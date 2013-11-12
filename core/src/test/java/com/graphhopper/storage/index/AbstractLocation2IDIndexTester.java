@@ -28,6 +28,7 @@ import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import java.io.File;
@@ -165,7 +166,7 @@ public abstract class AbstractLocation2IDIndexTester
         else
             fullIndex = new Location2IDFullIndex(g);        
 
-        DistanceCalc dist = new DistanceCalc();
+        DistanceCalc dist = new DistanceCalcEarth();
         for (int i = 0; i < 100; i++)
         {
             double lat = rand.nextDouble() * 5;

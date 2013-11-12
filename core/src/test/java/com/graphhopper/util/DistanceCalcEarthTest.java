@@ -25,31 +25,34 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class DistanceCalcTest
+public class DistanceCalcEarthTest
 {
+    private DistanceCalc dc = new DistanceCalcEarth();
+
     @Test
     public void testCalcCircumference()
     {
-        assertEquals(DistanceCalc.C, new DistanceCalc().calcCircumference(0), 1e-7);
+        assertEquals(DistanceCalcEarth.C, dc.calcCircumference(0), 1e-7);
     }
 
     @Test
     public void testRound()
     {
-        assertEquals(100.94, DistanceCalc.round(100.94, 2), 1e-7);
-        assertEquals(100.9, DistanceCalc.round(100.94, 1), 1e-7);
-        assertEquals(101.0, DistanceCalc.round(100.95, 1), 1e-7);
+        assertEquals(100.94, DistanceCalcEarth.round(100.94, 2), 1e-7);
+        assertEquals(100.9, DistanceCalcEarth.round(100.94, 1), 1e-7);
+        assertEquals(101.0, DistanceCalcEarth.round(100.95, 1), 1e-7);
     }
 
     @Test
     public void testGeohashMaxDist()
     {
-        assertEquals(DistanceCalc.C / 2, new DistanceCalc().calcSpatialKeyMaxDist(0), 1);
-        assertEquals(DistanceCalc.C / 2, new DistanceCalc().calcSpatialKeyMaxDist(1), 1);
-        assertEquals(DistanceCalc.C / 4, new DistanceCalc().calcSpatialKeyMaxDist(2), 1);
-        assertEquals(DistanceCalc.C / 4, new DistanceCalc().calcSpatialKeyMaxDist(3), 1);
-        assertEquals(DistanceCalc.C / 8, new DistanceCalc().calcSpatialKeyMaxDist(4), 1);
-        assertEquals(DistanceCalc.C / 8, new DistanceCalc().calcSpatialKeyMaxDist(5), 1);
+        DistanceCalcEarth dce = new DistanceCalcEarth();
+        assertEquals(DistanceCalcEarth.C / 2, dce.calcSpatialKeyMaxDist(0), 1);
+        assertEquals(DistanceCalcEarth.C / 2, dce.calcSpatialKeyMaxDist(1), 1);
+        assertEquals(DistanceCalcEarth.C / 4, dce.calcSpatialKeyMaxDist(2), 1);
+        assertEquals(DistanceCalcEarth.C / 4, dce.calcSpatialKeyMaxDist(3), 1);
+        assertEquals(DistanceCalcEarth.C / 8, dce.calcSpatialKeyMaxDist(4), 1);
+        assertEquals(DistanceCalcEarth.C / 8, dce.calcSpatialKeyMaxDist(5), 1);
     }
 
     @Test
@@ -57,87 +60,84 @@ public class DistanceCalcTest
     {
         float lat = 24.235f;
         float lon = 47.234f;
-        DistanceCalc approxDist = new DistancePlaneProjection();
-        DistanceCalc dist = new DistanceCalc();
+        DistanceCalc approxDist = new DistancePlaneProjection();        
         double res = 15051;
-        assertEquals(res, dist.calcDist(lat, lon, lat - 0.1, lon + 0.1), 1);
-        assertEquals(dist.calcNormalizedDist(res), dist.calcNormalizedDist(lat, lon, lat - 0.1, lon + 0.1), 1);
+        assertEquals(res, dc.calcDist(lat, lon, lat - 0.1, lon + 0.1), 1);
+        assertEquals(dc.calcNormalizedDist(res), dc.calcNormalizedDist(lat, lon, lat - 0.1, lon + 0.1), 1);
         assertEquals(res, approxDist.calcDist(lat, lon, lat - 0.1, lon + 0.1), 1);
 
         res = 15046;
-        assertEquals(res, dist.calcDist(lat, lon, lat + 0.1, lon - 0.1), 1);
-        assertEquals(dist.calcNormalizedDist(res), dist.calcNormalizedDist(lat, lon, lat + 0.1, lon - 0.1), 1);
+        assertEquals(res, dc.calcDist(lat, lon, lat + 0.1, lon - 0.1), 1);
+        assertEquals(dc.calcNormalizedDist(res), dc.calcNormalizedDist(lat, lon, lat + 0.1, lon - 0.1), 1);
         assertEquals(res, approxDist.calcDist(lat, lon, lat + 0.1, lon - 0.1), 1);
 
         res = 150748;
-        assertEquals(res, dist.calcDist(lat, lon, lat - 1, lon + 1), 1);
-        assertEquals(dist.calcNormalizedDist(res), dist.calcNormalizedDist(lat, lon, lat - 1, lon + 1), 1);
+        assertEquals(res, dc.calcDist(lat, lon, lat - 1, lon + 1), 1);
+        assertEquals(dc.calcNormalizedDist(res), dc.calcNormalizedDist(lat, lon, lat - 1, lon + 1), 1);
         assertEquals(res, approxDist.calcDist(lat, lon, lat - 1, lon + 1), 10);
 
         res = 150211;
-        assertEquals(res, dist.calcDist(lat, lon, lat + 1, lon - 1), 1);
-        assertEquals(dist.calcNormalizedDist(res), dist.calcNormalizedDist(lat, lon, lat + 1, lon - 1), 1);
+        assertEquals(res, dc.calcDist(lat, lon, lat + 1, lon - 1), 1);
+        assertEquals(dc.calcNormalizedDist(res), dc.calcNormalizedDist(lat, lon, lat + 1, lon - 1), 1);
         assertEquals(res, approxDist.calcDist(lat, lon, lat + 1, lon - 1), 10);
 
         res = 1527919;
-        assertEquals(res, dist.calcDist(lat, lon, lat - 10, lon + 10), 1);
-        assertEquals(dist.calcNormalizedDist(res), dist.calcNormalizedDist(lat, lon, lat - 10, lon + 10), 1);
+        assertEquals(res, dc.calcDist(lat, lon, lat - 10, lon + 10), 1);
+        assertEquals(dc.calcNormalizedDist(res), dc.calcNormalizedDist(lat, lon, lat - 10, lon + 10), 1);
         assertEquals(res, approxDist.calcDist(lat, lon, lat - 10, lon + 10), 10000);
 
         res = 1474016;
-        assertEquals(res, dist.calcDist(lat, lon, lat + 10, lon - 10), 1);
-        assertEquals(dist.calcNormalizedDist(res), dist.calcNormalizedDist(lat, lon, lat + 10, lon - 10), 1);
+        assertEquals(res, dc.calcDist(lat, lon, lat + 10, lon - 10), 1);
+        assertEquals(dc.calcNormalizedDist(res), dc.calcNormalizedDist(lat, lon, lat + 10, lon - 10), 1);
         assertEquals(res, approxDist.calcDist(lat, lon, lat + 10, lon - 10), 10000);
 
         res = 1013735.28;
-        assertEquals(res, dist.calcDist(lat, lon, lat, lon - 10), 1);
-        assertEquals(dist.calcNormalizedDist(res), dist.calcNormalizedDist(lat, lon, lat, lon - 10), 1);
+        assertEquals(res, dc.calcDist(lat, lon, lat, lon - 10), 1);
+        assertEquals(dc.calcNormalizedDist(res), dc.calcNormalizedDist(lat, lon, lat, lon - 10), 1);
         // 1013952.659
         assertEquals(res, approxDist.calcDist(lat, lon, lat, lon - 10), 1000);
 
         // if we have a big distance for latitude only then PlaneProjection is exact!!
         res = 1111949.3;
-        assertEquals(res, dist.calcDist(lat, lon, lat + 10, lon), 1);
-        assertEquals(dist.calcNormalizedDist(res), dist.calcNormalizedDist(lat, lon, lat + 10, lon), 1);
+        assertEquals(res, dc.calcDist(lat, lon, lat + 10, lon), 1);
+        assertEquals(dc.calcNormalizedDist(res), dc.calcNormalizedDist(lat, lon, lat + 10, lon), 1);
         assertEquals(res, approxDist.calcDist(lat, lon, lat + 10, lon), 1);
     }
 
     @Test
     public void testEdgeDistance()
-    {
-        DistanceCalc calc = new DistanceCalc();
-        double dist = calc.calcNormalizedEdgeDistance(49.94241, 11.544356,
+    {        
+        double dist = dc.calcNormalizedEdgeDistance(49.94241, 11.544356,
                 49.937964, 11.541824,
                 49.942272, 11.555643);
-        double expectedDist = calc.calcNormalizedDist(49.94241, 11.544356,
+        double expectedDist = dc.calcNormalizedDist(49.94241, 11.544356,
                 49.9394, 11.54681);
         assertEquals(expectedDist, dist, 1e-4);
 
         // test identical lats
-        dist = calc.calcNormalizedEdgeDistance(49.936299, 11.543992,
+        dist = dc.calcNormalizedEdgeDistance(49.936299, 11.543992,
                 49.9357, 11.543047,
                 49.9357, 11.549227);
-        expectedDist = calc.calcNormalizedDist(49.936299, 11.543992,
+        expectedDist = dc.calcNormalizedDist(49.936299, 11.543992,
                 49.9357, 11.543992);
         assertEquals(expectedDist, dist, 1e-4);
     }
 
     @Test
     public void testValidEdgeDistance()
-    {
-        DistanceCalc calc = new DistanceCalc();
-        assertTrue(calc.validEdgeDistance(49.94241, 11.544356, 49.937964, 11.541824, 49.942272, 11.555643));
-        assertTrue(calc.validEdgeDistance(49.936624, 11.547636, 49.937964, 11.541824, 49.942272, 11.555643));
-        assertTrue(calc.validEdgeDistance(49.940712, 11.556069, 49.937964, 11.541824, 49.942272, 11.555643));
+    {        
+        assertTrue(dc.validEdgeDistance(49.94241, 11.544356, 49.937964, 11.541824, 49.942272, 11.555643));
+        assertTrue(dc.validEdgeDistance(49.936624, 11.547636, 49.937964, 11.541824, 49.942272, 11.555643));
+        assertTrue(dc.validEdgeDistance(49.940712, 11.556069, 49.937964, 11.541824, 49.942272, 11.555643));
 
         // left bottom of the edge
-        assertFalse(calc.validEdgeDistance(49.935119, 11.541649, 49.937964, 11.541824, 49.942272, 11.555643));
+        assertFalse(dc.validEdgeDistance(49.935119, 11.541649, 49.937964, 11.541824, 49.942272, 11.555643));
         // left top of the edge
-        assertFalse(calc.validEdgeDistance(49.939317, 11.539675, 49.937964, 11.541824, 49.942272, 11.555643));
+        assertFalse(dc.validEdgeDistance(49.939317, 11.539675, 49.937964, 11.541824, 49.942272, 11.555643));
         // right top of the edge
-        assertFalse(calc.validEdgeDistance(49.944482, 11.555446, 49.937964, 11.541824, 49.942272, 11.555643));
+        assertFalse(dc.validEdgeDistance(49.944482, 11.555446, 49.937964, 11.541824, 49.942272, 11.555643));
         // right bottom of the edge
-        assertFalse(calc.validEdgeDistance(49.94085, 11.557356, 49.937964, 11.541824, 49.942272, 11.555643));
+        assertFalse(dc.validEdgeDistance(49.94085, 11.557356, 49.937964, 11.541824, 49.942272, 11.555643));
     }
 
     @Test

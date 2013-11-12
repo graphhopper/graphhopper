@@ -278,7 +278,7 @@ public abstract class AbstractRoutingAlgorithmTester
         updateDistancesFor(graph, 5, 0, 0.004);
     }
 
-    private static final DistanceCalc distCalc = new DistanceCalc();
+    private static final DistanceCalc distCalc = new DistanceCalcEarth();
 
     private static void updateDistancesFor( Graph g, int node, double lat, double lon )
     {
@@ -440,14 +440,14 @@ public abstract class AbstractRoutingAlgorithmTester
         Path p = prepare.createAlgo().calcPath(4, 0);
         assertEquals(Helper.createTList(4, 1, 0), p.calcNodes());
         assertEquals(Helper.createPointList(0.5, 4.5, 0, 3.5, 0, 3, 0, 2), p.calcPoints());
-        assertEquals(291110, p.calcPoints().calcDistance(new DistanceCalc()), 1);
+        assertEquals(291110, p.calcPoints().calcDistance(new DistanceCalcEarth()), 1);
 
         // PrepareTowerNodesShortcutsTest.printEdges((LevelGraph) graph);
         p = prepare.createAlgo().calcPath(2, 1);
         // System.out.println(p.toDetailsString());
         assertEquals(Helper.createTList(2, 0, 1), p.calcNodes());
         assertEquals(Helper.createPointList(1, 1, 1, 0, 0, 0, 0, 1.6, 0, 2, 0, 3, 0, 3.5), p.calcPoints());
-        assertEquals(611555, p.calcPoints().calcDistance(new DistanceCalc()), 1);
+        assertEquals(611555, p.calcPoints().calcDistance(new DistanceCalcEarth()), 1);
     }
 
     @Test

@@ -19,6 +19,7 @@ package com.graphhopper.trees;
 
 import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Circle;
@@ -82,7 +83,7 @@ public class QuadTreeSimple<T> implements QuadTree<T>
     private final long globalMaxBit;
     private final SpatialKeyAlgo algo;
     private final int entriesPerLeaf;
-    private DistanceCalc calc = new DistanceCalc();
+    private DistanceCalc calc = new DistanceCalcEarth();
     private int size;
     private QTNode<T> root;
 

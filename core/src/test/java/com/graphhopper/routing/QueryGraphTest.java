@@ -249,7 +249,7 @@ public class QueryGraphTest
         tmp.setClosestEdge(edge);
         tmp.setWayIndex(index);
         tmp.setSnappedPosition(pos);
-        tmp.calcSnappedPoint(new DistanceCalc());
+        tmp.calcSnappedPoint(new DistanceCalcEarth());
         return tmp;
     }
 }

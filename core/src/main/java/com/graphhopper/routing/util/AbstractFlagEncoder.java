@@ -21,6 +21,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.Helper;
 
@@ -88,7 +89,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
             {
                 str = str.substring(0, mpInteger).trim();
                 val = Integer.parseInt(str);
-                return (int) Math.round(val * DistanceCalc.KM_MILE);
+                return (int) Math.round(val * DistanceCalcEarth.KM_MILE);
             }
 
             int knotInteger = str.indexOf("knots");

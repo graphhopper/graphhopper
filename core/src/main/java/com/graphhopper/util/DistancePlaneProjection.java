@@ -32,7 +32,7 @@ import static java.lang.Math.*;
  * <p/>
  * @author Peter Karich
  */
-public class DistancePlaneProjection extends DistanceCalc
+public class DistancePlaneProjection extends DistanceCalcEarth
 {
     @Override
     public double calcDist( double fromLat, double fromLon, double toLat, double toLon )

@@ -19,7 +19,6 @@ package com.graphhopper.util;
 
 import com.graphhopper.util.shapes.GHPlace;
 import java.io.*;
-import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -40,7 +39,7 @@ public class QueryTorture
     {
         new QueryTorture().start(CmdArgs.read(args));
     }
-    private Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private ExecutorService service;
     private BlockingQueue<Query> queryQueue;
     private Set<Query> noDuplicate;
@@ -182,7 +181,7 @@ public class QueryTorture
 
     void startReadingLogs( final String logFile )
     {
-        final DistanceCalc distCalc = new DistanceCalc();
+        final DistanceCalc distCalc = new DistanceCalcEarth();
         new Thread("readLogFile")
         {
             @Override

@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.shapes.Circle;
 
@@ -53,7 +54,7 @@ public class Location2IDFullIndex implements LocationIndex
             calc = new DistancePlaneProjection();
         } else
         {
-            calc = new DistanceCalc();
+            calc = new DistanceCalcEarth();
         }
         return this;
     }

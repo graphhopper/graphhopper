@@ -28,6 +28,7 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
@@ -71,7 +72,7 @@ public class Location2IDQuadtree implements LocationIndex
         if (approxDist)
             distCalc = new DistancePlaneProjection();
         else
-            distCalc = new DistanceCalc();
+            distCalc = new DistanceCalcEarth();
 
         return this;
     }

@@ -60,7 +60,7 @@ public class AStar extends AbstractRoutingAlgorithm
         if (approx)
             dist = new DistancePlaneProjection();
         else
-            dist = new DistanceCalc();
+            dist = new DistanceCalcEarth();
 
         return this;
     }

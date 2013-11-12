@@ -41,7 +41,8 @@ import org.slf4j.LoggerFactory;
  */
 public class Helper
 {
-    private static Logger logger = LoggerFactory.getLogger(Helper.class);
+    private static DistanceCalc dce = new DistanceCalcEarth();
+    private static final Logger logger = LoggerFactory.getLogger(Helper.class);
     public static final int MB = 1 << 20;
 
     public static ArrayList<Integer> tIntListToArrayList( TIntList from )
@@ -257,10 +258,9 @@ public class Helper
     public static int calcIndexSize( BBox graphBounds )
     {
         if (!graphBounds.isValid())
-        {
             throw new IllegalArgumentException("Bounding box is not valid to calculate index size: " + graphBounds);
-        }
-        double dist = new DistanceCalc().calcDist(graphBounds.maxLat, graphBounds.minLon,
+
+        double dist = dce.calcDist(graphBounds.maxLat, graphBounds.minLon,
                 graphBounds.minLat, graphBounds.maxLon);
         // convert to km and maximum is 50000km => 1GB
         dist = Math.min(dist / 1000, 50000);

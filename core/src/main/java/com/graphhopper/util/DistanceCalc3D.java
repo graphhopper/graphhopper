@@ -25,7 +25,7 @@ package com.graphhopper.util;
  * <p/>
  * @author Peter Karich
  */
-public class DistanceCalc3D extends DistanceCalc
+public class DistanceCalc3D extends DistanceCalcEarth
 {
     /**
      * @param fromHeight in meters above 0

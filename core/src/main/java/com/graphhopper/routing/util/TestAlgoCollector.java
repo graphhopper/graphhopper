@@ -23,6 +23,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ import java.util.List;
 public class TestAlgoCollector
 {
     private final String name;
-    private final DistanceCalc distCalc = new DistanceCalc();
+    private final DistanceCalc distCalc = new DistanceCalcEarth();
     public List<String> errors = new ArrayList<String>();
 
     public TestAlgoCollector( String name )

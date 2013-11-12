@@ -53,7 +53,7 @@ public class LocationIndexTree implements LocationIndex
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int MAGIC_INT;
-    private DistanceCalc preciseDistCalc = new DistanceCalc();
+    private DistanceCalc preciseDistCalc = new DistanceCalcEarth();
     private DistanceCalc distCalc = new DistancePlaneProjection();
     final DataAccess dataAccess;
     private final Graph graph;
@@ -122,7 +122,7 @@ public class LocationIndexTree implements LocationIndex
 
         double lat = Math.min(Math.abs(bounds.maxLat), Math.abs(bounds.minLat));
         double maxDistInMeter = Math.max(
-                (bounds.maxLat - bounds.minLat) / 360 * DistanceCalc.C,
+                (bounds.maxLat - bounds.minLat) / 360 * DistanceCalcEarth.C,
                 (bounds.maxLon - bounds.minLon) / 360 * preciseDistCalc.calcCircumference(lat));
         double tmp = maxDistInMeter / minResolutionInMeter;
         tmp = tmp * tmp;
@@ -265,7 +265,7 @@ public class LocationIndexTree implements LocationIndex
         if (approx)
             distCalc = new DistancePlaneProjection();
         else
-            distCalc = new DistanceCalc();
+            distCalc = new DistanceCalcEarth();
         return this;
     }
 

@@ -62,13 +62,13 @@ public class OSMReader
     protected static final int PILLAR_NODE = 1;
     // tower node is <= -3
     protected static final int TOWER_NODE = -2;
-    private static Logger logger = LoggerFactory.getLogger(OSMReader.class);
+    private static final Logger logger = LoggerFactory.getLogger(OSMReader.class);
     private long locations;
     private long skippedLocations;
-    private GraphStorage graphStorage;
+    private final GraphStorage graphStorage;
     private EncodingManager encodingManager = null;
     private int workerThreads = -1;
-    private LongIntMap osmNodeIdToBarrierMap;
+    private final LongIntMap osmNodeIdToBarrierMap;
     private boolean enableInstructions = true;
     protected final Directory dir;
     protected long zeroCounter = 0;
@@ -86,8 +86,8 @@ public class OSMReader
     private final TLongList barrierNodeIDs = new TLongArrayList();
     protected DataAccess pillarLats;
     protected DataAccess pillarLons;
-    private DistanceCalc distCalc = new DistanceCalc();
-    private DouglasPeucker simplifyAlgo = new DouglasPeucker();
+    private DistanceCalc distCalc = new DistanceCalcEarth();
+    private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private int nextTowerId = 0;
     private int nextPillarId = 0;
     // negative but increasing to avoid clash with custom created OSM files

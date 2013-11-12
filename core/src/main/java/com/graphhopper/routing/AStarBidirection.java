@@ -22,6 +22,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -103,7 +104,7 @@ public class AStarBidirection extends AbstractBidirAlgo
             approximationFactor = 0.5;
         } else
         {
-            dist = new DistanceCalc();
+            dist = new DistanceCalcEarth();
             approximationFactor = 1.2;
         }
         return this;

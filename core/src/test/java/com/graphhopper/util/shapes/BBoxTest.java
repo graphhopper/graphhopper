@@ -18,6 +18,7 @@
 package com.graphhopper.util.shapes;
 
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
 import org.junit.*;
 import static org.junit.Assert.*;
 
@@ -30,7 +31,7 @@ public class BBoxTest
     @Test
     public void testCreate()
     {
-        DistanceCalc c = new DistanceCalc();
+        DistanceCalc c = new DistanceCalcEarth();
         BBox b = c.createBBox(52, 10, 100000);
 
         // The calclulated bounding box has no negative values (also for southern hemisphere and negative meridians)

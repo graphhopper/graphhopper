@@ -24,7 +24,7 @@ import static java.lang.Math.*;
  * <p/>
  * @author Peter Karich
  */
-public class DistanceCalc2D extends DistanceCalc
+public class DistanceCalc2D extends DistanceCalcEarth
 {
     @Override
     public double calcDist( double fromY, double fromX, double toY, double toX )

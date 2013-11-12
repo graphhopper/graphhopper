@@ -134,28 +134,28 @@ public class InstructionList
             if (mile)
             {
                 // calculate miles
-                double distInMiles = dist / 1000 / DistanceCalc.KM_MILE;
+                double distInMiles = dist / 1000 / DistanceCalcEarth.KM_MILE;
                 if (distInMiles < 0.9)
                 {
-                    labels.add((int) DistanceCalc.round(distInMiles * 5280, 1) + " " + tr.tr("ftAbbr"));
+                    labels.add((int) DistanceCalcEarth.round(distInMiles * 5280, 1) + " " + tr.tr("ftAbbr"));
                 } else
                 {
                     if (distInMiles < 100)
-                        labels.add(DistanceCalc.round(distInMiles, 2) + " " + tr.tr("miAbbr"));
+                        labels.add(DistanceCalcEarth.round(distInMiles, 2) + " " + tr.tr("miAbbr"));
                     else
-                        labels.add((int) DistanceCalc.round(distInMiles, 1) + " " + tr.tr("miAbbr"));
+                        labels.add((int) DistanceCalcEarth.round(distInMiles, 1) + " " + tr.tr("miAbbr"));
                 }
             } else
             {
                 if (dist < 950)
                 {
-                    labels.add((int) DistanceCalc.round(dist, 1) + " " + tr.tr("mAbbr"));
+                    labels.add((int) DistanceCalcEarth.round(dist, 1) + " " + tr.tr("mAbbr"));
                 } else
                 {
                     if (dist < 100000)
-                        labels.add(DistanceCalc.round(dist / 1000, 2) + " " + tr.tr("kmAbbr"));
+                        labels.add(DistanceCalcEarth.round(dist / 1000, 2) + " " + tr.tr("kmAbbr"));
                     else
-                        labels.add((int) DistanceCalc.round(dist / 1000, 1) + " " + tr.tr("kmAbbr"));
+                        labels.add((int) DistanceCalcEarth.round(dist / 1000, 1) + " " + tr.tr("kmAbbr"));
                 }
             }
         }
