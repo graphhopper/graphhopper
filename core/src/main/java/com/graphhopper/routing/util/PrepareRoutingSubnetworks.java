@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.XFirstSearch;
@@ -38,14 +38,14 @@ import org.slf4j.LoggerFactory;
  */
 public class PrepareRoutingSubnetworks
 {
-    private Logger logger = LoggerFactory.getLogger(getClass());
-    private final Graph g;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final GraphStorage g;
     private final EdgeFilter edgeFilter;
     private int minNetworkSize = 200;
     private int subNetworks = -1;
     private final AtomicInteger maxEdgesPerNode = new AtomicInteger(0);
 
-    public PrepareRoutingSubnetworks( Graph g, EncodingManager em )
+    public PrepareRoutingSubnetworks( GraphStorage g, EncodingManager em )
     {
         this.g = g;
         if (em.getVehicleCount() == 0)

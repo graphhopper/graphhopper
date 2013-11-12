@@ -87,7 +87,7 @@ public interface Graph
 
     /**
      * Returns an iterator which makes it possible to traverse all edges of the specified node if
-     * the filter accepts the edge. Reduce calling this method as much as possible, e.g. create it 
+     * the filter accepts the edge. Reduce calling this method as much as possible, e.g. create it
      * before a for loop!
      * <p/>
      * @see Graph#createEdgeExplorer()
@@ -103,22 +103,9 @@ public interface Graph
     EdgeExplorer createEdgeExplorer();
 
     /**
-     * @return the specified graph g
+     * Copy this Graph into the specified Graph g.
+     * <p>
+     * @return the specified GraphStorage g
      */
     Graph copyTo( Graph g );
-
-    /**
-     * Schedule the deletion of the specified node until an optimize() call happens
-     */
-    void markNodeRemoved( int index );
-
-    /**
-     * Checks if the specified node is marked as removed.
-     */
-    boolean isNodeRemoved( int index );
-
-    /**
-     * Performs optimization routines like deletion or node rearrangements.
-     */
-    void optimize();
 }

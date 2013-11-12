@@ -26,7 +26,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.StopWatch;
 import static com.graphhopper.routing.util.NoOpAlgorithmPreparation.*;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.Location2NodesNtreeLG;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -128,7 +128,7 @@ public class RoutingAlgorithmSpecialAreaTests
                         new ME(createAlgoPrepare(g, "dijkstra", encoder, weighting), idx)));
         if (withCh)
         {
-            LevelGraph graphCH = (LevelGraph) g.copyTo(new GraphBuilder(manager).levelGraphCreate());
+            LevelGraph graphCH = (LevelGraph) ((GraphStorage) g).copyTo(new GraphBuilder(manager).levelGraphCreate());
             PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(encoder, weighting).
                     setGraph(graphCH);
             prepareCH.doWork();

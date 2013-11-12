@@ -67,7 +67,7 @@ public class OSMReaderTest
 
     GraphStorage buildGraph( String directory, EncodingManager encodingManager )
     {
-        return new GraphStorage(new RAMDirectory(directory, false), encodingManager);
+        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager);
     }
 
     class GraphHopperTest extends GraphHopper
@@ -121,10 +121,10 @@ public class OSMReaderTest
         GraphHopper hopper = new GraphHopperTest(file1).importOrLoad();
         Graph graph = hopper.getGraph();
         assertEquals(4, graph.getNodes());
-        int n20 = AbstractGraphTester.getIdOf(graph, 52);
-        int n10 = AbstractGraphTester.getIdOf(graph, 51.2492152);
-        int n30 = AbstractGraphTester.getIdOf(graph, 51.2);
-        int n50 = AbstractGraphTester.getIdOf(graph, 49);
+        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
+        int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
+        int n30 = AbstractGraphStorageTester.getIdOf(graph, 51.2);
+        int n50 = AbstractGraphStorageTester.getIdOf(graph, 49);
         assertEquals(GHUtility.asSet(n20), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
         assertEquals(3, GHUtility.count(carOutExplorer.setBaseNode(n20)));
         assertEquals(GHUtility.asSet(n20), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)));
@@ -133,7 +133,7 @@ public class OSMReaderTest
         assertTrue(iter.next());        
         assertEquals("street 123, B 122", iter.getName());
         assertEquals(n50, iter.getAdjNode());
-        AbstractGraphTester.assertPList(Helper.createPointList(51.25, 9.43), iter.fetchWayGeometry(0));        
+        AbstractGraphStorageTester.assertPList(Helper.createPointList(51.25, 9.43), iter.fetchWayGeometry(0));        
         CarFlagEncoder flags = carEncoder;
         assertTrue(flags.isForward(iter.getFlags()));
         assertTrue(flags.isBackward(iter.getFlags()));
@@ -199,10 +199,10 @@ public class OSMReaderTest
 
         Graph graph = hopper.getGraph();
         assertEquals(4, graph.getNodes());
-        int n10 = AbstractGraphTester.getIdOf(graph, 51.2492152);
-        int n20 = AbstractGraphTester.getIdOf(graph, 52);
-        int n30 = AbstractGraphTester.getIdOf(graph, 51.2);
-        int n40 = AbstractGraphTester.getIdOf(graph, 51.25);
+        int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
+        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
+        int n30 = AbstractGraphStorageTester.getIdOf(graph, 51.2);
+        int n40 = AbstractGraphStorageTester.getIdOf(graph, 51.25);
 
         assertEquals(GHUtility.asSet(n20), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
         assertEquals(3, GHUtility.count(carOutExplorer.setBaseNode(n20)));
@@ -211,12 +211,12 @@ public class OSMReaderTest
         EdgeIterator iter = carOutExplorer.setBaseNode(n20);
         assertTrue(iter.next());
         assertEquals(n40, iter.getAdjNode());
-        AbstractGraphTester.assertPList(Helper.createPointList(), iter.fetchWayGeometry(0));        
+        AbstractGraphStorageTester.assertPList(Helper.createPointList(), iter.fetchWayGeometry(0));        
         assertTrue(iter.next());
         assertEquals(n30, iter.getAdjNode());
         assertEquals(93146.888, iter.getDistance(), 1);
         assertTrue(iter.next());
-        AbstractGraphTester.assertPList(Helper.createPointList(), iter.fetchWayGeometry(0));
+        AbstractGraphStorageTester.assertPList(Helper.createPointList(), iter.fetchWayGeometry(0));
         assertEquals(n10, iter.getAdjNode());
         assertEquals(88643, iter.getDistance(), 1);
 
@@ -234,11 +234,11 @@ public class OSMReaderTest
         GraphHopper hopper = new GraphHopperTest(file2).importOrLoad();
         Graph graph = hopper.getGraph();
 
-        int n20 = AbstractGraphTester.getIdOf(graph, 52.0);
-        int n22 = AbstractGraphTester.getIdOf(graph, 52.133);
-        int n23 = AbstractGraphTester.getIdOf(graph, 52.144);
-        int n10 = AbstractGraphTester.getIdOf(graph, 51.2492152);
-        int n30 = AbstractGraphTester.getIdOf(graph, 51.2);
+        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52.0);
+        int n22 = AbstractGraphStorageTester.getIdOf(graph, 52.133);
+        int n23 = AbstractGraphStorageTester.getIdOf(graph, 52.144);
+        int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
+        int n30 = AbstractGraphStorageTester.getIdOf(graph, 51.2);
 
         assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(n10)));
         assertEquals(2, GHUtility.count(carOutExplorer.setBaseNode(n20)));
@@ -288,12 +288,12 @@ public class OSMReaderTest
         }.importOrLoad();
         Graph graph = hopper.getGraph();
 
-        int n40 = AbstractGraphTester.getIdOf(graph, 54.0);
-        int n50 = AbstractGraphTester.getIdOf(graph, 55.0);
+        int n40 = AbstractGraphStorageTester.getIdOf(graph, 54.0);
+        int n50 = AbstractGraphStorageTester.getIdOf(graph, 55.0);
         assertEquals(GHUtility.asSet(n40), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n50)));
 
         // no duration is given => slow speed only!
-        int n80 = AbstractGraphTester.getIdOf(graph, 54.1);
+        int n80 = AbstractGraphStorageTester.getIdOf(graph, 54.1);
         EdgeIterator iter = carOutExplorer.setBaseNode(n80);
         iter.next();
         assertEquals(10, carEncoder.getSpeed(iter.getFlags()));
@@ -317,7 +317,7 @@ public class OSMReaderTest
         }.importOrLoad();
         Graph graph = hopper.getGraph();
 
-        int n60 = AbstractGraphTester.getIdOf(graph, 56.0);
+        int n60 = AbstractGraphStorageTester.getIdOf(graph, 56.0);
         EdgeIterator iter = carOutExplorer.setBaseNode(n60);
         iter.next();
         assertEquals(35, carEncoder.getSpeed(iter.getFlags()));
@@ -331,8 +331,8 @@ public class OSMReaderTest
         Graph graph = hopper.getGraph();
 
         assertEquals(2, graph.getNodes());
-        int n10 = AbstractGraphTester.getIdOf(graph, 51.2492152);
-        int n30 = AbstractGraphTester.getIdOf(graph, 51.2);
+        int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
+        int n30 = AbstractGraphStorageTester.getIdOf(graph, 51.2);
 
         assertEquals(GHUtility.asSet(n30), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
     }
@@ -344,11 +344,11 @@ public class OSMReaderTest
                 importOrLoad();
         Graph graph = hopper.getGraph();
 
-        int n10 = AbstractGraphTester.getIdOf(graph, 11.1);
-        int n20 = AbstractGraphTester.getIdOf(graph, 12);
-        int n30 = AbstractGraphTester.getIdOf(graph, 11.2);
-        int n40 = AbstractGraphTester.getIdOf(graph, 11.3);
-        int n50 = AbstractGraphTester.getIdOf(graph, 10);
+        int n10 = AbstractGraphStorageTester.getIdOf(graph, 11.1);
+        int n20 = AbstractGraphStorageTester.getIdOf(graph, 12);
+        int n30 = AbstractGraphStorageTester.getIdOf(graph, 11.2);
+        int n40 = AbstractGraphStorageTester.getIdOf(graph, 11.3);
+        int n50 = AbstractGraphStorageTester.getIdOf(graph, 10);
 
         assertEquals(GHUtility.asSet(n20, n40), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n10)));
         assertEquals(GHUtility.asSet(), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)));
@@ -367,9 +367,9 @@ public class OSMReaderTest
         GraphHopper hopper = new GraphHopperTest(fileNegIds).importOrLoad();
         Graph graph = hopper.getGraph();
         assertEquals(4, graph.getNodes());
-        int n20 = AbstractGraphTester.getIdOf(graph, 52);
-        int n10 = AbstractGraphTester.getIdOf(graph, 51.2492152);
-        int n30 = AbstractGraphTester.getIdOf(graph, 51.2);
+        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
+        int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
+        int n30 = AbstractGraphStorageTester.getIdOf(graph, 51.2);
         assertEquals(GHUtility.asSet(n20), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
         assertEquals(3, GHUtility.count(carOutExplorer.setBaseNode(n20)));
         assertEquals(GHUtility.asSet(n20), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)));
@@ -393,10 +393,10 @@ public class OSMReaderTest
         Graph graph = hopper.getGraph();
         assertEquals(8, graph.getNodes());
 
-        int n10 = AbstractGraphTester.getIdOf(graph, 51);
-        int n20 = AbstractGraphTester.getIdOf(graph, 52);
-        int n30 = AbstractGraphTester.getIdOf(graph, 53);
-        int n50 = AbstractGraphTester.getIdOf(graph, 55);
+        int n10 = AbstractGraphStorageTester.getIdOf(graph, 51);
+        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
+        int n30 = AbstractGraphStorageTester.getIdOf(graph, 53);
+        int n50 = AbstractGraphStorageTester.getIdOf(graph, 55);
 
         // separate id
         int new20 = 4;
@@ -427,7 +427,7 @@ public class OSMReaderTest
         Graph graph = hopper.getGraph();
         assertEquals(8, graph.getNodes());
 
-        int n60 = AbstractGraphTester.getIdOf(graph, 56);
+        int n60 = AbstractGraphStorageTester.getIdOf(graph, 56);
 
         int newId = 5;
         assertEquals(GHUtility.asSet(newId), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n60)));

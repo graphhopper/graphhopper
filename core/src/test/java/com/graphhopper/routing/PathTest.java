@@ -23,7 +23,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.Helper;
-import static com.graphhopper.storage.AbstractGraphTester.*;
+import static com.graphhopper.storage.AbstractGraphStorageTester.*;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;

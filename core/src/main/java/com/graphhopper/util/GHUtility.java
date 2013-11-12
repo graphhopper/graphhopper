@@ -257,7 +257,7 @@ public class GHUtility
             store = new LevelGraphStorage(outdir, encodingManager);
         } else
         {
-            store = new GraphStorage(outdir, encodingManager);
+            store = new GraphHopperStorage(outdir, encodingManager);
         }
         return store;
     }

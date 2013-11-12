@@ -28,12 +28,12 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class LevelGraphStorageTest extends GraphStorageTest
+public class LevelGraphStorageTest extends GraphHopperStorageTest
 {
     @Override
-    protected LevelGraph createGraph()
+    protected LevelGraphStorage createGraph()
     {
-        return (LevelGraph) super.createGraph();
+        return (LevelGraphStorage) super.createGraph();
     }
 
     @Override
@@ -71,7 +71,7 @@ public class LevelGraphStorageTest extends GraphStorageTest
     @Test
     public void testPriosWhileDeleting()
     {
-        LevelGraph g = createGraph();
+        LevelGraphStorage g = createGraph();
         for (int i = 0; i < 20; i++)
         {
             g.setLevel(i, i);

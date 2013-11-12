@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -443,13 +444,6 @@ public class QueryGraph implements Graph
     }
 
     @Override
-    public Graph copyTo( Graph g
-    )
-    {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
     public void setNode( int node, double lat, double lon )
     {
         throw exc();
@@ -468,19 +462,7 @@ public class QueryGraph implements Graph
     }
 
     @Override
-    public void markNodeRemoved( int index )
-    {
-        throw exc();
-    }
-
-    @Override
-    public boolean isNodeRemoved( int index )
-    {
-        throw exc();
-    }
-
-    @Override
-    public void optimize()
+    public Graph copyTo( Graph g )
     {
         throw exc();
     }

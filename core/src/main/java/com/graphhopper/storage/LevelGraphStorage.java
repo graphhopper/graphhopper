@@ -32,7 +32,7 @@ import com.graphhopper.util.EdgeSkipIterator;
  * @see GraphBuilder
  * @author Peter Karich
  */
-public class LevelGraphStorage extends GraphStorage implements LevelGraph
+public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
 {
     private final int I_SKIP_EDGE1;
     private final int I_SKIP_EDGE2;

@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.QueryResult;
@@ -53,7 +54,7 @@ public class QueryGraphTest
     public void testOneVirtualNode()
     {
         EncodingManager encodingManager = new EncodingManager("CAR");
-        Graph g = new GraphStorage(new RAMDirectory(), encodingManager).create(100);
+        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
         initGraph(g);
         EdgeExplorer expl = g.createEdgeExplorer();
 
@@ -127,7 +128,7 @@ public class QueryGraphTest
     public void testMultipleVirtualNodes()
     {
         EncodingManager encodingManager = new EncodingManager("CAR");
-        Graph g = new GraphStorage(new RAMDirectory(), encodingManager).create(100);
+        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
         initGraph(g);
 
         // snap to edge which has pillar nodes        
@@ -175,7 +176,7 @@ public class QueryGraphTest
     public void testOneWay()
     {
         EncodingManager encodingManager = new EncodingManager("CAR");
-        Graph g = new GraphStorage(new RAMDirectory(), encodingManager).create(100);
+        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
         g.setNode(0, 0, 0);
         g.setNode(1, 0, 1);
         g.edge(0, 1, 10, false);
@@ -201,7 +202,7 @@ public class QueryGraphTest
     public void testVirtEdges()
     {
         EncodingManager encodingManager = new EncodingManager("CAR");
-        Graph g = new GraphStorage(new RAMDirectory(), encodingManager).create(100);
+        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
         initGraph(g);
 
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(0);
@@ -217,7 +218,7 @@ public class QueryGraphTest
     public void testEdgesShareOneNode()
     {
         EncodingManager encodingManager = new EncodingManager("CAR");
-        Graph g = new GraphStorage(new RAMDirectory(), encodingManager).create(100);
+        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
         initGraph(g);
 
         EdgeIteratorState iter = GHUtility.getEdge(g, 0, 2);

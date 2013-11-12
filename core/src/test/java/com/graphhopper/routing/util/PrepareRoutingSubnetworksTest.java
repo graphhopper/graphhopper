@@ -34,16 +34,16 @@ import static org.junit.Assert.*;
  */
 public class PrepareRoutingSubnetworksTest
 {
-    private EncodingManager em = new EncodingManager("CAR");
+    private final EncodingManager em = new EncodingManager("CAR");
 
-    Graph createGraph( EncodingManager eman )
+    GraphStorage createGraph( EncodingManager eman )
     {
         return new GraphBuilder(eman).create();
     }
 
-    Graph createSubnetworkTestGraph()
+    GraphStorage createSubnetworkTestGraph()
     {
-        Graph g = createGraph(em);
+        GraphStorage g = createGraph(em);
         // big network
         g.edge(1, 2, 1, true);
         g.edge(1, 4, 1, false);
@@ -71,7 +71,7 @@ public class PrepareRoutingSubnetworksTest
     @Test
     public void testFindSubnetworks()
     {
-        Graph g = createSubnetworkTestGraph();
+        GraphStorage g = createSubnetworkTestGraph();
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em);
         Map<Integer, Integer> map = instance.findSubnetworks();
 
@@ -86,7 +86,7 @@ public class PrepareRoutingSubnetworksTest
     @Test
     public void testKeepLargestNetworks()
     {
-        Graph g = createSubnetworkTestGraph();
+        GraphStorage g = createSubnetworkTestGraph();
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em);
         Map<Integer, Integer> map = instance.findSubnetworks();
         instance.keepLargeNetworks(map);
@@ -99,9 +99,9 @@ public class PrepareRoutingSubnetworksTest
         assertEquals(7, (int) map.get(0));
     }
 
-    Graph createSubnetworkTestGraph2( EncodingManager em )
+    GraphStorage createSubnetworkTestGraph2( EncodingManager em )
     {
-        Graph g = createGraph(em);
+        GraphStorage g = createGraph(em);
         // large network
         g.edge(0, 1, 1, true);
         g.edge(1, 3, 1, true);
@@ -121,7 +121,7 @@ public class PrepareRoutingSubnetworksTest
     @Test
     public void testRemoveSubnetworkIfOnlyOneVehicle()
     {
-        Graph g = createSubnetworkTestGraph2(em);
+        GraphStorage g = createSubnetworkTestGraph2(em);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em);
         instance.setMinNetworkSize(4);
         instance.doWork();

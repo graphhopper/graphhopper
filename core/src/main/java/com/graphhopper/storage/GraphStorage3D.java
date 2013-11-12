@@ -23,7 +23,7 @@ import com.graphhopper.util.Helper;
 /**
  * @author Peter Karich
  */
-public class GraphStorage3D extends GraphStorage implements Graph3D
+public class GraphStorage3D extends GraphHopperStorage implements Graph3D
 {
     private final int N_HEIGHT;
 

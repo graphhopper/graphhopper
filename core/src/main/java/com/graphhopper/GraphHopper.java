@@ -515,7 +515,7 @@ public class GraphHopper implements GraphHopperAPI
         if (chEnabled)
             graph = new LevelGraphStorage(dir, encodingManager);
         else
-            graph = new GraphStorage(dir, encodingManager);
+            graph = new GraphHopperStorage(dir, encodingManager);
 
         graph.setSegmentSize(defaultSegmentSize);
         if (!graph.loadExisting())

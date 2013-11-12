@@ -36,9 +36,9 @@ import org.junit.Test;
  * <p/>
  * @author Peter Karich
  */
-public abstract class AbstractGraphTester
+public abstract class AbstractGraphStorageTester
 {
-    private String location = "./target/graphstorage";
+    private final String location = "./target/graphstorage";
     protected int defaultSize = 100;
     protected String defaultGraph = "./target/graphstorage/default";
     protected EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
@@ -49,18 +49,18 @@ public abstract class AbstractGraphTester
     EdgeExplorer carOutExplorer;
     EdgeExplorer carInExplorer;
     EdgeExplorer carAllExplorer;
-    private Graph graph;
+    private GraphStorage graph;
 
-    protected Graph createGraph()
+    protected GraphStorage createGraph()
     {
-        Graph g = createGraph(defaultGraph, defaultSize);
+        GraphStorage g = createGraph(defaultGraph, defaultSize);
         carOutExplorer = g.createEdgeExplorer(carOutFilter);
         carInExplorer = g.createEdgeExplorer(carInFilter);
         carAllExplorer = g.createEdgeExplorer();
         return g;
     }
 
-    abstract Graph createGraph( String location, int size );
+    abstract GraphStorage createGraph( String location, int size );
 
     @Before
     public void setUp()
@@ -137,7 +137,7 @@ public abstract class AbstractGraphTester
         assertEquals(2, i.getAdjNode());
 
         i = carOutExplorer.setBaseNode(1);
-        assertTrue(i.next());        
+        assertTrue(i.next());
         assertEquals(12, i.getAdjNode());
         assertTrue(i.next());
         assertEquals(11, i.getAdjNode());
@@ -178,7 +178,7 @@ public abstract class AbstractGraphTester
         assertTrue(i.next());
         assertEquals(11, i.getAdjNode());
         assertTrue(i.next());
-        assertEquals(2, i.getAdjNode());        
+        assertEquals(2, i.getAdjNode());
         assertFalse(i.next());
     }
 
@@ -250,7 +250,9 @@ public abstract class AbstractGraphTester
     {
         graph = createGraph();
         initExampleGraph(graph);
-        Graph gs = new GraphStorage(new RAMDirectory(), encodingManager).setSegmentSize(8000).create(10);
+        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), encodingManager);
+        gs.setSegmentSize(8000);
+        gs.create(10);
         try
         {
             graph.copyTo(gs);
@@ -552,7 +554,6 @@ public abstract class AbstractGraphTester
         graph.setNode(11, 11, 1);
         graph.setNode(12, 12, 1);
 
-
         // mini subnetwork which gets completely removed:
         graph.edge(5, 10, 510, true);
         graph.markNodeRemoved(5);
@@ -583,7 +584,7 @@ public abstract class AbstractGraphTester
         EdgeIterator iter = carAllExplorer.setBaseNode(id9);
         assertTrue(iter.next());
         assertEquals(id12, iter.getAdjNode());
-        assertEquals(2, iter.fetchWayGeometry(0).getLongitude(0), 1e-7);        
+        assertEquals(2, iter.fetchWayGeometry(0).getLongitude(0), 1e-7);
 
         assertTrue(iter.next());
         assertEquals(id11, iter.getAdjNode());
@@ -687,12 +688,11 @@ public abstract class AbstractGraphTester
         assertEquals(0, iter.getBaseNode());
         assertEquals(2, iter.getAdjNode());
         assertEquals(20, iter.getDistance(), 1e-5);
-        
+
 //        iter = graph.getEdgeProps(edgeId, -1);
 //        assertFalse(iter == null);
 //        assertEquals(0, iter.getBaseNode());
 //        assertEquals(2, iter.getAdjNode());
-
         iter = graph.getEdgeProps(edgeId, 1);
         assertTrue(iter == null);
 
@@ -738,7 +738,7 @@ public abstract class AbstractGraphTester
         {
         }
 
-        EdgeIterator iter = carOutExplorer.setBaseNode(2);        
+        EdgeIterator iter = carOutExplorer.setBaseNode(2);
         assertTrue(iter.next());
         EdgeIteratorState oneIter = graph.getEdgeProps(iter.getEdge(), 3);
         assertEquals(13, oneIter.getDistance(), 1e-6);
@@ -814,7 +814,7 @@ public abstract class AbstractGraphTester
         assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3), iter.fetchWayGeometry(0));
         assertPList(Helper.createPointList(0.01, 0.01, 1, 1, 1, 2, 1, 3), iter.fetchWayGeometry(1));
         assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3, 0.4, 0.4), iter.fetchWayGeometry(2));
-        assertPList(Helper.createPointList(0.01, 0.01, 1, 1, 1, 2, 1, 3, 0.4, 0.4), iter.fetchWayGeometry(3));        
+        assertPList(Helper.createPointList(0.01, 0.01, 1, 1, 1, 2, 1, 3, 0.4, 0.4), iter.fetchWayGeometry(3));
 
         assertFalse(iter.next());
 

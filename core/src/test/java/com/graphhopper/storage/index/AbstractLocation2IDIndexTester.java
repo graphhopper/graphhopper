@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
@@ -254,7 +255,7 @@ public abstract class AbstractLocation2IDIndexTester
 
     Graph createGraph( Directory dir, EncodingManager encodingManager )
     {
-        return new GraphStorage(dir, encodingManager).create(100);
+        return new GraphHopperStorage(dir, encodingManager).create(100);
     }
 
     public Graph createSampleGraph( EncodingManager encodingManager )

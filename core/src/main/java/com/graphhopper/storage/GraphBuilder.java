@@ -108,7 +108,7 @@ public class GraphBuilder
             graph = new LevelGraphStorage(dir, encodingManager);
         } else
         {
-            graph = new GraphStorage(dir, encodingManager);
+            graph = new GraphHopperStorage(dir, encodingManager);
         }
         return graph;
     }

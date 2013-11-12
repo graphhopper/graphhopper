@@ -20,11 +20,14 @@ package com.graphhopper.storage;
 /**
  * @author Peter Karich
  */
-public class GraphStorageViaMMapTest extends AbstractGraphTester
+public class GraphStorageViaMMapTest extends AbstractGraphStorageTester
 {
     @Override
     public GraphStorage createGraph( String location, int size )
     {
-        return new GraphBuilder(encodingManager).setLocation(location).setMmap(true).build().setSegmentSize(size / 2).create(size);
+        GraphStorage gs = new GraphBuilder(encodingManager).setLocation(location).setMmap(true).build();
+        gs.setSegmentSize(size / 2);
+        gs.create(size);
+        return gs;
     }
 }
