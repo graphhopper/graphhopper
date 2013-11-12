@@ -142,13 +142,13 @@ public class Location2NodesNtreeLG extends LocationIndexTree
             }
 
             @Override
-            public int getFlags()
+            public long getFlags()
             {
                 return tmpIter.getFlags();
             }
 
             @Override
-            public EdgeIteratorState setFlags( int flags )
+            public EdgeIteratorState setFlags( long flags )
             {
                 return tmpIter.setFlags(flags);
             }

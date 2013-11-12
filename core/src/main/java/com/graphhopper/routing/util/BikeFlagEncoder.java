@@ -102,7 +102,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
      * @param way
      */
     @Override
-    public int isAllowed( OSMWay way )
+    public long isAllowed( OSMWay way )
     {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null)
@@ -148,12 +148,12 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public int handleWayTags( int allowed, OSMWay way )
+    public long handleWayTags( long allowed, OSMWay way )
     {
         if ((allowed & acceptBit) == 0)
             return 0;
 
-        int encoded;
+        long encoded;
         if ((allowed & ferryBit) == 0)
         {
             // set speed
@@ -196,7 +196,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public int analyzeNodeTags( OSMNode node )
+    public long analyzeNodeTags( OSMNode node )
     {
 
         // absolute barriers always block

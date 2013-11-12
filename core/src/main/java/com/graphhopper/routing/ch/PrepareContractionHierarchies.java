@@ -72,8 +72,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private PriorityNode refs[];
     private final DataAccess originalEdges;
     // shortcut is one direction, speed is only involved while recalculating the endNode weights - see prepareEdges
-    private int scOneDir;
-    private int scBothDir;
+    private final long scOneDir;
+    private final long scBothDir;
     private final Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
     private IgnoreNodeFilter levelEdgeFilter;
     private DijkstraOneToMany algo;
@@ -107,12 +107,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return this;
     }
 
-    int getScBothDir()
+    long getScBothDir()
     {
         return scBothDir;
     }
 
-    int getScOneDir()
+    long getScOneDir()
     {
         return scOneDir;
     }
@@ -899,7 +899,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         int skippedEdge2;
         double distance;
         int originalEdges;
-        int flags = scOneDir;
+        long flags = scOneDir;
 
         public Shortcut( int from, int to, double dist )
         {

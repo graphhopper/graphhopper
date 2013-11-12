@@ -29,32 +29,32 @@ public interface FlagEncoder
     /**
      * @return the speed in km/h
      */
-    int getSpeed( int flags );
+    int getSpeed( long flags );
 
     /**
      * Sets the speed in km/h.
      * <p>
      * @return modified setProperties
      */
-    int setSpeed( int flags, int speed );
+    long setSpeed( long flags, int speed );
 
     /**
      * Sets the access of the edge.
      * <p>
-     * @return modified setProperties
+     * @return modified flags
      */
-    int setAccess( int flags, boolean forward, boolean backward );
+    long setAccess( long flags, boolean forward, boolean backward );
 
     /**
      * Sets speed and access properties.
      * <p>
-     * @return created setProperties
+     * @return created flags
      */
-    int setProperties( int speed, boolean forward, boolean backward );
+    long setProperties( int speed, boolean forward, boolean backward );
 
-    boolean isForward( int flags );
+    boolean isForward( long flags );
 
-    boolean isBackward( int flags );
+    boolean isBackward( long flags );
 
     /**
      * @return the maximum speed in km/h
@@ -62,13 +62,13 @@ public interface FlagEncoder
     int getMaxSpeed();
 
     /**
-     * Returns true if setProperties1 can be overwritten by setProperties2 without restricting or changing the
- directions of setProperties1.
+     * Returns true if flags1 can be overwritten by flags2 without restricting or changing the
+     * directions of flags1.
      */
     //        \  flags2:
     // flags1  \ -> | <- | <->
     // ->         t | f  | t
     // <-         f | t  | t
     // <->        f | f  | t
-    boolean canBeOverwritten( int flags1, int flags2 );
+    boolean canBeOverwritten( long flags1, long flags2 );
 }

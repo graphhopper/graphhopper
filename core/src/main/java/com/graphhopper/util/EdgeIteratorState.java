@@ -74,9 +74,9 @@ public interface EdgeIteratorState
 
     EdgeIteratorState setDistance( double dist );
 
-    int getFlags();
+    long getFlags();
 
-    EdgeIteratorState setFlags( int flags );
+    EdgeIteratorState setFlags( long flags );
 
     String getName();
 

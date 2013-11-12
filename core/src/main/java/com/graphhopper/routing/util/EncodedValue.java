@@ -26,12 +26,12 @@ package com.graphhopper.routing.util;
 public class EncodedValue
 {
     private String name;
-    private int shift;
-    private int mask;
-    private int factor;
-    private int maxValue;
-    private int defaultValue;
-    private int defaultMax;
+    private long shift;
+    private long mask;
+    private long factor;
+    private long maxValue;
+    private long defaultValue;
+    private long defaultMax;
 
     /**
      * Define a bit-encoded value
@@ -60,7 +60,7 @@ public class EncodedValue
         setValue(0, defaultMax);
     }
 
-    public int setValue( int flags, int value )
+    public long setValue( long flags, long value )
     {
         if (value > maxValue)
         {
@@ -78,7 +78,7 @@ public class EncodedValue
         return flags | value;
     }
 
-    public int getValue( int flags )
+    public long getValue( long flags )
     {
         // find value
         flags &= mask;
@@ -86,12 +86,12 @@ public class EncodedValue
         return flags * factor;
     }
 
-    public int setDefaultValue( int flags )
+    public long setDefaultValue( long flags )
     {
         return setValue(flags, defaultValue);
     }
 
-    public int getDefaultMaxValue()
+    public long getDefaultMaxValue()
     {
         return defaultMax;
     }

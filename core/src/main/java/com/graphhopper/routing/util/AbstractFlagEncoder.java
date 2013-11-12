@@ -20,9 +20,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
-import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.Helper;
 
 import java.util.HashSet;
@@ -31,7 +29,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
- * EncodingManager to be usable.
+ * EncodingManager to be usable. Although the flag is of type long only the int-portition is
+ * currently stored.
  * <p/>
  * @author Peter Karich
  * @author Nop
@@ -40,13 +39,13 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractFlagEncoder implements FlagEncoder
 {
     private final static Logger logger = LoggerFactory.getLogger(AbstractFlagEncoder.class);
-    protected int forwardBit = 0;
-    protected int backwardBit = 0;
-    protected int directionBitMask = 0;
+    protected long forwardBit = 0;
+    protected long backwardBit = 0;
+    protected long directionBitMask = 0;
     protected EncodedValue speedEncoder;
     // bit to signal that way is accepted
-    protected int acceptBit = 0;
-    protected int ferryBit = 0;
+    protected long acceptBit = 0;
+    protected long ferryBit = 0;
     // restriction definitions
     protected String[] restrictions;
     protected HashSet<String> restrictedValues = new HashSet<String>(5);
@@ -147,14 +146,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
      * @param way
      * @return the assigned bit of the mode of travel if it is accepted or 0 for not accepted
      */
-    public abstract int isAllowed( OSMWay way );
+    public abstract long isAllowed( OSMWay way );
 
     /**
      * Analyze properties of a way and create the routing flags
      * <p/>
      * @param allowed
      */
-    public abstract int handleWayTags( int allowed, OSMWay way );
+    public abstract long handleWayTags( long allowed, OSMWay way );
 
     /**
      * Parse tags on nodes, looking for barriers.
@@ -162,7 +161,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
      * @param node
      * @return
      */
-    public abstract int analyzeNodeTags( OSMNode node );
+    public abstract long analyzeNodeTags( OSMNode node );
 
     public boolean hasAccepted( int acceptedValue )
     {
@@ -170,67 +169,66 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     }
 
     @Override
-    public boolean isForward( int flags )
+    public boolean isForward( long flags )
     {
         return (flags & forwardBit) != 0;
     }
 
     @Override
-    public boolean isBackward( int flags )
+    public boolean isBackward( long flags )
     {
         return (flags & backwardBit) != 0;
     }
 
-    public boolean isBoth( int flags )
+    public boolean isBoth( long flags )
     {
         return (flags & directionBitMask) == directionBitMask;
     }
 
     @Override
-    public boolean canBeOverwritten( int flags1, int flags2 )
+    public boolean canBeOverwritten( long flags1, long flags2 )
     {
         return isBoth(flags2) || (flags1 & directionBitMask) == (flags2 & directionBitMask);
     }
 
-    public int swapDirection( int flags )
+    public long swapDirection( long flags )
     {
-        int dir = flags & directionBitMask;
+        long dir = flags & directionBitMask;
         if (dir == directionBitMask || dir == 0)
-        {
             return flags;
-        }
+
         return flags ^ directionBitMask;
     }
 
     @Override
-    public int getSpeed( int flags )
+    public int getSpeed( long flags )
     {
-        return speedEncoder.getValue(flags);
+        return (int) speedEncoder.getValue(flags);
     }
 
     /**
      * Sets default flags with specified access.
      */
-    public int flagsDefault( boolean forward, boolean backward )
+    public long flagsDefault( boolean forward, boolean backward )
     {
-        int flags = speedEncoder.setDefaultValue(0);
+        long flags = speedEncoder.setDefaultValue(0);
         return setAccess(flags, forward, backward);
     }
 
     @Override
-    public int setAccess( int flags, boolean forward, boolean backward )
+    public long setAccess( long flags, boolean forward, boolean backward )
     {
         return flags | (forward ? forwardBit : 0) | (backward ? backwardBit : 0);
     }
 
     @Override
-    public int setSpeed( int flags, int speed )
+    public long setSpeed( long flags, int speed )
     {
         return speedEncoder.setValue(flags, speed);
     }
 
     @Override
-    public int setProperties( int speed, boolean forward, boolean backward )
+    public long setProperties( int speed, boolean forward, boolean backward )
     {
         return setAccess(setSpeed(0, speed), forward, backward);
     }
@@ -238,14 +236,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     @Override
     public int getMaxSpeed()
     {
-        return speedEncoder.getDefaultMaxValue();
+        return (int) speedEncoder.getDefaultMaxValue();
     }
 
     @Override
     public int hashCode()
     {
         int hash = 7;
-        hash = 61 * hash + this.directionBitMask;
+        hash = 61 * hash + (int) this.directionBitMask;
         hash = 61 * hash + this.toString().hashCode();
         return hash;
     }
@@ -254,17 +252,15 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     public boolean equals( Object obj )
     {
         if (obj == null)
-        {
             return false;
-        }
+
         // only rely on the string
 //        if (getClass() != obj.getClass())
 //            return false;
         final AbstractFlagEncoder other = (AbstractFlagEncoder) obj;
         if (this.directionBitMask != other.directionBitMask)
-        {
             return false;
-        }
+
         return this.toString().equals(other.toString());
     }
 
@@ -338,14 +334,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
         if (durationInHours == 0)
         {
             // unknown speed -> put penalty on ferry transport
-            return speedEncoder.setValue(0, unknownSpeed);
+            return (int) speedEncoder.setValue(0, unknownSpeed);
         } else if (durationInHours > 1)
         {
             // lengthy ferries should be faster than short trip ferry
-            return speedEncoder.setValue(0, longTripsSpeed);
+            return (int) speedEncoder.setValue(0, longTripsSpeed);
         } else
         {
-            return speedEncoder.setValue(0, shortTripsSpeed);
+            return (int) speedEncoder.setValue(0, shortTripsSpeed);
         }
     }
 }

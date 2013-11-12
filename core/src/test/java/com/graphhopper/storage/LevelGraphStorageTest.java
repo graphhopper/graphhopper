@@ -123,8 +123,8 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
     {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
         // only remove edges
-        int flags = carEncoder.setProperties(60, true, true);
-        int flags2 = carEncoder.setProperties(60, true, false);
+        long flags = carEncoder.setProperties(60, true, true);
+        long flags2 = carEncoder.setProperties(60, true, false);
         g.edge(4, 1, 30, true);
         EdgeSkipExplorer tmp = g.shortcut(1, 2);
         tmp.setDistance(10).setFlags(flags);

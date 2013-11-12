@@ -247,7 +247,7 @@ public class EncodingManager
     /**
      * Swap direction for all encoders
      */
-    public int swapDirection( int flags )
+    public long swapDirection( long flags )
     {
         for (int i = 0; i < encoderCount; i++)
         {

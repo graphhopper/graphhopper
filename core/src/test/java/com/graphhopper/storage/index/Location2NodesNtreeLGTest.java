@@ -82,7 +82,7 @@ public class Location2NodesNtreeLGTest extends LocationIndexTreeTest
 
         // create shortcuts
         FlagEncoder car = encodingManager.getEncoder("CAR");
-        int flags = car.setProperties(60, true, true);
+        long flags = car.setProperties(60, true, true);
         EdgeSkipExplorer iter5 = g.shortcut(0, 2);
         iter5.setDistance(20).setFlags(flags);
         iter5.setSkippedEdges(iter1.getEdge(), iter2.getEdge());

@@ -518,13 +518,13 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
-        public int getFlags()
+        public long getFlags()
         {
             return edges.getInt(edgePointer + E_FLAGS);
         }
 
         @Override
-        public EdgeIteratorState setFlags( int flags )
+        public EdgeIteratorState setFlags( long flags )
         {
             throw new UnsupportedOperationException("Not supported yet.");
         }
@@ -632,7 +632,7 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
-        public int getFlags()
+        public long getFlags()
         {
             int flags = edges.getInt(edgePointer + E_FLAGS);
             if (switchFlags)
@@ -744,9 +744,9 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
-        public int getFlags()
+        public long getFlags()
         {
-            int flags = edges.getInt(edgePointer + E_FLAGS);
+            long flags = edges.getInt(edgePointer + E_FLAGS);
 
             // switch direction flags if necessary
             if (baseNode > node)
@@ -756,7 +756,7 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
-        public final EdgeIteratorState setFlags( int fl )
+        public final EdgeIteratorState setFlags( long fl )
         {
             int nep = edges.getInt(getLinkPosInEdgeArea(baseNode, node, edgePointer));
             int neop = edges.getInt(getLinkPosInEdgeArea(node, baseNode, edgePointer));
@@ -825,11 +825,11 @@ public class GraphHopperStorage implements GraphStorage
         }
     }
 
-    private void setFlags( long edgePointer, int nodeA, int nodeB, int flags )
+    private void setFlags( long edgePointer, int nodeA, int nodeB, long flags )
     {
         if (nodeA > nodeB)
             flags = encodingManager.swapDirection(flags);
-        edges.setInt(edgePointer + E_FLAGS, flags);
+        edges.setInt(edgePointer + E_FLAGS, (int) flags);
     }
 
     private void setWayGeometry( PointList pillarNodes, long edgePointer, boolean reverse )

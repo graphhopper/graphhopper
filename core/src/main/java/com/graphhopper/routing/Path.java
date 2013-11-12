@@ -210,7 +210,7 @@ public class Path
     /**
      * Calculates the time in seconds for the specified distance in meter and speed (via setProperties)
      */
-    protected long calcTime( double distance, int flags )
+    protected long calcTime( double distance, long flags )
     {
         return (long) (distance * 3.6 / encoder.getSpeed(flags));
     }

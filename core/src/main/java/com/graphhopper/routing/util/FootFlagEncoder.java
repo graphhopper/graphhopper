@@ -91,7 +91,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
      * @param way
      */
     @Override
-    public int isAllowed( OSMWay way )
+    public long isAllowed( OSMWay way )
     {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null)
@@ -145,12 +145,12 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public int handleWayTags( int allowed, OSMWay way )
+    public long handleWayTags( long allowed, OSMWay way )
     {
         if ((allowed & acceptBit) == 0)
             return 0;
 
-        int encoded;
+        long encoded;
         if ((allowed & ferryBit) == 0)
         {
             String sacScale = way.getTag("sac_scale");
@@ -183,7 +183,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public int analyzeNodeTags( OSMNode node )
+    public long analyzeNodeTags( OSMNode node )
     {
 
         // movable barriers block if they are not marked as passable

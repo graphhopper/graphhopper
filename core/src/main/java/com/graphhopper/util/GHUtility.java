@@ -355,7 +355,7 @@ public class GHUtility
         }
 
         @Override
-        public EdgeIteratorState setFlags( int flags )
+        public EdgeIteratorState setFlags( long flags )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -391,7 +391,7 @@ public class GHUtility
         }
 
         @Override
-        public int getFlags()
+        public long getFlags()
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }

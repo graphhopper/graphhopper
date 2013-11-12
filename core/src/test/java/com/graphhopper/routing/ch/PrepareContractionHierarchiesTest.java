@@ -296,7 +296,7 @@ public class PrepareContractionHierarchiesTest
         EdgeSkipExplorer tmp = g.shortcut(1, 4);
         tmp.setDistance(2).setFlags(prepare.getScBothDir());
         tmp.setSkippedEdges(iter1_1.getEdge(), iter1_2.getEdge());
-        int f = prepare.getScOneDir();
+        long f = prepare.getScOneDir();
         tmp = g.shortcut(4, 6);
         tmp.setDistance(2).setFlags(f);
         tmp.setSkippedEdges(iter2_1.getEdge(), iter2_2.getEdge());
@@ -312,7 +312,7 @@ public class PrepareContractionHierarchiesTest
 
     void initUnpackingGraph( LevelGraphStorage g, Weighting w )
     {
-        final int flags = carEncoder.setProperties(30, true, false);
+        final long flags = carEncoder.setProperties(30, true, false);
         EdgeIterator edge = new GHUtility.DisabledEdgeIterator()
         {
 
@@ -323,7 +323,7 @@ public class PrepareContractionHierarchiesTest
             }
 
             @Override
-            public int getFlags()
+            public long getFlags()
             {
                 return flags;
             }
@@ -336,7 +336,7 @@ public class PrepareContractionHierarchiesTest
         EdgeIteratorState iter4 = g.edge(3, 4).setDistance(w.calcWeight(edge)).setFlags(flags);
         EdgeIteratorState iter5 = g.edge(4, 5).setDistance(w.calcWeight(edge)).setFlags(flags);
         EdgeIteratorState iter6 = g.edge(5, 6).setDistance(w.calcWeight(edge)).setFlags(flags);
-        int oneDirFlags = new PrepareContractionHierarchies(carEncoder, w).getScOneDir();
+        long oneDirFlags = new PrepareContractionHierarchies(carEncoder, w).getScOneDir();
 
         int tmp = iter1.getEdge();
         iter1 = g.shortcut(0, 2);

@@ -37,7 +37,7 @@ public class BikeFlagEncoderTest
     @Test
     public void testGetSpeed()
     {
-        int result = encoder.setProperties(10, true, true);
+        long result = encoder.setProperties(10, true, true);
         assertEquals(10, encoder.getSpeed(result));
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "primary");

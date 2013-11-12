@@ -23,7 +23,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.GHUtility;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Test;
@@ -41,18 +40,18 @@ public class FootFlagEncoderTest
     @Test
     public void testGetSpeed()
     {
-        int fl = footEncoder.setProperties(10, true, true);
+        long fl = footEncoder.setProperties(10, true, true);
         assertEquals(10, footEncoder.getSpeed(fl));
     }
 
     @Test
     public void testBasics()
     {
-        int fl = footEncoder.flagsDefault(true, true);
+        long fl = footEncoder.flagsDefault(true, true);
         assertEquals(FootFlagEncoder.MEAN, footEncoder.getSpeed(fl));
 
-        int fl1 = footEncoder.flagsDefault(true, false);
-        int fl2 = footEncoder.swapDirection(fl1);
+        long fl1 = footEncoder.flagsDefault(true, false);
+        long fl2 = footEncoder.swapDirection(fl1);
         assertEquals(footEncoder.getSpeed(fl2), footEncoder.getSpeed(fl1));
     }
 
@@ -60,7 +59,7 @@ public class FootFlagEncoderTest
     public void testCombined()
     {
         FlagEncoder carEncoder = encodingManager.getEncoder("CAR");
-        int fl = footEncoder.setProperties(10, true, true) | carEncoder.setProperties(100, true, false);
+        long fl = footEncoder.setProperties(10, true, true) | carEncoder.setProperties(100, true, false);
         assertEquals(10, footEncoder.getSpeed(fl));
         assertTrue(footEncoder.isForward(fl));
         assertTrue(footEncoder.isBackward(fl));
@@ -156,17 +155,17 @@ public class FootFlagEncoderTest
         OSMWay way = new OSMWay(1, map);
 
         map.put("highway", "motorway");
-        int setProperties = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
-        assertEquals(0, setProperties);
+        long flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        assertEquals(0, flags);
 
         map.put("sidewalk", "yes");
-        setProperties = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
-        assertEquals(5, footEncoder.getSpeed(setProperties));
+        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        assertEquals(5, footEncoder.getSpeed(flags));
 
         map.clear();
         map.put("highway", "track");
-        setProperties = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
-        assertEquals(5, footEncoder.getSpeed(setProperties));
+        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        assertEquals(5, footEncoder.getSpeed(flags));
     }
 
     @Test
@@ -176,12 +175,12 @@ public class FootFlagEncoderTest
         OSMWay way = new OSMWay(1, map);
         map.put("highway", "track");
         map.put("sac_scale", "hiking");
-        int setProperties = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
-        assertEquals(FootFlagEncoder.MEAN, footEncoder.getSpeed(setProperties));
+        long flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        assertEquals(FootFlagEncoder.MEAN, footEncoder.getSpeed(flags));
 
         map.put("highway", "track");
         map.put("sac_scale", "mountain_hiking");
-        setProperties = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
-        assertEquals(FootFlagEncoder.SLOW, footEncoder.getSpeed(setProperties));
+        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        assertEquals(FootFlagEncoder.SLOW, footEncoder.getSpeed(flags));
     }
 }

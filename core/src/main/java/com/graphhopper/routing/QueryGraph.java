@@ -174,7 +174,7 @@ public class QueryGraph implements Graph
 
                 GHPoint prevPoint = fullPL.toGHPoint(0);
                 int adjNode = closestEdge.getAdjNode();
-                int reverseFlags = 0;
+                long reverseFlags = 0;
                 // #111 avoid this
                 if (reverseState != null)
                     reverseFlags = reverseState.getFlags();
@@ -224,7 +224,7 @@ public class QueryGraph implements Graph
 
     private void createEdges( GHPoint prevSnapped, int prevWayIndex, GHPoint currSnapped, int wayIndex,
             boolean onEdge, PointList fullPL, EdgeIteratorState closestEdge,
-            int prevNodeId, int nodeId, int swappedFlags )
+            int prevNodeId, int nodeId, long swappedFlags )
     {
         int max = wayIndex + 1;
         PointList basePoints = new PointList(max - prevWayIndex + 1);
@@ -559,13 +559,13 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public int getFlags()
+        public long getFlags()
         {
             return edges.get(current).getFlags();
         }
 
         @Override
-        public EdgeIteratorState setFlags( int flags )
+        public EdgeIteratorState setFlags( long flags )
         {
             return edges.get(current).setFlags(flags);
         }
@@ -597,13 +597,13 @@ public class QueryGraph implements Graph
         private final PointList pointList;
         private final int edgeId;
         private double distance;
-        private int flags;
+        private long flags;
         private String name;
         private final int baseNode;
         private final int adjNode;
 
         public VirtualEdgeIState( int edgeId, int baseNode, int adjNode,
-                double distance, int flags, String name, PointList pointList )
+                double distance, long flags, String name, PointList pointList )
         {
             this.edgeId = edgeId;
             this.baseNode = baseNode;
@@ -675,13 +675,13 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public int getFlags()
+        public long getFlags()
         {
             return flags;
         }
 
         @Override
-        public EdgeIteratorState setFlags( int flags )
+        public EdgeIteratorState setFlags( long flags )
         {
             this.flags = flags;
             return this;

@@ -89,8 +89,8 @@ public class CarFlagEncoderTest
         OSMWay way = new OSMWay(1, map);
         map.put("highway", "trunk");
         map.put("maxspeed", "500");
-        int allowed = encoder.isAllowed(way);
-        int encoded = encoder.handleWayTags(allowed, way);
+        long allowed = encoder.isAllowed(way);
+        long encoded = encoder.handleWayTags(allowed, way);
         assertEquals(100, encoder.getSpeed(encoded));
     }
 
@@ -102,8 +102,8 @@ public class CarFlagEncoderTest
         OSMWay way = new OSMWay(1, map);
         map.put("highway", "trunk");
         map.put("maxspeed", "110");
-        int allowed = encoder.isAllowed(way);
-        int encoded = encoder.handleWayTags(allowed, way);
+        long allowed = encoder.isAllowed(way);
+        long encoded = encoder.handleWayTags(allowed, way);
         assertEquals(95, encoder.getSpeed(encoded));
 
         map.clear();
@@ -152,9 +152,9 @@ public class CarFlagEncoderTest
     @Test
     public void testOverwrite()
     {
-        int forward = encoder.setProperties(10, true, false);
-        int backward = encoder.swapDirection(forward);
-        int both = encoder.setProperties(20, true, true);
+        long forward = encoder.setProperties(10, true, false);
+        long backward = encoder.swapDirection(forward);
+        long both = encoder.setProperties(20, true, true);
         assertTrue(encoder.canBeOverwritten(forward, forward));
         assertTrue(encoder.canBeOverwritten(backward, backward));
         assertTrue(encoder.canBeOverwritten(forward, both));
@@ -170,7 +170,7 @@ public class CarFlagEncoderTest
     @Test
     public void testSwapDir()
     {
-        int swappedFlags = encoder.swapDirection(encoder.flagsDefault(true, true));
+        long swappedFlags = encoder.swapDirection(encoder.flagsDefault(true, true));
         assertTrue(encoder.isForward(swappedFlags));
         assertTrue(encoder.isBackward(swappedFlags));
 
