@@ -21,11 +21,9 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.storage.AbstractGraphStorageTester.*;
 import com.graphhopper.storage.EdgeEntry;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -50,7 +48,7 @@ public class PathTest
     {
         FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
         Path p = new Path(null, encoder);
-        assertEquals(60 * 60, p.calcTime(100000, encoder.flags(100, true)));
+        assertEquals(60 * 60, p.calcTime(100000, encoder.setProperties(100, true, true)));
     }
 
     @Test

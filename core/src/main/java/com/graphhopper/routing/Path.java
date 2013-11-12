@@ -208,7 +208,7 @@ public class Path
     }
 
     /**
-     * Calculates the time in seconds for the specified distance in meter and speed (via flags)
+     * Calculates the time in seconds for the specified distance in meter and speed (via setProperties)
      */
     protected long calcTime( double distance, int flags )
     {

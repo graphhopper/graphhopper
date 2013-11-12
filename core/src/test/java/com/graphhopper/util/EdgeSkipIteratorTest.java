@@ -45,17 +45,17 @@ public class EdgeSkipIteratorTest
     public void testUpdateFlags()
     {
         LevelGraph g = createGraph();
-        g.edge(0, 1, 12, carFlagsEncoder.flags(10, true));
-        g.edge(0, 2, 13, carFlagsEncoder.flags(20, true));
+        g.edge(0, 1, 12, carFlagsEncoder.setProperties(10, true, true));
+        g.edge(0, 2, 13, carFlagsEncoder.setProperties(20, true, true));
 
         assertEquals(2, GHUtility.count(g.getAllEdges()));
         assertEquals(1, GHUtility.count(g.createEdgeExplorer(carOutFilter).setBaseNode(1)));
         EdgeIteratorState iter = GHUtility.getEdge(g, 0, 1);
         assertEquals(1, iter.getAdjNode());
-        assertEquals(carFlagsEncoder.flags(10, true), iter.getFlags());
+        assertEquals(carFlagsEncoder.setProperties(10, true, true), iter.getFlags());
 
-        // update flags
-        iter.setFlags(carFlagsEncoder.flags(20, false));
+        // update setProperties
+        iter.setFlags(carFlagsEncoder.setProperties(20, true, false));
         assertEquals(12, iter.getDistance(), 1e-4);
 
         // update distance
@@ -63,7 +63,7 @@ public class EdgeSkipIteratorTest
         assertEquals(10, iter.getDistance(), 1e-4);
         assertEquals(0, GHUtility.count(g.createEdgeExplorer(carOutFilter).setBaseNode(1)));
         iter = GHUtility.getEdge(g, 0, 1);
-        assertEquals(carFlagsEncoder.flags(20, false), iter.getFlags());
+        assertEquals(carFlagsEncoder.setProperties(20, true, false), iter.getFlags());
         assertEquals(10, iter.getDistance(), 1e-4);
         assertEquals(1, GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(1)).size());
         assertEquals(0, GHUtility.getNeighbors(g.createEdgeExplorer(carOutFilter).setBaseNode(1)).size());

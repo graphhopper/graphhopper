@@ -93,8 +93,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     public PrepareContractionHierarchies( FlagEncoder encoder, Weighting weighting )
     {
         prepareEncoder = encoder;
-        scOneDir = encoder.flags(0, false);
-        scBothDir = encoder.flags(0, true);
+        scOneDir = encoder.setAccess(0, true, false);
+        scBothDir = encoder.setAccess(0, true, true);
         prepareWeighting = weighting;
         originalEdges = new GHDirectory("", DAType.RAM_INT).find("originalEdges");
         originalEdges.create(1000);
@@ -206,7 +206,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     boolean prepareEdges()
     {
-        // In CH the flags (speed) are ignored as calculating the new flags for a shortcut is often not possible.
+        // In CH the setProperties (speed) are ignored as calculating the new setProperties for a shortcut is often not possible.
         // Also several shortcuts would be necessary with the different modes (e.g. fastest and shortest)
         // So calculate the weight and store this as distance, then use only distance instead of calcWeight
         EdgeIterator iter = g.getAllEdges();
@@ -460,7 +460,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         {
             // FOUND shortcut 
             // but be sure that it is the only shortcut in the collection 
-            // and also in the graph for u->w. If existing AND identical weight => update flags.
+            // and also in the graph for u->w. If existing AND identical weight => update setProperties.
             // Hint: shortcuts are always one-way due to distinct level of every node but we don't
             // know yet the levels so we need to determine the correct direction or if both directions
             // minor improvement: if (shortcuts.containsKey(sc) 

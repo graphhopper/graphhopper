@@ -31,8 +31,8 @@ import static org.junit.Assert.*;
  */
 public class CarFlagEncoderTest
 {
-    private EncodingManager em = new EncodingManager("CAR,BIKE,FOOT");
-    private CarFlagEncoder encoder = (CarFlagEncoder) em.getEncoder("CAR");
+    private final EncodingManager em = new EncodingManager("CAR,BIKE,FOOT");
+    private final CarFlagEncoder encoder = (CarFlagEncoder) em.getEncoder("CAR");
 
     @Test
     public void testAccess()
@@ -121,21 +121,21 @@ public class CarFlagEncoderTest
     @Test
     public void testBasics()
     {
-        assertTrue(encoder.isForward(encoder.flagsDefault(true)));
-        assertTrue(encoder.isBackward(encoder.flagsDefault(true)));
-        assertTrue(encoder.isBoth(encoder.flagsDefault(true)));
+        assertTrue(encoder.isForward(encoder.flagsDefault(true, true)));
+        assertTrue(encoder.isBackward(encoder.flagsDefault(true, true)));
+        assertTrue(encoder.isBoth(encoder.flagsDefault(true, true)));
 
-        assertTrue(encoder.isForward(encoder.flagsDefault(false)));
-        assertFalse(encoder.isBackward(encoder.flagsDefault(false)));
-        assertFalse(encoder.isBoth(encoder.flagsDefault(false)));
+        assertTrue(encoder.isForward(encoder.flagsDefault(true, false)));
+        assertFalse(encoder.isBackward(encoder.flagsDefault(true, false)));
+        assertFalse(encoder.isBoth(encoder.flagsDefault(true, false)));
     }
 
     @Test
     public void testOverwrite()
     {
-        int forward = encoder.flags(10, false);
+        int forward = encoder.setProperties(10, true, false);
         int backward = encoder.swapDirection(forward);
-        int both = encoder.flags(20, true);
+        int both = encoder.setProperties(20, true, true);
         assertTrue(encoder.canBeOverwritten(forward, forward));
         assertTrue(encoder.canBeOverwritten(backward, backward));
         assertTrue(encoder.canBeOverwritten(forward, both));
@@ -151,11 +151,11 @@ public class CarFlagEncoderTest
     @Test
     public void testSwapDir()
     {
-        int swappedFlags = encoder.swapDirection(encoder.flagsDefault(true));
+        int swappedFlags = encoder.swapDirection(encoder.flagsDefault(true, true));
         assertTrue(encoder.isForward(swappedFlags));
         assertTrue(encoder.isBackward(swappedFlags));
 
-        swappedFlags = encoder.swapDirection(encoder.flagsDefault(false));
+        swappedFlags = encoder.swapDirection(encoder.flagsDefault(true, false));
 
         assertFalse(encoder.isForward(swappedFlags));
         assertTrue(encoder.isBackward(swappedFlags));

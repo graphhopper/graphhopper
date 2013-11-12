@@ -655,16 +655,16 @@ public abstract class AbstractGraphStorageTester
     public void testFlags()
     {
         graph = createGraph();
-        graph.edge(0, 1, 10, carEncoder.flags(120, true));
-        graph.edge(2, 3, 10, carEncoder.flags(10, false));
+        graph.edge(0, 1, 10, carEncoder.setProperties(120, true, true));
+        graph.edge(2, 3, 10, carEncoder.setProperties(10, true, false));
 
         EdgeIterator iter = carAllExplorer.setBaseNode(0);
         assertTrue(iter.next());
-        assertEquals(carEncoder.flags(120, true), iter.getFlags());
+        assertEquals(carEncoder.setProperties(120, true, true), iter.getFlags());
 
         iter = carAllExplorer.setBaseNode(2);
         assertTrue(iter.next());
-        assertEquals(carEncoder.flags(10, false), iter.getFlags());
+        assertEquals(carEncoder.setProperties(10, true, false), iter.getFlags());
     }
 
     @Test
@@ -777,10 +777,10 @@ public abstract class AbstractGraphStorageTester
     public void testEdgeReturn()
     {
         graph = createGraph();
-        EdgeIteratorState iter = graph.edge(4, 10, 100, carEncoder.flags(10, false));
+        EdgeIteratorState iter = graph.edge(4, 10, 100, carEncoder.setProperties(10, true, false));
         assertEquals(4, iter.getBaseNode());
         assertEquals(10, iter.getAdjNode());
-        iter = graph.edge(14, 10, 100, carEncoder.flags(10, false));
+        iter = graph.edge(14, 10, 100, carEncoder.setProperties(10, true, false));
         assertEquals(14, iter.getBaseNode());
         assertEquals(10, iter.getAdjNode());
     }
@@ -795,11 +795,11 @@ public abstract class AbstractGraphStorageTester
         graph.setNode(10, 0.99, 0.99);
 
         PointList pointList = Helper.createPointList(1, 1, 1, 2, 1, 3);
-        graph.edge(0, 4, 100, carEncoder.flags(10, false)).setWayGeometry(pointList);
+        graph.edge(0, 4, 100, carEncoder.setProperties(10, true, false)).setWayGeometry(pointList);
         pointList = Helper.createPointList(1, 5, 1, 6, 1, 7, 1, 8, 1, 9);
-        graph.edge(4, 10, 100, carEncoder.flags(10, false)).setWayGeometry(pointList);
+        graph.edge(4, 10, 100, carEncoder.setProperties(10, true, false)).setWayGeometry(pointList);
         pointList = Helper.createPointList(1, 13, 1, 12, 1, 11);
-        graph.edge(14, 0, 100, carEncoder.flags(10, false)).setWayGeometry(pointList);
+        graph.edge(14, 0, 100, carEncoder.setProperties(10, true, false)).setWayGeometry(pointList);
 
         EdgeIterator iter = carAllExplorer.setBaseNode(0);
         assertTrue(iter.next());
@@ -838,9 +838,9 @@ public abstract class AbstractGraphStorageTester
     public void testFootMix()
     {
         graph = createGraph();
-        graph.edge(0, 1, 10, footEncoder.flags(10, true));
-        graph.edge(0, 2, 10, carEncoder.flags(10, true));
-        graph.edge(0, 3, 10, footEncoder.flags(10, true) | carEncoder.flags(10, true));
+        graph.edge(0, 1, 10, footEncoder.setProperties(10, true, true));
+        graph.edge(0, 2, 10, carEncoder.setProperties(10, true, true));
+        graph.edge(0, 3, 10, footEncoder.setProperties(10, true, true) | carEncoder.setProperties(10, true, true));
         EdgeExplorer footOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, false, true));
         assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(footOutExplorer.setBaseNode(0)));
         assertEquals(GHUtility.asSet(3, 2), GHUtility.getNeighbors(carOutExplorer.setBaseNode(0)));

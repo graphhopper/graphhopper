@@ -120,17 +120,17 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
 
     @Test
     public void testDisconnectEdge()
-    {        
-        LevelGraphStorage g = (LevelGraphStorage) createGraph();        
+    {
+        LevelGraphStorage g = (LevelGraphStorage) createGraph();
         // only remove edges
-        int flags = carEncoder.flags(60, true);
-        int flags2 = carEncoder.flags(60, false);
+        int flags = carEncoder.setProperties(60, true, true);
+        int flags2 = carEncoder.setProperties(60, true, false);
         g.edge(4, 1, 30, true);
         g.shortcut(1, 2, 10, flags).setSkippedEdges(10, 11);
         g.shortcut(1, 0, 20, flags2).setSkippedEdges(12, 13);
-        g.shortcut(3, 1, 30, flags2).setSkippedEdges(14, 15);        
+        g.shortcut(3, 1, 30, flags2).setSkippedEdges(14, 15);
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(1);
-        iter.next();        
+        iter.next();
         assertEquals(3, iter.getAdjNode());
         assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(3)));
         g.disconnect(g.createEdgeExplorer(), iter);
@@ -144,9 +144,9 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         assertEquals(0, GHUtility.count(carInExplorer.setBaseNode(0)));
 
         iter.next();
-        assertEquals(2, iter.getAdjNode());        
+        assertEquals(2, iter.getAdjNode());
         assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(2)));
         g.disconnect(g.createEdgeExplorer(), iter);
-        assertEquals(0, GHUtility.count(carOutExplorer.setBaseNode(2)));        
+        assertEquals(0, GHUtility.count(carOutExplorer.setBaseNode(2)));
     }
 }

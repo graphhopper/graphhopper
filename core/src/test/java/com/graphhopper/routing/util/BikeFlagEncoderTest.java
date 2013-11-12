@@ -32,12 +32,12 @@ import static org.junit.Assert.*;
  */
 public class BikeFlagEncoderTest
 {
-    private BikeFlagEncoder encoder = (BikeFlagEncoder) new EncodingManager("CAR,BIKE").getEncoder("BIKE");
+    private final BikeFlagEncoder encoder = (BikeFlagEncoder) new EncodingManager("CAR,BIKE").getEncoder("BIKE");
 
     @Test
     public void testGetSpeed()
     {
-        int result = encoder.flags(10, true);
+        int result = encoder.setProperties(10, true, true);
         assertEquals(10, encoder.getSpeed(result));
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "primary");
@@ -87,19 +87,19 @@ public class BikeFlagEncoderTest
         assertFalse(encoder.isAllowed(way) > 0);
         map.put("bicycle", "yes");
         assertTrue(encoder.isAllowed(way) > 0);
-        
+
         map.clear();
         map.put("route", "ferry");
         assertTrue(encoder.isAllowed(way) > 0);
         map.put("bicycle", "no");
         assertFalse(encoder.isAllowed(way) > 0);
-        
+
         map.clear();
         map.put("route", "ferry");
         map.put("foot", "yes");
         assertFalse(encoder.isAllowed(way) > 0);
     }
-    
+
     @Test
     public void testTramStations()
     {
@@ -115,14 +115,14 @@ public class BikeFlagEncoderTest
         map.put("railway", "station");
         // disallow stations
         assertEquals(0, encoder.isAllowed(way));
-        
+
         way = new OSMWay(1, map);
         map.put("highway", "secondary");
         map.put("railway", "station");
         map.put("bicycle", "yes");
         // allow stations if explicitely tagged
         assertNotSame(0, encoder.isAllowed(way));
-        
+
         way = new OSMWay(1, map);
         map.put("highway", "secondary");
         map.put("railway", "station");

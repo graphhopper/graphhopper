@@ -91,26 +91,26 @@ public abstract class AbstractRoutingAlgorithmTester
     // 6----/
     void initDirectedAndDiffSpeed( Graph graph )
     {
-        graph.edge(0, 1, 7000, carEncoder.flags(10, false));
-        graph.edge(0, 4, 5000, carEncoder.flags(20, false));
+        graph.edge(0, 1, 7000, carEncoder.setProperties(10, true, false));
+        graph.edge(0, 4, 5000, carEncoder.setProperties(20, true, false));
 
-        graph.edge(1, 4, 7000, carEncoder.flags(10, true));
-        graph.edge(1, 5, 7000, carEncoder.flags(10, true));
-        graph.edge(1, 2, 20000, carEncoder.flags(10, true));
+        graph.edge(1, 4, 7000, carEncoder.setProperties(10, true, true));
+        graph.edge(1, 5, 7000, carEncoder.setProperties(10, true, true));
+        graph.edge(1, 2, 20000, carEncoder.setProperties(10, true, true));
 
-        graph.edge(5, 2, 5000, carEncoder.flags(10, false));
-        graph.edge(2, 3, 5000, carEncoder.flags(10, false));
+        graph.edge(5, 2, 5000, carEncoder.setProperties(10, true, false));
+        graph.edge(2, 3, 5000, carEncoder.setProperties(10, true, false));
 
-        graph.edge(5, 3, 11000, carEncoder.flags(20, false));
-        graph.edge(3, 7, 7000, carEncoder.flags(10, false));
+        graph.edge(5, 3, 11000, carEncoder.setProperties(20, true, false));
+        graph.edge(3, 7, 7000, carEncoder.setProperties(10, true, false));
 
-        graph.edge(4, 6, 5000, carEncoder.flags(20, false));
-        graph.edge(5, 4, 7000, carEncoder.flags(10, false));
+        graph.edge(4, 6, 5000, carEncoder.setProperties(20, true, false));
+        graph.edge(5, 4, 7000, carEncoder.setProperties(10, true, false));
 
-        graph.edge(5, 6, 7000, carEncoder.flags(10, false));
-        graph.edge(7, 5, 5000, carEncoder.flags(20, false));
+        graph.edge(5, 6, 7000, carEncoder.setProperties(10, true, false));
+        graph.edge(7, 5, 5000, carEncoder.setProperties(20, true, false));
 
-        graph.edge(6, 7, 5000, carEncoder.flags(20, true));
+        graph.edge(6, 7, 5000, carEncoder.setProperties(20, true, true));
     }
 
     @Test
@@ -126,26 +126,26 @@ public abstract class AbstractRoutingAlgorithmTester
 
     void initFootVsCar( Graph graph )
     {
-        graph.edge(0, 1, 7000, footEncoder.flags(5, true) | carEncoder.flags(10, false));
-        graph.edge(0, 4, 5000, footEncoder.flags(5, true) | carEncoder.flags(20, false));
+        graph.edge(0, 1, 7000, footEncoder.setProperties(5, true, true) | carEncoder.setProperties(10, true, false));
+        graph.edge(0, 4, 5000, footEncoder.setProperties(5, true, true) | carEncoder.setProperties(20, true, false));
 
-        graph.edge(1, 4, 7000, carEncoder.flags(10, true));
-        graph.edge(1, 5, 7000, carEncoder.flags(10, true));
-        graph.edge(1, 2, 20000, footEncoder.flags(5, true) | carEncoder.flags(10, true));
+        graph.edge(1, 4, 7000, carEncoder.setProperties(10, true, true));
+        graph.edge(1, 5, 7000, carEncoder.setProperties(10, true, true));
+        graph.edge(1, 2, 20000, footEncoder.setProperties(5, true, true) | carEncoder.setProperties(10, true, true));
 
-        graph.edge(5, 2, 5000, carEncoder.flags(10, false));
-        graph.edge(2, 3, 5000, footEncoder.flags(5, true) | carEncoder.flags(10, false));
+        graph.edge(5, 2, 5000, carEncoder.setProperties(10, true, false));
+        graph.edge(2, 3, 5000, footEncoder.setProperties(5, true, true) | carEncoder.setProperties(10, true, false));
 
-        graph.edge(5, 3, 11000, carEncoder.flags(20, false));
-        graph.edge(3, 7, 7000, footEncoder.flags(5, true) | carEncoder.flags(10, false));
+        graph.edge(5, 3, 11000, carEncoder.setProperties(20, true, false));
+        graph.edge(3, 7, 7000, footEncoder.setProperties(5, true, true) | carEncoder.setProperties(10, true, false));
 
-        graph.edge(4, 6, 5000, carEncoder.flags(20, false));
-        graph.edge(5, 4, 7000, footEncoder.flags(5, true) | carEncoder.flags(10, false));
+        graph.edge(4, 6, 5000, carEncoder.setProperties(20, true, false));
+        graph.edge(5, 4, 7000, footEncoder.setProperties(5, true, true) | carEncoder.setProperties(10, true, false));
 
-        graph.edge(5, 6, 7000, carEncoder.flags(10, false));
-        graph.edge(7, 5, 5000, footEncoder.flags(5, true) | carEncoder.flags(20, false));
+        graph.edge(5, 6, 7000, carEncoder.setProperties(10, true, false));
+        graph.edge(7, 5, 5000, footEncoder.setProperties(5, true, true) | carEncoder.setProperties(20, true, false));
 
-        graph.edge(6, 7, 5000, carEncoder.flags(20, true));
+        graph.edge(6, 7, 5000, carEncoder.setProperties(20, true, true));
     }
 
     // see test-graph.svg !

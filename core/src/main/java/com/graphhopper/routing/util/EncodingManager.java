@@ -234,12 +234,12 @@ public class EncodingManager
         return encoders.get(0);
     }
 
-    public int flagsDefault( boolean bothDirections )
+    public int flagsDefault( boolean forward, boolean backward )
     {
         int flags = 0;
         for (int i = 0; i < encoderCount; i++)
         {
-            flags |= encoders.get(i).flagsDefault(bothDirections);
+            flags |= encoders.get(i).flagsDefault(forward, backward);
         }
         return flags;
     }

@@ -289,9 +289,9 @@ public class GraphHopperStorage implements GraphStorage
     }
 
     @Override
-    public EdgeIterator edge( int a, int b, double distance, boolean bothDirections )
+    public EdgeIterator edge( int a, int b, double distance, boolean bothDirection )
     {
-        return edge(a, b, distance, encodingManager.flagsDefault(bothDirections));
+        return edge(a, b, distance, encodingManager.flagsDefault(true, bothDirection));
     }
 
     @Override

@@ -352,7 +352,7 @@ public abstract class AbstractLocation2IDIndexTester
         CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
         while (iter.next())
         {
-            iter.setFlags(carEncoder.flags(50, true));
+            iter.setFlags(carEncoder.setProperties(50, true, true));
         }
 
         idx = createIndex(g, 32);

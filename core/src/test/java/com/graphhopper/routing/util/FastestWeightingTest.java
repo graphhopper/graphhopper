@@ -34,7 +34,7 @@ public class FastestWeightingTest
     public void testMinWeightHasSameUnitAs_getWeight()
     {
         FastestWeighting instance = new FastestWeighting(encoder);
-        int flags = encoder.flags(encoder.getMaxSpeed(), true);
+        int flags = encoder.setProperties(encoder.getMaxSpeed(), true, true);
         assertEquals(instance.getMinWeight(10), instance.calcWeight(createEdge(10, flags)), 1e-8);
     }
 
@@ -42,7 +42,7 @@ public class FastestWeightingTest
     public void testSpeed0()
     {
         FastestWeighting instance = new FastestWeighting(encoder);
-        assertEquals(1.0 / 0, instance.calcWeight(createEdge(10, encoder.flags(0, true))), 1e-8);
+        assertEquals(1.0 / 0, instance.calcWeight(createEdge(10, encoder.setProperties(0, true, true))), 1e-8);
     }
 
     EdgeIterator createEdge( final double distance, final int flags )

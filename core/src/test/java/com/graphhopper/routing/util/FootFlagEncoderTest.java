@@ -41,17 +41,17 @@ public class FootFlagEncoderTest
     @Test
     public void testGetSpeed()
     {
-        int fl = footEncoder.flags(10, true);
+        int fl = footEncoder.setProperties(10, true, true);
         assertEquals(10, footEncoder.getSpeed(fl));
     }
 
     @Test
     public void testBasics()
     {
-        int fl = footEncoder.flagsDefault(true);
+        int fl = footEncoder.flagsDefault(true, true);
         assertEquals(FootFlagEncoder.MEAN, footEncoder.getSpeed(fl));
 
-        int fl1 = footEncoder.flagsDefault(false);
+        int fl1 = footEncoder.flagsDefault(true, false);
         int fl2 = footEncoder.swapDirection(fl1);
         assertEquals(footEncoder.getSpeed(fl2), footEncoder.getSpeed(fl1));
     }
@@ -60,7 +60,7 @@ public class FootFlagEncoderTest
     public void testCombined()
     {
         FlagEncoder carEncoder = encodingManager.getEncoder("CAR");
-        int fl = footEncoder.flags(10, true) | carEncoder.flags(100, false);
+        int fl = footEncoder.setProperties(10, true, true) | carEncoder.setProperties(100, true, false);
         assertEquals(10, footEncoder.getSpeed(fl));
         assertTrue(footEncoder.isForward(fl));
         assertTrue(footEncoder.isBackward(fl));
@@ -69,16 +69,16 @@ public class FootFlagEncoderTest
         assertTrue(carEncoder.isForward(fl));
         assertFalse(carEncoder.isBackward(fl));
 
-        assertEquals(0, carEncoder.getSpeed(footEncoder.flags(10, true)));
+        assertEquals(0, carEncoder.getSpeed(footEncoder.setProperties(10, true, true)));
     }
 
     @Test
     public void testGraph()
     {
         Graph g = new GraphBuilder(encodingManager).create();
-        g.edge(0, 1, 10, footEncoder.flags(10, true));
-        g.edge(0, 2, 10, footEncoder.flags(5, true));
-        g.edge(1, 3, 10, footEncoder.flags(10, true));
+        g.edge(0, 1, 10, footEncoder.setProperties(10, true, true));
+        g.edge(0, 2, 10, footEncoder.setProperties(5, true, true));
+        g.edge(1, 3, 10, footEncoder.setProperties(10, true, true));
         EdgeExplorer out = g.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, false, true));
         assertEquals(GHUtility.asSet(1, 2), GHUtility.getNeighbors(out.setBaseNode(0)));
         assertEquals(GHUtility.asSet(0, 3), GHUtility.getNeighbors(out.setBaseNode(1)));
@@ -156,17 +156,17 @@ public class FootFlagEncoderTest
         OSMWay way = new OSMWay(1, map);
 
         map.put("highway", "motorway");
-        int flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
-        assertEquals(0, flags);
+        int setProperties = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        assertEquals(0, setProperties);
 
         map.put("sidewalk", "yes");
-        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
-        assertEquals(5, footEncoder.getSpeed(flags));
+        setProperties = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        assertEquals(5, footEncoder.getSpeed(setProperties));
 
         map.clear();
         map.put("highway", "track");
-        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
-        assertEquals(5, footEncoder.getSpeed(flags));
+        setProperties = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        assertEquals(5, footEncoder.getSpeed(setProperties));
     }
 
     @Test
@@ -176,12 +176,12 @@ public class FootFlagEncoderTest
         OSMWay way = new OSMWay(1, map);
         map.put("highway", "track");
         map.put("sac_scale", "hiking");
-        int flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
-        assertEquals(FootFlagEncoder.MEAN, footEncoder.getSpeed(flags));
+        int setProperties = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        assertEquals(FootFlagEncoder.MEAN, footEncoder.getSpeed(setProperties));
 
         map.put("highway", "track");
         map.put("sac_scale", "mountain_hiking");
-        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
-        assertEquals(FootFlagEncoder.SLOW, footEncoder.getSpeed(flags));
+        setProperties = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        assertEquals(FootFlagEncoder.SLOW, footEncoder.getSpeed(setProperties));
     }
 }

@@ -27,14 +27,30 @@ package com.graphhopper.routing.util;
 public interface FlagEncoder
 {
     /**
-     * @deprecated @param speed the speed in km/h
-     */
-    int flags( int speed, boolean bothDir );
-
-    /**
      * @return the speed in km/h
      */
     int getSpeed( int flags );
+
+    /**
+     * Sets the speed in km/h.
+     * <p>
+     * @return modified setProperties
+     */
+    int setSpeed( int flags, int speed );
+
+    /**
+     * Sets the access of the edge.
+     * <p>
+     * @return modified setProperties
+     */
+    int setAccess( int flags, boolean forward, boolean backward );
+
+    /**
+     * Sets speed and access properties.
+     * <p>
+     * @return created setProperties
+     */
+    int setProperties( int speed, boolean forward, boolean backward );
 
     boolean isForward( int flags );
 
@@ -46,8 +62,8 @@ public interface FlagEncoder
     int getMaxSpeed();
 
     /**
-     * Returns true if flags1 can be overwritten by flags2 without restricting or changing the
-     * directions of flags1.
+     * Returns true if setProperties1 can be overwritten by setProperties2 without restricting or changing the
+ directions of setProperties1.
      */
     //        \  flags2:
     // flags1  \ -> | <- | <->

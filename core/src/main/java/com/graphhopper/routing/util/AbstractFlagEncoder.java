@@ -55,7 +55,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     protected HashSet<String> acceptedRailways = new HashSet<String>(5);
     protected HashSet<String> absoluteBarriers = new HashSet<String>(5);
     protected HashSet<String> potentialBarriers = new HashSet<String>(5);
-    private DistanceCalc calc = new DistancePlaneProjection();
 
     public AbstractFlagEncoder()
     {
@@ -210,25 +209,30 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     }
 
     /**
-     * @param bothDirections
-     * @return
+     * Sets default flags with specified access.
      */
-    public int flagsDefault( boolean bothDirections )
+    public int flagsDefault( boolean forward, boolean backward )
     {
         int flags = speedEncoder.setDefaultValue(0);
-        return flags | (bothDirections ? directionBitMask : forwardBit);
+        return setAccess(flags, forward, backward);
     }
 
-    /**
-     * @deprecated @param speed the speed in km/h
-     * @param bothDirections
-     * @return
-     */
     @Override
-    public int flags( int speed, boolean bothDirections )
+    public int setAccess( int flags, boolean forward, boolean backward )
     {
-        int flags = speedEncoder.setValue(0, speed);
-        return flags | (bothDirections ? directionBitMask : forwardBit);
+        return flags | (forward ? forwardBit : 0) | (backward ? backwardBit : 0);
+    }
+
+    @Override
+    public int setSpeed( int flags, int speed )
+    {
+        return speedEncoder.setValue(flags, speed);
+    }
+
+    @Override
+    public int setProperties( int speed, boolean forward, boolean backward )
+    {
+        return setAccess(setSpeed(0, speed), forward, backward);
     }
 
     @Override

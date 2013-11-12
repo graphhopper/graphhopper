@@ -306,7 +306,7 @@ public class PrepareContractionHierarchiesTest
 
     void initUnpackingGraph( LevelGraphStorage g, Weighting w )
     {
-        final int flags = carEncoder.flags(30, false);
+        final int setProperties = carEncoder.setProperties(30, true, false);
         EdgeIterator edge = new GHUtility.DisabledEdgeIterator() {
 
             @Override
@@ -318,16 +318,16 @@ public class PrepareContractionHierarchiesTest
             @Override
             public int getFlags()
             {
-                return flags;
+                return setProperties;
             }
         };
-        g.edge(10, 0, w.calcWeight(edge), flags);
-        EdgeSkipIterator iter1 = g.edge(0, 1, w.calcWeight(edge), flags);
-        EdgeSkipIterator iter2 = g.edge(1, 2, w.calcWeight(edge), flags);
-        EdgeSkipIterator iter3 = g.edge(2, 3, w.calcWeight(edge), flags);
-        EdgeSkipIterator iter4 = g.edge(3, 4, w.calcWeight(edge), flags);
-        EdgeSkipIterator iter5 = g.edge(4, 5, w.calcWeight(edge), flags);
-        EdgeSkipIterator iter6 = g.edge(5, 6, w.calcWeight(edge), flags);
+        g.edge(10, 0, w.calcWeight(edge), setProperties);
+        EdgeSkipIterator iter1 = g.edge(0, 1, w.calcWeight(edge), setProperties);
+        EdgeSkipIterator iter2 = g.edge(1, 2, w.calcWeight(edge), setProperties);
+        EdgeSkipIterator iter3 = g.edge(2, 3, w.calcWeight(edge), setProperties);
+        EdgeSkipIterator iter4 = g.edge(3, 4, w.calcWeight(edge), setProperties);
+        EdgeSkipIterator iter5 = g.edge(4, 5, w.calcWeight(edge), setProperties);
+        EdgeSkipIterator iter6 = g.edge(5, 6, w.calcWeight(edge), setProperties);
         int oneDirFlags = new PrepareContractionHierarchies(carEncoder, w).getScOneDir();
 
         int tmp = iter1.getEdge();
@@ -501,7 +501,7 @@ public class PrepareContractionHierarchiesTest
 //                    + single.skippedEdge1() + "," + single.skippedEdge2() + " (" + iter.edge() + ")"
 //                    + ", dist: " + (float) iter.distance()
 //                    + ", level:" + g.getLevel(iter.nodeA()) + "<->" + g.getLevel(iter.nodeB())
-//                    + ", bothDir:" + CarFlagEncoder.isBoth(iter.flags()));
+//                    + ", bothDir:" + CarFlagEncoder.isBoth(iter.setProperties()));
 //        }
 //        System.out.println("---");
 //    }
