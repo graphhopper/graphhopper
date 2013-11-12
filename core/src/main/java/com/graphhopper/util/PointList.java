@@ -71,6 +71,11 @@ public class PointList
         size = newSize;
     }
 
+    public int size()
+    {
+        return size;
+    }
+
     public int getSize()
     {
         return size;

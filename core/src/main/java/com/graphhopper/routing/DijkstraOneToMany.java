@@ -37,7 +37,7 @@ import java.util.Arrays;
 public class DijkstraOneToMany extends AbstractRoutingAlgorithm
 {
     protected double[] weights;
-    private TIntList changedNodes;
+    private final TIntList changedNodes;
     private int[] parents;
     private int[] edgeIds;
     private IntDoubleBinHeap heap;
@@ -50,11 +50,16 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     public DijkstraOneToMany( Graph graph, FlagEncoder encoder, WeightCalculation type )
     {
         super(graph, encoder, type);
+
         parents = new int[graph.getNodes()];
         Arrays.fill(parents, -1);
 
+        edgeIds = new int[graph.getNodes()];
+        Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
+
         weights = new double[graph.getNodes()];
         Arrays.fill(weights, Double.MAX_VALUE);
+
         heap = new IntDoubleBinHeap();
         changedNodes = new TIntArrayList();
     }
@@ -70,17 +75,10 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     {
         throw new IllegalStateException("not supported yet");
     }
-    
+
     @Override
     public Path calcPath( int from, int to )
     {
-        if (edgeIds == null)
-        {
-            // create on demand to avoid array creation if only findEndNode is used
-            edgeIds = new int[graph.getNodes()];
-            Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
-        }
-
         fromNode = from;
         endNode = findEndNode(from, to);
         return extractPath();
@@ -122,8 +120,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
                 int n = changedNodes.get(i);
                 weights[n] = Double.MAX_VALUE;
                 parents[n] = -1;
-                if (edgeIds != null)
-                    edgeIds[n] = EdgeIterator.NO_EDGE;
+                edgeIds[n] = EdgeIterator.NO_EDGE;
             }
 
             heap.clear();
@@ -154,8 +151,11 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             {
                 if (!accept(iter))
                     continue;
-
                 int adjNode = iter.getAdjNode();
+                // minor speed up
+                if (edgeIds[adjNode] == iter.getEdge())
+                    continue;
+
                 double tmpWeight = weightCalc.getWeight(iter) + weights[currNode];
                 if (weights[adjNode] == Double.MAX_VALUE)
                 {
@@ -163,18 +163,15 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
                     weights[adjNode] = tmpWeight;
                     heap.insert_(tmpWeight, adjNode);
                     changedNodes.add(adjNode);
-                    if (edgeIds != null)
-                    {
-                        edgeIds[adjNode] = iter.getEdge();
-                    }
+                    edgeIds[adjNode] = iter.getEdge();
+
                 } else if (weights[adjNode] > tmpWeight)
                 {
                     parents[adjNode] = currNode;
                     weights[adjNode] = tmpWeight;
                     heap.update_(tmpWeight, adjNode);
                     changedNodes.add(adjNode);
-                    if (edgeIds != null)
-                        edgeIds[adjNode] = iter.getEdge();
+                    edgeIds[adjNode] = iter.getEdge();
                 }
             }
 
