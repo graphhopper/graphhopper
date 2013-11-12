@@ -42,7 +42,7 @@ public class FastestCalc implements WeightCalculation
     }
 
     @Override
-    public double getWeight( EdgeIteratorState edgeIter )
+    public double calcWeight( EdgeIteratorState edgeIter )
     {
         return edgeIter.getDistance() / encoder.getSpeed(edgeIter.getFlags());
     }

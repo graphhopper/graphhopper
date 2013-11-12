@@ -227,7 +227,7 @@ public class AStarBidirection extends AbstractBidirAlgo
             int neighborNode = iter.getAdjNode();
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
-            double alreadyVisitedWeight = weightCalc.getWeight(iter) + currEdge.weightToCompare;
+            double alreadyVisitedWeight = weightCalc.calcWeight(iter) + currEdge.weightToCompare;
             AStarEdge de = shortestWeightMap.get(neighborNode);
             if (de == null || de.weightToCompare > alreadyVisitedWeight)
             {

@@ -321,13 +321,13 @@ public class PrepareContractionHierarchiesTest
                 return flags;
             }
         };
-        g.edge(10, 0, w.getWeight(edge), flags);
-        EdgeSkipIterator iter1 = g.edge(0, 1, w.getWeight(edge), flags);
-        EdgeSkipIterator iter2 = g.edge(1, 2, w.getWeight(edge), flags);
-        EdgeSkipIterator iter3 = g.edge(2, 3, w.getWeight(edge), flags);
-        EdgeSkipIterator iter4 = g.edge(3, 4, w.getWeight(edge), flags);
-        EdgeSkipIterator iter5 = g.edge(4, 5, w.getWeight(edge), flags);
-        EdgeSkipIterator iter6 = g.edge(5, 6, w.getWeight(edge), flags);
+        g.edge(10, 0, w.calcWeight(edge), flags);
+        EdgeSkipIterator iter1 = g.edge(0, 1, w.calcWeight(edge), flags);
+        EdgeSkipIterator iter2 = g.edge(1, 2, w.calcWeight(edge), flags);
+        EdgeSkipIterator iter3 = g.edge(2, 3, w.calcWeight(edge), flags);
+        EdgeSkipIterator iter4 = g.edge(3, 4, w.calcWeight(edge), flags);
+        EdgeSkipIterator iter5 = g.edge(4, 5, w.calcWeight(edge), flags);
+        EdgeSkipIterator iter6 = g.edge(5, 6, w.calcWeight(edge), flags);
         int oneDirFlags = new PrepareContractionHierarchies(carEncoder, w).getScOneDir();
 
         int tmp = iter1.getEdge();

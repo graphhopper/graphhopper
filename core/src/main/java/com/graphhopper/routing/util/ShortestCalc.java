@@ -38,7 +38,7 @@ public class ShortestCalc implements WeightCalculation
     }
 
     @Override
-    public double getWeight( EdgeIteratorState iter )
+    public double calcWeight( EdgeIteratorState iter )
     {
         return iter.getDistance();
     }

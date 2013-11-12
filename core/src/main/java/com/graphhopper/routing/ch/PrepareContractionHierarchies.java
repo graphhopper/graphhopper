@@ -208,13 +208,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     {
         // In CH the flags (speed) are ignored as calculating the new flags for a shortcut is often not possible.
         // Also several shortcuts would be necessary with the different modes (e.g. fastest and shortest)
-        // So calculate the weight and store this as distance, then use only distance instead of getWeight
+        // So calculate the weight and store this as distance, then use only distance instead of calcWeight
         EdgeIterator iter = g.getAllEdges();
         int c = 0;
         while (iter.next())
         {
             c++;
-            iter.setDistance(prepareWeightCalc.getWeight(iter));
+            iter.setDistance(prepareWeightCalc.calcWeight(iter));
             setOrigEdgeCount(iter.getEdge(), 1);
         }
         return c > 0;
@@ -721,7 +721,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     @Override
                     protected void updateDistance( EdgeIteratorState edge )
                     {
-                        edge.setDistance(prepareWeightCalc.getWeight(edge));
+                        edge.setDistance(prepareWeightCalc.calcWeight(edge));
                     }
                 };
             }
@@ -785,7 +785,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     @Override
                     protected void updateDistance( EdgeIteratorState edge )
                     {
-                        edge.setDistance(prepareWeightCalc.getWeight(edge));
+                        edge.setDistance(prepareWeightCalc.calcWeight(edge));
                     }
                 };
             }
@@ -847,7 +847,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             @Override
-            public double getWeight( EdgeIteratorState edge )
+            public double calcWeight( EdgeIteratorState edge )
             {
                 return edge.getDistance();
             }

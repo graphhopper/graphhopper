@@ -103,7 +103,7 @@ public class AStar extends AbstractRoutingAlgorithm
                     continue;
 
                 int neighborNode = iter.getAdjNode();
-                double alreadyVisitedWeight = weightCalc.getWeight(iter) + currEdge.weightToCompare;
+                double alreadyVisitedWeight = weightCalc.calcWeight(iter) + currEdge.weightToCompare;
                 AStarEdge nEdge = fromMap.get(neighborNode);
                 if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight)
                 {

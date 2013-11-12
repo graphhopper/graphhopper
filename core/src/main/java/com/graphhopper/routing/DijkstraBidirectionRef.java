@@ -32,7 +32,7 @@ import java.util.PriorityQueue;
  * <p/>
  * 'Ref' stands for reference implementation and is using the normal Java-'reference'-way.
  * <p/>
- * @see DijkstraBidirection for an optimized but more complicated version
+ * @see DijkstraBidirectionfor an optimized but more complicated version
  * @author Peter Karich
  */
 public class DijkstraBidirectionRef extends AbstractBidirAlgo
@@ -158,7 +158,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
                 continue;
 
             int neighborNode = iter.getAdjNode();
-            double tmpWeight = weightCalc.getWeight(iter) + currEdge.weight;
+            double tmpWeight = weightCalc.calcWeight(iter) + currEdge.weight;
 
             EdgeEntry de = shortestWeightMap.get(neighborNode);
             if (de == null)

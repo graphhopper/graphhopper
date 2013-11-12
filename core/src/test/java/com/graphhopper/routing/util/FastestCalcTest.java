@@ -35,14 +35,14 @@ public class FastestCalcTest
     {
         FastestCalc instance = new FastestCalc(encoder);
         int flags = encoder.flags(encoder.getMaxSpeed(), true);
-        assertEquals(instance.getMinWeight(10), instance.getWeight(createEdge(10, flags)), 1e-8);
+        assertEquals(instance.getMinWeight(10), instance.calcWeight(createEdge(10, flags)), 1e-8);
     }
 
     @Test
     public void testSpeed0()
     {
         FastestCalc instance = new FastestCalc(encoder);
-        assertEquals(1.0 / 0, instance.getWeight(createEdge(10, encoder.flags(0, true))), 1e-8);
+        assertEquals(1.0 / 0, instance.calcWeight(createEdge(10, encoder.flags(0, true))), 1e-8);
     }
 
     EdgeIterator createEdge( final double distance, final int flags )
