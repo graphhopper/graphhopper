@@ -124,9 +124,9 @@ public class Location2NodesNtreeLG extends LocationIndexTree
             }
 
             @Override
-            public void setWayGeometry( PointList list )
+            public EdgeIteratorState setWayGeometry( PointList list )
             {
-                tmpIter.setWayGeometry(list);
+                return tmpIter.setWayGeometry(list);
             }
 
             @Override
@@ -136,9 +136,9 @@ public class Location2NodesNtreeLG extends LocationIndexTree
             }
 
             @Override
-            public void setDistance( double dist )
+            public EdgeIteratorState setDistance( double dist )
             {
-                tmpIter.setDistance(dist);
+                return tmpIter.setDistance(dist);
             }
 
             @Override
@@ -148,9 +148,9 @@ public class Location2NodesNtreeLG extends LocationIndexTree
             }
 
             @Override
-            public void setFlags( int flags )
+            public EdgeIteratorState setFlags( int flags )
             {
-                tmpIter.setFlags(flags);
+                return tmpIter.setFlags(flags);
             }
 
             @Override
@@ -160,9 +160,9 @@ public class Location2NodesNtreeLG extends LocationIndexTree
             }
 
             @Override
-            public void setName( String name )
+            public EdgeIteratorState setName( String name )
             {
-                tmpIter.setName(name);
+                return tmpIter.setName(name);
             }
         };
     }

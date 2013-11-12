@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -450,6 +449,11 @@ public class QueryGraph implements Graph
     }
 
     @Override
+    public EdgeIteratorState edge( int a, int b )
+    {
+        throw exc();
+    }
+    
     public EdgeIteratorState edge( int a, int b, double distance, int flags )
     {
         throw exc();
@@ -537,9 +541,9 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public void setWayGeometry( PointList list )
+        public EdgeIteratorState setWayGeometry( PointList list )
         {
-            edges.get(current).setWayGeometry(list);
+            return edges.get(current).setWayGeometry(list);
         }
 
         @Override
@@ -549,9 +553,9 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public void setDistance( double dist )
+        public EdgeIteratorState setDistance( double dist )
         {
-            edges.get(current).setDistance(dist);
+            return edges.get(current).setDistance(dist);
         }
 
         @Override
@@ -561,9 +565,9 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public void setFlags( int flags )
+        public EdgeIteratorState setFlags( int flags )
         {
-            edges.get(current).setFlags(flags);
+            return edges.get(current).setFlags(flags);
         }
 
         @Override
@@ -573,9 +577,9 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public void setName( String name )
+        public EdgeIteratorState setName( String name )
         {
-            edges.get(current).setName(name);
+            return edges.get(current).setName(name);
         }
 
         @Override
@@ -652,7 +656,7 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public void setWayGeometry( PointList list )
+        public EdgeIteratorState setWayGeometry( PointList list )
         {
             throw new UnsupportedOperationException("Not supported for in-memory edge. Set when creating it.");
         }
@@ -664,9 +668,10 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public void setDistance( double dist )
+        public EdgeIteratorState setDistance( double dist )
         {
             this.distance = dist;
+            return this;
         }
 
         @Override
@@ -676,9 +681,10 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public void setFlags( int flags )
+        public EdgeIteratorState setFlags( int flags )
         {
             this.flags = flags;
+            return this;
         }
 
         @Override
@@ -688,9 +694,10 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public void setName( String name )
+        public EdgeIteratorState setName( String name )
         {
             this.name = name;
+            return this;
         }
 
         @Override

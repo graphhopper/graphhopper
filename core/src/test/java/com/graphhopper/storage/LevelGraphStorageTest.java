@@ -126,9 +126,15 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         int flags = carEncoder.setProperties(60, true, true);
         int flags2 = carEncoder.setProperties(60, true, false);
         g.edge(4, 1, 30, true);
-        g.shortcut(1, 2, 10, flags).setSkippedEdges(10, 11);
-        g.shortcut(1, 0, 20, flags2).setSkippedEdges(12, 13);
-        g.shortcut(3, 1, 30, flags2).setSkippedEdges(14, 15);
+        EdgeSkipExplorer tmp = g.shortcut(1, 2);
+        tmp.setDistance(10).setFlags(flags);
+        tmp.setSkippedEdges(10, 11);
+        tmp = g.shortcut(1, 0);
+        tmp.setDistance(20).setFlags(flags2);
+        tmp.setSkippedEdges(12, 13);
+        tmp = g.shortcut(3, 1);
+        tmp.setDistance(30).setFlags(flags2);
+        tmp.setSkippedEdges(14, 15);
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(1);
         iter.next();
         assertEquals(3, iter.getAdjNode());

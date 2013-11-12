@@ -76,9 +76,9 @@ public class FootFlagEncoderTest
     public void testGraph()
     {
         Graph g = new GraphBuilder(encodingManager).create();
-        g.edge(0, 1, 10, footEncoder.setProperties(10, true, true));
-        g.edge(0, 2, 10, footEncoder.setProperties(5, true, true));
-        g.edge(1, 3, 10, footEncoder.setProperties(10, true, true));
+        g.edge(0, 1).setDistance(10).setFlags(footEncoder.setProperties(10, true, true));
+        g.edge(0, 2).setDistance(10).setFlags(footEncoder.setProperties(5, true, true));
+        g.edge(1, 3).setDistance(10).setFlags(footEncoder.setProperties(10, true, true));
         EdgeExplorer out = g.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, false, true));
         assertEquals(GHUtility.asSet(1, 2), GHUtility.getNeighbors(out.setBaseNode(0)));
         assertEquals(GHUtility.asSet(0, 3), GHUtility.getNeighbors(out.setBaseNode(1)));

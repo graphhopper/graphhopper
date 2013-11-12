@@ -65,20 +65,20 @@ public interface EdgeIteratorState
      * @param list is a sorted collection of nodes between the baseNode and the current adjacent
      * node
      */
-    void setWayGeometry( PointList list );
+    EdgeIteratorState setWayGeometry( PointList list );
 
     /**
      * @return the distance of the current edge in meter
      */
     double getDistance();
 
-    void setDistance( double dist );
+    EdgeIteratorState setDistance( double dist );
 
     int getFlags();
 
-    void setFlags( int flags );
+    EdgeIteratorState setFlags( int flags );
 
     String getName();
 
-    void setName( String name );
+    EdgeIteratorState setName( String name );
 }

@@ -58,17 +58,18 @@ public interface Graph
     BBox getBounds();
 
     /**
-     * Creates an edge between the nodes a and b.
+     * Creates an edge between the nodes a and b. To set distance or access use the returned edge
+     * and e.g. edgeState.setDistance
      * <p/>
      * @param a the index of the starting (tower) node of the edge
      * @param b the index of the ending (tower) node of the edge
-     * @param distance between a and b. Often setNode is not called - if it is not a geo-graph - and
-     * we need the distance parameter here.
-     * @param flags see EdgeFlags - involves velocity and direction
-     * @return the created edge
+     * @return the newly created edge
      */
-    EdgeIteratorState edge( int a, int b, double distance, int flags );
+    EdgeIteratorState edge( int a, int b );
 
+    /**
+     * Use edge(a,b).setDistance().setFlags instead
+     */
     EdgeIteratorState edge( int a, int b, double distance, boolean bothDirections );
 
     /**

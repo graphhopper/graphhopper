@@ -91,10 +91,13 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         g2.edge(6, 7, 1, true);
 
         // simulate preparation
-        EdgeSkipExplorer iter2_2 = g2.edge(5, 7, 1.4, carEncoder.setProperties(0, true, true));
-        EdgeSkipExplorer iter2_1 = g2.shortcut(0, 5, 2.8, carEncoder.setProperties(0, true, true));
+        EdgeSkipExplorer iter2_2 = g2.edge(5, 7);
+        iter2_2.setDistance(1.4).setFlags(carEncoder.setProperties(0, true, true));
+        EdgeSkipExplorer iter2_1 = g2.shortcut(0, 5);iter2_1.setDistance(2.8).setFlags(carEncoder.setProperties(0, true, true));
         iter2_1.setSkippedEdges(iter1_1.getEdge(), iter1_2.getEdge());        
-        g2.shortcut(0, 7, 4.2, carEncoder.setProperties(0, true, true)).setSkippedEdges(iter2_1.getEdge(), iter2_2.getEdge());
+        EdgeSkipExplorer tmp = g2.shortcut(0, 7);
+        tmp.setDistance(4.2).setFlags(carEncoder.setProperties(0, true, true));
+        tmp.setSkippedEdges(iter2_1.getEdge(), iter2_2.getEdge());
         g2.setLevel(1, 0);
         g2.setLevel(3, 1);
         g2.setLevel(4, 2);

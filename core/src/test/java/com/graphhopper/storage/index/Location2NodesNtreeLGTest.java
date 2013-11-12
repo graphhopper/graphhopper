@@ -83,11 +83,15 @@ public class Location2NodesNtreeLGTest extends LocationIndexTreeTest
         // create shortcuts
         FlagEncoder car = encodingManager.getEncoder("CAR");
         int flags = car.setProperties(60, true, true);
-        EdgeSkipExplorer iter5 = g.shortcut(0, 2, 20, flags);
+        EdgeSkipExplorer iter5 = g.shortcut(0, 2);
+        iter5.setDistance(20).setFlags(flags);
         iter5.setSkippedEdges(iter1.getEdge(), iter2.getEdge());
-        EdgeSkipExplorer iter6 = g.shortcut(2, 4, 28, flags);
+        EdgeSkipExplorer iter6 = g.shortcut(2, 4);
+        iter6.setDistance(28).setFlags(flags);
         iter6.setSkippedEdges(iter3.getEdge(), iter4.getEdge());
-        g.shortcut(0, 4, 40, flags).setSkippedEdges(iter5.getEdge(), iter6.getEdge());
+        EdgeSkipExplorer tmp = g.shortcut(0, 4);
+        tmp.setDistance(40).setFlags(flags);
+        tmp.setSkippedEdges(iter5.getEdge(), iter6.getEdge());
 
         LocationIndex index = createIndex(g, -1);
         assertEquals(2, index.findID(0, 0.5));
@@ -101,8 +105,7 @@ public class Location2NodesNtreeLGTest extends LocationIndexTreeTest
         lg.setLevel(2, 30);
         lg.setLevel(3, 20);
         TIntList tlist = Helper.createTList(1, 2, 3);
-        
-        
+
         // nodes with high level should come first to be covered by lower level nodes
         ArrayList<Integer> list = Helper.tIntListToArrayList(tlist);
         Collections.sort(list, new Comparator<Integer>()
@@ -114,7 +117,7 @@ public class Location2NodesNtreeLGTest extends LocationIndexTreeTest
             }
         });
         tlist.clear();
-        tlist.addAll(list);        
+        tlist.addAll(list);
         assertEquals(Helper.createTList(2, 3, 1), tlist);
     }
 

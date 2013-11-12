@@ -109,7 +109,7 @@ public class PrepareRoutingSubnetworksTest
         g.edge(2, 3, 1, true);
 
         // connecting both but do not allow CAR!
-        g.edge(3, 4, 1, 0);
+        g.edge(3, 4).setDistance(1);
 
         // small network
         g.edge(4, 5, 1, true);

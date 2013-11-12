@@ -70,6 +70,19 @@ public class CarFlagEncoderTest
     }
 
     @Test
+    public void testSetAccess()
+    {
+        assertTrue(encoder.isForward(encoder.setProperties(0, true, true)));
+        assertTrue(encoder.isBackward(encoder.setProperties(0, true, true)));
+
+        assertTrue(encoder.isForward(encoder.setProperties(0, true, false)));
+        assertFalse(encoder.isBackward(encoder.setProperties(0, true, false)));
+
+        assertFalse(encoder.isForward(encoder.setProperties(0, false, true)));
+        assertTrue(encoder.isBackward(encoder.setProperties(0, false, true)));
+    }
+
+    @Test
     public void testSpeedLimitBiggerThanMaxValue()
     {
         Map<String, String> map = new HashMap<String, String>();
@@ -99,6 +112,12 @@ public class CarFlagEncoderTest
         allowed = encoder.isAllowed(way);
         encoded = encoder.handleWayTags(allowed, way);
         assertEquals(30, encoder.getSpeed(encoded));
+    }
+
+    @Test
+    public void testSetSpeed()
+    {
+        assertEquals(10, encoder.getSpeed(encoder.setSpeed(0, 10)));
     }
 
     @Test

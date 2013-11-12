@@ -227,7 +227,7 @@ public class GHUtility
                 if (bitset.contains(newNodeIndex))
                     continue;
 
-                sortedGraph.edge(newIndex, newNodeIndex, eIter.getDistance(), eIter.getFlags()).
+                sortedGraph.edge(newIndex, newNodeIndex).setDistance(eIter.getDistance()).setFlags(eIter.getFlags()).
                         setWayGeometry(eIter.fetchWayGeometry(0));
             }
         }
@@ -299,7 +299,7 @@ public class GHUtility
                 if (bitset.contains(adjacentNodeIndex))
                     continue;
 
-                to.edge(oldNode, adjacentNodeIndex, eIter.getDistance(), eIter.getFlags()).
+                to.edge(oldNode, adjacentNodeIndex).setDistance(eIter.getDistance()).setFlags(eIter.getFlags()).
                         setWayGeometry(eIter.fetchWayGeometry(0));
             }
         }
@@ -349,13 +349,13 @@ public class GHUtility
         }
 
         @Override
-        public void setDistance( double dist )
+        public EdgeIteratorState setDistance( double dist )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public void setFlags( int flags )
+        public EdgeIteratorState setFlags( int flags )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -403,7 +403,7 @@ public class GHUtility
         }
 
         @Override
-        public void setWayGeometry( PointList list )
+        public EdgeIteratorState setWayGeometry( PointList list )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -415,7 +415,7 @@ public class GHUtility
         }
 
         @Override
-        public void setName( String name )
+        public EdgeIteratorState setName( String name )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
