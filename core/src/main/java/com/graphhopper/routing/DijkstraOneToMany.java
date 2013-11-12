@@ -22,7 +22,7 @@ import com.graphhopper.coll.IntDoubleBinHeap;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.index.LocationIDResult;
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIterator;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
@@ -71,7 +71,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     }
 
     @Override
-    public Path calcPath( LocationIDResult fromRes, LocationIDResult toRes )
+    public Path calcPath( QueryResult fromRes, QueryResult toRes )
     {
         throw new IllegalStateException("not supported yet");
     }

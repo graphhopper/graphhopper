@@ -37,7 +37,7 @@ import com.graphhopper.util.*;
  * <p/>
  * @author Peter Karich
  */
-public class Location2NodesNtreeLG extends Location2NodesNtree
+public class Location2NodesNtreeLG extends LocationIndexTree
 {
     private final static EdgeFilter NO_SHORTCUT = new EdgeFilter()
     {

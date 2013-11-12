@@ -21,7 +21,7 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.LocationIDResult;
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
@@ -43,7 +43,7 @@ public class TestAlgoCollector
     }
 
     public TestAlgoCollector assertDistance( RoutingAlgorithm algo,
-            LocationIDResult from, LocationIDResult to, double distance, int pointCount )
+            QueryResult from, QueryResult to, double distance, int pointCount )
     {
         Path path = algo.calcPath(from, to);
         if (!path.isFound())
@@ -81,7 +81,7 @@ public class TestAlgoCollector
 
     void queryIndex( Graph g, LocationIndex idx, double lat, double lon, double expectedDist )
     {
-        LocationIDResult res = idx.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
+        QueryResult res = idx.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
         if (!res.isValid())
         {
             errors.add("node not found for " + lat + "," + lon);

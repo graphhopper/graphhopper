@@ -40,7 +40,7 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest
+public class Location2NodesNtreeLGTest extends LocationIndexTreeTest
 {
     EncodingManager encodingManager = new EncodingManager("CAR");
 

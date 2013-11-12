@@ -577,8 +577,8 @@ public class GraphHopper implements GraphHopperAPI
 
         FlagEncoder encoder = encodingManager.getEncoder(request.getVehicle());
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-        LocationIDResult fromRes = locationIndex.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter);
-        LocationIDResult toRes = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter);
+        QueryResult fromRes = locationIndex.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter);
+        QueryResult toRes = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter);
 
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
 
@@ -655,13 +655,13 @@ public class GraphHopper implements GraphHopperAPI
         LocationIndex tmpIndex;
         if (preciseIndexResolution > 0)
         {
-            Location2NodesNtree tmpNIndex;
+            LocationIndexTree tmpNIndex;
             if (graph instanceof LevelGraph)
             {
                 tmpNIndex = new Location2NodesNtreeLG((LevelGraph) graph, dir);
             } else
             {
-                tmpNIndex = new Location2NodesNtree(graph, dir);
+                tmpNIndex = new LocationIndexTree(graph, dir);
             }
             tmpNIndex.setResolution(preciseIndexResolution);
             tmpNIndex.setSearchRegion(searchRegion);

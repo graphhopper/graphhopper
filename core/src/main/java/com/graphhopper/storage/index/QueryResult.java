@@ -25,7 +25,7 @@ import com.graphhopper.util.shapes.CoordTrig;
 import com.graphhopper.util.shapes.GHPoint;
 
 /**
- * Result of Location2IDIndex lookup.
+ * Result of LocationIndex lookup.
  * <p/>
  * <
  * pre> X=query coordinates S=snapped coordinates: "snapping" real coords to road N=tower or pillar
@@ -39,7 +39,7 @@ import com.graphhopper.util.shapes.GHPoint;
  * <p/>
  * @author Peter Karich
  */
-public class LocationIDResult
+public class QueryResult
 {
     private double queryDistance = Double.MAX_VALUE;
     private int wayIndex = -1;
@@ -54,7 +54,7 @@ public class LocationIDResult
         EDGE, TOWER, PILLAR
     }
 
-    public LocationIDResult( double queryLat, double queryLon )
+    public QueryResult( double queryLat, double queryLon )
     {
         queryPoint = new GHPoint(queryLat, queryLon);
     }

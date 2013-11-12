@@ -23,7 +23,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.index.LocationIDResult;
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import java.util.ArrayList;
@@ -72,10 +72,10 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     }
 
     @Override
-    public Path calcPath( LocationIDResult fromRes, LocationIDResult toRes )
+    public Path calcPath( QueryResult fromRes, QueryResult toRes )
     {
         QueryGraph queryGraph = createQueryGraph();
-        List<LocationIDResult> results = new ArrayList(2);
+        List<QueryResult> results = new ArrayList(2);
         results.add(fromRes);
         results.add(toRes);
         queryGraph.lookup(results);

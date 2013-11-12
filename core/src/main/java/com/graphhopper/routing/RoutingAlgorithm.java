@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.index.LocationIDResult;
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.NotThreadSafe;
 
 /**
@@ -45,7 +45,7 @@ public interface RoutingAlgorithm
      * <p/>
      * @return the path. Call the method found() to make sure that the path is valid.
      */
-    Path calcPath( LocationIDResult from, LocationIDResult to );
+    Path calcPath( QueryResult from, QueryResult to );
 
     /**
      * @return name of this algorithm

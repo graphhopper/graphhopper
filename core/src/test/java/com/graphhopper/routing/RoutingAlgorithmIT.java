@@ -25,7 +25,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.LocationIDResult;
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import java.io.File;
@@ -244,8 +244,8 @@ public class RoutingAlgorithmIT
                 for (OneRun oneRun : forEveryAlgo)
                 {
                     tmpOneRun = oneRun;
-                    LocationIDResult from = idx.findClosest(oneRun.fromLat, oneRun.fromLon, edgeFilter);
-                    LocationIDResult to = idx.findClosest(oneRun.toLat, oneRun.toLon, edgeFilter);
+                    QueryResult from = idx.findClosest(oneRun.fromLat, oneRun.fromLon, edgeFilter);
+                    QueryResult to = idx.findClosest(oneRun.toLat, oneRun.toLon, edgeFilter);
                     testCollector.assertDistance(tmpPrepare.createAlgo(), from, to, oneRun.dist, oneRun.locs);
                 }
             }
@@ -347,8 +347,8 @@ public class RoutingAlgorithmIT
                         public void run()
                         {
                             OneRun oneRun = instances.get(instanceIndex);
-                            LocationIDResult from = idx.findClosest(oneRun.fromLat, oneRun.fromLon, filter);
-                            LocationIDResult to = idx.findClosest(oneRun.toLat, oneRun.toLon, filter);
+                            QueryResult from = idx.findClosest(oneRun.fromLat, oneRun.fromLon, filter);
+                            QueryResult to = idx.findClosest(oneRun.toLat, oneRun.toLon, filter);
                             testCollector.assertDistance(algo, from, to, oneRun.dist, oneRun.locs);
                             integ.addAndGet(1);
                         }

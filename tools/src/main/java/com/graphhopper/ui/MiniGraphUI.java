@@ -29,7 +29,7 @@ import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.LocationIDResult;
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
@@ -135,10 +135,10 @@ public class MiniGraphUI
                 
                 double fromLat = 42.56819, fromLon = 1.603231;
                 mg.plotText(g2, fromLat, fromLon, "from");
-                LocationIDResult from = index.findClosest(fromLat, fromLon, EdgeFilter.ALL_EDGES);
+                QueryResult from = index.findClosest(fromLat, fromLon, EdgeFilter.ALL_EDGES);
                 double toLat = 42.571034, toLon = 1.520662;
                 mg.plotText(g2, toLat, toLon, "to");
-                LocationIDResult to = index.findClosest(toLat, toLon, EdgeFilter.ALL_EDGES);
+                QueryResult to = index.findClosest(toLat, toLon, EdgeFilter.ALL_EDGES);
 
                 g2.setColor(Color.RED.brighter().brighter());
                 path = prepare.createAlgo().calcPath(from, to);

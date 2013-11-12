@@ -23,9 +23,9 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.Location2NodesNtree;
+import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Location2NodesNtreeLG;
-import com.graphhopper.storage.index.LocationIDResult;
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
 import java.util.Random;
@@ -528,26 +528,26 @@ public abstract class AbstractRoutingAlgorithmTester
         if (graph instanceof LevelGraph)
             index = new Location2NodesNtreeLG((LevelGraph) graph, new RAMDirectory());
         else
-            index = new Location2NodesNtree(graph, new RAMDirectory());
+            index = new LocationIndexTree(graph, new RAMDirectory());
 
         index.prepareIndex();
-        LocationIDResult from = index.findClosest(fromLat, fromLon, EdgeFilter.ALL_EDGES);
-        LocationIDResult to = index.findClosest(toLat, toLon, EdgeFilter.ALL_EDGES);
+        QueryResult from = index.findClosest(fromLat, fromLon, EdgeFilter.ALL_EDGES);
+        QueryResult to = index.findClosest(toLat, toLon, EdgeFilter.ALL_EDGES);
         return prepareGraph(graph).createAlgo().calcPath(from, to);
     }
 
     Path calcPath( Graph graph, int fromNode1, int fromNode2, int toNode1, int toNode2 )
     {
         // lookup two edges: fromNode1-fromNode2 and toNode1-toNode2        
-        LocationIDResult from = newQR(graph, fromNode1, fromNode2);
-        LocationIDResult to = newQR(graph, toNode1, toNode2);
+        QueryResult from = newQR(graph, fromNode1, fromNode2);
+        QueryResult to = newQR(graph, toNode1, toNode2);
         return prepareGraph(graph).createAlgo().calcPath(from, to);
     }
 
     /**
      * Creates query result on edge (node1-node2) very close to node1.
      */
-    LocationIDResult newQR( Graph graph, int node1, int node2 )
+    QueryResult newQR( Graph graph, int node1, int node2 )
     {
         EdgeIteratorState edge = GHUtility.getEdge(graph, node1, node2);
         if (edge == null)
@@ -558,11 +558,11 @@ public abstract class AbstractRoutingAlgorithmTester
         double latAdj = graph.getLatitude(edge.getAdjNode());
         double lonAdj = graph.getLongitude(edge.getAdjNode());
         // calculate query point near the base node but not directly on it!
-        LocationIDResult res = new LocationIDResult(lat + (latAdj - lat) * .1, lon + (lonAdj - lon) * .1);
+        QueryResult res = new QueryResult(lat + (latAdj - lat) * .1, lon + (lonAdj - lon) * .1);
         res.setClosestNode(edge.getBaseNode());
         res.setClosestEdge(edge);
         res.setWayIndex(0);
-        res.setSnappedPosition(LocationIDResult.Position.EDGE);
+        res.setSnappedPosition(QueryResult.Position.EDGE);
         res.calcSnappedPoint(distCalc);
         return res;
     }

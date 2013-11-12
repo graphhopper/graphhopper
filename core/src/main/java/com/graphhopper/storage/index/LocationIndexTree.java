@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
  * <p/>
  * @author Peter Karich
  */
-public class Location2NodesNtree implements LocationIndex
+public class LocationIndexTree implements LocationIndex
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int MAGIC_INT;
@@ -76,7 +76,7 @@ public class Location2NodesNtree implements LocationIndex
      */
     private double equalNormedDelta;
 
-    public Location2NodesNtree( Graph g, Directory dir )
+    public LocationIndexTree( Graph g, Directory dir )
     {
         MAGIC_INT = Integer.MAX_VALUE / 22316;
         this.graph = g;
@@ -93,7 +93,7 @@ public class Location2NodesNtree implements LocationIndex
      * Minimum width in meter of one tile. Decrease this if you need faster queries, but keep in
      * mind that then queries with different coordinates are more likely to fail.
      */
-    public Location2NodesNtree setMinResolutionInMeter( int minResolutionInMeter )
+    public LocationIndexTree setMinResolutionInMeter( int minResolutionInMeter )
     {
         this.minResolutionInMeter = minResolutionInMeter;
         return this;
@@ -102,7 +102,7 @@ public class Location2NodesNtree implements LocationIndex
     /**
      * Searches also neighbouring quadtree entries to increase map matching precision.
      */
-    public Location2NodesNtree setSearchRegion( boolean regionAround )
+    public LocationIndexTree setSearchRegion( boolean regionAround )
     {
         this.regionSearch = regionAround;
         return this;
@@ -166,7 +166,7 @@ public class Location2NodesNtree implements LocationIndex
         deltaLon = (bounds.maxLon - bounds.minLon) / parts;
     }
 
-    private Location2NodesNtree initEntries( int[] entries )
+    private LocationIndexTree initEntries( int[] entries )
     {
         if (entries.length < 1)
         // at least one depth should have been specified
@@ -221,7 +221,7 @@ public class Location2NodesNtree implements LocationIndex
     @Override
     public int findID( double lat, double lon )
     {
-        LocationIDResult res = findClosest(lat, lon, EdgeFilter.ALL_EDGES);
+        QueryResult res = findClosest(lat, lon, EdgeFilter.ALL_EDGES);
         if (res == null)
             return -1;
 
@@ -270,7 +270,7 @@ public class Location2NodesNtree implements LocationIndex
     }
 
     @Override
-    public Location2NodesNtree create( long size )
+    public LocationIndexTree create( long size )
     {
         throw new UnsupportedOperationException("Not supported. Use prepareIndex instead.");
     }
@@ -621,11 +621,11 @@ public class Location2NodesNtree implements LocationIndex
     }
 
     @Override
-    public LocationIDResult findClosest( final double queryLat, final double queryLon,
+    public QueryResult findClosest( final double queryLat, final double queryLon,
             final EdgeFilter edgeFilter )
     {
         final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon);
-        final LocationIDResult closestMatch = new LocationIDResult(queryLat, queryLon);
+        final QueryResult closestMatch = new QueryResult(queryLat, queryLon);
         if (storedNetworkEntryIds.isEmpty())
             return closestMatch;
 
@@ -674,7 +674,7 @@ public class Location2NodesNtree implements LocationIndex
                         }
 
                         int tmpClosestNode = currNode;
-                        if (check(tmpClosestNode, currNormedDist, 0, currEdge, LocationIDResult.Position.TOWER))
+                        if (check(tmpClosestNode, currNormedDist, 0, currEdge, QueryResult.Position.TOWER))
                         {
                             if (currNormedDist <= equalNormedDelta)
                                 return false;
@@ -697,7 +697,7 @@ public class Location2NodesNtree implements LocationIndex
                         {
                             double wayLat = pointList.getLatitude(pointIndex);
                             double wayLon = pointList.getLongitude(pointIndex);
-                            LocationIDResult.Position pos = LocationIDResult.Position.EDGE;
+                            QueryResult.Position pos = QueryResult.Position.EDGE;
                             if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, wayLat, wayLon))
                             {
                                 tmpNormedDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
@@ -706,11 +706,11 @@ public class Location2NodesNtree implements LocationIndex
                             } else if (pointIndex + 1 == len)
                             {
                                 tmpNormedDist = adjDist;
-                                pos = LocationIDResult.Position.TOWER;
+                                pos = QueryResult.Position.TOWER;
                             } else
                             {
                                 tmpNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
-                                pos = LocationIDResult.Position.PILLAR;
+                                pos = QueryResult.Position.PILLAR;
                             }
                             check(tmpClosestNode, tmpNormedDist, pointIndex + 1, currEdge, pos);
 
@@ -723,7 +723,7 @@ public class Location2NodesNtree implements LocationIndex
                         return closestMatch.getQueryDistance() > equalNormedDelta;
                     }
 
-                    boolean check( int node, double normedDist, int wayIndex, EdgeIterator iter, LocationIDResult.Position pos )
+                    boolean check( int node, double normedDist, int wayIndex, EdgeIterator iter, QueryResult.Position pos )
                     {
                         if (normedDist < closestMatch.getQueryDistance())
                         {

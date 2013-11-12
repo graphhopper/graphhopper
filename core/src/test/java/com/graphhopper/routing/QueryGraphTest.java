@@ -21,8 +21,8 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.index.LocationIDResult;
-import static com.graphhopper.storage.index.LocationIDResult.Position.*;
+import com.graphhopper.storage.index.QueryResult;
+import static com.graphhopper.storage.index.QueryResult.Position.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.Arrays;
@@ -63,7 +63,7 @@ public class QueryGraphTest
         iter.next();
 
         QueryGraph queryGraph = new QueryGraph(g);
-        LocationIDResult res = createLocationResult(1, -1, iter, 0, TOWER);
+        QueryResult res = createLocationResult(1, -1, iter, 0, TOWER);
         queryGraph.lookup(Arrays.asList(res));
         assertEquals(new GHPoint(0, 0), res.getSnappedPoint());
 
@@ -133,7 +133,7 @@ public class QueryGraphTest
         // snap to edge which has pillar nodes        
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(1);
         iter.next();
-        LocationIDResult res1 = createLocationResult(2, 1.7, iter, 1, PILLAR);
+        QueryResult res1 = createLocationResult(2, 1.7, iter, 1, PILLAR);
         QueryGraph queryGraph = new QueryGraph(g);
         queryGraph.lookup(Arrays.asList(res1));
         assertEquals(new GHPoint(1.5, 1.5), res1.getSnappedPoint());
@@ -156,7 +156,7 @@ public class QueryGraphTest
         iter = g.createEdgeExplorer().setBaseNode(1);
         iter.next();
         res1 = createLocationResult(2, 1.7, iter, 1, PILLAR);
-        LocationIDResult res2 = createLocationResult(1.5, 2, iter, 0, EDGE);
+        QueryResult res2 = createLocationResult(1.5, 2, iter, 0, EDGE);
         queryGraph = new QueryGraph(g);
         queryGraph.lookup(Arrays.asList(res1, res2));
         assertEquals(4, res2.getClosestNode());
@@ -181,8 +181,8 @@ public class QueryGraphTest
         g.edge(0, 1, 10, false);
 
         EdgeIteratorState edge = GHUtility.getEdge(g, 0, 1);
-        LocationIDResult res1 = createLocationResult(0.1, 0.1, edge, 0, EDGE);
-        LocationIDResult res2 = createLocationResult(0.1, 0.9, edge, 0, EDGE);
+        QueryResult res1 = createLocationResult(0.1, 0.1, edge, 0, EDGE);
+        QueryResult res2 = createLocationResult(0.1, 0.9, edge, 0, EDGE);
         QueryGraph queryGraph = new QueryGraph(g);
         queryGraph.lookup(Arrays.asList(res2, res1));
         assertEquals(2, res1.getClosestNode());
@@ -221,9 +221,9 @@ public class QueryGraphTest
         initGraph(g);
 
         EdgeIteratorState iter = GHUtility.getEdge(g, 0, 2);
-        LocationIDResult res1 = createLocationResult(0.5, 0, iter, 0, EDGE);
+        QueryResult res1 = createLocationResult(0.5, 0, iter, 0, EDGE);
         iter = GHUtility.getEdge(g, 1, 0);
-        LocationIDResult res2 = createLocationResult(1.5, 2, iter, 0, EDGE);
+        QueryResult res2 = createLocationResult(1.5, 2, iter, 0, EDGE);
         QueryGraph queryGraph = new QueryGraph(g);
         queryGraph.lookup(Arrays.asList(res1, res2));
         assertEquals(new GHPoint(0.5, 0), res1.getSnappedPoint());
@@ -240,12 +240,12 @@ public class QueryGraphTest
         return edge.fetchWayGeometry(3);
     }
 
-    public LocationIDResult createLocationResult( double lat, double lon,
-            EdgeIteratorState edge, int index, LocationIDResult.Position pos )
+    public QueryResult createLocationResult( double lat, double lon,
+            EdgeIteratorState edge, int index, QueryResult.Position pos )
     {
         if (edge == null)
             throw new IllegalStateException("Specify edge != null");
-        LocationIDResult tmp = new LocationIDResult(lat, lon);
+        QueryResult tmp = new QueryResult(lat, lon);
         tmp.setClosestEdge(edge);
         tmp.setWayIndex(index);
         tmp.setSnappedPosition(pos);

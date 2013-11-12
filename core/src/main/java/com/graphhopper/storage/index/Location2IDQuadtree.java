@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * implementation is the a very memory efficient representation for areas with lots of node and
  * edges, but lacks precision. No edge distances are measured.
  * <p/>
- * @see Location2NodesNtreefor a more precise but more complicated and also slightly slower
+ * @see Location2NodesNtreefora more precise but more complicated and also slightly slower
  implementation of LocationIndex.
  <p/>
  * @author Peter Karich
@@ -319,7 +319,7 @@ public class Location2IDQuadtree implements LocationIndex
     }
 
     @Override
-    public LocationIDResult findClosest( final double queryLat, final double queryLon,
+    public QueryResult findClosest( final double queryLat, final double queryLon,
             final EdgeFilter edgeFilter )
     {
         if (edgeFilter != EdgeFilter.ALL_EDGES)
@@ -343,7 +343,7 @@ public class Location2IDQuadtree implements LocationIndex
         final int id = index.getInt(key * 4);
         double mainLat = graph.getLatitude(id);
         double mainLon = graph.getLongitude(id);
-        final LocationIDResult res = new LocationIDResult(queryLat, queryLon);
+        final QueryResult res = new QueryResult(queryLat, queryLon);
         res.setClosestNode(id);
         res.setQueryDistance(distCalc.calcNormalizedDist(queryLat, queryLon, mainLat, mainLon));
         goFurtherHook(id);

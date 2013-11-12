@@ -56,7 +56,7 @@ public interface LocationIndex extends Storable<LocationIndex>
      * has at least one edge which is accepted from the specified edgeFilter. If nothing is found it
      * returns null.
      */
-    LocationIDResult findClosest( double lat, double lon, EdgeFilter edgeFilter );
+    QueryResult findClosest( double lat, double lon, EdgeFilter edgeFilter );
 
     /**
      * @param approxDist false if initialization and querying should be faster but less precise.
