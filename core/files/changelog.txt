@@ -1,20 +1,45 @@
-## 0.2 (not yet released)
-######
+0.2.0
+    refactored/renamed classes:
+        TODO
+    incompatible storage layout due to:
+        pluggable endianness (#103) -> changed default endianess to LITTLE
+    add highly experimental UnsafeDataAccess to speed up search ~15%
+    several small bug fixes and improvements
+    different edge insert
+    important bug fix for edge retrieval which leads to massive speed up in prepare + CH algos
+    finally fixed major feature request #27 to allow gps-to-gps queries instead of only junction-to-junction ones.
+        follow up in #52 and #115
+        slower but more precise and necessary edge distance calculation
+    fixed bug #105 for disconnected areas    
+    fix which made CH preparation ~5% faster
+    more align API for all algorithms. and initCollection is called via 1000 not something depending on the graph size
+    API changed
+        case of vehicle now case does not matter
+        returned distance is in meter now
+    better i18n support
+    fixed major bug #102 when removing subnetworks
+    fixed bug #89 for trams on roads
+    completed improvement #93 for ferries
+    edge explorer makes none-CH algorithms ~8% faster
+    link to all closed issues: https://github.com/graphhopper/graphhopper/issues?milestone=2&state=closed
 
-renamed: TODO
-several small bug fixes and improvements
-different edge insert
-important bug fix for edge retrieval which leads to massive speed up in prepare + CH algos
-slower but more precise and necessary edge distance calculation
-fixed #27 (follow up in #52 and #115)
-pluggable endianness (#103) -> changed default endianess to LITTLE -> incompatible data storage layout
-add highly experimental UnsafeDataAccess to speed up search ~15%  
 
-## 0.1 (23th July 2013), 0.1.1 (6th August 2013)
-######
+0.1.1
+06 August 2013
 
-Route instructions
-Implement OSM import for bike/foot/car
-More compact graph (nodes along a way are stored in a separate storage => faster and reduced RAM usage)
-Made routing working world wide. Make German-sized networks working on Android.
-Made routing faster via bidirectional algorithms, contraction hierarchies, graph sorting, better OSM integration and some fine tuning.
+    correct maven bundling and some more issues
+    more i18n
+
+
+0.1
+23 July 2013
+
+    initial version with lots of features 
+    24 closed issues:
+        https://github.com/graphhopper/graphhopper/issues?milestone=3&state=closed
+    e.g.:
+    Route instructions
+    Implement OSM import for bike/foot/car
+    More compact graph (nodes along a way are stored in a separate storage => faster and reduced RAM usage)
+    Made routing working world wide. Make German-sized networks working on Android.
+    Made routing faster via bidirectional algorithms, contraction hierarchies, graph sorting, better OSM integration and some fine tuning.
