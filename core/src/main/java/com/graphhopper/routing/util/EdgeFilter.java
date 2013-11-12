@@ -19,6 +19,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Class used to traverse a graph.
@@ -30,11 +31,11 @@ public interface EdgeFilter
     /**
      * @return true if the current edge should be processed and false otherwise.
      */
-    boolean accept( EdgeIterator iter );
+    boolean accept( EdgeIteratorState edgeIterState );
     static final EdgeFilter ALL_EDGES = new EdgeFilter()
     {
         @Override
-        public boolean accept( EdgeIterator iter )
+        public final boolean accept( EdgeIteratorState edgeIterState )
         {
             return true;
         }

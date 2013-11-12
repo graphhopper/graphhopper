@@ -39,10 +39,6 @@ public abstract class BitUtil
     public static final BitUtil LITTLE = new BitUtilLittle();
     public static final BitUtil BIG = new BitUtilBig();
 
-//    public static BitUtil get( boolean little )
-//    {
-//        return little ? LITTLE : BIG;
-//    }
     public static BitUtil get( ByteOrder order )
     {
         if (order.equals(ByteOrder.BIG_ENDIAN))

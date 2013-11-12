@@ -37,9 +37,7 @@ public class GraphStorageTest extends AbstractGraphTester
     {
         super.setUp();
         if (gs != null)
-        {
-            gs.close();
-        }
+            gs.close();        
     }
 
     @Override
@@ -105,8 +103,8 @@ public class GraphStorageTest extends AbstractGraphTester
         assertEquals(12, graph.getNodes());
         checkGraph(graph);
 
-        assertEquals("named street1", graph.getEdgeProps(iter1.getEdge(), -1).getName());
-        assertEquals("named street2", graph.getEdgeProps(iter2.getEdge(), -1).getName());
+        assertEquals("named street1", graph.getEdgeProps(iter1.getEdge(), iter1.getAdjNode()).getName());
+        assertEquals("named street2", graph.getEdgeProps(iter2.getEdge(), iter2.getAdjNode()).getName());
         graph.edge(3, 4, 123, true).setWayGeometry(Helper.createPointList(4.4, 5.5, 6.6, 7.7));
         checkGraph(graph);
         graph.close();
@@ -123,10 +121,12 @@ public class GraphStorageTest extends AbstractGraphTester
 
         EdgeIterator iter = explorer.setBaseNode(0);
         assertTrue(iter.next());
-        assertEquals(Helper.createPointList(3.5, 4.5, 5, 6), iter.getWayGeometry());
+        assertEquals(Helper.createPointList(3.5, 4.5, 5, 6), iter.fetchWayGeometry(0));
 
         assertTrue(iter.next());
-        assertEquals(Helper.createPointList(1.5, 1, 2, 3), iter.getWayGeometry());
+        assertEquals(Helper.createPointList(1.5, 1, 2, 3), iter.fetchWayGeometry(0));
+        assertEquals(Helper.createPointList(10, 10, 1.5, 1, 2, 3), iter.fetchWayGeometry(1));
+        assertEquals(Helper.createPointList(1.5, 1, 2, 3, 11, 20), iter.fetchWayGeometry(2));        
 
         assertEquals(11, g.getLatitude(1), 1e-2);
         assertEquals(20, g.getLongitude(1), 1e-2);
@@ -136,6 +136,13 @@ public class GraphStorageTest extends AbstractGraphTester
         assertEquals(12, g.getLatitude(2), 1e-2);
         assertEquals(12, g.getLongitude(2), 1e-2);
         assertEquals(1, GHUtility.count(explorer.setBaseNode(2)));
+
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(2)));
+        
+        EdgeIteratorState eib = GHUtility.getEdge(g, 1, 2);
+        assertEquals(Helper.createPointList(), eib.fetchWayGeometry(0));
+        assertEquals(Helper.createPointList(11, 20), eib.fetchWayGeometry(1));
+        assertEquals(Helper.createPointList(12, 12), eib.fetchWayGeometry(2));
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(2)));
     }
 
@@ -209,8 +216,9 @@ public class GraphStorageTest extends AbstractGraphTester
         EdgeIteratorState iter2 = iter.detach();
         assertEquals(2, iter.getAdjNode());
         assertEquals(2, iter2.getAdjNode());
+        
         iter.next();
         assertEquals(1, iter.getAdjNode());
-        assertEquals(2, iter2.getAdjNode());
+        assertEquals(2, iter2.getAdjNode());     
     }
 }

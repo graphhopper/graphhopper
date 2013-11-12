@@ -19,7 +19,7 @@ import java.io.InputStreamReader;
 import java.util.List;
 
 /**
- * Taken from Lucene
+ * Defining several important constants for GraphHopper. Partially taken from Lucene.
  */
 public class Constants
 {
@@ -80,7 +80,6 @@ public class Constants
             System.err.println("GraphHopper Initialization ERROR: cannot read version!? " + ex.getMessage());
         }
         int indexM = version.indexOf("-");
-        int indexP = version.indexOf(".");
         if ("${project.version}".equals(version))
         {
             VERSION = "0.0";

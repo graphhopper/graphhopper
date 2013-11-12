@@ -23,16 +23,17 @@ package com.graphhopper.util;
  * <p/>
  * Usage:
  * <pre>
- * // calls to iter.adjNode(), distance() without next() will cause undefined behaviour
- * EdgeIterator iter = graph.getOutgoing(nodeId);
- * // or similar
- * EdgeIterator iter = graph.getIncoming(nodeId);
+ * EdgeExplorer explorer = graph.createEdgeExplorer();
+ * EdgeIterator iter = explorer.setBaseNode(nodeId);
+ * // calls to iter.getAdjNode(), getDistance() without calling next() will cause undefined behaviour!
  * while(iter.next()) {
- *   int baseNodeId = iter.baseNode(); // equal to nodeId
- *   int adjacentNodeId = iter.adjNode();
+ *   int baseNodeId = iter.getBaseNode(); // equal to nodeId
+ *   int adjacentNodeId = iter.getAdjNode(); // this is the node where this edge state is "pointing to"
  *   ...
  * }
  *
+ * @see EdgeIteratorState
+ * @see EdgeExplorer
  * @author Peter Karich
  */
 public interface EdgeIterator extends EdgeIteratorState
@@ -41,9 +42,11 @@ public interface EdgeIterator extends EdgeIteratorState
      * To be called to go to the next edge state.
      */
     boolean next();
-    
+
+    /**
+     * Creates an edge object from the EdgeIterator its current state.
+     */
     EdgeIteratorState detach();
-    
     /**
      * integer value to indicate if an edge is valid or not which then would be initialized with
      * this value

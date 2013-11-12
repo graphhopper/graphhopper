@@ -149,12 +149,6 @@ public abstract class QuadTreeTester
         assertEquals(3, coll.size());
     }
 
-//    @Test
-//    public void testGetNeighboursRectangleSearch() {
-//        QuadTree<Long> instance = createQuadTree(100);
-//        Collection<CoordTrig<Long>> coll = instance.getNodes(new BBox(12, 12.5f, 9.5f, 10));
-//        // TODO
-//    }
     @Test
     public void testGetNeighboursSearch()
     {

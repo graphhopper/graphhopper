@@ -215,8 +215,7 @@ public class Helper
 
     public static int getSizeOfObjectArray( int length, int factor )
     {
-        // TODO add 4byte to make a multiple of 8 in some cases
-        // TODO compressed oop
+        // improvements: add 4byte to make a multiple of 8 in some cases plus compressed oop
         return factor * (4 + 4 + 4 + 4) + 4 * length;
     }
 
@@ -237,18 +236,6 @@ public class Helper
         return str == null || str.trim().length() == 0;
     }
 
-    /*
-     public static EdgePropertyEncoder getVehicleEncoder(String str) {
-     str = str.toLowerCase();
-     if (str.isEmpty() || "car".equals(str))
-     return new CarFlagEncoder();
-     else if ("foot".equals(str))
-     return new FootFlagEncoder();
-     else if ("bike".equals(str))
-     return new BikeFlagEncoder();
-     throw new RuntimeException("VehicleEncoder not found " + str);
-     }
-     */
     /**
      * Determines if the specified ByteBuffer is one which maps to a file!
      */

@@ -12,13 +12,13 @@ var firstClickToRoute;
 var defaultTranslationMap = null;
 var enTranslationMap = null;
 
-var iconTo = L.icon({
-    iconUrl: './img/marker-to.png', 
-    iconAnchor: [10, 16]
-});
 var iconFrom = L.icon({
     iconUrl: './img/marker-from.png', 
-    iconAnchor: [10, 16]
+    iconAnchor: [12, 12]
+});
+var iconTo = L.icon({
+    iconUrl: './img/marker-to.png', 
+    iconAnchor: [12, 12]
 });
 
 var bounds = {};
@@ -105,7 +105,7 @@ $(document).ready(function(e) {
 //        var tempFeature = {
 //            "type": "Feature", "geometry": { "type": "LineString", "coordinates": data }
 //        };        
-//        routingLayer.addData(tempFeature);  
+//        routingLayer.addData(tempFeature);
         
         // execute query
         initFromParams(urlParams, true);        

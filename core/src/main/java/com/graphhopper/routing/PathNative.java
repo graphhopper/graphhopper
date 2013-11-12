@@ -27,7 +27,7 @@ import com.graphhopper.util.EdgeIterator;
  * @author Peter Karich
  */
 public class PathNative extends Path
-{    
+{
     int[] parents;
     int[] pathEdgeIds;
 
@@ -45,18 +45,15 @@ public class PathNative extends Path
     public Path extract()
     {
         if (endNode < 0)
-        {
             return this;
-        }
 
         while (true)
         {
             int edgeId = pathEdgeIds[endNode];
             if (!EdgeIterator.Edge.isValid(edgeId))
-            {
                 break;
-            }
-            processDistance(edgeId, endNode);
+
+            processEdge(edgeId, endNode);
             endNode = parents[endNode];
         }
         reverseOrder();

@@ -168,12 +168,12 @@ public class BBox implements Shape, Cloneable
     public boolean equals( Object obj )
     {
         if (obj == null)
-        {
             return false;
-        }
+
         BBox b = (BBox) obj;
-        return NumHelper.equals(minLat, b.minLat) && NumHelper.equals(maxLat, b.maxLat)
-                && NumHelper.equals(minLon, b.minLon) && NumHelper.equals(maxLon, b.maxLon);
+        // equals within a very small range
+        return NumHelper.equalsEps(minLat, b.minLat) && NumHelper.equalsEps(maxLat, b.maxLat)
+                && NumHelper.equalsEps(minLon, b.minLon) && NumHelper.equalsEps(maxLon, b.maxLon);
     }
 
     @Override

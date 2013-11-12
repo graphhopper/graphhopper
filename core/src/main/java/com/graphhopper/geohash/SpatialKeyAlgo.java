@@ -172,6 +172,7 @@ public class SpatialKeyAlgo implements KeyAlgo
                 }
             }
             i++;
+
             if (i < allBits)
                 hash <<= 1;
             else

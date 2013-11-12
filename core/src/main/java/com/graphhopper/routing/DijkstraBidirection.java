@@ -30,140 +30,133 @@ import com.graphhopper.util.EdgeWrapper;
  * more memory efficient as it does not go the normal Java way via references. In first tests this
  * class saves 30% memory, but as you can see it is more complicated.
  * <p/>
- * TODO: use only one EdgeWrapper to save memory. This is not easy if we want it to be as fast as
- * the current solution. But we need to try it out if a forwardSearchBitset.contains(ref) is that
+ * Possible improvements
+ * <p>
+ * 1. use only one EdgeWrapper to save memory. This is not easy if we want it to be as fast as the
+ * current solution. But we need to try it out if a forwardSearchBitset.contains(ref) is that
  * expensive
  * <p/>
- * TODO EdgeWrapper: instead of creating references point to the edges itself => we only need an
- * edge+node array and from that can retrieve eg. the distance
+ * 2. instead of creating references point to the edges itself => we only need an edge+node array
+ * and from that can retrieve eg. the distance
  * <p/>
  * @author Peter Karich
  */
-public class DijkstraBidirection extends AbstractRoutingAlgorithm
+public class DijkstraBidirection extends AbstractBidirAlgo
 {
-    private int from, to;
-    protected int currFrom;
-    protected double currFromWeight;
-    protected int currFromRef;
-    protected int currTo;
-    protected double currToWeight;
-    protected int currToRef;
-    protected PathBidir shortest;
-    protected EdgeWrapper wrapperOther;
+    private int currFrom;
+    private double currFromWeight;
+    private int currFromRef;
+    private int currTo;
+    private double currToWeight;
+    private int currToRef;
+    private EdgeWrapper parentRefOther;
     private IntDoubleBinHeap openSetFrom;
-    private EdgeWrapper wrapperFrom;
-    private int visitedFromCount;
+    private EdgeWrapper parentRefFrom;
     private IntDoubleBinHeap openSetTo;
-    private EdgeWrapper wrapperTo;
-    private int visitedToCount;
-    private boolean alreadyRun;
+    private EdgeWrapper parentRefTo;
+    private PathBidir nativeBestPath;
 
     public DijkstraBidirection( Graph graph, FlagEncoder encoder, WeightCalculation type )
     {
         super(graph, encoder, type);
-        int locs = Math.max(20, graph.getNodes());
-        openSetFrom = new IntDoubleBinHeap(locs / 10);
-        wrapperFrom = new EdgeWrapper(locs / 10);
-
-        openSetTo = new IntDoubleBinHeap(locs / 10);
-        wrapperTo = new EdgeWrapper(locs / 10);
+        initCollections(1000);
     }
 
-    DijkstraBidirection initFrom( int from )
+    protected void initCollections( int locs )
     {
-        this.from = from;
-        currFrom = from;
-        currFromWeight = 0;
-        currFromRef = wrapperFrom.add(from, 0, EdgeIterator.NO_EDGE);
-        return this;
-    }
+        openSetFrom = new IntDoubleBinHeap(locs);
+        parentRefFrom = new EdgeWrapper(locs);
 
-    DijkstraBidirection initTo( int to )
-    {
-        this.to = to;
-        currTo = to;
-        currToWeight = 0;
-        currToRef = wrapperTo.add(to, 0, EdgeIterator.NO_EDGE);
-        return this;
+        openSetTo = new IntDoubleBinHeap(locs);
+        parentRefTo = new EdgeWrapper(locs);
     }
 
     @Override
-    public Path calcPath( int from, int to )
+    public void initFrom( int from, double dist )
     {
-        if (alreadyRun)
+        currFrom = from;
+        currFromWeight = dist;
+        currFromRef = parentRefFrom.add(from, dist, EdgeIterator.NO_EDGE);
+        openSetFrom.insert_(currFromWeight, currFromRef);
+        if (currTo >= 0)
         {
-            throw new IllegalStateException("Create a new instance per call");
+            parentRefOther = parentRefTo;
+            updateShortest(currFrom, currFromRef, currToWeight);
         }
-        alreadyRun = true;
-        initPath();
-        initFrom(from);
-        initTo(to);
-
-        Path p = checkIndenticalFromAndTo();
-        if (p != null)
-        {
-            return p;
-        }
-
-        int finish = 0;
-        while (finish < 2)
-        {
-            finish = 0;
-            if (!fillEdgesFrom())
-            {
-                finish++;
-            }
-
-            if (!fillEdgesTo())
-            {
-                finish++;
-            }
-        }
-
-        return shortest.extract();
     }
 
-    void initPath()
+    @Override
+    public void initTo( int to, double dist )
     {
-        shortest = new PathBidir(graph, flagEncoder, wrapperFrom, wrapperTo);
+        currTo = to;
+        currToWeight = dist;
+        currToRef = parentRefTo.add(to, dist, EdgeIterator.NO_EDGE);
+        openSetTo.insert_(currToWeight, currToRef);
+        if (currFrom >= 0)
+        {
+            parentRefOther = parentRefFrom;
+            updateShortest(currTo, currToRef, currFromWeight);
+        }
+    }
+
+    @Override
+    protected void initPath()
+    {
+        nativeBestPath = new PathBidir(graph, flagEncoder, parentRefFrom, parentRefTo);
+    }
+
+    @Override
+    public Path extractPath()
+    {
+        return nativeBestPath.extract();
+    }
+
+    @Override
+    void checkState( int fromBase, int fromAdj, int toBase, int toAdj )
+    {
+        if (parentRefFrom.isEmpty() || parentRefTo.isEmpty())
+            throw new IllegalStateException("Either 'from'-edge or 'to'-edge is inaccessible. From:" + fromBase + ", to:" + toBase);
     }
 
     // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
     // a node from overlap may not be on the shortest path!!
     // => when scanning an arc (v, w) in the forward search and w is scanned in the reverseOrder 
     //    search, update shortest = μ if df (v) + (v, w) + dr (w) < μ            
-    boolean checkFinishCondition()
+    @Override
+    protected boolean finished()
     {
-        return currFromWeight + currToWeight >= shortest.getWeight();
+        if (finishedFrom || finishedTo)
+            return true;
+
+        return currFromWeight + currToWeight >= nativeBestPath.getWeight();
     }
 
     void fillEdges( int currNode, double currWeight, int currRef,
-            IntDoubleBinHeap prioQueue, EdgeWrapper wrapper, EdgeExplorer explorer )
+            IntDoubleBinHeap openSet, EdgeWrapper wrapper, EdgeExplorer explorer )
     {
-
-        explorer.setBaseNode(currNode);
-        while (explorer.next())
+        EdgeIterator iter = explorer.setBaseNode(currNode);
+        while (iter.next())
         {
-            if (!accept(explorer))
+            if (!accept(iter))
                 continue;
 
-            int neighborNode = explorer.getAdjNode();
-            double tmpWeight = weightCalc.getWeight(explorer) + currWeight;
+            int neighborNode = iter.getAdjNode();
+            double tmpWeight = weightCalc.getWeight(iter) + currWeight;
             int newRef = wrapper.getRef(neighborNode);
             if (newRef < 0)
             {
-                newRef = wrapper.add(neighborNode, tmpWeight, explorer.getEdge());
+                newRef = wrapper.add(neighborNode, tmpWeight, iter.getEdge());
                 wrapper.putParent(newRef, currRef);
-                prioQueue.insert_(tmpWeight, newRef);
+                openSet.insert_(tmpWeight, newRef);
             } else
             {
                 double weight = wrapper.getWeight(newRef);
                 if (weight > tmpWeight)
                 {
-                    wrapper.putEdgeId(newRef, explorer.getEdge());
+                    wrapper.putEdgeId(newRef, iter.getEdge());
                     wrapper.putWeight(newRef, tmpWeight);
                     wrapper.putParent(newRef, currRef);
-                    prioQueue.update_(tmpWeight, newRef);
+                    openSet.update_(tmpWeight, newRef);
                 }
             }
 
@@ -173,76 +166,50 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm
 
     void updateShortest( int nodeId, int ref, double weight )
     {
-        int otherRef = wrapperOther.getRef(nodeId);
+        int otherRef = parentRefOther.getRef(nodeId);
         if (otherRef < 0)
-        {
             return;
-        }
 
         // update μ
-        double newWeight = weight + wrapperOther.getWeight(otherRef);
-        if (newWeight < shortest.getWeight())
+        double newWeight = weight + parentRefOther.getWeight(otherRef);
+        if (newWeight < nativeBestPath.getWeight())
         {
-            shortest.switchWrapper = wrapperFrom == wrapperOther;
-            shortest.fromRef = ref;
-            shortest.toRef = otherRef;
-            shortest.setWeight(newWeight);
+            nativeBestPath.switchWrapper = parentRefFrom == parentRefOther;
+            nativeBestPath.fromRef = ref;
+            nativeBestPath.toRef = otherRef;
+            nativeBestPath.setWeight(newWeight);
         }
     }
 
+    @Override
     boolean fillEdgesFrom()
     {
-        wrapperOther = wrapperTo;
-        fillEdges(currFrom, currFromWeight, currFromRef, openSetFrom, wrapperFrom, outEdgeExplorer);
-        visitedFromCount++;
         if (openSetFrom.isEmpty())
-        {
             return false;
-        }
 
         currFromRef = openSetFrom.poll_element();
-        currFrom = wrapperFrom.getNode(currFromRef);
-        currFromWeight = wrapperFrom.getWeight(currFromRef);
-        if (checkFinishCondition())
-        {
-            return false;
-        }
-        return true;
-    }
+        currFrom = parentRefFrom.getNode(currFromRef);
+        currFromWeight = parentRefFrom.getWeight(currFromRef);
 
-    boolean fillEdgesTo()
-    {
-        wrapperOther = wrapperFrom;
-        fillEdges(currTo, currToWeight, currToRef, openSetTo, wrapperTo, inEdgeExplorer);
-        visitedToCount++;
-        if (openSetTo.isEmpty())
-        {
-            return false;
-        }
-
-        currToRef = openSetTo.poll_element();
-        currTo = wrapperTo.getNode(currToRef);
-        currToWeight = wrapperTo.getWeight(currToRef);
-        if (checkFinishCondition())
-        {
-            return false;
-        }
+        parentRefOther = parentRefTo;
+        fillEdges(currFrom, currFromWeight, currFromRef, openSetFrom, parentRefFrom, outEdgeExplorer);
+        visitedFromCount++;
         return true;
     }
 
     @Override
-    public int getVisitedNodes()
+    boolean fillEdgesTo()
     {
-        return visitedFromCount + visitedToCount;
-    }
+        if (openSetTo.isEmpty())
+            return false;
+        currToRef = openSetTo.poll_element();
+        currTo = parentRefTo.getNode(currToRef);
+        currToWeight = parentRefTo.getWeight(currToRef);
 
-    private Path checkIndenticalFromAndTo()
-    {
-        if (from == to)
-        {
-            return new Path(graph, flagEncoder);
-        }
-        return null;
+        parentRefOther = parentRefFrom;
+        fillEdges(currTo, currToWeight, currToRef, openSetTo, parentRefTo, inEdgeExplorer);
+        visitedToCount++;
+        return true;
     }
 
     @Override

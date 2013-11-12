@@ -25,6 +25,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.index.Location2IDIndex;
+import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import java.io.File;
@@ -32,6 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
@@ -57,10 +59,20 @@ public class RoutingAlgorithmIT
     List<OneRun> createMonacoCar()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(43.730729, 7.42135, 43.72775, 7.418737, 2524, 87));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3605, 126));
-        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.4277, 2490, 102));
-        list.add(new OneRun(43.733709, 7.41354, 43.739662, 7.424355, 2303, 108));
+        list.add(new OneRun(43.730729, 7.42135, 43.727697, 7.419199, 2581, 91));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3586, 126));
+        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.4277, 2560, 102));
+        list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 2225, 105));
+        list.add(new OneRun(43.730949, 7.412338, 43.739643, 7.424542, 2101, 100));
+        list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
+
+        // same special cases where GPS-exact routing could have problems (same edge and neighbor edges)
+        list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.41934, 0, 1));
+        // on the same edge and very close
+        list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.4193, 2, 2));
+        // one way stuff
+        list.add(new OneRun(43.729445, 7.415063, 43.728856, 7.41472, 107, 4));
+        list.add(new OneRun(43.728856, 7.41472, 43.729445, 7.415063, 316, 11));
         return list;
     }
 
@@ -73,11 +85,34 @@ public class RoutingAlgorithmIT
     }
 
     @Test
+    public void testMoscow()
+    {
+        // extracted via ./graphhopper.sh extract "37.582641,55.805261,37.626929,55.824455"
+
+        List<OneRun> list = new ArrayList<OneRun>();
+        // choose perpendicular
+        // http://localhost:8989/?point=55.818994%2C37.595354&point=55.819175%2C37.596931
+        list.add(new OneRun(55.818994, 37.595354, 55.819175, 37.596931, 1052, 14));
+        // should choose the closest road not the other one (opposite direction)
+        // http://localhost:8989/?point=55.818898%2C37.59661&point=55.819066%2C37.596374
+        list.add(new OneRun(55.818898, 37.59661, 55.819066, 37.596374, 24, 2));
+        // respect one way!
+        // http://localhost:8989/?point=55.819066%2C37.596374&point=55.818898%2C37.59661
+        list.add(new OneRun(55.819066, 37.596374, 55.818898, 37.59661, 1114, 23));
+        runAlgo(testCollector, "files/moscow.osm.gz", "target/graph-moscow",
+                list, "CAR", true, "CAR", "fastest");
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
     public void testMonacoFastest()
     {
         List<OneRun> list = createMonacoCar();
-        list.get(3).dist = 2353;
-        list.get(3).locs = 110;
+        list.get(0).locs = 95;
+        list.get(3).dist = 2274;
+        list.get(3).locs = 107;
+        list.get(4).dist = 2150;
+        list.get(4).locs = 102;
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "CAR", true, "CAR", "fastest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -89,12 +124,12 @@ public class RoutingAlgorithmIT
         // Additional locations are inserted because of new crossings from foot to highway paths!
         // Distance is the same.
         List<OneRun> list = createMonacoCar();
-        list.get(0).locs = 97;
+        list.get(0).locs = 101;
         list.get(1).locs = 135;
+        list.get(2).locs = 105;
         list.get(3).locs = 117;
+        list.get(4).locs = 106;
 
-        // 43.72915, 7.410572, 43.739213, 7.4277 -> cannot route
-        // 43.72915, 7.410572, 43.739213, 7.4278 -> all ok
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "CAR,FOOT", false, "CAR", "shortest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -104,10 +139,10 @@ public class RoutingAlgorithmIT
     public void testMonacoFoot()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 1536, 80));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3455, 123));
-        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2018, 89));
-        list.add(new OneRun(43.733709, 7.41354, 43.739662, 7.424355, 1434, 80));
+        list.add(new OneRun(43.730729, 7.421288, 43.727697, 7.419199, 1566, 84));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3435, 123));
+        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2085, 89));
+        list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1421, 78));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "FOOT", true, "FOOT", "shortest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -117,10 +152,10 @@ public class RoutingAlgorithmIT
     public void testMonacoBike()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 2543, 86));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3604, 125));
-        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2490, 102));
-        list.add(new OneRun(43.733709, 7.41354, 43.739662, 7.424355, 2303, 108));
+        list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 2535, 88));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3585, 126));
+        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2569, 107));
+        list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 2225, 105));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "BIKE", true, "BIKE", "shortest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -129,8 +164,8 @@ public class RoutingAlgorithmIT
     List<OneRun> createAndorra()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 17345, 435));
-        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 11093, 250));
+        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 17712, 446));
+        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 11411, 259));
         return list;
     }
 
@@ -154,11 +189,11 @@ public class RoutingAlgorithmIT
     public void testAndorraFoot()
     {
         List<OneRun> list = createAndorra();
-        list.get(0).dist = 16023;
-        list.get(0).locs = 514;
-        list.get(1).dist = 12410;
-        list.get(1).locs = 391;
-        // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
+        list.get(0).dist = 16354;
+        list.get(0).locs = 523;
+        list.get(1).dist = 12704;
+        list.get(1).locs = 404;
+
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra",
                 list, "FOOT", true, "FOOT", "shortest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -172,10 +207,9 @@ public class RoutingAlgorithmIT
         // bzcat campo-grande.osm.bz2 
         //   | ./bin/osmosis --read-xml enableDateParsing=no file=- --bounding-box top=-20.4 left=-54.6 bottom=-20.6 right=-54.5 --write-xml file=- 
         //   | bzip2 > campo-grande.extracted.osm.bz2
-
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(-20.4, -54.6, -20.6, -54.54, 25515, 253));
-        list.add(new OneRun(-20.43, -54.54, -20.537, -54.674, 18020, 238));
+        list.add(new OneRun(-20.43, -54.54, -20.537, -54.674, 18009, 234));
         runAlgo(testCollector, "files/campo-grande.osm.gz", "target/graph-campo-grande", list,
                 "CAR", false, "CAR", "shortest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -185,37 +219,43 @@ public class RoutingAlgorithmIT
             String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
             boolean ch, String vehicle, String weightCalcStr )
     {
+        AlgorithmPreparation tmpPrepare = null;
+        OneRun tmpOneRun = null;
         try
         {
-            // make sure we are using fresh graphhopper files with correct vehicle
             Helper.removeDir(new File(graphFile));
             GraphHopper hopper = new GraphHopper().setInMemory(true, true).setOSMFile(osmFile).
                     disableCHShortcuts().
                     setGraphHopperLocation(graphFile).setEncodingManager(new EncodingManager(importVehicles)).
                     importOrLoad();
 
-            Graph g = hopper.getGraph();
-            Location2IDIndex idx = hopper.getLocationIndex();
             final AbstractFlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             WeightCalculation weightCalc = new ShortestCalc();
-            if ("fastest".equals(weightCalcStr))
+            if ("fastest".equalsIgnoreCase(weightCalcStr))
                 weightCalc = new FastestCalc(encoder);
 
-            Collection<AlgorithmPreparation> prepares = RoutingAlgorithmSpecialAreaTests.
-                    createAlgos(g, encoder, ch, weightCalc, hopper.getEncodingManager());
+            Collection<Entry<AlgorithmPreparation, Location2IDIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
+                    createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, ch, weightCalc, hopper.getEncodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-            for (AlgorithmPreparation prepare : prepares)
+            for (Entry<AlgorithmPreparation, Location2IDIndex> entry : prepares)
             {
-                for (OneRun or : forEveryAlgo)
+                tmpPrepare = entry.getKey();
+                Location2IDIndex idx = entry.getValue();
+                for (OneRun oneRun : forEveryAlgo)
                 {
-                    int from = idx.findClosest(or.fromLat, or.fromLon, edgeFilter).getClosestNode();
-                    int to = idx.findClosest(or.toLat, or.toLon, edgeFilter).getClosestNode();
-                    testCollector.assertDistance(prepare.createAlgo(), from, to, or.dist, or.locs);
+                    tmpOneRun = oneRun;
+                    LocationIDResult from = idx.findClosest(oneRun.fromLat, oneRun.fromLon, edgeFilter);
+                    LocationIDResult to = idx.findClosest(oneRun.toLat, oneRun.toLon, edgeFilter);
+                    testCollector.assertDistance(tmpPrepare.createAlgo(), from, to, oneRun.dist, oneRun.locs);
                 }
             }
         } catch (Exception ex)
         {
-            throw new RuntimeException("cannot handle osm file " + osmFile, ex);
+            if (tmpPrepare == null)
+                throw new RuntimeException("cannot handle file " + osmFile, ex);
+
+            throw new RuntimeException("cannot handle " + tmpPrepare.toString() + ", for " + tmpOneRun
+                    + ", file " + osmFile, ex);
         } finally
         {
             Helper.removeDir(new File(graphFile));
@@ -235,26 +275,24 @@ public class RoutingAlgorithmIT
 
         String bigFile = "10000EWD.txt.gz";
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
-        Collection<AlgorithmPreparation> prepares = RoutingAlgorithmSpecialAreaTests.
-                createAlgos(graph, encoder, false, new ShortestCalc(), eManager);
-        for (AlgorithmPreparation prepare : prepares)
+        Collection<Entry<AlgorithmPreparation, Location2IDIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
+                createAlgos(graph, null, encoder, false, new ShortestCalc(), eManager);
+        for (Entry<AlgorithmPreparation, Location2IDIndex> entry : prepares)
         {
-            StopWatch sw = new StopWatch();            
+            AlgorithmPreparation prepare = entry.getKey();
+            StopWatch sw = new StopWatch();
             for (int i = 0; i < N; i++)
             {
-                int index1 = Math.abs(rand.nextInt(graph.getNodes()));
-                int index2 = Math.abs(rand.nextInt(graph.getNodes()));
+                int node1 = Math.abs(rand.nextInt(graph.getNodes()));
+                int node2 = Math.abs(rand.nextInt(graph.getNodes()));
                 RoutingAlgorithm d = prepare.createAlgo();
                 if (i >= noJvmWarming)
-                {
                     sw.start();
-                }
-                Path p = d.calcPath(index1, index2);
+
+                Path p = d.calcPath(node1, node2);
                 // avoid jvm optimization => call p.distance
                 if (i >= noJvmWarming && p.getDistance() > -1)
-                {
                     sw.stop();
-                }
 
                 // System.out.println("#" + i + " " + name + ":" + sw.getSeconds() + " " + p.nodes());
             }
@@ -289,6 +327,7 @@ public class RoutingAlgorithmIT
         // also the preparing is too costly to be called for every thread
         int algosLength = 2;
         WeightCalculation type = new ShortestCalc();
+        final EdgeFilter filter = new DefaultEdgeFilter(carEncoder);
         for (int no = 0; no < MAX; no++)
         {
             for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++)
@@ -307,10 +346,10 @@ public class RoutingAlgorithmIT
                         @Override
                         public void run()
                         {
-                            OneRun o = instances.get(instanceIndex);
-                            int from = idx.findID(o.fromLat, o.fromLon);
-                            int to = idx.findID(o.toLat, o.toLon);
-                            testCollector.assertDistance(algo, from, to, o.dist, o.locs);
+                            OneRun oneRun = instances.get(instanceIndex);
+                            LocationIDResult from = idx.findClosest(oneRun.fromLat, oneRun.fromLon, filter);
+                            LocationIDResult to = idx.findClosest(oneRun.toLat, oneRun.toLon, filter);
+                            testCollector.assertDistance(algo, from, to, oneRun.dist, oneRun.locs);
                             integ.addAndGet(1);
                         }
                     };
@@ -335,7 +374,7 @@ public class RoutingAlgorithmIT
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
-    class OneRun
+    static class OneRun
     {
         double fromLat, fromLon;
         double toLat, toLon;
@@ -350,6 +389,12 @@ public class RoutingAlgorithmIT
             this.toLon = toLon;
             this.dist = dist;
             this.locs = locs;
+        }
+
+        @Override
+        public String toString()
+        {
+            return fromLat + "," + fromLon + " -> " + toLat + "," + toLon + " with dist " + dist + " and locs " + locs;
         }
     }
 }

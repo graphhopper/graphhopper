@@ -309,8 +309,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     }
 
     /**
-     * TODO we just need the distance to calculate the real speed and then add 'duration' for
-     * waiting
+     * Special handling for ferry ways.
      */
     protected int handleFerry( OSMWay way, int unknownSpeed, int shortTripsSpeed, int longTripsSpeed )
     {

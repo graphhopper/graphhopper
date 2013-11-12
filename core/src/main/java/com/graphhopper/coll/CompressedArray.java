@@ -21,6 +21,7 @@ import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.storage.VLongStorage;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.CoordTrig;
+import com.graphhopper.util.shapes.GHPoint;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -77,11 +78,9 @@ public class CompressedArray
         try
         {
             if (currentWriter == null)
-            {
-                currentWriter = new VLongStorage(entriesPerSegment * approxBytesPerEntry);
-            }
+                currentWriter = new VLongStorage(entriesPerSegment * approxBytesPerEntry);           
 
-            long latlon = algo.encode(new CoordTrig(lat, lon));
+            long latlon = algo.encode(new GHPoint(lat, lon));
             // we cannot use delta encoding as vlong does not support negative numbers
             // but compression of vlong is much more efficient than directly storing the integers
             currentWriter.writeVLong(latlon);
@@ -96,7 +95,7 @@ public class CompressedArray
         }
     }
 
-    public CoordTrig get( long index )
+    public GHPoint get( long index )
     {
         int segmentNo = (int) (index / entriesPerSegment);
         int entry = (int) (index % entriesPerSegment);
@@ -114,9 +113,9 @@ public class CompressedArray
                 long latlon = store.readVLong();
                 if (i == entry)
                 {
-                    CoordTrig coord = new CoordTrig();
-                    algo.decode(latlon, coord);
-                    return coord;
+                    GHPoint point = new GHPoint();
+                    algo.decode(latlon, point);
+                    return point;
                 }
             }
             return null;

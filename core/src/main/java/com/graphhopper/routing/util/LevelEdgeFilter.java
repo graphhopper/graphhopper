@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Only certain nodes are accepted and therefor the others are ignored.
@@ -35,7 +35,7 @@ public class LevelEdgeFilter implements EdgeFilter
     }
 
     @Override
-    public boolean accept( EdgeIterator edgeIter )
+    public boolean accept( EdgeIteratorState edgeIter )
     {
         return graph.getLevel(edgeIter.getBaseNode()) <= graph.getLevel(edgeIter.getAdjNode());
     }

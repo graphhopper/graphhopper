@@ -39,11 +39,10 @@ public abstract class AbstractAlgoPreparation<T extends AlgorithmPreparation> im
     public T doWork()
     {
         if (prepared)
-        {
             throw new IllegalStateException("Call doWork only once!");
-        }
+
         prepared = true;
-        // no operation
+        // no operation        
         return (T) this;
     }
 

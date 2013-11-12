@@ -110,10 +110,10 @@ public class InstructionListTest
         });
         assertEquals(p.getDistance(), dr.val, 1e-7);
 
-        List<String> distStrings = wayList.createDistances(trMap.get("de"));
+        List<String> distStrings = wayList.createDistances(trMap.get("de"), false);
         assertEquals(Arrays.asList("100 m", "100 m", "100 m", "100 m", "100 m", "100 m"), distStrings);
 
-        distStrings = wayList.createDistances(trMap.get("en_US"));
+        distStrings = wayList.createDistances(trMap.get("en_US"), true);
         assertEquals(Arrays.asList("328 ft", "328 ft", "328 ft", "328 ft", "328 ft", "328 ft"), distStrings);
 
         p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestCalc()).calcPath(6, 2);

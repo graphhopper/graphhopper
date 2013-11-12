@@ -18,7 +18,6 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.AStar.AStarEdge;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
@@ -27,6 +26,7 @@ import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.shapes.CoordTrig;
+import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
@@ -58,40 +58,38 @@ import java.util.PriorityQueue;
  * <p/>
  * @author Peter Karich
  */
-public class AStarBidirection extends AbstractRoutingAlgorithm
+public class AStarBidirection extends AbstractBidirAlgo
 {
     private DistanceCalc dist;
-    private int from, to;
-    private int visitedFromCount;
     private PriorityQueue<AStarEdge> prioQueueOpenSetFrom;
-    private TIntObjectMap<AStarEdge> shortestWeightMapFrom;
-    private int visitedToCount;
+    private TIntObjectMap<AStarEdge> bestWeightMapFrom;
     private PriorityQueue<AStarEdge> prioQueueOpenSetTo;
-    private TIntObjectMap<AStarEdge> shortestWeightMapTo;
-    private boolean alreadyRun;
+    private TIntObjectMap<AStarEdge> bestWeightMapTo;
+    private TIntObjectMap<AStarEdge> bestWeightMapOther;
     protected AStarEdge currFrom;
     protected AStarEdge currTo;
-    private TIntObjectMap<AStarEdge> shortestWeightMapOther;
-    public PathBidirRef shortest;
+    protected double approximationFactor;
     private CoordTrig fromCoord;
     private CoordTrig toCoord;
-    protected double approximationFactor;
+    protected PathBidirRef bestPath;
 
     public AStarBidirection( Graph graph, FlagEncoder encoder, WeightCalculation type )
     {
         super(graph, encoder, type);
         int nodes = Math.max(20, graph.getNodes());
         initCollections(nodes);
+
+        // different default value for approximation than AStar
         setApproximation(false);
     }
 
     protected void initCollections( int size )
     {
         prioQueueOpenSetFrom = new PriorityQueue<AStarEdge>(size / 10);
-        shortestWeightMapFrom = new TIntObjectHashMap<AStarEdge>(size / 10);
+        bestWeightMapFrom = new TIntObjectHashMap<AStarEdge>(size / 10);
 
         prioQueueOpenSetTo = new PriorityQueue<AStarEdge>(size / 10);
-        shortestWeightMapTo = new TIntObjectHashMap<AStarEdge>(size / 10);
+        bestWeightMapTo = new TIntObjectHashMap<AStarEdge>(size / 10);
     }
 
     /**
@@ -120,158 +118,110 @@ public class AStarBidirection extends AbstractRoutingAlgorithm
         return this;
     }
 
-    public void initFrom( int from )
+    @Override
+    protected AStarEdge createEdgeEntry( int node, double dist )
     {
-        this.from = from;
-        currFrom = new AStarEdge(-1, from, 0, 0);
-        shortestWeightMapFrom.put(from, currFrom);
-        fromCoord = new CoordTrig(graph.getLatitude(from), graph.getLongitude(from));
-    }
-
-    public void initTo( int to )
-    {
-        this.to = to;
-        currTo = new AStarEdge(-1, to, 0, 0);
-        shortestWeightMapTo.put(to, currTo);
-        toCoord = new CoordTrig(graph.getLatitude(to), graph.getLongitude(to));
-    }
-
-    private Path checkIndenticalFromAndTo()
-    {
-        if (from == to)
-        {
-            return new Path(graph, flagEncoder);
-        }
-        return null;
-    }
-
-    protected PathBidirRef createPath()
-    {
-        return new PathBidirRef(graph, flagEncoder);
-    }
-
-    public void initPath()
-    {
-        shortest = createPath();
-        // pi_r_of_t = dist.calcDist(fromCoord.lat, fromCoord.lon, toCoord.lat, toCoord.lon);
+        return new AStarEdge(EdgeIterator.NO_EDGE, node, dist, dist);
     }
 
     @Override
-    public Path calcPath( int from, int to )
+    public void initFrom( int from, double dist )
     {
-        if (alreadyRun)
+        currFrom = createEdgeEntry(from, dist);
+        bestWeightMapFrom.put(from, currFrom);
+        prioQueueOpenSetFrom.add(currFrom);
+        fromCoord = new GHPoint(graph.getLatitude(from), graph.getLongitude(from));
+        if (currTo != null)
         {
-            throw new IllegalStateException("Create a new instance per call");
+            bestWeightMapOther = bestWeightMapTo;
+            updateShortest(currTo, from);
         }
-        alreadyRun = true;
-        initFrom(from);
-        initTo(to);
-        initPath();
+    }
 
-        Path p = checkIndenticalFromAndTo();
-        if (p != null)
+    @Override
+    public void initTo( int to, double dist )
+    {
+        currTo = createEdgeEntry(to, dist);
+        bestWeightMapTo.put(to, currTo);
+        prioQueueOpenSetTo.add(currTo);
+        toCoord = new GHPoint(graph.getLatitude(to), graph.getLongitude(to));
+        if (currFrom != null)
         {
-            return p;
+            bestWeightMapOther = bestWeightMapFrom;
+            updateShortest(currFrom, to);
         }
+    }
 
-        int finish = 0;
-        while (finish < 2)
-        {
-            finish = 0;
-            if (!fillEdgesFrom())
-            {
-                finish++;
-            }
+    @Override
+    protected void initPath()
+    {
+        bestPath = new PathBidirRef(graph, flagEncoder);
+    }
 
-            if (!fillEdgesTo())
-            {
-                finish++;
-            }
-        }
+    @Override
+    protected Path extractPath()
+    {
+        return bestPath.extract();
+    }
 
-        return shortest.extract();
+    @Override
+    void checkState( int fromBase, int fromAdj, int toBase, int toAdj )
+    {
+        if (bestWeightMapFrom.isEmpty() || bestWeightMapTo.isEmpty())
+            throw new IllegalStateException("Either 'from'-edge or 'to'-edge is inaccessible. From:" + bestWeightMapFrom + ", to:" + bestWeightMapTo);
     }
 
     // Problem is the correct finish condition! if the bounds are too wide too many nodes are visited :/   
     // d_f (v) + (v, w) + d_r (w) < μ + p_r(t)
     // where pi_r_of_t = p_r(t) = 1/2(pi_r(t) - pi_f(t) + pi_f(s)), and pi_f(t)=0
-    public boolean checkFinishCondition()
+    @Override
+    protected boolean finished()
     {
-        double tmp = shortest.getWeight() * approximationFactor;
-        if (currFrom == null)
-        {
-            return currTo.weightToCompare >= tmp;
-        } else if (currTo == null)
-        {
-            return currFrom.weightToCompare >= tmp;
-        }
+        if (finishedFrom || finishedTo)
+            return true;
+
+        double tmp = bestPath.getWeight() * approximationFactor;
         return currFrom.weightToCompare + currTo.weightToCompare >= tmp;
     }
 
-    public boolean fillEdgesFrom()
+    @Override
+    boolean fillEdgesFrom()
     {
-        if (currFrom != null)
-        {
-            shortestWeightMapOther = shortestWeightMapTo;
-            fillEdges(currFrom, toCoord, prioQueueOpenSetFrom, shortestWeightMapFrom, outEdgeExplorer);
-            visitedFromCount++;
-            if (prioQueueOpenSetFrom.isEmpty())
-            {
-                currFrom = null;
-                return false;
-            }
-
-            currFrom = prioQueueOpenSetFrom.poll();
-            if (checkFinishCondition())
-            {
-                return false;
-            }
-        } else if (currTo == null)
-        {
+        if (prioQueueOpenSetFrom.isEmpty())
             return false;
-        }
 
+        currFrom = prioQueueOpenSetFrom.poll();
+        bestWeightMapOther = bestWeightMapTo;
+        fillEdges(currFrom, toCoord, prioQueueOpenSetFrom, bestWeightMapFrom, outEdgeExplorer);
+        visitedFromCount++;
         return true;
     }
 
-    public boolean fillEdgesTo()
+    @Override
+    boolean fillEdgesTo()
     {
-        if (currTo != null)
-        {
-            shortestWeightMapOther = shortestWeightMapFrom;
-            fillEdges(currTo, fromCoord, prioQueueOpenSetTo, shortestWeightMapTo, inEdgeExplorer);
-            visitedToCount++;
-            if (prioQueueOpenSetTo.isEmpty())
-            {
-                currTo = null;
-                return false;
-            }
-
-            currTo = prioQueueOpenSetTo.poll();
-            if (checkFinishCondition())
-            {
-                return false;
-            }
-        } else if (currFrom == null)
-        {
+        if (prioQueueOpenSetTo.isEmpty())
             return false;
-        }
 
+        currTo = prioQueueOpenSetTo.poll();
+        bestWeightMapOther = bestWeightMapFrom;
+        fillEdges(currTo, fromCoord, prioQueueOpenSetTo, bestWeightMapTo, inEdgeExplorer);
+        visitedToCount++;
         return true;
     }
 
     private void fillEdges( AStarEdge curr, CoordTrig goal,
             PriorityQueue<AStarEdge> prioQueueOpenSet,
-            TIntObjectMap<AStarEdge> shortestWeightMap, EdgeExplorer iter )
+            TIntObjectMap<AStarEdge> shortestWeightMap, EdgeExplorer explorer )
     {
 
         int currNode = curr.endNode;
-        iter.setBaseNode(currNode);
+        EdgeIterator iter = explorer.setBaseNode(currNode);
         while (iter.next())
         {
-            if (!accept(iter))            
+            if (!accept(iter))
                 continue;
-            
+
             int neighborNode = iter.getAdjNode();
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
@@ -306,20 +256,18 @@ public class AStarBidirection extends AbstractRoutingAlgorithm
 //    @Override -> TODO use only weight => then a simple EdgeEntry is possible
     public void updateShortest( AStarEdge shortestDE, int currLoc )
     {
-        AStarEdge entryOther = shortestWeightMapOther.get(currLoc);
+        AStarEdge entryOther = bestWeightMapOther.get(currLoc);
         if (entryOther == null)
-        {
             return;
-        }
 
         // update μ
         double newShortest = shortestDE.weightToCompare + entryOther.weightToCompare;
-        if (newShortest < shortest.getWeight())
+        if (newShortest < bestPath.getWeight())
         {
-            shortest.setSwitchToFrom(shortestWeightMapFrom == shortestWeightMapOther);
-            shortest.edgeEntry = shortestDE;
-            shortest.edgeTo = entryOther;
-            shortest.setWeight(newShortest);
+            bestPath.setSwitchToFrom(bestWeightMapFrom == bestWeightMapOther);
+            bestPath.edgeEntry = shortestDE;
+            bestPath.edgeTo = entryOther;
+            bestPath.setWeight(newShortest);
         }
     }
 
@@ -327,11 +275,5 @@ public class AStarBidirection extends AbstractRoutingAlgorithm
     public String getName()
     {
         return "astarbi";
-    }
-
-    @Override
-    public int getVisitedNodes()
-    {
-        return visitedFromCount + visitedToCount;
     }
 }

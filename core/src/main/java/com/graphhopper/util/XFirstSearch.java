@@ -65,11 +65,11 @@ public class XFirstSearch
             current = coll.pop();
             if (goFurther(current))
             {
-                explorer.setBaseNode(current);
-                while (explorer.next())
+                EdgeIterator iter = explorer.setBaseNode(current);
+                while (iter.next())
                 {
-                    int connectedId = explorer.getAdjNode();
-                    if (checkAdjacent(explorer) && !visited.contains(connectedId))
+                    int connectedId = iter.getAdjNode();
+                    if (checkAdjacent(iter) && !visited.contains(connectedId))
                     {
                         visited.add(connectedId);
                         coll.push(connectedId);

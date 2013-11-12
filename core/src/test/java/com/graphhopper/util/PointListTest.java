@@ -27,6 +27,17 @@ import static org.junit.Assert.*;
 public class PointListTest
 {
     @Test
+    public void testEquals()
+    {
+        assertEquals(Helper.createPointList(), PointList.EMPTY);
+        PointList list1 = Helper.createPointList(38.5, -120.2, 43.252, -126.453, 40.7, -120.95, 
+                50.3139, 10.612793, 50.04303, 9.497681);
+        PointList list2 = Helper.createPointList(38.5, -120.2, 43.252, -126.453, 40.7, -120.95, 
+                50.3139, 10.612793, 50.04303, 9.497681);
+        assertEquals(list1, list2);
+    }
+
+    @Test
     public void testReverse()
     {
         PointList instance = new PointList();
@@ -37,8 +48,11 @@ public class PointListTest
         instance = new PointList();
         instance.add(1, 1);
         instance.add(2, 2);
+        PointList clonedList = instance.clone(false);
         instance.reverse();
         assertEquals(2, instance.getLongitude(0), 1e-7);
         assertEquals(1, instance.getLongitude(1), 1e-7);
+        
+        assertEquals(clonedList, instance.clone(true));
     }
 }

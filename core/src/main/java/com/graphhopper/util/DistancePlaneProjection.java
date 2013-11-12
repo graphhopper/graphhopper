@@ -27,7 +27,7 @@ import static java.lang.Math.*;
  * <p/>
  * http://stackoverflow.com/q/1006654
  * <p/>
- * TODO http://en.wikipedia.org/wiki/Mercator_projection#Mathematics_of_the_Mercator_projection
+ * http://en.wikipedia.org/wiki/Mercator_projection#Mathematics_of_the_Mercator_projection
  * http://gis.stackexchange.com/questions/4906/why-is-law-of-cosines-more-preferable-than-haversine-when-calculating-distance-b
  * <p/>
  * @author Peter Karich

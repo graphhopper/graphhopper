@@ -583,11 +583,11 @@ public abstract class AbstractGraphTester
         EdgeIterator iter = carAllExplorer.setBaseNode(id9);
         assertTrue(iter.next());
         assertEquals(id12, iter.getAdjNode());
-        assertEquals(2, iter.getWayGeometry().getLongitude(0), 1e-7);
-        
+        assertEquals(2, iter.fetchWayGeometry(0).getLongitude(0), 1e-7);        
+
         assertTrue(iter.next());
         assertEquals(id11, iter.getAdjNode());
-        assertEquals(2, iter.getWayGeometry().getLongitude(0), 1e-7);        
+        assertEquals(2, iter.fetchWayGeometry(0).getLongitude(0), 1e-7);
     }
 
     @Test
@@ -687,12 +687,11 @@ public abstract class AbstractGraphTester
         assertEquals(0, iter.getBaseNode());
         assertEquals(2, iter.getAdjNode());
         assertEquals(20, iter.getDistance(), 1e-5);
-
-        // minor API glitch: should be RawEdgeIterator
-        iter = graph.getEdgeProps(edgeId, -1);
-        assertFalse(iter == null);
-        assertEquals(0, iter.getBaseNode());
-        assertEquals(2, iter.getAdjNode());
+        
+//        iter = graph.getEdgeProps(edgeId, -1);
+//        assertFalse(iter == null);
+//        assertEquals(0, iter.getBaseNode());
+//        assertEquals(2, iter.getAdjNode());
 
         iter = graph.getEdgeProps(edgeId, 1);
         assertTrue(iter == null);
@@ -790,6 +789,11 @@ public abstract class AbstractGraphTester
     public void testPillarNodes()
     {
         graph = createGraph();
+        graph.setNode(0, 0.01, 0.01);
+        graph.setNode(4, 0.4, 0.4);
+        graph.setNode(14, 0.14, 0.14);
+        graph.setNode(10, 0.99, 0.99);
+
         PointList pointList = Helper.createPointList(1, 1, 1, 2, 1, 3);
         graph.edge(0, 4, 100, carEncoder.flags(10, false)).setWayGeometry(pointList);
         pointList = Helper.createPointList(1, 5, 1, 6, 1, 7, 1, 8, 1, 9);
@@ -797,26 +801,36 @@ public abstract class AbstractGraphTester
         pointList = Helper.createPointList(1, 13, 1, 12, 1, 11);
         graph.edge(14, 0, 100, carEncoder.flags(10, false)).setWayGeometry(pointList);
 
-        // if tower node requested => return only tower nodes
         EdgeIterator iter = carAllExplorer.setBaseNode(0);
         assertTrue(iter.next());
         assertEquals(14, iter.getAdjNode());
-        assertPList(Helper.createPointList(1, 11, 1, 12, 1, 13.0), iter.getWayGeometry());        
+        assertPList(Helper.createPointList(1, 11, 1, 12, 1, 13.0), iter.fetchWayGeometry(0));
+        assertPList(Helper.createPointList(0.01, 0.01, 1, 11, 1, 12, 1, 13.0), iter.fetchWayGeometry(1));
+        assertPList(Helper.createPointList(1, 11, 1, 12, 1, 13.0, 0.14, 0.14), iter.fetchWayGeometry(2));
+        assertPList(Helper.createPointList(0.01, 0.01, 1, 11, 1, 12, 1, 13.0, 0.14, 0.14), iter.fetchWayGeometry(3));
+
         assertTrue(iter.next());
         assertEquals(4, iter.getAdjNode());
-        assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3), iter.getWayGeometry());        
+        assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3), iter.fetchWayGeometry(0));
+        assertPList(Helper.createPointList(0.01, 0.01, 1, 1, 1, 2, 1, 3), iter.fetchWayGeometry(1));
+        assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3, 0.4, 0.4), iter.fetchWayGeometry(2));
+        assertPList(Helper.createPointList(0.01, 0.01, 1, 1, 1, 2, 1, 3, 0.4, 0.4), iter.fetchWayGeometry(3));        
+
         assertFalse(iter.next());
 
         iter = carOutExplorer.setBaseNode(0);
         assertTrue(iter.next());
-        assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3), iter.getWayGeometry());
         assertEquals(4, iter.getAdjNode());
+        assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3), iter.fetchWayGeometry(0));
         assertFalse(iter.next());
 
         iter = carInExplorer.setBaseNode(10);
         assertTrue(iter.next());
-        assertPList(Helper.createPointList(1, 9, 1, 8, 1, 7, 1, 6, 1, 5), iter.getWayGeometry());
         assertEquals(4, iter.getAdjNode());
+        assertPList(Helper.createPointList(1, 9, 1, 8, 1, 7, 1, 6, 1, 5), iter.fetchWayGeometry(0));
+        assertPList(Helper.createPointList(0.99, 0.99, 1, 9, 1, 8, 1, 7, 1, 6, 1, 5), iter.fetchWayGeometry(1));
+        assertPList(Helper.createPointList(1, 9, 1, 8, 1, 7, 1, 6, 1, 5, 0.4, 0.4), iter.fetchWayGeometry(2));
+        assertPList(Helper.createPointList(0.99, 0.99, 1, 9, 1, 8, 1, 7, 1, 6, 1, 5, 0.4, 0.4), iter.fetchWayGeometry(3));
         assertFalse(iter.next());
     }
 
@@ -939,7 +953,7 @@ public abstract class AbstractGraphTester
         EdgeIteratorState iter2 = graph.edge(0, 1, 10, true);
         iter2.setName("named street2");
 
-        assertEquals("named street1", graph.getEdgeProps(iter1.getEdge(), -1).getName());
-        assertEquals("named street2", graph.getEdgeProps(iter2.getEdge(), -1).getName());
+        assertEquals("named street1", graph.getEdgeProps(iter1.getEdge(), iter1.getAdjNode()).getName());
+        assertEquals("named street2", graph.getEdgeProps(iter2.getEdge(), iter2.getAdjNode()).getName());
     }
 }

@@ -18,6 +18,13 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.coll.GHTreeMapComposed;
+import com.graphhopper.routing.*;
+import com.graphhopper.routing.util.AbstractAlgoPreparation;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.LevelEdgeFilter;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraOneToMany;
@@ -31,10 +38,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.util.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -179,6 +183,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     @Override
     public PrepareContractionHierarchies doWork()
     {
+        checkGraph();
         if (prepareEncoder == null)
             throw new IllegalStateException("No vehicle encoder set.");
 
@@ -271,6 +276,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             neighborUpdate = false;
 
         StopWatch neighborSW = new StopWatch();
+        LevelGraphStorage lg = ((LevelGraphStorage) g);
         while (!sortedNodes.isEmpty())
         {
             if (counter % logSize == 0)
@@ -331,7 +337,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             g.setLevel(wn.node, level);
             level++;
 
-            EdgeIterator iter = vehicleAllExplorer.setBaseNode(wn.node);
+            EdgeSkipIterator iter = (EdgeSkipIterator) vehicleAllExplorer.setBaseNode(wn.node);
             while (iter.next())
             {
                 int nn = iter.getAdjNode();
@@ -355,7 +361,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 }
 
                 if (removesHigher2LowerEdges)
-                    ((LevelGraphStorage) g).disconnect(vehicleAllTmpExplorer, iter);
+                    lg.disconnect(vehicleAllTmpExplorer, iter);
             }
         }
 
@@ -636,9 +642,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     PrepareContractionHierarchies initFromGraph()
     {
-        if (g == null)
-            throw new NullPointerException("Graph must not be empty calling doWork of preparation");
-
+        checkGraph();
         vehicleInExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, false));
         vehicleOutExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, false, true));
         vehicleAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
@@ -673,7 +677,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         }
 
         @Override
-        public final boolean accept( EdgeIterator iter )
+        public final boolean accept( EdgeIteratorState iter )
         {
             // ignore if it is skipNode or a endNode already contracted
             int node = iter.getAdjNode();
@@ -698,6 +702,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     @Override
     public RoutingAlgorithm createAlgo()
     {
+        checkGraph();
         // do not change weight within DijkstraBidirectionRef => so use ShortestCalc
         DijkstraBidirectionRef dijkstrabi = new DijkstraBidirectionRef(g, prepareEncoder, shortestCalc)
         {
@@ -709,32 +714,48 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             @Override
-            public boolean checkFinishCondition()
+            protected QueryGraph createQueryGraph()
             {
-                // changed finish condition for CH
-                if (currFrom == null)
+                return new QueryGraph(graph)
                 {
-                    return currTo.weight >= shortest.getWeight();
-                } else if (currTo == null)
-                {
-                    return currFrom.weight >= shortest.getWeight();
-                }
-                return currFrom.weight >= shortest.getWeight() && currTo.weight >= shortest.getWeight();
+                    @Override
+                    protected void updateDistance( EdgeIteratorState edge )
+                    {
+                        edge.setDistance(prepareWeightCalc.getWeight(edge));
+                    }
+                };
             }
 
             @Override
-            protected PathBidirRef createPath()
+            public boolean finished()
+            {
+                // we need to finish BOTH searches for CH!
+                if (finishedFrom && finishedTo)
+                    return true;
+
+                // changed also the final finish condition for CH                
+                return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
+            }
+
+            @Override
+            public void initPath()
             {
                 // CH changes the distance in prepareEdges to the weight
                 // now we need to transform it back to the real distance
                 WeightCalculation wc = createWeightCalculation();
-                return new Path4CH(graph, flagEncoder, wc);
+                bestPath = new Path4CH(graph, flagEncoder, wc);
             }
 
             @Override
             public String getName()
             {
-                return "dijkstraCH";
+                return "dijkstrabiCH";
+            }
+
+            @Override
+            public String toString()
+            {
+                return getName() + "|" + prepareWeightCalc;
             }
         };
 
@@ -744,8 +765,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return dijkstrabi;
     }
 
-    public RoutingAlgorithm createAStar()
+    public AStarBidirection createAStar()
     {
+        checkGraph();
         AStarBidirection astar = new AStarBidirection(g, prepareEncoder, shortestCalc)
         {
             @Override
@@ -756,33 +778,49 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             @Override
-            public boolean checkFinishCondition()
+            protected QueryGraph createQueryGraph()
             {
+                return new QueryGraph(graph)
+                {
+                    @Override
+                    protected void updateDistance( EdgeIteratorState edge )
+                    {
+                        edge.setDistance(prepareWeightCalc.getWeight(edge));
+                    }
+                };
+            }
+
+            @Override
+            protected boolean finished()
+            {
+                // we need to finish BOTH searches for CH!
+                if (finishedFrom && finishedTo)
+                    return true;
+
                 // changed finish condition for CH
-                double tmpWeight = shortest.getWeight() * approximationFactor;
-                if (currFrom == null)
-                {
-                    return currTo.weight >= tmpWeight;
-                } else if (currTo == null)
-                {
-                    return currFrom.weight >= tmpWeight;
-                }
+                double tmpWeight = bestPath.getWeight() * approximationFactor;
                 return currFrom.weight >= tmpWeight && currTo.weight >= tmpWeight;
             }
 
             @Override
-            protected PathBidirRef createPath()
+            protected void initPath()
             {
                 // CH changes the distance in prepareEdges to the weight
                 // now we need to transform it back to the real distance
                 WeightCalculation wc = createWeightCalculation();
-                return new Path4CH(graph, flagEncoder, wc);
+                bestPath = new Path4CH(graph, flagEncoder, wc);
             }
 
             @Override
             public String getName()
             {
-                return "astarCH";
+                return "astarbiCH";
+            }
+
+            @Override
+            public String toString()
+            {
+                return getName() + "|" + prepareWeightCalc;
             }
         };
 
@@ -820,6 +858,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 return prepareWeightCalc.revertWeight(iter, weight);
             }
         };
+    }
+
+    private void checkGraph()
+    {
+        if (g == null)
+            throw new NullPointerException("setGraph before usage");
     }
 
     private static class PriorityNode implements Comparable<PriorityNode>

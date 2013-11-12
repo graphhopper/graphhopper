@@ -20,6 +20,7 @@ package com.graphhopper.geohash;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.shapes.CoordTrig;
+import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -48,7 +49,7 @@ public class SpatialKeyAlgoTest
         long val = algo.encode(lat, lon);
         assertEquals("00000000" + "110011000000100101101011", BitUtil.BIG.toLastBitString(val, 32));
 
-        CoordTrig fl = new CoordTrig();
+        GHPoint fl = new GHPoint();
         algo.decode(val, fl);
         // normally 10km are expected here we have only 100meters ... (?)
         assertEquals(lat, fl.lat, .1);
@@ -69,7 +70,7 @@ public class SpatialKeyAlgoTest
         long val = algo.encode(lat, lon);
         assertEquals("11001100000010010110101100111110", BitUtil.BIG.toLastBitString(val, bits));
 
-        CoordTrig fl = new CoordTrig();
+        GHPoint fl = new GHPoint();
         algo.decode(val, fl);
         assertEquals(lat, fl.lat, 1e-2);
         assertEquals(lon, fl.lon, 1e-2);
@@ -89,7 +90,7 @@ public class SpatialKeyAlgoTest
         long val = algo.encode(lat, lon);
         assertEquals("11001100000010010110101100111110" + "11100111" + "01000110", BitUtil.BIG.toLastBitString(val, bits));
 
-        CoordTrig fl = new CoordTrig();
+        GHPoint fl = new GHPoint();
         algo.decode(val, fl);
         assertEquals(lat, fl.lat, 1e-4);
         assertEquals(lon, fl.lon, 1e-4);
@@ -107,11 +108,11 @@ public class SpatialKeyAlgoTest
             SpatialKeyAlgo algo = new SpatialKeyAlgo((int) i);
             long keyX = algo.encode(1, 1);
 
-            CoordTrig coord = new CoordTrig();
+            GHPoint coord = new GHPoint();
             algo.decode(keyX, coord);
             long keyY = algo.encode(coord.lat, coord.lon);
 
-            CoordTrig coord2 = new CoordTrig();
+            GHPoint coord2 = new GHPoint();
             algo.decode(keyY, coord2);
 
             double precision = DistanceCalc.C / (1 << (i / 2 - 2)) / 4;
@@ -154,7 +155,7 @@ public class SpatialKeyAlgoTest
         algo.decode(resKey, coord2);
         assertEquals(key, resKey);
 
-        CoordTrig coord = new CoordTrig(50.022846, 9.2123575);
+        GHPoint coord = new GHPoint(50.022846, 9.2123575);
         key = algo.encode(coord);
         algo.decode(key, coord2);
         assertEquals(key, algo.encode(coord2));
@@ -173,7 +174,7 @@ public class SpatialKeyAlgoTest
         // and ensure small distance
         assertTrue(dist + "", dist < 5);
 
-        coord = new CoordTrig(50.0606072, 9.6277542);
+        coord = new GHPoint(50.0606072, 9.6277542);
         key = algo.encode(coord);
         algo.decode(key, coord2);
         assertEquals(key, algo.encode(coord2));
@@ -181,7 +182,7 @@ public class SpatialKeyAlgoTest
         // and ensure small distance
         assertTrue(dist + "", dist < 5);
 
-        coord = new CoordTrig(0.01, 0.01);
+        coord = new GHPoint(0.01, 0.01);
         key = algo.encode(coord);
         algo.decode(key, coord2);
         assertEquals(key, algo.encode(coord2));

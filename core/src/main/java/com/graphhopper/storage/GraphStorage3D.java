@@ -44,10 +44,12 @@ public class GraphStorage3D extends GraphStorage implements Graph3D
     public void setNode( int index, double lat, double lon, double height )
     {
         setNode(index, lat, lon);
-        // TODO 1 bounds for index
-        // TODO 2 location to id index
+        
+        // Improvements:
+        // 1 bounds for index
+        // 2 location to id index
         // we need to avoid rewriting every algorithm like A*
-        // TODO 3 currWeightToGoal = dist.calcDistKm(toLat, toLon, tmpLat, tmpLon);
+        // 3 currWeightToGoal = dist.calcDistKm(toLat, toLon, tmpLat, tmpLon);
         nodes.setInt((long) index * nodeEntryBytes + N_HEIGHT, Helper.doubleToInt(height));
     }
 

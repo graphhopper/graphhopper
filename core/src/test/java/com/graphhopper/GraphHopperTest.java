@@ -71,6 +71,18 @@ public class GraphHopperTest
     }
 
     @Test
+    public void testPrepare() throws IOException
+    {
+        instance = new GraphHopper().setInMemory(true, false).setEncodingManager(new EncodingManager("CAR")).
+                setCHShortcuts("shortest").
+                setGraphHopperLocation(ghLoc).setOSMFile(testOsm);
+        instance.importOrLoad();
+        GHResponse ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).setAlgorithm("dijkstrabi"));
+        assertTrue(ph.isFound());
+        assertEquals(3, ph.getPoints().getSize());
+    }
+
+    @Test
     public void testFootAndCar() throws IOException
     {
         // now all ways are imported
@@ -84,19 +96,22 @@ public class GraphHopperTest
 
         // A to D
         GHResponse res = instance.route(new GHRequest(11.1, 50, 11.3, 51).setVehicle(EncodingManager.CAR));
+        assertFalse(res.hasErrors());
         assertTrue(res.isFound());
-        assertEquals(2, res.getPoints().getSize());
-        // => found D
-        assertEquals(51, res.getPoints().getLongitude(1), 1e-3);
-        assertEquals(11.3, res.getPoints().getLatitude(1), 1e-3);
+        assertEquals(3, res.getPoints().getSize());
+        // => found A and D
+        assertEquals(50, res.getPoints().getLongitude(0), 1e-3);
+        assertEquals(11.1, res.getPoints().getLatitude(0), 1e-3);
+        assertEquals(51, res.getPoints().getLongitude(2), 1e-3);
+        assertEquals(11.3, res.getPoints().getLatitude(2), 1e-3);
 
         // A to D not allowed for foot. But the location index will choose a node close to D accessible to FOOT        
         res = instance.route(new GHRequest(11.1, 50, 11.3, 51).setVehicle(EncodingManager.FOOT));
         assertTrue(res.isFound());
         assertEquals(2, res.getPoints().getSize());
-        // => found B
-        assertEquals(51, res.getPoints().getLongitude(1), 1e-3);
-        assertEquals(12, res.getPoints().getLatitude(1), 1e-3);
+        // => found a point on edge A-B        
+        assertEquals(11.680, res.getPoints().getLatitude(1), 1e-3);
+        assertEquals(50.644, res.getPoints().getLongitude(1), 1e-3);
 
         // A to E only for foot
         res = instance.route(new GHRequest(11.1, 50, 10, 51).setVehicle(EncodingManager.FOOT));
@@ -145,7 +160,7 @@ public class GraphHopperTest
     }
 
     @Test
-    public void testNoNPEIfOnlyLoad() throws IOException
+    public void testNoNPE_ifOnlyLoad() throws IOException
     {
         // missing import of graph
         instance = new GraphHopper().setInMemory(true, true);
@@ -212,18 +227,6 @@ public class GraphHopperTest
         GHResponse res = instance.route(new GHRequest(11.1, 50, 11.2, 52).setVehicle(EncodingManager.FOOT));
         assertTrue(res.isFound());
         assertEquals(3, res.getPoints().getSize());
-    }
-
-    @Test
-    public void testPrepare() throws IOException
-    {
-        instance = new GraphHopper().setInMemory(true, false).setEncodingManager(new EncodingManager("CAR")).
-                setCHShortcuts("shortest").
-                setGraphHopperLocation(ghLoc).setOSMFile(testOsm);
-        instance.importOrLoad();
-        GHResponse ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).setAlgorithm("dijkstrabi"));
-        assertTrue(ph.isFound());
-        assertEquals(3, ph.getPoints().getSize());
     }
 
     @Test

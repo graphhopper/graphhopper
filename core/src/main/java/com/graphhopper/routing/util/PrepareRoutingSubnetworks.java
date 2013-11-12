@@ -199,8 +199,8 @@ public class PrepareRoutingSubnetworks
         EdgeExplorer explorer = g.createEdgeExplorer();
         for (int start = 0; start < locs; start++)
         {
-            explorer.setBaseNode(start);
-            if (!explorer.next())
+            EdgeIterator iter = explorer.setBaseNode(start);
+            if (!iter.next())
             {
                 removed++;
                 g.markNodeRemoved(start);

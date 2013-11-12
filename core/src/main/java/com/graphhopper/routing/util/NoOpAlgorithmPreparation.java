@@ -31,8 +31,7 @@ public abstract class NoOpAlgorithmPreparation extends AbstractAlgoPreparation<N
     }
 
     /**
-     * Creates a preparation wrapper for the specified algorithm. Warning/TODO: set the _graph for
-     * the instance otherwise you'll get NPE when calling createAlgo. Possible values for
+     * Creates a preparation wrapper for the specified algorithm. Possible values for
      * algorithmStr: astar (A* algorithm), astarbi (bidirectional A*) dijkstra (Dijkstra),
      * dijkstrabi and dijkstraNative (a bit faster bidirectional Dijkstra).
      */
@@ -58,6 +57,12 @@ public abstract class NoOpAlgorithmPreparation extends AbstractAlgoPreparation<N
                     throw new RuntimeException(ex);
                 }
             }
+
+            @Override
+            public String toString()
+            {
+                return createAlgo().getName() + ", " + encoder + ", " + weightCalc;
+            }                        
         };
     }
 }

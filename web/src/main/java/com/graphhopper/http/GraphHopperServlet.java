@@ -110,10 +110,13 @@ public class GraphHopperServlet extends GHServlet
             // we can reduce the path length based on the maximum differences to the original coordinates
             double minPathPrecision = getDoubleParam(req, "minPathPrecision", 1d);
             boolean enableInstructions = getBooleanParam(req, "instructions", true);
+            boolean calcPoints = getBooleanParam(req, "calcPoints", true);
+            boolean useMiles = getBooleanParam(req, "useMiles", false);
+            
             String vehicleStr = getParam(req, "vehicle", "CAR").toUpperCase();
             Locale locale = Helper.getLocale(getParam(req, "locale", "en"));
             String algoTypeStr = getParam(req, "algoType", "fastest");
-            String algoStr = getParam(req, "algorithm", defaultAlgorithm);
+            String algoStr = getParam(req, "algorithm", defaultAlgorithm);            
             boolean encodedPolylineParam = getBooleanParam(req, "encodedPolyline", true);
 
             sw = new StopWatch().start();
@@ -123,8 +126,9 @@ public class GraphHopperServlet extends GHServlet
                 FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
                 rsp = hopper.route(new GHRequest(start, end).
                         setVehicle(algoVehicle.toString()).
-                        setType(vehicleStr).
+                        setType(algoTypeStr).
                         setAlgorithm(algoStr).
+                        putHint("calcPoints", calcPoints).
                         putHint("instructions", enableInstructions).
                         putHint("douglas.minprecision", minPathPrecision));
             } else
@@ -176,7 +180,7 @@ public class GraphHopperServlet extends GHServlet
                     InstructionList instructions = rsp.getInstructions();
                     builder.startObject("instructions").
                             object("descriptions", instructions.createDescription(tr)).
-                            object("distances", instructions.createDistances(tr)).
+                            object("distances", instructions.createDistances(tr, useMiles)).
                             object("indications", instructions.createIndications()).
                             endObject();
                 }

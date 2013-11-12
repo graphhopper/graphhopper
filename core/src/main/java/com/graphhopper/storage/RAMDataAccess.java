@@ -64,7 +64,7 @@ public class RAMDataAccess extends AbstractDataAccess
         if (da instanceof RAMDataAccess)
         {
             RAMDataAccess rda = (RAMDataAccess) da;
-            // TODO we could reuse rda segments!
+            // TODO PERFORMANCE we could reuse rda segments!
             rda.segments = new byte[segments.length][];
             for (int i = 0; i < segments.length; i++)
             {

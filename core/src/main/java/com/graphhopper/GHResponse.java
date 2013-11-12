@@ -38,6 +38,7 @@ public class GHResponse
     private String debugInfo = "";
     private List<Throwable> errors = new ArrayList<Throwable>(4);
     private InstructionList instructions = new InstructionList(0);
+    private boolean found;
 
     public GHResponse()
     {
@@ -82,9 +83,15 @@ public class GHResponse
         return time;
     }
 
+    public GHResponse setFound( boolean found )
+    {
+        this.found = found;
+        return this;
+    }
+
     public boolean isFound()
     {
-        return list != null && !list.isEmpty();
+        return found;
     }
 
     public BBox calcRouteBBox( BBox _fallback )
@@ -163,7 +170,7 @@ public class GHResponse
      * Creates the GPX Format out of the points.
      * <p/>
      * TODO make it more reliable and use times from the route as well not only the points.
-     * 
+     * <p/>
      * @return string to be stored as gpx file
      */
     public String createGPX( String trackName, long startTime )
@@ -187,7 +194,6 @@ public class GHResponse
             double lon = tmpList.getLongitude(i);
             track.append("<trkpt lat='").append(lat).append("' lon='").append(lon).append("'>");
 
-            // TODO add actual driving time
             startTime = startTime + 1;
             track.append("<time>").append(formatter.format(startTime)).append("</time>");
 

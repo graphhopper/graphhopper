@@ -33,8 +33,8 @@ import java.util.Map;
  */
 public class StorableProperties implements Storable<StorableProperties>
 {
-    private Map<String, String> map = new LinkedHashMap<String, String>();
-    private DataAccess da;
+    private final Map<String, String> map = new LinkedHashMap<String, String>();
+    private final DataAccess da;
 
     public StorableProperties( Directory dir )
     {

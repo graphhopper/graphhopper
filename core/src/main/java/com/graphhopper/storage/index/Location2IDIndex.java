@@ -42,7 +42,7 @@ public interface Location2IDIndex extends Storable<Location2IDIndex>
     Location2IDIndex prepareIndex();
 
     /**
-     * @return the node id for the specified geo location (latitude,longitude)
+     * @return the closest node id for the specified geo location (latitude,longitude)
      */
     int findID( double lat, double lon );
 
@@ -51,6 +51,7 @@ public interface Location2IDIndex extends Storable<Location2IDIndex>
      * node into the graph is accessible from a selected vehicle. E.g. if you have a FOOT-query do:      <pre>
      *   new DefaultEdgeFilter(new FootFlagEncoder());
      * </pre>
+     * <p>
      * @return An object containing the closest node and edge for the specfied location. The node id
      * has at least one edge which is accepted from the specified edgeFilter. If nothing is found it
      * returns null.
@@ -58,7 +59,7 @@ public interface Location2IDIndex extends Storable<Location2IDIndex>
     LocationIDResult findClosest( double lat, double lon, EdgeFilter edgeFilter );
 
     /**
-     * @param approx if false this makes initialization and querying faster but less precise.
+     * @param approxDist false if initialization and querying should be faster but less precise.
      */
     Location2IDIndex setApproximation( boolean approxDist );
 

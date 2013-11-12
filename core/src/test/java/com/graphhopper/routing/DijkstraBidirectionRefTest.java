@@ -19,9 +19,6 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.Helper;
-import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  *
@@ -30,7 +27,7 @@ import static org.junit.Assert.*;
 public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
 {
     @Override
-    public AlgorithmPreparation prepareGraph( Graph g, final FlagEncoder encoder, final WeightCalculation calc)
+    public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final WeightCalculation calc)
     {
         return new NoOpAlgorithmPreparation()
         {
@@ -39,15 +36,6 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
             {
                 return new DijkstraBidirectionRef(_graph, encoder, calc);
             }
-        }.setGraph(g);
-    }
-
-    @Test
-    public void testCannotCalculateSP2()
-    {
-        Graph g = createGraph();
-        DijkstraBidirectionRef db = new DijkstraBidirectionRef(g, carEncoder, new ShortestCalc());
-        Path p = db.calcPath(0, 2);
-        assertFalse(p.isFound());
+        }.setGraph(defaultGraph);
     }
 }

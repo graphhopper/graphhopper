@@ -78,7 +78,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
     {
         ensureNodeIndex(Math.max(a, b));
         int edgeId = internalEdgeAdd(a, b, distance, flags);
-        EdgeSkipIteratorImpl iter = new EdgeSkipIteratorImpl(null);
+        EdgeSkipIteratorImpl iter = new EdgeSkipIteratorImpl(EdgeFilter.ALL_EDGES);
         iter.setBaseNode(a);
         iter.setEdgeId(edgeId);
         iter.next();
@@ -111,6 +111,13 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
         {
             super(filter);
         }
+
+        @Override
+        public EdgeSkipIterator setBaseNode( int baseNode )
+        {
+            super.setBaseNode(baseNode);
+            return this;
+        }                
 
         @Override
         public final void setSkippedEdges( int edge1, int edge2 )
@@ -158,11 +165,14 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
     /**
      * Disconnects the edges (higher->lower node) via the specified edgeState pointing from lower to
      * higher node.
+     * <p>
+     * @param edgeState the edge from lower to higher
      */
     public void disconnect( EdgeSkipExplorer explorer, EdgeIteratorState edgeState )
     {
-        // prevEdgePointer belongs to baseNode ... but now we need it for adjNode()!                       
-        EdgeSkipIterator tmpIter = (EdgeSkipIterator) explorer.setBaseNode(edgeState.getAdjNode());
+        // search edge with opposite direction        
+        // EdgeIteratorState tmpIter = getEdgeProps(iter.getEdge(), iter.getBaseNode());
+        EdgeSkipIterator tmpIter = explorer.setBaseNode(edgeState.getAdjNode());
         int tmpPrevEdge = EdgeIterator.NO_EDGE;
         boolean found = false;
         while (tmpIter.next())
@@ -216,12 +226,6 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
     }
 
     @Override
-    public EdgeSkipExplorer getEdgeProps( int edgeId, int endNode )
-    {
-        return (EdgeSkipExplorer) super.getEdgeProps(edgeId, endNode);
-    }
-
-    @Override
     protected SingleEdge createSingleEdge( int edge, int nodeId )
     {
         return new SingleLevelEdge(edge, nodeId);
@@ -233,6 +237,13 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
         {
             super(edge, nodeId);
         }
+
+        @Override
+        public EdgeSkipIterator setBaseNode( int baseNode )
+        {
+            super.setBaseNode(baseNode);
+            return this;
+        }                
 
         @Override
         public void setSkippedEdges( int edge1, int edge2 )

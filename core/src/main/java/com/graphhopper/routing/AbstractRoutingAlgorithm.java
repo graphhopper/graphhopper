@@ -23,8 +23,11 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Peter Karich
@@ -32,11 +35,12 @@ import com.graphhopper.util.EdgeIterator;
 public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
 {
     private EdgeFilter additionalEdgeFilter;
-    protected final Graph graph;    
+    protected Graph graph;
+    protected EdgeExplorer inEdgeExplorer;
+    protected EdgeExplorer outEdgeExplorer;
     protected final WeightCalculation weightCalc;
     protected final FlagEncoder flagEncoder;
-    protected final EdgeExplorer inEdgeExplorer;
-    protected final EdgeExplorer outEdgeExplorer;
+    private boolean alreadyRun;
 
     /**
      * @param graph specifies the graph where this algorithm will run on
@@ -45,11 +49,38 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
      */
     public AbstractRoutingAlgorithm( Graph graph, FlagEncoder encoder, WeightCalculation type )
     {
-        this.graph = graph;
         this.weightCalc = type;
         this.flagEncoder = encoder;
-        outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
-        inEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false));
+        setGraph(graph);
+    }
+
+    /**
+     * Specify the graph on which this algorithm should operate. API glitch: this method overwrites
+     * graph specified while constructing the algorithm. Only necessary if graph is a QueryGraph.
+     */
+    protected RoutingAlgorithm setGraph( Graph graph )
+    {
+        this.graph = graph;
+        outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
+        inEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, true, false));
+        return this;
+    }
+
+    protected QueryGraph createQueryGraph()
+    {
+        return new QueryGraph(graph);
+    }
+
+    @Override
+    public Path calcPath( LocationIDResult fromRes, LocationIDResult toRes )
+    {
+        QueryGraph queryGraph = createQueryGraph();
+        List<LocationIDResult> results = new ArrayList(2);
+        results.add(fromRes);
+        results.add(toRes);
+        queryGraph.lookup(results);
+        setGraph(queryGraph);
+        return calcPath(fromRes.getClosestNode(), toRes.getClosestNode());
     }
 
     public RoutingAlgorithm setEdgeFilter( EdgeFilter additionalEdgeFilter )
@@ -67,15 +98,49 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     {
     }
 
-    @Override
-    public String toString()
+    protected void checkAlreadyRun()
     {
-        return getName() + "|" + weightCalc;
+        if (alreadyRun)
+            throw new IllegalStateException("Create a new instance per call");
+
+        alreadyRun = true;
+    }
+
+    protected EdgeEntry createEdgeEntry( int node, double dist )
+    {
+        return new EdgeEntry(EdgeIterator.NO_EDGE, node, dist);
+    }
+
+    /**
+     * To be overwritten from extending class. Should we make this available in RoutingAlgorithm
+     * interface?
+     * <p/>
+     * @return true if finished.
+     */
+    protected abstract boolean finished();
+
+    /**
+     * To be overwritten from extending class. Should we make this available in RoutingAlgorithm
+     * interface?
+     * <p/>
+     * @return true if finished.
+     */
+    protected abstract Path extractPath();
+
+    protected Path createEmptyPath()
+    {
+        return new Path(graph, flagEncoder);
     }
 
     @Override
     public String getName()
     {
         return getClass().getSimpleName();
+    }
+
+    @Override
+    public String toString()
+    {
+        return getName() + "|" + weightCalc;
     }
 }

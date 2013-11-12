@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.util.shapes.GHPoint;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -137,5 +138,48 @@ public class DistanceCalcTest
         assertFalse(calc.validEdgeDistance(49.944482, 11.555446, 49.937964, 11.541824, 49.942272, 11.555643));
         // right bottom of the edge
         assertFalse(calc.validEdgeDistance(49.94085, 11.557356, 49.937964, 11.541824, 49.942272, 11.555643));
+    }
+
+    @Test
+    public void testPrecisionBug()
+    {
+        DistanceCalc dist = new DistancePlaneProjection();
+//        DistanceCalc dist = new DistanceCalc();
+        double queryLat = 42.56819, queryLon = 1.603231;
+        double lat16 = 42.56674481705006, lon16 = 1.6023790821964834;
+        double lat17 = 42.56694505140808, lon17 = 1.6020622462495173;
+        double lat18 = 42.56715199128878, lon18 = 1.601682266630581;
+
+        // segment 18
+        assertEquals(171.487, dist.calcDist(queryLat, queryLon, lat18, lon18), 1e-3);
+        // segment 17
+        assertEquals(168.298, dist.calcDist(queryLat, queryLon, lat17, lon17), 1e-3);
+        // segment 16
+        assertEquals(175.188, dist.calcDist(queryLat, queryLon, lat16, lon16), 1e-3);
+
+        assertEquals(167.385, dist.calcDenormalizedDist(dist.calcNormalizedEdgeDistance(queryLat, queryLon, lat16, lon16, lat17, lon17)), 1e-3);
+
+        assertEquals(168.213, dist.calcDenormalizedDist(dist.calcNormalizedEdgeDistance(queryLat, queryLon, lat17, lon17, lat18, lon18)), 1e-3);
+
+        // 16_17
+        assertEquals(new GHPoint(42.567048, 1.6019), dist.calcCrossingPointToEdge(queryLat, queryLon, lat16, lon16, lat17, lon17));
+        // 17_18
+        // assertEquals(new GHPoint(42.566945,1.602062), dist.calcCrossingPointToEdge(queryLat, queryLon, lat17, lon17, lat18, lon18));
+    }
+
+    @Test
+    public void testPrecisionBug2()
+    {
+        DistanceCalc distCalc = new DistancePlaneProjection();
+        double queryLat = 55.818994, queryLon = 37.595354;
+        double tmpLat = 55.81777239183573, tmpLon = 37.59598350366913;
+        double wayLat = 55.818839128736535, wayLon = 37.5942968784488;
+        assertEquals(68.25, distCalc.calcDist(wayLat, wayLon, queryLat, queryLon), .1);
+
+        assertEquals(60.88, distCalc.calcDenormalizedDist(distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
+                tmpLat, tmpLon, wayLat, wayLon)), .1);
+
+        assertEquals(new GHPoint(55.81863, 37.594626), distCalc.calcCrossingPointToEdge(queryLat, queryLon,
+                tmpLat, tmpLon, wayLat, wayLon));
     }
 }

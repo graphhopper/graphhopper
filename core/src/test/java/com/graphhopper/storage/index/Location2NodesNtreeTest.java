@@ -24,8 +24,10 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -58,6 +60,11 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester
         return true;
     }
 
+    //  0------\
+    // /|       \
+    // |1----3-\|
+    // |/   /   4
+    // 2---/---/
     Graph createTestGraph()
     {
         Graph graph = createGraph(new RAMDirectory(), encodingManager);
@@ -74,6 +81,22 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester
         graph.edge(2, 4, 1, true);
         graph.edge(3, 4, 1, true);
         return graph;
+    }
+
+    @Test
+    public void testSnappedPointAndGeometry()
+    {
+        Graph graph = createTestGraph();
+        Location2IDIndex index = createIndex(graph, 1000);
+        // query directly the tower node
+        LocationIDResult res = index.findClosest(-0.4, 0.9, EdgeFilter.ALL_EDGES);        
+        assertEquals(new GHPoint(-0.4, 0.9), res.getSnappedPoint());
+        res = index.findClosest(-0.6, 1.6, EdgeFilter.ALL_EDGES);        
+        assertEquals(new GHPoint(-0.6, 1.6), res.getSnappedPoint());
+
+        // query the edge (1,3)
+        res = index.findClosest(-0.2, 0.3, EdgeFilter.ALL_EDGES);
+        assertEquals(new GHPoint(-0.441624, 0.317259), res.getSnappedPoint());
     }
 
     @Test
@@ -247,7 +270,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester
     }
 
     @Test
-    public void testMore()
+    public void testFindingWayGeometry()
     {
         Graph g = createGraph(encodingManager);
         g.setNode(10, 51.2492152, 9.4317166);
@@ -265,14 +288,14 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester
     @Test
     public void testEdgeFilter()
     {
-        Graph g = createTestGraph();
-        Location2NodesNtree index = (Location2NodesNtree) createIndex(g, 1000);
+        Graph graph = createTestGraph();
+        Location2NodesNtree index = createIndex(graph, 1000);
 
         assertEquals(1, index.findClosest(-.6, -.6, EdgeFilter.ALL_EDGES).getClosestNode());
         assertEquals(2, index.findClosest(-.6, -.6, new EdgeFilter()
         {
             @Override
-            public boolean accept( EdgeIterator iter )
+            public boolean accept( EdgeIteratorState iter )
             {
                 return iter.getBaseNode() == 2 || iter.getAdjNode() == 2;
             }

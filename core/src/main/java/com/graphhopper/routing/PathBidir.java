@@ -49,9 +49,7 @@ public class PathBidir extends Path
     public Path extract()
     {
         if (fromRef < 0 || toRef < 0)
-        {
             return this;
-        }
 
         if (switchWrapper)
         {
@@ -63,21 +61,19 @@ public class PathBidir extends Path
         int nodeFrom = edgeWFrom.getNode(fromRef);
         int nodeTo = edgeWTo.getNode(toRef);
         if (nodeFrom != nodeTo)
-        {
-            throw new IllegalStateException("Locations of 'to' and 'from' DistEntries has to be the same." + toString());
-        }        
+            throw new IllegalStateException("'to' and 'from' have to be the same. " + toString());
+
         int currRef = fromRef;
         while (currRef > 0)
         {
             int edgeId = edgeWFrom.getEdgeId(currRef);
             if (edgeId < 0)
-            {
                 break;
-            }
-            processDistance(edgeId, nodeFrom);
+
+            processEdge(edgeId, nodeFrom);
             currRef = edgeWFrom.getParent(currRef);
             nodeFrom = edgeWFrom.getNode(currRef);
-        }        
+        }
         reverseOrder();
         setFromNode(nodeFrom);
         // skip node of toRef (equal to fromRef)
@@ -86,10 +82,9 @@ public class PathBidir extends Path
         {
             int edgeId = edgeWTo.getEdgeId(currRef);
             if (edgeId < 0)
-            {
                 break;
-            }
-            processDistance(edgeId, nodeTo);
+
+            processEdge(edgeId, nodeTo);
             int tmpRef = edgeWTo.getParent(currRef);
             nodeTo = edgeWTo.getNode(tmpRef);
             currRef = tmpRef;

@@ -18,6 +18,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -47,9 +48,7 @@ public class PointList
     public void set( int index, double lat, double lon )
     {
         if (index >= size)
-        {
             throw new ArrayIndexOutOfBoundsException("index has to be smaller than size " + size);
-        }
 
         latitudes[index] = lat;
         longitudes[index] = lon;
@@ -95,10 +94,9 @@ public class PointList
     public double getLongitude( int index )
     {
         if (index >= size)
-        {
             throw new ArrayIndexOutOfBoundsException("Tried to access PointList with too big index! "
                     + "index:" + index + ", size:" + size);
-        }
+
         return longitudes[index];
     }
 
@@ -127,9 +125,8 @@ public class PointList
     public void trimToSize( int newSize )
     {
         if (newSize > size)
-        {
             throw new IllegalArgumentException("new size needs be smaller than old size");
-        }
+
         size = newSize;
     }
 
@@ -140,9 +137,7 @@ public class PointList
         for (int i = 0; i < size; i++)
         {
             if (i > 0)
-            {
                 sb.append(", ");
-            }
 
             sb.append('(');
             sb.append(latitudes[i]);
@@ -162,38 +157,59 @@ public class PointList
         for (int i = 0; i < size; i++)
         {
             points.add(new Double[]
-                    {
-                        getLongitude(i), getLatitude(i)
-                    });
+            {
+                getLongitude(i), getLatitude(i)
+            });
         }
         return points;
     }
-    private final static int PRECISION = 100000;
 
     @Override
     public boolean equals( Object obj )
     {
-        if (obj == null || getClass() != obj.getClass())
-        {
+        if (obj == null)
             return false;
-        }
+
         final PointList other = (PointList) obj;
         if (this.size != other.size)
-        {
             return false;
-        }
+
         for (int i = 0; i < size; i++)
         {
-            if (Math.round(latitudes[i] * PRECISION) != Math.round(other.latitudes[i] * PRECISION))
-            {
+            if (!NumHelper.equalsEps(latitudes[i], other.latitudes[i]))
                 return false;
-            }
-            if (Math.round(longitudes[i] * PRECISION) != Math.round(other.longitudes[i] * PRECISION))
-            {
+
+            if (!NumHelper.equalsEps(longitudes[i], other.longitudes[i]))
                 return false;
-            }
         }
         return true;
+    }
+
+    public PointList clone( boolean reverse )
+    {
+        PointList clonePL = new PointList(size);
+        for (int i = 0; i < size; i++)
+        {
+            clonePL.add(latitudes[i], longitudes[i]);
+        }
+        if (reverse)
+            clonePL.reverse();
+        return clonePL;
+    }
+
+    public PointList copy( int from, int end )
+    {
+        if (from > end)
+            throw new IllegalArgumentException("from must be smaller or equals to end");
+        if (from < 0 || end > size)
+            throw new IllegalArgumentException("Illegal interval: " + from + ", " + end + ", size:" + size);
+
+        PointList copyPL = new PointList(size);
+        for (int i = from; i < end; i++)
+        {
+            copyPL.add(latitudes[i], longitudes[i]);
+        }
+        return copyPL;
     }
 
     @Override
@@ -202,13 +218,14 @@ public class PointList
         int hash = 5;
         for (int i = 0; i < latitudes.length; i++)
         {
-            hash = 73 * hash + (int) Math.round(latitudes[i] * PRECISION);
+            hash = 73 * hash + (int) Math.round(latitudes[i] * 1000000);
+            hash = 73 * hash + (int) Math.round(longitudes[i] * 1000000);
         }
         hash = 73 * hash + this.size;
         return hash;
     }
 
-    public double calculateDistance( DistanceCalc calc )
+    public double calcDistance( DistanceCalc calc )
     {
         double lat = -1;
         double lon = -1;
@@ -216,26 +233,12 @@ public class PointList
         for (int i = 0; i < size; i++)
         {
             if (i > 0)
-            {
                 dist += calc.calcDist(lat, lon, latitudes[i], longitudes[i]);
-            }
+
             lat = latitudes[i];
             lon = longitudes[i];
         }
         return dist;
-    }
-
-    public PointList trimToSize()
-    {
-        // 1 free point is ok
-        if (latitudes.length <= size + 1)
-        {
-            return this;
-        }
-
-        latitudes = Arrays.copyOf(latitudes, size);
-        longitudes = Arrays.copyOf(longitudes, size);
-        return this;
     }
 
     /**
@@ -247,9 +250,7 @@ public class PointList
         for (String latlon : str.split("\\["))
         {
             if (latlon.trim().length() == 0)
-            {
                 continue;
-            }
 
             String ll[] = latlon.split(",");
             String lat = ll[1].replace("]", "").trim();
@@ -293,5 +294,34 @@ public class PointList
         {
             throw new RuntimeException("cannot change EMPTY PointList");
         }
+
+        @Override
+        public void parseJSON( String str )
+        {
+            throw new RuntimeException("cannot change EMPTY PointList");
+        }
+
+        @Override
+        public double calcDistance( DistanceCalc calc )
+        {
+            return 0;
+        }
+
+        @Override
+        public PointList copy( int from, int end )
+        {
+            throw new RuntimeException("cannot copy EMPTY PointList");
+        }
+
+        @Override
+        public PointList clone( boolean reverse )
+        {
+            return this;
+        }
     };
+
+    public GHPoint toGHPoint( int index )
+    {
+        return new GHPoint(getLatitude(index), getLongitude(index));
+    }
 }

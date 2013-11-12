@@ -44,21 +44,18 @@ public class GHUtility
         int nodeIndex = 0;
         try
         {
-            EdgeExplorer iter = g.createEdgeExplorer();
+            EdgeExplorer explorer = g.createEdgeExplorer();
             for (; nodeIndex < nodes; nodeIndex++)
             {
                 double lat = g.getLatitude(nodeIndex);
                 if (lat > 90 || lat < -90)
-                {
                     problems.add("latitude is not within its bounds " + lat);
-                }
+
                 double lon = g.getLongitude(nodeIndex);
                 if (lon > 180 || lon < -180)
-                {
                     problems.add("longitude is not within its bounds " + lon);
-                }
 
-                iter.setBaseNode(nodeIndex);
+                EdgeIterator iter = explorer.setBaseNode(nodeIndex);
                 while (iter.next())
                 {
                     if (iter.getAdjNode() >= nodes)
@@ -151,7 +148,7 @@ public class GHUtility
         while (iter.next())
         {
             str += "  ->" + iter.getAdjNode() + " (" + iter.getDistance() + ") pillars:"
-                    + iter.getWayGeometry().getSize() + ", edgeId:" + iter.getEdge()
+                    + iter.fetchWayGeometry(0).getSize() + ", edgeId:" + iter.getEdge()
                     + "\t" + BitUtil.BIG.toBitString(iter.getFlags(), 8) + "\n";
         }
         return str;
@@ -209,7 +206,7 @@ public class GHUtility
         int len = oldToNewNodeList.size();
         // important to avoid creating two edges for edges with both directions
         GHBitSet bitset = new GHBitSetImpl(len);
-        EdgeExplorer eIter = g.createEdgeExplorer();
+        EdgeExplorer explorer = g.createEdgeExplorer();
         for (int old = 0; old < len; old++)
         {
             int newIndex = oldToNewNodeList.get(old);
@@ -220,20 +217,18 @@ public class GHUtility
             }
             bitset.add(newIndex);
             sortedGraph.setNode(newIndex, g.getLatitude(old), g.getLongitude(old));
-            eIter.setBaseNode(old);
+            EdgeIterator eIter = explorer.setBaseNode(old);
             while (eIter.next())
             {
                 int newNodeIndex = oldToNewNodeList.get(eIter.getAdjNode());
                 if (newNodeIndex < 0)
-                {
                     throw new IllegalStateException("empty entries should be connected to the others");
-                }
+
                 if (bitset.contains(newNodeIndex))
-                {
                     continue;
-                }
+
                 sortedGraph.edge(newIndex, newNodeIndex, eIter.getDistance(), eIter.getFlags()).
-                        setWayGeometry(eIter.getWayGeometry());
+                        setWayGeometry(eIter.fetchWayGeometry(0));
             }
         }
         return sortedGraph;
@@ -245,9 +240,7 @@ public class GHUtility
         Directory outdir;
         if (store.getDirectory() instanceof MMapDirectory)
         {
-            // TODO mmap will overwrite existing storage at the same location!                
-            throw new IllegalStateException("not supported yet");
-            // outdir = new MMapDirectory(location);                
+            throw new IllegalStateException("not supported yet: mmap will overwrite existing storage at the same location");
         } else
         {
             boolean isStoring = ((GHDirectory) store.getDirectory()).isStoring();
@@ -294,19 +287,20 @@ public class GHUtility
         int len = from.getNodes();
         // important to avoid creating two edges for edges with both directions        
         GHBitSet bitset = new GHBitSetImpl(len);
-        EdgeExplorer eIter = from.createEdgeExplorer();
+        EdgeExplorer explorer = from.createEdgeExplorer();
         for (int oldNode = 0; oldNode < len; oldNode++)
         {
             bitset.add(oldNode);
             to.setNode(oldNode, from.getLatitude(oldNode), from.getLongitude(oldNode));
-            eIter.setBaseNode(oldNode);
+            EdgeIterator eIter = explorer.setBaseNode(oldNode);
             while (eIter.next())
             {
                 int adjacentNodeIndex = eIter.getAdjNode();
                 if (bitset.contains(adjacentNodeIndex))
                     continue;
-                
-                to.edge(oldNode, adjacentNodeIndex, eIter.getDistance(), eIter.getFlags()).setWayGeometry(eIter.getWayGeometry());
+
+                to.edge(oldNode, adjacentNodeIndex, eIter.getDistance(), eIter.getFlags()).
+                        setWayGeometry(eIter.fetchWayGeometry(0));
             }
         }
         return to;
@@ -403,7 +397,7 @@ public class GHUtility
         }
 
         @Override
-        public PointList getWayGeometry()
+        public PointList fetchWayGeometry( int type )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -431,7 +425,7 @@ public class GHUtility
      * @return the <b>first</b> edge containing the specified nodes base and adj. Returns null if
      * not found.
      */
-    public static EdgeIterator getEdge( Graph graph, int base, int adj )
+    public static EdgeIteratorState getEdge( Graph graph, int base, int adj )
     {
         EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(base);
         while (iter.next())

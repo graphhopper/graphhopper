@@ -15,23 +15,21 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util;
+package com.graphhopper.storage.index;
+
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.CoordTrig;
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
- * Class to get EdgeIterator create it via graph.createEdgeExplorer(). Use one instance per thread.
- * <p/>
- * @see EdgeIterator
- * @see EdgeIteratorBase
+ *
  * @author Peter Karich
  */
-public interface EdgeExplorer
+public class LocationIDResultTest
 {
-    /**
-     * This method sets the base node for iteration through neighboring edges.
-     * <p/>
-     * @return EdgeIterator around specified baseNode. The resulting iterator can be a new instance
-     * or a reused instance returned in a previous call. So be sure you do not use the explorer from
-     * multiple threads or in a nested loop
-     */
-    EdgeIterator setBaseNode( int baseNode );
 }

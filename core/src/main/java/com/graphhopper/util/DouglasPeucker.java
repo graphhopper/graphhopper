@@ -40,12 +40,9 @@ public class DouglasPeucker
     {
         approx = a;
         if (approx)
-        {
             calc = new DistancePlaneProjection();
-        } else
-        {
+        else
             calc = new DistanceCalc();
-        }
     }
 
     /**

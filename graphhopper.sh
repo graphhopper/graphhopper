@@ -22,7 +22,7 @@ fi
 ACTION=$1
 FILE=$2
 
-USAGE="./graphhopper.sh import|ui|test|measurement|miniui <your-osm-file>"
+USAGE="./graphhopper.sh import|ui|test|measurement|miniui|extract <your-osm-file>"
 if [ "x$ACTION" = "x" ]; then
  echo -e "## action $ACTION not found. try \n$USAGE"
 fi
@@ -223,6 +223,12 @@ elif [ "x$ACTION" = "xminiui" ]; then
  JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar   
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI osmreader.osm="$OSM_FILE" printVersion=true config=$CONFIG \
               graph.location="$GRAPH"
+
+elif [ "x$ACTION" = "xextract" ]; then
+ echo use "./graphhopper.sh extract \"left,bottom,right,top\""
+ URL="http://api.openstreetmap.org/api/0.6/map?bbox=$2"
+ #echo "$URL"
+ wget -O extract.osm $URL
        
 elif [ "x$ACTION" = "xmeasurement" ]; then
  ARGS="config=$CONFIG graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chShortcuts=fastest osmreader.acceptWay=CAR"
@@ -239,6 +245,7 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
     "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS measurement.count=$COUNT measurement.location=$M_FILE_NAME \
             graph.importTime=$IMPORT_TIME measurement.gitinfo="$commit_info"
  }
+ 
  
  # use all <last_commits> versions starting from HEAD
  last_commits=$3

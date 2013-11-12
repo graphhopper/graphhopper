@@ -66,10 +66,9 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     {
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies(encoder, calc).setGraph(g);
         // hack: prepare matrixgraph only once
-        if (g != preparedMatrixGraph)
-        {
+        if (g != preparedMatrixGraph)       
             ch.doWork();
-        }
+        
         return ch;
     }
 

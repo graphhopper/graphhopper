@@ -69,8 +69,12 @@ public class Location2NodesNtree implements Location2IDIndex
     private boolean initialized = false;
     // do not start with 0 as a positive value means leaf and a negative means "entry with subentries"
     static final int START_POINTER = 1;
-    private boolean edgeDistCalcOnSearch = true;
     private boolean regionSearch = true;
+    /**
+     * If normed distance is smaller than this value the node or edge is 'identical' and the
+     * algorithm can stop search.
+     */
+    private double equalNormedDelta;
 
     public Location2NodesNtree( Graph g, Directory dir )
     {
@@ -96,15 +100,6 @@ public class Location2NodesNtree implements Location2IDIndex
     }
 
     /**
-     * Calculate edge distance to increase map matching precision.
-     */
-    public Location2NodesNtree setEdgeCalcOnFind( boolean edgeCalcOnSearch )
-    {
-        this.edgeDistCalcOnSearch = edgeCalcOnSearch;
-        return this;
-    }
-
-    /**
      * Searches also neighbouring quadtree entries to increase map matching precision.
      */
     public Location2NodesNtree setSearchRegion( boolean regionAround )
@@ -115,14 +110,16 @@ public class Location2NodesNtree implements Location2IDIndex
 
     void prepareAlgo()
     {
+        // 0.1 meter should count as 'equal'
+        equalNormedDelta = distCalc.calcNormalizedDist(0.1);
+
         // now calculate the necessary maxDepth d for our current bounds
         // if we assume a minimum resolution like 0.5km for a leaf-tile                
         // n^(depth/2) = toMeter(dLon) / minResolution
         BBox bounds = graph.getBounds();
         if (graph.getNodes() == 0 || !bounds.check())
-        {
-            throw new IllegalStateException("graph is not valid. bounds are: " + bounds);
-        }
+            throw new IllegalStateException("Bounds of graph are invalid: " + bounds);
+
         double lat = Math.min(Math.abs(bounds.maxLat), Math.abs(bounds.minLat));
         double maxDistInMeter = Math.max(
                 (bounds.maxLat - bounds.minLat) / 360 * DistanceCalc.C,
@@ -161,9 +158,8 @@ public class Location2NodesNtree implements Location2IDIndex
             parts *= entries[i];
         }
         if (shiftSum > 64)
-        {
             throw new IllegalStateException("sum of all shifts does not fit into a long variable");
-        }
+
         keyAlgo = new SpatialKeyAlgo(shiftSum).bounds(bounds);
         parts = Math.round(Math.sqrt(parts));
         deltaLat = (bounds.maxLat - bounds.minLat) / parts;
@@ -200,9 +196,8 @@ public class Location2NodesNtree implements Location2IDIndex
     {
         byte b = (byte) Math.round(Math.log(entries) / Math.log(2));
         if (b <= 0)
-        {
             throw new IllegalStateException("invalid shift:" + b);
-        }
+
         return b;
     }
 
@@ -368,7 +363,7 @@ public class Location2NodesNtree implements Location2IDIndex
                     double lon1 = graph.getLongitude(nodeA);
                     double lat2;
                     double lon2;
-                    PointList points = allIter.getWayGeometry();
+                    PointList points = allIter.fetchWayGeometry(0);
                     int len = points.getSize();
                     for (int i = 0; i < len; i++)
                     {
@@ -630,13 +625,14 @@ public class Location2NodesNtree implements Location2IDIndex
             final EdgeFilter edgeFilter )
     {
         final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon);
-        final LocationIDResult closestMatch = new LocationIDResult();
+        final LocationIDResult closestMatch = new LocationIDResult(queryLat, queryLon);
         if (storedNetworkEntryIds.isEmpty())
             return closestMatch;
 
         // clone storedIds to avoid interference with forEach
         final GHBitSet checkBitset = new GHTBitSet(new TIntHashSet(storedNetworkEntryIds));
         // find nodes from the network entries which are close to 'point'
+        final EdgeExplorer explorer = graph.createEdgeExplorer(getEdgeFilter());
         storedNetworkEntryIds.forEach(new TIntProcedure()
         {
             @Override
@@ -645,7 +641,7 @@ public class Location2NodesNtree implements Location2IDIndex
                 new XFirstSearch()
                 {
                     boolean goFurther = true;
-                    double currDist;
+                    double currNormedDist;
                     double currLat;
                     double currLon;
                     int currNode;
@@ -662,7 +658,7 @@ public class Location2NodesNtree implements Location2IDIndex
                         currNode = baseNode;
                         currLat = graph.getLatitude(baseNode);
                         currLon = graph.getLongitude(baseNode);
-                        currDist = distCalc.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
+                        currNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
                         return goFurther;
                     }
 
@@ -677,77 +673,80 @@ public class Location2NodesNtree implements Location2IDIndex
                             return true;
                         }
 
-                        int tmpNode = currNode;
-                        double tmpLat = currLat;
-                        double tmpLon = currLon;
+                        int tmpClosestNode = currNode;
+                        if (check(tmpClosestNode, currNormedDist, 0, currEdge, LocationIDResult.Position.TOWER))
+                        {
+                            if (currNormedDist <= equalNormedDelta)
+                                return false;
+                        }
+
                         int adjNode = currEdge.getAdjNode();
                         double adjLat = graph.getLatitude(adjNode);
                         double adjLon = graph.getLongitude(adjNode);
-
-                        check(tmpNode, currDist, -adjNode - 2, currEdge);
-
-                        double tmpDist;
                         double adjDist = distCalc.calcNormalizedDist(adjLat, adjLon, queryLat, queryLon);
                         // if there are wayPoints this is only an approximation
-                        if (edgeDistCalcOnSearch && adjDist < currDist)
-                        {
-                            tmpNode = adjNode;
-                        }
+                        if (adjDist < currNormedDist)
+                            tmpClosestNode = adjNode;
 
-                        PointList pointList = currEdge.getWayGeometry();
+                        double tmpLat = currLat;
+                        double tmpLon = currLon;
+                        double tmpNormedDist;
+                        PointList pointList = currEdge.fetchWayGeometry(2);
                         int len = pointList.getSize();
                         for (int pointIndex = 0; pointIndex < len; pointIndex++)
                         {
                             double wayLat = pointList.getLatitude(pointIndex);
                             double wayLon = pointList.getLongitude(pointIndex);
-                            if (NumHelper.equalsEps(queryLat, wayLat, 1e-6)
-                                    && NumHelper.equalsEps(queryLon, wayLon, 1e-6))
+                            LocationIDResult.Position pos = LocationIDResult.Position.EDGE;
+                            if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, wayLat, wayLon))
                             {
-                                // equal point found
-                                check(tmpNode, 0d, pointIndex, currEdge);
-                                break;
-                            } else if (edgeDistCalcOnSearch
-                                    && distCalc.validEdgeDistance(queryLat, queryLon,
-                                            tmpLat, tmpLon, wayLat, wayLon))
-                            {
-                                tmpDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
+                                tmpNormedDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                                         tmpLat, tmpLon, wayLat, wayLon);
-                                check(tmpNode, tmpDist, pointIndex, currEdge);
+                                check(tmpClosestNode, tmpNormedDist, pointIndex, currEdge, pos);
+                            } else if (pointIndex + 1 == len)
+                            {
+                                tmpNormedDist = adjDist;
+                                pos = LocationIDResult.Position.TOWER;
+                            } else
+                            {
+                                tmpNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
+                                pos = LocationIDResult.Position.PILLAR;
                             }
+                            check(tmpClosestNode, tmpNormedDist, pointIndex + 1, currEdge, pos);
+
+                            if (tmpNormedDist <= equalNormedDelta)
+                                return false;
 
                             tmpLat = wayLat;
                             tmpLon = wayLon;
                         }
-
-                        if (edgeDistCalcOnSearch
-                                && distCalc.validEdgeDistance(queryLat, queryLon,
-                                        tmpLat, tmpLon, adjLat, adjLon))
-                        {
-                            tmpDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
-                                    tmpLat, tmpLon, adjLat, adjLon);
-                        } else
-                        {
-                            tmpDist = adjDist;
-                        }
-
-                        check(tmpNode, tmpDist, -currNode - 2, currEdge);
-                        return closestMatch.getWeight() >= 0;
+                        return closestMatch.getQueryDistance() > equalNormedDelta;
                     }
 
-                    void check( int node, double dist, int wayIndex, EdgeIterator iter )
+                    boolean check( int node, double normedDist, int wayIndex, EdgeIterator iter, LocationIDResult.Position pos )
                     {
-                        if (dist < closestMatch.getWeight())
+                        if (normedDist < closestMatch.getQueryDistance())
                         {
-                            closestMatch.setWeight(dist);
+                            closestMatch.setQueryDistance(normedDist);
                             closestMatch.setClosestNode(node);
                             closestMatch.setClosestEdge(iter.detach());
                             closestMatch.setWayIndex(wayIndex);
+                            closestMatch.setSnappedPosition(pos);
+                            return true;
                         }
+                        return false;
                     }
-                }.start(createEdgeExplorer(), networkEntryNodeId, false);
+                }.start(explorer, networkEntryNodeId, false);
                 return true;
             }
         });
+
+        if (closestMatch.isValid())
+        {
+            // denormalize distance            
+            closestMatch.setQueryDistance(distCalc.calcDenormalizedDist(closestMatch.getQueryDistance()));
+            closestMatch.calcSnappedPoint(distCalc);
+        }
 
         return closestMatch;
     }
@@ -759,9 +758,9 @@ public class Location2NodesNtree implements Location2IDIndex
         return nodeA;
     }
 
-    protected EdgeExplorer createEdgeExplorer()
+    protected EdgeFilter getEdgeFilter()
     {
-        return graph.createEdgeExplorer();
+        return EdgeFilter.ALL_EDGES;
     }
 
     protected AllEdgesIterator getAllEdges()

@@ -24,10 +24,7 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
-import com.graphhopper.storage.index.Location2IDIndex;
-import com.graphhopper.storage.index.Location2IDQuadtree;
-import com.graphhopper.storage.index.Location2NodesNtree;
-import com.graphhopper.storage.index.Location2NodesNtreeLG;
+import com.graphhopper.storage.index.*;
 import com.graphhopper.util.*;
 import java.io.File;
 import java.io.IOException;
@@ -60,11 +57,9 @@ public class GraphHopper implements GraphHopperAPI
     boolean removeZipped = true;
     // for routing:
     private boolean simplifyRequest = true;
-    private String defaultAlgorithm = "bidijkstra";
     // for index:
     private Location2IDIndex locationIndex;
     private int preciseIndexResolution = 500;
-    private boolean edgeCalcOnSearch = true;
     private boolean searchRegion = true;
     // for prepare
     private int minNetworkSize = 200;
@@ -84,6 +79,7 @@ public class GraphHopper implements GraphHopperAPI
     private int workerThreads = -1;
     private int defaultSegmentSize = -1;
     private boolean enableInstructions = true;
+    private boolean calcPoints = true;
     private boolean fullyLoaded = false;
 
     public GraphHopper()
@@ -195,9 +191,6 @@ public class GraphHopper implements GraphHopperAPI
         ensureNotLoaded();
         chEnabled = true;
         chType = type;
-        if (chEnabled)
-            defaultAlgorithm = "bidijkstra";
-
         return this;
     }
 
@@ -224,6 +217,15 @@ public class GraphHopper implements GraphHopperAPI
     {
         ensureNotLoaded();
         enableInstructions = b;
+        return this;
+    }
+
+    /**
+     * This methods enables gps point calculation. If disabled only distance will be calculated.
+     */
+    public GraphHopper setEnableCalcPoints( boolean b )
+    {
+        calcPoints = b;
         return this;
     }
 
@@ -388,9 +390,6 @@ public class GraphHopper implements GraphHopperAPI
         if (args.has("prepare.updates.neighbor"))
             neighborUpdates = args.getInt("prepare.updates.neighbor", neighborUpdates);
 
-        // routing
-        defaultAlgorithm = args.get("routing.defaultAlgorithm", defaultAlgorithm);
-
         // osm import
         wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", wayPointMaxDistance);
         String type = args.get("osmreader.acceptWay", "CAR");
@@ -466,15 +465,12 @@ public class GraphHopper implements GraphHopperAPI
                 setWayPointMaxDistance(wayPointMaxDistance).
                 setEnableInstructions(enableInstructions);
         logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
-        reader.doOSM2Graph(osmTmpFile);               
+        reader.doOSM2Graph(osmTmpFile);
         return reader;
     }
 
     /**
-     * Opens or creates a graph. The specified args need a property 'graph' (a folder) and if no
-     * such folder exist it'll create a graph from the provided osm file (property 'osm'). A
-     * property 'size' is used to preinstantiate a datastructure/graph to avoid over-memory
-     * allocation or reallocation (default is 5mio)
+     * Opens existing graph.
      * <p/>
      * @param graphHopperFolder is the folder containing graphhopper files (which can be compressed
      * too)
@@ -534,21 +530,24 @@ public class GraphHopper implements GraphHopperAPI
     {
         encodingManager = graph.getEncodingManager();
         if (chEnabled)
-        {
-            FlagEncoder encoder = encodingManager.getSingle();
-            PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder,
-                    createType(chType, encoder));
-            tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
-                    setLazyUpdates(lazyUpdates).
-                    setNeighborUpdates(neighborUpdates);
-
-            prepare = tmpPrepareCH;
-            prepare.setGraph(graph);
-        }
+            initCHPrepare();
 
         if (!"true".equals(graph.getProperties().get("prepare.done")))
             prepare();
         initLocationIndex();
+    }
+
+    protected void initCHPrepare()
+    {
+        FlagEncoder encoder = encodingManager.getSingle();
+        PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder,
+                createType(chType, encoder));
+        tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
+                setLazyUpdates(lazyUpdates).
+                setNeighborUpdates(neighborUpdates);
+
+        prepare = tmpPrepareCH;
+        prepare.setGraph(graph);
     }
 
     protected WeightCalculation createType( String type, FlagEncoder encoder )
@@ -578,22 +577,19 @@ public class GraphHopper implements GraphHopperAPI
 
         FlagEncoder encoder = encodingManager.getEncoder(request.getVehicle());
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-        int from = locationIndex.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter).getClosestNode();
-        int to = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter).getClosestNode();
+        LocationIDResult fromRes = locationIndex.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter);
+        LocationIDResult toRes = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter);
+
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
 
-        if (from < 0)
+        if (!fromRes.isValid())
             rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.getFrom()));
 
-        if (to < 0)
+        if (!toRes.isValid())
             rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request.getTo()));
-
-        if (from == to)
-            rsp.addError(new IllegalArgumentException("Point 1 is equal to point 2"));
 
         sw = new StopWatch().start();
         RoutingAlgorithm algo = null;
-
         if (chEnabled)
         {
             if (prepare == null)
@@ -615,37 +611,43 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         if (rsp.hasErrors())
-        {
             return rsp;
-        }
+
         debug += ", algoInit:" + sw.stop().getSeconds() + "s";
-
         sw = new StopWatch().start();
-        Path path = algo.calcPath(from, to);
-        debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s"
-                + ", " + path.getDebugInfo();
-        PointList points = path.calcPoints();
-        simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
-        if (simplifyRequest)
-        {
-            sw = new StopWatch().start();
-            int orig = points.getSize();
-            double minPathPrecision = request.getHint("douglas.minprecision", 1d);
-            if (minPathPrecision > 0)
-            {
-                new DouglasPeucker().setMaxDistance(minPathPrecision).simplify(points);
-            }
-            debug += ", simplify (" + orig + "->" + points.getSize() + "):" + sw.stop().getSeconds() + "s";
-        }
 
-        enableInstructions = request.getHint("instructions", enableInstructions);
-        if (enableInstructions)
+        Path path = algo.calcPath(fromRes, toRes);
+        debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
+
+        calcPoints = request.getHint("calcPoints", calcPoints);
+        if (calcPoints)
         {
-            sw = new StopWatch().start();
-            rsp.setInstructions(path.calcInstructions());
-            debug += ", instructions:" + sw.stop().getSeconds() + "s";
-        }
-        return rsp.setPoints(points).setDistance(path.getDistance()).setTime(path.getTime()).setDebugInfo(debug);
+            PointList points = path.calcPoints();
+            rsp.setFound(points.getSize() > 1);
+            simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
+            if (simplifyRequest)
+            {
+                sw = new StopWatch().start();
+                int orig = points.getSize();
+                double minPathPrecision = request.getHint("douglas.minprecision", 1d);
+                if (minPathPrecision > 0)
+                    new DouglasPeucker().setMaxDistance(minPathPrecision).simplify(points);
+
+                debug += ", simplify (" + orig + "->" + points.getSize() + "):" + sw.stop().getSeconds() + "s";
+            }
+            rsp.setPoints(points);
+
+            enableInstructions = request.getHint("instructions", enableInstructions);
+            if (enableInstructions)
+            {
+                sw = new StopWatch().start();
+                rsp.setInstructions(path.calcInstructions());
+                debug += ", instructions:" + sw.stop().getSeconds() + "s";
+            }
+        } else
+            rsp.setFound(path.isFound());
+
+        return rsp.setDistance(path.getDistance()).setTime(path.getTime()).setDebugInfo(debug);
     }
 
     protected Location2IDIndex createLocationIndex( Directory dir )
@@ -662,7 +664,6 @@ public class GraphHopper implements GraphHopperAPI
                 tmpNIndex = new Location2NodesNtree(graph, dir);
             }
             tmpNIndex.setResolution(preciseIndexResolution);
-            tmpNIndex.setEdgeCalcOnFind(edgeCalcOnSearch);
             tmpNIndex.setSearchRegion(searchRegion);
             tmpIndex = tmpNIndex;
         } else
@@ -709,17 +710,16 @@ public class GraphHopper implements GraphHopperAPI
     protected void prepare()
     {
         boolean tmpPrepare = doPrepare && prepare != null;
-        graph.getProperties().put("prepare.done", tmpPrepare);
         if (tmpPrepare)
         {
             if (prepare instanceof PrepareContractionHierarchies && encodingManager.getVehicleCount() > 1)
-            {
                 throw new IllegalArgumentException("Contraction hierarchies preparation "
                         + "requires (at the moment) only one vehicle. But was:" + encodingManager);
-            }
+
             logger.info("calling prepare.doWork ... (" + Helper.getMemInfo() + ")");
             prepare.doWork();
         }
+        graph.getProperties().put("prepare.done", tmpPrepare);
     }
 
     protected void cleanUp()
@@ -755,7 +755,7 @@ public class GraphHopper implements GraphHopperAPI
             locationIndex.close();
     }
 
-    private void ensureNotLoaded()
+    protected void ensureNotLoaded()
     {
         if (fullyLoaded)
             throw new IllegalStateException("No configuration changes are possible after loading the graph");

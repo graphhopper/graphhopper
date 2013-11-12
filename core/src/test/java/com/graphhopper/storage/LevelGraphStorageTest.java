@@ -18,7 +18,6 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.LevelEdgeFilter;
-import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipExplorer;
 import com.graphhopper.util.GHUtility;
@@ -131,13 +130,7 @@ public class LevelGraphStorageTest extends GraphStorageTest
         g.shortcut(1, 0, 20, flags2).setSkippedEdges(12, 13);
         g.shortcut(3, 1, 30, flags2).setSkippedEdges(14, 15);        
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(1);
-        iter.next();
-        // for now do not remove normal edges
-//        assertEquals(4, iter.getAdjNode());
-//        assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(4)));
-//        g.disconnect(g.createEdgeExplorer(), iter);
-//        assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(4)));
-        
+        iter.next();        
         assertEquals(3, iter.getAdjNode());
         assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(3)));
         g.disconnect(g.createEdgeExplorer(), iter);
@@ -150,13 +143,10 @@ public class LevelGraphStorageTest extends GraphStorageTest
         g.disconnect(g.createEdgeExplorer(), iter);
         assertEquals(0, GHUtility.count(carInExplorer.setBaseNode(0)));
 
-        iter.next();        
+        iter.next();
         assertEquals(2, iter.getAdjNode());        
         assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(2)));
-        g.disconnect(g.createEdgeExplorer(), iter);        
-        assertEquals(0, GHUtility.count(carOutExplorer.setBaseNode(2)));               
-        
-        iter.next();        
-        assertEquals(4, iter.getAdjNode());
+        g.disconnect(g.createEdgeExplorer(), iter);
+        assertEquals(0, GHUtility.count(carOutExplorer.setBaseNode(2)));        
     }
 }

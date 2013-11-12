@@ -89,9 +89,7 @@ public class GHLongIntBTree implements LongIntMap
             // successfully inserted
             size++;
             if (size % 1000000 == 0)
-            {
-                optimize();
-            }
+                optimize();            
         }
         return rv.oldValue;
     }
@@ -135,10 +133,7 @@ public class GHLongIntBTree implements LongIntMap
     }
 
     void flush()
-    {
-        // TODO set headers with prefix, loadFactor etc
-//        keys.flush();
-//        values.flush();
+    {        
         throw new IllegalStateException("not supported yet");
     }
 

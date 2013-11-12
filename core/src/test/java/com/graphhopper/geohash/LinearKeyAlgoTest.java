@@ -18,6 +18,7 @@
 package com.graphhopper.geohash;
 
 import com.graphhopper.util.shapes.CoordTrig;
+import com.graphhopper.util.shapes.GHPoint;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -48,7 +49,7 @@ public class LinearKeyAlgoTest
     public void testDecode()
     {
         KeyAlgo algo = new LinearKeyAlgo(3, 4).setBounds(-1, 9, -2, 20);
-        CoordTrig latLon = new CoordTrig();
+        GHPoint latLon = new GHPoint();
 
         // decode that we get the center of the grid cell!
         algo.decode(5, latLon);

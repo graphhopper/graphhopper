@@ -18,22 +18,45 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PointList;
+import com.graphhopper.util.shapes.CoordTrig;
+import com.graphhopper.util.shapes.GHPoint;
 
 /**
- * Result of Location2IDIndex lookup
+ * Result of Location2IDIndex lookup.
+ * <p/>
+ * <
+ * pre> X=query coordinates S=snapped coordinates: "snapping" real coords to road N=tower or pillar
+ * node T=closest tower node XS=distance
+ * <p/>
+ * X
+ * |
+ * T--S----N
+ * <p/>
+ * </pre>
  * <p/>
  * @author Peter Karich
  */
 public class LocationIDResult
 {
-    private double weight = Double.MAX_VALUE;
-    private int wayIndex = -3;
+    private double queryDistance = Double.MAX_VALUE;
+    private int wayIndex = -1;
     private int closestNode = -1;
-    private EdgeIteratorState edgeIter;
+    private EdgeIteratorState closestEdge;
+    private final GHPoint queryPoint;
+    private GHPoint snappedPoint;
+    private Position snappedPosition;
 
-    public LocationIDResult()
+    public static enum Position
     {
+        EDGE, TOWER, PILLAR
+    }
+
+    public LocationIDResult( double queryLat, double queryLon )
+    {
+        queryPoint = new GHPoint(queryLat, queryLon);
     }
 
     public void setClosestNode( int node )
@@ -42,24 +65,24 @@ public class LocationIDResult
     }
 
     /**
-     * @return the closest matching node.
+     * @return the closest matching node. -1 if nothing found or call isValid before.
      */
     public int getClosestNode()
     {
         return closestNode;
     }
 
-    public void setWeight( double w )
+    public void setQueryDistance( double dist )
     {
-        weight = w;
+        queryDistance = dist;
     }
 
     /**
-     * @return the distance or a normalized value of it.
+     * @return the distance of the query to the snapped coordinates. In meter
      */
-    public double getWeight()
+    public double getQueryDistance()
     {
-        return weight;
+        return queryDistance;
     }
 
     public void setWayIndex( int wayIndex )
@@ -68,29 +91,100 @@ public class LocationIDResult
     }
 
     /**
+     * References to a tower node or the index of wayGeometry of the closest edge. If wayGeometry
+     * has lengh L then the wayIndex 0 refers to the *base* node, 1 to L (inclusive) refer to the
+     * wayGeometry indices (minus one) and L+1 to the *adjacent* node. Currently only intialized if
+     * returned from Location2NodesNtree.
+     */
+    public int getWayIndex()
+    {
+        return wayIndex;
+    }
+
+    public void setSnappedPosition( Position pos )
+    {
+        this.snappedPosition = pos;
+    }
+
+    /**
+     * @return 0 if on edge. 1 if on pillar node and 2 if on tower node.
+     */
+    public Position getSnappedPosition()
+    {
+        return snappedPosition;
+    }
+
+    /**
      * @return true if a close node was found
      */
     public boolean isValid()
     {
+        // Location2IDQuadtree does not support edges
         return closestNode >= 0;
     }
 
     public void setClosestEdge( EdgeIteratorState detach )
     {
-        edgeIter = detach;
+        closestEdge = detach;
     }
 
     /**
-     * @return the closest matching edge. Will be null if nothing found.
+     * @return the closest matching edge. Will be null if nothing found or call isValid before
      */
     public EdgeIteratorState getClosestEdge()
     {
-        return edgeIter;
+        return closestEdge;
+    }
+
+    public CoordTrig getQueryPoint()
+    {
+        return queryPoint;
+    }
+
+    /**
+     * Calculates the position of the query point 'snapped' to a close road segment or node. Can be
+     * null if no result found. Call calcSnappedPoint before.
+     */
+    public GHPoint getSnappedPoint()
+    {
+        if (snappedPoint == null)
+            throw new IllegalStateException("Calculate snapped point before!");
+        return snappedPoint;
+    }
+
+    /**
+     * Calculates the closet point on the edge from the query point.
+     */
+    public void calcSnappedPoint( DistanceCalc distCalc )
+    {
+        if (closestEdge == null)
+            throw new IllegalStateException("No closest edge?");
+        if (snappedPoint != null)
+            throw new IllegalStateException("Calculate snapped point only once");
+
+        PointList fullPL = getClosestEdge().fetchWayGeometry(3);
+        double tmpLat = fullPL.getLatitude(wayIndex);
+        double tmpLon = fullPL.getLongitude(wayIndex);
+        if (snappedPosition != Position.EDGE)
+        {
+            snappedPoint = new GHPoint(tmpLat, tmpLon);
+            return;
+        }
+
+        double queryLat = getQueryPoint().lat, queryLon = getQueryPoint().lon;
+        double adjLat = fullPL.getLatitude(wayIndex + 1), adjLon = fullPL.getLongitude(wayIndex + 1);
+        if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon))
+            snappedPoint = distCalc.calcCrossingPointToEdge(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon);
+        else
+            // outside of edge boundaries
+            snappedPoint = new GHPoint(tmpLat, tmpLon);
     }
 
     @Override
     public String toString()
     {
-        return closestNode + ", " + weight + ", " + wayIndex;
+        if(closestEdge != null)
+            return closestEdge.getBaseNode() + "-" + closestEdge.getAdjNode() + "  " + snappedPoint;
+        return closestNode + ", " + queryPoint + ", " + wayIndex;
     }
 }

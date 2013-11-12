@@ -17,7 +17,8 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.NotThreadSafe;
 
 /**
@@ -29,16 +30,22 @@ import com.graphhopper.util.NotThreadSafe;
 public interface RoutingAlgorithm
 {
     /**
-     * Calculates the fastest or shortest path.
+     * Calculates the best path between the specified nodes.
      * <p/>
-     * @return the path but check the method found() to make sure if the path is valid.
+     * @return the path. Call the method found() to make sure that the path is valid.
      */
     Path calcPath( int from, int to );
 
     /**
-     * Changes the used weight calculation (e.g. fastest, shortest). Default is shortest.
+     * Calculates the best path between the specified query results from GPS lookup.
+     * <p/>
+     * Note: The underlying implementation introduces a state of the algorithm and so it is tightly
+     * coupled to the query! Reusing this instance should be done carefully: only from within one
+     * thread and only via this calcPath method.
+     * <p/>
+     * @return the path. Call the method found() to make sure that the path is valid.
      */
-//    RoutingAlgorithm setType( WeightCalculation calc );
+    Path calcPath( LocationIDResult from, LocationIDResult to );
 
     /**
      * @return name of this algorithm

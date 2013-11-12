@@ -23,8 +23,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
 
 /**
  * Stores the nodes for the found path of an algorithm. It additionally needs the edgeIds to make
@@ -37,7 +35,7 @@ import gnu.trove.set.hash.TIntHashSet;
 public class Path
 {
     protected Graph graph;
-    protected FlagEncoder encoder;
+    private FlagEncoder encoder;
     protected double distance;
     // we go upwards (via EdgeEntry.parent) from the goal node to the origin node
     protected boolean reverseOrder = true;
@@ -121,7 +119,10 @@ public class Path
 
     void reverseOrder()
     {
-        reverseOrder = !reverseOrder;
+        if(!reverseOrder)
+            throw new IllegalStateException("Switching order multiple times is not supported");
+        
+        reverseOrder = false;
         edgeIds.reverse();
     }
 
@@ -164,7 +165,7 @@ public class Path
         setEndNode(goalEdge.endNode);
         while (EdgeIterator.Edge.isValid(goalEdge.edge))
         {
-            processDistance(goalEdge.edge, goalEdge.endNode);
+            processEdge(goalEdge.edge, goalEdge.endNode);
             goalEdge = goalEdge.parent;
         }
 
@@ -190,7 +191,7 @@ public class Path
     /**
      * Calls calcDistance and adds the edgeId.
      */
-    protected void processDistance( int edgeId, int endNode )
+    protected void processEdge( int edgeId, int endNode )
     {
         EdgeIteratorState iter = graph.getEdgeProps(edgeId, endNode);
         distance += calcDistance(iter);
@@ -199,7 +200,7 @@ public class Path
     }
 
     /**
-     * This method returns the distance in kilometer for the specified edge.
+     * This method returns the distance in meter for the specified edge.
      */
     protected double calcDistance( EdgeIteratorState iter )
     {
@@ -207,7 +208,7 @@ public class Path
     }
 
     /**
-     * Calculates the time in minutes for the specified distance and speed (via flags)
+     * Calculates the time in seconds for the specified distance in meter and speed (via flags)
      */
     protected long calcTime( double distance, int flags )
     {
@@ -217,7 +218,7 @@ public class Path
     /**
      * Used in combination with forEveryEdge.
      */
-    public static interface EdgeVisitor
+    private static interface EdgeVisitor
     {
         void next( EdgeIteratorState edgeBase, int index );
     }
@@ -225,7 +226,7 @@ public class Path
     /**
      * Iterates over all edges in this path and calls the visitor for it.
      */
-    public void forEveryEdge( EdgeVisitor visitor )
+    private void forEveryEdge( EdgeVisitor visitor )
     {
         int tmpNode = getFromNode();
         int len = edgeIds.size();
@@ -250,9 +251,7 @@ public class Path
     {
         final TIntArrayList nodes = new TIntArrayList(edgeIds.size() + 1);
         if (edgeIds.isEmpty())
-        {
             return nodes;
-        }
 
         int tmpNode = getFromNode();
         nodes.add(tmpNode);
@@ -274,11 +273,11 @@ public class Path
     {
         if (cachedPoints != null)
             return cachedPoints;
-        
+
         cachedPoints = new PointList(edgeIds.size() + 1);
         if (edgeIds.isEmpty())
             return cachedPoints;
-        
+
         int tmpNode = getFromNode();
         cachedPoints.add(graph.getLatitude(tmpNode), graph.getLongitude(tmpNode));
         forEveryEdge(new EdgeVisitor()
@@ -286,14 +285,12 @@ public class Path
             @Override
             public void next( EdgeIteratorState eb, int i )
             {
-                PointList pl = eb.getWayGeometry();
+                PointList pl = eb.fetchWayGeometry(1);
                 pl.reverse();
                 for (int j = 0; j < pl.getSize(); j++)
                 {
                     cachedPoints.add(pl.getLatitude(j), pl.getLongitude(j));
                 }
-                int baseNode = eb.getBaseNode();
-                cachedPoints.add(graph.getLatitude(baseNode), graph.getLongitude(baseNode));
             }
         });
         return cachedPoints;
@@ -349,7 +346,7 @@ public class Path
                 double baseLat = graph.getLatitude(baseNode);
                 double baseLon = graph.getLongitude(baseNode);
                 double latitude, longitude;
-                PointList wayGeo = edgeBase.getWayGeometry();
+                PointList wayGeo = edgeBase.fetchWayGeometry(0);
                 if (wayGeo.isEmpty())
                 {
                     latitude = baseLat;
@@ -421,6 +418,7 @@ public class Path
                                 cachedWays.add(InstructionList.TURN_SHARP_LEFT, name, prevDist);
                             else
                                 cachedWays.add(InstructionList.TURN_SHARP_RIGHT, name, prevDist);
+                            
                         }
                     } else
                         prevDist += calcDistance(edgeBase);
@@ -442,29 +440,6 @@ public class Path
         return cachedWays;
     }
 
-    public TIntSet calculateIdenticalNodes( Path p2 )
-    {
-        TIntHashSet thisSet = new TIntHashSet();
-        TIntHashSet retSet = new TIntHashSet();
-        TIntList nodes = calcNodes();
-        int max = nodes.size();
-        for (int i = 0; i < max; i++)
-        {
-            thisSet.add(nodes.get(i));
-        }
-
-        nodes = p2.calcNodes();
-        max = nodes.size();
-        for (int i = 0; i < max; i++)
-        {
-            if (thisSet.contains(nodes.get(i)))
-            {
-                retSet.add(nodes.get(i));
-            }
-        }
-        return retSet;
-    }
-
     @Override
     public String toString()
     {
@@ -477,9 +452,7 @@ public class Path
         for (int i = 0; i < edgeIds.size(); i++)
         {
             if (i > 0)
-            {
                 str += "->";
-            }
 
             str += edgeIds.get(i);
         }

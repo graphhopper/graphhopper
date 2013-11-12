@@ -32,7 +32,7 @@ import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.CoordTrig;
+import com.graphhopper.util.shapes.GHPoint;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,20 +42,20 @@ import org.slf4j.LoggerFactory;
  * implementation is the a very memory efficient representation for areas with lots of node and
  * edges, but lacks precision. No edge distances are measured.
  * <p/>
- * @see Location2NodesNtreefor a more precise but more complicated and also slightly slower
- implementation of Location2IDIndex.
- <p/>
+ * @see Location2NodesNtree for a more precise but more complicated and also slightly slower
+ * implementation of Location2IDIndex.
+ * <p/>
  * @author Peter Karich
  */
 public class Location2IDQuadtree implements Location2IDIndex
 {
     private final static int MAGIC_INT = Integer.MAX_VALUE / 12306;
-    private Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private KeyAlgo keyAlgo;
     protected DistanceCalc distCalc = new DistancePlaneProjection();
-    private DataAccess index;
+    private final DataAccess index;
     private double maxRasterWidth2InMeterNormed;
-    private Graph graph;
+    private final Graph graph;
     private int lonSize, latSize;
 
     public Location2IDQuadtree( Graph g, Directory dir )
@@ -69,12 +69,10 @@ public class Location2IDQuadtree implements Location2IDIndex
     public Location2IDIndex setApproximation( boolean approxDist )
     {
         if (approxDist)
-        {
             distCalc = new DistancePlaneProjection();
-        } else
-        {
+        else
             distCalc = new DistanceCalc();
-        }
+
         return this;
     }
 
@@ -94,22 +92,17 @@ public class Location2IDQuadtree implements Location2IDIndex
     public boolean loadExisting()
     {
         if (!index.loadExisting())
-        {
             return false;
-        }
 
         if (index.getHeader(0) != MAGIC_INT)
-        {
             throw new IllegalStateException("incorrect loc2id index version");
-        }
+
         int lat = index.getHeader(1 * 4);
         int lon = index.getHeader(2 * 4);
         int checksum = index.getHeader(3 * 4);
         if (checksum != graph.getNodes())
-        {
             throw new IllegalStateException("index was created from a different graph with "
                     + checksum + ". Current nodes:" + graph.getNodes());
-        }
 
         initAlgo(lat, lon);
         return true;
@@ -133,9 +126,6 @@ public class Location2IDQuadtree implements Location2IDIndex
      * pre-defined resolution which is controlled via capacity. This datastructure then uses approx.
      * capacity * 4 bytes. So maximum capacity is 2^30 where the quadtree would cover the world
      * boundaries every 1.3km - IMO enough for EU or US networks.
-     * <p/>
-     * TODO it should be additionally possible to specify the minimum raster width instead of the
-     * memory usage
      */
     @Override
     public Location2IDIndex prepareIndex()
@@ -159,9 +149,7 @@ public class Location2IDQuadtree implements Location2IDIndex
     {
         latSize = lonSize = (int) Math.sqrt(size);
         if (latSize * lonSize < size)
-        {
             lonSize++;
-        }
     }
 
     private void initBuffer()
@@ -199,7 +187,7 @@ public class Location2IDQuadtree implements Location2IDIndex
         }
 
         GHBitSet filledIndices = new GHBitSetImpl(size);
-        CoordTrig coord = new CoordTrig();
+        GHPoint coord = new GHPoint();
         for (int nodeId = 0; nodeId < locs; nodeId++)
         {
             double lat = graph.getLatitude(nodeId);
@@ -335,9 +323,7 @@ public class Location2IDQuadtree implements Location2IDIndex
             final EdgeFilter edgeFilter )
     {
         if (edgeFilter != EdgeFilter.ALL_EDGES)
-        {
             throw new UnsupportedOperationException("edge filters are not yet implemented for " + Location2IDQuadtree.class.getSimpleName());
-        }
 
         // The following cases (e.g. dead ends or motorways crossing a normal way) could be problematic:
         // |     |
@@ -345,7 +331,7 @@ public class Location2IDQuadtree implements Location2IDIndex
         // |  |  |< --- maxRasterWidth reached
         // \-----/
         /*
-         * TODO use additionally the 8 surrounding quadrants: There an error due to the raster
+         * Problem: use additionally the 8 surrounding quadrants: There an error due to the raster
          * width. Because this index does not cover 100% of the graph you'll need to traverse the
          * graph until you find the real matching point or if you reach the raster width limit. And
          * there is a problem when using the raster limit as 'not found' indication and if you have
@@ -353,14 +339,13 @@ public class Location2IDQuadtree implements Location2IDIndex
          * P is the closest point to the request one it could be that the raster limit is too short
          * to reach it via graph traversal:
          */
-
         long key = keyAlgo.encode(queryLat, queryLon);
         final int id = index.getInt(key * 4);
         double mainLat = graph.getLatitude(id);
         double mainLon = graph.getLongitude(id);
-        final LocationIDResult res = new LocationIDResult();
+        final LocationIDResult res = new LocationIDResult(queryLat, queryLon);
         res.setClosestNode(id);
-        res.setWeight(distCalc.calcNormalizedDist(queryLat, queryLon, mainLat, mainLon));
+        res.setQueryDistance(distCalc.calcNormalizedDist(queryLat, queryLon, mainLat, mainLon));
         goFurtherHook(id);
         new XFirstSearch()
         {
@@ -374,24 +359,25 @@ public class Location2IDQuadtree implements Location2IDIndex
             protected boolean goFurther( int baseNode )
             {
                 if (baseNode == id)
-                {
                     return true;
-                }
 
                 goFurtherHook(baseNode);
                 double currLat = graph.getLatitude(baseNode);
                 double currLon = graph.getLongitude(baseNode);
-                double currDist = distCalc.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
-                if (currDist < res.getWeight())
+                double currNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
+                if (currNormedDist < res.getQueryDistance())
                 {
-                    res.setWeight(currDist);
+                    res.setQueryDistance(currNormedDist);
                     res.setClosestNode(baseNode);
                     return true;
                 }
 
-                return currDist < maxRasterWidth2InMeterNormed;
+                return currNormedDist < maxRasterWidth2InMeterNormed;
             }
         }.start(graph.createEdgeExplorer(), id, false);
+
+        // denormalize distance
+        res.setQueryDistance(distCalc.calcDenormalizedDist(res.getQueryDistance()));
         return res;
     }
 
