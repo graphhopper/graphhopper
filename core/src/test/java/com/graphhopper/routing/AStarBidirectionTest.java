@@ -20,7 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 
 /**
@@ -30,14 +30,14 @@ import com.graphhopper.storage.Graph;
 public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
 {
     @Override
-    public AlgorithmPreparation prepareGraph( Graph g, final FlagEncoder encoder, final WeightCalculation calc)
+    public AlgorithmPreparation prepareGraph( Graph g, final FlagEncoder encoder, final Weighting w)
     {
         return new NoOpAlgorithmPreparation()
         {
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new AStarBidirection(_graph, encoder, calc);
+                return new AStarBidirection(_graph, encoder, w);
             }
         }.setGraph(g);
     }

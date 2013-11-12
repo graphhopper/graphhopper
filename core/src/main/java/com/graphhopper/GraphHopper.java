@@ -67,7 +67,7 @@ public class GraphHopper implements GraphHopperAPI
     private AlgorithmPreparation prepare;
     private boolean doPrepare = true;
     private boolean chEnabled = true;
-    private String chType = "fastest";
+    private String chWeighting = "fastest";
     private int periodicUpdates = 3;
     private int lazyUpdates = 10;
     private int neighborUpdates = 20;
@@ -183,14 +183,14 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Enables the use of contraction hierarchies to reduce query times.
      * <p/>
-     * @param type can be "fastest", "shortest" or your own weight-calculation type.
+     * @param weighting can be "fastest", "shortest" or your own weight-calculation type.
      * @see #disableCHShortcuts()
      */
-    public GraphHopper setCHShortcuts( String type )
+    public GraphHopper setCHShortcuts( String weighting )
     {
         ensureNotLoaded();
         chEnabled = true;
-        chType = type;
+        chWeighting = weighting;
         return this;
     }
 
@@ -392,8 +392,8 @@ public class GraphHopper implements GraphHopperAPI
 
         // osm import
         wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", wayPointMaxDistance);
-        String type = args.get("osmreader.acceptWay", "CAR");
-        encodingManager = new EncodingManager(type);
+        String flagEncoders = args.get("osmreader.acceptWay", "CAR");
+        encodingManager = new EncodingManager(flagEncoders);
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
 
@@ -541,7 +541,7 @@ public class GraphHopper implements GraphHopperAPI
     {
         FlagEncoder encoder = encodingManager.getSingle();
         PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder,
-                createType(chType, encoder));
+                createWeighting(chWeighting, encoder));
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                 setLazyUpdates(lazyUpdates).
                 setNeighborUpdates(neighborUpdates);
@@ -550,13 +550,13 @@ public class GraphHopper implements GraphHopperAPI
         prepare.setGraph(graph);
     }
 
-    protected WeightCalculation createType( String type, FlagEncoder encoder )
+    protected Weighting createWeighting( String weighting, FlagEncoder encoder )
     {
         // ignore case
-        type = type.toLowerCase();
-        if ("shortest".equals(type))
-            return new ShortestCalc();
-        return new FastestCalc(encoder);
+        weighting = weighting.toLowerCase();
+        if ("shortest".equals(weighting))
+            return new ShortestWeighting();
+        return new FastestWeighting(encoder);
     }
 
     @Override
@@ -593,7 +593,7 @@ public class GraphHopper implements GraphHopperAPI
         if (chEnabled)
         {
             if (prepare == null)
-                throw new IllegalStateException("Preparation object is null. CH-preparation wasn't done or did you forgot to call setCHShortcuts(false, chType)?");
+                throw new IllegalStateException("Preparation object is null. CH-preparation wasn't done or did you forgot to call disableCHShortcuts()?");
 
             if (request.getAlgorithm().equals("dijkstrabi"))
                 algo = prepare.createAlgo();
@@ -604,9 +604,9 @@ public class GraphHopper implements GraphHopperAPI
 
         } else
         {
-            WeightCalculation weightCalc = createType(request.getType(), encoder);
+            Weighting weighting = createWeighting(request.getWeighting(), encoder);
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.getAlgorithm(),
-                    encoder, weightCalc);
+                    encoder, weighting);
             algo = prepare.createAlgo();
         }
 

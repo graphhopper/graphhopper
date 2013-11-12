@@ -25,8 +25,8 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
-import com.graphhopper.routing.util.ShortestCalc;
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.ShortestWeighting;
+import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -70,7 +70,7 @@ public class MiniGraphUI
     private MapLayer roadsLayer;
     private MapLayer pathLayer;
     private boolean fastPaint = false;
-    private WeightCalculation wCalc = new ShortestCalc();
+    private Weighting weighting = new ShortestWeighting();
 
     public MiniGraphUI( GraphHopper hopper, boolean debug )
     {
@@ -78,7 +78,7 @@ public class MiniGraphUI
         prepare = hopper.getPreparation();
         if (prepare == null)
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph,
-                    "dijkstra", hopper.getEncodingManager().getEncoder("foot"), wCalc);
+                    "dijkstra", hopper.getEncodingManager().getEncoder("foot"), weighting);
 
         logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algo:" + prepare.createAlgo().getName());
         mg = new GraphicsWrapper(graph);
@@ -207,7 +207,7 @@ public class MiniGraphUI
                 }
 
                 StopWatch sw = new StopWatch().start();
-                logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId + " " + wCalc);
+                logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId + " " + weighting);
                 path = algo.calcPath(dijkstraFromId, dijkstraToId);
 //                mg.plotNode(g2, dijkstraFromId, Color.red);
 //                mg.plotNode(g2, dijkstraToId, Color.BLUE);

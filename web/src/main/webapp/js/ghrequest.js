@@ -4,6 +4,7 @@ GHRequest = function(host) {
     this.from = new GHInput("");
     this.to = new GHInput("");
     this.vehicle = "car";
+    this.weighting = "fastest";
     this.encodedPolyline = true;
     this.instructions = true;
     this.debug = false;
@@ -30,8 +31,11 @@ GHRequest.prototype.init = function(params) {
         this.minPathPrecision = params.minPathPrecision;
     if (params.vehicle)
         this.vehicle = params.vehicle;
+    if (params.weighting)
+        this.weighting = params.weighting;
+    // REMOVE_IN 0.3
     if (params.algoType)
-        this.algoType = params.algoType;
+        this.weighting = params.algoType;
     if (params.algorithm)
         this.algorithm = params.algorithm;
     if (params.locale)
@@ -87,8 +91,8 @@ GHRequest.prototype.createPath = function(url) {
     if (this.vehicle && this.vehicle != "car")
         url += "&vehicle=" + this.vehicle;
     // fastest or shortest
-    if (this.algoType && this.algoType != "fastest")
-        url += "&algoType=" + this.algoType;
+    if (this.weighting && this.weighting != "fastest")
+        url += "&weighting=" + this.weighting;
     if (this.locale && this.locale != "en")
         url += "&locale=" + this.locale;
     // dijkstra, dijkstrabi, astar, astarbi

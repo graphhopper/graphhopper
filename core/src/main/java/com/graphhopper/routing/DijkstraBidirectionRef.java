@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
@@ -32,7 +32,7 @@ import java.util.PriorityQueue;
  * <p/>
  * 'Ref' stands for reference implementation and is using the normal Java-'reference'-way.
  * <p/>
- * @see DijkstraBidirectionfor an optimized but more complicated version
+ * @see DijkstraBidirectionforanoptimized but more complicated version
  * @author Peter Karich
  */
 public class DijkstraBidirectionRef extends AbstractBidirAlgo
@@ -46,9 +46,9 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     protected EdgeEntry currTo;
     protected PathBidirRef bestPath;
 
-    public DijkstraBidirectionRef( Graph graph, FlagEncoder encoder, WeightCalculation type )
+    public DijkstraBidirectionRef( Graph graph, FlagEncoder encoder, Weighting weighting )
     {
-        super(graph, encoder, type);
+        super(graph, encoder, weighting);
         initCollections(1000);
     }
 
@@ -158,7 +158,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
                 continue;
 
             int neighborNode = iter.getAdjNode();
-            double tmpWeight = weightCalc.calcWeight(iter) + currEdge.weight;
+            double tmpWeight = weighting.calcWeight(iter) + currEdge.weight;
 
             EdgeEntry de = shortestWeightMap.get(neighborNode);
             if (de == null)

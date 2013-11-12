@@ -31,7 +31,7 @@ public class DefaultEdgeFilter implements EdgeFilter
     private FlagEncoder encoder;
 
     /**
-     * Creates an edges filter which accepts both direction of the specified vehicle type.
+     * Creates an edges filter which accepts both direction of the specified vehicle.
      */
     public DefaultEdgeFilter( FlagEncoder encoder )
     {

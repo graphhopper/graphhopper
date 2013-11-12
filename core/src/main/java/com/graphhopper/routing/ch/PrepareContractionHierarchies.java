@@ -23,8 +23,8 @@ import com.graphhopper.routing.util.AbstractAlgoPreparation;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.ShortestCalc;
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.ShortestWeighting;
+import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraOneToMany;
@@ -58,8 +58,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     // preparation dijkstra uses always shortest path as edges are rewritten - see doWork
-    private final WeightCalculation shortestCalc = new ShortestCalc();
-    private final WeightCalculation prepareWeightCalc;
+    private final Weighting shortestWeighting = new ShortestWeighting();
+    private final Weighting prepareWeighting;
     private final FlagEncoder prepareEncoder;
     private EdgeSkipExplorer vehicleInExplorer;
     private EdgeSkipExplorer vehicleOutExplorer;
@@ -90,12 +90,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private int neighborUpdatePercentage = 10;
     private int initialCollectionSize = 10000;
 
-    public PrepareContractionHierarchies( FlagEncoder encoder, WeightCalculation type )
+    public PrepareContractionHierarchies( FlagEncoder encoder, Weighting weighting )
     {
         prepareEncoder = encoder;
         scOneDir = encoder.flags(0, false);
         scBothDir = encoder.flags(0, true);
-        prepareWeightCalc = type;
+        prepareWeighting = weighting;
         originalEdges = new GHDirectory("", DAType.RAM_INT).find("originalEdges");
         originalEdges.create(1000);
     }
@@ -187,7 +187,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         if (prepareEncoder == null)
             throw new IllegalStateException("No vehicle encoder set.");
 
-        if (prepareWeightCalc == null)
+        if (prepareWeighting == null)
             throw new IllegalStateException("No weight calculation set.");
 
         allSW.start();
@@ -214,7 +214,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         while (iter.next())
         {
             c++;
-            iter.setDistance(prepareWeightCalc.calcWeight(iter));
+            iter.setDistance(prepareWeighting.calcWeight(iter));
             setOrigEdgeCount(iter.getEdge(), 1);
         }
         return c > 0;
@@ -368,7 +368,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // Preparation works only once so we can release temporary data.
         // The preparation object itself has to be intact to create the algorithm.
         close();
-        logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc
+        logger.info("new shortcuts " + newShortcuts + ", " + prepareWeighting
                 + ", " + prepareEncoder
                 + ", removeHigher2LowerEdges:" + removesHigher2LowerEdges
                 + ", dijkstras:" + dijkstraCount
@@ -651,7 +651,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         levelEdgeFilter = new IgnoreNodeFilter(g);
         sortedNodes = new GHTreeMapComposed();
         refs = new PriorityNode[g.getNodes()];
-        algo = new DijkstraOneToMany(g, prepareEncoder, shortestCalc);
+        algo = new DijkstraOneToMany(g, prepareEncoder, shortestWeighting);
         return this;
     }
 
@@ -703,8 +703,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     public RoutingAlgorithm createAlgo()
     {
         checkGraph();
-        // do not change weight within DijkstraBidirectionRef => so use ShortestCalc
-        DijkstraBidirectionRef dijkstrabi = new DijkstraBidirectionRef(g, prepareEncoder, shortestCalc)
+        // do not change weight within DijkstraBidirectionRef => so use ShortestWeighting
+        DijkstraBidirectionRef dijkstrabi = new DijkstraBidirectionRef(g, prepareEncoder, shortestWeighting)
         {
             @Override
             protected void initCollections( int nodes )
@@ -721,7 +721,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     @Override
                     protected void updateDistance( EdgeIteratorState edge )
                     {
-                        edge.setDistance(prepareWeightCalc.calcWeight(edge));
+                        edge.setDistance(prepareWeighting.calcWeight(edge));
                     }
                 };
             }
@@ -742,8 +742,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             {
                 // CH changes the distance in prepareEdges to the weight
                 // now we need to transform it back to the real distance
-                WeightCalculation wc = createWeightCalculation();
-                bestPath = new Path4CH(graph, flagEncoder, wc);
+                Weighting w = createWeighting();
+                bestPath = new Path4CH(graph, flagEncoder, w);
             }
 
             @Override
@@ -755,7 +755,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             @Override
             public String toString()
             {
-                return getName() + "|" + prepareWeightCalc;
+                return getName() + "|" + prepareWeighting;
             }
         };
 
@@ -768,7 +768,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     public AStarBidirection createAStar()
     {
         checkGraph();
-        AStarBidirection astar = new AStarBidirection(g, prepareEncoder, shortestCalc)
+        AStarBidirection astar = new AStarBidirection(g, prepareEncoder, shortestWeighting)
         {
             @Override
             protected void initCollections( int nodes )
@@ -785,7 +785,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     @Override
                     protected void updateDistance( EdgeIteratorState edge )
                     {
-                        edge.setDistance(prepareWeightCalc.calcWeight(edge));
+                        edge.setDistance(prepareWeighting.calcWeight(edge));
                     }
                 };
             }
@@ -807,7 +807,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             {
                 // CH changes the distance in prepareEdges to the weight
                 // now we need to transform it back to the real distance
-                WeightCalculation wc = createWeightCalculation();
+                Weighting wc = createWeighting();
                 bestPath = new Path4CH(graph, flagEncoder, wc);
             }
 
@@ -820,7 +820,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             @Override
             public String toString()
             {
-                return getName() + "|" + prepareWeightCalc;
+                return getName() + "|" + prepareWeighting;
             }
         };
 
@@ -830,9 +830,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return astar;
     }
 
-    WeightCalculation createWeightCalculation()
+    Weighting createWeighting()
     {
-        return new WeightCalculation()
+        return new Weighting()
         {
             @Override
             public String toString()
@@ -855,7 +855,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             @Override
             public double revertWeight( EdgeIteratorState iter, double weight )
             {
-                return prepareWeightCalc.revertWeight(iter, weight);
+                return prepareWeighting.revertWeight(iter, weight);
             }
         };
     }

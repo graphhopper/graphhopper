@@ -21,7 +21,7 @@ import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIteratorState;
@@ -36,14 +36,14 @@ import org.junit.Test;
 public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
 {
     @Override
-    public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final WeightCalculation calc )
+    public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final Weighting w )
     {
         return new NoOpAlgorithmPreparation()
         {
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new DijkstraOneToMany(_graph, encoder, calc);
+                return new DijkstraOneToMany(_graph, encoder, w);
             }
         }.setGraph(defaultGraph);
     }

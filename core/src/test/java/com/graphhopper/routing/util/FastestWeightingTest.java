@@ -26,14 +26,14 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class FastestCalcTest
+public class FastestWeightingTest
 {
-    private FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
+    private final FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
 
     @Test
     public void testMinWeightHasSameUnitAs_getWeight()
     {
-        FastestCalc instance = new FastestCalc(encoder);
+        FastestWeighting instance = new FastestWeighting(encoder);
         int flags = encoder.flags(encoder.getMaxSpeed(), true);
         assertEquals(instance.getMinWeight(10), instance.calcWeight(createEdge(10, flags)), 1e-8);
     }
@@ -41,7 +41,7 @@ public class FastestCalcTest
     @Test
     public void testSpeed0()
     {
-        FastestCalc instance = new FastestCalc(encoder);
+        FastestWeighting instance = new FastestWeighting(encoder);
         assertEquals(1.0 / 0, instance.calcWeight(createEdge(10, encoder.flags(0, true))), 1e-8);
     }
 

@@ -20,26 +20,38 @@ package com.graphhopper.routing.util;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
- * Specifies how the best route is calculated. E.g. the fastest or shortest route.
+ * Calculates the shortest route - independent of a vehicle as the calculation is based on the
+ * distance only.
  * <p/>
  * @author Peter Karich
  */
-public interface WeightCalculation
+public class ShortestWeighting implements Weighting
 {
-    /**
-     * Used only for the heuristical estimation in A
-     * <p/>
-     * @return minimal weight. E.g. if you calculate the fastest way it is distance/maxVelocity
-     */
-    double getMinWeight( double distance );
+    public ShortestWeighting()
+    {
+    }
 
-    /**
-     * @return the calculated weight with the specified velocity
-     */
-    double calcWeight( EdgeIteratorState edge );
+    @Override
+    public double getMinWeight( double currDistToGoal )
+    {
+        return currDistToGoal;
+    }
 
-    /**
-     * @return distance from specified weight
-     */
-    double revertWeight( EdgeIteratorState iter, double weight );
+    @Override
+    public double calcWeight( EdgeIteratorState iter )
+    {
+        return iter.getDistance();
+    }
+
+    @Override
+    public double revertWeight( EdgeIteratorState iter, double weight )
+    {
+        return weight;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "SHORTEST";
+    }
 }

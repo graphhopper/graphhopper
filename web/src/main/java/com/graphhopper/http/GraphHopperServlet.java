@@ -112,11 +112,17 @@ public class GraphHopperServlet extends GHServlet
             boolean enableInstructions = getBooleanParam(req, "instructions", true);
             boolean calcPoints = getBooleanParam(req, "calcPoints", true);
             boolean useMiles = getBooleanParam(req, "useMiles", false);
-            
+
             String vehicleStr = getParam(req, "vehicle", "CAR").toUpperCase();
+
             Locale locale = Helper.getLocale(getParam(req, "locale", "en"));
-            String algoTypeStr = getParam(req, "algoType", "fastest");
-            String algoStr = getParam(req, "algorithm", defaultAlgorithm);            
+
+            String weighting = getParam(req, "weighting", "fastest");
+            // REMOVE_IN 0.3
+            if (req.getParameterMap().containsKey("algoType"))
+                weighting = getParam(req, "algoType", "fastest");
+
+            String algoStr = getParam(req, "algorithm", defaultAlgorithm);
             boolean encodedPolylineParam = getBooleanParam(req, "encodedPolyline", true);
 
             sw = new StopWatch().start();
@@ -126,7 +132,7 @@ public class GraphHopperServlet extends GHServlet
                 FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
                 rsp = hopper.route(new GHRequest(start, end).
                         setVehicle(algoVehicle.toString()).
-                        setType(algoTypeStr).
+                        setWeighting(weighting).
                         setAlgorithm(algoStr).
                         putHint("calcPoints", calcPoints).
                         putHint("instructions", enableInstructions).
@@ -164,12 +170,12 @@ public class GraphHopperServlet extends GHServlet
                         endObject();
                 builder = builder.startObject("route").
                         object("from", new Double[]
-                        {
-                            start.lon, start.lat
+                                {
+                                    start.lon, start.lat
                         }).
                         object("to", new Double[]
-                        {
-                            end.lon, end.lat
+                                {
+                                    end.lon, end.lat
                         }).
                         object("distance", distInMeter).
                         object("time", rsp.getTime());
@@ -208,7 +214,7 @@ public class GraphHopperServlet extends GHServlet
                     + ", distance: " + distInMeter + ", time:" + Math.round(rsp.getTime() / 60f)
                     + "min, points:" + points.getSize() + ", took:" + took
                     + ", debug - " + rsp.getDebugInfo() + ", " + algoStr + ", "
-                    + algoTypeStr + ", " + vehicleStr;
+                    + weighting + ", " + vehicleStr;
             if (rsp.hasErrors())
                 logger.error(logStr + ", errors:" + rsp.getErrors());
             else

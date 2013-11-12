@@ -20,7 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.ShortestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import gnu.trove.list.TDoubleList;
@@ -87,7 +87,7 @@ public class InstructionListTest
         iter2.setName("8-9");
         iter2.setWayGeometry(list);
 
-        Path p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestCalc()).calcPath(0, 10);
+        Path p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestWeighting()).calcPath(0, 10);
         InstructionList wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Continue onto 4-7",
                 "Turn left onto 7-8", "Continue onto 8-9", "Turn right"),
@@ -116,7 +116,7 @@ public class InstructionListTest
         distStrings = wayList.createDistances(trMap.get("en_US"), true);
         assertEquals(Arrays.asList("328 ft", "328 ft", "328 ft", "328 ft", "328 ft", "328 ft"), distStrings);
 
-        p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestCalc()).calcPath(6, 2);
+        p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestWeighting()).calcPath(6, 2);
         assertEquals(420, p.getDistance(), 1e-2);
         wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 6-7", "Continue onto 7-8", "Turn left onto 5-8", "Continue onto 5-2"),
@@ -147,12 +147,12 @@ public class InstructionListTest
         list.add(10.20, 10.05);
         iter.setWayGeometry(list);
 
-        Path p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestCalc()).calcPath(2, 3);
+        Path p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestWeighting()).calcPath(2, 3);
         InstructionList wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 2-4", "Turn slight right onto 3-4"),
                 wayList.createDescription(trMap.getWithFallBack(Locale.CANADA)));
 
-        p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestCalc()).calcPath(3, 5);
+        p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestWeighting()).calcPath(3, 5);
         wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 3-4", "Continue onto 4-5"),
                 wayList.createDescription(trMap.getWithFallBack(Locale.CANADA)));
@@ -183,7 +183,7 @@ public class InstructionListTest
         list.add(10.20, 10.05);
         iter.setWayGeometry(list);
 
-        Path p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestCalc()).calcPath(2, 3);
+        Path p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestWeighting()).calcPath(2, 3);
         InstructionList wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto street"), wayList.createDescription(trMap.getWithFallBack(Locale.CANADA)));
     }

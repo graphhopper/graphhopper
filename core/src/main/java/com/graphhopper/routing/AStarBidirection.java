@@ -19,7 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.AStar.AStarEdge;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
@@ -73,9 +73,9 @@ public class AStarBidirection extends AbstractBidirAlgo
     private CoordTrig toCoord;
     protected PathBidirRef bestPath;
 
-    public AStarBidirection( Graph graph, FlagEncoder encoder, WeightCalculation type )
+    public AStarBidirection( Graph graph, FlagEncoder encoder, Weighting weighting )
     {
-        super(graph, encoder, type);
+        super(graph, encoder, weighting);
         int nodes = Math.max(20, graph.getNodes());
         initCollections(nodes);
 
@@ -227,14 +227,14 @@ public class AStarBidirection extends AbstractBidirAlgo
             int neighborNode = iter.getAdjNode();
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
-            double alreadyVisitedWeight = weightCalc.calcWeight(iter) + currEdge.weightToCompare;
+            double alreadyVisitedWeight = weighting.calcWeight(iter) + currEdge.weightToCompare;
             AStarEdge de = shortestWeightMap.get(neighborNode);
             if (de == null || de.weightToCompare > alreadyVisitedWeight)
             {
                 double tmpLat = graph.getLatitude(neighborNode);
                 double tmpLon = graph.getLongitude(neighborNode);
                 double currWeightToGoal = dist.calcDist(goal.lat, goal.lon, tmpLat, tmpLon);
-                currWeightToGoal = weightCalc.getMinWeight(currWeightToGoal);
+                currWeightToGoal = weighting.getMinWeight(currWeightToGoal);
                 double estimationFullDist = alreadyVisitedWeight + currWeightToGoal;
                 if (de == null)
                 {

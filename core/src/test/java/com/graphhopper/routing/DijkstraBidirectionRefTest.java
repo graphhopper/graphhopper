@@ -27,14 +27,14 @@ import com.graphhopper.storage.Graph;
 public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
 {
     @Override
-    public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final WeightCalculation calc)
+    public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final Weighting w)
     {
         return new NoOpAlgorithmPreparation()
         {
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new DijkstraBidirectionRef(_graph, encoder, calc);
+                return new DijkstraBidirectionRef(_graph, encoder, w);
             }
         }.setGraph(defaultGraph);
     }

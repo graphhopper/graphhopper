@@ -33,7 +33,7 @@ public class GHRequest
     private GHPlace to;
     private Map<String, Object> hints = new HashMap<String, Object>(5);
     private String vehicle = "CAR";
-    private String type = "shortest";
+    private String weighting = "shortest";
 
     /**
      * Calculate the path from specified startPoint (fromLat, fromLon) to endPoint (toLat, toLon).
@@ -114,15 +114,15 @@ public class GHRequest
     /**
      * By default it supports fastest and shortest
      */
-    public GHRequest setType( String type )
+    public GHRequest setWeighting( String w )
     {
-        this.type = type;
+        this.weighting = w;
         return this;
     }
 
-    public String getType()
+    public String getWeighting()
     {
-        return type;
+        return weighting;
     }
 
     public GHRequest setVehicle( String vehicle )

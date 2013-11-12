@@ -230,12 +230,12 @@ public class RoutingAlgorithmIT
                     importOrLoad();
 
             final AbstractFlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-            WeightCalculation weightCalc = new ShortestCalc();
+            Weighting weighting = new ShortestWeighting();
             if ("fastest".equalsIgnoreCase(weightCalcStr))
-                weightCalc = new FastestCalc(encoder);
+                weighting = new FastestWeighting(encoder);
 
             Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
-                    createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, ch, weightCalc, hopper.getEncodingManager());
+                    createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, ch, weighting, hopper.getEncodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
             for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
             {
@@ -276,7 +276,7 @@ public class RoutingAlgorithmIT
         String bigFile = "10000EWD.txt.gz";
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
         Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
-                createAlgos(graph, null, encoder, false, new ShortestCalc(), eManager);
+                createAlgos(graph, null, encoder, false, new ShortestWeighting(), eManager);
         for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
         {
             AlgorithmPreparation prepare = entry.getKey();
@@ -326,7 +326,7 @@ public class RoutingAlgorithmIT
         // testing if algorithms are independent. should be. so test only two algorithms. 
         // also the preparing is too costly to be called for every thread
         int algosLength = 2;
-        WeightCalculation type = new ShortestCalc();
+        Weighting weighting = new ShortestWeighting();
         final EdgeFilter filter = new DefaultEdgeFilter(carEncoder);
         for (int no = 0; no < MAX; no++)
         {
@@ -334,8 +334,8 @@ public class RoutingAlgorithmIT
             {
                 RoutingAlgorithm[] algos = new RoutingAlgorithm[]
                 {
-                    new AStar(g, carEncoder, type),
-                    new DijkstraBidirectionRef(g, carEncoder, type)
+                    new AStar(g, carEncoder, weighting),
+                    new DijkstraBidirectionRef(g, carEncoder, weighting)
                 };
                 for (final RoutingAlgorithm algo : algos)
                 {

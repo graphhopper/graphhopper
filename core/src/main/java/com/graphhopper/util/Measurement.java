@@ -107,9 +107,7 @@ public class Measurement
         if ("true".equals(g.getProperties().get("prepare.done")))
             throw new IllegalStateException("Graph has to be unprepared but wasn't!");
 
-        String vehicleStr = "car";
-        final FlagEncoder vehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
-        final WeightCalculation type = new FastestCalc(vehicle);
+        String vehicleStr = "car";        
         StopWatch sw = new StopWatch().start();
         try
         {
@@ -211,8 +209,7 @@ public class Measurement
                 double fromLon = g.getLongitude(from);
                 double toLat = g.getLatitude(to);
                 double toLon = g.getLongitude(to);
-                GHResponse res = hopper.route(new GHRequest(fromLat, fromLon, toLat, toLon).
-                        setType("fastest").setVehicle(vehicle));
+                GHResponse res = hopper.route(new GHRequest(fromLat, fromLon, toLat, toLon).setWeighting("fastest").setVehicle(vehicle));
                 if (res.hasErrors())
                     throw new IllegalStateException("errors should NOT happen in Measurement! " + res.getErrors());
 

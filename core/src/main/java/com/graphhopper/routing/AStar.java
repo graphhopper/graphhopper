@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
@@ -45,9 +45,9 @@ public class AStar extends AbstractRoutingAlgorithm
     private double toLat;
     private double toLon;
 
-    public AStar( Graph g, FlagEncoder encoder, WeightCalculation type )
+    public AStar( Graph g, FlagEncoder encoder, Weighting weighting )
     {
-        super(g, encoder, type);
+        super(g, encoder, weighting);
         initCollections(1000);
         setApproximation(true);
     }
@@ -103,14 +103,14 @@ public class AStar extends AbstractRoutingAlgorithm
                     continue;
 
                 int neighborNode = iter.getAdjNode();
-                double alreadyVisitedWeight = weightCalc.calcWeight(iter) + currEdge.weightToCompare;
+                double alreadyVisitedWeight = weighting.calcWeight(iter) + currEdge.weightToCompare;
                 AStarEdge nEdge = fromMap.get(neighborNode);
                 if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight)
                 {
                     tmpLat = graph.getLatitude(neighborNode);
                     tmpLon = graph.getLongitude(neighborNode);
                     currWeightToGoal = dist.calcDist(toLat, toLon, tmpLat, tmpLon);
-                    currWeightToGoal = weightCalc.getMinWeight(currWeightToGoal);
+                    currWeightToGoal = weighting.getMinWeight(currWeightToGoal);
                     distEstimation = alreadyVisitedWeight + currWeightToGoal;
                     if (nEdge == null)
                     {

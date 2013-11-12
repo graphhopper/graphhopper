@@ -72,9 +72,8 @@ public class GHServlet extends HttpServlet
     {
         String[] l = req.getParameterMap().get(string);
         if (l != null && l.length > 0)
-        {
             return l[0];
-        }
+        
         return _default;
     }
 

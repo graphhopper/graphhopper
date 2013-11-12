@@ -34,8 +34,6 @@ else {
     host = "http://graphhopper.com/routing";
 }
 var ghRequest = new GHRequest(host);
-ghRequest.algoType = "fastest";
-//ghRequest.algorithm = "dijkstra";
 
 $(document).ready(function(e) {
     var History = window.History;

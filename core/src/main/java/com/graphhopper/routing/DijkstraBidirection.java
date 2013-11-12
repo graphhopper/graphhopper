@@ -19,7 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.coll.IntDoubleBinHeap;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -56,9 +56,9 @@ public class DijkstraBidirection extends AbstractBidirAlgo
     private EdgeWrapper parentRefTo;
     private PathBidir nativeBestPath;
 
-    public DijkstraBidirection( Graph graph, FlagEncoder encoder, WeightCalculation type )
+    public DijkstraBidirection( Graph graph, FlagEncoder encoder, Weighting weighting )
     {
-        super(graph, encoder, type);
+        super(graph, encoder, weighting);
         initCollections(1000);
     }
 
@@ -146,7 +146,7 @@ public class DijkstraBidirection extends AbstractBidirAlgo
             if (newRef >= 0 && wrapper.getEdgeId(newRef) == iter.getEdge())
                 continue;
             
-            double tmpWeight = weightCalc.calcWeight(iter) + currWeight;            
+            double tmpWeight = weighting.calcWeight(iter) + currWeight;            
             if (newRef < 0)
             {
                 newRef = wrapper.add(neighborNode, tmpWeight, iter.getEdge());

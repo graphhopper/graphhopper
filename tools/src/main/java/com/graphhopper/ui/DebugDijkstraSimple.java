@@ -19,7 +19,7 @@ package com.graphhopper.ui;
 
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.EdgeEntry;
 import java.awt.Color;
@@ -33,9 +33,9 @@ public class DebugDijkstraSimple extends Dijkstra implements DebugAlgo
     private GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugDijkstraSimple( Graph graph, FlagEncoder encoder, WeightCalculation type, GraphicsWrapper mg )
+    public DebugDijkstraSimple( Graph graph, FlagEncoder encoder, Weighting weighting, GraphicsWrapper mg )
     {
-        super(graph, encoder, type);
+        super(graph, encoder, weighting);
         this.mg = mg;
     }
 

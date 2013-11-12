@@ -20,38 +20,42 @@ package com.graphhopper.routing.util;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
- * Calculates the shortest route - independent of a vehicle as the calculation is based on the
- * distance only.
+ * Calculates the fastest route with the specified vehicle (VehicleEncoder).
  * <p/>
  * @author Peter Karich
  */
-public class ShortestCalc implements WeightCalculation
+public class FastestWeighting implements Weighting
 {
-    public ShortestCalc()
+    private final FlagEncoder encoder;
+    private final double maxSpeed;
+
+    public FastestWeighting( FlagEncoder encoder )
     {
+        this.encoder = encoder;
+        maxSpeed = encoder.getMaxSpeed();
     }
 
     @Override
-    public double getMinWeight( double currDistToGoal )
+    public double getMinWeight( double distance )
     {
-        return currDistToGoal;
+        return distance / maxSpeed;
     }
 
     @Override
-    public double calcWeight( EdgeIteratorState iter )
+    public double calcWeight( EdgeIteratorState edgeIter )
     {
-        return iter.getDistance();
+        return edgeIter.getDistance() / encoder.getSpeed(edgeIter.getFlags());
     }
 
     @Override
     public double revertWeight( EdgeIteratorState iter, double weight )
     {
-        return weight;
+        return weight * encoder.getSpeed(iter.getFlags());
     }
 
     @Override
     public String toString()
     {
-        return "SHORTEST";
+        return "FASTEST|" + encoder;
     }
 }

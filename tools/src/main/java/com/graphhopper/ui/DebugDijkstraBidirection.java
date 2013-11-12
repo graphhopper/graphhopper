@@ -19,7 +19,7 @@ package com.graphhopper.ui;
 
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import java.awt.Color;
@@ -33,7 +33,7 @@ public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements 
     private GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugDijkstraBidirection( Graph graph, FlagEncoder encoder, WeightCalculation type, GraphicsWrapper mg )
+    public DebugDijkstraBidirection( Graph graph, FlagEncoder encoder, Weighting type, GraphicsWrapper mg )
     {
         super(graph, encoder, type);
         this.mg = mg;

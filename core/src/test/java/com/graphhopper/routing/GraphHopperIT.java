@@ -59,7 +59,7 @@ public class GraphHopperIT
 
             Graph g = hopper.getGraph();
             GHResponse rsp = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
-                    setAlgorithm("astar").setVehicle(vehicle).setType(weightCalcStr));
+                    setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
 
             assertEquals(3437.6, rsp.getDistance(), .1);
             assertEquals(87, rsp.getPoints().getSize());

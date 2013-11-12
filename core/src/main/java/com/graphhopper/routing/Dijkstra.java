@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
@@ -41,9 +41,9 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     private int to = -1;
     private EdgeEntry currEdge;
 
-    public Dijkstra( Graph g, FlagEncoder encoder, WeightCalculation type )
+    public Dijkstra( Graph g, FlagEncoder encoder, Weighting weighting )
     {
-        super(g, encoder, type);
+        super(g, encoder, weighting);
         initCollections(1000);
     }
 
@@ -83,7 +83,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
                     continue;
 
                 int tmpNode = iter.getAdjNode();
-                double tmpWeight = weightCalc.calcWeight(iter) + currEdge.weight;
+                double tmpWeight = weighting.calcWeight(iter) + currEdge.weight;
 
                 EdgeEntry nEdge = fromMap.get(tmpNode);
                 if (nEdge == null)

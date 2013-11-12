@@ -19,7 +19,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 
 /**
@@ -40,26 +40,26 @@ public class RoutingAlgorithmFactory
         this.approx = approx;
     }
 
-    public RoutingAlgorithm createAlgo( Graph g, FlagEncoder encoder, WeightCalculation type )
+    public RoutingAlgorithm createAlgo( Graph g, FlagEncoder encoder, Weighting weighting )
     {
         if ("dijkstrabi".equalsIgnoreCase(algoStr))
         {
-            return new DijkstraBidirectionRef(g, encoder, type);
+            return new DijkstraBidirectionRef(g, encoder, weighting);
         } else if ("dijkstraNative".equalsIgnoreCase(algoStr))
         {
-            return new DijkstraBidirection(g, encoder, type);
+            return new DijkstraBidirection(g, encoder, weighting);
         } else if ("dijkstra".equalsIgnoreCase(algoStr))
         {
-            return new Dijkstra(g, encoder, type);
+            return new Dijkstra(g, encoder, weighting);
         } else if ("astarbi".equalsIgnoreCase(algoStr))
         {
-            return new AStarBidirection(g, encoder, type).setApproximation(approx);
+            return new AStarBidirection(g, encoder, weighting).setApproximation(approx);
         } else if ("dijkstraOneToMany".equalsIgnoreCase(algoStr))
         {
-            return new DijkstraOneToMany(g, encoder, type);
+            return new DijkstraOneToMany(g, encoder, weighting);
         } else
         {
-            return new AStar(g, encoder, type);
+            return new AStar(g, encoder, weighting);
         }
     }
 }

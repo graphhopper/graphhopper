@@ -76,7 +76,7 @@ public class RoutingAlgorithmSpecialAreaTests
         CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
         boolean ch = true;
         Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = createAlgos(unterfrankenGraph, idx,
-                carEncoder, ch, new ShortestCalc(), encodingManager);
+                carEncoder, ch, new ShortestWeighting(), encodingManager);
         EdgeFilter ef = new DefaultEdgeFilter(carEncoder);
 
         for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
@@ -115,28 +115,28 @@ public class RoutingAlgorithmSpecialAreaTests
     }
 
     public static Collection<Entry<AlgorithmPreparation, LocationIndex>> createAlgos( Graph g,
-            LocationIndex idx, FlagEncoder encoder, boolean withCh, WeightCalculation weightCalc, EncodingManager manager )
+            LocationIndex idx, FlagEncoder encoder, boolean withCh, Weighting weighting, EncodingManager manager )
     {
         // List<Entry<AlgorithmPreparation, LocationIndex>> prepare = new ArrayList<Entry<AlgorithmPreparation, LocationIndex>>();
         List<Entry<AlgorithmPreparation, LocationIndex>> prepare = new ArrayList<Entry<AlgorithmPreparation, LocationIndex>>(
                 Arrays.<Entry<AlgorithmPreparation, LocationIndex>>asList(
-                        new ME(createAlgoPrepare(g, "astar", encoder, weightCalc), idx),
-                        // new MapEntry<AlgorithmPreparation, LocationIndex>(createAlgoPrepare(g, "dijkstraOneToMany", encoder, weightCalc),
-                        new ME(createAlgoPrepare(g, "astarbi", encoder, weightCalc), idx),
-                        new ME(createAlgoPrepare(g, "dijkstraNative", encoder, weightCalc), idx),
-                        new ME(createAlgoPrepare(g, "dijkstrabi", encoder, weightCalc), idx),
-                        new ME(createAlgoPrepare(g, "dijkstra", encoder, weightCalc), idx)));
+                        new ME(createAlgoPrepare(g, "astar", encoder, weighting), idx),
+                        // new MapEntry<AlgorithmPreparation, LocationIndex>(createAlgoPrepare(g, "dijkstraOneToMany", encoder, weighting),
+                        new ME(createAlgoPrepare(g, "astarbi", encoder, weighting), idx),
+                        new ME(createAlgoPrepare(g, "dijkstraNative", encoder, weighting), idx),
+                        new ME(createAlgoPrepare(g, "dijkstrabi", encoder, weighting), idx),
+                        new ME(createAlgoPrepare(g, "dijkstra", encoder, weighting), idx)));
         if (withCh)
         {
             LevelGraph graphCH = (LevelGraph) g.copyTo(new GraphBuilder(manager).levelGraphCreate());
-            PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(encoder, weightCalc).
+            PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(encoder, weighting).
                     setGraph(graphCH);
             prepareCH.doWork();
             LocationIndex idxCH = new Location2NodesNtreeLG(graphCH, new RAMDirectory()).prepareIndex();
             prepare.add(new ME(prepareCH, idxCH));
 
             // still one failing test regardless of the approx factor
-//            PrepareContractionHierarchies prepareCHAStar = new PrepareContractionHierarchies(encoder, weightCalc) {
+//            PrepareContractionHierarchies prepareCHAStar = new PrepareContractionHierarchies(encoder, weighting) {
 //
 //                @Override
 //                public RoutingAlgorithm createAlgo()

@@ -51,10 +51,10 @@ public abstract class AbstractRoutingAlgorithmTester
 
     public AlgorithmPreparation prepareGraph( Graph g )
     {
-        return prepareGraph(g, carEncoder, new ShortestCalc());
+        return prepareGraph(g, carEncoder, new ShortestWeighting());
     }
 
-    public abstract AlgorithmPreparation prepareGraph( Graph g, FlagEncoder encoder, WeightCalculation calc );
+    public abstract AlgorithmPreparation prepareGraph( Graph g, FlagEncoder encoder, Weighting w );
 
     @Test
     public void testCalcShortestPath()
@@ -71,14 +71,14 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         Graph graphShortest = createGraph();
         initDirectedAndDiffSpeed(graphShortest);
-        Path p1 = prepareGraph(graphShortest, carEncoder, new ShortestCalc()).createAlgo().calcPath(0, 3);
+        Path p1 = prepareGraph(graphShortest, carEncoder, new ShortestWeighting()).createAlgo().calcPath(0, 3);
         assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(p1.toString(), 24000, p1.getDistance(), 1e-6);
         assertEquals(p1.toString(), 8640, p1.getTime());
 
         Graph graphFastest = createGraph();
         initDirectedAndDiffSpeed(graphFastest);
-        Path p2 = prepareGraph(graphFastest, carEncoder, new FastestCalc(carEncoder)).createAlgo().calcPath(0, 3);
+        Path p2 = prepareGraph(graphFastest, carEncoder, new FastestWeighting(carEncoder)).createAlgo().calcPath(0, 3);
         assertEquals(Helper.createTList(0, 4, 6, 7, 5, 3), p2.calcNodes());
         assertEquals(p2.toString(), 31000, p2.getDistance(), 1e-6);
         assertEquals(p2.toString(), 5580, p2.getTime());
@@ -118,7 +118,7 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         Graph graphShortest = createGraph();
         initFootVsCar(graphShortest);
-        Path p1 = prepareGraph(graphShortest, footEncoder, new ShortestCalc()).createAlgo().calcPath(0, 7);
+        Path p1 = prepareGraph(graphShortest, footEncoder, new ShortestWeighting()).createAlgo().calcPath(0, 7);
         assertEquals(p1.toString(), 17000, p1.getDistance(), 1e-6);
         assertEquals(p1.toString(), 12240, p1.getTime());
         assertEquals(Helper.createTList(0, 4, 5, 7), p1.calcNodes());

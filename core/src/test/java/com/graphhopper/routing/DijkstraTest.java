@@ -20,7 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 
 /**
@@ -30,14 +30,14 @@ import com.graphhopper.storage.Graph;
 public class DijkstraTest extends AbstractRoutingAlgorithmTester
 {
     @Override
-    public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final WeightCalculation calc )
+    public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final Weighting weighting )
     {
         return new NoOpAlgorithmPreparation()
         {
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new Dijkstra(_graph, encoder, calc);
+                return new Dijkstra(_graph, encoder, weighting);
             }
         }.setGraph(defaultGraph);
     }

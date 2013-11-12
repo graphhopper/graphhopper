@@ -20,7 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.QueryResult;
@@ -38,18 +38,18 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     protected Graph graph;
     protected EdgeExplorer inEdgeExplorer;
     protected EdgeExplorer outEdgeExplorer;
-    protected final WeightCalculation weightCalc;
+    protected final Weighting weighting;
     protected final FlagEncoder flagEncoder;
     private boolean alreadyRun;
 
     /**
      * @param graph specifies the graph where this algorithm will run on
      * @param encoder sets the used vehicle (bike, car, foot)
-     * @param type set the used weight calculation (e.g. fastest, shortest).
+     * @param weighting set the used weight calculation (e.g. fastest, shortest).
      */
-    public AbstractRoutingAlgorithm( Graph graph, FlagEncoder encoder, WeightCalculation type )
+    public AbstractRoutingAlgorithm( Graph graph, FlagEncoder encoder, Weighting weighting )
     {
-        this.weightCalc = type;
+        this.weighting = weighting;
         this.flagEncoder = encoder;
         setGraph(graph);
     }
@@ -141,6 +141,6 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     @Override
     public String toString()
     {
-        return getName() + "|" + weightCalc;
+        return getName() + "|" + weighting;
     }
 }
