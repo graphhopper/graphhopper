@@ -25,11 +25,11 @@ import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.shapes.Circle;
 
 /**
- * Very slow O(n) Location2IDIndex but no RAM/disc required.
+ * Very slow O(n) LocationIndex but no RAM/disc required.
  * <p/>
  * @author Peter Karich
  */
-public class Location2IDFullIndex implements Location2IDIndex
+public class Location2IDFullIndex implements LocationIndex
 {
     private DistanceCalc calc = new DistancePlaneProjection();
     private final Graph graph;
@@ -46,7 +46,7 @@ public class Location2IDFullIndex implements Location2IDIndex
     }
 
     @Override
-    public Location2IDIndex setApproximation( boolean approxDist )
+    public LocationIndex setApproximation( boolean approxDist )
     {
         if (approxDist)
         {
@@ -59,13 +59,13 @@ public class Location2IDFullIndex implements Location2IDIndex
     }
 
     @Override
-    public Location2IDIndex setResolution( int resolution )
+    public LocationIndex setResolution( int resolution )
     {
         return this;
     }
 
     @Override
-    public Location2IDIndex prepareIndex()
+    public LocationIndex prepareIndex()
     {
         return this;
     }
@@ -115,7 +115,7 @@ public class Location2IDFullIndex implements Location2IDIndex
     }
 
     @Override
-    public Location2IDIndex create( long size )
+    public LocationIndex create( long size )
     {
         return this;
     }

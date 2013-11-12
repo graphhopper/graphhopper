@@ -20,7 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.index.Location2IDIndex;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.PointList;
@@ -79,7 +79,7 @@ public class TestAlgoCollector
         return this;
     }
 
-    void queryIndex( Graph g, Location2IDIndex idx, double lat, double lon, double expectedDist )
+    void queryIndex( Graph g, LocationIndex idx, double lat, double lon, double expectedDist )
     {
         LocationIDResult res = idx.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
         if (!res.isValid())

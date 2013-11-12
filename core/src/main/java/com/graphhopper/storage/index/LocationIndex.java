@@ -28,18 +28,18 @@ import com.graphhopper.storage.Storable;
  * <p/>
  * @author Peter Karich
  */
-public interface Location2IDIndex extends Storable<Location2IDIndex>
+public interface LocationIndex extends Storable<LocationIndex>
 {
     /**
      * Integer value to specify the resolution of this location index. The higher the better the
      * resolution.
      */
-    Location2IDIndex setResolution( int resolution );
+    LocationIndex setResolution( int resolution );
 
     /**
      * Creates this index - to be called once before findID.
      */
-    Location2IDIndex prepareIndex();
+    LocationIndex prepareIndex();
 
     /**
      * @return the closest node id for the specified geo location (latitude,longitude)
@@ -61,7 +61,7 @@ public interface Location2IDIndex extends Storable<Location2IDIndex>
     /**
      * @param approxDist false if initialization and querying should be faster but less precise.
      */
-    Location2IDIndex setApproximation( boolean approxDist );
+    LocationIndex setApproximation( boolean approxDist );
 
     void setSegmentSize( int bytes );
 }

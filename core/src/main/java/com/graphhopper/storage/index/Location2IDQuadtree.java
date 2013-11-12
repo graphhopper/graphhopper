@@ -42,12 +42,12 @@ import org.slf4j.LoggerFactory;
  * implementation is the a very memory efficient representation for areas with lots of node and
  * edges, but lacks precision. No edge distances are measured.
  * <p/>
- * @see Location2NodesNtree for a more precise but more complicated and also slightly slower
- * implementation of Location2IDIndex.
- * <p/>
+ * @see Location2NodesNtreefor a more precise but more complicated and also slightly slower
+ implementation of LocationIndex.
+ <p/>
  * @author Peter Karich
  */
-public class Location2IDQuadtree implements Location2IDIndex
+public class Location2IDQuadtree implements LocationIndex
 {
     private final static int MAGIC_INT = Integer.MAX_VALUE / 12306;
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -66,7 +66,7 @@ public class Location2IDQuadtree implements Location2IDIndex
     }
 
     @Override
-    public Location2IDIndex setApproximation( boolean approxDist )
+    public LocationIndex setApproximation( boolean approxDist )
     {
         if (approxDist)
             distCalc = new DistancePlaneProjection();
@@ -109,13 +109,13 @@ public class Location2IDQuadtree implements Location2IDIndex
     }
 
     @Override
-    public Location2IDIndex create( long size )
+    public LocationIndex create( long size )
     {
         throw new UnsupportedOperationException("Not supported. Use prepareIndex instead.");
     }
 
     @Override
-    public Location2IDIndex setResolution( int resolution )
+    public LocationIndex setResolution( int resolution )
     {
         initLatLonSize(resolution);
         return this;
@@ -128,7 +128,7 @@ public class Location2IDQuadtree implements Location2IDIndex
      * boundaries every 1.3km - IMO enough for EU or US networks.
      */
     @Override
-    public Location2IDIndex prepareIndex()
+    public LocationIndex prepareIndex()
     {
         initBuffer();
         initAlgo(latSize, lonSize);

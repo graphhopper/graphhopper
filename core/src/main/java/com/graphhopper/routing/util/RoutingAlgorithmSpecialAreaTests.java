@@ -22,7 +22,7 @@ import com.graphhopper.coll.MapEntry;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.index.Location2IDIndex;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.StopWatch;
 import static com.graphhopper.routing.util.NoOpAlgorithmPreparation.*;
@@ -46,7 +46,7 @@ public class RoutingAlgorithmSpecialAreaTests
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final Graph unterfrankenGraph;
-    private final Location2IDIndex idx;
+    private final LocationIndex idx;
 
     public RoutingAlgorithmSpecialAreaTests( GraphHopper graphhopper )
     {
@@ -75,14 +75,14 @@ public class RoutingAlgorithmSpecialAreaTests
         final EncodingManager encodingManager = new EncodingManager("CAR");
         CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
         boolean ch = true;
-        Collection<Entry<AlgorithmPreparation, Location2IDIndex>> prepares = createAlgos(unterfrankenGraph, idx,
+        Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = createAlgos(unterfrankenGraph, idx,
                 carEncoder, ch, new ShortestCalc(), encodingManager);
         EdgeFilter ef = new DefaultEdgeFilter(carEncoder);
 
-        for (Entry<AlgorithmPreparation, Location2IDIndex> entry : prepares)
+        for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
         {
             AlgorithmPreparation prepare = entry.getKey();
-            Location2IDIndex currIdx = entry.getValue();
+            LocationIndex currIdx = entry.getValue();
             int failed = testCollector.errors.size();
 
             testCollector.assertDistance(prepare.createAlgo(),
@@ -106,22 +106,22 @@ public class RoutingAlgorithmSpecialAreaTests
         testCollector.printSummary();
     }
 
-    private static class ME extends MapEntry<AlgorithmPreparation, Location2IDIndex>
+    private static class ME extends MapEntry<AlgorithmPreparation, LocationIndex>
     {
-        public ME( AlgorithmPreparation ap, Location2IDIndex idx )
+        public ME( AlgorithmPreparation ap, LocationIndex idx )
         {
             super(ap, idx);
         }
     }
 
-    public static Collection<Entry<AlgorithmPreparation, Location2IDIndex>> createAlgos( Graph g,
-            Location2IDIndex idx, FlagEncoder encoder, boolean withCh, WeightCalculation weightCalc, EncodingManager manager )
+    public static Collection<Entry<AlgorithmPreparation, LocationIndex>> createAlgos( Graph g,
+            LocationIndex idx, FlagEncoder encoder, boolean withCh, WeightCalculation weightCalc, EncodingManager manager )
     {
-        // List<Entry<AlgorithmPreparation, Location2IDIndex>> prepare = new ArrayList<Entry<AlgorithmPreparation, Location2IDIndex>>();
-        List<Entry<AlgorithmPreparation, Location2IDIndex>> prepare = new ArrayList<Entry<AlgorithmPreparation, Location2IDIndex>>(
-                Arrays.<Entry<AlgorithmPreparation, Location2IDIndex>>asList(
+        // List<Entry<AlgorithmPreparation, LocationIndex>> prepare = new ArrayList<Entry<AlgorithmPreparation, LocationIndex>>();
+        List<Entry<AlgorithmPreparation, LocationIndex>> prepare = new ArrayList<Entry<AlgorithmPreparation, LocationIndex>>(
+                Arrays.<Entry<AlgorithmPreparation, LocationIndex>>asList(
                         new ME(createAlgoPrepare(g, "astar", encoder, weightCalc), idx),
-                        // new MapEntry<AlgorithmPreparation, Location2IDIndex>(createAlgoPrepare(g, "dijkstraOneToMany", encoder, weightCalc),
+                        // new MapEntry<AlgorithmPreparation, LocationIndex>(createAlgoPrepare(g, "dijkstraOneToMany", encoder, weightCalc),
                         new ME(createAlgoPrepare(g, "astarbi", encoder, weightCalc), idx),
                         new ME(createAlgoPrepare(g, "dijkstraNative", encoder, weightCalc), idx),
                         new ME(createAlgoPrepare(g, "dijkstrabi", encoder, weightCalc), idx),
@@ -132,7 +132,7 @@ public class RoutingAlgorithmSpecialAreaTests
             PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(encoder, weightCalc).
                     setGraph(graphCH);
             prepareCH.doWork();
-            Location2IDIndex idxCH = new Location2NodesNtreeLG(graphCH, new RAMDirectory()).prepareIndex();
+            LocationIndex idxCH = new Location2NodesNtreeLG(graphCH, new RAMDirectory()).prepareIndex();
             prepare.add(new ME(prepareCH, idxCH));
 
             // still one failing test regardless of the approx factor

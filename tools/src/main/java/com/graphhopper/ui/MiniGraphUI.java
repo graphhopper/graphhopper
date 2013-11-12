@@ -28,7 +28,7 @@ import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.index.Location2IDIndex;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -62,7 +62,7 @@ public class MiniGraphUI
     private Path path;
     private AlgorithmPreparation prepare;
     private final Graph graph;
-    private Location2IDIndex index;
+    private LocationIndex index;
     private String latLon = "";
     private GraphicsWrapper mg;
     private JPanel infoPanel;

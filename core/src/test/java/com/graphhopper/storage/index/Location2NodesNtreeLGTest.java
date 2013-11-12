@@ -89,7 +89,7 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest
         iter6.setSkippedEdges(iter3.getEdge(), iter4.getEdge());
         g.shortcut(0, 4, 40, flags).setSkippedEdges(iter5.getEdge(), iter6.getEdge());
 
-        Location2IDIndex index = createIndex(g, -1);
+        LocationIndex index = createIndex(g, -1);
         assertEquals(2, index.findID(0, 0.5));
     }
 

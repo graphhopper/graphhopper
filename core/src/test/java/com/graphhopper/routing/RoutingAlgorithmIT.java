@@ -24,7 +24,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.index.Location2IDIndex;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
@@ -234,13 +234,13 @@ public class RoutingAlgorithmIT
             if ("fastest".equalsIgnoreCase(weightCalcStr))
                 weightCalc = new FastestCalc(encoder);
 
-            Collection<Entry<AlgorithmPreparation, Location2IDIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
+            Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
                     createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, ch, weightCalc, hopper.getEncodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-            for (Entry<AlgorithmPreparation, Location2IDIndex> entry : prepares)
+            for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
             {
                 tmpPrepare = entry.getKey();
-                Location2IDIndex idx = entry.getValue();
+                LocationIndex idx = entry.getValue();
                 for (OneRun oneRun : forEveryAlgo)
                 {
                     tmpOneRun = oneRun;
@@ -275,9 +275,9 @@ public class RoutingAlgorithmIT
 
         String bigFile = "10000EWD.txt.gz";
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
-        Collection<Entry<AlgorithmPreparation, Location2IDIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
+        Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
                 createAlgos(graph, null, encoder, false, new ShortestCalc(), eManager);
-        for (Entry<AlgorithmPreparation, Location2IDIndex> entry : prepares)
+        for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
         {
             AlgorithmPreparation prepare = entry.getKey();
             StopWatch sw = new StopWatch();
@@ -316,7 +316,7 @@ public class RoutingAlgorithmIT
                 setOSMFile("files/monaco.osm.gz").setGraphHopperLocation(graphFile).
                 importOrLoad();
         final Graph g = hopper.getGraph();
-        final Location2IDIndex idx = hopper.getLocationIndex();
+        final LocationIndex idx = hopper.getLocationIndex();
         final List<OneRun> instances = createMonacoCar();
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);

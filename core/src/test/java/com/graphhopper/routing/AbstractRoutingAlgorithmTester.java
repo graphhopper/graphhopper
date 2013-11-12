@@ -22,7 +22,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.index.Location2IDIndex;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Location2NodesNtree;
 import com.graphhopper.storage.index.Location2NodesNtreeLG;
 import com.graphhopper.storage.index.LocationIDResult;
@@ -524,7 +524,7 @@ public abstract class AbstractRoutingAlgorithmTester
     // Problem: for contraction hierarchy we cannot easily select egdes by nodes as some edges are skipped
     Path calcPathViaQuery( Graph graph, double fromLat, double fromLon, double toLat, double toLon )
     {
-        Location2IDIndex index;
+        LocationIndex index;
         if (graph instanceof LevelGraph)
             index = new Location2NodesNtreeLG((LevelGraph) graph, new RAMDirectory());
         else

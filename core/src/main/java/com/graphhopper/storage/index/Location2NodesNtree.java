@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
  * <p/>
  * @author Peter Karich
  */
-public class Location2NodesNtree implements Location2IDIndex
+public class Location2NodesNtree implements LocationIndex
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int MAGIC_INT;
@@ -250,7 +250,7 @@ public class Location2NodesNtree implements Location2IDIndex
     }
 
     @Override
-    public Location2IDIndex setResolution( int minResolutionInMeter )
+    public LocationIndex setResolution( int minResolutionInMeter )
     {
         if (minResolutionInMeter <= 0)
             throw new IllegalStateException("Negative precision is not allowed!");
@@ -260,7 +260,7 @@ public class Location2NodesNtree implements Location2IDIndex
     }
 
     @Override
-    public Location2IDIndex setApproximation( boolean approx )
+    public LocationIndex setApproximation( boolean approx )
     {
         if (approx)
             distCalc = new DistancePlaneProjection();
@@ -287,7 +287,7 @@ public class Location2NodesNtree implements Location2IDIndex
     }
 
     @Override
-    public Location2IDIndex prepareIndex()
+    public LocationIndex prepareIndex()
     {
         if (initialized)
             throw new IllegalStateException("Call prepareIndex only once");

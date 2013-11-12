@@ -87,7 +87,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester
     public void testSnappedPointAndGeometry()
     {
         Graph graph = createTestGraph();
-        Location2IDIndex index = createIndex(graph, 1000);
+        LocationIndex index = createIndex(graph, 1000);
         // query directly the tower node
         LocationIDResult res = index.findClosest(-0.4, 0.9, EdgeFilter.ALL_EDGES);        
         assertEquals(new GHPoint(-0.4, 0.9), res.getSnappedPoint());
@@ -226,7 +226,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester
         graph.edge(1, 0, 1000, true);
         graph.edge(0, 2, 1000, true);
         graph.edge(0, 3, 1000, true).setWayGeometry(Helper.createPointList(51.21, 9.43));
-        Location2IDIndex index = internalCreateIndex(graph, 1000);
+        LocationIndex index = internalCreateIndex(graph, 1000);
         assertEquals(2, index.findID(51.2, 9.4));
     }
 
@@ -262,7 +262,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester
     public void testWayGeometry()
     {
         Graph g = createTestGraphWithWayGeometry();
-        Location2IDIndex index = createIndex(g, 1000);
+        LocationIndex index = createIndex(g, 1000);
         assertEquals(1, index.findID(0, 0));
         assertEquals(1, index.findID(0, 0.1));
         assertEquals(1, index.findID(0.1, 0.1));
@@ -281,7 +281,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester
         g.edge(10, 20, 1, true);
         g.edge(20, 30, 1, true);
 
-        Location2IDIndex index = createIndex(g, 2000);
+        LocationIndex index = createIndex(g, 2000);
         assertEquals(20, index.findID(51.25, 9.43));
     }
 

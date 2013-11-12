@@ -28,7 +28,7 @@ import com.graphhopper.util.DistanceCalc;
  * <p/>
  * @author Peter Karich
  */
-public class Location2IDFullWithEdgesIndex implements Location2IDIndex
+public class Location2IDFullWithEdgesIndex implements LocationIndex
 {
     private DistanceCalc calc = new DistanceCalc();
     private Graph graph;
@@ -45,13 +45,13 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
     }
 
     @Override
-    public Location2IDIndex setResolution( int resolution )
+    public LocationIndex setResolution( int resolution )
     {
         return this;
     }
 
     @Override
-    public Location2IDIndex setApproximation( boolean approxDist )
+    public LocationIndex setApproximation( boolean approxDist )
     {
         if (approxDist)
         {
@@ -64,7 +64,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
     }
 
     @Override
-    public Location2IDIndex prepareIndex()
+    public LocationIndex prepareIndex()
     {
         return this;
     }
@@ -141,7 +141,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
     }
 
     @Override
-    public Location2IDIndex create( long size )
+    public LocationIndex create( long size )
     {
         return this;
     }

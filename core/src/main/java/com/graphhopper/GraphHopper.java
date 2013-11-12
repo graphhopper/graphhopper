@@ -58,7 +58,7 @@ public class GraphHopper implements GraphHopperAPI
     // for routing:
     private boolean simplifyRequest = true;
     // for index:
-    private Location2IDIndex locationIndex;
+    private LocationIndex locationIndex;
     private int preciseIndexResolution = 500;
     private boolean searchRegion = true;
     // for prepare
@@ -289,7 +289,7 @@ public class GraphHopper implements GraphHopperAPI
         this.graph = graph;
     }
 
-    public Location2IDIndex getLocationIndex()
+    public LocationIndex getLocationIndex()
     {
         if (locationIndex == null)
             throw new IllegalStateException("Location index not initialized");
@@ -650,9 +650,9 @@ public class GraphHopper implements GraphHopperAPI
         return rsp.setDistance(path.getDistance()).setTime(path.getTime()).setDebugInfo(debug);
     }
 
-    protected Location2IDIndex createLocationIndex( Directory dir )
+    protected LocationIndex createLocationIndex( Directory dir )
     {
-        Location2IDIndex tmpIndex;
+        LocationIndex tmpIndex;
         if (preciseIndexResolution > 0)
         {
             Location2NodesNtree tmpNIndex;

@@ -23,7 +23,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.index.Location2IDIndex;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.shapes.BBox;
@@ -167,7 +167,7 @@ public class Measurement
         put("prepare.shortcuts", prepare.getShortcuts());
     }
 
-    private void printLocation2IDQuery( Graph g, final Location2IDIndex idx, int count )
+    private void printLocation2IDQuery( Graph g, final LocationIndex idx, int count )
     {
         count *= 2;
         final BBox bbox = g.getBounds();
