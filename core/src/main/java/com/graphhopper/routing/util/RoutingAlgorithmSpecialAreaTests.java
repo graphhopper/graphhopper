@@ -19,8 +19,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.MapEntry;
-import com.graphhopper.routing.AStarBidirection;
-import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -46,7 +44,7 @@ import org.slf4j.LoggerFactory;
  */
 public class RoutingAlgorithmSpecialAreaTests
 {
-    private Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final Graph unterfrankenGraph;
     private final Location2IDIndex idx;
 
@@ -90,17 +88,17 @@ public class RoutingAlgorithmSpecialAreaTests
             testCollector.assertDistance(prepare.createAlgo(),
                     currIdx.findClosest(50.0314, 10.5105, ef), currIdx.findClosest(50.0303, 10.5070, ef), 570, 22);
             testCollector.assertDistance(prepare.createAlgo(),
-                    currIdx.findClosest(49.51451, 9.967346, ef), currIdx.findClosest(50.2920, 10.4650, ef), 107544, 1673);
+                    currIdx.findClosest(49.51451, 9.967346, ef), currIdx.findClosest(50.2920, 10.4650, ef), 107550, 1668);
             testCollector.assertDistance(prepare.createAlgo(),
                     currIdx.findClosest(50.0780, 9.1570, ef), currIdx.findClosest(49.5860, 9.9750, ef), 92770, 1285);
             testCollector.assertDistance(prepare.createAlgo(),
-                    currIdx.findClosest(50.2800, 9.7190, ef), currIdx.findClosest(49.8960, 10.3890, ef), 77446, 1302);
+                    currIdx.findClosest(50.2800, 9.7190, ef), currIdx.findClosest(49.8960, 10.3890, ef), 77486, 1321);
             testCollector.assertDistance(prepare.createAlgo(),
-                    currIdx.findClosest(49.8020, 9.2470, ef), currIdx.findClosest(50.4940, 10.1970, ef), 125567, 2232);
+                    currIdx.findClosest(49.8020, 9.2470, ef), currIdx.findClosest(50.4940, 10.1970, ef), 125548, 2223);
             testCollector.assertDistance(prepare.createAlgo(),
                     currIdx.findClosest(49.72449, 9.23482, ef), currIdx.findClosest(50.4140, 10.2750, ef), 137330, 2350);
             testCollector.assertDistance(prepare.createAlgo(),
-                    currIdx.findClosest(50.1100, 10.7530, ef), currIdx.findClosest(49.6500, 10.3410, ef), 74049, 1369);
+                    currIdx.findClosest(50.1100, 10.7530, ef), currIdx.findClosest(49.6500, 10.3410, ef), 74054, 1364);
 
             System.out.println("unterfranken " + prepare.createAlgo() + ": " + (testCollector.errors.size() - failed) + " failed");
         }
