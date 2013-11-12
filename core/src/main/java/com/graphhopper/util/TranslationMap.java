@@ -188,7 +188,7 @@ public class TranslationMap
         @Override
         public String tr( String key, Object... params )
         {
-            String val = map.get(key);
+            String val = map.get(key.toLowerCase());
             if (Helper.isEmpty(val))
                 return key;
 
@@ -197,7 +197,7 @@ public class TranslationMap
 
         public TranslationHashMap put( String key, String val )
         {
-            String existing = map.put(key, val);
+            String existing = map.put(key.toLowerCase(), val);
             if (existing != null)
                 throw new IllegalStateException("Cannot overwrite key " + key + " with " + val + ", was: " + existing);
             return this;

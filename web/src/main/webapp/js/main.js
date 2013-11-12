@@ -749,11 +749,15 @@ function tr(key, args) {
 }
 
 function tr2(key, args) {
+    if(key == null) {
+        console.log("ERROR: key was null?");
+        return "";
+    }
     if(defaultTranslationMap == null) {
         console.log("ERROR: defaultTranslationMap was not initialized?");
         return key;
     }
-    
+    key = key.toLowerCase();
     var val = defaultTranslationMap[key];
     if(val == null && enTranslationMap)
         val = enTranslationMap[key];
