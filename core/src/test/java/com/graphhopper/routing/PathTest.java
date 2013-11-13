@@ -66,7 +66,7 @@ public class PathTest
         EdgeIteratorState edge2 = g.edge(2, 1, 1, true);
         edge2.setWayGeometry(Helper.createPointList(11, 1, 10, 1));
 
-        Path path = new Path(g, carManager.getEncoder("CAR"));        
+        Path path = new Path(g, carManager.getEncoder("CAR"));
         EdgeEntry e1 = new EdgeEntry(edge2.getEdge(), 2, 1);
         e1.parent = new EdgeEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent = new EdgeEntry(-1, 0, 1);

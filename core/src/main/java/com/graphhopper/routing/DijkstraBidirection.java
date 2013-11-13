@@ -145,8 +145,8 @@ public class DijkstraBidirection extends AbstractBidirAlgo
             int newRef = wrapper.getRef(neighborNode);
             if (newRef >= 0 && wrapper.getEdgeId(newRef) == iter.getEdge())
                 continue;
-            
-            double tmpWeight = weighting.calcWeight(iter) + currWeight;            
+
+            double tmpWeight = weighting.calcWeight(iter) + currWeight;
             if (newRef < 0)
             {
                 newRef = wrapper.add(neighborNode, tmpWeight, iter.getEdge());

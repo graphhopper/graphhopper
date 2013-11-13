@@ -165,7 +165,7 @@ public abstract class AbstractLocation2IDIndexTester
         if (hasEdgeSupport())
             fullIndex = new Location2IDFullWithEdgesIndex(g);
         else
-            fullIndex = new Location2IDFullIndex(g);        
+            fullIndex = new Location2IDFullIndex(g);
 
         DistanceCalc dist = new DistanceCalcEarth();
         for (int i = 0; i < 100; i++)
@@ -278,7 +278,6 @@ public abstract class AbstractLocation2IDIndexTester
 //    0       a                  
 //        
 //   lon: 0   1   2   3   4   5
-
         int a0 = 0;
         graph.setNode(0, 0, 1.0001f);
         int b1 = 1;

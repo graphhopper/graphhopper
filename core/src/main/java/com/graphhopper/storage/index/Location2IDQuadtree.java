@@ -44,8 +44,8 @@ import org.slf4j.LoggerFactory;
  * edges, but lacks precision. No edge distances are measured.
  * <p/>
  * @see Location2NodesNtreefora more precise but more complicated and also slightly slower
- implementation of LocationIndex.
- <p/>
+ * implementation of LocationIndex.
+ * <p/>
  * @author Peter Karich
  */
 public class Location2IDQuadtree implements LocationIndex

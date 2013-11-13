@@ -78,7 +78,7 @@ public class CompressedArray
         try
         {
             if (currentWriter == null)
-                currentWriter = new VLongStorage(entriesPerSegment * approxBytesPerEntry);           
+                currentWriter = new VLongStorage(entriesPerSegment * approxBytesPerEntry);
 
             long latlon = algo.encode(new GHPoint(lat, lon));
             // we cannot use delta encoding as vlong does not support negative numbers

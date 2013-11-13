@@ -204,6 +204,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     }
     private final Set<String> safeHighwayTags = new HashSet<String>()
     {
+
         
         {
             add("footway");
@@ -218,6 +219,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     };
     private final Set<String> allowedHighwayTags = new HashSet<String>()
     {
+
         
         {
             addAll(safeHighwayTags);
@@ -237,5 +239,5 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     };
     static final int SLOW = 2;
     static final int MEAN = 5;
-    static final int FERRY = 10;    
+    static final int FERRY = 10;
 }

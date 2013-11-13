@@ -60,7 +60,7 @@ public class DistanceCalcEarthTest
     {
         float lat = 24.235f;
         float lon = 47.234f;
-        DistanceCalc approxDist = new DistancePlaneProjection();        
+        DistanceCalc approxDist = new DistancePlaneProjection();
         double res = 15051;
         assertEquals(res, dc.calcDist(lat, lon, lat - 0.1, lon + 0.1), 1);
         assertEquals(dc.calcNormalizedDist(res), dc.calcNormalizedDist(lat, lon, lat - 0.1, lon + 0.1), 1);
@@ -106,7 +106,7 @@ public class DistanceCalcEarthTest
 
     @Test
     public void testEdgeDistance()
-    {        
+    {
         double dist = dc.calcNormalizedEdgeDistance(49.94241, 11.544356,
                 49.937964, 11.541824,
                 49.942272, 11.555643);
@@ -125,7 +125,7 @@ public class DistanceCalcEarthTest
 
     @Test
     public void testValidEdgeDistance()
-    {        
+    {
         assertTrue(dc.validEdgeDistance(49.94241, 11.544356, 49.937964, 11.541824, 49.942272, 11.555643));
         assertTrue(dc.validEdgeDistance(49.936624, 11.547636, 49.937964, 11.541824, 49.942272, 11.555643));
         assertTrue(dc.validEdgeDistance(49.940712, 11.556069, 49.937964, 11.541824, 49.942272, 11.555643));

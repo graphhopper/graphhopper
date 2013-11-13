@@ -105,7 +105,7 @@ public class GHUtilityTest
         eb.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
         LevelGraph lg = new GraphBuilder(encodingManager).levelGraphCreate();
         GHUtility.copyTo(g, lg);
-        
+
         eb = GHUtility.getEdge(lg, 5, 6);
         assertEquals(Helper.createPointList(-1, 3, 12, 10), eb.fetchWayGeometry(0));
 
@@ -119,15 +119,15 @@ public class GHUtilityTest
         EdgeIterator iter = lg.createEdgeExplorer().setBaseNode(8);
         iter.next();
         assertEquals(0.5, iter.getDistance(), 1e-6);
-        assertEquals("11", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));        
+        assertEquals("11", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));
         iter.next();
         assertEquals(2.05, iter.getDistance(), 1e-6);
-        assertEquals("11", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));        
+        assertEquals("11", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));
 
         iter = lg.createEdgeExplorer().setBaseNode(7);
         iter.next();
         assertEquals(.7, iter.getDistance(), 1e-6);
-        
+
         iter.next();
         assertEquals(2.1, iter.getDistance(), 1e-6);
         assertEquals("01", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));

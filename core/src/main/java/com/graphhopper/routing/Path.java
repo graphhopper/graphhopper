@@ -119,9 +119,9 @@ public class Path
 
     void reverseOrder()
     {
-        if(!reverseOrder)
+        if (!reverseOrder)
             throw new IllegalStateException("Switching order multiple times is not supported");
-        
+
         reverseOrder = false;
         edgeIds.reverse();
     }
@@ -208,7 +208,8 @@ public class Path
     }
 
     /**
-     * Calculates the time in seconds for the specified distance in meter and speed (via setProperties)
+     * Calculates the time in seconds for the specified distance in meter and speed (via
+     * setProperties)
      */
     protected long calcTime( double distance, long flags )
     {
@@ -418,7 +419,7 @@ public class Path
                                 cachedWays.add(InstructionList.TURN_SHARP_LEFT, name, prevDist);
                             else
                                 cachedWays.add(InstructionList.TURN_SHARP_RIGHT, name, prevDist);
-                            
+
                         }
                     } else
                         prevDist += calcDistance(edgeBase);

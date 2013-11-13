@@ -44,7 +44,7 @@ public class GraphStorage3D extends GraphHopperStorage implements Graph3D
     public void setNode( int index, double lat, double lon, double height )
     {
         setNode(index, lat, lon);
-        
+
         // Improvements:
         // 1 bounds for index
         // 2 location to id index

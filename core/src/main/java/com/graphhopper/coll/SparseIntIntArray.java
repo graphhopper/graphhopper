@@ -81,8 +81,8 @@ public class SparseIntIntArray
     }
 
     /**
-     * Gets the Object mapped from the specified key, or
-     * <code>null</code> if no such mapping has been made.
+     * Gets the Object mapped from the specified key, or <code>null</code> if no such mapping has
+     * been made.
      */
     public int get( int key )
     {
@@ -218,8 +218,7 @@ public class SparseIntIntArray
     }
 
     /**
-     * Given an index in the range
-     * <code>0...size()-1</code>, returns the key from the
+     * Given an index in the range <code>0...size()-1</code>, returns the key from the
      * <code>index</code>th key-value mapping that this SparseIntIntArray stores.
      */
     public int keyAt( int index )
@@ -233,8 +232,7 @@ public class SparseIntIntArray
     }
 
     /**
-     * Given an index in the range
-     * <code>0...size()-1</code>, sets a new key for the
+     * Given an index in the range <code>0...size()-1</code>, sets a new key for the
      * <code>index</code>th key-value mapping that this SparseIntIntArray stores.
      */
     public void setKeyAt( int index, int key )
@@ -248,8 +246,7 @@ public class SparseIntIntArray
     }
 
     /**
-     * Given an index in the range
-     * <code>0...size()-1</code>, returns the value from the
+     * Given an index in the range <code>0...size()-1</code>, returns the value from the
      * <code>index</code>th key-value mapping that this SparseIntIntArray stores.
      */
     public int valueAt( int index )
@@ -263,8 +260,7 @@ public class SparseIntIntArray
     }
 
     /**
-     * Given an index in the range
-     * <code>0...size()-1</code>, sets a new value for the
+     * Given an index in the range <code>0...size()-1</code>, sets a new value for the
      * <code>index</code>th key-value mapping that this SparseIntIntArray stores.
      */
     public void setValueAt( int index, int value )

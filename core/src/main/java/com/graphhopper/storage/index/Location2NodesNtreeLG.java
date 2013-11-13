@@ -78,14 +78,14 @@ public class Location2NodesNtreeLG extends LocationIndexTree
             public EdgeIteratorState detach()
             {
                 return tmpIter.detach();
-            }            
-            
+            }
+
             @Override
             public int getMaxId()
             {
                 return tmpIter.getMaxId();
             }
-            
+
             @Override
             public boolean next()
             {
@@ -118,7 +118,7 @@ public class Location2NodesNtreeLG extends LocationIndexTree
             }
 
             @Override
-            public PointList fetchWayGeometry(int type)
+            public PointList fetchWayGeometry( int type )
             {
                 return tmpIter.fetchWayGeometry(type);
             }

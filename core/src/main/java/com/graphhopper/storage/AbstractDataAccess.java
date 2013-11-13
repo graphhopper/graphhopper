@@ -50,7 +50,7 @@ public abstract class AbstractDataAccess implements DataAccess
         this.name = name;
         if (!Helper.isEmpty(location) && !location.endsWith("/"))
             throw new IllegalArgumentException("Create DataAccess object via its corresponding Directory!");
-        
+
         this.location = location;
     }
 

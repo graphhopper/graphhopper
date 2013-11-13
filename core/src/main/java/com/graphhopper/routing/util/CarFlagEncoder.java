@@ -245,6 +245,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     }
     private static final Set<String> BAD_SURFACE = new HashSet<String>()
     {
+
         
         {
             add("cobblestone");
@@ -264,6 +265,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
      */
     private static final Map<String, Integer> SPEED = new HashMap<String, Integer>()
     {
+
         
         {
             // autobahn

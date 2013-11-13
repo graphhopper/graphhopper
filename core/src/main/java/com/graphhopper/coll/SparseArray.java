@@ -70,8 +70,8 @@ public class SparseArray<E> implements Cloneable
     }
 
     /**
-     * Gets the Object mapped from the specified key, or
-     * <code>null</code> if no such mapping has been made.
+     * Gets the Object mapped from the specified key, or <code>null</code> if no such mapping has
+     * been made.
      */
     public E get( int key )
     {
@@ -228,8 +228,7 @@ public class SparseArray<E> implements Cloneable
     }
 
     /**
-     * Given an index in the range
-     * <code>0...size()-1</code>, returns the key from the
+     * Given an index in the range <code>0...size()-1</code>, returns the key from the
      * <code>index</code>th key-value mapping that this SparseArray stores.
      */
     public int keyAt( int index )
@@ -243,8 +242,7 @@ public class SparseArray<E> implements Cloneable
     }
 
     /**
-     * Given an index in the range
-     * <code>0...size()-1</code>, returns the value from the
+     * Given an index in the range <code>0...size()-1</code>, returns the value from the
      * <code>index</code>th key-value mapping that this SparseArray stores.
      */
     @SuppressWarnings("unchecked")
@@ -259,8 +257,7 @@ public class SparseArray<E> implements Cloneable
     }
 
     /**
-     * Given an index in the range
-     * <code>0...size()-1</code>, sets a new value for the
+     * Given an index in the range <code>0...size()-1</code>, sets a new value for the
      * <code>index</code>th key-value mapping that this SparseArray stores.
      */
     public void setValueAt( int index, E value )

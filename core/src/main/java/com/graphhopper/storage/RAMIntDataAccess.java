@@ -98,11 +98,11 @@ class RAMIntDataAccess extends AbstractDataAccess
     {
         if (bytes < 0)
             throw new IllegalArgumentException("new capacity has to be strictly positive");
-        
+
         long cap = getCapacity();
         long todoBytes = bytes - cap;
         if (todoBytes <= 0)
-            return false;        
+            return false;
 
         int segmentsToCreate = (int) (todoBytes / segmentSizeInBytes);
         if (todoBytes % segmentSizeInBytes != 0)
@@ -157,7 +157,7 @@ class RAMIntDataAccess extends AbstractDataAccess
                 int segmentCount = (int) (byteCount / segmentSizeInBytes);
                 if (byteCount % segmentSizeInBytes != 0)
                     segmentCount++;
-                
+
                 segments = new int[segmentCount][];
                 for (int s = 0; s < segmentCount; s++)
                 {
@@ -325,7 +325,7 @@ class RAMIntDataAccess extends AbstractDataAccess
     {
         return true;
     }
-    
+
     @Override
     public DAType getType()
     {

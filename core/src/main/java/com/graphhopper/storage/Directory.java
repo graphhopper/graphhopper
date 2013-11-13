@@ -38,7 +38,7 @@ public interface Directory
      * @return the order in which the data is stored
      */
     ByteOrder getByteOrder();
-    
+
     /**
      * Tries to find the object with that name if not existent it creates one and associates the
      * location with it. A name is unique in one Directory.
@@ -56,7 +56,7 @@ public interface Directory
      * Removes the specified object from the directory.
      */
     void remove( DataAccess da );
-    
+
     /**
      * @return the default type of a newly created DataAccess object
      */

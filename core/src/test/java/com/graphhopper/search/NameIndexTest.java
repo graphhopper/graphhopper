@@ -35,7 +35,7 @@ public class NameIndexTest
     {
         NameIndex index = new NameIndex(new RAMDirectory()).create(1000);
         // 127 => bytes.length == 254
-        String str = "";        
+        String str = "";
         for (int i = 0; i < 127; i++)
         {
             str += "ß";

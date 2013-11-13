@@ -50,7 +50,7 @@ public class Downloader
     public Downloader( String userAgent )
     {
         this.userAgent = userAgent;
-    }        
+    }
 
     public Downloader setTimeout( int timeout )
     {

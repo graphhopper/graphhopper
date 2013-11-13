@@ -281,7 +281,7 @@ public class OSMReader
             if (firstLat != Double.NaN && firstLon != Double.NaN
                     && lastLat != Double.NaN && lastLon != Double.NaN)
             {
-                double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);                
+                double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
                 way.setTag("estimated_distance", estimatedDist + "");
             }
         }
@@ -602,7 +602,7 @@ public class OSMReader
             prevLat = lat;
             prevLon = lon;
             if (nodes > 2 && i < nodes - 1)
-                pillarNodes.add(lat, lon);            
+                pillarNodes.add(lat, lon);
         }
         if (towerNodeDistance == 0)
         {

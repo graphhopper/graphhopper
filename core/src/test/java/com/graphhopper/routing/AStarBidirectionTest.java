@@ -30,7 +30,7 @@ import com.graphhopper.storage.Graph;
 public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
 {
     @Override
-    public AlgorithmPreparation prepareGraph( Graph g, final FlagEncoder encoder, final Weighting w)
+    public AlgorithmPreparation prepareGraph( Graph g, final FlagEncoder encoder, final Weighting w )
     {
         return new NoOpAlgorithmPreparation()
         {

@@ -33,18 +33,18 @@ public abstract class OSMElement
 {
     public static final int NODE = 0;
     public static final int WAY = 1;
-    public static final int RELATION = 2;    
+    public static final int RELATION = 2;
     protected final int type;
     protected final long id;
     protected Map<String, String> tags;
 
-    public OSMElement( long id, int type, XMLStreamReader parser)
+    public OSMElement( long id, int type, XMLStreamReader parser )
     {
         this.type = type;
         this.id = id;
     }
 
-    public OSMElement( long id, int type, Map<String, String> tags)
+    public OSMElement( long id, int type, Map<String, String> tags )
     {
         this(id, type);
         this.tags = tags;
@@ -53,7 +53,7 @@ public abstract class OSMElement
     protected OSMElement( long id, int type )
     {
         this.id = id;
-        this.type = type;        
+        this.type = type;
     }
 
     public long getId()
@@ -134,7 +134,7 @@ public abstract class OSMElement
     {
         if (tags == null)
             return null;
-    
+
         return tags.get(name);
     }
 

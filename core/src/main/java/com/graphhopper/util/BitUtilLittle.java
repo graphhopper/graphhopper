@@ -84,11 +84,11 @@ public class BitUtilLittle extends BitUtil
         {
             byte res = 0;
             for (int i = 0; i < 8; i++)
-            {   
+            {
                 res <<= 1;
                 if (charI < strLen && str.charAt(charI) != '0')
                     res |= 1;
-                               
+
                 charI++;
             }
             bytes[b] = res;

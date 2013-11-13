@@ -71,7 +71,7 @@ public class DistanceCalcEarth implements DistanceCalc
         double tmp = sin(dist / 2 / R);
         return tmp * tmp;
     }
-    
+
     @Override
     public double calcNormalizedDist( double fromLat, double fromLon, double toLat, double toLon )
     {
@@ -117,7 +117,7 @@ public class DistanceCalcEarth implements DistanceCalc
         // Now return bounding box in coordinates
         return new BBox(lon - dLon, lon + dLon, lat - dLat, lat + dLat);
     }
-    
+
     @Override
     public double calcNormalizedEdgeDistance( double r_lat_deg, double r_lon_deg,
             double a_lat_deg, double a_lon_deg,
@@ -173,7 +173,7 @@ public class DistanceCalcEarth implements DistanceCalc
         double c_lat = a_lat + factor * delta_lat;
         return calcNormalizedDist(c_lat, c_lon / shrink_factor, r_lat_deg, r_lon_deg);
     }
-    
+
     @Override
     public GHPoint calcCrossingPointToEdge( double r_lat_deg, double r_lon_deg,
             double a_lat_deg, double a_lon_deg,

@@ -130,24 +130,24 @@ public class OSMReaderTest
         assertEquals(GHUtility.asSet(n20), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)));
 
         EdgeIterator iter = carOutExplorer.setBaseNode(n20);
-        assertTrue(iter.next());        
+        assertTrue(iter.next());
         assertEquals("street 123, B 122", iter.getName());
         assertEquals(n50, iter.getAdjNode());
-        AbstractGraphStorageTester.assertPList(Helper.createPointList(51.25, 9.43), iter.fetchWayGeometry(0));        
+        AbstractGraphStorageTester.assertPList(Helper.createPointList(51.25, 9.43), iter.fetchWayGeometry(0));
         CarFlagEncoder flags = carEncoder;
         assertTrue(flags.isForward(iter.getFlags()));
         assertTrue(flags.isBackward(iter.getFlags()));
-        
+
         assertTrue(iter.next());
         assertEquals("route 666", iter.getName());
         assertEquals(n30, iter.getAdjNode());
         assertEquals(93147, iter.getDistance(), 1);
-        
+
         assertTrue(iter.next());
         assertEquals("route 666", iter.getName());
-        assertEquals(n10, iter.getAdjNode());        
+        assertEquals(n10, iter.getAdjNode());
         assertEquals(88643, iter.getDistance(), 1);
-        
+
         assertTrue(flags.isForward(iter.getFlags()));
         assertTrue(flags.isBackward(iter.getFlags()));
         assertFalse(iter.next());
@@ -211,7 +211,7 @@ public class OSMReaderTest
         EdgeIterator iter = carOutExplorer.setBaseNode(n20);
         assertTrue(iter.next());
         assertEquals(n40, iter.getAdjNode());
-        AbstractGraphStorageTester.assertPList(Helper.createPointList(), iter.fetchWayGeometry(0));        
+        AbstractGraphStorageTester.assertPList(Helper.createPointList(), iter.fetchWayGeometry(0));
         assertTrue(iter.next());
         assertEquals(n30, iter.getAdjNode());
         assertEquals(93146.888, iter.getDistance(), 1);
@@ -254,7 +254,7 @@ public class OSMReaderTest
         assertTrue(iter.next());
         assertEquals(n23, iter.getAdjNode());
         assertTrue(encoder.isForward(iter.getFlags()));
-        assertFalse(encoder.isBackward(iter.getFlags()));               
+        assertFalse(encoder.isBackward(iter.getFlags()));
 
         assertTrue(iter.next());
         assertEquals(n22, iter.getAdjNode());
@@ -271,7 +271,7 @@ public class OSMReaderTest
         assertFalse(encoder.isBackward(iter.getFlags()));
 
         assertTrue(iter.next());
-        assertEquals(n10, iter.getAdjNode());        
+        assertEquals(n10, iter.getAdjNode());
         assertFalse(encoder.isForward(iter.getFlags()));
         assertTrue(encoder.isBackward(iter.getFlags()));
     }
@@ -376,14 +376,14 @@ public class OSMReaderTest
 
         EdgeIterator iter = carOutExplorer.setBaseNode(n20);
         assertTrue(iter.next());
-        
+
         assertTrue(iter.next());
         assertEquals(n30, iter.getAdjNode());
         assertEquals(93147, iter.getDistance(), 1);
-        
+
         assertTrue(iter.next());
         assertEquals(n10, iter.getAdjNode());
-        assertEquals(88643, iter.getDistance(), 1);        
+        assertEquals(88643, iter.getDistance(), 1);
     }
 
     @Test

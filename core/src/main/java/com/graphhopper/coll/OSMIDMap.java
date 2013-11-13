@@ -94,7 +94,7 @@ public class OSMIDMap implements LongIntMap
         long retIndex = binarySearch(keys, 0, getSize(), key);
         if (retIndex < 0)
             return noEntryValue;
-        
+
         return values.getInt(retIndex * 4);
     }
 

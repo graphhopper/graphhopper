@@ -53,7 +53,7 @@ public class StopWatch
     {
         if (lastTime < 0)
             return this;
-        
+
         nanoTime += System.nanoTime() - lastTime;
         lastTime = -1;
         return this;
@@ -66,7 +66,7 @@ public class StopWatch
     {
         return nanoTime / 1000000;
     }
-    
+
     public long getNanos()
     {
         return nanoTime;

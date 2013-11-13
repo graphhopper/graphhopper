@@ -62,7 +62,7 @@ public class CoordTrig<T>
         hash = 83 * hash + (int) (Double.doubleToLongBits(this.lon) ^ (Double.doubleToLongBits(this.lon) >>> 32));
         return hash;
     }
-    
+
     @Override
     public boolean equals( Object obj )
     {

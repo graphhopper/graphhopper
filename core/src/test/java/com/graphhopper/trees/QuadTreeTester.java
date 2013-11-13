@@ -175,7 +175,6 @@ public abstract class QuadTreeTester
         //
         // 7,7: 175.3585     7,8: 125.23878           7,9: 157.85646
         //
-
 //        CalcDistance c = new CalcDistance();
 //        System.out.println("9.124, 8.123:" + c.calcDistKm(9.124, 8.123, 8.12, 8.12));
 //        System.out.println("8,9:" + c.calcDistKm(8, 9, 8.12, 8.12));
@@ -185,7 +184,6 @@ public abstract class QuadTreeTester
 //        System.out.println("7,9:" + c.calcDistKm(7, 9, 8.12, 8.12));
 //        System.out.println("8,7:" + c.calcDistKm(8, 7, 8.12, 8.12));
 //        System.out.println("9,7:" + c.calcDistKm(9, 7, 8.12, 8.12));
-
         assertEquals(10, instance.getSize());
 
         assertEquals(2, instance.getNodes(8.12, 8.12, 10000).size());

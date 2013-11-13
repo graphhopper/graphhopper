@@ -62,14 +62,14 @@ public class TestAlgoCollector
                     + "\t pointList.calcDistance was " + tmpDist + "\t (expected points " + pointCount
                     + ", expected distance " + distance + ") from:" + from + ", to:" + to);
         }
-        
+
         if (Math.abs(path.getDistance() - distance) > 5)
         {
             errors.add(algo + " returns path not matching the expected distance of " + distance
                     + "\t Returned was " + path.getDistance() + "\t (expected points " + pointCount
                     + ", was " + pointList.getSize() + ") from:" + from + ", to:" + to);
         }
-        
+
         // There are real world instances where A-B-C is identical to A-C (in meter precision).
         if (Math.abs(pointList.getSize() - pointCount) > 4)
         {

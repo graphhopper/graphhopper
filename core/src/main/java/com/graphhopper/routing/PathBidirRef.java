@@ -69,7 +69,7 @@ public class PathBidirRef extends Path
         int from = GHUtility.getToNode(graph, edgeEntry.edge, edgeEntry.endNode);
         int to = GHUtility.getToNode(graph, edgeTo.edge, edgeTo.endNode);
         if (from != to)
-            throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString());        
+            throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString());
 
         extractSW.start();
         if (switchWrapper)

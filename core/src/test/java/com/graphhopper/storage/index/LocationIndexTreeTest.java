@@ -35,18 +35,16 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class LocationIndexTreeTest extends AbstractLocation2IDIndexTester
-{
+public class LocationIndexTreeTest extends AbstractLocation2IDIndexTester {
+
     protected final EncodingManager encodingManager = new EncodingManager("CAR");
 
     @Override
-    public LocationIndexTree createIndex( Graph g, int resolution )
-    {
+    public LocationIndexTree createIndex(Graph g, int resolution) {
         return internalCreateIndex(g, 500000);
     }
 
-    public LocationIndexTree internalCreateIndex( Graph g, int minMeter )
-    {
+    public LocationIndexTree internalCreateIndex(Graph g, int minMeter) {
         Directory dir = new RAMDirectory(location);
         LocationIndexTree idx = new LocationIndexTree(g, dir);
         idx.setResolution(minMeter).prepareIndex();
@@ -54,8 +52,7 @@ public class LocationIndexTreeTest extends AbstractLocation2IDIndexTester
     }
 
     @Override
-    public boolean hasEdgeSupport()
-    {
+    public boolean hasEdgeSupport() {
         return true;
     }
 
@@ -64,8 +61,7 @@ public class LocationIndexTreeTest extends AbstractLocation2IDIndexTester
     // |1----3-\|
     // |/   /   4
     // 2---/---/
-    Graph createTestGraph()
-    {
+    Graph createTestGraph() {
         Graph graph = createGraph(new RAMDirectory(), encodingManager);
         graph.setNode(0, 0.5, -0.5);
         graph.setNode(1, -0.5, -0.5);
@@ -83,14 +79,13 @@ public class LocationIndexTreeTest extends AbstractLocation2IDIndexTester
     }
 
     @Test
-    public void testSnappedPointAndGeometry()
-    {
+    public void testSnappedPointAndGeometry() {
         Graph graph = createTestGraph();
         LocationIndex index = createIndex(graph, 1000);
         // query directly the tower node
-        QueryResult res = index.findClosest(-0.4, 0.9, EdgeFilter.ALL_EDGES);        
+        QueryResult res = index.findClosest(-0.4, 0.9, EdgeFilter.ALL_EDGES);
         assertEquals(new GHPoint(-0.4, 0.9), res.getSnappedPoint());
-        res = index.findClosest(-0.6, 1.6, EdgeFilter.ALL_EDGES);        
+        res = index.findClosest(-0.6, 1.6, EdgeFilter.ALL_EDGES);
         assertEquals(new GHPoint(-0.6, 1.6), res.getSnappedPoint());
 
         // query the edge (1,3)
@@ -99,8 +94,7 @@ public class LocationIndexTreeTest extends AbstractLocation2IDIndexTester
     }
 
     @Test
-    public void testInMemIndex()
-    {
+    public void testInMemIndex() {
         Graph graph = createTestGraph();
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.setMinResolutionInMeter(50000).prepareAlgo();
@@ -139,8 +133,7 @@ public class LocationIndexTreeTest extends AbstractLocation2IDIndexTester
     }
 
     @Test
-    public void testInMemIndex2()
-    {
+    public void testInMemIndex2() {
         Graph graph = createTestGraph2();
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.setMinResolutionInMeter(500).prepareAlgo();
@@ -181,8 +174,7 @@ public class LocationIndexTreeTest extends AbstractLocation2IDIndexTester
     }
 
     @Test
-    public void testInMemIndex3()
-    {
+    public void testInMemIndex3() {
         Graph graph = createTestGraph();
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.setMinResolutionInMeter(10000).prepareAlgo();
@@ -202,8 +194,7 @@ public class LocationIndexTreeTest extends AbstractLocation2IDIndexTester
     }
 
     @Test
-    public void testReverseSpatialKey()
-    {
+    public void testReverseSpatialKey() {
         LocationIndexTree index = new LocationIndexTree(createTestGraph(), new RAMDirectory());
         index.setMinResolutionInMeter(200).prepareAlgo();
         assertEquals(Helper.createTList(64, 64, 64, 4), index.getEntries());
@@ -214,8 +205,7 @@ public class LocationIndexTreeTest extends AbstractLocation2IDIndexTester
     }
 
     @Test
-    public void testMoreReal()
-    {
+    public void testMoreReal() {
         Graph graph = createGraph(new EncodingManager("CAR"));
         graph.setNode(1, 51.2492152, 9.4317166);
         graph.setNode(0, 52, 9);
@@ -238,8 +228,7 @@ public class LocationIndexTreeTest extends AbstractLocation2IDIndexTester
     //  |  |/------/  /
     //-1|  2---------/
     //  |
-    private Graph createTestGraphWithWayGeometry()
-    {
+    private Graph createTestGraphWithWayGeometry() {
         Graph graph = createGraph(encodingManager);
         graph.setNode(0, 0.5, -0.5);
         graph.setNode(1, -0.5, -0.5);
@@ -258,8 +247,7 @@ public class LocationIndexTreeTest extends AbstractLocation2IDIndexTester
     }
 
     @Test
-    public void testWayGeometry()
-    {
+    public void testWayGeometry() {
         Graph g = createTestGraphWithWayGeometry();
         LocationIndex index = createIndex(g, 1000);
         assertEquals(1, index.findID(0, 0));
@@ -269,8 +257,7 @@ public class LocationIndexTreeTest extends AbstractLocation2IDIndexTester
     }
 
     @Test
-    public void testFindingWayGeometry()
-    {
+    public void testFindingWayGeometry() {
         Graph g = createGraph(encodingManager);
         g.setNode(10, 51.2492152, 9.4317166);
         g.setNode(20, 52, 9);
@@ -285,25 +272,21 @@ public class LocationIndexTreeTest extends AbstractLocation2IDIndexTester
     }
 
     @Test
-    public void testEdgeFilter()
-    {
+    public void testEdgeFilter() {
         Graph graph = createTestGraph();
         LocationIndexTree index = createIndex(graph, 1000);
 
         assertEquals(1, index.findClosest(-.6, -.6, EdgeFilter.ALL_EDGES).getClosestNode());
-        assertEquals(2, index.findClosest(-.6, -.6, new EdgeFilter()
-        {
+        assertEquals(2, index.findClosest(-.6, -.6, new EdgeFilter() {
             @Override
-            public boolean accept( EdgeIteratorState iter )
-            {
+            public boolean accept(EdgeIteratorState iter) {
                 return iter.getBaseNode() == 2 || iter.getAdjNode() == 2;
             }
         }).getClosestNode());
     }
 
     // see testgraph2.jpg
-    Graph createTestGraph2()
-    {
+    Graph createTestGraph2() {
         Graph graph = createGraph(new RAMDirectory(), encodingManager);
 
         graph.setNode(8, 49.94553, 11.57214);

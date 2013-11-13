@@ -54,6 +54,7 @@ public class DAType
     public enum MemRef
     {
         HEAP, MMAP, UNSAFE /*, DIRECT */
+
     };
     private final MemRef memRef;
     private final boolean storing;
@@ -89,12 +90,14 @@ public class DAType
     {
         return memRef;
     }
-    
-    public boolean isInMemory() {
+
+    public boolean isInMemory()
+    {
         return memRef == MemRef.HEAP;
     }
-    
-    public boolean isMMap() {
+
+    public boolean isMMap()
+    {
         return memRef == MemRef.MMAP;
     }
 

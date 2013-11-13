@@ -183,7 +183,7 @@ public class QueryResult
     @Override
     public String toString()
     {
-        if(closestEdge != null)
+        if (closestEdge != null)
             return closestEdge.getBaseNode() + "-" + closestEdge.getAdjNode() + "  " + snappedPoint;
         return closestNode + ", " + queryPoint + ", " + wayIndex;
     }

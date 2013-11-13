@@ -88,7 +88,7 @@ public class BitUtilBig extends BitUtil
                 res <<= 1;
                 if (charI < strLen && str.charAt(charI) != '0')
                     res |= 1;
-                                
+
                 charI++;
             }
             bytes[b] = res;

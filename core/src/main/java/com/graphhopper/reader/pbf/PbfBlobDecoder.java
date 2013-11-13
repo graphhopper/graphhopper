@@ -192,7 +192,6 @@ public class PbfBlobDecoder implements Runnable
          denseInfo = null;
          }
          */
-
         long nodeId = 0;
         long latitude = 0;
         long longitude = 0;
@@ -230,7 +229,6 @@ public class PbfBlobDecoder implements Runnable
              EMPTY_CHANGESET);
              }
              */
-
             // Build the tags. The key and value string indexes are sequential
             // in the same PBF array. Each set of tags is delimited by an index
             // with a value of 0.
@@ -335,7 +333,6 @@ public class PbfBlobDecoder implements Runnable
                     throw new RuntimeException("Member type of " + memberType + " is not supported.");
                 }
             }
-
 
             OSMRelation.Member member = new OSMRelation.Member(entityType, refId, fieldDecoder.decodeString(memberRoleIterator.next()));
 

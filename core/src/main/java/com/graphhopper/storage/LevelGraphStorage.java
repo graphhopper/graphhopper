@@ -117,7 +117,7 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
         {
             super.setBaseNode(baseNode);
             return this;
-        }                
+        }
 
         @Override
         public final void setSkippedEdges( int edge1, int edge2 )
@@ -243,7 +243,7 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
         {
             super.setBaseNode(baseNode);
             return this;
-        }                
+        }
 
         @Override
         public void setSkippedEdges( int edge1, int edge2 )

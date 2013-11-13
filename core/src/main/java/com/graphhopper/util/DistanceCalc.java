@@ -31,7 +31,7 @@ import com.graphhopper.util.shapes.GHPoint;
 public interface DistanceCalc
 {
     BBox createBBox( double lat, double lon, double radiusInMeter );
-    
+
     double calcCircumference( double lat );
 
     /**

@@ -48,9 +48,9 @@ public abstract class MiniPerfTest
             long time = System.nanoTime() - start;
             if (time < min)
                 min = time;
-            
+
             if (time > max)
-                max = time;            
+                max = time;
         }
         fullTime = System.nanoTime() - startFull;
         logger.info("dummySum:" + dummySum);

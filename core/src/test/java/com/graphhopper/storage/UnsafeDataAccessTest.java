@@ -70,7 +70,7 @@ public class UnsafeDataAccessTest extends DataAccessTest
                 UnsafeDataAccess.UNSAFE.putByte(address + i, bytes[i]);
             }
         }
-        
+
         long tmp = UnsafeDataAccess.UNSAFE.getLong(address);
         assertEquals(val, tmp);
         UnsafeDataAccess.UNSAFE.freeMemory(address);

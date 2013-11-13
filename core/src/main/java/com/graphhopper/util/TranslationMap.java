@@ -217,7 +217,7 @@ public class TranslationMap
 
         public TranslationHashMap doImport( InputStream is )
         {
-            if(is == null)
+            if (is == null)
                 throw new IllegalStateException("No input stream found in class path!?");
             try
             {
@@ -234,12 +234,12 @@ public class TranslationMap
                         throw new IllegalStateException("No key provided:" + line);
 
                     String value = line.substring(index + 1);
-                    if(value.isEmpty() && !key.contains("web"))
+                    if (value.isEmpty() && !key.contains("web"))
                         throw new IllegalStateException("A key for the core cannot be empty: " + key);
-                    
+
                     if (!value.isEmpty())
                         put(key, value);
-                    
+
                 }
             } catch (IOException ex)
             {

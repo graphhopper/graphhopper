@@ -75,8 +75,9 @@ public class VLongStorage
 
     /**
      * Writes an long in a variable-length format. Writes between one and nine bytes. Smaller values
-     * take fewer bytes. Negative numbers are not supported. <p> The format is described further in
-     * {@link DataOutput#writeVInt(int)}.
+     * take fewer bytes. Negative numbers are not supported.
+     * <p>
+     * The format is described further in {@link DataOutput#writeVInt(int)}.
      * <p/>
      * @see DataInput#readVLong()
      */
@@ -93,8 +94,9 @@ public class VLongStorage
 
     /**
      * Reads a long stored in variable-length format. Reads between one and nine bytes. Smaller
-     * values take fewer bytes. Negative numbers are not supported. <p> The format is described
-     * further in {@link DataOutput#writeVInt(int)}.
+     * values take fewer bytes. Negative numbers are not supported.
+     * <p>
+     * The format is described further in {@link DataOutput#writeVInt(int)}.
      * <p/>
      * @see DataOutput#writeVLong(long)
      */

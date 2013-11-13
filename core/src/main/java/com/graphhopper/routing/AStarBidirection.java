@@ -224,7 +224,7 @@ public class AStarBidirection extends AbstractBidirAlgo
                 continue;
             if (currEdge.edge == iter.getEdge())
                 continue;
-            
+
             int neighborNode = iter.getAdjNode();
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!

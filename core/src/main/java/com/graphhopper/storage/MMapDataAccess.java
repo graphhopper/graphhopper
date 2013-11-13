@@ -95,7 +95,7 @@ public class MMapDataAccess extends AbstractDataAccess
         // is a flush necessary then?
         // }
         return super.copyTo(da);
-    }    
+    }
 
     @Override
     public boolean incCapacity( long bytes )
@@ -107,20 +107,20 @@ public class MMapDataAccess extends AbstractDataAccess
     {
         if (byteCount < 0)
             throw new IllegalArgumentException("new capacity has to be strictly positive");
-        
+
         if (byteCount <= getCapacity())
             return false;
 
         long longSegmentSize = segmentSizeInBytes;
         int segmentsToMap = (int) (byteCount / longSegmentSize);
         if (segmentsToMap < 0)
-            throw new IllegalStateException("Too many segments needs to be allocated. Increase segmentSize.");        
+            throw new IllegalStateException("Too many segments needs to be allocated. Increase segmentSize.");
 
         if (byteCount % longSegmentSize != 0)
             segmentsToMap++;
-        
+
         if (segmentsToMap == 0)
-            throw new IllegalStateException("0 segments are not allowed.");        
+            throw new IllegalStateException("0 segments are not allowed.");
 
         long bufferStart = offset;
         int newSegments;

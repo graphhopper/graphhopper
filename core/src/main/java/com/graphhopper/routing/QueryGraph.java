@@ -453,7 +453,7 @@ public class QueryGraph implements Graph
     {
         throw exc();
     }
-    
+
     public EdgeIteratorState edge( int a, int b, double distance, int flags )
     {
         throw exc();

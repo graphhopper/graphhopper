@@ -29,7 +29,7 @@ public class GHPlace extends CoordTrig<String>
     private String name = "";
 
     public GHPlace()
-    {        
+    {
     }
 
     public GHPlace( String name )
@@ -102,8 +102,8 @@ public class GHPlace extends CoordTrig<String>
     public Double[] toGeoJson()
     {
         return new Double[]
-                {
-                    lon, lat
-                };
+        {
+            lon, lat
+        };
     }
 }

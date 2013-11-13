@@ -79,7 +79,7 @@ public class Location2IDFullWithEdgesIndex implements LocationIndex
     @Override
     public QueryResult findClosest( double queryLat, double queryLon, EdgeFilter filter )
     {
-        QueryResult res = new QueryResult(queryLat, queryLon);        
+        QueryResult res = new QueryResult(queryLat, queryLon);
         double foundDist = Double.MAX_VALUE;
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next())
@@ -115,7 +115,7 @@ public class Location2IDFullWithEdgesIndex implements LocationIndex
                 // process the next stuff only for baseNode
                 if (i > 0)
                     continue;
-                
+
                 int toNode = iter.getAdjNode();
                 double toLat = graph.getLatitude(toNode);
                 double toLon = graph.getLongitude(toNode);

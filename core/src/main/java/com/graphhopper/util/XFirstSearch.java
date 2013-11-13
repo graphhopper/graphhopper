@@ -59,7 +59,7 @@ public class XFirstSearch
         GHBitSet visited = createBitSet();
         visited.add(startNode);
         coll.push(startNode);
-        int current;        
+        int current;
         while (!coll.isEmpty())
         {
             current = coll.pop();

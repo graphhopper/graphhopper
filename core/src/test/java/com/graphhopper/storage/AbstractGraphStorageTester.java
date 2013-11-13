@@ -93,7 +93,7 @@ public abstract class AbstractGraphStorageTester
     {
         graph = createGraph();
         assertEquals(0, graph.edge(0, 1).getFlags());
-        assertEquals(0, graph.edge(0, 2).getDistance(), 1e-6);        
+        assertEquals(0, graph.edge(0, 2).getDistance(), 1e-6);
     }
 
     @Test

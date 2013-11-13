@@ -139,7 +139,7 @@ public class EncodingManager
     {
         for (int i = 0; i < encoderCount; i++)
         {
-            if (name.equalsIgnoreCase(encoders.get(i).toString()))            
+            if (name.equalsIgnoreCase(encoders.get(i).toString()))
                 return encoders.get(i);
         }
         if (throwExc)

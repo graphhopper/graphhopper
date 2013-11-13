@@ -38,7 +38,7 @@ import static org.junit.Assert.*;
 public class InstructionListTest
 {
     TranslationMap trMap = TranslationMapTest.SINGLETON;
-    
+
     @Test
     public void testWayList()
     {

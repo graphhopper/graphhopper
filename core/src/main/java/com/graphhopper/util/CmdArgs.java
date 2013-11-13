@@ -143,11 +143,11 @@ public class CmdArgs
     {
         if (systemProperty.startsWith("-D"))
             systemProperty = systemProperty.substring(2);
-        
+
         String configLocation = System.getProperty(systemProperty);
         if (Helper.isEmpty(configLocation))
             configLocation = fileStr;
-        
+
         Map<String, String> map = new LinkedHashMap<String, String>();
         Helper.loadProperties(map, new InputStreamReader(new FileInputStream(
                 new File(configLocation).getAbsoluteFile()), "UTF-8"));

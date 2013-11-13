@@ -72,7 +72,7 @@ public class Measurement
             StopWatch sw = new StopWatch().start();
             int edges = getGraph().getAllEdges().getMaxId();
             initCHPrepare();
-            super.prepare();           
+            super.prepare();
             put("prepare.time", sw.stop().getTime());
             put("prepare.shortcuts", getGraph().getAllEdges().getMaxId() - edges);
         }
@@ -106,7 +106,7 @@ public class Measurement
         if ("true".equals(g.getProperties().get("prepare.done")))
             throw new IllegalStateException("Graph has to be unprepared but wasn't!");
 
-        String vehicleStr = "car";        
+        String vehicleStr = "car";
         StopWatch sw = new StopWatch().start();
         try
         {

@@ -82,8 +82,8 @@ public class SparseLongLongArray
     }
 
     /**
-     * Gets the Object mapped from the specified key, or
-     * <code>null</code> if no such mapping has been made.
+     * Gets the Object mapped from the specified key, or <code>null</code> if no such mapping has
+     * been made.
      */
     public long get( long key )
     {
@@ -221,8 +221,7 @@ public class SparseLongLongArray
     }
 
     /**
-     * Given an index in the range
-     * <code>0...size()-1</code>, returns the key from the
+     * Given an index in the range <code>0...size()-1</code>, returns the key from the
      * <code>index</code>th key-value mapping that this SparseLongLongArray stores.
      */
     public long keyAt( int index )
@@ -236,8 +235,7 @@ public class SparseLongLongArray
     }
 
     /**
-     * Given an index in the range
-     * <code>0...size()-1</code>, sets a new key for the
+     * Given an index in the range <code>0...size()-1</code>, sets a new key for the
      * <code>index</code>th key-value mapping that this SparseLongLongArray stores.
      */
     public void setKeyAt( int index, long key )
@@ -251,8 +249,7 @@ public class SparseLongLongArray
     }
 
     /**
-     * Given an index in the range
-     * <code>0...size()-1</code>, returns the value from the
+     * Given an index in the range <code>0...size()-1</code>, returns the value from the
      * <code>index</code>th key-value mapping that this SparseLongLongArray stores.
      */
     public long valueAt( int index )
@@ -266,8 +263,7 @@ public class SparseLongLongArray
     }
 
     /**
-     * Given an index in the range
-     * <code>0...size()-1</code>, sets a new value for the
+     * Given an index in the range <code>0...size()-1</code>, sets a new value for the
      * <code>index</code>th key-value mapping that this SparseLongLongArray stores.
      */
     public void setValueAt( int index, long value )

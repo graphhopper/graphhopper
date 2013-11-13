@@ -255,6 +255,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     }
     private final Set<String> safeHighwayTags = new HashSet<String>()
     {
+
         
         {
             add("cycleway");
@@ -268,6 +269,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     };
     private static final Map<String, Integer> TRACKTYPE_SPEED = new HashMap<String, Integer>()
     {
+
         
         {
             put("grade1", 16); // paved
@@ -279,6 +281,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     };
     private static final Map<String, Integer> SURFACE_SPEED = new HashMap<String, Integer>()
     {
+
         
         {
             put("asphalt", 18);
@@ -295,6 +298,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     };
     private static final Map<String, Integer> HIGHWAY_SPEED = new HashMap<String, Integer>()
     {
+
         
         {
             put("living_street", 6);
