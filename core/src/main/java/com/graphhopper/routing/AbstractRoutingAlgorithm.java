@@ -75,7 +75,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     public Path calcPath( QueryResult fromRes, QueryResult toRes )
     {
         QueryGraph queryGraph = createQueryGraph();
-        List<QueryResult> results = new ArrayList(2);
+        List<QueryResult> results = new ArrayList<QueryResult>(2);
         results.add(fromRes);
         results.add(toRes);
         queryGraph.lookup(results);

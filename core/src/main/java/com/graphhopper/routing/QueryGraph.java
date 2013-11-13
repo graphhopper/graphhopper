@@ -79,7 +79,7 @@ public class QueryGraph implements Graph
 
         virtualEdges = new ArrayList<EdgeIteratorState>(resList.size() * 2);
         virtualNodes = new PointList(resList.size());
-        queryResults = new ArrayList(resList.size());
+        queryResults = new ArrayList<QueryResult>(resList.size());
 
         TIntObjectMap<List<QueryResult>> edge2res = new TIntObjectHashMap<List<QueryResult>>(resList.size());
 

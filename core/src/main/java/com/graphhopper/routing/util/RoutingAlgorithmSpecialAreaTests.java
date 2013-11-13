@@ -29,7 +29,6 @@ import static com.graphhopper.routing.util.NoOpAlgorithmPreparation.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.Location2NodesNtreeLG;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
@@ -118,14 +117,14 @@ public class RoutingAlgorithmSpecialAreaTests
             LocationIndex idx, FlagEncoder encoder, boolean withCh, Weighting weighting, EncodingManager manager )
     {
         // List<Entry<AlgorithmPreparation, LocationIndex>> prepare = new ArrayList<Entry<AlgorithmPreparation, LocationIndex>>();
-        List<Entry<AlgorithmPreparation, LocationIndex>> prepare = new ArrayList<Entry<AlgorithmPreparation, LocationIndex>>(
-                Arrays.<Entry<AlgorithmPreparation, LocationIndex>>asList(
-                        new ME(createAlgoPrepare(g, "astar", encoder, weighting), idx),
-                        // new MapEntry<AlgorithmPreparation, LocationIndex>(createAlgoPrepare(g, "dijkstraOneToMany", encoder, weighting),
-                        new ME(createAlgoPrepare(g, "astarbi", encoder, weighting), idx),
-                        new ME(createAlgoPrepare(g, "dijkstraNative", encoder, weighting), idx),
-                        new ME(createAlgoPrepare(g, "dijkstrabi", encoder, weighting), idx),
-                        new ME(createAlgoPrepare(g, "dijkstra", encoder, weighting), idx)));
+        List<Entry<AlgorithmPreparation, LocationIndex>> prepare = new ArrayList<Entry<AlgorithmPreparation, LocationIndex>>();
+        prepare.add(new ME(createAlgoPrepare(g, "astar", encoder, weighting), idx));
+        // prepare.add(new ME(createAlgoPrepare(g, "dijkstraOneToMany", encoder, weighting), idx));
+        prepare.add(new ME(createAlgoPrepare(g, "astarbi", encoder, weighting), idx));
+        prepare.add(new ME(createAlgoPrepare(g, "dijkstraNative", encoder, weighting), idx));
+        prepare.add(new ME(createAlgoPrepare(g, "dijkstrabi", encoder, weighting), idx));
+        prepare.add(new ME(createAlgoPrepare(g, "dijkstra", encoder, weighting), idx));
+        
         if (withCh)
         {
             LevelGraph graphCH = (LevelGraph) ((GraphStorage) g).copyTo(new GraphBuilder(manager).levelGraphCreate());
