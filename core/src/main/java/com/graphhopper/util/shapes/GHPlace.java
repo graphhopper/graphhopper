@@ -39,8 +39,8 @@ public class GHPlace extends CoordTrig<String>
 
     public GHPlace( double lat, double lon )
     {
-        this.lat = lat;
-        this.lon = lon;
+        this.lat = GHPoint.makeValidLat(lat);
+        this.lon = GHPoint.makeValidLon(lon);
     }
 
     @Override

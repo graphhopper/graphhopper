@@ -22,12 +22,31 @@ package com.graphhopper.util.shapes;
  */
 public class GHPoint extends CoordTrig<Void>
 {
+
+    static double makeValidLon( double lon )
+    {
+        if(lon < 180 && lon > -180)
+            return lon;
+        if(lon > 180)
+            return (lon + 180) % 360 - 180;
+        return (lon - 180) % 360 + 180;
+    }
+    
+    static double makeValidLat( double lat )
+    {
+        if(lat < 90 && lat > -90)
+            return lat;
+         if(lat > 90)
+            return (lat + 90) % 180 - 90;
+        return (lat - 90) % 180 + 90;
+    }
+    
     public GHPoint()
     {
     }
 
     public GHPoint( double lat, double lon )
     {
-        super(lat, lon);
+        super(makeValidLat(lat), makeValidLon(lon));
     }
 }

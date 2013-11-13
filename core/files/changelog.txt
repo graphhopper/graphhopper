@@ -1,6 +1,6 @@
 0.2.0
     refactored/renamed classes and methods:
-        refactor 'flags' from int to long
+        refactor 'flags' from int to long (still only int is stored)
         replacing Graph.edge(a,b,dist,flags) by Graph.edge(a,b).setDistance().setFlags()
         FlagEncoder.flags => use FlagEncoder.setProperties or separate setAccess and setSpeed method
         renamed LocationIDResult to QueryResult and Location2NodesNtree to LocationIndexTree
