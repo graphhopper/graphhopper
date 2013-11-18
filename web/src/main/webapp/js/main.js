@@ -1,3 +1,13 @@
+/*
+ * CONFIG
+ */
+
+/*
+ * If you want to use a specific, external graphhopper host, point the host to that host, otherwise set to null.
+ * E.g. http://graphhopper.com/routing
+ */ 
+var host = null;
+
 // fixing cross domain support e.g in Opera
 jQuery.support.cors = true;
 
@@ -23,12 +33,19 @@ var iconTo = L.icon({
 
 var bounds = {};
 LOCAL = true;
-if (window.location.search && window.location.search.indexOf("externalAPI=true") >= 0)
+if (window.location.search && window.location.search.indexOf("externalAPI=true") >= 0){
     LOCAL = false;
-var host;
-if (LOCAL)
-    host = "http://localhost:8989";
-else {
+}
+
+if (LOCAL){
+	if(host == null){
+		if(location.port === ''){
+			host = location.protocol + '//' + location.hostname;
+		}else{
+			host = location.protocol + '//' + location.hostname + ":" + location.port;
+		}
+	}
+} else {
     // cross origin:
     // host = "http://graphhopper.gpsies.com";
     host = "http://graphhopper.com/routing";
