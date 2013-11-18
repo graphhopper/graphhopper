@@ -1,13 +1,21 @@
 /*
- * CONFIG
+ * If you want to query another API append this something like
+ * &host=http://graphhopper.com/routing
+ * to the URL or overwrite the 'host' variable.
  */
+var tmpArgs = parseUrlWithHisto();
+var host = tmpArgs["host"];
+//var host = "http://graphhopper.com/routing";
+if (host == null) {
+    if (location.port === '') {
+        host = location.protocol + '//' + location.hostname;
+    } else {
+        host = location.protocol + '//' + location.hostname + ":" + location.port;
+    }
+}
 
-/*
- * If you want to use a specific, external graphhopper host, point the host to that host, otherwise set to null.
- * E.g. http://graphhopper.com/routing
- */ 
-var host = null;
-
+var ghRequest = new GHRequest(host);
+var bounds = {};
 // fixing cross domain support e.g in Opera
 jQuery.support.cors = true;
 
@@ -30,27 +38,6 @@ var iconTo = L.icon({
     iconUrl: './img/marker-to.png',
     iconAnchor: [12, 12]
 });
-
-var bounds = {};
-LOCAL = true;
-if (window.location.search && window.location.search.indexOf("externalAPI=true") >= 0){
-    LOCAL = false;
-}
-
-if (LOCAL){
-	if(host == null){
-		if(location.port === ''){
-			host = location.protocol + '//' + location.hostname;
-		}else{
-			host = location.protocol + '//' + location.hostname + ":" + location.port;
-		}
-	}
-} else {
-    // cross origin:
-    // host = "http://graphhopper.gpsies.com";
-    host = "http://graphhopper.com/routing";
-}
-var ghRequest = new GHRequest(host);
 
 $(document).ready(function(e) {
     var History = window.History;
@@ -323,10 +310,10 @@ function initMap() {
     map.on('click', onMapClick);
 }
 
-function makeValidLng(lon) {    
+function makeValidLng(lon) {
     if (lon < 180 && lon > -180)
         return lon;
-    if(lon > 180)
+    if (lon > 180)
         return (lon + 180) % 360 - 180;
     return (lon - 180) % 360 + 180;
 }
