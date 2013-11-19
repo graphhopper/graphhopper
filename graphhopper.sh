@@ -22,7 +22,7 @@ fi
 ACTION=$1
 FILE=$2
 
-USAGE="./graphhopper.sh import|ui|test|measurement|miniui|extract <your-osm-file>"
+USAGE="./graphhopper.sh import|ui|test|measurement|miniui|extract|build <your-osm-file>"
 if [ "x$ACTION" = "x" ]; then
  echo -e "## action $ACTION not found. try \n$USAGE"
 fi
@@ -85,7 +85,7 @@ function packageCoreJar {
     echo "## now building graphhopper jar: $JAR"
     echo "## using maven at $MAVEN_HOME"
     #mvn clean
-    "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests=true install assembly:single > /tmp/graphhopper-compile.log
+    "$MAVEN_HOME/bin/mvn" --projects core -DskipTests=true install assembly:single > /tmp/graphhopper-compile.log
     returncode=$?
     if [[ $returncode != 0 ]] ; then
         echo "## compilation failed"
@@ -112,10 +112,14 @@ if [ "x$ACTION" = "xclean" ]; then
 elif [ "x$ACTION" = "xeclipse" ]; then
  prepareEclipse
  exit
+
+elif [ "x$ACTION" = "xbuild" ]; then
+ prepareEclipse
+ exit  
  
 elif [ "x$ACTION" = "xandroid" ]; then
  prepareEclipse
- "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/android/pom.xml" install android:deploy android:run
+ "$MAVEN_HOME/bin/mvn" --projects android install android:deploy android:run
  exit
 fi
 

@@ -41,7 +41,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     private PriorityQueue<EdgeEntry> openSetTo;
     private TIntObjectMap<EdgeEntry> bestWeightMapFrom;
     private TIntObjectMap<EdgeEntry> bestWeightMapTo;
-    private TIntObjectMap<EdgeEntry> bestWeightMapOther;
+    protected TIntObjectMap<EdgeEntry> bestWeightMapOther;
     protected EdgeEntry currFrom;
     protected EdgeEntry currTo;
     protected PathBidirRef bestPath;
@@ -107,7 +107,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     }
 
     @Override
-    boolean fillEdgesFrom()
+    protected boolean fillEdgesFrom()
     {
         if (openSetFrom.isEmpty())
             return false;
@@ -120,7 +120,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     }
 
     @Override
-    boolean fillEdgesTo()
+    protected boolean fillEdgesTo()
     {
         if (openSetTo.isEmpty())
             return false;
