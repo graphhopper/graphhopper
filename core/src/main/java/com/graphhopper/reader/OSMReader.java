@@ -67,8 +67,7 @@ public class OSMReader
     private long skippedLocations;
     private final GraphStorage graphStorage;
     private EncodingManager encodingManager = null;
-    private int workerThreads = -1;
-    private final LongIntMap osmNodeIdToBarrierMap;
+    private int workerThreads = -1;    
     private boolean enableInstructions = true;
     protected final Directory dir;
     protected long zeroCounter = 0;
@@ -83,6 +82,7 @@ public class OSMReader
     // smaller memory overhead for bigger data sets because of avoiding a "rehash"
     // remember how many times a node was used to identify tower nodes
     private LongIntMap osmNodeIdToIndexMap;
+    private LongIntMap osmNodeIdToBarrierMap;
     private final TLongList barrierNodeIDs = new TLongArrayList();
     protected DataAccess pillarLats;
     protected DataAccess pillarLons;
@@ -655,14 +655,13 @@ public class OSMReader
 
     void finishedReading()
     {
-        // todo: is this necessary before removing it?
-        getNodeMap().optimize();
         printInfo("way");
         dir.remove(pillarLats);
         dir.remove(pillarLons);
         pillarLons = null;
         pillarLats = null;
         osmNodeIdToIndexMap = null;
+        osmNodeIdToBarrierMap = null;
     }
 
     /**
