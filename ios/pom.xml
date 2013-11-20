@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.graphhopper</groupId>
+    <artifactId>ios</artifactId>
+    <name>GraphHopper iOS</name>
+    <version>0.2-SNAPSHOT</version>
+    <packaging>jar</packaging> 
+    <description>
+        GraphHopper iOS is the 'reader' for GraphHopper files on iOS.
+    </description>
+    <parent>
+        <groupId>com.graphhopper</groupId>
+        <artifactId>graphhopper-parent</artifactId>    	
+        <version>0.2-SNAPSHOT</version>
+    </parent>
+        
+    <dependencies>
+        
+        <dependency>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper</artifactId>
+            <version>${project.parent.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.protobuf</groupId>
+                    <artifactId>protobuf-java</artifactId>                    
+                </exclusion>
+                <exclusion>
+                    <groupId>org.openstreetmap.osmosis</groupId>
+                    <artifactId>osmosis-osm-binary</artifactId>                    
+                </exclusion>
+            </exclusions>
+        </dependency>               
+    </dependencies>
+        
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>2.4</version>
+                    <configuration>
+                        <archive>
+                            <manifest>
+                                <mainClass>com.graphhopper.ios.Start</mainClass>
+                            </manifest>
+                        </archive>
+	                    
+                        <!-- for standalone usage -->
+                        <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef>
+                        </descriptorRefs>
+                    </configuration>
+                </plugin>                
+            </plugins>
+        </pluginManagement>        
+    </build>
+</project>
