@@ -25,7 +25,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeSkipExplorer;
 import com.graphhopper.util.Helper;
 import gnu.trove.list.TIntList;
@@ -40,15 +40,15 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class Location2NodesNtreeLGTest extends LocationIndexTreeTest
+public class LocationIndexTreeSCTest extends LocationIndexTreeTest
 {
-    EncodingManager encodingManager = new EncodingManager("CAR");
+    private final EncodingManager encodingManager = new EncodingManager("CAR");
 
     @Override
-    public Location2NodesNtreeLG createIndex( Graph g, int resolution )
+    public LocationIndexTreeSC createIndex( Graph g, int resolution )
     {
         Directory dir = new RAMDirectory(location);
-        Location2NodesNtreeLG idx = new Location2NodesNtreeLG((LevelGraph) g, dir);
+        LocationIndexTreeSC idx = new LocationIndexTreeSC((LevelGraph) g, dir);
         idx.setResolution(1000000).prepareIndex();
         return idx;
     }
@@ -75,10 +75,10 @@ public class Location2NodesNtreeLGTest extends LocationIndexTreeTest
         g.setNode(3, -1, 1);
         g.setNode(4, -2, 2);
 
-        EdgeIterator iter1 = g.edge(0, 1, 10, true);
-        EdgeIterator iter2 = g.edge(1, 2, 10, true);
-        EdgeIterator iter3 = g.edge(2, 3, 14, true);
-        EdgeIterator iter4 = g.edge(3, 4, 14, true);
+        EdgeIteratorState iter1 = g.edge(0, 1, 10, true);
+        EdgeIteratorState iter2 = g.edge(1, 2, 10, true);
+        EdgeIteratorState iter3 = g.edge(2, 3, 14, true);
+        EdgeIteratorState iter4 = g.edge(3, 4, 14, true);
 
         // create shortcuts
         FlagEncoder car = encodingManager.getEncoder("CAR");
@@ -135,8 +135,8 @@ public class Location2NodesNtreeLGTest extends LocationIndexTreeTest
         lg.setNode(1, 0, 0);
         lg.setNode(2, 0.5, 0.5);
         lg.setNode(3, 0.5, 1);
-        EdgeIterator iter1 = lg.edge(1, 0, 100, true);
-        EdgeIterator iter2 = lg.edge(2, 3, 100, true);
+        EdgeIteratorState iter1 = lg.edge(1, 0, 100, true);
+        EdgeIteratorState iter2 = lg.edge(2, 3, 100, true);
 
         lg.setLevel(0, 11);
         lg.setLevel(1, 10);
@@ -148,7 +148,7 @@ public class Location2NodesNtreeLGTest extends LocationIndexTreeTest
         // disconnect higher 3 from lower 2
         lg.disconnect(lg.createEdgeExplorer(), iter1);
 
-        Location2NodesNtreeLG index = new Location2NodesNtreeLG(lg, new RAMDirectory());
+        LocationIndexTreeSC index = new LocationIndexTreeSC(lg, new RAMDirectory());
         index.setResolution(100000);
         index.prepareIndex();
         // very close to 2, but should match the edge 0--1

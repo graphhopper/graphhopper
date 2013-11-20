@@ -658,7 +658,7 @@ public class GraphHopper implements GraphHopperAPI
             LocationIndexTree tmpNIndex;
             if (graph instanceof LevelGraph)
             {
-                tmpNIndex = new Location2NodesNtreeLG((LevelGraph) graph, dir);
+                tmpNIndex = new LocationIndexTreeSC((LevelGraph) graph, dir);
             } else
             {
                 tmpNIndex = new LocationIndexTree(graph, dir);

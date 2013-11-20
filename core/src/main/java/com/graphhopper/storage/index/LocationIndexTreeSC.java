@@ -37,7 +37,7 @@ import com.graphhopper.util.*;
  * <p/>
  * @author Peter Karich
  */
-public class Location2NodesNtreeLG extends LocationIndexTree
+public class LocationIndexTreeSC extends LocationIndexTree
 {
     private final static EdgeFilter NO_SHORTCUT = new EdgeFilter()
     {
@@ -49,7 +49,7 @@ public class Location2NodesNtreeLG extends LocationIndexTree
     };
     private LevelGraph lg;
 
-    public Location2NodesNtreeLG( LevelGraph g, Directory dir )
+    public LocationIndexTreeSC( LevelGraph g, Directory dir )
     {
         super(g, dir);
         lg = g;

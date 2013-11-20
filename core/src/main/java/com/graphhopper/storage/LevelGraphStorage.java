@@ -64,17 +64,11 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
     @Override
     public EdgeSkipExplorer shortcut( int a, int b )
     {
-        return edge(a, b);
+        return (EdgeSkipExplorer) edge(a, b);
     }
 
     @Override
-    public EdgeSkipExplorer edge( int a, int b, double distance, boolean bothDir )
-    {
-        return (EdgeSkipExplorer) super.edge(a, b, distance, bothDir);
-    }
-
-    @Override
-    public EdgeSkipExplorer edge( int a, int b )
+    public EdgeIteratorState edge( int a, int b )
     {
         ensureNodeIndex(Math.max(a, b));
         int edgeId = internalEdgeAdd(a, b);

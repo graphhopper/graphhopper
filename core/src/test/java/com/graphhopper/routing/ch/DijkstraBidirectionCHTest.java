@@ -27,6 +27,7 @@ import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.util.EdgeSkipExplorer;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -77,8 +78,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     {
         LevelGraphStorage g2 = (LevelGraphStorage) createGraph();
         g2.edge(0, 1, 1, true);
-        EdgeSkipExplorer iter1_1 = g2.edge(0, 2, 1.4, true);
-        EdgeSkipExplorer iter1_2 = g2.edge(2, 5, 1.4, true);
+        EdgeIteratorState iter1_1 = g2.edge(0, 2, 1.4, true);
+        EdgeIteratorState iter1_2 = g2.edge(2, 5, 1.4, true);
         g2.edge(1, 2, 1, true);
         g2.edge(1, 3, 3, true);
         g2.edge(2, 3, 1, true);
@@ -91,7 +92,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         g2.edge(6, 7, 1, true);
 
         // simulate preparation
-        EdgeSkipExplorer iter2_2 = g2.edge(5, 7);
+        EdgeIteratorState iter2_2 = g2.edge(5, 7);
         iter2_2.setDistance(1.4).setFlags(carEncoder.setProperties(0, true, true));
         EdgeSkipExplorer iter2_1 = g2.shortcut(0, 5);
         iter2_1.setDistance(2.8).setFlags(carEncoder.setProperties(0, true, true));

@@ -36,9 +36,6 @@ public interface LevelGraph extends Graph
     EdgeSkipExplorer shortcut( int a, int b );
 
     @Override
-    EdgeSkipExplorer edge( int a, int b, double distance, boolean bothDirections );
-
-    @Override
     EdgeIteratorState getEdgeProps( int edgeId, int endNode );
 
     @Override

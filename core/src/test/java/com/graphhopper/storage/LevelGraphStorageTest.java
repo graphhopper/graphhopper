@@ -19,6 +19,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeSkipExplorer;
 import com.graphhopper.util.GHUtility;
 import static org.junit.Assert.*;
@@ -103,7 +104,8 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         g.edge(0, 1, 10, true);
         g.edge(0, 2, 20, true);
         g.edge(2, 3, 30, true);
-        EdgeSkipExplorer tmpIter = g.edge(3, 4, 40, true);
+        EdgeSkipExplorer tmpIter = g.shortcut(3, 4);
+        tmpIter.setDistance(40).setFlags(carEncoder.setAccess(0, true, true));
         assertEquals(EdgeIterator.NO_EDGE, tmpIter.getSkippedEdge1());
         assertEquals(EdgeIterator.NO_EDGE, tmpIter.getSkippedEdge2());
 

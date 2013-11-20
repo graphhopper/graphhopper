@@ -208,7 +208,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     {
         // In CH the setProperties (speed) are ignored as calculating the new setProperties for a shortcut is often not possible.
         // Also several shortcuts would be necessary with the different modes (e.g. fastest and shortest)
-        // So calculate the weight and store this as distance, then use only distance instead of calcWeight
+        // So calculate the weight and store this as weight, then use only weight instead of calcWeight
         EdgeIterator iter = g.getAllEdges();
         int c = 0;
         while (iter.next())
@@ -618,11 +618,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             {
                 if (iter.isShortcut() && iter.getAdjNode() == sc.to
                         && prepareEncoder.canBeOverwritten(iter.getFlags(), sc.flags)
-                        && iter.getDistance() > sc.distance)
+                        && iter.getDistance() > sc.weight)
                 {
                     iter.setFlags(sc.flags);
                     iter.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
-                    iter.setDistance(sc.distance);
+                    iter.setDistance(sc.weight);
                     setOrigEdgeCount(iter.getEdge(), sc.originalEdges);
                     updatedInGraph = true;
                     break;
@@ -632,7 +632,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             if (!updatedInGraph)
             {
                 iter = g.shortcut(sc.from, sc.to);
-                iter.setDistance(sc.distance).setFlags(sc.flags);
+                iter.setDistance(sc.weight).setFlags(sc.flags);
                 iter.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
                 setOrigEdgeCount(iter.getEdge(), sc.originalEdges);
                 tmpNewShortcuts++;
@@ -741,8 +741,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             @Override
             public void initPath()
             {
-                // CH changes the distance in prepareEdges to the weight
-                // now we need to transform it back to the real distance
+                // CH changes the weight in prepareEdges to the weight
+                // now we need to transform it back to the real weight
                 Weighting w = createWeighting();
                 bestPath = new Path4CH(graph, flagEncoder, w);
             }
@@ -806,8 +806,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             @Override
             protected void initPath()
             {
-                // CH changes the distance in prepareEdges to the weight
-                // now we need to transform it back to the real distance
+                // CH changes the weight in prepareEdges to the weight
+                // now we need to transform it back to the real weight
                 Weighting wc = createWeighting();
                 bestPath = new Path4CH(graph, flagEncoder, wc);
             }
@@ -897,7 +897,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         int to;
         int skippedEdge1;
         int skippedEdge2;
-        double distance;
+        double weight;
         int originalEdges;
         long flags = scOneDir;
 
@@ -905,7 +905,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         {
             this.from = from;
             this.to = to;
-            this.distance = dist;
+            this.weight = dist;
         }
 
         @Override
@@ -915,7 +915,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             hash = 23 * hash + from;
             hash = 23 * hash + to;
             return 23 * hash
-                    + (int) (Double.doubleToLongBits(this.distance) ^ (Double.doubleToLongBits(this.distance) >>> 32));
+                    + (int) (Double.doubleToLongBits(this.weight) ^ (Double.doubleToLongBits(this.weight) >>> 32));
         }
 
         @Override
@@ -928,13 +928,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             if (this.from != other.from || this.to != other.to)
                 return false;
 
-            return Double.doubleToLongBits(this.distance) == Double.doubleToLongBits(other.distance);
+            return Double.doubleToLongBits(this.weight) == Double.doubleToLongBits(other.weight);
         }
 
         @Override
         public String toString()
         {
-            return from + "->" + to + ", dist:" + distance;
+            return from + "->" + to + ", dist:" + weight;
         }
     }
 }

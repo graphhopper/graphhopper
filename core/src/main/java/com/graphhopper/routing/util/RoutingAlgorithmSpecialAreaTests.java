@@ -27,7 +27,7 @@ import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.StopWatch;
 import static com.graphhopper.routing.util.NoOpAlgorithmPreparation.*;
 import com.graphhopper.storage.*;
-import com.graphhopper.storage.index.Location2NodesNtreeLG;
+import com.graphhopper.storage.index.LocationIndexTreeSC;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -131,7 +131,7 @@ public class RoutingAlgorithmSpecialAreaTests
             PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(encoder, weighting).
                     setGraph(graphCH);
             prepareCH.doWork();
-            LocationIndex idxCH = new Location2NodesNtreeLG(graphCH, new RAMDirectory()).prepareIndex();
+            LocationIndex idxCH = new LocationIndexTreeSC(graphCH, new RAMDirectory()).prepareIndex();
             prepare.add(new ME(prepareCH, idxCH));
 
             // still one failing test regardless of the approx factor

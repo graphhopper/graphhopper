@@ -191,7 +191,7 @@ public class PrepareContractionHierarchiesTest
         Iterator<Shortcut> iter = scs.iterator();
         Shortcut sc1 = iter.next();
         Shortcut sc2 = iter.next();
-        if (sc1.distance > sc2.distance)
+        if (sc1.weight > sc2.weight)
         {
             Shortcut tmp = sc1;
             sc1 = sc2;
@@ -206,8 +206,8 @@ public class PrepareContractionHierarchiesTest
         assertTrue(sc2.toString(), sc2.from == 2 && sc2.to == 3);
         assertTrue(sc2.toString(), carEncoder.isForward(sc2.flags));
 
-        assertEquals(sc1.toString(), 4, sc1.distance, 1e-4);
-        assertEquals(sc2.toString(), 12, sc2.distance, 1e-4);
+        assertEquals(sc1.toString(), 4, sc1.weight, 1e-4);
+        assertEquals(sc2.toString(), 12, sc2.weight, 1e-4);
     }
 
     void initRoundaboutGraph( Graph g )
@@ -280,12 +280,12 @@ public class PrepareContractionHierarchiesTest
     public void testFindShortcuts_Roundabout()
     {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
-        EdgeSkipExplorer iter1_1 = g.edge(1, 3, 1, true);
-        EdgeSkipExplorer iter1_2 = g.edge(3, 4, 1, true);
-        EdgeSkipExplorer iter2_1 = g.edge(4, 5, 1, false);
-        EdgeSkipExplorer iter2_2 = g.edge(5, 6, 1, false);
-        EdgeSkipExplorer iter3_1 = g.edge(6, 7, 1, true);
-        EdgeSkipExplorer iter3_2 = g.edge(6, 8, 2, false);
+        EdgeIteratorState iter1_1 = g.edge(1, 3, 1, true);
+        EdgeIteratorState iter1_2 = g.edge(3, 4, 1, true);
+        EdgeIteratorState iter2_1 = g.edge(4, 5, 1, false);
+        EdgeIteratorState iter2_2 = g.edge(5, 6, 1, false);
+        EdgeIteratorState iter3_1 = g.edge(6, 7, 1, true);
+        EdgeIteratorState iter3_2 = g.edge(6, 8, 2, false);
         g.edge(8, 4, 1, false);
         g.setLevel(3, 3);
         g.setLevel(5, 5);
@@ -329,8 +329,8 @@ public class PrepareContractionHierarchiesTest
             }
         };
         g.edge(10, 0).setDistance(w.calcWeight(edge)).setFlags(flags);
-        EdgeSkipIterator iter1 = g.edge(0, 1);
-        iter1.setDistance(w.calcWeight(edge)).setFlags(flags);
+        EdgeIteratorState iterTmp1 = g.edge(0, 1);
+        iterTmp1.setDistance(w.calcWeight(edge)).setFlags(flags);
         EdgeIteratorState iter2 = g.edge(1, 2).setDistance(w.calcWeight(edge)).setFlags(flags);
         EdgeIteratorState iter3 = g.edge(2, 3).setDistance(w.calcWeight(edge)).setFlags(flags);
         EdgeIteratorState iter4 = g.edge(3, 4).setDistance(w.calcWeight(edge)).setFlags(flags);
@@ -338,8 +338,8 @@ public class PrepareContractionHierarchiesTest
         EdgeIteratorState iter6 = g.edge(5, 6).setDistance(w.calcWeight(edge)).setFlags(flags);
         long oneDirFlags = new PrepareContractionHierarchies(carEncoder, w).getScOneDir();
 
-        int tmp = iter1.getEdge();
-        iter1 = g.shortcut(0, 2);
+        int tmp = iterTmp1.getEdge();
+        EdgeSkipExplorer iter1 = g.shortcut(0, 2);
         iter1.setDistance(2).setFlags(oneDirFlags);
         iter1.setSkippedEdges(tmp, iter2.getEdge());
         tmp = iter1.getEdge();
@@ -512,7 +512,7 @@ public class PrepareContractionHierarchiesTest
 //            EdgeSkipIterator single = g.getEdgeProps(iter.edge(), iter.nodeB());
 //            System.out.println(iter.nodeA() + "<->" + iter.nodeB() + " \\"
 //                    + single.skippedEdge1() + "," + single.skippedEdge2() + " (" + iter.edge() + ")"
-//                    + ", dist: " + (float) iter.distance()
+//                    + ", dist: " + (float) iter.weight()
 //                    + ", level:" + g.getLevel(iter.nodeA()) + "<->" + g.getLevel(iter.nodeB())
 //                    + ", bothDir:" + CarFlagEncoder.isBoth(iter.setProperties()));
 //        }
