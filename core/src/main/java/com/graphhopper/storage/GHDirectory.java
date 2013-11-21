@@ -152,11 +152,10 @@ public class GHDirectory implements Directory
 
     void removeByName( String name )
     {
-        if (map.remove(name) == null)
-        {
-            throw new IllegalStateException("Couldn't remove dataAccess object:" + name);
-        }
-
+        DataAccess da = map.remove(name);
+        if (da == null)
+            throw new IllegalStateException("Couldn't remove dataAccess object:" + name);        
+        da.close();
         Helper.removeDir(new File(location + name));
     }
 
