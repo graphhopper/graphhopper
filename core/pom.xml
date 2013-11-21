@@ -120,8 +120,7 @@
                     </configuration>
                 </plugin>
                 
-                <!-- create jar with test classes to be reused in other projects -->
-                <!--              
+                <!-- create jar with test classes to be reused in other projects -->                
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
@@ -134,7 +133,7 @@
                         </execution>
                     </executions>
                 </plugin>
-                -->
+                
             </plugins>
         </pluginManagement>
         
