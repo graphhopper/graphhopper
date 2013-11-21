@@ -87,17 +87,17 @@ public class RoutingAlgorithmSpecialAreaTests
             testCollector.assertDistance(prepare.createAlgo(),
                     currIdx.findClosest(50.0314, 10.5105, ef), currIdx.findClosest(50.0303, 10.5070, ef), 570, 22);
             testCollector.assertDistance(prepare.createAlgo(),
-                    currIdx.findClosest(49.51451, 9.967346, ef), currIdx.findClosest(50.2920, 10.4650, ef), 107550, 1668);
+                    currIdx.findClosest(49.51451, 9.967346, ef), currIdx.findClosest(50.2920, 10.4650, ef), 107545, 1712);
             testCollector.assertDistance(prepare.createAlgo(),
-                    currIdx.findClosest(50.0780, 9.1570, ef), currIdx.findClosest(49.5860, 9.9750, ef), 92770, 1285);
+                    currIdx.findClosest(50.0780, 9.1570, ef), currIdx.findClosest(49.5860, 9.9750, ef), 91715, 1299);
             testCollector.assertDistance(prepare.createAlgo(),
-                    currIdx.findClosest(50.2800, 9.7190, ef), currIdx.findClosest(49.8960, 10.3890, ef), 77486, 1321);
+                    currIdx.findClosest(50.2800, 9.7190, ef), currIdx.findClosest(49.8960, 10.3890, ef), 76409, 1406);
             testCollector.assertDistance(prepare.createAlgo(),
-                    currIdx.findClosest(49.8020, 9.2470, ef), currIdx.findClosest(50.4940, 10.1970, ef), 125548, 2223);
+                    currIdx.findClosest(49.8020, 9.2470, ef), currIdx.findClosest(50.4940, 10.1970, ef), 125633, 2253);
             testCollector.assertDistance(prepare.createAlgo(),
-                    currIdx.findClosest(49.72449, 9.23482, ef), currIdx.findClosest(50.4140, 10.2750, ef), 137330, 2350);
+                    currIdx.findClosest(49.72449, 9.23482, ef), currIdx.findClosest(50.4140, 10.2750, ef), 137260.8, 2401);
             testCollector.assertDistance(prepare.createAlgo(),
-                    currIdx.findClosest(50.1100, 10.7530, ef), currIdx.findClosest(49.6500, 10.3410, ef), 74054, 1364);
+                    currIdx.findClosest(50.1100, 10.7530, ef), currIdx.findClosest(49.6500, 10.3410, ef), 73533, 1462);
 
             System.out.println("unterfranken " + prepare.createAlgo() + ": " + (testCollector.errors.size() - failed) + " failed");
         }
@@ -151,9 +151,9 @@ public class RoutingAlgorithmSpecialAreaTests
     void testIndex()
     {
         TestAlgoCollector testCollector = new TestAlgoCollector("testIndex");
-        testCollector.queryIndex(unterfrankenGraph, idx, 50.081241, 10.124366, 11.09);
+        testCollector.queryIndex(unterfrankenGraph, idx, 50.081135, 10.124374, 11.93);
         testCollector.queryIndex(unterfrankenGraph, idx, 50.081146, 10.124496, 0.0);
-        testCollector.queryIndex(unterfrankenGraph, idx, 49.682000, 9.943000, 228.32);
+        testCollector.queryIndex(unterfrankenGraph, idx, 49.681805, 9.939882, 225.36);
         testCollector.queryIndex(unterfrankenGraph, idx, 50.066495, 10.191836, 14.63);
 
         testCollector.printSummary();
