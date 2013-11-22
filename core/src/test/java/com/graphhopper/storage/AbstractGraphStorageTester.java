@@ -697,10 +697,10 @@ public abstract class AbstractGraphStorageTester
         assertEquals(2, iter.getAdjNode());
         assertEquals(20, iter.getDistance(), 1e-5);
 
-//        iter = graph.getEdgeProps(edgeId, -1);
-//        assertFalse(iter == null);
-//        assertEquals(0, iter.getBaseNode());
-//        assertEquals(2, iter.getAdjNode());
+        iter = graph.getEdgeProps(edgeId, Integer.MIN_VALUE);
+        assertFalse(iter == null);
+        assertEquals(0, iter.getBaseNode());
+        assertEquals(2, iter.getAdjNode());
         iter = graph.getEdgeProps(edgeId, 1);
         assertTrue(iter == null);
 

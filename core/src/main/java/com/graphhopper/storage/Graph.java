@@ -75,7 +75,9 @@ public interface Graph
     /**
      * Returns a wrapper over the specified edgeId.
      * <p/>
-     * @param adjNode is the node that will be returned via adjNode()
+     * @param adjNode is the node that will be returned via adjNode(). If adjNode is
+     * Integer.MIN_VALUE then the edge with undefined values for adjNode and baseNode will be
+     * returned.
      * @return an edge iterator over one element where the method next() will always return false.
      * @throws IllegalStateException if edgeId is not valid
      */

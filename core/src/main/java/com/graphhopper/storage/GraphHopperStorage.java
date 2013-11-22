@@ -584,11 +584,10 @@ public class GraphHopperStorage implements GraphStorage
     @Override
     public EdgeIteratorState getEdgeProps( int edgeId, int adjNode )
     {
-        if (edgeId <= EdgeIterator.NO_EDGE || edgeId >= edgeCount)
+        if (edgeId <= EdgeIterator.NO_EDGE || edgeId > edgeCount)
             throw new IllegalStateException("edgeId " + edgeId + " out of bounds [0," + nf(edgeCount) + "]");
 
-        // -1 no longer supported
-        if (adjNode < 0)
+        if (adjNode < 0 && adjNode != Integer.MIN_VALUE)
             throw new IllegalStateException("adjNode " + adjNode + " out of bounds [0," + nf(nodeCount) + "]");
 
         long edgePointer = (long) edgeId * edgeEntryBytes;
@@ -598,7 +597,7 @@ public class GraphHopperStorage implements GraphStorage
 
         int nodeB = edges.getInt(edgePointer + E_NODEB);
         SingleEdge edge;
-        if (adjNode == nodeB)
+        if (adjNode == nodeB || adjNode == Integer.MIN_VALUE)
         {
             edge = createSingleEdge(edgeId, nodeA);
             edge.node = nodeB;
