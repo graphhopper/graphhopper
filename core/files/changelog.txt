@@ -1,4 +1,7 @@
 0.2.0
+    fixed issues with android:
+        graphhopper: use maps from 0.2 path; updated maps
+        mapsforge: use mapsforge-map dependency; merged #461; avoid duplicates otherwise mapsforge-core would be duplicate (?)
     refactored/renamed classes and methods:
         refactor 'flags' from int to long (still only int is stored)
         replacing Graph.edge(a,b,dist,flags) by Graph.edge(a,b).setDistance().setFlags()
