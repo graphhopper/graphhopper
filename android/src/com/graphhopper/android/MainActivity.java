@@ -1,7 +1,6 @@
 package com.graphhopper.android;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.List;
@@ -444,11 +443,7 @@ public class MainActivity extends MapActivity
         paintStroke.setColor(Color.BLUE);
         paintStroke.setAlpha(128);
         paintStroke.setStrokeWidth(8);
-        paintStroke
-                .setPathEffect(new DashPathEffect(new float[]
-                                {
-                                    25, 15
-                }, 0));
+        paintStroke.setPathEffect(new DashPathEffect(new float[] { 25, 15 }, 0));
 
         return new Polyline(polygonalChain, paintStroke);
     }
