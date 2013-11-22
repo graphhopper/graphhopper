@@ -17,11 +17,14 @@
  */
 package com.graphhopper.ios;
 
+import com.graphhopper.GHRequest;
+import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.XFirstSearch;
+import com.graphhopper.util.*;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -31,10 +34,9 @@ public class Start
 {
 
     public static void main( String[] strs ) throws Exception
-    {
-        // TODO fix logger issue!
+    {        
         CmdArgs args = CmdArgs.read(strs);
-        GraphHopper hopper = new GraphHopper().init(args);
+        final GraphHopper hopper = new GraphHopper().init(args);
         String location = args.get("graph.location", null);
         if (location == null)
         {
@@ -61,5 +63,48 @@ public class Start
             }
         }.start(storage.createEdgeExplorer(), 0, true);
         System.out.println("explored: " + c.get() + " nodes");
+        final Random rand = new Random(0);
+
+        int count = 200;
+        final Graph g = hopper.getGraph();
+        final AtomicLong distSum = new AtomicLong(0);
+        final AtomicInteger failedCount = new AtomicInteger(0);
+        final int maxNode = g.getNodes();
+        final String vehicle = "CAR";
+        MiniPerfTest miniPerf = new MiniPerfTest()
+        {
+            @Override
+            public int doCalc( boolean warmup, int run )
+            {
+                int from = rand.nextInt(maxNode);
+                int to = rand.nextInt(maxNode);
+                double fromLat = g.getLatitude(from);
+                double fromLon = g.getLongitude(from);
+                double toLat = g.getLatitude(to);
+                double toLon = g.getLongitude(to);
+                GHResponse res = hopper.route(new GHRequest(fromLat, fromLon, toLat, toLon).
+                        setWeighting("fastest").setVehicle(vehicle));
+                if (res.hasErrors())
+                    throw new IllegalStateException("errors should NOT happen in Measurement! " + res.getErrors());
+
+                if (!warmup)
+                {
+                    long dist = (long) res.getDistance();
+                    if (dist < 1)
+                    {
+                        failedCount.incrementAndGet();
+                        return 0;
+                    }
+
+                    distSum.addAndGet(dist);
+                }
+
+                return res.getPoints().getSize();
+            }
+        }.setIterations(count).start();
+        System.out.println("report:" + miniPerf.getReport() 
+                + ", failed:" + failedCount
+                + ", meanDist:" + (float) distSum.get() / count);
+        System.out.println("meanTime:" + miniPerf.getMean());
     }
 }

@@ -21,7 +21,13 @@ The result on the command line should be:
 graph:59105 MMAP_STORE
 explored: 320 nodes
 
-Include in your iOS project and report any problems or success stories!
+TODO
+======
+
+ * It is very hard to produce a library which then could be used from an iOS app!
+   https://groups.google.com/d/msg/robovm/yRXcGvKCwiM/mmGeqUdLDkUJ
+ * fix logger issue!
+ * use classes instead of jar to make compilation a lot faster
 
 License
 =======
