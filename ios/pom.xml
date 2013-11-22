@@ -36,13 +36,12 @@
             <artifactId>robovm-rt</artifactId>
             <version>0.0.6</version>
         </dependency>
-        <!-- makes only sense with StartUI on MacOS
+        <!-- necessary for StartUI -->
         <dependency>
             <groupId>org.robovm</groupId>
             <artifactId>robovm-cocoatouch</artifactId>
             <version>0.0.6</version>
         </dependency>
-        -->
         
         <dependency>
             <groupId>com.graphhopper</groupId>

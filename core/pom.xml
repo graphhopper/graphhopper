@@ -43,7 +43,16 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
-        </dependency>   
+        </dependency>
+        <!-- more recent and nicer but bigger
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.0.13</version>
+            <scope>runtime</scope>
+        </dependency>
+        -->
+        
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
@@ -111,9 +120,9 @@
                                     <threshold>Normal</threshold>
                                     <effort>Default</effort>
                                     <!--
-   	                                <threshold>High|Normal|Low|Exp|Ignore</threshold>
-   	                                <effort>Min|Default|Max</effort>
-   	                                -->
+                                    <threshold>High|Normal|Low|Exp|Ignore</threshold>
+                                    <effort>Min|Default|Max</effort>
+                                    -->
                                 </configuration>
                             </plugin>
                         </reportPlugins>
