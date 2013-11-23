@@ -584,7 +584,7 @@ public class GraphHopperStorage implements GraphStorage
     @Override
     public EdgeIteratorState getEdgeProps( int edgeId, int adjNode )
     {
-        if (edgeId <= EdgeIterator.NO_EDGE || edgeId > edgeCount)
+        if (edgeId <= EdgeIterator.NO_EDGE || edgeId >= edgeCount)
             throw new IllegalStateException("edgeId " + edgeId + " out of bounds [0," + nf(edgeCount) + "]");
 
         if (adjNode < 0 && adjNode != Integer.MIN_VALUE)
