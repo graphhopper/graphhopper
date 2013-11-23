@@ -24,7 +24,7 @@ import com.graphhopper.util.shapes.GHPoint;
  * Calculates the distance of two points or one point and an edge on earth via haversine formula.
  * Allows subclasses to implement less or more precise calculations.
  * <p/>
- * @see http://en.wikipedia.org/wiki/Haversine_formula
+ * See http://en.wikipedia.org/wiki/Haversine_formula
  * <p/>
  * @author Peter Karich
  */

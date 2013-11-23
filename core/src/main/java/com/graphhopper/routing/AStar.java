@@ -53,7 +53,7 @@ public class AStar extends AbstractRoutingAlgorithm
     }
 
     /**
-     * @param fast if true it enables an approximative distance calculation from lat,lon values
+     * @param approx if true it enables an approximative distance calculation from lat,lon values
      */
     public AStar setApproximation( boolean approx )
     {

@@ -32,7 +32,7 @@ import java.util.PriorityQueue;
  * <p/>
  * 'Ref' stands for reference implementation and is using the normal Java-'reference'-way.
  * <p/>
- * @see DijkstraBidirectionforanoptimized but more complicated version
+ * @see DijkstraBidirection for an array based but more complicated version
  * @author Peter Karich
  */
 public class DijkstraBidirectionRef extends AbstractBidirAlgo

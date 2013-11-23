@@ -212,10 +212,6 @@ public abstract class OSMElement
     /**
      * Check a number of tags in the given order for the any of the given values. Used to parse
      * hierarchical access restrictions
-     * <p/>
-     * @param keyList
-     * @param values
-     * @return
      */
     public boolean hasTag( String[] keyList, Set<String> values )
     {

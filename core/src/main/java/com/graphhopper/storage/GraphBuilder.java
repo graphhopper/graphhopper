@@ -27,7 +27,7 @@ import com.graphhopper.routing.util.EncodingManager;
  */
 public class GraphBuilder
 {
-    private EncodingManager encodingManager;
+    private final EncodingManager encodingManager;
     private String location;
     private boolean mmap;
     private boolean store;

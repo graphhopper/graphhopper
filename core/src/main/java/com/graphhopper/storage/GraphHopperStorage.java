@@ -40,7 +40,7 @@ import com.graphhopper.util.shapes.BBox;
  * Life cycle: (1) object creation, (2) configuration via setters & getters, (3) create or
  * loadExisting, (4) usage, (5) flush, (6) close
  * <p/>
- * @see GraphBuilderUsetheGraphBuilder class to create a (Level)GraphStorage easier.
+ * @see GraphBuilder Use the GraphBuilder class to create a (Level)GraphStorage easier.
  * @see LevelGraphStorage
  * @author Peter Karich
  */

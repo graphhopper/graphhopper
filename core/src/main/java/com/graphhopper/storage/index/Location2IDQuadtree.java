@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
  * implementation is the a very memory efficient representation for areas with lots of node and
  * edges, but lacks precision. No edge distances are measured.
  * <p/>
- * @see Location2NodesNtreefora more precise but more complicated and also slightly slower
+ * @see LocationIndexTree which is more precise but more complicated and also slightly slower
  * implementation of LocationIndex.
  * <p/>
  * @author Peter Karich

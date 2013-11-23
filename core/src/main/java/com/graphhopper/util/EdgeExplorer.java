@@ -21,7 +21,7 @@ package com.graphhopper.util;
  * Class to get EdgeIterator create it via graph.createEdgeExplorer(). Use one instance per thread.
  * <p/>
  * @see EdgeIterator
- * @see EdgeIteratorBase
+ * @see EdgeIteratorState
  * @author Peter Karich
  */
 public interface EdgeExplorer

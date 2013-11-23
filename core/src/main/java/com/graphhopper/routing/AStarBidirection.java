@@ -94,7 +94,7 @@ public class AStarBidirection extends AbstractBidirAlgo
     }
 
     /**
-     * @param fast if true it enables approximative distance calculation from lat,lon values
+     * @param approx if true it enables approximative distance calculation from lat,lon values
      */
     public AStarBidirection setApproximation( boolean approx )
     {

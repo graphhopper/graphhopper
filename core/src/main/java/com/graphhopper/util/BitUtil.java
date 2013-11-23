@@ -216,10 +216,10 @@ public abstract class BitUtil
     public abstract String toBitString( byte[] bytes );
 
     /**
-     * Reverses the bits in the specified long value and it removes the remaining higher bits.
+     * Reverses the bits in the specified long value and it removes the remaining higher bits. See
+     * also http://graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
      * <p/>
      * @param maxBits the maximum number of recognized bits for reversal
-     * @see also http://graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
      */
     public final long reverse( long value, int maxBits )
     {

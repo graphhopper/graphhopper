@@ -157,9 +157,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
 
     /**
      * Parse tags on nodes, looking for barriers.
-     * <p/>
-     * @param node
-     * @return
      */
     public abstract long analyzeNodeTags( OSMNode node );
 
