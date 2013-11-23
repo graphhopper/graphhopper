@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-android</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.2</version>
     <name>GraphHopper Android</name>
     <packaging>apk</packaging>    
     <organization>
@@ -15,7 +15,7 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.2-SNAPSHOT</version>
+        <version>0.2</version>
     </parent>
     <properties>        
         <!-- do not put the properties here as it differs from dev to dev <android.sdk.path>/home/peterk/Programme/android-sdk-linux_x86</android.sdk.path>
@@ -54,24 +54,18 @@
             </exclusions>
         </dependency>        
           
-        <!-- run scripts/maven-install-mapsforge.sh -> or already solved via local repo!
+        <!-- see scripts/maven-install-mapsforge.sh !
         if we would use system dep it doesn't work (classnotfound)-->              
         <dependency>
-            <groupId>org.mapsforge</groupId>
-            <!-- 
-                 renamed somewhere in 0.3.1-SNAPSHOT :( 
-                 <artifactId>mapsforge</artifactId> 
-            -->
-            <artifactId>mapsforge-map</artifactId>
-            <version>0.3.1-SNAPSHOT</version>	                                                
-            <type>jar</type>            
+            <groupId>org.mapsforge</groupId>            
+            <artifactId>mapsforge-gh</artifactId>
+            <version>0.3.1-SNAPSHOT</version>
         </dependency>
         
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-android</artifactId>
             <version>1.6.1-RC1</version>
-            <type>jar</type>
         </dependency>        
 
         <!-- Make sure this is above (!) the android dependencies -->
@@ -126,7 +120,10 @@
                     </sdk>
                     <deleteConflictingFiles>true</deleteConflictingFiles>
                     <undeployBeforeDeploy>true</undeployBeforeDeploy>
+                    <!--
+                    bug in maven plugin I think
                     <extractDuplicates>true</extractDuplicates>
+                    -->
                 </configuration>                
             </plugin>            
         </plugins>

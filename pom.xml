@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-parent</artifactId>
     <name>GraphHopper Parent Project</name>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.2</version>
     <packaging>pom</packaging> 
     <url>http://graphhopper.com</url> 
     <inceptionYear>2012</inceptionYear>
@@ -54,7 +54,7 @@
         <developer>
             <id>peterka</id>
             <name>Peter Karich</name>
-            <email>my.name@gmx.de</email>
+            <email>my.name@graphhopper.com</email>
         </developer>
     </developers>
     

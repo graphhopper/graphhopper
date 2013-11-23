@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-ios</artifactId>
     <name>GraphHopper iOS</name>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.2</version>
     <packaging>jar</packaging> 
     <description>
         GraphHopper iOS is the reader for GraphHopper files on iOS. At the moment import and 
@@ -15,7 +15,7 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.2-SNAPSHOT</version>
+        <version>0.2</version>
     </parent>
         
     <dependencies>
