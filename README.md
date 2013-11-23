@@ -26,4 +26,4 @@ Features
  * Highly customizable
  * Works on the desktop, as a web service and offline on Android
  * Well tested
- * Very few dependencies, no hibernate, no spring
+ * [... more](http://graphhopper.com/#overview)
