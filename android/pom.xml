@@ -55,11 +55,12 @@
         </dependency>        
           
         <!-- see scripts/maven-install-mapsforge.sh !
-        if we would use system dep it doesn't work (classnotfound)-->              
+            if we would use system dep it doesn't work (classnotfound). See also script for more infos.
+        -->              
         <dependency>
-            <groupId>org.mapsforge</groupId>            
+            <groupId>com.graphhopper</groupId>            
             <artifactId>mapsforge-gh</artifactId>
-            <version>0.3.1-SNAPSHOT</version>
+            <version>0.2-0.3.1-SNAPSHOT</version>
         </dependency>
         
         <dependency>
