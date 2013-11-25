@@ -9,7 +9,8 @@ Get Started & Contribute
 
 Read through our [wiki](https://github.com/graphhopper/graphhopper/wiki/), 
 [how to contribute](https://github.com/graphhopper/graphhopper/blob/master/CONTRIBUTING.md) and 
-sign up to the [mailing list](http://graphhopper.com/#developers).
+ask questions on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper)
+or sign up to the [mailing list](http://graphhopper.com/#developers).
 
 **Please only email me directly if you need consultancy** or can't explain your problem in the public.
 
