@@ -81,6 +81,17 @@ function ensureMaven {
 }
 
 function packageCoreJar {
+  if [ ! -f target ]; then
+    echo "## building parent"
+    "$MAVEN_HOME/bin/mvn" --non-recursive install > /tmp/graphhopper-compile.log
+     returncode=$?
+     if [[ $returncode != 0 ]] ; then
+       echo "## compilation of parent failed"
+       cat /tmp/graphhopper-compile.log
+       exit $returncode
+     fi                                     
+  fi
+  
   if [ ! -f "$JAR" ]; then
     echo "## now building graphhopper jar: $JAR"
     echo "## using maven at $MAVEN_HOME"
@@ -88,7 +99,7 @@ function packageCoreJar {
     "$MAVEN_HOME/bin/mvn" --projects core -DskipTests=true install assembly:single > /tmp/graphhopper-compile.log
     returncode=$?
     if [[ $returncode != 0 ]] ; then
-        echo "## compilation failed"
+        echo "## compilation of core failed"
         cat /tmp/graphhopper-compile.log
         exit $returncode
     fi      
