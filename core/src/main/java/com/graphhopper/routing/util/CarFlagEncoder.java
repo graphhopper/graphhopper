@@ -114,6 +114,9 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         if (!SPEED.containsKey(highwayValue))
             return 0;
 
+        if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
+            return 0;
+
         // do not drive street cars into fords
         if ((way.hasTag("highway", "ford") || way.hasTag("ford"))
                 && !way.hasTag(restrictions, intended))
