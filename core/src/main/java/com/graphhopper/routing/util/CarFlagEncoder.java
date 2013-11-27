@@ -289,7 +289,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             put("unclassified", 30);
             put("residential", 30);
             // spielstraße
-            put("living_street", 10);
+            put("living_street", 5);
             put("service", 20);
             // unknown road
             put("road", 20);
