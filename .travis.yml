@@ -1,11 +1,12 @@
 language: java
-jdk:
+jvm:
   - openjdk7
   - openjdk6
   - oraclejdk7
+  - oraclejdk8
 # do not install anything instead return true via unix command true
 install: true
 script: ./core/files/travis-build.sh
 notifications:
   email:
-    - peathal@yahoo.de
+    - github@graphhopper.com
