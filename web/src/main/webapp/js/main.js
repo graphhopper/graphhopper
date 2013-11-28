@@ -80,12 +80,13 @@ $(document).ready(function(e) {
                 bounds.maxLon = tmp[2];
                 bounds.maxLat = tmp[3];
                 var vehiclesDiv = $("#vehicles");
-                function createButton(text) {
-                    var button = $("<button/>")
-                    button.attr('id', text);
-                    button.html(tr(text));
+                function createButton(vehicle) {
+                    vehicle = vehicle.toLowerCase();
+                    var button = $("<button class='vehicle-btn' title='"+tr(vehicle)+"'/>")
+                    button.attr('id', vehicle);
+                    button.html("<img src='img/"+vehicle+".png' alt='"+tr(vehicle)+"'></img>");
                     button.click(function() {
-                        ghRequest.vehicle = text;
+                        ghRequest.vehicle = vehicle;
                         resolveFrom();
                         resolveTo();
                         routeLatLng(ghRequest);
@@ -516,8 +517,8 @@ function routeLatLng(request, doQuery) {
     setFlag(request.from, true);
     setFlag(request.to, false);
 
-    $("#vehicles button").removeClass();
-    $("button#" + request.vehicle.toUpperCase()).addClass("bold");
+    $("#vehicles button").removeClass("selectvehicle");
+    $("button#" + request.vehicle.toLowerCase()).addClass("selectvehicle");
 
     var urlForAPI = request.createURL("point=" + from + "&point=" + to);
     descriptionDiv.html('<img src="img/indicator.gif"/> Search Route ...');

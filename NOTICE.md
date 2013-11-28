@@ -16,6 +16,6 @@ tools
 web
  * org.json
  * com.google.inject
-
+ * images from mapbox https://www.mapbox.com/maki/
 android
  * org.mapsforge

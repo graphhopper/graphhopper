@@ -7,7 +7,7 @@ body {
     margin: 0;
 }
 #map {
-/*    float: right;*/
+    /*    float: right;*/
     width: 800px;
     height: 600px;
     cursor: default;
@@ -136,4 +136,26 @@ tr.instruction td {
 .instr_pic {    
     max-height: 24px;
     max-width: 16px;
+}
+
+.vehicle-btn {
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    -moz-border-radius: 0px;
+    -webkit-border-radius: 0px;
+    background-image: linear-gradient(to bottom, white, #e7e7e7);
+}
+
+.vehicle-btn img {
+    width: 24px;
+    height: 24px;
+}
+
+.selectvehicle {
+    // background-clip: padding-box;
+    background-color: #bbb;
+    -moz-border-radius: 0px;
+    -webkit-border-radius: 0px;
+    background-image: linear-gradient(to bottom, #9f9f9f, #e7e7e7);    
 }
