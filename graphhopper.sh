@@ -81,7 +81,7 @@ function ensureMaven {
 }
 
 function packageCoreJar {
-  if [ ! -f target ]; then
+  if [ ! -d "./target" ]; then
     echo "## building parent"
     "$MAVEN_HOME/bin/mvn" --non-recursive install > /tmp/graphhopper-compile.log
      returncode=$?
