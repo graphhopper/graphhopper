@@ -172,7 +172,7 @@ function initMap() {
     console.log("init map at " + JSON.stringify(bounds));
 
     // mapquest provider
-    var moreAttr = 'Data &copy; <a href="http://www.openstreetmap.org/">OSM</a>,'
+    var moreAttr = 'Data &copy; <a href="http://www.openstreetmap.org/copyright">OSM</a>,'
             + 'JS: <a href="http://leafletjs.com/">Leaflet</a>';
     var mapquest = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
         attribution: '<a href="http://open.mapquest.co.uk">MapQuest</a>,' + moreAttr,
