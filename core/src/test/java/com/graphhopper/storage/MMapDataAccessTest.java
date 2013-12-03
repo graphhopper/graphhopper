@@ -17,7 +17,6 @@
  */
 package com.graphhopper.storage;
 
-import java.nio.ByteOrder;
 import static org.junit.Assert.*;
 import org.junit.Test;
 

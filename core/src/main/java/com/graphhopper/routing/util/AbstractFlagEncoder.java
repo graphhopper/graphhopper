@@ -309,7 +309,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     /**
      * Special handling for ferry ways.
      */
-    protected int handleFerry( OSMWay way, int unknownSpeed, int shortTripsSpeed, int longTripsSpeed )
+    protected long handleFerry( OSMWay way, int unknownSpeed, int shortTripsSpeed, int longTripsSpeed )
     {
         // to hours
         double durationInHours = parseDuration(way.getTag("duration")) / 60d;
@@ -331,14 +331,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
         if (durationInHours == 0)
         {
             // unknown speed -> put penalty on ferry transport
-            return (int) speedEncoder.setValue(0, unknownSpeed);
+            return speedEncoder.setValue(0, unknownSpeed);
         } else if (durationInHours > 1)
         {
             // lengthy ferries should be faster than short trip ferry
-            return (int) speedEncoder.setValue(0, longTripsSpeed);
+            return speedEncoder.setValue(0, longTripsSpeed);
         } else
         {
-            return (int) speedEncoder.setValue(0, shortTripsSpeed);
+            return speedEncoder.setValue(0, shortTripsSpeed);
         }
     }
 }
