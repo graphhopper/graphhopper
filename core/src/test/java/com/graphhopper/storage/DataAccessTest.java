@@ -258,7 +258,8 @@ public abstract class DataAccessTest
         } catch (Exception ex)
         {
         }
-
+        da.close();
+        
         da = createDataAccess(name);
         da.create(128);
         da.setInt(31 * 4, 200);
@@ -270,6 +271,7 @@ public abstract class DataAccessTest
         } catch (Exception ex)
         {
         }
+        da.close();
     }
 
     @Test

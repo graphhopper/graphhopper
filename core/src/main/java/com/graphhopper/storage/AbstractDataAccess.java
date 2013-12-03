@@ -196,12 +196,12 @@ public abstract class AbstractDataAccess implements DataAccess
             {
                 if (!file.renameTo(new File(location + newName)))
                 {
-                    throw new IllegalStateException("Couldn't rename this RAMDataAccess object to " + newName);
+                    throw new IllegalStateException("Couldn't rename this " + getType() + " object to " + newName);
                 }
                 name = newName;
             } catch (Exception ex)
             {
-                throw new IllegalStateException("Couldn't rename this RAMDataAccess object!", ex);
+                throw new IllegalStateException("Couldn't rename this " + getType() + " object!", ex);
             }
         } else
         {
