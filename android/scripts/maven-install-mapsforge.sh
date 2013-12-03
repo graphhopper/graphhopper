@@ -9,7 +9,7 @@
 
 MAPSFORGE=`ls ./libs/mapsforge*.jar`
 echo "installing file: $MAPSFORGE"
-ARGS="-DgroupId=com.graphhopper -DartifactId=mapsforge-gh -Dversion=0.2-0.3.1-SNAPSHOT -Dpackaging=jar -Dfile=$MAPSFORGE"
+ARGS="-DgroupId=com.graphhopper -DartifactId=mapsforge-gh -Dversion=0.3-0.3.1-SNAPSHOT -Dpackaging=jar -Dfile=$MAPSFORGE"
     
 $MAVEN_HOME/bin/mvn install:install-file $ARGS
 
