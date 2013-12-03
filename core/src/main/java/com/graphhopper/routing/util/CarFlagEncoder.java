@@ -85,17 +85,22 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
     int getSpeed( OSMWay way )
     {
-        String tt = way.getTag("tracktype");
-        if (!Helper.isEmpty(tt))
-        {
-            Integer tInt = TRACKTYPE_SPEED.get(tt);
-            if (tInt != null)
-                return tInt;            
-        }
         String highwayValue = way.getTag("highway");
-        Integer speed = SPEED.get(highwayValue);        
+        Integer speed = SPEED.get(highwayValue);
         if (speed == null)
             throw new IllegalStateException("car, no speed found for:" + highwayValue);
+
+        if (highwayValue.equals("track"))
+        {
+            // apply tracktype for highway=track only
+            String tt = way.getTag("tracktype");
+            if (!Helper.isEmpty(tt))
+            {
+                Integer tInt = TRACKTYPE_SPEED.get(tt);
+                if (tInt != null)
+                    speed = tInt; // use this speed (also may raise the default speed)
+            }
+        }
 
         return speed;
     }
@@ -149,7 +154,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
         long encoded;
         if ((allowed & ferryBit) == 0)
-        {            
+        {
             // get assumed speed from highway type
             Integer speed = getSpeed(way);
             int maxspeed = parseSpeed(way.getTag("maxspeed"));
@@ -253,9 +258,9 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     {
         return "car";
     }
-    
+
     private static final Map<String, Integer> TRACKTYPE_SPEED = new HashMap<String, Integer>()
-    {   
+    {
         {
             put("grade1", 20); // paved
             put("grade2", 13); // now unpaved - gravel mixed with ...
@@ -264,7 +269,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             put("grade5", 3); // ... no hard materials. soil/sand/grass
         }
     };
-    
+
     private static final Set<String> BAD_SURFACE = new HashSet<String>()
     {
 
@@ -288,7 +293,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     private static final Map<String, Integer> SPEED = new HashMap<String, Integer>()
     {
 
-        
         {
             // autobahn
             put("motorway", 100);
