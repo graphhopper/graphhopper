@@ -125,6 +125,13 @@ public class CarFlagEncoderTest
         allowed = encoder.isAllowed(way);
         encoded = encoder.handleWayTags(allowed, way);
         assertEquals(20, encoder.getSpeed(encoded));
+        
+        map.clear();
+        map.put("highway", "track");
+        map.put("tracktype", "grade5");
+        allowed = encoder.isAllowed(way);
+        encoded = encoder.handleWayTags(allowed, way);
+        assertEquals(5, encoder.getSpeed(encoded));
     }
 
     @Test

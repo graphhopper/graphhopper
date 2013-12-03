@@ -286,7 +286,7 @@ public class OSMReader
             }
         }
 
-        int flags = encodingManager.handleWayTags(includeWay, way);
+        long flags = encodingManager.handleWayTags(includeWay, way);
         if (flags == 0)
             return;
 
@@ -297,7 +297,7 @@ public class OSMReader
         for (int i = 0; i < size; i++)
         {
             final long nodeId = osmNodeIds.get(i);
-            int barrierFlags = osmNodeIdToBarrierMap.get(nodeId);
+            long barrierFlags = (int) osmNodeIdToBarrierMap.get(nodeId);
             // barrier was spotted and way is otherwise passable for that mode of travel
             if (barrierFlags > 0 && (barrierFlags & flags) > 0)
             {
@@ -496,7 +496,7 @@ public class OSMReader
     /**
      * This method creates from an OSM way (via the osm ids) one or more edges in the graph.
      */
-    public Collection<EdgeIteratorState> addOSMWay( TLongList osmNodeIds, int flags )
+    public Collection<EdgeIteratorState> addOSMWay( TLongList osmNodeIds, long flags )
     {
         PointList pointList = new PointList(osmNodeIds.size());
         List<EdgeIteratorState> newEdges = new ArrayList<EdgeIteratorState>(5);
@@ -578,7 +578,7 @@ public class OSMReader
         return newEdges;
     }
 
-    EdgeIteratorState addEdge( int fromIndex, int toIndex, PointList pointList, int flags )
+    EdgeIteratorState addEdge( int fromIndex, int toIndex, PointList pointList, long flags )
     {
         if (fromIndex < 0 || toIndex < 0)
         {
@@ -612,7 +612,9 @@ public class OSMReader
             towerNodeDistance = 0.0001;
         }
 
-        EdgeIteratorState iter = graphStorage.edge(fromIndex, toIndex).setDistance(towerNodeDistance).setFlags(flags);
+        EdgeIteratorState iter = graphStorage.edge(fromIndex, toIndex).
+                setDistance(towerNodeDistance).
+                setFlags(flags);
         if (nodes > 2)
         {
             simplifyAlgo.simplify(pillarNodes);
@@ -700,7 +702,7 @@ public class OSMReader
     /**
      * Add a zero length edge with reduced routing options to the graph.
      */
-    public Collection<EdgeIteratorState> addBarrierEdge( long fromId, long toId, int flags, int barrierFlags )
+    public Collection<EdgeIteratorState> addBarrierEdge( long fromId, long toId, long flags, long barrierFlags )
     {
         // clear barred directions from routing flags
         flags &= ~barrierFlags;

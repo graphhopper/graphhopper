@@ -214,7 +214,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         while (iter.next())
         {
             c++;
-            iter.setDistance(prepareWeighting.calcWeight(iter));
+            double weight = prepareWeighting.calcWeight(iter);
+            // sanity check because preparation would take too long
+            if (Double.isInfinite(weight))
+                throw new IllegalStateException("Weight of edge " + iter.getEdge() + " is infinity (name: " + iter.getName() + "). "
+                        + "It is highly likely that you have a 0 speed somewhere. This will extremely increase preparation time.");
+
+            iter.setDistance(weight);
             setOrigEdgeCount(iter.getEdge(), 1);
         }
         return c > 0;
