@@ -83,11 +83,19 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         return shift + 5;
     }
 
-    int getSpeed( String string )
+    int getSpeed( OSMWay way )
     {
-        Integer speed = SPEED.get(string);
+        String tt = way.getTag("tracktype");
+        if (!Helper.isEmpty(tt))
+        {
+            Integer tInt = TRACKTYPE_SPEED.get(tt);
+            if (tInt != null)
+                return tInt;            
+        }
+        String highwayValue = way.getTag("highway");
+        Integer speed = SPEED.get(highwayValue);        
         if (speed == null)
-            throw new IllegalStateException("car, no speed found for:" + string);
+            throw new IllegalStateException("car, no speed found for:" + highwayValue);
 
         return speed;
     }
@@ -141,10 +149,9 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
         long encoded;
         if ((allowed & ferryBit) == 0)
-        {
-            String highwayValue = way.getTag("highway");
+        {            
             // get assumed speed from highway type
-            Integer speed = getSpeed(highwayValue);
+            Integer speed = getSpeed(way);
             int maxspeed = parseSpeed(way.getTag("maxspeed"));
             // apply speed limit no matter of the road type
             if (maxspeed >= 0)
@@ -246,6 +253,18 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     {
         return "car";
     }
+    
+    private static final Map<String, Integer> TRACKTYPE_SPEED = new HashMap<String, Integer>()
+    {   
+        {
+            put("grade1", 20); // paved
+            put("grade2", 13); // now unpaved - gravel mixed with ...
+            put("grade3", 9); // ... hard and soft materials
+            put("grade4", 6); // ... some hard or compressed materials
+            put("grade5", 3); // ... no hard materials. soil/sand/grass
+        }
+    };
+    
     private static final Set<String> BAD_SURFACE = new HashSet<String>()
     {
 
@@ -294,7 +313,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             // unknown road
             put("road", 20);
             // forestry stuff
-            put("track", 20);
+            put("track", 15);
         }
     };
 }
