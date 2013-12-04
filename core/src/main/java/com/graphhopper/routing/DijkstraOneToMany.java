@@ -43,7 +43,8 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     private IntDoubleBinHeap heap;
     private int visitedNodes;
     private boolean doClear = true;
-    private double limit = Double.MAX_VALUE;
+    private double limitWeight = Double.MAX_VALUE;
+    private int limitVisitedNodes = Integer.MAX_VALUE;
     private int endNode;
     private int currNode, fromNode, to;
 
@@ -64,9 +65,15 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         changedNodes = new TIntArrayList();
     }
 
-    public DijkstraOneToMany setLimit( double weight )
+    public DijkstraOneToMany setLimitWeight( double weight )
     {
-        limit = weight;
+        limitWeight = weight;
+        return this;
+    }
+    
+    public DijkstraOneToMany setLimitVisitedNodes( int nodes )
+    {
+        this.limitVisitedNodes = nodes;
         return this;
     }
 
@@ -144,7 +151,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             return currNode;
 
         while (true)
-        {
+        {            
             visitedNodes++;
             EdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
             while (iter.next())
@@ -175,7 +182,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
                 }
             }
 
-            if (heap.isEmpty())
+            if (heap.isEmpty() || visitedNodes >= limitVisitedNodes)
                 return -1;
 
             // calling just peek and not poll is important if the next query is cached
@@ -190,7 +197,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     @Override
     public boolean finished()
     {
-        return weights[currNode] >= limit || currNode == to;
+        return weights[currNode] >= limitWeight || currNode == to;
     }
 
     public void close()

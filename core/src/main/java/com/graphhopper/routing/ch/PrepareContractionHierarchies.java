@@ -28,7 +28,6 @@ import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraOneToMany;
-import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.DataAccess;
@@ -214,13 +213,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         while (iter.next())
         {
             c++;
-            double weight = prepareWeighting.calcWeight(iter);
-            // sanity check because preparation would take too long
-            if (Double.isInfinite(weight))
-                throw new IllegalStateException("Weight of edge " + iter.getEdge() + " is infinity (name: " + iter.getName() + "). "
-                        + "It is highly likely that you have a 0 speed somewhere. This will extremely increase preparation time.");
-
-            iter.setDistance(weight);
+            iter.setDistance(prepareWeighting.calcWeight(iter));
             setOrigEdgeCount(iter.getEdge(), 1);
         }
         return c > 0;
@@ -581,8 +574,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     continue;
                 }
 
+                // Limit weight as ferries or forbidden edges can increase local search too much.
+                // If we decrease the correct weight we only explore less and introduce more shortcuts.
+                // I.e. no change to accuracy is made.
                 double existingDirectWeight = v_u_weight + outgoingEdges.getDistance();
-                algo.setLimit(existingDirectWeight).setEdgeFilter(levelEdgeFilter.setAvoidNode(sch.getNode()));
+                algo.setLimitWeight(existingDirectWeight)
+                        .setLimitVisitedNodes((int) meanDegree * 100)
+                        .setEdgeFilter(levelEdgeFilter.setAvoidNode(sch.getNode()));
 
                 dijkstraSW.start();
                 dijkstraCount++;

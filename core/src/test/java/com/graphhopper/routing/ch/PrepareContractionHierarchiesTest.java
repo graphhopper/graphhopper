@@ -75,8 +75,12 @@ public class PrepareContractionHierarchiesTest
         double normalDist = new Dijkstra(g, carEncoder, weighting).calcPath(4, 2).getDistance();
         DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder, weighting);
         algo.setEdgeFilter(new PrepareContractionHierarchies.IgnoreNodeFilter(g).setAvoidNode(3));
-        int nodeEntry = algo.setLimit(100).findEndNode(4, 2);
+        int nodeEntry = algo.setLimitWeight(100).findEndNode(4, 2);
         assertTrue(algo.getWeight(nodeEntry) > normalDist);
+        
+        algo.clear();
+        nodeEntry = algo.setLimitVisitedNodes(1).findEndNode(4, 2);
+        assertEquals(-1, nodeEntry);
     }
 
     @Test
@@ -84,12 +88,14 @@ public class PrepareContractionHierarchiesTest
     {
         LevelGraph g = createExampleGraph();
         double normalDist = new Dijkstra(g, carEncoder, weighting).calcPath(4, 2).getDistance();
+        assertEquals(3, normalDist, 1e-5);
         DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder, weighting);
         algo.setEdgeFilter(new PrepareContractionHierarchies.IgnoreNodeFilter(g).setAvoidNode(3));
-        int nodeEntry = algo.setLimit(10).findEndNode(4, 2);
-        // assertEquals(ee.weight, normalDist, 1e-5);
-        nodeEntry = algo.setLimit(10).findEndNode(4, 1);
-        assertTrue(algo.getWeight(nodeEntry) > normalDist);
+        int nodeEntry = algo.setLimitWeight(10).findEndNode(4, 2);
+        assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
+        
+        nodeEntry = algo.setLimitWeight(10).findEndNode(4, 1);
+        assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
     }
 
     @Test
@@ -98,7 +104,7 @@ public class PrepareContractionHierarchiesTest
         LevelGraph g = createExampleGraph();
         DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder, weighting);
         algo.setEdgeFilter(new PrepareContractionHierarchies.IgnoreNodeFilter(g).setAvoidNode(0));
-        int endNode = algo.setLimit(2).findEndNode(4, 1);
+        int endNode = algo.setLimitWeight(2).findEndNode(4, 1);
         // did not reach endNode
         assertNotEquals(1, endNode);
     }
@@ -110,7 +116,7 @@ public class PrepareContractionHierarchiesTest
         int old = g.getAllEdges().getMaxId();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
         prepare.doWork();
-        assertEquals(old, g.getAllEdges().getMaxId());
+        assertEquals(old + 1, g.getAllEdges().getMaxId());
     }
 
     @Test
@@ -120,7 +126,7 @@ public class PrepareContractionHierarchiesTest
         int old = g.getAllEdges().getMaxId();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
         prepare.doWork();
-        assertEquals(old + 9, g.getAllEdges().getMaxId());
+        assertEquals(old + 8, g.getAllEdges().getMaxId());
     }
 
     @Test
@@ -153,7 +159,7 @@ public class PrepareContractionHierarchiesTest
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
         prepare.doWork();
         // PrepareTowerNodesShortcutsTest.printEdges(g);
-        assertEquals(old + 15, GHUtility.count(g.getAllEdges()));
+        assertEquals(old + 17, GHUtility.count(g.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(0, 10);
         assertEquals(10, p.getDistance(), 1e-6);
