@@ -117,7 +117,7 @@
                 <configuration>
                     <sdk>
                         <!-- platform or api level (api level 8 = platform 2.2) -->                        
-                        <platform>8</platform>
+                        <platform>10</platform>
                     </sdk>
                     <deleteConflictingFiles>true</deleteConflictingFiles>
                     <undeployBeforeDeploy>true</undeployBeforeDeploy>
