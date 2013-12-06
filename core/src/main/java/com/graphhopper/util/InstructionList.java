@@ -43,6 +43,7 @@ public class InstructionList
     private TIntList indications;
     private List<String> names;
     private TDoubleArrayList distances;
+    private TDoubleArrayList times;
 
     public InstructionList()
     {
