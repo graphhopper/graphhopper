@@ -1,1 +1,0 @@
-We have something in the works to make GraphHopper available on iOS. Please [contact](http://graphhopper.com/#contact) us to get a beta tester!
