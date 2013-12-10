@@ -654,7 +654,7 @@ function routeLatLng(request, doQuery) {
 }
 
 function addInstruction(main, indi, title, distance, time, latLng) {
-    var indiPic = "<img class='instr_pic' src='" + window.location.pathname + "img/" + indi + ".png'/>";
+    var indiPic = "<img class='instr_pic' style='vertical-align: middle' src='" + window.location.pathname + "img/" + indi + ".png'/>";
     var str = "<td class='instr_title'>" + title + "</td>"
         + " <td class='instr_distance_td'><span class='instr_distance'>" + distance + "<br/>" + time + "</span></td>";
     if (indi !== "continue")
