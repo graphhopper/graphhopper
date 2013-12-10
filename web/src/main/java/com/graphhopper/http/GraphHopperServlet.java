@@ -184,10 +184,25 @@ public class GraphHopperServlet extends GHServlet
                 {
                     Translation tr = trMap.getWithFallBack(locale);
                     InstructionList instructions = rsp.getInstructions();
+
+                    List<String> dummyTimes = new ArrayList<String>();
+                    List<List<Double>> dummyLatLngs = new ArrayList<List<Double>>();
+                    for (int i = 0; i < instructions.getDistances().size(); i++) {
+                        dummyTimes.add(String.format("%.0f min", instructions.getDistances().get(i)));
+
+                        List<Double> latLngs = new ArrayList<Double>();
+                        int idx = i * (points.getSize() / instructions.getDistances().size());
+                        latLngs.add(points.getLatitude(idx));
+                        latLngs.add(points.getLongitude(idx));
+                        dummyLatLngs.add(latLngs);
+                    }
+
                     builder.startObject("instructions").
                             object("descriptions", instructions.createDescription(tr)).
                             object("distances", instructions.createDistances(tr, useMiles)).
                             object("indications", instructions.createIndications()).
+                            object("times", dummyTimes).
+                            object("latLngs", dummyLatLngs).
                             endObject();
                 }
 
