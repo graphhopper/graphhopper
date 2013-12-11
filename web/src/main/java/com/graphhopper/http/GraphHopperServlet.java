@@ -183,26 +183,13 @@ public class GraphHopperServlet extends GHServlet
                 if (enableInstructions)
                 {
                     Translation tr = trMap.getWithFallBack(locale);
-                    InstructionList instructions = rsp.getInstructions();
-
-                    List<String> dummyTimes = new ArrayList<String>();
-                    List<List<Double>> dummyLatLngs = new ArrayList<List<Double>>();
-                    for (int i = 0; i < instructions.getDistances().size(); i++) {
-                        dummyTimes.add(String.format("%.0f min", instructions.getDistances().get(i)));
-
-                        List<Double> latLngs = new ArrayList<Double>();
-                        int idx = i * (points.getSize() / instructions.getDistances().size());
-                        latLngs.add(points.getLatitude(idx));
-                        latLngs.add(points.getLongitude(idx));
-                        dummyLatLngs.add(latLngs);
-                    }
-
+                    List<Instruction> instructions = rsp.getInstructions();
                     builder.startObject("instructions").
-                            object("descriptions", instructions.createDescription(tr)).
-                            object("distances", instructions.createDistances(tr, useMiles)).
-                            object("indications", instructions.createIndications()).
-                            object("times", dummyTimes).
-                            object("latLngs", dummyLatLngs).
+                            object("descriptions", InstructionUtil.createDescription(instructions, tr)).
+                            object("distances", InstructionUtil.createDistances(instructions, tr, useMiles)).
+                            object("indications", InstructionUtil.createIndications(instructions)).
+                            object("times", InstructionUtil.createTimes(instructions, tr)).
+                            object("latLngs", InstructionUtil.createSegmentStartPoints(instructions)).
                             endObject();
                 }
 

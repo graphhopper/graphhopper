@@ -22,10 +22,8 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.TranslationMap;
-import com.graphhopper.util.TranslationMapTest;
+import com.graphhopper.util.*;
+
 import java.io.File;
 import java.util.List;
 import java.util.Locale;
@@ -64,9 +62,9 @@ public class GraphHopperIT
             assertEquals(3437.6, rsp.getDistance(), .1);
             assertEquals(87, rsp.getPoints().getSize());
 
-            InstructionList il = rsp.getInstructions();
+            List<Instruction> il = rsp.getInstructions();
             assertEquals(12, il.size());
-            List<String> iList = il.createDescription(trMap.getWithFallBack(Locale.US));
+            List<String> iList = InstructionUtil.createDescription(il, trMap.getWithFallBack(Locale.US));
             // TODO roundabout fine tuning -> enter + leave roundabout (+ two rounabouts -> is it necessary if we do not leave the street?)
             assertEquals("Continue onto Avenue des Guelfes", iList.get(0));
             assertEquals("Turn slight left onto Avenue des Papalins", iList.get(1));

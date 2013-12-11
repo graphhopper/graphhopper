@@ -59,13 +59,15 @@ public class InstructionList
         indications = new TIntArrayList(cap);
         names = new ArrayList<String>(cap);
         distances = new TDoubleArrayList(cap);
+        times = new TDoubleArrayList(cap);
     }
 
-    public void add( int indication, String name, double dist )
+    public void add( int indication, String name, double dist, double time )
     {
         indications.add(indication);
         names.add(name);
         distances.add(dist);
+        times.add(time);
     }
 
     public int size()
@@ -83,6 +85,7 @@ public class InstructionList
         indications.clear();
         names.clear();
         distances.clear();
+        times.clear();
     }
 
     @Override
@@ -100,6 +103,8 @@ public class InstructionList
             sb.append(names.get(i));
             sb.append(',');
             sb.append(distances.get(i));
+            sb.append(',');
+            sb.append(times.get(i));
             sb.append(')');
         }
         return sb.toString();
