@@ -132,6 +132,7 @@ tr.instruction td {
 .instr_distance {
     float: right;    
     color: gray;
+    text-align: right;
 }
 .instr_pic {    
     max-height: 24px;
