@@ -24,6 +24,9 @@ import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Stores the nodes for the found path of an algorithm. It additionally needs the edgeIds to make
  * edge determination faster and less complex as there could be several edges (u,v) especially for
@@ -47,7 +50,7 @@ public class Path
     protected int endNode = -1;
     private TIntList edgeIds;
     private PointList cachedPoints;
-    private InstructionList cachedWays;
+    private List<Instruction> cachedWays;
     private double weight;
 
     public Path( Graph graph, FlagEncoder encoder )
@@ -300,12 +303,12 @@ public class Path
     /**
      * @return the cached list of ways for this path
      */
-    public InstructionList calcInstructions()
+    public List<Instruction> calcInstructions()
     {
         if (cachedWays != null)
             return cachedWays;
 
-        cachedWays = new InstructionList(edgeIds.size() / 4);
+        cachedWays = new ArrayList<Instruction>(edgeIds.size() / 4);
         if (edgeIds.isEmpty())
             return cachedWays;
 
@@ -337,6 +340,7 @@ public class Path
             double prevLon = graph.getLongitude(tmpNode);
             double prevOrientation;
             double prevDist;
+            long prevTime;
 
             @Override
             public void next( EdgeIteratorState edgeBase, int index )
@@ -366,7 +370,8 @@ public class Path
                 {
                     name = edgeBase.getName();
                     prevDist = calcDistance(edgeBase);
-                    cachedWays.add(InstructionList.CONTINUE_ON_STREET, name, prevDist);
+                    prevTime = calcTime(prevDist, edgeBase.getFlags());
+                    cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, prevDist, prevTime, prevLat, prevLon));
                 } else
                 {
                     double tmpOrientation;
@@ -388,41 +393,46 @@ public class Path
                     String tmpName = edgeBase.getName();
                     if (!name.equals(tmpName))
                     {
-                        cachedWays.updateLastDistance(prevDist);
+                        InstructionUtil.updateLastDistanceAndTime(cachedWays, prevDist, prevTime);
                         prevDist = calcDistance(edgeBase);
+                        prevTime = calcTime(prevDist, edgeBase.getFlags());
                         name = tmpName;
                         double delta = Math.abs(tmpOrientation - prevOrientation);
                         if (delta < 0.2)
                         {
                             // 0.2 ~= 11°
-                            cachedWays.add(InstructionList.CONTINUE_ON_STREET, name, prevDist);
+                            cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, prevDist, prevTime, prevLat, prevLon));
 
                         } else if (delta < 0.8)
                         {
                             // 0.8 ~= 40°
                             if (tmpOrientation > prevOrientation)
-                                cachedWays.add(InstructionList.TURN_SLIGHT_LEFT, name, prevDist);
+                                cachedWays.add(new Instruction(Instruction.TURN_SLIGHT_LEFT, name, prevDist, prevTime, prevLat, prevLon));
                             else
-                                cachedWays.add(InstructionList.TURN_SLIGHT_RIGHT, name, prevDist);
+                                cachedWays.add(new Instruction(Instruction.TURN_SLIGHT_RIGHT, name, prevDist, prevTime, prevLat, prevLon));
 
                         } else if (delta < 1.8)
                         {
                             // 1.8 ~= 103°
                             if (tmpOrientation > prevOrientation)
-                                cachedWays.add(InstructionList.TURN_LEFT, name, prevDist);
+                                cachedWays.add(new Instruction(Instruction.TURN_LEFT, name, prevDist, prevTime, prevLat, prevLon));
                             else
-                                cachedWays.add(InstructionList.TURN_RIGHT, name, prevDist);
+                                cachedWays.add(new Instruction(Instruction.TURN_RIGHT, name, prevDist, prevTime, prevLat, prevLon));
 
                         } else
                         {
                             if (tmpOrientation > prevOrientation)
-                                cachedWays.add(InstructionList.TURN_SHARP_LEFT, name, prevDist);
+                                cachedWays.add(new Instruction(Instruction.TURN_SHARP_LEFT, name, prevDist, prevTime, prevLat, prevLon));
                             else
-                                cachedWays.add(InstructionList.TURN_SHARP_RIGHT, name, prevDist);
+                                cachedWays.add(new Instruction(Instruction.TURN_SHARP_RIGHT, name, prevDist, prevTime, prevLat, prevLon));
 
                         }
                     } else
-                        prevDist += calcDistance(edgeBase);
+                    {
+                        double tmpDist = calcDistance(edgeBase);
+                        prevDist += tmpDist;
+                        prevTime += calcTime(tmpDist, edgeBase.getFlags());
+                    }
                 }
 
                 prevLat = baseLat;
@@ -434,7 +444,7 @@ public class Path
 
                 boolean lastEdgeIter = index == edgeIds.size() - 1;
                 if (lastEdgeIter)
-                    cachedWays.updateLastDistance(prevDist);
+                    InstructionUtil.updateLastDistanceAndTime(cachedWays, prevDist, prevTime);
             }
         });
 
