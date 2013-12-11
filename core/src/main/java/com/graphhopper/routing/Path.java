@@ -371,7 +371,7 @@ public class Path
                     name = edgeBase.getName();
                     prevDist = calcDistance(edgeBase);
                     prevTime = calcTime(prevDist, edgeBase.getFlags());
-                    cachedWays.add(new Instruction(InstructionList.CONTINUE_ON_STREET, name, prevDist, prevTime, prevLat, prevLon));
+                    cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, prevDist, prevTime, prevLat, prevLon));
                 } else
                 {
                     double tmpOrientation;
@@ -401,30 +401,30 @@ public class Path
                         if (delta < 0.2)
                         {
                             // 0.2 ~= 11°
-                            cachedWays.add(new Instruction(InstructionList.CONTINUE_ON_STREET, name, prevDist, prevTime, prevLat, prevLon));
+                            cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, prevDist, prevTime, prevLat, prevLon));
 
                         } else if (delta < 0.8)
                         {
                             // 0.8 ~= 40°
                             if (tmpOrientation > prevOrientation)
-                                cachedWays.add(new Instruction(InstructionList.TURN_SLIGHT_LEFT, name, prevDist, prevTime, prevLat, prevLon));
+                                cachedWays.add(new Instruction(Instruction.TURN_SLIGHT_LEFT, name, prevDist, prevTime, prevLat, prevLon));
                             else
-                                cachedWays.add(new Instruction(InstructionList.TURN_SLIGHT_RIGHT, name, prevDist, prevTime, prevLat, prevLon));
+                                cachedWays.add(new Instruction(Instruction.TURN_SLIGHT_RIGHT, name, prevDist, prevTime, prevLat, prevLon));
 
                         } else if (delta < 1.8)
                         {
                             // 1.8 ~= 103°
                             if (tmpOrientation > prevOrientation)
-                                cachedWays.add(new Instruction(InstructionList.TURN_LEFT, name, prevDist, prevTime, prevLat, prevLon));
+                                cachedWays.add(new Instruction(Instruction.TURN_LEFT, name, prevDist, prevTime, prevLat, prevLon));
                             else
-                                cachedWays.add(new Instruction(InstructionList.TURN_RIGHT, name, prevDist, prevTime, prevLat, prevLon));
+                                cachedWays.add(new Instruction(Instruction.TURN_RIGHT, name, prevDist, prevTime, prevLat, prevLon));
 
                         } else
                         {
                             if (tmpOrientation > prevOrientation)
-                                cachedWays.add(new Instruction(InstructionList.TURN_SHARP_LEFT, name, prevDist, prevTime, prevLat, prevLon));
+                                cachedWays.add(new Instruction(Instruction.TURN_SHARP_LEFT, name, prevDist, prevTime, prevLat, prevLon));
                             else
-                                cachedWays.add(new Instruction(InstructionList.TURN_SHARP_RIGHT, name, prevDist, prevTime, prevLat, prevLon));
+                                cachedWays.add(new Instruction(Instruction.TURN_SHARP_RIGHT, name, prevDist, prevTime, prevLat, prevLon));
 
                         }
                     } else

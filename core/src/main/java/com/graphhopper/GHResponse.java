@@ -19,8 +19,8 @@ package com.graphhopper;
 
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.shapes.BBox;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
