@@ -176,7 +176,6 @@ public class InstructionUtil
      */
     public static void updateLastDistanceAndTime(List<Instruction> instructions, double prevDist, long prevTime)
     {
-        System.out.printf("updating at index %d with dist %f and time %d\n", instructions.size()-1, prevDist, prevTime);
         if (instructions.isEmpty())
             throw new IllegalStateException("Cannot update last distance with:" + prevDist);
         instructions.get(instructions.size() - 1).setDistance(prevDist);
