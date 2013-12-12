@@ -2,6 +2,7 @@ package com.graphhopper.util;
 
 import gnu.trove.list.TDoubleList;
 import gnu.trove.list.array.TDoubleArrayList;
+import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -164,7 +165,10 @@ public class InstructionList implements Iterable<Instruction>
             String str;
             String n = instruction.getName();
             int indi = instruction.getIndication();
-            if (indi == Instruction.CONTINUE_ON_STREET)
+            if (indi == Instruction.FINISH)
+            {
+                str = tr.tr("finish");
+            } else if (indi == Instruction.CONTINUE_ON_STREET)
             {
                 str = Helper.isEmpty(n) ? continueTr : tr.tr("continue_onto", n);
             } else
@@ -216,5 +220,60 @@ public class InstructionList implements Iterable<Instruction>
     public String toString()
     {
         return instructions.toString();
+    }
+
+    /**
+     * This method returns a list of gpx entries where the time (in millis) is relative to the first
+     * which is 0.
+     */
+    public List<GPXEntry> createGPXList()
+    {
+        List<GPXEntry> gpxList = new ArrayList<GPXEntry>();
+        long sumTime = 0;
+        for (Instruction i : this)
+        {
+            List<GPXEntry> tmp = i.createGPXList();
+            if (tmp.isEmpty())
+                throw new IllegalStateException("cannot happen");
+
+            long offset = tmp.get(tmp.size() - 1).getMillis();
+            for (GPXEntry e : tmp)
+            {
+                e.setMillis(sumTime + e.getMillis());
+                gpxList.add(e);
+            }
+            sumTime += offset;
+        }
+        return gpxList;
+    }
+
+    /**
+     * Creates the GPX Format out of the points.
+     * <p/>
+     * @return string to be stored as gpx file
+     */
+    public String createGPX( String trackName, long startTimeMillis )
+    {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:SSZ");
+        String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
+                + "<gpx xmlns='http://www.topografix.com/GPX/1/1' >"
+                + "<metadata>"
+                + "<link href='http://graphhopper.com'>"
+                + "<text>GraphHopper GPX</text>"
+                + "</link>"
+                + " <time>" + formatter.format(startTimeMillis) + "</time>"
+                + "</metadata>";
+        StringBuilder track = new StringBuilder(header);
+        track.append("<trk><name>").append(trackName).append("</name>");
+        track.append("<trkseg>");
+        for (GPXEntry entry : createGPXList())
+        {
+            track.append("<trkpt lat='").append(entry.getLat()).append("' lon='").append(entry.getLon()).append("'>");
+            track.append("<time>").append(formatter.format(startTimeMillis + entry.getMillis())).append("</time>");
+            track.append("</trkpt>");
+        }
+        track.append("</trkseg>");
+        track.append("</trk></gpx>");
+        return track.toString().replaceAll("\\'", "\"");
     }
 }

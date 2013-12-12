@@ -39,6 +39,7 @@ import java.util.List;
  */
 public class Path
 {
+    private DistanceCalc distCalc = new DistanceCalcEarth();
     protected Graph graph;
     private FlagEncoder encoder;
     protected double distance;
@@ -345,22 +346,22 @@ public class Path
             PointList points = new PointList();
 
             @Override
-            public void next( EdgeIteratorState edgeBase, int index )
+            public void next( EdgeIteratorState edge, int index )
             {
-                // Hmmh, a bit ugly: 'edgeBase' links to the previous node of the path!
+                // Hmmh, a bit ugly: the 'edge' points to the previous node of the path!
                 // Ie. baseNode is the current node and adjNode is the previous.
-                int baseNode = edgeBase.getBaseNode();
+                int baseNode = edge.getBaseNode();
                 double baseLat = graph.getLatitude(baseNode);
                 double baseLon = graph.getLongitude(baseNode);
                 double latitude, longitude;
-                PointList wayGeo = edgeBase.fetchWayGeometry(0);
+                PointList wayGeo = edge.fetchWayGeometry(0);
                 if (wayGeo.isEmpty())
                 {
                     latitude = baseLat;
                     longitude = baseLon;
                 } else
                 {
-                    int adjNode = edgeBase.getAdjNode();
+                    int adjNode = edge.getAdjNode();
                     prevLat = graph.getLatitude(adjNode);
                     prevLon = graph.getLongitude(adjNode);
                     latitude = wayGeo.getLatitude(wayGeo.getSize() - 1);
@@ -371,11 +372,8 @@ public class Path
                 if (name == null)
                 {
                     // very first instruction
-                    name = edgeBase.getName();
-                    double tmpDist = calcDistance(edgeBase);
-                    distances.add(tmpDist);
-                    times.add(calcMillis(tmpDist, edgeBase.getFlags()));
-                    points.add(prevLat, prevLon);
+                    name = edge.getName();
+                    add(edge);
                     cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, distances, times, points));
                 } else
                 {
@@ -395,16 +393,13 @@ public class Path
                             tmpOrientation = orientation;
                     }
 
-                    String tmpName = edgeBase.getName();
+                    String tmpName = edge.getName();
                     if (!name.equals(tmpName))
                     {
                         distances = new TDoubleArrayList();
                         times = new TLongArrayList();
                         points = new PointList();
-                        double tmpDist = calcDistance(edgeBase);
-                        distances.add(tmpDist);
-                        times.add(calcMillis(tmpDist, edgeBase.getFlags()));
-                        points.add(prevLat, prevLon);
+                        add(edge);
                         name = tmpName;
                         double delta = Math.abs(tmpOrientation - prevOrientation);
                         int indication;
@@ -437,13 +432,11 @@ public class Path
                                 indication = Instruction.TURN_SHARP_RIGHT;
 
                         }
-                        
+
                         cachedWays.add(new Instruction(indication, name, distances, times, points));
                     } else
                     {
-                        double tmpDist = calcDistance(edgeBase);
-                        distances.add(tmpDist);
-                        times.add(calcMillis(tmpDist, edgeBase.getFlags()));
+                        add(edge);
                     }
                 }
 
@@ -452,7 +445,29 @@ public class Path
                 if (wayGeo.isEmpty())
                     prevOrientation = orientation;
                 else
-                    prevOrientation = Math.atan2(baseLat - wayGeo.getLatitude(0), baseLon - wayGeo.getLongitude(0));                
+                    prevOrientation = Math.atan2(baseLat - wayGeo.getLatitude(0), baseLon - wayGeo.getLongitude(0));
+
+                boolean lastEdge = index == edgeIds.size() - 1;
+                if (lastEdge)
+                    cachedWays.add(new FinishInstruction(prevLat, prevLon));
+            }                       
+
+            private void add( EdgeIteratorState edge )
+            {
+                // add points in opposite direction as adj node is previous
+                PointList pl = edge.fetchWayGeometry(3);
+                int len = pl.size() - 1;
+                for (int i = len; i > 0; i--)
+                {
+                    double lat = pl.getLatitude(i);
+                    double lon = pl.getLongitude(i);
+                    double nextLat = pl.getLatitude(i - 1);
+                    double nextLon = pl.getLongitude(i - 1);
+                    double tmpDist = distCalc.calcDist(lat, lon, nextLat, nextLon);
+                    distances.add(tmpDist);
+                    times.add(calcMillis(tmpDist, edge.getFlags()));
+                    points.add(lat, lon);
+                }
             }
         });
 

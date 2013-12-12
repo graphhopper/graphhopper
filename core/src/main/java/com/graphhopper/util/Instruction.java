@@ -14,6 +14,7 @@ public class Instruction
     public static final int TURN_SLIGHT_RIGHT = 1;
     public static final int TURN_RIGHT = 2;
     public static final int TURN_SHARP_RIGHT = 3;
+    public static final int FINISH = 4;
     private final int indication;
     private final String name;
     private final TDoubleArrayList distances;
@@ -31,7 +32,7 @@ public class Instruction
         this.name = name;
         this.distances = distances;
         this.times = times;
-        this.points = pl;
+        this.points = pl;                
 
         if (distances.isEmpty())
             throw new IllegalStateException("Distances cannot be empty");
@@ -90,15 +91,17 @@ public class Instruction
 
     /**
      * This method returns a list of gpx entries where the time (in millis) is relative to the first
-     * which is 0. It does NOT contain the last point which is the first of the next one.
+     * which is 0. It does NOT contain the last point which is the first of the next instruction.
      */
     public List<GPXEntry> createGPXList()
     {
         int len = times.size();
+        long sum = 0;
         List<GPXEntry> list = new ArrayList<GPXEntry>(len);
         for (int i = 0; i < len; i++)
         {
-            list.add(new GPXEntry(points.getLatitude(i), points.getLongitude(i), times.get(i)));
+            sum += times.get(i);
+            list.add(new GPXEntry(points.getLatitude(i), points.getLongitude(i), sum));
         }
         return list;
     }
