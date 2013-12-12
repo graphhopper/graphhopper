@@ -552,7 +552,7 @@ function routeLatLng(request, doQuery) {
             map.fitBounds(tmpB);
         }
 
-        var tmpTime = round(json.route.time / 60, 1000);
+        var tmpTime = round(json.route.time / 60 / 1000, 1000);
         if (tmpTime > 60) {
             if (tmpTime / 60 > 24)
                 tmpTime = floor(tmpTime / 60 / 24, 1) + tr2("dayAbbr") + " " + round(((tmpTime / 60) % 24), 1) + tr2("hourAbbr");

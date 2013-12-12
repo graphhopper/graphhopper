@@ -488,7 +488,7 @@ public class MainActivity extends MapActivity
                             / 1000f + ", nodes:" + resp.getPoints().getSize() + ", time:"
                             + time + " " + resp.getDebugInfo());
                     logUser("the route is " + (int) (resp.getDistance() / 100) / 10f
-                            + "km long, time:" + resp.getTime() / 60f + "min, debug:" + time);
+                            + "km long, time:" + resp.getMillis() / 60000f + "min, debug:" + time);
 
                     pathOverlay.getOverlayItems().add(createPolyline(resp));
                     mapView.redraw();

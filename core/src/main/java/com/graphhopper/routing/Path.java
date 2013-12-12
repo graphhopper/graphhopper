@@ -42,7 +42,7 @@ public class Path
     protected double distance;
     // we go upwards (via EdgeEntry.parent) from the goal node to the origin node
     protected boolean reverseOrder = true;
-    protected double time;
+    protected long millis;
     private boolean found;
     protected EdgeEntry edgeEntry;
     final StopWatch extractSW = new StopWatch("extract");
@@ -138,11 +138,11 @@ public class Path
     }
 
     /**
-     * @return time in seconds
+     * @return time in millis
      */
-    public double getTime()
+    public long getMillis()
     {
-        return time;
+        return millis;
     }
 
     /**
@@ -198,7 +198,7 @@ public class Path
     {
         EdgeIteratorState iter = graph.getEdgeProps(edgeId, endNode);
         distance += calcDistance(iter);
-        time += calcTime(iter.getDistance(), iter.getFlags());
+        millis += calcMillis(iter.getDistance(), iter.getFlags());
         addEdge(edgeId);
     }
 
@@ -211,12 +211,11 @@ public class Path
     }
 
     /**
-     * Calculates the time in seconds for the specified distance in meter and speed (via
-     * setProperties)
+     * Calculates the time in millis for the specified distance in meter and speed.
      */
-    protected double calcTime( double distance, long flags )
+    protected long calcMillis( double distance, long flags )
     {
-        return distance * 3.6 / encoder.getSpeed(flags);
+        return (long) (distance * 3600 / encoder.getSpeed(flags));
     }
 
     /**
@@ -340,7 +339,7 @@ public class Path
             double prevLon = graph.getLongitude(tmpNode);
             double prevOrientation;
             double prevDist;
-            double prevTime;
+            long prevTime;
 
             @Override
             public void next( EdgeIteratorState edgeBase, int index )
@@ -370,7 +369,7 @@ public class Path
                 {
                     name = edgeBase.getName();
                     prevDist = calcDistance(edgeBase);
-                    prevTime = calcTime(prevDist, edgeBase.getFlags());
+                    prevTime = calcMillis(prevDist, edgeBase.getFlags());
                     cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, prevDist, prevTime, prevLat, prevLon));
                 } else
                 {
@@ -395,7 +394,7 @@ public class Path
                     {
                         cachedWays.updateLastDistanceAndTime(prevDist, prevTime);
                         prevDist = calcDistance(edgeBase);
-                        prevTime = calcTime(prevDist, edgeBase.getFlags());
+                        prevTime = calcMillis(prevDist, edgeBase.getFlags());
                         name = tmpName;
                         double delta = Math.abs(tmpOrientation - prevOrientation);
                         if (delta < 0.2)
@@ -431,7 +430,7 @@ public class Path
                     {
                         double tmpDist = calcDistance(edgeBase);
                         prevDist += tmpDist;
-                        prevTime += calcTime(tmpDist, edgeBase.getFlags());
+                        prevTime += calcMillis(tmpDist, edgeBase.getFlags());
                     }
                 }
 

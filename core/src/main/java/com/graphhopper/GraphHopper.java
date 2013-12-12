@@ -647,7 +647,7 @@ public class GraphHopper implements GraphHopperAPI
         } else
             rsp.setFound(path.isFound());
 
-        return rsp.setDistance(path.getDistance()).setTime(path.getTime()).setDebugInfo(debug);
+        return rsp.setDistance(path.getDistance()).setMillis(path.getMillis()).setDebugInfo(debug);
     }
 
     protected LocationIndex createLocationIndex( Directory dir )

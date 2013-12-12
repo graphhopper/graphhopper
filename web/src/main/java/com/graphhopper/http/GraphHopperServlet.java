@@ -178,7 +178,7 @@ public class GraphHopperServlet extends GHBaseServlet
                                     end.lon, end.lat
                         }).
                         object("distance", distInMeter).
-                        object("time", rsp.getTime());
+                        object("time", rsp.getMillis());
 
                 if (enableInstructions)
                 {
@@ -213,7 +213,7 @@ public class GraphHopperServlet extends GHBaseServlet
 
             writeJson(req, res, builder.build());
             String logStr = req.getQueryString() + " " + infoStr + " " + start + "->" + end
-                    + ", distance: " + distInMeter + ", time:" + Math.round(rsp.getTime() / 60f)
+                    + ", distance: " + distInMeter + ", time:" + Math.round(rsp.getMillis() / 60000f)
                     + "min, points:" + points.getSize() + ", took:" + took
                     + ", debug - " + rsp.getDebugInfo() + ", " + algoStr + ", "
                     + weighting + ", " + vehicleStr;

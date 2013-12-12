@@ -48,7 +48,7 @@ public class PathTest
     {
         FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
         Path p = new Path(null, encoder);
-        assertEquals(60 * 60d, p.calcTime(100000, encoder.setProperties(100, true, true)), 1e-2);
+        assertEquals(60 * 60 * 1000, p.calcMillis(100000, encoder.setProperties(100, true, true)));
     }
 
     @Test

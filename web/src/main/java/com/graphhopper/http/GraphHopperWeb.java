@@ -93,7 +93,7 @@ public class GraphHopperWeb implements GraphHopperAPI
             took = json.getJSONObject("info").getDouble("took");
             JSONObject route = json.getJSONObject("route");
             double distance = route.getDouble("distance");
-            int timeInSeconds = route.getInt("time");
+            int millis = route.getInt("time");
             PointList list;
             if (encodePolyline)
             {
@@ -110,7 +110,7 @@ public class GraphHopperWeb implements GraphHopperAPI
                     list.add(lat, lon);
                 }
             }
-            return new GHResponse().setPoints(list).setDistance(distance).setTime(timeInSeconds);
+            return new GHResponse().setPoints(list).setDistance(distance).setMillis(millis);
         } catch (Exception ex)
         {
             throw new RuntimeException("Problem while fetching path " + request.getFrom() + "->" + request.getTo(), ex);

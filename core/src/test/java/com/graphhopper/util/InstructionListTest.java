@@ -214,12 +214,12 @@ public class InstructionListTest
         InstructionList wayList = p.calcInstructions();
         assertEquals(4, wayList.size());
 
-        double sumOfTimes = 0;
+        long sumOfTimes = 0;
         for (Instruction instruction : wayList)
         {
-            sumOfTimes += instruction.getTime();
+            sumOfTimes += instruction.getMillis();
         }
-        assertEquals(p.getTime(), sumOfTimes, 1e-2);
+        assertEquals(p.getMillis(), sumOfTimes);
 
         assertEquals(Instruction.CONTINUE_ON_STREET, wayList.get(0).getIndication());
         assertEquals(15, wayList.get(0).getLat(), 1e-3);

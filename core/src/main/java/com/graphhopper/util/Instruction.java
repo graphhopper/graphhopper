@@ -12,16 +12,16 @@ public class Instruction
     private int indication;
     private String name;
     private double distance;
-    private double time;
+    private long millis;
     private double lat;
     private double lon;
 
-    public Instruction( int indication, String name, double distance, double time, double lat, double lon )
+    public Instruction( int indication, String name, double distance, long millis, double lat, double lon )
     {
         this.indication = indication;
         this.name = name;
         this.distance = distance;
-        this.time = time;
+        this.millis = millis;
         this.lat = lat;
         this.lon = lon;
     }
@@ -48,11 +48,11 @@ public class Instruction
     }
 
     /**
-     * Time in seconds until no new instruction
+     * Time in millis until no new instruction
      */
-    public double getTime()
+    public long getMillis()
     {
-        return time;
+        return millis;
     }
 
     public void setDistance( double distance )
@@ -60,13 +60,13 @@ public class Instruction
         this.distance = distance;
     }
 
-    public void setTime( double time )
+    public void setMillis( long time )
     {
-        this.time = time;
+        this.millis = time;
     }
 
     /**
-     * Latitude of the location where this instruction should happen.
+     * Latitude of the location where this instruction should take place.
      */
     public double getLat()
     {
@@ -74,7 +74,7 @@ public class Instruction
     }
 
     /**
-     * Longitude of the location where this instruction should happen.
+     * Longitude of the location where this instruction should take place.
      */
     public double getLon()
     {
@@ -92,7 +92,7 @@ public class Instruction
         sb.append(',');
         sb.append(distance);
         sb.append(',');
-        sb.append(time);
+        sb.append(millis);
         sb.append(')');
 
         return sb.toString();

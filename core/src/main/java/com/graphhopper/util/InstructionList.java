@@ -102,12 +102,15 @@ public class InstructionList implements Iterable<Instruction>
         return labels;
     }
 
+    /**
+     * @return string representations of the times until no new instruction.
+     */
     public List<String> createTimes( TranslationMap.Translation tr )
     {
         List<String> res = new ArrayList<String>();
         for (Instruction instruction : instructions)
         {
-            long minutes = Math.round(instruction.getTime() / 60.0);
+            long minutes = Math.round(instruction.getMillis() / 60000.0);
             if (minutes > 60)
             {
                 if (minutes / 60.0 > 24)
@@ -126,7 +129,7 @@ public class InstructionList implements Iterable<Instruction>
                 if (minutes > 0)
                     res.add(String.format("%d %s", minutes, tr.tr("minAbbr")));
                 else
-                    res.add(String.format(Locale.US, "%.1f %s", instruction.getTime() / 60.0, tr.tr("minAbbr")));
+                    res.add(String.format(Locale.US, "%.1f %s", instruction.getMillis() / 60000.0, tr.tr("minAbbr")));
             }
         }
         return res;
@@ -200,12 +203,12 @@ public class InstructionList implements Iterable<Instruction>
     /**
      * Sets the last added distance and time to the specified value.
      */
-    public void updateLastDistanceAndTime( double prevDist, double prevTime )
+    public void updateLastDistanceAndTime( double prevDist, long prevTime )
     {
         if (instructions.isEmpty())
             throw new IllegalStateException("Cannot update last distance with:" + prevDist);
         instructions.get(instructions.size() - 1).setDistance(prevDist);
-        instructions.get(instructions.size() - 1).setTime(prevTime);
+        instructions.get(instructions.size() - 1).setMillis(prevTime);
     }
 
     @Override
@@ -217,5 +220,11 @@ public class InstructionList implements Iterable<Instruction>
     public Instruction get( int index )
     {
         return instructions.get(index);
+    }
+
+    @Override
+    public String toString()
+    {
+        return instructions.toString();
     }
 }

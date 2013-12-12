@@ -36,7 +36,7 @@ public class GHResponse
 {
     private PointList list = PointList.EMPTY;
     private double distance;
-    private double time;
+    private long time;
     private String debugInfo = "";
     private final List<Throwable> errors = new ArrayList<Throwable>(4);
     private InstructionList instructions = new InstructionList(0);
@@ -71,16 +71,16 @@ public class GHResponse
         return distance;
     }
 
-    public GHResponse setTime( double timeInSec )
+    public GHResponse setMillis( long timeInMillis )
     {
-        this.time = timeInSec;
+        this.time = timeInMillis;
         return this;
     }
 
     /**
-     * @return time in seconds
+     * @return time in millis
      */
-    public double getTime()
+    public long getMillis()
     {
         return time;
     }
@@ -168,18 +168,21 @@ public class GHResponse
         return instructions;
     }
 
-    public List<GPXEntry> createGPXList( long startTime )
+    /**
+     * The first time will be always 0.
+     * <p>
+     * @return
+     */
+    public List<GPXEntry> createGPXList()
     {
         List<GPXEntry> gpxList = new ArrayList<GPXEntry>();
-        PointList tmpList = getPoints();
-        double sumTime = startTime / 1000d;
-        for (int i = 0; i < tmpList.getSize(); i++)
+        long sumTime = 0;
+        for (Instruction i : getInstructions())
         {
-            double lat = tmpList.getLatitude(i);
-            double lon = tmpList.getLongitude(i);
+            double lat = i.getLat();
+            double lon = i.getLon();
+            sumTime += i.getMillis();
             gpxList.add(new GPXEntry(lat, lon, sumTime));
-
-            // TODO time += timeDiff;
         }
         return gpxList;
     }
@@ -191,7 +194,7 @@ public class GHResponse
      * <p/>
      * @return string to be stored as gpx file
      */
-    public String createGPX( String trackName, long startTime )
+    public String createGPX( String trackName, long startTimeLong )
     {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:SSZ");
         String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
@@ -200,15 +203,15 @@ public class GHResponse
                 + "<link href='http://graphhopper.com'>"
                 + "<text>GraphHopper GPX Track</text>"
                 + "</link>"
-                + " <time>" + formatter.format(startTime) + "</time>"
+                + " <time>" + formatter.format(startTimeLong) + "</time>"
                 + "</metadata>";
         StringBuilder track = new StringBuilder(header);
         track.append("<trk><name>").append(trackName).append("</name>");
         track.append("<trkseg>");
-        for (GPXEntry entry : createGPXList(startTime))
+        for (GPXEntry entry : createGPXList())
         {
             track.append("<trkpt lat='").append(entry.getLat()).append("' lon='").append(entry.getLon()).append("'>");
-            track.append("<time>").append(formatter.format(entry.getTime())).append("</time>");
+            track.append("<time>").append(formatter.format(startTimeLong + entry.getTime())).append("</time>");
             track.append("</trkpt>");
         }
         track.append("</trkseg>");

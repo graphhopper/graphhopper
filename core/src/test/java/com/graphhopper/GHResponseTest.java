@@ -18,7 +18,8 @@
 package com.graphhopper;
 
 import com.graphhopper.util.GPXEntry;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.Instruction;
+import com.graphhopper.util.InstructionList;
 import java.util.List;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -33,11 +34,11 @@ public class GHResponseTest
     public void testCreateGPX()
     {
         GHResponse instance = new GHResponse();
-        PointList points = new PointList();
-        points.add(51.272226, 13.623047);
-        points.add(51.416338, 13.540649);
-        instance.setPoints(points);
-        List<GPXEntry> result = instance.createGPXList(0);
+        InstructionList points = new InstructionList();
+        points.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp", 100, 10 * 1000, 51.272226, 13.623047));
+        points.add(new Instruction(Instruction.TURN_LEFT, "temp2", 100, 4 * 1000, 51.272226, 13.623047));
+        instance.setInstructions(points);
+        List<GPXEntry> result = instance.createGPXList();
         assertEquals(2, result.size());
     }
 }

@@ -64,7 +64,7 @@ public class Path4CH extends PathBidirRef
             double dist = calcDistance(mainIter);
             distance += dist;
             long flags = mainIter.getFlags();
-            time += calcTime(dist, flags);
+            millis += calcMillis(dist, flags);
             addEdge(mainIter.getEdge());
             return;
         }

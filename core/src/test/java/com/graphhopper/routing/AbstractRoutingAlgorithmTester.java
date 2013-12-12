@@ -74,14 +74,14 @@ public abstract class AbstractRoutingAlgorithmTester
         Path p1 = prepareGraph(graphShortest, carEncoder, new ShortestWeighting()).createAlgo().calcPath(0, 3);
         assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(p1.toString(), 24000, p1.getDistance(), 1e-6);
-        assertEquals(p1.toString(), 8640, p1.getTime(), 1e-2);
+        assertEquals(p1.toString(), 8640 * 1000, p1.getMillis());
 
         Graph graphFastest = createGraph();
         initDirectedAndDiffSpeed(graphFastest);
         Path p2 = prepareGraph(graphFastest, carEncoder, new FastestWeighting(carEncoder)).createAlgo().calcPath(0, 3);
         assertEquals(Helper.createTList(0, 4, 6, 7, 5, 3), p2.calcNodes());
         assertEquals(p2.toString(), 31000, p2.getDistance(), 1e-6);
-        assertEquals(p2.toString(), 5580, p2.getTime(), 1e-2);
+        assertEquals(p2.toString(), 5580 * 1000, p2.getMillis());
     }
 
     // 0-1-2-3
@@ -120,7 +120,7 @@ public abstract class AbstractRoutingAlgorithmTester
         initFootVsCar(graphShortest);
         Path p1 = prepareGraph(graphShortest, footEncoder, new ShortestWeighting()).createAlgo().calcPath(0, 7);
         assertEquals(p1.toString(), 17000, p1.getDistance(), 1e-6);
-        assertEquals(p1.toString(), 12240, p1.getTime(), 1e-2);
+        assertEquals(p1.toString(), 12240 * 1000, p1.getMillis());
         assertEquals(Helper.createTList(0, 4, 5, 7), p1.calcNodes());
     }
 

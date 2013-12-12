@@ -25,16 +25,19 @@ public class GPXEntry
 {
     private final double lat;
     private final double lon;
-    private final double time;
+    private final long time;
 
-    public GPXEntry( double lat, double lon, double time )
+    public GPXEntry( double lat, double lon, long time )
     {
         this.lat = lat;
         this.lon = lon;
         this.time = time;
     }
 
-    public double getTime()
+    /**
+     * The time relative to the start time. In millis.
+     */
+    public long getTime()
     {
         return time;
     }
