@@ -63,7 +63,7 @@ public class GraphHopperIT
             assertEquals(87, rsp.getPoints().getSize());
 
             InstructionList il = rsp.getInstructions();
-            assertEquals(12, il.size());
+            assertEquals(13, il.size());
             List<String> iList = il.createDescription(trMap.getWithFallBack(Locale.US));
             // TODO roundabout fine tuning -> enter + leave roundabout (+ two rounabouts -> is it necessary if we do not leave the street?)
             assertEquals("Continue onto Avenue des Guelfes", iList.get(0));

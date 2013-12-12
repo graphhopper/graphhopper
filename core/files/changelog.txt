@@ -1,4 +1,5 @@
 0.3.0
+    gpx export via API or HTTP (route?type=gpx)
     breaking: The web response, Path.time and GHResponse.time change to milliseconds and 'long' (instead of seconds and double)
 
 0.2.0

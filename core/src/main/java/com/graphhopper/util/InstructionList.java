@@ -205,6 +205,10 @@ public class InstructionList implements Iterable<Instruction>
         return res;
     }
 
+    public boolean isEmpty() {
+        return instructions.isEmpty();
+    }
+    
     @Override
     public Iterator<Instruction> iterator()
     {
