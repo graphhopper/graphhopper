@@ -46,7 +46,7 @@ import static javax.servlet.http.HttpServletResponse.*;
  * <p/>
  * @author Peter Karich
  */
-public class GraphHopperServlet extends GHServlet
+public class GraphHopperServlet extends GHBaseServlet
 {
     @Inject
     private GraphHopper hopper;
@@ -183,13 +183,13 @@ public class GraphHopperServlet extends GHServlet
                 if (enableInstructions)
                 {
                     Translation tr = trMap.getWithFallBack(locale);
-                    List<Instruction> instructions = rsp.getInstructions();
+                    InstructionList instructions = rsp.getInstructions();
                     builder.startObject("instructions").
-                            object("descriptions", InstructionUtil.createDescription(instructions, tr)).
-                            object("distances", InstructionUtil.createDistances(instructions, tr, useMiles)).
-                            object("indications", InstructionUtil.createIndications(instructions)).
-                            object("times", InstructionUtil.createTimes(instructions, tr)).
-                            object("latLngs", InstructionUtil.createSegmentStartPoints(instructions)).
+                            object("descriptions", instructions.createDescription(tr)).
+                            object("distances", instructions.createDistances(tr, useMiles)).
+                            object("indications", instructions.createIndications()).
+                            object("times", instructions.createTimes(tr)).
+                            object("latLngs", instructions.createSegmentStartPoints()).
                             endObject();
                 }
 

@@ -17,13 +17,14 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.util.GPXEntry;
 import com.graphhopper.util.Instruction;
+import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -35,10 +36,10 @@ public class GHResponse
 {
     private PointList list = PointList.EMPTY;
     private double distance;
-    private long time;
+    private double time;
     private String debugInfo = "";
-    private List<Throwable> errors = new ArrayList<Throwable>(4);
-    private List<Instruction> instructions = new ArrayList<Instruction>(0);
+    private final List<Throwable> errors = new ArrayList<Throwable>(4);
+    private InstructionList instructions = new InstructionList(0);
     private boolean found;
 
     public GHResponse()
@@ -70,7 +71,7 @@ public class GHResponse
         return distance;
     }
 
-    public GHResponse setTime( long timeInSec )
+    public GHResponse setTime( double timeInSec )
     {
         this.time = timeInSec;
         return this;
@@ -79,7 +80,7 @@ public class GHResponse
     /**
      * @return time in seconds
      */
-    public long getTime()
+    public double getTime()
     {
         return time;
     }
@@ -157,14 +158,30 @@ public class GHResponse
         return "found:" + isFound() + ", nodes:" + list.getSize() + ": " + list.toString();
     }
 
-    public void setInstructions( List<Instruction> instructions )
+    public void setInstructions( InstructionList instructions )
     {
         this.instructions = instructions;
     }
 
-    public List<Instruction> getInstructions()
+    public InstructionList getInstructions()
     {
         return instructions;
+    }
+
+    public List<GPXEntry> createGPXList( long startTime )
+    {
+        List<GPXEntry> gpxList = new ArrayList<GPXEntry>();
+        PointList tmpList = getPoints();
+        double sumTime = startTime / 1000d;
+        for (int i = 0; i < tmpList.getSize(); i++)
+        {
+            double lat = tmpList.getLatitude(i);
+            double lon = tmpList.getLongitude(i);
+            gpxList.add(new GPXEntry(lat, lon, sumTime));
+
+            // TODO time += timeDiff;
+        }
+        return gpxList;
     }
 
     /**
@@ -181,23 +198,17 @@ public class GHResponse
                 + "<gpx xmlns='http://www.topografix.com/GPX/1/1' >"
                 + "<metadata>"
                 + "<link href='http://graphhopper.com'>"
-                + "<text>GraphHopper Maps</text>"
+                + "<text>GraphHopper GPX Track</text>"
                 + "</link>"
-                + " <time>" + formatter.format(new Date()) + "</time>"
+                + " <time>" + formatter.format(startTime) + "</time>"
                 + "</metadata>";
         StringBuilder track = new StringBuilder(header);
         track.append("<trk><name>").append(trackName).append("</name>");
         track.append("<trkseg>");
-        PointList tmpList = getPoints();
-        for (int i = 0; i < tmpList.getSize(); i++)
+        for (GPXEntry entry : createGPXList(startTime))
         {
-            double lat = tmpList.getLatitude(i);
-            double lon = tmpList.getLongitude(i);
-            track.append("<trkpt lat='").append(lat).append("' lon='").append(lon).append("'>");
-
-            startTime = startTime + 1;
-            track.append("<time>").append(formatter.format(startTime)).append("</time>");
-
+            track.append("<trkpt lat='").append(entry.getLat()).append("' lon='").append(entry.getLon()).append("'>");
+            track.append("<time>").append(formatter.format(entry.getTime())).append("</time>");
             track.append("</trkpt>");
         }
         track.append("</trkseg>");

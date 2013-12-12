@@ -32,7 +32,7 @@ import org.json.JSONObject;
 /**
  * @author Peter Karich
  */
-public class I18NServlet extends GHServlet
+public class I18NServlet extends GHBaseServlet
 {
     @Inject
     private TranslationMap map;

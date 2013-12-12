@@ -42,7 +42,7 @@ public class Path
     protected double distance;
     // we go upwards (via EdgeEntry.parent) from the goal node to the origin node
     protected boolean reverseOrder = true;
-    protected long time;
+    protected double time;
     private boolean found;
     protected EdgeEntry edgeEntry;
     final StopWatch extractSW = new StopWatch("extract");
@@ -50,7 +50,7 @@ public class Path
     protected int endNode = -1;
     private TIntList edgeIds;
     private PointList cachedPoints;
-    private List<Instruction> cachedWays;
+    private InstructionList cachedWays;
     private double weight;
 
     public Path( Graph graph, FlagEncoder encoder )
@@ -140,7 +140,7 @@ public class Path
     /**
      * @return time in seconds
      */
-    public long getTime()
+    public double getTime()
     {
         return time;
     }
@@ -214,9 +214,9 @@ public class Path
      * Calculates the time in seconds for the specified distance in meter and speed (via
      * setProperties)
      */
-    protected long calcTime( double distance, long flags )
+    protected double calcTime( double distance, long flags )
     {
-        return (long) (distance * 3.6 / encoder.getSpeed(flags));
+        return distance * 3.6 / encoder.getSpeed(flags);
     }
 
     /**
@@ -303,12 +303,12 @@ public class Path
     /**
      * @return the cached list of ways for this path
      */
-    public List<Instruction> calcInstructions()
+    public InstructionList calcInstructions()
     {
         if (cachedWays != null)
             return cachedWays;
 
-        cachedWays = new ArrayList<Instruction>(edgeIds.size() / 4);
+        cachedWays = new InstructionList(edgeIds.size() / 4);
         if (edgeIds.isEmpty())
             return cachedWays;
 
@@ -340,12 +340,12 @@ public class Path
             double prevLon = graph.getLongitude(tmpNode);
             double prevOrientation;
             double prevDist;
-            long prevTime;
+            double prevTime;
 
             @Override
             public void next( EdgeIteratorState edgeBase, int index )
             {
-                // Hmmh, a bit ugly: 'iter' links to the previous node of the path!
+                // Hmmh, a bit ugly: 'edgeBase' links to the previous node of the path!
                 // Ie. baseNode is the current node and adjNode is the previous.
                 int baseNode = edgeBase.getBaseNode();
                 double baseLat = graph.getLatitude(baseNode);
@@ -393,7 +393,7 @@ public class Path
                     String tmpName = edgeBase.getName();
                     if (!name.equals(tmpName))
                     {
-                        InstructionUtil.updateLastDistanceAndTime(cachedWays, prevDist, prevTime);
+                        cachedWays.updateLastDistanceAndTime(prevDist, prevTime);
                         prevDist = calcDistance(edgeBase);
                         prevTime = calcTime(prevDist, edgeBase.getFlags());
                         name = tmpName;
@@ -444,7 +444,7 @@ public class Path
 
                 boolean lastEdgeIter = index == edgeIds.size() - 1;
                 if (lastEdgeIter)
-                    InstructionUtil.updateLastDistanceAndTime(cachedWays, prevDist, prevTime);
+                    cachedWays.updateLastDistanceAndTime(prevDist, prevTime);
             }
         });
 

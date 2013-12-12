@@ -12,11 +12,11 @@ public class Instruction
     private int indication;
     private String name;
     private double distance;
-    private long time;
+    private double time;
     private double lat;
     private double lon;
 
-    public Instruction(int indication, String name, double distance, long time, double lat, double lon)
+    public Instruction( int indication, String name, double distance, double time, double lat, double lon )
     {
         this.indication = indication;
         this.name = name;
@@ -31,36 +31,51 @@ public class Instruction
         return indication;
     }
 
+    /**
+     * The instruction for the person/driver to execute.
+     */
     public String getName()
     {
         return name;
     }
 
+    /**
+     * Distance in meter until no new instruction
+     */
     public double getDistance()
     {
         return distance;
     }
 
-    public long getTime()
+    /**
+     * Time in seconds until no new instruction
+     */
+    public double getTime()
     {
         return time;
     }
 
-    public void setDistance(double distance)
+    public void setDistance( double distance )
     {
         this.distance = distance;
     }
 
-    public void setTime(long time)
+    public void setTime( double time )
     {
         this.time = time;
     }
 
+    /**
+     * Latitude of the location where this instruction should happen.
+     */
     public double getLat()
     {
         return lat;
     }
 
+    /**
+     * Longitude of the location where this instruction should happen.
+     */
     public double getLon()
     {
         return lon;

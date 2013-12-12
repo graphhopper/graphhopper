@@ -4,15 +4,43 @@ import gnu.trove.list.TDoubleList;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
-public class InstructionUtil
+public class InstructionList implements Iterable<Instruction>
 {
+    private final List<Instruction> instructions;
+
+    public InstructionList()
+    {
+        this(10);
+    }
+
+    public InstructionList( int cap )
+    {
+        instructions = new ArrayList<Instruction>(cap);
+    }
+
+    public void add( Instruction instr )
+    {
+        instructions.add(instr);
+    }
+
+    public int getSize()
+    {
+        return instructions.size();
+    }
+
+    public int size()
+    {
+        return instructions.size();
+    }
+
     /**
      * @return list of indications useful to create images
      */
-    public static List<Integer> createIndications(List<Instruction> instructions)
+    public List<Integer> createIndications()
     {
         List<Integer> res = new ArrayList<Integer>(instructions.size());
         for (Instruction instruction : instructions)
@@ -22,7 +50,7 @@ public class InstructionUtil
         return res;
     }
 
-    public static TDoubleList getDistances(List<Instruction> instructions)
+    public TDoubleList getDistances()
     {
         TDoubleList res = new TDoubleArrayList(instructions.size());
         for (Instruction instruction : instructions)
@@ -32,9 +60,9 @@ public class InstructionUtil
         return res;
     }
 
-    public static List<String> createDistances(List<Instruction> instructions, TranslationMap.Translation tr, boolean mile)
+    public List<String> createDistances( TranslationMap.Translation tr, boolean mile )
     {
-        TDoubleList distances = getDistances(instructions);
+        TDoubleList distances = getDistances();
 
         // United Kingdom, Canada, Ireland, Australia, the Bahamas, India, and Malaysia
         // still use some forms of the Imperial System, but are official Metric Nations
@@ -74,7 +102,7 @@ public class InstructionUtil
         return labels;
     }
 
-    public static List<String> createTimes(List<Instruction> instructions, TranslationMap.Translation tr)
+    public List<String> createTimes( TranslationMap.Translation tr )
     {
         List<String> res = new ArrayList<String>();
         for (Instruction instruction : instructions)
@@ -87,15 +115,13 @@ public class InstructionUtil
                     long days = (long) Math.floor(minutes / 60.0 / 24.0);
                     long hours = Math.round((minutes / 60.0) % 24);
                     res.add(String.format("%d %s %d %s", days, tr.tr("dayAbbr"), hours, tr.tr("hourAbbr")));
-                }
-                else
+                } else
                 {
                     long hours = (long) Math.floor(minutes / 60.0);
                     minutes = Math.round(minutes % 60);
                     res.add(String.format("%d %s %d %s", hours, tr.tr("hourAbbr"), minutes, tr.tr("minAbbr")));
                 }
-            }
-            else
+            } else
             {
                 if (minutes > 0)
                     res.add(String.format("%d %s", minutes, tr.tr("minAbbr")));
@@ -106,7 +132,7 @@ public class InstructionUtil
         return res;
     }
 
-    public static List<List<Double>> createSegmentStartPoints(List<Instruction> instructions)
+    public List<List<Double>> createSegmentStartPoints()
     {
         List<List<Double>> res = new ArrayList<List<Double>>();
         for (Instruction instruction : instructions)
@@ -119,7 +145,7 @@ public class InstructionUtil
         return res;
     }
 
-    public static List<String> createDescription(List<Instruction> instructions, TranslationMap.Translation tr)
+    public List<String> createDescription( TranslationMap.Translation tr )
     {
         String shLeftTr = tr.tr("sharp_left");
         String shRightTr = tr.tr("sharp_right");
@@ -174,11 +200,22 @@ public class InstructionUtil
     /**
      * Sets the last added distance and time to the specified value.
      */
-    public static void updateLastDistanceAndTime(List<Instruction> instructions, double prevDist, long prevTime)
+    public void updateLastDistanceAndTime( double prevDist, double prevTime )
     {
         if (instructions.isEmpty())
             throw new IllegalStateException("Cannot update last distance with:" + prevDist);
         instructions.get(instructions.size() - 1).setDistance(prevDist);
         instructions.get(instructions.size() - 1).setTime(prevTime);
+    }
+
+    @Override
+    public Iterator<Instruction> iterator()
+    {
+        return instructions.iterator();
+    }
+
+    public Instruction get( int index )
+    {
+        return instructions.get(index);
     }
 }

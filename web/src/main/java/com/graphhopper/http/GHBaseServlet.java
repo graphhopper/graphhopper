@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Peter Karich
  */
-public class GHServlet extends HttpServlet
+public class GHBaseServlet extends HttpServlet
 {
     protected Logger logger = LoggerFactory.getLogger(getClass());
 

@@ -17,7 +17,9 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.util.GPXEntry;
 import com.graphhopper.util.PointList;
+import java.util.List;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -35,7 +37,7 @@ public class GHResponseTest
         points.add(51.272226, 13.623047);
         points.add(51.416338, 13.540649);
         instance.setPoints(points);
-        String result = instance.createGPX("Test", System.currentTimeMillis());
-        assertEquals(5, result.split("trkpt").length);
+        List<GPXEntry> result = instance.createGPXList(0);
+        assertEquals(2, result.size());
     }
 }
