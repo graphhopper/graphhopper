@@ -29,6 +29,7 @@ var browserTitle = "GraphHopper Maps";
 var firstClickToRoute;
 var defaultTranslationMap = null;
 var enTranslationMap = null;
+var routeSegmentPopup = null;
 
 var iconFrom = L.icon({
     iconUrl: './img/marker-from.png',
@@ -622,6 +623,8 @@ function routeLatLng(request, doQuery) {
             var descriptions = json.route.instructions.descriptions;
             var distances = json.route.instructions.distances;
             var indications = json.route.instructions.indications;
+            var times = json.route.instructions.times;
+            var latLngs = json.route.instructions.latLngs;
             for (var m = 0; m < descriptions.length; m++) {
                 var indi = indications[m];
                 if (m == 0)
@@ -643,24 +646,41 @@ function routeLatLng(request, doQuery) {
                 else
                     throw "did not found indication " + indi;
 
-                addInstruction(instructionsElement, indi, descriptions[m], distances[m]);
+                addInstruction(instructionsElement, indi, descriptions[m], distances[m], times[m], latLngs[m]);
             }
-            addInstruction(instructionsElement, "marker-to", tr("finish"), "");
+            addInstruction(instructionsElement, "marker-to", tr("finish"), "", "", null);
         }
     });
 }
 
-function addInstruction(main, indi, title, distance) {
-    var indiPic = "<img class='instr_pic' src='" + window.location.pathname + "img/" + indi + ".png'/>";
+function addInstruction(main, indi, title, distance, time, latLng) {
+    var indiPic = "<img class='instr_pic' style='vertical-align: middle' src='" + window.location.pathname + "img/" + indi + ".png'/>";
     var str = "<td class='instr_title'>" + title + "</td>"
-            + " <td class='instr_distance_td'><span class='instr_distance'>" + distance + "</span></td>";
+        + " <td class='instr_distance_td'><span class='instr_distance'>" + distance + "<br/>" + time + "</span></td>";
     if (indi !== "continue")
         str = "<td>" + indiPic + "</td>" + str;
     else
         str = "<td/>" + str;
     var instructionDiv = $("<tr class='instruction'/>");
     instructionDiv.html(str);
+    if (latLng) {
+        instructionDiv.on("mouseover", function() {
+            showRouteSegmentPopup(indiPic + " " + title, latLng);
+        }).on("mouseout", hideRouteSegmentPopup);
+    }
     main.append(instructionDiv);
+}
+
+function showRouteSegmentPopup(html, latLng) {
+    hideRouteSegmentPopup();
+    routeSegmentPopup = L.popup({closeButton:false}).setLatLng(latLng).setContent(html).openOn(map);
+}
+
+function hideRouteSegmentPopup() {
+    if (routeSegmentPopup) {
+        map.removeLayer(routeSegmentPopup);
+        routeSegmentPopup = null;
+    }
 }
 
 function getCenter(bounds) {

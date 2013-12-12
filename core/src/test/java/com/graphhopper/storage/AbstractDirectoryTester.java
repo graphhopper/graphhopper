@@ -37,11 +37,9 @@ public abstract class AbstractDirectoryTester
     @After
     public void tearDown()
     {
-        Helper.removeDir(new File(location));
         if (da != null)
-        {
             da.close();
-        }
+        Helper.removeDir(new File(location));        
     }
 
     @Before

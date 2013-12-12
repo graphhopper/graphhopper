@@ -17,9 +17,10 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.util.Instruction;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.shapes.BBox;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -37,7 +38,7 @@ public class GHResponse
     private long time;
     private String debugInfo = "";
     private List<Throwable> errors = new ArrayList<Throwable>(4);
-    private InstructionList instructions = new InstructionList(0);
+    private List<Instruction> instructions = new ArrayList<Instruction>(0);
     private boolean found;
 
     public GHResponse()
@@ -156,12 +157,12 @@ public class GHResponse
         return "found:" + isFound() + ", nodes:" + list.getSize() + ": " + list.toString();
     }
 
-    public void setInstructions( InstructionList instructions )
+    public void setInstructions( List<Instruction> instructions )
     {
         this.instructions = instructions;
     }
 
-    public InstructionList getInstructions()
+    public List<Instruction> getInstructions()
     {
         return instructions;
     }

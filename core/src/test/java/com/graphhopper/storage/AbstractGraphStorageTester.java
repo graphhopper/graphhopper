@@ -282,6 +282,7 @@ public abstract class AbstractGraphStorageTester
             ex.printStackTrace();
             assertTrue(ex.toString(), false);
         }
+        close(gs);
     }
 
     @Test
@@ -514,9 +515,7 @@ public abstract class AbstractGraphStorageTester
         while (iter.next())
         {
             if (Math.abs(g.getLatitude(iter.getAdjNode()) - latitude) < 1e-4)
-            {
                 return true;
-            }
         }
         return false;
     }
@@ -936,11 +935,9 @@ public abstract class AbstractGraphStorageTester
     static void close( Object o )
     {
         if (o == null)
-        {
             return;
-        }
+
         if (o instanceof Closeable)
-        {
             try
             {
                 ((Closeable) o).close();
@@ -948,7 +945,6 @@ public abstract class AbstractGraphStorageTester
             {
                 throw new RuntimeException(ex);
             }
-        }
     }
 
     @Test

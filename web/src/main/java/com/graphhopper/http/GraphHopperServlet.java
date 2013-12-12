@@ -183,11 +183,13 @@ public class GraphHopperServlet extends GHServlet
                 if (enableInstructions)
                 {
                     Translation tr = trMap.getWithFallBack(locale);
-                    InstructionList instructions = rsp.getInstructions();
+                    List<Instruction> instructions = rsp.getInstructions();
                     builder.startObject("instructions").
-                            object("descriptions", instructions.createDescription(tr)).
-                            object("distances", instructions.createDistances(tr, useMiles)).
-                            object("indications", instructions.createIndications()).
+                            object("descriptions", InstructionUtil.createDescription(instructions, tr)).
+                            object("distances", InstructionUtil.createDistances(instructions, tr, useMiles)).
+                            object("indications", InstructionUtil.createIndications(instructions)).
+                            object("times", InstructionUtil.createTimes(instructions, tr)).
+                            object("latLngs", InstructionUtil.createSegmentStartPoints(instructions)).
                             endObject();
                 }
 
