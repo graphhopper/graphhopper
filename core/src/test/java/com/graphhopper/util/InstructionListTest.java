@@ -267,11 +267,16 @@ public class InstructionListTest
         pl = new PointList();
         pl.add(51.2722, 13.623);
         instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", distances, times, pl));
+        instructions.add(new FinishInstruction(51.272, 13.62));
         
         List<GPXEntry> result = instructions.createGPXList();
-        assertEquals(4, result.size());
-        assertEquals(19 * 1000, result.get(2).getMillis());
-        assertEquals(22 * 1000, result.get(3).getMillis());
+        assertEquals(5, result.size());
+        
+        assertEquals(0, result.get(0).getMillis());
+        assertEquals(10 * 1000, result.get(1).getMillis());
+        assertEquals(15 * 1000, result.get(2).getMillis());
+        assertEquals(19 * 1000, result.get(3).getMillis());
+        assertEquals(22 * 1000, result.get(4).getMillis());
     }
 
     private long flagsForSpeed( EncodingManager encodingManager, int speedKmPerHour )

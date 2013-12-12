@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * List of instruction. TODO: the last instruction is a special finish instruction and has only one
- * point and no distance or time.
+ * List of instruction.
  */
 public class InstructionList implements Iterable<Instruction>
 {
@@ -205,10 +204,11 @@ public class InstructionList implements Iterable<Instruction>
         return res;
     }
 
-    public boolean isEmpty() {
+    public boolean isEmpty()
+    {
         return instructions.isEmpty();
     }
-    
+
     @Override
     public Iterator<Instruction> iterator()
     {
@@ -233,20 +233,10 @@ public class InstructionList implements Iterable<Instruction>
     public List<GPXEntry> createGPXList()
     {
         List<GPXEntry> gpxList = new ArrayList<GPXEntry>();
-        long sumTime = 0;
+        long timeOffset = 0;
         for (Instruction i : this)
         {
-            List<GPXEntry> tmp = i.createGPXList();
-            if (tmp.isEmpty())
-                throw new IllegalStateException("cannot happen");
-
-            long offset = tmp.get(tmp.size() - 1).getMillis();
-            for (GPXEntry e : tmp)
-            {
-                e.setMillis(sumTime + e.getMillis());
-                gpxList.add(e);
-            }
-            sumTime += offset;
+            timeOffset = i.fillGPXList(gpxList, timeOffset);
         }
         return gpxList;
     }

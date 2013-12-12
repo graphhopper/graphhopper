@@ -455,6 +455,7 @@ public class Path
             private void add( EdgeIteratorState edge )
             {
                 // add points in opposite direction as adj node is previous
+                // skip base point => 'i > 0'
                 PointList pl = edge.fetchWayGeometry(3);
                 int len = pl.size() - 1;
                 for (int i = len; i > 0; i--)

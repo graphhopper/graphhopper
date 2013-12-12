@@ -32,7 +32,7 @@ public class Instruction
         this.name = name;
         this.distances = distances;
         this.times = times;
-        this.points = pl;                
+        this.points = pl;
 
         if (distances.isEmpty())
             throw new IllegalStateException("Distances cannot be empty");
@@ -92,18 +92,19 @@ public class Instruction
     /**
      * This method returns a list of gpx entries where the time (in millis) is relative to the first
      * which is 0. It does NOT contain the last point which is the first of the next instruction.
+     * <p>
+     * @return the time offset to add for the next instruction
      */
-    public List<GPXEntry> createGPXList()
+    public long fillGPXList( List<GPXEntry> list, long time )
     {
         int len = times.size();
-        long sum = 0;
-        List<GPXEntry> list = new ArrayList<GPXEntry>(len);
-        for (int i = 0; i < len; i++)
+        int i = 0;
+        for (; i < len; i++)
         {
-            sum += times.get(i);
-            list.add(new GPXEntry(points.getLatitude(i), points.getLongitude(i), sum));
+            list.add(new GPXEntry(points.getLatitude(i), points.getLongitude(i), time));
+            time += times.get(i);
         }
-        return list;
+        return time;
     }
 
     @Override
