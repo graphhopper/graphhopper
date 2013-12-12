@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
  * returns EMPTY.
  *    b)Reads relations from OSM file, and performs a check for a route relation. In case that the 
  *    relation is a route relation, it stores specific relation attributes required for routing 
- *    into osmWayIdToRouteAttributeMap for all the ways of the relation.
+ *    into osmWayIdToRouteWeigthMap for all the ways of the relation.
  * <p/>
  * 2.a) Reads nodes from OSM file and stores lat+lon information either into the intermediate
  * datastructure for the pillar nodes (pillarLats/pillarLons) or, if a tower node, directly into the
@@ -84,7 +84,7 @@ public class OSMReader
     // remember how many times a node was used to identify tower nodes
     private LongIntMap osmNodeIdToIndexMap;
     private LongIntMap osmNodeIdToBarrierMap;
-    private LongIntMap osmWayIdToRouteAttributeMap;
+    private LongIntMap osmWayIdToRouteWeightMap;
     private final TLongList barrierNodeIDs = new TLongArrayList();
     protected DataAccess pillarLats;
     protected DataAccess pillarLons;
@@ -103,7 +103,7 @@ public class OSMReader
 
         osmNodeIdToBarrierMap = new GHLongIntBTree(200);
         osmNodeIdToIndexMap = new GHLongIntBTree(200);
-        osmWayIdToRouteAttributeMap = new GHLongIntBTree(200);
+        osmWayIdToRouteWeightMap = new GHLongIntBTree(200);
 
         dir = graphStorage.getDirectory();
         pillarLats = dir.find("tmpLatitudes");
@@ -141,7 +141,7 @@ public class OSMReader
             in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
 
             long tmpWayCounter = 1;
-            long tmpRelCounter = 1;
+            long tmpRelationCounter = 1;
 
             OSMElement item;
             while ((item = in.getNext()) != null)
@@ -175,9 +175,9 @@ public class OSMReader
                          prepareWaysWithRelationInfo(relation);
                     }
                     
-                    if (++tmpRelCounter % 50000 == 0)
+                    if (++tmpRelationCounter % 50000 == 0)
                     {
-                          logger.info(nf(tmpRelCounter) + " (preprocess), osmWayMap:"
+                          logger.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:"
                                   + nf(getWayMap().getSize()) + " (" + getWayMap().getMemoryUsage() + "MB) "
                                     + Helper.getMemInfo());
                     }
@@ -281,7 +281,7 @@ public class OSMReader
     /**
      * Process properties, encode flags and create edges for the way.
      */
-    public void processWay( OSMWay way, int relationcode) throws XMLStreamException
+    public void processWay( OSMWay way, int relationweighth) throws XMLStreamException
     {
         if (way.getNodes().size() < 2)
             return;
@@ -310,7 +310,7 @@ public class OSMReader
             }
         }
 
-        long flags = encodingManager.handleWayTags(includeWay, way, relationcode);
+        long flags = encodingManager.handleWayTags(includeWay, way, relationweighth);
         if (flags == 0)
             return;
 
@@ -738,7 +738,7 @@ public class OSMReader
         pillarLats = null;
         osmNodeIdToIndexMap = null;
         osmNodeIdToBarrierMap = null;
-        osmWayIdToRouteAttributeMap = null;
+        osmWayIdToRouteWeightMap = null;
     }
 
     /**
@@ -803,7 +803,7 @@ public class OSMReader
 
     private LongIntMap getWayMap()
     {
-        return osmWayIdToRouteAttributeMap;
+        return osmWayIdToRouteWeightMap;
     }
     
     /**

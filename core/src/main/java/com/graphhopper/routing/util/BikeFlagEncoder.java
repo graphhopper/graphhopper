@@ -63,18 +63,16 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         oppositeLanes.add("opposite_lane");
         oppositeLanes.add("opposite_track");
    
-/*        
         potentialBarriers.add("gate");
         potentialBarriers.add("lift_gate");
         potentialBarriers.add("swing_gate");
         potentialBarriers.add("cycle_barrier");
         potentialBarriers.add("block");
-        
 
         absoluteBarriers.add("kissing_gate");
         absoluteBarriers.add("stile");
         absoluteBarriers.add("turnstile");
-*/
+
         // very dangerous
         // acceptedRailways.remove("tram");
     }
@@ -191,9 +189,10 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         {
             
             // set speed
-            // FIXME Wait for decision for other weighting than speed
+            // FIXME Rewrite necessary after decision for other weighting than speed!
+            // Currently there is only speed, so we increase it.
             int speed;
-            // relationcode == 0 : This happens for e.g. ways with a bus relation
+            // relationcode = 0 : This happens for e.g. ways with a bus or hiking relation
             if ((relationcode == -1) || (relationcode == 0))
             {
                 // In case that the way does not belong to a relation:
@@ -201,7 +200,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
             }
             else
             {
-                // In case that the way belongs to a relation
+                // In case that the way belongs to a relation for which we do have a weight change:
                 int boostpercent;
                 boostpercent=100 + (relationcode-4)*33;
                 speed=getSpeed(way);
@@ -320,10 +319,10 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     private static final Map<String, Integer> TRACKTYPE_SPEED = new HashMap<String, Integer>()
     {
         {
-            put("grade1", 25); // paved
-            put("grade2", 20); // now unpaved ...
-            put("grade3", 18);
-            put("grade4", 16);
+            put("grade1", 16); // paved
+            put("grade2", 12); // now unpaved ...
+            put("grade3", 12);
+            put("grade4", 10);
             put("grade5", 8); // like sand/grass            
         }
     };
@@ -331,15 +330,15 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     private static final Map<String, Integer> SURFACE_SPEED = new HashMap<String, Integer>()
     {   
         {
-            put("asphalt", 25);
-            put("concrete", 25);
-            put("paved", 25);
-            put("unpaved", 20);
-            put("gravel", 20);
-            put("ground", 25);
-            put("dirt", 20);
-            put("paving_stones", 20);
-            put("grass", 25);
+            put("asphalt", 20);
+            put("concrete", 20);
+            put("paved", 18);
+            put("unpaved", 15);
+            put("gravel", 12);
+            put("ground", 12);
+            put("dirt", 10);
+            put("paving_stones", 8);
+            put("grass", 8);
             put("cobblestone", 6);
         }
     };
@@ -347,25 +346,25 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     private static final Map<String, Integer> HIGHWAY_SPEED = new HashMap<String, Integer>()
     {
         {
-            put("living_street", 20);
+            put("living_street", 15);
             put("steps", 4);
 
-            put("cycleway", 25);
+            put("cycleway", 20);
             put("path", 18);
-            put("footway", 10);
+            put("footway", 15);
             put("road", 10);
-            put("track", 25);
+            put("track", 20);
             put("service", 20);
-            put("unclassified", 18);
+            put("unclassified", 25);
             put("residential", 20);
 
-            put("trunk", 10);
+            put("trunk", 16);
             put("trunk_link", 16);
-            put("primary", 16);
+            put("primary", 18);
             put("primary_link", 16);
-            put("secondary", 16);
+            put("secondary", 18);
             put("secondary_link", 16);
-            put("tertiary", 16);
+            put("tertiary", 18);
             put("tertiary_link", 16);
         }
     };

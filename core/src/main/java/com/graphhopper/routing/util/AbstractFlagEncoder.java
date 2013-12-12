@@ -160,7 +160,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
      * <p/>
      * @param allowed
      */
-    public abstract long handleWayTags( long allowed, OSMWay way, int relationcode);
+    public abstract long handleWayTags( long allowed, OSMWay way, int relationweigth);
 
     /**
      * Parse tags on nodes, looking for barriers.

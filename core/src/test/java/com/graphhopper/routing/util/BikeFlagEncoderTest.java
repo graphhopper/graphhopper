@@ -41,10 +41,10 @@ public class BikeFlagEncoderTest
         assertEquals(10, encoder.getSpeed(result));
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "primary");
-        assertEquals(16, encoder.getSpeed(way));
+        assertEquals(18, encoder.getSpeed(way));
 
         way.setTag("surface", "paved");
-        assertEquals(25, encoder.getSpeed(way));
+        assertEquals(18, encoder.getSpeed(way));
     }
 
     @Test

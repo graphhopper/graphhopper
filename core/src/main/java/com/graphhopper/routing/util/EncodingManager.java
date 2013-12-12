@@ -178,12 +178,12 @@ public class EncodingManager
      * <p/>
      * @return the encoded flags
      */
-    public long handleWayTags( int includeWay, OSMWay way, int relationcode)
+    public long handleWayTags( int includeWay, OSMWay way, int weightFromRelations)
     {
         long flags = 0;
         for (int i = 0; i < encoderCount; i++)
         {
-            flags |= encoders.get(i).handleWayTags(includeWay, way, relationcode);
+            flags |= encoders.get(i).handleWayTags(includeWay, way, weightFromRelations);
         }
 
         return flags;
