@@ -8,6 +8,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * List of instruction. TODO: the last instruction is a special finish instruction and has only one
+ * point and no distance or time.
+ */
 public class InstructionList implements Iterable<Instruction>
 {
     private final List<Instruction> instructions;
@@ -50,24 +54,20 @@ public class InstructionList implements Iterable<Instruction>
         return res;
     }
 
-    public TDoubleList getDistances()
+    public TDoubleList createDistances()
     {
         TDoubleList res = new TDoubleArrayList(instructions.size());
         for (Instruction instruction : instructions)
         {
-            res.add(instruction.getDistance());
+            res.add(instruction.calcDistance());
         }
         return res;
     }
 
     public List<String> createDistances( TranslationMap.Translation tr, boolean mile )
     {
-        TDoubleList distances = getDistances();
-
-        // United Kingdom, Canada, Ireland, Australia, the Bahamas, India, and Malaysia
-        // still use some forms of the Imperial System, but are official Metric Nations
+        TDoubleList distances = createDistances();
         List<String> labels = new ArrayList<String>(distances.size());
-        String country = tr.getLocale().getCountry();
         for (int i = 0; i < distances.size(); i++)
         {
             double dist = distances.get(i);
@@ -110,7 +110,8 @@ public class InstructionList implements Iterable<Instruction>
         List<String> res = new ArrayList<String>();
         for (Instruction instruction : instructions)
         {
-            long minutes = Math.round(instruction.getMillis() / 60000.0);
+            long millis = instruction.calcMillis();
+            int minutes = (int) Math.round(millis / 60000.0);
             if (minutes > 60)
             {
                 if (minutes / 60.0 > 24)
@@ -129,7 +130,7 @@ public class InstructionList implements Iterable<Instruction>
                 if (minutes > 0)
                     res.add(String.format("%d %s", minutes, tr.tr("minAbbr")));
                 else
-                    res.add(String.format(Locale.US, "%.1f %s", instruction.getMillis() / 60000.0, tr.tr("minAbbr")));
+                    res.add(String.format(Locale.US, "%.1f %s", millis / 60000.0, tr.tr("minAbbr")));
             }
         }
         return res;
@@ -141,8 +142,8 @@ public class InstructionList implements Iterable<Instruction>
         for (Instruction instruction : instructions)
         {
             List<Double> latLng = new ArrayList<Double>(2);
-            latLng.add(instruction.getLat());
-            latLng.add(instruction.getLon());
+            latLng.add(instruction.getStartLat());
+            latLng.add(instruction.getStartLon());
             res.add(latLng);
         }
         return res;
@@ -198,17 +199,6 @@ public class InstructionList implements Iterable<Instruction>
             res.add(Helper.firstBig(str));
         }
         return res;
-    }
-
-    /**
-     * Sets the last added distance and time to the specified value.
-     */
-    public void updateLastDistanceAndTime( double prevDist, long prevTime )
-    {
-        if (instructions.isEmpty())
-            throw new IllegalStateException("Cannot update last distance with:" + prevDist);
-        instructions.get(instructions.size() - 1).setDistance(prevDist);
-        instructions.get(instructions.size() - 1).setMillis(prevTime);
     }
 
     @Override

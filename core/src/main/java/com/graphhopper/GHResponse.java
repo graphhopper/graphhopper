@@ -169,9 +169,8 @@ public class GHResponse
     }
 
     /**
-     * The first time will be always 0.
-     * <p>
-     * @return
+     * This method returns a list of gpx entries where the time (in millis) is relative to the first
+     * which is 0.
      */
     public List<GPXEntry> createGPXList()
     {
@@ -179,10 +178,14 @@ public class GHResponse
         long sumTime = 0;
         for (Instruction i : getInstructions())
         {
-            double lat = i.getLat();
-            double lon = i.getLon();
-            sumTime += i.getMillis();
-            gpxList.add(new GPXEntry(lat, lon, sumTime));
+            long offset = 0;
+            for (GPXEntry e : i.createGPXList())
+            {
+                offset += e.getMillis();
+                e.setMillis(sumTime + e.getMillis());
+                gpxList.add(e);
+            }
+            sumTime += offset;
         }
         return gpxList;
     }
@@ -190,11 +193,9 @@ public class GHResponse
     /**
      * Creates the GPX Format out of the points.
      * <p/>
-     * TODO make it more reliable and use times from the route as well not only the points.
-     * <p/>
      * @return string to be stored as gpx file
      */
-    public String createGPX( String trackName, long startTimeLong )
+    public String createGPX( String trackName, long startTimeMillis )
     {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:SSZ");
         String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
@@ -203,7 +204,7 @@ public class GHResponse
                 + "<link href='http://graphhopper.com'>"
                 + "<text>GraphHopper GPX Track</text>"
                 + "</link>"
-                + " <time>" + formatter.format(startTimeLong) + "</time>"
+                + " <time>" + formatter.format(startTimeMillis) + "</time>"
                 + "</metadata>";
         StringBuilder track = new StringBuilder(header);
         track.append("<trk><name>").append(trackName).append("</name>");
@@ -211,7 +212,7 @@ public class GHResponse
         for (GPXEntry entry : createGPXList())
         {
             track.append("<trkpt lat='").append(entry.getLat()).append("' lon='").append(entry.getLon()).append("'>");
-            track.append("<time>").append(formatter.format(startTimeLong + entry.getTime())).append("</time>");
+            track.append("<time>").append(formatter.format(startTimeMillis + entry.getMillis())).append("</time>");
             track.append("</trkpt>");
         }
         track.append("</trkseg>");

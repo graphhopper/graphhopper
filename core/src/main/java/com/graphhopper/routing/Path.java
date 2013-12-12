@@ -22,7 +22,9 @@ import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.list.array.TLongArrayList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -338,8 +340,9 @@ public class Path
             double prevLat = graph.getLatitude(tmpNode);
             double prevLon = graph.getLongitude(tmpNode);
             double prevOrientation;
-            double prevDist;
-            long prevTime;
+            TDoubleArrayList distances = new TDoubleArrayList();
+            TLongArrayList times = new TLongArrayList();
+            PointList points = new PointList();
 
             @Override
             public void next( EdgeIteratorState edgeBase, int index )
@@ -367,10 +370,13 @@ public class Path
                 double orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
                 if (name == null)
                 {
+                    // very first instruction
                     name = edgeBase.getName();
-                    prevDist = calcDistance(edgeBase);
-                    prevTime = calcMillis(prevDist, edgeBase.getFlags());
-                    cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, prevDist, prevTime, prevLat, prevLon));
+                    double tmpDist = calcDistance(edgeBase);
+                    distances.add(tmpDist);
+                    times.add(calcMillis(tmpDist, edgeBase.getFlags()));
+                    points.add(prevLat, prevLon);
+                    cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, distances, times, points));
                 } else
                 {
                     double tmpOrientation;
@@ -392,45 +398,52 @@ public class Path
                     String tmpName = edgeBase.getName();
                     if (!name.equals(tmpName))
                     {
-                        cachedWays.updateLastDistanceAndTime(prevDist, prevTime);
-                        prevDist = calcDistance(edgeBase);
-                        prevTime = calcMillis(prevDist, edgeBase.getFlags());
+                        distances = new TDoubleArrayList();
+                        times = new TLongArrayList();
+                        points = new PointList();
+                        double tmpDist = calcDistance(edgeBase);
+                        distances.add(tmpDist);
+                        times.add(calcMillis(tmpDist, edgeBase.getFlags()));
+                        points.add(prevLat, prevLon);
                         name = tmpName;
                         double delta = Math.abs(tmpOrientation - prevOrientation);
+                        int indication;
                         if (delta < 0.2)
                         {
                             // 0.2 ~= 11°
-                            cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, prevDist, prevTime, prevLat, prevLon));
+                            indication = Instruction.CONTINUE_ON_STREET;
 
                         } else if (delta < 0.8)
                         {
                             // 0.8 ~= 40°
                             if (tmpOrientation > prevOrientation)
-                                cachedWays.add(new Instruction(Instruction.TURN_SLIGHT_LEFT, name, prevDist, prevTime, prevLat, prevLon));
+                                indication = Instruction.TURN_SLIGHT_LEFT;
                             else
-                                cachedWays.add(new Instruction(Instruction.TURN_SLIGHT_RIGHT, name, prevDist, prevTime, prevLat, prevLon));
+                                indication = Instruction.TURN_SLIGHT_RIGHT;
 
                         } else if (delta < 1.8)
                         {
                             // 1.8 ~= 103°
                             if (tmpOrientation > prevOrientation)
-                                cachedWays.add(new Instruction(Instruction.TURN_LEFT, name, prevDist, prevTime, prevLat, prevLon));
+                                indication = Instruction.TURN_LEFT;
                             else
-                                cachedWays.add(new Instruction(Instruction.TURN_RIGHT, name, prevDist, prevTime, prevLat, prevLon));
+                                indication = Instruction.TURN_RIGHT;
 
                         } else
                         {
                             if (tmpOrientation > prevOrientation)
-                                cachedWays.add(new Instruction(Instruction.TURN_SHARP_LEFT, name, prevDist, prevTime, prevLat, prevLon));
+                                indication = Instruction.TURN_SHARP_LEFT;
                             else
-                                cachedWays.add(new Instruction(Instruction.TURN_SHARP_RIGHT, name, prevDist, prevTime, prevLat, prevLon));
+                                indication = Instruction.TURN_SHARP_RIGHT;
 
                         }
+                        
+                        cachedWays.add(new Instruction(indication, name, distances, times, points));
                     } else
                     {
                         double tmpDist = calcDistance(edgeBase);
-                        prevDist += tmpDist;
-                        prevTime += calcMillis(tmpDist, edgeBase.getFlags());
+                        distances.add(tmpDist);
+                        times.add(calcMillis(tmpDist, edgeBase.getFlags()));
                     }
                 }
 
@@ -439,11 +452,7 @@ public class Path
                 if (wayGeo.isEmpty())
                     prevOrientation = orientation;
                 else
-                    prevOrientation = Math.atan2(baseLat - wayGeo.getLatitude(0), baseLon - wayGeo.getLongitude(0));
-
-                boolean lastEdgeIter = index == edgeIds.size() - 1;
-                if (lastEdgeIter)
-                    cachedWays.updateLastDistanceAndTime(prevDist, prevTime);
+                    prevOrientation = Math.atan2(baseLat - wayGeo.getLatitude(0), baseLon - wayGeo.getLongitude(0));                
             }
         });
 

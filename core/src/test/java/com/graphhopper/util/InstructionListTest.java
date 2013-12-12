@@ -98,7 +98,7 @@ public class InstructionListTest
                 "Links abbiegen auf 7-8", "Geradeaus auf 8-9", "Rechts abbiegen"),
                 wayList.createDescription(trMap.getWithFallBack(Locale.GERMAN)));
 
-        TDoubleList distList = wayList.getDistances();
+        TDoubleList distList = wayList.createDistances();
         final DoubleRef dr = new DoubleRef(0);
         distList.forEach(new TDoubleProcedure()
         {
@@ -217,25 +217,28 @@ public class InstructionListTest
         long sumOfTimes = 0;
         for (Instruction instruction : wayList)
         {
-            sumOfTimes += instruction.getMillis();
+            for (GPXEntry e : instruction.createGPXList())
+            {
+                sumOfTimes += e.getMillis();
+            }
         }
         assertEquals(p.getMillis(), sumOfTimes);
 
         assertEquals(Instruction.CONTINUE_ON_STREET, wayList.get(0).getIndication());
-        assertEquals(15, wayList.get(0).getLat(), 1e-3);
-        assertEquals(10, wayList.get(0).getLon(), 1e-3);
+        assertEquals(15, wayList.get(0).getStartLat(), 1e-3);
+        assertEquals(10, wayList.get(0).getStartLon(), 1e-3);
 
         assertEquals(Instruction.TURN_LEFT, wayList.get(1).getIndication());
-        assertEquals(16, wayList.get(1).getLat(), 1e-3);
-        assertEquals(10, wayList.get(1).getLon(), 1e-3);
+        assertEquals(16, wayList.get(1).getStartLat(), 1e-3);
+        assertEquals(10, wayList.get(1).getStartLon(), 1e-3);
 
         assertEquals(Instruction.TURN_RIGHT, wayList.get(2).getIndication());
-        assertEquals(16, wayList.get(2).getLat(), 1e-3);
-        assertEquals(9, wayList.get(2).getLon(), 1e-3);
+        assertEquals(16, wayList.get(2).getStartLat(), 1e-3);
+        assertEquals(9, wayList.get(2).getStartLon(), 1e-3);
 
         assertEquals(Instruction.TURN_RIGHT, wayList.get(3).getIndication());
-        assertEquals(17, wayList.get(3).getLat(), 1e-3);
-        assertEquals(9, wayList.get(3).getLon(), 1e-3);
+        assertEquals(17, wayList.get(3).getStartLat(), 1e-3);
+        assertEquals(9, wayList.get(3).getStartLon(), 1e-3);
     }
 
     private long flagsForSpeed( EncodingManager encodingManager, int speedKmPerHour )

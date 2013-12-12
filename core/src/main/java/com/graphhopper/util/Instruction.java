@@ -1,5 +1,10 @@
 package com.graphhopper.util;
 
+import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TLongArrayList;
+import java.util.ArrayList;
+import java.util.List;
+
 public class Instruction
 {
     public static final int TURN_SHARP_LEFT = -3;
@@ -9,21 +14,33 @@ public class Instruction
     public static final int TURN_SLIGHT_RIGHT = 1;
     public static final int TURN_RIGHT = 2;
     public static final int TURN_SHARP_RIGHT = 3;
-    private int indication;
-    private String name;
-    private double distance;
-    private long millis;
-    private double lat;
-    private double lon;
+    private final int indication;
+    private final String name;
+    private final TDoubleArrayList distances;
+    private final TLongArrayList times;
+    private final PointList points;
 
-    public Instruction( int indication, String name, double distance, long millis, double lat, double lon )
+    /**
+     * The points, distances and times have exactly the same count. The last point of this
+     * instruction is not duplicated here and should be in the next one. The first distance and time
+     * entries are measured between the first point and the second one etc.
+     */
+    public Instruction( int indication, String name, TDoubleArrayList distances, TLongArrayList times, PointList pl )
     {
         this.indication = indication;
         this.name = name;
-        this.distance = distance;
-        this.millis = millis;
-        this.lat = lat;
-        this.lon = lon;
+        this.distances = distances;
+        this.times = times;
+        this.points = pl;
+
+        if (distances.isEmpty())
+            throw new IllegalStateException("Distances cannot be empty");
+
+        if (times.size() != distances.size())
+            throw new IllegalStateException("Distances and times must have same size");
+
+        if (times.size() != points.size())
+            throw new IllegalStateException("Points and times must have same size");
     }
 
     public int getIndication()
@@ -42,43 +59,48 @@ public class Instruction
     /**
      * Distance in meter until no new instruction
      */
-    public double getDistance()
+    public double calcDistance()
     {
-        return distance;
+        return distances.sum();
     }
 
     /**
      * Time in millis until no new instruction
      */
-    public long getMillis()
+    public long calcMillis()
     {
-        return millis;
-    }
-
-    public void setDistance( double distance )
-    {
-        this.distance = distance;
-    }
-
-    public void setMillis( long time )
-    {
-        this.millis = time;
+        return times.sum();
     }
 
     /**
      * Latitude of the location where this instruction should take place.
      */
-    public double getLat()
+    public double getStartLat()
     {
-        return lat;
+        return points.getLatitude(0);
     }
 
     /**
      * Longitude of the location where this instruction should take place.
      */
-    public double getLon()
+    public double getStartLon()
     {
-        return lon;
+        return points.getLongitude(0);
+    }
+
+    /**
+     * This method returns a list of gpx entries where the time (in millis) is relative to the first
+     * which is 0. It does NOT contain the last point which is the first of the next one.
+     */
+    public List<GPXEntry> createGPXList()
+    {
+        int len = times.size();
+        List<GPXEntry> list = new ArrayList<GPXEntry>(len);
+        for (int i = 0; i < len; i++)
+        {
+            list.add(new GPXEntry(points.getLatitude(i), points.getLongitude(i), times.get(i)));
+        }
+        return list;
     }
 
     @Override
@@ -90,11 +112,10 @@ public class Instruction
         sb.append(',');
         sb.append(name);
         sb.append(',');
-        sb.append(distance);
+        sb.append(distances);
         sb.append(',');
-        sb.append(millis);
+        sb.append(times);
         sb.append(')');
-
         return sb.toString();
     }
 }
