@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.util.Helper;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -146,7 +147,13 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long handleWayTags( long allowed, OSMWay way )
+    public int handleRelationTags( OSMRelation relation )
+    {
+        return (0);
+    }
+        
+    @Override
+    public long handleWayTags( long allowed, OSMWay way, int relationcode)
     {
         if ((allowed & acceptBit) == 0)
             return 0;

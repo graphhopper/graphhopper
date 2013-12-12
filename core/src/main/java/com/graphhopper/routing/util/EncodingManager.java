@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.OSMRelation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -160,19 +161,29 @@ public class EncodingManager
 
         return includeWay;
     }
-
+    
+    public int handleRelationTags( OSMRelation relation )
+    {
+        int flags = 0;
+        for (int i = 0; i < encoderCount; i++)
+        {
+            flags |= encoders.get(i).handleRelationTags(relation);
+        }
+        
+        return flags;
+    }
     /**
      * Processes way properties of different kind to determine speed and direction. Properties are
      * directly encoded in 4-Byte flags.
      * <p/>
      * @return the encoded flags
      */
-    public long handleWayTags( int includeWay, OSMWay way )
+    public long handleWayTags( int includeWay, OSMWay way, int relationcode)
     {
         long flags = 0;
         for (int i = 0; i < encoderCount; i++)
         {
-            flags |= encoders.get(i).handleWayTags(includeWay, way);
+            flags |= encoders.get(i).handleWayTags(includeWay, way, relationcode);
         }
 
         return flags;

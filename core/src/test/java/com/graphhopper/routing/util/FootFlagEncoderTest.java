@@ -155,16 +155,16 @@ public class FootFlagEncoderTest
         OSMWay way = new OSMWay(1, map);
 
         map.put("highway", "motorway");
-        long flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        long flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way, 0);
         assertEquals(0, flags);
 
         map.put("sidewalk", "yes");
-        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way, 0);
         assertEquals(5, footEncoder.getSpeed(flags));
 
         map.clear();
         map.put("highway", "track");
-        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way, 0);
         assertEquals(5, footEncoder.getSpeed(flags));
     }
 
@@ -175,12 +175,12 @@ public class FootFlagEncoderTest
         OSMWay way = new OSMWay(1, map);
         map.put("highway", "track");
         map.put("sac_scale", "hiking");
-        long flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        long flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way, 0);
         assertEquals(FootFlagEncoder.MEAN, footEncoder.getSpeed(flags));
 
         map.put("highway", "track");
         map.put("sac_scale", "mountain_hiking");
-        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way, 0);
         assertEquals(FootFlagEncoder.SLOW, footEncoder.getSpeed(flags));
     }
 }

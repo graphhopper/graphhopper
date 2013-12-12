@@ -30,19 +30,20 @@ import javax.xml.stream.XMLStreamException;
 
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * This class parses an OSM xml or pbf file and creates a graph from it. It does so in a two phase
- * parsing process in order to reduce memory usage compared to a single parsing processing.
+ * parsing processes in order to reduce memory usage compared to a single parsing processing.
  * <p/>
- * 1. Reads ways from OSM file and stores all associated node ids in osmNodeIdToIndexMap. If a node
+ * 1. a) Reads ways from OSM file and stores all associated node ids in osmNodeIdToIndexMap. If a node
  * occurs once it is a pillar node and if more it is a tower node, otherwise osmNodeIdToIndexMap
  * returns EMPTY.
+ *    b)Reads relations from OSM file, and performs a check for a route relation. In case that the 
+ *    relation is a route relation, it stores specific relation attributes required for routing 
+ *    into osmWayIdToRouteAttributeMap for all the ways of the relation.
  * <p/>
  * 2.a) Reads nodes from OSM file and stores lat+lon information either into the intermediate
  * datastructure for the pillar nodes (pillarLats/pillarLons) or, if a tower node, directly into the
@@ -83,6 +84,7 @@ public class OSMReader
     // remember how many times a node was used to identify tower nodes
     private LongIntMap osmNodeIdToIndexMap;
     private LongIntMap osmNodeIdToBarrierMap;
+    private LongIntMap osmWayIdToRouteAttributeMap;
     private final TLongList barrierNodeIDs = new TLongArrayList();
     protected DataAccess pillarLats;
     protected DataAccess pillarLons;
@@ -101,6 +103,7 @@ public class OSMReader
 
         osmNodeIdToBarrierMap = new GHLongIntBTree(200);
         osmNodeIdToIndexMap = new GHLongIntBTree(200);
+        osmWayIdToRouteAttributeMap = new GHLongIntBTree(200);
 
         dir = graphStorage.getDirectory();
         pillarLats = dir.find("tmpLatitudes");
@@ -137,7 +140,8 @@ public class OSMReader
         {
             in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
 
-            long tmpCounter = 1;
+            long tmpWayCounter = 1;
+            long tmpRelCounter = 1;
 
             OSMElement item;
             while ((item = in.getNext()) != null)
@@ -155,13 +159,29 @@ public class OSMReader
                             prepareHighwayNode(wayNodes.get(index));
                         }
 
-                        if (++tmpCounter % 500000 == 0)
+                        if (++tmpWayCounter % 500000 == 0)
                         {
-                            logger.info(nf(tmpCounter) + " (preprocess), osmIdMap:"
+                            logger.info(nf(tmpWayCounter) + " (preprocess), osmIdMap:"
                                     + nf(getNodeMap().getSize()) + " (" + getNodeMap().getMemoryUsage() + "MB) "
                                     + Helper.getMemInfo());
                         }
                     }
+                }
+                if (item.isType(OSMElement.RELATION))
+                {
+                    final OSMRelation relation = (OSMRelation) item;
+                    if (!relation.isMetaRelation() && relation.hasTag("type", "route"))
+                    {
+                         prepareWaysWithRelationInfo(relation);
+                    }
+                    
+                    if (++tmpRelCounter % 50000 == 0)
+                    {
+                          logger.info(nf(tmpRelCounter) + " (preprocess), osmWayMap:"
+                                  + nf(getWayMap().getSize()) + " (" + getWayMap().getMemoryUsage() + "MB) "
+                                    + Helper.getMemInfo());
+                    }
+                    
                 }
             }
         } catch (Exception ex)
@@ -230,7 +250,11 @@ public class OSMReader
                             logger.info(nf(counter) + ", now parsing ways");
                             wayStart = counter;
                         }
-                        processWay((OSMWay) item);
+                        //logger.info( "Way:" +item.getId() + " " + item.getTag("name")+" WayMapValue=" + getWayMap().get((item.getId())));
+                        processWay((OSMWay) item, getWayMap().get((item.getId())));
+                        break;
+                   case OSMElement.RELATION:
+                        processRelation((OSMRelation)  item);
                         break;
                 }
                 if (++counter % 5000000 == 0)
@@ -257,7 +281,7 @@ public class OSMReader
     /**
      * Process properties, encode flags and create edges for the way.
      */
-    public void processWay( OSMWay way ) throws XMLStreamException
+    public void processWay( OSMWay way, int relationcode) throws XMLStreamException
     {
         if (way.getNodes().size() < 2)
             return;
@@ -286,7 +310,7 @@ public class OSMReader
             }
         }
 
-        long flags = encodingManager.handleWayTags(includeWay, way);
+        long flags = encodingManager.handleWayTags(includeWay, way, relationcode);
         if (flags == 0)
             return;
 
@@ -374,6 +398,12 @@ public class OSMReader
         }
     }
 
+    public void processRelation( OSMRelation relation ) throws XMLStreamException            
+    {
+        if (relation.isMetaRelation())
+           return;
+    }
+    
     // TODO remove this ugly stuff via better preparsing phase! E.g. putting every tags etc into a helper file!
     private double getTmpLatitude( int id )
     {
@@ -465,6 +495,50 @@ public class OSMReader
             nextPillarId++;
         }
         return true;
+    }
+       
+    
+    public void prepareWaysWithRelationInfo( OSMRelation relation )
+    {
+        int s = relation.getMembers().size();
+        int newWayRelationCode = 0;
+        if ( relation.hasTag("route", "bicycle") || relation.hasTag("route", "mtb") )
+        {
+            //logger.info(relation.tagsToString());
+            newWayRelationCode = encodingManager.handleRelationTags(relation);
+        }
+        //logger.info(relation.tagsToString() + " size=" + nf(s) + " newWayRelationCode=" + newWayRelationCode );
+        for (int index = 0; index < s; index++)
+        {
+            OSMRelation.Member member= relation.getMembers().get(index);
+            if (member.type() == OSMRelation.Member.WAY)
+            {
+                long osmId = member.ref();
+                int tmpRelationCode = getWayMap().get(osmId);
+                if (tmpRelationCode == EMPTY)
+                {
+                    // osmId is used exactly once
+                    getWayMap().put(osmId, newWayRelationCode ); // PILLAR_NODE);
+                } else if (tmpRelationCode > EMPTY)
+                {
+                    // Check if our new code is better comparated to the the last occured before
+                    if (newWayRelationCode>tmpRelationCode)
+                    {
+                       getWayMap().put(osmId, newWayRelationCode ); // overwrite with the higher code);
+                    }
+                    /*                    
+                    else
+                    {
+                        logger.info( relation.tagsToString() + "Kept old higher relation code " + tmpRelationCode + "on way with ID=" + osmId + " would have been overwritten with " + newWayRelationCode );
+                    } 
+                    */
+                }
+                else
+                {
+                    // tmpIndex is already negative (already tower node)
+                }
+             }
+        }
     }
 
     public void prepareHighwayNode( long osmId )
@@ -664,6 +738,7 @@ public class OSMReader
         pillarLats = null;
         osmNodeIdToIndexMap = null;
         osmNodeIdToBarrierMap = null;
+        osmWayIdToRouteAttributeMap = null;
     }
 
     /**
@@ -726,6 +801,11 @@ public class OSMReader
         return osmNodeIdToIndexMap;
     }
 
+    private LongIntMap getWayMap()
+    {
+        return osmWayIdToRouteAttributeMap;
+    }
+    
     /**
      * Specify the type of the path calculation (car, bike, ...).
      */
@@ -759,6 +839,8 @@ public class OSMReader
                 + " nodes: " + graphStorage.getNodes() + ", osmIdMap.size:" + getNodeMap().getSize()
                 + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB"
                 + ", osmIdMap.toString:" + getNodeMap() + " "
+                + ", osmWayMap:" + getWayMap().getMemoryUsage() + "MB"
+                + ", osmWayMap.toString:" + getWayMap() + " "
                 + Helper.getMemInfo());
     }
 

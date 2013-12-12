@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.Helper;
 
@@ -139,7 +140,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
 
         return shift + 2;
     }
-
+    
+    /**
+     * Analyze the properties of a relation and create the routing flags for the second read step
+     * <p/>
+     */
+    public abstract int handleRelationTags( OSMRelation relation );
+    
     /**
      * Decide whether a way is routable for a given mode of travel
      * <p/>
@@ -147,13 +154,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
      * @return the assigned bit of the mode of travel if it is accepted or 0 for not accepted
      */
     public abstract long isAllowed( OSMWay way );
-
+    
     /**
      * Analyze properties of a way and create the routing flags
      * <p/>
      * @param allowed
      */
-    public abstract long handleWayTags( long allowed, OSMWay way );
+    public abstract long handleWayTags( long allowed, OSMWay way, int relationcode);
 
     /**
      * Parse tags on nodes, looking for barriers.

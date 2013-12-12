@@ -41,10 +41,10 @@ public class BikeFlagEncoderTest
         assertEquals(10, encoder.getSpeed(result));
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "primary");
-        assertEquals(18, encoder.getSpeed(way));
+        assertEquals(16, encoder.getSpeed(way));
 
         way.setTag("surface", "paved");
-        assertEquals(16, encoder.getSpeed(way));
+        assertEquals(25, encoder.getSpeed(way));
     }
 
     @Test
@@ -57,14 +57,27 @@ public class BikeFlagEncoderTest
         assertFalse(encoder.isAllowed(way) > 0);
 
         map.put("highway", "footway");
+        map.put("bicycle", "no");
         assertFalse(encoder.isAllowed(way) > 0);
+        
+        map.put("highway", "footway");
+        map.put("bicycle", "yes");
+        assertTrue(encoder.isAllowed(way) > 0);
 
+        map.put("bicycle", "yes");
         map.put("highway", "cycleway");
         assertTrue(encoder.isAllowed(way) > 0);
 
+        map.clear();
         map.put("highway", "path");
         assertFalse(encoder.isAllowed(way) > 0);
 
+        map.put("highway", "path");
+        map.put("bicycle", "yes");
+        assertTrue(encoder.isAllowed(way) > 0);
+        map.clear();
+
+        map.put("highway", "path");
         map.put("foot", "official");
         assertFalse(encoder.isAllowed(way) > 0);
 
