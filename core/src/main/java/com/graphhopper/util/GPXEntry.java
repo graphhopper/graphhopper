@@ -18,19 +18,18 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.util.shapes.GHPoint;
+
 /**
  * @author Peter Karich
  */
-public class GPXEntry
+public class GPXEntry extends GHPoint
 {
-    private final double lat;
-    private final double lon;
     private long time;
 
     public GPXEntry( double lat, double lon, long millis )
     {
-        this.lat = lat;
-        this.lon = lon;
+        super(lat, lon);
         this.time = millis;
     }
 
@@ -47,13 +46,9 @@ public class GPXEntry
         this.time = time;
     }
 
-    public double getLon()
+    @Override
+    public String toString()
     {
-        return lon;
-    }
-
-    public double getLat()
-    {
-        return lat;
+        return super.toString() + ", " + time;
     }
 }

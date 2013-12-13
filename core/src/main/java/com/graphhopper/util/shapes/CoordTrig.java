@@ -39,6 +39,16 @@ public class CoordTrig<T>
         this.lon = lon;
     }
 
+    public double getLon()
+    {
+        return lon;
+    }
+
+    public double getLat()
+    {
+        return lat;
+    }
+
     public boolean isValid()
     {
         return lat != Double.NaN && lon != Double.NaN;

@@ -354,8 +354,8 @@ public class Path
                 double baseLat = graph.getLatitude(baseNode);
                 double baseLon = graph.getLongitude(baseNode);
                 double latitude, longitude;
-                PointList wayGeo = edge.fetchWayGeometry(0);
-                if (wayGeo.isEmpty())
+                PointList wayGeo = edge.fetchWayGeometry(3);
+                if (wayGeo.getSize() <= 2)
                 {
                     latitude = baseLat;
                     longitude = baseLon;
@@ -364,8 +364,8 @@ public class Path
                     int adjNode = edge.getAdjNode();
                     prevLat = graph.getLatitude(adjNode);
                     prevLon = graph.getLongitude(adjNode);
-                    latitude = wayGeo.getLatitude(wayGeo.getSize() - 1);
-                    longitude = wayGeo.getLongitude(wayGeo.getSize() - 1);
+                    latitude = wayGeo.getLatitude(wayGeo.getSize() - 2);
+                    longitude = wayGeo.getLongitude(wayGeo.getSize() - 2);
                 }
 
                 double orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
@@ -373,7 +373,7 @@ public class Path
                 {
                     // very first instruction
                     name = edge.getName();
-                    add(edge);
+                    add(edge, wayGeo);
                     cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, distances, times, points));
                 } else
                 {
@@ -399,7 +399,7 @@ public class Path
                         distances = new TDoubleArrayList();
                         times = new TLongArrayList();
                         points = new PointList();
-                        add(edge);
+                        add(edge, wayGeo);
                         name = tmpName;
                         double delta = Math.abs(tmpOrientation - prevOrientation);
                         int indication;
@@ -436,28 +436,28 @@ public class Path
                         cachedWays.add(new Instruction(indication, name, distances, times, points));
                     } else
                     {
-                        add(edge);
+                        add(edge, wayGeo);
                     }
                 }
 
                 prevLat = baseLat;
                 prevLon = baseLon;
-                if (wayGeo.isEmpty())
+                if (wayGeo.getSize() <= 2)
                     prevOrientation = orientation;
                 else
-                    prevOrientation = Math.atan2(baseLat - wayGeo.getLatitude(0), baseLon - wayGeo.getLongitude(0));
+                    prevOrientation = Math.atan2(baseLat - wayGeo.getLatitude(1), baseLon - wayGeo.getLongitude(1));
 
                 boolean lastEdge = index == edgeIds.size() - 1;
                 if (lastEdge)
                     cachedWays.add(new FinishInstruction(prevLat, prevLon));
             }                       
 
-            private void add( EdgeIteratorState edge )
+            private void add( EdgeIteratorState edge, PointList pl )
             {
                 // add points in opposite direction as adj node is previous
                 // skip base point => 'i > 0'
-                PointList pl = edge.fetchWayGeometry(3);
                 int len = pl.size() - 1;
+                long flags = edge.getFlags();
                 for (int i = len; i > 0; i--)
                 {
                     double lat = pl.getLatitude(i);
@@ -466,7 +466,7 @@ public class Path
                     double nextLon = pl.getLongitude(i - 1);
                     double tmpDist = distCalc.calcDist(lat, lon, nextLat, nextLon);
                     distances.add(tmpDist);
-                    times.add(calcMillis(tmpDist, edge.getFlags()));
+                    times.add(calcMillis(tmpDist, flags));
                     points.add(lat, lon);
                 }
             }
