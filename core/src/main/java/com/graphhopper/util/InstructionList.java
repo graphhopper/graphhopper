@@ -261,7 +261,7 @@ public class InstructionList implements Iterable<Instruction>
                 + "<link href='http://graphhopper.com'>"
                 + "<text>GraphHopper GPX</text>"
                 + "</link>"
-                + " <time>" + formatter.format(startTimeMillis) + "</time>"
+                + " <time>" + tzHack(formatter.format(startTimeMillis)) + "</time>"
                 + "</metadata>";
         StringBuilder track = new StringBuilder(header);
         track.append("<trk><name>").append(trackName).append("</name>");
