@@ -256,12 +256,12 @@ public class InstructionList implements Iterable<Instruction>
 
         formatter.setTimeZone(tz);
         String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
-                + "<gpx xmlns='http://www.topografix.com/GPX/1/1' >"
+                + "<gpx xmlns='http://www.topografix.com/GPX/1/1' creator='Graphhopper' version='1.1' >"
                 + "<metadata>"
                 + "<link href='http://graphhopper.com'>"
                 + "<text>GraphHopper GPX</text>"
                 + "</link>"
-                + " <time>" + tzHack(formatter.format(startTimeMillis)) + "</time>"
+                + "<time>" + tzHack(formatter.format(startTimeMillis)) + "</time>"
                 + "</metadata>";
         StringBuilder track = new StringBuilder(header);
         track.append("<trk><name>").append(trackName).append("</name>");
