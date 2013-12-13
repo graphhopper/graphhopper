@@ -165,8 +165,9 @@ public class GraphHopperServlet extends GHBaseServlet
         res.setCharacterEncoding("UTF-8");
         res.setContentType("application/xml");
         String trackName = getParam(req, "track", "GraphHopper Track");
+        String timeZone = getParam(req, "timezone", "GMT");
         long time = getLongParam(req, "millis", System.currentTimeMillis());
-        writeResponse(res, rsp.getInstructions().createGPX(trackName, time));
+        writeResponse(res, rsp.getInstructions().createGPX(trackName, time, timeZone));
     }
 
     private void writeJson( HttpServletRequest req, HttpServletResponse res,

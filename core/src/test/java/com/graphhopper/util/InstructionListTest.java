@@ -30,6 +30,7 @@ import gnu.trove.list.array.TLongArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -235,6 +236,9 @@ public class InstructionListTest
         assertEquals(Instruction.TURN_RIGHT, wayList.get(3).getIndication());
         assertEquals(15.2, wayList.get(3).getStartLat(), 1e-3);
         assertEquals(9.9, wayList.get(3).getStartLon(), 1e-3);
+        
+        String gpxStr = wayList.createGPX("test", 0, "GMT+1");
+        assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T01:00:00+01:00</time></trkpt>"));
     }
 
     @Test

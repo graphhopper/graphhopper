@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * List of instruction.
@@ -246,9 +247,14 @@ public class InstructionList implements Iterable<Instruction>
      * <p/>
      * @return string to be stored as gpx file
      */
-    public String createGPX( String trackName, long startTimeMillis )
+    public String createGPX( String trackName, long startTimeMillis, String timeZoneId )
     {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:SSZ");
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+        TimeZone tz = TimeZone.getDefault();
+        if (!Helper.isEmpty(timeZoneId))
+            tz = TimeZone.getTimeZone(timeZoneId);
+
+        formatter.setTimeZone(tz);
         String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
                 + "<gpx xmlns='http://www.topografix.com/GPX/1/1' >"
                 + "<metadata>"
@@ -263,11 +269,19 @@ public class InstructionList implements Iterable<Instruction>
         for (GPXEntry entry : createGPXList())
         {
             track.append("<trkpt lat='").append(entry.getLat()).append("' lon='").append(entry.getLon()).append("'>");
-            track.append("<time>").append(formatter.format(startTimeMillis + entry.getMillis())).append("</time>");
+            track.append("<time>").append(tzHack(formatter.format(startTimeMillis + entry.getMillis()))).append("</time>");
             track.append("</trkpt>");
         }
         track.append("</trkseg>");
         track.append("</trk></gpx>");
         return track.toString().replaceAll("\\'", "\"");
+    }
+
+    /**
+     * Hack to form valid timezone ala +01:00 instead +0100
+     */
+    private static String tzHack( String str )
+    {
+        return str.substring(0, str.length() - 2) + ":" + str.substring(str.length() - 2);
     }
 }
