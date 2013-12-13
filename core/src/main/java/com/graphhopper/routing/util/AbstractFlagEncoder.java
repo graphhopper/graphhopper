@@ -39,24 +39,30 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractFlagEncoder implements FlagEncoder
 {
     private final static Logger logger = LoggerFactory.getLogger(AbstractFlagEncoder.class);
+    private long bitMask = 0;
     protected long forwardBit = 0;
     protected long backwardBit = 0;
-    protected long directionBitMask = 0;
+    protected long directionBitMask = 0;    
     protected EncodedValue speedEncoder;
     // bit to signal that way is accepted
     protected long acceptBit = 0;
     protected long ferryBit = 0;
     // restriction definitions
     protected String[] restrictions;
+    protected HashSet<String> intended = new HashSet<String>();
     protected HashSet<String> restrictedValues = new HashSet<String>(5);
     protected HashSet<String> ferries = new HashSet<String>(5);
     protected HashSet<String> oneways = new HashSet<String>(5);
     protected HashSet<String> acceptedRailways = new HashSet<String>(5);
     protected HashSet<String> absoluteBarriers = new HashSet<String>(5);
     protected HashSet<String> potentialBarriers = new HashSet<String>(5);
+    protected int speedBits;
+    protected int speedFactor;
 
-    public AbstractFlagEncoder()
+    public AbstractFlagEncoder( int speedBits, int speedFactor )
     {
+        this.speedBits = speedBits;
+        this.speedFactor = speedFactor;
         oneways.add("yes");
         oneways.add("true");
         oneways.add("1");
@@ -68,58 +74,18 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
         acceptedRailways.add("tram");
     }
 
-    /**
-     * @return the speed in km/h
-     */
-    static int parseSpeed( String str )
+    public void setSpeedFactor( int factor )
     {
-        if (Helper.isEmpty(str))
-        {
-            return -1;
-        }
+        this.speedFactor = factor;
+    }
 
-        try
-        {
-            int val;
-            // see https://en.wikipedia.org/wiki/Knot_%28unit%29#Definitions
-            int mpInteger = str.indexOf("mp");
-            if (mpInteger > 0)
-            {
-                str = str.substring(0, mpInteger).trim();
-                val = Integer.parseInt(str);
-                return (int) Math.round(val * DistanceCalcEarth.KM_MILE);
-            }
-
-            int knotInteger = str.indexOf("knots");
-            if (knotInteger > 0)
-            {
-                str = str.substring(0, knotInteger).trim();
-                val = Integer.parseInt(str);
-                return (int) Math.round(val * 1.852);
-            }
-
-            int kmInteger = str.indexOf("km");
-            if (kmInteger > 0)
-            {
-                str = str.substring(0, kmInteger).trim();
-            } else
-            {
-                kmInteger = str.indexOf("kph");
-                if (kmInteger > 0)
-                {
-                    str = str.substring(0, kmInteger).trim();
-                }
-            }
-
-            return Integer.parseInt(str);
-        } catch (Exception ex)
-        {
-            return -1;
-        }
+    public void setSpeedBits( int bits )
+    {
+        this.speedBits = bits;
     }
 
     /**
-     * Define 2 reserved bits for routing and internal bits for parsing.
+     * Define 2 reserved speedBits for routing and internal speedBits for parsing.
      * <p/>
      * @param index
      * @param shift bit offset for the first bit used by this encoder
@@ -127,7 +93,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
      */
     public int defineBits( int index, int shift )
     {
-        // define the first 2 bits in flags for routing
+        // define the first 2 speedBits in flags for routing
         forwardBit = 1 << shift;
         backwardBit = 2 << shift;
         directionBitMask = 3 << shift;
@@ -137,6 +103,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
         acceptBit = 1 << index;
         ferryBit = 2 << index;
 
+        // forward and backward bit:
         return shift + 2;
     }
 
@@ -156,13 +123,22 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     public abstract long handleWayTags( long allowed, OSMWay way );
 
     /**
-     * Parse tags on nodes, looking for barriers.
+     * Parse tags on nodes. Node tags can add to speed (like traffic_signals) where the value is
+     * strict negative or blocks access (like a barrier), then the value is strict positive.
      */
-    public abstract long analyzeNodeTags( OSMNode node );
-
-    public boolean hasAccepted( int acceptedValue )
+    public long analyzeNodeTags( OSMNode node )
     {
-        return (acceptedValue & acceptBit) > 0;
+        // movable barriers block if they are not marked as passable
+        if (node.hasTag("barrier", potentialBarriers)
+                && !node.hasTag(restrictions, intended)
+                && !node.hasTag("locked", "no"))
+            return directionBitMask;
+
+        if ((node.hasTag("highway", "ford") || node.hasTag("ford"))
+                && !node.hasTag(restrictions, intended))
+            return directionBitMask;
+
+        return 0;
     }
 
     @Override
@@ -233,7 +209,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     @Override
     public int getMaxSpeed()
     {
-        return (int) speedEncoder.getDefaultMaxValue();
+        return (int) speedEncoder.getMaxValue();
     }
 
     @Override
@@ -264,6 +240,56 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     public String getWayInfo( OSMWay way )
     {
         return "";
+    }
+
+    /**
+     * @return the speed in km/h
+     */
+    static int parseSpeed( String str )
+    {
+        if (Helper.isEmpty(str))
+        {
+            return -1;
+        }
+
+        try
+        {
+            int val;
+            // see https://en.wikipedia.org/wiki/Knot_%28unit%29#Definitions
+            int mpInteger = str.indexOf("mp");
+            if (mpInteger > 0)
+            {
+                str = str.substring(0, mpInteger).trim();
+                val = Integer.parseInt(str);
+                return (int) Math.round(val * DistanceCalcEarth.KM_MILE);
+            }
+
+            int knotInteger = str.indexOf("knots");
+            if (knotInteger > 0)
+            {
+                str = str.substring(0, knotInteger).trim();
+                val = Integer.parseInt(str);
+                return (int) Math.round(val * 1.852);
+            }
+
+            int kmInteger = str.indexOf("km");
+            if (kmInteger > 0)
+            {
+                str = str.substring(0, kmInteger).trim();
+            } else
+            {
+                kmInteger = str.indexOf("kph");
+                if (kmInteger > 0)
+                {
+                    str = str.substring(0, kmInteger).trim();
+                }
+            }
+
+            return Integer.parseInt(str);
+        } catch (Exception ex)
+        {
+            return -1;
+        }
     }
 
     /**
@@ -341,4 +367,20 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
             return speedEncoder.setValue(0, shortTripsSpeed);
         }
     }
+
+    public long applyNodeFlags( long wayFlags, long nodeFlags )
+    {
+        return wayFlags;
+    }
+
+    void setBitMask( int usedBits, int shift )
+    {
+        bitMask = (1L << usedBits) - 1;
+        bitMask <<= shift;
+    }
+
+    long getBitMask()
+    {
+        return bitMask;
+    }        
 }

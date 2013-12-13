@@ -32,13 +32,14 @@ import java.util.Set;
  */
 public class CarFlagEncoder extends AbstractFlagEncoder
 {
-    private HashSet<String> intended = new HashSet<String>();
-
-    /**
-     * Should be only instantied via EncodingManager
-     */
     protected CarFlagEncoder()
     {
+        this(5, 5);
+    }
+
+    protected CarFlagEncoder( int speedBits, int speedFactor )
+    {
+        super(speedBits, speedFactor);
         restrictions = new String[]
         {
             "motorcar", "motor_vehicle", "vehicle", "access"
@@ -65,22 +66,14 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     }
 
     /**
-     * Define the encoding flags for car
-     * <p/>
-     * @param index
-     * @param shift bit offset for the first bit used by this encoder
-     * @return adjusted shift pointing behind the last used field
+     * Define the place of speedBits in the flags variable for car.
      */
     @Override
     public int defineBits( int index, int shift )
     {
-        // first two bits are reserved for route handling in superclass
         shift = super.defineBits(index, shift);
-
-        speedEncoder = new EncodedValue("Speed", shift, 5, 5, SPEED.get("secondary"), SPEED.get("motorway"));
-
-        // speed used 5 bits
-        return shift + 5;
+        speedEncoder = new EncodedValue("Speed", shift, speedBits, speedFactor, SPEED.get("secondary"), SPEED.get("motorway"));
+        return shift + speedBits;
     }
 
     int getSpeed( OSMWay way )
@@ -171,8 +164,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
             encoded = speedEncoder.setValue(0, speed);
 
-            // usually used with a node, this does not work as intended
-            // if( "toll_booth".equals( osmProperties.get( "barrier" ) ) )
             if (way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))
             {
                 if (way.hasTag("oneway", "-1"))
@@ -194,28 +185,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     @Override
     public long analyzeNodeTags( OSMNode node )
     {
-
         // absolute barriers always block
         if (node.hasTag("barrier", absoluteBarriers))
-        {
             return directionBitMask;
-        }
 
-        // movable barriers block if they are not marked as passable
-        if (node.hasTag("barrier", potentialBarriers)
-                && !node.hasTag(restrictions, intended)
-                && !node.hasTag("locked", "no"))
-        {
-            return directionBitMask;
-        }
-
-        if ((node.hasTag("highway", "ford") || node.hasTag("ford"))
-                && !node.hasTag(restrictions, intended))
-        {
-            return directionBitMask;
-        }
-
-        return 0;
+        return super.analyzeNodeTags(node);
     }
 
     @Override
@@ -270,7 +244,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     };
 
     private static final Set<String> BAD_SURFACE = new HashSet<String>()
-    {
+    {   
         {
             add("cobblestone");
             add("grass_paver");
@@ -282,13 +256,14 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             add("grass");
         }
     };
+    
     /**
      * A map which associates string to speed. Get some impression:
      * http://www.itoworld.com/map/124#fullscreen
      * http://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed
      */
     private static final Map<String, Integer> SPEED = new HashMap<String, Integer>()
-    {
+    {        
         {
             // autobahn
             put("motorway", 100);

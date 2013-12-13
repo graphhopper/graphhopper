@@ -25,13 +25,12 @@ package com.graphhopper.routing.util;
  */
 public class EncodedValue
 {
-    private String name;
-    private long shift;
-    private long mask;
-    private long factor;
-    private long maxValue;
-    private long defaultValue;
-    private long defaultMax;
+    private final String name;
+    private final long shift;
+    private final long mask;
+    private final long factor;
+    private final long maxValue;
+    private final long defaultValue;
 
     /**
      * Define a bit-encoded value
@@ -41,31 +40,28 @@ public class EncodedValue
      * @param bits number of bits reserved
      * @param factor scaling factor for stored values
      * @param defaultValue default value
-     * @param defaultMax default maximum value
+     * @param maxValue default maximum value
      */
-    public EncodedValue( String name, int shift, int bits, int factor, int defaultValue, int defaultMax )
+    public EncodedValue( String name, int shift, int bits, int factor, int defaultValue, int maxValue )
     {
         this.name = name;
         this.shift = shift;
         this.factor = factor;
         this.defaultValue = defaultValue;
-        this.defaultMax = defaultMax;
 
-        mask = (1 << (bits)) - 1;
-        maxValue = mask * factor;
+        long tmpMask = (1L << bits) - 1;
+        long tmpMaxValue = tmpMask * factor;
+        if (maxValue > tmpMaxValue)
+            throw new IllegalStateException(name + " -> maxValue " + maxValue + " is too large for " + bits + " bits");
 
-        mask <<= shift;
-
-        // test the default max value just for paranoia
-        setValue(0, defaultMax);
+        this.maxValue = maxValue;
+        mask = tmpMask << shift;
     }
 
     public long setValue( long flags, long value )
     {
         if (value > maxValue)
-        {
-            throw new IllegalArgumentException(name + " value too large for encoding: " + value);
-        }
+            throw new IllegalArgumentException(name + " value too large for encoding: " + value + ", maxValue:" + maxValue);
 
         // scale down value
         value /= factor;
@@ -91,8 +87,8 @@ public class EncodedValue
         return setValue(flags, defaultValue);
     }
 
-    public long getDefaultMaxValue()
+    public long getMaxValue()
     {
-        return defaultMax;
+        return maxValue;
     }
 }

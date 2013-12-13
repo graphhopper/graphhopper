@@ -36,14 +36,14 @@ import java.util.Set;
 public class BikeFlagEncoder extends AbstractFlagEncoder
 {
     private int safeWayBit = 0;
-    private HashSet<String> intended = new HashSet<String>();
-    private HashSet<String> oppositeLanes = new HashSet<String>();
+    private final HashSet<String> oppositeLanes = new HashSet<String>();
 
     /**
      * Should be only instantied via EncodingManager
      */
     protected BikeFlagEncoder()
     {
+        super(4, 2);
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
         restrictions = new String[]
         {
@@ -70,8 +70,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
 
         absoluteBarriers.add("kissing_gate");
         absoluteBarriers.add("stile");
-        absoluteBarriers.add("turnstile");
-
+        absoluteBarriers.add("turnstile");        
         // very dangerous
         // acceptedRailways.remove("tram");
     }
@@ -79,14 +78,12 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     @Override
     public int defineBits( int index, int shift )
     {
-        // first two bits are reserved for route handling in superclass
+        // first two speedBits are reserved for route handling in superclass
         shift = super.defineBits(index, shift);
+        speedEncoder = new EncodedValue("Speed", shift, speedBits, speedFactor, HIGHWAY_SPEED.get("cycleway"), HIGHWAY_SPEED.get("primary"));
+        shift += speedBits;
 
-        speedEncoder = new EncodedValue("Speed", shift, 4, 2, HIGHWAY_SPEED.get("cycleway"), HIGHWAY_SPEED.get("primary"));
-        shift += 4;
-
-        safeWayBit = 1 << shift++;
-
+        safeWayBit = 1 << shift++;        
         return shift;
     }
 
@@ -198,28 +195,11 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     @Override
     public long analyzeNodeTags( OSMNode node )
     {
-
         // absolute barriers always block
         if (node.hasTag("barrier", absoluteBarriers))
-        {
             return directionBitMask;
-        }
-
-        // movable barriers block if they are not marked as passable
-        if (node.hasTag("barrier", potentialBarriers)
-                && !node.hasTag(restrictions, intended)
-                && !node.hasTag("locked", "no"))
-        {
-            return directionBitMask;
-        }
-
-        if ((node.hasTag("highway", "ford") || node.hasTag("ford"))
-                && !node.hasTag(restrictions, intended))
-        {
-            return directionBitMask;
-        }
-
-        return 0;
+        
+        return super.analyzeNodeTags(node);
     }
 
     int getSpeed( OSMWay way )

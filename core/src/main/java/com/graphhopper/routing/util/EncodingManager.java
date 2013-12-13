@@ -44,7 +44,7 @@ public class EncodingManager
         defaultEncoders.put(BIKE, BikeFlagEncoder.class.getName());
         defaultEncoders.put(FOOT, FootFlagEncoder.class.getName());
     }
-    public static final int MAX_BITS = 32;
+    public static final int MAX_BITS = 64;
     private ArrayList<AbstractFlagEncoder> encoders = new ArrayList<AbstractFlagEncoder>();
     private int encoderCount = 0;
     private int nextBit = 0;
@@ -92,32 +92,17 @@ public class EncodingManager
             {
                 throw new IllegalArgumentException("Cannot instantiate class " + className, e);
             }
-        }
-
-        /*
-         // comment this in to detect involuntary changes of the encoding
-         if( instance != null )
-         {
-         System.out.println( "WARNING: Overwriting Encoding Manager " + instance.toString() + " with new instance " + toString());
-         StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-         for( int i = 2; i < trace.length; i++ ) {
-         System.out.println( trace[i] );
-         }
-         }
-         */
-        // instance = this;
+        }       
     }
 
-    public void register( AbstractFlagEncoder encoder )
+    void register( AbstractFlagEncoder encoder )
     {
         encoders.add(encoder);
 
         int usedBits = encoder.defineBits(encoderCount, nextBit);
         if (usedBits >= MAX_BITS)
-        {
-            throw new IllegalArgumentException("Encoders are requesting more than 32 bits of flags");
-        }
-
+            throw new IllegalArgumentException("Encoders are requesting more than " + MAX_BITS + " bits of flags");
+        encoder.setBitMask(usedBits - nextBit, nextBit);
         nextBit = usedBits;
         encoderCount = encoders.size();
     }
@@ -130,12 +115,12 @@ public class EncodingManager
         return getEncoder(encoder, false) != null;
     }
 
-    public AbstractFlagEncoder getEncoder( String name )
+    public FlagEncoder getEncoder( String name )
     {
         return getEncoder(name, true);
     }
 
-    private AbstractFlagEncoder getEncoder( String name, boolean throwExc )
+    private FlagEncoder getEncoder( String name, boolean throwExc )
     {
         for (int i = 0; i < encoderCount; i++)
         {
@@ -150,9 +135,9 @@ public class EncodingManager
     /**
      * Determine whether an osm way is a routable way for one of its encoders.
      */
-    public int accept( OSMWay way )
+    public long acceptWay( OSMWay way )
     {
-        int includeWay = 0;
+        long includeWay = 0;
         for (int i = 0; i < encoderCount; i++)
         {
             includeWay |= encoders.get(i).isAllowed(way);
@@ -163,11 +148,11 @@ public class EncodingManager
 
     /**
      * Processes way properties of different kind to determine speed and direction. Properties are
-     * directly encoded in 4-Byte flags.
+     * directly encoded in the 8-Byte flags.
      * <p/>
      * @return the encoded flags
      */
-    public long handleWayTags( int includeWay, OSMWay way )
+    public long handleWayTags( long includeWay, OSMWay way )
     {
         long flags = 0;
         for (int i = 0; i < encoderCount; i++)
@@ -234,9 +219,9 @@ public class EncodingManager
         return encoders.get(0);
     }
 
-    public int flagsDefault( boolean forward, boolean backward )
+    public long flagsDefault( boolean forward, boolean backward )
     {
-        int flags = 0;
+        long flags = 0;
         for (int i = 0; i < encoderCount; i++)
         {
             flags |= encoders.get(i).flagsDefault(forward, backward);
@@ -288,9 +273,9 @@ public class EncodingManager
      * <p/>
      * @param node
      */
-    public int analyzeNode( OSMNode node )
+    public long analyzeNode( OSMNode node )
     {
-        int flags = 0;
+        long flags = 0;
         for (int i = 0; i < encoderCount; i++)
         {
             flags |= encoders.get(i).analyzeNodeTags(node);
@@ -312,5 +297,17 @@ public class EncodingManager
             str += tmpWayInfo;
         }
         return str;
+    }
+
+    public long applyNodeFlags( long wayFlags, long nodeFlags )
+    {
+        long flags = 0;
+        for (int i = 0; i < encoderCount; i++)
+        {
+            AbstractFlagEncoder encoder = encoders.get(i);
+            flags |= encoder.applyNodeFlags(wayFlags & encoder.getBitMask(), nodeFlags);
+        }
+
+        return flags;
     }
 }

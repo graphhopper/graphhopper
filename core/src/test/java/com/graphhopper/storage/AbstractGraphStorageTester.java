@@ -662,12 +662,12 @@ public abstract class AbstractGraphStorageTester
     public void testFlags()
     {
         graph = createGraph();
-        graph.edge(0, 1).setDistance(10).setFlags(carEncoder.setProperties(120, true, true));
+        graph.edge(0, 1).setDistance(10).setFlags(carEncoder.setProperties(100, true, true));
         graph.edge(2, 3).setDistance(10).setFlags(carEncoder.setProperties(10, true, false));
 
         EdgeIterator iter = carAllExplorer.setBaseNode(0);
         assertTrue(iter.next());
-        assertEquals(carEncoder.setProperties(120, true, true), iter.getFlags());
+        assertEquals(carEncoder.setProperties(100, true, true), iter.getFlags());
 
         iter = carAllExplorer.setBaseNode(2);
         assertTrue(iter.next());

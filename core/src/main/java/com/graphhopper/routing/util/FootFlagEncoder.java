@@ -18,7 +18,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 
 import java.util.HashSet;
@@ -30,8 +29,7 @@ import java.util.Set;
  */
 public class FootFlagEncoder extends AbstractFlagEncoder
 {
-    private int safeWayBit = 0;
-    protected HashSet<String> intended = new HashSet<String>();
+    private int safeWayBit = 0;    
     protected HashSet<String> sidewalks = new HashSet<String>();
 
     /**
@@ -39,6 +37,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
      */
     protected FootFlagEncoder()
     {
+        super(4, 1);
         restrictions = new String[]
         {
             "foot", "access"
@@ -68,12 +67,11 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     @Override
     public int defineBits( int index, int shift )
     {
-        // first two bits are reserved for route handling in superclass
+        // first two speedBits are reserved for route handling in superclass
         shift = super.defineBits(index, shift);
-
         // larger value required - ferries are faster than pedestrians
-        speedEncoder = new EncodedValue("Speed", shift, 4, 1, MEAN, FERRY);
-        shift += 4;
+        speedEncoder = new EncodedValue("Speed", shift, speedBits, speedFactor, MEAN, FERRY);
+        shift += speedBits;
 
         safeWayBit = 1 << shift++;
         return shift;
@@ -182,30 +180,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         return encoded;
     }
 
-    @Override
-    public long analyzeNodeTags( OSMNode node )
-    {
-
-        // movable barriers block if they are not marked as passable
-        if (node.hasTag("barrier", potentialBarriers)
-                && !node.hasTag(restrictions, intended)
-                && !node.hasTag("locked", "no"))
-        {
-            return directionBitMask;
-        }
-
-        if ((node.hasTag("highway", "ford") || node.hasTag("ford"))
-                && !node.hasTag(restrictions, intended))
-        {
-            return directionBitMask;
-        }
-
-        return 0;
-    }
     private final Set<String> safeHighwayTags = new HashSet<String>()
     {
-
-        
         {
             add("footway");
             add("path");
@@ -219,8 +195,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     };
     private final Set<String> allowedHighwayTags = new HashSet<String>()
     {
-
-        
         {
             addAll(safeHighwayTags);
             add("trunk");
