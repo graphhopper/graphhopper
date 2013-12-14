@@ -225,6 +225,7 @@ public class OSMReader
         logger.info("creating graph. Found nodes (pillar+tower):" + nf(getNodeMap().getSize()) + ", " + Helper.getMemInfo());
         graphStorage.create(tmp);
         long wayStart = -1;
+        long relationStart = -1;
         long counter = 1;
         OSMInputFile in = null;
         try
@@ -250,10 +251,15 @@ public class OSMReader
                             logger.info(nf(counter) + ", now parsing ways");
                             wayStart = counter;
                         }
-                        //logger.info( "Way:" +item.getId() + " " + item.getTag("name")+" WayMapValue=" + getWayMap().get((item.getId())));
+                        //logger.info( "Way:" +item.getId() + " " + item.getTag("name") + " WayMapValue=" + getWayMap().get((item.getId())));
                         processWay((OSMWay) item, getWayMap().get((item.getId())));
                         break;
                    case OSMElement.RELATION:
+                        if (relationStart < 0)
+                        {
+                            logger.info(nf(counter) + ", now parsing relations");
+                            relationStart = counter;
+                        }
                         processRelation((OSMRelation)  item);
                         break;
                 }

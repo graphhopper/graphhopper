@@ -37,6 +37,9 @@ import java.util.Set;
 public class BikeFlagEncoder extends AbstractFlagEncoder
 {
     private int safeWayBit = 0;
+    private final static int unspecifiedRelationWeight = 4;
+    //Wheeler heighways are parts where you need to get off your bike and wheel (German: Schiebestrecke)
+    private HashSet<String> wheeler = new HashSet<String>();
     private HashSet<String> intended = new HashSet<String>();
     private HashSet<String> oppositeLanes = new HashSet<String>();
 
@@ -58,16 +61,24 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         intended.add("designated");
         intended.add("official");
         intended.add("permissive");
-
+        
+        wheeler.add("path");
+        wheeler.add("track");
+        wheeler.add("footway");
+        wheeler.add("pedestrian");
+        wheeler.add("steps");
+                
         oppositeLanes.add("opposite");
         oppositeLanes.add("opposite_lane");
         oppositeLanes.add("opposite_track");
    
+        /* With a bike one usually can pass all those barriers:
         potentialBarriers.add("gate");
         potentialBarriers.add("lift_gate");
         potentialBarriers.add("swing_gate");
         potentialBarriers.add("cycle_barrier");
         potentialBarriers.add("block");
+        */
 
         absoluteBarriers.add("kissing_gate");
         absoluteBarriers.add("stile");
@@ -83,7 +94,8 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         // first two bits are reserved for route handling in superclass
         shift = super.defineBits(index, shift);
 
-        speedEncoder = new EncodedValue("Speed", shift, 4, 2, HIGHWAY_SPEED.get("cycleway"), HIGHWAY_SPEED.get("primary"));
+        speedEncoder = new EncodedValue("Speed", shift, 4, 2, HIGHWAY_SPEED.get("cycleway"), relationWeightCodeToSpeed(20, relationMapCode.OUTSTANDING_NICE.getValue()));
+        
         shift += 4;
 
         safeWayBit = 1 << shift++;
@@ -126,10 +138,9 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         if (way.hasTag("bicycle", intended))
             return acceptBit;
 
-        // avoid paths that are not tagged for bikes.
-        if (way.hasTag("highway", "path"))
-            return 0;
-
+        if (way.hasTag("mtb", intended))
+            return acceptBit;
+        
         if (way.hasTag("motorroad", "yes"))
             return 0;
 
@@ -153,21 +164,21 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     {
         if (relation.hasTag("route", "bicycle"))
         {
-           try
+           if (relation.getTag("network") == null )
            {
-             if (relation.getTag("network").isEmpty() )
-             {
-               return relationMapCode.UNCHANGED.getValue();
-             }
-             else
+             return relationMapCode.UNCHANGED.getValue();
+           }
+           else
+           {
+             try
              {
                return (BIKE_NETWORK_TO_CODE.get(relation.getTag("network")));
              }
+             catch (Exception ex)
+             {
+               return relationMapCode.UNCHANGED.getValue();
+             }
            }
-           catch ( Exception ex)
-                   {
-                       return relationMapCode.UNCHANGED.getValue();
-                   }
         }
         else
         {
@@ -177,9 +188,24 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
                return relationMapCode.UNCHANGED.getValue();
         }
     }
+
+    // In case that the way belongs to a relation for which we do have a relation triggered weight change.    
+    // FIXME: Re-write in case that there is a more geneic way to influence the weighting.
+    // Here we boost or reduce the speed according to the relationweightcode:
+    private int relationWeightCodeToSpeed(int highwayspeed, int relationweightcode)
+    {
+        int speed;
+        if (highwayspeed<15)
+           //We know that our way belongs to a cycle route, so we assume 15km/h minimum
+           speed=15;
+        else 
+           speed=highwayspeed; 
+        // Add or remove 3km/h per every relation weight boost point
+        return  speed + 3 * (relationweightcode-unspecifiedRelationWeight);
+    }
     
     @Override
-    public long handleWayTags( long allowed, OSMWay way, int relationcode)
+    public long handleWayTags( long allowed, OSMWay way, int relationweightcode)
     {
         if ((allowed & acceptBit) == 0)
             return 0;
@@ -193,20 +219,14 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
             // Currently there is only speed, so we increase it.
             int speed;
             // relationcode = 0 : This happens for e.g. ways with a bus or hiking relation
-            if ((relationcode == -1) || (relationcode == 0))
+            if ((relationweightcode == -1) || (relationweightcode == 0))
             {
                 // In case that the way does not belong to a relation:
                 speed=getSpeed(way);
             }
             else
             {
-                // In case that the way belongs to a relation for which we do have a weight change:
-                int boostpercent;
-                boostpercent=100 + (relationcode-4)*33;
-                speed=getSpeed(way);
-                if (speed<20) 
-                    speed=20;
-                speed=speed*(boostpercent/100);
+                speed=relationWeightCodeToSpeed(getSpeed(way), relationweightcode);
             }
             
             encoded = speedEncoder.setValue(0, speed);
@@ -298,7 +318,10 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
             Integer hwInt = HIGHWAY_SPEED.get(highway);
             if (hwInt != null)
             {
-                return hwInt;
+                if (way.hasTag("bicycle", intended) || !way.hasTag("highway", wheeler))
+                    return hwInt;
+                else
+                    return 4;
             }
         }
         return 10;
@@ -308,6 +331,8 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         {
             add("cycleway");
             add("path");
+            add("footway");
+            add("pedestrian");
             add("living_street");
             add("track");
             add("service");
@@ -319,7 +344,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     private static final Map<String, Integer> TRACKTYPE_SPEED = new HashMap<String, Integer>()
     {
         {
-            put("grade1", 16); // paved
+            put("grade1", 20); // paved
             put("grade2", 12); // now unpaved ...
             put("grade3", 12);
             put("grade4", 10);
@@ -332,8 +357,8 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         {
             put("asphalt", 20);
             put("concrete", 20);
-            put("paved", 18);
-            put("unpaved", 15);
+            put("paved", 20);
+            put("unpaved", 16);
             put("gravel", 12);
             put("ground", 12);
             put("dirt", 10);
@@ -349,23 +374,24 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
             put("living_street", 15);
             put("steps", 4);
 
-            put("cycleway", 20);
+            put("cycleway", 18);
             put("path", 18);
-            put("footway", 15);
+            put("footway", 18);
+            put("pedestrian", 18);
             put("road", 10);
             put("track", 20);
             put("service", 20);
-            put("unclassified", 25);
-            put("residential", 20);
+            put("unclassified", 23);
+            put("residential", 23);
 
-            put("trunk", 16);
-            put("trunk_link", 16);
+            put("trunk", 18);
+            put("trunk_link", 18);
             put("primary", 18);
-            put("primary_link", 16);
-            put("secondary", 18);
+            put("primary_link", 15);
+            put("secondary", 16);
             put("secondary_link", 16);
             put("tertiary", 18);
-            put("tertiary_link", 16);
+            put("tertiary_link", 18);
         }
     };
     
@@ -383,8 +409,15 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
        "3" = This way is so nice, it pays out to make a detour also if this means taking 
              many unsuitable ways to get here. Outstanding for its intended usage class.
         */
-        //We can't store negative numbers into our map, therefore we add 3
-        AVOID_AT_ALL_COSTS(1), REACH_DEST(2), AVOID_IF_POSSIBLE(3), UNCHANGED(4) , PREFER(5), VERY_NICE(6), OUTSTANDING_NICE(7);
+        //We can't store negative numbers into our map, therefore we add 
+        //unspecifiedRelationWeight=4 to the schema from above
+        AVOID_AT_ALL_COSTS(1), 
+        REACH_DEST(2), 
+        AVOID_IF_POSSIBLE(3), 
+        UNCHANGED(unspecifiedRelationWeight) , 
+        PREFER(5), 
+        VERY_NICE(6), 
+        OUTSTANDING_NICE(7);
         
         private final int value;
         private relationMapCode(int value) {
@@ -403,7 +436,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
             put("icn", relationMapCode.VERY_NICE.getValue());
             put("ncn", relationMapCode.VERY_NICE.getValue());
             put("rcn", relationMapCode.PREFER.getValue());
-            put("lcn", relationMapCode.UNCHANGED.getValue());
+            put("lcn", relationMapCode.PREFER.getValue());
             put("mtb", relationMapCode.UNCHANGED.getValue());
             put("deprecated", relationMapCode.AVOID_AT_ALL_COSTS.getValue());
         }
