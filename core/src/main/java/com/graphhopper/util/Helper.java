@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.storage.Graph;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
@@ -230,7 +231,7 @@ public class Helper
         {
             throw new RuntimeException("Couldn't close resource", ex);
         }
-    }
+    }    
 
     public static boolean isEmpty( String str )
     {

@@ -26,7 +26,7 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class Location2IDFullIndexTest extends AbstractLocation2IDIndexTester
+public class Location2IDFullIndexTest extends AbstractLocationIndexTester
 {
     @Override
     public LocationIndex createIndex( Graph g, int resolution )

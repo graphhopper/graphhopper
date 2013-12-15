@@ -28,7 +28,7 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class Location2IDQuadtreeTest extends AbstractLocation2IDIndexTester
+public class Location2IDQuadtreeTest extends AbstractLocationIndexTester
 {
     @Override
     public LocationIndex createIndex( Graph g, int resolution )
