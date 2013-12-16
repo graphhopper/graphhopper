@@ -99,7 +99,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
      * @param way
      */
     @Override
-    public long isAllowed( OSMWay way )
+    public long acceptWay( OSMWay way )
     {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null)

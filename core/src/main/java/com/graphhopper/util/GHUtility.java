@@ -79,6 +79,9 @@ public class GHUtility
         return problems;
     }
 
+    /**
+     * Counts reachable edges.
+     */
     public static int count( EdgeIterator iter )
     {
         int counter = 0;

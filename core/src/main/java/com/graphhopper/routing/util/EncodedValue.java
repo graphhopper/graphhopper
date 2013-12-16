@@ -31,6 +31,8 @@ public class EncodedValue
     private final long factor;
     private final long maxValue;
     private final long defaultValue;
+    private final boolean allowNegative;
+    private final boolean allowZero;
 
     /**
      * Define a bit-encoded value
@@ -44,6 +46,11 @@ public class EncodedValue
      */
     public EncodedValue( String name, int shift, int bits, int factor, int defaultValue, int maxValue )
     {
+        this(name, shift, bits, factor, defaultValue, maxValue, false, true);
+    }
+
+    public EncodedValue( String name, int shift, int bits, int factor, int defaultValue, int maxValue, boolean allowNegative, boolean allowZero )
+    {
         this.name = name;
         this.shift = shift;
         this.factor = factor;
@@ -56,12 +63,19 @@ public class EncodedValue
 
         this.maxValue = maxValue;
         mask = tmpMask << shift;
+
+        this.allowNegative = allowNegative;
+        this.allowZero = allowZero;
     }
 
     public long setValue( long flags, long value )
     {
         if (value > maxValue)
             throw new IllegalArgumentException(name + " value too large for encoding: " + value + ", maxValue:" + maxValue);
+        if (!allowNegative && value < 0)
+            throw new IllegalArgumentException("negative " + name + " value not allowed! " + value);
+        if (!allowZero && value == 0)
+            throw new IllegalArgumentException("zero " + name + " value not allowed! " + value);
 
         // scale down value
         value /= factor;

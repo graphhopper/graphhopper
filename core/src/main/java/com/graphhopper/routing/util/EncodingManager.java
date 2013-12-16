@@ -92,7 +92,7 @@ public class EncodingManager
             {
                 throw new IllegalArgumentException("Cannot instantiate class " + className, e);
             }
-        }       
+        }
     }
 
     void register( AbstractFlagEncoder encoder )
@@ -140,7 +140,7 @@ public class EncodingManager
         long includeWay = 0;
         for (int i = 0; i < encoderCount; i++)
         {
-            includeWay |= encoders.get(i).isAllowed(way);
+            includeWay |= encoders.get(i).acceptWay(way);
         }
 
         return includeWay;
@@ -148,16 +148,17 @@ public class EncodingManager
 
     /**
      * Processes way properties of different kind to determine speed and direction. Properties are
-     * directly encoded in the 8-Byte flags.
+     * directly encoded into 8 bytes.
      * <p/>
+     * @param acceptWay return value from acceptWay
      * @return the encoded flags
      */
-    public long handleWayTags( long includeWay, OSMWay way )
+    public long handleWayTags( long acceptWay, OSMWay way )
     {
         long flags = 0;
         for (int i = 0; i < encoderCount; i++)
         {
-            flags |= encoders.get(i).handleWayTags(includeWay, way);
+            flags |= encoders.get(i).handleWayTags(acceptWay, way);
         }
 
         return flags;
@@ -175,9 +176,8 @@ public class EncodingManager
         for (int i = 0; i < encoderCount; i++)
         {
             if (str.length() > 0)
-            {
                 str.append(",");
-            }
+
             str.append(encoders.get(i).toString());
         }
 
@@ -190,9 +190,8 @@ public class EncodingManager
         for (int i = 0; i < encoderCount; i++)
         {
             if (str.length() > 0)
-            {
                 str.append(",");
-            }
+
             str.append(encoders.get(i).toString());
             str.append(":");
             str.append(encoders.get(i).getClass().getName());
@@ -204,18 +203,16 @@ public class EncodingManager
     public FlagEncoder getSingle()
     {
         if (getVehicleCount() > 1)
-        {
             throw new IllegalStateException("multiple encoders are active. cannot return one:" + toString());
-        }
+
         return getFirst();
     }
 
     private FlagEncoder getFirst()
     {
         if (getVehicleCount() == 0)
-        {
             throw new IllegalStateException("no encoder is active!");
-        }
+
         return encoders.get(0);
     }
 
@@ -269,9 +266,7 @@ public class EncodingManager
     }
 
     /**
-     * Analyze tags on osm node
-     * <p/>
-     * @param node
+     * Analyze tags on osm node. Store node tags (barriers etc) for later usage while parsing way.
      */
     public long analyzeNode( OSMNode node )
     {
@@ -299,6 +294,9 @@ public class EncodingManager
         return str;
     }
 
+    /**
+     * When parsing the ways we have the node flags as long variable encoded in analyzeNode.
+     */
     public long applyNodeFlags( long wayFlags, long nodeFlags )
     {
         long flags = 0;

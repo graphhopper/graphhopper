@@ -117,6 +117,7 @@ public class EncodingManagerTest
             public long analyzeNodeTags( OSMNode node )
             {
                 String tmp = node.getTags().get("test");
+                // return negative value to indicate that this is not a barrier
                 if (tmp == null)
                     return -nodeEncoder.setValue(0, 1);
                 return -nodeEncoder.setValue(0, 2);
@@ -150,5 +151,13 @@ public class EncodingManagerTest
         wayFlags = manager.applyNodeFlags(wayFlags, -nodeFlags);
         assertEquals(58, car2.getSpeed(wayFlags));
         assertEquals(60, car.getSpeed(wayFlags));
+
+        wayMap.put("maxspeed", "130");
+        wayFlags = manager.handleWayTags(manager.acceptWay(way), way);
+        assertEquals(car.getMaxSpeed(), car2.getSpeed(wayFlags));
+        nodeFlags = manager.analyzeNode(node);
+        wayFlags = manager.applyNodeFlags(wayFlags, -nodeFlags);
+        assertEquals(98, car2.getSpeed(wayFlags));
+        assertEquals(100, car.getSpeed(wayFlags));
     }
 }

@@ -42,7 +42,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     private long bitMask = 0;
     protected long forwardBit = 0;
     protected long backwardBit = 0;
-    protected long directionBitMask = 0;    
+    protected long directionBitMask = 0;
     protected EncodedValue speedEncoder;
     // bit to signal that way is accepted
     protected long acceptBit = 0;
@@ -110,17 +110,16 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     /**
      * Decide whether a way is routable for a given mode of travel
      * <p/>
-     * @param way
-     * @return the assigned bit of the mode of travel if it is accepted or 0 for not accepted
+     * @return the encoded value to indicate if this encoder allows travel or not.
      */
-    public abstract long isAllowed( OSMWay way );
+    public abstract long acceptWay( OSMWay way );
 
     /**
      * Analyze properties of a way and create the routing flags
      * <p/>
-     * @param allowed
+     * @param acceptWay return value from acceptWay
      */
-    public abstract long handleWayTags( long allowed, OSMWay way );
+    public abstract long handleWayTags( long acceptWay, OSMWay way );
 
     /**
      * Parse tags on nodes. Node tags can add to speed (like traffic_signals) where the value is
@@ -382,5 +381,5 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     long getBitMask()
     {
         return bitMask;
-    }        
+    }
 }
