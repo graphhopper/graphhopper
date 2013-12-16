@@ -125,7 +125,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
      * Parse tags on nodes. Node tags can add to speed (like traffic_signals) where the value is
      * strict negative or blocks access (like a barrier), then the value is strict positive.
      */
-    public long analyzeNodeTags( OSMNode node )
+    public long handleNodeTags( OSMNode node )
     {
         // movable barriers block if they are not marked as passable
         if (node.hasTag("barrier", potentialBarriers)
@@ -340,15 +340,19 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
         double durationInHours = parseDuration(way.getTag("duration")) / 60d;
         if (durationInHours > 0)
             try
-            {   // to km
-                double estimatedLength = Double.parseDouble(way.getTag("estimated_distance")) / 1000;
-
-                // If duration AND distance is available we can calculate the speed more precisely
-                // and set both speed to the same value. Factor 1.4 slower because of waiting time!
-                shortTripsSpeed = (int) Math.round(estimatedLength / durationInHours / 1.4);
-                if (shortTripsSpeed > getMaxSpeed())
-                    shortTripsSpeed = getMaxSpeed();
-                longTripsSpeed = shortTripsSpeed;
+            {
+                Double estimatedLength = way.getInternalTag("estimated_distance", null);
+                if (estimatedLength != null)
+                {
+                    // to km
+                    estimatedLength /= 1000;
+                    // If duration AND distance is available we can calculate the speed more precisely
+                    // and set both speed to the same value. Factor 1.4 slower because of waiting time!
+                    shortTripsSpeed = (int) Math.round(estimatedLength / durationInHours / 1.4);
+                    if (shortTripsSpeed > getMaxSpeed())
+                        shortTripsSpeed = getMaxSpeed();
+                    longTripsSpeed = shortTripsSpeed;
+                }
             } catch (Exception ex)
             {
             }
@@ -369,7 +373,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
 
     public long applyNodeFlags( long wayFlags, long nodeFlags )
     {
-        return wayFlags;
+        return nodeFlags | wayFlags;
     }
 
     void setBitMask( int usedBits, int shift )

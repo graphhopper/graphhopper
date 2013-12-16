@@ -114,7 +114,7 @@ public class EncodingManagerTest
             }
 
             @Override
-            public long analyzeNodeTags( OSMNode node )
+            public long handleNodeTags( OSMNode node )
             {
                 String tmp = node.getTags().get("test");
                 // return negative value to indicate that this is not a barrier

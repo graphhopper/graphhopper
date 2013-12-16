@@ -21,14 +21,18 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.GHPoint;
+import gnu.trove.list.TLongList;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import static org.junit.Assert.*;
 import org.junit.Before;
@@ -448,5 +452,102 @@ public class OSMReaderTest
     {
         assertEquals("B8, B12", OSMReader.fixWayName("B8;B12"));
         assertEquals("B8, B12", OSMReader.fixWayName("B8; B12"));
+    }
+
+    @Test
+    public void testEstimatedCenter()
+    {
+        final CarFlagEncoder encoder = new CarFlagEncoder()
+        {
+            private EncodedValue objectEncoder;
+
+            @Override
+            public int defineBits( int index, int shift )
+            {
+                shift = super.defineBits(index, shift);
+                objectEncoder = new EncodedValue("oEnc", shift, 2, 1, 0, 3, false, true);
+                return shift + 2;
+            }
+
+            @Override
+            public long handleNodeTags( OSMNode node )
+            {
+                if (node.hasTag("test", "now"))
+                    return -objectEncoder.setValue(0, 1);
+                return 0;
+            }
+
+            public long applyNodeFlags( long wayFlags, long nodeFlags )
+            {
+                int speed = getSpeed(wayFlags);
+                if (objectEncoder.getValue(nodeFlags) != 0)
+                    speed -= 5;
+
+                return speedEncoder.setValue(wayFlags, speed);
+            }
+        };
+        EncodingManager manager = new EncodingManager()
+        {
+
+            
+            {
+                super.register(encoder);
+            }
+        };
+        GraphStorage graph = buildGraph(dir, manager);
+        final Map<Integer, Double> latMap = new HashMap<Integer, Double>();
+        final Map<Integer, Double> lonMap = new HashMap<Integer, Double>();
+        latMap.put(1, 1.1d);
+        latMap.put(2, 1.2d);
+
+        lonMap.put(1, 1.0d);
+        lonMap.put(2, 1.0d);
+        final AtomicInteger increased = new AtomicInteger(0);
+        OSMReader osmreader = new OSMReader(graph, 1000)
+        {
+            // mock data access
+            @Override
+            double getTmpLatitude( int id )
+            {
+                return latMap.get(id);
+            }
+
+            @Override
+            double getTmpLongitude( int id )
+            {
+                return lonMap.get(id);
+            }
+
+            @Override
+            Collection<EdgeIteratorState> addOSMWay( TLongList osmNodeIds, long wayFlags )
+            {
+                // reduced speed due to node tags
+                increased.incrementAndGet();
+                assertEquals(100 - 5, encoder.getSpeed(wayFlags));
+                return Collections.EMPTY_SET;
+            }
+
+        };
+        osmreader.setEncodingManager(manager);
+        // save some node tags for first node
+        Map<String, String> nodeMap = new HashMap<String, String>();
+        OSMNode osmNode = new OSMNode(1, nodeMap, 1.1d, 1.0d);
+        osmNode.setTag("test", "now");
+        osmreader.getNodeFlagsMap().put(1, encoder.handleNodeTags(osmNode));
+
+        OSMWay way = new OSMWay(1L);
+        way.getNodes().add(1);
+        way.getNodes().add(2);
+        way.setTag("highway", "motorway");
+        osmreader.getNodeMap().put(1, 1);
+        osmreader.getNodeMap().put(2, 2);
+        osmreader.processWay(way);
+
+        GHPoint p = way.getInternalTag("estimated_center", null);
+        assertEquals(1.15, p.lat, 1e-3);
+        assertEquals(1.0, p.lon, 1e-3);
+        Double d = way.getInternalTag("estimated_distance", null);
+        assertEquals(11119.5, d, 1e-1);
+        assertEquals(1, increased.get());
     }
 }

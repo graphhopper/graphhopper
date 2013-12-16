@@ -55,8 +55,8 @@ public class EncodingManager
 
     /**
      * Instantiate manager with the given list of encoders. The manager knows the default encoders:
-     * CAR, FOOT and BIKE Custom encoders can be added by giving a full class name e.g.
-     * "CAR:com.graphhopper.myproject.MyCarEncoder"
+     * CAR, FOOT and BIKE (ignoring the case). Custom encoders can be specified by giving a full
+     * class name e.g. "car:com.graphhopper.myproject.MyCarEncoder"
      * <p/>
      * @param encoderList comma delimited list of encoders. The order does not matter.
      */
@@ -95,7 +95,7 @@ public class EncodingManager
         }
     }
 
-    void register( AbstractFlagEncoder encoder )
+    protected void register( AbstractFlagEncoder encoder )
     {
         encoders.add(encoder);
 
@@ -273,7 +273,7 @@ public class EncodingManager
         long flags = 0;
         for (int i = 0; i < encoderCount; i++)
         {
-            flags |= encoders.get(i).analyzeNodeTags(node);
+            flags |= encoders.get(i).handleNodeTags(node);
         }
 
         return flags;

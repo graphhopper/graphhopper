@@ -37,6 +37,7 @@ public abstract class OSMElement
     protected final int type;
     protected final long id;
     protected Map<String, String> tags;
+    protected Map<String, Object> iProperties;
 
     public OSMElement( long id, int type, XMLStreamReader parser )
     {
@@ -141,9 +142,7 @@ public abstract class OSMElement
     public void setTag( String name, String value )
     {
         if (tags == null)
-        {
             tags = new HashMap<String, String>();
-        }
 
         tags.put(name, value);
     }
@@ -154,9 +153,7 @@ public abstract class OSMElement
     public boolean hasTag( String key, String value )
     {
         if (tags == null)
-        {
             return false;
-        }
 
         String val = tags.get(key);
         return value.equals(val);
@@ -169,28 +166,20 @@ public abstract class OSMElement
     public boolean hasTag( String key, String... values )
     {
         if (tags == null)
-        {
             return false;
-        }
 
         String osmValue = tags.get(key);
         if (osmValue == null)
-        {
             return false;
-        }
 
         // tag present, no values given: success
         if (values.length == 0)
-        {
             return true;
-        }
 
         for (String val : values)
         {
             if (val.equals(osmValue))
-            {
                 return true;
-            }
         }
         return false;
     }
@@ -201,9 +190,7 @@ public abstract class OSMElement
     public final boolean hasTag( String key, Set<String> values )
     {
         if (tags == null)
-        {
             return false;
-        }
 
         String osmValue = tags.get(key);
         return osmValue != null && values.contains(osmValue);
@@ -216,29 +203,46 @@ public abstract class OSMElement
     public boolean hasTag( String[] keyList, Set<String> values )
     {
         if (tags == null)
-        {
             return false;
-        }
 
         for (int i = 0; i < keyList.length; i++)
         {
             String osmValue = tags.get(keyList[i]);
             if (osmValue != null && values.contains(osmValue))
-            {
                 return true;
-            }
         }
         return false;
     }
 
+    public void setInternalTag( String key, Object value )
+    {
+        if (iProperties == null)
+            iProperties = new HashMap<String, Object>();
+
+        iProperties.put(key, value);
+    }
+
+    public boolean hasInternalTag( String key )
+    {
+        if (iProperties == null)
+            return false;
+        return iProperties.containsKey(key);
+    }
+
+    public <T> T getInternalTag( String key, T defaultValue )
+    {
+        if (iProperties == null)
+            return defaultValue;
+        T val = (T) iProperties.get(key);
+        if (val == null)
+            return defaultValue;
+        return val;
+    }
+
     public void removeTag( String name )
     {
-        if (tags == null)
-        {
-            return;
-        }
-
-        tags.remove(name);
+        if (tags != null)
+            tags.remove(name);
     }
 
     public void clearTags()

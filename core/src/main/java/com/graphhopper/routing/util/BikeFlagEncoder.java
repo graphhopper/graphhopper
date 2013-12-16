@@ -193,13 +193,13 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long analyzeNodeTags( OSMNode node )
+    public long handleNodeTags( OSMNode node )
     {
         // absolute barriers always block
         if (node.hasTag("barrier", absoluteBarriers))
             return directionBitMask;
         
-        return super.analyzeNodeTags(node);
+        return super.handleNodeTags(node);
     }
 
     int getSpeed( OSMWay way )

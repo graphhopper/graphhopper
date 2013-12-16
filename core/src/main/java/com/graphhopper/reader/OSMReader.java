@@ -25,6 +25,7 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.*;
 import static com.graphhopper.util.Helper.*;
+import com.graphhopper.util.shapes.GHPoint;
 import java.io.*;
 
 import gnu.trove.list.TLongList;
@@ -278,7 +279,8 @@ public class OSMReader
                     && lastLat != Double.NaN && lastLon != Double.NaN)
             {
                 double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
-                way.setTag("estimated_distance", estimatedDist + "");
+                way.setInternalTag("estimated_distance", estimatedDist);
+                way.setInternalTag("estimated_center", new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2));
             }
         }
 
@@ -293,14 +295,14 @@ public class OSMReader
         for (int i = 0; i < size; i++)
         {
             long nodeId = osmNodeIds.get(i);
-            long nodeFlags = osmNodeIdToNodeFlagsMap.get(nodeId);
+            long nodeFlags = getNodeFlagsMap().get(nodeId);
             // barrier was spotted and way is otherwise passable for that mode of travel
             if (nodeFlags > 0)
             {
                 if ((nodeFlags & wayFlags) > 0)
                 {
                     // remove barrier to avoid duplicates
-                    osmNodeIdToNodeFlagsMap.put(nodeId, 0);
+                    getNodeFlagsMap().put(nodeId, 0);
 
                     // create shadow node copy for zero length edge
                     long newNodeId = addBarrierNode(nodeId);
@@ -329,7 +331,7 @@ public class OSMReader
                     // remember barrier for processing the way behind it
                     lastBarrier = i;
                 }
-            } else if(nodeFlags < 0)
+            } else if (nodeFlags < 0)
             {
                 wayFlags = encodingManager.applyNodeFlags(wayFlags, -nodeFlags);
             }
@@ -375,7 +377,7 @@ public class OSMReader
     }
 
     // TODO remove this ugly stuff via better preparsing phase! E.g. putting every tags etc into a helper file!
-    private double getTmpLatitude( int id )
+    double getTmpLatitude( int id )
     {
         if (id == EMPTY)
             return Double.NaN;
@@ -394,7 +396,7 @@ public class OSMReader
             return Double.NaN;
     }
 
-    private double getTmpLongitude( int id )
+    double getTmpLongitude( int id )
     {
         if (id == EMPTY)
             return Double.NaN;
@@ -431,7 +433,7 @@ public class OSMReader
             {
                 long nodeFlags = encodingManager.analyzeNode(node);
                 if (nodeFlags != 0)
-                    osmNodeIdToNodeFlagsMap.put(node.getId(), nodeFlags);
+                    getNodeFlagsMap().put(node.getId(), nodeFlags);
             }
 
             locations++;
@@ -719,9 +721,14 @@ public class OSMReader
         return true;
     }
 
-    private LongIntMap getNodeMap()
+    LongIntMap getNodeMap()
     {
         return osmNodeIdToInternalIdMap;
+    }
+
+    TLongLongMap getNodeFlagsMap()
+    {
+        return osmNodeIdToNodeFlagsMap;
     }
 
     /**

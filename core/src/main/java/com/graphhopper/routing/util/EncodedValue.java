@@ -33,6 +33,7 @@ public class EncodedValue
     private final long defaultValue;
     private final boolean allowNegative;
     private final boolean allowZero;
+    private final int bits;
 
     /**
      * Define a bit-encoded value
@@ -49,13 +50,14 @@ public class EncodedValue
         this(name, shift, bits, factor, defaultValue, maxValue, false, true);
     }
 
-    public EncodedValue( String name, int shift, int bits, int factor, int defaultValue, int maxValue, boolean allowNegative, boolean allowZero )
+    public EncodedValue( String name, int shift, int bits, int factor, int defaultValue, int maxValue, 
+            boolean allowNegative, boolean allowZero )
     {
         this.name = name;
         this.shift = shift;
         this.factor = factor;
         this.defaultValue = defaultValue;
-
+        this.bits = bits;
         long tmpMask = (1L << bits) - 1;
         long tmpMaxValue = tmpMask * factor;
         if (maxValue > tmpMaxValue)
@@ -94,6 +96,11 @@ public class EncodedValue
         flags &= mask;
         flags >>= shift;
         return flags * factor;
+    }
+
+    public int getBits()
+    {
+        return bits;
     }
 
     public long setDefaultValue( long flags )

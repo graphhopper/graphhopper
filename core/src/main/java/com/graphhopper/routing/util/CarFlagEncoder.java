@@ -76,7 +76,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         return shift + speedBits;
     }
 
-    int getSpeed( OSMWay way )
+    protected int getSpeed( OSMWay way )
     {
         String highwayValue = way.getTag("highway");
         Integer speed = SPEED.get(highwayValue);
@@ -183,13 +183,13 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long analyzeNodeTags( OSMNode node )
+    public long handleNodeTags( OSMNode node )
     {
         // absolute barriers always block
         if (node.hasTag("barrier", absoluteBarriers))
             return directionBitMask;
 
-        return super.analyzeNodeTags(node);
+        return super.handleNodeTags(node);
     }
 
     @Override
