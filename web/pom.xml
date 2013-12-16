@@ -142,7 +142,15 @@
                     </scanTargets>
                     <scanIntervalSeconds>1</scanIntervalSeconds>
                 </configuration>
-            </plugin>        
+            </plugin>
+            <!-- create a jar file too, so others can use it more easily -->
+            <plugin>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <attachClasses>true</attachClasses>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
