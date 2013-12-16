@@ -18,10 +18,15 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.util.InstructionUtil;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.TranslationMap.Translation;
+import static com.graphhopper.util.TranslationMapTest.SINGLETON;
 import org.junit.Test;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.Assert.*;
@@ -33,6 +38,7 @@ import static org.junit.Assert.*;
 public class BikeFlagEncoderTest
 {
     private final BikeFlagEncoder encoder = (BikeFlagEncoder) new EncodingManager("CAR,BIKE").getEncoder("BIKE");
+    public final static TranslationMap SINGLETON = new TranslationMap().doImport();
 
     @Test
     public void testGetSpeed()
@@ -58,6 +64,7 @@ public class BikeFlagEncoderTest
 
         map.put("highway", "footway");
         assertTrue(encoder.isAllowed(way) > 0);
+      
         map.put("bicycle", "no");
         assertFalse(encoder.isAllowed(way) > 0);
         
@@ -165,33 +172,119 @@ public class BikeFlagEncoderTest
         assertEquals(0, encoder.isAllowed(way));
     }
     
+    private String encodeDecodeWayType(String name, OSMWay way)
+    {
+        
+        long allowed=1;
+        long flags=encoder.handleWayTags( allowed,  way, 0 );
+        int pavement=encoder.getPavementCode(flags);
+        int wayType=encoder.getWayTypeCode(flags);
+        
+        Translation enMap = SINGLETON.getWithFallBack(Locale.UK);
+        return InstructionUtil.getWayName (name, pavement, wayType,  enMap);
+
+    }
+    
     @Test
     public void testhandleWayTags()
     {
         Map<String, String> map = new HashMap<String, String>();
         OSMWay way = new OSMWay(1, map);
+        String wayType;
+        
         map.put("highway", "track");
+        wayType = encodeDecodeWayType("", way);
+        assertEquals("wheeler,unpaved",wayType);
+ 
+        map.put("highway", "steps");
+        wayType = encodeDecodeWayType("", way);
+        assertEquals("wheeler",wayType);
+         
+        map.put("highway", "steps");
+        wayType = encodeDecodeWayType("Famous steps", way);
+        assertEquals("Famous steps,wheeler",wayType);
+                
+        map.put("highway", "path");
+        wayType = encodeDecodeWayType("", way);
+        assertEquals("wheeler,unpaved",wayType);
+        
+        map.put("highway", "footway");
+        wayType = encodeDecodeWayType("", way);       
+        assertEquals("wheeler",wayType);
+        
+        map.put("highway", "footway");
+        map.put("surface", "pebblestone");
+        wayType = encodeDecodeWayType("", way);
+        assertEquals("wheeler",wayType);
+
+        
+        map.put("highway", "path");
+        map.put("surface", "grass");
+        wayType = encodeDecodeWayType("", way);
+        assertEquals("wheeler,unpaved",wayType);
+        
+        map.put("highway", "path");
+        map.put("surface", "concrete");
+        wayType = encodeDecodeWayType("", way);
+        assertEquals("wheeler",wayType);
+        
+        map.put("highway", "residential");
+        wayType = encodeDecodeWayType("", way);
+        assertEquals("road",wayType);
+
+        map.put("highway", "cycleway");
+        wayType = encodeDecodeWayType("", way);
+        assertEquals("cycleway",wayType);
+
+        map.put("surface", "grass");
+        wayType = encodeDecodeWayType("", way);
+        assertEquals("cycleway,unpaved",wayType);
+
+        map.put("surface", "asphalt");
+        wayType = encodeDecodeWayType("", way);
+        assertEquals("cycleway",wayType);        
+        
+        map.put("highway", "footway");        
         map.put("bicycle", "yes");
+        map.put("surface", "grass");
+        wayType = encodeDecodeWayType("", way);
+        assertEquals("cycleway,unpaved",wayType);
+        
+        map.clear();
 
-        long allowed=0;
-        long flags=encoder.handleWayTags( allowed,  way, 0 );
-        assertEquals(0, flags);
+        map.put("highway", "track");        
+        map.put("foot", "yes");
+        map.put("surface", "paved");
+        map.put("tracktype", "grade1");
+        wayType = encodeDecodeWayType("", way);
+        assertEquals("wheeler",wayType);
 
-        allowed=1;
+        map.put("highway", "track");        
+        map.put("foot", "yes");
+        map.put("surface", "paved");
+        map.put("tracktype", "grade2");
+        wayType = encodeDecodeWayType("", way);
+        assertEquals("wheeler,unpaved",wayType);
+        
+        map.clear();
+        map.put("highway", "footway");        
+        map.put("bicycle", "yes");
+        map.put("surface", "grass");
+        wayType = encodeDecodeWayType("", way);
+        
+        long flags;        
+        long allowed=1;
         flags=encoder.handleWayTags( allowed,  way, 4 );
-        assertEquals(107, flags);
+        assertEquals(735, flags);
         
-        allowed=1;
         flags=encoder.handleWayTags( allowed,  way, 5 );
-        assertEquals(111, flags);
+        assertEquals(743, flags);
         
-        allowed=1;
         flags=encoder.handleWayTags( allowed,  way, 6 );
-        assertEquals(119, flags);
+        assertEquals(747, flags);
 
-        allowed=1;
         flags=encoder.handleWayTags( allowed,  way, 7 );
-        assertEquals(123, flags);
+        assertEquals(755, flags);
 
         /* This throws an exception, but boosting with 8 is an error  as it is higher than OUTSTANDING_NICE
         allowed=1;

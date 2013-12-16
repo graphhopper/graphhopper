@@ -37,6 +37,8 @@ import java.util.Set;
 public class BikeFlagEncoder extends AbstractFlagEncoder
 {
     private int safeWayBit = 0;
+    private int unpavedBit = 0;
+    private int wayTypeStartBit = 0;
     private final static int unspecifiedRelationWeight = 4;
     //Wheeler heighways are parts where you need to get off your bike and wheel (German: Schiebestrecke)
     private HashSet<String> wheeler = new HashSet<String>();
@@ -99,6 +101,9 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         shift += 4;
 
         safeWayBit = 1 << shift++;
+        unpavedBit = 1 << shift++;
+        
+        wayTypeStartBit = shift++ ; shift ++;
 
         return shift;
     }
@@ -255,6 +260,27 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
             {
                 encoded |= safeWayBit;
             }
+            
+            // mark unpaved bit
+            if  ( ((way.getTag("highway").equals("track") && (way.getTag("tracktype")==null)) ) ||
+                  ((way.getTag("highway").equals("track")) && !(way.getTag("tracktype").equals("grade1")) )|| 
+                  ((way.getTag("surface")==null) && (way.getTag("highway").equals("path")) ) ||
+                   (unpavedSurfaceTags.contains(way.getTag("surface")) ) )
+            {
+                encoded |= unpavedBit;
+            }
+
+            // Populate bits at wayTypemask with wayType            
+            wayType ourwayType = wayType.OTHERSMALLWAY;
+            if (way.hasTag("highway", wheeler))
+               ourwayType=wayType.WHEELER;
+            if ( (way.hasTag("bicycle", intended) && way.hasTag("highway", wheeler)) ||
+                 (way.getTag("highway") == "cycleway") )
+                ourwayType=wayType.CYCLEWAY;
+            if (way.hasTag("highway",ROAD))
+                ourwayType=wayType.ROAD;
+                    
+            encoded |= (ourwayType.getValue() << wayTypeStartBit );
 
         } else
         {
@@ -338,6 +364,20 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
             add("service");
             add("unclassified");
             add("residential");
+            add("steps");
+        }
+    };
+
+    private final Set<String> unpavedSurfaceTags = new HashSet<String>()
+    {
+        {
+            add("unpaved");
+            add("gravel");
+            add("ground");
+            add("dirt");
+            add("paving_stones");
+            add("grass");
+            add("cobblestone");
         }
     };
     
@@ -368,6 +408,25 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         }
     };
     
+    private final Set<String> ROAD = new HashSet<String>()
+    {
+        {
+            add("living_street");
+            add("road");
+            add("service");
+            add("unclassified");
+            add("residential");
+            add("trunk");
+            add("trunk_link");
+            add("primary");
+            add("primary_link");
+            add("secondary");
+            add("secondary_link");
+            add("tertiary");
+            add("tertiary_link");
+        }
+    };
+    
     private static final Map<String, Integer> HIGHWAY_SPEED = new HashMap<String, Integer>()
     {
         {
@@ -395,6 +454,22 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         }
     };
     
+    @Override
+    public int getPavementCode(long flags)
+    {
+       if ((flags & unpavedBit) != 0)
+           return 1;   //Unpaved
+       else
+           return 0;   //Paved
+    }
+    
+    @Override    
+    public int getWayTypeCode(long flags)
+    {
+        long wayTypeMask=(1<<wayTypeStartBit) + (2<<wayTypeStartBit);
+        return (int) (flags & wayTypeMask) >> wayTypeStartBit;
+    }
+   
     private enum relationMapCode
     {
        /* Inspired by http://wiki.openstreetmap.org/wiki/Class:bicycle
@@ -420,7 +495,8 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         OUTSTANDING_NICE(7);
         
         private final int value;
-        private relationMapCode(int value) {
+        private relationMapCode(int value) 
+        {
            this.value = value;
         }
 
@@ -428,6 +504,26 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
            return value;
         }
     };
+
+    private enum wayType
+    {
+        ROAD(0),
+        WHEELER(1),
+        CYCLEWAY(2),
+        OTHERSMALLWAY(3);
+       
+        private final int value;
+        private wayType(int value) {
+           this.value = value;
+        }
+
+        public int getValue() 
+        {
+           return value;
+        }
+
+    };
+    
     
     //Convert bicycle route network tag into way route code stored in MAP
     private static final Map<String, Integer> BIKE_NETWORK_TO_CODE = new HashMap<String, Integer>()

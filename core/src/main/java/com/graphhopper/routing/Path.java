@@ -316,6 +316,8 @@ public class Path
         forEveryEdge(new EdgeVisitor()
         {
             String name = null;
+            int pavement;
+            int wayType;
             /*
              * We need three points to make directions
              *
@@ -369,9 +371,11 @@ public class Path
                 if (name == null)
                 {
                     name = edgeBase.getName();
+                    pavement=encoder.getPavementCode(edgeBase.getFlags());                    
+                    wayType=encoder.getWayTypeCode(edgeBase.getFlags());
                     prevDist = calcDistance(edgeBase);
                     prevTime = calcTime(prevDist, edgeBase.getFlags());
-                    cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, prevDist, prevTime, prevLat, prevLon));
+                    cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, wayType, pavement, prevDist, prevTime, prevLat, prevLon));
                 } else
                 {
                     double tmpOrientation;
@@ -391,40 +395,47 @@ public class Path
                     }
 
                     String tmpName = edgeBase.getName();
-                    if (!name.equals(tmpName))
+                    int tmppavement=encoder.getPavementCode(edgeBase.getFlags());                    
+                    int tmpwayType=encoder.getWayTypeCode(edgeBase.getFlags());
+                    
+                    if ( (!name.equals(tmpName)) ||
+                          (pavement!=tmppavement) || 
+                          (wayType!=tmpwayType)  )
                     {
                         InstructionUtil.updateLastDistanceAndTime(cachedWays, prevDist, prevTime);
                         prevDist = calcDistance(edgeBase);
                         prevTime = calcTime(prevDist, edgeBase.getFlags());
                         name = tmpName;
+                        pavement=tmppavement;
+                        wayType=tmpwayType;
                         double delta = Math.abs(tmpOrientation - prevOrientation);
                         if (delta < 0.2)
                         {
                             // 0.2 ~= 11°
-                            cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, prevDist, prevTime, prevLat, prevLon));
+                            cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, wayType, pavement, prevDist, prevTime, prevLat, prevLon));
 
                         } else if (delta < 0.8)
                         {
                             // 0.8 ~= 40°
                             if (tmpOrientation > prevOrientation)
-                                cachedWays.add(new Instruction(Instruction.TURN_SLIGHT_LEFT, name, prevDist, prevTime, prevLat, prevLon));
+                                cachedWays.add(new Instruction(Instruction.TURN_SLIGHT_LEFT, name, wayType, pavement, prevDist, prevTime, prevLat, prevLon));
                             else
-                                cachedWays.add(new Instruction(Instruction.TURN_SLIGHT_RIGHT, name, prevDist, prevTime, prevLat, prevLon));
+                                cachedWays.add(new Instruction(Instruction.TURN_SLIGHT_RIGHT, name, wayType, pavement, prevDist, prevTime, prevLat, prevLon));
 
                         } else if (delta < 1.8)
                         {
                             // 1.8 ~= 103°
                             if (tmpOrientation > prevOrientation)
-                                cachedWays.add(new Instruction(Instruction.TURN_LEFT, name, prevDist, prevTime, prevLat, prevLon));
+                                cachedWays.add(new Instruction(Instruction.TURN_LEFT, name, wayType, pavement, prevDist, prevTime, prevLat, prevLon));
                             else
-                                cachedWays.add(new Instruction(Instruction.TURN_RIGHT, name, prevDist, prevTime, prevLat, prevLon));
+                                cachedWays.add(new Instruction(Instruction.TURN_RIGHT, name, wayType, pavement, prevDist, prevTime, prevLat, prevLon));
 
                         } else
                         {
                             if (tmpOrientation > prevOrientation)
-                                cachedWays.add(new Instruction(Instruction.TURN_SHARP_LEFT, name, prevDist, prevTime, prevLat, prevLon));
+                                cachedWays.add(new Instruction(Instruction.TURN_SHARP_LEFT, name, wayType, pavement, prevDist, prevTime, prevLat, prevLon));
                             else
-                                cachedWays.add(new Instruction(Instruction.TURN_SHARP_RIGHT, name, prevDist, prevTime, prevLat, prevLon));
+                                cachedWays.add(new Instruction(Instruction.TURN_SHARP_RIGHT, name, wayType, pavement, prevDist, prevTime, prevLat, prevLon));
 
                         }
                     } else

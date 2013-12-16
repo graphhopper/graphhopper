@@ -71,4 +71,7 @@ public interface FlagEncoder
     // <-         f | t  | t
     // <->        f | f  | t
     boolean canBeOverwritten( long flags1, long flags2 );
+    
+    int getPavementCode(long flags);
+    int getWayTypeCode(long flags);
 }

@@ -15,17 +15,31 @@ public class Instruction
     private long time;
     private double lat;
     private double lon;
+    private int pavementType;
+    private int waytype;
 
-    public Instruction(int indication, String name, double distance, long time, double lat, double lon)
+    public Instruction(int indication, String name, int waytype, int pavementType, double distance, long time, double lat, double lon)
     {
         this.indication = indication;
         this.name = name;
+        this.waytype=waytype;
+        this.pavementType=pavementType;
         this.distance = distance;
         this.time = time;
         this.lat = lat;
         this.lon = lon;
     }
+    
+    public int getPavement()
+    {
+        return pavementType;
+    }
 
+    public int getWayType()
+    {
+        return waytype;
+    }
+   
     public int getIndication()
     {
         return indication;

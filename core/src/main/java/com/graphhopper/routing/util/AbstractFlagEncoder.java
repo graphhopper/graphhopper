@@ -195,6 +195,18 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
         return isBoth(flags2) || (flags1 & directionBitMask) == (flags2 & directionBitMask);
     }
 
+    @Override
+    public int getPavementCode(long flags)
+    {
+        return -1;
+    }
+    
+    @Override
+    public int getWayTypeCode(long flags)
+    {
+        return -1;
+    }
+    
     public long swapDirection( long flags )
     {
         long dir = flags & directionBitMask;

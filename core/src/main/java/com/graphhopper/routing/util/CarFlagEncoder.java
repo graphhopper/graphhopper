@@ -323,4 +323,17 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             put("track", 15);
         }
     };
+    
+    @Override
+    public int getPavementCode(long flags)
+    {
+       return 0;
+    }
+    
+    @Override    
+    public int getWayTypeCode(long flags)
+    {
+       return 0;
+    }
+    
 }

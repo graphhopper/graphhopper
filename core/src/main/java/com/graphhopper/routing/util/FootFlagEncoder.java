@@ -247,4 +247,17 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     static final int SLOW = 2;
     static final int MEAN = 5;
     static final int FERRY = 10;
+    
+    @Override
+    public int getPavementCode(long flags)
+    {
+       return 0;
+    }
+    
+    @Override    
+    public int getWayTypeCode(long flags)
+    {
+       return 0;
+    }
+    
 }

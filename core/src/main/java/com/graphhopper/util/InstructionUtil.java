@@ -118,7 +118,50 @@ public class InstructionUtil
         }
         return res;
     }
+    
+    public static String getWayName (String name, int pavetype, int waytype, TranslationMap.Translation tr)
+    {
+        String road = tr.tr("road");
+        String wheeler = tr.tr("wheeler");
+        String cycleway = tr.tr("cycleway");
+        String way = tr.tr("way");
 
+        String paved = tr.tr("paved");
+        String unpaved = tr.tr("unpaved");
+        
+        String pavementName="";
+        
+        if (pavetype == 1)
+            pavementName=unpaved;
+
+        String wayClass="";
+        switch (waytype)
+        {
+            case 0: wayClass=road;
+                    break;
+            case 1: wayClass=wheeler;
+                    break;
+            case 2: wayClass=cycleway;
+                    break;
+            case 3: wayClass=way;
+                    break;
+        }
+        
+        if (name.isEmpty())
+          if (pavementName.isEmpty())
+            return wayClass;
+          else 
+            return wayClass + "," + pavementName;
+        else
+          if (pavementName.isEmpty())
+             if (waytype==0)
+                 return name;
+             else
+                 return name + "," + wayClass;
+          else 
+             return name + "," + pavementName;
+    }       
+    
     public static List<String> createDescription(List<Instruction> instructions, TranslationMap.Translation tr)
     {
         String shLeftTr = tr.tr("sharp_left");
@@ -132,7 +175,7 @@ public class InstructionUtil
         for (Instruction instruction : instructions)
         {
             String str;
-            String n = instruction.getName();
+            String n = getWayName(instruction.getName(), instruction.getPavement(), instruction.getWayType(),tr);
             int indi = instruction.getIndication();
             if (indi == Instruction.CONTINUE_ON_STREET)
             {

@@ -324,4 +324,30 @@ public class EncodingManager
         }
         return str;
     }
+    
+    public int getPavementCode(long flags)
+    {
+        int pavementCode = 0;
+        for (int i = 0; i < encoderCount; i++)
+        {
+            // FIXME: Multiple Encoderes!!!!!!!
+            pavementCode += encoders.get(i).getPavementCode(flags);
+        }
+        {
+        return pavementCode;
+        }
+    }
+    
+    public int getWayTypeCode(long flags)
+    {
+        int wayTypeCodeCode = 0;
+        for (int i = 0; i < encoderCount; i++)
+        {
+            wayTypeCodeCode += encoders.get(i).getPavementCode(flags);
+        }
+        {
+        return wayTypeCodeCode;
+        }
+    }
+        
 }
