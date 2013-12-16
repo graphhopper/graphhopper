@@ -91,11 +91,11 @@ public class InstructionListTest
         Path p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestWeighting()).calcPath(0, 10);
         List<Instruction> wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Continue onto 4-7",
-                "Turn left onto 7-8", "Continue onto 8-9", "Turn right"),
+                "Turn left onto 7-8", "Continue onto 8-9", "Turn right onto road"),
                 InstructionUtil.createDescription(wayList, trMap.getWithFallBack(Locale.CANADA)));
 
         assertEquals(Arrays.asList("Geradeaus auf 0-1", "Rechts abbiegen auf 1-4", "Geradeaus auf 4-7",
-                "Links abbiegen auf 7-8", "Geradeaus auf 8-9", "Rechts abbiegen"),
+                "Links abbiegen auf 7-8", "Geradeaus auf 8-9", "Rechts abbiegen auf Strasse"),
                 InstructionUtil.createDescription(wayList, trMap.getWithFallBack(Locale.GERMAN)));
 
         TDoubleList distList = InstructionUtil.getDistances(wayList);
