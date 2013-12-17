@@ -198,7 +198,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     }
 
     // In case that the way belongs to a relation for which we do have a relation triggered weight change.    
-    // FIXME: Re-write in case that there is a more geneic way to influence the weighting.
+    // FIXME: Re-write in case that there is a more geneic way to influence the weighting (issue #124).
     // Here we boost or reduce the speed according to the relationweightcode:
     private int relationWeightCodeToSpeed(int highwayspeed, int relationweightcode)
     {
@@ -230,7 +230,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         {
             
             // set speed
-            // FIXME Rewrite necessary after decision for other weighting than speed!
+            // FIXME Rewrite necessary after decision #124 for other weighting than speed!
             // Currently there is only speed, so we increase it.
             int speed;
             // relationcode = 0 : This happens for e.g. ways with a bus or hiking relation
