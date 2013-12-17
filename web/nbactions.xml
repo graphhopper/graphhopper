@@ -9,7 +9,7 @@
         <properties>
             <maven.test.skip>true</maven.test.skip>
             <!-- for germany we need roughly 500MB -->
-            <Env.MAVEN_OPTS>-Djetty.port=8989 -Dgraphhopper.config=../config.properties -Dgraphhopper.osmreader.osm=d:\temp\graphoppertest\pdorf.osm  -Xmx2600m -Xms2600m -XX:PermSize=50m -XX:MaxPermSize=50m</Env.MAVEN_OPTS>
+            <Env.MAVEN_OPTS>-Djetty.port=8989 -Dgraphhopper.config=../config.properties -Dgraphhopper.osmreader.osm=/media/SAMSUNG/maps/berlin -Xms2400m -Xms2400m -XX:PermSize=50m -XX:MaxPermSize=50m</Env.MAVEN_OPTS>
         </properties>
     </action>
     <action>
@@ -22,7 +22,7 @@
         <properties>
             <maven.test.skip>true</maven.test.skip>
             <!-- for germany we need a bit more RAM -->
-            <Env.MAVEN_OPTS>-Djetty.port=8989 -Dgraphhopper.config=../config.properties -Dgraphhopper.osmreader.osm=d:\temp\graphoppertest\pdorf.osm -Xmx1500m -Xms1500m -XX:PermSize=50m -XX:MaxPermSize=50m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=8000</Env.MAVEN_OPTS>
+            <Env.MAVEN_OPTS>-Djetty.port=8989 -Dgraphhopper.config=../config.properties -Dgraphhopper.osmreader.osm=/media/SAMSUNG/maps/berlin -Xms1500m -Xms1500m -XX:PermSize=50m -XX:MaxPermSize=50m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=8000</Env.MAVEN_OPTS>
         </properties>
     </action>
     <action>

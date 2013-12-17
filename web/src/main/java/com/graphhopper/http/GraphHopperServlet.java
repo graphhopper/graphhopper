@@ -38,9 +38,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import static javax.servlet.http.HttpServletResponse.*;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 
 /**
  * Servlet to use GraphHopper in a remote application (mobile or browser). Attention: If type is
@@ -100,48 +97,6 @@ public class GraphHopperServlet extends GHServlet
                 object("buildDate", Constants.BUILD_DATE);
         writeJson(req, res, json.build());
     }
-    
-    void createGPXfile(String gpxstring)
-    {
- 
-		FileOutputStream fop = null;
-		File file;
- 
-		try {
- 
-			file = new File("d:/temp/result.gpx");
-			fop = new FileOutputStream(file);
- 
-			// if file doesnt exists, then create it
-			if (!file.exists()) {
-				file.createNewFile();
-			}
-                        else
-                        {
-                            file.delete();
-                            file.createNewFile();
-                        }
- 
-			// get the content in bytes
-			byte[] contentInBytes = gpxstring.getBytes();
- 
-			fop.write(contentInBytes);
-			fop.flush();
-			fop.close();
- 
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if (fop != null) {
-					fop.close();
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-    }
-
 
     void writePath( HttpServletRequest req, HttpServletResponse res ) throws Exception
     {
@@ -158,7 +113,7 @@ public class GraphHopperServlet extends GHServlet
             boolean calcPoints = getBooleanParam(req, "calcPoints", true);
             boolean useMiles = getBooleanParam(req, "useMiles", false);
 
-            String vehicleStr = getParam(req, "vehicle", "BIKE").toUpperCase();
+            String vehicleStr = getParam(req, "vehicle", "CAR").toUpperCase();
 
             Locale locale = Helper.getLocale(getParam(req, "locale", "en"));
 
@@ -207,9 +162,6 @@ public class GraphHopperServlet extends GHServlet
                 builder = builder.object("errors", list).endObject();
             } else
             {
-                String gpx=rsp.createGPX("GPXResult",0);
-                createGPXfile(gpx);
-                
                 builder = new JSONBuilder().
                         startObject("info").
                         object("routeFound", rsp.isFound()).
