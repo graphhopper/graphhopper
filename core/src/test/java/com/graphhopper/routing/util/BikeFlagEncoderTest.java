@@ -286,11 +286,13 @@ public class BikeFlagEncoderTest
         flags=encoder.handleWayTags( allowed,  way, 7 );
         assertEquals(755, flags);
 
-        /* This throws an exception, but boosting with 8 is an error  as it is higher than OUTSTANDING_NICE
         allowed=1;
-        flags=encoder.handleWayTags( allowed,  way, 8 );
-        assertEquals(127, flags);
-        */
+        flags=encoder.handleWayTags( allowed,  way, 18 );
+        assertEquals(763, flags);
+
+        allowed=1;
+        flags=encoder.handleWayTags( allowed,  way, -18 );
+        assertEquals(707, flags);
         
         
     }

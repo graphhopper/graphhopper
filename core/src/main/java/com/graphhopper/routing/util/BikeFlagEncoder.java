@@ -44,6 +44,8 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     private HashSet<String> wheeler = new HashSet<String>();
     private HashSet<String> intended = new HashSet<String>();
     private HashSet<String> oppositeLanes = new HashSet<String>();
+    
+    private int maxcyclespeed = 30;
 
     /**
      * Should be only instantied via EncodingManager
@@ -95,8 +97,9 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     {
         // first two bits are reserved for route handling in superclass
         shift = super.defineBits(index, shift);
+        maxcyclespeed=relationWeightCodeToSpeed(20, relationMapCode.OUTSTANDING_NICE.getValue());
 
-        speedEncoder = new EncodedValue("Speed", shift, 4, 2, HIGHWAY_SPEED.get("cycleway"), relationWeightCodeToSpeed(20, relationMapCode.OUTSTANDING_NICE.getValue()));
+        speedEncoder = new EncodedValue("Speed", shift, 4, 2, HIGHWAY_SPEED.get("cycleway"), maxcyclespeed);
         
         shift += 4;
 
@@ -206,7 +209,14 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         else 
            speed=highwayspeed; 
         // Add or remove 3km/h per every relation weight boost point
-        return  speed + 3 * (relationweightcode-unspecifiedRelationWeight);
+        speed = speed + 3 * (relationweightcode-unspecifiedRelationWeight);
+        // Make sure that we do not eceed the limits:
+        if (speed > maxcyclespeed)
+            speed = maxcyclespeed;
+        else
+            if (speed <0)
+              speed = 0;
+        return speed ;
     }
     
     @Override
