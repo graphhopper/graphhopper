@@ -54,10 +54,10 @@ public class LocationIndexTree implements LocationIndex
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int MAGIC_INT;
-    private DistanceCalc preciseDistCalc = new DistanceCalcEarth();
-    private DistanceCalc distCalc = new DistancePlaneProjection();
-    final DataAccess dataAccess;
+    protected static DistanceCalc distCalc = new DistancePlaneProjection();
+    private DistanceCalc preciseDistCalc = new DistanceCalcEarth();    
     protected final Graph graph;
+    final DataAccess dataAccess;
     private int[] entries;
     private byte[] shifts;
     // convert spatial key to index for subentry of current depth

@@ -26,8 +26,6 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TLongArrayList;
 
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Stores the nodes for the found path of an algorithm. It additionally needs the edgeIds to make
