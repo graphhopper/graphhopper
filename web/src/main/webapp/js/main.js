@@ -172,9 +172,19 @@ function initMap() {
     $("#info").css("max-height", height);
     console.log("init map at " + JSON.stringify(bounds));
 
-    // mapquest provider
+    // mapquest provider    
     var moreAttr = 'Data &copy; <a href="http://www.openstreetmap.org/copyright">OSM</a>,'
             + 'JS: <a href="http://leafletjs.com/">Leaflet</a>';
+
+    var tp = "ls";
+    if (L.Browser.retina)
+        tp = "lr";
+
+    var lyrk = L.tileLayer('http://{s}.tiles.lyrk.org/' + tp + '/{z}/{x}/{y}?apikey=6e8cfef737a140e2a58c8122aaa26077', {
+        attribution: '<a href="http://geodienste.lyrk.de/">Lyrk</a>,' + moreAttr,
+        subdomains: ['a', 'b', 'c']
+    });
+
     var mapquest = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
         attribution: '<a href="http://open.mapquest.co.uk">MapQuest</a>,' + moreAttr,
         subdomains: ['otile1', 'otile2', 'otile3', 'otile4']
@@ -237,6 +247,7 @@ function initMap() {
     });
 
     var baseMaps = {
+        "Lyrk": lyrk,
         "MapQuest": mapquest,
         "MapQuest Aerial": mapquestAerial,
         "TF Transport": thunderTransport,
@@ -657,10 +668,10 @@ function routeLatLng(request, doQuery) {
 function addInstruction(main, indi, title, distance, time, latLng) {
     var indiPic = "<img class='instr_pic' style='vertical-align: middle' src='" + window.location.pathname + "img/" + indi + ".png'/>";
     var str = "<td class='instr_title'>" + title + "</td>";
-    
+
     if (distance && distance.indexOf("0 ") < 0)
         str += " <td class='instr_distance_td'><span class='instr_distance'>" + distance + "<br/>" + time + "</span></td>";
-    
+
     if (indi !== "continue")
         str = "<td>" + indiPic + "</td>" + str;
     else
