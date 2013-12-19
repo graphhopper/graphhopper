@@ -188,8 +188,13 @@ public class OSMInputFile implements Sink, Closeable
                 switch (name.charAt(0))
                 {
                     case 'n':
-                        id = Long.parseLong(parser.getAttributeValue(null, "id"));
-                        return new OSMNode(id, parser);
+                        // note vs. node
+                        if ("node".equals(name))
+                        {
+                            id = Long.parseLong(parser.getAttributeValue(null, "id"));
+                            return new OSMNode(id, parser);
+                        }
+                        break;
 
                     case 'w':
                     {

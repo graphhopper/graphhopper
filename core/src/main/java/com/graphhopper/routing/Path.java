@@ -25,7 +25,8 @@ import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TLongArrayList;
-
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Stores the nodes for the found path of an algorithm. It additionally needs the edgeIds to make
@@ -37,7 +38,7 @@ import gnu.trove.list.array.TLongArrayList;
  */
 public class Path
 {
-    private DistanceCalc distCalc = new DistanceCalcEarth();
+    private final DistanceCalc distCalc = new DistanceCalcEarth();
     protected Graph graph;
     private FlagEncoder encoder;
     protected double distance;
@@ -248,6 +249,23 @@ public class Path
         }
     }
 
+    public List<EdgeIteratorState> calcEdges()
+    {
+        final List<EdgeIteratorState> edges = new ArrayList<EdgeIteratorState>(edgeIds.size());
+        if (edgeIds.isEmpty())
+            return edges;
+
+        forEveryEdge(new EdgeVisitor()
+        {
+            @Override
+            public void next( EdgeIteratorState eb, int i )
+            {
+                edges.add(eb);
+            }
+        });
+        return edges;
+    }
+
     /**
      * @return the uncached node indices of the tower nodes in this path.
      */
@@ -448,7 +466,7 @@ public class Path
                 boolean lastEdge = index == edgeIds.size() - 1;
                 if (lastEdge)
                     cachedWays.add(new FinishInstruction(prevLat, prevLon));
-            }                       
+            }
 
             private void add( EdgeIteratorState edge, PointList pl )
             {
