@@ -2,11 +2,11 @@ package com.graphhopper.util;
 
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TLongArrayList;
-import java.util.ArrayList;
 import java.util.List;
 
 public class Instruction
 {
+    private static DistanceCalc distanceCalc = new DistanceCalcEarth();
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
     public static final int TURN_SLIGHT_LEFT = -1;
@@ -17,8 +17,8 @@ public class Instruction
     public static final int FINISH = 4;
     private final int indication;
     private final String name;
-    private final TDoubleArrayList distances;
-    private final TLongArrayList times;
+    private final double distance;
+    private final long millis;
     private final PointList points;
 
     /**
@@ -26,22 +26,15 @@ public class Instruction
      * instruction is not duplicated here and should be in the next one. The first distance and time
      * entries are measured between the first point and the second one etc.
      */
-    public Instruction( int indication, String name, TDoubleArrayList distances, TLongArrayList times, PointList pl )
+    public Instruction( int indication, String name, double distance, long millis, PointList pl )
     {
         this.indication = indication;
         this.name = name;
-        this.distances = distances;
-        this.times = times;
+        this.distance = distance;
+        if (Double.isNaN(distance))
+            throw new IllegalStateException("distance of Instruction cannot be empty! " + toString());
+        this.millis = millis;
         this.points = pl;
-
-        if (distances.isEmpty())
-            throw new IllegalStateException("Distances cannot be empty");
-
-        if (times.size() != distances.size())
-            throw new IllegalStateException("Distances and times must have same size");
-
-        if (times.size() != points.size())
-            throw new IllegalStateException("Points and times must have same size");
     }
 
     public int getIndication()
@@ -60,23 +53,23 @@ public class Instruction
     /**
      * Distance in meter until no new instruction
      */
-    public double calcDistance()
+    public double getDistance()
     {
-        return distances.sum();
+        return distance;
     }
 
     /**
      * Time in millis until no new instruction
      */
-    public long calcMillis()
+    public long getMillis()
     {
-        return times.sum();
+        return millis;
     }
 
     /**
      * Latitude of the location where this instruction should take place.
      */
-    public double getStartLat()
+    double getFirstLat()
     {
         return points.getLatitude(0);
     }
@@ -84,9 +77,19 @@ public class Instruction
     /**
      * Longitude of the location where this instruction should take place.
      */
-    public double getStartLon()
+    double getFirstLon()
     {
         return points.getLongitude(0);
+    }
+
+    double getLastLat()
+    {
+        return points.getLatitude(points.size() - 1);
+    }
+
+    double getLastLon()
+    {
+        return points.getLongitude(points.size() - 1);
     }
 
     /**
@@ -95,14 +98,24 @@ public class Instruction
      * <p>
      * @return the time offset to add for the next instruction
      */
-    public long fillGPXList( List<GPXEntry> list, long time )
+    public long fillGPXList( List<GPXEntry> list, long time, double prevFactor, double prevLat, double prevLon )
     {
-        int len = times.size();
-        int i = 0;
-        for (; i < len; i++)
+        int len = points.size();
+        for (int i = 0; i < len; i++)
         {
-            list.add(new GPXEntry(points.getLatitude(i), points.getLongitude(i), time));
-            time += times.get(i);
+            double lat = points.getLatitude(i);
+            double lon = points.getLongitude(i);
+            if (!Double.isNaN(prevLat)) {
+                // Here we assume that the same speed is used until the next instruction.
+                // If we would calculate all the distances (and times) up front there
+                // would be a problem where the air-line distance is not the distance returned from the edge
+                // e.g. in the case if we include elevation data                
+                time += distanceCalc.calcDist(prevLat, prevLon, lat, lon) / prevFactor;
+            }
+            list.add(new GPXEntry(lat, lon, time));
+            prevFactor = distance / millis;
+            prevLat = lat;
+            prevLon = lon;
         }
         return time;
     }
@@ -116,9 +129,9 @@ public class Instruction
         sb.append(',');
         sb.append(name);
         sb.append(',');
-        sb.append(distances);
+        sb.append(distance);
         sb.append(',');
-        sb.append(times);
+        sb.append(millis);
         sb.append(')');
         return sb.toString();
     }
