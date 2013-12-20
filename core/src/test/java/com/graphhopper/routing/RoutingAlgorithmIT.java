@@ -152,7 +152,7 @@ public class RoutingAlgorithmIT
     public void testMonacoBike()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 1671, 84));
+        list.add(new OneRun(43.730864,7.420771, 43.727687, 7.418737, 1641, 76));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3580, 133));
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2323, 100));
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1434, 80));
