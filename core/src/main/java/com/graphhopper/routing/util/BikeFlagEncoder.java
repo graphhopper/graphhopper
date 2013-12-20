@@ -145,9 +145,6 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         // use the way if it is tagged for bikes
         if (way.hasTag("bicycle", intended))
             return acceptBit;
-
-        if (way.hasTag("mtb", intended))
-            return acceptBit;
         
         if (way.hasTag("motorroad", "yes"))
             return 0;
@@ -190,10 +187,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         }
         else
         {
-           if (relation.hasTag("route", "mtb"))
-               return BIKE_NETWORK_TO_CODE.get("mtb");
-           else
-               return relationMapCode.UNCHANGED.getValue();
+           return relationMapCode.UNCHANGED.getValue();
         }
     }
 
@@ -535,7 +529,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     };
     
     
-    //Convert bicycle route network tag into way route code stored in MAP
+    //Convert network tag of bicycle routes into a way route code stored in the wayMAP
     private static final Map<String, Integer> BIKE_NETWORK_TO_CODE = new HashMap<String, Integer>()
     {
         {
