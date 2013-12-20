@@ -48,9 +48,31 @@ public class BikeFlagEncoderTest
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "primary");
         assertEquals(18, encoder.getSpeed(way));
+        
+        way.setTag("highway", "residential");
+        assertEquals(20, encoder.getSpeed(way));
+        // Test pushing section speeds
+        way.setTag("highway", "footway");
+        assertEquals(4, encoder.getSpeed(way));
+        way.setTag("highway", "track");
+        assertEquals(4, encoder.getSpeed(way));
 
+        way.setTag("highway", "steps");
+        assertEquals(2, encoder.getSpeed(way));
+        
+        //Test speed for allowed pushing section types
+        way.setTag("highway", "track");
+        way.setTag("bicycle", "yes");
+        assertEquals(20, encoder.getSpeed(way));
+        
+        way.setTag("highway", "track");
+        way.setTag("bicycle", "yes");
+        way.setTag("tracktype", "grade3");
+        assertEquals(12, encoder.getSpeed(way));
+        
         way.setTag("surface", "paved");
         assertEquals(20, encoder.getSpeed(way));
+
     }
 
     @Test
@@ -194,39 +216,39 @@ public class BikeFlagEncoderTest
         
         map.put("highway", "track");
         wayType = encodeDecodeWayType("", way);
-        assertEquals("wheeler,unpaved",wayType);
+        assertEquals("pushing section,unpaved",wayType);
  
         map.put("highway", "steps");
         wayType = encodeDecodeWayType("", way);
-        assertEquals("wheeler",wayType);
+        assertEquals("pushing section",wayType);
          
         map.put("highway", "steps");
         wayType = encodeDecodeWayType("Famous steps", way);
-        assertEquals("Famous steps,wheeler",wayType);
+        assertEquals("Famous steps,pushing section",wayType);
                 
         map.put("highway", "path");
         wayType = encodeDecodeWayType("", way);
-        assertEquals("wheeler,unpaved",wayType);
+        assertEquals("pushing section,unpaved",wayType);
         
         map.put("highway", "footway");
         wayType = encodeDecodeWayType("", way);       
-        assertEquals("wheeler",wayType);
+        assertEquals("pushing section",wayType);
         
         map.put("highway", "footway");
         map.put("surface", "pebblestone");
         wayType = encodeDecodeWayType("", way);
-        assertEquals("wheeler",wayType);
+        assertEquals("pushing section",wayType);
 
         
         map.put("highway", "path");
         map.put("surface", "grass");
         wayType = encodeDecodeWayType("", way);
-        assertEquals("wheeler,unpaved",wayType);
+        assertEquals("pushing section,unpaved",wayType);
         
         map.put("highway", "path");
         map.put("surface", "concrete");
         wayType = encodeDecodeWayType("", way);
-        assertEquals("wheeler",wayType);
+        assertEquals("pushing section",wayType);
         
         map.put("highway", "residential");
         wayType = encodeDecodeWayType("", way);
@@ -257,14 +279,14 @@ public class BikeFlagEncoderTest
         map.put("surface", "paved");
         map.put("tracktype", "grade1");
         wayType = encodeDecodeWayType("", way);
-        assertEquals("wheeler",wayType);
+        assertEquals("pushing section",wayType);
 
         map.put("highway", "track");        
         map.put("foot", "yes");
         map.put("surface", "paved");
         map.put("tracktype", "grade2");
         wayType = encodeDecodeWayType("", way);
-        assertEquals("wheeler,unpaved",wayType);
+        assertEquals("pushing section,unpaved",wayType);
         
         map.clear();
         map.put("highway", "footway");        

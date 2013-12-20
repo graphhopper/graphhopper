@@ -122,7 +122,7 @@ public class InstructionUtil
     public static String getWayName (String name, int pavetype, int waytype, TranslationMap.Translation tr)
     {
         String road = tr.tr("road");
-        String wheeler = tr.tr("wheeler");
+        String pushing_section = tr.tr("pushing_section");
         String cycleway = tr.tr("cycleway");
         String way = tr.tr("way");
 
@@ -139,7 +139,7 @@ public class InstructionUtil
         {
             case 0: wayClass=road;
                     break;
-            case 1: wayClass=wheeler;
+            case 1: wayClass=pushing_section;
                     break;
             case 2: wayClass=cycleway;
                     break;

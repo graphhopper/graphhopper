@@ -41,11 +41,12 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     private int wayTypeStartBit = 0;
     private final static int unspecifiedRelationWeight = 4;
     //Wheeler heighways are parts where you need to get off your bike and wheel (German: Schiebestrecke)
-    private HashSet<String> wheeler = new HashSet<String>();
+    private HashSet<String> pushing_sections = new HashSet<String>();
     private HashSet<String> intended = new HashSet<String>();
     private HashSet<String> oppositeLanes = new HashSet<String>();
     
     private int maxcyclespeed = 30;
+    private final static int pushing_section_speed = 4;
 
     /**
      * Should be only instantied via EncodingManager
@@ -66,11 +67,11 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         intended.add("official");
         intended.add("permissive");
         
-        wheeler.add("path");
-        wheeler.add("track");
-        wheeler.add("footway");
-        wheeler.add("pedestrian");
-        wheeler.add("steps");
+        pushing_sections.add("path");
+        pushing_sections.add("track");
+        pushing_sections.add("footway");
+        pushing_sections.add("pedestrian");
+        pushing_sections.add("steps");
                 
         oppositeLanes.add("opposite");
         oppositeLanes.add("opposite_lane");
@@ -276,9 +277,9 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
 
             // Populate bits at wayTypemask with wayType            
             wayType ourwayType = wayType.OTHERSMALLWAY;
-            if (way.hasTag("highway", wheeler))
+            if (way.hasTag("highway", pushing_sections))
                ourwayType=wayType.WHEELER;
-            if ( (way.hasTag("bicycle", intended) && way.hasTag("highway", wheeler)) ||
+            if ( (way.hasTag("bicycle", intended) && way.hasTag("highway", pushing_sections)) ||
                  (way.getTag("highway") == "cycleway") )
                 ourwayType=wayType.CYCLEWAY;
             if (way.hasTag("highway",ROAD))
@@ -326,6 +327,12 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
 
     int getSpeed( OSMWay way )
     {
+        if (!way.hasTag("bicycle", intended) && way.hasTag("highway", pushing_sections))
+            if (way.hasTag("highway","steps"))
+               return pushing_section_speed/2;
+            else
+               return pushing_section_speed;
+        
         String s = way.getTag("surface");
         if (!Helper.isEmpty(s))
         {
@@ -348,10 +355,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
             Integer hwInt = HIGHWAY_SPEED.get(highway);
             if (hwInt != null)
             {
-                if (way.hasTag("bicycle", intended) || !way.hasTag("highway", wheeler))
-                    return hwInt;
-                else
-                    return 4;
+                return hwInt;
             }
         }
         return 10;
@@ -435,7 +439,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     {
         {
             put("living_street", 15);
-            put("steps", 4);
+            put("steps", pushing_section_speed);
 
             put("cycleway", 18);
             put("path", 18);
@@ -444,8 +448,8 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
             put("road", 10);
             put("track", 20);
             put("service", 20);
-            put("unclassified", 23);
-            put("residential", 23);
+            put("unclassified", 20);
+            put("residential", 20);
 
             put("trunk", 18);
             put("trunk_link", 18);
@@ -533,9 +537,9 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     private static final Map<String, Integer> BIKE_NETWORK_TO_CODE = new HashMap<String, Integer>()
     {
         {
-            put("icn", relationMapCode.VERY_NICE.getValue());
-            put("ncn", relationMapCode.VERY_NICE.getValue());
-            put("rcn", relationMapCode.PREFER.getValue());
+            put("icn", relationMapCode.OUTSTANDING_NICE.getValue());
+            put("ncn", relationMapCode.OUTSTANDING_NICE.getValue());
+            put("rcn", relationMapCode.VERY_NICE.getValue());
             put("lcn", relationMapCode.PREFER.getValue());
             put("mtb", relationMapCode.UNCHANGED.getValue());
             put("deprecated", relationMapCode.AVOID_AT_ALL_COSTS.getValue());

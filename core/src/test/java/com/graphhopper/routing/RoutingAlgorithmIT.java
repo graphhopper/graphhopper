@@ -11,7 +11,7 @@
  * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either exkrepress or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
@@ -161,6 +161,18 @@ public class RoutingAlgorithmIT
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
+    @Test
+    public void testKremsBikeRelation()
+    {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(48.409523,15.602394, 48.375466,15.72916, 12489, 141));
+        list.add(new OneRun(48.410061,15.63951, 48.411386,15.604899, 3077, 75));
+        
+        runAlgo(testCollector, "files/krems.osm.gz", "target/graph-krems",
+                list, "BIKE", true, "BIKE", "fastest");
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }    
+    
     List<OneRun> createAndorra()
     {
         List<OneRun> list = new ArrayList<OneRun>();
