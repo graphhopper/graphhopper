@@ -35,7 +35,7 @@ public class FinishInstruction extends Instruction
 
     public FinishInstruction( final double lat, final double lon )
     {
-        super(FINISH, "", DISTANCES, TIMES, new PointList()
+        super(FINISH, "", 0, 0, DISTANCES, TIMES, new PointList()
         {   
             {
                 add(lat, lon);

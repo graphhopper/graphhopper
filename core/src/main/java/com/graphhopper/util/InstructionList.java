@@ -163,7 +163,7 @@ public class InstructionList implements Iterable<Instruction>
         for (Instruction instruction : instructions)
         {
             String str;
-            String n = instruction.getName();
+            String n = getWayName (instruction.getName(), instruction.getPavement(), instruction.getWayType(), tr);
             int indi = instruction.getIndication();
             if (indi == Instruction.FINISH)
             {
@@ -284,4 +284,48 @@ public class InstructionList implements Iterable<Instruction>
     {
         return str.substring(0, str.length() - 2) + ":" + str.substring(str.length() - 2);
     }
+    
+    public static String getWayName (String name, int pavetype, int waytype, TranslationMap.Translation tr)
+    {
+         String road = tr.tr("road");
+         String pushing_section = tr.tr("pushing_section");
+         String cycleway = tr.tr("cycleway");
+         String way = tr.tr("way");
+ 
+         String paved = tr.tr("paved");
+         String unpaved = tr.tr("unpaved");
+         
+         String pavementName="";
+         
+         if (pavetype == 1)
+             pavementName=unpaved;
+ 
+         String wayClass="";
+         switch (waytype)
+         {
+             case 0: wayClass=road;
+                     break;
+             case 1: wayClass=pushing_section;
+                     break;
+             case 2: wayClass=cycleway;
+                     break;
+             case 3: wayClass=way;
+                     break;
+         }
+         
+         if (name.isEmpty())
+           if (pavementName.isEmpty())
+             return wayClass;
+           else 
+             return wayClass + "," + pavementName;
+         else
+           if (pavementName.isEmpty())
+              if (waytype==0)
+                  return name;
+              else
+                  return name + "," + wayClass;
+           else 
+              return name + "," + pavementName;
+    }
+    
 }

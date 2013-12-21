@@ -18,8 +18,8 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.util.InstructionUtil;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.TranslationMap.Translation;
 import static com.graphhopper.util.TranslationMapTest.SINGLETON;
@@ -196,14 +196,14 @@ public class BikeFlagEncoderTest
     
     private String encodeDecodeWayType(String name, OSMWay way)
     {
-        
+        InstructionList instructions = new InstructionList();
         long allowed=1;
         long flags=encoder.handleWayTags( allowed,  way, 0 );
         int pavement=encoder.getPavementCode(flags);
         int wayType=encoder.getWayTypeCode(flags);
         
         Translation enMap = SINGLETON.getWithFallBack(Locale.UK);
-        return InstructionUtil.getWayName (name, pavement, wayType,  enMap);
+        return instructions.getWayName (name, pavement, wayType,  enMap);
 
     }
     
