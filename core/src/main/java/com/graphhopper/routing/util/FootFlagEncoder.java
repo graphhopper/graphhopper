@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.OSMRelation;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -143,9 +144,15 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         return acceptBit;
     }
-
+    
     @Override
-    public long handleWayTags( long allowed, OSMWay way )
+    public int handleRelationTags( OSMRelation relation )
+    {
+        return (0);
+    }
+    
+    @Override
+    public long handleWayTags( long allowed, OSMWay way, int relationcode)
     {
         if ((allowed & acceptBit) == 0)
             return 0;
@@ -240,4 +247,17 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     static final int SLOW = 2;
     static final int MEAN = 5;
     static final int FERRY = 10;
+    
+    @Override
+    public int getPavementCode(long flags)
+    {
+       return 0;
+    }
+    
+    @Override    
+    public int getWayTypeCode(long flags)
+    {
+       return 0;
+    }
+    
 }

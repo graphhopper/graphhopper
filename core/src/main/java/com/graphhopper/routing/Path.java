@@ -33,7 +33,7 @@ import gnu.trove.list.array.TIntArrayList;
  * @author Ottavio Campana
  */
 public class Path
-{    
+{
     protected Graph graph;
     private FlagEncoder encoder;
     protected double distance;
@@ -312,6 +312,8 @@ public class Path
         forEveryEdge(new EdgeVisitor()
         {
             String name = null;
+            int pavement;
+            int wayType;
             /*
              * We need three points to make directions
              *
@@ -367,8 +369,11 @@ public class Path
                 {
                     // very first instruction
                     name = edge.getName();
+                    pavement = encoder.getPavementCode(edge.getFlags());
+                    wayType = encoder.getWayTypeCode(edge.getFlags());
+
                     add(edge, wayGeo);
-                    cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, tmpDistance, tmpTime, points));
+                    cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, wayType, pavement, tmpDistance, tmpTime, points));
                 } else
                 {
                     double tmpOrientation;
@@ -388,12 +393,18 @@ public class Path
                     }
 
                     String tmpName = edge.getName();
-                    if (!name.equals(tmpName))
+                    int tmppavement = encoder.getPavementCode(edge.getFlags());
+                    int tmpwayType = encoder.getWayTypeCode(edge.getFlags());
+                    if ((!name.equals(tmpName))
+                            || (pavement != tmppavement)
+                            || (wayType != tmpwayType))
                     {
                         tmpDistance = Double.NaN;
                         points = new PointList();
                         add(edge, wayGeo);
                         name = tmpName;
+                        pavement = tmppavement;
+                        wayType = tmpwayType;
                         double delta = Math.abs(tmpOrientation - prevOrientation);
                         int indication;
                         if (delta < 0.2)
@@ -426,7 +437,7 @@ public class Path
 
                         }
 
-                        cachedWays.add(new Instruction(indication, name, tmpDistance, tmpTime, points));
+                        cachedWays.add(new Instruction(indication, name, wayType, pavement, tmpDistance, tmpTime, points));
                     } else
                     {
                         add(edge, wayGeo);

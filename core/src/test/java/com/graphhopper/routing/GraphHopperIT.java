@@ -69,7 +69,7 @@ public class GraphHopperIT
             assertEquals("Continue onto Avenue des Guelfes", iList.get(0));
             assertEquals("Turn slight left onto Avenue des Papalins", iList.get(1));
             assertEquals("Turn sharp right onto Quai Jean-Charles Rey", iList.get(2));
-            assertEquals("Turn left", iList.get(3));
+            assertEquals("Turn left onto road", iList.get(3));
             assertEquals("Turn right onto Avenue Albert II", iList.get(4));
         } catch (Exception ex)
         {
