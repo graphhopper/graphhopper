@@ -1,3 +1,7 @@
+0.3.0
+    gpx export via API or HTTP (route?type=gpx)
+    breaking: The web response, Path.time and GHResponse.time change to milliseconds and 'long' (instead of seconds and double)
+
 0.2.0
     change inconsistent default settings for contraction hierarchies in the API - see https://lists.openstreetmap.org/pipermail/graphhopper/2013-December/000585.html
     fixed issues with android:

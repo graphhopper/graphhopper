@@ -17,13 +17,14 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.util.GPXEntry;
 import com.graphhopper.util.Instruction;
+import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -37,8 +38,8 @@ public class GHResponse
     private double distance;
     private long time;
     private String debugInfo = "";
-    private List<Throwable> errors = new ArrayList<Throwable>(4);
-    private List<Instruction> instructions = new ArrayList<Instruction>(0);
+    private final List<Throwable> errors = new ArrayList<Throwable>(4);
+    private InstructionList instructions = new InstructionList(0);
     private boolean found;
 
     public GHResponse()
@@ -70,16 +71,16 @@ public class GHResponse
         return distance;
     }
 
-    public GHResponse setTime( long timeInSec )
+    public GHResponse setMillis( long timeInMillis )
     {
-        this.time = timeInSec;
+        this.time = timeInMillis;
         return this;
     }
 
     /**
-     * @return time in seconds
+     * @return time in millis
      */
-    public long getTime()
+    public long getMillis()
     {
         return time;
     }
@@ -157,51 +158,13 @@ public class GHResponse
         return "found:" + isFound() + ", nodes:" + list.getSize() + ": " + list.toString();
     }
 
-    public void setInstructions( List<Instruction> instructions )
+    public void setInstructions( InstructionList instructions )
     {
         this.instructions = instructions;
     }
 
-    public List<Instruction> getInstructions()
+    public InstructionList getInstructions()
     {
         return instructions;
-    }
-
-    /**
-     * Creates the GPX Format out of the points.
-     * <p/>
-     * TODO make it more reliable and use times from the route as well not only the points.
-     * <p/>
-     * @return string to be stored as gpx file
-     */
-    public String createGPX( String trackName, long startTime )
-    {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:SSZ");
-        String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
-                + "<gpx xmlns='http://www.topografix.com/GPX/1/1' >"
-                + "<metadata>"
-                + "<link href='http://graphhopper.com'>"
-                + "<text>GraphHopper Maps</text>"
-                + "</link>"
-                + " <time>" + formatter.format(new Date()) + "</time>"
-                + "</metadata>";
-        StringBuilder track = new StringBuilder(header);
-        track.append("<trk><name>").append(trackName).append("</name>");
-        track.append("<trkseg>");
-        PointList tmpList = getPoints();
-        for (int i = 0; i < tmpList.getSize(); i++)
-        {
-            double lat = tmpList.getLatitude(i);
-            double lon = tmpList.getLongitude(i);
-            track.append("<trkpt lat='").append(lat).append("' lon='").append(lon).append("'>");
-
-            startTime = startTime + 1;
-            track.append("<time>").append(formatter.format(startTime)).append("</time>");
-
-            track.append("</trkpt>");
-        }
-        track.append("</trkseg>");
-        track.append("</trk></gpx>");
-        return track.toString().replaceAll("\\'", "\"");
     }
 }

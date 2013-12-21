@@ -71,7 +71,7 @@ public abstract class AbstractGraphStorageTester
     @After
     public void tearDown()
     {
-        close(graph);
+        Helper.close((Closeable) graph);
         Helper.removeDir(new File(location));
     }
 
@@ -231,7 +231,7 @@ public abstract class AbstractGraphStorageTester
         clone.edge(1, 4, 10, true);
         assertEquals(3, count(clone.createEdgeExplorer(carOutFilter).setBaseNode(1)));
         assertEquals(graph.getBounds(), clone.getBounds());
-        close(clone);
+        Helper.close((Closeable) clone);
     }
 
     @Test
@@ -247,7 +247,7 @@ public abstract class AbstractGraphStorageTester
 
         graph.edge(0, 2, 10, true);
         assertEquals(3, graph.getNodes());
-        close(graph);
+        Helper.close((Closeable) graph);
 
         graph = createGraph();
         assertEquals(0, graph.getNodes());
@@ -273,7 +273,7 @@ public abstract class AbstractGraphStorageTester
 
         try
         {
-            close(graph);
+            Helper.close((Closeable) graph);
             graph = createGraph();
             gs.copyTo(graph);
             checkExampleGraph(graph);
@@ -282,7 +282,7 @@ public abstract class AbstractGraphStorageTester
             ex.printStackTrace();
             assertTrue(ex.toString(), false);
         }
-        close(gs);
+        Helper.close((Closeable) graph);
     }
 
     @Test
@@ -926,25 +926,6 @@ public abstract class AbstractGraphStorageTester
             }
         }
         return -1;
-    }
-
-    /**
-     * Windows forces us to close files properly and so we need to close the graph properly if it
-     * supports closeable
-     */
-    static void close( Object o )
-    {
-        if (o == null)
-            return;
-
-        if (o instanceof Closeable)
-            try
-            {
-                ((Closeable) o).close();
-            } catch (IOException ex)
-            {
-                throw new RuntimeException(ex);
-            }
     }
 
     @Test

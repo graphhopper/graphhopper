@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Peter Karich
  */
-public class GHServlet extends HttpServlet
+public class GHBaseServlet extends HttpServlet
 {
     protected Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -73,7 +73,7 @@ public class GHServlet extends HttpServlet
         String[] l = req.getParameterMap().get(string);
         if (l != null && l.length > 0)
             return l[0];
-        
+
         return _default;
     }
 
@@ -85,6 +85,17 @@ public class GHServlet extends HttpServlet
             return l;
         }
         return new String[0];
+    }
+
+    protected long getLongParam( HttpServletRequest req, String string, long _default )
+    {
+        try
+        {
+            return Long.parseLong(getParam(req, string, "" + _default));
+        } catch (Exception ex)
+        {
+            return _default;
+        }
     }
 
     protected boolean getBooleanParam( HttpServletRequest req, String string, boolean _default )

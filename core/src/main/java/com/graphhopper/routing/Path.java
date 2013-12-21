@@ -22,7 +22,9 @@ import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.list.array.TLongArrayList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,12 +39,13 @@ import java.util.List;
  */
 public class Path
 {
+    private DistanceCalc distCalc = new DistanceCalcEarth();
     protected Graph graph;
     private FlagEncoder encoder;
     protected double distance;
     // we go upwards (via EdgeEntry.parent) from the goal node to the origin node
     protected boolean reverseOrder = true;
-    protected long time;
+    protected long millis;
     private boolean found;
     protected EdgeEntry edgeEntry;
     final StopWatch extractSW = new StopWatch("extract");
@@ -50,7 +53,7 @@ public class Path
     protected int endNode = -1;
     private TIntList edgeIds;
     private PointList cachedPoints;
-    private List<Instruction> cachedWays;
+    private InstructionList cachedWays;
     private double weight;
 
     public Path( Graph graph, FlagEncoder encoder )
@@ -138,11 +141,11 @@ public class Path
     }
 
     /**
-     * @return time in seconds
+     * @return time in millis
      */
-    public long getTime()
+    public long getMillis()
     {
-        return time;
+        return millis;
     }
 
     /**
@@ -198,7 +201,7 @@ public class Path
     {
         EdgeIteratorState iter = graph.getEdgeProps(edgeId, endNode);
         distance += calcDistance(iter);
-        time += calcTime(iter.getDistance(), iter.getFlags());
+        millis += calcMillis(iter.getDistance(), iter.getFlags());
         addEdge(edgeId);
     }
 
@@ -211,12 +214,11 @@ public class Path
     }
 
     /**
-     * Calculates the time in seconds for the specified distance in meter and speed (via
-     * setProperties)
+     * Calculates the time in millis for the specified distance in meter and speed.
      */
-    protected long calcTime( double distance, long flags )
+    protected long calcMillis( double distance, long flags )
     {
-        return (long) (distance * 3.6 / encoder.getSpeed(flags));
+        return (long) (distance * 3600 / encoder.getSpeed(flags));
     }
 
     /**
@@ -303,12 +305,12 @@ public class Path
     /**
      * @return the cached list of ways for this path
      */
-    public List<Instruction> calcInstructions()
+    public InstructionList calcInstructions()
     {
         if (cachedWays != null)
             return cachedWays;
 
-        cachedWays = new ArrayList<Instruction>(edgeIds.size() / 4);
+        cachedWays = new InstructionList(edgeIds.size() / 4);
         if (edgeIds.isEmpty())
             return cachedWays;
 
@@ -341,41 +343,43 @@ public class Path
             double prevLat = graph.getLatitude(tmpNode);
             double prevLon = graph.getLongitude(tmpNode);
             double prevOrientation;
-            double prevDist;
-            long prevTime;
+            TDoubleArrayList distances = new TDoubleArrayList();
+            TLongArrayList times = new TLongArrayList();
+            PointList points = new PointList();
 
             @Override
-            public void next( EdgeIteratorState edgeBase, int index )
+            public void next( EdgeIteratorState edge, int index )
             {
-                // Hmmh, a bit ugly: 'iter' links to the previous node of the path!
+                // Hmmh, a bit ugly: the 'edge' points to the previous node of the path!
                 // Ie. baseNode is the current node and adjNode is the previous.
-                int baseNode = edgeBase.getBaseNode();
+                int baseNode = edge.getBaseNode();
                 double baseLat = graph.getLatitude(baseNode);
                 double baseLon = graph.getLongitude(baseNode);
                 double latitude, longitude;
-                PointList wayGeo = edgeBase.fetchWayGeometry(0);
-                if (wayGeo.isEmpty())
+                PointList wayGeo = edge.fetchWayGeometry(3);
+                if (wayGeo.getSize() <= 2)
                 {
                     latitude = baseLat;
                     longitude = baseLon;
                 } else
                 {
-                    int adjNode = edgeBase.getAdjNode();
+                    int adjNode = edge.getAdjNode();
                     prevLat = graph.getLatitude(adjNode);
                     prevLon = graph.getLongitude(adjNode);
-                    latitude = wayGeo.getLatitude(wayGeo.getSize() - 1);
-                    longitude = wayGeo.getLongitude(wayGeo.getSize() - 1);
+                    latitude = wayGeo.getLatitude(wayGeo.getSize() - 2);
+                    longitude = wayGeo.getLongitude(wayGeo.getSize() - 2);
                 }
 
                 double orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
                 if (name == null)
                 {
-                    name = edgeBase.getName();
-                    pavement=encoder.getPavementCode(edgeBase.getFlags());                    
-                    wayType=encoder.getWayTypeCode(edgeBase.getFlags());
-                    prevDist = calcDistance(edgeBase);
-                    prevTime = calcTime(prevDist, edgeBase.getFlags());
-                    cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, wayType, pavement, prevDist, prevTime, prevLat, prevLon));
+                    // very first instruction
+                    name = edge.getName();
+                    pavement=encoder.getPavementCode(edge.getFlags());
+                    wayType=encoder.getWayTypeCode(edge.getFlags());
+                    
+                    add(edge, wayGeo);
+                    cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, wayType, pavement, distances, times, points));
                 } else
                 {
                     double tmpOrientation;
@@ -394,68 +398,88 @@ public class Path
                             tmpOrientation = orientation;
                     }
 
-                    String tmpName = edgeBase.getName();
-                    int tmppavement=encoder.getPavementCode(edgeBase.getFlags());                    
-                    int tmpwayType=encoder.getWayTypeCode(edgeBase.getFlags());
-                    
+                    String tmpName = edge.getName();
+                    int tmppavement=encoder.getPavementCode(edge.getFlags());
+                    int tmpwayType=encoder.getWayTypeCode(edge.getFlags());
                     if ( (!name.equals(tmpName)) ||
                           (pavement!=tmppavement) || 
                           (wayType!=tmpwayType)  )
                     {
-                        InstructionUtil.updateLastDistanceAndTime(cachedWays, prevDist, prevTime);
-                        prevDist = calcDistance(edgeBase);
-                        prevTime = calcTime(prevDist, edgeBase.getFlags());
+                        distances = new TDoubleArrayList();
+                        times = new TLongArrayList();
+                        points = new PointList();
+                        add(edge, wayGeo);
                         name = tmpName;
                         pavement=tmppavement;
                         wayType=tmpwayType;
                         double delta = Math.abs(tmpOrientation - prevOrientation);
+                        int indication;
                         if (delta < 0.2)
                         {
                             // 0.2 ~= 11°
-                            cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, wayType, pavement, prevDist, prevTime, prevLat, prevLon));
+                            indication = Instruction.CONTINUE_ON_STREET;
 
                         } else if (delta < 0.8)
                         {
                             // 0.8 ~= 40°
                             if (tmpOrientation > prevOrientation)
-                                cachedWays.add(new Instruction(Instruction.TURN_SLIGHT_LEFT, name, wayType, pavement, prevDist, prevTime, prevLat, prevLon));
+                                indication = Instruction.TURN_SLIGHT_LEFT;
                             else
-                                cachedWays.add(new Instruction(Instruction.TURN_SLIGHT_RIGHT, name, wayType, pavement, prevDist, prevTime, prevLat, prevLon));
+                                indication = Instruction.TURN_SLIGHT_RIGHT;
 
                         } else if (delta < 1.8)
                         {
                             // 1.8 ~= 103°
                             if (tmpOrientation > prevOrientation)
-                                cachedWays.add(new Instruction(Instruction.TURN_LEFT, name, wayType, pavement, prevDist, prevTime, prevLat, prevLon));
+                                indication = Instruction.TURN_LEFT;
                             else
-                                cachedWays.add(new Instruction(Instruction.TURN_RIGHT, name, wayType, pavement, prevDist, prevTime, prevLat, prevLon));
+                                indication = Instruction.TURN_RIGHT;
 
                         } else
                         {
                             if (tmpOrientation > prevOrientation)
-                                cachedWays.add(new Instruction(Instruction.TURN_SHARP_LEFT, name, wayType, pavement, prevDist, prevTime, prevLat, prevLon));
+                                indication = Instruction.TURN_SHARP_LEFT;
                             else
-                                cachedWays.add(new Instruction(Instruction.TURN_SHARP_RIGHT, name, wayType, pavement, prevDist, prevTime, prevLat, prevLon));
+                                indication = Instruction.TURN_SHARP_RIGHT;
 
                         }
+
+                        cachedWays.add(new Instruction(indication, name, wayType, pavement, distances, times, points));
                     } else
                     {
-                        double tmpDist = calcDistance(edgeBase);
-                        prevDist += tmpDist;
-                        prevTime += calcTime(tmpDist, edgeBase.getFlags());
+                        add(edge, wayGeo);
                     }
                 }
 
                 prevLat = baseLat;
                 prevLon = baseLon;
-                if (wayGeo.isEmpty())
+                if (wayGeo.getSize() <= 2)
                     prevOrientation = orientation;
                 else
-                    prevOrientation = Math.atan2(baseLat - wayGeo.getLatitude(0), baseLon - wayGeo.getLongitude(0));
+                    prevOrientation = Math.atan2(baseLat - wayGeo.getLatitude(1), baseLon - wayGeo.getLongitude(1));
 
-                boolean lastEdgeIter = index == edgeIds.size() - 1;
-                if (lastEdgeIter)
-                    InstructionUtil.updateLastDistanceAndTime(cachedWays, prevDist, prevTime);
+                boolean lastEdge = index == edgeIds.size() - 1;
+                if (lastEdge)
+                    cachedWays.add(new FinishInstruction(prevLat, prevLon));
+            }                       
+
+            private void add( EdgeIteratorState edge, PointList pl )
+            {
+                // add points in opposite direction as adj node is previous
+                // skip base point => 'i > 0'
+                int len = pl.size() - 1;
+                long flags = edge.getFlags();
+                for (int i = len; i > 0; i--)
+                {
+                    double lat = pl.getLatitude(i);
+                    double lon = pl.getLongitude(i);
+                    double nextLat = pl.getLatitude(i - 1);
+                    double nextLon = pl.getLongitude(i - 1);
+                    double tmpDist = distCalc.calcDist(lat, lon, nextLat, nextLon);
+                    distances.add(tmpDist);
+                    times.add(calcMillis(tmpDist, flags));
+                    points.add(lat, lon);
+                }
             }
         });
 

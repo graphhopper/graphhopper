@@ -1,5 +1,10 @@
 package com.graphhopper.util;
 
+import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TLongArrayList;
+import java.util.ArrayList;
+import java.util.List;
+
 public class Instruction
 {
     public static final int TURN_SHARP_LEFT = -3;
@@ -9,25 +14,38 @@ public class Instruction
     public static final int TURN_SLIGHT_RIGHT = 1;
     public static final int TURN_RIGHT = 2;
     public static final int TURN_SHARP_RIGHT = 3;
-    private int indication;
-    private String name;
-    private double distance;
-    private long time;
-    private double lat;
-    private double lon;
+    public static final int FINISH = 4;
+    private final int indication;
+    private final String name;
+    private final TDoubleArrayList distances;
+    private final TLongArrayList times;
+    private final PointList points;
     private int pavementType;
     private int waytype;
-
-    public Instruction(int indication, String name, int waytype, int pavementType, double distance, long time, double lat, double lon)
+    
+    /**
+     * The points, distances and times have exactly the same count. The last point of this
+     * instruction is not duplicated here and should be in the next one. The first distance and time
+     * entries are measured between the first point and the second one etc.
+     */
+    public Instruction( int indication, String name, int waytype, int pavementType, TDoubleArrayList distances, TLongArrayList times, PointList pl )
     {
         this.indication = indication;
         this.name = name;
+        this.distances = distances;
+        this.times = times;
+        this.points = pl;
+
+        if (distances.isEmpty())
+            throw new IllegalStateException("Distances cannot be empty");
+
+        if (times.size() != distances.size())
+            throw new IllegalStateException("Distances and times must have same size");
+
+        if (times.size() != points.size())
+            throw new IllegalStateException("Points and times must have same size");
         this.waytype=waytype;
         this.pavementType=pavementType;
-        this.distance = distance;
-        this.time = time;
-        this.lat = lat;
-        this.lon = lon;
     }
     
     public int getPavement()
@@ -45,39 +63,62 @@ public class Instruction
         return indication;
     }
 
+    /**
+     * The instruction for the person/driver to execute.
+     */
     public String getName()
     {
         return name;
     }
 
-    public double getDistance()
+    /**
+     * Distance in meter until no new instruction
+     */
+    public double calcDistance()
     {
-        return distance;
+        return distances.sum();
     }
 
-    public long getTime()
+    /**
+     * Time in millis until no new instruction
+     */
+    public long calcMillis()
     {
+        return times.sum();
+    }
+
+    /**
+     * Latitude of the location where this instruction should take place.
+     */
+    public double getStartLat()
+    {
+        return points.getLatitude(0);
+    }
+
+    /**
+     * Longitude of the location where this instruction should take place.
+     */
+    public double getStartLon()
+    {
+        return points.getLongitude(0);
+    }
+
+    /**
+     * This method returns a list of gpx entries where the time (in millis) is relative to the first
+     * which is 0. It does NOT contain the last point which is the first of the next instruction.
+     * <p>
+     * @return the time offset to add for the next instruction
+     */
+    public long fillGPXList( List<GPXEntry> list, long time )
+    {
+        int len = times.size();
+        int i = 0;
+        for (; i < len; i++)
+        {
+            list.add(new GPXEntry(points.getLatitude(i), points.getLongitude(i), time));
+            time += times.get(i);
+        }
         return time;
-    }
-
-    public void setDistance(double distance)
-    {
-        this.distance = distance;
-    }
-
-    public void setTime(long time)
-    {
-        this.time = time;
-    }
-
-    public double getLat()
-    {
-        return lat;
-    }
-
-    public double getLon()
-    {
-        return lon;
     }
 
     @Override
@@ -89,11 +130,14 @@ public class Instruction
         sb.append(',');
         sb.append(name);
         sb.append(',');
-        sb.append(distance);
+        sb.append(distances);
         sb.append(',');
-        sb.append(time);
+        sb.append(times);
         sb.append(')');
-
         return sb.toString();
     }
 }
+
+
+     
+ 

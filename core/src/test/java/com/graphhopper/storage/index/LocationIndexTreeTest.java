@@ -35,7 +35,7 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class LocationIndexTreeTest extends AbstractLocation2IDIndexTester {
+public class LocationIndexTreeTest extends AbstractLocationIndexTester {
 
     protected final EncodingManager encodingManager = new EncodingManager("CAR");
 

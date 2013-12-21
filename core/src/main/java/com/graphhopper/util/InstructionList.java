@@ -2,17 +2,50 @@ package com.graphhopper.util;
 
 import gnu.trove.list.TDoubleList;
 import gnu.trove.list.array.TDoubleArrayList;
+import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
-public class InstructionUtil
+/**
+ * List of instruction.
+ */
+public class InstructionList implements Iterable<Instruction>
 {
+    private final List<Instruction> instructions;
+
+    public InstructionList()
+    {
+        this(10);
+    }
+
+    public InstructionList( int cap )
+    {
+        instructions = new ArrayList<Instruction>(cap);
+    }
+
+    public void add( Instruction instr )
+    {
+        instructions.add(instr);
+    }
+
+    public int getSize()
+    {
+        return instructions.size();
+    }
+
+    public int size()
+    {
+        return instructions.size();
+    }
+
     /**
      * @return list of indications useful to create images
      */
-    public static List<Integer> createIndications(List<Instruction> instructions)
+    public List<Integer> createIndications()
     {
         List<Integer> res = new ArrayList<Integer>(instructions.size());
         for (Instruction instruction : instructions)
@@ -22,24 +55,20 @@ public class InstructionUtil
         return res;
     }
 
-    public static TDoubleList getDistances(List<Instruction> instructions)
+    public TDoubleList createDistances()
     {
         TDoubleList res = new TDoubleArrayList(instructions.size());
         for (Instruction instruction : instructions)
         {
-            res.add(instruction.getDistance());
+            res.add(instruction.calcDistance());
         }
         return res;
     }
 
-    public static List<String> createDistances(List<Instruction> instructions, TranslationMap.Translation tr, boolean mile)
+    public List<String> createDistances( TranslationMap.Translation tr, boolean mile )
     {
-        TDoubleList distances = getDistances(instructions);
-
-        // United Kingdom, Canada, Ireland, Australia, the Bahamas, India, and Malaysia
-        // still use some forms of the Imperial System, but are official Metric Nations
+        TDoubleList distances = createDistances();
         List<String> labels = new ArrayList<String>(distances.size());
-        String country = tr.getLocale().getCountry();
         for (int i = 0; i < distances.size(); i++)
         {
             double dist = distances.get(i);
@@ -74,12 +103,16 @@ public class InstructionUtil
         return labels;
     }
 
-    public static List<String> createTimes(List<Instruction> instructions, TranslationMap.Translation tr)
+    /**
+     * @return string representations of the times until no new instruction.
+     */
+    public List<String> createTimes( TranslationMap.Translation tr )
     {
         List<String> res = new ArrayList<String>();
         for (Instruction instruction : instructions)
         {
-            long minutes = Math.round(instruction.getTime() / 60.0);
+            long millis = instruction.calcMillis();
+            int minutes = (int) Math.round(millis / 60000.0);
             if (minutes > 60)
             {
                 if (minutes / 60.0 > 24)
@@ -87,82 +120,37 @@ public class InstructionUtil
                     long days = (long) Math.floor(minutes / 60.0 / 24.0);
                     long hours = Math.round((minutes / 60.0) % 24);
                     res.add(String.format("%d %s %d %s", days, tr.tr("dayAbbr"), hours, tr.tr("hourAbbr")));
-                }
-                else
+                } else
                 {
                     long hours = (long) Math.floor(minutes / 60.0);
                     minutes = Math.round(minutes % 60);
                     res.add(String.format("%d %s %d %s", hours, tr.tr("hourAbbr"), minutes, tr.tr("minAbbr")));
                 }
-            }
-            else
+            } else
             {
                 if (minutes > 0)
                     res.add(String.format("%d %s", minutes, tr.tr("minAbbr")));
                 else
-                    res.add(String.format(Locale.US, "%.1f %s", instruction.getTime() / 60.0, tr.tr("minAbbr")));
+                    res.add(String.format(Locale.US, "%.1f %s", millis / 60000.0, tr.tr("minAbbr")));
             }
         }
         return res;
     }
 
-    public static List<List<Double>> createSegmentStartPoints(List<Instruction> instructions)
+    public List<List<Double>> createSegmentStartPoints()
     {
         List<List<Double>> res = new ArrayList<List<Double>>();
         for (Instruction instruction : instructions)
         {
             List<Double> latLng = new ArrayList<Double>(2);
-            latLng.add(instruction.getLat());
-            latLng.add(instruction.getLon());
+            latLng.add(instruction.getStartLat());
+            latLng.add(instruction.getStartLon());
             res.add(latLng);
         }
         return res;
     }
-    
-    public static String getWayName (String name, int pavetype, int waytype, TranslationMap.Translation tr)
-    {
-        String road = tr.tr("road");
-        String pushing_section = tr.tr("pushing_section");
-        String cycleway = tr.tr("cycleway");
-        String way = tr.tr("way");
 
-        String paved = tr.tr("paved");
-        String unpaved = tr.tr("unpaved");
-        
-        String pavementName="";
-        
-        if (pavetype == 1)
-            pavementName=unpaved;
-
-        String wayClass="";
-        switch (waytype)
-        {
-            case 0: wayClass=road;
-                    break;
-            case 1: wayClass=pushing_section;
-                    break;
-            case 2: wayClass=cycleway;
-                    break;
-            case 3: wayClass=way;
-                    break;
-        }
-        
-        if (name.isEmpty())
-          if (pavementName.isEmpty())
-            return wayClass;
-          else 
-            return wayClass + "," + pavementName;
-        else
-          if (pavementName.isEmpty())
-             if (waytype==0)
-                 return name;
-             else
-                 return name + "," + wayClass;
-          else 
-             return name + "," + pavementName;
-    }       
-    
-    public static List<String> createDescription(List<Instruction> instructions, TranslationMap.Translation tr)
+    public List<String> createDescription( TranslationMap.Translation tr )
     {
         String shLeftTr = tr.tr("sharp_left");
         String shRightTr = tr.tr("sharp_right");
@@ -175,9 +163,12 @@ public class InstructionUtil
         for (Instruction instruction : instructions)
         {
             String str;
-            String n = getWayName(instruction.getName(), instruction.getPavement(), instruction.getWayType(),tr);
+            String n = instruction.getName();
             int indi = instruction.getIndication();
-            if (indi == Instruction.CONTINUE_ON_STREET)
+            if (indi == Instruction.FINISH)
+            {
+                str = tr.tr("finish");
+            } else if (indi == Instruction.CONTINUE_ON_STREET)
             {
                 str = Helper.isEmpty(n) ? continueTr : tr.tr("continue_onto", n);
             } else
@@ -214,14 +205,83 @@ public class InstructionUtil
         return res;
     }
 
-    /**
-     * Sets the last added distance and time to the specified value.
-     */
-    public static void updateLastDistanceAndTime(List<Instruction> instructions, double prevDist, long prevTime)
+    public boolean isEmpty()
     {
-        if (instructions.isEmpty())
-            throw new IllegalStateException("Cannot update last distance with:" + prevDist);
-        instructions.get(instructions.size() - 1).setDistance(prevDist);
-        instructions.get(instructions.size() - 1).setTime(prevTime);
+        return instructions.isEmpty();
+    }
+
+    @Override
+    public Iterator<Instruction> iterator()
+    {
+        return instructions.iterator();
+    }
+
+    public Instruction get( int index )
+    {
+        return instructions.get(index);
+    }
+
+    @Override
+    public String toString()
+    {
+        return instructions.toString();
+    }
+
+    /**
+     * This method returns a list of gpx entries where the time (in millis) is relative to the first
+     * which is 0.
+     */
+    public List<GPXEntry> createGPXList()
+    {
+        List<GPXEntry> gpxList = new ArrayList<GPXEntry>();
+        long timeOffset = 0;
+        for (Instruction i : this)
+        {
+            timeOffset = i.fillGPXList(gpxList, timeOffset);
+        }
+        return gpxList;
+    }
+
+    /**
+     * Creates the GPX Format out of the points.
+     * <p/>
+     * @return string to be stored as gpx file
+     */
+    public String createGPX( String trackName, long startTimeMillis, String timeZoneId )
+    {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+        TimeZone tz = TimeZone.getDefault();
+        if (!Helper.isEmpty(timeZoneId))
+            tz = TimeZone.getTimeZone(timeZoneId);
+
+        formatter.setTimeZone(tz);
+        String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
+                + "<gpx xmlns='http://www.topografix.com/GPX/1/1' creator='Graphhopper' version='1.1' >"
+                + "<metadata>"
+                + "<link href='http://graphhopper.com'>"
+                + "<text>GraphHopper GPX</text>"
+                + "</link>"
+                + "<time>" + tzHack(formatter.format(startTimeMillis)) + "</time>"
+                + "</metadata>";
+        StringBuilder track = new StringBuilder(header);
+        track.append("<trk><name>").append(trackName).append("</name>");
+        track.append("<trkseg>");
+        for (GPXEntry entry : createGPXList())
+        {
+            track.append("<trkpt lat='").append(entry.getLat()).append("' lon='").append(entry.getLon()).append("'>");
+            track.append("<time>").append(tzHack(formatter.format(startTimeMillis + entry.getMillis()))).append("</time>");
+            track.append("</trkpt>");
+        }
+        track.append("</trkseg>");
+        track.append("</trk></gpx>");
+        return track.toString().replaceAll("\\'", "\"");
+    }
+
+    /**
+     * Hack to form valid timezone ala +01:00 instead +0100
+     */
+    private static String tzHack( String str )
+    {
+        return str.substring(0, str.length() - 2) + ":" + str.substring(str.length() - 2);
     }
 }

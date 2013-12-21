@@ -640,7 +640,7 @@ public class QueryGraph implements Graph
 
             // due to API we need to create a new instance per call!
             if (mode == 3)
-                return pointList.clone(true);
+                return pointList.clone(false);
             else if (mode == 1)
                 return pointList.copy(0, pointList.getSize() - 1);
             else if (mode == 2)

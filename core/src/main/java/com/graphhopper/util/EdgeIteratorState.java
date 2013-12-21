@@ -63,7 +63,7 @@ public interface EdgeIteratorState
 
     /**
      * @param list is a sorted collection of nodes between the baseNode and the current adjacent
-     * node
+     * node. Specify the list without the adjacent and base nodes.
      */
     EdgeIteratorState setWayGeometry( PointList list );
 
