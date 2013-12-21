@@ -40,7 +40,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     private int unpavedBit = 0;
     private int wayTypeStartBit = 0;
     private final static int unspecifiedRelationWeight = 4;
-    //Wheeler heighways are parts where you need to get off your bike and wheel (German: Schiebestrecke)
+    //Pushing section heighways are parts where you need to get off your bike and push it (German: Schiebestrecke)
     private HashSet<String> pushing_sections = new HashSet<String>();
     private HashSet<String> intended = new HashSet<String>();
     private HashSet<String> oppositeLanes = new HashSet<String>();
