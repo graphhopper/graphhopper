@@ -419,6 +419,16 @@ public class GHUtility
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
+
+		@Override
+		public int getAdditionalField() {
+			throw new UnsupportedOperationException("Not supported. Edge is empty.");
+		}
+
+		@Override
+		public EdgeIteratorState setAdditionalField(int value) {
+			throw new UnsupportedOperationException("Not supported. Edge is empty.");
+		}
     };
 
     /**

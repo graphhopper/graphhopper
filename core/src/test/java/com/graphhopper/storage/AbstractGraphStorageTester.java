@@ -23,7 +23,6 @@ import static com.graphhopper.util.GHUtility.*;
 import com.graphhopper.util.shapes.BBox;
 import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import static org.junit.Assert.*;
 import org.junit.After;
@@ -61,6 +60,11 @@ public abstract class AbstractGraphStorageTester
     }
 
     abstract GraphStorage createGraph( String location, int size );
+    
+    protected GraphStorage newRAMGraph()
+    {
+        return new GraphHopperStorage(new RAMDirectory(), encodingManager);
+    }
 
     @Before
     public void setUp()
@@ -258,7 +262,7 @@ public abstract class AbstractGraphStorageTester
     {
         graph = createGraph();
         initExampleGraph(graph);
-        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), encodingManager);
+        GraphStorage gs = newRAMGraph();
         gs.setSegmentSize(8000);
         gs.create(10);
         try

@@ -24,12 +24,14 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.procedure.TObjectProcedure;
 import gnu.trove.set.hash.TIntHashSet;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -69,8 +71,9 @@ public class QueryGraph implements Graph
     }
 
     /**
-     * For all specified query results calculate snapped point and set closest node and edge to a
-     * virtual one if necessary. Additionally the wayIndex can change if an edge is swapped.
+     * For all specified query results calculate snapped point and set closest
+     * node and edge to a virtual one if necessary. Additionally the wayIndex
+     * can change if an edge is swapped.
      */
     public void lookup( List<QueryResult> resList )
     {
@@ -282,6 +285,12 @@ public class QueryGraph implements Graph
     }
 
     @Override
+    public int getAdditionalNodeField( int nodeId )
+    {
+        return mainGraph.getAdditionalNodeField(nodeId);
+    }
+
+    @Override
     public BBox getBounds()
     {
         return mainGraph.getBounds();
@@ -449,6 +458,12 @@ public class QueryGraph implements Graph
     }
 
     @Override
+    public void setAdditionalNodeField( int nodeId, int additionalValue )
+    {
+        exc();
+    }
+
+    @Override
     public EdgeIteratorState edge( int a, int b )
     {
         throw exc();
@@ -587,6 +602,18 @@ public class QueryGraph implements Graph
         {
             return edges.toString();
         }
+
+        @Override
+        public int getAdditionalField()
+        {
+            return edges.get(current).getAdditionalField();
+        }
+
+        @Override
+        public EdgeIteratorState setAdditionalField( int value )
+        {
+            return edges.get(current).setAdditionalField(value);
+        }
     }
 
     /**
@@ -713,6 +740,12 @@ public class QueryGraph implements Graph
         }
 
         @Override
+        public int getAdditionalField()
+        {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
         public int getSkippedEdge1()
         {
             throw new UnsupportedOperationException("Not supported.");
@@ -738,6 +771,12 @@ public class QueryGraph implements Graph
 
         @Override
         public EdgeIteratorState detach()
+        {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public EdgeIteratorState setAdditionalField( int value )
         {
             throw new UnsupportedOperationException("Not supported.");
         }
