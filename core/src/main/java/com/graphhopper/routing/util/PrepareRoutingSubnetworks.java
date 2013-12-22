@@ -22,6 +22,7 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.XFirstSearch;
 import java.util.*;
 import java.util.Map.Entry;
@@ -112,7 +113,7 @@ public class PrepareRoutingSubnetworks
                 }
 
                 @Override
-                protected final boolean checkAdjacent( EdgeIterator iter )
+                protected final boolean checkAdjacent( EdgeIteratorState iter )
                 {
                     tmpCounter++;
                     return true;

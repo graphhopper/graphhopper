@@ -28,12 +28,14 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * Defines bit layout for cars. (speed, access, ferries, ...)
+ * <p>
  * @author Peter Karich
  * @author Nop
  */
 public class CarFlagEncoder extends AbstractFlagEncoder
 {
-    private HashSet<String> intended = new HashSet<String>();
+    private final HashSet<String> intended = new HashSet<String>();
 
     /**
      * Should be only instantied via EncodingManager
@@ -73,10 +75,10 @@ public class CarFlagEncoder extends AbstractFlagEncoder
      * @return adjusted shift pointing behind the last used field
      */
     @Override
-    public int defineBits( int index, int shift )
+    public int defineWayBits( int index, int shift )
     {
         // first two bits are reserved for route handling in superclass
-        shift = super.defineBits(index, shift);
+        shift = super.defineWayBits(index, shift);
 
         speedEncoder = new EncodedValue("Speed", shift, 5, 5, SPEED.get("secondary"), SPEED.get("motorway"));
 
@@ -147,13 +149,13 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public int handleRelationTags( OSMRelation relation )
+    public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
     {
-        return (0);
+        return oldRelationFlags;
     }
-        
+
     @Override
-    public long handleWayTags( long allowed, OSMWay way, int relationcode)
+    public long handleWayTags( OSMWay way, long allowed, long relationCode )
     {
         if ((allowed & acceptBit) == 0)
             return 0;
@@ -260,80 +262,73 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
+    public int getPavementCode( long flags )
+    {
+        return 0;
+    }
+
+    @Override
+    public int getWayTypeCode( long flags )
+    {
+        return 0;
+    }
+
+    @Override
     public String toString()
     {
         return "car";
     }
 
-    private static final Map<String, Integer> TRACKTYPE_SPEED = new HashMap<String, Integer>()
-    {
-        {
-            put("grade1", 20); // paved
-            put("grade2", 15); // now unpaved - gravel mixed with ...
-            put("grade3", 10); // ... hard and soft materials
-            put("grade4", 5); // ... some hard or compressed materials
-            put("grade5", 5); // ... no hard materials. soil/sand/grass
-        }
-    };
-
-    private static final Set<String> BAD_SURFACE = new HashSet<String>()
-    {
-        {
-            add("cobblestone");
-            add("grass_paver");
-            add("gravel");
-            add("sand");
-            add("paving_stones");
-            add("dirt");
-            add("ground");
-            add("grass");
-        }
-    };
+    private static final Map<String, Integer> TRACKTYPE_SPEED = new HashMap<String, Integer>();
+    private static final Set<String> BAD_SURFACE = new HashSet<String>();
     /**
      * A map which associates string to speed. Get some impression:
      * http://www.itoworld.com/map/124#fullscreen
      * http://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed
      */
-    private static final Map<String, Integer> SPEED = new HashMap<String, Integer>()
+    private static final Map<String, Integer> SPEED = new HashMap<String, Integer>();
+
+    static
     {
-        {
-            // autobahn
-            put("motorway", 100);
-            put("motorway_link", 70);
-            // bundesstraße
-            put("trunk", 70);
-            put("trunk_link", 65);
-            // linking bigger town
-            put("primary", 65);
-            put("primary_link", 60);
-            // linking towns + villages
-            put("secondary", 60);
-            put("secondary_link", 50);
-            // streets without middle line separation
-            put("tertiary", 50);
-            put("tertiary_link", 40);
-            put("unclassified", 30);
-            put("residential", 30);
-            // spielstraße
-            put("living_street", 5);
-            put("service", 20);
-            // unknown road
-            put("road", 20);
-            // forestry stuff
-            put("track", 15);
-        }
-    };
-    
-    @Override
-    public int getPavementCode(long flags)
-    {
-       return 0;
+
+        TRACKTYPE_SPEED.put("grade1", 20); // paved
+        TRACKTYPE_SPEED.put("grade2", 15); // now unpaved - gravel mixed with ...
+        TRACKTYPE_SPEED.put("grade3", 10); // ... hard and soft materials
+        TRACKTYPE_SPEED.put("grade4", 5); // ... some hard or compressed materials
+        TRACKTYPE_SPEED.put("grade5", 5); // ... no hard materials. soil/sand/grass
+
+        BAD_SURFACE.add("cobblestone");
+        BAD_SURFACE.add("grass_paver");
+        BAD_SURFACE.add("gravel");
+        BAD_SURFACE.add("sand");
+        BAD_SURFACE.add("paving_stones");
+        BAD_SURFACE.add("dirt");
+        BAD_SURFACE.add("ground");
+        BAD_SURFACE.add("grass");
+
+        // autobahn
+        SPEED.put("motorway", 100);
+        SPEED.put("motorway_link", 70);
+        // bundesstraße
+        SPEED.put("trunk", 70);
+        SPEED.put("trunk_link", 65);
+        // linking bigger town
+        SPEED.put("primary", 65);
+        SPEED.put("primary_link", 60);
+        // linking towns + villages
+        SPEED.put("secondary", 60);
+        SPEED.put("secondary_link", 50);
+        // streets without middle line separation
+        SPEED.put("tertiary", 50);
+        SPEED.put("tertiary_link", 40);
+        SPEED.put("unclassified", 30);
+        SPEED.put("residential", 30);
+        // spielstraße
+        SPEED.put("living_street", 5);
+        SPEED.put("service", 20);
+        // unknown road
+        SPEED.put("road", 20);
+        // forestry stuff
+        SPEED.put("track", 15);
     }
-    
-    @Override    
-    public int getWayTypeCode(long flags)
-    {
-       return 0;
-    }
-    
 }

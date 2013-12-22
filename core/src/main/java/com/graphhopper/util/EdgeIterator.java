@@ -42,11 +42,7 @@ public interface EdgeIterator extends EdgeIteratorState
      * To be called to go to the next edge state.
      */
     boolean next();
-
-    /**
-     * Creates an edge object from the EdgeIterator its current state.
-     */
-    EdgeIteratorState detach();
+    
     /**
      * integer value to indicate if an edge is valid or not which then would be initialized with
      * this value

@@ -40,6 +40,9 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractFlagEncoder implements FlagEncoder
 {
     private final static Logger logger = LoggerFactory.getLogger(AbstractFlagEncoder.class);
+    private long nodeBitMask;
+    private long wayBitMask;
+    private long relBitMask;
     protected long forwardBit = 0;
     protected long backwardBit = 0;
     protected long directionBitMask = 0;
@@ -75,9 +78,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     static int parseSpeed( String str )
     {
         if (Helper.isEmpty(str))
-        {
             return -1;
-        }
 
         try
         {
@@ -120,13 +121,23 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     }
 
     /**
-     * Define 2 reserved bits for routing and internal bits for parsing.
+     * Defines the bits for the node flags, which are currently used for barriers only.
+     * <p>
+     * @return incremented shift value pointing behind the last used bit
+     */
+    public int defineNodeBits( int index, int shift )
+    {
+        return shift;
+    }
+
+    /**
+     * Defines bits used for edge flags used for access, speed etc.
      * <p/>
      * @param index
      * @param shift bit offset for the first bit used by this encoder
      * @return incremented shift value pointing behind the last used bit
      */
-    public int defineBits( int index, int shift )
+    public int defineWayBits( int index, int shift )
     {
         // define the first 2 bits in flags for routing
         forwardBit = 1 << shift;
@@ -140,13 +151,23 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
 
         return shift + 2;
     }
-    
+
+    /**
+     * Defines the bits which are used for relation flags.
+     * <p>
+     * @return incremented shift value pointing behind the last used bit
+     */
+    public int defineRelationBits( int index, int shift )
+    {
+        return shift;
+    }
+
     /**
      * Analyze the properties of a relation and create the routing flags for the second read step
      * <p/>
      */
-    public abstract int handleRelationTags( OSMRelation relation );
-    
+    public abstract long handleRelationTags( OSMRelation relation, long oldRelationFlags );
+
     /**
      * Decide whether a way is routable for a given mode of travel
      * <p/>
@@ -154,13 +175,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
      * @return the assigned bit of the mode of travel if it is accepted or 0 for not accepted
      */
     public abstract long isAllowed( OSMWay way );
-    
+
     /**
      * Analyze properties of a way and create the routing flags
      * <p/>
      * @param allowed
      */
-    public abstract long handleWayTags( long allowed, OSMWay way, int relationweigth);
+    public abstract long handleWayTags( OSMWay way, long allowed, long relationFlags );
 
     /**
      * Parse tags on nodes, looking for barriers.
@@ -196,17 +217,17 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     }
 
     @Override
-    public int getPavementCode(long flags)
+    public int getPavementCode( long flags )
     {
         return -1;
     }
-    
+
     @Override
-    public int getWayTypeCode(long flags)
+    public int getWayTypeCode( long flags )
     {
         return -1;
     }
-    
+
     public long swapDirection( long flags )
     {
         long dir = flags & directionBitMask;
@@ -359,5 +380,28 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
         {
             return speedEncoder.setValue(0, shortTripsSpeed);
         }
+    }
+
+    void setWayBitMask( int usedBits, int shift )
+    {
+        wayBitMask = (1L << usedBits) - 1;
+        wayBitMask <<= shift;
+    }
+
+    long getWayBitMask()
+    {
+        return wayBitMask;
+    }
+
+    void setRelBitMask( int usedBits, int shift )
+    {
+        relBitMask = (1L << usedBits) - 1;
+        relBitMask <<= shift;
+    }
+
+    void setNodeBitMask( int usedBits, int shift )
+    {
+        nodeBitMask = (1L << usedBits) - 1;
+        nodeBitMask <<= shift;
     }
 }

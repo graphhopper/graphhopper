@@ -81,4 +81,9 @@ public interface EdgeIteratorState
     String getName();
 
     EdgeIteratorState setName( String name );
+
+    /**
+     * Clones this EdgeIteratorState.
+     */
+    EdgeIteratorState detach();
 }

@@ -274,6 +274,6 @@ public class InstructionListTest
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "motorway");
         way.setTag("maxspeed", String.format("%d km/h", speedKmPerHour));
-        return encodingManager.handleWayTags(1, way, 0);
+        return encodingManager.handleWayTags(way, 1, 0);
     }
 }

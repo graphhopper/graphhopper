@@ -26,14 +26,21 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * Defines bit layout for pedestrians (speed, access, surface, ...).
+ * <p>
  * @author Peter Karich
  * @author Nop
  */
 public class FootFlagEncoder extends AbstractFlagEncoder
 {
+    static final int SLOW = 2;
+    static final int MEAN = 5;
+    static final int FERRY = 10;
     private int safeWayBit = 0;
     protected HashSet<String> intended = new HashSet<String>();
     protected HashSet<String> sidewalks = new HashSet<String>();
+    private final Set<String> safeHighwayTags = new HashSet<String>();
+    private final Set<String> allowedHighwayTags = new HashSet<String>();
 
     /**
      * Should be only instantied via EncodingManager
@@ -64,13 +71,36 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         acceptedRailways.add("station");
         acceptedRailways.add("platform");
+
+        safeHighwayTags.add("footway");
+        safeHighwayTags.add("path");
+        safeHighwayTags.add("steps");
+        safeHighwayTags.add("pedestrian");
+        safeHighwayTags.add("living_street");
+        safeHighwayTags.add("track");
+        safeHighwayTags.add("residential");
+        safeHighwayTags.add("service");
+
+        allowedHighwayTags.addAll(safeHighwayTags);
+        allowedHighwayTags.add("trunk");
+        allowedHighwayTags.add("trunk_link");
+        allowedHighwayTags.add("primary");
+        allowedHighwayTags.add("primary_link");
+        allowedHighwayTags.add("secondary");
+        allowedHighwayTags.add("secondary_link");
+        allowedHighwayTags.add("tertiary");
+        allowedHighwayTags.add("tertiary_link");
+        allowedHighwayTags.add("unclassified");
+        allowedHighwayTags.add("road");
+        // disallowed in some countries
+        //allowedHighwayTags.add("bridleway");
     }
 
     @Override
-    public int defineBits( int index, int shift )
+    public int defineWayBits( int index, int shift )
     {
         // first two bits are reserved for route handling in superclass
-        shift = super.defineBits(index, shift);
+        shift = super.defineWayBits(index, shift);
 
         // larger value required - ferries are faster than pedestrians
         speedEncoder = new EncodedValue("Speed", shift, 4, 1, MEAN, FERRY);
@@ -144,15 +174,15 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         return acceptBit;
     }
-    
+
     @Override
-    public int handleRelationTags( OSMRelation relation )
+    public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
     {
-        return (0);
+        return oldRelationFlags;
     }
-    
+
     @Override
-    public long handleWayTags( long allowed, OSMWay way, int relationcode)
+    public long handleWayTags( OSMWay way, long allowed, long relationCode )
     {
         if ((allowed & acceptBit) == 0)
             return 0;
@@ -209,55 +239,16 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         return 0;
     }
-    private final Set<String> safeHighwayTags = new HashSet<String>()
-    {
 
-        
-        {
-            add("footway");
-            add("path");
-            add("steps");
-            add("pedestrian");
-            add("living_street");
-            add("track");
-            add("residential");
-            add("service");
-        }
-    };
-    private final Set<String> allowedHighwayTags = new HashSet<String>()
-    {
-
-        
-        {
-            addAll(safeHighwayTags);
-            add("trunk");
-            add("trunk_link");
-            add("primary");
-            add("primary_link");
-            add("secondary");
-            add("secondary_link");
-            add("tertiary");
-            add("tertiary_link");
-            add("unclassified");
-            add("road");
-            // disallowed in some countries
-            //add("bridleway");
-        }
-    };
-    static final int SLOW = 2;
-    static final int MEAN = 5;
-    static final int FERRY = 10;
-    
     @Override
-    public int getPavementCode(long flags)
+    public int getPavementCode( long flags )
     {
-       return 0;
+        return 0;
     }
-    
-    @Override    
-    public int getWayTypeCode(long flags)
+
+    @Override
+    public int getWayTypeCode( long flags )
     {
-       return 0;
+        return 0;
     }
-    
 }

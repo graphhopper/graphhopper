@@ -47,8 +47,9 @@ public class EncodingManager
     }
     public static final int MAX_BITS = 32;
     private ArrayList<AbstractFlagEncoder> encoders = new ArrayList<AbstractFlagEncoder>();
-    private int encoderCount = 0;
-    private int nextBit = 0;
+    private int nextWayBit = 0;
+    private int nextRelBit = 0;
+    private int nextNodeBit = 0;
 
     public EncodingManager()
     {
@@ -94,33 +95,30 @@ public class EncodingManager
                 throw new IllegalArgumentException("Cannot instantiate class " + className, e);
             }
         }
-
-        /*
-         // comment this in to detect involuntary changes of the encoding
-         if( instance != null )
-         {
-         System.out.println( "WARNING: Overwriting Encoding Manager " + instance.toString() + " with new instance " + toString());
-         StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-         for( int i = 2; i < trace.length; i++ ) {
-         System.out.println( trace[i] );
-         }
-         }
-         */
-        // instance = this;
     }
 
-    public void register( AbstractFlagEncoder encoder )
+    protected void register( AbstractFlagEncoder encoder )
     {
-        encoders.add(encoder);
+        int encoderCount = encoders.size();
+        encoders.add(encoder);        
 
-        int usedBits = encoder.defineBits(encoderCount, nextBit);
+        int usedBits = encoder.defineNodeBits(encoderCount, nextNodeBit);
         if (usedBits >= MAX_BITS)
-        {
-            throw new IllegalArgumentException("Encoders are requesting more than 32 bits of flags");
-        }
+            throw new IllegalArgumentException("Encoders are requesting more than " + MAX_BITS + " bits of node flags");
+        encoder.setNodeBitMask(usedBits - nextNodeBit, nextNodeBit);
+        nextNodeBit = usedBits;
 
-        nextBit = usedBits;
-        encoderCount = encoders.size();
+        usedBits = encoder.defineWayBits(encoderCount, nextWayBit);
+        if (usedBits >= MAX_BITS)
+            throw new IllegalArgumentException("Encoders are requesting more than " + MAX_BITS + " bits of way flags");
+        encoder.setWayBitMask(usedBits - nextWayBit, nextWayBit);
+        nextWayBit = usedBits;
+
+        usedBits = encoder.defineRelationBits(encoderCount, nextRelBit);
+        if (usedBits >= MAX_BITS)
+            throw new IllegalArgumentException("Encoders are requesting more than " + MAX_BITS + " bits of relation flags");
+        encoder.setRelBitMask(usedBits - nextRelBit, nextRelBit);
+        nextRelBit = usedBits;        
     }
 
     /**
@@ -138,6 +136,7 @@ public class EncodingManager
 
     private AbstractFlagEncoder getEncoder( String name, boolean throwExc )
     {
+        int encoderCount = encoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
             if (name.equalsIgnoreCase(encoders.get(i).toString()))
@@ -151,9 +150,10 @@ public class EncodingManager
     /**
      * Determine whether an osm way is a routable way for one of its encoders.
      */
-    public int accept( OSMWay way )
+    public long accept( OSMWay way )
     {
-        int includeWay = 0;
+        long includeWay = 0;
+        int encoderCount = encoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
             includeWay |= encoders.get(i).isAllowed(way);
@@ -161,29 +161,34 @@ public class EncodingManager
 
         return includeWay;
     }
-    
-    public int handleRelationTags( OSMRelation relation )
-    {
-        int flags = 0;
-        for (int i = 0; i < encoderCount; i++)
-        {
-            flags |= encoders.get(i).handleRelationTags(relation);
-        }
-        
-        return flags;
-    }
-    /**
-     * Processes way properties of different kind to determine speed and direction. Properties are
-     * directly encoded in 4-Byte flags.
-     * <p/>
-     * @return the encoded flags
-     */
-    public long handleWayTags( int includeWay, OSMWay way, int weightFromRelations)
+
+    public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
     {
         long flags = 0;
+        int encoderCount = encoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
-            flags |= encoders.get(i).handleWayTags(includeWay, way, weightFromRelations);
+            flags |= encoders.get(i).handleRelationTags(relation, oldRelationFlags);
+        }
+
+        return flags;
+    }
+
+    /**
+     * Processes way properties of different kind to determine speed and direction. Properties are
+     * directly encoded in 8 bytes.
+     * <p/>
+     * @param relationFlags The preprocessed relation flags is used to influence the way properties.
+     * @return the encoded flags
+     */
+    public long handleWayTags( OSMWay way, long includeWay, long relationFlags )
+    {
+        long flags = 0;
+        int encoderCount = encoders.size();
+        for (int i = 0; i < encoderCount; i++)
+        {
+            AbstractFlagEncoder encoder = encoders.get(i);
+            flags |= encoder.handleWayTags(way, includeWay, relationFlags & encoder.getWayBitMask());
         }
 
         return flags;
@@ -191,13 +196,14 @@ public class EncodingManager
 
     public int getVehicleCount()
     {
-        return encoderCount;
+        return encoders.size();
     }
 
     @Override
     public String toString()
     {
         StringBuilder str = new StringBuilder();
+        int encoderCount = encoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
             if (str.length() > 0)
@@ -210,9 +216,10 @@ public class EncodingManager
         return str.toString();
     }
 
-    public String encoderList()
+    public String getEncoderList()
     {
         StringBuilder str = new StringBuilder();
+        int encoderCount = encoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
             if (str.length() > 0)
@@ -245,9 +252,10 @@ public class EncodingManager
         return encoders.get(0);
     }
 
-    public int flagsDefault( boolean forward, boolean backward )
+    public long flagsDefault( boolean forward, boolean backward )
     {
-        int flags = 0;
+        long flags = 0;
+        int encoderCount = encoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
             flags |= encoders.get(i).flagsDefault(forward, backward);
@@ -260,6 +268,7 @@ public class EncodingManager
      */
     public long swapDirection( long flags )
     {
+        int encoderCount = encoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
             flags = encoders.get(i).swapDirection(flags);
@@ -299,9 +308,10 @@ public class EncodingManager
      * <p/>
      * @param node
      */
-    public int analyzeNode( OSMNode node )
+    public long analyzeNode( OSMNode node )
     {
-        int flags = 0;
+        long flags = 0;
+        int encoderCount = encoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
             flags |= encoders.get(i).analyzeNodeTags(node);
@@ -313,6 +323,7 @@ public class EncodingManager
     public String getWayInfo( OSMWay way )
     {
         String str = "";
+        int encoderCount = encoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
             String tmpWayInfo = encoders.get(i).getWayInfo(way);
@@ -324,5 +335,5 @@ public class EncodingManager
         }
         return str;
     }
-        
+
 }

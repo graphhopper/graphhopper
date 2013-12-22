@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.HashMap;
 import org.junit.After;
 import static org.junit.Assert.*;
 import org.junit.Before;
@@ -326,8 +327,7 @@ public class OSMReaderTest
     @Test
     public void testWayReferencesNotExistingAdjNode()
     {
-        GraphHopper hopper = new GraphHopperTest(file4).
-                importOrLoad();
+        GraphHopper hopper = new GraphHopperTest(file4).importOrLoad();
         Graph graph = hopper.getGraph();
 
         assertEquals(2, graph.getNodes());
@@ -340,8 +340,7 @@ public class OSMReaderTest
     @Test
     public void testFoot()
     {
-        GraphHopper hopper = new GraphHopperTest(file3).
-                importOrLoad();
+        GraphHopper hopper = new GraphHopperTest(file3).importOrLoad();
         Graph graph = hopper.getGraph();
 
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 11.1);
@@ -428,7 +427,6 @@ public class OSMReaderTest
         assertEquals(8, graph.getNodes());
 
         int n60 = AbstractGraphStorageTester.getIdOf(graph, 56);
-
         int newId = 5;
         assertEquals(GHUtility.asSet(newId), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n60)));
 
@@ -441,6 +439,36 @@ public class OSMReaderTest
         assertTrue(iter.next());
         assertEquals(n60, iter.getAdjNode());
         assertFalse(iter.next());
+    }
+
+    @Test
+    public void testRelation()
+    {
+        EncodingManager manager = new EncodingManager("bike");
+        OSMReader reader = new OSMReader(new GraphHopperStorage(new RAMDirectory(), manager), -1).
+                setEncodingManager(manager);
+        OSMRelation osmRel = new OSMRelation(1, new HashMap<String, String>());
+        osmRel.getMembers().add(new OSMRelation.Member(OSMRelation.WAY, 1, ""));
+        osmRel.getMembers().add(new OSMRelation.Member(OSMRelation.WAY, 2, ""));
+        
+        osmRel.setTag("route", "bicycle");
+        osmRel.setTag("network", "lcn");        
+        reader.prepareWaysWithRelationInfo(osmRel);
+        
+        long flags = reader.getRelFlagsMap().get(1);
+        assertTrue(flags != 0);
+        
+        // do NOT overwrite with UNCHANGED
+        osmRel.setTag("network", "mtb");
+        reader.prepareWaysWithRelationInfo(osmRel);
+        long flags2 = reader.getRelFlagsMap().get(1);
+        assertEquals(flags, flags2);
+        
+        // overwrite with outstanding
+        osmRel.setTag("network", "ncn");
+        reader.prepareWaysWithRelationInfo(osmRel);
+        long flags3 = reader.getRelFlagsMap().get(1);
+        assertTrue(flags != flags3);
     }
 
     @Test

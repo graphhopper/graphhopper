@@ -663,7 +663,7 @@ public class LocationIndexTree implements LocationIndex
                     }
 
                     @Override
-                    protected boolean checkAdjacent( EdgeIterator currEdge )
+                    protected boolean checkAdjacent( EdgeIteratorState currEdge )
                     {
                         goFurther = false;
                         if (!edgeFilter.accept(currEdge))
@@ -723,13 +723,13 @@ public class LocationIndexTree implements LocationIndex
                         return closestMatch.getQueryDistance() > equalNormedDelta;
                     }
 
-                    boolean check( int node, double normedDist, int wayIndex, EdgeIterator iter, QueryResult.Position pos )
+                    boolean check( int node, double normedDist, int wayIndex, EdgeIteratorState edge, QueryResult.Position pos )
                     {
                         if (normedDist < closestMatch.getQueryDistance())
                         {
                             closestMatch.setQueryDistance(normedDist);
                             closestMatch.setClosestNode(node);
-                            closestMatch.setClosestEdge(iter.detach());
+                            closestMatch.setClosestEdge(edge.detach());
                             closestMatch.setWayIndex(wayIndex);
                             closestMatch.setSnappedPosition(pos);
                             return true;
