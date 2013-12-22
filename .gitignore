@@ -25,4 +25,4 @@ debug.sh
 *.pbf
 *.dem
 *.log
-core/TODO-london.txt
+core/TODO*.txt

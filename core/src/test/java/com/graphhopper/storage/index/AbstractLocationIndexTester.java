@@ -25,13 +25,13 @@ import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
+import java.io.Closeable;
 import java.io.File;
 import java.util.Random;
 import org.junit.After;
@@ -42,7 +42,7 @@ import org.junit.Test;
 /**
  * @author Peter Karich
  */
-public abstract class AbstractLocation2IDIndexTester
+public abstract class AbstractLocationIndexTester
 {
     String location = "./target/tmp/";
     LocationIndex idx;
@@ -57,14 +57,14 @@ public abstract class AbstractLocation2IDIndexTester
     @Before
     public void setUp()
     {
-        if(idx != null)
-            idx.close();
         Helper.removeDir(new File(location));
     }
 
     @After
     public void tearDown()
     {
+        if (idx != null)
+            idx.close();
         Helper.removeDir(new File(location));
     }
 
@@ -87,6 +87,7 @@ public abstract class AbstractLocation2IDIndexTester
         {
             assertEquals(6, idx.findID(4, 0));
         }
+        Helper.close((Closeable) g);
     }
 
     public void initSimpleGraph( Graph g )
@@ -142,6 +143,7 @@ public abstract class AbstractLocation2IDIndexTester
         }
         assertEquals(6, idx.findID(4, -2));
         assertEquals(5, idx.findID(3, 3));
+        Helper.close((Closeable) g);
     }
 
     @Test
@@ -192,8 +194,9 @@ public abstract class AbstractLocation2IDIndexTester
                     + " full:" + fullLat + "," + fullLon + " fullDist:" + fullDist
                     + " found:" + newLat + "," + newLon + " foundDist:" + newDist,
                     Math.abs(fullDist - newDist) < 50000);
-        }
+        }        
         fullIndex.close();
+        Helper.close((Closeable) g);
     }
 
     // our simple index has only one node per tile => problems if multiple subnetworks
@@ -215,6 +218,7 @@ public abstract class AbstractLocation2IDIndexTester
 
         assertEquals(10, idx.findID(3.8, 0));
         assertEquals(10, idx.findID(3.8466, 0.021));
+        Helper.close((Closeable) g);
     }
 
     @Test
@@ -234,6 +238,7 @@ public abstract class AbstractLocation2IDIndexTester
             assertEquals(6, idx.findID(2.485, 1.373));
         }
         assertEquals(0, idx.findID(0.64628404, 0.53006625));
+        Helper.close((Closeable) g);
     }
 
     @Test
@@ -247,9 +252,8 @@ public abstract class AbstractLocation2IDIndexTester
         {
             g.setNode(i, (float) rand.nextDouble() * 10 + 10, (float) rand.nextDouble() * 10 + 10);
         }
-        LocationIndex idx = createIndex(g, 200);
-        idx.close();
-        Helper.removeDir(new File(location));
+        idx = createIndex(g, 200);
+        Helper.close((Closeable) g);
     }
 
     Graph createGraph( EncodingManager encodingManager )
@@ -358,9 +362,10 @@ public abstract class AbstractLocation2IDIndexTester
             iter.setFlags(carEncoder.setProperties(50, true, true));
         }
         idx.close();
-        
+
         idx = createIndex(g, 32);
         FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
         assertEquals(2, idx.findClosest(1, -1, new DefaultEdgeFilter(footEncoder)).getClosestNode());
+        Helper.close((Closeable) g);
     }
 }

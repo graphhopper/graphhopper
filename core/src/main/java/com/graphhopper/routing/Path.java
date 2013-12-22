@@ -22,7 +22,6 @@ import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TLongArrayList;
 import java.util.ArrayList;
@@ -38,7 +37,6 @@ import java.util.List;
  */
 public class Path
 {
-    private final DistanceCalc distCalc = new DistanceCalcEarth();
     protected Graph graph;
     private FlagEncoder encoder;
     protected double distance;
@@ -194,7 +192,7 @@ public class Path
     }
 
     /**
-     * Calls calcDistance and adds the edgeId.
+     * Calls getDistance and adds the edgeId.
      */
     protected void processEdge( int edgeId, int endNode )
     {
@@ -357,8 +355,8 @@ public class Path
             double prevLat = graph.getLatitude(tmpNode);
             double prevLon = graph.getLongitude(tmpNode);
             double prevOrientation;
-            TDoubleArrayList distances = new TDoubleArrayList();
-            TLongArrayList times = new TLongArrayList();
+            double tmpDistance = Double.NaN;
+            long tmpTime;
             PointList points = new PointList();
 
             @Override
@@ -390,7 +388,7 @@ public class Path
                     // very first instruction
                     name = edge.getName();
                     add(edge, wayGeo);
-                    cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, distances, times, points));
+                    cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, tmpDistance, tmpTime, points));
                 } else
                 {
                     double tmpOrientation;
@@ -412,8 +410,7 @@ public class Path
                     String tmpName = edge.getName();
                     if (!name.equals(tmpName))
                     {
-                        distances = new TDoubleArrayList();
-                        times = new TLongArrayList();
+                        tmpDistance = Double.NaN;
                         points = new PointList();
                         add(edge, wayGeo);
                         name = tmpName;
@@ -449,7 +446,7 @@ public class Path
 
                         }
 
-                        cachedWays.add(new Instruction(indication, name, distances, times, points));
+                        cachedWays.add(new Instruction(indication, name, tmpDistance, tmpTime, points));
                     } else
                     {
                         add(edge, wayGeo);
@@ -478,13 +475,10 @@ public class Path
                 {
                     double lat = pl.getLatitude(i);
                     double lon = pl.getLongitude(i);
-                    double nextLat = pl.getLatitude(i - 1);
-                    double nextLon = pl.getLongitude(i - 1);
-                    double tmpDist = distCalc.calcDist(lat, lon, nextLat, nextLon);
-                    distances.add(tmpDist);
-                    times.add(calcMillis(tmpDist, flags));
                     points.add(lat, lon);
                 }
+                tmpDistance = calcDistance(edge);
+                tmpTime = calcMillis(tmpDistance, flags);
             }
         });
 

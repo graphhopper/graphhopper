@@ -82,9 +82,9 @@ public class InstructionListTest
         list.add(1.0, 1.16);
         iter.setWayGeometry(list);
         iter.setName("7-8");
-        // missing edge name => Unknown
+        // missing edge name
         g.edge(9, 10, 10000, true);
-        EdgeIteratorState iter2 = g.edge(8, 9, 10000, true);
+        EdgeIteratorState iter2 = g.edge(8, 9, 20000, true);
         list.clear();
         list.add(1.0, 1.3);
         iter2.setName("8-9");
@@ -101,12 +101,11 @@ public class InstructionListTest
                 wayList.createDescription(trMap.getWithFallBack(Locale.GERMAN)));
 
         TDoubleList distList = wayList.createDistances();
-        // the real distance is 11.12 * 7 (to calculate algorithm we use slightly different values)
-        assertEquals(77828.5, distList.sum(), 1e-1);
+        assertEquals(70000.0, distList.sum(), 1e-1);
         List<String> distStrings = wayList.createDistances(trMap.get("de"), false);
-        assertEquals(Arrays.asList("11.12 km", "11.12 km", "11.12 km", "11.12 km", "22.24 km", "11.12 km", "0 m"), distStrings);
+        assertEquals(Arrays.asList("10.0 km", "10.0 km", "10.0 km", "10.0 km", "20.0 km", "10.0 km", "0 m"), distStrings);
         distStrings = wayList.createDistances(trMap.get("en_US"), true);
-        assertEquals(Arrays.asList("6.91 mi", "6.91 mi", "6.91 mi", "6.91 mi", "13.82 mi", "6.91 mi", "0 ft"), distStrings);
+        assertEquals(Arrays.asList("6.21 mi", "6.21 mi", "6.21 mi", "6.21 mi", "12.43 mi", "6.21 mi", "0 ft"), distStrings);
         List<GPXEntry> gpxes = wayList.createGPXList();
         assertEquals(10, gpxes.size());
         // check order of tower nodes        
@@ -205,9 +204,9 @@ public class InstructionListTest
         g.setNode(4, 15.2, 9.9);
         g.setNode(5, 15.2, 10);
 
-        g.edge(1, 2, 10000, true).setName("1-2").setFlags(flagsForSpeed(carManager, 70));
-        g.edge(2, 3, 10000, true).setName("2-3").setFlags(flagsForSpeed(carManager, 80));
-        g.edge(3, 4, 10000, true).setName("3-4").setFlags(flagsForSpeed(carManager, 90));
+        g.edge(1, 2, 7000, true).setName("1-2").setFlags(flagsForSpeed(carManager, 70));
+        g.edge(2, 3, 8000, true).setName("2-3").setFlags(flagsForSpeed(carManager, 80));
+        g.edge(3, 4, 9000, true).setName("3-4").setFlags(flagsForSpeed(carManager, 90));
         g.edge(4, 5, 10000, true).setName("4-5").setFlags(flagsForSpeed(carManager, 100));
 
         Path p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestWeighting()).calcPath(1, 5);
@@ -216,27 +215,28 @@ public class InstructionListTest
 
         List<GPXEntry> gpxList = wayList.createGPXList();
         // distances and times are not identical (only similar) as we only guessed the edge distance
-        assertEquals(40000, p.getDistance(), 1e-1);
-        assertEquals(43705, wayList.createDistances().sum(), 1e-1);        
-        assertEquals(1964285, p.getMillis());
+        assertEquals(34000, p.getDistance(), 1e-1);
+        assertEquals(34000, wayList.createDistances().sum(), 1e-1);
+        assertEquals(5, gpxList.size());
+        assertEquals(1636428, p.getMillis());
         assertEquals(2148878, gpxList.get(gpxList.size() - 1).getMillis());
 
         assertEquals(Instruction.CONTINUE_ON_STREET, wayList.get(0).getIndication());
-        assertEquals(15, wayList.get(0).getStartLat(), 1e-3);
-        assertEquals(10, wayList.get(0).getStartLon(), 1e-3);
+        assertEquals(15, wayList.get(0).getFirstLat(), 1e-3);
+        assertEquals(10, wayList.get(0).getFirstLon(), 1e-3);
 
         assertEquals(Instruction.TURN_LEFT, wayList.get(1).getIndication());
-        assertEquals(15.1, wayList.get(1).getStartLat(), 1e-3);
-        assertEquals(10, wayList.get(1).getStartLon(), 1e-3);
+        assertEquals(15.1, wayList.get(1).getFirstLat(), 1e-3);
+        assertEquals(10, wayList.get(1).getFirstLon(), 1e-3);
 
         assertEquals(Instruction.TURN_RIGHT, wayList.get(2).getIndication());
-        assertEquals(15.1, wayList.get(2).getStartLat(), 1e-3);
-        assertEquals(9.9, wayList.get(2).getStartLon(), 1e-3);
+        assertEquals(15.1, wayList.get(2).getFirstLat(), 1e-3);
+        assertEquals(9.9, wayList.get(2).getFirstLon(), 1e-3);
 
         assertEquals(Instruction.TURN_RIGHT, wayList.get(3).getIndication());
-        assertEquals(15.2, wayList.get(3).getStartLat(), 1e-3);
-        assertEquals(9.9, wayList.get(3).getStartLon(), 1e-3);
-        
+        assertEquals(15.2, wayList.get(3).getFirstLat(), 1e-3);
+        assertEquals(9.9, wayList.get(3).getFirstLon(), 1e-3);
+
         String gpxStr = wayList.createGPX("test", 0, "GMT+1");
         assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T01:00:00+01:00</time></trkpt>"));
     }
@@ -245,42 +245,28 @@ public class InstructionListTest
     public void testCreateGPX()
     {
         InstructionList instructions = new InstructionList();
-        TLongArrayList times = new TLongArrayList();
-        times.add(10 * 1000);
-        times.add(5 * 1000);
         PointList pl = new PointList();
-        pl.add(51.272226, 13.623047);
-        pl.add(51.272, 13.623);
-        TDoubleArrayList distances = new TDoubleArrayList();
-        distances.add(100);
-        distances.add(10);
-        instructions.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp", distances, times, pl));
+        pl.add(49.942576, 11.580384);
+        pl.add(49.941858, 11.582422);
+        instructions.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp", 240, 15000, pl));
 
-        times = new TLongArrayList();
-        times.add(4 * 1000);
-        distances = new TDoubleArrayList();
-        distances.add(100);
         pl = new PointList();
-        pl.add(51.272226, 13.623047);
-        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", distances, times, pl));
-        
-        times = new TLongArrayList();
-        times.add(3 * 1000);
-        distances = new TDoubleArrayList();
-        distances.add(100);
+        pl.add(49.941575, 11.583501);
+        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", 25, 4000, pl));
+
         pl = new PointList();
-        pl.add(51.2722, 13.623);
-        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", distances, times, pl));
-        instructions.add(new FinishInstruction(51.272, 13.62));
-        
+        pl.add(49.941389, 11.584311);
+        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", 25, 3000, pl));
+        instructions.add(new FinishInstruction(49.941029, 11.584514));
+
         List<GPXEntry> result = instructions.createGPXList();
         assertEquals(5, result.size());
-        
+
         assertEquals(0, result.get(0).getMillis());
-        assertEquals(10 * 1000, result.get(1).getMillis());
-        assertEquals(15 * 1000, result.get(2).getMillis());
-        assertEquals(19 * 1000, result.get(3).getMillis());
-        assertEquals(22 * 1000, result.get(4).getMillis());
+        assertEquals(10391, result.get(1).getMillis());
+        assertEquals(15602, result.get(2).getMillis());
+        assertEquals(25449, result.get(3).getMillis());
+        assertEquals(30559, result.get(4).getMillis());
     }
 
     private long flagsForSpeed( EncodingManager encodingManager, int speedKmPerHour )

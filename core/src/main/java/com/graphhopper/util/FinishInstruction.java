@@ -18,25 +18,15 @@
  */
 package com.graphhopper.util;
 
-import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TLongArrayList;
-
 /**
  * @author Peter Karich
  */
 public class FinishInstruction extends Instruction
-{   
-    private final static TDoubleArrayList DISTANCES = new TDoubleArrayList(1);
-    private final static TLongArrayList TIMES = new TLongArrayList(1);
-    static {
-        DISTANCES.add(0);
-        TIMES.add(0);
-    }
-
+{
     public FinishInstruction( final double lat, final double lon )
     {
-        super(FINISH, "", DISTANCES, TIMES, new PointList()
-        {   
+        super(FINISH, "", 0, 0, new PointList()
+        {
             {
                 add(lat, lon);
             }

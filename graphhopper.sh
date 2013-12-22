@@ -128,6 +128,13 @@ elif [ "x$ACTION" = "xbuild" ]; then
  prepareEclipse
  exit  
  
+elif [ "x$ACTION" = "xextract" ]; then
+ echo use "./graphhopper.sh extract \"left,bottom,right,top\""
+ URL="http://overpass-api.de/api/map?bbox=$2"
+ #echo "$URL"
+ wget -O extract.osm $URL
+ exit
+ 
 elif [ "x$ACTION" = "xandroid" ]; then
  prepareEclipse
  "$MAVEN_HOME/bin/mvn" --projects android install android:deploy android:run
@@ -230,8 +237,10 @@ elif [ "x$ACTION" = "xtest" ]; then
        graph.location="$GRAPH" osmreader.osm="$OSM_FILE" prepare.chShortcuts=false \
        graph.testIT=true
 
+
 elif [ "x$ACTION" = "xtorture" ]; then
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.QueryTorture $3 $4 $5 $6 $7 $8 $9
+
 
 elif [ "x$ACTION" = "xminiui" ]; then
  "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/tools/pom.xml" -DskipTests clean install assembly:single
@@ -239,12 +248,7 @@ elif [ "x$ACTION" = "xminiui" ]; then
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI osmreader.osm="$OSM_FILE" printVersion=true config=$CONFIG \
               graph.location="$GRAPH"
 
-elif [ "x$ACTION" = "xextract" ]; then
- echo use "./graphhopper.sh extract \"left,bottom,right,top\""
- URL="http://api.openstreetmap.org/api/0.6/map?bbox=$2"
- #echo "$URL"
- wget -O extract.osm $URL
-       
+
 elif [ "x$ACTION" = "xmeasurement" ]; then
  ARGS="config=$CONFIG graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chShortcuts=fastest osmreader.acceptWay=CAR"
  echo -e "\ncreate graph via $ARGS, $JAR"

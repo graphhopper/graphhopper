@@ -5,6 +5,7 @@ import gnu.trove.list.array.TDoubleArrayList;
 import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -60,7 +61,7 @@ public class InstructionList implements Iterable<Instruction>
         TDoubleList res = new TDoubleArrayList(instructions.size());
         for (Instruction instruction : instructions)
         {
-            res.add(instruction.calcDistance());
+            res.add(instruction.getDistance());
         }
         return res;
     }
@@ -111,7 +112,7 @@ public class InstructionList implements Iterable<Instruction>
         List<String> res = new ArrayList<String>();
         for (Instruction instruction : instructions)
         {
-            long millis = instruction.calcMillis();
+            long millis = instruction.getMillis();
             int minutes = (int) Math.round(millis / 60000.0);
             if (minutes > 60)
             {
@@ -143,8 +144,8 @@ public class InstructionList implements Iterable<Instruction>
         for (Instruction instruction : instructions)
         {
             List<Double> latLng = new ArrayList<Double>(2);
-            latLng.add(instruction.getStartLat());
-            latLng.add(instruction.getStartLon());
+            latLng.add(instruction.getFirstLat());
+            latLng.add(instruction.getFirstLon());
             res.add(latLng);
         }
         return res;
@@ -233,11 +234,19 @@ public class InstructionList implements Iterable<Instruction>
      */
     public List<GPXEntry> createGPXList()
     {
+        if (isEmpty())
+            return Collections.EMPTY_LIST;
+
         List<GPXEntry> gpxList = new ArrayList<GPXEntry>();
         long timeOffset = 0;
+        double prevLat = Double.NaN, prevLon = Double.NaN; 
+        double prevFactor = 0;
         for (Instruction i : this)
         {
-            timeOffset = i.fillGPXList(gpxList, timeOffset);
+            timeOffset = i.fillGPXList(gpxList, timeOffset, prevFactor, prevLat, prevLon);
+            prevFactor = i.getDistance() / i.getMillis();
+            prevLat = i.getLastLat();
+            prevLon = i.getLastLon();
         }
         return gpxList;
     }
