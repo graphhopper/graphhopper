@@ -77,6 +77,16 @@ public interface EdgeIteratorState
     long getFlags();
 
     EdgeIteratorState setFlags( long flags );
+    
+    /**
+     * @return the additional field value for this edge
+     */
+    int getAdditionalField();
+
+    /**
+     * Updates the additional field value for this edge
+     */
+    EdgeIteratorState setAdditionalField( int value );
 
     String getName();
 
