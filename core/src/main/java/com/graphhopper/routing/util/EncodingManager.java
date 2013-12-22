@@ -17,12 +17,15 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMNode;
-import com.graphhopper.reader.OSMWay;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.graphhopper.reader.OSMNode;
+import com.graphhopper.reader.OSMWay;
+import com.graphhopper.routing.util.TurnCostEncoder.NoTurnCostsEncoder;
 
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders
@@ -36,18 +39,30 @@ public class EncodingManager
     public static final String CAR = "car";
     public static final String BIKE = "bike";
     public static final String FOOT = "foot";
-    private static final HashMap<String, String> defaultEncoders = new HashMap<String, String>();
+    private static final Map<String, String> defaultEdgeFlagEncoders = new HashMap<String, String>();
+    private static final Map<String, String> defaultTurnFlagEncoders = new HashMap<String, String>();
 
     static
     {
-        defaultEncoders.put(CAR, CarFlagEncoder.class.getName());
-        defaultEncoders.put(BIKE, BikeFlagEncoder.class.getName());
-        defaultEncoders.put(FOOT, FootFlagEncoder.class.getName());
+        defaultEdgeFlagEncoders.put(CAR, CarFlagEncoder.class.getName());
+        defaultEdgeFlagEncoders.put(BIKE, BikeFlagEncoder.class.getName());
+        defaultEdgeFlagEncoders.put(FOOT, FootFlagEncoder.class.getName());
+
+        defaultTurnFlagEncoders.put(CAR, DefaultTurnCostEncoder.class.getName());
+        defaultTurnFlagEncoders.put(BIKE, DefaultTurnCostEncoder.class.getName());
+        defaultTurnFlagEncoders.put(FOOT, NoTurnCostsEncoder.class.getName());
     }
+
     public static final int MAX_BITS = 32;
-    private ArrayList<AbstractFlagEncoder> encoders = new ArrayList<AbstractFlagEncoder>();
-    private int encoderCount = 0;
-    private int nextBit = 0;
+
+    //edge encoders
+    private List<AbstractFlagEncoder> encoders = new ArrayList<AbstractFlagEncoder>();
+    private int edgeEncoderCount = 0;
+    private int edgeEncoderNextBit = 0;
+
+    private List<TurnCostEncoder> turnCostEncoders = new ArrayList<TurnCostEncoder>();
+    private int turnEncoderCount = 0;
+    private int turnEncoderNextBit = 0;
 
     public EncodingManager()
     {
@@ -60,11 +75,52 @@ public class EncodingManager
      * <p/>
      * @param encoderList comma delimited list of encoders. The order does not matter.
      */
-    @SuppressWarnings("unchecked")
     public EncodingManager( String encoderList )
+    {
+        this(encoderList, "");
+    }
+
+    /**
+     * Instantiate manager with the given list of encoders. The manager knows the default encoders:
+     * CAR, FOOT and BIKE Custom encoders can be added by giving a full class name e.g.
+     * "CAR:com.graphhopper.myproject.MyCarEncoder"
+     * <p/>
+     * @param encoderList comma delimited list of encoders. The order does not matter.
+     * @param turnCostEncoderList comma delimited list of turn cost encoders. The order does not matter.
+     */
+    public EncodingManager( String encoderList, String turnCostEncoderList )
+    {
+
+        for (AbstractFlagEncoder flagEncoder : test(defaultEdgeFlagEncoders, encoderList, AbstractFlagEncoder.class))
+        {
+            registerEdgeFlagEncoder(flagEncoder);
+        }
+
+        for (TurnCostEncoder turnCostEncoder : test(defaultTurnFlagEncoders, turnCostEncoderList, TurnCostEncoder.class))
+        {
+            registerTurnCostFlagEncoder(turnCostEncoder);
+        }
+
+        /*
+         // comment this in to detect involuntary changes of the encoding
+         if( instance != null )
+         {
+         System.out.println( "WARNING: Overwriting Encoding Manager " + instance.toString() + " with new instance " + toString());
+         StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+         for( int i = 2; i < trace.length; i++ ) {
+         System.out.println( trace[i] );
+         }
+         }
+         */
+        // instance = this;
+    }
+
+    private <T> List<T> test( Map<String, String> defaultEncoders, String encoderList, Class<T> encoderClass )
     {
         String[] entries = encoderList.split(",");
         Arrays.sort(entries);
+
+        List<T> resultEncoders = new ArrayList<T>();
 
         for (String entry : entries)
         {
@@ -86,40 +142,43 @@ public class EncodingManager
 
             try
             {
-                Class cls = Class.forName(className);
-                register((AbstractFlagEncoder) cls.getDeclaredConstructor().newInstance());
+                @SuppressWarnings("unchecked")
+                Class<T> cls = (Class<T>) Class.forName(className);
+                resultEncoders.add((T) cls.getDeclaredConstructor().newInstance());
             } catch (Exception e)
             {
                 throw new IllegalArgumentException("Cannot instantiate class " + className, e);
             }
         }
-
-        /*
-         // comment this in to detect involuntary changes of the encoding
-         if( instance != null )
-         {
-         System.out.println( "WARNING: Overwriting Encoding Manager " + instance.toString() + " with new instance " + toString());
-         StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-         for( int i = 2; i < trace.length; i++ ) {
-         System.out.println( trace[i] );
-         }
-         }
-         */
-        // instance = this;
+        return resultEncoders;
     }
 
-    public void register( AbstractFlagEncoder encoder )
+    public void registerEdgeFlagEncoder( AbstractFlagEncoder encoder )
     {
         encoders.add(encoder);
 
-        int usedBits = encoder.defineBits(encoderCount, nextBit);
+        int usedBits = encoder.defineBits(edgeEncoderCount, edgeEncoderNextBit);
         if (usedBits >= MAX_BITS)
         {
             throw new IllegalArgumentException("Encoders are requesting more than 32 bits of flags");
         }
 
-        nextBit = usedBits;
-        encoderCount = encoders.size();
+        edgeEncoderNextBit = usedBits;
+        edgeEncoderCount = encoders.size();
+    }
+
+    public void registerTurnCostFlagEncoder( TurnCostEncoder encoder )
+    {
+        turnCostEncoders.add(encoder);
+
+        int usedBits = encoder.defineBits(turnEncoderCount, turnEncoderNextBit);
+        if (usedBits >= MAX_BITS)
+        {
+            throw new IllegalArgumentException("Encoders are requesting more than 32 bits of flags");
+        }
+
+        turnEncoderNextBit = usedBits;
+        turnEncoderCount = turnCostEncoders.size();
     }
 
     /**
@@ -135,9 +194,14 @@ public class EncodingManager
         return getEncoder(name, true);
     }
 
+    public TurnCostEncoder getTurnCostEncoder( String name )
+    {
+        return getTurnCostEncoder(name, true);
+    }
+
     private AbstractFlagEncoder getEncoder( String name, boolean throwExc )
     {
-        for (int i = 0; i < encoderCount; i++)
+        for (int i = 0; i < edgeEncoderCount; i++)
         {
             if (name.equalsIgnoreCase(encoders.get(i).toString()))
                 return encoders.get(i);
@@ -147,13 +211,25 @@ public class EncodingManager
         return null;
     }
 
+    private TurnCostEncoder getTurnCostEncoder( String name, boolean throwExc )
+    {
+        for (int i = 0; i < turnEncoderCount; i++)
+        {
+            if (name.equalsIgnoreCase(turnCostEncoders.get(i).toString()))
+                return turnCostEncoders.get(i);
+        }
+        if (throwExc)
+            throw new IllegalArgumentException("Turn Cost Encoder for " + name + " not found.");
+        return null;
+    }
+
     /**
      * Determine whether an osm way is a routable way for one of its encoders.
      */
     public int accept( OSMWay way )
     {
         int includeWay = 0;
-        for (int i = 0; i < encoderCount; i++)
+        for (int i = 0; i < edgeEncoderCount; i++)
         {
             includeWay |= encoders.get(i).isAllowed(way);
         }
@@ -170,7 +246,7 @@ public class EncodingManager
     public long handleWayTags( int includeWay, OSMWay way )
     {
         long flags = 0;
-        for (int i = 0; i < encoderCount; i++)
+        for (int i = 0; i < edgeEncoderCount; i++)
         {
             flags |= encoders.get(i).handleWayTags(includeWay, way);
         }
@@ -180,14 +256,14 @@ public class EncodingManager
 
     public int getVehicleCount()
     {
-        return encoderCount;
+        return edgeEncoderCount;
     }
 
     @Override
     public String toString()
     {
         StringBuilder str = new StringBuilder();
-        for (int i = 0; i < encoderCount; i++)
+        for (int i = 0; i < edgeEncoderCount; i++)
         {
             if (str.length() > 0)
             {
@@ -202,7 +278,7 @@ public class EncodingManager
     public String encoderList()
     {
         StringBuilder str = new StringBuilder();
-        for (int i = 0; i < encoderCount; i++)
+        for (int i = 0; i < edgeEncoderCount; i++)
         {
             if (str.length() > 0)
             {
@@ -237,7 +313,7 @@ public class EncodingManager
     public int flagsDefault( boolean forward, boolean backward )
     {
         int flags = 0;
-        for (int i = 0; i < encoderCount; i++)
+        for (int i = 0; i < edgeEncoderCount; i++)
         {
             flags |= encoders.get(i).flagsDefault(forward, backward);
         }
@@ -249,7 +325,7 @@ public class EncodingManager
      */
     public long swapDirection( long flags )
     {
-        for (int i = 0; i < encoderCount; i++)
+        for (int i = 0; i < edgeEncoderCount; i++)
         {
             flags = encoders.get(i).swapDirection(flags);
         }
@@ -291,7 +367,7 @@ public class EncodingManager
     public int analyzeNode( OSMNode node )
     {
         int flags = 0;
-        for (int i = 0; i < encoderCount; i++)
+        for (int i = 0; i < edgeEncoderCount; i++)
         {
             flags |= encoders.get(i).analyzeNodeTags(node);
         }
@@ -302,7 +378,7 @@ public class EncodingManager
     public String getWayInfo( OSMWay way )
     {
         String str = "";
-        for (int i = 0; i < encoderCount; i++)
+        for (int i = 0; i < edgeEncoderCount; i++)
         {
             String tmpWayInfo = encoders.get(i).getWayInfo(way);
             if (tmpWayInfo.isEmpty())

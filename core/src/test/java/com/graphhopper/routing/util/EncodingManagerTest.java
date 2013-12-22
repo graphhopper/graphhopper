@@ -43,7 +43,7 @@ public class EncodingManagerTest
         FootFlagEncoder foot2 = new FootFlagEncoder()
         {
         };
-        manager2.register(foot2);
+        manager2.registerEdgeFlagEncoder(foot2);
         assertNotEquals(foot, foot2);
         assertNotEquals(foot.hashCode(), foot2.hashCode());
 
@@ -51,7 +51,7 @@ public class EncodingManagerTest
         FootFlagEncoder foot3 = new FootFlagEncoder()
         {
         };
-        manager3.register(foot3);
+        manager3.registerEdgeFlagEncoder(foot3);
         assertEquals(foot3, foot2);
         assertEquals(foot3.hashCode(), foot2.hashCode());
 
@@ -71,13 +71,13 @@ public class EncodingManagerTest
         EncodingManager manager = new EncodingManager();
         for (int i = 0; i < 4; i++)
         {
-            manager.register(new FootFlagEncoder()
+            manager.registerEdgeFlagEncoder(new FootFlagEncoder()
             {
             });
         }
         try
         {
-            manager.register(new FootFlagEncoder()
+            manager.registerEdgeFlagEncoder(new FootFlagEncoder()
             {
             });
             assertTrue(false);
