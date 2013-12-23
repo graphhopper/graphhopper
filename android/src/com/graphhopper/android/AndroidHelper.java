@@ -29,7 +29,7 @@ public class AndroidHelper
             reader.close();
         }
     }
-    
+
     public static boolean isFastDownload( Context ctx )
     {
         ConnectivityManager mgrConn = (ConnectivityManager) ctx

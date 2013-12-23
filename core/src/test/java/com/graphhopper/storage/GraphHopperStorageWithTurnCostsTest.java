@@ -27,7 +27,6 @@ import org.junit.Test;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 
-
 /**
  *
  * @author Karl Hübner
@@ -37,17 +36,18 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
     private TurnCostStorage turnCostStorage;
 
     @Override
-    protected GraphStorage newGraph(Directory dir) {
+    protected GraphStorage newGraph( Directory dir )
+    {
         turnCostStorage = new TurnCostStorage();
-    	return new GraphHopperStorage(dir, encodingManager, turnCostStorage);
+        return new GraphHopperStorage(dir, encodingManager, turnCostStorage);
     }
-    
+
     @Override
     protected GraphStorage newRAMGraph()
     {
         return newGraph(new RAMDirectory());
     }
-    
+
     @Test
     public void testSave_and_fileFormat_withTurnCostEntries() throws IOException
     {
@@ -56,7 +56,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
         graph.setNode(1, 11, 20);
         graph.setNode(2, 12, 12);
 
-        EdgeIteratorState iter2 = graph.edge(0, 1, 100, true); 
+        EdgeIteratorState iter2 = graph.edge(0, 1, 100, true);
         iter2.setWayGeometry(Helper.createPointList(1.5, 1, 2, 3));
         EdgeIteratorState iter1 = graph.edge(0, 2, 200, true);
         iter1.setWayGeometry(Helper.createPointList(3.5, 4.5, 5, 6));
@@ -67,7 +67,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
         turnCostStorage.setTurnCosts(0, iter1.getEdge(), iter2.getEdge(), 1337);
         turnCostStorage.setTurnCosts(0, iter2.getEdge(), iter1.getEdge(), 666);
         turnCostStorage.setTurnCosts(1, iter1.getEdge(), iter2.getEdge(), 815);
-        
+
         iter1.setName("named street1");
         iter2.setName("named street2");
 
@@ -83,12 +83,12 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
 
         assertEquals("named street1", graph.getEdgeProps(iter1.getEdge(), iter1.getAdjNode()).getName());
         assertEquals("named street2", graph.getEdgeProps(iter2.getEdge(), iter2.getAdjNode()).getName());
-        
+
         assertEquals(1337, turnCostStorage.getTurnCosts(0, iter1.getEdge(), iter2.getEdge()));
         assertEquals(666, turnCostStorage.getTurnCosts(0, iter2.getEdge(), iter1.getEdge()));
         assertEquals(815, turnCostStorage.getTurnCosts(1, iter1.getEdge(), iter2.getEdge()));
         assertEquals(0, turnCostStorage.getTurnCosts(3, iter1.getEdge(), iter2.getEdge()));
-        
+
         graph.edge(3, 4, 123, true).setWayGeometry(Helper.createPointList(4.4, 5.5, 6.6, 7.7));
         checkGraph(graph);
         graph.close();

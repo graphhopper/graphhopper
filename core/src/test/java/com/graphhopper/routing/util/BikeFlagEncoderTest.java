@@ -315,7 +315,7 @@ public class BikeFlagEncoderTest
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(18, encoder.getSpeed(flags));
         assertEquals(1, encoder.getWayTypeCode(flags));
-        assertEquals(1, encoder.getPavementCode(flags));                
+        assertEquals(1, encoder.getPavementCode(flags));
 
         // relation code is VERY_NICE
         relMap.put("network", "rcn");
@@ -341,24 +341,24 @@ public class BikeFlagEncoderTest
         };
         // call necessary register
         new EncodingManager().registerEdgeFlagEncoder(fakeEncoder);
-        
+
         flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
         assertEquals(30, fakeEncoder.getSpeed(flags));
 
         fakeSpeed.set(-2);
         flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
         assertEquals(0, fakeEncoder.getSpeed(flags));
-        
+
         // PREFER relation, but tertiary road
         // => no pushing section but road wayTypeCode and faster
         wayMap.clear();
         wayMap.put("highway", "tertiary");
-        
+
         relMap.put("route", "bicycle");
-        relMap.put("network", "lcn");        
+        relMap.put("network", "lcn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(20, encoder.getSpeed(flags));
         assertEquals(0, encoder.getWayTypeCode(flags));
-    }   
+    }
 }

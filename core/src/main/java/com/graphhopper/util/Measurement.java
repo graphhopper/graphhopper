@@ -192,8 +192,8 @@ public class Measurement
         final AtomicLong distSum = new AtomicLong(0);
         final AtomicLong airDistSum = new AtomicLong(0);
         final AtomicInteger failedCount = new AtomicInteger(0);
-        final DistanceCalc distCalc  = new DistanceCalcEarth();
-        
+        final DistanceCalc distCalc = new DistanceCalcEarth();
+
 //        final AtomicLong extractTimeSum = new AtomicLong(0);
 //        final AtomicLong calcPointsTimeSum = new AtomicLong(0);
 //        final AtomicLong calcDistTimeSum = new AtomicLong(0);
@@ -225,8 +225,8 @@ public class Measurement
 
                     distSum.addAndGet(dist);
 
-                    airDistSum.addAndGet((long)distCalc.calcDist(fromLat, fromLon, toLat, toLon));
-                    
+                    airDistSum.addAndGet((long) distCalc.calcDist(fromLat, fromLon, toLat, toLon));
+
                     if (dist > maxDistance.get())
                         maxDistance.set(dist);
 

@@ -68,7 +68,7 @@ public class GuiceServletConfig extends GuiceServletContextListener
 
                 serve("/api/i18n*").with(I18NServlet.class);
                 bind(I18NServlet.class).in(Singleton.class);
-                
+
                 serve("/api*").with(GraphHopperServlet.class);
                 bind(GraphHopperServlet.class).in(Singleton.class);
             }

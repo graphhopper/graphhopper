@@ -77,7 +77,7 @@ public interface EdgeIteratorState
     long getFlags();
 
     EdgeIteratorState setFlags( long flags );
-    
+
     /**
      * @return the additional field value for this edge
      */

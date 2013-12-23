@@ -83,7 +83,7 @@ public class GraphHopper implements GraphHopperAPI
     private boolean fullyLoaded = false;
 
     public GraphHopper()
-    {       
+    {
     }
 
     /**

@@ -28,17 +28,15 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class GraphHopperServletIT extends BaseServletTest
-{
+public class GraphHopperServletIT extends BaseServletTest {
+
     @Before
-    public void setUp()
-    {
+    public void setUp() {
         setUpJetty();
     }
 
     @Test
-    public void testBasicQuery() throws Exception
-    {
+    public void testBasicQuery() throws Exception {
         JSONObject json = query("point=42.554851,1.536198&point=42.510071,1.548128");
         JSONObject infoJson = json.getJSONObject("info");
         assertFalse(infoJson.has("errors"));
@@ -48,8 +46,7 @@ public class GraphHopperServletIT extends BaseServletTest
     }
 
     @Test
-    public void testGraphHopperWeb() throws Exception
-    {
+    public void testGraphHopperWeb() throws Exception {
         GraphHopperAPI hopper = new GraphHopperWeb();
         assertTrue(hopper.load(getTestAPIUrl()));
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128));

@@ -72,7 +72,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
             assertTrue(true);
         } catch (Exception ex)
         {
-            assertFalse("AssertionError should be raised", true);
+            assertFalse("AssertionError should be raised, but was " + ex.toString(), true);
         }
         gs.close();
     }

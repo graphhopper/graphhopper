@@ -44,7 +44,7 @@ public interface EdgeIterator extends EdgeIteratorState
      * To be called to go to the next edge state.
      */
     boolean next();
-    
+
     /**
      * integer value to indicate if an edge is valid or not which then would be initialized with
      * this value

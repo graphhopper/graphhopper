@@ -50,7 +50,7 @@ public class EncodedValue
         this(name, shift, bits, factor, defaultValue, maxValue, false, true);
     }
 
-    public EncodedValue( String name, int shift, int bits, int factor, int defaultValue, int maxValue, 
+    public EncodedValue( String name, int shift, int bits, int factor, int defaultValue, int maxValue,
             boolean allowNegative, boolean allowZero )
     {
         this.name = name;

@@ -4,10 +4,10 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.TurnCostIterator;
 
 /**
- * Holds turn cost tables for each node. The additional field of a node will be used
- * to point towards the first entry within a node cost table to identify turn restrictions, 
- * or later, turn costs.
- * 
+ * Holds turn cost tables for each node. The additional field of a node will be used to point
+ * towards the first entry within a node cost table to identify turn restrictions, or later, turn
+ * costs.
+ * <p>
  * @author karl.huebner
  */
 public class TurnCostStorage implements ExtendedStorage

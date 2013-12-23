@@ -65,7 +65,8 @@ public class QueryResult
     }
 
     /**
-     * @return the closest matching node. -1 if nothing found, this should be avoided via a call of 'isValid'
+     * @return the closest matching node. -1 if nothing found, this should be avoided via a call of
+     * 'isValid'
      */
     public int getClosestNode()
     {

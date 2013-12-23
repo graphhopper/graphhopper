@@ -1,32 +1,29 @@
 package com.graphhopper.storage;
 
 /**
- * You need custom storages, like turn cost tables, or osmid tables for your
- * graph? Implement this interface now and put it in any graph storage you want.
- * It's that easy!
+ * You need custom storages, like turn cost tables, or osmid tables for your graph? Implement this
+ * interface now and put it in any graph storage you want. It's that easy!
  */
 public interface ExtendedStorage
 {
 
     /**
-     * @return true, if and only if, if an additional field at the graphs node
-     *         storage is required
+     * @return true, if and only if, if an additional field at the graphs node storage is required
      */
     boolean isRequireNodeField();
 
     /**
-     * @return true, if and only if, if an additional field at the graphs edge
-     *         storage is required
+     * @return true, if and only if, if an additional field at the graphs edge storage is required
      */
     boolean isRequireEdgeField();
-    
+
     /**
-     * @return the default field value which will be set for default when creating nodes 
+     * @return the default field value which will be set for default when creating nodes
      */
     int getDefaultNodeFieldValue();
-    
+
     /**
-     * @return the default field value which will be set for default when creating edges 
+     * @return the default field value which will be set for default when creating edges
      */
     int getDefaultEdgeFieldValue();
 
@@ -71,8 +68,8 @@ public interface ExtendedStorage
     ExtendedStorage copyTo( ExtendedStorage extStorage );
 
     /**
-     * default implementation defines no additional fields or any logic. there's like nothing
-     * , like the default behavior.
+     * default implementation defines no additional fields or any logic. there's like nothing , like
+     * the default behavior.
      */
     public class NoExtendedStorage implements ExtendedStorage
     {
@@ -100,7 +97,7 @@ public interface ExtendedStorage
         {
             return 0;
         }
-        
+
         @Override
         public void init( GraphStorage grap )
         {

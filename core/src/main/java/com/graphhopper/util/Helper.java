@@ -231,7 +231,7 @@ public class Helper
         {
             throw new RuntimeException("Couldn't close resource", ex);
         }
-    }    
+    }
 
     public static boolean isEmpty( String str )
     {

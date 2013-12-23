@@ -39,7 +39,7 @@ public abstract class AbstractDirectoryTester
     {
         if (da != null)
             da.close();
-        Helper.removeDir(new File(location));        
+        Helper.removeDir(new File(location));
     }
 
     @Before

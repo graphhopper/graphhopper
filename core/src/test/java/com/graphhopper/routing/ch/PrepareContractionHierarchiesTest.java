@@ -77,7 +77,7 @@ public class PrepareContractionHierarchiesTest
         algo.setEdgeFilter(new PrepareContractionHierarchies.IgnoreNodeFilter(g).setAvoidNode(3));
         int nodeEntry = algo.setLimitWeight(100).findEndNode(4, 2);
         assertTrue(algo.getWeight(nodeEntry) > normalDist);
-        
+
         algo.clear();
         nodeEntry = algo.setLimitVisitedNodes(1).findEndNode(4, 2);
         assertEquals(-1, nodeEntry);
@@ -93,7 +93,7 @@ public class PrepareContractionHierarchiesTest
         algo.setEdgeFilter(new PrepareContractionHierarchies.IgnoreNodeFilter(g).setAvoidNode(3));
         int nodeEntry = algo.setLimitWeight(10).findEndNode(4, 2);
         assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
-        
+
         nodeEntry = algo.setLimitWeight(10).findEndNode(4, 1);
         assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
     }

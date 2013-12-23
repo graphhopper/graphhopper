@@ -54,15 +54,18 @@ public interface Graph
 
     /**
      * @return the additional value at the specified node index
-     * @throws AssertionError if, and only if, the extendedStorage does not require an additional node field 
+     * @throws AssertionError if, and only if, the extendedStorage does not require an additional
+     * node field
      */
-	int getAdditionalNodeField(int nodeId);
+    int getAdditionalNodeField( int nodeId );
 
-	/**
-	 * Sets the additional value at the specified node index
-	 * @throws AssertionError if, and only if, the extendedStorage does not require an additional node field
-	 */
-	void setAdditionalNodeField(int nodeId, int additionalValue);
+    /**
+     * Sets the additional value at the specified node index
+     * <p>
+     * @throws AssertionError if, and only if, the extendedStorage does not require an additional
+     * node field
+     */
+    void setAdditionalNodeField( int nodeId, int additionalValue );
 
     /**
      * Returns the implicit bounds of this graph calculated from the lat,lon input of setNode

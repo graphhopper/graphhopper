@@ -1,9 +1,9 @@
 package com.graphhopper.routing.util;
 
 /**
- * Very simple turn cost encoder, which stores the turn restriction in the first bit,
- * and the turn costs (in seconds) in x additional bits (0..2^x-1)
- * 
+ * Very simple turn cost encoder, which stores the turn restriction in the first bit, and the turn
+ * costs (in seconds) in x additional bits (0..2^x-1)
+ * <p>
  * @author karl.huebner
  */
 public abstract class AbstractTurnCostEncoder implements TurnCostEncoder

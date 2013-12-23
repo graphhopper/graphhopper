@@ -157,7 +157,7 @@ public class MainActivity extends MapActivity
 
         TextView welcome = (TextView) findViewById(R.id.welcome);
         welcome.setText("Welcome to GraphHopper " + Constants.VERSION + "!");
-        welcome.setPadding(6, 3, 3, 3); 
+        welcome.setPadding(6, 3, 3, 3);
         localSpinner = (Spinner) findViewById(R.id.locale_area_spinner);
         localButton = (Button) findViewById(R.id.locale_button);
         remoteSpinner = (Spinner) findViewById(R.id.remote_area_spinner);
@@ -447,7 +447,10 @@ public class MainActivity extends MapActivity
         paintStroke.setColor(Color.BLUE);
         paintStroke.setAlpha(128);
         paintStroke.setStrokeWidth(8);
-        paintStroke.setPathEffect(new DashPathEffect(new float[] { 25, 15 }, 0));
+        paintStroke.setPathEffect(new DashPathEffect(new float[]
+        {
+            25, 15
+        }, 0));
 
         return new Polyline(polygonalChain, paintStroke);
     }

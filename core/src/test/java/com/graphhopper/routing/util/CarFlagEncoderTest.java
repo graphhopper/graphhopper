@@ -111,21 +111,21 @@ public class CarFlagEncoderTest
         map.put("surface", "cobblestone");
         allowed = encoder.acceptWay(way);
         encoded = encoder.handleWayTags(way, allowed, 0);
-        assertEquals(30, encoder.getSpeed(encoded)); 
-        
+        assertEquals(30, encoder.getSpeed(encoded));
+
         map.clear();
         map.put("highway", "track");
         allowed = encoder.acceptWay(way);
         encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(15, encoder.getSpeed(encoded));
-        
+
         map.clear();
         map.put("highway", "track");
         map.put("tracktype", "grade1");
         allowed = encoder.acceptWay(way);
         encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(20, encoder.getSpeed(encoded));
-        
+
         map.clear();
         map.put("highway", "track");
         map.put("tracktype", "grade5");

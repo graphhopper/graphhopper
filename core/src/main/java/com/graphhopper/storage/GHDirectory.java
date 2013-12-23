@@ -154,7 +154,7 @@ public class GHDirectory implements Directory
     {
         DataAccess da = map.remove(name);
         if (da == null)
-            throw new IllegalStateException("Couldn't remove dataAccess object:" + name);        
+            throw new IllegalStateException("Couldn't remove dataAccess object:" + name);
         da.close();
         Helper.removeDir(new File(location + name));
     }

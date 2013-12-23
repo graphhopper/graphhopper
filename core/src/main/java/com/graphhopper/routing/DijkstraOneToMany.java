@@ -70,7 +70,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         limitWeight = weight;
         return this;
     }
-    
+
     public DijkstraOneToMany setLimitVisitedNodes( int nodes )
     {
         this.limitVisitedNodes = nodes;
@@ -151,7 +151,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             return currNode;
 
         while (true)
-        {            
+        {
             visitedNodes++;
             EdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
             while (iter.next())

@@ -60,7 +60,7 @@ public abstract class AbstractGraphStorageTester
     }
 
     abstract GraphStorage createGraph( String location, int size );
-    
+
     protected GraphStorage newRAMGraph()
     {
         return new GraphHopperStorage(new RAMDirectory(), encodingManager);

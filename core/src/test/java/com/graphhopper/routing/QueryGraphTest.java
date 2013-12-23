@@ -141,7 +141,7 @@ public class QueryGraphTest
         assertEquals(3, res1.getClosestNode());
         assertEquals(3, getPoints(queryGraph, 0, 3).getSize());
         PointList pl = getPoints(queryGraph, 3, 1);
-        assertEquals(2, pl.getSize());        
+        assertEquals(2, pl.getSize());
         assertEquals(new GHPoint(1.5, 1.5), pl.toGHPoint(0));
         assertEquals(new GHPoint(1, 2.5), pl.toGHPoint(1));
 

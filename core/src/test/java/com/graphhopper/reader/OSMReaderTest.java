@@ -453,20 +453,20 @@ public class OSMReaderTest
         OSMRelation osmRel = new OSMRelation(1, new HashMap<String, String>());
         osmRel.getMembers().add(new OSMRelation.Member(OSMRelation.WAY, 1, ""));
         osmRel.getMembers().add(new OSMRelation.Member(OSMRelation.WAY, 2, ""));
-        
+
         osmRel.setTag("route", "bicycle");
-        osmRel.setTag("network", "lcn");        
+        osmRel.setTag("network", "lcn");
         reader.prepareWaysWithRelationInfo(osmRel);
-        
+
         long flags = reader.getRelFlagsMap().get(1);
         assertTrue(flags != 0);
-        
+
         // do NOT overwrite with UNCHANGED
         osmRel.setTag("network", "mtb");
         reader.prepareWaysWithRelationInfo(osmRel);
         long flags2 = reader.getRelFlagsMap().get(1);
         assertEquals(flags, flags2);
-        
+
         // overwrite with outstanding
         osmRel.setTag("network", "ncn");
         reader.prepareWaysWithRelationInfo(osmRel);
@@ -515,7 +515,8 @@ public class OSMReaderTest
             }
         };
         EncodingManager manager = new EncodingManager()
-        {   
+        {
+            
             {
                 super.registerEdgeFlagEncoder(encoder);
             }

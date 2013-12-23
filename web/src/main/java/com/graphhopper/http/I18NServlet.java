@@ -58,8 +58,8 @@ public class I18NServlet extends GHBaseServlet
             Translation tr = map.get(locale);
             JSONObject json = new JSONObject();
             if (tr != null && !Locale.US.equals(tr.getLocale()))
-                json.put("default", tr.asMap());                
-            
+                json.put("default", tr.asMap());
+
             json.put("locale", locale.toString());
             json.put("en", map.get("en").asMap());
             writeJson(req, res, json);

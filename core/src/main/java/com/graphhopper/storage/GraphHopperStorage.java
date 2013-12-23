@@ -286,10 +286,11 @@ public class GraphHopperStorage implements GraphStorage
         {
             bounds.minLon = lon;
         }
-        
+
         //set the default value for the additional field of this node
-        if(extStorage.isRequireNodeField()){
-            nodes.setInt(tmp + N_ADDITIONAL, extStorage.getDefaultNodeFieldValue());    
+        if (extStorage.isRequireNodeField())
+        {
+            nodes.setInt(tmp + N_ADDITIONAL, extStorage.getDefaultNodeFieldValue());
         }
     }
 
@@ -337,11 +338,12 @@ public class GraphHopperStorage implements GraphStorage
         {
             nodes.setInt(pointer, EdgeIterator.NO_EDGE);
         }
-        if(extStorage.isRequireNodeField()){
+        if (extStorage.isRequireNodeField())
+        {
             for (long pointer = oldCapacity + N_ADDITIONAL; pointer < newCapacity; pointer += nodeEntryBytes)
             {
                 nodes.setInt(pointer, extStorage.getDefaultNodeFieldValue());
-            }    
+            }
         }
     }
 
@@ -369,8 +371,9 @@ public class GraphHopperStorage implements GraphStorage
         EdgeIterable iter = new EdgeIterable(EdgeFilter.ALL_EDGES);
         iter.setBaseNode(a);
         iter.setEdgeId(edge);
-        if(extStorage.isRequireEdgeField()){
-            iter.setAdditionalField(extStorage.getDefaultEdgeFieldValue());   
+        if (extStorage.isRequireEdgeField())
+        {
+            iter.setAdditionalField(extStorage.getDefaultEdgeFieldValue());
         }
         iter.next();
         return iter;

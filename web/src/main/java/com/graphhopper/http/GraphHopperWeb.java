@@ -55,7 +55,7 @@ public class GraphHopperWeb implements GraphHopperAPI
     public void setDownloader( Downloader downloader )
     {
         this.downloader = downloader;
-    }        
+    }
 
     /**
      * Example url: http://localhost:8989/api or http://217.92.216.224:8080/api

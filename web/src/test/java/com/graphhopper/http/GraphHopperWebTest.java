@@ -30,16 +30,13 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class GraphHopperWebTest
-{
+public class GraphHopperWebTest {
+
     @Test
-    public void testReadUnencoded() throws Exception
-    {
-        Downloader downloader = new Downloader("GraphHopper Test")
-        {
+    public void testReadUnencoded() throws Exception {
+        Downloader downloader = new Downloader("GraphHopper Test") {
             @Override
-            public InputStream fetch( String url ) throws IOException
-            {
+            public InputStream fetch(String url) throws IOException {
                 return getClass().getResourceAsStream("test.json");
             }
         };
@@ -51,13 +48,10 @@ public class GraphHopperWebTest
     }
 
     @Test
-    public void testReadEncoded() throws Exception
-    {
-        Downloader downloader = new Downloader("GraphHopper Test")
-        {
+    public void testReadEncoded() throws Exception {
+        Downloader downloader = new Downloader("GraphHopper Test") {
             @Override
-            public InputStream fetch( String url ) throws IOException
-            {
+            public InputStream fetch(String url) throws IOException {
                 return getClass().getResourceAsStream("test_encoded.json");
             }
         };

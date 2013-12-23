@@ -57,7 +57,7 @@ public class DefaultModule extends AbstractModule
                     setTimeout((int) timeout).
                     setBounds(hopper.getGraph().getBounds()));
             bind(GHThreadPool.class).toInstance(new GHThreadPool(1000, 50).startService());
-            
+
             bind(TranslationMap.class).toInstance(new TranslationMap().doImport());
         } catch (Exception ex)
         {

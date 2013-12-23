@@ -165,17 +165,17 @@ public class LocationIndexTreeSC extends LocationIndexTree
                 return tmpIter.setName(name);
             }
 
-			@Override
-			public int getAdditionalField()
-			{
-				return tmpIter.getAdditionalField();
-			}
+            @Override
+            public int getAdditionalField()
+            {
+                return tmpIter.getAdditionalField();
+            }
 
-			@Override
-			public EdgeIteratorState setAdditionalField(int value) 
-			{
-				return tmpIter.setAdditionalField(value);
-			}
+            @Override
+            public EdgeIteratorState setAdditionalField( int value )
+            {
+                return tmpIter.setAdditionalField(value);
+            }
         };
     }
 

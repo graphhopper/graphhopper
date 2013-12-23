@@ -27,16 +27,13 @@ import java.util.zip.InflaterInputStream;
 /**
  * @author Peter Karich
  */
-public class Downloader
-{
-    public static void main( String[] args ) throws IOException
-    {
+public class Downloader {
+
+    public static void main(String[] args) throws IOException {
         new Downloader("GraphHopper Downloader").downloadAndUnzip("http://graphhopper.com/public/maps/0.1/europe_germany_berlin.ghz", "somefolder",
-                new ProgressListener()
-                {
+                new ProgressListener() {
                     @Override
-                    public void update( long val )
-                    {
+                    public void update(long val) {
                         System.out.println("progress:" + val);
                     }
                 });
@@ -47,25 +44,21 @@ public class Downloader
     private int timeout = 4000;
     private int size = 1024 * 8;
 
-    public Downloader( String userAgent )
-    {
+    public Downloader(String userAgent) {
         this.userAgent = userAgent;
     }
 
-    public Downloader setTimeout( int timeout )
-    {
+    public Downloader setTimeout(int timeout) {
         this.timeout = timeout;
         return this;
     }
 
-    public Downloader setReferrer( String referrer )
-    {
+    public Downloader setReferrer(String referrer) {
         this.referrer = referrer;
         return this;
     }
 
-    public InputStream fetch( HttpURLConnection conn ) throws IOException
-    {
+    public InputStream fetch(HttpURLConnection conn) throws IOException {
         // create connection but before reading get the correct inputstream based on the compression
         conn.connect();
         String encoding = conn.getContentEncoding();
@@ -80,13 +73,11 @@ public class Downloader
         return is;
     }
 
-    public InputStream fetch( String url ) throws IOException
-    {
+    public InputStream fetch(String url) throws IOException {
         return fetch((HttpURLConnection) createConnection(url));
     }
 
-    public HttpURLConnection createConnection( String urlStr ) throws IOException
-    {
+    public HttpURLConnection createConnection(String urlStr) throws IOException {
         URL url = new URL(urlStr);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setDoOutput(true);
@@ -101,43 +92,35 @@ public class Downloader
         return conn;
     }
 
-    public void downloadAndUnzip( String url, String to, final ProgressListener progressListener ) throws IOException
-    {
+    public void downloadAndUnzip(String url, String to, final ProgressListener progressListener) throws IOException {
         HttpURLConnection conn = createConnection(url);
         final int length = conn.getContentLength();
         InputStream iStream = fetch(conn);
 
-        new Unzipper().setSize(size).unzip(iStream, new File(to), new ProgressListener()
-        {
+        new Unzipper().setSize(size).unzip(iStream, new File(to), new ProgressListener() {
             @Override
-            public void update( long sumBytes )
-            {
+            public void update(long sumBytes) {
                 progressListener.update((int) (100 * sumBytes / length));
             }
         });
     }
 
-    public String downloadAsString( String url ) throws IOException
-    {
+    public String downloadAsString(String url) throws IOException {
         return readString(fetch(url));
     }
 
-    private String readString( InputStream inputStream ) throws IOException
-    {
+    private String readString(InputStream inputStream) throws IOException {
         String encoding = "UTF-8";
         InputStream in = new BufferedInputStream(inputStream, size);
-        try
-        {
+        try {
             byte[] buffer = new byte[size];
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             int numRead;
-            while ((numRead = in.read(buffer)) != -1)
-            {
+            while ((numRead = in.read(buffer)) != -1) {
                 output.write(buffer, 0, numRead);
             }
             return output.toString(encoding);
-        } finally
-        {
+        } finally {
             in.close();
         }
     }

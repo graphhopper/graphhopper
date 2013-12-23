@@ -85,7 +85,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         // potentialBarriers.add("block");
         absoluteBarriers.add("kissing_gate");
         absoluteBarriers.add("stile");
-        absoluteBarriers.add("turnstile");        
+        absoluteBarriers.add("turnstile");
         // very dangerous
         // acceptedRailways.remove("tram");
     }
@@ -284,7 +284,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         // absolute barriers always block
         if (node.hasTag("barrier", absoluteBarriers))
             return directionBitMask;
-        
+
         return super.analyzeNodeTags(node);
     }
 

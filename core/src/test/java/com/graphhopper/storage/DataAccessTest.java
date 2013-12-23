@@ -259,7 +259,7 @@ public abstract class DataAccessTest
         {
         }
         da.close();
-        
+
         da = createDataAccess(name);
         da.create(128);
         da.setInt(31 * 4, 200);

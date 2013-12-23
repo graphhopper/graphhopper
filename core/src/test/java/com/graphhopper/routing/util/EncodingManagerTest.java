@@ -126,8 +126,7 @@ public class EncodingManagerTest
         assertEquals(18, defaultBike.getSpeed(flags));
         assertEquals(4, lessRelationCodes.getSpeed(flags));
     }
-    
-    
+
     public void testFullBitMask()
     {
         BitUtil bitUtil = BitUtil.LITTLE;
@@ -154,12 +153,12 @@ public class EncodingManagerTest
             {
                 shift = super.defineNodeBits(index, shift);
                 nodeEncoder = new EncodedValue("nodeEnc", shift, 2, 1, 0, 3);
-                return shift+2;
+                return shift + 2;
             }
 
             @Override
             public long analyzeNodeTags( OSMNode node )
-            {            
+            {
                 String tmp = node.getTags().get("test");
                 // return negative value to indicate that this is not a barrier
                 if (tmp == null)

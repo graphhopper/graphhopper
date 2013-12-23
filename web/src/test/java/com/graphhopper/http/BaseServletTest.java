@@ -76,9 +76,9 @@ public class BaseServletTest
         // jetty 7:
         // app.addFilter(GuiceFilter.class, "/*", 0);
         app.setConfigurationClasses(new String[]
-                {
-                    WebXmlConfiguration.class.getName()
-                });
+        {
+            WebXmlConfiguration.class.getName()
+        });
 
         app.addEventListener(new GuiceServletConfig()
         {
