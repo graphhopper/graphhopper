@@ -1,3 +1,14 @@
+// IE fix
+if (!window.console) {
+    var console = {
+        log: function() {},
+        warn: function() {},
+        error: function() {},
+        time: function() {},
+        timeEnd: function() {}
+    };
+}
+
 GHRequest = function(host) {
     this.minPathPrecision = 1;
     this.host = host;
