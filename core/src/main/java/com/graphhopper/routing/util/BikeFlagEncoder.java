@@ -313,8 +313,12 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         if (!Helper.isEmpty(highway))
         {
             Integer hwInt = HIGHWAY_SPEED.get(highway);
-            if (hwInt != null)
-                return hwInt;
+            if (hwInt != null) {
+                if (way.getTag("service") == null)
+                   return hwInt;
+                else
+                   return HIGHWAY_SPEED.get("living_street");
+            }
         }
         return 10;
     }

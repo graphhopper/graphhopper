@@ -60,7 +60,13 @@ public class BikeFlagEncoderTest
         way.setTag("highway", "steps");
         assertEquals(2, encoder.getSpeed(way));
 
-        //Test speed for allowed pushing section types
+        way.setTag("highway", "service");
+        assertEquals(20, encoder.getSpeed(way));
+        way.setTag("service", "parking_aisle");
+        assertEquals(15, encoder.getSpeed(way));
+        way.clearTags();
+
+        // test speed for allowed pushing section types
         way.setTag("highway", "track");
         way.setTag("bicycle", "yes");
         assertEquals(20, encoder.getSpeed(way));
