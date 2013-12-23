@@ -63,9 +63,7 @@ public class EncodedValue
     public long setValue( long flags, long value )
     {
         if (value > maxValue)
-        {
-            throw new IllegalArgumentException(name + " value too large for encoding: " + value);
-        }
+            throw new IllegalArgumentException(name + " value too large for encoding: " + value);        
 
         // scale down value
         value /= factor;

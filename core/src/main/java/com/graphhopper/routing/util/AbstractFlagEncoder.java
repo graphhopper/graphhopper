@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.Helper;
 
@@ -39,6 +40,9 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractFlagEncoder implements FlagEncoder
 {
     private final static Logger logger = LoggerFactory.getLogger(AbstractFlagEncoder.class);
+    private long nodeBitMask;
+    private long wayBitMask;
+    private long relBitMask;
     protected long forwardBit = 0;
     protected long backwardBit = 0;
     protected long directionBitMask = 0;
@@ -74,9 +78,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     static int parseSpeed( String str )
     {
         if (Helper.isEmpty(str))
-        {
             return -1;
-        }
 
         try
         {
@@ -119,13 +121,23 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     }
 
     /**
-     * Define 2 reserved bits for routing and internal bits for parsing.
+     * Defines the bits for the node flags, which are currently used for barriers only.
+     * <p>
+     * @return incremented shift value pointing behind the last used bit
+     */
+    public int defineNodeBits( int index, int shift )
+    {
+        return shift;
+    }
+
+    /**
+     * Defines bits used for edge flags used for access, speed etc.
      * <p/>
      * @param index
      * @param shift bit offset for the first bit used by this encoder
      * @return incremented shift value pointing behind the last used bit
      */
-    public int defineBits( int index, int shift )
+    public int defineWayBits( int index, int shift )
     {
         // define the first 2 bits in flags for routing
         forwardBit = 1 << shift;
@@ -141,6 +153,22 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     }
 
     /**
+     * Defines the bits which are used for relation flags.
+     * <p>
+     * @return incremented shift value pointing behind the last used bit
+     */
+    public int defineRelationBits( int index, int shift )
+    {
+        return shift;
+    }
+
+    /**
+     * Analyze the properties of a relation and create the routing flags for the second read step
+     * <p/>
+     */
+    public abstract long handleRelationTags( OSMRelation relation, long oldRelationFlags );
+
+    /**
      * Decide whether a way is routable for a given mode of travel
      * <p/>
      * @param way
@@ -153,7 +181,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
      * <p/>
      * @param allowed
      */
-    public abstract long handleWayTags( long allowed, OSMWay way );
+    public abstract long handleWayTags( OSMWay way, long allowed, long relationFlags );
 
     /**
      * Parse tags on nodes, looking for barriers.
@@ -186,6 +214,18 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     public boolean canBeOverwritten( long flags1, long flags2 )
     {
         return isBoth(flags2) || (flags1 & directionBitMask) == (flags2 & directionBitMask);
+    }
+
+    @Override
+    public int getPavementCode( long flags )
+    {
+        return -1;
+    }
+
+    @Override
+    public int getWayTypeCode( long flags )
+    {
+        return -1;
     }
 
     public long swapDirection( long flags )
@@ -340,5 +380,28 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
         {
             return speedEncoder.setValue(0, shortTripsSpeed);
         }
+    }
+
+    void setWayBitMask( int usedBits, int shift )
+    {
+        wayBitMask = (1L << usedBits) - 1;
+        wayBitMask <<= shift;
+    }
+
+    long getWayBitMask()
+    {
+        return wayBitMask;
+    }
+
+    void setRelBitMask( int usedBits, int shift )
+    {
+        relBitMask = (1L << usedBits) - 1;
+        relBitMask <<= shift;
+    }
+
+    void setNodeBitMask( int usedBits, int shift )
+    {
+        nodeBitMask = (1L << usedBits) - 1;
+        nodeBitMask <<= shift;
     }
 }

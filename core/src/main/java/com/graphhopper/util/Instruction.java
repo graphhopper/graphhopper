@@ -1,12 +1,27 @@
+/*
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
+ * 
+ *  GraphHopper licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
+ * 
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.graphhopper.util;
 
-import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TLongArrayList;
 import java.util.List;
 
 public class Instruction
 {
-    private static DistanceCalc distanceCalc = new DistanceCalcEarth();
+    private static final DistanceCalc distanceCalc = new DistanceCalcEarth();
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
     public static final int TURN_SLIGHT_LEFT = -1;
@@ -20,13 +35,16 @@ public class Instruction
     private final double distance;
     private final long millis;
     private final PointList points;
+    private int pavementType;
+    private int waytype;
 
     /**
      * The points, distances and times have exactly the same count. The last point of this
      * instruction is not duplicated here and should be in the next one. The first distance and time
      * entries are measured between the first point and the second one etc.
      */
-    public Instruction( int indication, String name, double distance, long millis, PointList pl )
+    public Instruction( int indication, String name, int waytype, int pavementType,
+            double distance, long millis, PointList pl )
     {
         this.indication = indication;
         this.name = name;
@@ -35,6 +53,18 @@ public class Instruction
             throw new IllegalStateException("distance of Instruction cannot be empty! " + toString());
         this.millis = millis;
         this.points = pl;
+        this.waytype = waytype;
+        this.pavementType = pavementType;
+    }
+
+    public int getPavement()
+    {
+        return pavementType;
+    }
+
+    public int getWayType()
+    {
+        return waytype;
     }
 
     public int getIndication()
@@ -105,7 +135,8 @@ public class Instruction
         {
             double lat = points.getLatitude(i);
             double lon = points.getLongitude(i);
-            if (!Double.isNaN(prevLat)) {
+            if (!Double.isNaN(prevLat))
+            {
                 // Here we assume that the same speed is used until the next instruction.
                 // If we would calculate all the distances (and times) up front there
                 // would be a problem where the air-line distance is not the distance returned from the edge

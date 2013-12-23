@@ -164,7 +164,7 @@ public class InstructionList implements Iterable<Instruction>
         for (Instruction instruction : instructions)
         {
             String str;
-            String n = instruction.getName();
+            String n = getWayName(instruction.getName(), instruction.getPavement(), instruction.getWayType(), tr);
             int indi = instruction.getIndication();
             if (indi == Instruction.FINISH)
             {
@@ -239,7 +239,7 @@ public class InstructionList implements Iterable<Instruction>
 
         List<GPXEntry> gpxList = new ArrayList<GPXEntry>();
         long timeOffset = 0;
-        double prevLat = Double.NaN, prevLon = Double.NaN; 
+        double prevLat = Double.NaN, prevLon = Double.NaN;
         double prevFactor = 0;
         for (Instruction i : this)
         {
@@ -293,4 +293,42 @@ public class InstructionList implements Iterable<Instruction>
     {
         return str.substring(0, str.length() - 2) + ":" + str.substring(str.length() - 2);
     }
+
+    public static String getWayName( String name, int pavetype, int waytype, TranslationMap.Translation tr )
+    {
+        String pavementName = "";
+        if (pavetype == 1)
+            pavementName = tr.tr("unpaved");
+
+        String wayClass = "";
+        switch (waytype)
+        {
+            case 0:
+                wayClass = tr.tr("road");
+                break;
+            case 1:
+                wayClass = tr.tr("pushing_section");
+                break;
+            case 2:
+                wayClass = tr.tr("cycleway");
+                break;
+            case 3:
+                wayClass = tr.tr("way");
+                break;
+        }
+
+        if (name.isEmpty())
+            if (pavementName.isEmpty())
+                return wayClass;
+            else
+                return wayClass + ", " + pavementName;
+        else if (pavementName.isEmpty())
+            if (waytype == 0)
+                return name;
+            else
+                return name + ", " + wayClass;
+        else
+            return name + ", " + pavementName;
+    }
+
 }

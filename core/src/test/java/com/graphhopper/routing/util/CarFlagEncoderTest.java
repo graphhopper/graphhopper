@@ -90,7 +90,7 @@ public class CarFlagEncoderTest
         map.put("highway", "trunk");
         map.put("maxspeed", "500");
         long allowed = encoder.isAllowed(way);
-        long encoded = encoder.handleWayTags(allowed, way);
+        long encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(100, encoder.getSpeed(encoded));
     }
 
@@ -103,34 +103,34 @@ public class CarFlagEncoderTest
         map.put("highway", "trunk");
         map.put("maxspeed", "110");
         long allowed = encoder.isAllowed(way);
-        long encoded = encoder.handleWayTags(allowed, way);
+        long encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(95, encoder.getSpeed(encoded));
 
         map.clear();
         map.put("highway", "residential");
         map.put("surface", "cobblestone");
         allowed = encoder.isAllowed(way);
-        encoded = encoder.handleWayTags(allowed, way);
+        encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(30, encoder.getSpeed(encoded)); 
         
         map.clear();
         map.put("highway", "track");
         allowed = encoder.isAllowed(way);
-        encoded = encoder.handleWayTags(allowed, way);
+        encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(15, encoder.getSpeed(encoded));
         
         map.clear();
         map.put("highway", "track");
         map.put("tracktype", "grade1");
         allowed = encoder.isAllowed(way);
-        encoded = encoder.handleWayTags(allowed, way);
+        encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(20, encoder.getSpeed(encoded));
         
         map.clear();
         map.put("highway", "track");
         map.put("tracktype", "grade5");
         allowed = encoder.isAllowed(way);
-        encoded = encoder.handleWayTags(allowed, way);
+        encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(5, encoder.getSpeed(encoded));
     }
 

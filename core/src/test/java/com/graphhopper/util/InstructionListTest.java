@@ -93,11 +93,11 @@ public class InstructionListTest
         Path p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestWeighting()).calcPath(0, 10);
         InstructionList wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Continue onto 4-7",
-                "Turn left onto 7-8", "Continue onto 8-9", "Turn right", "Finish!"),
+                "Turn left onto 7-8", "Continue onto 8-9", "Turn right onto road", "Finish!"),
                 wayList.createDescription(trMap.getWithFallBack(Locale.CANADA)));
 
         assertEquals(Arrays.asList("Geradeaus auf 0-1", "Rechts abbiegen auf 1-4", "Geradeaus auf 4-7",
-                "Links abbiegen auf 7-8", "Geradeaus auf 8-9", "Rechts abbiegen", "Ziel erreicht!"),
+                "Links abbiegen auf 7-8", "Geradeaus auf 8-9", "Rechts abbiegen auf Strasse", "Ziel erreicht!"),
                 wayList.createDescription(trMap.getWithFallBack(Locale.GERMAN)));
 
         TDoubleList distList = wayList.createDistances();
@@ -248,15 +248,15 @@ public class InstructionListTest
         PointList pl = new PointList();
         pl.add(49.942576, 11.580384);
         pl.add(49.941858, 11.582422);
-        instructions.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp", 240, 15000, pl));
+        instructions.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp", 0, 0, 240, 15000, pl));
 
         pl = new PointList();
         pl.add(49.941575, 11.583501);
-        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", 25, 4000, pl));
+        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", 0, 0, 25, 4000, pl));
 
         pl = new PointList();
         pl.add(49.941389, 11.584311);
-        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", 25, 3000, pl));
+        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", 0, 0, 25, 3000, pl));
         instructions.add(new FinishInstruction(49.941029, 11.584514));
 
         List<GPXEntry> result = instructions.createGPXList();
@@ -274,6 +274,6 @@ public class InstructionListTest
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "motorway");
         way.setTag("maxspeed", String.format("%d km/h", speedKmPerHour));
-        return encodingManager.handleWayTags(1, way);
+        return encodingManager.handleWayTags(way, 1, 0);
     }
 }

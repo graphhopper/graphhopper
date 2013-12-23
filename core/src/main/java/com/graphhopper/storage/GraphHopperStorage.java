@@ -204,7 +204,7 @@ public class GraphHopperStorage implements GraphStorage
         wayGeometry.create(initSize);
         nameIndex.create(1000);
         properties.create(100);
-        properties.put("osmreader.acceptWay", encodingManager.encoderList());
+        properties.put("osmreader.acceptWay", encodingManager.getEncoderList());
         properties.putCurrentVersions();
         extStorage.create(initSize);
         initialized = true;
@@ -1372,9 +1372,9 @@ public class GraphHopperStorage implements GraphStorage
                             + dir.getLocation());
 
                 encodingManager = new EncodingManager(acceptStr);
-            } else if (!acceptStr.isEmpty() && !encodingManager.encoderList().equalsIgnoreCase(acceptStr))
+            } else if (!acceptStr.isEmpty() && !encodingManager.getEncoderList().equalsIgnoreCase(acceptStr))
             {
-                throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.encoderList() + "\nGraph: " + acceptStr);
+                throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.getEncoderList() + "\nGraph: " + acceptStr);
             }
 
             // nodes

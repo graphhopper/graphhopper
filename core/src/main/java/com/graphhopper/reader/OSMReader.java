@@ -30,19 +30,22 @@ import javax.xml.stream.XMLStreamException;
 
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import gnu.trove.map.hash.TLongLongHashMap;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * This class parses an OSM xml or pbf file and creates a graph from it. It does so in a two phase
- * parsing process in order to reduce memory usage compared to a single parsing processing.
+ * parsing processes in order to reduce memory usage compared to a single parsing processing.
  * <p/>
- * 1. Reads ways from OSM file and stores all associated node ids in osmNodeIdToIndexMap. If a node
- * occurs once it is a pillar node and if more it is a tower node, otherwise osmNodeIdToIndexMap
- * returns EMPTY.
+ * 1. a) Reads ways from OSM file and stores all associated node ids in osmNodeIdToIndexMap. If a
+ * node occurs once it is a pillar node and if more it is a tower node, otherwise
+ * osmNodeIdToIndexMap returns EMPTY.
+ * <p>
+ * 1. b) Reads relations from OSM file. In case that the relation is a route relation, it stores
+ * specific relation attributes required for routing into osmWayIdToRouteWeigthMap for all the ways
+ * of the relation.
  * <p/>
  * 2.a) Reads nodes from OSM file and stores lat+lon information either into the intermediate
  * datastructure for the pillar nodes (pillarLats/pillarLons) or, if a tower node, directly into the
@@ -67,7 +70,7 @@ public class OSMReader
     private long skippedLocations;
     private final GraphStorage graphStorage;
     private EncodingManager encodingManager = null;
-    private int workerThreads = -1;    
+    private int workerThreads = -1;
     private boolean enableInstructions = true;
     protected final Directory dir;
     protected long zeroCounter = 0;
@@ -82,11 +85,12 @@ public class OSMReader
     // smaller memory overhead for bigger data sets because of avoiding a "rehash"
     // remember how many times a node was used to identify tower nodes
     private LongIntMap osmNodeIdToIndexMap;
-    private LongIntMap osmNodeIdToBarrierMap;
+    private TLongLongHashMap osmNodeIdToNodeFlagsMap;
+    private TLongLongHashMap osmWayIdToRouteWeightMap;
     private final TLongList barrierNodeIDs = new TLongArrayList();
     protected DataAccess pillarLats;
     protected DataAccess pillarLons;
-    private DistanceCalc distCalc = new DistanceCalcEarth();
+    private final DistanceCalc distCalc = new DistanceCalcEarth();
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private int nextTowerId = 0;
     private int nextPillarId = 0;
@@ -99,8 +103,9 @@ public class OSMReader
         this.graphStorage = storage;
         this.expectedNodes = expectedCap;
 
-        osmNodeIdToBarrierMap = new GHLongIntBTree(200);
         osmNodeIdToIndexMap = new GHLongIntBTree(200);
+        osmNodeIdToNodeFlagsMap = new TLongLongHashMap(200, .5f, 0, 0);
+        osmWayIdToRouteWeightMap = new TLongLongHashMap(200, .5f, 0, 0);
 
         dir = graphStorage.getDirectory();
         pillarLats = dir.find("tmpLatitudes");
@@ -130,14 +135,15 @@ public class OSMReader
      * Preprocessing of OSM file to select nodes which are used for highways. This allows a more
      * compact graph data structure.
      */
-    public void preProcess( File osmFile )
+    void preProcess( File osmFile )
     {
         OSMInputFile in = null;
         try
         {
             in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
 
-            long tmpCounter = 1;
+            long tmpWayCounter = 1;
+            long tmpRelationCounter = 1;
 
             OSMElement item;
             while ((item = in.getNext()) != null)
@@ -155,13 +161,28 @@ public class OSMReader
                             prepareHighwayNode(wayNodes.get(index));
                         }
 
-                        if (++tmpCounter % 500000 == 0)
+                        if (++tmpWayCounter % 500000 == 0)
                         {
-                            logger.info(nf(tmpCounter) + " (preprocess), osmIdMap:"
+                            logger.info(nf(tmpWayCounter) + " (preprocess), osmIdMap:"
                                     + nf(getNodeMap().getSize()) + " (" + getNodeMap().getMemoryUsage() + "MB) "
                                     + Helper.getMemInfo());
                         }
                     }
+                }
+                if (item.isType(OSMElement.RELATION))
+                {
+                    final OSMRelation relation = (OSMRelation) item;
+                    if (!relation.isMetaRelation() && relation.hasTag("type", "route"))
+                    {
+                        prepareWaysWithRelationInfo(relation);
+                    }
+
+                    if (++tmpRelationCounter % 50000 == 0)
+                    {
+                        logger.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:"
+                                + nf(getRelFlagsMap().size()) + Helper.getMemInfo());
+                    }
+
                 }
             }
         } catch (Exception ex)
@@ -205,6 +226,7 @@ public class OSMReader
         logger.info("creating graph. Found nodes (pillar+tower):" + nf(getNodeMap().getSize()) + ", " + Helper.getMemInfo());
         graphStorage.create(tmp);
         long wayStart = -1;
+        long relationStart = -1;
         long counter = 1;
         OSMInputFile in = null;
         try
@@ -232,6 +254,14 @@ public class OSMReader
                         }
                         processWay((OSMWay) item);
                         break;
+                    case OSMElement.RELATION:
+                        if (relationStart < 0)
+                        {
+                            logger.info(nf(counter) + ", now parsing relations");
+                            relationStart = counter;
+                        }
+                        processRelation((OSMRelation) item);
+                        break;
                 }
                 if (++counter % 5000000 == 0)
                 {
@@ -257,7 +287,7 @@ public class OSMReader
     /**
      * Process properties, encode flags and create edges for the way.
      */
-    public void processWay( OSMWay way ) throws XMLStreamException
+    void processWay( OSMWay way ) throws XMLStreamException
     {
         if (way.getNodes().size() < 2)
             return;
@@ -266,9 +296,11 @@ public class OSMReader
         if (!way.hasTags())
             return;
 
-        int includeWay = encodingManager.accept(way);
+        long includeWay = encodingManager.accept(way);
         if (includeWay == 0)
             return;
+
+        long relationFlags = getRelFlagsMap().get(way.getId());
 
         // estimate length of the track e.g. for ferry speed calculation
         TLongList osmNodeIds = way.getNodes();
@@ -286,7 +318,7 @@ public class OSMReader
             }
         }
 
-        long flags = encodingManager.handleWayTags(includeWay, way);
+        long flags = encodingManager.handleWayTags(way, includeWay, relationFlags);
         if (flags == 0)
             return;
 
@@ -297,12 +329,12 @@ public class OSMReader
         for (int i = 0; i < size; i++)
         {
             final long nodeId = osmNodeIds.get(i);
-            long barrierFlags = (int) osmNodeIdToBarrierMap.get(nodeId);
+            long nodeFlags = getNodeFlagsMap().get(nodeId);
             // barrier was spotted and way is otherwise passable for that mode of travel
-            if (barrierFlags > 0 && (barrierFlags & flags) > 0)
+            if (nodeFlags > 0 && (nodeFlags & flags) > 0)
             {
                 // remove barrier to avoid duplicates
-                osmNodeIdToBarrierMap.put(nodeId, 0);
+                getNodeFlagsMap().put(nodeId, 0);
 
                 // create shadow node copy for zero length edge
                 long newNodeId = addBarrierNode(nodeId);
@@ -321,11 +353,11 @@ public class OSMReader
                     createdEdges.addAll(addOSMWay(partIds, flags));
 
                     // create zero length edge for barrier
-                    createdEdges.addAll(addBarrierEdge(newNodeId, nodeId, flags, barrierFlags));
+                    createdEdges.addAll(addBarrierEdge(newNodeId, nodeId, flags, nodeFlags));
                 } else
                 {
                     // run edge from real first node to shadow node
-                    createdEdges.addAll(addBarrierEdge(nodeId, newNodeId, flags, barrierFlags));
+                    createdEdges.addAll(addBarrierEdge(nodeId, newNodeId, flags, nodeFlags));
 
                     // exchange first node for created barrier node
                     osmNodeIds.set(0, newNodeId);
@@ -372,6 +404,10 @@ public class OSMReader
                 iter.setName(name);
             }
         }
+    }
+
+    public void processRelation( OSMRelation relation ) throws XMLStreamException
+    {
     }
 
     // TODO remove this ugly stuff via better preparsing phase! E.g. putting every tags etc into a helper file!
@@ -429,11 +465,9 @@ public class OSMReader
             // analyze node tags for barriers
             if (node.hasTags())
             {
-                final int barrierFlags = encodingManager.analyzeNode(node);
-                if (barrierFlags != 0)
-                {
-                    osmNodeIdToBarrierMap.put(node.getId(), barrierFlags);
-                }
+                long nodeFlags = encodingManager.analyzeNode(node);
+                if (nodeFlags != 0)
+                    getNodeFlagsMap().put(node.getId(), nodeFlags);
             }
 
             locations++;
@@ -443,7 +477,7 @@ public class OSMReader
         }
     }
 
-    public boolean addNode( OSMNode node )
+    boolean addNode( OSMNode node )
     {
         int nodeType = getNodeMap().get(node.getId());
         if (nodeType == EMPTY)
@@ -467,7 +501,30 @@ public class OSMReader
         return true;
     }
 
-    public void prepareHighwayNode( long osmId )
+    void prepareWaysWithRelationInfo( OSMRelation osmRelation )
+    {
+        // is there at least one tag interesting for the registed encoders?
+        if (encodingManager.handleRelationTags(osmRelation, 0) == 0)
+            return;
+
+        int size = osmRelation.getMembers().size();
+        for (int index = 0; index < size; index++)
+        {
+            OSMRelation.Member member = osmRelation.getMembers().get(index);
+            if (member.type() != OSMRelation.Member.WAY)
+                continue;
+
+            long osmId = member.ref();
+            long oldRelationFlags = getRelFlagsMap().get(osmId);
+
+            // Check if our new code is better comparated to the the last occured before            
+            long newRelationFlags = encodingManager.handleRelationTags(osmRelation, oldRelationFlags);
+            if (oldRelationFlags != newRelationFlags)
+                getRelFlagsMap().put(osmId, newRelationFlags);
+        }
+    }
+
+    void prepareHighwayNode( long osmId )
     {
         int tmpIndex = getNodeMap().get(osmId);
         if (tmpIndex == EMPTY)
@@ -484,7 +541,7 @@ public class OSMReader
         }
     }
 
-    protected int addTowerNode( long osmId, double lat, double lon )
+    int addTowerNode( long osmId, double lat, double lon )
     {
         graphStorage.setNode(nextTowerId, lat, lon);
         int id = -(nextTowerId + 3);
@@ -496,7 +553,7 @@ public class OSMReader
     /**
      * This method creates from an OSM way (via the osm ids) one or more edges in the graph.
      */
-    public Collection<EdgeIteratorState> addOSMWay( TLongList osmNodeIds, long flags )
+    Collection<EdgeIteratorState> addOSMWay( TLongList osmNodeIds, long flags )
     {
         PointList pointList = new PointList(osmNodeIds.size());
         List<EdgeIteratorState> newEdges = new ArrayList<EdgeIteratorState>(5);
@@ -581,10 +638,8 @@ public class OSMReader
     EdgeIteratorState addEdge( int fromIndex, int toIndex, PointList pointList, long flags )
     {
         if (fromIndex < 0 || toIndex < 0)
-        {
             throw new AssertionError("to or from index is invalid for this edge "
                     + fromIndex + "->" + toIndex + ", points:" + pointList);
-        }
 
         double towerNodeDistance = 0;
         double prevLat = pointList.getLatitude(0);
@@ -663,13 +718,14 @@ public class OSMReader
         pillarLons = null;
         pillarLats = null;
         osmNodeIdToIndexMap = null;
-        osmNodeIdToBarrierMap = null;
+        osmNodeIdToNodeFlagsMap = null;
+        osmWayIdToRouteWeightMap = null;
     }
 
     /**
      * Create a copy of the barrier node
      */
-    public long addBarrierNode( long nodeId )
+    long addBarrierNode( long nodeId )
     {
         // create node
         OSMNode newNode;
@@ -702,10 +758,10 @@ public class OSMReader
     /**
      * Add a zero length edge with reduced routing options to the graph.
      */
-    public Collection<EdgeIteratorState> addBarrierEdge( long fromId, long toId, long flags, long barrierFlags )
+    Collection<EdgeIteratorState> addBarrierEdge( long fromId, long toId, long flags, long nodeFlags )
     {
         // clear barred directions from routing flags
-        flags &= ~barrierFlags;
+        flags &= ~nodeFlags;
         // add edge
         barrierNodeIDs.clear();
         barrierNodeIDs.add(fromId);
@@ -716,14 +772,27 @@ public class OSMReader
     /**
      * Filter method, override in subclass
      */
-    protected boolean isInBounds( OSMNode node )
+    boolean isInBounds( OSMNode node )
     {
         return true;
     }
 
+    /**
+     * Maps OSM IDs (long) to internal node IDs (int)
+     */
     private LongIntMap getNodeMap()
     {
         return osmNodeIdToIndexMap;
+    }
+
+    private TLongLongHashMap getNodeFlagsMap()
+    {
+        return osmNodeIdToNodeFlagsMap;
+    }
+
+    TLongLongHashMap getRelFlagsMap()
+    {
+        return osmWayIdToRouteWeightMap;
     }
 
     /**
@@ -756,9 +825,11 @@ public class OSMReader
     private void printInfo( String str )
     {
         LoggerFactory.getLogger(getClass()).info("finished " + str + " processing."
-                + " nodes: " + graphStorage.getNodes() + ", osmIdMap.size:" + getNodeMap().getSize()
+                + " nodes: " + graphStorage.getNodes()
+                + ", osmIdMap.size:" + getNodeMap().getSize()
                 + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB"
-                + ", osmIdMap.toString:" + getNodeMap() + " "
+                + ", nodeFlagsMap.size:" + getNodeFlagsMap().size()
+                + ", relFlagsMap.size:" + getRelFlagsMap().size() + " "
                 + Helper.getMemInfo());
     }
 

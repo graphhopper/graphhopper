@@ -18,6 +18,10 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMRelation;
+import com.graphhopper.reader.OSMWay;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -84,5 +88,48 @@ public class EncodingManagerTest
         } catch (Exception ex)
         {
         }
+    }
+
+    @Test
+    public void testCombineRelations()
+    {
+        Map<String, String> wayMap = new HashMap<String, String>();
+        wayMap.put("highway", "track");
+        OSMWay osmWay = new OSMWay(1, wayMap);
+
+        Map<String, String> relMap = new HashMap<String, String>();
+        OSMRelation osmRel = new OSMRelation(1, relMap);
+
+        EncodingManager manager = new EncodingManager();
+        BikeFlagEncoder defaultBike = new BikeFlagEncoder();
+        manager.registerEdgeFlagEncoder(defaultBike);
+        BikeFlagEncoder lessRelationCodes = new BikeFlagEncoder()
+        {
+            @Override
+            public int defineRelationBits( int index, int shift )
+            {
+                relationCodeEncoder = new EncodedValue("RelationCode2", shift, 2, 1, 0, 3);
+                return shift + 2;
+            }
+
+            @Override
+            public long handleRelationTags( OSMRelation relation, long oldRelFlags )
+            {
+                if (relation.hasTag("route", "bicycle"))
+                    return relationCodeEncoder.setValue(0, 2);
+                return relationCodeEncoder.setValue(0, 0);
+            }
+        };
+        manager.registerEdgeFlagEncoder(lessRelationCodes);
+
+        // relation code is PREFER
+        relMap.put("route", "bicycle");
+        relMap.put("network", "lcn");
+        long relFlags = manager.handleRelationTags(osmRel, 0);
+        long allow = defaultBike.isAllowed(osmWay) | lessRelationCodes.isAllowed(osmWay);
+        long flags = manager.handleWayTags(osmWay, allow, relFlags);
+
+        assertEquals(18, defaultBike.getSpeed(flags));
+        assertEquals(4, lessRelationCodes.getSpeed(flags));
     }
 }

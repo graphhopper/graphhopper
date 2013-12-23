@@ -84,7 +84,7 @@ public class XFirstSearch
         return true;
     }
 
-    protected boolean checkAdjacent( EdgeIterator iter )
+    protected boolean checkAdjacent( EdgeIteratorState edge )
     {
         return true;
     }

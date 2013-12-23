@@ -33,7 +33,7 @@ import gnu.trove.list.array.TIntArrayList;
  * @author Ottavio Campana
  */
 public class Path
-{    
+{
     protected Graph graph;
     private FlagEncoder encoder;
     protected double distance;
@@ -311,7 +311,6 @@ public class Path
         final int tmpNode = getFromNode();
         forEveryEdge(new EdgeVisitor()
         {
-            String name = null;
             /*
              * We need three points to make directions
              *
@@ -332,12 +331,15 @@ public class Path
              * considering orientation belonging to the interval
              * [ - pi + previousOrientation , + pi + previousOrientation ]
              */
-            double prevLat = graph.getLatitude(tmpNode);
-            double prevLon = graph.getLongitude(tmpNode);
-            double prevOrientation;
-            double tmpDistance = Double.NaN;
-            long tmpTime;
-            PointList points = new PointList();
+            private double prevLat = graph.getLatitude(tmpNode);
+            private double prevLon = graph.getLongitude(tmpNode);
+            private double prevOrientation;
+            private double tmpDistance = Double.NaN;
+            private long tmpTime;
+            private PointList points = new PointList();
+            private String name = null;
+            private int pavementCode;
+            private int wayTypeCode;
 
             @Override
             public void next( EdgeIteratorState edge, int index )
@@ -367,8 +369,11 @@ public class Path
                 {
                     // very first instruction
                     name = edge.getName();
+                    pavementCode = encoder.getPavementCode(edge.getFlags());
+                    wayTypeCode = encoder.getWayTypeCode(edge.getFlags());
+
                     add(edge, wayGeo);
-                    cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, tmpDistance, tmpTime, points));
+                    cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, wayTypeCode, pavementCode, tmpDistance, tmpTime, points));
                 } else
                 {
                     double tmpOrientation;
@@ -388,12 +393,18 @@ public class Path
                     }
 
                     String tmpName = edge.getName();
-                    if (!name.equals(tmpName))
+                    int tmppavement = encoder.getPavementCode(edge.getFlags());
+                    int tmpwayType = encoder.getWayTypeCode(edge.getFlags());
+                    if ((!name.equals(tmpName))
+                            || (pavementCode != tmppavement)
+                            || (wayTypeCode != tmpwayType))
                     {
                         tmpDistance = Double.NaN;
                         points = new PointList();
                         add(edge, wayGeo);
                         name = tmpName;
+                        pavementCode = tmppavement;
+                        wayTypeCode = tmpwayType;
                         double delta = Math.abs(tmpOrientation - prevOrientation);
                         int indication;
                         if (delta < 0.2)
@@ -426,7 +437,7 @@ public class Path
 
                         }
 
-                        cachedWays.add(new Instruction(indication, name, tmpDistance, tmpTime, points));
+                        cachedWays.add(new Instruction(indication, name, wayTypeCode, pavementCode, tmpDistance, tmpTime, points));
                     } else
                     {
                         add(edge, wayGeo);
