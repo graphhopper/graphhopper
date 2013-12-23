@@ -55,11 +55,10 @@ public class EncodingManager
 
     public static final int MAX_BITS = 32;
 
-    //edge encoders
-    private List<AbstractFlagEncoder> encoders = new ArrayList<AbstractFlagEncoder>();
+    private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<AbstractFlagEncoder>();
     private int edgeEncoderNextBit = 0;
 
-    private List<TurnCostEncoder> turnCostEncoders = new ArrayList<TurnCostEncoder>();
+    private final List<TurnCostEncoder> turnCostEncoders = new ArrayList<TurnCostEncoder>();
     private int turnEncoderNextBit = 0;
 
     private int nextWayBit = 0;
@@ -72,8 +71,8 @@ public class EncodingManager
 
     /**
      * Instantiate manager with the given list of encoders. The manager knows the default encoders:
-     * CAR, FOOT and BIKE Custom encoders can be added by giving a full class name e.g.
-     * "CAR:com.graphhopper.myproject.MyCarEncoder"
+     * CAR, FOOT and BIKE (ignoring the case). Custom encoders can be specified by giving a full
+     * class name e.g. "car:com.graphhopper.myproject.MyCarEncoder"
      * <p/>
      * @param encoderList comma delimited list of encoders. The order does not matter.
      */
@@ -145,8 +144,8 @@ public class EncodingManager
 
     public void registerEdgeFlagEncoder( AbstractFlagEncoder encoder )
     {
-        int encoderCount = encoders.size();
-        encoders.add(encoder);
+        int encoderCount = edgeEncoders.size();
+        edgeEncoders.add(encoder);
 
         int usedBits = encoder.defineNodeBits(encoderCount, edgeEncoderNextBit);
         if (usedBits >= MAX_BITS)
@@ -191,7 +190,7 @@ public class EncodingManager
         return getEncoder(encoder, false) != null;
     }
 
-    public AbstractFlagEncoder getEncoder( String name )
+    public FlagEncoder getEncoder( String name )
     {
         return getEncoder(name, true);
     }
@@ -201,13 +200,13 @@ public class EncodingManager
         return getTurnCostEncoder(name, true);
     }
 
-    private AbstractFlagEncoder getEncoder( String name, boolean throwExc )
+    private FlagEncoder getEncoder( String name, boolean throwExc )
     {
-        int encoderCount = encoders.size();
+        int encoderCount = edgeEncoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
-            if (name.equalsIgnoreCase(encoders.get(i).toString()))
-                return encoders.get(i);
+            if (name.equalsIgnoreCase(edgeEncoders.get(i).toString()))
+                return edgeEncoders.get(i);
         }
         if (throwExc)
             throw new IllegalArgumentException("Encoder for " + name + " not found.");
@@ -230,13 +229,13 @@ public class EncodingManager
     /**
      * Determine whether an osm way is a routable way for one of its encoders.
      */
-    public long accept( OSMWay way )
+    public long acceptWay( OSMWay way )
     {
-        int includeWay = 0;
-        int encoderCount = encoders.size();
+        long includeWay = 0;
+        int encoderCount = edgeEncoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
-            includeWay |= encoders.get(i).isAllowed(way);
+            includeWay |= edgeEncoders.get(i).acceptWay(way);
         }
 
         return includeWay;
@@ -245,10 +244,10 @@ public class EncodingManager
     public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
     {
         long flags = 0;
-        int encoderCount = encoders.size();
+        int encoderCount = edgeEncoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
-            flags |= encoders.get(i).handleRelationTags(relation, oldRelationFlags);
+            flags |= edgeEncoders.get(i).handleRelationTags(relation, oldRelationFlags);
         }
 
         return flags;
@@ -264,10 +263,10 @@ public class EncodingManager
     public long handleWayTags( OSMWay way, long includeWay, long relationFlags )
     {
         long flags = 0;
-        int encoderCount = encoders.size();
+        int encoderCount = edgeEncoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
-            AbstractFlagEncoder encoder = encoders.get(i);
+            AbstractFlagEncoder encoder = edgeEncoders.get(i);
             flags |= encoder.handleWayTags(way, includeWay, relationFlags & encoder.getWayBitMask());
         }
 
@@ -276,21 +275,20 @@ public class EncodingManager
 
     public int getVehicleCount()
     {
-        return encoders.size();
+        return edgeEncoders.size();
     }
 
     @Override
     public String toString()
     {
         StringBuilder str = new StringBuilder();
-        int encoderCount = encoders.size();
+        int encoderCount = edgeEncoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
             if (str.length() > 0)
-            {
                 str.append(",");
-            }
-            str.append(encoders.get(i).toString());
+
+            str.append(edgeEncoders.get(i).toString());
         }
 
         return str.toString();
@@ -299,16 +297,15 @@ public class EncodingManager
     public String getEncoderList()
     {
         StringBuilder str = new StringBuilder();
-        int encoderCount = encoders.size();
+        int encoderCount = edgeEncoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
             if (str.length() > 0)
-            {
                 str.append(",");
-            }
-            str.append(encoders.get(i).toString());
+
+            str.append(edgeEncoders.get(i).toString());
             str.append(":");
-            str.append(encoders.get(i).getClass().getName());
+            str.append(edgeEncoders.get(i).getClass().getName());
         }
 
         return str.toString();
@@ -317,28 +314,26 @@ public class EncodingManager
     public FlagEncoder getSingle()
     {
         if (getVehicleCount() > 1)
-        {
             throw new IllegalStateException("multiple encoders are active. cannot return one:" + toString());
-        }
+
         return getFirst();
     }
 
     private FlagEncoder getFirst()
     {
         if (getVehicleCount() == 0)
-        {
             throw new IllegalStateException("no encoder is active!");
-        }
-        return encoders.get(0);
+
+        return edgeEncoders.get(0);
     }
 
     public long flagsDefault( boolean forward, boolean backward )
     {
         long flags = 0;
-        int encoderCount = encoders.size();
+        int encoderCount = edgeEncoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
-            flags |= encoders.get(i).flagsDefault(forward, backward);
+            flags |= edgeEncoders.get(i).flagsDefault(forward, backward);
         }
         return flags;
     }
@@ -348,10 +343,10 @@ public class EncodingManager
      */
     public long swapDirection( long flags )
     {
-        int encoderCount = encoders.size();
+        int encoderCount = edgeEncoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
-            flags = encoders.get(i).swapDirection(flags);
+            flags = edgeEncoders.get(i).swapDirection(flags);
         }
         return flags;
     }
@@ -360,7 +355,7 @@ public class EncodingManager
     public int hashCode()
     {
         int hash = 5;
-        hash = 53 * hash + (this.encoders != null ? this.encoders.hashCode() : 0);
+        hash = 53 * hash + (this.edgeEncoders != null ? this.edgeEncoders.hashCode() : 0);
         return hash;
     }
 
@@ -376,7 +371,7 @@ public class EncodingManager
             return false;
         }
         final EncodingManager other = (EncodingManager) obj;
-        if (this.encoders != other.encoders && (this.encoders == null || !this.encoders.equals(other.encoders)))
+        if (this.edgeEncoders != other.edgeEncoders && (this.edgeEncoders == null || !this.edgeEncoders.equals(other.edgeEncoders)))
         {
             return false;
         }
@@ -384,17 +379,15 @@ public class EncodingManager
     }
 
     /**
-     * Analyze tags on osm node
-     * <p/>
-     * @param node
+     * Analyze tags on osm node. Store node tags (barriers etc) for later usage while parsing way.
      */
-    public long analyzeNode( OSMNode node )
+    public long analyzeNodeTags( OSMNode node )
     {
         long flags = 0;
-        int encoderCount = encoders.size();
+        int encoderCount = edgeEncoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
-            flags |= encoders.get(i).analyzeNodeTags(node);
+            flags |= edgeEncoders.get(i).analyzeNodeTags(node);
         }
 
         return flags;
@@ -403,10 +396,10 @@ public class EncodingManager
     public String getWayInfo( OSMWay way )
     {
         String str = "";
-        int encoderCount = encoders.size();
+        int encoderCount = edgeEncoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
-            String tmpWayInfo = encoders.get(i).getWayInfo(way);
+            String tmpWayInfo = edgeEncoders.get(i).getWayInfo(way);
             if (tmpWayInfo.isEmpty())
                 continue;
             if (!str.isEmpty())
@@ -416,4 +409,19 @@ public class EncodingManager
         return str;
     }
 
+    /**
+     * When parsing the ways we have the node flags as long variable encoded in analyzeNode.
+     */
+    public long applyNodeFlags( long wayFlags, long nodeFlags )
+    {
+        long flags = 0;
+        int encoderCount = edgeEncoders.size();
+        for (int i = 0; i < encoderCount; i++)
+        {
+            AbstractFlagEncoder encoder = edgeEncoders.get(i);
+            flags |= encoder.applyNodeFlags(wayFlags & encoder.getWayBitMask(), nodeFlags);
+        }
+
+        return flags;
+    }
 }

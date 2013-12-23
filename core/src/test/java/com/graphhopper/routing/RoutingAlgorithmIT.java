@@ -241,7 +241,7 @@ public class RoutingAlgorithmIT
                     setGraphHopperLocation(graphFile).setEncodingManager(new EncodingManager(importVehicles)).
                     importOrLoad();
 
-            final AbstractFlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
+            FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             Weighting weighting = new ShortestWeighting();
             if ("fastest".equalsIgnoreCase(weightCalcStr))
                 weighting = new FastestWeighting(encoder);

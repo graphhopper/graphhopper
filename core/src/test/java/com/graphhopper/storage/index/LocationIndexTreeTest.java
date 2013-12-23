@@ -59,7 +59,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
     //  0------\
     // /|       \
     // |1----3-\|
-    // |/   /   4
+    // |    /   4
     // 2---/---/
     Graph createTestGraph() {
         Graph graph = createGraph(new RAMDirectory(), encodingManager);

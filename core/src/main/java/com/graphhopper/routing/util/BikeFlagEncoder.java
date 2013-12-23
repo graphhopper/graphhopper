@@ -52,6 +52,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
      */
     protected BikeFlagEncoder()
     {
+        super(4, 2);
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
         restrictions = new String[]
         {
@@ -84,8 +85,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         // potentialBarriers.add("block");
         absoluteBarriers.add("kissing_gate");
         absoluteBarriers.add("stile");
-        absoluteBarriers.add("turnstile");
-
+        absoluteBarriers.add("turnstile");        
         // very dangerous
         // acceptedRailways.remove("tram");
     }
@@ -95,8 +95,8 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     {
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
-        speedEncoder = new EncodedValue("Speed", shift, 4, 2, HIGHWAY_SPEED.get("cycleway"), 30);
-        shift += 4;
+        speedEncoder = new EncodedValue("Speed", shift, speedBits, speedFactor, HIGHWAY_SPEED.get("cycleway"), 30);
+        shift += speedBits;
 
         safeWayBit = 1 << shift++;
         unpavedBit = 1 << shift++;
@@ -119,7 +119,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long isAllowed( OSMWay way )
+    public long acceptWay( OSMWay way )
     {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null)
@@ -213,8 +213,8 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
             }
 
             // Make sure that we do not exceed the limits:
-            if (speed > speedEncoder.getDefaultMaxValue())
-                speed = (int) speedEncoder.getDefaultMaxValue();
+            if (speed > speedEncoder.getMaxValue())
+                speed = (int) speedEncoder.getMaxValue();
             else if (speed < 0)
                 speed = 0;
             encoded = speedEncoder.setValue(0, speed);
@@ -283,25 +283,9 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     {
         // absolute barriers always block
         if (node.hasTag("barrier", absoluteBarriers))
-        {
             return directionBitMask;
-        }
-
-        // movable barriers block if they are not marked as passable
-        if (node.hasTag("barrier", potentialBarriers)
-                && !node.hasTag(restrictions, intended)
-                && !node.hasTag("locked", "no"))
-        {
-            return directionBitMask;
-        }
-
-        if ((node.hasTag("highway", "ford") || node.hasTag("ford"))
-                && !node.hasTag(restrictions, intended))
-        {
-            return directionBitMask;
-        }
-
-        return 0;
+        
+        return super.analyzeNodeTags(node);
     }
 
     int getSpeed( OSMWay way )

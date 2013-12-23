@@ -36,7 +36,13 @@ import java.nio.ByteOrder;
  */
 public abstract class BitUtil
 {
+    /**
+     * Default for GraphHopper
+     */
     public static final BitUtil LITTLE = new BitUtilLittle();
+    /**
+     * BIG endianess. Little is the default for GraphHopper.
+     */
     public static final BitUtil BIG = new BitUtilBig();
 
     public static BitUtil get( ByteOrder order )

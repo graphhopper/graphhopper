@@ -53,10 +53,10 @@ public class LocationIndexTree implements LocationIndex
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int MAGIC_INT;
-    private DistanceCalc preciseDistCalc = new DistanceCalcEarth();
-    private DistanceCalc distCalc = new DistancePlaneProjection();
+    protected static DistanceCalc distCalc = new DistancePlaneProjection();
+    private DistanceCalc preciseDistCalc = new DistanceCalcEarth();    
+    protected final Graph graph;
     final DataAccess dataAccess;
-    private final Graph graph;
     private int[] entries;
     private byte[] shifts;
     // convert spatial key to index for subentry of current depth
@@ -595,7 +595,7 @@ public class LocationIndexTree implements LocationIndex
         return BitUtil.BIG.reverse(key, keyAlgo.getBits());
     }
 
-    TIntHashSet findNetworkEntries( double queryLat, double queryLon )
+    protected TIntHashSet findNetworkEntries( double queryLat, double queryLon )
     {
         TIntHashSet storedNetworkEntryIds = new TIntHashSet();
         if (regionSearch)
@@ -638,92 +638,16 @@ public class LocationIndexTree implements LocationIndex
             @Override
             public boolean execute( final int networkEntryNodeId )
             {
-                new XFirstSearch()
+                new XFirstSearchCheck(queryLat, queryLon, checkBitset, edgeFilter)
                 {
-                    boolean goFurther = true;
-                    double currNormedDist;
-                    double currLat;
-                    double currLon;
-                    int currNode;
-
                     @Override
-                    protected GHBitSet createBitSet()
+                    protected double getQueryDistance()
                     {
-                        return checkBitset;
+                        return closestMatch.getQueryDistance();
                     }
 
                     @Override
-                    protected boolean goFurther( int baseNode )
-                    {
-                        currNode = baseNode;
-                        currLat = graph.getLatitude(baseNode);
-                        currLon = graph.getLongitude(baseNode);
-                        currNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
-                        return goFurther;
-                    }
-
-                    @Override
-                    protected boolean checkAdjacent( EdgeIteratorState currEdge )
-                    {
-                        goFurther = false;
-                        if (!edgeFilter.accept(currEdge))
-                        {
-                            // only limit the adjNode to a certain radius as currNode could be the wrong side of a valid edge
-                            // goFurther = currDist < minResolution2InMeterNormed;
-                            return true;
-                        }
-
-                        int tmpClosestNode = currNode;
-                        if (check(tmpClosestNode, currNormedDist, 0, currEdge, QueryResult.Position.TOWER))
-                        {
-                            if (currNormedDist <= equalNormedDelta)
-                                return false;
-                        }
-
-                        int adjNode = currEdge.getAdjNode();
-                        double adjLat = graph.getLatitude(adjNode);
-                        double adjLon = graph.getLongitude(adjNode);
-                        double adjDist = distCalc.calcNormalizedDist(adjLat, adjLon, queryLat, queryLon);
-                        // if there are wayPoints this is only an approximation
-                        if (adjDist < currNormedDist)
-                            tmpClosestNode = adjNode;
-
-                        double tmpLat = currLat;
-                        double tmpLon = currLon;
-                        double tmpNormedDist;
-                        PointList pointList = currEdge.fetchWayGeometry(2);
-                        int len = pointList.getSize();
-                        for (int pointIndex = 0; pointIndex < len; pointIndex++)
-                        {
-                            double wayLat = pointList.getLatitude(pointIndex);
-                            double wayLon = pointList.getLongitude(pointIndex);
-                            QueryResult.Position pos = QueryResult.Position.EDGE;
-                            if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, wayLat, wayLon))
-                            {
-                                tmpNormedDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
-                                        tmpLat, tmpLon, wayLat, wayLon);
-                                check(tmpClosestNode, tmpNormedDist, pointIndex, currEdge, pos);
-                            } else if (pointIndex + 1 == len)
-                            {
-                                tmpNormedDist = adjDist;
-                                pos = QueryResult.Position.TOWER;
-                            } else
-                            {
-                                tmpNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
-                                pos = QueryResult.Position.PILLAR;
-                            }
-                            check(tmpClosestNode, tmpNormedDist, pointIndex + 1, currEdge, pos);
-
-                            if (tmpNormedDist <= equalNormedDelta)
-                                return false;
-
-                            tmpLat = wayLat;
-                            tmpLon = wayLon;
-                        }
-                        return closestMatch.getQueryDistance() > equalNormedDelta;
-                    }
-
-                    boolean check( int node, double normedDist, int wayIndex, EdgeIteratorState edge, QueryResult.Position pos )
+                    protected boolean check( int node, double normedDist, int wayIndex, EdgeIteratorState edge, QueryResult.Position pos )
                     {
                         if (normedDist < closestMatch.getQueryDistance())
                         {
@@ -749,6 +673,111 @@ public class LocationIndexTree implements LocationIndex
         }
 
         return closestMatch;
+    }
+
+    /**
+     * Make it possible to collect nearby location also for other purposes.
+     */
+    protected abstract class XFirstSearchCheck extends XFirstSearch
+    {
+        boolean goFurther = true;
+        double currNormedDist;
+        double currLat;
+        double currLon;
+        int currNode;
+        final double queryLat;
+        final double queryLon;
+        final GHBitSet checkBitset;
+        final EdgeFilter edgeFilter;
+
+        public XFirstSearchCheck( double queryLat, double queryLon, GHBitSet checkBitset, EdgeFilter edgeFilter )
+        {
+            this.queryLat = queryLat;
+            this.queryLon = queryLon;
+            this.checkBitset = checkBitset;
+            this.edgeFilter = edgeFilter;
+        }
+
+        @Override
+        protected GHBitSet createBitSet()
+        {
+            return checkBitset;
+        }
+
+        @Override
+        protected boolean goFurther( int baseNode )
+        {
+            currNode = baseNode;
+            currLat = graph.getLatitude(baseNode);
+            currLon = graph.getLongitude(baseNode);
+            currNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
+            return goFurther;
+        }
+
+        @Override
+        protected boolean checkAdjacent( EdgeIteratorState currEdge )
+        {
+            goFurther = false;
+            if (!edgeFilter.accept(currEdge))
+            {
+                // only limit the adjNode to a certain radius as currNode could be the wrong side of a valid edge
+                // goFurther = currDist < minResolution2InMeterNormed;
+                return true;
+            }
+
+            int tmpClosestNode = currNode;
+            if (check(tmpClosestNode, currNormedDist, 0, currEdge, QueryResult.Position.TOWER))
+            {
+                if (currNormedDist <= equalNormedDelta)
+                    return false;
+            }
+
+            int adjNode = currEdge.getAdjNode();
+            double adjLat = graph.getLatitude(adjNode);
+            double adjLon = graph.getLongitude(adjNode);
+            double adjDist = distCalc.calcNormalizedDist(adjLat, adjLon, queryLat, queryLon);
+            // if there are wayPoints this is only an approximation
+            if (adjDist < currNormedDist)
+                tmpClosestNode = adjNode;
+
+            double tmpLat = currLat;
+            double tmpLon = currLon;
+            double tmpNormedDist;
+            PointList pointList = currEdge.fetchWayGeometry(2);
+            int len = pointList.getSize();
+            for (int pointIndex = 0; pointIndex < len; pointIndex++)
+            {
+                double wayLat = pointList.getLatitude(pointIndex);
+                double wayLon = pointList.getLongitude(pointIndex);
+                QueryResult.Position pos = QueryResult.Position.EDGE;
+                if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, wayLat, wayLon))
+                {
+                    tmpNormedDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
+                            tmpLat, tmpLon, wayLat, wayLon);
+                    check(tmpClosestNode, tmpNormedDist, pointIndex, currEdge, pos);
+                } else if (pointIndex + 1 == len)
+                {
+                    tmpNormedDist = adjDist;
+                    pos = QueryResult.Position.TOWER;
+                } else
+                {
+                    tmpNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
+                    pos = QueryResult.Position.PILLAR;
+                }
+                check(tmpClosestNode, tmpNormedDist, pointIndex + 1, currEdge, pos);
+
+                if (tmpNormedDist <= equalNormedDelta)
+                    return false;
+
+                tmpLat = wayLat;
+                tmpLon = wayLon;
+            }
+            return getQueryDistance() > equalNormedDelta;
+        }
+
+        protected abstract double getQueryDistance();
+
+        protected abstract boolean check( int node, double normedDist, int wayIndex, EdgeIteratorState iter, QueryResult.Position pos );
     }
 
     protected int pickBestNode( int nodeA, int nodeB )

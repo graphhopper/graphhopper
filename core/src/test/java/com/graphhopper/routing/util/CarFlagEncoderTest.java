@@ -39,34 +39,34 @@ public class CarFlagEncoderTest
     {
         Map<String, String> map = new HashMap<String, String>();
         OSMWay way = new OSMWay(1, map);
-        assertFalse(encoder.isAllowed(way) > 0);
+        assertFalse(encoder.acceptWay(way) > 0);
         map.put("highway", "service");
-        assertTrue(encoder.isAllowed(way) > 0);
+        assertTrue(encoder.acceptWay(way) > 0);
         map.put("access", "no");
-        assertFalse(encoder.isAllowed(way) > 0);
+        assertFalse(encoder.acceptWay(way) > 0);
 
         map.clear();
         map.put("highway", "track");
         map.put("motorcar", "no");
-        assertFalse(encoder.isAllowed(way) > 0);
+        assertFalse(encoder.acceptWay(way) > 0);
 
         map.clear();
         map.put("highway", "unclassified");
         map.put("ford", "yes");
-        assertFalse(encoder.isAllowed(way) > 0);
+        assertFalse(encoder.acceptWay(way) > 0);
         map.put("motorcar", "yes");
-        assertTrue(encoder.isAllowed(way) > 0);
+        assertTrue(encoder.acceptWay(way) > 0);
 
         map.clear();
         map.put("route", "ferry");
-        assertTrue(encoder.isAllowed(way) > 0);
+        assertTrue(encoder.acceptWay(way) > 0);
         map.put("motorcar", "no");
-        assertFalse(encoder.isAllowed(way) > 0);
+        assertFalse(encoder.acceptWay(way) > 0);
 
         map.clear();
         map.put("route", "ferry");
         map.put("foot", "yes");
-        assertFalse(encoder.isAllowed(way) > 0);
+        assertFalse(encoder.acceptWay(way) > 0);
     }
 
     @Test
@@ -89,7 +89,7 @@ public class CarFlagEncoderTest
         OSMWay way = new OSMWay(1, map);
         map.put("highway", "trunk");
         map.put("maxspeed", "500");
-        long allowed = encoder.isAllowed(way);
+        long allowed = encoder.acceptWay(way);
         long encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(100, encoder.getSpeed(encoded));
     }
@@ -102,34 +102,34 @@ public class CarFlagEncoderTest
         OSMWay way = new OSMWay(1, map);
         map.put("highway", "trunk");
         map.put("maxspeed", "110");
-        long allowed = encoder.isAllowed(way);
+        long allowed = encoder.acceptWay(way);
         long encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(95, encoder.getSpeed(encoded));
 
         map.clear();
         map.put("highway", "residential");
         map.put("surface", "cobblestone");
-        allowed = encoder.isAllowed(way);
+        allowed = encoder.acceptWay(way);
         encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(30, encoder.getSpeed(encoded)); 
         
         map.clear();
         map.put("highway", "track");
-        allowed = encoder.isAllowed(way);
+        allowed = encoder.acceptWay(way);
         encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(15, encoder.getSpeed(encoded));
         
         map.clear();
         map.put("highway", "track");
         map.put("tracktype", "grade1");
-        allowed = encoder.isAllowed(way);
+        allowed = encoder.acceptWay(way);
         encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(20, encoder.getSpeed(encoded));
         
         map.clear();
         map.put("highway", "track");
         map.put("tracktype", "grade5");
-        allowed = encoder.isAllowed(way);
+        allowed = encoder.acceptWay(way);
         encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(5, encoder.getSpeed(encoded));
     }
@@ -148,13 +148,13 @@ public class CarFlagEncoderTest
         map.put("highway", "secondary");
         map.put("railway", "rail");
         // disallow rail
-        assertEquals(0, encoder.isAllowed(way));
+        assertEquals(0, encoder.acceptWay(way));
 
         way = new OSMWay(1, map);
         map.put("highway", "secondary");
         map.put("railway", "tram");
         // but allow tram to be on the same way
-        assertNotSame(0, encoder.isAllowed(way));
+        assertNotSame(0, encoder.acceptWay(way));
     }
 
     @Test

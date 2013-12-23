@@ -82,85 +82,85 @@ public class BikeFlagEncoderTest
         OSMWay way = new OSMWay(1, map);
 
         map.put("highway", "motorway");
-        assertFalse(encoder.isAllowed(way) > 0);
+        assertFalse(encoder.acceptWay(way) > 0);
 
         map.put("highway", "footway");
-        assertTrue(encoder.isAllowed(way) > 0);
+        assertTrue(encoder.acceptWay(way) > 0);
 
         map.put("bicycle", "no");
-        assertFalse(encoder.isAllowed(way) > 0);
+        assertFalse(encoder.acceptWay(way) > 0);
 
         map.put("highway", "footway");
         map.put("bicycle", "yes");
-        assertTrue(encoder.isAllowed(way) > 0);
+        assertTrue(encoder.acceptWay(way) > 0);
 
         map.put("highway", "pedestrian");
         map.put("bicycle", "no");
-        assertFalse(encoder.isAllowed(way) > 0);
+        assertFalse(encoder.acceptWay(way) > 0);
 
         map.put("highway", "pedestrian");
         map.put("bicycle", "yes");
-        assertTrue(encoder.isAllowed(way) > 0);
+        assertTrue(encoder.acceptWay(way) > 0);
 
         map.put("bicycle", "yes");
         map.put("highway", "cycleway");
-        assertTrue(encoder.isAllowed(way) > 0);
+        assertTrue(encoder.acceptWay(way) > 0);
 
         map.clear();
         map.put("highway", "path");
-        assertTrue(encoder.isAllowed(way) > 0);
+        assertTrue(encoder.acceptWay(way) > 0);
 
         map.put("highway", "path");
         map.put("bicycle", "yes");
-        assertTrue(encoder.isAllowed(way) > 0);
+        assertTrue(encoder.acceptWay(way) > 0);
         map.clear();
 
         map.put("highway", "track");
         map.put("bicycle", "yes");
-        assertTrue(encoder.isAllowed(way) > 0);
+        assertTrue(encoder.acceptWay(way) > 0);
         map.clear();
 
         map.put("highway", "track");
-        assertTrue(encoder.isAllowed(way) > 0);
+        assertTrue(encoder.acceptWay(way) > 0);
 
         map.put("mtb", "yes");
-        assertTrue(encoder.isAllowed(way) > 0);
+        assertTrue(encoder.acceptWay(way) > 0);
 
         map.clear();
         map.put("highway", "path");
         map.put("foot", "official");
-        assertTrue(encoder.isAllowed(way) > 0);
+        assertTrue(encoder.acceptWay(way) > 0);
 
         map.put("bicycle", "official");
-        assertTrue(encoder.isAllowed(way) > 0);
+        assertTrue(encoder.acceptWay(way) > 0);
 
         map.clear();
         map.put("highway", "service");
         map.put("access", "no");
-        assertFalse(encoder.isAllowed(way) > 0);
+        assertFalse(encoder.acceptWay(way) > 0);
 
         map.clear();
         map.put("highway", "tertiary");
         map.put("motorroad", "yes");
-        assertFalse(encoder.isAllowed(way) > 0);
+        assertFalse(encoder.acceptWay(way) > 0);
 
         map.clear();
         map.put("highway", "track");
         map.put("ford", "yes");
-        assertFalse(encoder.isAllowed(way) > 0);
+        assertFalse(encoder.acceptWay(way) > 0);
         map.put("bicycle", "yes");
-        assertTrue(encoder.isAllowed(way) > 0);
+        assertTrue(encoder.acceptWay(way) > 0);
 
         map.clear();
         map.put("route", "ferry");
-        assertTrue(encoder.isAllowed(way) > 0);
+        assertTrue(encoder.acceptWay(way) > 0);
         map.put("bicycle", "no");
-        assertFalse(encoder.isAllowed(way) > 0);
+        assertFalse(encoder.acceptWay(way) > 0);
 
         map.clear();
         map.put("route", "ferry");
         map.put("foot", "yes");
-        assertFalse(encoder.isAllowed(way) > 0);
+        assertFalse(encoder.acceptWay(way) > 0);
     }
 
     @Test
@@ -171,27 +171,27 @@ public class BikeFlagEncoderTest
         map.put("highway", "secondary");
         map.put("railway", "rail");
         // disallow rail
-        assertEquals(0, encoder.isAllowed(way));
+        assertEquals(0, encoder.acceptWay(way));
 
         way = new OSMWay(1, map);
         map.put("highway", "secondary");
         map.put("railway", "station");
         // disallow stations
-        assertEquals(0, encoder.isAllowed(way));
+        assertEquals(0, encoder.acceptWay(way));
 
         way = new OSMWay(1, map);
         map.put("highway", "secondary");
         map.put("railway", "station");
         map.put("bicycle", "yes");
         // allow stations if explicitely tagged
-        assertNotSame(0, encoder.isAllowed(way));
+        assertNotSame(0, encoder.acceptWay(way));
 
         way = new OSMWay(1, map);
         map.put("highway", "secondary");
         map.put("railway", "station");
         map.put("bicycle", "no");
         // disallow
-        assertEquals(0, encoder.isAllowed(way));
+        assertEquals(0, encoder.acceptWay(way));
     }
 
     private String encodeDecodeWayType( String name, OSMWay way )
@@ -296,7 +296,7 @@ public class BikeFlagEncoderTest
         Map<String, String> wayMap = new HashMap<String, String>();
         OSMWay osmWay = new OSMWay(1, wayMap);
         wayMap.put("highway", "track");
-        long allowed = encoder.isAllowed(osmWay);
+        long allowed = encoder.acceptWay(osmWay);
 
         Map<String, String> relMap = new HashMap<String, String>();
         OSMRelation osmRel = new OSMRelation(1, relMap);

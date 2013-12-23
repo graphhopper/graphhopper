@@ -47,6 +47,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
      */
     protected FootFlagEncoder()
     {
+        super(4, 1);
         restrictions = new String[]
         {
             "foot", "access"
@@ -101,10 +102,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     {
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
-
         // larger value required - ferries are faster than pedestrians
-        speedEncoder = new EncodedValue("Speed", shift, 4, 1, MEAN, FERRY);
-        shift += 4;
+        speedEncoder = new EncodedValue("Speed", shift, speedBits, speedFactor, MEAN, FERRY);
+        shift += speedBits;
 
         safeWayBit = 1 << shift++;
         return shift;
@@ -122,7 +122,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
      * @param way
      */
     @Override
-    public long isAllowed( OSMWay way )
+    public long acceptWay( OSMWay way )
     {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null)
@@ -222,7 +222,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     @Override
     public long analyzeNodeTags( OSMNode node )
     {
-
         // movable barriers block if they are not marked as passable
         if (node.hasTag("barrier", potentialBarriers)
                 && !node.hasTag(restrictions, intended)

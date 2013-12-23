@@ -25,13 +25,15 @@ package com.graphhopper.routing.util;
  */
 public class EncodedValue
 {
-    private String name;
-    private long shift;
-    private long mask;
-    private long factor;
-    private long maxValue;
-    private long defaultValue;
-    private long defaultMax;
+    private final String name;
+    private final long shift;
+    private final long mask;
+    private final long factor;
+    private final long maxValue;
+    private final long defaultValue;
+    private final boolean allowNegative;
+    private final boolean allowZero;
+    private final int bits;
 
     /**
      * Define a bit-encoded value
@@ -41,29 +43,41 @@ public class EncodedValue
      * @param bits number of bits reserved
      * @param factor scaling factor for stored values
      * @param defaultValue default value
-     * @param defaultMax default maximum value
+     * @param maxValue default maximum value
      */
-    public EncodedValue( String name, int shift, int bits, int factor, int defaultValue, int defaultMax )
+    public EncodedValue( String name, int shift, int bits, int factor, int defaultValue, int maxValue )
+    {
+        this(name, shift, bits, factor, defaultValue, maxValue, false, true);
+    }
+
+    public EncodedValue( String name, int shift, int bits, int factor, int defaultValue, int maxValue, 
+            boolean allowNegative, boolean allowZero )
     {
         this.name = name;
         this.shift = shift;
         this.factor = factor;
         this.defaultValue = defaultValue;
-        this.defaultMax = defaultMax;
+        this.bits = bits;
+        long tmpMask = (1L << bits) - 1;
+        long tmpMaxValue = tmpMask * factor;
+        if (maxValue > tmpMaxValue)
+            throw new IllegalStateException(name + " -> maxValue " + maxValue + " is too large for " + bits + " bits");
 
-        mask = (1 << (bits)) - 1;
-        maxValue = mask * factor;
+        this.maxValue = maxValue;
+        mask = tmpMask << shift;
 
-        mask <<= shift;
-
-        // test the default max value just for paranoia
-        setValue(0, defaultMax);
+        this.allowNegative = allowNegative;
+        this.allowZero = allowZero;
     }
 
     public long setValue( long flags, long value )
     {
         if (value > maxValue)
-            throw new IllegalArgumentException(name + " value too large for encoding: " + value);        
+            throw new IllegalArgumentException(name + " value too large for encoding: " + value + ", maxValue:" + maxValue);
+        if (!allowNegative && value < 0)
+            throw new IllegalArgumentException("negative " + name + " value not allowed! " + value);
+        if (!allowZero && value == 0)
+            throw new IllegalArgumentException("zero " + name + " value not allowed! " + value);
 
         // scale down value
         value /= factor;
@@ -84,13 +98,18 @@ public class EncodedValue
         return flags * factor;
     }
 
+    public int getBits()
+    {
+        return bits;
+    }
+
     public long setDefaultValue( long flags )
     {
         return setValue(flags, defaultValue);
     }
 
-    public long getDefaultMaxValue()
+    public long getMaxValue()
     {
-        return defaultMax;
+        return maxValue;
     }
 }
