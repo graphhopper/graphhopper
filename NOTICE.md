@@ -9,13 +9,14 @@ The core product includes the following software
  * Snippets regarding mmap, vint/vlong and compression from Lucene (Apache license)
  * protobuf - New BSD license
  * OSM-binary - LGPL license
+ * Osmosis - public domain, see osmosis-copying.txt under core/files
 
 tools
  * apache-compress
 
 web
- * org.json
- * com.google.inject
- * images from mapbox https://www.mapbox.com/maki/
-android
- * org.mapsforge
+ * org.json, MIT style license
+ * com.google.inject, Apache License 2.0
+ * images from mapbox https://www.mapbox.com/maki/, BSD License, see core/files
+ * android, Apache License 2.0
+ * org.mapsforge, LGPL
