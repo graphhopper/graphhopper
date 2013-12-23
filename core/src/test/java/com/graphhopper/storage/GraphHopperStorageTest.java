@@ -29,16 +29,6 @@ import org.junit.Test;
  */
 public class GraphHopperStorageTest extends AbstractGraphStorageTester
 {
-    private GraphStorage gs;
-
-    @Override
-    public void setUp()
-    {
-        super.setUp();
-        if (gs != null)
-            gs.close();
-    }
-
     @Override
     public GraphStorage createGraph( String location, int size )
     {
@@ -73,8 +63,10 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
         } catch (Exception ex)
         {
             assertFalse("AssertionError should be raised, but was " + ex.toString(), true);
+        } finally
+        {
+            gs.close();
         }
-        gs.close();
     }
 
     @Test
@@ -180,12 +172,12 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
     public void testEnsureSize()
     {
         Directory dir = new RAMDirectory();
-        gs = new GraphHopperStorage(dir, encodingManager).create(defaultSize);
+        graph = new GraphHopperStorage(dir, encodingManager).create(defaultSize);
         int testIndex = dir.find("edges").getSegmentSize() * 3;
-        gs.edge(0, testIndex, 10, true);
+        graph.edge(0, testIndex, 10, true);
 
         // test if optimize works without error
-        gs.optimize();
+        graph.optimize();
     }
 
     @Test
@@ -203,12 +195,12 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
     public void testDetachEdge()
     {
         Directory dir = new RAMDirectory();
-        gs = new GraphHopperStorage(dir, encodingManager).create(defaultSize);
-        gs.edge(0, 1, 2, true);
-        gs.edge(0, 2, 2, true);
-        gs.edge(1, 2, 2, true);
+        graph = new GraphHopperStorage(dir, encodingManager).create(defaultSize);
+        graph.edge(0, 1, 2, true);
+        graph.edge(0, 2, 2, true);
+        graph.edge(1, 2, 2, true);
 
-        EdgeIterator iter = gs.createEdgeExplorer().setBaseNode(0);
+        EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(0);
         try
         {
             // currently not possible to implement without a new property inside EdgeIterable

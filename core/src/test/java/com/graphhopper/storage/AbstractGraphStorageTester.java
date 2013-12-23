@@ -48,7 +48,7 @@ public abstract class AbstractGraphStorageTester
     EdgeExplorer carOutExplorer;
     EdgeExplorer carInExplorer;
     EdgeExplorer carAllExplorer;
-    private GraphStorage graph;
+    protected GraphStorage graph;
 
     protected GraphStorage createGraph()
     {
