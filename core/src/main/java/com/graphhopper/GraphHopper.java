@@ -746,7 +746,7 @@ public class GraphHopper implements GraphHopperAPI
         fullyLoaded = true;
     }
 
-    void close()
+    public void close()
     {
         if (graph != null)
             graph.close();

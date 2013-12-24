@@ -30,4 +30,22 @@ public class GHPoint extends CoordTrig<Void>
     {
         super(lat, lon);
     }
+
+    public static GHPoint parse( String str )
+    {
+        // if the point is in the format of lat,lon we don't need to call geocoding service
+        String[] fromStrs = str.split(",");
+        if (fromStrs.length == 2)
+        {
+            try
+            {
+                double fromLat = Double.parseDouble(fromStrs[0]);
+                double fromLon = Double.parseDouble(fromStrs[1]);
+                return new GHPoint(fromLat, fromLon);
+            } catch (Exception ex)
+            {
+            }
+        }
+        return null;
+    }
 }
