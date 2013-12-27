@@ -21,7 +21,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.graphhopper.reader.OSMWay;
+
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
@@ -199,5 +201,61 @@ public class CarFlagEncoderTest
         assertTrue(encoder.isBackward(swappedFlags));
 
         assertEquals(0, encoder.swapDirection(0));
+    }
+    
+    @Test
+    public void testTurnFlagEncoding_noCosts() {
+        encoder.defineTurnBits(0, 0, 0);
+        
+        long flags_r0 = encoder.getTurnFlags(true, 0);
+        long flags_0 = encoder.getTurnFlags(false, 0);
+        
+        long flags_r20 = encoder.getTurnFlags(true, 20);
+        long flags_20 = encoder.getTurnFlags(false, 20);
+        
+        assertEquals(0, encoder.getTurnCosts(flags_r0));
+        assertEquals(0, encoder.getTurnCosts(flags_0));
+        
+        assertEquals(0, encoder.getTurnCosts(flags_r20));
+        assertEquals(0, encoder.getTurnCosts(flags_20));
+        
+        assertTrue(encoder.isTurnRestricted(flags_r0));
+        assertFalse(encoder.isTurnRestricted(flags_0));
+        
+        assertTrue(encoder.isTurnRestricted(flags_r20));
+        assertFalse(encoder.isTurnRestricted(flags_20));
+    }
+    
+    @Test
+    public void testTurnFlagEncoding_withCosts() {
+        //arbitrary shift, 7 turn cost bits: [0,127]
+        encoder.defineTurnBits(0, 2, 7);
+        
+        long flags_r0 = encoder.getTurnFlags(true, 0);
+        long flags_0 = encoder.getTurnFlags(false, 0);
+        
+        long flags_r20 = encoder.getTurnFlags(true, 20);
+        long flags_20 = encoder.getTurnFlags(false, 20);
+        
+        long flags_r220 = encoder.getTurnFlags(true, 220);
+        long flags_220 = encoder.getTurnFlags(false, 220);
+        
+        assertEquals(0, encoder.getTurnCosts(flags_r0));
+        assertEquals(0, encoder.getTurnCosts(flags_0));
+        
+        assertEquals(20, encoder.getTurnCosts(flags_r20));
+        assertEquals(20, encoder.getTurnCosts(flags_20));
+        
+        assertEquals(127, encoder.getTurnCosts(flags_r220)); // max costs is 2^7-1 = 127
+        assertEquals(127, encoder.getTurnCosts(flags_220));
+        
+        assertTrue(encoder.isTurnRestricted(flags_r0));
+        assertFalse(encoder.isTurnRestricted(flags_0));
+        
+        assertTrue(encoder.isTurnRestricted(flags_r20));
+        assertFalse(encoder.isTurnRestricted(flags_20));
+        
+        assertTrue(encoder.isTurnRestricted(flags_r220));
+        assertFalse(encoder.isTurnRestricted(flags_220));
     }
 }

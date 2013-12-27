@@ -17,15 +17,22 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMNode;
-import com.graphhopper.reader.OSMWay;
-import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.Helper;
-
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.graphhopper.reader.OSMNode;
+import com.graphhopper.reader.OSMReader;
+import com.graphhopper.reader.OSMTurnRelation;
+import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.OSMRelation;
+import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.Helper;
 
 /**
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
@@ -36,9 +43,12 @@ import org.slf4j.LoggerFactory;
  * @author Nop
  * @see EncodingManager
  */
-public abstract class AbstractFlagEncoder implements FlagEncoder
+public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncoder
 {
     private final static Logger logger = LoggerFactory.getLogger(AbstractFlagEncoder.class);
+
+    /* Edge Flag Encoder fields */
+
     private long nodeBitMask;
     private long wayBitMask;
     private long relBitMask;
@@ -49,7 +59,22 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     // bit to signal that way is accepted
     protected long acceptBit = 0;
     protected long ferryBit = 0;
-    // restriction definitions
+
+    /* Turn Cost Flag Encoder fields */
+
+    protected int maxCostsBits;
+    protected long costsMask;
+
+    protected long restrictionBit;
+    protected long costShift;
+    
+    /* processing properties (to be initialized lazy when needed) */
+    
+    protected EdgeExplorer edgeOutExplorer;
+    protected EdgeExplorer edgeInExplorer;
+
+    /* restriction definitions */
+
     protected String[] restrictions;
     protected HashSet<String> intended = new HashSet<String>();
     protected HashSet<String> restrictedValues = new HashSet<String>(5);
@@ -130,6 +155,29 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     }
 
     /**
+     * Defines the bits reserved for storing turn restriction and turn cost
+     * 
+     * @param shift bit offset for the first bit used by this encoder
+     * @param numberCostsBits number of bits reserved for storing costs (range of values: [0, 2^numberCostBits - 1] seconds )
+     * @return incremented shift value pointing behind the last used bit
+     */
+    public int defineTurnBits( int index, int shift, int numberCostsBits )
+    {
+        this.maxCostsBits = numberCostsBits;
+
+        int mask = 0;
+        for (int i = 0; i < this.maxCostsBits; i++)
+        {
+            mask |= (1 << i);
+        }
+        this.costsMask = mask;
+
+        restrictionBit = 1 << shift;
+        costShift = shift + 1;
+        return shift + maxCostsBits + 1;
+    }
+
+    /**
      * Analyze the properties of a relation and create the routing flags for the second read step
      * <p/>
      */
@@ -156,13 +204,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     public long analyzeNodeTags( OSMNode node )
     {
         // movable barriers block if they are not marked as passable
-        if (node.hasTag("barrier", potentialBarriers)
-                && !node.hasTag(restrictions, intended)
-                && !node.hasTag("locked", "no"))
+        if (node.hasTag("barrier", potentialBarriers) && !node.hasTag(restrictions, intended) && !node.hasTag("locked", "no"))
             return directionBitMask;
 
-        if ((node.hasTag("highway", "ford") || node.hasTag("ford"))
-                && !node.hasTag(restrictions, intended))
+        if ((node.hasTag("highway", "ford") || node.hasTag("ford")) && !node.hasTag(restrictions, intended))
             return directionBitMask;
 
         return 0;
@@ -272,8 +317,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
             return false;
 
         // only rely on the string
-//        if (getClass() != obj.getClass())
-//            return false;
+        //        if (getClass() != obj.getClass())
+        //            return false;
         final AbstractFlagEncoder other = (AbstractFlagEncoder) obj;
         if (this.directionBitMask != other.directionBitMask)
             return false;
@@ -443,4 +488,39 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     {
         return nodeBitMask;
     }
+
+    @Override
+    public boolean isTurnRestricted( long flag )
+    {
+        return (flag & restrictionBit) != 0;
+    }
+
+    @Override
+    public int getTurnCosts( long flag )
+    {
+        long result = (flag >> costShift) & costsMask;
+        if (result >= Math.pow(2, maxCostsBits) || result < 0)
+        {
+            throw new IllegalStateException("Wrong encoding of turn costs");
+        }
+        return Long.valueOf(result).intValue();
+    }
+
+    @Override
+    public long getTurnFlags( boolean restricted, int costs )
+    {
+        costs = Math.min(costs, (int) (Math.pow(2, maxCostsBits) - 1));
+        long encode = costs << costShift;
+        if (restricted)
+        {
+            encode |= restrictionBit;
+        }
+        return encode;
+    }
+
+    public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
+    {
+        return new ArrayList<OSMTurnRelation.TurnCostTableEntry>();
+    }
+
 }
