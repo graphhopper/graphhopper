@@ -255,9 +255,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // => enable it but call not so often
         boolean periodicUpdate = true;
         if (periodicUpdatesCount == 0)
-        {
             periodicUpdate = false;
-        }
+        
         int updateCounter = 0;
         StopWatch periodSW = new StopWatch();
 
@@ -291,9 +290,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     {
                         PriorityNode pNode = refs[node];
                         if (g.getLevel(node) != 0)
-                        {
                             continue;
-                        }
+                        
                         pNode.priority = calculatePriority(node);
                         sortedNodes.insert(node, pNode.priority);
                     }
@@ -336,15 +334,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             g.setLevel(wn.node, level);
             level++;
 
-            EdgeSkipIterator iter = (EdgeSkipIterator) vehicleAllExplorer.setBaseNode(wn.node);
+            EdgeSkipIterator iter = vehicleAllExplorer.setBaseNode(wn.node);
             while (iter.next())
             {
                 int nn = iter.getAdjNode();
                 if (g.getLevel(nn) != 0)
-                // already contracted no update necessary
-                {
+                    // already contracted no update necessary
                     continue;
-                }
 
                 if (neighborUpdate && rand.nextInt(100) < neighborUpdatePercentage)
                 {
@@ -353,9 +349,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     int oldPrio = neighborWn.priority;
                     neighborWn.priority = calculatePriority(nn);
                     if (neighborWn.priority != oldPrio)
-                    {
                         sortedNodes.update(nn, oldPrio, neighborWn.priority);
-                    }
+                    
                     neighborSW.stop();
                 }
 
