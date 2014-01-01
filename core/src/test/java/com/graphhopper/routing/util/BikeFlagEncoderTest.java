@@ -38,7 +38,7 @@ import static org.junit.Assert.*;
  */
 public class BikeFlagEncoderTest
 {
-    private final BikeFlagEncoder encoder = (BikeFlagEncoder) new EncodingManager("CAR,BIKE").getEncoder("BIKE");
+    private final BikeFlagEncoder encoder = (BikeFlagEncoder) new EncodingManager("BIKE,MTB,RACINGBIKE").getEncoder("BIKE");
 
     @Test
     public void testGetSpeed()
@@ -78,6 +78,11 @@ public class BikeFlagEncoderTest
 
         way.setTag("surface", "paved");
         assertEquals(20, encoder.getSpeed(way));
+        
+        way.clearTags();
+        way.setTag("highway", "path");
+        way.setTag("surface", "ground");
+        assertEquals(4, encoder.getSpeed(way));
     }
 
     @Test
@@ -201,7 +206,7 @@ public class BikeFlagEncoderTest
 
     private String encodeDecodeWayType( String name, OSMWay way )
     {
-        long allowed = 1;
+        long allowed = encoder.acceptBit;
         long flags = encoder.handleWayTags(way, allowed, 0);
         int pavement = encoder.getPavementCode(flags);
         int wayType = encoder.getWayTypeCode(flags);
