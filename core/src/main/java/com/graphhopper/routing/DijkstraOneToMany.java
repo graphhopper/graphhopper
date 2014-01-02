@@ -23,7 +23,6 @@ import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIterator;
-import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import java.util.Arrays;
 
@@ -36,7 +35,7 @@ import java.util.Arrays;
 public class DijkstraOneToMany extends AbstractRoutingAlgorithm
 {
     protected double[] weights;
-    private final TIntList changedNodes;
+    private final TIntArrayList changedNodes;
     private int[] parents;
     private int[] edgeIds;
     private IntDoubleBinHeap heap;
@@ -130,7 +129,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             }
 
             heap.clear();
-            changedNodes.clear();
+            changedNodes.reset();
 
             currNode = from;
             weights[currNode] = 0;
