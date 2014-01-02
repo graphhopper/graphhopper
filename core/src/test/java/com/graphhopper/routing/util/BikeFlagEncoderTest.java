@@ -19,16 +19,11 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.TranslationMap.Translation;
-import static com.graphhopper.util.TranslationMapTest.SINGLETON;
 import org.junit.Test;
 
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.Assert.*;
 
@@ -36,9 +31,14 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class BikeFlagEncoderTest
+public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 {
-    private final BikeFlagEncoder encoder = (BikeFlagEncoder) new EncodingManager("BIKE,MTB,RACINGBIKE").getEncoder("BIKE");
+    @Override
+    BikeFlagCommonEncoder createBikeEncoder(String encoderlist, String encoder)
+    {
+        BikeFlagCommonEncoder bikeencoder = (BikeFlagEncoder) new EncodingManager(encoderlist).getEncoder("BIKE");
+        return bikeencoder;
+    }
 
     @Test
     public void testGetSpeed()
@@ -86,196 +86,32 @@ public class BikeFlagEncoderTest
     }
 
     @Test
-    public void testAccess()
-    {
-        Map<String, String> map = new HashMap<String, String>();
-        OSMWay way = new OSMWay(1, map);
-
-        map.put("highway", "motorway");
-        assertFalse(encoder.acceptWay(way) > 0);
-
-        map.put("highway", "footway");
-        assertTrue(encoder.acceptWay(way) > 0);
-
-        map.put("bicycle", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
-
-        map.put("highway", "footway");
-        map.put("bicycle", "yes");
-        assertTrue(encoder.acceptWay(way) > 0);
-
-        map.put("highway", "pedestrian");
-        map.put("bicycle", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
-
-        map.put("highway", "pedestrian");
-        map.put("bicycle", "yes");
-        assertTrue(encoder.acceptWay(way) > 0);
-
-        map.put("bicycle", "yes");
-        map.put("highway", "cycleway");
-        assertTrue(encoder.acceptWay(way) > 0);
-
-        map.clear();
-        map.put("highway", "path");
-        assertTrue(encoder.acceptWay(way) > 0);
-
-        map.put("highway", "path");
-        map.put("bicycle", "yes");
-        assertTrue(encoder.acceptWay(way) > 0);
-        map.clear();
-
-        map.put("highway", "track");
-        map.put("bicycle", "yes");
-        assertTrue(encoder.acceptWay(way) > 0);
-        map.clear();
-
-        map.put("highway", "track");
-        assertTrue(encoder.acceptWay(way) > 0);
-
-        map.put("mtb", "yes");
-        assertTrue(encoder.acceptWay(way) > 0);
-
-        map.clear();
-        map.put("highway", "path");
-        map.put("foot", "official");
-        assertTrue(encoder.acceptWay(way) > 0);
-
-        map.put("bicycle", "official");
-        assertTrue(encoder.acceptWay(way) > 0);
-
-        map.clear();
-        map.put("highway", "service");
-        map.put("access", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
-
-        map.clear();
-        map.put("highway", "tertiary");
-        map.put("motorroad", "yes");
-        assertFalse(encoder.acceptWay(way) > 0);
-
-        map.clear();
-        map.put("highway", "track");
-        map.put("ford", "yes");
-        assertFalse(encoder.acceptWay(way) > 0);
-        map.put("bicycle", "yes");
-        assertTrue(encoder.acceptWay(way) > 0);
-
-        map.clear();
-        map.put("route", "ferry");
-        assertTrue(encoder.acceptWay(way) > 0);
-        map.put("bicycle", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
-
-        map.clear();
-        map.put("route", "ferry");
-        map.put("foot", "yes");
-        assertFalse(encoder.acceptWay(way) > 0);
-    }
-
-    @Test
-    public void testTramStations()
-    {
-        Map<String, String> map = new HashMap<String, String>();
-        OSMWay way = new OSMWay(1, map);
-        map.put("highway", "secondary");
-        map.put("railway", "rail");
-        // disallow rail
-        assertEquals(0, encoder.acceptWay(way));
-
-        way = new OSMWay(1, map);
-        map.put("highway", "secondary");
-        map.put("railway", "station");
-        // disallow stations
-        assertEquals(0, encoder.acceptWay(way));
-
-        way = new OSMWay(1, map);
-        map.put("highway", "secondary");
-        map.put("railway", "station");
-        map.put("bicycle", "yes");
-        // allow stations if explicitely tagged
-        assertNotSame(0, encoder.acceptWay(way));
-
-        way = new OSMWay(1, map);
-        map.put("highway", "secondary");
-        map.put("railway", "station");
-        map.put("bicycle", "no");
-        // disallow
-        assertEquals(0, encoder.acceptWay(way));
-    }
-
-    private String encodeDecodeWayType( String name, OSMWay way )
-    {
-        long allowed = encoder.acceptBit;
-        long flags = encoder.handleWayTags(way, allowed, 0);
-        int pavement = encoder.getPavementCode(flags);
-        int wayType = encoder.getWayTypeCode(flags);
-
-        Translation enMap = SINGLETON.getWithFallBack(Locale.UK);
-        return InstructionList.getWayName(name, pavement, wayType, enMap);
-    }
-
-    @Test
     public void testHandleWayTags()
     {
         Map<String, String> wayMap = new HashMap<String, String>();
         OSMWay way = new OSMWay(1, wayMap);
+        String wayType;
+        
         wayMap.put("highway", "track");
-        String wayType = encodeDecodeWayType("", way);
-        assertEquals("pushing section, unpaved", wayType);
-
-        wayMap.put("highway", "steps");
         wayType = encodeDecodeWayType("", way);
-        assertEquals("pushing section", wayType);
-
-        wayMap.put("highway", "steps");
-        wayType = encodeDecodeWayType("Famous steps", way);
-        assertEquals("Famous steps, pushing section", wayType);
-
+        assertEquals("pushing section, unpaved", wayType);
+        
+        wayMap.clear();
         wayMap.put("highway", "path");
         wayType = encodeDecodeWayType("", way);
         assertEquals("pushing section, unpaved", wayType);
 
-        wayMap.put("highway", "footway");
-        wayType = encodeDecodeWayType("", way);
-        assertEquals("pushing section", wayType);
-
-        wayMap.put("highway", "footway");
-        wayMap.put("surface", "pebblestone");
-        wayType = encodeDecodeWayType("", way);
-        assertEquals("pushing section", wayType);
-
+        wayMap.clear();
         wayMap.put("highway", "path");
         wayMap.put("surface", "grass");
         wayType = encodeDecodeWayType("", way);
         assertEquals("pushing section, unpaved", wayType);
 
+        wayMap.clear();
         wayMap.put("highway", "path");
         wayMap.put("surface", "concrete");
         wayType = encodeDecodeWayType("", way);
         assertEquals("pushing section", wayType);
-
-        wayMap.put("highway", "residential");
-        wayType = encodeDecodeWayType("", way);
-        assertEquals("road", wayType);
-
-        wayMap.put("highway", "cycleway");
-        wayType = encodeDecodeWayType("", way);
-        assertEquals("cycleway", wayType);
-
-        wayMap.put("surface", "grass");
-        wayType = encodeDecodeWayType("", way);
-        assertEquals("cycleway, unpaved", wayType);
-
-        wayMap.put("surface", "asphalt");
-        wayType = encodeDecodeWayType("", way);
-        assertEquals("cycleway", wayType);
-
-        wayMap.put("highway", "footway");
-        wayMap.put("bicycle", "yes");
-        wayMap.put("surface", "grass");
-        wayType = encodeDecodeWayType("", way);
-        assertEquals("cycleway, unpaved", wayType);
 
         wayMap.clear();
         wayMap.put("highway", "track");
@@ -285,19 +121,14 @@ public class BikeFlagEncoderTest
         wayType = encodeDecodeWayType("", way);
         assertEquals("pushing section", wayType);
 
+        wayMap.clear();
         wayMap.put("highway", "track");
         wayMap.put("foot", "yes");
         wayMap.put("surface", "paved");
         wayMap.put("tracktype", "grade2");
         wayType = encodeDecodeWayType("", way);
         assertEquals("pushing section, unpaved", wayType);
-
-        wayMap.clear();
-        wayMap.put("highway", "footway");
-        wayMap.put("bicycle", "yes");
-        wayMap.put("surface", "grass");
-        wayType = encodeDecodeWayType("", way);
-        assertEquals("cycleway, unpaved", wayType);
+        
     }
 
     @Test
