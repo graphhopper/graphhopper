@@ -17,7 +17,6 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.storage.Graph;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
@@ -42,7 +41,7 @@ import org.slf4j.LoggerFactory;
  */
 public class Helper
 {
-    private static DistanceCalc dce = new DistanceCalcEarth();
+    private static final DistanceCalc dce = new DistanceCalcEarth();
     private static final Logger logger = LoggerFactory.getLogger(Helper.class);
     public static final int MB = 1 << 20;
 

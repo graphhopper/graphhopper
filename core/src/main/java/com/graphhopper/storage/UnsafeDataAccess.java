@@ -47,7 +47,9 @@ public class UnsafeDataAccess extends AbstractDataAccess
     static
     {
         try
-        {
+        {                           
+            // On Android getting Unsafe fails as the field is named THE_ONE but Android has no memory allocation methods so it won't work nevertheless.
+            // On Android we need JNI+malloc https://github.com/libgdx/libgdx/blob/5945211a88570ced7eafce95c68f6f1f7124cd23/gdx/src/com/badlogic/gdx/utils/BufferUtils.java#L287
             @SuppressWarnings("all")
             Field field = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
             field.setAccessible(true);
