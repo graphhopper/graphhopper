@@ -36,7 +36,7 @@ import org.junit.Test;
 public abstract class AbstractBikeFlagEncoderTester
 {
     protected  BikeFlagCommonEncoder encoder;
-    String defaultencoderlist = "BIKE,MTB,RACINGBIKE";
+    String defaultencoderlist = "BIKE";
     String defaultencoder = "BIKE";
     
     AbstractBikeFlagEncoderTester () {

@@ -37,7 +37,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
 {
     private static final int DEFAULT_REL_CODE = 4;
     public static final int PUSHING_SECTION_SPEED = 4;
-    private int safeWayBit = 0;
+    // private int safeWayBit = 0;
     private int unpavedBit = 0;
     // Pushing section heighways are parts where you need to get off your bike and push it (German: Schiebestrecke)
     private final HashSet<String> pushingSections = new HashSet<String>();
@@ -81,7 +81,9 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
         absoluteBarriers.add("turnstile");
         // very dangerous
         // acceptedRailways.remove("tram");
-    SAFE_HIGHWAY_TAGS.add("cycleway");
+
+/*        
+        SAFE_HIGHWAY_TAGS.add("cycleway");
         SAFE_HIGHWAY_TAGS.add("path");
         SAFE_HIGHWAY_TAGS.add("footway");
         SAFE_HIGHWAY_TAGS.add("pedestrian");
@@ -91,7 +93,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
         SAFE_HIGHWAY_TAGS.add("unclassified");
         SAFE_HIGHWAY_TAGS.add("residential");
         SAFE_HIGHWAY_TAGS.add("steps");
-
+*/
         UNPAVED_SURFACE_TAGS.add("unpaved");
         UNPAVED_SURFACE_TAGS.add("gravel");
         UNPAVED_SURFACE_TAGS.add("ground");
@@ -116,7 +118,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
 
         setCyclingNetworkPreference("deprecated", RelationMapCode.AVOID_AT_ALL_COSTS.getValue());        
     }
-
+    
     @Override
     public int defineWayBits( int index, int shift )
     {
@@ -125,7 +127,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
         speedEncoder = new EncodedValue("Speed", shift, speedBits, speedFactor, HIGHWAY_SPEED.get("cycleway"), 30);
         shift += speedBits;
 
-        safeWayBit = 1 << shift++;
+        //safeWayBit = 1 << shift++;
         unpavedBit = 1 << shift++;
         // 2 bits
         wayTypeEncoder = new EncodedValue("WayType", shift, 2, 1, 0, 3);
@@ -258,12 +260,15 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
                 encoded |= directionBitMask;
             }
 
-            // mark safe ways or ways with cycle lanes
             String highway = way.getTag("highway");
+
+            /*            
+            // mark safe ways or ways with cycle lanes
             if (SAFE_HIGHWAY_TAGS.contains(highway) || way.hasTag("cycleway"))
             {
                 encoded |= safeWayBit;
             }
+            */
 
             // mark unpaved bit
             String surfaceTag = way.getTag("surface");

@@ -77,5 +77,5 @@ public class BikeFlagEncoder extends BikeFlagCommonEncoder
     public String toString()
     {
         return "bike";
-    }    
+    }
 }

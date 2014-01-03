@@ -36,7 +36,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     @Override
     BikeFlagCommonEncoder createBikeEncoder(String encoderlist, String encoder)
     {
-        BikeFlagCommonEncoder bikeencoder = (BikeFlagEncoder) new EncodingManager("BIKE,MTB").getEncoder("BIKE");
+        BikeFlagCommonEncoder bikeencoder = (BikeFlagEncoder) new EncodingManager("BIKE,MTB,RACINGBIKE").getEncoder("BIKE");
         return bikeencoder;
     }
 

@@ -69,6 +69,7 @@ public class EncodingManager
 
     private int nextWayBit = 0;
     private int nextNodeBit = 0;
+    private int nextRelBit = 0;
 
     public EncodingManager()
     {
@@ -164,11 +165,11 @@ public class EncodingManager
         encoder.setWayBitMask(usedBits - nextWayBit, nextWayBit);
         nextWayBit = usedBits;
 
-        usedBits = encoder.defineRelationBits(encoderCount, nextWayBit);
+        usedBits = encoder.defineRelationBits(encoderCount, nextRelBit);
         if (usedBits >= MAX_BITS)
             throw new IllegalArgumentException("Encoders are requesting more than " + MAX_BITS + " bits of relation flags");
-        encoder.setRelBitMask(usedBits - nextWayBit, nextWayBit);
-        nextWayBit = usedBits;
+        encoder.setRelBitMask(usedBits - nextRelBit, nextRelBit);
+        nextRelBit = usedBits;
 
         edgeEncoderNextBit = usedBits;
     }
@@ -272,7 +273,7 @@ public class EncodingManager
         for (int i = 0; i < encoderCount; i++)
         {
             AbstractFlagEncoder encoder = edgeEncoders.get(i);
-            flags |= encoder.handleWayTags(way, includeWay, relationFlags & encoder.getWayBitMask());
+            flags |= encoder.handleWayTags(way, includeWay, relationFlags & encoder.getRelBitMask());
         }
 
         return flags;
