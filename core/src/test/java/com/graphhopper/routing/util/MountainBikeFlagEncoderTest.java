@@ -31,7 +31,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     @Override
     BikeFlagCommonEncoder createBikeEncoder(String encoderlist, String encoder)
     {
-        BikeFlagCommonEncoder bikeencoder = (MountainBikeFlagEncoder) new EncodingManager(encoderlist).getEncoder("MTB");
+        BikeFlagCommonEncoder bikeencoder = (MountainBikeFlagEncoder) new EncodingManager("BIKE,MTB").getEncoder("MTB");
         return bikeencoder;
     }
 
@@ -132,7 +132,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         Map<String, String> wayMap = new HashMap<String, String>();
         OSMWay osmWay = new OSMWay(1, wayMap);
         wayMap.put("highway", "track");
-        long allowed = encoder.acceptWay(osmWay);
+        long allowed=encoder.acceptBit;
 
         Map<String, String> relMap = new HashMap<String, String>();
         OSMRelation osmRel = new OSMRelation(1, relMap);
@@ -165,26 +165,6 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(26, encoder.getSpeed(flags));
 
-        // test max and min speed
-        final AtomicInteger fakeSpeed = new AtomicInteger(40);
-        BikeFlagEncoder fakeEncoder = new BikeFlagEncoder()
-        {
-            @Override
-            int relationWeightCodeToSpeed( int highwaySpeed, int relationCode )
-            {
-                return fakeSpeed.get();
-            }
-        };
-        // call necessary register
-        new EncodingManager().registerEdgeFlagEncoder(fakeEncoder);
-
-        flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
-        assertEquals(0, fakeEncoder.getSpeed(flags));
-
-        fakeSpeed.set(-2);
-        flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
-        assertEquals(0, fakeEncoder.getSpeed(flags));
-
         // PREFER relation, but tertiary road
         // => no pushing section but road wayTypeCode and faster
         wayMap.clear();
@@ -196,6 +176,28 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(18, encoder.getSpeed(flags));
         assertEquals(0, encoder.getWayTypeCode(flags));
+        
+        // test max and min speed
+        final AtomicInteger fakeSpeed = new AtomicInteger(40);
+        MountainBikeFlagEncoder fakeEncoder = new MountainBikeFlagEncoder()
+        {
+            @Override
+            int relationWeightCodeToSpeed( int highwaySpeed, int relationCode )
+            {
+                return fakeSpeed.get();
+            }
+        };
+        // call necessary register
+        new EncodingManager().registerEdgeFlagEncoder(fakeEncoder);
+        allowed = fakeEncoder.acceptBit;
+
+        flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
+        assertEquals(30, fakeEncoder.getSpeed(flags));
+
+        fakeSpeed.set(-2);
+        flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
+        assertEquals(0, fakeEncoder.getSpeed(flags));
+        
     }
 }
 
