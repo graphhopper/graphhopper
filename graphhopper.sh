@@ -174,39 +174,23 @@ GRAPH=$NAME-gh
 VERSION=`grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1`
 JAR=core/target/graphhopper-$VERSION-jar-with-dependencies.jar
 
-# file without path
-TMP=$(basename "$FILE")
-TMP="${TMP%.*}"
-TMP="${TMP%.*}"
-
-
-if [ "x$TMP" = "xunterfranken" ]; then
- LINK="http://download.geofabrik.de/openstreetmap/europe/germany/bayern/unterfranken.osm.bz2"
- JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx200m -Xms200m -server" 
-elif [ "x$TMP" = "xgermany" ]; then
- LINK=http://download.geofabrik.de/openstreetmap/europe/germany.osm.bz2
-
- # Info: for import we need a more memory than for just loading it
- JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1800m -Xms1800m -server"
-else 
- LINK=`echo $NAME | tr '_' '/'`
- if [ "x$FILE" == "x-" ]; then
+LINK=`echo $NAME | tr '_' '/'`
+if [ "x$FILE" == "x-" ]; then
    LINK=
- elif [ ${FILE: -4} == ".osm" ]; then 
+elif [ ${FILE: -4} == ".osm" ]; then 
    LINK="http://download.geofabrik.de/$LINK-latest.osm.bz2"
- elif [ ${FILE: -4} == ".ghz" ]; then
+elif [ ${FILE: -4} == ".ghz" ]; then
    LINK="http://graphhopper.com/public/maps/0.1/$FILE"      
- elif [ ${FILE: -4} == ".pbf" ]; then
+elif [ ${FILE: -4} == ".pbf" ]; then
    LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
- else
+else
    # e.g. if directory ends on '-gh'
    LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
- fi
- if [ "x$JAVA_OPTS" = "x" ]; then
-  JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1000m -Xms1000m -server"
- fi
 fi
 
+if [ "x$JAVA_OPTS" = "x" ]; then
+  JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1000m -Xms1000m -server"
+fi
 
 
 ensureOsmXml
