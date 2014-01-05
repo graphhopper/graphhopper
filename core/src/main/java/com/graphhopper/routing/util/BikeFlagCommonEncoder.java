@@ -32,6 +32,7 @@ import java.util.Set;
  * <p/>
  * @author Peter Karich
  * @author Nop
+ * @author ratrun
  */
 public class BikeFlagCommonEncoder extends AbstractFlagEncoder
 {
