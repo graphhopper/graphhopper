@@ -253,9 +253,9 @@ public class EncodingManagerTest
         manager.registerEncoder(car);
 
         //turn cost entries for car and foot are for the same relations (same viaNode, edgeFrom and edgeTo), turn cost entry for bike is for another relation (different viaNode) 
-        turnCostEntry_car.nodeVia = 1;
-        turnCostEntry_foot.nodeVia = 1;
-        turnCostEntry_bike.nodeVia = 2;
+        turnCostEntry_car.edgeFrom = 1;
+        turnCostEntry_foot.edgeFrom = 1;
+        turnCostEntry_bike.edgeFrom = 2;
 
         //calculating arbitrary flags using the encoders
         turnCostEntry_car.flags = car.getTurnFlags(true, 20);
@@ -273,7 +273,7 @@ public class EncodingManagerTest
 
         for (TurnCostTableEntry entry : entries)
         {
-            if (entry.nodeVia == 1)
+            if (entry.edgeFrom == 1)
             { //the first entry provides turn flags for car and foot only 
                 assertEquals(assertFlag1, entry.flags);
                 assertTrue(car.isTurnRestricted(entry.flags));
@@ -283,7 +283,7 @@ public class EncodingManagerTest
                 assertEquals(20, car.getTurnCosts(entry.flags));
                 assertEquals(0, foot.getTurnCosts(entry.flags));
                 assertEquals(0, bike.getTurnCosts(entry.flags));
-            } else if (entry.nodeVia == 2)
+            } else if (entry.edgeFrom == 2)
             { //the 2nd entry provides turn flags for bike only
                 assertEquals(assertFlag2, entry.flags);
                 assertFalse(car.isTurnRestricted(entry.flags));

@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing.util;
 
+import gnu.trove.map.TLongObjectMap;
+import gnu.trove.map.hash.TLongObjectHashMap;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -398,7 +401,7 @@ public class EncodingManager
 
     public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
     {
-        Map<Integer, TurnCostTableEntry> entries = new HashMap<Integer, TurnCostTableEntry>();
+        TLongObjectMap<TurnCostTableEntry> entries = new TLongObjectHashMap<OSMTurnRelation.TurnCostTableEntry>();
 
         int encoderCount = edgeEncoders.size();
         for (int i = 0; i < encoderCount; i++)
@@ -416,6 +419,6 @@ public class EncodingManager
 
         }
 
-        return entries.values();
+        return entries.valueCollection();
     }
 }

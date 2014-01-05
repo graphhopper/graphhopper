@@ -389,25 +389,4 @@ public class Helper
 
         return Character.toUpperCase(sayText.charAt(0)) + sayText.substring(1);
     }
-    
-    /**
-     * @return a long composed of two integers
-     */
-    public static long intToLong(int left, int right) {
-        return (long) left << 32 | (long) right & 0xFFFFFFFFL;
-    }
-
-    /**
-     * @return the first half (first 32 bit) of a long 
-     */
-    public static int longToIntLeft(long number) {
-        return (int) (number >>> 32);
-    }
-
-    /**
-     * @return the second half (last 32 bit) of a long
-     */
-    public static int longToIntRight(long number) {
-        return (int) (number & 0xFFFFFFFFL);
-    }
 }

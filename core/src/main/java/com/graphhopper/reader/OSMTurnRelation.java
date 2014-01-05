@@ -47,17 +47,16 @@ public class OSMTurnRelation extends OSMRelation
     /**
      * transforms this relation into a collection of node cost entries
      * 
-     * @param g the graph which provides node cost tables
      * @param edgeOutFilter an edge filter which only allows outgoing edges
      * @param edgeInFilter an edge filter which only allows incoming edges
      * @return a collection of node cost entries which can be added to the graph later
      */
-    public static Collection<TurnCostTableEntry> getRestrictionAsEntries( OSMTurnRelation turn, TurnCostEncoder encoder,
+    public Collection<TurnCostTableEntry> getRestrictionAsEntries( TurnCostEncoder encoder,
             EdgeExplorer edgeOutExplorer, EdgeExplorer edgeInExplorer, OSMReader osmReader )
     {
         final Set<TurnCostTableEntry> entries = new HashSet<TurnCostTableEntry>();
 
-        int viaNodeId = osmReader.getInternalNodeIdOfOsmNode(turn.viaOsm);
+        int viaNodeId = osmReader.getInternalNodeIdOfOsmNode(this.viaOsm);
 
         try
         {
@@ -73,7 +72,7 @@ public class OSMTurnRelation extends OSMRelation
 
             while (iter.next())
             {
-                if (osmReader.getOsmIdOfInternalEdge(iter.getEdge()) == turn.fromOsm)
+                if (osmReader.getOsmIdOfInternalEdge(iter.getEdge()) == this.fromOsm)
                 {
                     edgeIdFrom = iter.getEdge();
                     break;
@@ -84,14 +83,14 @@ public class OSMTurnRelation extends OSMRelation
             iter = edgeOutExplorer.setBaseNode(viaNodeId);
             if (edgeIdFrom != EdgeIterator.NO_EDGE)
             {
-                if (turn.restriction == TYPE_NO_U_TURN || turn.restriction == TYPE_NO_LEFT_TURN || turn.restriction == TYPE_NO_RIGHT_TURN
-                        || turn.restriction == TYPE_NO_STRAIGHT_ON)
+                if (this.restriction == TYPE_NO_U_TURN || this.restriction == TYPE_NO_LEFT_TURN || this.restriction == TYPE_NO_RIGHT_TURN
+                        || this.restriction == TYPE_NO_STRAIGHT_ON)
                 {
                     // if we have a restriction of TYPE_NO_* we add restriction only to
                     // the given turn (from, via, to)  
                     while (iter.next())
                     {
-                        if (iter.getEdge() != edgeIdFrom && osmReader.getOsmIdOfInternalEdge(iter.getEdge()) == turn.toOsm)
+                        if (iter.getEdge() != edgeIdFrom && osmReader.getOsmIdOfInternalEdge(iter.getEdge()) == this.toOsm)
                         {
                             final TurnCostTableEntry entry = new TurnCostTableEntry();
                             entry.nodeVia = viaNodeId;
@@ -102,14 +101,14 @@ public class OSMTurnRelation extends OSMRelation
                         }
                     }
 
-                } else if (turn.restriction == TYPE_ONLY_RIGHT_TURN || turn.restriction == TYPE_ONLY_LEFT_TURN
-                        || turn.restriction == TYPE_ONLY_STRAIGHT_ON)
+                } else if (this.restriction == TYPE_ONLY_RIGHT_TURN || this.restriction == TYPE_ONLY_LEFT_TURN
+                        || this.restriction == TYPE_ONLY_STRAIGHT_ON)
                 {
                     // if we have a restriction of TYPE_ONLY_* we add restriction to
                     // any turn possibility (from, via, * ) except the given turn
                     while (iter.next())
                     {
-                        if (iter.getEdge() != edgeIdFrom && osmReader.getOsmIdOfInternalEdge(iter.getEdge()) != turn.toOsm)
+                        if (iter.getEdge() != edgeIdFrom && osmReader.getOsmIdOfInternalEdge(iter.getEdge()) != this.toOsm)
                         {
                             final TurnCostTableEntry entry = new TurnCostTableEntry();
                             entry.nodeVia = viaNodeId;
@@ -124,7 +123,7 @@ public class OSMTurnRelation extends OSMRelation
         } catch (Exception e)
         {
             LoggerFactory.getLogger(OSMTurnRelation.class).warn(
-                    "Could not built node costs table for relation of node [osmId:" + turn.viaOsm + "].", e);
+                    "Could not built node costs table for relation of node [osmId:" + this.viaOsm + "].", e);
         }
         return entries;
     }
@@ -140,15 +139,11 @@ public class OSMTurnRelation extends OSMRelation
         public long flags;
 
         /**
-         * @return an unique id if (edgeFrom, edgeTo, nodeVia) to avoid doubled entries during parsing
+         * @return an unique id (edgeFrom, edgeTo) to avoid doubled entries during parsing
          */
-        public int getItemId()
+        public long getItemId()
         {
-            int id = 1;
-            id = id * 11 + edgeFrom;
-            id = id * 3 + edgeTo;
-            id = id * 7 + nodeVia;
-            return id;
+            return ((long)edgeFrom) << 32 | ((long)edgeTo);
         }
     }
 

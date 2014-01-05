@@ -249,7 +249,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             edgeOutExplorer = osmReader.getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(this, false, true));
             edgeInExplorer = osmReader.getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(this, true, false));
         }
-        return OSMTurnRelation.getRestrictionAsEntries(turnRelation, this, edgeOutExplorer, edgeInExplorer, osmReader);
+        return turnRelation.getRestrictionAsEntries(this, edgeOutExplorer, edgeInExplorer, osmReader);
     }
 
     @Override

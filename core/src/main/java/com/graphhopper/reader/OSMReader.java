@@ -44,6 +44,7 @@ import com.graphhopper.storage.ExtendedStorage;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.DouglasPeucker;
@@ -453,14 +454,20 @@ public class OSMReader
 
     public long getOsmIdOfInternalEdge( int edgeId )
     {
-        return Helper.intToLong(edgeOsmIds.getInt(edgeId * 8), edgeOsmIds.getInt(edgeId * 8 + 4));
+        BitUtil bitUtil = BitUtil.get(dir.getByteOrder());
+
+        byte[] bytesOsmWayId = new byte[8];
+        edgeOsmIds.getBytes(edgeId * 8, bytesOsmWayId, 8);
+
+        return bitUtil.toLong(bytesOsmWayId);
     }
 
     public int getInternalNodeIdOfOsmNode( long nodeOsmId )
     {
         int id = getNodeMap().get(nodeOsmId);
-        if(id < TOWER_NODE) {
-            return -id - 3;    
+        if (id < TOWER_NODE)
+        {
+            return -id - 3;
         }
         return EMPTY;
     }
@@ -734,9 +741,11 @@ public class OSMReader
     private void storeOSMWayID( int edgeId, long osmWayID )
     {
         long ptr = (long) edgeId * 8;
+
+        BitUtil bitUtil = BitUtil.get(dir.getByteOrder());
+
         edgeOsmIds.incCapacity(ptr + 8);
-        edgeOsmIds.setInt(ptr, Helper.longToIntLeft(osmWayID));
-        edgeOsmIds.setInt(ptr + 4, Helper.longToIntRight(osmWayID));
+        edgeOsmIds.setBytes(ptr, bitUtil.fromLong(osmWayID), 8);
     }
 
     /**
