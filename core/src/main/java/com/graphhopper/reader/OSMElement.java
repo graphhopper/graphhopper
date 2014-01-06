@@ -229,6 +229,7 @@ public abstract class OSMElement
         return iProperties.containsKey(key);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T getInternalTag( String key, T defaultValue )
     {
         if (iProperties == null)

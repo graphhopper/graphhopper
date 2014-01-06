@@ -252,7 +252,7 @@ public class InstructionList implements Iterable<Instruction>
     public List<GPXEntry> createGPXList()
     {
         if (isEmpty())
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
 
         List<GPXEntry> gpxList = new ArrayList<GPXEntry>();
         long timeOffset = 0;

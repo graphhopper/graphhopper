@@ -110,7 +110,6 @@ public class OSMReader
     protected DataAccess pillarLats;
     protected DataAccess pillarLons;
     protected DataAccess edgeOsmIds;
-    protected DataAccess nodeOsmIds;
     private final DistanceCalc distCalc = new DistanceCalcEarth();
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private int nextTowerId = 0;
@@ -120,6 +119,7 @@ public class OSMReader
     private boolean exitOnlyPillarNodeException = true;
     //relation factory specifies an arbitrary osm relation
     private OSMRelationFactory relationFactory = new OSMRelationFactory();
+    private final BitUtil bitUtil;
 
     public OSMReader( GraphStorage storage, long expectedCap )
     {
@@ -134,13 +134,12 @@ public class OSMReader
         pillarLats = dir.find("tmpLatitudes");
         pillarLons = dir.find("tmpLongitudes");
         edgeOsmIds = dir.find("tmpEdgeOsmIds");
-        nodeOsmIds = dir.find("tmpNodeOsmIds");
         pillarLats.create(Math.max(expectedCap, 100));
         pillarLons.create(Math.max(expectedCap, 100));
         edgeOsmIds.create(Math.max(expectedCap, 100));
-        nodeOsmIds.create(Math.max(expectedCap, 100));
 
         relationFactory = new OSMRelationFactory();
+        bitUtil = BitUtil.get(dir.getByteOrder());
     }
 
     public void doOSM2Graph( File osmFile ) throws IOException
@@ -454,11 +453,8 @@ public class OSMReader
 
     public long getOsmIdOfInternalEdge( int edgeId )
     {
-        BitUtil bitUtil = BitUtil.get(dir.getByteOrder());
-
         byte[] bytesOsmWayId = new byte[8];
         edgeOsmIds.getBytes(edgeId * 8, bytesOsmWayId, 8);
-
         return bitUtil.toLong(bytesOsmWayId);
     }
 
@@ -466,9 +462,8 @@ public class OSMReader
     {
         int id = getNodeMap().get(nodeOsmId);
         if (id < TOWER_NODE)
-        {
             return -id - 3;
-        }
+
         return EMPTY;
     }
 
@@ -741,9 +736,6 @@ public class OSMReader
     private void storeOSMWayID( int edgeId, long osmWayID )
     {
         long ptr = (long) edgeId * 8;
-
-        BitUtil bitUtil = BitUtil.get(dir.getByteOrder());
-
         edgeOsmIds.incCapacity(ptr + 8);
         edgeOsmIds.setBytes(ptr, bitUtil.fromLong(osmWayID), 8);
     }
@@ -785,11 +777,9 @@ public class OSMReader
         dir.remove(pillarLats);
         dir.remove(pillarLons);
         dir.remove(edgeOsmIds);
-        dir.remove(nodeOsmIds);
         pillarLons = null;
         pillarLats = null;
         edgeOsmIds = null;
-        nodeOsmIds = null;
         osmNodeIdToInternalNodeMap = null;
         osmNodeIdToNodeFlagsMap = null;
         osmWayIdToRouteWeightMap = null;

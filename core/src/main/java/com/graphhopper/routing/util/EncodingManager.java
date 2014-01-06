@@ -24,10 +24,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMReader;
@@ -410,13 +408,15 @@ public class EncodingManager
             for (TurnCostTableEntry entry : encoder.analyzeTurnRelation(turnRelation, osmReader))
             {
                 TurnCostTableEntry oldEntry = entries.get(entry.getItemId());
-                if(oldEntry != null){
+                if (oldEntry != null)
+                {
+                    // merging different encoders
                     oldEntry.flags |= entry.flags;
-                }else{
+                } else
+                {
                     entries.put(entry.getItemId(), entry);
                 }
             }
-
         }
 
         return entries.valueCollection();

@@ -4,8 +4,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.slf4j.LoggerFactory;
-
 import com.graphhopper.reader.OSMRelationFactory.OSMRelationFactoryEngine;
 import com.graphhopper.routing.util.TurnCostEncoder;
 import com.graphhopper.util.EdgeExplorer;
@@ -13,7 +11,7 @@ import com.graphhopper.util.EdgeIterator;
 
 /**
  * Helper object which gives node cost entries for a given OSM-relation of type "restriction"
- * 
+ * <p>
  * @author Karl Hübner
  */
 public class OSMTurnRelation extends OSMRelation
@@ -28,10 +26,10 @@ public class OSMTurnRelation extends OSMRelation
     public static final int TYPE_ONLY_STRAIGHT_ON = 6;
     public static final int TYPE_NO_U_TURN = 7;
 
-    protected long fromOsm;
-    protected long viaOsm;
-    protected long toOsm;
-    protected int restriction;
+    private long fromOsm;
+    private long viaOsm;
+    private long toOsm;
+    private int restriction;
 
     private OSMTurnRelation( OSMRelation parent )
     {
@@ -46,9 +44,9 @@ public class OSMTurnRelation extends OSMRelation
 
     /**
      * transforms this relation into a collection of node cost entries
-     * 
-     * @param edgeOutFilter an edge filter which only allows outgoing edges
-     * @param edgeInFilter an edge filter which only allows incoming edges
+     * <p>
+     * @param edgeOutExplorer an edge filter which only allows outgoing edges
+     * @param edgeInExplorer an edge filter which only allows incoming edges
      * @return a collection of node cost entries which can be added to the graph later
      */
     public Collection<TurnCostTableEntry> getRestrictionAsEntries( TurnCostEncoder encoder,
@@ -64,7 +62,7 @@ public class OSMTurnRelation extends OSMRelation
             {
                 throw new IllegalArgumentException("Unknown node osm id");
             }
-            
+
             int edgeIdFrom = EdgeIterator.NO_EDGE;
 
             // get all incoming edges and receive the edge which is defined by fromOsm
@@ -83,8 +81,8 @@ public class OSMTurnRelation extends OSMRelation
             iter = edgeOutExplorer.setBaseNode(viaNodeId);
             if (edgeIdFrom != EdgeIterator.NO_EDGE)
             {
-                if (this.restriction == TYPE_NO_U_TURN || this.restriction == TYPE_NO_LEFT_TURN || this.restriction == TYPE_NO_RIGHT_TURN
-                        || this.restriction == TYPE_NO_STRAIGHT_ON)
+                if (this.restriction == TYPE_NO_U_TURN || this.restriction == TYPE_NO_LEFT_TURN
+                        || this.restriction == TYPE_NO_RIGHT_TURN || this.restriction == TYPE_NO_STRAIGHT_ON)
                 {
                     // if we have a restriction of TYPE_NO_* we add restriction only to
                     // the given turn (from, via, to)  
@@ -122,14 +120,13 @@ public class OSMTurnRelation extends OSMRelation
             }
         } catch (Exception e)
         {
-            LoggerFactory.getLogger(OSMTurnRelation.class).warn(
-                    "Could not built node costs table for relation of node [osmId:" + this.viaOsm + "].", e);
+            throw new IllegalStateException("Could not built node costs table for relation of node [osmId:" + this.viaOsm + "].", e);
         }
         return entries;
     }
 
     /**
-     * Helper class to processing porpuses only
+     * Helper class to processing purposes only
      */
     public static class TurnCostTableEntry
     {
@@ -143,13 +140,13 @@ public class OSMTurnRelation extends OSMRelation
          */
         public long getItemId()
         {
-            return ((long)edgeFrom) << 32 | ((long)edgeTo);
+            return ((long) edgeFrom) << 32 | ((long) edgeTo);
         }
     }
 
     /**
-     * Creates an OSM turn relation out of an unspecified OSM relation 
-     * 
+     * Creates an OSM turn relation out of an unspecified OSM relation
+     * <p>
      * @author karl.huebner
      */
     static class FactoryEngine implements OSMRelationFactoryEngine<OSMTurnRelation>

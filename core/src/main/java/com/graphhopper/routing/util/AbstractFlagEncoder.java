@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -33,6 +32,7 @@ import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.Helper;
+import java.util.Collections;
 
 /**
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
@@ -520,7 +520,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
     {
-        return new ArrayList<OSMTurnRelation.TurnCostTableEntry>();
+        return Collections.emptyList();
     }
-
 }
