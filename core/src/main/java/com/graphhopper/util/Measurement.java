@@ -105,7 +105,7 @@ public class Measurement
         if ("true".equals(g.getProperties().get("prepare.done")))
             throw new IllegalStateException("Graph has to be unprepared but wasn't!");
 
-        String vehicleStr = "car";
+        String vehicleStr = args.get("osmreader.acceptWay");
         StopWatch sw = new StopWatch().start();
         try
         {
