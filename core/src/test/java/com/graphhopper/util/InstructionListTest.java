@@ -25,12 +25,9 @@ import com.graphhopper.routing.util.ShortestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import gnu.trove.list.TDoubleList;
-import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TLongArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.TimeZone;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
