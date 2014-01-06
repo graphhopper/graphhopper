@@ -1,4 +1,6 @@
 0.3.0
+    PrepareContractionHierarchies.setPeriodicUpdates is now in percentage not in absolute counts
+    change GHResponse.getTime to GHResponse.getMillis
     gpx export via API or HTTP (route?type=gpx)
     breaking: The web response, Path.time and GHResponse.time change to milliseconds and 'long' (instead of seconds and double)
 
