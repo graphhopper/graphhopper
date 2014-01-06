@@ -68,9 +68,10 @@ public class GraphHopper implements GraphHopperAPI
     private boolean doPrepare = true;
     private boolean chEnabled = true;
     private String chWeighting = "fastest";
-    private int periodicUpdates = 3;
+    private int periodicUpdates = 20;
     private int lazyUpdates = 10;
     private int neighborUpdates = 20;
+    private int logMessages = 20;
     // for OSM import:
     private String osmFile;
     private EncodingManager encodingManager;
@@ -381,14 +382,10 @@ public class GraphHopper implements GraphHopperAPI
         if (chEnabled)
             setCHShortcuts(chShortcuts);
 
-        if (args.has("prepare.updates.periodic"))
-            periodicUpdates = args.getInt("prepare.updates.periodic", periodicUpdates);
-
-        if (args.has("prepare.updates.lazy"))
-            lazyUpdates = args.getInt("prepare.updates.lazy", lazyUpdates);
-
-        if (args.has("prepare.updates.neighbor"))
-            neighborUpdates = args.getInt("prepare.updates.neighbor", neighborUpdates);
+        periodicUpdates = args.getInt("prepare.updates.periodic", periodicUpdates);
+        lazyUpdates = args.getInt("prepare.updates.lazy", lazyUpdates);
+        neighborUpdates = args.getInt("prepare.updates.neighbor", neighborUpdates);        
+        logMessages = args.getInt("prepare.logmessages", logMessages);
 
         // osm import
         wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", wayPointMaxDistance);
@@ -544,7 +541,8 @@ public class GraphHopper implements GraphHopperAPI
                 createWeighting(chWeighting, encoder));
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                 setLazyUpdates(lazyUpdates).
-                setNeighborUpdates(neighborUpdates);
+                setNeighborUpdates(neighborUpdates).
+                setLogMessages(logMessages);
 
         prepare = tmpPrepareCH;
         prepare.setGraph(graph);

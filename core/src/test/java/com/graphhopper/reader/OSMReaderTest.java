@@ -551,7 +551,7 @@ public class OSMReaderTest
                 // reduced speed due to node tags
                 increased.incrementAndGet();
                 assertEquals(100 - 5, encoder.getSpeed(wayFlags));
-                return Collections.EMPTY_SET;
+                return Collections.emptyList();
             }
 
         };
