@@ -610,7 +610,9 @@ function routeLatLng(request, doQuery) {
         if (request.vehicle.toUpperCase() == "FOOT") {
             addToGoogle = "&dirflg=w";
             addToBing = "&mode=W";
-        } else if (request.vehicle.toUpperCase() == "BIKE") {
+        } else if ( (request.vehicle.toUpperCase() == "BIKE") ||
+                     (request.vehicle.toUpperCase() == "RACINGBIKE") ||
+                     (request.vehicle.toUpperCase() == "MTB") ) {
             addToGoogle = "&dirflg=b";
             // ? addToBing = "&mode=B";
         }

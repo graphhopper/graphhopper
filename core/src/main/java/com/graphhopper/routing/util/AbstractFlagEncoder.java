@@ -432,6 +432,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
         relBitMask = (1L << usedBits) - 1;
         relBitMask <<= shift;
     }
+    
+    long getRelBitMask()
+    {
+        return relBitMask;
+    }
 
     void setNodeBitMask( int usedBits, int shift )
     {
