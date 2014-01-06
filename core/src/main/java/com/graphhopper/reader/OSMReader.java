@@ -20,8 +20,12 @@ package com.graphhopper.reader;
 import static com.graphhopper.util.Helper.nf;
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
+import gnu.trove.map.TIntLongMap;
 import gnu.trove.map.TLongLongMap;
+import gnu.trove.map.hash.TIntLongHashMap;
 import gnu.trove.map.hash.TLongLongHashMap;
+import gnu.trove.set.TLongSet;
+import gnu.trove.set.hash.TLongHashSet;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,7 +48,6 @@ import com.graphhopper.storage.ExtendedStorage;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.TurnCostStorage;
-import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.DouglasPeucker;
@@ -106,10 +109,11 @@ public class OSMReader
     private LongIntMap osmNodeIdToInternalNodeMap;
     private TLongLongHashMap osmNodeIdToNodeFlagsMap;
     private TLongLongHashMap osmWayIdToRouteWeightMap;
+    private TLongHashSet osmIdStoreRequiredSet; //stores osm ids used by relations to identify which edge ids needs to be mapped later
+    private TIntLongMap edgeIdToOsmidMap;
     private final TLongList barrierNodeIDs = new TLongArrayList();
     protected DataAccess pillarLats;
     protected DataAccess pillarLons;
-    protected DataAccess edgeOsmIds;
     private final DistanceCalc distCalc = new DistanceCalcEarth();
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private int nextTowerId = 0;
@@ -117,9 +121,9 @@ public class OSMReader
     // negative but increasing to avoid clash with custom created OSM files
     private long newUniqueOSMId = -Long.MAX_VALUE;
     private boolean exitOnlyPillarNodeException = true;
+
     //relation factory specifies an arbitrary osm relation
     private OSMRelationFactory relationFactory = new OSMRelationFactory();
-    private final BitUtil bitUtil;
 
     public OSMReader( GraphStorage storage, long expectedCap )
     {
@@ -133,13 +137,10 @@ public class OSMReader
         dir = graphStorage.getDirectory();
         pillarLats = dir.find("tmpLatitudes");
         pillarLons = dir.find("tmpLongitudes");
-        edgeOsmIds = dir.find("tmpEdgeOsmIds");
         pillarLats.create(Math.max(expectedCap, 100));
         pillarLons.create(Math.max(expectedCap, 100));
-        edgeOsmIds.create(Math.max(expectedCap, 100));
 
         relationFactory = new OSMRelationFactory();
-        bitUtil = BitUtil.get(dir.getByteOrder());
     }
 
     public void doOSM2Graph( File osmFile ) throws IOException
@@ -203,6 +204,11 @@ public class OSMReader
                         prepareWaysWithRelationInfo(relation);
                     }
 
+                    if (relation.hasTag("type", "restriction"))
+                    {
+                        prepareRestrictionRelation(relation);
+                    }
+
                     if (++tmpRelationCounter % 50000 == 0)
                     {
                         logger.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:" + nf(getRelFlagsMap().size())
@@ -218,6 +224,34 @@ public class OSMReader
         {
             Helper.close(in);
         }
+    }
+
+    private void prepareRestrictionRelation( OSMRelation relation )
+    {
+        OSMRelation specifiedRelation = relationFactory.specify(relation);
+        if (specifiedRelation != null && specifiedRelation instanceof OSMTurnRelation)
+        {
+            getOsmIdStoreRequiredSet().add(((OSMTurnRelation) specifiedRelation).getOsmIdFrom());
+            getOsmIdStoreRequiredSet().add(((OSMTurnRelation) specifiedRelation).getOsmIdTo());
+        }
+    }
+
+    private TLongSet getOsmIdStoreRequiredSet()
+    {
+        if (osmIdStoreRequiredSet == null)
+        {
+            osmIdStoreRequiredSet = new TLongHashSet();
+        }
+        return osmIdStoreRequiredSet;
+    }
+
+    private TIntLongMap getEdgeIdToOsmidMap()
+    {
+        if (edgeIdToOsmidMap == null)
+        {
+            edgeIdToOsmidMap = new TIntLongHashMap(getOsmIdStoreRequiredSet().size());
+        }
+        return edgeIdToOsmidMap;
     }
 
     /**
@@ -453,9 +487,7 @@ public class OSMReader
 
     public long getOsmIdOfInternalEdge( int edgeId )
     {
-        byte[] bytesOsmWayId = new byte[8];
-        edgeOsmIds.getBytes(edgeId * 8, bytesOsmWayId, 8);
-        return bitUtil.toLong(bytesOsmWayId);
+        return getEdgeIdToOsmidMap().get(edgeId);
     }
 
     public int getInternalNodeIdOfOsmNode( long nodeOsmId )
@@ -735,9 +767,10 @@ public class OSMReader
 
     private void storeOSMWayID( int edgeId, long osmWayID )
     {
-        long ptr = (long) edgeId * 8;
-        edgeOsmIds.incCapacity(ptr + 8);
-        edgeOsmIds.setBytes(ptr, bitUtil.fromLong(osmWayID), 8);
+        if (getOsmIdStoreRequiredSet().contains(osmWayID))
+        {
+            getEdgeIdToOsmidMap().put(edgeId, osmWayID);
+        }
     }
 
     /**
@@ -776,10 +809,8 @@ public class OSMReader
         printInfo("way");
         dir.remove(pillarLats);
         dir.remove(pillarLons);
-        dir.remove(edgeOsmIds);
         pillarLons = null;
         pillarLats = null;
-        edgeOsmIds = null;
         osmNodeIdToInternalNodeMap = null;
         osmNodeIdToNodeFlagsMap = null;
         osmWayIdToRouteWeightMap = null;

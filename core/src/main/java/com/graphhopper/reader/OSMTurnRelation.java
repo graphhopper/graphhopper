@@ -18,13 +18,8 @@ public class OSMTurnRelation extends OSMRelation
 {
 
     public static final int TYPE_UNSUPPORTED = 0;
-    public static final int TYPE_NO_LEFT_TURN = 1;
-    public static final int TYPE_NO_RIGHT_TURN = 2;
-    public static final int TYPE_NO_STRAIGHT_ON = 3;
-    public static final int TYPE_ONLY_RIGHT_TURN = 4;
-    public static final int TYPE_ONLY_LEFT_TURN = 5;
-    public static final int TYPE_ONLY_STRAIGHT_ON = 6;
-    public static final int TYPE_NO_U_TURN = 7;
+    public static final int TYPE_NOT = 1;
+    public static final int TYPE_ONLY = 2;
 
     private long fromOsm;
     private long viaOsm;
@@ -40,6 +35,16 @@ public class OSMTurnRelation extends OSMRelation
     private boolean isValid()
     {
         return restriction != TYPE_UNSUPPORTED && viaOsm >= 0 && fromOsm >= 0 && toOsm >= 0;
+    }
+
+    long getOsmIdFrom()
+    {
+        return fromOsm;
+    }
+    
+    long getOsmIdTo()
+    {
+        return toOsm;
     }
 
     /**
@@ -81,8 +86,7 @@ public class OSMTurnRelation extends OSMRelation
             iter = edgeOutExplorer.setBaseNode(viaNodeId);
             if (edgeIdFrom != EdgeIterator.NO_EDGE)
             {
-                if (this.restriction == TYPE_NO_U_TURN || this.restriction == TYPE_NO_LEFT_TURN
-                        || this.restriction == TYPE_NO_RIGHT_TURN || this.restriction == TYPE_NO_STRAIGHT_ON)
+                if (this.restriction == TYPE_NOT)
                 {
                     // if we have a restriction of TYPE_NO_* we add restriction only to
                     // the given turn (from, via, to)  
@@ -99,8 +103,7 @@ public class OSMTurnRelation extends OSMRelation
                         }
                     }
 
-                } else if (this.restriction == TYPE_ONLY_RIGHT_TURN || this.restriction == TYPE_ONLY_LEFT_TURN
-                        || this.restriction == TYPE_ONLY_STRAIGHT_ON)
+                } else if (this.restriction == TYPE_ONLY)
                 {
                     // if we have a restriction of TYPE_ONLY_* we add restriction to
                     // any turn possibility (from, via, * ) except the given turn
@@ -188,25 +191,25 @@ public class OSMTurnRelation extends OSMRelation
         {
             if ("no_left_turn".equals(restrictionType))
             {
-                return OSMTurnRelation.TYPE_NO_LEFT_TURN;
+                return OSMTurnRelation.TYPE_NOT;
             } else if ("no_right_turn".equals(restrictionType))
             {
-                return OSMTurnRelation.TYPE_NO_RIGHT_TURN;
+                return OSMTurnRelation.TYPE_NOT;
             } else if ("no_straight_on".equals(restrictionType))
             {
-                return OSMTurnRelation.TYPE_NO_STRAIGHT_ON;
+                return OSMTurnRelation.TYPE_NOT;
             } else if ("no_u_turn".equals(restrictionType))
             {
-                return OSMTurnRelation.TYPE_NO_U_TURN;
+                return OSMTurnRelation.TYPE_ONLY;
             } else if ("only_right_turn".equals(restrictionType))
             {
-                return OSMTurnRelation.TYPE_ONLY_RIGHT_TURN;
+                return OSMTurnRelation.TYPE_ONLY;
             } else if ("only_left_turn".equals(restrictionType))
             {
-                return OSMTurnRelation.TYPE_ONLY_LEFT_TURN;
+                return OSMTurnRelation.TYPE_ONLY;
             } else if ("only_straight_on".equals(restrictionType))
             {
-                return OSMTurnRelation.TYPE_ONLY_STRAIGHT_ON;
+                return OSMTurnRelation.TYPE_ONLY;
             }
             return OSMTurnRelation.TYPE_UNSUPPORTED;
         }
