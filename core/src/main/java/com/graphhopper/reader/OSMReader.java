@@ -122,9 +122,6 @@ public class OSMReader
     private long newUniqueOSMId = -Long.MAX_VALUE;
     private boolean exitOnlyPillarNodeException = true;
 
-    //relation factory specifies an arbitrary osm relation
-    private OSMRelationFactory relationFactory = new OSMRelationFactory();
-
     public OSMReader( GraphStorage storage, long expectedCap )
     {
         this.graphStorage = storage;
@@ -139,8 +136,6 @@ public class OSMReader
         pillarLons = dir.find("tmpLongitudes");
         pillarLats.create(Math.max(expectedCap, 100));
         pillarLons.create(Math.max(expectedCap, 100));
-
-        relationFactory = new OSMRelationFactory();
     }
 
     public void doOSM2Graph( File osmFile ) throws IOException
@@ -228,11 +223,11 @@ public class OSMReader
 
     private void prepareRestrictionRelation( OSMRelation relation )
     {
-        OSMRelation specifiedRelation = relationFactory.specify(relation);
-        if (specifiedRelation != null && specifiedRelation instanceof OSMTurnRelation)
+        OSMTurnRelation turnRelation = createTurnRelation(relation);
+        if (turnRelation != null)
         {
-            getOsmIdStoreRequiredSet().add(((OSMTurnRelation) specifiedRelation).getOsmIdFrom());
-            getOsmIdStoreRequiredSet().add(((OSMTurnRelation) specifiedRelation).getOsmIdTo());
+            getOsmIdStoreRequiredSet().add(((OSMTurnRelation) turnRelation).getOsmIdFrom());
+            getOsmIdStoreRequiredSet().add(((OSMTurnRelation) turnRelation).getOsmIdTo());
         }
     }
 
@@ -468,19 +463,20 @@ public class OSMReader
 
     public void processRelation( OSMRelation relation ) throws XMLStreamException
     {
-        OSMRelation specified = relationFactory.specify(relation);
-        if (specified != null)
+        if (relation.hasTag("type", "restriction"))
         {
-            ExtendedStorage extendedStorage = ((GraphHopperStorage) graphStorage).getExtendedStorage();
-
-            if (specified instanceof OSMTurnRelation && extendedStorage instanceof TurnCostStorage)
+            OSMTurnRelation turnRelation = createTurnRelation(relation);
+            if (turnRelation != null)
             {
-                Collection<TurnCostTableEntry> entries = encodingManager.analyzeTurnRelation((OSMTurnRelation) specified, this);
-                for (TurnCostTableEntry entry : entries)
+                ExtendedStorage extendedStorage = ((GraphHopperStorage) graphStorage).getExtendedStorage();
+                if (extendedStorage instanceof TurnCostStorage)
                 {
-                    ((TurnCostStorage) extendedStorage).setTurnCosts(entry.nodeVia, entry.edgeFrom, entry.edgeTo, (int) entry.flags);
+                    Collection<TurnCostTableEntry> entries = encodingManager.analyzeTurnRelation(turnRelation, this);
+                    for (TurnCostTableEntry entry : entries)
+                    {
+                        ((TurnCostStorage) extendedStorage).setTurnCosts(entry.nodeVia, entry.edgeFrom, entry.edgeTo, (int) entry.flags);
+                    }
                 }
-
             }
         }
     }
@@ -859,6 +855,44 @@ public class OSMReader
         barrierNodeIDs.add(fromId);
         barrierNodeIDs.add(toId);
         return addOSMWay(barrierNodeIDs, flags, wayOsmId);
+    }
+
+    /**
+     * Creates an OSM turn relation out of an unspecified OSM relation
+     * 
+     * @return the OSM turn relation, <code>null</code>, if unsupported turn relation
+     */
+    OSMTurnRelation createTurnRelation( OSMRelation relation )
+    {
+        OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType(relation.getTag("restriction"));
+        if (type != OSMTurnRelation.Type.UNSUPPORTED)
+        {
+            long fromWayID = -1;
+            long viaNodeID = -1;
+            long toWayID = -1;
+
+            for (OSMRelation.Member member : relation.getMembers())
+            {
+                if (OSMElement.WAY == member.type())
+                {
+                    if ("from".equals(member.role()))
+                    {
+                        fromWayID = member.ref();
+                    } else if ("to".equals(member.role()))
+                    {
+                        toWayID = member.ref();
+                    }
+                } else if (OSMElement.NODE == member.type() && "via".equals(member.role()))
+                {
+                    viaNodeID = member.ref();
+                }
+            }
+            if (type != OSMTurnRelation.Type.UNSUPPORTED && fromWayID >= 0 && toWayID >= 0 && viaNodeID >= 0)
+            {
+                return new OSMTurnRelation(fromWayID, viaNodeID, toWayID, type);
+            }
+        }
+        return null;
     }
 
     /**

@@ -1,10 +1,11 @@
 package com.graphhopper.reader;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
-import com.graphhopper.reader.OSMRelationFactory.OSMRelationFactoryEngine;
 import com.graphhopper.routing.util.TurnCostEncoder;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -14,34 +15,55 @@ import com.graphhopper.util.EdgeIterator;
  * <p>
  * @author Karl Hübner
  */
-public class OSMTurnRelation extends OSMRelation
+public class OSMTurnRelation
 {
 
-    public static final int TYPE_UNSUPPORTED = 0;
-    public static final int TYPE_NOT = 1;
-    public static final int TYPE_ONLY = 2;
+    enum Type
+    {
+        UNSUPPORTED, NOT, ONLY;
+
+        private static Map<String, Type> tags = new HashMap<String, Type>();
+
+        static
+        {
+            tags.put("no_left_turn", NOT);
+            tags.put("no_right_turn", NOT);
+            tags.put("no_straight_on", NOT);
+            tags.put("no_u_turn", NOT);
+            tags.put("only_right_turn", ONLY);
+            tags.put("only_left_turn", ONLY);
+            tags.put("only_straight_on", ONLY);
+        }
+
+        public static Type getRestrictionType( String tag )
+        {
+            Type result = null;
+            if (tag != null)
+            {
+                result = tags.get(tag);
+            }
+            return (result != null) ? result : UNSUPPORTED;
+        }
+    }
 
     private long fromOsm;
     private long viaOsm;
     private long toOsm;
-    private int restriction;
+    private Type restriction;
 
-    private OSMTurnRelation( OSMRelation parent )
+    OSMTurnRelation( long fromWayID, long viaNodeID, long toWayID, Type restrictionType )
     {
-        super(parent.id, parent.tags);
-        this.members = parent.members;
-    }
-
-    private boolean isValid()
-    {
-        return restriction != TYPE_UNSUPPORTED && viaOsm >= 0 && fromOsm >= 0 && toOsm >= 0;
+        this.fromOsm = fromWayID;
+        this.viaOsm = viaNodeID;
+        this.toOsm = toWayID;
+        this.restriction = restrictionType;
     }
 
     long getOsmIdFrom()
     {
         return fromOsm;
     }
-    
+
     long getOsmIdTo()
     {
         return toOsm;
@@ -86,7 +108,7 @@ public class OSMTurnRelation extends OSMRelation
             iter = edgeOutExplorer.setBaseNode(viaNodeId);
             if (edgeIdFrom != EdgeIterator.NO_EDGE)
             {
-                if (this.restriction == TYPE_NOT)
+                if (this.restriction == Type.NOT)
                 {
                     // if we have a restriction of TYPE_NO_* we add restriction only to
                     // the given turn (from, via, to)  
@@ -103,7 +125,7 @@ public class OSMTurnRelation extends OSMRelation
                         }
                     }
 
-                } else if (this.restriction == TYPE_ONLY)
+                } else if (this.restriction == Type.ONLY)
                 {
                     // if we have a restriction of TYPE_ONLY_* we add restriction to
                     // any turn possibility (from, via, * ) except the given turn
@@ -145,75 +167,6 @@ public class OSMTurnRelation extends OSMRelation
         {
             return ((long) edgeFrom) << 32 | ((long) edgeTo);
         }
-    }
-
-    /**
-     * Creates an OSM turn relation out of an unspecified OSM relation
-     * <p>
-     * @author karl.huebner
-     */
-    static class FactoryEngine implements OSMRelationFactoryEngine<OSMTurnRelation>
-    {
-
-        @Override
-        public OSMTurnRelation create( OSMRelation relation )
-        {
-            if ("restriction".equals(relation.getTag("type")))
-            {
-                OSMTurnRelation turnRelation = new OSMTurnRelation(relation);
-                turnRelation.restriction = getRestrictionType(relation.getTag("restriction"));
-                for (OSMRelation.Member member : relation.getMembers())
-                {
-                    if (OSMElement.WAY == member.type())
-                    {
-                        if ("from".equals(member.role()))
-                        {
-                            turnRelation.fromOsm = member.ref();
-                        } else if ("to".equals(member.role()))
-                        {
-                            turnRelation.toOsm = member.ref();
-                        }
-                    } else if (OSMElement.NODE == member.type() && "via".equals(member.role()))
-                    {
-                        turnRelation.viaOsm = member.ref();
-                    }
-                }
-                if (turnRelation.isValid())
-                {
-                    return turnRelation;
-                }
-
-            }
-            return null;
-        }
-
-        private int getRestrictionType( String restrictionType )
-        {
-            if ("no_left_turn".equals(restrictionType))
-            {
-                return OSMTurnRelation.TYPE_NOT;
-            } else if ("no_right_turn".equals(restrictionType))
-            {
-                return OSMTurnRelation.TYPE_NOT;
-            } else if ("no_straight_on".equals(restrictionType))
-            {
-                return OSMTurnRelation.TYPE_NOT;
-            } else if ("no_u_turn".equals(restrictionType))
-            {
-                return OSMTurnRelation.TYPE_ONLY;
-            } else if ("only_right_turn".equals(restrictionType))
-            {
-                return OSMTurnRelation.TYPE_ONLY;
-            } else if ("only_left_turn".equals(restrictionType))
-            {
-                return OSMTurnRelation.TYPE_ONLY;
-            } else if ("only_straight_on".equals(restrictionType))
-            {
-                return OSMTurnRelation.TYPE_ONLY;
-            }
-            return OSMTurnRelation.TYPE_UNSUPPORTED;
-        }
-
     }
 
 }
