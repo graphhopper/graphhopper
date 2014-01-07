@@ -17,14 +17,19 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMNode;
-import com.graphhopper.reader.OSMWay;
-import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.util.Helper;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import com.graphhopper.reader.OSMNode;
+import com.graphhopper.reader.OSMReader;
+import com.graphhopper.reader.OSMRelation;
+import com.graphhopper.reader.OSMTurnRelation;
+import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
+import com.graphhopper.reader.OSMWay;
+import com.graphhopper.util.Helper;
 
 /**
  * Defines bit layout for cars. (speed, access, ferries, ...)
@@ -47,10 +52,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     protected CarFlagEncoder( int speedBits, int speedFactor )
     {
         super(speedBits, speedFactor);
-        restrictions = new String[]
-        {
-            "motorcar", "motor_vehicle", "vehicle", "access"
-        };
+        restrictions = new String[] { "motorcar", "motor_vehicle", "vehicle", "access" };
         restrictedValues.add("private");
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -119,8 +121,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
                 if (motorcarTag == null)
                     motorcarTag = way.getTag("motor_vehicle");
 
-                if (motorcarTag == null && !way.hasTag("foot") && !way.hasTag("bicycle")
-                        || "yes".equals(motorcarTag))
+                if (motorcarTag == null && !way.hasTag("foot") && !way.hasTag("bicycle") || "yes".equals(motorcarTag))
                     return acceptBit | ferryBit;
             }
             return 0;
@@ -133,8 +134,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // do not drive street cars into fords
-        if ((way.hasTag("highway", "ford") || way.hasTag("ford"))
-                && !way.hasTag(restrictions, intended))
+        if ((way.hasTag("highway", "ford") || way.hasTag("ford")) && !way.hasTag(restrictions, intended))
             return 0;
 
         // check access restrictions
@@ -240,6 +240,16 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             return "destinations: " + str;
         else
             return "destination: " + str;
+    }
+
+    @Override
+    public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
+    {
+        if(edgeOutExplorer == null || edgeInExplorer == null) {
+            edgeOutExplorer = osmReader.getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(this, false, true));
+            edgeInExplorer = osmReader.getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(this, true, false));
+        }
+        return turnRelation.getRestrictionAsEntries(this, edgeOutExplorer, edgeInExplorer, osmReader);
     }
 
     @Override

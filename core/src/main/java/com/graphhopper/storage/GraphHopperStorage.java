@@ -785,7 +785,7 @@ public class GraphHopperStorage implements GraphStorage
                 edgePointer = (long) nextEdge * edgeEntryBytes;
                 edgeId = nextEdge;
                 node = getOtherNode(baseNode, edgePointer);
-
+                
                 // position to next edge
                 nextEdge = edges.getInt(getLinkPosInEdgeArea(baseNode, node, edgePointer));
                 if (nextEdge == edgeId)
@@ -793,6 +793,14 @@ public class GraphHopperStorage implements GraphStorage
                             + ", " + edgePointer + ", " + edgeId);
 
                 foundNext = filter == null || filter.accept(this);
+//
+//                if(foundNext && nextEdge != EdgeIterator.NO_EDGE && extStorage instanceof TurnCostStorage){
+//                    int turncosts = ((TurnCostStorage) extStorage).getTurnCosts(baseNode, edgeId, nextEdge);
+//                    if(turncosts == Integer.MAX_VALUE){
+//                        foundNext = false;
+//                    }
+//                }
+                
                 if (foundNext)
                     break;
             }
@@ -1064,7 +1072,6 @@ public class GraphHopperStorage implements GraphStorage
 
         // extStorage
         extStorage.copyTo(clonedG.extStorage);
-        clonedG.extStorage = extStorage;
 
         properties.copyTo(clonedG.properties);
 
@@ -1468,5 +1475,10 @@ public class GraphHopperStorage implements GraphStorage
                 + "|" + encodingManager
                 + "|" + getDirectory().getDefaultType()
                 + "|" + getProperties().versionsToString();
+    }
+
+    public ExtendedStorage getExtendedStorage()
+    {
+        return extStorage;
     }
 }

@@ -22,12 +22,13 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.*;
 import com.graphhopper.util.*;
+
 import java.io.File;
 import java.io.IOException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +49,7 @@ public class GraphHopper implements GraphHopperAPI
         if (args.getBool("graph.testIT", false))
             tests.start();
     }
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
     // for graph:
     private GraphStorage graph;
@@ -79,6 +81,7 @@ public class GraphHopper implements GraphHopperAPI
     private double wayPointMaxDistance = 1;
     private int workerThreads = -1;
     private int defaultSegmentSize = -1;
+    private boolean enableTurnRestrictions = false;
     private boolean enableInstructions = true;
     private boolean calcPoints = true;
     private boolean fullyLoaded = false;
@@ -208,6 +211,24 @@ public class GraphHopper implements GraphHopperAPI
     public boolean isCHEnabled()
     {
         return chEnabled;
+    }
+
+    /**
+     * @return if import of turn restrictions is enabled
+     */
+    public boolean isEnableTurnRestrictions()
+    {
+        return enableTurnRestrictions;
+    }
+
+    /**
+     * This method specifies if the import should include turn restrictions if available
+     */
+    public GraphHopper setEnableTurnRestrictions( boolean b )
+    {
+        ensureNotLoaded();
+        enableTurnRestrictions = b;
+        return this;
     }
 
     /**
@@ -377,8 +398,7 @@ public class GraphHopper implements GraphHopperAPI
         // prepare CH
         doPrepare = args.getBool("prepare.doPrepare", doPrepare);
         String chShortcuts = args.get("prepare.chShortcuts", "fastest");
-        chEnabled = "true".equals(chShortcuts)
-                || "fastest".equals(chShortcuts) || "shortest".equals(chShortcuts);
+        chEnabled = "true".equals(chShortcuts) || "fastest".equals(chShortcuts) || "shortest".equals(chShortcuts);
         if (chEnabled)
             setCHShortcuts(chShortcuts);
 
@@ -401,8 +421,7 @@ public class GraphHopper implements GraphHopperAPI
 
     private void printInfo()
     {
-        logger.info("version " + Constants.VERSION
-                + "|" + Constants.BUILD_DATE + " (" + Constants.getVersions() + ")");
+        logger.info("version " + Constants.VERSION + "|" + Constants.BUILD_DATE + " (" + Constants.getVersions() + ")");
         logger.info("graph " + graph.toString() + ", details:" + graph.toDetailsString());
     }
 
@@ -456,11 +475,8 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         logger.info("start creating graph from " + osmFile);
-        OSMReader reader = new OSMReader(graph, expectedCapacity).
-                setWorkerThreads(workerThreads).
-                setEncodingManager(encodingManager).
-                setWayPointMaxDistance(wayPointMaxDistance).
-                setEnableInstructions(enableInstructions);
+        OSMReader reader = new OSMReader(graph, expectedCapacity).setWorkerThreads(workerThreads).setEncodingManager(encodingManager)
+                .setWayPointMaxDistance(wayPointMaxDistance).setEnableInstructions(enableInstructions);
         logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
         reader.doOSM2Graph(osmTmpFile);
         return reader;
@@ -511,6 +527,8 @@ public class GraphHopper implements GraphHopperAPI
 
         if (chEnabled)
             graph = new LevelGraphStorage(dir, encodingManager);
+        else if (enableTurnRestrictions)
+            graph = new GraphHopperStorage(dir, encodingManager, new TurnCostStorage());
         else
             graph = new GraphHopperStorage(dir, encodingManager);
 
@@ -569,7 +587,8 @@ public class GraphHopper implements GraphHopperAPI
 
         if (!encodingManager.supports(request.getVehicle()))
         {
-            rsp.addError(new IllegalArgumentException("Vehicle " + request.getVehicle() + " unsupported. Supported are: " + getEncodingManager()));
+            rsp.addError(new IllegalArgumentException("Vehicle " + request.getVehicle() + " unsupported. Supported are: "
+                    + getEncodingManager()));
             return rsp;
         }
 
@@ -591,20 +610,21 @@ public class GraphHopper implements GraphHopperAPI
         if (chEnabled)
         {
             if (prepare == null)
-                throw new IllegalStateException("Preparation object is null. CH-preparation wasn't done or did you forgot to call disableCHShortcuts()?");
+                throw new IllegalStateException(
+                        "Preparation object is null. CH-preparation wasn't done or did you forgot to call disableCHShortcuts()?");
 
             if (request.getAlgorithm().equals("dijkstrabi"))
                 algo = prepare.createAlgo();
             else if (request.getAlgorithm().equals("astarbi"))
                 algo = ((PrepareContractionHierarchies) prepare).createAStar();
             else
-                rsp.addError(new IllegalStateException("Only dijkstrabi and astarbi is supported for LevelGraph (using contraction hierarchies)!"));
+                rsp.addError(new IllegalStateException(
+                        "Only dijkstrabi and astarbi is supported for LevelGraph (using contraction hierarchies)!"));
 
         } else
         {
             Weighting weighting = createWeighting(request.getWeighting(), encoder);
-            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.getAlgorithm(),
-                    encoder, weighting);
+            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.getAlgorithm(), encoder, weighting);
             algo = prepare.createAlgo();
         }
 
@@ -730,16 +750,13 @@ public class GraphHopper implements GraphHopperAPI
         int n = graph.getNodes();
         // calculate remaining subnetworks
         int remainingSubnetworks = preparation.findSubnetworks().size();
-        logger.info("edges: " + graph.getAllEdges().getMaxId()
-                + ", nodes " + n + ", there were " + preparation.getSubNetworks()
-                + " subnetworks. removed them => " + (prev - n)
-                + " less nodes. Remaining subnetworks:" + remainingSubnetworks);
+        logger.info("edges: " + graph.getAllEdges().getMaxId() + ", nodes " + n + ", there were " + preparation.getSubNetworks()
+                + " subnetworks. removed them => " + (prev - n) + " less nodes. Remaining subnetworks:" + remainingSubnetworks);
     }
 
     private void flush()
     {
-        logger.info("flushing graph " + graph.toString() + ", details:" + graph.toDetailsString() + ", "
-                + Helper.getMemInfo() + ")");
+        logger.info("flushing graph " + graph.toString() + ", details:" + graph.toDetailsString() + ", " + Helper.getMemInfo() + ")");
         graph.flush();
         fullyLoaded = true;
     }

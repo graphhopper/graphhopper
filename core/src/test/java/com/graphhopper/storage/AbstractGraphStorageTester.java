@@ -587,7 +587,7 @@ public abstract class AbstractGraphStorageTester
 
         int id11 = getIdOf(graph, 11); // is now 10
         int id12 = getIdOf(graph, 12); // is now 5
-        int id9 = getIdOf(graph, 9);   // is now 9
+        int id9 = getIdOf(graph, 9); // is now 9
         assertEquals(GHUtility.asSet(id12, id11), GHUtility.getNeighbors(carAllExplorer.setBaseNode(id9)));
         assertEquals(GHUtility.asSet(id9), GHUtility.getNeighbors(carAllExplorer.setBaseNode(id11)));
         assertEquals(GHUtility.asSet(id9), GHUtility.getNeighbors(carAllExplorer.setBaseNode(id12)));
@@ -925,6 +925,19 @@ public abstract class AbstractGraphStorageTester
         for (int i = 0; i < s; i++)
         {
             if (Math.abs(g.getLatitude(i) - latitude) < 1e-4)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public static int getIdOf( Graph g, double latitude, double longitude )
+    {
+        int s = g.getNodes();
+        for (int i = 0; i < s; i++)
+        {
+            if (Math.abs(g.getLatitude(i) - latitude) < 1e-4 && Math.abs(g.getLongitude(i) - longitude) < 1e-4)
             {
                 return i;
             }

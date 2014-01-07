@@ -22,9 +22,12 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.GHUtility;
+
 import java.util.HashMap;
 import java.util.Map;
+
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
@@ -181,5 +184,26 @@ public class FootFlagEncoderTest
         map.put("sac_scale", "mountain_hiking");
         flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
         assertEquals(FootFlagEncoder.SLOW, footEncoder.getSpeed(flags));
+    }
+    
+    @Test
+    public void testTurnFlagEncoding_noCostsAndRestrictions() {
+        long flags_r0 = footEncoder.getTurnFlags(true, 0);
+        long flags_0 = footEncoder.getTurnFlags(false, 0);
+        
+        long flags_r20 = footEncoder.getTurnFlags(true, 20);
+        long flags_20 = footEncoder.getTurnFlags(false, 20);
+        
+        assertEquals(0, footEncoder.getTurnCosts(flags_r0));
+        assertEquals(0, footEncoder.getTurnCosts(flags_0));
+        
+        assertEquals(0,footEncoder.getTurnCosts(flags_r20));
+        assertEquals(0, footEncoder.getTurnCosts(flags_20));
+        
+        assertFalse(footEncoder.isTurnRestricted(flags_r0));
+        assertFalse(footEncoder.isTurnRestricted(flags_0));
+        
+        assertFalse(footEncoder.isTurnRestricted(flags_r20));
+        assertFalse(footEncoder.isTurnRestricted(flags_20));
     }
 }

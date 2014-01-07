@@ -17,18 +17,19 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMNode;
-import com.graphhopper.reader.OSMWay;
-import com.graphhopper.reader.OSMRelation;
-
 import java.util.HashSet;
 import java.util.Set;
+
+import com.graphhopper.reader.OSMNode;
+import com.graphhopper.reader.OSMRelation;
+import com.graphhopper.reader.OSMWay;
 
 /**
  * Defines bit layout for pedestrians (speed, access, surface, ...).
  * <p>
  * @author Peter Karich
  * @author Nop
+ * @author Karl Hübner
  */
 public class FootFlagEncoder extends AbstractFlagEncoder
 {
@@ -108,6 +109,38 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         safeWayBit = 1 << shift++;
         return shift;
     }
+    
+    /**
+     * Foot flag encoder does not provide any turn cost / restrictions
+     */
+    @Override
+    public int defineTurnBits( int index, int shift, int numberCostsBits )
+    {
+        return shift;
+    }
+    
+    /**
+     * Foot flag encoder does not provide any turn cost / restrictions
+     * 
+     * @return <code>false</code>
+     */
+    @Override
+    public boolean isTurnRestricted( long flag )
+    {
+        return false;
+    }
+    
+    /**
+     * Foot flag encoder does not provide any turn cost / restrictions
+     * 
+     * @return 0
+     */    
+    @Override
+    public int getTurnCosts( long flag )
+    {
+        return 0;
+    }
+    
 
     @Override
     public String toString()
