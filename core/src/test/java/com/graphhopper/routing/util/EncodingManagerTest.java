@@ -122,6 +122,16 @@ public class EncodingManagerTest
                     return relationCodeEncoder.setValue(0, 2);
                 return relationCodeEncoder.setValue(0, 0);
             }
+            @Override            
+            int relationWeightCodeToSpeed( int highwaySpeed, int relationCode )
+            {
+                return highwaySpeed;
+            }            
+            @Override
+            public String toString()
+            {
+               return "lessRelationsBits";
+            }
         };
         manager.registerEncoder(lessRelationCodes);
 
@@ -129,13 +139,44 @@ public class EncodingManagerTest
         relMap.put("route", "bicycle");
         relMap.put("network", "lcn");
         long relFlags = manager.handleRelationTags(osmRel, 0);
-        long allow = defaultBike.acceptWay(osmWay) | lessRelationCodes.acceptWay(osmWay);
+        long allow = defaultBike.acceptBit | lessRelationCodes.acceptBit;
         long flags = manager.handleWayTags(osmWay, allow, relFlags);
 
         assertEquals(18, defaultBike.getSpeed(flags));
         assertEquals(4, lessRelationCodes.getSpeed(flags));
     }
 
+    @Test
+    public void testMixBikeTypesAndRelationCombination()
+    {
+        Map<String, String> wayMap = new HashMap<String, String>();
+        wayMap.put("highway", "track");
+        wayMap.put("tracktype", "grade1");
+        OSMWay osmWay = new OSMWay(1, wayMap);
+
+        Map<String, String> relMap = new HashMap<String, String>();
+        OSMRelation osmRel = new OSMRelation(1, relMap);
+
+        EncodingManager manager = new EncodingManager();
+        BikeFlagEncoder bikeencoder = new BikeFlagEncoder();
+        manager.registerEncoder(bikeencoder);
+        MountainBikeFlagEncoder mountainbikeencoder = new MountainBikeFlagEncoder();
+        manager.registerEncoder(mountainbikeencoder);
+        
+
+        // relation code for network rcn is VERY_NICE for bike and PREFER for mountainbike
+        relMap.put("route", "bicycle");
+        relMap.put("network", "rcn");
+        long relFlags = manager.handleRelationTags(osmRel, 0);
+        long allow = bikeencoder.acceptBit | mountainbikeencoder.acceptBit;
+        long flags = manager.handleWayTags(osmWay, allow, relFlags);
+
+        //Uninfluenced speed for grade1 bikeencoder = 4 (pushing section) -> smaller than 15 -> VERYNICE -> 18
+        assertEquals(20, bikeencoder.getSpeed(flags));
+        //Uninfluenced speed for grade1 bikeencoder = 12 -> smaller than 15 -> PREFER -> 18
+        assertEquals(18, mountainbikeencoder.getSpeed(flags));
+    }
+    
     public void testFullBitMask()
     {
         BitUtil bitUtil = BitUtil.LITTLE;

@@ -33,6 +33,7 @@ import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.routing.util.TurnCostEncoder.NoTurnCostsEncoder;
 
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders
@@ -45,14 +46,19 @@ public class EncodingManager
 {
     public static final String CAR = "car";
     public static final String BIKE = "bike";
+    public static final String RACINGBIKE = "racingbike";
+    public static final String MOUNTAINBIKE = "mtb";
     public static final String FOOT = "foot";
     private static final Map<String, String> defaultEdgeFlagEncoders = new HashMap<String, String>();
+    private static final Map<String, String> defaultTurnFlagEncoders = new HashMap<String, String>();
 
     static
     {
         defaultEdgeFlagEncoders.put(CAR, CarFlagEncoder.class.getName());
         defaultEdgeFlagEncoders.put(BIKE, BikeFlagEncoder.class.getName());
-        defaultEdgeFlagEncoders.put(FOOT, FootFlagEncoder.class.getName());
+        defaultEdgeFlagEncoders.put(RACINGBIKE, RacingBikeFlagEncoder.class.getName());
+        defaultEdgeFlagEncoders.put(MOUNTAINBIKE, MountainBikeFlagEncoder.class.getName());
+        defaultEdgeFlagEncoders.put(FOOT, FootFlagEncoder.class.getName());        
     }
 
     public static final int MAX_BITS = 32;
@@ -62,8 +68,8 @@ public class EncodingManager
     private int edgeEncoderNextBit = 0;
 
     private int nextWayBit = 0;
-    private int nextRelBit = 0;
     private int nextNodeBit = 0;
+    private int nextRelBit = 0;
     private int nextTurnBit = 0;
     protected int maxTurnCost;
 
@@ -228,7 +234,7 @@ public class EncodingManager
         for (int i = 0; i < encoderCount; i++)
         {
             AbstractFlagEncoder encoder = edgeEncoders.get(i);
-            flags |= encoder.handleWayTags(way, includeWay, relationFlags & encoder.getWayBitMask());
+            flags |= encoder.handleWayTags(way, includeWay, relationFlags & encoder.getRelBitMask());
         }
 
         return flags;
