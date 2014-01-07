@@ -137,6 +137,11 @@ public class TurnCostStorage implements ExtendedStorage
 
     public void setTurnCosts( int nodeIndex, int from, int to, int flags )
     {
+        if(flags == 0) {
+            //no need to store turn costs
+            return;
+        }
+        
         // append
         int newEntryIndex = turnCostsCount;
         turnCostsCount++;
@@ -239,7 +244,6 @@ public class TurnCostStorage implements ExtendedStorage
 
         turnCosts.copyTo(clonedTC.turnCosts);
         clonedTC.turnCostsCount = turnCostsCount;
-        clonedTC.graph = graph; //TODO might be faulty
 
         return clonedStorage;
     }

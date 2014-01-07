@@ -17,15 +17,22 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMNode;
-import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMWay;
+import gnu.trove.map.TLongObjectMap;
+import gnu.trove.map.hash.TLongObjectHashMap;
+
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import com.graphhopper.routing.util.TurnCostEncoder.NoTurnCostsEncoder;
+
+import com.graphhopper.reader.OSMNode;
+import com.graphhopper.reader.OSMReader;
+import com.graphhopper.reader.OSMRelation;
+import com.graphhopper.reader.OSMTurnRelation;
+import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
+import com.graphhopper.reader.OSMWay;
 
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders
@@ -40,33 +47,29 @@ public class EncodingManager
     public static final String BIKE = "bike";
     public static final String FOOT = "foot";
     private static final Map<String, String> defaultEdgeFlagEncoders = new HashMap<String, String>();
-    private static final Map<String, String> defaultTurnFlagEncoders = new HashMap<String, String>();
 
     static
     {
         defaultEdgeFlagEncoders.put(CAR, CarFlagEncoder.class.getName());
         defaultEdgeFlagEncoders.put(BIKE, BikeFlagEncoder.class.getName());
         defaultEdgeFlagEncoders.put(FOOT, FootFlagEncoder.class.getName());
-
-        defaultTurnFlagEncoders.put(CAR, DefaultTurnCostEncoder.class.getName());
-        defaultTurnFlagEncoders.put(BIKE, DefaultTurnCostEncoder.class.getName());
-        defaultTurnFlagEncoders.put(FOOT, NoTurnCostsEncoder.class.getName());
     }
 
     public static final int MAX_BITS = 32;
+    public static final int MAX_BITS_TURN_FLAGS = 32;
 
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<AbstractFlagEncoder>();
     private int edgeEncoderNextBit = 0;
 
-    private final List<TurnCostEncoder> turnCostEncoders = new ArrayList<TurnCostEncoder>();
-    private int turnEncoderNextBit = 0;
-
     private int nextWayBit = 0;
     private int nextRelBit = 0;
     private int nextNodeBit = 0;
+    private int nextTurnBit = 0;
+    protected int maxTurnCost;
 
     public EncodingManager()
     {
+        maxTurnCost = 0; //we don't need turn costs yet, but only restrictions
     }
 
     /**
@@ -78,33 +81,15 @@ public class EncodingManager
      */
     public EncodingManager( String encoderList )
     {
-        this(encoderList, "");
-    }
+        this();
 
-    /**
-     * Instantiate manager with the given list of encoders. The manager knows the default encoders:
-     * CAR, FOOT and BIKE Custom encoders can be added by giving a full class name e.g.
-     * "CAR:com.graphhopper.myproject.MyCarEncoder"
-     * <p/>
-     * @param encoderList comma delimited list of encoders. The order does not matter.
-     * @param turnCostEncoderList comma delimited list of turn cost encoders. The order does not
-     * matter.
-     */
-    public EncodingManager( String encoderList, String turnCostEncoderList )
-    {
-
-        for (AbstractFlagEncoder flagEncoder : test(defaultEdgeFlagEncoders, encoderList, AbstractFlagEncoder.class))
+        for (AbstractFlagEncoder flagEncoder : readFromEncoderString(defaultEdgeFlagEncoders, encoderList, AbstractFlagEncoder.class))
         {
-            registerEdgeFlagEncoder(flagEncoder);
-        }
-
-        for (TurnCostEncoder turnCostEncoder : test(defaultTurnFlagEncoders, turnCostEncoderList, TurnCostEncoder.class))
-        {
-            registerTurnCostFlagEncoder(turnCostEncoder);
+            registerEncoder(flagEncoder);
         }
     }
 
-    private <T> List<T> test( Map<String, String> defaultEncoders, String encoderList, Class<T> encoderClass )
+    private <T> List<T> readFromEncoderString( Map<String, String> defaultEncoders, String encoderList, Class<T> encoderClass )
     {
         String[] entries = encoderList.split(",");
         Arrays.sort(entries);
@@ -142,10 +127,9 @@ public class EncodingManager
         return resultEncoders;
     }
 
-    public void registerEdgeFlagEncoder( AbstractFlagEncoder encoder )
+    public void registerEncoder( AbstractFlagEncoder encoder )
     {
         int encoderCount = edgeEncoders.size();
-        edgeEncoders.add(encoder);
 
         int usedBits = encoder.defineNodeBits(encoderCount, edgeEncoderNextBit);
         if (usedBits >= MAX_BITS)
@@ -166,20 +150,15 @@ public class EncodingManager
         nextRelBit = usedBits;
 
         edgeEncoderNextBit = usedBits;
-    }
 
-    public void registerTurnCostFlagEncoder( TurnCostEncoder encoder )
-    {
-        int turnEncoderCount = turnCostEncoders.size();
-        turnCostEncoders.add(encoder);
+        //turn flag bits are independent from edge encoder bits
+        usedBits = encoder.defineTurnBits(encoderCount, nextTurnBit, determineRequiredBits(maxTurnCost));
+        if (usedBits >= MAX_BITS_TURN_FLAGS)
+            throw new IllegalArgumentException("Encoders are requesting more than " + MAX_BITS + " bits of turn flags");
+        nextTurnBit = usedBits;
 
-        int usedBits = encoder.defineBits(turnEncoderCount, turnEncoderNextBit);
-        if (usedBits >= MAX_BITS)
-        {
-            throw new IllegalArgumentException("Encoders are requesting more than 32 bits of flags");
-        }
-
-        turnEncoderNextBit = usedBits;
+        //everything okay, add encoder
+        edgeEncoders.add(encoder);
     }
 
     /**
@@ -195,11 +174,6 @@ public class EncodingManager
         return getEncoder(name, true);
     }
 
-    public TurnCostEncoder getTurnCostEncoder( String name )
-    {
-        return getTurnCostEncoder(name, true);
-    }
-
     private FlagEncoder getEncoder( String name, boolean throwExc )
     {
         int encoderCount = edgeEncoders.size();
@@ -210,19 +184,6 @@ public class EncodingManager
         }
         if (throwExc)
             throw new IllegalArgumentException("Encoder for " + name + " not found.");
-        return null;
-    }
-
-    private TurnCostEncoder getTurnCostEncoder( String name, boolean throwExc )
-    {
-        int turnEncoderCount = turnCostEncoders.size();
-        for (int i = 0; i < turnEncoderCount; i++)
-        {
-            if (name.equalsIgnoreCase(turnCostEncoders.get(i).toString()))
-                return turnCostEncoders.get(i);
-        }
-        if (throwExc)
-            throw new IllegalArgumentException("Turn Cost Encoder for " + name + " not found.");
         return null;
     }
 
@@ -423,5 +384,41 @@ public class EncodingManager
         }
 
         return flags;
+    }
+
+    private static int determineRequiredBits( int value )
+    {
+        int numberOfBits = 0;
+        while (value > 0)
+        {
+            value = value >> 1;
+            numberOfBits++;
+        }
+        return numberOfBits;
+    }
+
+    public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
+    {
+        TLongObjectMap<TurnCostTableEntry> entries = new TLongObjectHashMap<OSMTurnRelation.TurnCostTableEntry>();
+
+        int encoderCount = edgeEncoders.size();
+        for (int i = 0; i < encoderCount; i++)
+        {
+            AbstractFlagEncoder encoder = edgeEncoders.get(i);
+            for (TurnCostTableEntry entry : encoder.analyzeTurnRelation(turnRelation, osmReader))
+            {
+                TurnCostTableEntry oldEntry = entries.get(entry.getItemId());
+                if (oldEntry != null)
+                {
+                    // merging different encoders
+                    oldEntry.flags |= entry.flags;
+                } else
+                {
+                    entries.put(entry.getItemId(), entry);
+                }
+            }
+        }
+
+        return entries.valueCollection();
     }
 }
