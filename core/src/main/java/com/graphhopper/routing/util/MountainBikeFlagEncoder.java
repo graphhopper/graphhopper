@@ -49,7 +49,7 @@ public class MountainBikeFlagEncoder extends BikeFlagCommonEncoder
         setSurfaceSpeed("cobblestone", 20);
 
         setHighwaySpeed("living_street", 15);
-        setHighwaySpeed("steps", PUSHING_SECTION_SPEED);
+        setHighwaySpeed("steps", PUSHING_SECTION_SPEED/2);
 
         setHighwaySpeed("cycleway", 12);
         setHighwaySpeed("path", 24);

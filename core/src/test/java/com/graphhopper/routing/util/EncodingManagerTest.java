@@ -161,8 +161,8 @@ public class EncodingManagerTest
         long allow = bikeencoder.acceptBit | mountainbikeencoder.acceptBit;
         long flags = manager.handleWayTags(osmWay, allow, relFlags);
 
-        //Uninfluenced speed for grade1 bikeencoder = 4 (pushing section) -> smaller than 15 -> VERYNICE -> 18
-        assertEquals(20, bikeencoder.getSpeed(flags));
+        //Uninfluenced speed for grade1 bikeencoder = 4 (pushing section) -> smaller than 15 -> VERYNICE -> 22
+        assertEquals(22, bikeencoder.getSpeed(flags));
         //Uninfluenced speed for grade1 bikeencoder = 12 -> smaller than 15 -> PREFER -> 18
         assertEquals(18, mountainbikeencoder.getSpeed(flags));
     }

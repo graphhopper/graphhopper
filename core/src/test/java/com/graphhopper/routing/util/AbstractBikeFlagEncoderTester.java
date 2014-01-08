@@ -48,6 +48,13 @@ public abstract class AbstractBikeFlagEncoderTester
    
     abstract BikeFlagCommonEncoder createBikeEncoder(String encoderlist, String encoder);
     
+    public int getEncodedDecodedSpeed( OSMWay way )
+    {
+        long allowed = encoder.acceptBit;
+        long flags = encoder.handleWayTags(way, allowed, 0);
+        return encoder.getSpeed(flags);
+    }    
+    
     public String encodeDecodeWayType( String name, OSMWay way )
     {
         long allowed = encoder.acceptBit;

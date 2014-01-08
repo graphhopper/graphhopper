@@ -36,7 +36,7 @@ import java.util.Set;
  */
 public class BikeFlagCommonEncoder extends AbstractFlagEncoder
 {
-    private static final int DEFAULT_REL_CODE = 4;
+    public static final int DEFAULT_REL_CODE = 4;
     public static final int PUSHING_SECTION_SPEED = 4;
     // private int safeWayBit = 0;
     private int unpavedBit = 0;
@@ -200,18 +200,19 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
     }
 
     // In case that the way belongs to a relation for which we do have a relation triggered weight change.    
-    // FIXME: Re-write in case that there is a more geneic way to influence the weighting (issue #124).
+    // FIXME: Re-write in case that there is a more generic way to influence the weighting (issue #124).
     // Here we boost or reduce the speed according to the relationWeightCode:
     int relationWeightCodeToSpeed( int highwaySpeed, int relationCode )
     {
         int speed;
         if (highwaySpeed < 15)
-            // We know that our way belongs to a cycle route, so we assume 15km/h minimum
+            // We know that our way belongs to a cycle route, so we are optimistic and assume 15km/h minimum,
+            // irrespective of the tracktype and surface
             speed = 15;
         else
             speed = highwaySpeed;
-        // Add or remove 3km/h per every relation weight boost point
-        return speed + 3 * (relationCode - DEFAULT_REL_CODE);
+        // Add or remove 4km/h per every relation weight boost point
+        return speed + 4 * (relationCode - DEFAULT_REL_CODE);
     }
 
     @Override
@@ -317,38 +318,52 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
 
     int getSpeed( OSMWay way )
     {
-        if (!way.hasTag("bicycle", intended) && way.hasTag("highway", pushingSections))
-            if (way.hasTag("highway", "steps"))
-                return PUSHING_SECTION_SPEED / 2;
-            else
-                return PUSHING_SECTION_SPEED;
+        int speed = 0;
 
         String s = way.getTag("surface");
         if (!Helper.isEmpty(s))
         {
             Integer sInt = SURFACE_SPEED.get(s);
             if (sInt != null)
-                return sInt;
+                speed = sInt;
         }
-        String tt = way.getTag("tracktype");
-        if (!Helper.isEmpty(tt))
+        else
         {
-            Integer tInt = TRACKTYPE_SPEED.get(tt);
-            if (tInt != null)
-                return tInt;
-        }
-        String highway = way.getTag("highway");
-        if (!Helper.isEmpty(highway))
-        {
-            Integer hwInt = HIGHWAY_SPEED.get(highway);
-            if (hwInt != null) {
-                if (way.getTag("service") == null)
-                   return hwInt;
-                else
-                   return HIGHWAY_SPEED.get("living_street");
+            String tt = way.getTag("tracktype");
+            if (!Helper.isEmpty(tt))
+            {
+                Integer tInt = TRACKTYPE_SPEED.get(tt);
+                if (tInt != null)
+                    speed = tInt;
+            }
+            else
+            {
+                String highway = way.getTag("highway");
+                if (!Helper.isEmpty(highway))
+                {
+                    Integer hwInt = HIGHWAY_SPEED.get(highway);
+                    if (hwInt != null) {
+                        if (way.getTag("service") == null)
+                           speed = hwInt;
+                        else
+                           speed = HIGHWAY_SPEED.get("living_street");
+                    }
+                }
             }
         }
-        return 10;
+        
+        // Until now we assumed that the way is no pusing section
+        // Now we check, but only in case that our speed is bigger compared to the PUSHING_SECTION_SPEED
+        if ( (speed > PUSHING_SECTION_SPEED) &&
+             (!way.hasTag("bicycle", intended) && way.hasTag("highway", pushingSections)) )
+        {
+            if (way.hasTag("highway", "steps"))
+                speed = PUSHING_SECTION_SPEED / 2;
+            else
+                speed = PUSHING_SECTION_SPEED;
+        }
+
+        return speed;
     }
 
     @Override
@@ -424,7 +439,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
 
     };
 
-    private final Set<String> SAFE_HIGHWAY_TAGS = new HashSet<String>();
+    //private final Set<String> SAFE_HIGHWAY_TAGS = new HashSet<String>();
     private final Set<String> UNPAVED_SURFACE_TAGS = new HashSet<String>();
     private final Map<String, Integer> TRACKTYPE_SPEED = new HashMap<String, Integer>();
     private final Map<String, Integer> SURFACE_SPEED = new HashMap<String, Integer>();
