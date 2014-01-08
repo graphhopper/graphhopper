@@ -50,7 +50,7 @@ public class GraphHopperStorage implements GraphStorage
     // Road networks typically do not have nodes with plenty of edges!
     private static final int MAX_EDGES = 1000;
     // distance of around +-1000 000 meter are ok
-    private static final float INT_DIST_FACTOR = 1000f;
+    private static final double INT_DIST_FACTOR = 1000f;
     private final Directory dir;
     // edge memory layout: nodeA,nodeB,linkA,linkB,dist,flags,geometryRef,streetNameRef
     protected final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS, E_GEO, E_NAME, E_ADDITIONAL;
@@ -241,11 +241,22 @@ public class GraphHopperStorage implements GraphStorage
     }
 
     /**
-     * Translates double VALUE to integer in order to save it in a DataAccess object
+     * Translates double distance to integer in order to save it in a DataAccess object
      */
-    private int distToInt( double f )
+    private int distToInt( double distance )
     {
-        return (int) (f * INT_DIST_FACTOR);
+        int integ = (int) (distance * INT_DIST_FACTOR);
+        if (integ < 0)
+            throw new IllegalArgumentException("Distance cannot be empty: " + 
+                    distance + ", maybe overflow issue? integer: " + integ);
+        
+        // Due to rounding errors e.g. when getting the distance from another DataAccess object
+        // the following exception is not a good idea: 
+        // Allow integ to be 0 only if distance is 0
+        // if (integ == 0 && distance > 0)
+        //    throw new IllegalStateException("Distance wasn't 0 but converted integer was: " + 
+        //            distance + ", integer: " + integ);
+        return integ;
     }
 
     /**
@@ -253,7 +264,7 @@ public class GraphHopperStorage implements GraphStorage
      */
     private double getDist( long pointer )
     {
-        return (double) edges.getInt(pointer + E_DIST) / INT_DIST_FACTOR;
+        return edges.getInt(pointer + E_DIST) / INT_DIST_FACTOR;
     }
 
     @Override
@@ -785,7 +796,7 @@ public class GraphHopperStorage implements GraphStorage
                 edgePointer = (long) nextEdge * edgeEntryBytes;
                 edgeId = nextEdge;
                 node = getOtherNode(baseNode, edgePointer);
-                
+
                 // position to next edge
                 nextEdge = edges.getInt(getLinkPosInEdgeArea(baseNode, node, edgePointer));
                 if (nextEdge == edgeId)
@@ -800,7 +811,7 @@ public class GraphHopperStorage implements GraphStorage
 //                        foundNext = false;
 //                    }
 //                }
-                
+
                 if (foundNext)
                     break;
             }

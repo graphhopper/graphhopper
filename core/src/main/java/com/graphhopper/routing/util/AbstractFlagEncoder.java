@@ -29,6 +29,7 @@ import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.Helper;
@@ -48,7 +49,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     private final static Logger logger = LoggerFactory.getLogger(AbstractFlagEncoder.class);
 
     /* Edge Flag Encoder fields */
-
     private long nodeBitMask;
     private long wayBitMask;
     private long relBitMask;
@@ -61,20 +61,17 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected long ferryBit = 0;
 
     /* Turn Cost Flag Encoder fields */
-
     protected int maxCostsBits;
     protected long costsMask;
 
     protected long restrictionBit;
     protected long costShift;
-    
+
     /* processing properties (to be initialized lazy when needed) */
-    
     protected EdgeExplorer edgeOutExplorer;
     protected EdgeExplorer edgeInExplorer;
 
     /* restriction definitions */
-
     protected String[] restrictions;
     protected HashSet<String> intended = new HashSet<String>();
     protected HashSet<String> restrictedValues = new HashSet<String>(5);
@@ -156,9 +153,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     /**
      * Defines the bits reserved for storing turn restriction and turn cost
-     * 
+     * <p>
      * @param shift bit offset for the first bit used by this encoder
-     * @param numberCostsBits number of bits reserved for storing costs (range of values: [0, 2^numberCostBits - 1] seconds )
+     * @param numberCostsBits number of bits reserved for storing costs (range of values: [0,
+     * 2^numberCostBits - 1] seconds )
      * @return incremented shift value pointing behind the last used bit
      */
     public int defineTurnBits( int index, int shift, int numberCostsBits )
@@ -265,7 +263,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     @Override
     public int getSpeed( long flags )
     {
-        return (int) speedEncoder.getValue(flags);
+        int speedVal = (int) speedEncoder.getValue(flags);
+        if (speedVal < 0)
+            throw new IllegalStateException("Speed was negative!? " + speedVal);
+
+        return speedVal;
     }
 
     /**
@@ -286,6 +288,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     @Override
     public long setSpeed( long flags, int speed )
     {
+        if (speed < 0)
+            throw new IllegalArgumentException("Speed cannot be negative: " + speed + ", flags:" + BitUtil.LITTLE.toBitString(flags));
         return speedEncoder.setValue(flags, speed);
     }
 
@@ -477,7 +481,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         relBitMask = (1L << usedBits) - 1;
         relBitMask <<= shift;
     }
-    
+
     long getRelBitMask()
     {
         return relBitMask;

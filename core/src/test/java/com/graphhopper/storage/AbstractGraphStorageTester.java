@@ -676,6 +676,14 @@ public abstract class AbstractGraphStorageTester
         iter = carAllExplorer.setBaseNode(2);
         assertTrue(iter.next());
         assertEquals(carEncoder.setProperties(10, true, false), iter.getFlags());
+
+        try
+        {
+            graph.edge(0, 1).setDistance(-1);
+            assertTrue(false);
+        } catch (IllegalArgumentException ex)
+        {
+        }
     }
 
     @Test

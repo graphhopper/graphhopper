@@ -133,6 +133,13 @@ public class CarFlagEncoderTest
         allowed = encoder.acceptWay(way);
         encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(5, encoder.getSpeed(encoded));
+        
+        try {
+            encoder.setSpeed(0, -1);
+            assertTrue(false);
+        } catch (IllegalArgumentException ex)
+        {
+        }
     }
 
     @Test

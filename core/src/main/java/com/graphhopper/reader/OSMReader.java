@@ -817,24 +817,25 @@ public class OSMReader
      */
     long addBarrierNode( long nodeId )
     {
-        // create node
         OSMNode newNode;
         int graphIndex = getNodeMap().get(nodeId);
         if (graphIndex < TOWER_NODE)
         {
             graphIndex = -graphIndex - 3;
-            newNode = new OSMNode(createNewNodeId(), graphStorage.getLatitude(graphIndex), graphStorage.getLongitude(graphIndex));
+            newNode = new OSMNode(createNewNodeId(), 
+                    graphStorage.getLatitude(graphIndex), 
+                    graphStorage.getLongitude(graphIndex));
         } else
         {
             graphIndex = graphIndex - 3;
-            newNode = new OSMNode(createNewNodeId(), Helper.intToDegree(pillarLats.getInt(graphIndex * 4)), Helper.intToDegree(pillarLons
-                    .getInt(graphIndex * 4)));
+            newNode = new OSMNode(createNewNodeId(), 
+                    Helper.intToDegree(pillarLats.getInt(graphIndex * 4)), 
+                    Helper.intToDegree(pillarLons.getInt(graphIndex * 4)));
         }
 
         final long id = newNode.getId();
         prepareHighwayNode(id);
         addNode(newNode);
-
         return id;
     }
 
