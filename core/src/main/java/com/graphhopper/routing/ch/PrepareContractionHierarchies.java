@@ -68,7 +68,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private LevelGraph g;
     // the most important nodes comes last
     private GHTreeMapComposed sortedNodes;
-    private PriorityNode refs[];
+    private int priorities[];
     private final DataAccess originalEdges;
     // shortcut is one direction, speed is only involved while recalculating the endNode weights - see prepareEdges
     private final long scOneDir;
@@ -237,16 +237,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     boolean prepareNodes()
     {
         int len = g.getNodes();
+        
         for (int node = 0; node < len; node++)
         {
-            refs[node] = new PriorityNode(node, 0);
-        }
-
-        for (int node = 0; node < len; node++)
-        {
-            PriorityNode wn = refs[node];
-            wn.priority = calculatePriority(node);
-            sortedNodes.insert(wn.node, wn.priority);
+            int priority = priorities[node] = calculatePriority(node);
+            sortedNodes.insert(node, priority);
         }
 
         if (sortedNodes.isEmpty())
@@ -299,12 +294,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 int len = g.getNodes();
                 for (int node = 0; node < len; node++)
                 {
-                    PriorityNode pNode = refs[node];
                     if (g.getLevel(node) != 0)
                         continue;
 
-                    pNode.priority = calculatePriority(node);
-                    sortedNodes.insert(node, pNode.priority);
+                    int priority = priorities[node] = calculatePriority(node);
+                    sortedNodes.insert(node, priority);
                 }
                 periodSW.stop();
                 updateCounter++;
@@ -329,15 +323,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             counter++;
-            PriorityNode wn = refs[sortedNodes.pollKey()];
+            int polledNode = sortedNodes.pollKey();            
             if (sortedNodes.getSize() < lastNodesLazyUpdates)
             {
                 lazySW.start();
-                wn.priority = calculatePriority(wn.node);
-                if (!sortedNodes.isEmpty() && wn.priority > sortedNodes.peekValue())
+                int priority = priorities[polledNode] = calculatePriority(polledNode);
+                if (!sortedNodes.isEmpty() && priority > sortedNodes.peekValue())
                 {
                     // current node got more important => insert as new value and contract it later
-                    sortedNodes.insert(wn.node, wn.priority);
+                    sortedNodes.insert(polledNode, priority);
                     lazySW.stop();
                     continue;
                 }
@@ -345,11 +339,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             // contract!            
-            newShortcuts += addShortcuts(wn.node);
-            g.setLevel(wn.node, level);
+            newShortcuts += addShortcuts(polledNode);
+            g.setLevel(polledNode, level);
             level++;
 
-            EdgeSkipIterator iter = vehicleAllExplorer.setBaseNode(wn.node);
+            EdgeSkipIterator iter = vehicleAllExplorer.setBaseNode(polledNode);
             while (iter.next())
             {
                 int nn = iter.getAdjNode();
@@ -360,11 +354,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 if (neighborUpdate && rand.nextInt(100) < neighborUpdatePercentage)
                 {
                     neighborSW.start();
-                    PriorityNode neighborWn = refs[nn];
-                    int oldPrio = neighborWn.priority;
-                    neighborWn.priority = calculatePriority(nn);
-                    if (neighborWn.priority != oldPrio)
-                        sortedNodes.update(nn, oldPrio, neighborWn.priority);
+                    int oldPrio = priorities[nn];
+                    int priority = priorities[nn] = calculatePriority(nn);
+                    if (priority != oldPrio)
+                        sortedNodes.update(nn, oldPrio, priority);
 
                     neighborSW.stop();
                 }
@@ -399,7 +392,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         algo.close();
         originalEdges.close();
         sortedNodes = null;
-        refs = null;
+        priorities = null;
     }
     AddShortcutHandler addScHandler = new AddShortcutHandler();
     CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
@@ -666,8 +659,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         vehicleAllTmpExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
         calcPrioAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
         levelEdgeFilter = new IgnoreNodeFilter(g);
+        // Use an alternative to PriorityQueue as it has some advantages: 
+        //   1. Gets automatically smaller if less entries are stored => less total RAM used (as Graph is increasing until the end)
+        //   2. is slightly faster
+        //   but we need additional priorities array to keep old value which is necessary for update method
         sortedNodes = new GHTreeMapComposed();
-        refs = new PriorityNode[g.getNodes()];
+        priorities = new int[g.getNodes()];
         algo = new DijkstraOneToMany(g, prepareEncoder, shortestWeighting);
         return this;
     }

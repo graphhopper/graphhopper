@@ -234,18 +234,16 @@ public class OSMReader
     private TLongSet getOsmIdStoreRequiredSet()
     {
         if (osmIdStoreRequiredSet == null)
-        {
             osmIdStoreRequiredSet = new TLongHashSet();
-        }
+        
         return osmIdStoreRequiredSet;
     }
 
     private TIntLongMap getEdgeIdToOsmidMap()
     {
         if (edgeIdToOsmidMap == null)
-        {
             edgeIdToOsmidMap = new TIntLongHashMap(getOsmIdStoreRequiredSet().size());
-        }
+        
         return edgeIdToOsmidMap;
     }
 
@@ -810,6 +808,8 @@ public class OSMReader
         osmNodeIdToInternalNodeMap = null;
         osmNodeIdToNodeFlagsMap = null;
         osmWayIdToRouteWeightMap = null;
+        osmIdStoreRequiredSet = null;
+        edgeIdToOsmidMap = null;
     }
 
     /**
