@@ -181,7 +181,7 @@ public class RoutingAlgorithmIT
         list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2597, 110));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3615, 155));
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2323, 100));
-        list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1475, 80));
+        list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1490, 74));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "CAR,BIKE,RACINGBIKE", true, "RACINGBIKE", "fastest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
