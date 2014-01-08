@@ -15,28 +15,25 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package com.graphhopper.routing.util;
 
 import static com.graphhopper.routing.util.BikeFlagCommonEncoder.PUSHING_SECTION_SPEED;
 
 /**
- * Specifies the settings for mountainbikeing
+ * Specifies the settings for mountain biking
  * <p/>
  * @author ratrun
  */
-
 public class MountainBikeFlagEncoder extends BikeFlagCommonEncoder
 {
     MountainBikeFlagEncoder()
     {
-        super ();
         setTrackTypeSpeed("grade1", 12); // paved
         setTrackTypeSpeed("grade2", 20); // now unpaved ...
         setTrackTypeSpeed("grade3", 20);
         setTrackTypeSpeed("grade4", 20);
         setTrackTypeSpeed("grade5", 20); // like sand/grass     
-        
+
         setSurfaceSpeed("asphalt", 12);
         setSurfaceSpeed("concrete", 12);
         setSurfaceSpeed("paved", 12);
@@ -49,7 +46,7 @@ public class MountainBikeFlagEncoder extends BikeFlagCommonEncoder
         setSurfaceSpeed("cobblestone", 20);
 
         setHighwaySpeed("living_street", 15);
-        setHighwaySpeed("steps", PUSHING_SECTION_SPEED/2);
+        setHighwaySpeed("steps", PUSHING_SECTION_SPEED / 2);
 
         setHighwaySpeed("cycleway", 12);
         setHighwaySpeed("path", 24);
@@ -69,22 +66,22 @@ public class MountainBikeFlagEncoder extends BikeFlagCommonEncoder
         setHighwaySpeed("secondary_link", 12);
         setHighwaySpeed("tertiary", 14);
         setHighwaySpeed("tertiary_link", 14);
-        
+
         setPushingSection("footway");
         setPushingSection("pedestrian");
         setPushingSection("steps");
-        
+
         setCyclingNetworkPreference("icn", BikeFlagCommonEncoder.RelationMapCode.PREFER.getValue());
         setCyclingNetworkPreference("ncn", BikeFlagCommonEncoder.RelationMapCode.PREFER.getValue());
         setCyclingNetworkPreference("rcn", BikeFlagCommonEncoder.RelationMapCode.PREFER.getValue());
         setCyclingNetworkPreference("lcn", BikeFlagCommonEncoder.RelationMapCode.PREFER.getValue());
-        setCyclingNetworkPreference("mtb", BikeFlagCommonEncoder.RelationMapCode.OUTSTANDING_NICE.getValue());        
-        
+        setCyclingNetworkPreference("mtb", BikeFlagCommonEncoder.RelationMapCode.OUTSTANDING_NICE.getValue());
+
     }
-    
+
     @Override
     public String toString()
     {
         return "mtb";
-    }    
+    }
 }

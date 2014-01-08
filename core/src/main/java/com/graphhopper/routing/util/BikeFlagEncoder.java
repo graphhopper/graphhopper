@@ -15,7 +15,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package com.graphhopper.routing.util;
 
 /**
@@ -23,18 +22,16 @@ package com.graphhopper.routing.util;
  * <p/>
  * @author ratrun
  */
-
 public class BikeFlagEncoder extends BikeFlagCommonEncoder
 {
     BikeFlagEncoder()
     {
-        super ();
         setTrackTypeSpeed("grade1", 20); // paved
         setTrackTypeSpeed("grade2", 12); // now unpaved ...
         setTrackTypeSpeed("grade3", 12);
         setTrackTypeSpeed("grade4", 10);
         setTrackTypeSpeed("grade5", 8); // like sand/grass     
-        
+
         setSurfaceSpeed("asphalt", 20);
         setSurfaceSpeed("concrete", 20);
         setSurfaceSpeed("paved", 20);
@@ -47,7 +44,7 @@ public class BikeFlagEncoder extends BikeFlagCommonEncoder
         setSurfaceSpeed("cobblestone", 6);
 
         setHighwaySpeed("living_street", 15);
-        setHighwaySpeed("steps", PUSHING_SECTION_SPEED/2);
+        setHighwaySpeed("steps", PUSHING_SECTION_SPEED / 2);
 
         setHighwaySpeed("cycleway", 18);
         setHighwaySpeed("path", 18);
@@ -67,20 +64,20 @@ public class BikeFlagEncoder extends BikeFlagCommonEncoder
         setHighwaySpeed("secondary_link", 16);
         setHighwaySpeed("tertiary", 18);
         setHighwaySpeed("tertiary_link", 18);
-        
+
         setPushingSection("path");
         setPushingSection("track");
         setPushingSection("footway");
         setPushingSection("pedestrian");
         setPushingSection("steps");
-        
+
         setCyclingNetworkPreference("icn", RelationMapCode.OUTSTANDING_NICE.getValue());
         setCyclingNetworkPreference("ncn", RelationMapCode.OUTSTANDING_NICE.getValue());
         setCyclingNetworkPreference("rcn", RelationMapCode.VERY_NICE.getValue());
         setCyclingNetworkPreference("lcn", RelationMapCode.PREFER.getValue());
         setCyclingNetworkPreference("mtb", RelationMapCode.UNCHANGED.getValue());
     }
-    
+
     @Override
     public String toString()
     {
