@@ -43,7 +43,7 @@ public class Helper
 {
     private static final DistanceCalc dce = new DistanceCalcEarth();
     private static final Logger logger = LoggerFactory.getLogger(Helper.class);
-    public static final int MB = 1 << 20;
+    public static final long MB = 1L << 20;
 
     public static ArrayList<Integer> tIntListToArrayList( TIntList from )
     {

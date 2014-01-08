@@ -73,7 +73,7 @@ public class GraphHopper implements GraphHopperAPI
     private int periodicUpdates = 20;
     private int lazyUpdates = 10;
     private int neighborUpdates = 20;
-    private int logMessages = 20;
+    private double logMessages = 20;
     // for OSM import:
     private String osmFile;
     private EncodingManager encodingManager;
@@ -405,7 +405,7 @@ public class GraphHopper implements GraphHopperAPI
         periodicUpdates = args.getInt("prepare.updates.periodic", periodicUpdates);
         lazyUpdates = args.getInt("prepare.updates.lazy", lazyUpdates);
         neighborUpdates = args.getInt("prepare.updates.neighbor", neighborUpdates);        
-        logMessages = args.getInt("prepare.logmessages", logMessages);
+        logMessages = args.getDouble("prepare.logmessages", logMessages);
 
         // osm import
         wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", wayPointMaxDistance);

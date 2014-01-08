@@ -68,7 +68,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private LevelGraph g;
     // the most important nodes comes last
     private GHTreeMapComposed sortedNodes;
-    private int priorities[];
+    private int oldPriorities[];    
     private final DataAccess originalEdges;
     // shortcut is one direction, speed is only involved while recalculating the endNode weights - see prepareEdges
     private final long scOneDir;
@@ -88,7 +88,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private final StopWatch allSW = new StopWatch();
     private int neighborUpdatePercentage = 10;
     private int initialCollectionSize = 10000;
-    private int logMessagesPercentage = 20;
+    private double logMessagesPercentage = 20;
 
     public PrepareContractionHierarchies( FlagEncoder encoder, Weighting weighting )
     {
@@ -162,7 +162,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
      * Specifies how often a log message should be printed. Specify something around 20 (20% of the
      * start nodes).
      */
-    public PrepareContractionHierarchies setLogMessages( int logMessages )
+    public PrepareContractionHierarchies setLogMessages( double logMessages )
     {
         this.logMessagesPercentage = logMessages;
         return this;
@@ -240,7 +240,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         
         for (int node = 0; node < len; node++)
         {
-            int priority = priorities[node] = calculatePriority(node);
+            int priority = oldPriorities[node] = calculatePriority(node);
             sortedNodes.insert(node, priority);
         }
 
@@ -256,7 +256,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         int level = 1;
         counter = 0;
         int initSize = sortedNodes.getSize();
-        int logSize = Math.max(10, sortedNodes.getSize() / 100 * logMessagesPercentage);
+        int logSize = (int) Math.round(Math.max(10, sortedNodes.getSize() / 100 * logMessagesPercentage));
         if (logMessagesPercentage == 0)
             logSize = Integer.MAX_VALUE;
 
@@ -297,7 +297,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     if (g.getLevel(node) != 0)
                         continue;
 
-                    int priority = priorities[node] = calculatePriority(node);
+                    int priority = oldPriorities[node] = calculatePriority(node);
                     sortedNodes.insert(node, priority);
                 }
                 periodSW.stop();
@@ -306,6 +306,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
             if (counter % logSize == 0)
             {
+                // TODO necessary?
+                System.gc();
                 logger.info(Helper.nf(counter) + ", updates:" + updateCounter 
                         + ", nodes: " + Helper.nf(sortedNodes.getSize())
                         + ", shortcuts:" + Helper.nf(newShortcuts)
@@ -315,6 +317,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                         + ", t(lazy):" + (int) lazySW.getSeconds()
                         + ", t(neighbor):" + (int) neighborSW.getSeconds()
                         + ", meanDegree:" + (long) meanDegree
+                        + ", algo(" + algo.getMemoryUsageAsString() + ")"
                         + ", " + Helper.getMemInfo());
                 dijkstraSW = new StopWatch();
                 periodSW = new StopWatch();
@@ -327,7 +330,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             if (sortedNodes.getSize() < lastNodesLazyUpdates)
             {
                 lazySW.start();
-                int priority = priorities[polledNode] = calculatePriority(polledNode);
+                int priority = oldPriorities[polledNode] = calculatePriority(polledNode);
                 if (!sortedNodes.isEmpty() && priority > sortedNodes.peekValue())
                 {
                     // current node got more important => insert as new value and contract it later
@@ -354,8 +357,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 if (neighborUpdate && rand.nextInt(100) < neighborUpdatePercentage)
                 {
                     neighborSW.start();
-                    int oldPrio = priorities[nn];
-                    int priority = priorities[nn] = calculatePriority(nn);
+                    int oldPrio = oldPriorities[nn];
+                    int priority = oldPriorities[nn] = calculatePriority(nn);
                     if (priority != oldPrio)
                         sortedNodes.update(nn, oldPrio, priority);
 
@@ -392,7 +395,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         algo.close();
         originalEdges.close();
         sortedNodes = null;
-        priorities = null;
+        oldPriorities = null;
     }
     AddShortcutHandler addScHandler = new AddShortcutHandler();
     CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
@@ -664,7 +667,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         //   2. is slightly faster
         //   but we need additional priorities array to keep old value which is necessary for update method
         sortedNodes = new GHTreeMapComposed();
-        priorities = new int[g.getNodes()];
+        oldPriorities = new int[g.getNodes()];
         algo = new DijkstraOneToMany(g, prepareEncoder, shortestWeighting);
         return this;
     }
@@ -708,6 +711,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     private int getOrigEdgeCount( int index )
     {
+        // TODO possible memory usage improvement: avoid storing the value 1 for normal edges (does not change)!
         long tmp = (long) index * 4;
         originalEdges.incCapacity(tmp + 4);
         return originalEdges.getInt(tmp);

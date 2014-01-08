@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.Helper;
 import gnu.trove.list.array.TIntArrayList;
 import java.util.Arrays;
 
@@ -35,7 +36,7 @@ import java.util.Arrays;
 public class DijkstraOneToMany extends AbstractRoutingAlgorithm
 {
     protected double[] weights;
-    private final TIntArrayList changedNodes;
+    private final TIntArrayListWithCap changedNodes;
     private int[] parents;
     private int[] edgeIds;
     private IntDoubleBinHeap heap;
@@ -60,7 +61,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         Arrays.fill(weights, Double.MAX_VALUE);
 
         heap = new IntDoubleBinHeap();
-        changedNodes = new TIntArrayList();
+        changedNodes = new TIntArrayListWithCap();
     }
 
     public DijkstraOneToMany setLimitWeight( double weight )
@@ -216,5 +217,25 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     public String getName()
     {
         return "dijkstraOneToMany";
+    }
+
+    /**
+     * List currently used memory in MB (approximatively)
+     */
+    public String getMemoryUsageAsString()
+    {
+        long len = weights.length;
+        return "weights+parents+edgeIds:" + ((8L + 4L + 4L) * len) / Helper.MB
+                + "MB, changedNodes:" + changedNodes.getCapacity() * 4L / Helper.MB
+                + "MB, heap:" + heap.getCapacity() * (4L + 4L) / Helper.MB 
+                + "MB";
+    }
+
+    private static class TIntArrayListWithCap extends TIntArrayList
+    {
+        public int getCapacity()
+        {
+            return _data.length;
+        }
     }
 }

@@ -207,7 +207,7 @@ public class OSMReader
                     if (++tmpRelationCounter % 50000 == 0)
                     {
                         logger.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:" + nf(getRelFlagsMap().size())
-                                + Helper.getMemInfo());
+                                + " " + Helper.getMemInfo());
                     }
 
                 }
