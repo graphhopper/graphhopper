@@ -2,7 +2,8 @@ language: java
 jdk:
   - openjdk7
   - oraclejdk7
-before_install: cd core
+build_environment: win2012
+before_install: cmd /c cd core
 install: mvn test
 notifications:
   email:
