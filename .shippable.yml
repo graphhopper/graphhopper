@@ -1,0 +1,9 @@
+language: java
+jdk:
+  - openjdk7
+  - oraclejdk7
+before_install: cd core
+install: mvn test
+notifications:
+  email:
+    - github@graphhopper.com
