@@ -317,7 +317,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                         + ", t(lazy):" + (int) lazySW.getSeconds()
                         + ", t(neighbor):" + (int) neighborSW.getSeconds()
                         + ", meanDegree:" + (long) meanDegree
-                        + ", algo(" + algo.getMemoryUsageAsString() + ")"
+                        + ", algo:" + algo.getMemoryUsageAsString()
                         + ", " + Helper.getMemInfo());
                 dijkstraSW = new StopWatch();
                 periodSW = new StopWatch();

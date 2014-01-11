@@ -225,9 +225,9 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     public String getMemoryUsageAsString()
     {
         long len = weights.length;
-        return "weights+parents+edgeIds:" + ((8L + 4L + 4L) * len) / Helper.MB
-                + "MB, changedNodes:" + changedNodes.getCapacity() * 4L / Helper.MB
-                + "MB, heap:" + heap.getCapacity() * (4L + 4L) / Helper.MB 
+        return ((8L + 4L + 4L) * len 
+                + changedNodes.getCapacity() * 4L 
+                + heap.getCapacity() * (4L + 4L)) / Helper.MB
                 + "MB";
     }
 
