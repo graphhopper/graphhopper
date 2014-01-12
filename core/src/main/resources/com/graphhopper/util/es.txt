@@ -12,6 +12,7 @@ web.searchButton=Buscar
 web.fromHint=Desde
 web.toHint=hasta
 web.moreButton=más
+web.gpxExportButton=GPX export
 web.routeInfo=%1$s%2$s tardará %3$s 
 web.locationsNotFound=No se ha encontrado la ruta. El destino no se encuentra en el área.
 web.bike=Bicicleta

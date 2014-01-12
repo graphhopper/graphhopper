@@ -12,6 +12,7 @@ web.searchButton=Search
 web.fromHint=From
 web.toHint=To
 web.moreButton=more
+web.gpxExportButton=GPX export
 web.routeInfo=%1$s%2$s will take %3$s
 web.locationsNotFound=Routing not possible. Location(s) not found in the area.
 web.bike=Bike

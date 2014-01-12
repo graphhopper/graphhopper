@@ -12,6 +12,7 @@ web.searchButton=Pesquisar
 web.fromHint=De
 web.toHint=Para
 web.moreButton=mais
+web.gpxExportButton=GPX export
 web.routeInfo=%1$s%2$s irá levar %3$s
 web.locationsNotFound=Roteamento impossível. Localização(ões) não encontrada(s) na área.
 web.bike=Bicicleta

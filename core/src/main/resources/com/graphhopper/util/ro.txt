@@ -12,6 +12,7 @@ web.searchButton=Caută
 web.fromHint=de la
 web.toHint=la
 web.moreButton=mai mult
+web.gpxExportButton=GPX export
 web.routeInfo=%1$s%2$s durează %3$s
 web.locationsNotFound=Traseul nu este posibil. Locul(locurile) nu pot fi găsite în zonă.
 web.bike=bicicletă
