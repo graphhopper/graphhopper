@@ -72,7 +72,6 @@ public class LocationIndexTreeSC extends LocationIndexTree
         final AllEdgesSkipIterator tmpIter = lg.getAllEdges();
         return new AllEdgesIterator()
         {
-
             @Override
             public EdgeIteratorState detach()
             {
@@ -175,6 +174,12 @@ public class LocationIndexTreeSC extends LocationIndexTree
             {
                 return tmpIter.setAdditionalField(value);
             }
+
+            @Override
+            public void copyProperties( EdgeIteratorState edge )
+            {
+                tmpIter.copyProperties(edge);
+            }            
         };
     }
 

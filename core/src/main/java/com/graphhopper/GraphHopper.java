@@ -325,7 +325,7 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * @deprecated until #12 is fixed
+     * Sorts the graph which requires more RAM while import.
      */
     public GraphHopper setSortGraph( boolean sortGraph )
     {
@@ -404,7 +404,7 @@ public class GraphHopper implements GraphHopperAPI
 
         periodicUpdates = args.getInt("prepare.updates.periodic", periodicUpdates);
         lazyUpdates = args.getInt("prepare.updates.lazy", lazyUpdates);
-        neighborUpdates = args.getInt("prepare.updates.neighbor", neighborUpdates);        
+        neighborUpdates = args.getInt("prepare.updates.neighbor", neighborUpdates);
         logMessages = args.getDouble("prepare.logmessages", logMessages);
 
         // osm import
@@ -517,7 +517,8 @@ public class GraphHopper implements GraphHopperAPI
                     new Unzipper().unzip(compressed.getAbsolutePath(), graphHopperFolder, removeZipped);
                 } catch (IOException ex)
                 {
-                    throw new RuntimeException("Couldn't extract file " + compressed.getAbsolutePath() + " to " + graphHopperFolder, ex);
+                    throw new RuntimeException("Couldn't extract file " + compressed.getAbsolutePath()
+                            + " to " + graphHopperFolder, ex);
                 }
             }
         }
@@ -547,9 +548,13 @@ public class GraphHopper implements GraphHopperAPI
         if (chEnabled)
             initCHPrepare();
 
-        if (!"true".equals(graph.getProperties().get("prepare.done")))
+        if (!isPrepared())
             prepare();
         initLocationIndex();
+    }
+    
+    private boolean isPrepared() {
+        return "true".equals(graph.getProperties().get("prepare.done"));
     }
 
     protected void initCHPrepare()
@@ -715,9 +720,13 @@ public class GraphHopper implements GraphHopperAPI
         graph.optimize();
         logger.info("finished optimize (" + Helper.getMemInfo() + ")");
 
-        // move this into the GraphStorage.optimize method?
+        // Later: move this into the GraphStorage.optimize method
+        // Or: Doing it after preparation to optimize shortcuts too. But not possible yet https://github.com/graphhopper/graphhopper/issues/12
         if (sortGraph)
         {
+            if(graph instanceof LevelGraph && isPrepared())
+                throw new IllegalArgumentException("Sorting prepared LevelGraph is not possible yet. See #12");
+            
             logger.info("sorting ... (" + Helper.getMemInfo() + ")");
             GraphStorage newGraph = GHUtility.newStorage(graph);
             GHUtility.sortDFS(graph, newGraph);

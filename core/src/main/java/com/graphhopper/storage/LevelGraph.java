@@ -19,8 +19,8 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.AllEdgesSkipIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeSkipExplorer;
+import com.graphhopper.util.EdgeSkipIterState;
 
 /**
  * Extended graph interface which supports storing and retrieving the level for a node.
@@ -33,10 +33,10 @@ public interface LevelGraph extends Graph
 
     int getLevel( int index );
 
-    EdgeSkipExplorer shortcut( int a, int b );
+    EdgeSkipIterState shortcut( int a, int b );
 
     @Override
-    EdgeIteratorState getEdgeProps( int edgeId, int endNode );
+    EdgeSkipIterState getEdgeProps( int edgeId, int endNode );
 
     @Override
     EdgeSkipExplorer createEdgeExplorer();

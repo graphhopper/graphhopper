@@ -299,7 +299,7 @@ public class PrepareContractionHierarchiesTest
         g.setLevel(8, 8);
 
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
-        EdgeSkipExplorer tmp = g.shortcut(1, 4);
+        EdgeSkipIterState tmp = g.shortcut(1, 4);
         tmp.setDistance(2).setFlags(prepare.getScBothDir());
         tmp.setSkippedEdges(iter1_1.getEdge(), iter1_2.getEdge());
         long f = prepare.getScOneDir();
@@ -345,7 +345,7 @@ public class PrepareContractionHierarchiesTest
         long oneDirFlags = new PrepareContractionHierarchies(carEncoder, w).getScOneDir();
 
         int tmp = iterTmp1.getEdge();
-        EdgeSkipExplorer iter1 = g.shortcut(0, 2);
+        EdgeSkipIterState iter1 = g.shortcut(0, 2);
         iter1.setDistance(2).setFlags(oneDirFlags);
         iter1.setSkippedEdges(tmp, iter2.getEdge());
         tmp = iter1.getEdge();

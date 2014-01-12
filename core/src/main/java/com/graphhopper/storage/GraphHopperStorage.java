@@ -626,6 +626,12 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
+        public void copyProperties( EdgeIteratorState edge )
+        {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+        
+        @Override
         public int getEdge()
         {
             return (int) (edgePointer / edgeEntryBytes);
@@ -938,6 +944,12 @@ public class GraphHopperStorage implements GraphStorage
         public final String toString()
         {
             return getEdge() + " " + getBaseNode() + "-" + getAdjNode();
+        }
+
+        @Override
+        public void copyProperties( EdgeIteratorState edge )
+        {
+            setDistance(edge.getDistance()).setFlags(edge.getFlags()).setWayGeometry(edge.fetchWayGeometry(0));
         }
     }
 

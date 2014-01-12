@@ -133,8 +133,8 @@ public class GHUtility
 
     public static String getNodeInfo( LevelGraph g, int nodeId, EdgeFilter filter )
     {
-        EdgeSkipExplorer iter = g.createEdgeExplorer(filter);
-        iter.setBaseNode(nodeId);
+        EdgeSkipExplorer ex = g.createEdgeExplorer(filter);
+        EdgeSkipIterator iter = ex.setBaseNode(nodeId);
         String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
         while (iter.next())
         {
@@ -181,6 +181,7 @@ public class GHUtility
         list.fill(0, nodes, -1);
         final GHBitSetImpl bitset = new GHBitSetImpl(nodes);
         final IntRef ref = new IntRef(0);
+        EdgeExplorer explorer = g.createEdgeExplorer();
         for (int startNode = 0; startNode >= 0 && startNode < nodes;
                 startNode = bitset.nextClear(startNode + 1))
         {
@@ -199,7 +200,7 @@ public class GHUtility
                     ref.val++;
                     return super.goFurther(nodeId);
                 }
-            }.start(g.createEdgeExplorer(), startNode, false);
+            }.start(explorer, startNode, false);
         }
         return createSortedGraph(g, sortedGraph, list);
     }
@@ -215,9 +216,8 @@ public class GHUtility
             int newIndex = oldToNewNodeList.get(old);
             // ignore empty entries
             if (newIndex < 0)
-            {
                 continue;
-            }
+            
             bitset.add(newIndex);
             sortedGraph.setNode(newIndex, g.getLatitude(old), g.getLongitude(old));
             EdgeIterator eIter = explorer.setBaseNode(old);
@@ -230,8 +230,7 @@ public class GHUtility
                 if (bitset.contains(newNodeIndex))
                     continue;
 
-                sortedGraph.edge(newIndex, newNodeIndex).setDistance(eIter.getDistance()).setFlags(eIter.getFlags()).
-                        setWayGeometry(eIter.fetchWayGeometry(0));
+                sortedGraph.edge(newIndex, newNodeIndex).copyProperties(eIter);
             }
         }
         return sortedGraph;
@@ -431,6 +430,12 @@ public class GHUtility
 
         @Override
         public EdgeIteratorState setAdditionalField( int value )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public void copyProperties( EdgeIteratorState edge )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }

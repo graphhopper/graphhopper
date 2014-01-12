@@ -529,11 +529,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // number of already contracted neighbors of v
         int contractedNeighbors = 0;
         int degree = 0;
-        calcPrioAllExplorer.setBaseNode(v);
-        while (calcPrioAllExplorer.next())
+        EdgeSkipIterator iter = calcPrioAllExplorer.setBaseNode(v);
+        while (iter.next())
         {
             degree++;
-            if (calcPrioAllExplorer.isShortcut())
+            if (iter.isShortcut())
                 contractedNeighbors++;
         }
 
@@ -624,8 +624,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         {
             boolean updatedInGraph = false;
             // check if we need to update some existing shortcut in the graph
-            vehicleOutExplorer.setBaseNode(sc.from);
-            EdgeSkipExplorer iter = vehicleOutExplorer;
+            EdgeSkipIterator iter = vehicleOutExplorer.setBaseNode(sc.from);
             while (iter.next())
             {
                 if (iter.isShortcut() && iter.getAdjNode() == sc.to
@@ -643,10 +642,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
             if (!updatedInGraph)
             {
-                iter = g.shortcut(sc.from, sc.to);
-                iter.setDistance(sc.weight).setFlags(sc.flags);
-                iter.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
-                setOrigEdgeCount(iter.getEdge(), sc.originalEdges);
+                EdgeSkipIterState edgeState = g.shortcut(sc.from, sc.to);
+                edgeState.setDistance(sc.weight).setFlags(sc.flags);
+                edgeState.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
+                setOrigEdgeCount(edgeState.getEdge(), sc.originalEdges);
                 tmpNewShortcuts++;
             }
         }

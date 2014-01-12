@@ -24,6 +24,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipExplorer;
 import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.EdgeSkipIterState;
 
 /**
  * A Graph necessary for shortcut algorithms like Contraction Hierarchies. This class enables the
@@ -62,13 +63,13 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
     }
 
     @Override
-    public EdgeSkipExplorer shortcut( int a, int b )
+    public EdgeSkipIterState shortcut( int a, int b )
     {
-        return (EdgeSkipExplorer) edge(a, b);
+        return edge(a, b);
     }
 
     @Override
-    public EdgeIteratorState edge( int a, int b )
+    public EdgeSkipIterState edge( int a, int b )
     {
         ensureNodeIndex(Math.max(a, b));
         int edgeId = internalEdgeAdd(a, b);
@@ -99,7 +100,13 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
         return this;
     }
 
-    class EdgeSkipIteratorImpl extends EdgeIterable implements EdgeSkipExplorer
+    @Override
+    public final EdgeSkipIterState getEdgeProps( int edgeId, int endNode )
+    {
+        return (EdgeSkipIterState) super.getEdgeProps(edgeId, endNode);
+    }
+
+    class EdgeSkipIteratorImpl extends EdgeIterable implements EdgeSkipExplorer, EdgeSkipIterator
     {
         public EdgeSkipIteratorImpl( EdgeFilter filter )
         {
@@ -153,6 +160,14 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
             iter.setEdgeId(edgeId);
             iter.next();
             return iter;
+        }
+
+        @Override
+        public void copyProperties( EdgeIteratorState edge )
+        {
+            super.copyProperties(edge);
+            EdgeSkipIterator eSkip = (EdgeSkipIterator) edge;
+//            setSkippedEdges(eSkip.getSkippedEdge1(), eSkip.getSkippedEdge2());
         }
     }
 
@@ -225,18 +240,11 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
         return new SingleLevelEdge(edge, nodeId);
     }
 
-    class SingleLevelEdge extends SingleEdge implements EdgeSkipExplorer
+    class SingleLevelEdge extends SingleEdge implements EdgeSkipIterState
     {
         public SingleLevelEdge( int edge, int nodeId )
         {
             super(edge, nodeId);
-        }
-
-        @Override
-        public EdgeSkipIterator setBaseNode( int baseNode )
-        {
-            super.setBaseNode(baseNode);
-            return this;
         }
 
         @Override

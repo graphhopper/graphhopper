@@ -25,13 +25,6 @@ import com.graphhopper.storage.LevelGraph;
  * @see LevelGraph
  * @author Peter Karich
  */
-public interface EdgeSkipIterator extends EdgeIterator
+public interface EdgeSkipIterator extends EdgeIterator, EdgeSkipIterState
 {
-    int getSkippedEdge1();
-
-    int getSkippedEdge2();
-
-    void setSkippedEdges( int edge1, int edge2 );
-
-    boolean isShortcut();
 }

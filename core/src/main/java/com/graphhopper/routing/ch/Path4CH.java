@@ -21,9 +21,11 @@ import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeSkipExplorer;
 import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.EdgeSkipIterState;
 
 /**
  * Recursivly unpack shortcuts.
@@ -44,11 +46,9 @@ public class Path4CH extends PathBidirRef
     @Override
     protected void processEdge( int tmpEdge, int endNode )
     {
-        EdgeIteratorState mainIter = graph.getEdgeProps(tmpEdge, endNode);
-
         // Shortcuts do only contain valid weight so first expand before adding
         // to distance and time
-        expandEdge((EdgeSkipIterator) mainIter, false);
+        expandEdge((EdgeSkipIterState) graph.getEdgeProps(tmpEdge, endNode), false);
     }
 
     @Override
@@ -57,21 +57,21 @@ public class Path4CH extends PathBidirRef
         return calc.revertWeight(mainIter, mainIter.getDistance());
     }
 
-    private void expandEdge( EdgeSkipIterator mainIter, boolean revert )
+    private void expandEdge( EdgeSkipIterState mainEdgeState, boolean revert )
     {
-        if (!mainIter.isShortcut())
+        if (!mainEdgeState.isShortcut())
         {
-            double dist = calcDistance(mainIter);
+            double dist = calcDistance(mainEdgeState);
             distance += dist;
-            long flags = mainIter.getFlags();
+            long flags = mainEdgeState.getFlags();
             millis += calcMillis(dist, flags);
-            addEdge(mainIter.getEdge());
+            addEdge(mainEdgeState.getEdge());
             return;
         }
 
-        int skippedEdge1 = mainIter.getSkippedEdge1();
-        int skippedEdge2 = mainIter.getSkippedEdge2();
-        int from = mainIter.getBaseNode(), to = mainIter.getAdjNode();
+        int skippedEdge1 = mainEdgeState.getSkippedEdge1();
+        int skippedEdge2 = mainEdgeState.getSkippedEdge2();
+        int from = mainEdgeState.getBaseNode(), to = mainEdgeState.getAdjNode();
         if (revert)
         {
             int tmp = from;
@@ -82,32 +82,32 @@ public class Path4CH extends PathBidirRef
         // getEdgeProps could possibly return an empty edge if the shortcut is available for both directions
         if (reverseOrder)
         {
-            EdgeSkipExplorer iter = (EdgeSkipExplorer) graph.getEdgeProps(skippedEdge1, to);
-            boolean empty = iter == null;
+            EdgeSkipIterState edgeState = (EdgeSkipIterState) graph.getEdgeProps(skippedEdge1, to);
+            boolean empty = edgeState == null;
             if (empty)
-                iter = (EdgeSkipExplorer) graph.getEdgeProps(skippedEdge2, to);
+                edgeState = (EdgeSkipIterState) graph.getEdgeProps(skippedEdge2, to);
 
-            expandEdge(iter, false);
+            expandEdge(edgeState, false);
 
             if (empty)
-                iter = (EdgeSkipExplorer) graph.getEdgeProps(skippedEdge1, from);
+                edgeState = (EdgeSkipIterState) graph.getEdgeProps(skippedEdge1, from);
             else
-                iter = (EdgeSkipExplorer) graph.getEdgeProps(skippedEdge2, from);
+                edgeState = (EdgeSkipIterState) graph.getEdgeProps(skippedEdge2, from);
 
-            expandEdge(iter, true);
+            expandEdge(edgeState, true);
         } else
         {
-            EdgeSkipExplorer iter = (EdgeSkipExplorer) graph.getEdgeProps(skippedEdge1, from);
+            EdgeSkipIterState iter = (EdgeSkipIterState) graph.getEdgeProps(skippedEdge1, from);
             boolean empty = iter == null;
             if (empty)
-                iter = (EdgeSkipExplorer) graph.getEdgeProps(skippedEdge2, from);
+                iter = (EdgeSkipIterState) graph.getEdgeProps(skippedEdge2, from);
 
             expandEdge(iter, true);
 
             if (empty)
-                iter = (EdgeSkipExplorer) graph.getEdgeProps(skippedEdge1, to);
+                iter = (EdgeSkipIterState) graph.getEdgeProps(skippedEdge1, to);
             else
-                iter = (EdgeSkipExplorer) graph.getEdgeProps(skippedEdge2, to);
+                iter = (EdgeSkipIterState) graph.getEdgeProps(skippedEdge2, to);
 
             expandEdge(iter, false);
         }

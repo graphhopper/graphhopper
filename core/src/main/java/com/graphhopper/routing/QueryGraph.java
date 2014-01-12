@@ -550,6 +550,12 @@ public class QueryGraph implements Graph {
         public EdgeIteratorState setAdditionalField(int value) {
             return edges.get(current).setAdditionalField(value);
         }
+
+        @Override
+        public void copyProperties( EdgeIteratorState edge )
+        {
+            edges.get(current).copyProperties(edge);
+        }
     }
 
     /**
@@ -693,6 +699,12 @@ public class QueryGraph implements Graph {
 
         @Override
         public EdgeIteratorState setAdditionalField(int value) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public void copyProperties( EdgeIteratorState edge )
+        {
             throw new UnsupportedOperationException("Not supported.");
         }
     }

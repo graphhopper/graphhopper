@@ -25,7 +25,7 @@ import com.graphhopper.storage.LevelGraph;
  * @see LevelGraph
  * @author Peter Karich
  */
-public interface EdgeSkipExplorer extends EdgeSkipIterator, EdgeExplorer
+public interface EdgeSkipExplorer extends EdgeExplorer
 {
     @Override
     EdgeSkipIterator setBaseNode( int baseNode );

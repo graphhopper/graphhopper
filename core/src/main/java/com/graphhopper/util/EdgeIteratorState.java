@@ -96,4 +96,9 @@ public interface EdgeIteratorState
      * Clones this EdgeIteratorState.
      */
     EdgeIteratorState detach();
+    
+    /**
+     * Copies the specified edge into the current one.
+     */
+    void copyProperties(EdgeIteratorState edge);
 }
