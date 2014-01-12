@@ -181,7 +181,7 @@ GHRequest.prototype.doRequest = function(url, callback) {
             callback(json);
         },
         "error": function(err) {
-            var msg = "API did not response! ";
+            var msg = "API did not respond! ";
             if (err && err.statusText && err.statusText != "OK")
                 msg += err.statusText;
 

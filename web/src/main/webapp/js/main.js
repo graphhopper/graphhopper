@@ -98,6 +98,7 @@ $(document).ready(function(e) {
                 if (json.supportedVehicles) {
                     var vehicles = json.supportedVehicles.split(",");
                     if (vehicles.length > 1)
+                        ghRequest.vehicle = vehicles[0];
                         for (var i = 0; i < vehicles.length; i++) {
                             vehiclesDiv.append(createButton(vehicles[i]));
                         }
@@ -153,7 +154,7 @@ function resolveCoords(fromStr, toStr, doQuery) {
         resolveTo();
         routeLatLng(ghRequest, doQuery);
     } else {
-        // wait for resolve as we need the coord for routing     
+        // wait for resolve as we need the coord for routing
         $.when(resolveFrom(), resolveTo()).done(function(fromArgs, toArgs) {
             routeLatLng(ghRequest, doQuery);
         });
@@ -839,6 +840,40 @@ function stringFormat(str, args) {
 
 function initI18N() {
     $('#searchButton').attr("value", tr("searchButton"));
+    $('#gpxExportButton').attr("value", tr("gpxExportButton"));
     $('#fromInput').attr("placeholder", tr("fromHint"));
     $('#toInput').attr("placeholder", tr("toHint"));
 }
+
+function exportGPX()
+{
+    var fromStr = $("#fromInput").val();
+    var toStr = $("#toInput").val();
+    if (fromStr === "" || toStr === "") {
+        // TODO print warning
+        return;
+    }
+    
+    routingLayer.clearLayers();
+    if (fromStr !== ghRequest.from.input || !ghRequest.from.isResolved())
+        ghRequest.from = new GHInput(fromStr);
+
+    if (toStr !== ghRequest.to.input || !ghRequest.to.isResolved())
+        ghRequest.to = new GHInput(toStr);
+    
+    if (ghRequest.from.lat && ghRequest.to.lat) {
+        // do not wait for resolve
+        resolveFrom();
+        resolveTo();
+        var url = ghRequest.host + "/api/route"+ghRequest.createFullURL()+"&type=gpx";
+        window.open(url);
+    } else {
+        // wait for resolve as we need the coord for calculating the gpx
+        $.when(resolveFrom(), resolveTo()).done(function(fromArgs, toArgs) {
+            var url = ghRequest.host + "/api/route"+ghRequest.createFullURL()+"&type=gpx";
+            window.open(url);
+        });
+    }
+    return false;
+}
+

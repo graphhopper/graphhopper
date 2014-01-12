@@ -46,7 +46,10 @@
                 </div>
                 <div id="exportLink" class="left"><a href="/maps"><img src='img/link.png'></a></div>
                 <input id="searchButton" type="submit" value="Search">
-            </form>      
+            </form>
+            <form id="gpxform" onsubmit="return exportGPX()">
+                <input id="gpxExportButton" type="submit" value="GPX export">
+            </form>
             <div class="clear"> </div>
             <div id="info" class="small_text">
             </div>
