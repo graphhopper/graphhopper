@@ -61,7 +61,7 @@ public class LocationIndexTree implements LocationIndex
     // convert spatial key to index for subentry of current depth
     private long[] bitmasks;
     SpatialKeyAlgo keyAlgo;
-    private int minResolutionInMeter;
+    private int minResolutionInMeter = 500;
     private double deltaLat;
     private double deltaLon;
     private int initSizeLeafEntries = 4;
@@ -80,7 +80,6 @@ public class LocationIndexTree implements LocationIndex
         MAGIC_INT = Integer.MAX_VALUE / 22316;
         this.graph = g;
         dataAccess = dir.find("locationIndex");
-        setMinResolutionInMeter(500);
     }
 
     public int getMinResolutionInMeter()

@@ -142,8 +142,8 @@ public class QueryResult
     }
 
     /**
-     * Calculates the position of the query point 'snapped' to a close road segment or node. Can be
-     * null if no result found. Call calcSnappedPoint before.
+     * Calculates the position of the query point 'snapped' to a close road segment or node. Call
+     * calcSnappedPoint before, if not, an IllegalStateException is thrown.
      */
     public GHPoint getSnappedPoint()
     {
