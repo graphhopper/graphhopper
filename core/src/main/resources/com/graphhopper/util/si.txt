@@ -12,6 +12,7 @@ web.searchButton=Išči
 web.fromHint=Od 
 web.toHint=Do
 web.moreButton=več
+web.gpxExportButton=GPX export
 web.routeInfo=%1$s%2$s bo trajalo %3$s
 web.locationsNotFound=Usmerjanje ni mogoče. Lokacije ne pokaže na tem območju.
 web.bike=Kolo

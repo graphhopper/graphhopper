@@ -93,8 +93,12 @@ body {
 #header_img img {
     width: 200px;
 }
-#searchButton {
+#gpxExportButton {
     float: right;
+    margin-bottom: 5px;
+}
+#searchButton {
+    float: left;
     margin-bottom: 5px;
 }
 .clear {

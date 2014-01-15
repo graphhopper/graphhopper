@@ -12,6 +12,7 @@ web.searchButton=Поиск
 web.fromHint=От
 web.toHint=До
 web.moreButton=еще
+web.gpxExportButton=GPX export
 web.routeInfo=%1$s%2$s займет %3$s
 web.locationsNotFound=Построение маршрута невозвозможно. Местоположение не определено
 web.bike=Велосипед

@@ -12,6 +12,7 @@ web.searchButton=Търсене
 web.fromHint=От
 web.toHint=До
 web.moreButton=още
+web.gpxExportButton=GPX export
 web.routeInfo=%1$s%2$s ще отнеме %3$s
 web.locationsNotFound=Не са изтеглени упътвания. Търсеното местоположение не е открито.
 web.bike=Велосипед
