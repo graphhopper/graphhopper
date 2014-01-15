@@ -94,11 +94,13 @@ body {
     width: 200px;
 }
 #gpxExportButton {
-    float: right;
-    margin-bottom: 5px;
+    margin-top: -3px;
+}
+#gpxExportButton img {
+    padding-left: 6px;
 }
 #searchButton {
-    float: left;
+    float: right;
     margin-bottom: 5px;
 }
 .clear {

@@ -54,6 +54,12 @@ $(document).ready(function(e) {
         });
     }
     initForm();
+    
+     $('#gpxExportButton a').click(function(e) {
+        // no page reload
+        e.preventDefault();
+        exportGPX();
+    });
 
     var urlParams = parseUrlWithHisto();
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
@@ -851,7 +857,7 @@ function exportGPX()
     var toStr = $("#toInput").val();
     if (fromStr === "" || toStr === "") {
         // TODO print warning
-        return;
+        return false;
     }
     
     routingLayer.clearLayers();
