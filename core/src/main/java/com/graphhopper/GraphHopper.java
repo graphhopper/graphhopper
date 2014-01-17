@@ -763,7 +763,7 @@ public class GraphHopper implements GraphHopperAPI
                 + " subnetworks. removed them => " + (prev - n) + " less nodes. Remaining subnetworks:" + remainingSubnetworks);
     }
 
-    private void flush()
+    protected void flush()
     {
         logger.info("flushing graph " + graph.toString() + ", details:" + graph.toDetailsString() + ", " + Helper.getMemInfo() + ")");
         graph.flush();
