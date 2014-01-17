@@ -180,7 +180,7 @@ public class QueryGraph implements Graph {
                 // fullPL into the right pieces.
                 for (QueryResult res : results) {
                     if (res.getClosestEdge().getBaseNode() != baseNode)
-                        throw new IllegalStateException("Base nodes have to be identical was were not: " + closestEdge + " vs " + res.getClosestEdge());
+                        throw new IllegalStateException("Base nodes have to be identical but were not: " + closestEdge + " vs " + res.getClosestEdge());
 
                     queryResults.add(res);
                     GHPoint currSnapped = res.getSnappedPoint();

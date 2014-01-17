@@ -31,6 +31,11 @@ public class GPXEntry extends GHPoint
         super(lat, lon);
         this.time = millis;
     }
+    
+    public GPXEntry( GHPoint p, long millis )
+    {
+        this(p.lat, p.lon, millis);
+    }
 
     /**
      * The time relative to the start time.
