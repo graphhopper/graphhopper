@@ -234,7 +234,8 @@ elif [ "x$ACTION" = "xminiui" ]; then
 
 
 elif [ "x$ACTION" = "xmeasurement" ]; then
- ARGS="config=$CONFIG graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chShortcuts=fastest osmreader.acceptWay=CAR graph.doSort=true"
+ ARGS="config=$CONFIG graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chShortcuts=fastest osmreader.acceptWay=CAR"
+ # graph.doSort=true"
  echo -e "\ncreate graph via $ARGS, $JAR"
  START=$(date +%s)
  "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS $ARGS prepare.doPrepare=false
