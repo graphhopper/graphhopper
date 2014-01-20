@@ -16,8 +16,6 @@ if (host == null) {
 
 var ghRequest = new GHRequest(host);
 var bounds = {};
-// fixing cross domain support e.g in Opera
-jQuery.support.cors = true;
 
 //var nominatim = "http://open.mapquestapi.com/nominatim/v1/search.php";
 //var nominatim_reverse = "http://open.mapquestapi.com/nominatim/v1/reverse.php";
@@ -32,15 +30,22 @@ var enTranslationMap = null;
 var routeSegmentPopup = null;
 
 var iconFrom = L.icon({
-    iconUrl: './img/marker-from.png',
-    iconAnchor: [12, 12]
+    iconUrl: './img/marker-icon-green.png',
+    shadowSize: [50, 64],
+    shadowAnchor: [4, 62],
+    iconAnchor: [12, 40]
 });
+
 var iconTo = L.icon({
-    iconUrl: './img/marker-to.png',
-    iconAnchor: [12, 12]
+    iconUrl: './img/marker-icon-red.png',
+    shadowSize: [50, 64],
+    shadowAnchor: [4, 62],
+    iconAnchor: [12, 40]
 });
 
 $(document).ready(function(e) {
+    // fixing cross domain support e.g in Opera
+    jQuery.support.cors = true;
     var History = window.History;
     if (History.enabled) {
         History.Adapter.bind(window, 'statechange', function() {
@@ -53,9 +58,14 @@ $(document).ready(function(e) {
             initFromParams(state.data, true);
         });
     }
-    initForm();
-    
-     $('#gpxExportButton a').click(function(e) {
+
+    $('#locationform').submit(function(e) {
+        // no page reload
+        e.preventDefault();
+        mySubmit();
+    });
+
+    $('#gpxExportButton a').click(function(e) {
         // no page reload
         e.preventDefault();
         exportGPX();
@@ -105,9 +115,9 @@ $(document).ready(function(e) {
                     var vehicles = json.supportedVehicles.split(",");
                     if (vehicles.length > 1)
                         ghRequest.vehicle = vehicles[0];
-                        for (var i = 0; i < vehicles.length; i++) {
-                            vehiclesDiv.append(createButton(vehicles[i]));
-                        }
+                    for (var i = 0; i < vehicles.length; i++) {
+                        vehiclesDiv.append(createButton(vehicles[i]));
+                    }
                 }
 
                 initMap();
@@ -147,7 +157,6 @@ function initFromParams(params, doQuery) {
 }
 
 function resolveCoords(fromStr, toStr, doQuery) {
-    routingLayer.clearLayers();
     if (fromStr !== ghRequest.from.input || !ghRequest.from.isResolved())
         ghRequest.from = new GHInput(fromStr);
 
@@ -155,12 +164,12 @@ function resolveCoords(fromStr, toStr, doQuery) {
         ghRequest.to = new GHInput(toStr);
 
     if (ghRequest.from.lat && ghRequest.to.lat) {
-        // do not wait for resolve
+        // two mouse clicks into the map -> do not wait for resolve
         resolveFrom();
         resolveTo();
         routeLatLng(ghRequest, doQuery);
     } else {
-        // wait for resolve as we need the coord for routing
+        // at least one text input from user -> wait for resolve as we need the coord for routing     
         $.when(resolveFrom(), resolveTo()).done(function(fromArgs, toArgs) {
             routeLatLng(ghRequest, doQuery);
         });
@@ -179,7 +188,7 @@ function initMap() {
     $("#info").css("max-height", height);
     console.log("init map at " + JSON.stringify(bounds));
 
-    // mapquest provider    
+    // mapquest provider
     var moreAttr = 'Data &copy; <a href="http://www.openstreetmap.org/copyright">OSM</a>,'
             + 'JS: <a href="http://leafletjs.com/">Leaflet</a>';
 
@@ -338,9 +347,9 @@ function makeValidLng(lon) {
     return (lon - 180) % 360 + 180;
 }
 
-function setFlag(latlng, isFrom) {
-    if (latlng.lat) {
-        var marker = L.marker([latlng.lat, latlng.lng], {
+function setFlag(coord, isFrom) {
+    if (coord.lat) {
+        var marker = L.marker([coord.lat, coord.lng], {
             icon: (isFrom ? iconFrom : iconTo),
             draggable: true
         }).addTo(routingLayer).bindPopup(isFrom ? "Start" : "End");
@@ -372,103 +381,182 @@ function resolveTo() {
     return resolve("to", ghRequest.to);
 }
 
-function resolve(fromOrTo, point) {
+function resolve(fromOrTo, locCoord) {
     $("#" + fromOrTo + "Flag").hide();
     $("#" + fromOrTo + "Indicator").show();
-    return getInfoFromLocation(point).done(function() {
-        $("#" + fromOrTo + "Input").val(point.input);
-        if (point.resolvedText) {
-            var foundDiv = $("#" + fromOrTo + "Found");
-            foundDiv.html(point.resolvedText);
-            foundDiv.attr("title", point.resolvedText);
+    $("#" + fromOrTo + "Input").val(locCoord.input);
+
+    return createAmbiguityList(locCoord).done(function(arg1) {
+        var errorDiv = $("#" + fromOrTo + "ResolveError");
+        errorDiv.empty();
+        var foundDiv = $("#" + fromOrTo + "ResolveFound");
+        // deinstallation of completion if there was one
+        // if (getAutoCompleteDiv(fromOrTo).autocomplete())
+        //    getAutoCompleteDiv(fromOrTo).autocomplete().dispose();
+
+        foundDiv.empty();
+        var list = locCoord.resolvedList;
+        if (locCoord.error) {
+            errorDiv.text(locCoord.error);
+        } else if (list) {
+            var anchor = String.fromCharCode(0x25BC);
+            var showAuto = false;
+            var linkPart = $("<a>" + anchor + "<small>"+list.length+"</small></a>");
+            foundDiv.append(linkPart.click(function(e) {
+                            if (showAuto)
+                                getAutoCompleteDiv(fromOrTo).autocomplete().hide();
+                            else
+                                setAutoCompleteList(fromOrTo, locCoord);
+
+                            showAuto = !showAuto;
+                        }));
         }
 
-        $("#" + fromOrTo + "Flag").show();
         $("#" + fromOrTo + "Indicator").hide();
-        return point;
+        $("#" + fromOrTo + "Flag").show();
+        return locCoord;
     });
 }
 
-var getInfoTmpCounter = 0;
-function getInfoFromLocation(locCoord) {
-    // make sure that the demo route always works even if external geocoding is down!
-    if (locCoord.input.toLowerCase() == "madrid") {
-        locCoord.lat = 40.416698;
-        locCoord.lng = -3.703551;
-        locCoord.resolvedText = "Madrid, Área metropolitana de Madrid y Corredor del Henares, Madrid, Community of Madrid, Spain, European Union";
-    }
-    if (locCoord.input.toLowerCase() == "moscow") {
-        locCoord.lat = 55.751608;
-        locCoord.lng = 37.618775;
-        locCoord.resolvedText = "Borowizki-Straße Moscow Russian Federation";
-    }
-    if (locCoord.resolvedText) {
+/**
+ * Returns a defer object containing the location pointing to a resolvedList with all the found
+ * coordinates.
+ */
+function createAmbiguityList(locCoord) {
+    if (locCoord.isResolved()) {
         var tmpDefer = $.Deferred();
         tmpDefer.resolve([locCoord]);
         return tmpDefer;
     }
 
+    locCoord.error = "";
+    locCoord.resolvedList = [];
+    var timeout = 3000;
     if (locCoord.lat && locCoord.lng) {
-        newCallback();
-        // in every case overwrite name
-        locCoord.resolvedText = "Error while looking up coordinate";
         var url = nominatim_reverse + "?lat=" + locCoord.lat + "&lon="
-                + locCoord.lng + "&format=json&zoom=16&json_callback=reverse_callback" + getInfoTmpCounter;
+                + locCoord.lng + "&format=json&zoom=16";
         return $.ajax({
             url: url,
             type: "GET",
-            dataType: "jsonp",
-            timeout: 3000,
-            jsonpCallback: 'reverse_callback' + getInfoTmpCounter
+            dataType: "json",
+            timeout: timeout
         }).fail(function(err) {
             // not critical => no alert
+            locCoord.error = "Error while looking up coordinate";
             console.log(err);
         }).pipe(function(json) {
             if (!json) {
-                locCoord.resolvedText = "No description found for coordinate";
+                locCoord.error = "No description found for coordinate";
                 return [locCoord];
             }
             var address = json.address;
-            locCoord.resolvedText = "";
-            if (address.road)
-                locCoord.resolvedText += address.road + " ";
-            if (address.city)
-                locCoord.resolvedText += address.city + " ";
-            if (address.country)
-                locCoord.resolvedText += address.country;
-
+            var point = {};
+            point.lat = locCoord.lat;
+            point.lng = locCoord.lng;
+            point.bbox = json.boundingbox;
+            point.positionType = json.type;
+            point.locationDetails = formatLocationEntry(address);
+            // point.address = json.address;
+            locCoord.resolvedList.push(point);
             return [locCoord];
         });
     } else {
-        locCoord.resolvedText = "Error while looking up area description";
-        return geoCoding(locCoord.input).pipe(function(jsonArgs) {
-            var json = jsonArgs[0];
-            if (!json) {
-                locCoord.resolvedText = "No area description found";
+        return doGeoCoding(locCoord.input, 10, timeout).pipe(function(jsonArgs) {
+            if (!jsonArgs || jsonArgs.length == 0) {
+                locCoord.error = "No area description found";
                 return [locCoord];
             }
-            locCoord.resolvedText = json.display_name;
-            locCoord.lat = round(json.lat);
-            locCoord.lng = round(json.lon);
+            var prevImportance = jsonArgs[0].importance;
+            var address;
+            for (var index in jsonArgs) {
+                var json = jsonArgs[index];
+                // if we have already some results ignore unimportant
+                if (prevImportance - json.importance > 0.4)
+                    break;
+
+                // ignore boundary stuff
+                if (json.type === "administrative")
+                    continue;
+
+                // if no different properties => skip!
+                if (address && JSON.stringify(address) === JSON.stringify(json.address))
+                    continue;
+
+                address = json.address;
+                prevImportance = json.importance;
+                var point = {};
+                point.lat = round(json.lat);
+                point.lng = round(json.lon);
+                point.locationDetails = formatLocationEntry(address);
+                point.bbox = json.boundingbox;
+                point.positionType = json.type;
+                locCoord.resolvedList.push(point);
+            }
+            var list = locCoord.resolvedList;
+            locCoord.lat = list[0].lat;
+            locCoord.lng = list[0].lng;
+            // locCoord.input = dataToText(list[0]);
             return [locCoord];
         });
     }
 }
 
-function newCallback() {
-    // Every call to getInfoFromLocation needs to get its own callback. Sadly we need to overwrite 
-    // the callback method name for nominatim and cannot use the default jQuery behaviour.
-    getInfoTmpCounter++;
+function insComma(textA, textB) {
+    if (textA.length > 0)
+        return textA + ", " + textB;
+    return textB;
 }
 
-// TODO show list of possible locations (disambiguation)
-function geoCoding(input, limit) {
-    newCallback();
+function formatLocationEntry(address) {
+    var locationDetails = {};
+    var text = "";
+    if (address.road) {
+        text = address.road;
+        if (address.house_number) {
+            if (text.length > 0)
+                text += " ";
+            text += address.house_number;
+        }
+        locationDetails.road = text;
+    }
+
+    locationDetails.postcode = address.postcode;
+    locationDetails.country = address.country;
+    
+    if (address.city || address.suburb || address.town
+            || address.village || address.hamlet || address.locality) {
+        text = "";
+        if (address.locality)
+            text = insComma(text, address.locality);
+        if (address.hamlet)
+            text = insComma(text, address.hamlet);
+        if (address.village)
+            text = insComma(text, address.village);
+        if (address.suburb)
+            text = insComma(text, address.suburb);
+        if (address.city)
+            text = insComma(text, address.city);
+        if (address.town)
+            text = insComma(text, address.town);
+        locationDetails.city = text;
+    }
+
+    text = "";
+    if (address.state)
+      text += address.state;
+            
+   if (address.continent)
+      text = insComma(text, address.continent);    
+        
+    locationDetails.more = text;
+    return locationDetails;
+}
+
+function doGeoCoding(input, limit, timeout) {
     // see https://trac.openstreetmap.org/ticket/4683 why limit=3 and not 1
     if (!limit)
-        limit = 3;
-    var url = nominatim + "?format=json&q=" + encodeURIComponent(input)
-            + "&limit=" + limit + "&json_callback=search_callback" + getInfoTmpCounter;
+        limit = 10;
+    var url = nominatim + "?format=json&addressdetails=1&q=" + encodeURIComponent(input) + "&limit=" + limit;
     if (bounds.initialized) {
         // minLon, minLat, maxLon, maxLat => left, top, right, bottom
         url += "&bounded=1&viewbox=" + bounds.minLon + "," + bounds.maxLat + "," + bounds.maxLon + "," + bounds.minLat;
@@ -477,9 +565,8 @@ function geoCoding(input, limit) {
     return $.ajax({
         url: url,
         type: "GET",
-        dataType: "jsonp",
-        timeout: 3000,
-        jsonpCallback: 'search_callback' + getInfoTmpCounter
+        dataType: "json",
+        timeout: timeout
     }).fail(createCallback("[nominatim] Problem while looking up location " + input));
 }
 
@@ -494,11 +581,21 @@ function createCallback(errorFallback) {
     };
 }
 
-function focus(coord) {
+function focusWithBounds(coord, bbox, isFrom) {
+    routingLayer.clearLayers();
+    // bbox needs to be in the none-geojson format!?
+    // [[lat, lng], [lat2, lng2], ...]
+    map.fitBounds(new L.LatLngBounds(bbox));
+    setFlag(coord, isFrom);
+}
+
+function focus(coord, zoom, isFrom) {
     if (coord.lat && coord.lng) {
+        if (!zoom)
+            zoom = 11;
         routingLayer.clearLayers();
-        map.setView(new L.LatLng(coord.lat, coord.lng), 11);
-        setFlag(coord, true);
+        map.setView(new L.LatLng(coord.lat, coord.lng), zoom);
+        setFlag(coord, isFrom);
     }
 }
 function routeLatLng(request, doQuery) {
@@ -587,15 +684,15 @@ function routeLatLng(request, doQuery) {
         var hiddenDiv = $("<div id='routeDetails'/>");
         hiddenDiv.hide();
 
-        var toggly = $("<button style='font-size:9px; float: right; padding: 0px'>" + tr("moreButton") + "</button>");
+        var toggly = $("<button style='font-size:14px; float: right; font-weight: bold; padding: 0px'>+</button>");
         toggly.click(function() {
             hiddenDiv.toggle();
-        })
+        });
         $("#info").prepend(toggly);
         var infoStr = "took: " + round(json.info.took, 1000) + "s"
                 + ", points: " + json.route.data.coordinates.length;
-        if (json.route.instructions)
-            infoStr += ", instructions: " + json.route.instructions.descriptions.length;
+        //if (json.route.instructions)
+        //    infoStr += ", instructions: " + json.route.instructions.descriptions.length;
         hiddenDiv.append("<span>" + infoStr + "</span>");
         $("#info").append(hiddenDiv);
 
@@ -617,9 +714,9 @@ function routeLatLng(request, doQuery) {
         if (request.vehicle.toUpperCase() == "FOOT") {
             addToGoogle = "&dirflg=w";
             addToBing = "&mode=W";
-        } else if ( (request.vehicle.toUpperCase() == "BIKE") ||
-                     (request.vehicle.toUpperCase() == "RACINGBIKE") ||
-                     (request.vehicle.toUpperCase() == "MTB") ) {
+        } else if ((request.vehicle.toUpperCase() == "BIKE") ||
+                (request.vehicle.toUpperCase() == "RACINGBIKE") ||
+                (request.vehicle.toUpperCase() == "MTB")) {
             addToGoogle = "&dirflg=b";
             // ? addToBing = "&mode=B";
         }
@@ -675,7 +772,8 @@ function routeLatLng(request, doQuery) {
 }
 
 function addInstruction(main, indi, title, distance, time, latLng) {
-    var indiPic = "<img class='instr_pic' style='vertical-align: middle' src='" + window.location.pathname + "img/" + indi + ".png'/>";
+    var indiPic = "<img class='instr_pic' style='vertical-align: middle' src='" +
+            window.location.pathname + "img/" + indi + ".png'/>";
     var str = "<td class='instr_title'>" + title + "</td>";
 
     if (distance && distance.indexOf("0 ") < 0)
@@ -688,16 +786,17 @@ function addInstruction(main, indi, title, distance, time, latLng) {
     var instructionDiv = $("<tr class='instruction'/>");
     instructionDiv.html(str);
     if (latLng) {
-        instructionDiv.on("mouseover", function() {
+        instructionDiv.click(function() {
+            hideRouteSegmentPopup();
             showRouteSegmentPopup(indiPic + " " + title, latLng);
-        }).on("mouseout", hideRouteSegmentPopup);
+        });
     }
     main.append(instructionDiv);
 }
 
 function showRouteSegmentPopup(html, latLng) {
     hideRouteSegmentPopup();
-    routeSegmentPopup = L.popup({closeButton: false}).setLatLng(latLng).setContent(html).openOn(map);
+    routeSegmentPopup = L.popup().setLatLng(latLng).setContent(html).openOn(map);
 }
 
 function hideRouteSegmentPopup() {
@@ -780,14 +879,6 @@ function mySubmit() {
     resolveCoords(fromStr, toStr);
 }
 
-function initForm() {
-    $('#locationform').submit(function(e) {
-        // no page reload
-        e.preventDefault();
-        mySubmit();
-    });
-}
-
 function floor(val, precision) {
     if (!precision)
         precision = 1e6;
@@ -846,40 +937,119 @@ function stringFormat(str, args) {
 
 function initI18N() {
     $('#searchButton').attr("value", tr("searchButton"));
-    $('#gpxExportButton').attr("value", tr("gpxExportButton"));
     $('#fromInput').attr("placeholder", tr("fromHint"));
     $('#toInput').attr("placeholder", tr("toHint"));
 }
 
-function exportGPX()
-{
-    var fromStr = $("#fromInput").val();
-    var toStr = $("#toInput").val();
-    if (fromStr === "" || toStr === "") {
-        // TODO print warning
+function exportGPX() {
+    if (!ghRequest.from.isResolved() || !ghRequest.to.isResolved())
         return false;
-    }
-    
-    routingLayer.clearLayers();
-    if (fromStr !== ghRequest.from.input || !ghRequest.from.isResolved())
-        ghRequest.from = new GHInput(fromStr);
 
-    if (toStr !== ghRequest.to.input || !ghRequest.to.isResolved())
-        ghRequest.to = new GHInput(toStr);
-    
-    if (ghRequest.from.lat && ghRequest.to.lat) {
-        // do not wait for resolve
-        resolveFrom();
-        resolveTo();
-        var url = ghRequest.host + "/api/route"+ghRequest.createFullURL()+"&type=gpx";
-        window.open(url);
-    } else {
-        // wait for resolve as we need the coord for calculating the gpx
-        $.when(resolveFrom(), resolveTo()).done(function(fromArgs, toArgs) {
-            var url = ghRequest.host + "/api/route"+ghRequest.createFullURL()+"&type=gpx";
-            window.open(url);
-        });
-    }
+    var url = ghRequest.host + "/api/route" + ghRequest.createFullURL() + "&type=gpx";
+    window.open(url);
     return false;
 }
 
+function getAutoCompleteDiv(fromOrTo) {
+    if (fromOrTo === "from")
+        return $('#fromInput')
+    else
+        return $('#toInput');
+}
+
+function setAutoCompleteList(fromOrTo, ghRequestLoc) {
+    function formatValue(suggestionValue, currentValue) {
+        var pattern = '(' + $.Autocomplete.utils.escapeRegExChars(currentValue) + ')';
+        return suggestionValue.replace(new RegExp(pattern, 'gi'), '<strong>$1<\/strong>');
+    }
+    var isFrom = fromOrTo === "from";
+    var pointIndex = isFrom ? 1 : 2;
+    var fakeCurrentInput = ghRequestLoc.input.toLowerCase();
+    var valueDataList = [];
+    var list = ghRequestLoc.resolvedList;
+    for (var index in list) {
+        var dataItem = list[index];
+        valueDataList.push({value: dataToText(dataItem), data: dataItem});
+    }
+    
+    var options = {
+        maxHeight: 510,
+        triggerSelectOnValidInput: false,
+        autoSelectFirst: false,
+        lookup: valueDataList,
+        onSearchError: function(element, q, jqXHR, textStatus, errorThrown) {
+            console.log(element + ", " + q + ", textStatus " + textStatus + ", " + errorThrown);
+        },
+        formatResult: function(suggestion, currInput) {
+            // avoid highlighting for now as this breaks the html sometimes
+            return dataToHtml(suggestion.data);
+        },
+        lookupFilter: function(suggestion, originalQuery, queryLowerCase) {
+            if(queryLowerCase === fakeCurrentInput)
+                return true;
+            return suggestion.value.toLowerCase().indexOf(queryLowerCase) !== -1;
+        }
+    };
+    options.onSelect = function(suggestion) {
+        options.onPreSelect(suggestion);        
+        if (ghRequest.from.isResolved() && ghRequest.to.isResolved())
+            routeLatLng(ghRequest);
+    };
+    options.onPreSelect = function(suggestion) {
+        var data = suggestion.data;
+        ghRequestLoc.setCoord(data.lat, data.lng);
+        ghRequestLoc.input = dataToText(suggestion.data);        
+        if (suggestion.data.boundingbox) {
+            var bbox = suggestion.data.box;
+            focusWithBounds(ghRequestLoc, [[bbox[0], bbox[2]], [bbox[1], bbox[3]]], isFrom);
+        } else
+            focus(ghRequestLoc, 15, isFrom);
+    };
+
+    options.containerClass = "complete-" + pointIndex;
+    var myAutoDiv = getAutoCompleteDiv(fromOrTo);
+    myAutoDiv.autocomplete(options);
+    myAutoDiv.autocomplete().forceSuggest("");    
+    myAutoDiv.focus();
+}
+
+function dataToHtml(data) {
+    var data = data.locationDetails;
+    var text = "";
+    if (data.road)
+        text += "<div class='roadseg'>" + data.road + "</div>";
+    if (data.city) {        
+        text += "<div class='cityseg'>" + insComma(data.city, data.country) + "</div>";
+    }
+    if (data.country)
+        text += "<div class='moreseg'>" + data.more + "</div>";
+    return text;
+}
+
+// do not print everything as nominatim slows down or doesn't properly handle if continent etc is included
+function dataToText(data) {
+    var data = data.locationDetails;
+    var text = "";
+    if (data.road)
+        text += data.road;
+
+    if (data.city) {
+        if (text.length > 0)
+            text += ", ";
+        text += data.city;
+    }
+
+    if (data.postcode) {
+        if (text.length > 0)
+            text += ", ";
+        text += data.postcode;
+    }
+
+    if (data.country) {
+        if (text.length > 0)
+            text += ", ";
+        var tmp = $.trim(data.country.replace(data.city, '').replace(data.city + ", ", ''));
+        text += tmp;
+    }
+    return text;
+}

@@ -15,7 +15,7 @@
         <script type="text/javascript" src="js/leaflet.js?v=0.6.4"></script>
         <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
         <script type="text/javascript" src="js/jquery.history.js"></script>
-        <!--        <script type="text/javascript" src="js/jquery.autocomplete.min.js"></script>-->
+<!--        <script type="text/javascript" src="js/jquery.autocomplete.min.js"></script>-->
         <script type="text/javascript" src="js/jquery.autocomplete.js"></script>
         <script type="text/javascript" src="js/ghrequest.js?v=3"></script>
         <script type="text/javascript" src="js/main.js?v=14"></script>
@@ -34,30 +34,21 @@
                 </span>
             </div>
             <form id="locationform">
-                <div id="locationpoints">
-                    <div id="fromDiv">
-                        <img id="fromIndicator" class="hidden" src="img/indicator.gif"/>
-                        <img id="fromFlag" src="img/marker-small-green.png"/>
-                        <input id="fromInput" type="text" placeholder="From"/>
-                        <div class="clear"> </div>
-                        <div id="fromResolveFound"></div>
-                        <div id="fromResolveError"></div>
-                    </div>
-                    <div class="clear"> </div>
-                    <div id="toDiv">
-                        <img id="toIndicator" class="hidden" src="img/indicator.gif"/>
-                        <img id="toFlag" src="img/marker-small-red.png"/>                    
-                        <input id="toInput" type="text" placeholder="To"/>
-                        <div class="clear"> </div>
-                        <div id="toResolveFound"></div>
-                        <div id="toResolveError"></div>
-                    </div>
+                <div id="fromDiv">
+                    <img id="fromIndicator" class="hidden" src="img/indicator.gif"/>
+                    <img id="fromFlag" src="img/marker-small-green.png"/>
+                    <input id="fromInput" type="text" placeholder="From"/>
+                    <div id="fromFound"></div>
                 </div>
-                <div class="clear"> </div>
-                <div id="exportLink" title="Static Link" class="left"><a href="/maps"><img src='img/link.png'></a></div>
+                <div id="toDiv">
+                    <img id="toIndicator" class="hidden" src="img/indicator.gif"/>
+                    <img id="toFlag" src="img/marker-small-red.png"/>                    
+                    <input id="toInput" type="text" placeholder="To"/>
+                    <div id="toFound"></div>
+                </div>
+                <div id="exportLink" class="left"><a href="/maps"><img src='img/link.png'></a></div>
                 <input id="searchButton" type="submit" value="Search">
             </form>      
-            <div id="gpxExportButton" title="GPX Download"><a href=""><img alt="gpx" src='img/gpx.png'></a></div>
             <div class="clear"> </div>
             <div id="info" class="small_text">
             </div>
@@ -69,20 +60,19 @@
         </div>
         <!-- Piwik -->
         <script type="text/javascript">
-            PIWIK = false;
-            if (PIWIK) {
+            PIWIK=false;
+            if(PIWIK) {
                 var pkBaseURL = (("https:" == document.location.protocol) ? "https://www.pannous.info/piwik/" : "http://www.pannous.info/piwik/");
                 document.write(unescape("%3Cscript src='" + pkBaseURL + "piwik.js' type='text/javascript'%3E%3C/script%3E"));
             }
         </script>
         <script type="text/javascript">
-            if (PIWIK)
-                try {
+            if(PIWIK)
+                try { 
                     var piwikTracker = Piwik.getTracker(pkBaseURL + "piwik.php", 7);
                     piwikTracker.trackPageView();
                     piwikTracker.enableLinkTracking();
-                } catch (err) {
-                }
+                } catch( err ) {}
         </script>
         <noscript><p><img src="http://www.pannous.info/piwik/piwik.php?idsite=7" style="border:0" alt="" /></p></noscript>
         <!-- End Piwik Tracking Code -->

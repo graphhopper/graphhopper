@@ -216,7 +216,6 @@ GHRequest.prototype.getInfo = function() {
 GHInput = function(str) {
     // either text or coordinates
     this.input = str;
-    this.resolvedText = "";
     try {
         var index = str.indexOf(",");
         if (index >= 0) {
@@ -238,7 +237,6 @@ GHInput.prototype.isResolved = function() {
 };
 
 GHInput.prototype.setCoord = function(lat, lng) {
-    this.resolvedText = "";
     this.lat = round(lat);
     this.lng = round(lng);
     this.input = this.lat + "," + this.lng;

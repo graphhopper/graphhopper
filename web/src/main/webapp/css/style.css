@@ -31,20 +31,41 @@ body {
     width: 255px;
 }
 #fromInput, #toInput {
-    width: 230px;
+    width: 225px;
+    float: right;    
 }
-#fromFound, #toFound {
+
+#fromResolveFound a, #toResolveFound a {
+    background-color: white;
+    padding-left: 4px;
+    padding-right: 2px;
+}
+#fromResolveFound, #toResolveFound {
     overflow: hidden;
     max-height: 24px;
     font-size: 10px;
-    color: gray;
-    padding-top: 4px;
-    padding-bottom: 5px;
+    color: blue;
+    float: right;
+    cursor: pointer;    
+    margin-top: -20px;
+    margin-right: 3px;    
+}
+
+#fromResolveError, #toResolveError {
+    float: right;
+    font-size: 12px;
+    padding-bottom: 4px;
+}
+
+.boxSizingBorder {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
 }
 .warn {
     color: orange;
 }
-.error {
+.error, #fromResolveError, #toResolveError {
     color: red;
 }
 #moreattribution a {
@@ -166,3 +187,15 @@ tr.instruction td {
     -webkit-border-radius: 0px;
     background-image: linear-gradient(to bottom, #9f9f9f, #e7e7e7);    
 }
+
+.complete-1, .complete-2 { border: 1px solid #999; background: #FFF; overflow: auto; }
+.complete-1 strong, .complete-2 strong { font-weight: normal; /*color: #3399FF;*/; color: #04B431; }
+.autocomplete-suggestion { padding: 2px 5px; white-space: nowrap; overflow: hidden; font-size: 12px; }
+.autocomplete-selected { background: #e7e7e7; }
+.light { font-weight: lighter; color: #9f9f9f; font-size: smaller }
+.wikilink { float: right; }
+.wikilink img { max-width: 16px; }
+
+.roadseg {}
+.cityseg {}
+.moreseg { font-size: 9px; }
