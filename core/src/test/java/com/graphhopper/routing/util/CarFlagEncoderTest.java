@@ -151,18 +151,28 @@ public class CarFlagEncoderTest
     @Test
     public void testRailway()
     {
-        Map<String, String> map = new HashMap<String, String>();
-        OSMWay way = new OSMWay(1, map);
-        map.put("highway", "secondary");
-        map.put("railway", "rail");
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "secondary");
+        way.setTag("railway", "rail");
         // disallow rail
         assertEquals(0, encoder.acceptWay(way));
 
-        way = new OSMWay(1, map);
-        map.put("highway", "secondary");
-        map.put("railway", "tram");
+        way = new OSMWay(1);
+        way.setTag("highway", "secondary");
+        way.setTag("railway", "tram");
         // but allow tram to be on the same way
         assertNotSame(0, encoder.acceptWay(way));
+        
+        way = new OSMWay(1);
+        way.setTag("route", "shuttle_train");
+        way.setTag("motorcar", "yes");
+        way.setTag("bicycle", "no");
+        way.setTag("duration", "35");
+        way.setInternalTag("estimated_distance", 50000);
+        // accept
+        assertNotSame(0, encoder.acceptWay(way));
+        // calculate speed from estimated_distance and duration
+        assertEquals(60, encoder.getSpeed(encoder.handleFerry(way, 20, 30, 40)));
     }
 
     @Test

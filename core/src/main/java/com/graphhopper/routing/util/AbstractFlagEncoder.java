@@ -397,9 +397,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             return 0;
 
         int index = str.indexOf(":");
-        if (index > 0)
+
+        try
         {
-            try
+            if (index > 0)
             {
                 String hourStr = str.substring(0, index);
                 String minStr = str.substring(index + 1);
@@ -417,10 +418,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                 minutes += Integer.parseInt(hourStr) * 60;
                 minutes += Integer.parseInt(minStr);
                 return minutes;
-            } catch (Exception ex)
+            } else
             {
-                logger.error("Cannot parse " + str + " using 0 minutes");
+                return Integer.parseInt(str);
             }
+        } catch (Exception ex)
+        {
+            logger.error("Cannot parse " + str + " using 0 minutes");
         }
         return 0;
     }
@@ -435,14 +439,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (durationInHours > 0)
             try
             {
-                Double estimatedLength = way.getInternalTag("estimated_distance", null);
+                Number estimatedLength = way.getInternalTag("estimated_distance", null);
                 if (estimatedLength != null)
                 {
                     // to km
-                    estimatedLength /= 1000;
+                    double val = estimatedLength.doubleValue() / 1000;
                     // If duration AND distance is available we can calculate the speed more precisely
                     // and set both speed to the same value. Factor 1.4 slower because of waiting time!
-                    shortTripsSpeed = (int) Math.round(estimatedLength / durationInHours / 1.4);
+                    shortTripsSpeed = (int) Math.round(val / durationInHours / 1.4);
                     if (shortTripsSpeed > getMaxSpeed())
                         shortTripsSpeed = getMaxSpeed();
                     longTripsSpeed = shortTripsSpeed;
