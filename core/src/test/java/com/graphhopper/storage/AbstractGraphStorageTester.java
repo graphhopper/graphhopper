@@ -80,6 +80,15 @@ public abstract class AbstractGraphStorageTester
     }
 
     @Test
+    public void testInfinityWeight()
+    {
+        graph = createGraph();
+        EdgeIteratorState edge = graph.edge(0, 1);
+        edge.setDistance(Double.POSITIVE_INFINITY);
+        assertTrue(Double.isInfinite(edge.getDistance()));
+    }
+
+    @Test
     public void testSetNodes()
     {
         graph = createGraph();

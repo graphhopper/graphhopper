@@ -247,9 +247,9 @@ public class GraphHopperStorage implements GraphStorage
     {
         int integ = (int) (distance * INT_DIST_FACTOR);
         if (integ < 0)
-            throw new IllegalArgumentException("Distance cannot be empty: " + 
-                    distance + ", maybe overflow issue? integer: " + integ);
-        
+            throw new IllegalArgumentException("Distance cannot be empty: "
+                    + distance + ", maybe overflow issue? integer: " + integ);
+
         // Due to rounding errors e.g. when getting the distance from another DataAccess object
         // the following exception is not a good idea: 
         // Allow integ to be 0 only if distance is 0
@@ -264,7 +264,11 @@ public class GraphHopperStorage implements GraphStorage
      */
     private double getDist( long pointer )
     {
-        return edges.getInt(pointer + E_DIST) / INT_DIST_FACTOR;
+        int val = edges.getInt(pointer + E_DIST);
+        if (val == Integer.MAX_VALUE)
+            return Double.POSITIVE_INFINITY;
+
+        return val / INT_DIST_FACTOR;
     }
 
     @Override
@@ -630,7 +634,7 @@ public class GraphHopperStorage implements GraphStorage
         {
             throw new UnsupportedOperationException("Not supported yet.");
         }
-        
+
         @Override
         public int getEdge()
         {
