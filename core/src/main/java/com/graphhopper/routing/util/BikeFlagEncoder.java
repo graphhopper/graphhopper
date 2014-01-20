@@ -49,7 +49,7 @@ public class BikeFlagEncoder extends BikeFlagCommonEncoder
         setHighwaySpeed("cycleway", 18);
         setHighwaySpeed("path", 18);
         setHighwaySpeed("footway", 18);
-        setHighwaySpeed("pedestrian", 18);
+        setHighwaySpeed("pedestrian", 16);
         setHighwaySpeed("road", 10);
         setHighwaySpeed("track", 20);
         setHighwaySpeed("service", 20);
