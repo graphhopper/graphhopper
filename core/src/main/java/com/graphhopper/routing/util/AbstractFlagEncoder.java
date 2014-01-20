@@ -97,17 +97,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
         acceptedRailways.add("tram");
     }
-
-    public void setSpeedFactor( int factor )
-    {
-        this.speedFactor = factor;
-    }
-
-    public void setSpeedBits( int bits )
-    {
-        this.speedBits = bits;
-    }
-
+    
     /**
      * Defines the bits for the node flags, which are currently used for barriers only.
      * <p>
