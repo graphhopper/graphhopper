@@ -38,7 +38,7 @@ body {
 #fromResolveFound a, #toResolveFound a {
     background-color: white;
     padding-left: 4px;
-    padding-right: 2px;
+    padding-right: 3px;    
 }
 #fromResolveFound, #toResolveFound {
     overflow: hidden;
@@ -48,7 +48,7 @@ body {
     float: right;
     cursor: pointer;    
     margin-top: -20px;
-    margin-right: 3px;    
+    margin-right: 2px;    
 }
 
 #fromResolveError, #toResolveError {

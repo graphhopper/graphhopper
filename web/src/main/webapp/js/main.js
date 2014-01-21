@@ -400,15 +400,9 @@ function resolve(fromOrTo, locCoord) {
             errorDiv.text(locCoord.error);
         } else if (list) {
             var anchor = String.fromCharCode(0x25BC);
-            var showAuto = false;
             var linkPart = $("<a>" + anchor + "<small>"+list.length+"</small></a>");
             foundDiv.append(linkPart.click(function(e) {
-                            if (showAuto)
-                                getAutoCompleteDiv(fromOrTo).autocomplete().hide();
-                            else
-                                setAutoCompleteList(fromOrTo, locCoord);
-
-                            showAuto = !showAuto;
+                            setAutoCompleteList(fromOrTo, locCoord);
                         }));
         }
 
@@ -423,6 +417,20 @@ function resolve(fromOrTo, locCoord) {
  * coordinates.
  */
 function createAmbiguityList(locCoord) {
+    // make example working even if nominatim service is down
+    if (locCoord.input.toLowerCase() === "madrid") {
+        locCoord.lat = 40.416698;
+        locCoord.lng = -3.703551;
+        locCoord.locationDetails = formatLocationEntry({ city : "Madrid", country: "Spain"});
+        locCoord.resolvedList = [locCoord];
+    }
+    if (locCoord.input.toLowerCase() === "moscow") {
+        locCoord.lat = 55.751608;
+        locCoord.lng = 37.618775;
+        locCoord.locationDetails = formatLocationEntry({ road: "Borowizki-Straße", city : "Moscow", country: "Russian Federation"});
+        locCoord.resolvedList = [locCoord];
+    }
+    
     if (locCoord.isResolved()) {
         var tmpDefer = $.Deferred();
         tmpDefer.resolve([locCoord]);
@@ -491,6 +499,10 @@ function createAmbiguityList(locCoord) {
                 point.bbox = json.boundingbox;
                 point.positionType = json.type;
                 locCoord.resolvedList.push(point);
+            }
+            if(locCoord.resolvedList.length === 0) {
+                locCoord.error = "No area description found";
+                return [locCoord];
             }
             var list = locCoord.resolvedList;
             locCoord.lat = list[0].lat;
@@ -572,11 +584,6 @@ function doGeoCoding(input, limit, timeout) {
 
 function createCallback(errorFallback) {
     return function(err) {
-        if (err.statusText && err.statusText != "OK")
-            alert(errorFallback + ", " + err.statusText);
-        else
-            alert(errorFallback);
-
         console.log(errorFallback + " " + JSON.stringify(err));
     };
 }
