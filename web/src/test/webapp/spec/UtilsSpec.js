@@ -2,14 +2,23 @@
  * This software stands under the Apache 2 License
  */
 describe("utils", function() {
-
-    it("should format string correctly", function() {
+    it("should format time string correctly", function() {
+        defaultTranslationMap = {};
+        defaultTranslationMap["minabbr"]='min';
+        defaultTranslationMap["hourabbr"]='h';
+        defaultTranslationMap["dayabbr"]='d';
+        expect(createTimeString(10773331)).toBe("2h 59min");
+        
+        expect(createTimeString(10773331 * 24)).toBe("2d 23h");
+    });
+    
+    it("should format translation string correctly", function() {
         // toBe, toBeTruthy, toBeFalsy
         defaultTranslationMap = {};
-        defaultTranslationMap["web.someKey1"] = "%s wow %s";
+        defaultTranslationMap["web.somekey1"] = "%s wow %s";
         expect(tr("someKey1", ["nice", "to"])).toBe("nice wow to");
 
-        defaultTranslationMap["web.someKey2"] = "%2$s wow %1$s";
+        defaultTranslationMap["web.somekey2"] = "%2$s wow %1$s";
         expect(tr("someKey2", ["nice", "to"])).toBe("to wow nice");
 
         defaultTranslationMap["web.key"] = "it will take %1$s";
@@ -19,15 +28,15 @@ describe("utils", function() {
         expect(tr("key", [200, "km", "2min"])).toBe("200km werden 2min brauchen");
     });
 
-    it("should format string correctly", function() {
+    it("should format location entry correctly", function() {
         var res = formatLocationEntry({
             "state": "Berlin",
             "country": "Deutschland",
             "country_code": "de",
             "continent": "Europäischen Union"
         });
-        expect(res).toBe({ country: "Berlin, Deutschland, Europäischen Union"});
-        
+        expect(res).toEqual({postcode: undefined, country: "Deutschland", more: "Berlin, Europäischen Union"});
+
         res = formatLocationEntry({
             "suburb": "Neukölln",
             "city_district": "Neukölln",
@@ -37,6 +46,6 @@ describe("utils", function() {
             "country_code": "de",
             "continent": "Europäischen Union"
         });
-        expect(res).toBe({ city: "Neukölln", country: "Berlin, Deutschland, Europäischen Union"});
+        expect(res).toEqual({postcode: undefined, city: "Rixdorf, Neukölln", country: "Deutschland", more: "Berlin, Europäischen Union"});
     });
 });
