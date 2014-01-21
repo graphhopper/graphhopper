@@ -385,11 +385,16 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     {
         if (str == null)
             return 0;
-
-        int index = str.indexOf(":");
-
+        
         try
         {
+            // for now ignore this special duration notation
+            // because P1M != PT1M but there are wrong edits in OSM! e.g. http://www.openstreetmap.org/way/24791405
+            // http://wiki.openstreetmap.org/wiki/Key:duration
+            if(str.startsWith("P"))
+                return 0;
+            
+            int index = str.indexOf(":");
             if (index > 0)
             {
                 String hourStr = str.substring(0, index);
