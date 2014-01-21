@@ -949,11 +949,8 @@ function initI18N() {
 }
 
 function exportGPX() {
-    if (!ghRequest.from.isResolved() || !ghRequest.to.isResolved())
-        return false;
-
-    var url = ghRequest.host + "/api/route" + ghRequest.createFullURL() + "&type=gpx";
-    window.open(url);
+    if (ghRequest.from.isResolved() && ghRequest.to.isResolved())       
+        window.open(ghRequest.createGPXURL());
     return false;
 }
 

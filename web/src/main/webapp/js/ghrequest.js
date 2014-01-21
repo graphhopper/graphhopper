@@ -93,6 +93,12 @@ GHRequest.prototype.createURL = function(demoUrl) {
     return this.createPath(this.host + "/api/route?" + demoUrl + "&type=" + this.dataType);
 };
 
+GHRequest.prototype.createGPXURL = function() {
+    // use points instead of strings
+    var str = "point=" + encodeURIComponent(this.from.toString()) + "&point=" + encodeURIComponent(this.to.toString());
+    return this.createPath(this.host + "/api/route?" + str + "&type=gpx");
+};
+
 GHRequest.prototype.createFullURL = function() {
     var str = "?point=" + encodeURIComponent(this.from.input) + "&point=" + encodeURIComponent(this.to.input);
     return this.createPath(str);
