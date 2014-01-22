@@ -773,14 +773,22 @@ function routeLatLng(request, doQuery) {
 
 function createTimeString(time) {
     var tmpTime = round(time / 60 / 1000, 1000);
+    var resTimeStr;
     if (tmpTime > 60) {
-        if (tmpTime / 60 > 24)
-            tmpTime = floor(tmpTime / 60 / 24, 1) + tr2("dayAbbr") + " " + floor(((tmpTime / 60) % 24), 1) + tr2("hourAbbr");
-        else
-            tmpTime = floor(tmpTime / 60, 1) + tr2("hourAbbr") + " " + floor(tmpTime % 60, 1) + tr2("minAbbr");
+        if (tmpTime / 60 > 24) {
+            resTimeStr = floor(tmpTime / 60 / 24, 1) + tr2("dayAbbr");
+            tmpTime = floor(((tmpTime / 60) % 24), 1);
+            if(tmpTime > 0)
+                resTimeStr += " " + tmpTime + tr2("hourAbbr");
+        } else {
+            resTimeStr = floor(tmpTime / 60, 1) + tr2("hourAbbr");
+            tmpTime = floor(tmpTime % 60, 1);
+            if(tmpTime > 0)
+                resTimeStr += " " + tmpTime + tr2("minAbbr");
+        }
     } else
-        tmpTime = round(tmpTime % 60, 1) + tr2("minAbbr");
-    return tmpTime;
+        resTimeStr = round(tmpTime % 60, 1) + tr2("minAbbr");
+    return resTimeStr;
 }
 function addInstruction(main, indi, title, distance, time, latLng) {
     var indiPic = "<img class='instr_pic' style='vertical-align: middle' src='" +

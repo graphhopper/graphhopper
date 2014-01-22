@@ -10,6 +10,9 @@ describe("utils", function() {
         expect(createTimeString(10773331)).toBe("2h 59min");
         
         expect(createTimeString(10773331 * 24)).toBe("2d 23h");
+        
+        expect(createTimeString(260493166)).toBe("3d");
+        expect(createTimeString(3642407)).toBe("1h");
     });
     
     it("should format translation string correctly", function() {
