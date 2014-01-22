@@ -23,6 +23,8 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
+import com.graphhopper.util.TranslationMap.Translation;
+import gnu.trove.list.TDoubleList;
 
 import java.io.File;
 import java.util.List;
@@ -64,13 +66,30 @@ public class GraphHopperIT
 
             InstructionList il = rsp.getInstructions();
             assertEquals(13, il.size());
-            List<String> iList = il.createDescription(trMap.getWithFallBack(Locale.US));
+            Translation tr = trMap.getWithFallBack(Locale.US);
+            List<String> iList = il.createDescription(tr);            
             // TODO roundabout fine tuning -> enter + leave roundabout (+ two rounabouts -> is it necessary if we do not leave the street?)
             assertEquals("Continue onto Avenue des Guelfes", iList.get(0));
             assertEquals("Turn slight left onto Avenue des Papalins", iList.get(1));
             assertEquals("Turn sharp right onto Quai Jean-Charles Rey", iList.get(2));
             assertEquals("Turn left onto road", iList.get(3));
             assertEquals("Turn right onto Avenue Albert II", iList.get(4));
+            
+            TDoubleList dists = il.createDistances();
+            assertEquals(10.5, dists.get(0), 1e-1);
+            assertEquals(97.0, dists.get(1), 1e-1);
+            assertEquals(9.8, dists.get(2), 1e-1);
+            assertEquals(4.8, dists.get(3), 1e-1);
+            assertEquals(6.0, dists.get(4), 1e-1);
+            assertEquals(195.4, dists.get(5), 1e-1);
+            
+            List<String> times = il.createTimes(tr);
+            assertEquals("0.1 min", times.get(0));
+            assertEquals("1 min", times.get(1));
+            assertEquals("0.1 min", times.get(2));
+            assertEquals("0.1 min", times.get(3));
+            assertEquals("0.1 min", times.get(4));
+            assertEquals("2 min", times.get(5));
         } catch (Exception ex)
         {
             throw new RuntimeException("cannot handle osm file " + osmFile, ex);

@@ -245,15 +245,15 @@ public class InstructionListTest
         PointList pl = new PointList();
         pl.add(49.942576, 11.580384);
         pl.add(49.941858, 11.582422);
-        instructions.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp", 0, 0, 240, 15000, pl));
+        instructions.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp", 0, 0, pl).setDistance(240).setMillis(15000));
 
         pl = new PointList();
         pl.add(49.941575, 11.583501);
-        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", 0, 0, 25, 4000, pl));
+        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", 0, 0, pl).setDistance(25).setMillis(4000));
 
         pl = new PointList();
         pl.add(49.941389, 11.584311);
-        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", 0, 0, 25, 3000, pl));
+        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", 0, 0, pl).setDistance(25).setMillis(3000));
         instructions.add(new FinishInstruction(49.941029, 11.584514));
 
         List<GPXEntry> result = instructions.createGPXList();

@@ -21,10 +21,7 @@ import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.EdgeSkipExplorer;
-import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.EdgeSkipIterState;
 
 /**

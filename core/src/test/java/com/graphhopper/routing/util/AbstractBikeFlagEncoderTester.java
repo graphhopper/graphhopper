@@ -15,7 +15,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
@@ -29,32 +28,32 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
- *
  * @author Peter Karich
  * @author ratrun
  */
 public abstract class AbstractBikeFlagEncoderTester
 {
-    protected  BikeFlagCommonEncoder encoder;
-    String defaultencoderlist = "BIKE";
-    String defaultencoder = "BIKE";
-    
-    AbstractBikeFlagEncoderTester () {
-         encoder=createBikeEncoder(defaultencoderlist, defaultencoder);
+    protected BikeFlagCommonEncoder encoder;
+
+    @Before
+    public void setUp()
+    {
+        encoder = createBikeEncoder();
     }
-   
-    abstract BikeFlagCommonEncoder createBikeEncoder(String encoderlist, String encoder);
-    
+
+    abstract BikeFlagCommonEncoder createBikeEncoder();
+
     public int getEncodedDecodedSpeed( OSMWay way )
     {
         long allowed = encoder.acceptBit;
         long flags = encoder.handleWayTags(way, allowed, 0);
         return encoder.getSpeed(flags);
-    }    
-    
+    }
+
     public String encodeDecodeWayType( String name, OSMWay way )
     {
         long allowed = encoder.acceptBit;
@@ -191,7 +190,7 @@ public abstract class AbstractBikeFlagEncoderTester
         Map<String, String> wayMap = new HashMap<String, String>();
         OSMWay way = new OSMWay(1, wayMap);
         String wayType;
-        
+
         wayMap.put("highway", "steps");
         wayType = encodeDecodeWayType("", way);
         assertEquals("pushing section", wayType);
@@ -231,7 +230,6 @@ public abstract class AbstractBikeFlagEncoderTester
         wayType = encodeDecodeWayType("", way);
         assertEquals("cycleway, unpaved", wayType);
 
-
         wayMap.clear();
         wayMap.put("highway", "footway");
         wayMap.put("bicycle", "yes");
@@ -239,5 +237,5 @@ public abstract class AbstractBikeFlagEncoderTester
         wayType = encodeDecodeWayType("", way);
         assertEquals("cycleway, unpaved", wayType);
     }
-    
+
 }

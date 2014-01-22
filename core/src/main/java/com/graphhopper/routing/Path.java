@@ -196,8 +196,9 @@ public class Path
     protected void processEdge( int edgeId, int endNode )
     {
         EdgeIteratorState iter = graph.getEdgeProps(edgeId, endNode);
-        distance += calcDistance(iter);
-        millis += calcMillis(iter.getDistance(), iter.getFlags());
+        double dist = calcDistance(iter);
+        distance += dist;
+        millis += calcMillis(dist, iter.getFlags());
         addEdge(edgeId);
     }
 
@@ -210,7 +211,8 @@ public class Path
     }
 
     /**
-     * Calculates the time in millis for the specified distance in meter and speed.
+     * Calculates the time in millis for the specified distance in meter and speed (in km/h) via
+     * flags.
      */
     protected long calcMillis( double distance, long flags )
     {
@@ -353,8 +355,7 @@ public class Path
             private double prevLat = graph.getLatitude(tmpNode);
             private double prevLon = graph.getLongitude(tmpNode);
             private double prevOrientation;
-            private double tmpDistance = Double.NaN;
-            private long tmpTime;
+            private Instruction prevInstruction;
             private PointList points = new PointList();
             private String name = null;
             private int pavementCode;
@@ -390,9 +391,9 @@ public class Path
                     name = edge.getName();
                     pavementCode = encoder.getPavementCode(edge.getFlags());
                     wayTypeCode = encoder.getWayTypeCode(edge.getFlags());
-
-                    add(edge, wayGeo);
-                    cachedWays.add(new Instruction(Instruction.CONTINUE_ON_STREET, name, wayTypeCode, pavementCode, tmpDistance, tmpTime, points));
+                    prevInstruction = new Instruction(Instruction.CONTINUE_ON_STREET, name, wayTypeCode, pavementCode, points);
+                    updatePointsAndInstruction(edge, wayGeo);
+                    cachedWays.add(prevInstruction);
                 } else
                 {
                     double tmpOrientation;
@@ -412,18 +413,16 @@ public class Path
                     }
 
                     String tmpName = edge.getName();
-                    int tmppavement = encoder.getPavementCode(edge.getFlags());
-                    int tmpwayType = encoder.getWayTypeCode(edge.getFlags());
+                    int tmpPavement = encoder.getPavementCode(edge.getFlags());
+                    int tmpWayType = encoder.getWayTypeCode(edge.getFlags());
                     if ((!name.equals(tmpName))
-                            || (pavementCode != tmppavement)
-                            || (wayTypeCode != tmpwayType))
+                            || (pavementCode != tmpPavement)
+                            || (wayTypeCode != tmpWayType))
                     {
-                        tmpDistance = Double.NaN;
-                        points = new PointList();
-                        add(edge, wayGeo);
+                        points = new PointList();                        
                         name = tmpName;
-                        pavementCode = tmppavement;
-                        wayTypeCode = tmpwayType;
+                        pavementCode = tmpPavement;
+                        wayTypeCode = tmpWayType;
                         double delta = Math.abs(tmpOrientation - prevOrientation);
                         int indication;
                         if (delta < 0.2)
@@ -456,11 +455,11 @@ public class Path
 
                         }
 
-                        cachedWays.add(new Instruction(indication, name, wayTypeCode, pavementCode, tmpDistance, tmpTime, points));
-                    } else
-                    {
-                        add(edge, wayGeo);
-                    }
+                        prevInstruction = new Instruction(indication, name, wayTypeCode, pavementCode, points);
+                        cachedWays.add(prevInstruction);
+                    } 
+                    
+                    updatePointsAndInstruction(edge, wayGeo);                    
                 }
 
                 prevLat = baseLat;
@@ -472,10 +471,10 @@ public class Path
 
                 boolean lastEdge = index == edgeIds.size() - 1;
                 if (lastEdge)
-                    cachedWays.add(new FinishInstruction(prevLat, prevLon));
+                    cachedWays.add(new FinishInstruction(prevLat, prevLon));                
             }
 
-            private void add( EdgeIteratorState edge, PointList pl )
+            private void updatePointsAndInstruction( EdgeIteratorState edge, PointList pl )
             {
                 // add points in opposite direction as adj node is previous
                 // skip base point => 'i > 0'
@@ -487,8 +486,9 @@ public class Path
                     double lon = pl.getLongitude(i);
                     points.add(lat, lon);
                 }
-                tmpDistance = calcDistance(edge);
-                tmpTime = calcMillis(tmpDistance, flags);
+                double dist = calcDistance(edge);
+                prevInstruction.setDistance(dist + prevInstruction.getDistance());
+                prevInstruction.setMillis(calcMillis(dist, flags) + prevInstruction.getMillis());
             }
         });
 

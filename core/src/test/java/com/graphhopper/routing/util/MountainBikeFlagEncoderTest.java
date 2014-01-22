@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMRelation;
@@ -29,10 +28,9 @@ import static org.junit.Assert.*;
 public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 {
     @Override
-    BikeFlagCommonEncoder createBikeEncoder(String encoderlist, String encoder)
+    BikeFlagCommonEncoder createBikeEncoder()
     {
-        BikeFlagCommonEncoder bikeencoder = (MountainBikeFlagEncoder) new EncodingManager("BIKE,MTB").getEncoder("MTB");
-        return bikeencoder;
+        return (BikeFlagCommonEncoder) new EncodingManager("BIKE,MTB").getEncoder("MTB");
     }
 
     @Test
@@ -73,24 +71,24 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 
         way.setTag("surface", "paved");
         assertEquals(12, encoder.getSpeed(way));
-        
+
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("surface", "ground");
         assertEquals(20, encoder.getSpeed(way));
     }
-    
+
     @Test
     public void testHandleWayTags()
     {
         Map<String, String> wayMap = new HashMap<String, String>();
         OSMWay way = new OSMWay(1, wayMap);
         String wayType;
-        
+
         wayMap.put("highway", "track");
         wayType = encodeDecodeWayType("", way);
         assertEquals("way, unpaved", wayType);
-        
+
         wayMap.clear();
         wayMap.put("highway", "path");
         wayType = encodeDecodeWayType("", way);
@@ -101,7 +99,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         wayMap.put("surface", "grass");
         wayType = encodeDecodeWayType("", way);
         assertEquals("way, unpaved", wayType);
-     
+
         wayMap.clear();
         wayMap.put("highway", "path");
         wayMap.put("surface", "concrete");
@@ -123,7 +121,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         wayMap.put("tracktype", "grade2");
         wayType = encodeDecodeWayType("", way);
         assertEquals("way, unpaved", wayType);
-        
+
     }
 
     @Test
@@ -132,7 +130,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         Map<String, String> wayMap = new HashMap<String, String>();
         OSMWay osmWay = new OSMWay(1, wayMap);
         wayMap.put("highway", "track");
-        long allowed=encoder.acceptBit;
+        long allowed = encoder.acceptBit;
 
         Map<String, String> relMap = new HashMap<String, String>();
         OSMRelation osmRel = new OSMRelation(1, relMap);
@@ -176,7 +174,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(18, encoder.getSpeed(flags));
         assertEquals(0, encoder.getWayTypeCode(flags));
-        
+
         // test max and min speed
         final AtomicInteger fakeSpeed = new AtomicInteger(40);
         MountainBikeFlagEncoder fakeEncoder = new MountainBikeFlagEncoder()
@@ -197,7 +195,6 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         fakeSpeed.set(-2);
         flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
         assertEquals(0, fakeEncoder.getSpeed(flags));
-        
+
     }
 }
-

@@ -32,26 +32,21 @@ public class Instruction
     public static final int FINISH = 4;
     private final int indication;
     private final String name;
-    private final double distance;
-    private final long millis;
+    private double distance;
+    private long millis;
     private final PointList points;
-    private int pavementType;
-    private int waytype;
+    private final int pavementType;
+    private final int waytype;
 
     /**
      * The points, distances and times have exactly the same count. The last point of this
      * instruction is not duplicated here and should be in the next one. The first distance and time
      * entries are measured between the first point and the second one etc.
      */
-    public Instruction( int indication, String name, int waytype, int pavementType,
-            double distance, long millis, PointList pl )
+    public Instruction( int indication, String name, int waytype, int pavementType, PointList pl )
     {
         this.indication = indication;
         this.name = name;
-        this.distance = distance;
-        if (Double.isNaN(distance))
-            throw new IllegalStateException("distance of Instruction cannot be empty! " + toString());
-        this.millis = millis;
         this.points = pl;
         this.waytype = waytype;
         this.pavementType = pavementType;
@@ -80,6 +75,12 @@ public class Instruction
         return name;
     }
 
+    public Instruction setDistance( double distance )
+    {
+        this.distance = distance;
+        return this;
+    }
+
     /**
      * Distance in meter until no new instruction
      */
@@ -88,6 +89,12 @@ public class Instruction
         return distance;
     }
 
+    public Instruction setMillis( long millis )
+    {
+        this.millis = millis;
+        return this;
+    }
+    
     /**
      * Time in millis until no new instruction
      */

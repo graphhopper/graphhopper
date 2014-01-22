@@ -29,7 +29,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 /**
- * List of instruction.
+ * List of instructions.
  */
 public class InstructionList implements Iterable<Instruction>
 {
@@ -89,11 +89,11 @@ public class InstructionList implements Iterable<Instruction>
         List<String> labels = new ArrayList<String>(distances.size());
         for (int i = 0; i < distances.size(); i++)
         {
-            double dist = distances.get(i);
+            double distInMeter = distances.get(i);
             if (mile)
             {
                 // calculate miles
-                double distInMiles = dist / 1000 / DistanceCalcEarth.KM_MILE;
+                double distInMiles = distInMeter / 1000 / DistanceCalcEarth.KM_MILE;
                 if (distInMiles < 0.9)
                 {
                     labels.add((int) DistanceCalcEarth.round(distInMiles * 5280, 1) + " " + tr.tr("ftAbbr"));
@@ -106,15 +106,16 @@ public class InstructionList implements Iterable<Instruction>
                 }
             } else
             {
-                if (dist < 950)
+                if (distInMeter < 950)
                 {
-                    labels.add((int) DistanceCalcEarth.round(dist, 1) + " " + tr.tr("mAbbr"));
+                    labels.add((int) DistanceCalcEarth.round(distInMeter, 1) + " " + tr.tr("mAbbr"));
                 } else
                 {
-                    if (dist < 100000)
-                        labels.add(DistanceCalcEarth.round(dist / 1000, 2) + " " + tr.tr("kmAbbr"));
+                    distInMeter /= 1000;
+                    if (distInMeter < 100)
+                        labels.add(DistanceCalcEarth.round(distInMeter, 2) + " " + tr.tr("kmAbbr"));
                     else
-                        labels.add((int) DistanceCalcEarth.round(dist / 1000, 1) + " " + tr.tr("kmAbbr"));
+                        labels.add((int) DistanceCalcEarth.round(distInMeter, 1) + " " + tr.tr("kmAbbr"));
                 }
             }
         }

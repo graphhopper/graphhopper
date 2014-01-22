@@ -15,7 +15,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMRelation;
@@ -23,7 +22,6 @@ import com.graphhopper.reader.OSMWay;
 import static com.graphhopper.routing.util.BikeFlagCommonEncoder.PUSHING_SECTION_SPEED;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -34,12 +32,11 @@ import static org.junit.Assert.*;
 public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 {
     @Override
-    BikeFlagCommonEncoder createBikeEncoder(String encoderlist, String encoder)
+    BikeFlagCommonEncoder createBikeEncoder()
     {
-        BikeFlagCommonEncoder bikeencoder = (RacingBikeFlagEncoder) new EncodingManager("BIKE,MTB,RACINGBIKE").getEncoder("RACINGBIKE");
-        return bikeencoder;
+        return (BikeFlagCommonEncoder) new EncodingManager("BIKE,MTB,RACINGBIKE").getEncoder("RACINGBIKE");
     }
-    
+
     @Test
     public void testGetSpeed()
     {
@@ -49,30 +46,30 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade3");
         // Pushing section speed/2
-        assertEquals(PUSHING_SECTION_SPEED/2, getEncodedDecodedSpeed(way));
-        
+        assertEquals(PUSHING_SECTION_SPEED / 2, getEncodedDecodedSpeed(way));
+
         // Even if it is part of a cycle way PUSHING_SECTION_SPEED/2
         way.setTag("bicycle", "yes");
-        assertEquals(PUSHING_SECTION_SPEED/2, getEncodedDecodedSpeed(way));
-        
+        assertEquals(PUSHING_SECTION_SPEED / 2, getEncodedDecodedSpeed(way));
+
         way.clearTags();
-        way.setTag("highway", "steps");        
-        assertEquals(2, getEncodedDecodedSpeed(way));        
-        
+        way.setTag("highway", "steps");
+        assertEquals(2, getEncodedDecodedSpeed(way));
+
     }
-    
-@Test
+
+    @Test
     public void testHandleWayTagsInfluencedByRelation()
     {
         Map<String, String> wayMap = new HashMap<String, String>();
         OSMWay osmWay = new OSMWay(1, wayMap);
         wayMap.put("highway", "track");
-        long allowed=encoder.acceptBit;
+        long allowed = encoder.acceptBit;
 
         Map<String, String> relMap = new HashMap<String, String>();
         OSMRelation osmRel = new OSMRelation(1, relMap);
 
-        assertEquals(PUSHING_SECTION_SPEED/2, getEncodedDecodedSpeed(osmWay));
+        assertEquals(PUSHING_SECTION_SPEED / 2, getEncodedDecodedSpeed(osmWay));
 
         // relation code is PREFER
         relMap.put("route", "bicycle");
@@ -100,9 +97,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(30, encoder.getSpeed(flags));
-        
-    }    
-    
+
+    }
+
 }
-
-
