@@ -13,6 +13,7 @@ describe("utils", function() {
         
         expect(createTimeString(260493166)).toBe("3d");
         expect(createTimeString(3642407)).toBe("1h");
+        expect(createTimeString(12000)).toBe("0min");
     });
     
     it("should format translation string correctly", function() {

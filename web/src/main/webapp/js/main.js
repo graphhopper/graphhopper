@@ -795,7 +795,7 @@ function addInstruction(main, indi, title, distance, time, latLng) {
             window.location.pathname + "img/" + indi + ".png'/>";
     var str = "<td class='instr_title'>" + title + "</td>";
 
-    if (distance && distance.indexOf("0 ") < 0)
+    if (distance && distance.indexOf("0 ") != 0)
         str += " <td class='instr_distance_td'><span class='instr_distance'>" + distance + "<br/>" + time + "</span></td>";
 
     if (indi !== "continue")
@@ -905,7 +905,7 @@ function floor(val, precision) {
 }
 
 function round(val, precision) {
-    if (!precision)
+    if (precision === undefined)
         precision = 1e6;
     return Math.round(val * precision) / precision;
 }
