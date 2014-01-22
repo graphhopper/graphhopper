@@ -179,9 +179,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     public abstract long acceptWay( OSMWay way );
 
     /**
-     * Analyze properties of a way and create the routing flags
-     * <p/>
-     * @param acceptWay return value from acceptWay
+     * Analyze properties of a way and create the routing flags          
      */
     public abstract long handleWayTags( OSMWay way, long allowed, long relationFlags );
 
@@ -192,10 +190,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     public long analyzeNodeTags( OSMNode node )
     {
         // movable barriers block if they are not marked as passable
-        if (node.hasTag("barrier", potentialBarriers) && !node.hasTag(restrictions, intended) && !node.hasTag("locked", "no"))
+        if (node.hasTag("barrier", potentialBarriers) 
+                && !node.hasTag(restrictions, intended) 
+                && !node.hasTag("locked", "no"))
             return directionBitMask;
 
-        if ((node.hasTag("highway", "ford") || node.hasTag("ford")) && !node.hasTag(restrictions, intended))
+        if ((node.hasTag("highway", "ford") 
+                || node.hasTag("ford")) && !node.hasTag(restrictions, intended))
             return directionBitMask;
 
         return 0;

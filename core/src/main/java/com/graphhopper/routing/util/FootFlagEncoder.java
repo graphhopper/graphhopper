@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
 
@@ -37,7 +36,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     static final int MEAN = 5;
     static final int FERRY = 10;
     private int safeWayBit = 0;
-    protected HashSet<String> intended = new HashSet<String>();
     protected HashSet<String> sidewalks = new HashSet<String>();
     private final Set<String> safeHighwayTags = new HashSet<String>();
     private final Set<String> allowedHighwayTags = new HashSet<String>();
@@ -249,26 +247,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         }
 
         return encoded;
-    }
-
-    @Override
-    public long analyzeNodeTags( OSMNode node )
-    {
-        // movable barriers block if they are not marked as passable
-        if (node.hasTag("barrier", potentialBarriers)
-                && !node.hasTag(restrictions, intended)
-                && !node.hasTag("locked", "no"))
-        {
-            return directionBitMask;
-        }
-
-        if ((node.hasTag("highway", "ford") || node.hasTag("ford"))
-                && !node.hasTag(restrictions, intended))
-        {
-            return directionBitMask;
-        }
-
-        return 0;
     }
 
     @Override

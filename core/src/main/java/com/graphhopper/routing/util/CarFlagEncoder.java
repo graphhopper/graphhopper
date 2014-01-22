@@ -39,8 +39,6 @@ import com.graphhopper.util.Helper;
  */
 public class CarFlagEncoder extends AbstractFlagEncoder
 {
-    private final HashSet<String> intended = new HashSet<String>();
-
     /**
      * Should be only instantied via EncodingManager
      */
