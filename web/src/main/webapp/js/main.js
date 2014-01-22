@@ -482,9 +482,9 @@ function createAmbiguityList(locCoord) {
                 if (prevImportance - json.importance > 0.4)
                     break;
 
-                // ignore boundary stuff
-                if (json.type === "administrative")
-                    continue;
+                // de-duplicate via ignoring boundary stuff => not perfect as 'Freiberg' would no longer be correct
+                // if (json.type === "administrative")
+                //    continue;
 
                 // if no different properties => skip!
                 if (address && JSON.stringify(address) === JSON.stringify(json.address))
