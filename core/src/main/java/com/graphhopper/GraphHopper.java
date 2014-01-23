@@ -81,7 +81,7 @@ public class GraphHopper implements GraphHopperAPI
     private double wayPointMaxDistance = 1;
     private int workerThreads = -1;
     private int defaultSegmentSize = -1;
-    private boolean enableTurnRestrictions = false;
+    private boolean turnCosts = false;
     private boolean enableInstructions = true;
     private boolean calcPoints = true;
     private boolean fullyLoaded = false;
@@ -218,7 +218,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     public boolean isEnableTurnRestrictions()
     {
-        return enableTurnRestrictions;
+        return turnCosts;
     }
 
     /**
@@ -227,7 +227,7 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setEnableTurnRestrictions( boolean b )
     {
         ensureNotLoaded();
-        enableTurnRestrictions = b;
+        turnCosts = b;
         return this;
     }
 
@@ -391,7 +391,7 @@ public class GraphHopper implements GraphHopperAPI
 
         sortGraph = args.getBool("graph.doSort", sortGraph);
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
-        enableTurnRestrictions = args.getBool("graph.enableTurnRestrictions", enableTurnRestrictions);
+        turnCosts = args.getBool("graph.turnCosts", turnCosts);
 
         // optimizable prepare
         minNetworkSize = args.getInt("prepare.minNetworkSize", minNetworkSize);
@@ -529,7 +529,7 @@ public class GraphHopper implements GraphHopperAPI
 
         if (chEnabled)
             graph = new LevelGraphStorage(dir, encodingManager);
-        else if (enableTurnRestrictions)
+        else if (turnCosts)
             graph = new GraphHopperStorage(dir, encodingManager, new TurnCostStorage());
         else
             graph = new GraphHopperStorage(dir, encodingManager);
