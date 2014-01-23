@@ -26,9 +26,6 @@ import static com.graphhopper.storage.AbstractGraphStorageTester.*;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.TranslationMap.Translation;
-import com.graphhopper.util.TranslationMapTest;
-import java.util.Locale;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -80,10 +77,9 @@ public class PathTest
         // 0-1-2
         assertPList(Helper.createPointList(0, 0.1, 8, 1, 9, 1, 1, 0.1, 10, 1, 11, 1, 2, 0.1), path.calcPoints());
         InstructionList instr = path.calcInstructions();
-        Translation tr = TranslationMapTest.SINGLETON.getWithFallBack(Locale.US);
-        assertEquals("[8 min, 0.0 min]", instr.createTimes(tr).toString());
-        assertEquals("{3000.0, 0.0}", instr.createDistances().toString());
-        
+        assertEquals("[" + 504 * 1000 + ", 0]", instr.createMillis().toString());
+        assertEquals("[3000.0, 0.0]", instr.createDistances().toString());
+
         // force minor change for instructions
         edge2.setName("2");
         path = new Path(g, carEnc);
@@ -93,8 +89,8 @@ public class PathTest
         path.setEdgeEntry(e1);
         path.extract();
         instr = path.calcInstructions();
-        assertEquals("[6 min, 2 min, 0.0 min]", instr.createTimes(tr).toString());
-        assertEquals("{1000.0, 2000.0, 0.0}", instr.createDistances().toString());
+        assertEquals("[" + 6 * 60 * 1000 + ", " + 144 * 1000 + ", 0]", instr.createMillis().toString());
+        assertEquals("[1000.0, 2000.0, 0.0]", instr.createDistances().toString());
 
         // now reverse order
         path = new Path(g, carEnc);
@@ -106,7 +102,7 @@ public class PathTest
         // 2-1-0
         assertPList(Helper.createPointList(2, 0.1, 11, 1, 10, 1, 1, 0.1, 9, 1, 8, 1, 0, 0.1), path.calcPoints());
         instr = path.calcInstructions();
-        assertEquals("[2 min, 6 min, 0.0 min]", instr.createTimes(tr).toString());
-        assertEquals("{2000.0, 1000.0, 0.0}", instr.createDistances().toString());
+        assertEquals("[" + 144 * 1000 + ", " + 6 * 60 * 1000 + ", 0]", instr.createMillis().toString());
+        assertEquals("[2000.0, 1000.0, 0.0]", instr.createDistances().toString());
     }
 }

@@ -24,7 +24,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.ShortestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import gnu.trove.list.TDoubleList;
+import gnu.trove.list.array.TDoubleArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -97,8 +97,8 @@ public class InstructionListTest
                 "Links abbiegen auf 7-8", "Geradeaus auf 8-9", "Rechts abbiegen auf Strasse", "Ziel erreicht!"),
                 wayList.createDescription(trMap.getWithFallBack(Locale.GERMAN)));
 
-        TDoubleList distList = wayList.createDistances();
-        assertEquals(70000.0, distList.sum(), 1e-1);
+        List<Double> distList = wayList.createDistances();
+        assertEquals(70000.0, sum(distList), 1e-1);
         List<String> distStrings = wayList.createDistances(trMap.get("de"), false);
         assertEquals(Arrays.asList("10.0 km", "10.0 km", "10.0 km", "10.0 km", "20.0 km", "10.0 km", "0 m"), distStrings);
         distStrings = wayList.createDistances(trMap.get("en_US"), true);
@@ -118,6 +118,16 @@ public class InstructionListTest
         wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 6-7", "Continue onto 7-8", "Turn left onto 5-8", "Continue onto 5-2", "Finish!"),
                 wayList.createDescription(trMap.getWithFallBack(Locale.CANADA)));
+    }
+
+    double sum( List<Double> list )
+    {
+        double val = 0;
+        for (Double d : list)
+        {
+            val += d;
+        }
+        return val;
     }
 
     @Test
@@ -213,7 +223,7 @@ public class InstructionListTest
         List<GPXEntry> gpxList = wayList.createGPXList();
         // distances and times are not identical (only similar) as we only guessed the edge distance
         assertEquals(34000, p.getDistance(), 1e-1);
-        assertEquals(34000, wayList.createDistances().sum(), 1e-1);
+        assertEquals(34000, sum(wayList.createDistances()), 1e-1);
         assertEquals(5, gpxList.size());
         assertEquals(1636428, p.getMillis());
         assertEquals(2148878, gpxList.get(gpxList.size() - 1).getMillis());

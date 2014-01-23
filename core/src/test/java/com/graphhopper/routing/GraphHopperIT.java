@@ -25,6 +25,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 import com.graphhopper.util.TranslationMap.Translation;
 import gnu.trove.list.TDoubleList;
+import gnu.trove.list.TLongList;
 
 import java.io.File;
 import java.util.List;
@@ -67,29 +68,29 @@ public class GraphHopperIT
             InstructionList il = rsp.getInstructions();
             assertEquals(13, il.size());
             Translation tr = trMap.getWithFallBack(Locale.US);
-            List<String> iList = il.createDescription(tr);            
+            List<String> iList = il.createDescription(tr);
             // TODO roundabout fine tuning -> enter + leave roundabout (+ two rounabouts -> is it necessary if we do not leave the street?)
             assertEquals("Continue onto Avenue des Guelfes", iList.get(0));
             assertEquals("Turn slight left onto Avenue des Papalins", iList.get(1));
             assertEquals("Turn sharp right onto Quai Jean-Charles Rey", iList.get(2));
             assertEquals("Turn left onto road", iList.get(3));
             assertEquals("Turn right onto Avenue Albert II", iList.get(4));
-            
-            TDoubleList dists = il.createDistances();
-            assertEquals(10.5, dists.get(0), 1e-1);
-            assertEquals(97.0, dists.get(1), 1e-1);
-            assertEquals(9.8, dists.get(2), 1e-1);
-            assertEquals(4.8, dists.get(3), 1e-1);
-            assertEquals(6.0, dists.get(4), 1e-1);
-            assertEquals(195.4, dists.get(5), 1e-1);
-            
-            List<String> times = il.createTimes(tr);
-            assertEquals("0.1 min", times.get(0));
-            assertEquals("1 min", times.get(1));
-            assertEquals("0.1 min", times.get(2));
-            assertEquals("0.1 min", times.get(3));
-            assertEquals("0.1 min", times.get(4));
-            assertEquals("2 min", times.get(5));
+
+            List<Double> dists = il.createDistances();
+            assertEquals(11, dists.get(0), 1);
+            assertEquals(289, dists.get(1), 1);
+            assertEquals(10, dists.get(2), 1);
+            assertEquals(43, dists.get(3), 1);
+            assertEquals(122, dists.get(4), 1);
+            assertEquals(447, dists.get(5), 1);
+
+            List<Long> times = il.createMillis();
+            assertEquals(7, times.get(0) / 1000);
+            assertEquals(207, times.get(1) / 1000);
+            assertEquals(7, times.get(2) / 1000);
+            assertEquals(30, times.get(3) / 1000);
+            assertEquals(87, times.get(4) / 1000);
+            assertEquals(321, times.get(5) / 1000);
         } catch (Exception ex)
         {
             throw new RuntimeException("cannot handle osm file " + osmFile, ex);

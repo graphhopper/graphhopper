@@ -17,15 +17,12 @@
  */
 package com.graphhopper.util;
 
-import gnu.trove.list.TDoubleList;
-import gnu.trove.list.array.TDoubleArrayList;
 import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.TimeZone;
 
 /**
@@ -73,9 +70,9 @@ public class InstructionList implements Iterable<Instruction>
         return res;
     }
 
-    public TDoubleList createDistances()
+    public List<Double> createDistances()
     {
-        TDoubleList res = new TDoubleArrayList(instructions.size());
+        List<Double> res = new ArrayList<Double>(instructions.size());
         for (Instruction instruction : instructions)
         {
             res.add(instruction.getDistance());
@@ -85,7 +82,7 @@ public class InstructionList implements Iterable<Instruction>
 
     public List<String> createDistances( TranslationMap.Translation tr, boolean mile )
     {
-        TDoubleList distances = createDistances();
+        List<Double> distances = createDistances();
         List<String> labels = new ArrayList<String>(distances.size());
         for (int i = 0; i < distances.size(); i++)
         {
@@ -125,38 +122,20 @@ public class InstructionList implements Iterable<Instruction>
     /**
      * @return string representations of the times until no new instruction.
      */
-    public List<String> createTimes( TranslationMap.Translation tr )
+    public List<Long> createMillis()
     {
-        List<String> res = new ArrayList<String>();
+        List<Long> res = new ArrayList<Long>(instructions.size());
         for (Instruction instruction : instructions)
         {
-            long millis = instruction.getMillis();
-            int minutes = (int) Math.round(millis / 60000.0);
-            if (minutes > 60)
-            {
-                if (minutes / 60.0 > 24)
-                {
-                    long days = (long) Math.floor(minutes / 60.0 / 24.0);
-                    long hours = Math.round((minutes / 60.0) % 24);
-                    res.add(String.format("%d %s %d %s", days, tr.tr("dayAbbr"), hours, tr.tr("hourAbbr")));
-                } else
-                {
-                    long hours = (long) Math.floor(minutes / 60.0);
-                    minutes = Math.round(minutes % 60);
-                    res.add(String.format("%d %s %d %s", hours, tr.tr("hourAbbr"), minutes, tr.tr("minAbbr")));
-                }
-            } else
-            {
-                if (minutes > 0)
-                    res.add(String.format("%d %s", minutes, tr.tr("minAbbr")));
-                else
-                    res.add(String.format(Locale.US, "%.1f %s", millis / 60000.0, tr.tr("minAbbr")));
-            }
+            res.add(instruction.getMillis());
         }
         return res;
     }
 
-    public List<List<Double>> createSegmentStartPoints()
+    /**
+     * @return the lat,lon positions at which the instructions have to be presented.
+     */
+    public List<List<Double>> createLatLngs()
     {
         List<List<Double>> res = new ArrayList<List<Double>>();
         for (Instruction instruction : instructions)

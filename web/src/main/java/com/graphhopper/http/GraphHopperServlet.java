@@ -199,10 +199,10 @@ public class GraphHopperServlet extends GHBaseServlet {
                 InstructionList instructions = rsp.getInstructions();
                 builder.startObject("instructions").
                         object("descriptions", instructions.createDescription(tr)).
-                        object("distances", instructions.createDistances(tr, useMiles)).
+                        object("distances", instructions.createDistances()).
                         object("indications", instructions.createIndications()).
-                        object("times", instructions.createTimes(tr)).
-                        object("latLngs", instructions.createSegmentStartPoints()).
+                        object("millis", instructions.createMillis()).
+                        object("latLngs", instructions.createLatLngs()).
                         endObject();
             }
 

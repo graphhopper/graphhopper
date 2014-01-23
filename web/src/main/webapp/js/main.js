@@ -400,10 +400,10 @@ function resolve(fromOrTo, locCoord) {
             errorDiv.text(locCoord.error);
         } else if (list) {
             var anchor = String.fromCharCode(0x25BC);
-            var linkPart = $("<a>" + anchor + "<small>"+list.length+"</small></a>");
+            var linkPart = $("<a>" + anchor + "<small>" + list.length + "</small></a>");
             foundDiv.append(linkPart.click(function(e) {
-                            setAutoCompleteList(fromOrTo, locCoord);
-                        }));
+                setAutoCompleteList(fromOrTo, locCoord);
+            }));
         }
 
         $("#" + fromOrTo + "Indicator").hide();
@@ -421,16 +421,16 @@ function createAmbiguityList(locCoord) {
     if (locCoord.input.toLowerCase() === "madrid") {
         locCoord.lat = 40.416698;
         locCoord.lng = -3.703551;
-        locCoord.locationDetails = formatLocationEntry({ city : "Madrid", country: "Spain"});
+        locCoord.locationDetails = formatLocationEntry({city: "Madrid", country: "Spain"});
         locCoord.resolvedList = [locCoord];
     }
     if (locCoord.input.toLowerCase() === "moscow") {
         locCoord.lat = 55.751608;
         locCoord.lng = 37.618775;
-        locCoord.locationDetails = formatLocationEntry({ road: "Borowizki-Straße", city : "Moscow", country: "Russian Federation"});
+        locCoord.locationDetails = formatLocationEntry({road: "Borowizki-Straße", city: "Moscow", country: "Russian Federation"});
         locCoord.resolvedList = [locCoord];
     }
-    
+
     if (locCoord.isResolved()) {
         var tmpDefer = $.Deferred();
         tmpDefer.resolve([locCoord]);
@@ -500,7 +500,7 @@ function createAmbiguityList(locCoord) {
                 point.positionType = json.type;
                 locCoord.resolvedList.push(point);
             }
-            if(locCoord.resolvedList.length === 0) {
+            if (locCoord.resolvedList.length === 0) {
                 locCoord.error = "No area description found";
                 return [locCoord];
             }
@@ -534,7 +534,7 @@ function formatLocationEntry(address) {
 
     locationDetails.postcode = address.postcode;
     locationDetails.country = address.country;
-    
+
     if (address.city || address.suburb || address.town
             || address.village || address.hamlet || address.locality) {
         text = "";
@@ -555,11 +555,11 @@ function formatLocationEntry(address) {
 
     text = "";
     if (address.state)
-      text += address.state;
-            
-   if (address.continent)
-      text = insComma(text, address.continent);    
-        
+        text += address.state;
+
+    if (address.continent)
+        text = insComma(text, address.continent);
+
     locationDetails.more = text;
     return locationDetails;
 }
@@ -675,11 +675,8 @@ function routeLatLng(request, doQuery) {
         }
 
         var tmpTime = createTimeString(json.route.time);
-        var dist = round(json.route.distance / 1000, 100);
-        if (dist > 100)
-            dist = round(dist, 1);
-
-        descriptionDiv.html(tr("routeInfo", [dist, tr2("kmAbbr"), tmpTime]));
+        var tmpDist = createDistanceString(json.route.distance);
+        descriptionDiv.html(tr("routeInfo", [tmpDist, tmpTime]));
 
         var hiddenDiv = $("<div id='routeDetails'/>");
         hiddenDiv.hide();
@@ -740,7 +737,7 @@ function routeLatLng(request, doQuery) {
             var descriptions = json.route.instructions.descriptions;
             var distances = json.route.instructions.distances;
             var indications = json.route.instructions.indications;
-            var times = json.route.instructions.times;
+            var millis = json.route.instructions.millis;
             var latLngs = json.route.instructions.latLngs;
             for (var m = 0; m < descriptions.length; m++) {
                 var indi = indications[m];
@@ -765,10 +762,20 @@ function routeLatLng(request, doQuery) {
                 else
                     throw "did not found indication " + indi;
 
-                addInstruction(instructionsElement, indi, descriptions[m], distances[m], times[m], latLngs[m]);
+                addInstruction(instructionsElement, indi, descriptions[m], distances[m], millis[m], latLngs[m]);
             }
         }
     });
+}
+
+function createDistanceString(dist) {
+    if(dist < 900)
+        return round(dist, 1) + tr2("mAbbr");
+    
+    dist = round(dist / 1000, 100);
+    if (dist > 100)
+        dist = round(dist, 1);
+    return dist + tr2("kmAbbr");
 }
 
 function createTimeString(time) {
@@ -778,25 +785,28 @@ function createTimeString(time) {
         if (tmpTime / 60 > 24) {
             resTimeStr = floor(tmpTime / 60 / 24, 1) + tr2("dayAbbr");
             tmpTime = floor(((tmpTime / 60) % 24), 1);
-            if(tmpTime > 0)
+            if (tmpTime > 0)
                 resTimeStr += " " + tmpTime + tr2("hourAbbr");
         } else {
             resTimeStr = floor(tmpTime / 60, 1) + tr2("hourAbbr");
             tmpTime = floor(tmpTime % 60, 1);
-            if(tmpTime > 0)
+            if (tmpTime > 0)
                 resTimeStr += " " + tmpTime + tr2("minAbbr");
         }
     } else
         resTimeStr = round(tmpTime % 60, 1) + tr2("minAbbr");
     return resTimeStr;
 }
-function addInstruction(main, indi, title, distance, time, latLng) {
+
+function addInstruction(main, indi, title, distance, milliEntry, latLng) {
     var indiPic = "<img class='instr_pic' style='vertical-align: middle' src='" +
             window.location.pathname + "img/" + indi + ".png'/>";
     var str = "<td class='instr_title'>" + title + "</td>";
 
-    if (distance && distance.indexOf("0 ") != 0)
-        str += " <td class='instr_distance_td'><span class='instr_distance'>" + distance + "<br/>" + time + "</span></td>";
+    if (distance > 0) {
+        str += " <td class='instr_distance_td'><span class='instr_distance'>" + createDistanceString(distance) + "<br/>"
+                + createTimeString(milliEntry) + "</span></td>";
+    }
 
     if (indi !== "continue")
         str = "<td>" + indiPic + "</td>" + str;
@@ -961,7 +971,7 @@ function initI18N() {
 }
 
 function exportGPX() {
-    if (ghRequest.from.isResolved() && ghRequest.to.isResolved())       
+    if (ghRequest.from.isResolved() && ghRequest.to.isResolved())
         window.open(ghRequest.createGPXURL());
     return false;
 }
@@ -987,7 +997,7 @@ function setAutoCompleteList(fromOrTo, ghRequestLoc) {
         var dataItem = list[index];
         valueDataList.push({value: dataToText(dataItem), data: dataItem});
     }
-    
+
     var options = {
         maxHeight: 510,
         triggerSelectOnValidInput: false,
@@ -1001,20 +1011,20 @@ function setAutoCompleteList(fromOrTo, ghRequestLoc) {
             return dataToHtml(suggestion.data);
         },
         lookupFilter: function(suggestion, originalQuery, queryLowerCase) {
-            if(queryLowerCase === fakeCurrentInput)
+            if (queryLowerCase === fakeCurrentInput)
                 return true;
             return suggestion.value.toLowerCase().indexOf(queryLowerCase) !== -1;
         }
     };
     options.onSelect = function(suggestion) {
-        options.onPreSelect(suggestion);        
+        options.onPreSelect(suggestion);
         if (ghRequest.from.isResolved() && ghRequest.to.isResolved())
             routeLatLng(ghRequest);
     };
     options.onPreSelect = function(suggestion) {
         var data = suggestion.data;
         ghRequestLoc.setCoord(data.lat, data.lng);
-        ghRequestLoc.input = dataToText(suggestion.data);        
+        ghRequestLoc.input = dataToText(suggestion.data);
         if (suggestion.data.boundingbox) {
             var bbox = suggestion.data.box;
             focusWithBounds(ghRequestLoc, [[bbox[0], bbox[2]], [bbox[1], bbox[3]]], isFrom);
@@ -1025,7 +1035,7 @@ function setAutoCompleteList(fromOrTo, ghRequestLoc) {
     options.containerClass = "complete-" + pointIndex;
     var myAutoDiv = getAutoCompleteDiv(fromOrTo);
     myAutoDiv.autocomplete(options);
-    myAutoDiv.autocomplete().forceSuggest("");    
+    myAutoDiv.autocomplete().forceSuggest("");
     myAutoDiv.focus();
 }
 
@@ -1034,7 +1044,7 @@ function dataToHtml(data) {
     var text = "";
     if (data.road)
         text += "<div class='roadseg'>" + data.road + "</div>";
-    if (data.city) {        
+    if (data.city) {
         text += "<div class='cityseg'>" + insComma(data.city, data.country) + "</div>";
     }
     if (data.country)
