@@ -391,6 +391,7 @@ public class GraphHopper implements GraphHopperAPI
 
         sortGraph = args.getBool("graph.doSort", sortGraph);
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
+        enableTurnRestrictions = args.getBool("graph.enableTurnRestrictions", enableTurnRestrictions);
 
         // optimizable prepare
         minNetworkSize = args.getInt("prepare.minNetworkSize", minNetworkSize);
