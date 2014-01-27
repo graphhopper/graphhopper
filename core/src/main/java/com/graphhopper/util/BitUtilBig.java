@@ -36,6 +36,12 @@ public class BitUtilBig extends BitUtil
     }
 
     @Override
+    public final short toShort( byte[] b, int offset )
+    {
+        return (short) ((b[offset] & 0xFF) << 8 | (b[offset + 1] & 0xFF));
+    }
+
+    @Override
     public final void fromInt( byte[] bytes, int value, int offset )
     {
         bytes[offset] = (byte) (value >> 24);

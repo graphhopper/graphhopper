@@ -107,6 +107,8 @@ public abstract class BitUtil
         fromInt(bytes, Float.floatToRawIntBits(value), offset);
     }
 
+    public abstract short toShort( byte[] b, int offset );
+
     public final int toInt( byte[] b )
     {
         return toInt(b, 0);
