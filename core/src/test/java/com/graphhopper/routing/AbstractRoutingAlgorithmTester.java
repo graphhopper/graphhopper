@@ -31,6 +31,7 @@ import gnu.trove.list.TIntList;
 import java.util.Random;
 import static org.junit.Assert.*;
 import org.junit.Test;
+import java.util.List;
 
 /**
  *
@@ -63,6 +64,28 @@ public abstract class AbstractRoutingAlgorithmTester
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 7);
         assertEquals(p.toString(), 13, p.getDistance(), 1e-4);
         assertEquals(p.toString(), 5, p.calcNodes().size());
+
+        p = prepareGraph(graph).createAlgo().calcPath(0, 2);
+        assertEquals(p.toString(), 9, p.getDistance(), 1e-4);
+        assertEquals(p.toString(), 3, p.calcNodes().size());
+        
+        p = prepareGraph(graph).createAlgo().calcPath(2, 7);
+        assertEquals(p.toString(), 5, p.getDistance(), 1e-4);
+        assertEquals(p.toString(), 4, p.calcNodes().size());
+        
+        p = prepareGraph(graph).createAlgo().calcPath(7, 0);
+        assertEquals(p.toString(), 13, p.getDistance(), 1e-4);
+        assertEquals(p.toString(), 5, p.calcNodes().size());
+
+        int[] from_via_to = {0,2,7,0};
+        List<Path> plist = prepareGraph(graph).createAlgo().calcPathList(from_via_to);
+        assertEquals(plist.get(0).toString(), 9, plist.get(0).getDistance(), 1e-4);
+        assertEquals(plist.get(0).toString(), 3, plist.get(0).calcNodes().size());
+        assertEquals(plist.get(1).toString(), 5, plist.get(1).getDistance(), 1e-4);
+        assertEquals(plist.get(1).toString(), 4, plist.get(1).calcNodes().size());
+        assertEquals(plist.get(2).toString(), 13, plist.get(2).getDistance(), 1e-4);
+        assertEquals(plist.get(2).toString(), 5, plist.get(2).calcNodes().size());
+
     }
 
     // see calc-fastest-graph.svg

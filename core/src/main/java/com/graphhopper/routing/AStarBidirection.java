@@ -77,6 +77,12 @@ public class AStarBidirection extends AbstractBidirAlgo
     public AStarBidirection( Graph graph, FlagEncoder encoder, Weighting weighting )
     {
         super(graph, encoder, weighting);
+        reset();
+    }
+ 
+    @Override
+    public void reset()
+    {
         int nodes = Math.max(20, graph.getNodes());
         initCollections(nodes);
 

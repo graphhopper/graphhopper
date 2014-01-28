@@ -59,6 +59,12 @@ public class DijkstraBidirection extends AbstractBidirAlgo
     public DijkstraBidirection( Graph graph, FlagEncoder encoder, Weighting weighting )
     {
         super(graph, encoder, weighting);
+        reset();
+    }
+
+    @Override
+    public void reset()
+    {
         initCollections(1000);
     }
 

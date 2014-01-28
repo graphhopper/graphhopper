@@ -82,7 +82,32 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         setGraph(queryGraph);
         return calcPath(fromRes.getClosestNode(), toRes.getClosestNode());
     }
+    
+    public List<Path> calcPathList( int[] from_via_to_list )
+    {
+        List<Path> resultpathlist = new ArrayList<Path>();
+        if (from_via_to_list.length < 2)
+                return null;
 
+        int i=0;
+        
+        int from = from_via_to_list[i];
+        int to = from_via_to_list[i+1];
+        // Calculate initial segment
+        resultpathlist.add(calcPath(from, to));
+        
+        // Walk through the via list
+        for (i=1; i<from_via_to_list.length-1; i++)
+        {
+           from = from_via_to_list[i];
+           to = from_via_to_list[i+1];
+           reset();
+           alreadyRun = false;
+           resultpathlist.add(calcPath(from, to));
+        }
+        return resultpathlist;
+      }
+     
     public RoutingAlgorithm setEdgeFilter( EdgeFilter additionalEdgeFilter )
     {
         this.additionalEdgeFilter = additionalEdgeFilter;

@@ -48,6 +48,12 @@ public class AStar extends AbstractRoutingAlgorithm
     public AStar( Graph g, FlagEncoder encoder, Weighting weighting )
     {
         super(g, encoder, weighting);
+        reset();
+    }
+    
+    @Override
+    public void reset()
+    {
         initCollections(1000);
         setApproximation(true);
     }
