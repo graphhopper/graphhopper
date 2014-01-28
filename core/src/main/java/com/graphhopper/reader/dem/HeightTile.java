@@ -33,7 +33,7 @@ import javax.imageio.ImageIO;
  */
 public class HeightTile
 {
-    private short[] heights;
+    private DataAccess heights;
     private final int minLat;
     private final int minLon;
     private final int width;
@@ -45,7 +45,7 @@ public class HeightTile
         this.width = width;
     }
 
-    void setHeights( short[] da )
+    void setHeights( DataAccess da )
     {
         this.heights = da;
     }
@@ -63,7 +63,7 @@ public class HeightTile
         // http://gis.stackexchange.com/a/43756/9006
         int lonSimilar = (int) Math.round(width * deltaLon);
         int latSimilar = width - (int) Math.round(width * deltaLat);
-        return heights[latSimilar * width + lonSimilar];
+        return heights.getShort(2 * (latSimilar * width + lonSimilar));
     }
 
     public void toImage( String imageFile ) throws IOException
@@ -76,13 +76,13 @@ public class HeightTile
         int height = width;
         BufferedImage argbImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics g = argbImage.getGraphics();
-        long len = heights.length;
+        long len = heights.getCapacity() / 2;
         for (int i = 0; i < len; i++)
         {
             int lonSimilar = i % width;
             // no need for width - x as coordinate system for Graphics is already this way
             int latSimilar = i / width;
-            int green = Math.abs(heights[i]);
+            int green = Math.abs(heights.getShort(i * 2));
             int red = 0;
             while (green > 255)
             {

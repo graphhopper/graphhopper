@@ -52,7 +52,7 @@ public class GHDirectory implements Directory
             throw new RuntimeException("file '" + dir + "' exists but is not a directory");
 
         // set default access to integer based
-        // improves performance on server side, 10% faster for queries, 20% faster for preparation
+        // improves performance on server side, 10% faster for queries and preparation
         if (this.defaultType.isInMemory())
         {
             if (isStoring())
@@ -173,9 +173,7 @@ public class GHDirectory implements Directory
     protected void mkdirs()
     {
         if (isStoring())
-        {
             new File(location).mkdirs();
-        }
     }
 
     Collection<DataAccess> getAll()

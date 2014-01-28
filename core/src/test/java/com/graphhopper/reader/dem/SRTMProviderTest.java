@@ -28,7 +28,7 @@ import org.junit.Before;
  *
  * @author Peter Karich
  */
-public class SRTMReaderTest
+public class SRTMProviderTest
 {
     SRTMProvider instance;
 

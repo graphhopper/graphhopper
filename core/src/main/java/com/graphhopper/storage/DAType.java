@@ -91,6 +91,9 @@ public class DAType
         return memRef;
     }
 
+    /**
+     * @return true if data resides in the JVM heap.
+     */
     public boolean isInMemory()
     {
         return memRef == MemRef.HEAP;

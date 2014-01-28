@@ -18,18 +18,18 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.geohash.KeyAlgo;
-import com.graphhopper.geohash.LinearKeyAlgo;
+import com.graphhopper.storage.DataAccess;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.io.*;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
- * Elevation data from NASA. Downloaded from http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/
+ * Elevation data from NASA (SRTM). Downloaded from http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/
  * <p>
  * Important information about SRTM: the coordinates of the lower-left corner of tile N40W118 are 40
  * degrees north latitude and 118 degrees west longitude. To be more exact, these coordinates refer
@@ -38,7 +38,7 @@ import java.util.zip.ZipInputStream;
  * <p>
  * @author Peter Karich
  */
-public class SRTMProvider implements DEMProvider
+public class SRTMProvider implements ElevationProvider
 {
     public static void main( String[] args ) throws IOException
     {
@@ -47,6 +47,7 @@ public class SRTMProvider implements DEMProvider
 
     private static final BitUtil BIT_UTIL = BitUtil.BIG;
     private final int WIDTH = 1201;
+    private Directory dir;
     private Downloader downloader = new Downloader("GraphHopper SRTMReader");
     private File cacheDir = new File("/tmp");
     // use a map as an array is not quite useful if we want to hold only parts of the world
@@ -54,9 +55,10 @@ public class SRTMProvider implements DEMProvider
     private final TIntObjectHashMap<String> areas = new TIntObjectHashMap<String>();
 
     public SRTMProvider()
-    {
-        // move to explicit call?
+    {        
+        // move to explicit calls?
         init();
+        dir = new RAMDirectory();
     }
 
     /**
@@ -109,7 +111,7 @@ public class SRTMProvider implements DEMProvider
     public void setDownloader( Downloader downloader )
     {
         this.downloader = downloader;
-    }
+    }       
 
     public void setCacheDir( File cacheDir )
     {
@@ -182,7 +184,7 @@ public class SRTMProvider implements DEMProvider
                 InputStream is;
                 if (!file.exists())
                 {
-                    // get zip file if not already in cacheDir but don't unzip!
+                    // get zip file if not already in cacheDir - unzip later and in-memory only!
                     downloader.downloadFile(zippedURL, file.getAbsolutePath());
                 }
 
@@ -191,7 +193,9 @@ public class SRTMProvider implements DEMProvider
                 zis.getNextEntry();
                 BufferedInputStream buff = new BufferedInputStream(zis);
                 byte[] bytes = new byte[2 * WIDTH * WIDTH];
-                short[] heights = new short[WIDTH * WIDTH];
+                DataAccess heights = dir.find("dem" + intKey);
+                heights.create(bytes.length);
+                        
                 demProvider.setHeights(heights);
                 int len;
                 while ((len = buff.read(bytes)) > 0)
@@ -208,7 +212,7 @@ public class SRTMProvider implements DEMProvider
                             val = Short.MIN_VALUE;
                         }
 
-                        heights[bytePos / 2] = val;
+                        heights.setShort(bytePos, val);
                     }
                 }
                 // demProvider.toImage(file.getName() + ".png");

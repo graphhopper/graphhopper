@@ -21,7 +21,7 @@ package com.graphhopper.reader.dem;
 /**
  * @author Peter Karich
  */
-public interface DEMProvider
+public interface ElevationProvider
 {
     /**
      * @return returns the hight in meter or Integer.MIN_VALUE if invalid
