@@ -33,7 +33,6 @@ import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
-import com.graphhopper.routing.util.TurnCostEncoder.NoTurnCostsEncoder;
 
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders

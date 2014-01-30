@@ -198,6 +198,11 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
+    public String getCHWeighting()
+    {
+        return chWeighting;
+    }
+
     /**
      * Disables contraction hierarchies. Enabled by default.
      */
@@ -404,7 +409,7 @@ public class GraphHopper implements GraphHopperAPI
 
         periodicUpdates = args.getInt("prepare.updates.periodic", periodicUpdates);
         lazyUpdates = args.getInt("prepare.updates.lazy", lazyUpdates);
-        neighborUpdates = args.getInt("prepare.updates.neighbor", neighborUpdates);        
+        neighborUpdates = args.getInt("prepare.updates.neighbor", neighborUpdates);
         logMessages = args.getDouble("prepare.logmessages", logMessages);
 
         // osm import
