@@ -198,6 +198,11 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
+    public String getCHWeighting()
+    {
+        return chWeighting;
+    }
+
     /**
      * Disables contraction hierarchies. Enabled by default.
      */
