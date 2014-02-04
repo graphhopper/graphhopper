@@ -28,14 +28,19 @@ public interface FlagEncoder
     /**
      * @return the speed in km/h
      */
-    int getSpeed( long flags );
+    double getSpeed( long flags );
+
+    /**
+     * @return the maximum speed in km/h
+     */
+    double getMaxSpeed();
 
     /**
      * Sets the speed in km/h.
      * <p>
      * @return modified setProperties
      */
-    long setSpeed( long flags, int speed );
+    long setSpeed( long flags, double speed );
 
     /**
      * Sets the access of the edge.
@@ -49,16 +54,11 @@ public interface FlagEncoder
      * <p>
      * @return created flags
      */
-    long setProperties( int speed, boolean forward, boolean backward );
+    long setProperties( double speed, boolean forward, boolean backward );
 
     boolean isForward( long flags );
 
     boolean isBackward( long flags );
-
-    /**
-     * @return the maximum speed in km/h
-     */
-    int getMaxSpeed();
 
     /**
      * Returns true if flags1 can be overwritten by flags2 without restricting or changing the

@@ -68,7 +68,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private LevelGraph g;
     // the most important nodes comes last
     private GHTreeMapComposed sortedNodes;
-    private int oldPriorities[];    
+    private int oldPriorities[];
     private final DataAccess originalEdges;
     // shortcut is one direction, speed is only involved while recalculating the endNode weights - see prepareEdges
     private final long scOneDir;
@@ -237,7 +237,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     boolean prepareNodes()
     {
         int len = g.getNodes();
-        
+
         for (int node = 0; node < len; node++)
         {
             int priority = oldPriorities[node] = calculatePriority(node);
@@ -308,7 +308,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             {
                 // TODO necessary?
                 System.gc();
-                logger.info(Helper.nf(counter) + ", updates:" + updateCounter 
+                logger.info(Helper.nf(counter) + ", updates:" + updateCounter
                         + ", nodes: " + Helper.nf(sortedNodes.getSize())
                         + ", shortcuts:" + Helper.nf(newShortcuts)
                         + ", dijkstras:" + Helper.nf(dijkstraCount)
@@ -326,7 +326,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             counter++;
-            int polledNode = sortedNodes.pollKey();            
+            int polledNode = sortedNodes.pollKey();
             if (sortedNodes.getSize() < lastNodesLazyUpdates)
             {
                 lazySW.start();
@@ -374,7 +374,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // The preparation object itself has to be intact to create the algorithm.
         close();
         logger.info("took:" + (int) allSW.stop().getSeconds()
-                + ", new shortcuts: " + newShortcuts 
+                + ", new shortcuts: " + newShortcuts
                 + ", " + prepareWeighting
                 + ", " + prepareEncoder
                 + ", removeHigher2LowerEdges:" + removesHigher2LowerEdges
@@ -382,7 +382,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 + ", t(dijk):" + (int) dijkstraSW.getSeconds()
                 + ", t(period):" + (int) periodSW.getSeconds()
                 + ", t(lazy):" + (int) lazySW.getSeconds()
-                + ", t(neighbor):" + (int) neighborSW.getSeconds()                
+                + ", t(neighbor):" + (int) neighborSW.getSeconds()
                 + ", meanDegree:" + (long) meanDegree
                 + ", initSize:" + initSize
                 + ", periodic:" + periodicUpdatesPercentage

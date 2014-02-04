@@ -93,7 +93,7 @@ public class CarFlagEncoderTest
         map.put("maxspeed", "500");
         long allowed = encoder.acceptWay(way);
         long encoded = encoder.handleWayTags(way, allowed, 0);
-        assertEquals(100, encoder.getSpeed(encoded));
+        assertEquals(100, encoder.getSpeed(encoded), 1e-1);
     }
 
     @Test
@@ -106,34 +106,34 @@ public class CarFlagEncoderTest
         map.put("maxspeed", "110");
         long allowed = encoder.acceptWay(way);
         long encoded = encoder.handleWayTags(way, allowed, 0);
-        assertEquals(95, encoder.getSpeed(encoded));
+        assertEquals(95, encoder.getSpeed(encoded), 1e-1);
 
         map.clear();
         map.put("highway", "residential");
         map.put("surface", "cobblestone");
         allowed = encoder.acceptWay(way);
         encoded = encoder.handleWayTags(way, allowed, 0);
-        assertEquals(30, encoder.getSpeed(encoded));
+        assertEquals(30, encoder.getSpeed(encoded), 1e-1);
 
         map.clear();
         map.put("highway", "track");
         allowed = encoder.acceptWay(way);
         encoded = encoder.handleWayTags(way, allowed, 0);
-        assertEquals(15, encoder.getSpeed(encoded));
+        assertEquals(15, encoder.getSpeed(encoded), 1e-1);
 
         map.clear();
         map.put("highway", "track");
         map.put("tracktype", "grade1");
         allowed = encoder.acceptWay(way);
         encoded = encoder.handleWayTags(way, allowed, 0);
-        assertEquals(20, encoder.getSpeed(encoded));
+        assertEquals(20, encoder.getSpeed(encoded), 1e-1);
 
         map.clear();
         map.put("highway", "track");
         map.put("tracktype", "grade5");
         allowed = encoder.acceptWay(way);
         encoded = encoder.handleWayTags(way, allowed, 0);
-        assertEquals(5, encoder.getSpeed(encoded));
+        assertEquals(5, encoder.getSpeed(encoded), 1e-1);
 
         try
         {
@@ -147,7 +147,7 @@ public class CarFlagEncoderTest
     @Test
     public void testSetSpeed()
     {
-        assertEquals(10, encoder.getSpeed(encoder.setSpeed(0, 10)));
+        assertEquals(10, encoder.getSpeed(encoder.setSpeed(0, 10)), 1e-1);
     }
 
     @Test
@@ -174,7 +174,7 @@ public class CarFlagEncoderTest
         // accept
         assertNotSame(0, encoder.acceptWay(way));
         // calculate speed from estimated_distance and duration
-        assertEquals(60, encoder.getSpeed(encoder.handleFerry(way, 20, 30, 40)));
+        assertEquals(60, encoder.getSpeed(encoder.handleFerry(way, 20, 30, 40)), 1e-1);
     }
 
     @Test

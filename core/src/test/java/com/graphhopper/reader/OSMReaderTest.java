@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
@@ -324,13 +323,13 @@ public class OSMReaderTest
         int n80 = AbstractGraphStorageTester.getIdOf(graph, 54.1);
         EdgeIterator iter = carOutExplorer.setBaseNode(n80);
         iter.next();
-        assertEquals(5, carEncoder.getSpeed(iter.getFlags()));
+        assertEquals(5, carEncoder.getSpeed(iter.getFlags()), 1e-1);
 
         // more precise speed calculation! ~150km (from 54.0,10.1 to 55.0,10.1) in duration=70 minutes -> wow ;)
         // => 130km/h => / 1.4 => 92km/h        
         iter = carOutExplorer.setBaseNode(n40);
         iter.next();
-        assertEquals(100, carEncoder.getSpeed(iter.getFlags()));
+        assertEquals(100, carEncoder.getSpeed(iter.getFlags()), 1e-1);
     }
 
     @Test
@@ -348,7 +347,7 @@ public class OSMReaderTest
         int n60 = AbstractGraphStorageTester.getIdOf(graph, 56.0);
         EdgeIterator iter = carOutExplorer.setBaseNode(n60);
         iter.next();
-        assertEquals(35, carEncoder.getSpeed(iter.getFlags()));
+        assertEquals(35, carEncoder.getSpeed(iter.getFlags()), 1e-1);
     }
 
     @Test
@@ -503,50 +502,53 @@ public class OSMReaderTest
         GraphHopper hopper = new GraphHopperTest(fileTurnRestrictions).setEnableTurnRestrictions(true).importOrLoad();
         Graph graph = hopper.getGraph();
         assertEquals(9, graph.getNodes());
-        assertTrue(((GraphHopperStorage)graph).getExtendedStorage() instanceof TurnCostStorage);
+        assertTrue(((GraphHopperStorage) graph).getExtendedStorage() instanceof TurnCostStorage);
 
-        TurnCostStorage tcStorage = (TurnCostStorage) ((GraphHopperStorage)graph).getExtendedStorage();
-        
+        TurnCostStorage tcStorage = (TurnCostStorage) ((GraphHopperStorage) graph).getExtendedStorage();
+
         int n2 = AbstractGraphStorageTester.getIdOf(graph, 52, 10);
         int n3 = AbstractGraphStorageTester.getIdOf(graph, 52, 11);
         int n4 = AbstractGraphStorageTester.getIdOf(graph, 52, 12);
         int n8 = AbstractGraphStorageTester.getIdOf(graph, 54, 11);
-        
+
         int edge2_3 = getEdge(n2, n3);
         int edge3_4 = getEdge(n3, n4);
         int edge3_8 = getEdge(n3, n8);
-        
+
         int edge3_2 = getEdge(n3, n2);
         int edge4_3 = getEdge(n4, n3);
         int edge8_3 = getEdge(n8, n3);
-        
+
         // (2-3)->(3-4) only_straight_on = (2-3)->(3-8) restricted
         // (4-3)->(3-8) no_right_turn = (4-3)->(3-8) restricted
         assertTrue(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n3, edge2_3, edge3_8)));
         assertTrue(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n3, edge4_3, edge3_8)));
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n3, edge2_3, edge3_4)));
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n3, edge2_3, edge3_2)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n3, edge2_3, edge3_4)));        
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n3, edge2_3, edge3_4)));
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n3, edge4_3, edge3_2)));
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n3, edge8_3, edge3_2)));
-        
+
         int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
         int n5 = AbstractGraphStorageTester.getIdOf(graph, 50, 12);
         int n6 = AbstractGraphStorageTester.getIdOf(graph, 50, 11);
-        
+
         int edge4_5 = getEdge(n4, n5);
         int edge5_6 = getEdge(n5, n6);
         int edge5_1 = getEdge(n5, n1);
-        
+
         // (4-5)->(5-1) right_turn_only = (4-5)->(5-6) restricted 
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n5, edge4_5, edge5_6)));
         assertTrue(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n5, edge4_5, edge5_1)));
     }
-    
-    private int getEdge(int from, int to){
+
+    private int getEdge( int from, int to )
+    {
         EdgeIterator iter = carOutExplorer.setBaseNode(from);
-        while(iter.next()) {
-            if(iter.getAdjNode() == to){
+        while (iter.next())
+        {
+            if (iter.getAdjNode() == to)
+            {
                 return iter.getEdge();
             }
         }
@@ -586,16 +588,15 @@ public class OSMReaderTest
             @Override
             public long applyNodeFlags( long wayFlags, long nodeFlags )
             {
-                int speed = getSpeed(wayFlags);
+                double speed = getSpeed(wayFlags);
                 if (objectEncoder.getValue(nodeFlags) != 0)
                     speed -= 5;
 
-                return speedEncoder.setValue(wayFlags, speed);
+                return speedEncoder.setValue(wayFlags, (int) speed);
             }
         };
         EncodingManager manager = new EncodingManager()
         {
-
             {
                 super.registerEncoder(encoder);
             }
@@ -629,7 +630,7 @@ public class OSMReaderTest
             {
                 // reduced speed due to node tags
                 increased.incrementAndGet();
-                assertEquals(100 - 5, encoder.getSpeed(wayFlags));
+                assertEquals(100 - 5, encoder.getSpeed(wayFlags), 1e-1);
                 return Collections.emptyList();
             }
         };

@@ -37,7 +37,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     public void testGetSpeed()
     {
         long result = encoder.setProperties(10, true, true);
-        assertEquals(10, encoder.getSpeed(result));
+        assertEquals(10, encoder.getSpeed(result), 1e-1);
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "primary");
         assertEquals(10, encoder.getSpeed(way));
@@ -138,7 +138,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         long relFlags = encoder.handleRelationTags(osmRel, 0);
         // unchanged
         long flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(24, encoder.getSpeed(flags));
+        assertEquals(24, encoder.getSpeed(flags), 1e-1);
         assertEquals(3, encoder.getWayTypeCode(flags));
         assertEquals(1, encoder.getPavementCode(flags));
 
@@ -147,7 +147,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         relMap.put("network", "lcn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(28, encoder.getSpeed(flags));
+        assertEquals(28, encoder.getSpeed(flags), 1e-1);
         assertEquals(3, encoder.getWayTypeCode(flags));
         assertEquals(1, encoder.getPavementCode(flags));
 
@@ -155,13 +155,13 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         relMap.put("network", "rcn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(28, encoder.getSpeed(flags));
+        assertEquals(28, encoder.getSpeed(flags), 1e-1);
 
         // relation code is PREFER
         relMap.put("network", "ncn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(28, encoder.getSpeed(flags));
+        assertEquals(28, encoder.getSpeed(flags), 1e-1);
 
         // PREFER relation, but tertiary road
         // => no pushing section but road wayTypeCode and faster
@@ -172,7 +172,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         relMap.put("network", "lcn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(18, encoder.getSpeed(flags));
+        assertEquals(18, encoder.getSpeed(flags), 1e-1);
         assertEquals(0, encoder.getWayTypeCode(flags));
 
         // test max and min speed
@@ -190,11 +190,11 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         allowed = fakeEncoder.acceptBit;
 
         flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
-        assertEquals(30, fakeEncoder.getSpeed(flags));
+        assertEquals(30, fakeEncoder.getSpeed(flags), 1e-1);
 
         fakeSpeed.set(-2);
         flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
-        assertEquals(0, fakeEncoder.getSpeed(flags));
+        assertEquals(0, fakeEncoder.getSpeed(flags), 1e-1);
 
     }
 }

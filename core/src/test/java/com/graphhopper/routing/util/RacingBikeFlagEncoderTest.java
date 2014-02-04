@@ -41,20 +41,20 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     public void testGetSpeed()
     {
         long result = encoder.setProperties(10, true, true);
-        assertEquals(10, encoder.getSpeed(result));
+        assertEquals(10, encoder.getSpeed(result), 1e-1);
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade3");
         // Pushing section speed/2
-        assertEquals(PUSHING_SECTION_SPEED / 2, getEncodedDecodedSpeed(way));
+        assertEquals(PUSHING_SECTION_SPEED / 2, getEncodedDecodedSpeed(way), 1e-1);
 
         // Even if it is part of a cycle way PUSHING_SECTION_SPEED/2
         way.setTag("bicycle", "yes");
-        assertEquals(PUSHING_SECTION_SPEED / 2, getEncodedDecodedSpeed(way));
+        assertEquals(PUSHING_SECTION_SPEED / 2, getEncodedDecodedSpeed(way), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "steps");
-        assertEquals(2, getEncodedDecodedSpeed(way));
+        assertEquals(2, getEncodedDecodedSpeed(way), 1e-1);
 
     }
 
@@ -69,14 +69,14 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         Map<String, String> relMap = new HashMap<String, String>();
         OSMRelation osmRel = new OSMRelation(1, relMap);
 
-        assertEquals(PUSHING_SECTION_SPEED / 2, getEncodedDecodedSpeed(osmWay));
+        assertEquals(PUSHING_SECTION_SPEED / 2, getEncodedDecodedSpeed(osmWay), 1e-1);
 
         // relation code is PREFER
         relMap.put("route", "bicycle");
         relMap.put("network", "lcn");
         long relFlags = encoder.handleRelationTags(osmRel, 0);
         long flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(2, encoder.getSpeed(flags));
+        assertEquals(2, encoder.getSpeed(flags), 1e-1);
         assertEquals(1, encoder.getWayTypeCode(flags)); // Pushing section
         assertEquals(1, encoder.getPavementCode(flags)); //  Unpaved
 
@@ -84,19 +84,19 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         relMap.put("network", "icn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(2, encoder.getSpeed(flags));
+        assertEquals(2, encoder.getSpeed(flags), 1e-1);
 
         // Now we assume bicycle=yes, anyhow still unpaved
         wayMap.put("bicycle", "yes");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(2, encoder.getSpeed(flags));
+        assertEquals(2, encoder.getSpeed(flags), 1e-1);
 
         // Now we assume bicycle=yes, and paved -> The speed is pushed!
         wayMap.put("tracktype", "grade1");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(30, encoder.getSpeed(flags));
+        assertEquals(30, encoder.getSpeed(flags), 1e-1);
 
     }
 

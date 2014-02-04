@@ -142,8 +142,8 @@ public class EncodingManagerTest
         long allow = defaultBike.acceptBit | lessRelationCodes.acceptBit;
         long flags = manager.handleWayTags(osmWay, allow, relFlags);
 
-        assertEquals(18, defaultBike.getSpeed(flags));
-        assertEquals(4, lessRelationCodes.getSpeed(flags));
+        assertEquals(18, defaultBike.getSpeed(flags), 1e-1);
+        assertEquals(4, lessRelationCodes.getSpeed(flags), 1e-1);
     }
 
     @Test
@@ -172,9 +172,9 @@ public class EncodingManagerTest
         long flags = manager.handleWayTags(osmWay, allow, relFlags);
 
         //Uninfluenced speed for grade1 bikeencoder = 4 (pushing section) -> smaller than 15 -> VERYNICE -> 22
-        assertEquals(22, bikeencoder.getSpeed(flags));
+        assertEquals(22, bikeencoder.getSpeed(flags), 1e-1);
         //Uninfluenced speed for grade1 bikeencoder = 12 -> smaller than 15 -> PREFER -> 18
-        assertEquals(18, mountainbikeencoder.getSpeed(flags));
+        assertEquals(18, mountainbikeencoder.getSpeed(flags), 1e-1);
     }
     
     public void testFullBitMask()
@@ -235,23 +235,23 @@ public class EncodingManagerTest
         long wayFlags = manager.handleWayTags(way, manager.acceptWay(way), 0);
         long nodeFlags = manager.analyzeNodeTags(node);
         wayFlags = manager.applyNodeFlags(wayFlags, -nodeFlags);
-        assertEquals(60, car.getSpeed(wayFlags));
-        assertEquals(59, car2.getSpeed(wayFlags));
+        assertEquals(60, car.getSpeed(wayFlags), 1e-1);
+        assertEquals(59, car2.getSpeed(wayFlags), 1e-1);
 
         nodeMap.put("test", "something");
         wayFlags = manager.handleWayTags(way, manager.acceptWay(way), 0);
         nodeFlags = manager.analyzeNodeTags(node);
         wayFlags = manager.applyNodeFlags(wayFlags, -nodeFlags);
-        assertEquals(58, car2.getSpeed(wayFlags));
-        assertEquals(60, car.getSpeed(wayFlags));
+        assertEquals(58, car2.getSpeed(wayFlags), 1e-1);
+        assertEquals(60, car.getSpeed(wayFlags), 1e-1);
 
         wayMap.put("maxspeed", "130");
         wayFlags = manager.handleWayTags(way, manager.acceptWay(way), 0);
-        assertEquals(car.getMaxSpeed(), car2.getSpeed(wayFlags));
+        assertEquals(car.getMaxSpeed(), car2.getSpeed(wayFlags), 1e-1);
         nodeFlags = manager.analyzeNodeTags(node);
         wayFlags = manager.applyNodeFlags(wayFlags, -nodeFlags);
-        assertEquals(98, car2.getSpeed(wayFlags));
-        assertEquals(100, car.getSpeed(wayFlags));
+        assertEquals(98, car2.getSpeed(wayFlags), 1e-1);
+        assertEquals(100, car.getSpeed(wayFlags), 1e-1);
     }
 
     /**
