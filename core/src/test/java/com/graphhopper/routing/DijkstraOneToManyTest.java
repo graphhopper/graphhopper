@@ -72,6 +72,12 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
         // not supported
     }
 
+    @Override
+    public void testQueryGraphAndFastest()
+    {
+        // not supported
+    }
+
     @Test
     public void testUseCache()
     {

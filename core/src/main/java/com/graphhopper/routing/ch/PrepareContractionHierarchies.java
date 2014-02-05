@@ -91,6 +91,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         prepareEncoder = encoder;
         scFwdDir = encoder.setAccess(0, true, false);
         scBothDir = encoder.setAccess(0, true, true);
+
+        // shortcuts store weight in flags where we assume bit 1 and 2 are used for access restriction
+        if ((scFwdDir & 0x1) == 0)
+            throw new IllegalArgumentException("Currently only one vehicle is supported if you enable CH. "
+                    + "It seems that you have imported more than one.");
+
         prepareWeighting = new PreparationWeighting(weighting);
         originalEdges = new GHDirectory("", DAType.RAM_INT).find("originalEdges");
         originalEdges.create(1000);
@@ -649,6 +655,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
             if (!updatedInGraph)
             {
+                // System.out.println("NEW " + sc);
                 EdgeSkipIterState edgeState = g.shortcut(sc.from, sc.to);
                 edgeState.setFlags(sc.flags);
                 edgeState.setWeight(sc.weight);

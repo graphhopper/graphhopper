@@ -484,7 +484,7 @@ public class QueryGraph implements Graph
         return new UnsupportedOperationException("QueryGraph cannot be modified.");
     }
 
-    static class VirtualEdgeIterator implements EdgeIterator
+    static class VirtualEdgeIterator implements EdgeIterator, EdgeSkipIterState
     {
 
         private final List<EdgeIteratorState> edges;
@@ -614,12 +614,50 @@ public class QueryGraph implements Graph
         {
             edges.get(current).copyProperties(edge);
         }
+
+        @Override
+        public boolean isShortcut()
+        {
+            EdgeIteratorState edge = edges.get(current);
+            return edge instanceof EdgeSkipIterState && ((EdgeSkipIterState) edge).isShortcut();
+        }
+
+        @Override
+        public double getWeight()
+        {
+            // will be called only from PreparationWeighting and if isShortcut is true
+            return ((EdgeSkipIterState) edges.get(current)).getWeight();
+        }
+
+        @Override
+        public EdgeSkipIterState setWeight( double weight )
+        {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public int getSkippedEdge1()
+        {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public int getSkippedEdge2()
+        {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public void setSkippedEdges( int edge1, int edge2 )
+        {
+            throw new UnsupportedOperationException("Not supported.");
+        }
     }
 
     /**
      * Creates an edge state decoupled from a graph where nodes, pointList, etc are kept in memory.
      */
-    private static class VirtualEdgeIState implements EdgeIteratorState, /* for isShortcut only: */ EdgeSkipIterator
+    private static class VirtualEdgeIState implements EdgeIteratorState, EdgeSkipIterState
     {
 
         private final PointList pointList;
@@ -760,12 +798,6 @@ public class QueryGraph implements Graph
 
         @Override
         public void setSkippedEdges( int edge1, int edge2 )
-        {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        @Override
-        public boolean next()
         {
             throw new UnsupportedOperationException("Not supported.");
         }

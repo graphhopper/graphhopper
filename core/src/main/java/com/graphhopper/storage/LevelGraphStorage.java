@@ -178,7 +178,7 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
         }
 
         @Override
-        public final EdgeIterator detach()
+        public final EdgeIteratorState detach()
         {
             if (edgeId == nextEdge)
                 throw new IllegalStateException("call next before detaching");
@@ -323,7 +323,7 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
         public final double getWeight()
         {
             return LevelGraphStorage.this.getWeight(this);
-        }
+        }       
     }
 
     final void setWeight( EdgeSkipIterState edge, double weight )

@@ -932,7 +932,7 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
-        public EdgeIterator detach()
+        public EdgeIteratorState detach()
         {
             if (edgeId == nextEdge)
                 throw new IllegalStateException("call next before detaching");
