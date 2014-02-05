@@ -83,6 +83,19 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.setTag("highway", "path");
         way.setTag("surface", "ground");
         assertEquals(4, encoder.getSpeed(way));
+        
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("bicycle", "yes");
+        way.setTag("surface", "fine_gravel");
+        assertEquals(18, encoder.getSpeed(way));
+        
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("bicycle", "yes");
+        way.setTag("surface", "unknown_surface");
+        assertEquals(4, encoder.getSpeed(way));
+        
     }
 
     @Test
