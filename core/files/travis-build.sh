@@ -1,7 +1,7 @@
 HOME=$(dirname $0)
 cd $HOME/../..
 
-modules="core web tools"
+modules="core web tools simple-transit"
 for module in $modules; do
   echo "====== INSTALL $module ====="
   mvn -pl $module install -DskipTests=true
