@@ -26,7 +26,6 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.util.EdgeSkipExplorer;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.*;
 import java.util.Collection;
@@ -172,8 +171,8 @@ public class PrepareContractionHierarchiesTest
         LevelGraph g = createGraph();
         //5 6 7
         // \|/
-        //4-3_1<-  0
-        //    \_|/_10
+        //4-3_1<-
+        //    \_|_10
         //   0__2_11
 
         g.edge(0, 2, 2, true);
@@ -300,14 +299,17 @@ public class PrepareContractionHierarchiesTest
 
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
         EdgeSkipIterState tmp = g.shortcut(1, 4);
-        tmp.setDistance(2).setFlags(prepare.getScBothDir());
+        tmp.setFlags(prepare.getScBothDir());
+        tmp.setWeight(2);        
         tmp.setSkippedEdges(iter1_1.getEdge(), iter1_2.getEdge());
-        long f = prepare.getScOneDir();
+        long f = prepare.getScFwdDir();
         tmp = g.shortcut(4, 6);
-        tmp.setDistance(2).setFlags(f);
+        tmp.setFlags(f);
+        tmp.setWeight(2);        
         tmp.setSkippedEdges(iter2_1.getEdge(), iter2_2.getEdge());
         tmp = g.shortcut(6, 4);
-        tmp.setDistance(3).setFlags(f);
+        tmp.setFlags(f);
+        tmp.setWeight(3);        
         tmp.setSkippedEdges(iter3_1.getEdge(), iter3_2.getEdge());
 
         prepare.initFromGraph();
@@ -319,51 +321,37 @@ public class PrepareContractionHierarchiesTest
     void initUnpackingGraph( LevelGraphStorage g, Weighting w )
     {
         final long flags = carEncoder.setProperties(30, true, false);
-        EdgeIterator edge = new GHUtility.DisabledEdgeIterator()
-        {
-
-            @Override
-            public double getDistance()
-            {
-                return 1;
-            }
-
-            @Override
-            public long getFlags()
-            {
-                return flags;
-            }
-        };
-        g.edge(10, 0).setDistance(w.calcWeight(edge)).setFlags(flags);
+        double dist = 1;
+        g.edge(10, 0).setDistance(dist).setFlags(flags);
         EdgeIteratorState iterTmp1 = g.edge(0, 1);
-        iterTmp1.setDistance(w.calcWeight(edge)).setFlags(flags);
-        EdgeIteratorState iter2 = g.edge(1, 2).setDistance(w.calcWeight(edge)).setFlags(flags);
-        EdgeIteratorState iter3 = g.edge(2, 3).setDistance(w.calcWeight(edge)).setFlags(flags);
-        EdgeIteratorState iter4 = g.edge(3, 4).setDistance(w.calcWeight(edge)).setFlags(flags);
-        EdgeIteratorState iter5 = g.edge(4, 5).setDistance(w.calcWeight(edge)).setFlags(flags);
-        EdgeIteratorState iter6 = g.edge(5, 6).setDistance(w.calcWeight(edge)).setFlags(flags);
-        long oneDirFlags = new PrepareContractionHierarchies(carEncoder, w).getScOneDir();
+        iterTmp1.setDistance(dist).setFlags(flags);
+        EdgeIteratorState iter2 = g.edge(1, 2).setDistance(dist).setFlags(flags);
+        EdgeIteratorState iter3 = g.edge(2, 3).setDistance(dist).setFlags(flags);
+        EdgeIteratorState iter4 = g.edge(3, 4).setDistance(dist).setFlags(flags);
+        EdgeIteratorState iter5 = g.edge(4, 5).setDistance(dist).setFlags(flags);
+        EdgeIteratorState iter6 = g.edge(5, 6).setDistance(dist).setFlags(flags);
+        long oneDirFlags = new PrepareContractionHierarchies(carEncoder, w).getScFwdDir();
 
         int tmp = iterTmp1.getEdge();
-        EdgeSkipIterState iter1 = g.shortcut(0, 2);
-        iter1.setDistance(2).setFlags(oneDirFlags);
-        iter1.setSkippedEdges(tmp, iter2.getEdge());
-        tmp = iter1.getEdge();
-        iter1 = g.shortcut(0, 3);
-        iter1.setDistance(3).setFlags(oneDirFlags);
-        iter1.setSkippedEdges(tmp, iter3.getEdge());
-        tmp = iter1.getEdge();
-        iter1 = g.shortcut(0, 4);
-        iter1.setDistance(4).setFlags(oneDirFlags);
-        iter1.setSkippedEdges(tmp, iter4.getEdge());
-        tmp = iter1.getEdge();
-        iter1 = g.shortcut(0, 5);
-        iter1.setDistance(5).setFlags(oneDirFlags);
-        iter1.setSkippedEdges(tmp, iter5.getEdge());
-        tmp = iter1.getEdge();
-        iter1 = g.shortcut(0, 6);
-        iter1.setDistance(6).setFlags(oneDirFlags);
-        iter1.setSkippedEdges(tmp, iter6.getEdge());
+        EdgeSkipIterState sc1 = g.shortcut(0, 2);
+        sc1.setWeight(w.calcWeight(iterTmp1) + w.calcWeight(iter2)).setDistance(2 * dist).setFlags(oneDirFlags);
+        sc1.setSkippedEdges(tmp, iter2.getEdge());
+        tmp = sc1.getEdge();
+        EdgeSkipIterState sc2 = g.shortcut(0, 3);
+        sc2.setWeight(w.calcWeight(sc1) + w.calcWeight(iter3)).setDistance(3 * dist).setFlags(oneDirFlags);
+        sc2.setSkippedEdges(tmp, iter3.getEdge());
+        tmp = sc2.getEdge();
+        sc1 = g.shortcut(0, 4);
+        sc1.setWeight(w.calcWeight(sc2) + w.calcWeight(iter4)).setDistance(4).setFlags(oneDirFlags);
+        sc1.setSkippedEdges(tmp, iter4.getEdge());
+        tmp = sc1.getEdge();
+        sc2 = g.shortcut(0, 5);
+        sc2.setWeight(w.calcWeight(sc1) + w.calcWeight(iter5)).setDistance(5).setFlags(oneDirFlags);
+        sc2.setSkippedEdges(tmp, iter5.getEdge());
+        tmp = sc2.getEdge();
+        sc1 = g.shortcut(0, 6);
+        sc1.setWeight(w.calcWeight(sc2) + w.calcWeight(iter6)).setDistance(6).setFlags(oneDirFlags);
+        sc1.setSkippedEdges(tmp, iter6.getEdge());
         g.setLevel(0, 10);
         g.setLevel(6, 9);
         g.setLevel(5, 8);

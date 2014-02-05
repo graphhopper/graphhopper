@@ -19,9 +19,7 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeSkipIterState;
 
 /**
@@ -32,12 +30,9 @@ import com.graphhopper.util.EdgeSkipIterState;
  */
 public class Path4CH extends PathBidirRef
 {
-    private final Weighting calc;
-
-    public Path4CH( Graph g, FlagEncoder encoder, Weighting calc )
+    public Path4CH( Graph g, FlagEncoder encoder )
     {
         super(g, encoder);
-        this.calc = calc;
     }
 
     @Override
@@ -48,17 +43,11 @@ public class Path4CH extends PathBidirRef
         expandEdge((EdgeSkipIterState) graph.getEdgeProps(tmpEdge, endNode), false);
     }
 
-    @Override
-    public double calcDistance( EdgeIteratorState mainIter )
-    {
-        return calc.revertWeight(mainIter, mainIter.getDistance());
-    }
-
     private void expandEdge( EdgeSkipIterState mainEdgeState, boolean revert )
     {
         if (!mainEdgeState.isShortcut())
         {
-            double dist = calcDistance(mainEdgeState);
+            double dist = mainEdgeState.getDistance();
             distance += dist;
             long flags = mainEdgeState.getFlags();
             millis += calcMillis(dist, flags);

@@ -19,7 +19,6 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeSkipExplorer;
 import com.graphhopper.util.EdgeSkipIterState;
 import com.graphhopper.util.GHUtility;
 import static org.junit.Assert.*;
@@ -108,8 +107,7 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         assertEquals(EdgeIterator.NO_EDGE, tmpIter.getSkippedEdge1());
         assertEquals(EdgeIterator.NO_EDGE, tmpIter.getSkippedEdge2());
 
-        // shortcut
-        g.edge(0, 4, 40, true);
+        g.shortcut(0, 4).setDistance(40).setFlags(carEncoder.setAccess(0, true, true));
         g.setLevel(0, 1);
         g.setLevel(4, 1);
 
@@ -155,5 +153,37 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(2)));
         g.disconnect(g.createEdgeExplorer(), iter);
         assertEquals(0, GHUtility.count(carOutExplorer.setBaseNode(2)));
+    }
+
+    @Test
+    public void testGetWeight()
+    {
+        LevelGraphStorage g = (LevelGraphStorage) createGraph();
+        assertFalse(g.edge(0, 1).isShortcut());
+        assertFalse(g.edge(1, 2).isShortcut());
+        
+        // only remove edges
+        long flags = carEncoder.setProperties(0, true, true);
+        EdgeSkipIterState sc1 = g.shortcut(0, 1);
+        assertTrue(sc1.isShortcut());
+        sc1.setWeight(2.001);
+        assertEquals(2.001, sc1.getWeight(), 1e-3);
+        sc1.setWeight(100.123);
+        assertEquals(100.123, sc1.getWeight(), 1e-3);
+        sc1.setWeight(Double.MAX_VALUE);
+        assertTrue(Double.isInfinite(sc1.getWeight()));
+
+        sc1.setFlags(flags);
+        sc1.setWeight(100.123);
+        assertEquals(100.123, sc1.getWeight(), 1e-3);
+        assertTrue(carEncoder.isBackward(sc1.getFlags()));
+        assertTrue(carEncoder.isForward(sc1.getFlags()));
+
+        flags = carEncoder.setProperties(0, false, true);
+        sc1.setFlags(flags);
+        sc1.setWeight(100.123);
+        assertEquals(100.123, sc1.getWeight(), 1e-3);
+        assertTrue(carEncoder.isBackward(sc1.getFlags()));
+        assertFalse(carEncoder.isForward(sc1.getFlags()));
     }
 }

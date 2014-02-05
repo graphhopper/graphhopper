@@ -341,7 +341,7 @@ public abstract class AbstractRoutingAlgorithmTester
     @Test
     public void testRekeyBugOfIntBinHeap()
     {
-        // using DijkstraSimple + IntBinHeap then rekey loops endlessly
+        // using Dijkstra + IntBinHeap then rekey loops endlessly
         Path p = prepareGraph(getMatrixGraph()).createAlgo().calcPath(36, 91);
         assertEquals(12, p.calcNodes().size());
 

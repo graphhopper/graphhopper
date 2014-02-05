@@ -62,7 +62,8 @@ class RAMIntDataAccess extends AbstractDataAccess
     {
         if (da instanceof RAMIntDataAccess)
         {
-            RAMIntDataAccess rda = (RAMIntDataAccess) da;
+            copyHeader(da);
+            RAMIntDataAccess rda = (RAMIntDataAccess) da;            
             // TODO PERFORMANCE we could reuse rda segments!
             rda.segments = new int[segments.length][];
             for (int i = 0; i < segments.length; i++)

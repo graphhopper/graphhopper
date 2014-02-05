@@ -30,4 +30,8 @@ public interface EdgeSkipIterState extends EdgeIteratorState
     void setSkippedEdges( int edge1, int edge2 );
 
     boolean isShortcut();
+
+    EdgeSkipIterState setWeight( double weight );
+
+    double getWeight();
 }
