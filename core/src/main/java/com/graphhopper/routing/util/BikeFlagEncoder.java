@@ -32,16 +32,32 @@ public class BikeFlagEncoder extends BikeFlagCommonEncoder
         setTrackTypeSpeed("grade4", 10);
         setTrackTypeSpeed("grade5", 8); // like sand/grass     
 
+        setSurfaceSpeed("paved", 20);        
         setSurfaceSpeed("asphalt", 20);
+        setSurfaceSpeed("cobblestone", 10);
+        setSurfaceSpeed("cobblestone:flattened", 10);
+        setSurfaceSpeed("sett",8);
         setSurfaceSpeed("concrete", 20);
-        setSurfaceSpeed("paved", 20);
+        setSurfaceSpeed("concrete:lanes", 16);
+        setSurfaceSpeed("concrete:plates", 16);
+        setSurfaceSpeed("paving_stones", 10);
+        setSurfaceSpeed("paving_stones:30", 10);
         setSurfaceSpeed("unpaved", 16);
+        setSurfaceSpeed("compacted",18);        
+        setSurfaceSpeed("dirt", 10);
+        setSurfaceSpeed("earth", 10);
+        setSurfaceSpeed("fine_gravel", 18);
+        setSurfaceSpeed("grass", 8);
+        setSurfaceSpeed("grass_paver", 8);
         setSurfaceSpeed("gravel", 12);
         setSurfaceSpeed("ground", 12);
-        setSurfaceSpeed("dirt", 10);
-        setSurfaceSpeed("paving_stones", 8);
-        setSurfaceSpeed("grass", 8);
-        setSurfaceSpeed("cobblestone", 6);
+        setSurfaceSpeed("ice", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("metal", 10);
+        setSurfaceSpeed("mud", 10);
+        setSurfaceSpeed("pebblestone", 16);
+        setSurfaceSpeed("salt", 6);
+        setSurfaceSpeed("sand", 8);
+        setSurfaceSpeed("wood", 10);
 
         setHighwaySpeed("living_street", 15);
         setHighwaySpeed("steps", PUSHING_SECTION_SPEED / 2);
