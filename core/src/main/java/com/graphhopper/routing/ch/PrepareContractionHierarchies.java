@@ -595,6 +595,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 // If we decrease the correct weight we only explore less and introduce more shortcuts.
                 // I.e. no change to accuracy is made.
                 double existingDirectWeight = v_u_weight + prepareWeighting.calcWeight(outgoingEdges);
+                if (existingDirectWeight >= Double.MAX_VALUE)
+                    continue;
                 double existingDistSum = v_u_dist + outgoingEdges.getDistance();
                 algo.setLimitWeight(existingDirectWeight)
                         .setLimitVisitedNodes((int) meanDegree * 100)
