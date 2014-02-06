@@ -632,6 +632,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         shortcuts.clear();
         findShortcuts(addScHandler.setNode(v));
         int tmpNewShortcuts = 0;
+        NEXT_SC:
         for (Shortcut sc : shortcuts.keySet())
         {
             boolean updatedInGraph = false;
@@ -640,9 +641,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             while (iter.next())
             {
                 if (iter.isShortcut() && iter.getAdjNode() == sc.to
-                        && prepareEncoder.canBeOverwritten(iter.getFlags(), sc.flags)
-                        && prepareWeighting.calcWeight(iter) > sc.weight)
+                        && prepareEncoder.canBeOverwritten(iter.getFlags(), sc.flags))
                 {
+                    if (sc.weight >= prepareWeighting.calcWeight(iter))
+                        continue NEXT_SC;
+
                     iter.setFlags(sc.flags);
                     iter.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
                     iter.setDistance(sc.dist);
