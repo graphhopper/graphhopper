@@ -44,12 +44,6 @@ public class ShortestWeighting implements Weighting
     }
 
     @Override
-    public double revertWeight( EdgeIteratorState edge, double weight )
-    {
-        return weight;
-    }
-
-    @Override
     public String toString()
     {
         return "SHORTEST";

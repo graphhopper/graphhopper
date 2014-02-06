@@ -932,7 +932,7 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
-        public EdgeIterator detach()
+        public EdgeIteratorState detach()
         {
             if (edgeId == nextEdge)
                 throw new IllegalStateException("call next before detaching");
@@ -1072,30 +1072,28 @@ public class GraphHopperStorage implements GraphStorage
     Graph _copyTo( GraphHopperStorage clonedG )
     {
         if (clonedG.edgeEntryBytes != edgeEntryBytes)
-        {
-            throw new IllegalStateException("edgeEntrySize cannot be different for cloned graph");
-        }
+            throw new IllegalStateException("edgeEntrySize cannot be different for cloned graph");        
 
         if (clonedG.nodeEntryBytes != nodeEntryBytes)
-        {
-            throw new IllegalStateException("nodeEntrySize cannot be different for cloned graph");
-        }
+            throw new IllegalStateException("nodeEntrySize cannot be different for cloned graph");        
 
         // nodes
+        setNodesHeader();
         nodes.copyTo(clonedG.nodes);
-        clonedG.nodeCount = nodeCount;
-        clonedG.bounds = bounds.clone();
+        clonedG.loadNodesHeader();        
 
         // edges
+        setEdgesHeader();
         edges.copyTo(clonedG.edges);
-        clonedG.edgeCount = edgeCount;
+        clonedG.loadEdgesHeader();
 
         // name
         nameIndex.copyTo(clonedG.nameIndex);
 
         // geometry
+        setWayGeometryHeader();
         wayGeometry.copyTo(clonedG.wayGeometry);
-        clonedG.maxGeoRef = maxGeoRef;
+        clonedG.loadWayGeometryHeader();
 
         // extStorage
         extStorage.copyTo(clonedG.extStorage);
@@ -1413,36 +1411,34 @@ public class GraphHopperStorage implements GraphStorage
                 throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.getEncoderList() + "\nGraph: " + acceptStr);
             }
 
-            // nodes
-            int hash = nodes.getHeader(0);
-            if (hash != getClass().getName().hashCode())
-            {
-                throw new IllegalStateException("Cannot load the graph - use instance "
-                        + getClass().getName() + " to load it! " + dir);
-            }
-            nodeEntryBytes = nodes.getHeader(1 * 4);
-            nodeCount = nodes.getHeader(2 * 4);
-            bounds.minLon = Helper.intToDegree(nodes.getHeader(3 * 4));
-            bounds.maxLon = Helper.intToDegree(nodes.getHeader(4 * 4));
-            bounds.minLat = Helper.intToDegree(nodes.getHeader(5 * 4));
-            bounds.maxLat = Helper.intToDegree(nodes.getHeader(6 * 4));
-
-            // edges
-            edgeEntryBytes = edges.getHeader(0);
-            edgeCount = edges.getHeader(1 * 4);
-
-            // geometry
-            maxGeoRef = wayGeometry.getHeader(0);
+            loadNodesHeader();
+            loadEdgesHeader();
+            loadWayGeometryHeader();
             initialized = true;
             return true;
         }
         return false;
     }
 
-    @Override
-    public void flush()
+    protected int loadNodesHeader()
     {
-        // nodes
+        int hash = nodes.getHeader(0);
+        if (hash != getClass().getName().hashCode())
+        {
+            throw new IllegalStateException("Cannot load the graph - use instance "
+                    + getClass().getName() + " to load it! " + dir);
+        }
+        nodeEntryBytes = nodes.getHeader(1 * 4);
+        nodeCount = nodes.getHeader(2 * 4);
+        bounds.minLon = Helper.intToDegree(nodes.getHeader(3 * 4));
+        bounds.maxLon = Helper.intToDegree(nodes.getHeader(4 * 4));
+        bounds.minLat = Helper.intToDegree(nodes.getHeader(5 * 4));
+        bounds.maxLat = Helper.intToDegree(nodes.getHeader(6 * 4));
+        return 7;
+    }
+
+    protected int setNodesHeader()
+    {
         nodes.setHeader(0, getClass().getName().hashCode());
         nodes.setHeader(1 * 4, nodeEntryBytes);
         nodes.setHeader(2 * 4, nodeCount);
@@ -1450,15 +1446,43 @@ public class GraphHopperStorage implements GraphStorage
         nodes.setHeader(4 * 4, Helper.degreeToInt(bounds.maxLon));
         nodes.setHeader(5 * 4, Helper.degreeToInt(bounds.minLat));
         nodes.setHeader(6 * 4, Helper.degreeToInt(bounds.maxLat));
+        return 7;
+    }
 
-        // edges
+    protected int loadEdgesHeader()
+    {
+        edgeEntryBytes = edges.getHeader(0);
+        edgeCount = edges.getHeader(1 * 4);
+        return 4;
+    }
+
+    protected int setEdgesHeader()
+    {
         edges.setHeader(0, edgeEntryBytes);
         edges.setHeader(1 * 4, edgeCount);
         edges.setHeader(2 * 4, encodingManager.hashCode());
         edges.setHeader(3 * 4, extStorage.hashCode());
+        return 4;
+    }
 
-        // geometry
+    protected int loadWayGeometryHeader()
+    {
+        maxGeoRef = wayGeometry.getHeader(0);
+        return 1;
+    }
+
+    protected int setWayGeometryHeader()
+    {
         wayGeometry.setHeader(0, maxGeoRef);
+        return 1;
+    }
+
+    @Override
+    public void flush()
+    {
+        setNodesHeader();
+        setEdgesHeader();
+        setWayGeometryHeader();
 
         properties.flush();
         wayGeometry.flush();

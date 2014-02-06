@@ -46,7 +46,7 @@ public class LocationIndexTreeSC extends LocationIndexTree
             return !((EdgeSkipIterator) edgeIterState).isShortcut();
         }
     };
-    private LevelGraph lg;
+    private final LevelGraph lg;
 
     public LocationIndexTreeSC( LevelGraph g, Directory dir )
     {
@@ -60,9 +60,7 @@ public class LocationIndexTreeSC extends LocationIndexTree
         // return lower level nodes as those nodes are always connected to higher ones
         // (high level nodes are potentially disconnected from lower ones in order to improve performance on Android)
         if (lg.getLevel(nodeA) < lg.getLevel(nodeB))
-        {
             return nodeA;
-        }
         return nodeB;
     }
 

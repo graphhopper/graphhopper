@@ -37,9 +37,4 @@ public interface Weighting
      * @return the calculated weight with the specified velocity
      */
     double calcWeight( EdgeIteratorState edge );
-
-    /**
-     * @return distance from specified weight
-     */
-    double revertWeight( EdgeIteratorState edge, double weight );
 }

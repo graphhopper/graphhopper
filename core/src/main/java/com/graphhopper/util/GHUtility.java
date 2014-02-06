@@ -217,7 +217,7 @@ public class GHUtility
             // ignore empty entries
             if (newIndex < 0)
                 continue;
-            
+
             bitset.add(newIndex);
             sortedGraph.setNode(newIndex, g.getLatitude(old), g.getLongitude(old));
             EdgeIterator eIter = explorer.setBaseNode(old);
@@ -436,6 +436,18 @@ public class GHUtility
 
         @Override
         public void copyProperties( EdgeIteratorState edge )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public double getWeight()
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public EdgeSkipIterState setWeight( double weight )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }

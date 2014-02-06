@@ -19,13 +19,14 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.ShortestWeighting;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.util.EdgeSkipExplorer;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeSkipIterState;
@@ -114,5 +115,26 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());
         assertEquals(4, p.calcNodes().size());
         assertEquals(4.2, p.getDistance(), 1e-5);
+    }
+
+    @Override
+    public void testCalcFootPath()
+    {
+        // disable car encoder and move foot to first position => workaround as CH does not allow multiple vehicles
+        FlagEncoder tmpFootEncoder = footEncoder;
+        FlagEncoder tmpCarEncoder = carEncoder;
+        carEncoder = new CarFlagEncoder()
+        {            
+            @Override
+            public long setProperties( int speed, boolean forward, boolean backward )
+            {
+                return 0;
+            }                        
+        };
+        
+        footEncoder = new EncodingManager("FOOT").getSingle();        
+        super.testCalcFootPath();
+        footEncoder = tmpFootEncoder;
+        carEncoder = tmpCarEncoder;
     }
 }

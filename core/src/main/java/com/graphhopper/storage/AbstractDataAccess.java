@@ -118,13 +118,18 @@ public abstract class AbstractDataAccess implements DataAccess
         return bytes;
     }
 
-    @Override
-    public DataAccess copyTo( DataAccess da )
+    protected void copyHeader( DataAccess da )
     {
         for (int h = 0; h < header.length * 4; h += 4)
         {
             da.setHeader(h, getHeader(h));
         }
+    }
+
+    @Override
+    public DataAccess copyTo( DataAccess da )
+    {
+        copyHeader(da);
         da.incCapacity(getCapacity());
         long cap = getCapacity();
         // currently get/setBytes does not support copying more bytes then segmentSize

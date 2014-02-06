@@ -63,6 +63,7 @@ public class RAMDataAccess extends AbstractDataAccess
     {
         if (da instanceof RAMDataAccess)
         {
+            copyHeader(da);
             RAMDataAccess rda = (RAMDataAccess) da;
             // TODO PERFORMANCE we could reuse rda segments!
             rda.segments = new byte[segments.length][];
