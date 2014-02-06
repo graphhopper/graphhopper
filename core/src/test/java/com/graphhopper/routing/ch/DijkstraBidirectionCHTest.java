@@ -126,7 +126,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         carEncoder = new CarFlagEncoder()
         {            
             @Override
-            public long setProperties( int speed, boolean forward, boolean backward )
+            public long setProperties( double speed, boolean forward, boolean backward )
             {
                 return 0;
             }                        
