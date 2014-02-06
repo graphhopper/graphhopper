@@ -648,6 +648,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     if (sc.weight >= prepareWeighting.calcWeight(iter))
                         continue NEXT_SC;
 
+                    // note: flags overwrite weight => call them first
                     iter.setFlags(sc.flags);
                     iter.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
                     iter.setDistance(sc.dist);
@@ -659,9 +660,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             if (!updatedInGraph)
-            {
-                // System.out.println("NEW " + sc);
+            {                
                 EdgeSkipIterState edgeState = g.shortcut(sc.from, sc.to);
+                // note: flags overwrite weight => call them first
                 edgeState.setFlags(sc.flags);
                 edgeState.setWeight(sc.weight);
                 edgeState.setDistance(sc.dist);

@@ -1,7 +1,10 @@
 0.3.0
+    GraphHopper.setMemory(true, true/false) was refactored to GraphHopper.setMemory(true/false), use mmap config via GraphHopper.setMemoryMapped()
+    incompatible edges => you need to re-import data and/or update the edges file
     the instructions of the web response does not contain times (string) but instead millis (long)
     PrepareContractionHierarchies.setPeriodicUpdates is now in percentage not in absolute counts
-    gpx export via API or HTTP (route?type=gpx)
+    improved bike routing #132, #138, #139, #150
+    gpx export via API, HTTP (route?type=gpx) and web interface is possible: #113, #136, #141
     breaking: The web response, Path.time and GHResponse.time change to milliseconds and 'long' (instead of seconds and double)
 
 0.2.0

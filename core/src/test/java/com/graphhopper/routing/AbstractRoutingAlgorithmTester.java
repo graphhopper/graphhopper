@@ -18,10 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.LocationIndexTreeSC;
@@ -538,7 +535,7 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         Graph graph = createGraph();
         initDirectedAndDiffSpeed(graph);
-        Path p = calcPathViaQuery("fastest", graph, 0.002, 0.0005, 0.0017, 0.0031);        
+        Path p = calcPathViaQuery("fastest", graph, 0.002, 0.0005, 0.0017, 0.0031);
         assertEquals(Helper.createTList(9, 1, 5, 3, 8), p.calcNodes());
         assertEquals(602.98, p.getDistance(), 1e-1);
     }
@@ -595,6 +592,77 @@ public abstract class AbstractRoutingAlgorithmTester
         res.setSnappedPosition(QueryResult.Position.EDGE);
         res.calcSnappedPoint(distCalc);
         return res;
+    }
+
+    @Test
+    public void testTwoWeightsPerEdge()
+    {
+
+        // other direction should be different!
+        Graph graph = createEleGraph();
+        Path p = prepareGraph(graph, carEncoder, new ShortestWeighting()).createAlgo().calcPath(0, 10);
+        // GHUtility.printEdgeInfo(graph, carEncoder);
+        assertEquals(Helper.createTList(0, 4, 6, 10), p.calcNodes());
+        Weighting fakeWeighting = new Weighting()
+        {
+            @Override
+            public double getMinWeight( double distance )
+            {
+                return distance;
+            }
+
+            @Override
+            public double calcWeight( EdgeIteratorState edge )
+            {
+                // a 'hill' at node 6
+                if (edge.getAdjNode() == 6)
+                    return 3 * edge.getDistance();
+                else if (edge.getBaseNode() == 6)
+                    return edge.getDistance() * 0.7;
+                else if (edge.getAdjNode() == 4)
+                    return 2 * edge.getDistance();
+                else if (edge.getBaseNode() == 4)
+                    return edge.getDistance() * 0.8;
+                else
+                    return edge.getDistance();
+            }
+        };
+        graph = createEleGraph();
+        p = prepareGraph(graph, carEncoder, fakeWeighting).createAlgo().calcPath(0, 10);        
+        // GHUtility.printEdgeInfo(graph, carEncoder);        
+        assertEquals(Helper.createTList(0, 1, 2, 11, 7, 10), p.calcNodes());
+    }
+
+    // 0-1-2
+    // |\| |
+    // 3 4-11
+    // | | |
+    // 5-6-7
+    // | |\|
+    // 8-9-10
+    Graph createEleGraph()
+    {
+        Graph g = createGraph();
+        g.edge(0, 1, 10, true);
+        g.edge(0, 4, 12, true);
+        g.edge(0, 3, 5, true);
+        g.edge(1, 2, 10, true);
+        g.edge(1, 4, 5, true);
+        g.edge(3, 5, 5, false);
+        g.edge(5, 6, 10, true);
+        g.edge(5, 8, 10, true);
+        g.edge(6, 4, 5, true);
+        g.edge(6, 7, 10, true);
+        g.edge(6, 10, 12, true);
+        g.edge(6, 9, 12, true);
+        g.edge(2, 11, 5, false);
+        g.edge(4, 11, 10, true);
+        g.edge(7, 11, 5, true);
+        g.edge(7, 10, 5, true);
+        g.edge(8, 9, 10, false);
+        g.edge(9, 8, 9, false);
+        g.edge(10, 9, 10, false);
+        return g;
     }
 
     public Graph getMatrixGraph()

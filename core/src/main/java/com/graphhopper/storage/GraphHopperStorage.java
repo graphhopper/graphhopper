@@ -52,18 +52,21 @@ public class GraphHopperStorage implements GraphStorage
     // distance of around +-1000 000 meter are ok
     private static final double INT_DIST_FACTOR = 1000f;
     private final Directory dir;
-    // edge memory layout: nodeA,nodeB,linkA,linkB,dist,flags,geometryRef,streetNameRef
+    // edge memory layout:
     protected final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS, E_GEO, E_NAME, E_ADDITIONAL;
+    /**
+     * Specifies how many entries (integers) are used per edge.
+     */
     protected int edgeEntryBytes;
     protected DataAccess edges;
     /**
-     * Specified how many entries (integers) are used per edge. interval [0,n)
+     * interval [0,n)
      */
     protected int edgeCount = 0;
-    // node memory layout: edgeRef,lat,lon
+    // node memory layout:
     protected final int N_EDGE_REF, N_LAT, N_LON, N_ADDITIONAL;
     /**
-     * specified how many entries (integers) are used per node
+     * Specifies how many entries (integers) are used per node
      */
     protected int nodeEntryBytes;
     protected DataAccess nodes;
@@ -76,7 +79,7 @@ public class GraphHopperStorage implements GraphStorage
     private GHBitSet removedNodes;
     private int edgeEntryIndex = -4, nodeEntryIndex = -4;
     // length | nodeA | nextNode | ... | nodeB
-    // as we use integer index in 'egdes' area => 'geometry' area is limited to 2GB
+    // as we use integer index in 'egdes' area => 'geometry' area is limited to 2GB (currently ~311M for world wide)
     private final DataAccess wayGeometry;
     // 0 stands for no separate geoRef
     private int maxGeoRef = 4;
@@ -1072,15 +1075,15 @@ public class GraphHopperStorage implements GraphStorage
     Graph _copyTo( GraphHopperStorage clonedG )
     {
         if (clonedG.edgeEntryBytes != edgeEntryBytes)
-            throw new IllegalStateException("edgeEntrySize cannot be different for cloned graph");        
+            throw new IllegalStateException("edgeEntrySize cannot be different for cloned graph");
 
         if (clonedG.nodeEntryBytes != nodeEntryBytes)
-            throw new IllegalStateException("nodeEntrySize cannot be different for cloned graph");        
+            throw new IllegalStateException("nodeEntrySize cannot be different for cloned graph");
 
         // nodes
         setNodesHeader();
         nodes.copyTo(clonedG.nodes);
-        clonedG.loadNodesHeader();        
+        clonedG.loadNodesHeader();
 
         // edges
         setEdgesHeader();

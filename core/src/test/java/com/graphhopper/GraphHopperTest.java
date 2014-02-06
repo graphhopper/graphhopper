@@ -55,7 +55,7 @@ public class GraphHopperTest
     @Test
     public void testLoadOSM()
     {
-        instance = new GraphHopper().setInMemory(true, true).
+        instance = new GraphHopper().setInMemory(true).
                 setEncodingManager(new EncodingManager("CAR")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
@@ -65,7 +65,7 @@ public class GraphHopperTest
         assertEquals(3, ph.getPoints().getSize());
 
         instance.close();
-        instance = new GraphHopper().setInMemory(true, true);
+        instance = new GraphHopper().setInMemory(true);
         assertTrue(instance.load(ghLoc));
         ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertTrue(ph.isFound());
@@ -75,7 +75,7 @@ public class GraphHopperTest
     @Test
     public void testPrepare()
     {
-        instance = new GraphHopper().setInMemory(true, false).
+        instance = new GraphHopper().setInMemory(false).
                 setEncodingManager(new EncodingManager("CAR")).
                 setCHShortcuts("shortest").
                 setGraphHopperLocation(ghLoc).
@@ -90,7 +90,7 @@ public class GraphHopperTest
     @Test
     public void testSortedGraph_noCH()
     {
-        instance = new GraphHopper().setInMemory(true, false).
+        instance = new GraphHopper().setInMemory(false).
                 setSortGraph(true).
                 setEncodingManager(new EncodingManager("CAR")).
                 disableCHShortcuts().
@@ -109,7 +109,7 @@ public class GraphHopperTest
     public void testFootAndCar()
     {
         // now all ways are imported
-        instance = new GraphHopper().setInMemory(true, false).
+        instance = new GraphHopper().setInMemory(false).
                 setEncodingManager(new EncodingManager("CAR,FOOT")).
                 disableCHShortcuts().
                 setGraphHopperLocation(ghLoc).
@@ -189,7 +189,7 @@ public class GraphHopperTest
     public void testNoNPE_ifOnlyLoad()
     {
         // missing import of graph
-        instance = new GraphHopper().setInMemory(true, true);
+        instance = new GraphHopper().setInMemory(true);
         try
         {
             assertFalse(instance.load(ghLoc));
@@ -227,7 +227,7 @@ public class GraphHopperTest
         }
 
         // missing encoding manager
-        instance = new GraphHopper().setInMemory(true, true).
+        instance = new GraphHopper().setInMemory(true).
                 setGraphHopperLocation(ghLoc);
         try
         {
@@ -243,7 +243,7 @@ public class GraphHopperTest
     public void testFootOnly()
     {
         // now only footable ways are imported => no A D C and B D E => the other both ways have pillar nodes!
-        instance = new GraphHopper().setInMemory(true, false).
+        instance = new GraphHopper().setInMemory(false).
                 setEncodingManager(new EncodingManager("FOOT")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
@@ -261,7 +261,7 @@ public class GraphHopperTest
     @Test
     public void testPrepareOnly()
     {
-        instance = new GraphHopper().setInMemory(true, true).
+        instance = new GraphHopper().setInMemory(true).
                 setCHShortcuts("shortest").
                 setEncodingManager(new EncodingManager("FOOT")).
                 setDoPrepare(false).
@@ -270,7 +270,7 @@ public class GraphHopperTest
         instance.importOrLoad();
         instance.close();
 
-        instance = new GraphHopper().setInMemory(true, true).
+        instance = new GraphHopper().setInMemory(true).
                 setCHShortcuts("shortest").
                 setGraphHopperLocation(ghLoc).setOSMFile(testOsm3);
 
@@ -286,7 +286,7 @@ public class GraphHopperTest
         }
 
         // use the encoding manager from the graph
-        instance = new GraphHopper().setInMemory(true, true).
+        instance = new GraphHopper().setInMemory(true).
                 setCHShortcuts("shortest").
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);

@@ -141,7 +141,6 @@ public class PrepareContractionHierarchiesTest
         int old = GHUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
         prepare.doWork();
-        // PrepareTowerNodesShortcutsTest.printEdges(g);
         assertEquals(old + 2, GHUtility.count(g.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(4, 2);

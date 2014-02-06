@@ -292,7 +292,7 @@ public class RoutingAlgorithmIT
         try
         {
             Helper.removeDir(new File(graphFile));
-            GraphHopper hopper = new GraphHopper().setInMemory(true, true).setOSMFile(osmFile).
+            GraphHopper hopper = new GraphHopper().setInMemory(true).setOSMFile(osmFile).
                     disableCHShortcuts().
                     setGraphHopperLocation(graphFile).setEncodingManager(new EncodingManager(importVehicles)).
                     importOrLoad();
@@ -379,7 +379,7 @@ public class RoutingAlgorithmIT
         String graphFile = "target/graph-monaco";
         Helper.removeDir(new File(graphFile));
         final EncodingManager encodingManager = new EncodingManager("CAR");
-        GraphHopper hopper = new GraphHopper().setInMemory(true, true).setEncodingManager(encodingManager).
+        GraphHopper hopper = new GraphHopper().setInMemory(true).setEncodingManager(encodingManager).
                 disableCHShortcuts().
                 setOSMFile("files/monaco.osm.gz").setGraphHopperLocation(graphFile).
                 importOrLoad();

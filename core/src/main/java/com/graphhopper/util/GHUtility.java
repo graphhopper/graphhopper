@@ -19,8 +19,11 @@ package com.graphhopper.util;
 
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.AllEdgesSkipIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
@@ -110,6 +113,24 @@ public class GHUtility
             list.add(iter.getAdjNode());
         }
         return list;
+    }
+
+    public static void printEdgeInfo( final Graph g, FlagEncoder encoder )
+    {
+        System.out.println("-- Graph n:" + g.getNodes() + " e:" + g.getAllEdges().getMaxId() + " ---");
+        AllEdgesIterator iter = g.getAllEdges();
+        while (iter.next())
+        {
+            String sc = "";
+            if (iter instanceof AllEdgesSkipIterator)
+            {
+                AllEdgesSkipIterator aeSkip = (AllEdgesSkipIterator) iter;
+                sc = aeSkip.isShortcut() ? "sc" : "  ";
+            }
+            String fwdStr = encoder.isForward(iter.getFlags()) ? "fwd" : "   ";
+            String bckStr = encoder.isBackward(iter.getFlags()) ? "bckwd" : "";
+            System.out.println(sc + " " + iter + " " + fwdStr + " " + bckStr);
+        }
     }
 
     public static void printInfo( final Graph g, int startNode, final int counts, final EdgeFilter filter )

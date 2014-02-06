@@ -101,6 +101,10 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
+    /**
+     * Specify which vehicles can be read by this GraphHopper instance. An encoding manager defines
+     * how data from every vehicle is written (und read) into edges of the graph.
+     */
     public GraphHopper setEncodingManager( EncodingManager acceptWay )
     {
         ensureNotLoaded();
@@ -113,21 +117,32 @@ public class GraphHopper implements GraphHopperAPI
         return encodingManager;
     }
 
+    /**
+     * Configures the underlying storage to be used on a well equipped server.
+     */
     public GraphHopper forServer()
     {
         // simplify to reduce network IO
         setSimplifyRequest(true);
         setPreciseIndexResolution(500);
-        return setInMemory(true, true);
+        return setInMemory(true);
     }
 
+    /**
+     * Configures the underlying storage to be used on a Desktop computer with enough RAM but no
+     * network latency.
+     */
     public GraphHopper forDesktop()
     {
         setSimplifyRequest(false);
         setPreciseIndexResolution(500);
-        return setInMemory(true, true);
+        return setInMemory(true);
     }
 
+    /**
+     * Configures the underlying storage to be used on a less powerful machine like Android and
+     * Raspberry Pi with only few RAM.
+     */
     public GraphHopper forMobile()
     {
         setSimplifyRequest(false);
@@ -147,22 +162,25 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
-    public GraphHopper setInMemory( boolean inMemory, boolean storeOnFlush )
+    /**
+     * This method call results in an in-memory graph. Specify storeOnFlush to true if you want that
+     * existing data will be loaded FROM disc and all in-memory data will be flushed TO disc after
+     * flush is called e.g. while OSM import.
+     */
+    public GraphHopper setInMemory( boolean storeOnFlush )
     {
         ensureNotLoaded();
-        if (inMemory)
-        {
-            if (storeOnFlush)
-                dataAccessType = DAType.RAM_STORE;
-            else
-                dataAccessType = DAType.RAM;
-        } else
-        {
-            setMemoryMapped();
-        }
+        if (storeOnFlush)
+            dataAccessType = DAType.RAM_STORE;
+        else
+            dataAccessType = DAType.RAM;
+
         return this;
     }
 
+    /**
+     * Enable memory mapped configuration if not enough memory is available on the target platform.
+     */
     public GraphHopper setMemoryMapped()
     {
         ensureNotLoaded();
@@ -170,7 +188,9 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
-    // not yet stable enough to offer it for everyone
+    /**
+     * Not yet stable enough to offer it for everyone
+     */
     private GraphHopper setUnsafeMemory()
     {
         ensureNotLoaded();
@@ -178,6 +198,9 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
+    /**
+     * Disables "CH-preparation". Use only if you know what you do.
+     */
     public GraphHopper setDoPrepare( boolean doPrepare )
     {
         this.doPrepare = doPrepare;
@@ -185,7 +208,7 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Enables the use of contraction hierarchies to reduce query times.
+     * Enables the use of contraction hierarchies to reduce query times. Enabled by default.
      * <p/>
      * @param weighting can be "fastest", "shortest" or your own weight-calculation type.
      * @see #disableCHShortcuts()
@@ -303,6 +326,11 @@ public class GraphHopper implements GraphHopperAPI
         return osmFile;
     }
 
+    /**
+     * The underlying graph used in algorithms.
+     * <p>
+     * @throws IllegalStateException if graph is not instantiated.
+     */
     public Graph getGraph()
     {
         if (graph == null)
@@ -316,6 +344,11 @@ public class GraphHopper implements GraphHopperAPI
         this.graph = graph;
     }
 
+    /**
+     * The location index created from the graph.
+     * <p>
+     * @throws IllegalStateException if index is not initialized
+     */
     public LocationIndex getLocationIndex()
     {
         if (locationIndex == null)
@@ -330,7 +363,7 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Sorts the graph which requires more RAM while import.
+     * Sorts the graph which requires more RAM while import. See #12
      */
     public GraphHopper setSortGraph( boolean sortGraph )
     {
@@ -353,6 +386,11 @@ public class GraphHopper implements GraphHopperAPI
         return args;
     }
 
+    /**
+     * Reads configuration from a CmdArgs object. Which can be manually filled, or via main(String[]
+     * args) ala CmdArgs.read(args) or via configuration file ala
+     * CmdArgs.readFromConfig("config.properties", "graphhopper.config")
+     */
     public GraphHopper init( CmdArgs args ) throws IOException
     {
         args = mergeArgsFromConfig(args);
@@ -386,9 +424,9 @@ public class GraphHopper implements GraphHopperAPI
                 throw new IllegalStateException("configuration names for dataAccess changed. Use eg. RAM or RAM_STORE");
 
             if (dataAccess.contains("RAM_STORE"))
-                setInMemory(true, true);
+                setInMemory(true);
             else
-                setInMemory(true, false);
+                setInMemory(false);
         }
 
         if (dataAccess.contains("SYNC"))
@@ -431,6 +469,11 @@ public class GraphHopper implements GraphHopperAPI
         logger.info("graph " + graph.toString() + ", details:" + graph.toDetailsString());
     }
 
+    /**
+     * Imports provided data from disc and creates graph. Depending on the settings the resulting
+     * graph will be stored to disc so on a second call this method will only load the graph from
+     * disc which is usually a lot faster.
+     */
     public GraphHopper importOrLoad()
     {
         if (!load(ghLocation))
@@ -558,8 +601,9 @@ public class GraphHopper implements GraphHopperAPI
             prepare();
         initLocationIndex();
     }
-    
-    private boolean isPrepared() {
+
+    private boolean isPrepared()
+    {
         return "true".equals(graph.getProperties().get("prepare.done"));
     }
 
@@ -730,9 +774,9 @@ public class GraphHopper implements GraphHopperAPI
         // Or: Doing it after preparation to optimize shortcuts too. But not possible yet https://github.com/graphhopper/graphhopper/issues/12
         if (sortGraph)
         {
-            if(graph instanceof LevelGraph && isPrepared())
+            if (graph instanceof LevelGraph && isPrepared())
                 throw new IllegalArgumentException("Sorting prepared LevelGraph is not possible yet. See #12");
-            
+
             logger.info("sorting ... (" + Helper.getMemInfo() + ")");
             GraphStorage newGraph = GHUtility.newStorage(graph);
             GHUtility.sortDFS(graph, newGraph);
@@ -776,6 +820,9 @@ public class GraphHopper implements GraphHopperAPI
         fullyLoaded = true;
     }
 
+    /**
+     * Releases all associated resources like memory or files.
+     */
     public void close()
     {
         if (graph != null)

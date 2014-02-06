@@ -34,7 +34,8 @@ public interface Weighting
     double getMinWeight( double distance );
 
     /**
-     * @return the calculated weight with the specified velocity
+     * @return the calculated weight with the specified velocity has to be in the range of 0 and
+     * +Infinity
      */
     double calcWeight( EdgeIteratorState edge );
 }
