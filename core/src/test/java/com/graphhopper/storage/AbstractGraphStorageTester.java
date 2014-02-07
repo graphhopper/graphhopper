@@ -23,7 +23,9 @@ import static com.graphhopper.util.GHUtility.*;
 import com.graphhopper.util.shapes.BBox;
 import java.io.Closeable;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Before;
@@ -974,5 +976,45 @@ public abstract class AbstractGraphStorageTester
 
         assertEquals("named street1", graph.getEdgeProps(iter1.getEdge(), iter1.getAdjNode()).getName());
         assertEquals("named street2", graph.getEdgeProps(iter2.getEdge(), iter2.getAdjNode()).getName());
+    }
+
+    @Test
+    public void test8BytesFlags()
+    {
+        Directory dir = new RAMDirectory();
+        List<FlagEncoder> list = new ArrayList<FlagEncoder>();
+        list.add(new TmpCarFlagEncoder(30, 0.001));
+        list.add(new TmpCarFlagEncoder(30, 0.001));
+        EncodingManager manager = new EncodingManager(list, 8, 0);
+        graph = new GraphHopperStorage(dir, manager).create(defaultSize);
+        EdgeIteratorState edge = graph.edge(0, 1);
+        edge.setFlags(Long.MAX_VALUE / 3);
+        // System.out.println(BitUtil.LITTLE.toBitString(Long.MAX_VALUE / 3) + "\n" + BitUtil.LITTLE.toBitString(edge.getFlags()));
+        assertEquals(Long.MAX_VALUE / 3, edge.getFlags());
+        graph.close();
+
+        graph = new GraphHopperStorage(dir, manager).create(defaultSize);
+        edge = graph.edge(0, 1);
+        edge.setFlags(list.get(0).setProperties(99.123, true, true));
+        assertEquals(99.123, list.get(0).getSpeed(edge.getFlags()), 1e-3);
+        long flags = GHUtility.getEdge(graph, 1, 0).getFlags();
+        assertEquals(99.123, list.get(0).getSpeed(flags), 1e-3);
+        assertTrue(list.get(0).isForward(flags));
+        assertTrue(list.get(0).isBackward(flags));
+        edge = graph.edge(2, 3);
+        edge.setFlags(list.get(1).setProperties(44.123, true, false));
+        assertEquals(44.123, list.get(1).getSpeed(edge.getFlags()), 1e-3);
+        flags = GHUtility.getEdge(graph, 3, 2).getFlags();
+        assertEquals(44.123, list.get(1).getSpeed(flags), 1e-3);
+        assertTrue(list.get(1).isForward(flags));
+        assertFalse(list.get(1).isBackward(flags));
+    }
+
+    static class TmpCarFlagEncoder extends CarFlagEncoder
+    {
+        public TmpCarFlagEncoder( int speedBits, double speedFactor )
+        {
+            super(speedBits, speedFactor);
+        }
     }
 }

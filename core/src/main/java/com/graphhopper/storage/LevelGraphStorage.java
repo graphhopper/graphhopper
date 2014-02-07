@@ -39,20 +39,26 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
     // 2 bits for access, for now only 32bit => not Long.MAX
     private static final long MAX_WEIGHT_LONG = (Integer.MAX_VALUE >> 2) << 2;
     private static final double MAX_WEIGHT = (Integer.MAX_VALUE >> 2) / WEIGHT_FACTOR;
-    private final int I_SKIP_EDGE1;
-    private final int I_SKIP_EDGE2;
-    private final int I_LEVEL;
+    private int I_SKIP_EDGE1;
+    private int I_SKIP_EDGE2;
+    private int I_LEVEL;
+    // after the last edge only shortcuts are stored
     private int lastEdgeIndex;
 
     public LevelGraphStorage( Directory dir, EncodingManager encodingManager )
     {
-        super(dir, encodingManager);
-        I_SKIP_EDGE1 = nextEdgeEntryIndex();
-        I_SKIP_EDGE2 = nextEdgeEntryIndex();
-        I_LEVEL = nextNodeEntryIndex();
-        initNodeAndEdgeEntrySize();
+        super(dir, encodingManager);        
     }
 
+    @Override
+    protected void initStorage() {
+        super.initStorage();
+        I_SKIP_EDGE1 = nextEdgeEntryIndex(4);
+        I_SKIP_EDGE2 = nextEdgeEntryIndex(4);
+        I_LEVEL = nextNodeEntryIndex(4);
+        initNodeAndEdgeEntrySize();
+    }
+    
     @Override
     public final void setLevel( int index, int level )
     {

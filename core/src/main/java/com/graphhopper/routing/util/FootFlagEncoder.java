@@ -45,7 +45,12 @@ public class FootFlagEncoder extends AbstractFlagEncoder
      */
     protected FootFlagEncoder()
     {
-        super(4, 1);
+        this(4, 1);
+    }
+
+    protected FootFlagEncoder( int speedBits, double speedFactor )
+    {
+        super(speedBits, speedFactor);
         restrictions = new String[]
         {
             "foot", "access"
@@ -107,7 +112,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         safeWayBit = 1 << shift++;
         return shift;
     }
-    
+
     /**
      * Foot flag encoder does not provide any turn cost / restrictions
      */
@@ -116,10 +121,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     {
         return shift;
     }
-    
+
     /**
      * Foot flag encoder does not provide any turn cost / restrictions
-     * 
+     * <p>
      * @return <code>false</code>
      */
     @Override
@@ -127,18 +132,17 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     {
         return false;
     }
-    
+
     /**
      * Foot flag encoder does not provide any turn cost / restrictions
-     * 
+     * <p>
      * @return 0
-     */    
+     */
     @Override
     public int getTurnCosts( long flag )
     {
         return 0;
     }
-    
 
     @Override
     public String toString()

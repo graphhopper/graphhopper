@@ -225,8 +225,8 @@ public class InstructionListTest
         assertEquals(34000, p.getDistance(), 1e-1);
         assertEquals(34000, sum(wayList.createDistances()), 1e-1);
         assertEquals(5, gpxList.size());
-        assertEquals(1636428, p.getMillis());
-        assertEquals(2148878, gpxList.get(gpxList.size() - 1).getMillis());
+        assertEquals(1604120, p.getMillis());
+        assertEquals(2097557, gpxList.get(gpxList.size() - 1).getMillis());
 
         assertEquals(Instruction.CONTINUE_ON_STREET, wayList.get(0).getIndication());
         assertEquals(15, wayList.get(0).getFirstLat(), 1e-3);

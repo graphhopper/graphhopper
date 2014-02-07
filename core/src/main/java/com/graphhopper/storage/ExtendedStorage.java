@@ -23,7 +23,6 @@ package com.graphhopper.storage;
  */
 public interface ExtendedStorage
 {
-
     /**
      * @return true, if and only if, if an additional field at the graphs node storage is required
      */

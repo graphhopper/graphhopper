@@ -21,7 +21,6 @@ import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +32,7 @@ import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
+import java.util.*;
 
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders
@@ -57,11 +57,8 @@ public class EncodingManager
         defaultEdgeFlagEncoders.put(BIKE, BikeFlagEncoder.class.getName());
         defaultEdgeFlagEncoders.put(RACINGBIKE, RacingBikeFlagEncoder.class.getName());
         defaultEdgeFlagEncoders.put(MOUNTAINBIKE, MountainBikeFlagEncoder.class.getName());
-        defaultEdgeFlagEncoders.put(FOOT, FootFlagEncoder.class.getName());        
+        defaultEdgeFlagEncoders.put(FOOT, FootFlagEncoder.class.getName());
     }
-
-    public static final int MAX_BITS = 32;
-    public static final int MAX_BITS_TURN_FLAGS = 32;
 
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<AbstractFlagEncoder>();
     private int edgeEncoderNextBit = 0;
@@ -70,36 +67,80 @@ public class EncodingManager
     private int nextNodeBit = 0;
     private int nextRelBit = 0;
     private int nextTurnBit = 0;
-    protected int maxTurnCost;
-
-    public EncodingManager()
-    {
-        maxTurnCost = 0; //we don't need turn costs yet, but only restrictions
-    }
+    private final int bytesForFlags;
+    private final int maxTurnFlagsBits;
+    private final int maxTurnCost;
 
     /**
      * Instantiate manager with the given list of encoders. The manager knows the default encoders:
      * CAR, FOOT and BIKE (ignoring the case). Custom encoders can be specified by giving a full
      * class name e.g. "car:com.graphhopper.myproject.MyCarEncoder"
      * <p/>
-     * @param encoderList comma delimited list of encoders. The order does not matter.
+     * @param flagEncodersStr comma delimited list of encoders. The order does not matter.
      */
-    public EncodingManager( String encoderList )
+    public EncodingManager( String flagEncodersStr )
     {
-        this();
+        this(flagEncodersStr, 4);
+    }
+    
+    public EncodingManager( String flagEncodersStr, int bytesForFlags )
+    {
+        this(Arrays.asList(readFromEncoderString(defaultEdgeFlagEncoders, flagEncodersStr).toArray(new FlagEncoder[0])), bytesForFlags, 0);
+    }
 
-        for (AbstractFlagEncoder flagEncoder : readFromEncoderString(defaultEdgeFlagEncoders, encoderList, AbstractFlagEncoder.class))
+    /**
+     * Instantiate manager with the given list of encoders.
+     * <p/>
+     * @param flagEncoders comma delimited list of encoders. The order does not matter.
+     */
+    public EncodingManager( FlagEncoder... flagEncoders )
+    {
+        this(Arrays.asList(flagEncoders));
+    }
+
+    /**
+     * Instantiate manager with the given list of encoders.
+     * <p/>
+     * @param flagEncoders comma delimited list of encoders. The order does not matter.
+     */
+    public EncodingManager( List<? extends FlagEncoder> flagEncoders )
+    {
+        // we don't need turn costs yet, but only restrictions => maxTurnCost = 0
+        this(flagEncoders, 4, 0);
+    }
+
+    public EncodingManager( List<? extends FlagEncoder> flagEncoders, int bytesForFlags, int maxTurnCost )
+    {
+        if (bytesForFlags != 4 && bytesForFlags != 8)
+            throw new IllegalStateException("For 'flags' currently only 4 or 8 bytes supported");
+
+        this.maxTurnCost = maxTurnCost;
+        this.bytesForFlags = bytesForFlags * 8;
+        this.maxTurnFlagsBits = bytesForFlags * 8;
+
+        Collections.sort(flagEncoders, new Comparator<FlagEncoder>()
         {
-            registerEncoder(flagEncoder);
+            @Override
+            public int compare( FlagEncoder o1, FlagEncoder o2 )
+            {
+                return o1.getClass().toString().compareTo(o2.getClass().toString());
+            }
+        });
+        for (FlagEncoder flagEncoder : flagEncoders)
+        {
+            registerEncoder((AbstractFlagEncoder) flagEncoder);
         }
     }
 
-    private <T> List<T> readFromEncoderString( Map<String, String> defaultEncoders, String encoderList, Class<T> encoderClass )
+    public int getBytesForFlags()
+    {
+        return bytesForFlags / 8;
+    }
+
+    private static List<FlagEncoder> readFromEncoderString( Map<String, String> defaultEncoders, String encoderList )
     {
         String[] entries = encoderList.split(",");
-        Arrays.sort(entries);
-
-        List<T> resultEncoders = new ArrayList<T>();
+        List<FlagEncoder> resultEncoders = new ArrayList<FlagEncoder>();
 
         for (String entry : entries)
         {
@@ -122,8 +163,8 @@ public class EncodingManager
             try
             {
                 @SuppressWarnings("unchecked")
-                Class<T> cls = (Class<T>) Class.forName(className);
-                resultEncoders.add((T) cls.getDeclaredConstructor().newInstance());
+                Class<FlagEncoder> cls = (Class<FlagEncoder>) Class.forName(className);
+                resultEncoders.add((FlagEncoder) cls.getDeclaredConstructor().newInstance());
             } catch (Exception e)
             {
                 throw new IllegalArgumentException("Cannot instantiate class " + className, e);
@@ -132,34 +173,33 @@ public class EncodingManager
         return resultEncoders;
     }
 
-    public void registerEncoder( AbstractFlagEncoder encoder )
+    private void registerEncoder( AbstractFlagEncoder encoder )
     {
         int encoderCount = edgeEncoders.size();
-
         int usedBits = encoder.defineNodeBits(encoderCount, edgeEncoderNextBit);
-        if (usedBits >= MAX_BITS)
-            throw new IllegalArgumentException("Encoders are requesting more than " + MAX_BITS + " bits of node flags");
+        if (usedBits > bytesForFlags)
+            throw new IllegalArgumentException("Encoders are requesting more than " + bytesForFlags + " bits of node flags");
         encoder.setNodeBitMask(usedBits - nextNodeBit, nextNodeBit);
         nextNodeBit = usedBits;
 
         usedBits = encoder.defineWayBits(encoderCount, nextWayBit);
-        if (usedBits >= MAX_BITS)
-            throw new IllegalArgumentException("Encoders are requesting more than " + MAX_BITS + " bits of way flags");
+        if (usedBits > bytesForFlags)
+            throw new IllegalArgumentException("Encoders are requesting more than " + bytesForFlags + " bits of way flags");
         encoder.setWayBitMask(usedBits - nextWayBit, nextWayBit);
         nextWayBit = usedBits;
 
         usedBits = encoder.defineRelationBits(encoderCount, nextRelBit);
-        if (usedBits >= MAX_BITS)
-            throw new IllegalArgumentException("Encoders are requesting more than " + MAX_BITS + " bits of relation flags");
+        if (usedBits > bytesForFlags)
+            throw new IllegalArgumentException("Encoders are requesting more than " + bytesForFlags + " bits of relation flags");
         encoder.setRelBitMask(usedBits - nextRelBit, nextRelBit);
         nextRelBit = usedBits;
 
         edgeEncoderNextBit = usedBits;
 
-        //turn flag bits are independent from edge encoder bits
+        // turn flag bits are independent from edge encoder bits
         usedBits = encoder.defineTurnBits(encoderCount, nextTurnBit, determineRequiredBits(maxTurnCost));
-        if (usedBits >= MAX_BITS_TURN_FLAGS)
-            throw new IllegalArgumentException("Encoders are requesting more than " + MAX_BITS + " bits of turn flags");
+        if (usedBits > maxTurnFlagsBits)
+            throw new IllegalArgumentException("Encoders are requesting more than " + maxTurnFlagsBits + " bits of turn flags");
         nextTurnBit = usedBits;
 
         //everything okay, add encoder
@@ -260,7 +300,7 @@ public class EncodingManager
         return str.toString();
     }
 
-    public String getEncoderList()
+    public String toDetailsString()
     {
         StringBuilder str = new StringBuilder();
         int encoderCount = edgeEncoders.size();
@@ -282,11 +322,6 @@ public class EncodingManager
         if (getVehicleCount() > 1)
             throw new IllegalStateException("multiple encoders are active. cannot return one:" + toString());
 
-        return getFirst();
-    }
-
-    private FlagEncoder getFirst()
-    {
         if (getVehicleCount() == 0)
             throw new IllegalStateException("no encoder is active!");
 

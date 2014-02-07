@@ -595,12 +595,7 @@ public class OSMReaderTest
                 return speedEncoder.setValue(wayFlags, (int) speed);
             }
         };
-        EncodingManager manager = new EncodingManager()
-        {
-            {
-                super.registerEncoder(encoder);
-            }
-        };
+        EncodingManager manager = new EncodingManager(encoder);        
         GraphStorage graph = buildGraph(dir, manager, false);
         final Map<Integer, Double> latMap = new HashMap<Integer, Double>();
         final Map<Integer, Double> lonMap = new HashMap<Integer, Double>();
