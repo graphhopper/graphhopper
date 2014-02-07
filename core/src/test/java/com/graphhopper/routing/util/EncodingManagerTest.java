@@ -36,6 +36,7 @@ import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.BitUtil;
+import java.util.*;
 
 /**
  *
@@ -55,15 +56,13 @@ public class EncodingManagerTest
         assertNotEquals(car.hashCode(), bike.hashCode());
         assertNotEquals(car.hashCode(), foot.hashCode());
 
-        EncodingManager manager2 = new EncodingManager();
         FootFlagEncoder foot2 = new FootFlagEncoder();
-        manager2.registerEncoder(foot2);
+        EncodingManager manager2 = new EncodingManager(foot2);
         assertNotEquals(foot, foot2);
         assertNotEquals(foot.hashCode(), foot2.hashCode());
 
-        EncodingManager manager3 = new EncodingManager();
         FootFlagEncoder foot3 = new FootFlagEncoder();
-        manager3.registerEncoder(foot3);
+        EncodingManager manager3 = new EncodingManager(foot3);
         assertEquals(foot3, foot2);
         assertEquals(foot3.hashCode(), foot2.hashCode());
     }
@@ -79,14 +78,16 @@ public class EncodingManagerTest
     @Test
     public void testTooManyEncoders()
     {
-        EncodingManager manager = new EncodingManager();
+        List<FlagEncoder> list = new ArrayList<FlagEncoder>();
         for (int i = 0; i < 4; i++)
         {
-            manager.registerEncoder(new FootFlagEncoder());
+            list.add(new FootFlagEncoder());
         }
+        new EncodingManager(list);
+        list.add(new FootFlagEncoder());
         try
         {
-            manager.registerEncoder(new FootFlagEncoder());
+            new EncodingManager(list);
             assertTrue(false);
         } catch (Exception ex)
         {
@@ -103,9 +104,7 @@ public class EncodingManagerTest
         Map<String, String> relMap = new HashMap<String, String>();
         OSMRelation osmRel = new OSMRelation(1, relMap);
 
-        EncodingManager manager = new EncodingManager();
         BikeFlagEncoder defaultBike = new BikeFlagEncoder();
-        manager.registerEncoder(defaultBike);
         BikeFlagEncoder lessRelationCodes = new BikeFlagEncoder()
         {
             @Override
@@ -122,18 +121,20 @@ public class EncodingManagerTest
                     return relationCodeEncoder.setValue(0, 2);
                 return relationCodeEncoder.setValue(0, 0);
             }
-            @Override            
+
+            @Override
             int relationWeightCodeToSpeed( int highwaySpeed, int relationCode )
             {
                 return highwaySpeed;
-            }            
+            }
+
             @Override
             public String toString()
             {
-               return "lessRelationsBits";
+                return "lessRelationsBits";
             }
         };
-        manager.registerEncoder(lessRelationCodes);
+        EncodingManager manager = new EncodingManager(defaultBike, lessRelationCodes);
 
         // relation code is PREFER
         relMap.put("route", "bicycle");
@@ -157,26 +158,23 @@ public class EncodingManagerTest
         Map<String, String> relMap = new HashMap<String, String>();
         OSMRelation osmRel = new OSMRelation(1, relMap);
 
-        EncodingManager manager = new EncodingManager();
-        BikeFlagEncoder bikeencoder = new BikeFlagEncoder();
-        manager.registerEncoder(bikeencoder);
-        MountainBikeFlagEncoder mountainbikeencoder = new MountainBikeFlagEncoder();
-        manager.registerEncoder(mountainbikeencoder);
-        
+        BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
+        MountainBikeFlagEncoder mtbEncoder = new MountainBikeFlagEncoder();
+        EncodingManager manager = new EncodingManager(bikeEncoder, mtbEncoder);
 
         // relation code for network rcn is VERY_NICE for bike and PREFER for mountainbike
         relMap.put("route", "bicycle");
         relMap.put("network", "rcn");
         long relFlags = manager.handleRelationTags(osmRel, 0);
-        long allow = bikeencoder.acceptBit | mountainbikeencoder.acceptBit;
+        long allow = bikeEncoder.acceptBit | mtbEncoder.acceptBit;
         long flags = manager.handleWayTags(osmWay, allow, relFlags);
 
         //Uninfluenced speed for grade1 bikeencoder = 4 (pushing section) -> smaller than 15 -> VERYNICE -> 22
-        assertEquals(22, bikeencoder.getSpeed(flags), 1e-1);
+        assertEquals(22, bikeEncoder.getSpeed(flags), 1e-1);
         //Uninfluenced speed for grade1 bikeencoder = 12 -> smaller than 15 -> PREFER -> 18
-        assertEquals(18, mountainbikeencoder.getSpeed(flags), 1e-1);
+        assertEquals(18, mtbEncoder.getSpeed(flags), 1e-1);
     }
-    
+
     public void testFullBitMask()
     {
         BitUtil bitUtil = BitUtil.LITTLE;
@@ -191,9 +189,7 @@ public class EncodingManagerTest
     @Test
     public void testApplyNodeTags()
     {
-        EncodingManager manager = new EncodingManager();
         CarFlagEncoder car = new CarFlagEncoder();
-        manager.registerEncoder(car);
         CarFlagEncoder car2 = new CarFlagEncoder(7, 1)
         {
             protected EncodedValue nodeEncoder;
@@ -224,7 +220,7 @@ public class EncodingManagerTest
                 return speedEncoder.setValue(wayFlags, speed - speedDecrease);
             }
         };
-        manager.registerEncoder(car2);
+        EncodingManager manager = new EncodingManager(car, car2);
 
         Map<String, String> nodeMap = new HashMap<String, String>();
         OSMNode node = new OSMNode(1, nodeMap, Double.NaN, Double.NaN);
@@ -264,50 +260,48 @@ public class EncodingManagerTest
         final TurnCostTableEntry turnCostEntry_foot = new TurnCostTableEntry();
         final TurnCostTableEntry turnCostEntry_bike = new TurnCostTableEntry();
 
-        EncodingManager manager = new EncodingManager();
         CarFlagEncoder car = new CarFlagEncoder()
         {
+            @Override
             public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
             {
                 return Collections.singleton(turnCostEntry_car); //simulate by returning one turn cost entry directly
-            };
+            }
         };
         FootFlagEncoder foot = new FootFlagEncoder()
         {
+            @Override
             public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
             {
                 return Collections.singleton(turnCostEntry_foot); //simulate by returning one turn cost entry directly
-            };
+            }
         };
         BikeFlagEncoder bike = new BikeFlagEncoder()
         {
+            @Override
             public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
             {
                 return Collections.singleton(turnCostEntry_bike); //simulate by returning one turn cost entry directly
-            };
+            }
         };
 
-        manager.maxTurnCost = 127; //allow turn costs
+        EncodingManager manager = new EncodingManager(Arrays.asList(bike, foot, car), 4, 127);        
 
-        manager.registerEncoder(bike);
-        manager.registerEncoder(foot);
-        manager.registerEncoder(car);
-
-        //turn cost entries for car and foot are for the same relations (same viaNode, edgeFrom and edgeTo), turn cost entry for bike is for another relation (different viaNode) 
+        // turn cost entries for car and foot are for the same relations (same viaNode, edgeFrom and edgeTo), turn cost entry for bike is for another relation (different viaNode) 
         turnCostEntry_car.edgeFrom = 1;
         turnCostEntry_foot.edgeFrom = 1;
         turnCostEntry_bike.edgeFrom = 2;
 
-        //calculating arbitrary flags using the encoders
+        // calculating arbitrary flags using the encoders
         turnCostEntry_car.flags = car.getTurnFlags(true, 20);
         turnCostEntry_foot.flags = foot.getTurnFlags(true, 0);
         turnCostEntry_bike.flags = bike.getTurnFlags(false, 10);
 
-        //we expect two different entries: the first one is a combination of turn flags of car and foot, since they provide the same relation, the other one is for bike only
+        // we expect two different entries: the first one is a combination of turn flags of car and foot, since they provide the same relation, the other one is for bike only
         long assertFlag1 = turnCostEntry_car.flags | turnCostEntry_foot.flags;
         long assertFlag2 = turnCostEntry_bike.flags;
 
-        //RUN: analyze = combine flags of all encoders
+        // RUN: analyze = combine flags of all encoders
         Collection<TurnCostTableEntry> entries = manager.analyzeTurnRelation(null, null);
 
         assertEquals(2, entries.size()); //we expect two different turnCost entries
@@ -315,7 +309,8 @@ public class EncodingManagerTest
         for (TurnCostTableEntry entry : entries)
         {
             if (entry.edgeFrom == 1)
-            { //the first entry provides turn flags for car and foot only 
+            { 
+                // the first entry provides turn flags for car and foot only 
                 assertEquals(assertFlag1, entry.flags);
                 assertTrue(car.isTurnRestricted(entry.flags));
                 assertFalse(foot.isTurnRestricted(entry.flags));
@@ -325,7 +320,8 @@ public class EncodingManagerTest
                 assertEquals(0, foot.getTurnCosts(entry.flags));
                 assertEquals(0, bike.getTurnCosts(entry.flags));
             } else if (entry.edgeFrom == 2)
-            { //the 2nd entry provides turn flags for bike only
+            { 
+                // the 2nd entry provides turn flags for bike only
                 assertEquals(assertFlag2, entry.flags);
                 assertFalse(car.isTurnRestricted(entry.flags));
                 assertFalse(foot.isTurnRestricted(entry.flags));

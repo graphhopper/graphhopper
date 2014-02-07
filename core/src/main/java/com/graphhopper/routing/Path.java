@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
@@ -51,11 +52,13 @@ public class Path
     private PointList cachedPoints;
     private InstructionList cachedWays;
     private double weight;
+    private NodeAccess nodeAccess;
 
     public Path( Graph graph, FlagEncoder encoder )
     {
         this.weight = Double.MAX_VALUE;
         this.graph = graph;
+        this.nodeAccess = graph.getNodeAccess();
         this.encoder = encoder;
         this.edgeIds = new TIntArrayList();
     }
@@ -287,12 +290,12 @@ public class Path
         if (cachedPoints != null)
             return cachedPoints;
 
-        cachedPoints = new PointList(edgeIds.size() + 1);
+        cachedPoints = new PointList(edgeIds.size() + 1, nodeAccess.is3D());
         if (edgeIds.isEmpty())
             return cachedPoints;
 
-        int tmpNode = getFromNode();
-        cachedPoints.add(graph.getLatitude(tmpNode), graph.getLongitude(tmpNode));
+        int tmpNode = getFromNode();        
+        cachedPoints.add(nodeAccess, tmpNode);
         forEveryEdge(new EdgeVisitor()
         {
             @Override
@@ -302,7 +305,7 @@ public class Path
                 pl.reverse();
                 for (int j = 0; j < pl.getSize(); j++)
                 {
-                    cachedPoints.add(pl.getLatitude(j), pl.getLongitude(j));
+                    cachedPoints.add(pl, j);
                 }
             }
         });
@@ -320,8 +323,8 @@ public class Path
         cachedWays = new InstructionList(edgeIds.size() / 4);
         if (edgeIds.isEmpty())
             return cachedWays;
-
-        final int tmpNode = getFromNode();
+        
+        final int tmpNode = getFromNode();        
         forEveryEdge(new EdgeVisitor()
         {
             /*
@@ -344,8 +347,8 @@ public class Path
              * considering orientation belonging to the interval
              * [ - pi + previousOrientation , + pi + previousOrientation ]
              */
-            private double prevLat = graph.getLatitude(tmpNode);
-            private double prevLon = graph.getLongitude(tmpNode);
+            private double prevLat = nodeAccess.getLatitude(tmpNode);
+            private double prevLon = nodeAccess.getLongitude(tmpNode);
             private double prevOrientation;
             private Instruction prevInstruction;
             private PointList points = new PointList();
@@ -358,9 +361,9 @@ public class Path
             {
                 // Hmmh, a bit ugly: the 'edge' points to the previous node of the path!
                 // Ie. baseNode is the current node and adjNode is the previous.
-                int baseNode = edge.getBaseNode();
-                double baseLat = graph.getLatitude(baseNode);
-                double baseLon = graph.getLongitude(baseNode);
+                int baseNode = edge.getBaseNode();                
+                double baseLat = nodeAccess.getLatitude(baseNode);
+                double baseLon = nodeAccess.getLongitude(baseNode);
                 double latitude, longitude;
                 PointList wayGeo = edge.fetchWayGeometry(3);
                 if (wayGeo.getSize() <= 2)
@@ -370,8 +373,8 @@ public class Path
                 } else
                 {
                     int adjNode = edge.getAdjNode();
-                    prevLat = graph.getLatitude(adjNode);
-                    prevLon = graph.getLongitude(adjNode);
+                    prevLat = nodeAccess.getLatitude(adjNode);
+                    prevLon = nodeAccess.getLongitude(adjNode);
                     latitude = wayGeo.getLatitude(wayGeo.getSize() - 2);
                     longitude = wayGeo.getLongitude(wayGeo.getSize() - 2);
                 }
@@ -474,9 +477,7 @@ public class Path
                 long flags = edge.getFlags();
                 for (int i = len; i > 0; i--)
                 {
-                    double lat = pl.getLatitude(i);
-                    double lon = pl.getLongitude(i);
-                    points.add(lat, lon);
+                    points.add(pl.getLatitude(i), pl.getLongitude(i), pl.getElevation(i));
                 }
                 double dist = edge.getDistance();
                 prevInstruction.setDistance(dist + prevInstruction.getDistance());

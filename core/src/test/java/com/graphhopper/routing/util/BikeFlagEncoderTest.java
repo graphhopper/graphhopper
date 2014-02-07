@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
-import static com.graphhopper.routing.util.BikeFlagCommonEncoder.PUSHING_SECTION_SPEED;
+import java.util.Collections;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -206,7 +206,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
             }
         };
         // call necessary register
-        new EncodingManager().registerEncoder(fakeEncoder);
+        new EncodingManager(fakeEncoder);
         allowed = fakeEncoder.acceptBit;
 
         flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);

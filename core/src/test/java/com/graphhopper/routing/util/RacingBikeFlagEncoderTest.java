@@ -97,7 +97,5 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(30, encoder.getSpeed(flags), 1e-1);
-
     }
-
 }

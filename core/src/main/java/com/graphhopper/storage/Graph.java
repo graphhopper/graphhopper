@@ -37,35 +37,9 @@ public interface Graph
     int getNodes();
 
     /**
-     * This method ensures that the node with the specified index exists and sets the lat+lon to the
-     * specified values. The index goes from 0 (inclusive) to nodes() (exclusive)
+     * Creates a node explorer to access node properties.
      */
-    void setNode( int node, double lat, double lon );
-
-    /**
-     * @return the latitude at the specified node index
-     */
-    double getLatitude( int nodeId );
-
-    /**
-     * @return the longitude at the specified node index
-     */
-    double getLongitude( int nodeId );
-
-    /**
-     * @return the additional value at the specified node index
-     * @throws AssertionError if, and only if, the extendedStorage does not require an additional
-     * node field
-     */
-    int getAdditionalNodeField( int nodeId );
-
-    /**
-     * Sets the additional value at the specified node index
-     * <p>
-     * @throws AssertionError if, and only if, the extendedStorage does not require an additional
-     * node field
-     */
-    void setAdditionalNodeField( int nodeId, int additionalValue );
+    NodeAccess getNodeAccess();    
 
     /**
      * Returns the implicit bounds of this graph calculated from the lat,lon input of setNode

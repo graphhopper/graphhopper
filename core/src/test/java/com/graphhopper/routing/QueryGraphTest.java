@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.QueryResult;
 import static com.graphhopper.storage.index.QueryResult.Position.*;
@@ -43,9 +44,10 @@ public class QueryGraphTest
         // 0     1
         // |
         // 2
-        g.setNode(0, 1, 0);
-        g.setNode(1, 1, 2.5);
-        g.setNode(2, 0, 0);
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 1, 0);
+        na.setNode(1, 1, 2.5);
+        na.setNode(2, 0, 0);
         g.edge(0, 2, 10, true);
         g.edge(0, 1, 10, true).setWayGeometry(Helper.createPointList(1.5, 1, 1.5, 1.5));
     }
@@ -54,7 +56,7 @@ public class QueryGraphTest
     public void testOneVirtualNode()
     {
         EncodingManager encodingManager = new EncodingManager("CAR");
-        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
+        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
         initGraph(g);
         EdgeExplorer expl = g.createEdgeExplorer();
 
@@ -128,7 +130,7 @@ public class QueryGraphTest
     public void testMultipleVirtualNodes()
     {
         EncodingManager encodingManager = new EncodingManager("CAR");
-        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
+        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
         initGraph(g);
 
         // snap to edge which has pillar nodes        
@@ -176,9 +178,10 @@ public class QueryGraphTest
     public void testOneWay()
     {
         EncodingManager encodingManager = new EncodingManager("CAR");
-        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
-        g.setNode(0, 0, 0);
-        g.setNode(1, 0, 1);
+        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 0, 0);
+        na.setNode(1, 0, 1);
         g.edge(0, 1, 10, false);
 
         EdgeIteratorState edge = GHUtility.getEdge(g, 0, 1);
@@ -202,7 +205,7 @@ public class QueryGraphTest
     public void testVirtEdges()
     {
         EncodingManager encodingManager = new EncodingManager("CAR");
-        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
+        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
         initGraph(g);
 
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(0);
@@ -218,7 +221,7 @@ public class QueryGraphTest
     public void testEdgesShareOneNode()
     {
         EncodingManager encodingManager = new EncodingManager("CAR");
-        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
+        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
         initGraph(g);
 
         EdgeIteratorState iter = GHUtility.getEdge(g, 0, 2);

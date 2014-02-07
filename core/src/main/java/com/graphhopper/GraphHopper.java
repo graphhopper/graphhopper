@@ -57,9 +57,10 @@ public class GraphHopper implements GraphHopperAPI
     private DAType dataAccessType = DAType.RAM;
     private boolean sortGraph = false;
     boolean removeZipped = true;
-    // for routing:
+    private boolean is3D = false;
+    // for routing
     private boolean simplifyRequest = true;
-    // for index:
+    // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 500;
     private boolean searchRegion = true;
@@ -74,7 +75,7 @@ public class GraphHopper implements GraphHopperAPI
     private int lazyUpdates = 10;
     private int neighborUpdates = 20;
     private double logMessages = 20;
-    // for OSM import:
+    // for OSM import
     private String osmFile;
     private EncodingManager encodingManager;
     private long expectedCapacity = 100;
@@ -239,6 +240,22 @@ public class GraphHopper implements GraphHopperAPI
     public boolean isCHEnabled()
     {
         return chEnabled;
+    }
+
+    /**
+     * @return true if storing and fetching elevation data is enabled. Default is false
+     */
+    public boolean is3D()
+    {
+        return is3D;
+    }
+
+    /**
+     * Enable storing and fetching elevation data. Default is false
+     */
+    public void set3D( boolean is3D )
+    {
+        this.is3D = is3D;
     }
 
     /**
@@ -411,6 +428,7 @@ public class GraphHopper implements GraphHopperAPI
         setGraphHopperLocation(graphHopperFolder);
         expectedCapacity = args.getLong("graph.expectedCapacity", expectedCapacity);
         defaultSegmentSize = args.getInt("graph.dataaccess.segmentSize", defaultSegmentSize);
+        is3D = args.getBool("graph.is3d", is3D);
         String dataAccess = args.get("graph.dataaccess", "RAM_STORE").toUpperCase();
         if (dataAccess.contains("MMAP"))
         {
@@ -454,7 +472,8 @@ public class GraphHopper implements GraphHopperAPI
         // osm import
         wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", wayPointMaxDistance);
         String flagEncoders = args.get("osmreader.acceptWay", "CAR");
-        encodingManager = new EncodingManager(flagEncoders);
+        int bytesForFlags = args.getInt("osmreader.bytesForFlags", 4);
+        encodingManager = new EncodingManager(flagEncoders, bytesForFlags);
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
 
@@ -576,11 +595,11 @@ public class GraphHopper implements GraphHopperAPI
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
 
         if (chEnabled)
-            graph = new LevelGraphStorage(dir, encodingManager);
+            graph = new LevelGraphStorage(dir, encodingManager, is3D);
         else if (turnCosts)
-            graph = new GraphHopperStorage(dir, encodingManager, new TurnCostStorage());
+            graph = new GraphHopperStorage(dir, encodingManager, is3D, new TurnCostStorage());
         else
-            graph = new GraphHopperStorage(dir, encodingManager);
+            graph = new GraphHopperStorage(dir, encodingManager, is3D);
 
         graph.setSegmentSize(defaultSegmentSize);
         if (!graph.loadExisting())

@@ -48,6 +48,7 @@ import com.graphhopper.storage.ExtendedStorage;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeExplorer;
@@ -90,10 +91,10 @@ public class OSMReaderTest
         Helper.removeDir(new File(dir));
     }
 
-    GraphStorage buildGraph( String directory, EncodingManager encodingManager, boolean turnRestrictionsImport )
+    GraphStorage newGraph( String directory, EncodingManager encodingManager, boolean is3D, boolean turnRestrictionsImport )
     {
-        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, (turnRestrictionsImport) ? new TurnCostStorage()
-                : new ExtendedStorage.NoExtendedStorage());
+        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, 
+                is3D, turnRestrictionsImport ? new TurnCostStorage() : new ExtendedStorage.NoExtendedStorage());
     }
 
     class GraphHopperTest extends GraphHopper
@@ -119,7 +120,7 @@ public class OSMReaderTest
         @Override
         protected OSMReader importOSM( String ignore ) throws IOException
         {
-            GraphStorage tmpGraph = buildGraph(dir, getEncodingManager(), isEnableTurnRestrictions());
+            GraphStorage tmpGraph = newGraph(dir, getEncodingManager(), is3D(), isEnableTurnRestrictions());
             setGraph(tmpGraph);
             OSMReader osmReader = createReader(tmpGraph);
             osmReader.setEncodingManager(getEncodingManager());
@@ -186,12 +187,13 @@ public class OSMReaderTest
         assertEquals(n20, iter.getAdjNode());
         assertEquals(93146.888, iter.getDistance(), 1);
 
-        assertEquals(9.4, graph.getLongitude(hopper.getLocationIndex().findID(51.2, 9.4)), 1e-3);
-        assertEquals(10, graph.getLongitude(hopper.getLocationIndex().findID(49, 10)), 1e-3);
-        assertEquals(51.249, graph.getLatitude(hopper.getLocationIndex().findID(51.2492152, 9.4317166)), 1e-3);
+        NodeAccess na = graph.getNodeAccess();
+        assertEquals(9.4, na.getLongitude(hopper.getLocationIndex().findID(51.2, 9.4)), 1e-3);
+        assertEquals(10, na.getLongitude(hopper.getLocationIndex().findID(49, 10)), 1e-3);
+        assertEquals(51.249, na.getLatitude(hopper.getLocationIndex().findID(51.2492152, 9.4317166)), 1e-3);
 
         // node 40 is on the way between 30 and 50 => 9.0
-        assertEquals(9, graph.getLongitude(hopper.getLocationIndex().findID(51.25, 9.43)), 1e-3);
+        assertEquals(9, na.getLongitude(hopper.getLocationIndex().findID(51.25, 9.43)), 1e-3);
     }
 
     @Test
@@ -199,8 +201,9 @@ public class OSMReaderTest
     {
         GraphHopper hopper = new GraphHopperTest(file1).setSortGraph(true).importOrLoad();
         Graph graph = hopper.getGraph();
-        assertEquals(10, graph.getLongitude(hopper.getLocationIndex().findID(49, 10)), 1e-3);
-        assertEquals(51.249, graph.getLatitude(hopper.getLocationIndex().findID(51.2492152, 9.4317166)), 1e-3);
+        NodeAccess na = graph.getNodeAccess();
+        assertEquals(10, na.getLongitude(hopper.getLocationIndex().findID(49, 10)), 1e-3);
+        assertEquals(51.249, na.getLatitude(hopper.getLocationIndex().findID(51.2492152, 9.4317166)), 1e-3);
     }
 
     @Test
@@ -426,8 +429,9 @@ public class OSMReaderTest
         // separate id
         int new20 = 4;
         assertNotEquals(n20, new20);
-        assertEquals(graph.getLatitude(n20), graph.getLatitude(new20), 1e-5);
-        assertEquals(graph.getLongitude(n20), graph.getLongitude(new20), 1e-5);
+        NodeAccess na = graph.getNodeAccess();
+        assertEquals(na.getLatitude(n20), na.getLatitude(new20), 1e-5);
+        assertEquals(na.getLongitude(n20), na.getLongitude(new20), 1e-5);
 
         assertEquals(n20, hopper.getLocationIndex().findID(52, 9.4));
 
@@ -471,7 +475,7 @@ public class OSMReaderTest
     public void testRelation()
     {
         EncodingManager manager = new EncodingManager("bike");
-        OSMReader reader = new OSMReader(new GraphHopperStorage(new RAMDirectory(), manager), -1).setEncodingManager(manager);
+        OSMReader reader = new OSMReader(new GraphHopperStorage(new RAMDirectory(), manager, false), -1).setEncodingManager(manager);
         OSMRelation osmRel = new OSMRelation(1, new HashMap<String, String>());
         osmRel.getMembers().add(new OSMRelation.Member(OSMRelation.WAY, 1, ""));
         osmRel.getMembers().add(new OSMRelation.Member(OSMRelation.WAY, 2, ""));
@@ -595,13 +599,8 @@ public class OSMReaderTest
                 return speedEncoder.setValue(wayFlags, (int) speed);
             }
         };
-        EncodingManager manager = new EncodingManager()
-        {
-            {
-                super.registerEncoder(encoder);
-            }
-        };
-        GraphStorage graph = buildGraph(dir, manager, false);
+        EncodingManager manager = new EncodingManager(encoder);        
+        GraphStorage graph = newGraph(dir, manager, false, false);
         final Map<Integer, Double> latMap = new HashMap<Integer, Double>();
         final Map<Integer, Double> lonMap = new HashMap<Integer, Double>();
         latMap.put(1, 1.1d);

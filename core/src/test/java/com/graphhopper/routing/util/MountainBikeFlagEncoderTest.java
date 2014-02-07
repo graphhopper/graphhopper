@@ -186,7 +186,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
             }
         };
         // call necessary register
-        new EncodingManager().registerEncoder(fakeEncoder);
+        new EncodingManager(fakeEncoder);
         allowed = fakeEncoder.acceptBit;
 
         flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);

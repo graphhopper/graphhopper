@@ -58,7 +58,12 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
      */
     protected BikeFlagCommonEncoder()
     {
-        super(4, 2);
+        this(4, 2);
+    }
+
+    protected BikeFlagCommonEncoder( int speedBits, double speedFactor )
+    {
+        super(speedBits, speedFactor);
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
         restrictions = new String[]
         {

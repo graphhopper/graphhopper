@@ -45,16 +45,17 @@ public class GHUtility
         List<String> problems = new ArrayList<String>();
         int nodes = g.getNodes();
         int nodeIndex = 0;
+        NodeAccess na = g.getNodeAccess();
         try
         {
             EdgeExplorer explorer = g.createEdgeExplorer();
             for (; nodeIndex < nodes; nodeIndex++)
             {
-                double lat = g.getLatitude(nodeIndex);
+                double lat = na.getLatitude(nodeIndex);
                 if (lat > 90 || lat < -90)
                     problems.add("latitude is not within its bounds " + lat);
 
-                double lon = g.getLongitude(nodeIndex);
+                double lon = na.getLongitude(nodeIndex);
                 if (lon > 180 || lon < -180)
                     problems.add("longitude is not within its bounds " + lon);
 
@@ -156,7 +157,8 @@ public class GHUtility
     {
         EdgeSkipExplorer ex = g.createEdgeExplorer(filter);
         EdgeSkipIterator iter = ex.setBaseNode(nodeId);
-        String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
+        NodeAccess na = g.getNodeAccess();
+        String str = nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n";
         while (iter.next())
         {
             str += "  ->" + iter.getAdjNode() + "(" + iter.getSkippedEdge1() + "," + iter.getSkippedEdge2() + ") "
@@ -168,7 +170,8 @@ public class GHUtility
     public static String getNodeInfo( Graph g, int nodeId, EdgeFilter filter )
     {
         EdgeIterator iter = g.createEdgeExplorer(filter).setBaseNode(nodeId);
-        String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
+        NodeAccess na = g.getNodeAccess();
+        String str = nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n";
         while (iter.next())
         {
             str += "  ->" + iter.getAdjNode() + " (" + iter.getDistance() + ") pillars:"
@@ -232,6 +235,8 @@ public class GHUtility
         // important to avoid creating two edges for edges with both directions
         GHBitSet bitset = new GHBitSetImpl(len);
         EdgeExplorer explorer = g.createEdgeExplorer();
+        NodeAccess na = g.getNodeAccess();
+        NodeAccess sna = sortedGraph.getNodeAccess();
         for (int old = 0; old < len; old++)
         {
             int newIndex = oldToNewNodeList.get(old);
@@ -240,7 +245,11 @@ public class GHUtility
                 continue;
 
             bitset.add(newIndex);
-            sortedGraph.setNode(newIndex, g.getLatitude(old), g.getLongitude(old));
+            if(sna.is3D())
+                sna.setNode(newIndex, na.getLatitude(old), na.getLongitude(old), na.getElevation(old));                
+            else
+                sna.setNode(newIndex, na.getLatitude(old), na.getLongitude(old));                
+            
             EdgeIterator eIter = explorer.setBaseNode(old);
             while (eIter.next())
             {
@@ -275,13 +284,12 @@ public class GHUtility
     static GraphStorage guessStorage( Graph g, Directory outdir, EncodingManager encodingManager )
     {
         GraphStorage store;
+        boolean is3D = g.getNodeAccess().is3D();
         if (g instanceof LevelGraphStorage)
-        {
-            store = new LevelGraphStorage(outdir, encodingManager);
-        } else
-        {
-            store = new GraphHopperStorage(outdir, encodingManager);
-        }
+            store = new LevelGraphStorage(outdir, encodingManager, is3D);
+        else
+            store = new GraphHopperStorage(outdir, encodingManager, is3D);
+        
         return store;
     }
 
@@ -311,10 +319,16 @@ public class GHUtility
         // important to avoid creating two edges for edges with both directions        
         GHBitSet bitset = new GHBitSetImpl(len);
         EdgeExplorer explorer = from.createEdgeExplorer();
+        NodeAccess na = from.getNodeAccess();
+        NodeAccess toNa = to.getNodeAccess();
         for (int oldNode = 0; oldNode < len; oldNode++)
         {
             bitset.add(oldNode);
-            to.setNode(oldNode, from.getLatitude(oldNode), from.getLongitude(oldNode));
+            if(toNa.is3D())
+                toNa.setNode(oldNode, na.getLatitude(oldNode), na.getLongitude(oldNode), na.getElevation(oldNode));
+            else
+                toNa.setNode(oldNode, na.getLatitude(oldNode), na.getLongitude(oldNode));
+            
             EdgeIterator eIter = explorer.setBaseNode(oldNode);
             while (eIter.next())
             {

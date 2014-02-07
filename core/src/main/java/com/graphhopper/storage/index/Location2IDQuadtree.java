@@ -23,10 +23,7 @@ import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.geohash.KeyAlgo;
 import com.graphhopper.geohash.LinearKeyAlgo;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.DataAccess;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.DistancePlaneProjection;
@@ -57,11 +54,13 @@ public class Location2IDQuadtree implements LocationIndex
     private final DataAccess index;
     private double maxRasterWidth2InMeterNormed;
     private final Graph graph;
+    private final NodeAccess nodeAccess;
     private int lonSize, latSize;
 
     public Location2IDQuadtree( Graph g, Directory dir )
     {
         this.graph = g;
+        this.nodeAccess = g.getNodeAccess();
         index = dir.find("loc2idIndex");
         setResolution(100 * 100);
     }
@@ -191,8 +190,8 @@ public class Location2IDQuadtree implements LocationIndex
         GHPoint coord = new GHPoint();
         for (int nodeId = 0; nodeId < locs; nodeId++)
         {
-            double lat = graph.getLatitude(nodeId);
-            double lon = graph.getLongitude(nodeId);
+            double lat = nodeAccess.getLatitude(nodeId);
+            double lon = nodeAccess.getLongitude(nodeId);
             int key = (int) keyAlgo.encode(lat, lon);
             long bytePos = (long) key * 4;
             if (filledIndices.contains(key))
@@ -201,8 +200,8 @@ public class Location2IDQuadtree implements LocationIndex
                 keyAlgo.decode(key, coord);
                 // decide which one is closer to 'key'
                 double distNew = distCalc.calcNormalizedDist(coord.lat, coord.lon, lat, lon);
-                double oldLat = graph.getLatitude(oldNodeId);
-                double oldLon = graph.getLongitude(oldNodeId);
+                double oldLat = nodeAccess.getLatitude(oldNodeId);
+                double oldLon = nodeAccess.getLongitude(oldNodeId);
                 double distOld = distCalc.calcNormalizedDist(coord.lat, coord.lon, oldLat, oldLon);
                 // new point is closer to quad tree point (key) so overwrite old
                 if (distNew < distOld)
@@ -342,8 +341,8 @@ public class Location2IDQuadtree implements LocationIndex
          */
         long key = keyAlgo.encode(queryLat, queryLon);
         final int id = index.getInt(key * 4);
-        double mainLat = graph.getLatitude(id);
-        double mainLon = graph.getLongitude(id);
+        double mainLat = nodeAccess.getLatitude(id);
+        double mainLon = nodeAccess.getLongitude(id);
         final QueryResult res = new QueryResult(queryLat, queryLon);
         res.setClosestNode(id);
         res.setQueryDistance(distCalc.calcNormalizedDist(queryLat, queryLon, mainLat, mainLon));
@@ -363,8 +362,8 @@ public class Location2IDQuadtree implements LocationIndex
                     return true;
 
                 goFurtherHook(baseNode);
-                double currLat = graph.getLatitude(baseNode);
-                double currLon = graph.getLongitude(baseNode);
+                double currLat = nodeAccess.getLatitude(baseNode);
+                double currLon = nodeAccess.getLongitude(baseNode);
                 double currNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
                 if (currNormedDist < res.getQueryDistance())
                 {

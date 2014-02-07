@@ -291,13 +291,14 @@ public abstract class AbstractRoutingAlgorithmTester
 
     private static void updateDistancesFor( Graph g, int node, double lat, double lon )
     {
-        g.setNode(node, lat, lon);
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(node, lat, lon);
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(node);
         while (iter.next())
         {
             int adj = iter.getAdjNode();
-            double adjLat = g.getLatitude(adj);
-            double adjLon = g.getLongitude(adj);
+            double adjLat = na.getLatitude(adj);
+            double adjLon = na.getLongitude(adj);
             iter.setDistance(distCalc.calcDist(lat, lon, adjLat, adjLon));
         }
     }
@@ -430,11 +431,12 @@ public abstract class AbstractRoutingAlgorithmTester
     public void testWithCoordinates()
     {
         Graph graph = createGraph();
-        graph.setNode(0, 0, 2);
-        graph.setNode(1, 0, 3.5);
-        graph.setNode(2, 1, 1);
-        graph.setNode(3, 1.5, 2.5);
-        graph.setNode(4, 0.5, 4.5);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 0, 2);
+        na.setNode(1, 0, 3.5);
+        na.setNode(2, 1, 1);
+        na.setNode(3, 1.5, 2.5);
+        na.setNode(4, 0.5, 4.5);
 
         graph.edge(0, 1, 2, true).setWayGeometry(Helper.createPointList(0, 3));
         graph.edge(2, 3, 2, true);
@@ -580,10 +582,11 @@ public abstract class AbstractRoutingAlgorithmTester
         if (edge == null)
             throw new IllegalStateException("edge not found? " + node1 + "-" + node2);
 
-        double lat = graph.getLatitude(edge.getBaseNode());
-        double lon = graph.getLongitude(edge.getBaseNode());
-        double latAdj = graph.getLatitude(edge.getAdjNode());
-        double lonAdj = graph.getLongitude(edge.getAdjNode());
+        NodeAccess na = graph.getNodeAccess();
+        double lat = na.getLatitude(edge.getBaseNode());
+        double lon = na.getLongitude(edge.getBaseNode());
+        double latAdj = na.getLatitude(edge.getAdjNode());
+        double lonAdj = na.getLongitude(edge.getAdjNode());
         // calculate query point near the base node but not directly on it!
         QueryResult res = new QueryResult(lat + (latAdj - lat) * .1, lon + (lonAdj - lon) * .1);
         res.setClosestNode(edge.getBaseNode());

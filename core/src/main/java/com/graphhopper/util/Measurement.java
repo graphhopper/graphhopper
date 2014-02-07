@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.shapes.BBox;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -198,6 +199,7 @@ public class Measurement
 //        final AtomicLong calcDistTimeSum = new AtomicLong(0);
 //        final AtomicLong tmpDist = new AtomicLong(0);
         final Random rand = new Random(seed);
+        final NodeAccess na = g.getNodeAccess();
         MiniPerfTest miniPerf = new MiniPerfTest()
         {
             @Override
@@ -205,10 +207,10 @@ public class Measurement
             {
                 int from = rand.nextInt(maxNode);
                 int to = rand.nextInt(maxNode);
-                double fromLat = g.getLatitude(from);
-                double fromLon = g.getLongitude(from);
-                double toLat = g.getLatitude(to);
-                double toLon = g.getLongitude(to);
+                double fromLat = na.getLatitude(from);
+                double fromLon = na.getLongitude(from);
+                double toLat = na.getLatitude(to);
+                double toLon = na.getLongitude(to);
                 GHResponse res = hopper.route(new GHRequest(fromLat, fromLon, toLat, toLon).setWeighting("fastest").setVehicle(vehicle));
                 if (res.hasErrors())
                     throw new IllegalStateException("errors should NOT happen in Measurement! " + res.getErrors());

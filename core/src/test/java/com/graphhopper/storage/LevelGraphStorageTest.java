@@ -36,21 +36,15 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
     }
 
     @Override
-    protected LevelGraphStorage createGraphStorage( Directory dir )
+    public GraphStorage newGraph( Directory dir, boolean is3D )
     {
-        return (LevelGraphStorage) super.createGraphStorage(dir);
-    }
-
-    @Override
-    public GraphStorage newGraph( Directory dir )
-    {
-        return new LevelGraphStorage(dir, encodingManager);
+        return new LevelGraphStorage(dir, encodingManager, is3D);
     }
 
     @Test
     public void testCannotBeLoadedViaDifferentClass()
     {
-        GraphStorage g = createGraphStorage(new RAMDirectory(defaultGraph, true));
+        GraphStorage g = newGraph(new RAMDirectory(defaultGraph, true), false).create(defaultSize);
         g.flush();
         g.close();
 
@@ -63,7 +57,7 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         {
         }
 
-        g = newGraph(new RAMDirectory(defaultGraph, true));
+        g = newGraph(new RAMDirectory(defaultGraph, true), false);
         assertTrue(g.loadExisting());
     }
 

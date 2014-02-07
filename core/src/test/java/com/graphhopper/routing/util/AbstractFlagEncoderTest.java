@@ -29,15 +29,15 @@ public class AbstractFlagEncoderTest
     @Test
     public void testAcceptsCar()
     {
-        assertEquals(40, AbstractFlagEncoder.parseSpeed("40 km/h"));
-        assertEquals(40, AbstractFlagEncoder.parseSpeed("40km/h"));
-        assertEquals(40, AbstractFlagEncoder.parseSpeed("40kmh"));
-        assertEquals(64, AbstractFlagEncoder.parseSpeed("40mph"));
-        assertEquals(48, AbstractFlagEncoder.parseSpeed("30 mph"));
-        assertEquals(-1, AbstractFlagEncoder.parseSpeed(null));
-        assertEquals(19, AbstractFlagEncoder.parseSpeed("10 knots"));
-        assertEquals(19, AbstractFlagEncoder.parseSpeed("19 kph"));
-        assertEquals(19, AbstractFlagEncoder.parseSpeed("19kph"));
+        assertEquals(40, AbstractFlagEncoder.parseSpeed("40 km/h"), 1e-3);
+        assertEquals(40, AbstractFlagEncoder.parseSpeed("40km/h"), 1e-3);
+        assertEquals(40, AbstractFlagEncoder.parseSpeed("40kmh"), 1e-3);
+        assertEquals(64.374, AbstractFlagEncoder.parseSpeed("40mph"), 1e-3);
+        assertEquals(48.28, AbstractFlagEncoder.parseSpeed("30 mph"), 1e-3);
+        assertEquals(-1, AbstractFlagEncoder.parseSpeed(null), 1e-3);
+        assertEquals(18.52, AbstractFlagEncoder.parseSpeed("10 knots"), 1e-3);
+        assertEquals(19, AbstractFlagEncoder.parseSpeed("19 kph"), 1e-3);
+        assertEquals(19, AbstractFlagEncoder.parseSpeed("19kph"), 1e-3);
     }
 
     @Test

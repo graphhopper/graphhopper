@@ -131,7 +131,7 @@ public class AStarBidirection extends AbstractBidirAlgo
         currFrom = createEdgeEntry(from, dist);
         bestWeightMapFrom.put(from, currFrom);
         prioQueueOpenSetFrom.add(currFrom);
-        fromCoord = new GHPoint(graph.getLatitude(from), graph.getLongitude(from));
+        fromCoord = new GHPoint(nodeAccess.getLatitude(from), nodeAccess.getLongitude(from));
         if (currTo != null)
         {
             bestWeightMapOther = bestWeightMapTo;
@@ -145,7 +145,7 @@ public class AStarBidirection extends AbstractBidirAlgo
         currTo = createEdgeEntry(to, dist);
         bestWeightMapTo.put(to, currTo);
         prioQueueOpenSetTo.add(currTo);
-        toCoord = new GHPoint(graph.getLatitude(to), graph.getLongitude(to));
+        toCoord = new GHPoint(nodeAccess.getLatitude(to), nodeAccess.getLongitude(to));
         if (currFrom != null)
         {
             bestWeightMapOther = bestWeightMapFrom;
@@ -232,8 +232,8 @@ public class AStarBidirection extends AbstractBidirAlgo
             AStarEdge de = shortestWeightMap.get(neighborNode);
             if (de == null || de.weightToCompare > alreadyVisitedWeight)
             {
-                double tmpLat = graph.getLatitude(neighborNode);
-                double tmpLon = graph.getLongitude(neighborNode);
+                double tmpLat = nodeAccess.getLatitude(neighborNode);
+                double tmpLon = nodeAccess.getLongitude(neighborNode);
                 double currWeightToGoal = dist.calcDist(goal.lat, goal.lon, tmpLat, tmpLon);
                 currWeightToGoal = weighting.getMinWeight(currWeightToGoal);
                 double estimationFullDist = alreadyVisitedWeight + currWeightToGoal;

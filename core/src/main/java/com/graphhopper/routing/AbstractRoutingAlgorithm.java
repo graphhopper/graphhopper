@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -36,6 +37,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
 {
     private EdgeFilter additionalEdgeFilter;
     protected Graph graph;
+    protected NodeAccess nodeAccess;
     protected EdgeExplorer inEdgeExplorer;
     protected EdgeExplorer outEdgeExplorer;
     protected final Weighting weighting;
@@ -61,6 +63,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     protected RoutingAlgorithm setGraph( Graph graph )
     {
         this.graph = graph;
+        this.nodeAccess = graph.getNodeAccess();
         outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
         inEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, true, false));
         return this;

@@ -45,6 +45,7 @@ public class TurnCostStorage implements ExtendedStorage
     protected int turnCostsCount;
 
     private GraphStorage graph;
+    private NodeAccess nodeAccess;
 
     public TurnCostStorage()
     {
@@ -59,17 +60,12 @@ public class TurnCostStorage implements ExtendedStorage
     @Override
     public void init( GraphStorage graph )
     {
-
         if (turnCostsCount > 0)
-        {
             throw new AssertionError("The turn cost storage must be initialized only once.");
-        }
 
         this.graph = graph;
-
-        Directory dir = this.graph.getDirectory();
-
-        this.turnCosts = dir.find("turnCosts");
+        this.nodeAccess = graph.getNodeAccess();
+        this.turnCosts = this.graph.getDirectory().find("turnCosts");
     }
 
     protected final int nextTurnCostsEntryIndex()
@@ -129,19 +125,19 @@ public class TurnCostStorage implements ExtendedStorage
     private int getCostTableAdress( int index )
     {
         if (index >= graph.getNodes() || index < 0)
-        {
             return NO_COST_ENTRY;
-        }
-        return graph.getAdditionalNodeField(index);
+        
+        return nodeAccess.getAdditionalNodeField(index);
     }
 
     public void setTurnCosts( int nodeIndex, int from, int to, int flags )
     {
-        if(flags == 0) {
+        if (flags == 0)
+        {
             //no need to store turn costs
             return;
         }
-        
+
         // append
         int newEntryIndex = turnCostsCount;
         turnCostsCount++;
@@ -152,7 +148,7 @@ public class TurnCostStorage implements ExtendedStorage
         if (previousEntryIndex == NO_COST_ENTRY)
         {
             // set cost-pointer to this new cost entry
-            graph.setAdditionalNodeField(nodeIndex, newEntryIndex);
+            nodeAccess.setAdditionalNodeField(nodeIndex, newEntryIndex);
         } else
         {
             int i = 0;

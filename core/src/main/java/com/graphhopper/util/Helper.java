@@ -290,14 +290,27 @@ public class Helper
     public static PointList createPointList( double... list )
     {
         if (list.length % 2 != 0)
-        {
             throw new IllegalArgumentException("list should consist of lat,lon pairs!");
-        }
-        PointList res = new PointList(list.length);
+
         int max = list.length / 2;
+        PointList res = new PointList(max, false);        
         for (int i = 0; i < max; i++)
         {
-            res.add(list[2 * i], list[2 * i + 1]);
+            res.add(list[2 * i], list[2 * i + 1], Double.NaN);
+        }
+        return res;
+    }
+
+    public static PointList createPointList3D( double... list )
+    {
+        if (list.length % 3 != 0)
+            throw new IllegalArgumentException("list should consist of lat,lon,ele tuples!");
+
+        int max = list.length / 3;
+        PointList res = new PointList(max, true);        
+        for (int i = 0; i < max; i++)
+        {
+            res.add(list[3 * i], list[3 * i + 1], list[3 * i + 2]);
         }
         return res;
     }

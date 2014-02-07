@@ -42,12 +42,7 @@ import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.DataAccess;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.ExtendedStorage;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.DouglasPeucker;
@@ -91,6 +86,7 @@ public class OSMReader
     private long locations;
     private long skippedLocations;
     private final GraphStorage graphStorage;
+    private final NodeAccess nodeAccess;
     private EncodingManager encodingManager = null;
     private int workerThreads = -1;
     private boolean enableInstructions = true;
@@ -126,6 +122,7 @@ public class OSMReader
     {
         this.graphStorage = storage;
         this.expectedNodes = expectedCap;
+        this.nodeAccess = graphStorage.getNodeAccess();
 
         osmNodeIdToInternalNodeMap = new GHLongIntBTree(200);
         osmNodeIdToNodeFlagsMap = new TLongLongHashMap(200, .5f, 0, 0);
@@ -502,7 +499,7 @@ public class OSMReader
         {
             // tower node
             id = -id - 3;
-            return graphStorage.getLatitude(id);
+            return nodeAccess.getLatitude(id);
         } else if (id > -TOWER_NODE)
         {
             // pillar node
@@ -521,7 +518,7 @@ public class OSMReader
         {
             // tower node
             id = -id - 3;
-            return graphStorage.getLongitude(id);
+            return nodeAccess.getLongitude(id);
         } else if (id > -TOWER_NODE)
         {
             // pillar node
@@ -626,7 +623,7 @@ public class OSMReader
 
     int addTowerNode( long osmId, double lat, double lon )
     {
-        graphStorage.setNode(nextTowerId, lat, lon);
+        nodeAccess.setNode(nextTowerId, lat, lon);
         int id = -(nextTowerId + 3);
         getNodeMap().put(osmId, id);
         nextTowerId++;
@@ -638,7 +635,7 @@ public class OSMReader
      */
     Collection<EdgeIteratorState> addOSMWay( TLongList osmNodeIds, long flags, long wayOsmId )
     {
-        PointList pointList = new PointList(osmNodeIds.size());
+        PointList pointList = new PointList(osmNodeIds.size(), nodeAccess.is3D());
         List<EdgeIteratorState> newEdges = new ArrayList<EdgeIteratorState>(5);
         int firstNode = -1;
         int lastIndex = osmNodeIds.size() - 1;
@@ -672,7 +669,7 @@ public class OSMReader
                             // TOWER node
                             newEdges.add(addEdge(firstNode, tmpNode, pointList, flags, wayOsmId));
                             pointList.clear();
-                            pointList.add(graphStorage.getLatitude(tmpNode), graphStorage.getLongitude(tmpNode));
+                            pointList.add(nodeAccess.getLatitude(tmpNode), nodeAccess.getLongitude(tmpNode));
                         }
                         firstNode = tmpNode;
                         lastInBoundsPillarNode = -1;
@@ -699,12 +696,12 @@ public class OSMReader
                 {
                     // TOWER node
                     tmpNode = -tmpNode - 3;
-                    pointList.add(graphStorage.getLatitude(tmpNode), graphStorage.getLongitude(tmpNode));
+                    pointList.add(nodeAccess.getLatitude(tmpNode), nodeAccess.getLongitude(tmpNode));
                     if (firstNode >= 0)
                     {
                         newEdges.add(addEdge(firstNode, tmpNode, pointList, flags, wayOsmId));
                         pointList.clear();
-                        pointList.add(graphStorage.getLatitude(tmpNode), graphStorage.getLongitude(tmpNode));
+                        pointList.add(nodeAccess.getLatitude(tmpNode), nodeAccess.getLongitude(tmpNode));
                     }
                     firstNode = tmpNode;
                 }
@@ -728,11 +725,11 @@ public class OSMReader
         double prevLon = pointList.getLongitude(0);
         double lat;
         double lon;
-        PointList pillarNodes = new PointList(pointList.getSize() - 2);
+        PointList pillarNodes = new PointList(pointList.getSize() - 2, nodeAccess.is3D());
         int nodes = pointList.getSize();
         for (int i = 1; i < nodes; i++)
         {
-            // we could save some lines if we would use pointListIncludingTowerNodes.calculateDistance(distCalc);
+            // we could save some lines if we would use pointList.calculateDistance(distCalc);
             lat = pointList.getLatitude(i);
             lon = pointList.getLongitude(i);
             towerNodeDistance += distCalc.calcDist(prevLat, prevLon, lat, lon);
@@ -823,8 +820,8 @@ public class OSMReader
         {
             graphIndex = -graphIndex - 3;
             newNode = new OSMNode(createNewNodeId(), 
-                    graphStorage.getLatitude(graphIndex), 
-                    graphStorage.getLongitude(graphIndex));
+                    nodeAccess.getLatitude(graphIndex), 
+                    nodeAccess.getLongitude(graphIndex));
         } else
         {
             graphIndex = graphIndex - 3;

@@ -18,7 +18,7 @@
 package com.graphhopper.util;
 
 /**
- * Simplyfies a list of points which are not too far away.
+ * Simplyfies a list of 2D points which are not too far away.
  * http://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
  * <p/>
  * Calling simplify is thread safe.
@@ -85,26 +85,6 @@ public class DouglasPeucker
         return removed;
     }
 
-    /**
-     * compress list: move points into EMPTY slots
-     */
-    void compress( PointList list )
-    {
-        PointList pl = new PointList(list.getSize());
-        for (int i = 0; i < list.getSize(); i++)
-        {
-            if (Double.isNaN(list.getLatitude(i)))
-            {
-                continue;
-            }
-            pl.add(list.getLatitude(i), list.getLongitude(i));
-        }
-        list.clear();
-        for (int i = 0; i < pl.getSize(); i++)
-        {
-            list.add(pl.getLatitude(i), pl.getLongitude(i));
-        }
-    }
 
     /**
      * compress list: move points into EMPTY slots
@@ -117,17 +97,16 @@ public class DouglasPeucker
             if (Double.isNaN(points.getLatitude(currentIndex)))
             {
                 if (freeIndex < 0)
-                {
                     freeIndex = currentIndex;
-                }
+                
                 continue;
             } else if (freeIndex < 0)
             {
                 continue;
             }
 
-            points.set(freeIndex, points.getLatitude(currentIndex), points.getLongitude(currentIndex));
-            points.set(currentIndex, Double.NaN, Double.NaN);
+            points.set(freeIndex, points.getLatitude(currentIndex), points.getLongitude(currentIndex), points.getElevation(currentIndex));
+            points.set(currentIndex, Double.NaN, Double.NaN, Double.NaN);
             // find next free index
             int max = currentIndex;
             int searchIndex = freeIndex + 1;
@@ -183,7 +162,7 @@ public class DouglasPeucker
         {
             for (int i = fromIndex + 1; i < lastIndex; i++)
             {
-                points.set(i, Double.NaN, Double.NaN);
+                points.set(i, Double.NaN, Double.NaN, Double.NaN);
                 counter++;
             }
         } else

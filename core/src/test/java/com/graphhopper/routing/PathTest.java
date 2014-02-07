@@ -19,11 +19,9 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.storage.AbstractGraphStorageTester.*;
-import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.InstructionList;
 import org.junit.Test;
@@ -35,40 +33,44 @@ import static org.junit.Assert.*;
  */
 public class PathTest
 {
+    private final EncodingManager carManager = new EncodingManager("CAR");
+    private final FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
+    
     @Test
     public void testFound()
     {
-        Path p = new Path(null, null);
+        GraphStorage g = new GraphBuilder(carManager).create();
+        Path p = new Path(g, encoder);
         assertFalse(p.isFound());
         assertEquals(0, p.getDistance(), 1e-7);
         assertEquals(0, p.calcNodes().size());
+        g.close();
     }
 
     @Test
     public void testTime()
     {
-        FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
-        Path p = new Path(null, encoder);
+        GraphStorage g = new GraphBuilder(carManager).create();        
+        Path p = new Path(g, encoder);
         assertEquals(60 * 60 * 1000, p.calcMillis(100000, encoder.setProperties(100, true, true)));
-    }
+        g.close();
+    }    
 
     @Test
     public void testWayList()
     {
-        EncodingManager carManager = new EncodingManager("CAR");
-        FlagEncoder carEnc = carManager.getEncoder("CAR");
-        Graph g = new GraphBuilder(carManager).create();
+        GraphStorage g = new GraphBuilder(carManager).create();
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 0.0, 0.1);
+        na.setNode(1, 1.0, 0.1);
+        na.setNode(2, 2.0, 0.1);
 
-        g.setNode(0, 0.0, 0.1);
-        g.setNode(1, 1.0, 0.1);
-        g.setNode(2, 2.0, 0.1);
-
-        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).setFlags(carEnc.setProperties(10, true, true));
+        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).setFlags(encoder.setProperties(10, true, true));
         edge1.setWayGeometry(Helper.createPointList(8, 1, 9, 1));
-        EdgeIteratorState edge2 = g.edge(2, 1).setDistance(2000).setFlags(carEnc.setProperties(50, true, true));
+        EdgeIteratorState edge2 = g.edge(2, 1).setDistance(2000).setFlags(encoder.setProperties(50, true, true));
         edge2.setWayGeometry(Helper.createPointList(11, 1, 10, 1));
 
-        Path path = new Path(g, carEnc);
+        Path path = new Path(g, encoder);
         EdgeEntry e1 = new EdgeEntry(edge2.getEdge(), 2, 1);
         e1.parent = new EdgeEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent = new EdgeEntry(-1, 0, 1);
@@ -82,7 +84,7 @@ public class PathTest
 
         // force minor change for instructions
         edge2.setName("2");
-        path = new Path(g, carEnc);
+        path = new Path(g, encoder);
         e1 = new EdgeEntry(edge2.getEdge(), 2, 1);
         e1.parent = new EdgeEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent = new EdgeEntry(-1, 0, 1);
@@ -93,7 +95,7 @@ public class PathTest
         assertEquals("[1000.0, 2000.0, 0.0]", instr.createDistances().toString());
 
         // now reverse order
-        path = new Path(g, carEnc);
+        path = new Path(g, encoder);
         e1 = new EdgeEntry(edge1.getEdge(), 0, 1);
         e1.parent = new EdgeEntry(edge2.getEdge(), 1, 1);
         e1.parent.parent = new EdgeEntry(-1, 2, 1);
@@ -103,6 +105,7 @@ public class PathTest
         assertPList(Helper.createPointList(2, 0.1, 11, 1, 10, 1, 1, 0.1, 9, 1, 8, 1, 0, 0.1), path.calcPoints());
         instr = path.calcInstructions();
         assertEquals("[" + 144 * 1000 + ", " + 6 * 60 * 1000 + ", 0]", instr.createMillis().toString());
-        assertEquals("[2000.0, 1000.0, 0.0]", instr.createDistances().toString());
+        assertEquals("[2000.0, 1000.0, 0.0]", instr.createDistances().toString());        
+        g.close();
     }
 }

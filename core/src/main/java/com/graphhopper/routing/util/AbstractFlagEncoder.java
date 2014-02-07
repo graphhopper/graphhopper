@@ -81,9 +81,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected HashSet<String> absoluteBarriers = new HashSet<String>(5);
     protected HashSet<String> potentialBarriers = new HashSet<String>(5);
     protected int speedBits;
-    protected int speedFactor;
+    protected double speedFactor;
 
-    public AbstractFlagEncoder( int speedBits, int speedFactor )
+    public AbstractFlagEncoder( int speedBits, double speedFactor )
     {
         this.speedBits = speedBits;
         this.speedFactor = speedFactor;
@@ -242,6 +242,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         return -1;
     }
 
+    /**
+     * Swapping directions means swapping bits which are dependent on the direction of an edge like
+     * the access bits. But also direction dependent speed values should be swapped too.
+     */
     public long swapDirection( long flags )
     {
         long dir = flags & directionBitMask;
@@ -254,7 +258,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     @Override
     public double getSpeed( long flags )
     {
-        double speedVal = speedEncoder.getValue(flags);
+        double speedVal = speedEncoder.getDoubleValue(flags);
         if (speedVal < 0)
             throw new IllegalStateException("Speed was negative!? " + speedVal);
 
@@ -281,7 +285,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     {
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative: " + speed + ", flags:" + BitUtil.LITTLE.toBitString(flags));
-        return speedEncoder.setValue(flags, (int) speed);
+        return speedEncoder.setDoubleValue(flags, speed);
     }
 
     @Override
@@ -329,7 +333,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     /**
      * @return the speed in km/h
      */
-    static int parseSpeed( String str )
+    static double parseSpeed( String str )
     {
         if (Helper.isEmpty(str))
         {
@@ -345,7 +349,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             {
                 str = str.substring(0, mpInteger).trim();
                 val = Integer.parseInt(str);
-                return (int) Math.round(val * DistanceCalcEarth.KM_MILE);
+                return val * DistanceCalcEarth.KM_MILE;
             }
 
             int knotInteger = str.indexOf("knots");
@@ -353,7 +357,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             {
                 str = str.substring(0, knotInteger).trim();
                 val = Integer.parseInt(str);
-                return (int) Math.round(val * 1.852);
+                return val * 1.852;
             }
 
             int kmInteger = str.indexOf("km");

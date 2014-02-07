@@ -28,6 +28,7 @@ import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.ShortestWeighting;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -61,18 +62,20 @@ public class MiniGraphUI {
     private Path path;
     private AlgorithmPreparation prepare;
     private final Graph graph;
+    private final NodeAccess na;
     private LocationIndex index;
     private String latLon = "";
     private GraphicsWrapper mg;
     private JPanel infoPanel;
     private LayeredPanel mainPanel;
     private MapLayer roadsLayer;
-    private MapLayer pathLayer;
+    private final MapLayer pathLayer;
     private boolean fastPaint = false;
     private Weighting weighting = new ShortestWeighting();
 
     public MiniGraphUI(GraphHopper hopper, boolean debug) {
         this.graph = hopper.getGraph();
+        this.na = graph.getNodeAccess();
         prepare = hopper.getPreparation();
         if (prepare == null)
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph,
@@ -144,8 +147,8 @@ public class MiniGraphUI {
                     if (fastPaint && rand.nextInt(30) > 1) {
                         continue;
                     }
-                    double lat = graph.getLatitude(nodeIndex);
-                    double lon = graph.getLongitude(nodeIndex);
+                    double lat = na.getLatitude(nodeIndex);
+                    double lon = na.getLongitude(nodeIndex);
                     // mg.plotText(g2, lat, lon, "" + nodeIndex);
                     if (lat < b.minLat || lat > b.maxLat || lon < b.minLon || lon > b.maxLon) {
                         continue;
@@ -168,8 +171,8 @@ public class MiniGraphUI {
                             }
                             bitset.add(sum);
                         }
-                        double lat2 = graph.getLatitude(nodeId);
-                        double lon2 = graph.getLongitude(nodeId);
+                        double lat2 = na.getLatitude(nodeId);
+                        double lon2 = na.getLongitude(nodeId);
                         mg.plotEdge(g2, lat, lon, lat2, lon2);
                     }
                 }
@@ -230,8 +233,8 @@ public class MiniGraphUI {
     }
 
     void plotNodeName(Graphics2D g2, int node) {
-        double lat = graph.getLatitude(node);
-        double lon = graph.getLongitude(node);
+        double lat = na.getLatitude(node);
+        double lon = na.getLongitude(node);
         mg.plotText(g2, lat, lon, "" + node);
     }
 

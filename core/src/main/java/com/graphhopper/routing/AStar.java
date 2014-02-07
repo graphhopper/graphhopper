@@ -75,8 +75,8 @@ public class AStar extends AbstractRoutingAlgorithm
     public Path calcPath( int from, int to )
     {
         checkAlreadyRun();
-        toLat = graph.getLatitude(to);
-        toLon = graph.getLongitude(to);
+        toLat = nodeAccess.getLatitude(to);
+        toLon = nodeAccess.getLongitude(to);
         to1 = to;
         currEdge = createEdgeEntry(from, 0);
         fromMap.put(from, currEdge);
@@ -107,8 +107,8 @@ public class AStar extends AbstractRoutingAlgorithm
                 AStarEdge nEdge = fromMap.get(neighborNode);
                 if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight)
                 {
-                    tmpLat = graph.getLatitude(neighborNode);
-                    tmpLon = graph.getLongitude(neighborNode);
+                    tmpLat = nodeAccess.getLatitude(neighborNode);
+                    tmpLon = nodeAccess.getLongitude(neighborNode);
                     currWeightToGoal = dist.calcDist(toLat, toLon, tmpLat, tmpLon);
                     currWeightToGoal = weighting.getMinWeight(currWeightToGoal);
                     distEstimation = alreadyVisitedWeight + currWeightToGoal;

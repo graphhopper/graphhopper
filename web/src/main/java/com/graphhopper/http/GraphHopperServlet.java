@@ -210,12 +210,13 @@ public class GraphHopperServlet extends GHBaseServlet {
             if (points.getSize() >= 2)
                 builder.object("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
 
+            builder.object("coordinatesDim", points.getDimension());
             if (encodedPolylineParam) {
                 String encodedPolyline = WebHelper.encodePolyline(points);
                 builder.object("coordinates", encodedPolyline);
             } else {
                 builder.startObject("data").
-                        object("type", "LineString").
+                        object("type", "LineString").                        
                         object("coordinates", points.toGeoJson()).
                         endObject();
             }
