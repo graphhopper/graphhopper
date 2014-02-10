@@ -34,10 +34,10 @@ import org.slf4j.LoggerFactory;
  */
 public class GHThreadPool
 {
-    private Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ExecutorService service;
     private final int threads;
-    private BlockingQueue<GHWorker> resolverQueue;
+    private final BlockingQueue<GHWorker> resolverQueue;
 
     public GHThreadPool( int queueSize, int threads )
     {
@@ -141,7 +141,8 @@ public class GHThreadPool
                 long tmp = System.currentTimeMillis();
                 synchronized (w)
                 {
-                    w.wait(timeOutInMillis);
+                    if (w.isAlive())
+                        w.wait(timeOutInMillis);
                 }
                 remainingTimeout -= (System.currentTimeMillis() - tmp);
                 if (remainingTimeout < 10)
@@ -157,8 +158,9 @@ public class GHThreadPool
 
     public static abstract class GHWorker implements Runnable
     {
-        private long maxLiveTimeInMillis = 5000;
-        private long startTime = -1;
+        private final long maxLiveTimeInMillis;
+        private volatile long startTime = -1;
+        private volatile boolean alive = true;
 
         public GHWorker( long maxLiveTimeInMillis )
         {
@@ -174,13 +176,17 @@ public class GHThreadPool
         private boolean isTimedOut()
         {
             if (startTime < 0)
-            {
                 throw new IllegalStateException("Call doEnqueue before");
-            }
+
             return (System.currentTimeMillis() - startTime) > maxLiveTimeInMillis;
         }
 
         public abstract String getName();
+
+        public boolean isAlive()
+        {
+            return alive;
+        }
 
         @Override
         public String toString()
@@ -189,9 +195,10 @@ public class GHThreadPool
         }
 
         private void finish()
-        {
+        {            
             synchronized (this)
             {
+                alive = false;
                 notifyAll();
             }
         }
