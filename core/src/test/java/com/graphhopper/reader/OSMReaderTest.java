@@ -76,7 +76,6 @@ public class OSMReaderTest
     private CarFlagEncoder carEncoder;
     private FootFlagEncoder footEncoder;
     private EdgeExplorer carOutExplorer;
-    private EdgeExplorer carInExplorer;
     private EdgeExplorer carAllExplorer;
 
     @Before
@@ -93,7 +92,7 @@ public class OSMReaderTest
 
     GraphStorage newGraph( String directory, EncodingManager encodingManager, boolean is3D, boolean turnRestrictionsImport )
     {
-        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, 
+        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager,
                 is3D, turnRestrictionsImport ? new TurnCostStorage() : new ExtendedStorage.NoExtendedStorage());
     }
 
@@ -114,7 +113,7 @@ public class OSMReaderTest
 
         OSMReader createReader( GraphStorage tmpGraph )
         {
-            return new OSMReader(tmpGraph, 1000);
+            return new OSMReader(tmpGraph);
         }
 
         @Override
@@ -132,7 +131,6 @@ public class OSMReaderTest
                 throw new RuntimeException(e);
             }
             carOutExplorer = getGraph().createEdgeExplorer(new DefaultEdgeFilter(carEncoder, false, true));
-            carInExplorer = getGraph().createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, false));
             carAllExplorer = getGraph().createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, true));
             return osmReader;
         }
@@ -214,7 +212,7 @@ public class OSMReaderTest
             @Override
             OSMReader createReader( GraphStorage tmpGraph )
             {
-                return new OSMReader(tmpGraph, 1000)
+                return new OSMReader(tmpGraph)
                 {
                     @Override
                     public boolean isInBounds( OSMNode node )
@@ -328,11 +326,11 @@ public class OSMReaderTest
         iter.next();
         assertEquals(5, carEncoder.getSpeed(iter.getFlags()), 1e-1);
 
-        // more precise speed calculation! ~150km (from 54.0,10.1 to 55.0,10.1) in duration=70 minutes -> wow ;)
-        // => 130km/h => / 1.4 => 92km/h        
+        // duration 01:10 is given => more precise speed calculation! 
+        // ~111km (from 54.0,10.1 to 55.0,10.2) in duration=70 minutes => 95km/h => / 1.4 => 71km/h        
         iter = carOutExplorer.setBaseNode(n40);
         iter.next();
-        assertEquals(100, carEncoder.getSpeed(iter.getFlags()), 1e-1);
+        assertEquals(70, carEncoder.getSpeed(iter.getFlags()), 1e-1);
     }
 
     @Test
@@ -475,7 +473,8 @@ public class OSMReaderTest
     public void testRelation()
     {
         EncodingManager manager = new EncodingManager("bike");
-        OSMReader reader = new OSMReader(new GraphHopperStorage(new RAMDirectory(), manager, false), -1).setEncodingManager(manager);
+        OSMReader reader = new OSMReader(new GraphHopperStorage(new RAMDirectory(), manager, false)).
+                setEncodingManager(manager);
         OSMRelation osmRel = new OSMRelation(1, new HashMap<String, String>());
         osmRel.getMembers().add(new OSMRelation.Member(OSMRelation.WAY, 1, ""));
         osmRel.getMembers().add(new OSMRelation.Member(OSMRelation.WAY, 2, ""));
@@ -560,13 +559,6 @@ public class OSMReaderTest
     }
 
     @Test
-    public void testFixWayName()
-    {
-        assertEquals("B8, B12", OSMReader.fixWayName("B8;B12"));
-        assertEquals("B8, B12", OSMReader.fixWayName("B8; B12"));
-    }
-
-    @Test
     public void testEstimatedCenter()
     {
         final CarFlagEncoder encoder = new CarFlagEncoder()
@@ -582,7 +574,7 @@ public class OSMReaderTest
             }
 
             @Override
-            public long analyzeNodeTags( OSMNode node )
+            public long handleNodeTags( OSMNode node )
             {
                 if (node.hasTag("test", "now"))
                     return -objectEncoder.setValue(0, 1);
@@ -599,7 +591,7 @@ public class OSMReaderTest
                 return speedEncoder.setValue(wayFlags, (int) speed);
             }
         };
-        EncodingManager manager = new EncodingManager(encoder);        
+        EncodingManager manager = new EncodingManager(encoder);
         GraphStorage graph = newGraph(dir, manager, false, false);
         final Map<Integer, Double> latMap = new HashMap<Integer, Double>();
         final Map<Integer, Double> lonMap = new HashMap<Integer, Double>();
@@ -609,7 +601,7 @@ public class OSMReaderTest
         lonMap.put(1, 1.0d);
         lonMap.put(2, 1.0d);
         final AtomicInteger increased = new AtomicInteger(0);
-        OSMReader osmreader = new OSMReader(graph, 1000)
+        OSMReader osmreader = new OSMReader(graph)
         {
             // mock data access
             @Override
@@ -638,7 +630,7 @@ public class OSMReaderTest
         Map<String, String> nodeMap = new HashMap<String, String>();
         OSMNode osmNode = new OSMNode(1, nodeMap, 1.1d, 1.0d);
         osmNode.setTag("test", "now");
-        osmreader.getNodeFlagsMap().put(1, encoder.analyzeNodeTags(osmNode));
+        osmreader.getNodeFlagsMap().put(1, encoder.handleNodeTags(osmNode));
 
         OSMWay way = new OSMWay(1L);
         way.getNodes().add(1);
@@ -654,5 +646,19 @@ public class OSMReaderTest
         Double d = way.getInternalTag("estimated_distance", null);
         assertEquals(11119.5, d, 1e-1);
         assertEquals(1, increased.get());
+    }
+
+    @Test
+    public void testReadEleFromCustomOSM()
+    {
+        GraphHopper hopper = new GraphHopperTest("custom-osm-ele.xml").
+                set3D(true).
+                importOrLoad();
+        Graph graph = hopper.getGraph();
+        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
+        int n50 = AbstractGraphStorageTester.getIdOf(graph, 49);
+        
+        EdgeIteratorState edge = GHUtility.getEdge(graph, n20, n50);
+        assertEquals(Helper.createPointList3D(52, 9, -10, 51.25, 9.43, 100, 49, 10, -30), edge.fetchWayGeometry(3));
     }
 }

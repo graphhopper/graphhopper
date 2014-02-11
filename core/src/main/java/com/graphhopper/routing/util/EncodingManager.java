@@ -32,6 +32,8 @@ import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
 import java.util.*;
 
 /**
@@ -70,6 +72,7 @@ public class EncodingManager
     private final int bytesForFlags;
     private final int maxTurnFlagsBits;
     private final int maxTurnCost;
+    private boolean enableInstructions = true;
 
     /**
      * Instantiate manager with the given list of encoders. The manager knows the default encoders:
@@ -82,7 +85,7 @@ public class EncodingManager
     {
         this(flagEncodersStr, 4);
     }
-    
+
     public EncodingManager( String flagEncodersStr, int bytesForFlags )
     {
         this(Arrays.asList(readFromEncoderString(defaultEdgeFlagEncoders, flagEncodersStr).toArray(new FlagEncoder[0])), bytesForFlags, 0);
@@ -221,11 +224,10 @@ public class EncodingManager
 
     private FlagEncoder getEncoder( String name, boolean throwExc )
     {
-        int encoderCount = edgeEncoders.size();
-        for (int i = 0; i < encoderCount; i++)
+        for (AbstractFlagEncoder encoder : edgeEncoders)
         {
-            if (name.equalsIgnoreCase(edgeEncoders.get(i).toString()))
-                return edgeEncoders.get(i);
+            if (name.equalsIgnoreCase(encoder.toString()))
+                return encoder;
         }
         if (throwExc)
             throw new IllegalArgumentException("Encoder for " + name + " not found.");
@@ -238,10 +240,9 @@ public class EncodingManager
     public long acceptWay( OSMWay way )
     {
         long includeWay = 0;
-        int encoderCount = edgeEncoders.size();
-        for (int i = 0; i < encoderCount; i++)
+        for (AbstractFlagEncoder encoder : edgeEncoders)
         {
-            includeWay |= edgeEncoders.get(i).acceptWay(way);
+            includeWay |= encoder.acceptWay(way);
         }
 
         return includeWay;
@@ -250,10 +251,9 @@ public class EncodingManager
     public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
     {
         long flags = 0;
-        int encoderCount = edgeEncoders.size();
-        for (int i = 0; i < encoderCount; i++)
+        for (AbstractFlagEncoder encoder : edgeEncoders)
         {
-            flags |= edgeEncoders.get(i).handleRelationTags(relation, oldRelationFlags);
+            flags |= encoder.handleRelationTags(relation, oldRelationFlags);
         }
 
         return flags;
@@ -269,10 +269,8 @@ public class EncodingManager
     public long handleWayTags( OSMWay way, long includeWay, long relationFlags )
     {
         long flags = 0;
-        int encoderCount = edgeEncoders.size();
-        for (int i = 0; i < encoderCount; i++)
+        for (AbstractFlagEncoder encoder : edgeEncoders)
         {
-            AbstractFlagEncoder encoder = edgeEncoders.get(i);
             flags |= encoder.handleWayTags(way, includeWay, relationFlags & encoder.getRelBitMask());
         }
 
@@ -288,13 +286,12 @@ public class EncodingManager
     public String toString()
     {
         StringBuilder str = new StringBuilder();
-        int encoderCount = edgeEncoders.size();
-        for (int i = 0; i < encoderCount; i++)
+        for (AbstractFlagEncoder encoder : edgeEncoders)
         {
             if (str.length() > 0)
                 str.append(",");
 
-            str.append(edgeEncoders.get(i).toString());
+            str.append(encoder.toString());
         }
 
         return str.toString();
@@ -303,15 +300,14 @@ public class EncodingManager
     public String toDetailsString()
     {
         StringBuilder str = new StringBuilder();
-        int encoderCount = edgeEncoders.size();
-        for (int i = 0; i < encoderCount; i++)
+        for (AbstractFlagEncoder encoder : edgeEncoders)
         {
             if (str.length() > 0)
                 str.append(",");
 
-            str.append(edgeEncoders.get(i).toString());
+            str.append(encoder.toString());
             str.append(":");
-            str.append(edgeEncoders.get(i).getClass().getName());
+            str.append(encoder.getClass().getName());
         }
 
         return str.toString();
@@ -331,10 +327,9 @@ public class EncodingManager
     public long flagsDefault( boolean forward, boolean backward )
     {
         long flags = 0;
-        int encoderCount = edgeEncoders.size();
-        for (int i = 0; i < encoderCount; i++)
+        for (AbstractFlagEncoder encoder : edgeEncoders)
         {
-            flags |= edgeEncoders.get(i).flagsDefault(forward, backward);
+            flags |= encoder.flagsDefault(forward, backward);
         }
         return flags;
     }
@@ -344,10 +339,9 @@ public class EncodingManager
      */
     public long swapDirection( long flags )
     {
-        int encoderCount = edgeEncoders.size();
-        for (int i = 0; i < encoderCount; i++)
+        for (AbstractFlagEncoder encoder : edgeEncoders)
         {
-            flags = edgeEncoders.get(i).swapDirection(flags);
+            flags = encoder.swapDirection(flags);
         }
         return flags;
     }
@@ -364,13 +358,11 @@ public class EncodingManager
     public boolean equals( Object obj )
     {
         if (obj == null)
-        {
             return false;
-        }
+
         if (getClass() != obj.getClass())
-        {
             return false;
-        }
+
         final EncodingManager other = (EncodingManager) obj;
         if (this.edgeEncoders != other.edgeEncoders && (this.edgeEncoders == null || !this.edgeEncoders.equals(other.edgeEncoders)))
         {
@@ -382,32 +374,15 @@ public class EncodingManager
     /**
      * Analyze tags on osm node. Store node tags (barriers etc) for later usage while parsing way.
      */
-    public long analyzeNodeTags( OSMNode node )
+    public long handleNodeTags( OSMNode node )
     {
         long flags = 0;
-        int encoderCount = edgeEncoders.size();
-        for (int i = 0; i < encoderCount; i++)
+        for (AbstractFlagEncoder encoder : edgeEncoders)
         {
-            flags |= edgeEncoders.get(i).analyzeNodeTags(node);
+            flags |= encoder.handleNodeTags(node);
         }
 
         return flags;
-    }
-
-    public String getWayInfo( OSMWay way )
-    {
-        String str = "";
-        int encoderCount = edgeEncoders.size();
-        for (int i = 0; i < encoderCount; i++)
-        {
-            String tmpWayInfo = edgeEncoders.get(i).getWayInfo(way);
-            if (tmpWayInfo.isEmpty())
-                continue;
-            if (!str.isEmpty())
-                str += ", ";
-            str += tmpWayInfo;
-        }
-        return str;
     }
 
     /**
@@ -416,10 +391,8 @@ public class EncodingManager
     public long applyNodeFlags( long wayFlags, long nodeFlags )
     {
         long flags = 0;
-        int encoderCount = edgeEncoders.size();
-        for (int i = 0; i < encoderCount; i++)
+        for (AbstractFlagEncoder encoder : edgeEncoders)
         {
-            AbstractFlagEncoder encoder = edgeEncoders.get(i);
             flags |= encoder.applyNodeFlags(wayFlags & encoder.getWayBitMask(), nodeFlags);
         }
 
@@ -460,5 +433,45 @@ public class EncodingManager
         }
 
         return entries.valueCollection();
+    }
+
+    public EncodingManager setEnableInstructions( boolean enableInstructions )
+    {
+        this.enableInstructions = enableInstructions;
+        return this;
+    }
+
+    public void applyWayTags( OSMWay way, EdgeIteratorState edge )
+    {
+        // storing the road name does not yet depend on the flagEncoder so manage it directly
+        if (enableInstructions)
+        {   
+            // String wayInfo = carFlagEncoder.getWayInfo(way);
+            // http://wiki.openstreetmap.org/wiki/Key:name
+            String name = fixWayName(way.getTag("name"));
+            // http://wiki.openstreetmap.org/wiki/Key:ref
+            String refName = fixWayName(way.getTag("ref"));
+            if (!Helper.isEmpty(refName))
+            {
+                if (Helper.isEmpty(name))
+                    name = refName;
+                else
+                    name += ", " + refName;
+            }
+
+            edge.setName(name);
+        }
+
+        for (AbstractFlagEncoder encoder : edgeEncoders)
+        {
+            encoder.applyWayTags(way, edge);
+        }
+    }
+
+    static String fixWayName( String str )
+    {
+        if (str == null)
+            return "";
+        return str.replaceAll(";[ ]*", ", ");
     }
 }

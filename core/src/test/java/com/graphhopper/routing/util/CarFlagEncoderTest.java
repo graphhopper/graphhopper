@@ -174,7 +174,7 @@ public class CarFlagEncoderTest
         // accept
         assertNotSame(0, encoder.acceptWay(way));
         // calculate speed from estimated_distance and duration
-        assertEquals(60, encoder.getSpeed(encoder.handleFerry(way, 20, 30, 40)), 1e-1);
+        assertEquals(60, encoder.getSpeed(encoder.handleFerryTags(way, 20, 30, 40)), 1e-1);
     }
 
     @Test
@@ -229,27 +229,27 @@ public class CarFlagEncoderTest
         node.setTag("barrier", "lift_gate");
         node.setTag("access", "yes");
         // no barrier!
-        assertTrue(encoder.analyzeNodeTags(node) == 0);
+        assertTrue(encoder.handleNodeTags(node) == 0);
 
         node = new OSMNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
         node.setTag("bicycle", "yes");
         // barrier!
-        assertTrue(encoder.analyzeNodeTags(node) > 0);
+        assertTrue(encoder.handleNodeTags(node) > 0);
         
         node = new OSMNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
         node.setTag("access", "yes");
         node.setTag("bicycle", "yes");
         // should this be a barrier for motorcars too?
-        // assertTrue(encoder.analyzeNodeTags(node) > 0);
+        // assertTrue(encoder.handleNodeTags(node) > 0);
         
         node = new OSMNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
         node.setTag("access", "no");
         node.setTag("motorcar", "yes");
         // no barrier!
-        assertTrue(encoder.analyzeNodeTags(node) == 0);
+        assertTrue(encoder.handleNodeTags(node) == 0);
     }
 
     @Test

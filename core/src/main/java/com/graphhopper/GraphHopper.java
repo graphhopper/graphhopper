@@ -77,8 +77,7 @@ public class GraphHopper implements GraphHopperAPI
     private double logMessages = 20;
     // for OSM import
     private String osmFile;
-    private EncodingManager encodingManager;
-    private long expectedCapacity = 100;
+    private EncodingManager encodingManager;    
     private double wayPointMaxDistance = 1;
     private int workerThreads = -1;
     private int defaultSegmentSize = -1;
@@ -253,9 +252,10 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Enable storing and fetching elevation data. Default is false
      */
-    public void set3D( boolean is3D )
+    public GraphHopper set3D( boolean is3D )
     {
         this.is3D = is3D;
+        return this;
     }
 
     /**
@@ -426,7 +426,6 @@ public class GraphHopper implements GraphHopperAPI
 
         // graph
         setGraphHopperLocation(graphHopperFolder);
-        expectedCapacity = args.getLong("graph.expectedCapacity", expectedCapacity);
         defaultSegmentSize = args.getInt("graph.dataaccess.segmentSize", defaultSegmentSize);
         is3D = args.getBool("graph.is3d", is3D);
         String dataAccess = args.get("graph.dataaccess", "RAM_STORE").toUpperCase();
@@ -538,13 +537,14 @@ public class GraphHopper implements GraphHopperAPI
         setOSMFile(_osmFile);
         File osmTmpFile = new File(osmFile);
         if (!osmTmpFile.exists())
-        {
-            throw new IllegalStateException("Your specified OSM file does not exist:" + osmTmpFile.getAbsolutePath());
-        }
+            throw new IllegalStateException("Your specified OSM file does not exist:" + osmTmpFile.getAbsolutePath());        
 
         logger.info("start creating graph from " + osmFile);
-        OSMReader reader = new OSMReader(graph, expectedCapacity).setWorkerThreads(workerThreads).setEncodingManager(encodingManager)
-                .setWayPointMaxDistance(wayPointMaxDistance).setEnableInstructions(enableInstructions);
+        encodingManager.setEnableInstructions(enableInstructions);
+        OSMReader reader = new OSMReader(graph).
+                setWorkerThreads(workerThreads).
+                setEncodingManager(encodingManager).
+                setWayPointMaxDistance(wayPointMaxDistance);
         logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
         reader.doOSM2Graph(osmTmpFile);
         return reader;

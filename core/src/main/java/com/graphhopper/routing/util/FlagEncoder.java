@@ -71,7 +71,15 @@ public interface FlagEncoder
     // <->        f | f  | t
     boolean canBeOverwritten( long flags1, long flags2 );
 
-    int getPavementCode( long flags );
+    /**
+     * @return the number to identify a pavement of a road.
+     * @see InstructionList#getWayName
+     */
+    int getPavementType( long flags );
 
-    int getWayTypeCode( long flags );
+    /**
+     * @return the number to identify a pushing section, cycle way etc.
+     * @see InstructionList#getWayName
+     */
+    int getWayType( long flags );
 }

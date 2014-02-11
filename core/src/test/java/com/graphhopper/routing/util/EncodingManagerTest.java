@@ -203,7 +203,7 @@ public class EncodingManagerTest
             }
 
             @Override
-            public long analyzeNodeTags( OSMNode node )
+            public long handleNodeTags( OSMNode node )
             {
                 String tmp = node.getTags().get("test");
                 // return negative value to indicate that this is not a barrier
@@ -229,14 +229,14 @@ public class EncodingManagerTest
         OSMWay way = new OSMWay(2, wayMap);
 
         long wayFlags = manager.handleWayTags(way, manager.acceptWay(way), 0);
-        long nodeFlags = manager.analyzeNodeTags(node);
+        long nodeFlags = manager.handleNodeTags(node);
         wayFlags = manager.applyNodeFlags(wayFlags, -nodeFlags);
         assertEquals(60, car.getSpeed(wayFlags), 1e-1);
         assertEquals(59, car2.getSpeed(wayFlags), 1e-1);
 
         nodeMap.put("test", "something");
         wayFlags = manager.handleWayTags(way, manager.acceptWay(way), 0);
-        nodeFlags = manager.analyzeNodeTags(node);
+        nodeFlags = manager.handleNodeTags(node);
         wayFlags = manager.applyNodeFlags(wayFlags, -nodeFlags);
         assertEquals(58, car2.getSpeed(wayFlags), 1e-1);
         assertEquals(60, car.getSpeed(wayFlags), 1e-1);
@@ -244,7 +244,7 @@ public class EncodingManagerTest
         wayMap.put("maxspeed", "130");
         wayFlags = manager.handleWayTags(way, manager.acceptWay(way), 0);
         assertEquals(car.getMaxSpeed(), car2.getSpeed(wayFlags), 1e-1);
-        nodeFlags = manager.analyzeNodeTags(node);
+        nodeFlags = manager.handleNodeTags(node);
         wayFlags = manager.applyNodeFlags(wayFlags, -nodeFlags);
         assertEquals(98, car2.getSpeed(wayFlags), 1e-1);
         assertEquals(100, car.getSpeed(wayFlags), 1e-1);
@@ -285,7 +285,7 @@ public class EncodingManagerTest
             }
         };
 
-        EncodingManager manager = new EncodingManager(Arrays.asList(bike, foot, car), 4, 127);        
+        EncodingManager manager = new EncodingManager(Arrays.asList(bike, foot, car), 4, 127);
 
         // turn cost entries for car and foot are for the same relations (same viaNode, edgeFrom and edgeTo), turn cost entry for bike is for another relation (different viaNode) 
         turnCostEntry_car.edgeFrom = 1;
@@ -309,7 +309,7 @@ public class EncodingManagerTest
         for (TurnCostTableEntry entry : entries)
         {
             if (entry.edgeFrom == 1)
-            { 
+            {
                 // the first entry provides turn flags for car and foot only 
                 assertEquals(assertFlag1, entry.flags);
                 assertTrue(car.isTurnRestricted(entry.flags));
@@ -320,7 +320,7 @@ public class EncodingManagerTest
                 assertEquals(0, foot.getTurnCosts(entry.flags));
                 assertEquals(0, bike.getTurnCosts(entry.flags));
             } else if (entry.edgeFrom == 2)
-            { 
+            {
                 // the 2nd entry provides turn flags for bike only
                 assertEquals(assertFlag2, entry.flags);
                 assertFalse(car.isTurnRestricted(entry.flags));
@@ -335,4 +335,10 @@ public class EncodingManagerTest
 
     }
 
+    @Test
+    public void testFixWayName()
+    {
+        assertEquals("B8, B12", EncodingManager.fixWayName("B8;B12"));
+        assertEquals("B8, B12", EncodingManager.fixWayName("B8; B12"));
+    }
 }

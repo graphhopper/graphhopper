@@ -302,7 +302,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
 
         } else
         {
-            encoded = handleFerry(way,
+            encoded = handleFerryTags(way,
                     highwaySpeed.get("living_street"),
                     highwaySpeed.get("track"),
                     highwaySpeed.get("primary"));
@@ -312,13 +312,13 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long analyzeNodeTags( OSMNode node )
+    public long handleNodeTags( OSMNode node )
     {
         // absolute barriers always block
         if (node.hasTag("barrier", absoluteBarriers))
             return directionBitMask;
 
-        return super.analyzeNodeTags(node);
+        return super.handleNodeTags(node);
     }
 
     int getSpeed( OSMWay way )
@@ -371,7 +371,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public int getPavementCode( long flags )
+    public int getPavementType( long flags )
     {
         if ((flags & unpavedBit) != 0)
             return 1; // unpaved
@@ -380,7 +380,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public int getWayTypeCode( long flags )
+    public int getWayType( long flags )
     {
         return (int) wayTypeEncoder.getValue(flags);
     }

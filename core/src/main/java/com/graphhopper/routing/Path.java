@@ -353,8 +353,8 @@ public class Path
             private Instruction prevInstruction;
             private PointList points = new PointList();
             private String name = null;
-            private int pavementCode;
-            private int wayTypeCode;
+            private int pavementType;
+            private int wayType;
 
             @Override
             public void next( EdgeIteratorState edge, int index )
@@ -384,9 +384,9 @@ public class Path
                 {
                     // very first instruction
                     name = edge.getName();
-                    pavementCode = encoder.getPavementCode(edge.getFlags());
-                    wayTypeCode = encoder.getWayTypeCode(edge.getFlags());
-                    prevInstruction = new Instruction(Instruction.CONTINUE_ON_STREET, name, wayTypeCode, pavementCode, points);
+                    pavementType = encoder.getPavementType(edge.getFlags());
+                    wayType = encoder.getWayType(edge.getFlags());
+                    prevInstruction = new Instruction(Instruction.CONTINUE_ON_STREET, name, wayType, pavementType, points);
                     updatePointsAndInstruction(edge, wayGeo);
                     cachedWays.add(prevInstruction);
                 } else
@@ -408,16 +408,16 @@ public class Path
                     }
 
                     String tmpName = edge.getName();
-                    int tmpPavement = encoder.getPavementCode(edge.getFlags());
-                    int tmpWayType = encoder.getWayTypeCode(edge.getFlags());
+                    int tmpPavement = encoder.getPavementType(edge.getFlags());
+                    int tmpWayType = encoder.getWayType(edge.getFlags());
                     if ((!name.equals(tmpName))
-                            || (pavementCode != tmpPavement)
-                            || (wayTypeCode != tmpWayType))
+                            || (pavementType != tmpPavement)
+                            || (wayType != tmpWayType))
                     {
                         points = new PointList();                        
                         name = tmpName;
-                        pavementCode = tmpPavement;
-                        wayTypeCode = tmpWayType;
+                        pavementType = tmpPavement;
+                        wayType = tmpWayType;
                         double delta = Math.abs(tmpOrientation - prevOrientation);
                         int indication;
                         if (delta < 0.2)
@@ -450,7 +450,7 @@ public class Path
 
                         }
 
-                        prevInstruction = new Instruction(indication, name, wayTypeCode, pavementCode, points);
+                        prevInstruction = new Instruction(indication, name, wayType, pavementType, points);
                         cachedWays.add(prevInstruction);
                     } 
                     

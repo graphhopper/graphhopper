@@ -58,8 +58,8 @@ public abstract class AbstractBikeFlagEncoderTester
     {
         long allowed = encoder.acceptBit;
         long flags = encoder.handleWayTags(way, allowed, 0);
-        int pavement = encoder.getPavementCode(flags);
-        int wayType = encoder.getWayTypeCode(flags);
+        int pavement = encoder.getPavementType(flags);
+        int wayType = encoder.getWayType(flags);
 
         TranslationMap.Translation enMap = SINGLETON.getWithFallBack(Locale.UK);
         return InstructionList.getWayName(name, pavement, wayType, enMap);

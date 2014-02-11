@@ -29,16 +29,13 @@ import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.*;
 import java.util.Collections;
 
 /**
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
- * EncodingManager to be usable. Although the flag is of type long only the int-portition is
- * currently stored.
+ * EncodingManager to be usable. If you want the full long to be stored you need to enable this in
+ * the GraphHopperStorage.
  * <p/>
  * @author Peter Karich
  * @author Nop
@@ -166,28 +163,32 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     /**
-     * Analyze the properties of a relation and create the routing flags for the second read step
+     * Analyze the properties of a relation and create the routing flags for the second read step.
+     * In the pre-parsing step this method will be called to determine the useful relation tags.
      * <p/>
      */
     public abstract long handleRelationTags( OSMRelation relation, long oldRelationFlags );
 
     /**
-     * Decide whether a way is routable for a given mode of travel
+     * Decide whether a way is routable for a given mode of travel. This skips some ways before
+     * handleWayTags is called.
      * <p/>
      * @return the encoded value to indicate if this encoder allows travel or not.
      */
     public abstract long acceptWay( OSMWay way );
 
     /**
-     * Analyze properties of a way and create the routing flags
+     * Analyze properties of a way and create the routing flags. This method is called in the second
+     * parsing step.
      */
     public abstract long handleWayTags( OSMWay way, long allowed, long relationFlags );
 
     /**
      * Parse tags on nodes. Node tags can add to speed (like traffic_signals) where the value is
-     * strict negative or blocks access (like a barrier), then the value is strict positive.
+     * strict negative or blocks access (like a barrier), then the value is strict positive.This
+     * method is called in the second parsing step.
      */
-    public long analyzeNodeTags( OSMNode node )
+    public long handleNodeTags( OSMNode node )
     {
         // movable barriers block if they are not marked as passable
         if (node.hasTag("barrier", potentialBarriers)
@@ -202,6 +203,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         return 0;
     }
 
+    /**
+     * This method is called after determining the node flags and way flags.
+     */
     public long applyNodeFlags( long wayFlags, long nodeFlags )
     {
         return nodeFlags | wayFlags;
@@ -231,15 +235,15 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     @Override
-    public int getPavementCode( long flags )
+    public int getPavementType( long flags )
     {
-        return -1;
+        return 0;
     }
 
     @Override
-    public int getWayTypeCode( long flags )
+    public int getWayType( long flags )
     {
-        return -1;
+        return 0;
     }
 
     /**
@@ -323,11 +327,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             return false;
 
         return this.toString().equals(other.toString());
-    }
-
-    public String getWayInfo( OSMWay way )
-    {
-        return "";
     }
 
     /**
@@ -430,9 +429,17 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     /**
+     * Second parsing step. After splitting the edges currently used to offer a hook to calculate
+     * precise speed values based on elevation data stored in the specified edge.
+     */
+    public void applyWayTags( OSMWay way, EdgeIteratorState edge )
+    {
+    }
+
+    /**
      * Special handling for ferry ways.
      */
-    protected long handleFerry( OSMWay way, double unknownSpeed, double shortTripsSpeed, double longTripsSpeed )
+    protected long handleFerryTags( OSMWay way, double unknownSpeed, double shortTripsSpeed, double longTripsSpeed )
     {
         // to hours
         double durationInHours = parseDuration(way.getTag("duration")) / 60d;
@@ -458,14 +465,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (durationInHours == 0)
         {
             // unknown speed -> put penalty on ferry transport
-            return speedEncoder.setValue(0, (int) unknownSpeed);
+            return speedEncoder.setDoubleValue(0, unknownSpeed);
         } else if (durationInHours > 1)
         {
             // lengthy ferries should be faster than short trip ferry
-            return speedEncoder.setValue(0, (int) longTripsSpeed);
+            return speedEncoder.setDoubleValue(0, longTripsSpeed);
         } else
         {
-            return speedEncoder.setValue(0, (int) shortTripsSpeed);
+            return speedEncoder.setDoubleValue(0, shortTripsSpeed);
         }
     }
 

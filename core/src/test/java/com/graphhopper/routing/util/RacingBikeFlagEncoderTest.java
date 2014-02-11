@@ -77,8 +77,8 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         long relFlags = encoder.handleRelationTags(osmRel, 0);
         long flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(2, encoder.getSpeed(flags), 1e-1);
-        assertEquals(1, encoder.getWayTypeCode(flags)); // Pushing section
-        assertEquals(1, encoder.getPavementCode(flags)); //  Unpaved
+        assertEquals(1, encoder.getWayType(flags)); // Pushing section
+        assertEquals(1, encoder.getPavementType(flags)); //  Unpaved
 
         // relation code is OUTSTANDING NICE but as unpaved, the speed is still PUSHING_SECTION_SPEED/2
         relMap.put("network", "icn");

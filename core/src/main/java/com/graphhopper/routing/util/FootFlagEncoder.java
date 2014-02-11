@@ -246,7 +246,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         } else
         {
-            encoded = handleFerry(way, SLOW, MEAN, FERRY);
+            encoded = handleFerryTags(way, SLOW, MEAN, FERRY);
             encoded |= directionBitMask;
         }
 
@@ -254,13 +254,13 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public int getPavementCode( long flags )
+    public int getPavementType( long flags )
     {
         return 0;
     }
 
     @Override
-    public int getWayTypeCode( long flags )
+    public int getWayType( long flags )
     {
         return 0;
     }

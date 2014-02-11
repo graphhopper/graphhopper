@@ -44,6 +44,7 @@ import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalc3D;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.EdgeIteratorState;
@@ -89,10 +90,7 @@ public class OSMReader
     private final NodeAccess nodeAccess;
     private EncodingManager encodingManager = null;
     private int workerThreads = -1;
-    private boolean enableInstructions = true;
-    protected final Directory dir;
     protected long zeroCounter = 0;
-    protected final long expectedNodes;
     // Using the correct Map<Long, Integer> is hard. We need a memory efficient and fast solution for big data sets!
     //
     // very slow: new SparseLongLongArray
@@ -105,12 +103,14 @@ public class OSMReader
     private LongIntMap osmNodeIdToInternalNodeMap;
     private TLongLongHashMap osmNodeIdToNodeFlagsMap;
     private TLongLongHashMap osmWayIdToRouteWeightMap;
-    private TLongHashSet osmIdStoreRequiredSet; //stores osm ids used by relations to identify which edge ids needs to be mapped later
+    // stores osm ids used by relations to identify which edge ids needs to be mapped later
+    private TLongHashSet osmIdStoreRequiredSet = new TLongHashSet();
+    ; 
     private TIntLongMap edgeIdToOsmidMap;
     private final TLongList barrierNodeIDs = new TLongArrayList();
-    protected DataAccess pillarLats;
-    protected DataAccess pillarLons;
+    protected PillarInfo pillarInfo;
     private final DistanceCalc distCalc = new DistanceCalcEarth();
+    private final DistanceCalc3D distCalc3D = new DistanceCalc3D();
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private int nextTowerId = 0;
     private int nextPillarId = 0;
@@ -118,21 +118,15 @@ public class OSMReader
     private long newUniqueOSMId = -Long.MAX_VALUE;
     private boolean exitOnlyPillarNodeException = true;
 
-    public OSMReader( GraphStorage storage, long expectedCap )
+    public OSMReader( GraphStorage storage )
     {
         this.graphStorage = storage;
-        this.expectedNodes = expectedCap;
         this.nodeAccess = graphStorage.getNodeAccess();
 
         osmNodeIdToInternalNodeMap = new GHLongIntBTree(200);
         osmNodeIdToNodeFlagsMap = new TLongLongHashMap(200, .5f, 0, 0);
         osmWayIdToRouteWeightMap = new TLongLongHashMap(200, .5f, 0, 0);
-
-        dir = graphStorage.getDirectory();
-        pillarLats = dir.find("tmpLatitudes");
-        pillarLons = dir.find("tmpLongitudes");
-        pillarLats.create(Math.max(expectedCap, 100));
-        pillarLons.create(Math.max(expectedCap, 100));
+        pillarInfo = new PillarInfo(nodeAccess.is3D(), graphStorage.getDirectory());
     }
 
     public void doOSM2Graph( File osmFile ) throws IOException
@@ -192,14 +186,10 @@ public class OSMReader
                 {
                     final OSMRelation relation = (OSMRelation) item;
                     if (!relation.isMetaRelation() && relation.hasTag("type", "route"))
-                    {
                         prepareWaysWithRelationInfo(relation);
-                    }
 
                     if (relation.hasTag("type", "restriction"))
-                    {
                         prepareRestrictionRelation(relation);
-                    }
 
                     if (++tmpRelationCounter % 50000 == 0)
                     {
@@ -230,9 +220,6 @@ public class OSMReader
 
     private TLongSet getOsmIdStoreRequiredSet()
     {
-        if (osmIdStoreRequiredSet == null)
-            osmIdStoreRequiredSet = new TLongHashSet();
-        
         return osmIdStoreRequiredSet;
     }
 
@@ -240,7 +227,7 @@ public class OSMReader
     {
         if (edgeIdToOsmidMap == null)
             edgeIdToOsmidMap = new TIntLongHashMap(getOsmIdStoreRequiredSet().size());
-        
+
         return edgeIdToOsmidMap;
     }
 
@@ -283,30 +270,31 @@ public class OSMReader
             OSMElement item;
             while ((item = in.getNext()) != null)
             {
-                switch (item.getType()) {
-                case OSMElement.NODE:
-                    if (nodeFilter.get(item.getId()) != -1)
-                    {
-                        processNode((OSMNode) item);
-                    }
-                    break;
+                switch (item.getType())
+                {
+                    case OSMElement.NODE:
+                        if (nodeFilter.get(item.getId()) != -1)
+                        {
+                            processNode((OSMNode) item);
+                        }
+                        break;
 
-                case OSMElement.WAY:
-                    if (wayStart < 0)
-                    {
-                        logger.info(nf(counter) + ", now parsing ways");
-                        wayStart = counter;
-                    }
-                    processWay((OSMWay) item);
-                    break;
-                case OSMElement.RELATION:
-                    if (relationStart < 0)
-                    {
-                        logger.info(nf(counter) + ", now parsing relations");
-                        relationStart = counter;
-                    }
-                    processRelation((OSMRelation) item);
-                    break;
+                    case OSMElement.WAY:
+                        if (wayStart < 0)
+                        {
+                            logger.info(nf(counter) + ", now parsing ways");
+                            wayStart = counter;
+                        }
+                        processWay((OSMWay) item);
+                        break;
+                    case OSMElement.RELATION:
+                        if (relationStart < 0)
+                        {
+                            logger.info(nf(counter) + ", now parsing relations");
+                            relationStart = counter;
+                        }
+                        processRelation((OSMRelation) item);
+                        break;
                 }
                 if (++counter % 5000000 == 0)
                 {
@@ -348,6 +336,7 @@ public class OSMReader
 
         long relationFlags = getRelFlagsMap().get(way.getId());
 
+        // TODO move this after we have created the edge and know the coordinates => encodingManager.applyWayTags
         // estimate length of the track e.g. for ferry speed calculation
         TLongList osmNodeIds = way.getNodes();
         if (osmNodeIds.size() > 1)
@@ -431,28 +420,10 @@ public class OSMReader
             // no barriers - simply add the whole way
             createdEdges.addAll(addOSMWay(way.getNodes(), wayFlags, wayOsmId));
         }
-        if (enableInstructions)
-        {
-            // String wayInfo = encodingManager.getWayInfo(way);
-            // http://wiki.openstreetmap.org/wiki/Key:name
-            String name = fixWayName(way.getTag("name"));
-            // http://wiki.openstreetmap.org/wiki/Key:ref
-            String refName = fixWayName(way.getTag("ref"));
-            if (!Helper.isEmpty(refName))
-            {
-                if (Helper.isEmpty(name))
-                {
-                    name = refName;
-                } else
-                {
-                    name += ", " + refName;
-                }
-            }
 
-            for (EdgeIteratorState iter : createdEdges)
-            {
-                iter.setName(name);
-            }
+        for (EdgeIteratorState edge : createdEdges)
+        {
+            encodingManager.applyWayTags(way, edge);
         }
     }
 
@@ -504,7 +475,7 @@ public class OSMReader
         {
             // pillar node
             id = id - 3;
-            return pillarLats.getInt(id * 4L);
+            return pillarInfo.getLat(id);
         } else
             // e.g. if id is not handled from preparse (e.g. was ignored via isInBounds)
             return Double.NaN;
@@ -523,17 +494,10 @@ public class OSMReader
         {
             // pillar node
             id = id - 3;
-            return pillarLons.getInt(id * 4L);
+            return pillarInfo.getLon(id);
         } else
             // e.g. if id is not handled from preparse (e.g. was ignored via isInBounds)
             return Double.NaN;
-    }
-
-    static String fixWayName( String str )
-    {
-        if (str == null)
-            return "";
-        return str.replaceAll(";[ ]*", ", ");
     }
 
     private void processNode( OSMNode node )
@@ -545,7 +509,7 @@ public class OSMReader
             // analyze node tags for barriers
             if (node.hasTags())
             {
-                long nodeFlags = encodingManager.analyzeNodeTags(node);
+                long nodeFlags = encodingManager.handleNodeTags(node);
                 if (nodeFlags != 0)
                     getNodeFlagsMap().put(node.getId(), nodeFlags);
             }
@@ -565,16 +529,13 @@ public class OSMReader
 
         double lat = node.getLat();
         double lon = node.getLon();
+        double ele = node.getEle();
         if (nodeType == TOWER_NODE)
         {
-            addTowerNode(node.getId(), lat, lon);
+            addTowerNode(node.getId(), lat, lon, ele);
         } else if (nodeType == PILLAR_NODE)
         {
-            int tmp = nextPillarId * 4;
-            pillarLats.incCapacity(tmp + 4);
-            pillarLats.setInt(tmp, Helper.degreeToInt(lat));
-            pillarLons.incCapacity(tmp + 4);
-            pillarLons.setInt(tmp, Helper.degreeToInt(lon));
+            pillarInfo.setNode(nextPillarId, lat, lon, ele);
             getNodeMap().put(node.getId(), nextPillarId + 3);
             nextPillarId++;
         }
@@ -597,7 +558,7 @@ public class OSMReader
             long osmId = member.ref();
             long oldRelationFlags = getRelFlagsMap().get(osmId);
 
-            // Check if our new code is better comparated to the the last occured before            
+            // Check if our new relation data is better comparated to the the last one
             long newRelationFlags = encodingManager.handleRelationTags(osmRelation, oldRelationFlags);
             if (oldRelationFlags != newRelationFlags)
                 getRelFlagsMap().put(osmId, newRelationFlags);
@@ -621,9 +582,13 @@ public class OSMReader
         }
     }
 
-    int addTowerNode( long osmId, double lat, double lon )
+    int addTowerNode( long osmId, double lat, double lon, double ele )
     {
-        nodeAccess.setNode(nextTowerId, lat, lon);
+        if (nodeAccess.is3D())
+            nodeAccess.setNode(nextTowerId, lat, lon, ele);
+        else
+            nodeAccess.setNode(nextTowerId, lat, lon);
+
         int id = -(nextTowerId + 3);
         getNodeMap().put(osmId, id);
         nextTowerId++;
@@ -669,7 +634,7 @@ public class OSMReader
                             // TOWER node
                             newEdges.add(addEdge(firstNode, tmpNode, pointList, flags, wayOsmId));
                             pointList.clear();
-                            pointList.add(nodeAccess.getLatitude(tmpNode), nodeAccess.getLongitude(tmpNode));
+                            pointList.add(nodeAccess, tmpNode);
                         }
                         firstNode = tmpNode;
                         lastInBoundsPillarNode = -1;
@@ -696,12 +661,12 @@ public class OSMReader
                 {
                     // TOWER node
                     tmpNode = -tmpNode - 3;
-                    pointList.add(nodeAccess.getLatitude(tmpNode), nodeAccess.getLongitude(tmpNode));
+                    pointList.add(nodeAccess, tmpNode);
                     if (firstNode >= 0)
                     {
                         newEdges.add(addEdge(firstNode, tmpNode, pointList, flags, wayOsmId));
                         pointList.clear();
-                        pointList.add(nodeAccess.getLatitude(tmpNode), nodeAccess.getLongitude(tmpNode));
+                        pointList.add(nodeAccess, tmpNode);
                     }
                     firstNode = tmpNode;
                 }
@@ -723,8 +688,8 @@ public class OSMReader
         double towerNodeDistance = 0;
         double prevLat = pointList.getLatitude(0);
         double prevLon = pointList.getLongitude(0);
-        double lat;
-        double lon;
+        double prevEle = pointList.is3D() ? pointList.getElevation(0) : Double.NaN;
+        double lat, lon, ele = Double.NaN;
         PointList pillarNodes = new PointList(pointList.getSize() - 2, nodeAccess.is3D());
         int nodes = pointList.getSize();
         for (int i = 1; i < nodes; i++)
@@ -732,11 +697,21 @@ public class OSMReader
             // we could save some lines if we would use pointList.calculateDistance(distCalc);
             lat = pointList.getLatitude(i);
             lon = pointList.getLongitude(i);
-            towerNodeDistance += distCalc.calcDist(prevLat, prevLon, lat, lon);
+            if (pointList.is3D())
+            {
+                ele = pointList.getElevation(i);
+                towerNodeDistance += distCalc3D.calcDist(prevLat, prevLon, prevEle, lat, lon, ele);
+                prevEle = ele;
+            } else
+                towerNodeDistance += distCalc.calcDist(prevLat, prevLon, lat, lon);
             prevLat = lat;
             prevLon = lon;
-            if (nodes > 2 && i < nodes - 1)
-                pillarNodes.add(lat, lon);
+            if (nodes > 2 && i < nodes - 1) {
+                if(pillarNodes.is3D())
+                    pillarNodes.add(lat, lon, ele);
+                else
+                    pillarNodes.add(lat, lon);
+            }
         }
         if (towerNodeDistance == 0)
         {
@@ -770,26 +745,24 @@ public class OSMReader
     private int handlePillarNode( int tmpNode, long osmId, PointList pointList, boolean convertToTowerNode )
     {
         tmpNode = tmpNode - 3;
-        int intlat = pillarLats.getInt(tmpNode * 4);
-        int intlon = pillarLons.getInt(tmpNode * 4);
-        if (intlat == Integer.MAX_VALUE || intlon == Integer.MAX_VALUE)
-        {
-            throw new RuntimeException("Conversion pillarNode to towerNode already happended!? " + "osmId:" + osmId + " pillarIndex:"
-                    + tmpNode);
-        }
-
-        double tmpLat = Helper.intToDegree(intlat);
-        double tmpLon = Helper.intToDegree(intlon);
+        double lat = pillarInfo.getLatitude(tmpNode);
+        double lon = pillarInfo.getLongitude(tmpNode);
+        double ele = pillarInfo.getElevation(tmpNode);
+        if (lat == Double.MAX_VALUE || lon == Double.MAX_VALUE)
+            throw new RuntimeException("Conversion pillarNode to towerNode already happended!? "
+                    + "osmId:" + osmId + " pillarIndex:" + tmpNode);
 
         if (convertToTowerNode)
         {
             // convert pillarNode type to towerNode, make pillar values invalid
-            pillarLons.setInt(tmpNode * 4, Integer.MAX_VALUE);
-            pillarLats.setInt(tmpNode * 4, Integer.MAX_VALUE);
-            tmpNode = addTowerNode(osmId, tmpLat, tmpLon);
+            pillarInfo.setNode(tmpNode, Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+            tmpNode = addTowerNode(osmId, lat, lon, ele);
         } else
         {
-            pointList.add(tmpLat, tmpLon);
+            if(pointList.is3D())
+                pointList.add(lat, lon, ele);
+            else
+                pointList.add(lat, lon);
         }
 
         return tmpNode;
@@ -798,10 +771,7 @@ public class OSMReader
     void finishedReading()
     {
         printInfo("way");
-        dir.remove(pillarLats);
-        dir.remove(pillarLons);
-        pillarLons = null;
-        pillarLats = null;
+        pillarInfo.clear();
         osmNodeIdToInternalNodeMap = null;
         osmNodeIdToNodeFlagsMap = null;
         osmWayIdToRouteWeightMap = null;
@@ -819,15 +789,11 @@ public class OSMReader
         if (graphIndex < TOWER_NODE)
         {
             graphIndex = -graphIndex - 3;
-            newNode = new OSMNode(createNewNodeId(), 
-                    nodeAccess.getLatitude(graphIndex), 
-                    nodeAccess.getLongitude(graphIndex));
+            newNode = new OSMNode(createNewNodeId(), nodeAccess, graphIndex);
         } else
         {
             graphIndex = graphIndex - 3;
-            newNode = new OSMNode(createNewNodeId(), 
-                    Helper.intToDegree(pillarLats.getInt(graphIndex * 4)), 
-                    Helper.intToDegree(pillarLons.getInt(graphIndex * 4)));
+            newNode = new OSMNode(createNewNodeId(), pillarInfo, graphIndex);
         }
 
         final long id = newNode.getId();
@@ -857,7 +823,7 @@ public class OSMReader
 
     /**
      * Creates an OSM turn relation out of an unspecified OSM relation
-     * 
+     * <p>
      * @return the OSM turn relation, <code>null</code>, if unsupported turn relation
      */
     OSMTurnRelation createTurnRelation( OSMRelation relation )
@@ -928,12 +894,6 @@ public class OSMReader
         return this;
     }
 
-    public OSMReader setEnableInstructions( boolean enableInstructions )
-    {
-        this.enableInstructions = enableInstructions;
-        return this;
-    }
-
     public OSMReader setWayPointMaxDistance( double maxDist )
     {
         simplifyAlgo.setMaxDistance(maxDist);
@@ -950,8 +910,8 @@ public class OSMReader
     {
         LoggerFactory.getLogger(getClass()).info(
                 "finished " + str + " processing." + " nodes: " + graphStorage.getNodes() + ", osmIdMap.size:" + getNodeMap().getSize()
-                        + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB" + ", nodeFlagsMap.size:" + getNodeFlagsMap().size()
-                        + ", relFlagsMap.size:" + getRelFlagsMap().size() + " " + Helper.getMemInfo());
+                + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB" + ", nodeFlagsMap.size:" + getNodeFlagsMap().size()
+                + ", relFlagsMap.size:" + getRelFlagsMap().size() + " " + Helper.getMemInfo());
     }
 
     @Override

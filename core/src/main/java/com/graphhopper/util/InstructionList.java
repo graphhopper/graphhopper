@@ -161,7 +161,7 @@ public class InstructionList implements Iterable<Instruction>
         for (Instruction instruction : instructions)
         {
             String str;
-            String n = getWayName(instruction.getName(), instruction.getPavement(), instruction.getWayType(), tr);
+            String n = getWayName(instruction.getName(), instruction.getPavementType(), instruction.getWayType(), tr);
             int indi = instruction.getIndication();
             if (indi == Instruction.FINISH)
             {
@@ -291,14 +291,14 @@ public class InstructionList implements Iterable<Instruction>
         return str.substring(0, str.length() - 2) + ":" + str.substring(str.length() - 2);
     }
 
-    public static String getWayName( String name, int pavetype, int waytype, TranslationMap.Translation tr )
+    public static String getWayName( String name, int paveType, int wayType, TranslationMap.Translation tr )
     {
         String pavementName = "";
-        if (pavetype == 1)
+        if (paveType == 1)
             pavementName = tr.tr("unpaved");
 
         String wayClass = "";
-        switch (waytype)
+        switch (wayType)
         {
             case 0:
                 wayClass = tr.tr("road");
@@ -320,7 +320,7 @@ public class InstructionList implements Iterable<Instruction>
             else
                 return wayClass + ", " + pavementName;
         else if (pavementName.isEmpty())
-            if (waytype == 0)
+            if (wayType == 0)
                 return name;
             else
                 return name + ", " + wayClass;

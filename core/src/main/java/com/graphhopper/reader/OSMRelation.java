@@ -34,7 +34,7 @@ public class OSMRelation extends OSMElement
 
     public OSMRelation( long id, XMLStreamReader parser ) throws XMLStreamException
     {
-        super(id, RELATION, parser);
+        super(id, RELATION);
         members = new ArrayList<Member>();
 
         parser.nextTag();

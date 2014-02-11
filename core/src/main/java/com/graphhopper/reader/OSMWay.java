@@ -36,14 +36,10 @@ public class OSMWay extends OSMElement
 
     /**
      * Constructor for XML Parser
-     * <p/>
-     * @param id
-     * @param parser
-     * @throws XMLStreamException
      */
     public OSMWay( long id, XMLStreamReader parser ) throws XMLStreamException
     {
-        super(id, WAY, parser);
+        super(id, WAY);
         nodes = new TLongArrayList();
 
         parser.nextTag();

@@ -39,12 +39,6 @@ public abstract class OSMElement
     protected Map<String, String> tags;
     protected Map<String, Object> iProperties;
 
-    public OSMElement( long id, int type, XMLStreamReader parser )
-    {
-        this.type = type;
-        this.id = id;
-    }
-
     public OSMElement( long id, int type, Map<String, String> tags )
     {
         this(id, type);
@@ -121,7 +115,7 @@ public abstract class OSMElement
         return tags;
     }
 
-    public void replaceTags( HashMap<String, String> newTags )
+    public void replaceTags( Map<String, String> newTags )
     {
         tags = newTags;
     }
