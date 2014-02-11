@@ -236,15 +236,19 @@ public class InstructionList implements Iterable<Instruction>
 
         List<GPXEntry> gpxList = new ArrayList<GPXEntry>();
         long timeOffset = 0;
-        double prevLat = Double.NaN, prevLon = Double.NaN;
-        double prevFactor = 0;
-        for (Instruction i : this)
+        for (int i = 0; i < size() - 1; i++)
         {
-            timeOffset = i.fillGPXList(gpxList, timeOffset, prevFactor, prevLat, prevLon);
-            prevFactor = i.getDistance() / i.getMillis();
-            prevLat = i.getLastLat();
-            prevLon = i.getLastLon();
+            Instruction nextInstr = get(i + 1);
+            nextInstr.checkOne();            
+            // current instruction does not contain last point which is equals to first point of next instruction:
+            double nextLat = nextInstr.getFirstLat(), nextLon = nextInstr.getFirstLon();            
+            timeOffset = get(i).fillGPXList(gpxList, timeOffset, nextLat, nextLon);
         }
+        Instruction lastI = get(size() - 1);
+        if (lastI.points.size() != 1)
+            throw new IllegalStateException("Last instruction must have exactly one point but was " + lastI.points.size());
+        double lastLat = lastI.getFirstLat(), lastLon = lastI.getFirstLon();
+        gpxList.add(new GPXEntry(lastLat, lastLon, timeOffset));
         return gpxList;
     }
 

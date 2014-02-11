@@ -156,7 +156,8 @@ public class GHDirectory implements Directory
         if (da == null)
             throw new IllegalStateException("Couldn't remove dataAccess object:" + name);
         da.close();
-        Helper.removeDir(new File(location + name));
+        if (da.getType().isStoring())
+            Helper.removeDir(new File(location + name));
     }
 
     @Override

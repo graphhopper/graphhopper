@@ -479,6 +479,9 @@ public class GraphHopper implements GraphHopperAPI
     {
         if (!load(ghLocation))
         {
+            if (!new File(osmFile).exists())
+                throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
+                        + " but also cannot import from OSM file as it does not exist: " + osmFile);
             printInfo();
             process(ghLocation, osmFile);
         } else

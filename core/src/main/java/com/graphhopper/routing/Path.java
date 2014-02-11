@@ -471,16 +471,16 @@ public class Path
                 // add points in opposite direction as adj node is previous
                 // skip base point => 'i > 0'
                 int len = pl.size() - 1;
-                long flags = edge.getFlags();
                 for (int i = len; i > 0; i--)
                 {
                     double lat = pl.getLatitude(i);
                     double lon = pl.getLongitude(i);
                     points.add(lat, lon);
                 }
-                double dist = edge.getDistance();
-                prevInstruction.setDistance(dist + prevInstruction.getDistance());
-                prevInstruction.setMillis(calcMillis(dist, flags) + prevInstruction.getMillis());
+                double newDist = edge.getDistance();
+                prevInstruction.setDistance(newDist + prevInstruction.getDistance());
+                long flags = edge.getFlags();
+                prevInstruction.setMillis(calcMillis(newDist, flags) + prevInstruction.getMillis());
             }
         });
 
