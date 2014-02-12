@@ -208,7 +208,7 @@ public class GraphHopperTest
         instance = new GraphHopper();
         try
         {
-            instance.importOSM(testOsm);
+            instance.setOSMFile(testOsm).importOSM();
             assertTrue(false);
         } catch (IllegalStateException ex)
         {
@@ -235,7 +235,8 @@ public class GraphHopperTest
             assertTrue(false);
         } catch (IllegalStateException ex)
         {
-            assertEquals("No encodingManager was specified", ex.getMessage());
+            assertEquals("Couldn't load from existing folder: " + ghLoc 
+                    + " but also cannot import from OSM file as it wasn't specified!", ex.getMessage());
         }
     }
 

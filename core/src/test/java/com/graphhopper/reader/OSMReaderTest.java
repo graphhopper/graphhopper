@@ -92,17 +92,15 @@ public class OSMReaderTest
 
     GraphStorage buildGraph( String directory, EncodingManager encodingManager, boolean turnRestrictionsImport )
     {
-        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, (turnRestrictionsImport) ? new TurnCostStorage()
-                : new ExtendedStorage.NoExtendedStorage());
+        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, 
+                (turnRestrictionsImport) ? new TurnCostStorage() : new ExtendedStorage.NoExtendedStorage());
     }
 
     class GraphHopperTest extends GraphHopper
     {
-        String testFile;
-
-        public GraphHopperTest( String file )
+        public GraphHopperTest( String osmFile )
         {
-            this.testFile = file;
+            setOSMFile(osmFile);
             setGraphHopperLocation(dir);
             setEncodingManager(new EncodingManager("CAR,FOOT"));
             disableCHShortcuts();
@@ -117,7 +115,7 @@ public class OSMReaderTest
         }
 
         @Override
-        protected OSMReader importOSM( String ignore ) throws IOException
+        protected OSMReader importOSM() throws IOException
         {
             GraphStorage tmpGraph = buildGraph(dir, getEncodingManager(), isEnableTurnRestrictions());
             setGraph(tmpGraph);
@@ -125,7 +123,7 @@ public class OSMReaderTest
             osmReader.setEncodingManager(getEncodingManager());
             try
             {
-                osmReader.doOSM2Graph(new File(getClass().getResource(testFile).toURI()));
+                osmReader.doOSM2Graph(new File(getClass().getResource(getOSMFile()).toURI()));
             } catch (URISyntaxException e)
             {
                 throw new RuntimeException(e);

@@ -141,7 +141,10 @@ public class OSMReader
     public void doOSM2Graph( File osmFile ) throws IOException
     {
         if (encodingManager == null)
-            throw new IllegalStateException("Encoding manager not set.");
+            throw new IllegalStateException("Encoding manager was not set.");
+
+        if (!osmFile.exists())
+            throw new IllegalStateException("Your specified OSM file does not exist:" + osmFile.getAbsolutePath());
 
         StopWatch sw1 = new StopWatch().start();
         preProcess(osmFile);
@@ -235,7 +238,7 @@ public class OSMReader
     {
         if (osmIdStoreRequiredSet == null)
             osmIdStoreRequiredSet = new TLongHashSet();
-        
+
         return osmIdStoreRequiredSet;
     }
 
@@ -243,7 +246,7 @@ public class OSMReader
     {
         if (edgeIdToOsmidMap == null)
             edgeIdToOsmidMap = new TIntLongHashMap(getOsmIdStoreRequiredSet().size());
-        
+
         return edgeIdToOsmidMap;
     }
 
@@ -286,30 +289,31 @@ public class OSMReader
             OSMElement item;
             while ((item = in.getNext()) != null)
             {
-                switch (item.getType()) {
-                case OSMElement.NODE:
-                    if (nodeFilter.get(item.getId()) != -1)
-                    {
-                        processNode((OSMNode) item);
-                    }
-                    break;
+                switch (item.getType())
+                {
+                    case OSMElement.NODE:
+                        if (nodeFilter.get(item.getId()) != -1)
+                        {
+                            processNode((OSMNode) item);
+                        }
+                        break;
 
-                case OSMElement.WAY:
-                    if (wayStart < 0)
-                    {
-                        logger.info(nf(counter) + ", now parsing ways");
-                        wayStart = counter;
-                    }
-                    processWay((OSMWay) item);
-                    break;
-                case OSMElement.RELATION:
-                    if (relationStart < 0)
-                    {
-                        logger.info(nf(counter) + ", now parsing relations");
-                        relationStart = counter;
-                    }
-                    processRelation((OSMRelation) item);
-                    break;
+                    case OSMElement.WAY:
+                        if (wayStart < 0)
+                        {
+                            logger.info(nf(counter) + ", now parsing ways");
+                            wayStart = counter;
+                        }
+                        processWay((OSMWay) item);
+                        break;
+                    case OSMElement.RELATION:
+                        if (relationStart < 0)
+                        {
+                            logger.info(nf(counter) + ", now parsing relations");
+                            relationStart = counter;
+                        }
+                        processRelation((OSMRelation) item);
+                        break;
                 }
                 if (++counter % 5000000 == 0)
                 {
@@ -822,14 +826,14 @@ public class OSMReader
         if (graphIndex < TOWER_NODE)
         {
             graphIndex = -graphIndex - 3;
-            newNode = new OSMNode(createNewNodeId(), 
-                    graphStorage.getLatitude(graphIndex), 
+            newNode = new OSMNode(createNewNodeId(),
+                    graphStorage.getLatitude(graphIndex),
                     graphStorage.getLongitude(graphIndex));
         } else
         {
             graphIndex = graphIndex - 3;
-            newNode = new OSMNode(createNewNodeId(), 
-                    Helper.intToDegree(pillarLats.getInt(graphIndex * 4)), 
+            newNode = new OSMNode(createNewNodeId(),
+                    Helper.intToDegree(pillarLats.getInt(graphIndex * 4)),
                     Helper.intToDegree(pillarLons.getInt(graphIndex * 4)));
         }
 
@@ -860,7 +864,7 @@ public class OSMReader
 
     /**
      * Creates an OSM turn relation out of an unspecified OSM relation
-     * 
+     * <p>
      * @return the OSM turn relation, <code>null</code>, if unsupported turn relation
      */
     OSMTurnRelation createTurnRelation( OSMRelation relation )
@@ -953,8 +957,8 @@ public class OSMReader
     {
         LoggerFactory.getLogger(getClass()).info(
                 "finished " + str + " processing." + " nodes: " + graphStorage.getNodes() + ", osmIdMap.size:" + getNodeMap().getSize()
-                        + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB" + ", nodeFlagsMap.size:" + getNodeFlagsMap().size()
-                        + ", relFlagsMap.size:" + getRelFlagsMap().size() + " " + Helper.getMemInfo());
+                + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB" + ", nodeFlagsMap.size:" + getNodeFlagsMap().size()
+                + ", relFlagsMap.size:" + getRelFlagsMap().size() + " " + Helper.getMemInfo());
     }
 
     @Override
