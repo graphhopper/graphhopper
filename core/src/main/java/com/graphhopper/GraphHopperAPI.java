@@ -24,7 +24,7 @@ package com.graphhopper;
  * <pre>
  *
  * // init offline graph
- * GraphHopperAPI gh = new GraphHopper().setInMemory(true, true);
+ * GraphHopperAPI gh = new GraphHopper().setInMemory(true);
  * gh.load("graph-hopper-folder");
  *
  * // init online service

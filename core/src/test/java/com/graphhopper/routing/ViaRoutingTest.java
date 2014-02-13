@@ -118,14 +118,14 @@ public class ViaRoutingTest
             GraphHopper hopper;
             if (ch)
             {
-               hopper = new GraphHopper().setInMemory(true, true).setOSMFile(osmFile).
+               hopper = new GraphHopper().setInMemory(true).setOSMFile(osmFile).
                     setCHShortcuts(weightCalcStr).
                     setGraphHopperLocation(graphFile).setEncodingManager(encodingManager).
                     importOrLoad();
             }
             else
             {
-               hopper = new GraphHopper().setInMemory(true, true).setOSMFile(osmFile).
+               hopper = new GraphHopper().setInMemory(true).setOSMFile(osmFile).
                     disableCHShortcuts().
                     setGraphHopperLocation(graphFile).setEncodingManager(encodingManager).
                     importOrLoad();
