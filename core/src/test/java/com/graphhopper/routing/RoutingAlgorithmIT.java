@@ -65,6 +65,7 @@ public class RoutingAlgorithmIT
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 2227, 105));
         list.add(new OneRun(43.730949, 7.412338, 43.739643, 7.424542, 2101, 100));
         list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
+        list.add(new OneRun(43.727697, 7.419199, 43.726387,7.40919, 2300, 90));
 
         // same special cases where GPS-exact routing could have problems (same edge and neighbor edges)
         list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.41934, 0, 1));

@@ -48,13 +48,6 @@ public interface RoutingAlgorithm
     Path calcPath( QueryResult from, QueryResult to );
 
     /**
-     * Calculates the best paths between the specified ordered list of nodes.
-     * <p/>
-     * @return the path list. Call the method found() on every list entry to make sure that the path is valid.
-     */
-    public List<Path> calcPathList( int[] from_via_to_list );
-    
-    /**
      * Reset all internal data such that we can run calcPath( int from, int to ) within a loop
      * <p/>
      */

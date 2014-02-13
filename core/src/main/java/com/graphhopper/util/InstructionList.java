@@ -158,14 +158,19 @@ public class InstructionList implements Iterable<Instruction>
         String rightTr = tr.tr("right");
         String continueTr = tr.tr("continue");
         List<String> res = new ArrayList<String>(instructions.size());
-        for (Instruction instruction : instructions)
+        for (int i=0; i<instructions.size(); i++)
         {
+            Instruction instruction = instructions.get(i);
             String str;
             String n = getWayName(instruction.getName(), instruction.getPavement(), instruction.getWayType(), tr);
             int indi = instruction.getIndication();
             if (indi == Instruction.FINISH)
             {
-                str = tr.tr("finish");
+                // Only final finish instruction is finish
+                if (i==instructions.size()-1)
+                    str = tr.tr("finish");
+                else
+                    str = tr.tr("stopover");
             } else if (indi == Instruction.CONTINUE_ON_STREET)
             {
                 str = Helper.isEmpty(n) ? continueTr : tr.tr("continue_onto", n);

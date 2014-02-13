@@ -59,4 +59,12 @@ public interface GraphHopperAPI
      * @return the response with the route and possible errors
      */
     GHResponse route( GHRequest request );
+
+    /**
+     * Calculates the path from specified request visiting the via list of locations.
+     * <p/>
+     * @return the response with the route and possible errors
+     */
+    GHResponse route( GHViaRequest request );
+    
 }
