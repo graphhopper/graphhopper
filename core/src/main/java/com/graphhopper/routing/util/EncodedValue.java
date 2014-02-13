@@ -25,12 +25,11 @@ package com.graphhopper.routing.util;
 public class EncodedValue
 {
     private final String name;
-    private final long shift;
-    private final long mask;
-    private final double factor;
+    protected final long shift;
+    protected final long mask;
+    protected final double factor;
+    protected final long defaultValue;
     private final long maxValue;
-    private final long defaultValue;
-    private final boolean allowNegative;
     private final boolean allowZero;
     private final int bits;
 
@@ -46,11 +45,10 @@ public class EncodedValue
      */
     public EncodedValue( String name, int shift, int bits, double factor, long defaultValue, int maxValue )
     {
-        this(name, shift, bits, factor, defaultValue, maxValue, false, true);
+        this(name, shift, bits, factor, defaultValue, maxValue, true);
     }
 
-    public EncodedValue( String name, int shift, int bits, double factor, long defaultValue, int maxValue,
-            boolean allowNegative, boolean allowZero )
+    public EncodedValue( String name, int shift, int bits, double factor, long defaultValue, int maxValue, boolean allowZero )
     {
         this.name = name;
         this.shift = shift;
@@ -63,16 +61,14 @@ public class EncodedValue
             throw new IllegalStateException(name + " -> maxValue " + maxValue + " is too large for " + bits + " bits");
 
         mask = tmpMask << shift;
-
-        this.allowNegative = allowNegative;
         this.allowZero = allowZero;
     }
 
-    private void checkValue( long value )
+    protected void checkValue( long value )
     {
         if (value > maxValue)
             throw new IllegalArgumentException(name + " value too large for encoding: " + value + ", maxValue:" + maxValue);
-        if (!allowNegative && value < 0)
+        if (value < 0)
             throw new IllegalArgumentException("negative " + name + " value not allowed! " + value);
         if (!allowZero && value == 0)
             throw new IllegalArgumentException("zero " + name + " value not allowed! " + value);
@@ -100,28 +96,6 @@ public class EncodedValue
         return Math.round(flags * factor);
     }
 
-    public long setDoubleValue( long flags, double value )
-    {
-        checkValue((long) value);
-        // scale value        
-        long tmpValue = Math.round(value / factor);
-        tmpValue <<= shift;
-
-        // clear value bits
-        flags &= ~mask;
-
-        // set value
-        return flags | tmpValue;
-    }
-
-    public double getDoubleValue( long flags )
-    {
-        // find value
-        flags &= mask;
-        flags >>= shift;
-        return flags * factor;
-    }
-
     public int getBits()
     {
         return bits;
@@ -135,5 +109,17 @@ public class EncodedValue
     public long getMaxValue()
     {
         return maxValue;
+    }
+
+    /**
+     * Swap the contents controlled by this value encoder with the given value.
+     * <p>
+     * @return the new flags
+     */
+    public long swap( long flags, EncodedValue otherEncoder )
+    {
+        long otherValue = otherEncoder.getValue(flags);
+        flags = otherEncoder.setValue(flags, getValue(flags));
+        return setValue(flags, otherValue);
     }
 }

@@ -80,7 +80,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     {
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
-        speedEncoder = new EncodedValue("Speed", shift, speedBits, speedFactor, SPEED.get("secondary"), SPEED.get("motorway"));
+        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, SPEED.get("secondary"), SPEED.get("motorway"));
 
         // speed used 5 bits
         return shift + speedBits;
@@ -173,10 +173,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             if (speed > 30 && way.hasTag("surface", BAD_SURFACE))
                 speed = 30;
 
-            if (speed > getMaxSpeed())
-                speed = getMaxSpeed();
-
-            encoded = speedEncoder.setDoubleValue(0, speed);
+            encoded = setSpeed(0, speed);
 
             if (way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))
             {
