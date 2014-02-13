@@ -106,7 +106,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
         // larger value required - ferries are faster than pedestrians
-        speedEncoder = new EncodedValue("Speed", shift, speedBits, speedFactor, MEAN, FERRY);
+        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, MEAN, FERRY);
         shift += speedBits;
 
         safeWayBit = 1 << shift++;
@@ -228,12 +228,12 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             if (sacScale != null)
             {
                 if ("hiking".equals(sacScale))
-                    encoded = speedEncoder.setValue(0, MEAN);
+                    encoded = speedEncoder.setDoubleValue(0, MEAN);
                 else
-                    encoded = speedEncoder.setValue(0, SLOW);
+                    encoded = speedEncoder.setDoubleValue(0, SLOW);
             } else
             {
-                encoded = speedEncoder.setValue(0, MEAN);
+                encoded = speedEncoder.setDoubleValue(0, MEAN);
             }
             encoded |= directionBitMask;
 

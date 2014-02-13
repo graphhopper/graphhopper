@@ -55,7 +55,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected long forwardBit = 0;
     protected long backwardBit = 0;
     protected long directionBitMask = 0;
-    protected EncodedValue speedEncoder;
+    protected EncodedDoubleValue speedEncoder;
     // bit to signal that way is accepted
     protected long acceptBit = 0;
     protected long ferryBit = 0;
@@ -285,6 +285,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     {
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative: " + speed + ", flags:" + BitUtil.LITTLE.toBitString(flags));
+
+        if (speed > getMaxSpeed())
+            speed = getMaxSpeed();
         return speedEncoder.setDoubleValue(flags, speed);
     }
 
@@ -458,14 +461,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (durationInHours == 0)
         {
             // unknown speed -> put penalty on ferry transport
-            return speedEncoder.setValue(0, (int) unknownSpeed);
+            return setSpeed(0, unknownSpeed);
         } else if (durationInHours > 1)
         {
             // lengthy ferries should be faster than short trip ferry
-            return speedEncoder.setValue(0, (int) longTripsSpeed);
+            return setSpeed(0, longTripsSpeed);
         } else
         {
-            return speedEncoder.setValue(0, (int) shortTripsSpeed);
+            return setSpeed(0, shortTripsSpeed);
         }
     }
 

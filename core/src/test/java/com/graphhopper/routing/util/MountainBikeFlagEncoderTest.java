@@ -172,7 +172,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         relMap.put("network", "lcn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(18, encoder.getSpeed(flags), 1e-1);
+        assertEquals(20, encoder.getSpeed(flags), 1e-1);
         assertEquals(0, encoder.getWayTypeCode(flags));
 
         // test max and min speed
