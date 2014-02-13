@@ -19,6 +19,7 @@ package com.graphhopper.http;
 
 import com.graphhopper.search.Geocoding;
 import com.graphhopper.GHRequest;
+import com.graphhopper.GHViaRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -95,6 +96,7 @@ public class GraphHopperServlet extends GHBaseServlet {
         float tookGeocoding = sw.stop().getSeconds();
         GHPlace start = infoPoints.get(0);
         GHPlace end = infoPoints.get(1);
+        String loghelper = "Empty";        
         try {
             // we can reduce the path length based on the maximum differences to the original coordinates
             double minPathPrecision = getDoubleParam(req, "minPathPrecision", 1d);
@@ -113,13 +115,27 @@ public class GraphHopperServlet extends GHBaseServlet {
             GHResponse rsp;
             if (hopper.getEncodingManager().supports(vehicleStr)) {
                 FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
-                rsp = hopper.route(new GHRequest(start, end).
+                if (infoPoints.size()==2)
+                {
+                   loghelper="Calling GHRequest";
+                   rsp = hopper.route(new GHRequest(start, end).
                         setVehicle(algoVehicle.toString()).
                         setWeighting(weighting).
                         setAlgorithm(algoStr).
                         putHint("calcPoints", calcPoints).
                         putHint("instructions", enableInstructions).
                         putHint("douglas.minprecision", minPathPrecision));
+                }
+                else
+                {
+                   rsp = hopper.route(new GHViaRequest(infoPoints).
+                        setVehicle(algoVehicle.toString()).
+                        setWeighting(weighting).
+                        setAlgorithm(algoStr).
+                        putHint("calcPoints", calcPoints).
+                        putHint("instructions", enableInstructions).
+                        putHint("douglas.minprecision", minPathPrecision));
+                }
             } else {
                 rsp = new GHResponse().addError(new IllegalArgumentException("Vehicle not supported: " + vehicleStr));
             }
@@ -281,11 +297,6 @@ public class GraphHopperServlet extends GHBaseServlet {
         // TODO resolve name in a thread if only lat,lon is given but limit to a certain timeout
         if (infoPoints == null || infoPoints.size() < 2) {
             throw new IllegalArgumentException("Did you specify point=<from>&point=<to> ? Use at least 2 points! " + infoPoints);
-        }
-
-        // TODO execute algorithm multiple times!
-        if (infoPoints.size() != 2) {
-            throw new IllegalArgumentException("TODO! At the moment only 2 points can be specified");
         }
 
         return infoPoints;

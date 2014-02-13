@@ -30,17 +30,17 @@ body {
 #input, #instructions {
     width: 255px;
 }
-#fromInput, #toInput {
+#fromInput, #viaInput, #toInput {
     width: 225px;
     float: right;    
 }
 
-#fromResolveFound a, #toResolveFound a {
+#fromResolveFound a, #viaResolveFound a, #toResolveFound a {
     background-color: white;
     padding-left: 4px;
     padding-right: 3px;    
 }
-#fromResolveFound, #toResolveFound {
+#fromResolveFound, #viaResolveFound, #toResolveFound {
     overflow: hidden;
     max-height: 24px;
     font-size: 10px;
@@ -51,7 +51,7 @@ body {
     margin-right: 2px;    
 }
 
-#fromResolveError, #toResolveError {
+#fromResolveError, #viaResolveError, #toResolveError {
     float: right;
     font-size: 12px;
     padding-bottom: 4px;
@@ -65,7 +65,7 @@ body {
 .warn {
     color: orange;
 }
-.error, #fromResolveError, #toResolveError {
+.error, #fromResolveError, #viaResolveError,#toResolveError {
     color: red;
 }
 #moreattribution a {
@@ -76,7 +76,7 @@ body {
     padding-top: 20px;
     color: #666666                    
 }
-#fromDiv img, #toDiv img {
+#fromDiv img, #viaDiv img,#toDiv img {
     margin-top: 4px;
     padding-right: 3px;                
     float: left;

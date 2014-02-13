@@ -18,6 +18,7 @@
 package com.graphhopper.http;
 
 import com.graphhopper.GHRequest;
+import com.graphhopper.GHViaRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.util.Downloader;
@@ -73,6 +74,53 @@ public class GraphHopperWeb implements GraphHopperAPI
         return this;
     }
 
+    @Override
+    public GHResponse route( GHViaRequest request )
+    {
+        request.check();
+        StopWatch sw = new StopWatch().start();
+        double took = 0;
+        try
+        {
+            String url = serviceUrl
+                    + "?from=" + request.getFrom().lat + "," + request.getFrom().lon
+                    + "&to=" + request.getTo().lat + "," + request.getTo().lon
+                    + "&type=json"
+                    + "&encodedPolyline=" + encodePolyline
+                    + "&minPathPrecision=" + request.getHint("douglas.minprecision", 1)
+                    + "&algo=" + request.getAlgorithm();
+            String str = downloader.downloadAsString(url);
+            JSONObject json = new JSONObject(str);
+            took = json.getJSONObject("info").getDouble("took");
+            JSONObject route = json.getJSONObject("route");
+            double distance = route.getDouble("distance");
+            int millis = route.getInt("time");
+            PointList list;
+            if (encodePolyline)
+            {
+                list = WebHelper.decodePolyline(route.getString("coordinates"), 100);
+            } else
+            {
+                JSONArray coords = route.getJSONObject("data").getJSONArray("coordinates");
+                list = new PointList(coords.length());
+                for (int i = 0; i < coords.length(); i++)
+                {
+                    JSONArray arr = coords.getJSONArray(i);
+                    double lon = arr.getDouble(0);
+                    double lat = arr.getDouble(1);
+                    list.add(lat, lon);
+                }
+            }
+            return new GHResponse().setPoints(list).setDistance(distance).setMillis(millis);
+        } catch (Exception ex)
+        {
+            throw new RuntimeException("Problem while fetching path " + request.getFrom() + "->" + request.getTo(), ex);
+        } finally
+        {
+            logger.debug("Full request took:" + sw.stop().getSeconds() + ", API took:" + took);
+        }
+    }
+    
     @Override
     public GHResponse route( GHRequest request )
     {
