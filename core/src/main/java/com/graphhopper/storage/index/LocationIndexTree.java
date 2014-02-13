@@ -30,10 +30,7 @@ import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +57,7 @@ public class LocationIndexTree implements LocationIndex
     private byte[] shifts;
     // convert spatial key to index for subentry of current depth
     private long[] bitmasks;
-    SpatialKeyAlgo keyAlgo;
+    protected SpatialKeyAlgo keyAlgo;
     private int minResolutionInMeter = 500;
     private double deltaLat;
     private double deltaLon;
@@ -551,7 +548,7 @@ public class LocationIndexTree implements LocationIndex
         return new TIntArrayList(entries);
     }
 
-    // fillIDs according to how they are stored    
+    // fillIDs according to how they are stored
     void fillIDs( long keyPart, int intIndex, TIntHashSet set, int depth )
     {
         long pointer = (long) intIndex << 2;
@@ -623,7 +620,7 @@ public class LocationIndexTree implements LocationIndex
             final EdgeFilter edgeFilter )
     {
         final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon);
-        final QueryResult closestMatch = new QueryResult(queryLat, queryLon);
+        final QueryResult closestMatch = new QueryResult(queryLat, queryLon);               
         if (storedNetworkEntryIds.isEmpty())
             return closestMatch;
 

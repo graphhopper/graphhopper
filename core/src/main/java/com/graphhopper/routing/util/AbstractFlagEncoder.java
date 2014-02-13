@@ -81,9 +81,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected HashSet<String> absoluteBarriers = new HashSet<String>(5);
     protected HashSet<String> potentialBarriers = new HashSet<String>(5);
     protected int speedBits;
-    protected int speedFactor;
+    protected double speedFactor;
 
-    public AbstractFlagEncoder( int speedBits, int speedFactor )
+    public AbstractFlagEncoder( int speedBits, double speedFactor )
     {
         this.speedBits = speedBits;
         this.speedFactor = speedFactor;
@@ -97,7 +97,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
         acceptedRailways.add("tram");
     }
-    
+
     /**
      * Defines the bits for the node flags, which are currently used for barriers only.
      * <p>
@@ -179,7 +179,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     public abstract long acceptWay( OSMWay way );
 
     /**
-     * Analyze properties of a way and create the routing flags          
+     * Analyze properties of a way and create the routing flags
      */
     public abstract long handleWayTags( OSMWay way, long allowed, long relationFlags );
 
@@ -190,12 +190,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     public long analyzeNodeTags( OSMNode node )
     {
         // movable barriers block if they are not marked as passable
-        if (node.hasTag("barrier", potentialBarriers) 
-                && !node.hasTag(restrictions, intended) 
+        if (node.hasTag("barrier", potentialBarriers)
+                && !node.hasTag(restrictions, intended)
                 && !node.hasTag("locked", "no"))
             return directionBitMask;
 
-        if ((node.hasTag("highway", "ford") 
+        if ((node.hasTag("highway", "ford")
                 || node.hasTag("ford")) && !node.hasTag(restrictions, intended))
             return directionBitMask;
 
@@ -242,6 +242,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         return -1;
     }
 
+    /**
+     * Swapping directions means swapping bits which are dependent on the direction of an edge like
+     * the access bits. But also direction dependent speed values should be swapped too.
+     */
     public long swapDirection( long flags )
     {
         long dir = flags & directionBitMask;
@@ -252,9 +256,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     @Override
-    public int getSpeed( long flags )
+    public double getSpeed( long flags )
     {
-        int speedVal = (int) speedEncoder.getValue(flags);
+        double speedVal = speedEncoder.getDoubleValue(flags);
         if (speedVal < 0)
             throw new IllegalStateException("Speed was negative!? " + speedVal);
 
@@ -277,23 +281,23 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     @Override
-    public long setSpeed( long flags, int speed )
+    public long setSpeed( long flags, double speed )
     {
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative: " + speed + ", flags:" + BitUtil.LITTLE.toBitString(flags));
-        return speedEncoder.setValue(flags, speed);
+        return speedEncoder.setDoubleValue(flags, speed);
     }
 
     @Override
-    public long setProperties( int speed, boolean forward, boolean backward )
+    public long setProperties( double speed, boolean forward, boolean backward )
     {
         return setAccess(setSpeed(0, speed), forward, backward);
     }
 
     @Override
-    public int getMaxSpeed()
+    public double getMaxSpeed()
     {
-        return (int) speedEncoder.getMaxValue();
+        return speedEncoder.getMaxValue();
     }
 
     @Override
@@ -329,7 +333,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     /**
      * @return the speed in km/h
      */
-    static int parseSpeed( String str )
+    static double parseSpeed( String str )
     {
         if (Helper.isEmpty(str))
         {
@@ -345,7 +349,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             {
                 str = str.substring(0, mpInteger).trim();
                 val = Integer.parseInt(str);
-                return (int) Math.round(val * DistanceCalcEarth.KM_MILE);
+                return val * DistanceCalcEarth.KM_MILE;
             }
 
             int knotInteger = str.indexOf("knots");
@@ -353,7 +357,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             {
                 str = str.substring(0, knotInteger).trim();
                 val = Integer.parseInt(str);
-                return (int) Math.round(val * 1.852);
+                return val * 1.852;
             }
 
             int kmInteger = str.indexOf("km");
@@ -386,15 +390,15 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     {
         if (str == null)
             return 0;
-        
+
         try
         {
             // for now ignore this special duration notation
             // because P1M != PT1M but there are wrong edits in OSM! e.g. http://www.openstreetmap.org/way/24791405
             // http://wiki.openstreetmap.org/wiki/Key:duration
-            if(str.startsWith("P"))
+            if (str.startsWith("P"))
                 return 0;
-            
+
             int index = str.indexOf(":");
             if (index > 0)
             {
@@ -428,7 +432,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     /**
      * Special handling for ferry ways.
      */
-    protected long handleFerry( OSMWay way, int unknownSpeed, int shortTripsSpeed, int longTripsSpeed )
+    protected long handleFerry( OSMWay way, double unknownSpeed, double shortTripsSpeed, double longTripsSpeed )
     {
         // to hours
         double durationInHours = parseDuration(way.getTag("duration")) / 60d;
@@ -454,14 +458,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (durationInHours == 0)
         {
             // unknown speed -> put penalty on ferry transport
-            return speedEncoder.setValue(0, unknownSpeed);
+            return speedEncoder.setValue(0, (int) unknownSpeed);
         } else if (durationInHours > 1)
         {
             // lengthy ferries should be faster than short trip ferry
-            return speedEncoder.setValue(0, longTripsSpeed);
+            return speedEncoder.setValue(0, (int) longTripsSpeed);
         } else
         {
-            return speedEncoder.setValue(0, shortTripsSpeed);
+            return speedEncoder.setValue(0, (int) shortTripsSpeed);
         }
     }
 

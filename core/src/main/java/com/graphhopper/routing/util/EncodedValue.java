@@ -27,7 +27,7 @@ public class EncodedValue
     private final String name;
     private final long shift;
     private final long mask;
-    private final long factor;
+    private final double factor;
     private final long maxValue;
     private final long defaultValue;
     private final boolean allowNegative;
@@ -44,12 +44,12 @@ public class EncodedValue
      * @param defaultValue default value
      * @param maxValue default maximum value
      */
-    public EncodedValue( String name, int shift, int bits, int factor, int defaultValue, int maxValue )
+    public EncodedValue( String name, int shift, int bits, double factor, long defaultValue, int maxValue )
     {
         this(name, shift, bits, factor, defaultValue, maxValue, false, true);
     }
 
-    public EncodedValue( String name, int shift, int bits, int factor, int defaultValue, int maxValue,
+    public EncodedValue( String name, int shift, int bits, double factor, long defaultValue, int maxValue,
             boolean allowNegative, boolean allowZero )
     {
         this.name = name;
@@ -58,18 +58,17 @@ public class EncodedValue
         this.defaultValue = defaultValue;
         this.bits = bits;
         long tmpMask = (1L << bits) - 1;
-        long tmpMaxValue = tmpMask * factor;
-        if (maxValue > tmpMaxValue)
+        this.maxValue = Math.min(maxValue, Math.round(tmpMask * factor));
+        if (maxValue > this.maxValue)
             throw new IllegalStateException(name + " -> maxValue " + maxValue + " is too large for " + bits + " bits");
 
-        this.maxValue = maxValue;
         mask = tmpMask << shift;
 
         this.allowNegative = allowNegative;
         this.allowZero = allowZero;
     }
 
-    public long setValue( long flags, long value )
+    private void checkValue( long value )
     {
         if (value > maxValue)
             throw new IllegalArgumentException(name + " value too large for encoding: " + value + ", maxValue:" + maxValue);
@@ -77,8 +76,12 @@ public class EncodedValue
             throw new IllegalArgumentException("negative " + name + " value not allowed! " + value);
         if (!allowZero && value == 0)
             throw new IllegalArgumentException("zero " + name + " value not allowed! " + value);
+    }
 
-        // scale down value
+    public long setValue( long flags, long value )
+    {
+        checkValue(value);
+        // scale value
         value /= factor;
         value <<= shift;
 
@@ -90,6 +93,28 @@ public class EncodedValue
     }
 
     public long getValue( long flags )
+    {
+        // find value
+        flags &= mask;
+        flags >>= shift;
+        return Math.round(flags * factor);
+    }
+
+    public long setDoubleValue( long flags, double value )
+    {
+        checkValue((long) value);
+        // scale value        
+        long tmpValue = Math.round(value / factor);
+        tmpValue <<= shift;
+
+        // clear value bits
+        flags &= ~mask;
+
+        // set value
+        return flags | tmpValue;
+    }
+
+    public double getDoubleValue( long flags )
     {
         // find value
         flags &= mask;

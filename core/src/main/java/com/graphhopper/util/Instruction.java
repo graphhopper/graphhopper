@@ -34,14 +34,13 @@ public class Instruction
     private final String name;
     private double distance;
     private long millis;
-    private final PointList points;
+    final PointList points;
     private final int pavementType;
     private final int waytype;
 
     /**
      * The points, distances and times have exactly the same count. The last point of this
-     * instruction is not duplicated here and should be in the next one. The first distance and time
-     * entries are measured between the first point and the second one etc.
+     * instruction is not duplicated here and should be in the next one.
      */
     public Instruction( int indication, String name, int waytype, int pavementType, PointList pl )
     {
@@ -94,7 +93,7 @@ public class Instruction
         this.millis = millis;
         return this;
     }
-    
+
     /**
      * Time in millis until no new instruction
      */
@@ -135,27 +134,26 @@ public class Instruction
      * <p>
      * @return the time offset to add for the next instruction
      */
-    public long fillGPXList( List<GPXEntry> list, long time, double prevFactor, double prevLat, double prevLon )
+    long fillGPXList( List<GPXEntry> list, long time, double nextInstrLat, double nextInstrLon )
     {
+        checkOne();
         int len = points.size();
+        long prevTime = time;
+        double lat = points.getLatitude(0);
+        double lon = points.getLongitude(0);
         for (int i = 0; i < len; i++)
         {
-            double lat = points.getLatitude(i);
-            double lon = points.getLongitude(i);
-            if (!Double.isNaN(prevLat))
-            {
-                // Here we assume that the same speed is used until the next instruction.
-                // If we would calculate all the distances (and times) up front there
-                // would be a problem where the air-line distance is not the distance returned from the edge
-                // e.g. in the case if we include elevation data                
-                time += distanceCalc.calcDist(prevLat, prevLon, lat, lon) / prevFactor;
-            }
-            list.add(new GPXEntry(lat, lon, time));
-            prevFactor = distance / millis;
-            prevLat = lat;
-            prevLon = lon;
+            boolean last = i + 1 == len;
+            double nextLat = last ? nextInstrLat : points.getLatitude(i + 1);
+            double nextLon = last ? nextInstrLon : points.getLongitude(i + 1);
+
+            list.add(new GPXEntry(lat, lon, prevTime));
+            // TODO in the case of elevation data the air-line distance is probably not precise enough
+            prevTime = Math.round(prevTime + millis * distanceCalc.calcDist(nextLat, nextLon, lat, lon) / distance);
+            lat = nextLat;
+            lon = nextLon;
         }
-        return time;
+        return time + millis;
     }
 
     @Override
@@ -172,5 +170,11 @@ public class Instruction
         sb.append(millis);
         sb.append(')');
         return sb.toString();
+    }
+
+    void checkOne()
+    {
+        if (points.size() < 1)
+            throw new IllegalStateException("Instruction must contain at least one point " + toString());
     }
 }

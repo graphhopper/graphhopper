@@ -60,7 +60,7 @@ public class StopWatch
     }
 
     /**
-     * @return the delta nanoTime in milliseconds
+     * @return the time delta in milliseconds
      */
     public long getTime()
     {

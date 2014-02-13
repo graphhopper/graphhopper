@@ -32,17 +32,33 @@ public class RacingBikeFlagEncoder extends BikeFlagCommonEncoder
         setTrackTypeSpeed("grade4", PUSHING_SECTION_SPEED / 2);
         setTrackTypeSpeed("grade5", PUSHING_SECTION_SPEED / 2); // like sand/grass     
 
+        setSurfaceSpeed("paved", 20);        
         setSurfaceSpeed("asphalt", 20);
+        setSurfaceSpeed("cobblestone", 10);
+        setSurfaceSpeed("cobblestone:flattened", 10);
+        setSurfaceSpeed("sett",10);
         setSurfaceSpeed("concrete", 20);
-        setSurfaceSpeed("paved", 20);
+        setSurfaceSpeed("concrete:lanes", 16);
+        setSurfaceSpeed("concrete:plates", 16);
+        setSurfaceSpeed("paving_stones", 10);
+        setSurfaceSpeed("paving_stones:30", 10);
         setSurfaceSpeed("unpaved", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("compacted",PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("dirt", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("earth", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("fine_gravel", PUSHING_SECTION_SPEED);
+        setSurfaceSpeed("grass", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("grass_paver", PUSHING_SECTION_SPEED / 2);
         setSurfaceSpeed("gravel", PUSHING_SECTION_SPEED / 2);
         setSurfaceSpeed("ground", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("dirt", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("paving_stones", PUSHING_SECTION_SPEED);
-        setSurfaceSpeed("grass", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("cobblestone", PUSHING_SECTION_SPEED / 2);
-
+        setSurfaceSpeed("ice", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("metal", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("mud", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("pebblestone", PUSHING_SECTION_SPEED );
+        setSurfaceSpeed("salt", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("sand", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("wood", PUSHING_SECTION_SPEED / 2);
+        
         setHighwaySpeed("living_street", 15);
         setHighwaySpeed("steps", PUSHING_SECTION_SPEED / 2);
 

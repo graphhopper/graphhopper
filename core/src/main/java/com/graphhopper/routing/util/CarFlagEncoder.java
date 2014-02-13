@@ -47,7 +47,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         this(5, 5);
     }
 
-    protected CarFlagEncoder( int speedBits, int speedFactor )
+    protected CarFlagEncoder( int speedBits, double speedFactor )
     {
         super(speedBits, speedFactor);
         restrictions = new String[] { "motorcar", "motor_vehicle", "vehicle", "access" };
@@ -86,7 +86,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         return shift + speedBits;
     }
 
-    protected int getSpeed( OSMWay way )
+    protected double getSpeed( OSMWay way )
     {
         String highwayValue = way.getTag("highway");
         Integer speed = SPEED.get(highwayValue);
@@ -162,12 +162,12 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         if ((allowed & ferryBit) == 0)
         {
             // get assumed speed from highway type
-            Integer speed = getSpeed(way);
-            int maxspeed = parseSpeed(way.getTag("maxspeed"));
+            double speed = getSpeed(way);
+            double maxspeed = parseSpeed(way.getTag("maxspeed"));
             // apply speed limit no matter of the road type
             if (maxspeed >= 0)
                 // reduce speed limit to reflect average speed
-                speed = Math.round(maxspeed * 0.9f);
+                speed = maxspeed * 0.9;
 
             // limit speed to max 30 km/h if bad surface
             if (speed > 30 && way.hasTag("surface", BAD_SURFACE))
@@ -176,7 +176,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             if (speed > getMaxSpeed())
                 speed = getMaxSpeed();
 
-            encoded = speedEncoder.setValue(0, speed);
+            encoded = speedEncoder.setDoubleValue(0, speed);
 
             if (way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))
             {

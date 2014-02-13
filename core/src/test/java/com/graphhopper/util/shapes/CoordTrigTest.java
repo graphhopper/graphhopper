@@ -16,22 +16,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util;
+package com.graphhopper.util.shapes;
+
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
+ *
  * @author Peter Karich
  */
-public interface EdgeSkipIterState extends EdgeIteratorState
+public class CoordTrigTest
 {
-    int getSkippedEdge1();
+    @Test
+    public void testIsValid()
+    {
+        CoordTrig instance = new CoordTrig();
+        assertFalse(instance.isValid());
+        instance.lat = 1;
+        assertFalse(instance.isValid());
+        instance.lon = 1;
+        assertTrue(instance.isValid());
+    }
 
-    int getSkippedEdge2();
-
-    void setSkippedEdges( int edge1, int edge2 );
-
-    boolean isShortcut();
-
-    EdgeSkipIterState setWeight( double weight );
-
-    double getWeight();
 }

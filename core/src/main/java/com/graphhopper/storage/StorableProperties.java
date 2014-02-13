@@ -84,6 +84,9 @@ public class StorableProperties implements Storable<StorableProperties>
         return this;
     }
 
+    /**
+     * Before it saves this value it creates a string out of it.
+     */
     public StorableProperties put( String key, Object val )
     {
         map.put(key, val.toString());

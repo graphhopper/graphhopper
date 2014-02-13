@@ -171,7 +171,11 @@ public class RoutingAlgorithmIT
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2323, 100));
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1475, 80));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
-                list, "BIKE,MTB,RACINGBIKE", true, "MTB", "fastest");
+                list, "MTB", true, "MTB", "fastest");
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+        
+        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
+                list, "BIKE,MTB,RACINGBIKE", false, "MTB", "fastest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -184,7 +188,11 @@ public class RoutingAlgorithmIT
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2323, 100));
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1490, 74));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
-                list, "CAR,BIKE,RACINGBIKE", true, "RACINGBIKE", "fastest");
+                list, "RACINGBIKE", true, "RACINGBIKE", "fastest");
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+        
+        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
+                list, "CAR,BIKE,RACINGBIKE", false, "RACINGBIKE", "fastest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
     
@@ -201,7 +209,7 @@ public class RoutingAlgorithmIT
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
         
         runAlgo(testCollector, "files/krems.osm.gz", "target/graph-krems",
-                list, "CAR,BIKE,MTB", true, "BIKE", "fastest");
+                list, "CAR,BIKE,MTB", false, "BIKE", "fastest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -214,12 +222,12 @@ public class RoutingAlgorithmIT
         list.add(new OneRun(48.412294, 15.62007, 48.398306, 15.609667, 3965, 86));
 
         runAlgo(testCollector, "files/krems.osm.gz", "target/graph-krems",
-                list, "CAR,BIKE,MTB", true, "MTB", "fastest");
-        assertEquals(testCollector.toString(), 0, testCollector.errors.size());        
-        
-        runAlgo(testCollector, "files/krems.osm.gz", "target/graph-krems",
                 list, "MTB", true, "MTB", "fastest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+                
+        runAlgo(testCollector, "files/krems.osm.gz", "target/graph-krems",
+                list, "CAR,BIKE,MTB", false, "MTB", "fastest");
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());                
     }
     
     List<OneRun> createAndorra()
@@ -285,7 +293,7 @@ public class RoutingAlgorithmIT
         try
         {
             Helper.removeDir(new File(graphFile));
-            GraphHopper hopper = new GraphHopper().setInMemory(true, true).setOSMFile(osmFile).
+            GraphHopper hopper = new GraphHopper().setInMemory(true).setOSMFile(osmFile).
                     disableCHShortcuts().
                     setGraphHopperLocation(graphFile).setEncodingManager(new EncodingManager(importVehicles)).
                     importOrLoad();
@@ -372,7 +380,7 @@ public class RoutingAlgorithmIT
         String graphFile = "target/graph-monaco";
         Helper.removeDir(new File(graphFile));
         final EncodingManager encodingManager = new EncodingManager("CAR");
-        GraphHopper hopper = new GraphHopper().setInMemory(true, true).setEncodingManager(encodingManager).
+        GraphHopper hopper = new GraphHopper().setInMemory(true).setEncodingManager(encodingManager).
                 disableCHShortcuts().
                 setOSMFile("files/monaco.osm.gz").setGraphHopperLocation(graphFile).
                 importOrLoad();

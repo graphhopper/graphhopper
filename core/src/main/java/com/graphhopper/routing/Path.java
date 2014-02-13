@@ -102,7 +102,7 @@ public class Path
      */
     private int getFromNode()
     {
-        if (!EdgeIterator.Edge.isValid(fromNode))
+        if (fromNode < 0)
             throw new IllegalStateException("Call extract() before retrieving fromNode");
 
         return fromNode;
@@ -196,18 +196,10 @@ public class Path
     protected void processEdge( int edgeId, int endNode )
     {
         EdgeIteratorState iter = graph.getEdgeProps(edgeId, endNode);
-        double dist = calcDistance(iter);
+        double dist = iter.getDistance();
         distance += dist;
         millis += calcMillis(dist, iter.getFlags());
         addEdge(edgeId);
-    }
-
-    /**
-     * This method returns the distance in meter for the specified edge.
-     */
-    protected double calcDistance( EdgeIteratorState iter )
-    {
-        return iter.getDistance();
     }
 
     /**
@@ -479,16 +471,16 @@ public class Path
                 // add points in opposite direction as adj node is previous
                 // skip base point => 'i > 0'
                 int len = pl.size() - 1;
-                long flags = edge.getFlags();
                 for (int i = len; i > 0; i--)
                 {
                     double lat = pl.getLatitude(i);
                     double lon = pl.getLongitude(i);
                     points.add(lat, lon);
                 }
-                double dist = calcDistance(edge);
-                prevInstruction.setDistance(dist + prevInstruction.getDistance());
-                prevInstruction.setMillis(calcMillis(dist, flags) + prevInstruction.getMillis());
+                double newDist = edge.getDistance();
+                prevInstruction.setDistance(newDist + prevInstruction.getDistance());
+                long flags = edge.getFlags();
+                prevInstruction.setMillis(calcMillis(newDist, flags) + prevInstruction.getMillis());
             }
         });
 

@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
-import static com.graphhopper.routing.util.BikeFlagCommonEncoder.PUSHING_SECTION_SPEED;
+import java.util.Collections;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -44,7 +44,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     public void testGetSpeed()
     {
         long result = encoder.setProperties(10, true, true);
-        assertEquals(10, encoder.getSpeed(result));
+        assertEquals(10, encoder.getSpeed(result), 1e-1);
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "primary");
         assertEquals(18, encoder.getSpeed(way));
@@ -83,6 +83,19 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.setTag("highway", "path");
         way.setTag("surface", "ground");
         assertEquals(4, encoder.getSpeed(way));
+        
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("bicycle", "yes");
+        way.setTag("surface", "fine_gravel");
+        assertEquals(18, encoder.getSpeed(way));
+        
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("bicycle", "yes");
+        way.setTag("surface", "unknown_surface");
+        assertEquals(4, encoder.getSpeed(way));
+        
     }
 
     @Test
@@ -145,7 +158,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         long relFlags = encoder.handleRelationTags(osmRel, 0);
         // unchanged
         long flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(14, encoder.getSpeed(flags));
+        assertEquals(14, encoder.getSpeed(flags), 1e-1);
         assertEquals(1, encoder.getWayTypeCode(flags));
         assertEquals(1, encoder.getPavementCode(flags));
 
@@ -154,7 +167,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         relMap.put("network", "lcn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(18, encoder.getSpeed(flags));
+        assertEquals(18, encoder.getSpeed(flags), 1e-1);
         assertEquals(1, encoder.getWayTypeCode(flags));
         assertEquals(1, encoder.getPavementCode(flags));
 
@@ -162,13 +175,13 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         relMap.put("network", "rcn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(22, encoder.getSpeed(flags));
+        assertEquals(22, encoder.getSpeed(flags), 1e-1);
 
         // relation code is OUTSTANDING_NICE
         relMap.put("network", "ncn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(26, encoder.getSpeed(flags));
+        assertEquals(26, encoder.getSpeed(flags), 1e-1);
 
         // PREFER relation, but tertiary road
         // => no pushing section but road wayTypeCode and faster
@@ -179,7 +192,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         relMap.put("network", "lcn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(22, encoder.getSpeed(flags));
+        assertEquals(22, encoder.getSpeed(flags), 1e-1);
         assertEquals(0, encoder.getWayTypeCode(flags));
         
         // test max and min speed
@@ -193,15 +206,15 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
             }
         };
         // call necessary register
-        new EncodingManager().registerEncoder(fakeEncoder);
+        new EncodingManager(fakeEncoder);
         allowed = fakeEncoder.acceptBit;
 
         flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
-        assertEquals(30, fakeEncoder.getSpeed(flags));
+        assertEquals(30, fakeEncoder.getSpeed(flags), 1e-1);
 
         fakeSpeed.set(-2);
         flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
-        assertEquals(0, fakeEncoder.getSpeed(flags));
+        assertEquals(0, fakeEncoder.getSpeed(flags), 1e-1);
         
     }
     

@@ -58,7 +58,12 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
      */
     protected BikeFlagCommonEncoder()
     {
-        super(4, 2);
+        this(4, 2);
+    }
+
+    protected BikeFlagCommonEncoder( int speedBits, double speedFactor )
+    {
+        super(speedBits, speedFactor);
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
         restrictions = new String[]
         {
@@ -93,9 +98,16 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
         unpavedSurfaceTags.add("gravel");
         unpavedSurfaceTags.add("ground");
         unpavedSurfaceTags.add("dirt");
-        unpavedSurfaceTags.add("paving_stones");
         unpavedSurfaceTags.add("grass");
-        unpavedSurfaceTags.add("cobblestone");
+        unpavedSurfaceTags.add("compacted");
+        unpavedSurfaceTags.add("earth");
+        unpavedSurfaceTags.add("fine_gravel");
+        unpavedSurfaceTags.add("grass_paver");
+        unpavedSurfaceTags.add("ice");
+        unpavedSurfaceTags.add("mud");
+        unpavedSurfaceTags.add("salt");
+        unpavedSurfaceTags.add("sand");
+        unpavedSurfaceTags.add("wood");
 
         roadValues.add("living_street");
         roadValues.add("road");
@@ -311,7 +323,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
 
     int getSpeed( OSMWay way )
     {
-        int speed = 0;
+        int speed = PUSHING_SECTION_SPEED;
 
         String s = way.getTag("surface");
         if (!Helper.isEmpty(s))

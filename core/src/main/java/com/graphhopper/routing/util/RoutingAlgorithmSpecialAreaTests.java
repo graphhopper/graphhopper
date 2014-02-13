@@ -71,7 +71,7 @@ public class RoutingAlgorithmSpecialAreaTests
         }
 
         TestAlgoCollector testCollector = new TestAlgoCollector("testAlgos");
-        final EncodingManager encodingManager = new EncodingManager("CAR");
+        final EncodingManager encodingManager = new EncodingManager("CAR", 4);
         CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
         boolean ch = true;
         Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = createAlgos(unterfrankenGraph, idx,

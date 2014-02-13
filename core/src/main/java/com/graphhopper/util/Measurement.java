@@ -111,7 +111,7 @@ public class Measurement
         {
             maxNode = g.getNodes();
             printGraphDetails(g);
-            printLocation2IDQuery(g, hopper.getLocationIndex(), count);
+            printLocationIndexQuery(g, hopper.getLocationIndex(), count);
 
             // Route via dijkstrabi. Normal routing takes a lot of time => smaller query number than CH
             // => values are not really comparable to routingCH as e.g. the mean distance etc is different            
@@ -158,7 +158,7 @@ public class Measurement
         put("graph.encoder", g.getEncodingManager().getSingle().toString());
     }
 
-    private void printLocation2IDQuery( Graph g, final LocationIndex idx, int count )
+    private void printLocationIndexQuery( Graph g, final LocationIndex idx, int count )
     {
         count *= 2;
         final BBox bbox = g.getBounds();

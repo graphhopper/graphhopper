@@ -25,7 +25,6 @@ import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.EdgeSkipExplorer;
 import com.graphhopper.util.EdgeSkipIterState;
 import com.graphhopper.util.Helper;
 import gnu.trove.list.TIntList;
@@ -42,8 +41,6 @@ import static org.junit.Assert.*;
  */
 public class LocationIndexTreeSCTest extends LocationIndexTreeTest
 {
-    private final EncodingManager encodingManager = new EncodingManager("CAR");
-
     @Override
     public LocationIndexTreeSC createIndex( Graph g, int resolution )
     {

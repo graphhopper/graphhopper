@@ -59,17 +59,11 @@ public class TurnCostStorage implements ExtendedStorage
     @Override
     public void init( GraphStorage graph )
     {
-
         if (turnCostsCount > 0)
-        {
             throw new AssertionError("The turn cost storage must be initialized only once.");
-        }
 
         this.graph = graph;
-
-        Directory dir = this.graph.getDirectory();
-
-        this.turnCosts = dir.find("turnCosts");
+        this.turnCosts = this.graph.getDirectory().find("turnCosts");
     }
 
     protected final int nextTurnCostsEntryIndex()
@@ -137,11 +131,12 @@ public class TurnCostStorage implements ExtendedStorage
 
     public void setTurnCosts( int nodeIndex, int from, int to, int flags )
     {
-        if(flags == 0) {
+        if (flags == 0)
+        {
             //no need to store turn costs
             return;
         }
-        
+
         // append
         int newEntryIndex = turnCostsCount;
         turnCostsCount++;

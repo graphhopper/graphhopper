@@ -25,12 +25,18 @@ import com.graphhopper.util.Helper;
  */
 public class GraphStorage3D extends GraphHopperStorage implements Graph3D
 {
-    private final int N_HEIGHT;
+    private int N_HEIGHT;
 
     public GraphStorage3D( Directory dir, EncodingManager encodingManager )
     {
-        super(dir, encodingManager);
-        N_HEIGHT = nextNodeEntryIndex();
+        super(dir, encodingManager);        
+    }
+
+    @Override
+    protected void initStorage()
+    {
+        super.initStorage();
+        N_HEIGHT = nextNodeEntryIndex(4);
         initNodeAndEdgeEntrySize();
     }
 

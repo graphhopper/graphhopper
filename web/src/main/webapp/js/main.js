@@ -23,7 +23,7 @@ var nominatim = "http://nominatim.openstreetmap.org/search";
 var nominatim_reverse = "http://nominatim.openstreetmap.org/reverse";
 var routingLayer;
 var map;
-var browserTitle = "GraphHopper Maps";
+var browserTitle = "GraphHopper Maps - Driving Directions";
 var firstClickToRoute;
 var defaultTranslationMap = null;
 var enTranslationMap = null;
@@ -769,9 +769,9 @@ function routeLatLng(request, doQuery) {
 }
 
 function createDistanceString(dist) {
-    if(dist < 900)
+    if (dist < 900)
         return round(dist, 1) + tr2("mAbbr");
-    
+
     dist = round(dist / 1000, 100);
     if (dist > 100)
         dist = round(dist, 1);
@@ -1018,14 +1018,14 @@ function setAutoCompleteList(fromOrTo, ghRequestLoc) {
     };
     options.onSelect = function(suggestion) {
         options.onPreSelect(suggestion);
-        if (ghRequest.from.isResolved() && ghRequest.to.isResolved())
-            routeLatLng(ghRequest);
     };
     options.onPreSelect = function(suggestion) {
         var data = suggestion.data;
         ghRequestLoc.setCoord(data.lat, data.lng);
         ghRequestLoc.input = dataToText(suggestion.data);
-        if (suggestion.data.boundingbox) {
+        if (ghRequest.from.isResolved() && ghRequest.to.isResolved())
+            routeLatLng(ghRequest);
+        else if (suggestion.data.boundingbox) {
             var bbox = suggestion.data.box;
             focusWithBounds(ghRequestLoc, [[bbox[0], bbox[2]], [bbox[1], bbox[3]]], isFrom);
         } else

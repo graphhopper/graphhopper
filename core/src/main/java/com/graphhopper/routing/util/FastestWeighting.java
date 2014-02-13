@@ -48,12 +48,6 @@ public class FastestWeighting implements Weighting
     }
 
     @Override
-    public double revertWeight( EdgeIteratorState edge, double weight )
-    {
-        return weight * encoder.getSpeed(edge.getFlags());
-    }
-
-    @Override
     public String toString()
     {
         return "FASTEST|" + encoder;

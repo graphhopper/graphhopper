@@ -51,7 +51,7 @@ public class CoordTrig<T>
 
     public boolean isValid()
     {
-        return lat != Double.NaN && lon != Double.NaN;
+        return !Double.isNaN(lat) && !Double.isNaN(lon);
     }
 
     public void setValue( T t )

@@ -38,4 +38,11 @@ public class EncodedValueTest
         instance = new EncodedValue("test", 0, 4, 1, 5, 10);
         assertEquals(5, instance.getValue(instance.setDefaultValue(0)));
     }
+    
+    @Test
+    public void testSetDoubleValue()
+    {
+        EncodedValue instance = new EncodedValue("test", 6, 10, 0.01, 5, 10);
+        assertEquals(10.12, instance.getDoubleValue(instance.setDoubleValue(0, 10.12)), 1e-4);
+    }
 }
