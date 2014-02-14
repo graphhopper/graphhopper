@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.util.shapes.CoordTrig;
 import com.graphhopper.util.shapes.GHPoint;
 
 /**
@@ -31,7 +32,7 @@ public class GPXEntry extends GHPoint
         super(lat, lon);
         this.time = millis;
     }
-    
+
     public GPXEntry( GHPoint p, long millis )
     {
         this(p.lat, p.lon, millis);
@@ -48,6 +49,16 @@ public class GPXEntry extends GHPoint
     public void setMillis( long time )
     {
         this.time = time;
+    }
+
+    @Override
+    public boolean equals( Object obj )
+    {
+        if (obj == null)
+            return false;
+
+        final GPXEntry other = (GPXEntry) obj;
+        return time == other.time && super.equals(obj);
     }
 
     @Override

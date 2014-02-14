@@ -41,7 +41,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     private final Set<String> allowedHighwayTags = new HashSet<String>();
 
     /**
-     * Should be only instantied via EncodingManager
+     * Should be only instantiated via EncodingManager
      */
     protected FootFlagEncoder()
     {

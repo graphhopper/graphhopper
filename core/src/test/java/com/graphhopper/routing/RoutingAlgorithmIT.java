@@ -216,7 +216,7 @@ public class RoutingAlgorithmIT
     public void testKremsMountainBikeRelation()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(48.409523, 15.602394, 48.375466, 15.72916, 12563, 148));
+        list.add(new OneRun(48.409523, 15.602394, 48.375466, 15.72916, 12479, 141));
         list.add(new OneRun(48.410061, 15.63951, 48.411386, 15.604899, 3164, 83));
         list.add(new OneRun(48.412294, 15.62007, 48.398306, 15.609667, 3965, 86));
 
@@ -368,7 +368,7 @@ public class RoutingAlgorithmIT
             float perRun = sw.stop().getSeconds() / ((float) (N - noJvmWarming));
             System.out.println("# " + getClass().getSimpleName() + " " + prepare.createAlgo().getName()
                     + ":" + sw.stop().getSeconds() + ", per run:" + perRun);
-            assertTrue("speed to low!? " + perRun + " per run", perRun < 0.07);
+            assertTrue("speed to low!? " + perRun + " per run", perRun < 0.08);
         }
     }
 

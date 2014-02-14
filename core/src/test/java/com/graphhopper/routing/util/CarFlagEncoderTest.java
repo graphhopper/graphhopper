@@ -236,14 +236,14 @@ public class CarFlagEncoderTest
         node.setTag("bicycle", "yes");
         // barrier!
         assertTrue(encoder.analyzeNodeTags(node) > 0);
-        
+
         node = new OSMNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
         node.setTag("access", "yes");
         node.setTag("bicycle", "yes");
         // should this be a barrier for motorcars too?
         // assertTrue(encoder.analyzeNodeTags(node) > 0);
-        
+
         node = new OSMNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
         node.setTag("access", "no");
@@ -308,5 +308,36 @@ public class CarFlagEncoderTest
 
         assertTrue(encoder.isTurnRestricted(flags_r220));
         assertFalse(encoder.isTurnRestricted(flags_220));
+    }
+
+    @Test
+    public void testMaxValue()
+    {
+        CarFlagEncoder instance = new CarFlagEncoder(8, 0.5);
+        EncodingManager em = new EncodingManager(instance);
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "motorway_link");
+        way.setTag("maxspeed", "70 mph");
+        long flags = instance.handleWayTags(way, 1, 0);
+
+        // double speed = AbstractFlagEncoder.parseSpeed("70 mph");
+        // => 112.654 * 0.9 => 101
+        instance.swapDirection(flags);
+        assertEquals(100, instance.getSpeed(flags), 1e-1);
+    }
+
+    @Test
+    public void testRegisterOnlyOnceAllowed()
+    {
+        CarFlagEncoder instance = new CarFlagEncoder(8, 0.5);
+        EncodingManager em = new EncodingManager(instance);
+        try
+        {
+            em = new EncodingManager(instance);
+            assertTrue(false);
+        } catch (IllegalStateException ex)
+        {
+
+        }
     }
 }

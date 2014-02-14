@@ -36,8 +36,8 @@ import static org.junit.Assert.*;
  */
 public class FootFlagEncoderTest
 {
-    private EncodingManager encodingManager = new EncodingManager("CAR,BIKE,FOOT");
-    private FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
+    private final EncodingManager encodingManager = new EncodingManager("CAR,BIKE,FOOT");
+    private final FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
 
     @Test
     public void testGetSpeed()

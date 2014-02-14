@@ -81,8 +81,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
         speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, SPEED.get("secondary"), SPEED.get("motorway"));
-
-        // speed used 5 bits
         return shift + speedBits;
     }
 
@@ -266,7 +264,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     }
 
     private static final Map<String, Integer> TRACKTYPE_SPEED = new HashMap<String, Integer>();
-    private static final Set<String> BAD_SURFACE = new HashSet<String>();
+    protected static final Set<String> BAD_SURFACE = new HashSet<String>();
     /**
      * A map which associates string to speed. Get some impression:
      * http://www.itoworld.com/map/124#fullscreen

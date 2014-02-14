@@ -46,7 +46,6 @@ import java.util.List;
  */
 public class QueryGraph implements Graph
 {
-
     private final Graph mainGraph;
     private final int mainNodes;
     private final int mainEdges;
