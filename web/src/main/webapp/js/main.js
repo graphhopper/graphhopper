@@ -25,6 +25,7 @@ var routingLayer;
 var map;
 var browserTitle = "GraphHopper Maps - Driving Directions";
 var firstClickToRoute;
+var viacounter = 0;
 var clickToRouteAsVia;
 var defaultTranslationMap = null;
 var enTranslationMap = null;
@@ -77,6 +78,18 @@ $(document).ready(function(e) {
         // no page reload
         e.preventDefault();
         exportGPX();
+    });
+    
+    $('#addViaButton').click(function(e) {
+        // no page reload
+        e.preventDefault();
+        addViaButton();
+    });
+
+    $('#rmViaButton').click(function(e) {
+        // no page reload
+        e.preventDefault();
+        rmViaButton();
     });
 
     var urlParams = parseUrlWithHisto();
@@ -152,6 +165,38 @@ $(document).ready(function(e) {
                 initMap();
             });
 });
+
+function addViaButton()
+{
+    //Create an via input type dynamically.   
+    var element = document.createElement("input");
+    viacounter++;    
+    var type="viaInput"+viacounter;
+    //Assign different attributes to the element. 
+    element.type = "text";
+    element.value = "Via " + viacounter; 
+    element.id = type;
+    element.name = type;  // And the name too?
+    var foo = document.getElementById("viabuttons");
+    //Append the element in page (in span).  
+    foo.appendChild(element);
+    document.getElementById("rmViaButton").setAttribute("class", "visible");
+    routingLayer.clearLayers();
+}
+
+function rmViaButton()
+{
+    var foo = document.getElementById("viaInput"+viacounter);
+    viacounter--;
+    if (viacounter<=0)
+    {
+        viacounter=0;
+        document.getElementById("rmViaButton").setAttribute("class", "hidden");
+    }
+    //Remove the element
+    foo.parentNode.removeChild(foo);
+    routingLayer.clearLayers();
+}
 
 function initFromParams(params, doQuery) {
     ghRequest.init(params);
@@ -348,7 +393,10 @@ function initMap() {
               // set start point
               routingLayer.clearLayers();
               firstClickToRoute = false;
-              clickToRouteAsVia = true;
+              if ( viacounter>0 )
+              {
+                 clickToRouteAsVia = true;
+              }
               ghRequest.from.setCoord(latlng.lat, latlng.lng);
               resolveFrom();
            } else {
@@ -381,15 +429,15 @@ function setFlag(coord, isFromViaOrTo) {
         {
             case 1:
                placeicon=iconFrom;
-               placepopup="Start"
+               placepopup="Start";
                break;         
             case 2:
                placeicon=iconVia;
-               placepopup="Via"
+               placepopup="Via";
                break;         
             case 3:
                placeicon=iconTo;
-               placepopup="To"
+               placepopup="To";
                break;         
         }
         
@@ -439,18 +487,21 @@ function resolveTo() {
     return resolve("to", ghRequest.to);
 }
 
-function resolve(fromOrTo, locCoord) {
-    $("#" + fromOrTo + "Flag").hide();
-    $("#" + fromOrTo + "Indicator").show();
-    $("#" + fromOrTo + "Input").val(locCoord.input);
+function resolve(fromOrViaOrTo, locCoord) {
+    $("#" + fromOrViaOrTo + "Flag").hide();
+    $("#" + fromOrViaOrTo + "Indicator").show();
+    if (fromOrViaOrTo==="via")
+          $("#" + fromOrViaOrTo + "Input1").val(locCoord.input);
+        else
+          $("#" + fromOrViaOrTo + "Input").val(locCoord.input);
 
     return createAmbiguityList(locCoord).done(function(arg1) {
-        var errorDiv = $("#" + fromOrTo + "ResolveError");
+        var errorDiv = $("#" + fromOrViaOrTo + "ResolveError");
         errorDiv.empty();
-        var foundDiv = $("#" + fromOrTo + "ResolveFound");
+        var foundDiv = $("#" + fromOrViaOrTo + "ResolveFound");
         // deinstallation of completion if there was one
-        // if (getAutoCompleteDiv(fromOrTo).autocomplete())
-        //    getAutoCompleteDiv(fromOrTo).autocomplete().dispose();
+        // if (getAutoCompleteDiv(fromOrViaOrTo).autocomplete())
+        //    getAutoCompleteDiv(fromOrViaOrTo).autocomplete().dispose();
 
         foundDiv.empty();
         var list = locCoord.resolvedList;
@@ -460,12 +511,12 @@ function resolve(fromOrTo, locCoord) {
             var anchor = String.fromCharCode(0x25BC);
             var linkPart = $("<a>" + anchor + "<small>" + list.length + "</small></a>");
             foundDiv.append(linkPart.click(function(e) {
-                setAutoCompleteList(fromOrTo, locCoord);
+                setAutoCompleteList(fromOrViaOrTo, locCoord);
             }));
         }
 
-        $("#" + fromOrTo + "Indicator").hide();
-        $("#" + fromOrTo + "Flag").show();
+        $("#" + fromOrViaOrTo + "Indicator").hide();
+        $("#" + fromOrViaOrTo + "Flag").show();
         return locCoord;
     });
 }
@@ -957,7 +1008,7 @@ function parseUrl(query) {
 
 function mySubmit() {
     var fromStr = $("#fromInput").val();
-    var viaStr = $("#viaInput").val();
+    var viaStr = $("#viaInput1").val();
     var toStr = $("#toInput").val();
     if (toStr == "To" && fromStr == "From" && viaStr == "Via") {
         // TODO print warning
@@ -1047,7 +1098,7 @@ function stringFormat(str, args) {
 function initI18N() {
     $('#searchButton').attr("value", tr("searchButton"));
     $('#fromInput').attr("placeholder", tr("fromHint"));
-    $('#viaInput').attr("placeholder", tr("viaHint"));
+    $('#viaInput1').attr("placeholder", tr("viaHint"));
     $('#toInput').attr("placeholder", tr("toHint"));
 }
 

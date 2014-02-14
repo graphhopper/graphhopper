@@ -30,9 +30,19 @@ body {
 #input, #instructions {
     width: 255px;
 }
-#fromInput, #viaInput, #toInput {
+#fromInput, #viaInput, #toInput, #viabuttons {
     width: 225px;
-    float: right;    
+    float: right;
+}
+
+#addViaButton {
+    width: 100px;
+    float: left;
+}
+
+#rmViaButton {
+    width: 100px;
+    float: right;
 }
 
 #fromResolveFound a, #viaResolveFound a, #toResolveFound a {
@@ -124,6 +134,7 @@ body {
     float: right;
     margin-bottom: 5px;
 }
+
 .clear {
     clear: both;
 }

@@ -35,6 +35,7 @@
             </div>
             <form id="locationform">
                 <div id="locationpoints">
+                    
                     <div id="fromDiv">
                         <img id="fromIndicator" class="hidden" src="img/indicator.gif"/>
                         <img id="fromFlag" src="img/marker-small-green.png"/>
@@ -47,7 +48,10 @@
                     <div id="viaDiv">
                         <img id="viaIndicator" class="hidden" src="img/indicator.gif"/>
                         <img id="viaFlag" src="img/marker-small-yellow.png"/>
-                        <input id="viaInput" type="text" placeholder="Via"/>
+                        <input id="addViaButton" type="button" value="Add Via"/>
+                        <input id="rmViaButton" type="button" value="Remove Via" class="hidden"/>
+                        <!-- <input id="viaInput" type="text" placeholder="Via"/> -->
+                        <span id="viabuttons"> </span>
                         <div class="clear"> </div>
                         <div id="viaResolveFound"></div>
                         <div id="viaResolveError"></div>
