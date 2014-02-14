@@ -117,6 +117,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      */
     public int defineWayBits( int index, int shift )
     {
+        if (forwardBit != 0)
+            throw new IllegalStateException("You must not register a FlagEncoder (" + toString() + ") twice!");
+        
         // define the first 2 speedBits in flags for routing
         forwardBit = 1 << shift;
         backwardBit = 2 << shift;
@@ -270,7 +273,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      */
     public long flagsDefault( boolean forward, boolean backward )
     {
-        long flags = speedEncoder.setDefaultValue(0);
+        long flags = setSpeed(0, 0);
         return setAccess(flags, forward, backward);
     }
 
@@ -336,7 +339,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     /**
      * @return the speed in km/h
      */
-    static double parseSpeed( String str )
+    protected static double parseSpeed( String str )
     {
         if (Helper.isEmpty(str))
         {
