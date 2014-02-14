@@ -13,7 +13,7 @@ GHRequest = function(host) {
     this.minPathPrecision = 1;
     this.host = host;
     this.from = new GHInput("");
-    this.via = new GHInput("");    
+    this.via = new Array();
     this.to = new GHInput("");
     this.vehicle = "car";
     this.weighting = "fastest";
@@ -97,26 +97,37 @@ GHRequest.prototype.createURL = function(demoUrl) {
 GHRequest.prototype.createGPXURL = function() {
     // use points instead of strings
     var str;
-    if (!this.via.toString())
+    if (this.via.length===0)
     {
        str = "point=" + encodeURIComponent(this.from.toString()) + "&point=" + encodeURIComponent(this.to.toString());
     }
     else
     {
-       str = "point=" + encodeURIComponent(this.from.toString()) + "&point=" + encodeURIComponent(this.via.toString()) + "&point=" + encodeURIComponent(this.to.toString());
+       var vialist="";
+       for(i=0;i<this.via.length;i++)
+       {
+           vialist=vialist + "&point=" + encodeURIComponent(this.via[i].toString());
+       }
+       str = "point=" + encodeURIComponent(this.from.toString()) + vialist + "&point=" + encodeURIComponent(this.to.toString());
     }
     return this.createPath(this.host + "/api/route?" + str + "&type=gpx");
 };
 
 GHRequest.prototype.createFullURL = function() {
     var str;
-    if (!this.via.toString())
+    if (this.via.length===0)
     {
         str = "?point=" + encodeURIComponent(this.from.input) + "&point=" + encodeURIComponent(this.to.input);
     }
     else
     {
-        str = "?point=" + encodeURIComponent(this.from.input) + "&point=" + encodeURIComponent(this.via.input) + "&point=" + encodeURIComponent(this.to.input);
+       var vialist="";
+       for(i=0;i<this.via.length;i++)
+       {
+           vialist=vialist + "&point=" + encodeURIComponent(this.via[i].toString());
+       }
+        
+       str = "?point=" + encodeURIComponent(this.from.input) + vialist + "&point=" + encodeURIComponent(this.to.input);
     }
     return this.createPath(str);
 };
