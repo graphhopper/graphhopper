@@ -168,33 +168,68 @@ $(document).ready(function(e) {
 
 function addViaButton()
 {
-    //Create an via input type dynamically.   
+    // Create <img id="viaIndicator" class="hidden" src="img/indicator.gif"/>
+    viacounter++;
+    var img = document.createElement("img");
+    img.id = "viaIndicator"+viacounter;
+    img.setAttribute("class", "hidden");
+    img.setAttribute("src", "img/indicator.gif");
+    var pic = document.getElementById("viapics");
+    // Create <img id="viaFlag" src="img/marker-small-yellow.png"/>
+    pic.appendChild(img);
+    var png = document.createElement("img");
+    png.id = "viaFlag"+viacounter;
+    png.setAttribute("src", "img/marker-small-yellow.png");
+    pic.appendChild(png);
+    
     var element = document.createElement("input");
-    viacounter++;    
     var type="viaInput"+viacounter;
     //Assign different attributes to the element. 
     element.type = "text";
     element.value = "Via " + viacounter; 
     element.id = type;
     element.name = type;  // And the name too?
-    var foo = document.getElementById("viabuttons");
+    //var foo = document.getElementById("viabuttons");
     //Append the element in page (in span).  
-    foo.appendChild(element);
+    pic.appendChild(element);
+    var clear = document.createElement("div");
+    clear.setAttribute("class", "clear");
+    pic.appendChild(clear);
+    
+    var viaResolveFound = document.createElement("div");
+    viaResolveFound.id = "viaResolveFound"+viacounter;
+    pic.appendChild(viaResolveFound);
+    
+    var viaResolveError = document.createElement("div");
+    viaResolveError.id = "viaResolveError"+viacounter;
+    pic.appendChild(viaResolveError);
+    
     document.getElementById("rmViaButton").setAttribute("class", "visible");
     routingLayer.clearLayers();
+    
+    
 }
 
 function rmViaButton()
 {
-    var foo = document.getElementById("viaInput"+viacounter);
+    var foo = document.getElementById("viaIndicator"+viacounter);
+    //Remove the element
+    foo.parentNode.removeChild(foo);
+    foo = document.getElementById("viaFlag"+viacounter);
+    foo.parentNode.removeChild(foo);
+    foo = document.getElementById("viaInput"+viacounter);
+    foo.parentNode.removeChild(foo);
+    foo = document.getElementById("viaResolveFound"+viacounter);
+    foo.parentNode.removeChild(foo);
+    foo = document.getElementById("viaResolveError"+viacounter);
+    foo.parentNode.removeChild(foo);
+    
     viacounter--;
     if (viacounter<=0)
     {
         viacounter=0;
         document.getElementById("rmViaButton").setAttribute("class", "hidden");
     }
-    //Remove the element
-    foo.parentNode.removeChild(foo);
     routingLayer.clearLayers();
 }
 

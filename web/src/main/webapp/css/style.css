@@ -50,12 +50,20 @@ input[id^='viaInput'] {
     float: right;
 }
 
-#fromResolveFound a, #viaResolveFound a, #toResolveFound a {
+div[id^='viaResolveFound a']
+{
     background-color: white;
     padding-left: 4px;
     padding-right: 3px;    
 }
-#fromResolveFound, #viaResolveFound, #toResolveFound {
+
+#fromResolveFound a, #toResolveFound a {
+    background-color: white;
+    padding-left: 4px;
+    padding-right: 3px;    
+}
+
+#fromResolveFound, #toResolveFound {
     overflow: hidden;
     max-height: 24px;
     font-size: 10px;
@@ -66,7 +74,26 @@ input[id^='viaInput'] {
     margin-right: 2px;    
 }
 
-#fromResolveError, #viaResolveError, #toResolveError {
+div[id^='viaResolveFound']
+{
+    overflow: hidden;
+    max-height: 24px;
+    font-size: 10px;
+    color: blue;
+    float: right;
+    cursor: pointer;    
+    margin-top: -20px;
+    margin-right: 2px;    
+}
+
+div[id^='viaResolveError']
+{
+    float: right;
+    font-size: 12px;
+    padding-bottom: 4px;
+}
+
+#fromResolveError, #toResolveError {
     float: right;
     font-size: 12px;
     padding-bottom: 4px;
@@ -91,7 +118,7 @@ input[id^='viaInput'] {
     padding-top: 20px;
     color: #666666                    
 }
-#fromDiv img, #viaDiv img,#toDiv img {
+#fromDiv img, #viaDiv img, #toDiv img {
     margin-top: 4px;
     padding-right: 3px;                
     float: left;
