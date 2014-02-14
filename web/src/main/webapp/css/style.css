@@ -30,7 +30,12 @@ body {
 #input, #instructions {
     width: 255px;
 }
-#fromInput, #viaInput, #toInput, #viabuttons {
+#fromInput, #toInput, #viabuttons {
+    width: 225px;
+    float: right;
+}
+
+input[id^='viaInput'] {
     width: 225px;
     float: right;
 }
