@@ -261,7 +261,6 @@ function resolveCoords(fromStr, viaarray, toStr, doQuery) {
       {
           if (viaarray[i] !== ghRequest.via[i].input || !ghRequest.via[i].isResolved())
              ghRequest.via[i] = new GHInput(viaarray[i]);
-          resolveVia(i+1);
       }
     }
 
