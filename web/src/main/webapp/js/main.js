@@ -26,8 +26,7 @@ var map;
 var browserTitle = "GraphHopper Maps - Driving Directions";
 var firstClickToRoute;
 var viacounter = 0;
-var clickToRouteAsVia;
-var activeviaindex = 0;
+var FromAndToFlagCreated=false;
 var defaultTranslationMap = null;
 var enTranslationMap = null;
 var routeSegmentPopup = null;
@@ -174,6 +173,7 @@ function addViaButton()
 {
     // Create <img id="viaIndicator" class="hidden" src="img/indicator.gif"/>
     viacounter++;
+    ghRequest.via.push(new GHInput(""));
     var img = document.createElement("img");
     img.id = "viaIndicator"+viacounter;
     img.setAttribute("class", "hidden");
@@ -209,9 +209,6 @@ function addViaButton()
     pic.appendChild(viaResolveError);
     
     document.getElementById("rmViaButton").setAttribute("class", "visible");
-    routingLayer.clearLayers();
-    
-    
 }
 
 function rmViaButton()
@@ -234,7 +231,12 @@ function rmViaButton()
         viacounter=0;
         document.getElementById("rmViaButton").setAttribute("class", "hidden");
     }
+    if (ghRequest.via.length !== 0)
+    {
+       ghRequest.via.pop();
+    }
     routingLayer.clearLayers();
+    mySubmit();
 }
 
 function initFromParams(params, doQuery) {
@@ -243,35 +245,39 @@ function initFromParams(params, doQuery) {
     var routeNow = params.point && params.point.length == 2 || fromAndTo;
     if (routeNow) {
         if (fromAndTo)
-            resolveCoords(params.from, params.via ,params.to, doQuery);
+            resolveCoords(params.from, null ,params.to, doQuery);
         else
-            resolveCoords(params.point[0], params.point[1], params.point[2], doQuery);
+            resolveCoords(params.point[0], null , params.point[2], doQuery);
     }
 }
 
-function resolveCoords(fromStr, viaStr, toStr, doQuery) {
-    console.log("resolveCoords start");
+function resolveCoords(fromStr, viaarray, toStr, doQuery) {
     if (fromStr !== ghRequest.from.input || !ghRequest.from.isResolved())
         ghRequest.from = new GHInput(fromStr);
 
-    if (viaStr !== ghRequest.via[0].input || !ghRequest.via[0].isResolved())
-        ghRequest.via[0] = new GHInput(viaStr);
+    if ( (viaarray!=null)&&(viaarray.length !==0 ))
+    {
+      for (i=0; i<viaarray.length; i++)
+      {
+          if (viaarray[i] !== ghRequest.via[i].input || !ghRequest.via[i].isResolved())
+             ghRequest.via[i] = new GHInput(viaarray[i]);
+          resolveVia(i+1);
+      }
+    }
 
     if (toStr !== ghRequest.to.input || !ghRequest.to.isResolved())
         ghRequest.to = new GHInput(toStr);
 
-    if (ghRequest.from.lat && ghRequest.via[0].lat && ghRequest.to.lat) {
+    if (ghRequest.from.lat && ghRequest.to.lat) {
         // two mouse clicks into the map -> do not wait for resolve
         resolveFrom();
-        for (i=1; i<=viacounter; i++)
-        {
-           resolveVia(i);
-        }
+        for (i=0; i<ghRequest.via.length;i++)
+            resolveVia(i+1);
         resolveTo();
         routeLatLng(ghRequest, doQuery);
     } else {
         // at least one text input from user -> wait for resolve as we need the coord for routing     
-        $.when(resolveFrom(), resolveVia(1), resolveTo()).done(function(fromArgs, viaArgs, toArgs) {
+        $.when(resolveFrom(), resolveTo()).done(function(fromArgs, toArgs) {
             routeLatLng(ghRequest, doQuery);
         });
     }
@@ -418,45 +424,49 @@ function initMap() {
 
     routingLayer = L.geoJson().addTo(map);
     firstClickToRoute = true;
-    clickToRouteAsVia = false;
-    activeviaindex = 0;
     function onMapClick(e) {
         var latlng = e.latlng;
         latlng.lng = makeValidLng(latlng.lng);
-        if (clickToRouteAsVia)
-        {
-            // set via point
-            activeviaindex ++;
-            ghRequest.via.push(new GHInput(""));
-            if (activeviaindex>=viacounter)
-            {
-              clickToRouteAsVia = false;
-              firstClickToRoute = false;
-            }
-            ghRequest.via[activeviaindex-1].setCoord(latlng.lat, latlng.lng);
-            resolveVia(activeviaindex);
-        } else
-        {
-           if (firstClickToRoute) {
-              // set start point
-              activeviaindex = 0;
-              routingLayer.clearLayers();
-              firstClickToRoute = false;
-              if ( viacounter>0 )
+           // Check if we have all via flags
+           var viaflagmissing=-1;
+           for (i=0;(viaflagmissing===-1)&&(i<ghRequest.via.length);i++)
+           {
+              var viaStr = $("#viaInput"+(i+1)).val();
+              console.log("viaStr"+(i+1)+"="+viaStr);
+              if (viaStr === "Via "+(i+1))
               {
-                 clickToRouteAsVia = true;
+                 viaflagmissing=i;
               }
-              ghRequest.from.setCoord(latlng.lat, latlng.lng);
-              resolveFrom();
-           } else {
-              // set end point
-              ghRequest.to.setCoord(latlng.lat, latlng.lng);
-              resolveTo();
-              // do not wait for resolving
-              routeLatLng(ghRequest);
-              firstClickToRoute = true;
            }
-        }
+           console.log("viaflagmissing new="+viaflagmissing);
+           // Via flag missing
+           if (viaflagmissing!==-1)
+           {
+              ghRequest.via[viaflagmissing].setCoord(latlng.lat, latlng.lng);
+              resolveVia(viaflagmissing+1);
+              if (FromAndToFlagCreated )
+                  mySubmit();                  
+           }
+           else
+           {
+             if (firstClickToRoute) {
+                // set start point
+                routingLayer.clearLayers();
+                FromAndToFlagCreated = false;
+                firstClickToRoute = false;
+                ghRequest.from.setCoord(latlng.lat, latlng.lng);
+                resolveFrom();
+             } else 
+             {
+                // set end point
+                ghRequest.to.setCoord(latlng.lat, latlng.lng);
+                FromAndToFlagCreated = true;
+                resolveTo();
+                // do not wait for resolving
+                routeLatLng(ghRequest);
+                firstClickToRoute = true;
+             }
+           }
     }
 
     map.on('click', onMapClick);
@@ -471,6 +481,7 @@ function makeValidLng(lon) {
 }
 
 function setFlag(coord, isFromViaOrTo, viaindex) {
+    console.log("setFlag isFromViaOrTo="+isFromViaOrTo+" viaindex="+viaindex);
     if (coord.lat) {
         var placeicon;
         var placepopup;
@@ -527,8 +538,11 @@ function resolveFrom() {
 }
 
 function resolveVia(viaindex) {
-    setFlag(ghRequest.via[viaindex-1], 2, viaindex);
-    return resolve("via", ghRequest.via[viaindex-1], viaindex);
+  if (ghRequest.via.length!==0)
+  {    
+      setFlag(ghRequest.via[viaindex-1], 2, viaindex);
+      return resolve("via", ghRequest.via[viaindex-1], viaindex);
+  }
 }
 
 function resolveTo() {
@@ -769,27 +783,29 @@ function createCallback(errorFallback) {
     };
 }
 
-function focusWithBounds(coord, bbox, isFromViaOrTo) {
+function focusWithBounds(coord, bbox, isFromViaOrTo, viaindex) {
     routingLayer.clearLayers();
+    FromAndToFlagCreated = false;
     // bbox needs to be in the none-geojson format!?
     // [[lat, lng], [lat2, lng2], ...]
     map.fitBounds(new L.LatLngBounds(bbox));
-    setFlag(coord, isFromViaOrTo);
+    setFlag(coord, isFromViaOrTo, viaindex);
 }
 
-function focus(coord, zoom, isFromViaOrTo) {
+function focus(coord, zoom, isFromViaOrTo, viaindex) {
     if (coord.lat && coord.lng) {
         if (!zoom)
             zoom = 11;
         routingLayer.clearLayers();
         map.setView(new L.LatLng(coord.lat, coord.lng), zoom);
-        setFlag(coord, isFromViaOrTo);
+        setFlag(coord, isFromViaOrTo, viaindex);
     }
 }
 function routeLatLng(request, doQuery) {
     // doZoom should not show up in the URL but in the request object to avoid zooming for history change
     var doZoom = request.doZoom;
     request.doZoom = true;
+
     console.log("routeLatLng ratrun hack: Forcing doQuery");
     doQuery=true;
 
@@ -829,21 +845,8 @@ function routeLatLng(request, doQuery) {
     $("#vehicles button").removeClass("selectvehicle");
     $("button#" + request.vehicle.toLowerCase()).addClass("selectvehicle");
 
-    var urlForAPI;
-    if (request.via.length==0)
-    {
-      urlForAPI = request.createURL("point=" + from + "&point=" + to);
-    }
-    else
-    {
-       var vialist="";
-       for(i=0;i<request.via.length;i++)
-       {
-           vialist=vialist + "&point=" + encodeURIComponent(request.via[i].toString());
-       }
+    var urlForAPI=request.createURL("point=" + from + request.createViaParams() + "&point=" + to);
 
-      urlForAPI = request.createURL("point=" + from + vialist + "&point=" + to);
-    }
     descriptionDiv.html('<img src="img/indicator.gif"/> Search Route ...');
     request.doRequest(urlForAPI, function(json) {
         descriptionDiv.html("");
@@ -1087,9 +1090,9 @@ function parseUrl(query) {
 
 function mySubmit() {
     var fromStr = $("#fromInput").val();
-    var viaStr = $("#viaInput1").val();
     var toStr = $("#toInput").val();
-    if (toStr == "To" && fromStr == "From" && viaStr == "Via") {
+    var viaarray = new Array();
+    if (toStr == "To" && fromStr == "From") {
         // TODO print warning
         return;
     }
@@ -1097,25 +1100,30 @@ function mySubmit() {
         // no special function
         return;
     }
-    if (viaStr == "Via") {
-        // no special function
-        return;
+    for (i=1;i<ghRequest.via.length+1;i++)
+    {
+      var viaStr = $("#viaInput"+i).val();
+      if (viaStr === "Via "+i) {
+          // no special function
+          return;
+      }
+      ghRequest.via[i-1] = new GHInput(viaStr);
+      viaarray.push(viaStr);
+      $.when(resolveVia(i)).done(function() {
+          focus(ghRequest.via[i-1],2,i);
+      });
     }
     
     if (toStr == "To") {
         // lookup area
-        ghRequest.via[0] = new GHInput(viaStr);
-        $.when(resolveVia()).done(function() {
-            focus(ghRequest.via[0],2);
-        ghRequest.from = new GHInput(fromStr);
-        });        
+        ghRequest.from = new GHInput(fromStr);        
         $.when(resolveFrom()).done(function() {
-            focus(ghRequest.from,1);
+            focus(ghRequest.from,1,0);
         });
         return;
     }
     // route!
-    resolveCoords(fromStr, viaStr, toStr);
+    resolveCoords(fromStr, viaarray, toStr);
 }
 
 function floor(val, precision) {
@@ -1238,9 +1246,9 @@ function setAutoCompleteList(fromOrTo, ghRequestLoc) {
             routeLatLng(ghRequest);
         else if (suggestion.data.boundingbox) {
             var bbox = suggestion.data.box;
-            focusWithBounds(ghRequestLoc, [[bbox[0], bbox[2]], [bbox[1], bbox[3]]], 1);
+            focusWithBounds(ghRequestLoc, [[bbox[0], bbox[2]], [bbox[1], bbox[3]]], 1, 0);
         } else
-            focus(ghRequestLoc, 15, 1);
+            focus(ghRequestLoc, 15, 1, 0);
     };
 
     options.containerClass = "complete-" + pointIndex;
