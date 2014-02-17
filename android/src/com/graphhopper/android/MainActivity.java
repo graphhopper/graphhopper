@@ -123,8 +123,7 @@ public class MainActivity extends MapActivity
             return true;
         }
     };
-    private GestureDetector gestureDetector = new GestureDetector(
-            gestureListener);
+    private GestureDetector gestureDetector = new GestureDetector(gestureListener);
 
     @Override
     protected void onCreate( Bundle savedInstanceState )
@@ -195,7 +194,7 @@ public class MainActivity extends MapActivity
     private void chooseAreaFromLocal()
     {
         List<String> nameList = new ArrayList<String>();
-        String[] files = new File(mapsFolder).list(new FilenameFilter()
+        String[] files = mapsFolder.list(new FilenameFilter()
         {
             @Override
             public boolean accept( File dir, String filename )
