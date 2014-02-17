@@ -412,20 +412,17 @@ public class QueryGraph implements Graph
             throw new IllegalStateException("should not happen:" + towerNode + ", " + node2Edge);
 
         VirtualEdgeIterator vIter = node2Edge.get(towerNode);
-        TIntArrayList ignoreNodes = new TIntArrayList(vIter.count() * 2);
+        TIntArrayList ignoreEdges = new TIntArrayList(vIter.count() * 2);
         while (vIter.next())
         {
             EdgeIteratorState edge = queryResults.get(vIter.getAdjNode() - mainNodes).getClosestEdge();
-            ignoreNodes.add(edge.getAdjNode());
-            ignoreNodes.add(edge.getBaseNode());
+            ignoreEdges.add(edge.getEdge());
         }
-
-        ignoreNodes.remove(towerNode);
         vIter.reset();
         EdgeIterator iter = mainExpl.setBaseNode(towerNode);
         while (iter.next())
         {
-            if (!ignoreNodes.contains(iter.getAdjNode()))
+            if (!ignoreEdges.contains(iter.getEdge()))
                 vIter.add(iter.detach());
         }
     }

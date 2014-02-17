@@ -27,6 +27,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.map.TIntObjectMap;
 import java.util.Arrays;
+import java.util.Collections;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -131,30 +132,31 @@ public class QueryGraphTest
         Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
         initGraph(g);
         g.edge(1, 3);
-            
+
         final int baseNode = 1;
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(baseNode);
         iter.next();
         QueryResult res1 = createLocationResult(2, 1.7, iter, 1, PILLAR);
-        QueryGraph queryGraph = new QueryGraph(g) {
+        QueryGraph queryGraph = new QueryGraph(g)
+        {
 
             @Override
             void fillVirtualEdges( TIntObjectMap<QueryGraph.VirtualEdgeIterator> node2Edge, int towerNode, EdgeExplorer mainExpl )
             {
                 super.fillVirtualEdges(node2Edge, towerNode, mainExpl);
                 // ignore nodes should include baseNode == 1
-                if(towerNode == 3)
+                if (towerNode == 3)
                     assertEquals("[3->4]", node2Edge.get(towerNode).toString());
-                else if(towerNode == 1)
+                else if (towerNode == 1)
                     assertEquals("[1->4, 1 1-0]", node2Edge.get(towerNode).toString());
                 else
                     throw new IllegalStateException("not allowed " + towerNode);
-            }            
+            }
         };
         queryGraph.lookup(Arrays.asList(res1));
         GHUtility.getEdge(queryGraph, 0, 1);
     }
-    
+
     @Test
     public void testMultipleVirtualNodes()
     {
@@ -243,6 +245,38 @@ public class QueryGraphTest
         vi.add(iter.detach());
 
         assertTrue(vi.next());
+    }
+
+    @Test
+    public void testLoopStreet_Issue151()
+    {
+        // do query at x should result in ignoring only the bottom edge 1-3 not the upper one => getNeighbors are 0, 5, 3 and not only 0, 5
+        //
+        // 0--1--3--4
+        //    |  |
+        //    x---
+        //
+        EncodingManager encodingManager = new EncodingManager("CAR");
+        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
+        g.edge(0, 1, 10, true);
+        g.edge(1, 3, 10, true);
+        g.edge(3, 4, 10, true);
+        EdgeIteratorState edge = g.edge(1, 3, 20, true).setWayGeometry(Helper.createPointList(-0.001, 0.001, -0.001, 0.002));
+        AbstractRoutingAlgorithmTester.updateDistancesFor(g, 0, 0, 0);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(g, 1, 0, 0.001);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(g, 3, 0, 0.002);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(g, 4, 0, 0.003);
+
+        QueryResult qr = new QueryResult(-0.0005, 0.001);
+        qr.setClosestEdge(edge);
+        qr.setWayIndex(0);
+        qr.calcSnappedPoint(new DistanceCalc2D());
+
+        QueryGraph qg = new QueryGraph(g);
+        qg.lookup(Arrays.asList(qr));
+        EdgeExplorer ee = qg.createEdgeExplorer();
+        
+        assertEquals(GHUtility.asSet(0, 5, 3), GHUtility.getNeighbors(ee.setBaseNode(1)));
     }
 
     @Test
