@@ -202,7 +202,8 @@ public class QueryGraph implements Graph
                     createEdges(prevPoint, prevWayIndex,
                             res.getSnappedPoint(), res.getWayIndex(),
                             onEdge, fullPL, closestEdge, prevNodeId, virtNodeId, reverseFlags);
-                    virtualNodes.add(currSnapped.lat, currSnapped.lon);
+
+                    virtualNodes.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
 
                     // add edges again to set adjacent edges for newVirtNodeId
                     if (counter > 0)
@@ -282,8 +283,8 @@ public class QueryGraph implements Graph
         public int getDimension()
         {
             return mainNodeAccess.getDimension();
-        }                
-        
+        }
+
         @Override
         public double getLatitude( int nodeId )
         {
@@ -307,7 +308,7 @@ public class QueryGraph implements Graph
                 return virtualNodes.getElevation(nodeId - mainNodes);
             return mainNodeAccess.getElevation(nodeId);
         }
-        
+
         @Override
         public int getAdditionalNodeField( int nodeId )
         {
@@ -332,7 +333,7 @@ public class QueryGraph implements Graph
         public void setAdditionalNodeField( int nodeId, int additionalValue )
         {
             throw new UnsupportedOperationException("Not supported yet.");
-        }              
+        }
 
         @Override
         public double getLat( int nodeId )

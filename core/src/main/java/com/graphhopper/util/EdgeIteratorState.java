@@ -27,6 +27,12 @@ package com.graphhopper.util;
 public interface EdgeIteratorState
 {
     /**
+     * Changes direction of this edge state. I.e. the following properties will change/'swap' so
+     * that this edge has the opposite direction: base and adjacent nodes, flags and wayGeometry.
+     */
+//    void swap();
+
+    /**
      * @return the edge id of the current edge. Do not make any assumptions about the concrete
      * values, except that for an implemention it is recommended that they'll be contiguous.
      */
@@ -96,9 +102,9 @@ public interface EdgeIteratorState
      * Clones this EdgeIteratorState.
      */
     EdgeIteratorState detach();
-    
+
     /**
      * Copies the specified edge into the current one.
      */
-    void copyProperties(EdgeIteratorState edge);
+    void copyProperties( EdgeIteratorState edge );
 }

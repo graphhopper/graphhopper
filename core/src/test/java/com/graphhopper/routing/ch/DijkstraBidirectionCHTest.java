@@ -50,7 +50,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     {
         if (preparedMatrixGraph == null)
         {
-            LevelGraph lg = createGraph();
+            LevelGraph lg = createGraph(false);
             getMatrixAlikeGraph().copyTo(lg);
             prepareGraph(lg);
             preparedMatrixGraph = lg;
@@ -59,9 +59,9 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     }
 
     @Override
-    protected LevelGraph createGraph()
+    protected LevelGraph createGraph(boolean is3D)
     {
-        return new GraphBuilder(encodingManager).levelGraphCreate();
+        return new GraphBuilder(encodingManager).set3D(is3D).levelGraphCreate();
     }
 
     @Override
@@ -78,7 +78,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     @Test
     public void testPathRecursiveUnpacking()
     {
-        LevelGraphStorage g2 = (LevelGraphStorage) createGraph();
+        LevelGraphStorage g2 = (LevelGraphStorage) createGraph(false);
         g2.edge(0, 1, 1, true);
         EdgeIteratorState iter1_1 = g2.edge(0, 2, 1.4, true);
         EdgeIteratorState iter1_2 = g2.edge(2, 5, 1.4, true);
