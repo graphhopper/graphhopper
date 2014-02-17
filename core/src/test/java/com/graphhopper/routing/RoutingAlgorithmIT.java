@@ -105,21 +105,6 @@ public class RoutingAlgorithmIT
     }
 
     @Test
-    public void testRegensburg_issue151()
-    {
-        // extracted via ./graphhopper.sh extract "12.12985,48.98047,12.148283,48.992411"
-
-        List<OneRun> list = new ArrayList<OneRun>();
-        // bug for dijkstrabi
-        list.add(new OneRun(48.983667, 12.142929, 48.982893, 12.13617, 568.7, 23));
-        list.add(new OneRun(48.983206, 12.140568, 48.983213, 12.136266, 338.5, 12));
-
-        runAlgo(testCollector, "files/regensburg-issue151.osm.gz", "target/graph-regensburg",
-                list, "CAR", true, "CAR", "fastest");
-        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
-    }
-
-    @Test
     public void testMonacoFastest()
     {
         List<OneRun> list = createMonacoCar();
