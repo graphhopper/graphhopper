@@ -188,9 +188,9 @@ function addViaButton()
     
     var element = document.createElement("input");
     var type="viaInput"+viacounter;
+    element.setAttribute("placeholder", tr("viaHint"));
     //Assign different attributes to the element. 
     element.type = "text";
-    element.value = "Via " + viacounter; 
     element.id = type;
     element.name = type;  // And the name too?
     //var foo = document.getElementById("viabuttons");
@@ -247,11 +247,25 @@ function initFromParams(params, doQuery) {
         if (fromAndTo)
             resolveCoords(params.from, null ,params.to, doQuery);
         else
-            resolveCoords(params.point[0], null , params.point[2], doQuery);
+            resolveCoords(params.point[0], null , params.point[1], doQuery);
+    }
+    else
+    {
+       if (params.point && params.point.length>2) 
+       {
+          var viaarray=new Array();
+          for (i=1;i<params.point.length-1;i++)
+          {
+             addViaButton();
+             viaarray.push(params.point[i]);
+          }
+          resolveCoords(params.point[0], viaarray , params.point[params.point.length-1], doQuery);
+       }
     }
 }
 
 function resolveCoords(fromStr, viaarray, toStr, doQuery) {
+    console.log("resolveCoords fromStr="+fromStr+" toStr"+toStr+" doQuery="+doQuery);
     if (fromStr !== ghRequest.from.input || !ghRequest.from.isResolved())
         ghRequest.from = new GHInput(fromStr);
 
@@ -270,13 +284,13 @@ function resolveCoords(fromStr, viaarray, toStr, doQuery) {
     if (ghRequest.from.lat && ghRequest.to.lat) {
         // two mouse clicks into the map -> do not wait for resolve
         resolveFrom();
-        for (i=0; i<ghRequest.via.length;i++)
-            resolveVia(i+1);
         resolveTo();
         routeLatLng(ghRequest, doQuery);
     } else {
-        // at least one text input from user -> wait for resolve as we need the coord for routing     
+        // at least one text input from user -> wait for resolve as we need the coord for routing
+        console.log("at least one text input from user -> wait for resolve as we need the coord for routing");
         $.when(resolveFrom(), resolveTo()).done(function(fromArgs, toArgs) {
+            console.log("(resolveFrom(), resolveTo()).done");
             routeLatLng(ghRequest, doQuery);
         });
     }
@@ -432,7 +446,7 @@ function initMap() {
            {
               var viaStr = $("#viaInput"+(i+1)).val();
               console.log("viaStr"+(i+1)+"="+viaStr);
-              if (viaStr === "Via "+(i+1))
+              if (viaStr === "")
               {
                  viaflagmissing=i;
               }
@@ -783,6 +797,7 @@ function createCallback(errorFallback) {
 }
 
 function focusWithBounds(coord, bbox, isFromViaOrTo, viaindex) {
+    console.log("focusWithBounds isFromViaOrTo="+isFromViaOrTo+" viaindex="+viaindex);
     routingLayer.clearLayers();
     FromAndToFlagCreated = false;
     // bbox needs to be in the none-geojson format!?
@@ -792,7 +807,8 @@ function focusWithBounds(coord, bbox, isFromViaOrTo, viaindex) {
 }
 
 function focus(coord, zoom, isFromViaOrTo, viaindex) {
-    if (coord.lat && coord.lng) {
+    console.log("focus isFromViaOrTo="+isFromViaOrTo+" viaindex="+viaindex);    
+    if (coord!=null && coord.lat && coord.lng) {
         if (!zoom)
             zoom = 11;
         routingLayer.clearLayers();
@@ -804,9 +820,7 @@ function routeLatLng(request, doQuery) {
     // doZoom should not show up in the URL but in the request object to avoid zooming for history change
     var doZoom = request.doZoom;
     request.doZoom = true;
-
-    console.log("routeLatLng ratrun hack: Forcing doQuery");
-    doQuery=true;
+    console.log("routeLatLngdoQuery doQuery="+doQuery);
 
     var urlForHistory = request.createFullURL();
     // not enabled e.g. if no cookies allowed (?)
@@ -1102,7 +1116,7 @@ function mySubmit() {
     for (i=1;i<ghRequest.via.length+1;i++)
     {
       var viaStr = $("#viaInput"+i).val();
-      if (viaStr === "Via "+i) {
+      if (viaStr === "Via") {
           // no special function
           return;
       }
@@ -1184,7 +1198,6 @@ function stringFormat(str, args) {
 function initI18N() {
     $('#searchButton').attr("value", tr("searchButton"));
     $('#fromInput').attr("placeholder", tr("fromHint"));
-    $('#viaInput1').attr("placeholder", tr("viaHint"));
     $('#toInput').attr("placeholder", tr("toHint"));
 }
 
