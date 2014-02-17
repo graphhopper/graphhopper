@@ -6,14 +6,14 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-web</artifactId>
     <packaging>war</packaging>
-    <version>0.3-SNAPSHOT</version>
+    <version>0.2.1-SNAPSHOT</version>
     <name>GraphHopper Web</name>
     <description>Example on how to use GraphHopper in a web-based application</description>
         
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.3-SNAPSHOT</version>
+        <version>0.2.1-SNAPSHOT</version>
     </parent>
     <properties>
         <jetty.version>8.1.10.v20130312</jetty.version>
