@@ -105,6 +105,21 @@ public class RoutingAlgorithmIT
     }
 
     @Test
+    public void testRegensburg_issue151()
+    {
+        // extracted via ./graphhopper.sh extract "12.12985,48.98047,12.148283,48.992411"
+
+        List<OneRun> list = new ArrayList<OneRun>();
+        // bug for dijkstrabi
+        list.add(new OneRun(48.983667, 12.142929, 48.982893, 12.13617, 568.7, 23));
+        list.add(new OneRun(48.983206, 12.140568, 48.983213, 12.136266, 338.5, 12));
+
+        runAlgo(testCollector, "files/regensburg-issue151.osm.gz", "target/graph-regensburg",
+                list, "CAR", true, "CAR", "fastest");
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
     public void testMonacoFastest()
     {
         List<OneRun> list = createMonacoCar();
@@ -160,7 +175,7 @@ public class RoutingAlgorithmIT
                 list, "BIKE", true, "BIKE", "shortest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
-    
+
     @Test
     public void testMonacoMountainBike()
     {
@@ -172,7 +187,7 @@ public class RoutingAlgorithmIT
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "MTB", true, "MTB", "fastest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
-        
+
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "BIKE,MTB,RACINGBIKE", false, "MTB", "fastest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -189,12 +204,12 @@ public class RoutingAlgorithmIT
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "RACINGBIKE", true, "RACINGBIKE", "fastest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
-        
+
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "CAR,BIKE,RACINGBIKE", false, "RACINGBIKE", "fastest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
-    
+
     @Test
     public void testKremsBikeRelation()
     {
@@ -206,7 +221,7 @@ public class RoutingAlgorithmIT
         runAlgo(testCollector, "files/krems.osm.gz", "target/graph-krems",
                 list, "BIKE", true, "BIKE", "fastest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
-        
+
         runAlgo(testCollector, "files/krems.osm.gz", "target/graph-krems",
                 list, "CAR,BIKE,MTB", false, "BIKE", "fastest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -223,12 +238,12 @@ public class RoutingAlgorithmIT
         runAlgo(testCollector, "files/krems.osm.gz", "target/graph-krems",
                 list, "MTB", true, "MTB", "fastest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
-                
+
         runAlgo(testCollector, "files/krems.osm.gz", "target/graph-krems",
                 list, "CAR,BIKE,MTB", false, "MTB", "fastest");
-        assertEquals(testCollector.toString(), 0, testCollector.errors.size());                
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
-    
+
     List<OneRun> createAndorra()
     {
         List<OneRun> list = new ArrayList<OneRun>();

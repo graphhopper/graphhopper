@@ -20,12 +20,12 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.QueryResult;
 import static com.graphhopper.storage.index.QueryResult.Position.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+import gnu.trove.map.TIntObjectMap;
 import java.util.Arrays;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -124,6 +124,37 @@ public class QueryGraphTest
         assertEquals(2, getPoints(queryGraph, 3, 2).getSize());
     }
 
+    @Test
+    public void testFillVirtualEdges()
+    {
+        EncodingManager encodingManager = new EncodingManager("CAR");
+        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
+        initGraph(g);
+        g.edge(1, 3);
+            
+        final int baseNode = 1;
+        EdgeIterator iter = g.createEdgeExplorer().setBaseNode(baseNode);
+        iter.next();
+        QueryResult res1 = createLocationResult(2, 1.7, iter, 1, PILLAR);
+        QueryGraph queryGraph = new QueryGraph(g) {
+
+            @Override
+            void fillVirtualEdges( TIntObjectMap<QueryGraph.VirtualEdgeIterator> node2Edge, int towerNode, EdgeExplorer mainExpl )
+            {
+                super.fillVirtualEdges(node2Edge, towerNode, mainExpl);
+                // ignore nodes should include baseNode == 1
+                if(towerNode == 3)
+                    assertEquals("[3->4]", node2Edge.get(towerNode).toString());
+                else if(towerNode == 1)
+                    assertEquals("[1->4, 1 1-0]", node2Edge.get(towerNode).toString());
+                else
+                    throw new IllegalStateException("not allowed " + towerNode);
+            }            
+        };
+        queryGraph.lookup(Arrays.asList(res1));
+        GHUtility.getEdge(queryGraph, 0, 1);
+    }
+    
     @Test
     public void testMultipleVirtualNodes()
     {
@@ -242,13 +273,13 @@ public class QueryGraphTest
     }
 
     public QueryResult createLocationResult( double lat, double lon,
-            EdgeIteratorState edge, int index, QueryResult.Position pos )
+            EdgeIteratorState edge, int wayIndex, QueryResult.Position pos )
     {
         if (edge == null)
             throw new IllegalStateException("Specify edge != null");
         QueryResult tmp = new QueryResult(lat, lon);
         tmp.setClosestEdge(edge);
-        tmp.setWayIndex(index);
+        tmp.setWayIndex(wayIndex);
         tmp.setSnappedPosition(pos);
         tmp.calcSnappedPoint(new DistanceCalcEarth());
         return tmp;
