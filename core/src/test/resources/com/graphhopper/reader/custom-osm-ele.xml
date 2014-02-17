@@ -1,32 +1,40 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <osm version="0.6" generator="pbf2osm">
-    <node id="10" lat="51.2492152" lon="9.4317166" ele="3" uid="24853">
+    <node id="10" lat="51.2492152" lon="9.4317166" uid="24853">
         <tag k="is_in" v="Wiesbaden,Hessen,Germany,Europe" />
         <tag k="name" v="Wiesbaden-Naurod" />
         <tag k="place" v="village" />
+        <tag k="ele" v="3" />
     </node>
-    <node id="20" lat="52" lon="9" ele="-10" uid="24854">
+    <node id="20" lat="52" lon="9" uid="24854">
         <tag k="name" v="Halbendorf-Spree" />
+        <tag k="ele" v="-10" />
     </node>
-    <node id="30" lat="51.2" lon="9.4" ele="10" uid="24855">
+    <node id="30" lat="51.2" lon="9.4" uid="24855">
         <tag k="name" v="Dresden" />
+        <tag k="ele" v="10" />
     </node>
     
-    <node id="35" lat="45.2" lon="13.431" ele="4" uid="3212487">
+    <node id="35" lat="45.2" lon="13.431" uid="3212487">
         <tag k="name" v="Unused1" />
+        <tag k="ele" v="4" />
     </node>
 
-    <node id="40" lat="51.25" lon="9.43" ele="100" uid="24856">
+    <node id="40" lat="51.25" lon="9.43" uid="24856">
         <tag k="name" v="Cottbus" />
+        <tag k="ele" v="100" />
     </node>
-    <node id="41" lat="51.23" lon="11.43" ele="1000" uid="3214857">
+    <node id="41" lat="51.23" lon="11.43" uid="3214857">
         <tag k="name" v="Unused2" />
+        <tag k="ele" v="1000" />
     </node>
-    <node id="45" lat="41.2" lon="10.431" ele="20" uid="32124857">
+    <node id="45" lat="41.2" lon="10.431" uid="32124857">
         <tag k="name" v="Unused3" />
+        <tag k="ele" v="20" />
     </node>
-    <node id="50" lat="49" lon="10" ele="-30" uid="24857">
+    <node id="50" lat="49" lon="10" uid="24857">
         <tag k="name" v="Tester" />
+        <tag k="ele" v="-30" />
     </node>
     
     <way id="10" uid="85761">

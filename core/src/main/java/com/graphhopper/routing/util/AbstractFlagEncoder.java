@@ -446,7 +446,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (durationInHours > 0)
             try
             {
-                Number estimatedLength = way.getInternalTag("estimated_distance", null);
+                Number estimatedLength = way.getTag("estimated_distance", null);
                 if (estimatedLength != null)
                 {
                     // to km

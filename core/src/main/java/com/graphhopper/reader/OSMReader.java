@@ -348,8 +348,8 @@ public class OSMReader
             if (firstLat != Double.NaN && firstLon != Double.NaN && lastLat != Double.NaN && lastLon != Double.NaN)
             {
                 double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
-                way.setInternalTag("estimated_distance", estimatedDist);
-                way.setInternalTag("estimated_center", new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2));
+                way.setTag("estimated_distance", estimatedDist);
+                way.setTag("estimated_center", new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2));
             }
         }
 
@@ -706,8 +706,9 @@ public class OSMReader
                 towerNodeDistance += distCalc.calcDist(prevLat, prevLon, lat, lon);
             prevLat = lat;
             prevLon = lon;
-            if (nodes > 2 && i < nodes - 1) {
-                if(pillarNodes.is3D())
+            if (nodes > 2 && i < nodes - 1)
+            {
+                if (pillarNodes.is3D())
                     pillarNodes.add(lat, lon, ele);
                 else
                     pillarNodes.add(lat, lon);
@@ -759,7 +760,7 @@ public class OSMReader
             tmpNode = addTowerNode(osmId, lat, lon, ele);
         } else
         {
-            if(pointList.is3D())
+            if (pointList.is3D())
                 pointList.add(lat, lon, ele);
             else
                 pointList.add(lat, lon);
@@ -828,7 +829,7 @@ public class OSMReader
      */
     OSMTurnRelation createTurnRelation( OSMRelation relation )
     {
-        OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType(relation.getTag("restriction"));
+        OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType((String) relation.getTag("restriction"));
         if (type != OSMTurnRelation.Type.UNSUPPORTED)
         {
             long fromWayID = -1;

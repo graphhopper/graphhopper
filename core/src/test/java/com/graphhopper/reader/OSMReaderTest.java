@@ -476,7 +476,7 @@ public class OSMReaderTest
         EncodingManager manager = new EncodingManager("bike");
         OSMReader reader = new OSMReader(new GraphHopperStorage(new RAMDirectory(), manager, false)).
                 setEncodingManager(manager);
-        OSMRelation osmRel = new OSMRelation(1, new HashMap<String, String>());
+        OSMRelation osmRel = new OSMRelation(1);
         osmRel.getMembers().add(new OSMRelation.Member(OSMRelation.WAY, 1, ""));
         osmRel.getMembers().add(new OSMRelation.Member(OSMRelation.WAY, 2, ""));
 
@@ -628,8 +628,7 @@ public class OSMReaderTest
         };
         osmreader.setEncodingManager(manager);
         // save some node tags for first node
-        Map<String, String> nodeMap = new HashMap<String, String>();
-        OSMNode osmNode = new OSMNode(1, nodeMap, 1.1d, 1.0d);
+        OSMNode osmNode = new OSMNode(1, 1.1d, 1.0d);
         osmNode.setTag("test", "now");
         osmreader.getNodeFlagsMap().put(1, encoder.handleNodeTags(osmNode));
 
@@ -641,10 +640,10 @@ public class OSMReaderTest
         osmreader.getNodeMap().put(2, 2);
         osmreader.processWay(way);
 
-        GHPoint p = way.getInternalTag("estimated_center", null);
+        GHPoint p = way.getTag("estimated_center", null);
         assertEquals(1.15, p.lat, 1e-3);
         assertEquals(1.0, p.lon, 1e-3);
-        Double d = way.getInternalTag("estimated_distance", null);
+        Double d = way.getTag("estimated_distance", null);
         assertEquals(11119.5, d, 1e-1);
         assertEquals(1, increased.get());
     }

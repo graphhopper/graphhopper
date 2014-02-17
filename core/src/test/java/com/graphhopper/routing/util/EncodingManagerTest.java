@@ -24,8 +24,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.junit.Test;
 
@@ -96,13 +94,10 @@ public class EncodingManagerTest
 
     @Test
     public void testCombineRelations()
-    {
-        Map<String, String> wayMap = new HashMap<String, String>();
-        wayMap.put("highway", "track");
-        OSMWay osmWay = new OSMWay(1, wayMap);
-
-        Map<String, String> relMap = new HashMap<String, String>();
-        OSMRelation osmRel = new OSMRelation(1, relMap);
+    {        
+        OSMWay osmWay = new OSMWay(1);
+        osmWay.setTag("highway", "track");
+        OSMRelation osmRel = new OSMRelation(1);
 
         BikeFlagEncoder defaultBike = new BikeFlagEncoder();
         BikeFlagEncoder lessRelationCodes = new BikeFlagEncoder()
@@ -137,8 +132,8 @@ public class EncodingManagerTest
         EncodingManager manager = new EncodingManager(defaultBike, lessRelationCodes);
 
         // relation code is PREFER
-        relMap.put("route", "bicycle");
-        relMap.put("network", "lcn");
+        osmRel.setTag("route", "bicycle");
+        osmRel.setTag("network", "lcn");
         long relFlags = manager.handleRelationTags(osmRel, 0);
         long allow = defaultBike.acceptBit | lessRelationCodes.acceptBit;
         long flags = manager.handleWayTags(osmWay, allow, relFlags);
@@ -149,22 +144,20 @@ public class EncodingManagerTest
 
     @Test
     public void testMixBikeTypesAndRelationCombination()
-    {
-        Map<String, String> wayMap = new HashMap<String, String>();
-        wayMap.put("highway", "track");
-        wayMap.put("tracktype", "grade1");
-        OSMWay osmWay = new OSMWay(1, wayMap);
+    {        
+        OSMWay osmWay = new OSMWay(1);
+        osmWay.setTag("highway", "track");
+        osmWay.setTag("tracktype", "grade1");
 
-        Map<String, String> relMap = new HashMap<String, String>();
-        OSMRelation osmRel = new OSMRelation(1, relMap);
+        OSMRelation osmRel = new OSMRelation(1);
 
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
         MountainBikeFlagEncoder mtbEncoder = new MountainBikeFlagEncoder();
         EncodingManager manager = new EncodingManager(bikeEncoder, mtbEncoder);
 
         // relation code for network rcn is VERY_NICE for bike and PREFER for mountainbike
-        relMap.put("route", "bicycle");
-        relMap.put("network", "rcn");
+        osmRel.setTag("route", "bicycle");
+        osmRel.setTag("network", "rcn");
         long relFlags = manager.handleRelationTags(osmRel, 0);
         long allow = bikeEncoder.acceptBit | mtbEncoder.acceptBit;
         long flags = manager.handleWayTags(osmWay, allow, relFlags);
@@ -205,7 +198,7 @@ public class EncodingManagerTest
             @Override
             public long handleNodeTags( OSMNode node )
             {
-                String tmp = node.getTags().get("test");
+                String tmp = node.getTag("test");
                 // return negative value to indicate that this is not a barrier
                 if (tmp == null)
                     return -nodeEncoder.setValue(0, 1);
@@ -222,11 +215,9 @@ public class EncodingManagerTest
         };
         EncodingManager manager = new EncodingManager(car, car2);
 
-        Map<String, String> nodeMap = new HashMap<String, String>();
-        OSMNode node = new OSMNode(1, nodeMap, Double.NaN, Double.NaN);
-        Map<String, String> wayMap = new HashMap<String, String>();
-        wayMap.put("highway", "secondary");
-        OSMWay way = new OSMWay(2, wayMap);
+        OSMNode node = new OSMNode(1, Double.NaN, Double.NaN);
+        OSMWay way = new OSMWay(2);
+        way.setTag("highway", "secondary");
 
         long wayFlags = manager.handleWayTags(way, manager.acceptWay(way), 0);
         long nodeFlags = manager.handleNodeTags(node);
@@ -234,14 +225,14 @@ public class EncodingManagerTest
         assertEquals(60, car.getSpeed(wayFlags), 1e-1);
         assertEquals(59, car2.getSpeed(wayFlags), 1e-1);
 
-        nodeMap.put("test", "something");
+        node.setTag("test", "something");
         wayFlags = manager.handleWayTags(way, manager.acceptWay(way), 0);
         nodeFlags = manager.handleNodeTags(node);
         wayFlags = manager.applyNodeFlags(wayFlags, -nodeFlags);
         assertEquals(58, car2.getSpeed(wayFlags), 1e-1);
         assertEquals(60, car.getSpeed(wayFlags), 1e-1);
 
-        wayMap.put("maxspeed", "130");
+        way.setTag("maxspeed", "130");
         wayFlags = manager.handleWayTags(way, manager.acceptWay(way), 0);
         assertEquals(car.getMaxSpeed(), car2.getSpeed(wayFlags), 1e-1);
         nodeFlags = manager.handleNodeTags(node);
