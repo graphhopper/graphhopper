@@ -22,7 +22,7 @@ package com.graphhopper.reader.dem;
  * @author Peter Karich
  */
 public interface ElevationProvider
-{
+{    
     /**
      * @return returns the hight in meter or Double.NaN if invalid
      */

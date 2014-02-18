@@ -499,7 +499,7 @@ public class Path
                 int len = pl.size() - 1;
                 for (int i = 0; i < len; i++)
                 {
-                    points.add(pl.getLatitude(i), pl.getLongitude(i), pl.getElevation(i));
+                    points.add(pl, i);
                 }
                 double newDist = edge.getDistance();
                 prevInstruction.setDistance(newDist + prevInstruction.getDistance());

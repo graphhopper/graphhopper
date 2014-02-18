@@ -123,6 +123,10 @@ public class GraphHopper implements GraphHopperAPI
 
     public GraphHopper setElevationProvider( ElevationProvider eleProvider )
     {
+        if (eleProvider == null || eleProvider == ElevationProvider.NOOP)
+            set3D(false);
+        else
+            set3D(true);
         this.eleProvider = eleProvider;
         return this;
     }
@@ -503,13 +507,13 @@ public class GraphHopper implements GraphHopperAPI
         String eleProviderStr = args.get("graph.elevationProvider", "noop:").toLowerCase();
         if (eleProviderStr.startsWith("noop:"))
         {
-            eleProvider = ElevationProvider.NOOP;
+            setElevationProvider(ElevationProvider.NOOP);
         } else if (eleProviderStr.startsWith("srtm:"))
         {
             SRTMProvider tmpProvider = new SRTMProvider();
             if (eleProviderStr.length() > 5)
                 tmpProvider.setCacheDir(new File(eleProviderStr.substring(5)));
-            eleProvider = tmpProvider;
+            setElevationProvider(tmpProvider);
         }
         // later:
 //        else if(eleProviderStr.startsWith("cgiar:"))        

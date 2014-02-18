@@ -924,6 +924,12 @@ public class OSMReader implements DataReader
 
     public OSMReader setElevationProvider( ElevationProvider eleProvider )
     {
+        if (eleProvider == null)
+            throw new IllegalStateException("Use the NOOP elevation provider instead of null or don't call setElevationProvider");
+
+        if (!nodeAccess.is3D() && ElevationProvider.NOOP != eleProvider)
+            throw new IllegalStateException("Make sure you graph accepts 3D data");
+
         this.eleProvider = eleProvider;
         return this;
     }
