@@ -108,6 +108,17 @@ public class Path
         return fromNode;
     }
 
+    /**
+     * @return the last node of this Path.
+     */
+    private int getEndNode()
+    {
+        if (endNode < 0)
+            throw new IllegalStateException("Call extract() before retrieving endNode");
+
+        return endNode;
+    }
+
     public boolean isFound()
     {
         return found;
@@ -411,7 +422,7 @@ public class Path
                             || (pavementCode != tmpPavement)
                             || (wayTypeCode != tmpWayType))
                     {
-                        points = new PointList();                        
+                        points = new PointList();
                         name = tmpName;
                         pavementCode = tmpPavement;
                         wayTypeCode = tmpWayType;
@@ -449,9 +460,9 @@ public class Path
 
                         prevInstruction = new Instruction(indication, name, wayTypeCode, pavementCode, points);
                         cachedWays.add(prevInstruction);
-                    } 
-                    
-                    updatePointsAndInstruction(edge, wayGeo);                    
+                    }
+
+                    updatePointsAndInstruction(edge, wayGeo);
                 }
 
                 prevLat = baseLat;
@@ -463,7 +474,7 @@ public class Path
 
                 boolean lastEdge = index == edgeIds.size() - 1;
                 if (lastEdge)
-                    cachedWays.add(new FinishInstruction(prevLat, prevLon));                
+                    cachedWays.add(new FinishInstruction(prevLat, prevLon));
             }
 
             private void updatePointsAndInstruction( EdgeIteratorState edge, PointList pl )

@@ -38,11 +38,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EncodedValue;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.AbstractGraphStorageTester;
 import com.graphhopper.storage.ExtendedStorage;
 import com.graphhopper.storage.Graph;
@@ -571,7 +567,7 @@ public class OSMReaderTest
             public int defineNodeBits( int index, int shift )
             {
                 shift = super.defineNodeBits(index, shift);
-                objectEncoder = new EncodedValue("oEnc", shift, 2, 1, 0, 3, false, true);
+                objectEncoder = new EncodedValue("oEnc", shift, 2, 1, 0, 3, true);
                 return shift + 2;
             }
 
@@ -590,7 +586,7 @@ public class OSMReaderTest
                 if (objectEncoder.getValue(nodeFlags) != 0)
                     speed -= 5;
 
-                return speedEncoder.setValue(wayFlags, (int) speed);
+                return setSpeed(0, speed);
             }
         };
         EncodingManager manager = new EncodingManager(encoder);        

@@ -33,7 +33,7 @@ import java.util.Map.Entry;
 public class TranslationMap
 {
     // use 'en' as reference
-    private static final List<String> LOCALES = Arrays.asList("bg", "de_DE", "en_US", "es", "fr", "ja", "pt_PT", "ro", "ru", "si", "tr");
+    private static final List<String> LOCALES = Arrays.asList("bg", "de_DE", "en_US", "es", "fr", "ja", "pt_PT", "pt_BR", "ro", "ru", "si", "tr");
     private Map<String, Translation> translations = new HashMap<String, Translation>();
 
     /**
