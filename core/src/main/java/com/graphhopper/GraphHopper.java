@@ -19,6 +19,8 @@ package com.graphhopper;
 
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.OSMReader;
+import com.graphhopper.reader.dem.ElevationProvider;
+import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
@@ -86,6 +88,7 @@ public class GraphHopper implements GraphHopperAPI
     private boolean enableInstructions = true;
     private boolean calcPoints = true;
     private boolean fullyLoaded = false;
+    private ElevationProvider eleProvider = ElevationProvider.NOOP;
 
     public GraphHopper()
     {
@@ -116,6 +119,12 @@ public class GraphHopper implements GraphHopperAPI
     public EncodingManager getEncodingManager()
     {
         return encodingManager;
+    }
+
+    public GraphHopper setElevationProvider( ElevationProvider eleProvider )
+    {
+        this.eleProvider = eleProvider;
+        return this;
     }
 
     /**
@@ -490,6 +499,22 @@ public class GraphHopper implements GraphHopperAPI
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
 
+        // elevation
+        String eleProviderStr = args.get("graph.elevationProvider", "noop:").toLowerCase();
+        if (eleProviderStr.startsWith("noop:"))
+        {
+            eleProvider = ElevationProvider.NOOP;
+        } else if (eleProviderStr.startsWith("srtm:"))
+        {
+            SRTMProvider tmpProvider = new SRTMProvider();
+            if (eleProviderStr.length() > 5)
+                tmpProvider.setCacheDir(new File(eleProviderStr.substring(5)));
+            eleProvider = tmpProvider;
+        }
+        // later:
+//        else if(eleProviderStr.startsWith("cgiar:"))        
+//            eleProvider = new CGIARProvider().setCacheDir(new File());        
+
         // index
         preciseIndexResolution = args.getInt("index.highResolution", preciseIndexResolution);
         return this;
@@ -556,13 +581,18 @@ public class GraphHopper implements GraphHopperAPI
 
     protected DataReader createReader( GraphStorage tmpGraph )
     {
+        return initOSMReader(new OSMReader(tmpGraph));
+    }
+
+    protected OSMReader initOSMReader( OSMReader reader )
+    {
         if (osmFile == null)
             throw new IllegalArgumentException("No OSM file specified");
 
         logger.info("start creating graph from " + osmFile);
         File osmTmpFile = new File(osmFile);
-        return new OSMReader(tmpGraph).
-                setOSMFile(osmTmpFile).
+        return reader.setOSMFile(osmTmpFile).
+                setElevationProvider(eleProvider).
                 setWorkerThreads(workerThreads).
                 setEncodingManager(encodingManager).
                 setWayPointMaxDistance(wayPointMaxDistance);

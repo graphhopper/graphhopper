@@ -47,15 +47,15 @@ public class SRTMProvider implements ElevationProvider
 
     private static final BitUtil BIT_UTIL = BitUtil.BIG;
     private final int WIDTH = 1201;
-    private Directory dir;
+    private final Directory dir;
     private Downloader downloader = new Downloader("GraphHopper SRTMReader");
-    private File cacheDir = new File("/tmp");
+    private File cacheDir = new File("/tmp/srtm");
     // use a map as an array is not quite useful if we want to hold only parts of the world
     private final TIntObjectHashMap<HeightTile> cacheData = new TIntObjectHashMap<HeightTile>();
     private final TIntObjectHashMap<String> areas = new TIntObjectHashMap<String>();
 
     public SRTMProvider()
-    {        
+    {
         // move to explicit calls?
         init();
         dir = new RAMDirectory();
@@ -111,16 +111,15 @@ public class SRTMProvider implements ElevationProvider
     public void setDownloader( Downloader downloader )
     {
         this.downloader = downloader;
-    }       
+    }
 
-    public void setCacheDir( File cacheDir )
+    public SRTMProvider setCacheDir( File cacheDir )
     {
-        if (!cacheDir.isDirectory())
+        if (cacheDir.exists() && !cacheDir.isDirectory())
             throw new IllegalStateException("Cache path has to be a directory");
 
-        if (!cacheDir.exists())
-            cacheDir.mkdirs();
         this.cacheDir = cacheDir;
+        return this;
     }
 
     int down( double val )
@@ -170,6 +169,9 @@ public class SRTMProvider implements ElevationProvider
         HeightTile demProvider = cacheData.get(intKey);
         if (demProvider == null)
         {
+            if (!cacheDir.exists())
+                cacheDir.mkdirs();
+
             String fileDetails = getFileString(lat, lon);
             String baseUrl = "http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/";
             // mirror: base = "http://mirror.ufs.ac.za/datasets/SRTM3/"        
@@ -195,7 +197,7 @@ public class SRTMProvider implements ElevationProvider
                 byte[] bytes = new byte[2 * WIDTH * WIDTH];
                 DataAccess heights = dir.find("dem" + intKey);
                 heights.create(bytes.length);
-                        
+
                 demProvider.setHeights(heights);
                 int len;
                 while ((len = buff.read(bytes)) > 0)
@@ -228,4 +230,10 @@ public class SRTMProvider implements ElevationProvider
             return Double.NaN;
         return val;
     }
+
+    @Override
+    public String toString()
+    {
+        return "SRTM";
+    }        
 }
