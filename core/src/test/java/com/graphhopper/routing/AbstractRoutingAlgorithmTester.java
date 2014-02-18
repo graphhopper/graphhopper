@@ -289,7 +289,7 @@ public abstract class AbstractRoutingAlgorithmTester
 
     private static final DistanceCalc distCalc = new DistanceCalcEarth();
 
-    private static void updateDistancesFor( Graph g, int node, double lat, double lon )
+    public static void updateDistancesFor( Graph g, int node, double lat, double lon )
     {
         NodeAccess na = g.getNodeAccess();
         na.setNode(node, lat, lon);

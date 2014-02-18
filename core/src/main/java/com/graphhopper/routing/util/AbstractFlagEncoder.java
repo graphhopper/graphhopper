@@ -52,7 +52,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected long forwardBit = 0;
     protected long backwardBit = 0;
     protected long directionBitMask = 0;
-    protected EncodedValue speedEncoder;
+    protected EncodedDoubleValue speedEncoder;
     // bit to signal that way is accepted
     protected long acceptBit = 0;
     protected long ferryBit = 0;
@@ -114,6 +114,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      */
     public int defineWayBits( int index, int shift )
     {
+        if (forwardBit != 0)
+            throw new IllegalStateException("You must not register a FlagEncoder (" + toString() + ") twice!");
+
         // define the first 2 speedBits in flags for routing
         forwardBit = 1 << shift;
         backwardBit = 2 << shift;
@@ -289,6 +292,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     {
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative: " + speed + ", flags:" + BitUtil.LITTLE.toBitString(flags));
+        
+        if (speed > getMaxSpeed())
+            speed = getMaxSpeed();
         return speedEncoder.setDoubleValue(flags, speed);
     }
 
@@ -332,7 +338,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     /**
      * @return the speed in km/h
      */
-    static double parseSpeed( String str )
+    protected static double parseSpeed( String str )
     {
         if (Helper.isEmpty(str))
         {
@@ -465,14 +471,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (durationInHours == 0)
         {
             // unknown speed -> put penalty on ferry transport
-            return speedEncoder.setDoubleValue(0, unknownSpeed);
+            return setSpeed(0, unknownSpeed);
         } else if (durationInHours > 1)
         {
             // lengthy ferries should be faster than short trip ferry
-            return speedEncoder.setDoubleValue(0, longTripsSpeed);
+            return setSpeed(0, longTripsSpeed);
         } else
         {
-            return speedEncoder.setDoubleValue(0, shortTripsSpeed);
+            return setSpeed(0, shortTripsSpeed);
         }
     }
 

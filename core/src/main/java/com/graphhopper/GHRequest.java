@@ -73,7 +73,7 @@ public class GHRequest
 
     /**
      * Possible values: astar (A* algorithm, default), astarbi (bidirectional A*) dijkstra
-     * (Dijkstra), dijkstrabi and dijkstraNative (a bit faster bidirectional Dijkstra).
+     * (Dijkstra), dijkstrabi and dijkstraNativebi (a bit faster bidirectional Dijkstra).
      */
     public GHRequest setAlgorithm( String algo )
     {

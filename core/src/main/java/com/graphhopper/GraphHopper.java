@@ -313,7 +313,7 @@ public class GraphHopper implements GraphHopperAPI
     {
         ensureNotLoaded();
         if (ghLocation == null)
-            throw new NullPointerException("graphhopper location cannot be null");
+            throw new IllegalArgumentException("graphhopper location cannot be null");
 
         this.ghLocation = ghLocation;
         return this;
@@ -437,9 +437,6 @@ public class GraphHopper implements GraphHopperAPI
             setUnsafeMemory();
         } else
         {
-            if (dataAccess.contains("SAVE") || dataAccess.contains("INMEMORY"))
-                throw new IllegalStateException("configuration names for dataAccess changed. Use eg. RAM or RAM_STORE");
-
             if (dataAccess.contains("RAM_STORE"))
                 setInMemory(true);
             else
@@ -496,8 +493,11 @@ public class GraphHopper implements GraphHopperAPI
     {
         if (!load(ghLocation))
         {
+            if (osmFile == null)
+                throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
+                        + " but also cannot import from OSM file as it wasn't specified!");
             printInfo();
-            process(ghLocation, osmFile);
+            process(ghLocation);
         } else
         {
             printInfo();
@@ -508,19 +508,15 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Creates the graph from OSM data.
      */
-    private GraphHopper process( String graphHopperLocation, String osmFileStr )
+    private GraphHopper process( String graphHopperLocation )
     {
-        if (encodingManager == null)
-            throw new IllegalStateException("No encodingManager was specified");
-
         setGraphHopperLocation(graphHopperLocation);
-
         try
         {
-            importOSM(osmFileStr);
+            importOSM();
         } catch (IOException ex)
         {
-            throw new RuntimeException("Cannot parse OSM file " + osmFileStr, ex);
+            throw new RuntimeException("Cannot parse OSM file " + getOSMFile(), ex);
         }
         cleanUp();
         optimize();
@@ -529,16 +525,15 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
-    protected OSMReader importOSM( String _osmFile ) throws IOException
+    protected OSMReader importOSM() throws IOException
     {
         if (graph == null)
             throw new IllegalStateException("Load graph before importing OSM data");
 
-        setOSMFile(_osmFile);
-        File osmTmpFile = new File(osmFile);
-        if (!osmTmpFile.exists())
-            throw new IllegalStateException("Your specified OSM file does not exist:" + osmTmpFile.getAbsolutePath());        
+        if (osmFile == null)
+            throw new IllegalArgumentException("No OSM file specified");
 
+        File osmTmpFile = new File(osmFile);
         logger.info("start creating graph from " + osmFile);
         encodingManager.setEnableInstructions(enableInstructions);
         OSMReader reader = new OSMReader(graph).

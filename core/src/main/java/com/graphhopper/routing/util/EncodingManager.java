@@ -445,7 +445,7 @@ public class EncodingManager
     {
         // storing the road name does not yet depend on the flagEncoder so manage it directly
         if (enableInstructions)
-        {   
+        {
             // String wayInfo = carFlagEncoder.getWayInfo(way);
             // http://wiki.openstreetmap.org/wiki/Key:name
             String name = fixWayName(way.getTag("name"));

@@ -24,8 +24,6 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 import com.graphhopper.util.TranslationMap.Translation;
-import gnu.trove.list.TDoubleList;
-import gnu.trove.list.TLongList;
 
 import java.io.File;
 import java.util.List;
@@ -91,6 +89,13 @@ public class GraphHopperIT
             assertEquals(30, times.get(3) / 1000);
             assertEquals(87, times.get(4) / 1000);
             assertEquals(321, times.get(5) / 1000);
+
+            List<GPXEntry> list = rsp.getInstructions().createGPXList();
+            assertEquals(123, list.size());
+            final long lastEntryMillis = list.get(list.size() - 1).getMillis();
+            final long totalResponseMillis = rsp.getMillis();
+            assertEquals(totalResponseMillis, lastEntryMillis);
+
         } catch (Exception ex)
         {
             throw new RuntimeException("cannot handle osm file " + osmFile, ex);

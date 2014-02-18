@@ -127,7 +127,7 @@ public class GraphHopperStorage implements GraphStorage
         return tmp;
     }
 
-    protected final int nextNodeEntryIndex( int sizeInBytes )
+    protected final int nextNodeEntryIndex(int sizeInBytes)
     {
         int tmp = nodeEntryIndex;
         nodeEntryIndex += 4;
@@ -184,6 +184,7 @@ public class GraphHopperStorage implements GraphStorage
         initStorage();
         // 0 stands for no separate geoRef
         maxGeoRef = 4;
+
         initNodeRefs(0, nodes.getCapacity());
         return this;
     }
@@ -1377,7 +1378,6 @@ public class GraphHopperStorage implements GraphStorage
         E_DIST = nextEdgeEntryIndex(4);
         this.flagsSizeIsLong = encodingManager.getBytesForFlags() == 8;
         E_FLAGS = nextEdgeEntryIndex(encodingManager.getBytesForFlags());
-
         E_GEO = nextEdgeEntryIndex(4);
         E_NAME = nextEdgeEntryIndex(4);
         if (extStorage.isRequireEdgeField())
@@ -1492,7 +1492,7 @@ public class GraphHopperStorage implements GraphStorage
     @Override
     public long getCapacity()
     {
-        return edges.getCapacity() + nodes.getCapacity() + nameIndex.getCapacity() + wayGeometry.getCapacity()
+        return edges.getCapacity() + nodes.getCapacity() + nameIndex.getCapacity() + wayGeometry.getCapacity() 
                 + properties.getCapacity() + extStorage.getCapacity();
     }
 

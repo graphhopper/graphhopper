@@ -152,7 +152,14 @@ public class GHResponse
     @Override
     public String toString()
     {
-        return "found:" + isFound() + ", nodes:" + list.getSize() + ": " + list.toString();
+        String str = "found:" + isFound() + ", nodes:" + list.getSize() + ": " + list.toString();
+        if (!instructions.isEmpty())
+            str += ", " + instructions.toString();
+        
+        if (!errors.isEmpty())            
+            str += ", " + errors.toString();
+        
+        return str;
     }
 
     public void setInstructions( InstructionList instructions )

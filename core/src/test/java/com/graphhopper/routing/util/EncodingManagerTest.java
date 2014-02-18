@@ -138,7 +138,7 @@ public class EncodingManagerTest
         long allow = defaultBike.acceptBit | lessRelationCodes.acceptBit;
         long flags = manager.handleWayTags(osmWay, allow, relFlags);
 
-        assertEquals(18, defaultBike.getSpeed(flags), 1e-1);
+        assertEquals(20, defaultBike.getSpeed(flags), 1e-1);
         assertEquals(4, lessRelationCodes.getSpeed(flags), 1e-1);
     }
 
@@ -162,10 +162,10 @@ public class EncodingManagerTest
         long allow = bikeEncoder.acceptBit | mtbEncoder.acceptBit;
         long flags = manager.handleWayTags(osmWay, allow, relFlags);
 
-        //Uninfluenced speed for grade1 bikeencoder = 4 (pushing section) -> smaller than 15 -> VERYNICE -> 22
-        assertEquals(22, bikeEncoder.getSpeed(flags), 1e-1);
-        //Uninfluenced speed for grade1 bikeencoder = 12 -> smaller than 15 -> PREFER -> 18
-        assertEquals(18, mtbEncoder.getSpeed(flags), 1e-1);
+        // uninfluenced speed for grade1 bikeencoder = 4 (pushing section) -> smaller than 15 -> VERYNICE -> 22
+        assertEquals(24, bikeEncoder.getSpeed(flags), 1e-1);
+        // uninfluenced speed for grade1 bikeencoder = 12 -> smaller than 15 -> PREFER -> 18
+        assertEquals(20, mtbEncoder.getSpeed(flags), 1e-1);
     }
 
     public void testFullBitMask()
@@ -208,9 +208,9 @@ public class EncodingManagerTest
             @Override
             public long applyNodeFlags( long wayFlags, long nodeFlags )
             {
-                int speed = (int) speedEncoder.getValue(wayFlags);
-                int speedDecrease = (int) nodeEncoder.getValue(nodeFlags);
-                return speedEncoder.setValue(wayFlags, speed - speedDecrease);
+                double speed = speedEncoder.getDoubleValue(wayFlags);
+                double speedDecrease = nodeEncoder.getValue(nodeFlags);
+                return setSpeed(wayFlags, speed - speedDecrease);
             }
         };
         EncodingManager manager = new EncodingManager(car, car2);
@@ -300,7 +300,7 @@ public class EncodingManagerTest
         for (TurnCostTableEntry entry : entries)
         {
             if (entry.edgeFrom == 1)
-            {
+            { 
                 // the first entry provides turn flags for car and foot only 
                 assertEquals(assertFlag1, entry.flags);
                 assertTrue(car.isTurnRestricted(entry.flags));
@@ -323,7 +323,6 @@ public class EncodingManagerTest
                 assertEquals(10, bike.getTurnCosts(entry.flags));
             }
         }
-
     }
 
     @Test

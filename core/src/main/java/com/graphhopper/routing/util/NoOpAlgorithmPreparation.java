@@ -33,7 +33,7 @@ public abstract class NoOpAlgorithmPreparation extends AbstractAlgoPreparation<N
     /**
      * Creates a preparation wrapper for the specified algorithm. Possible values for algorithmStr:
      * astar (A* algorithm), astarbi (bidirectional A*) dijkstra (Dijkstra), dijkstrabi and
-     * dijkstraNative (a bit faster bidirectional Dijkstra).
+     * dijkstraNativebi (a bit faster bidirectional Dijkstra).
      */
     public static AlgorithmPreparation createAlgoPrepare( Graph g, final String algorithmStr,
             FlagEncoder encoder, Weighting weighting )

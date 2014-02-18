@@ -1004,6 +1004,7 @@ public abstract class AbstractGraphStorageTester
         list.add(new TmpCarFlagEncoder(30, 0.001));
         EncodingManager manager = new EncodingManager(list, 8, 0);
         graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
+
         EdgeIteratorState edge = graph.edge(0, 1);
         edge.setFlags(Long.MAX_VALUE / 3);
         // System.out.println(BitUtil.LITTLE.toBitString(Long.MAX_VALUE / 3) + "\n" + BitUtil.LITTLE.toBitString(edge.getFlags()));
@@ -1011,6 +1012,7 @@ public abstract class AbstractGraphStorageTester
         graph.close();
 
         graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
+
         edge = graph.edge(0, 1);
         edge.setFlags(list.get(0).setProperties(99.123, true, true));
         assertEquals(99.123, list.get(0).getSpeed(edge.getFlags()), 1e-3);

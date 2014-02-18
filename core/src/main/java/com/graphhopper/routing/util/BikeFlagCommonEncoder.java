@@ -131,7 +131,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
     {
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
-        speedEncoder = new EncodedValue("Speed", shift, speedBits, speedFactor, highwaySpeed.get("cycleway"), 30);
+        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, highwaySpeed.get("cycleway"), 30);
         shift += speedBits;
 
         //safeWayBit = 1 << shift++;
@@ -233,7 +233,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
             // set speed
             // FIXME Rewrite necessary after decision #124 for other weighting than speed!
             // Currently there is only speed, so we increase it.
-            int speed;
+            double speed;
             if (relationFlags == 0)
             {
                 // In case that the way does not belong to a relation
@@ -245,10 +245,10 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
 
             // Make sure that we do not exceed the limits:
             if (speed > speedEncoder.getMaxValue())
-                speed = (int) speedEncoder.getMaxValue();
+                speed = speedEncoder.getMaxValue();
             else if (speed < 0)
                 speed = 0;
-            encoded = speedEncoder.setValue(0, speed);
+            encoded = setSpeed(0, speed);
 
             // handle oneways
             if ((way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))

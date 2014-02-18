@@ -132,7 +132,10 @@ public class OSMReader
     public void doOSM2Graph( File osmFile ) throws IOException
     {
         if (encodingManager == null)
-            throw new IllegalStateException("Encoding manager not set.");
+            throw new IllegalStateException("Encoding manager was not set.");
+
+        if (!osmFile.exists())
+            throw new IllegalStateException("Your specified OSM file does not exist:" + osmFile.getAbsolutePath());
 
         StopWatch sw1 = new StopWatch().start();
         preProcess(osmFile);

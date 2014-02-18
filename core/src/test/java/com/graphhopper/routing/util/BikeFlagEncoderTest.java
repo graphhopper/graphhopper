@@ -19,11 +19,8 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
-import java.util.Collections;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
@@ -155,16 +152,16 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         long relFlags = encoder.handleRelationTags(osmRel, 0);
         // unchanged
         long flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(14, encoder.getSpeed(flags), 1e-1);
+        assertEquals(16, encoder.getSpeed(flags), 1e-1);
         assertEquals(1, encoder.getWayType(flags));
         assertEquals(1, encoder.getPavementType(flags));
-
+        
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(18, encoder.getSpeed(flags), 1e-1);
+        assertEquals(20, encoder.getSpeed(flags), 1e-1);
         assertEquals(1, encoder.getWayType(flags));
         assertEquals(1, encoder.getPavementType(flags));
 
@@ -172,13 +169,13 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         osmRel.setTag("network", "rcn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(22, encoder.getSpeed(flags), 1e-1);
+        assertEquals(24, encoder.getSpeed(flags), 1e-1);
 
         // relation code is OUTSTANDING_NICE
         osmRel.setTag("network", "ncn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(26, encoder.getSpeed(flags), 1e-1);
+        assertEquals(28, encoder.getSpeed(flags), 1e-1);
 
         // PREFER relation, but tertiary road
         // => no pushing section but road wayTypeCode and faster

@@ -225,12 +225,11 @@ public class InstructionListTest
         assertEquals(5, wayList.size());
 
         List<GPXEntry> gpxList = wayList.createGPXList();
-        // distances and times are not identical (only similar) as we only guessed the edge distance
         assertEquals(34000, p.getDistance(), 1e-1);
         assertEquals(34000, sum(wayList.createDistances()), 1e-1);
         assertEquals(5, gpxList.size());
         assertEquals(1604120, p.getMillis());
-        assertEquals(2097557, gpxList.get(gpxList.size() - 1).getMillis());
+        assertEquals(1604120, gpxList.get(gpxList.size() - 1).getMillis());
 
         assertEquals(Instruction.CONTINUE_ON_STREET, wayList.get(0).getIndication());
         assertEquals(15, wayList.get(0).getFirstLat(), 1e-3);
@@ -275,9 +274,9 @@ public class InstructionListTest
 
         assertEquals(0, result.get(0).getMillis());
         assertEquals(10391, result.get(1).getMillis());
-        assertEquals(15602, result.get(2).getMillis());
-        assertEquals(25449, result.get(3).getMillis());
-        assertEquals(30559, result.get(4).getMillis());
+        assertEquals(15000, result.get(2).getMillis());
+        assertEquals(19000, result.get(3).getMillis());
+        assertEquals(22000, result.get(4).getMillis());
     }
 
     private long flagsForSpeed( EncodingManager encodingManager, int speedKmPerHour )

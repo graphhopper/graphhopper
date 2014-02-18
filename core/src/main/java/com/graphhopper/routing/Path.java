@@ -111,6 +111,17 @@ public class Path
         return fromNode;
     }
 
+    /**
+     * @return the last node of this Path.
+     */
+    private int getEndNode()
+    {
+        if (endNode < 0)
+            throw new IllegalStateException("Call extract() before retrieving endNode");
+
+        return endNode;
+    }
+
     public boolean isFound()
     {
         return found;
@@ -413,7 +424,7 @@ public class Path
                             || (pavementType != tmpPavement)
                             || (wayType != tmpWayType))
                     {
-                        points = new PointList();                        
+                        points = new PointList();
                         name = tmpName;
                         pavementType = tmpPavement;
                         wayType = tmpWayType;
@@ -451,9 +462,9 @@ public class Path
 
                         prevInstruction = new Instruction(indication, name, wayType, pavementType, points);
                         cachedWays.add(prevInstruction);
-                    } 
-                    
-                    updatePointsAndInstruction(edge, wayGeo);                    
+                    }
+
+                    updatePointsAndInstruction(edge, wayGeo);
                 }
 
                 prevLat = baseLat;
@@ -465,7 +476,7 @@ public class Path
 
                 boolean lastEdge = index == edgeIds.size() - 1;
                 if (lastEdge)
-                    cachedWays.add(new FinishInstruction(prevLat, prevLon));                
+                    cachedWays.add(new FinishInstruction(prevLat, prevLon));
             }
 
             private void updatePointsAndInstruction( EdgeIteratorState edge, PointList pl )
@@ -473,14 +484,14 @@ public class Path
                 // add points in opposite direction as adj node is previous
                 // skip base point => 'i > 0'
                 int len = pl.size() - 1;
-                long flags = edge.getFlags();
                 for (int i = len; i > 0; i--)
                 {
                     points.add(pl.getLatitude(i), pl.getLongitude(i), pl.getElevation(i));
                 }
-                double dist = edge.getDistance();
-                prevInstruction.setDistance(dist + prevInstruction.getDistance());
-                prevInstruction.setMillis(calcMillis(dist, flags) + prevInstruction.getMillis());
+                double newDist = edge.getDistance();
+                prevInstruction.setDistance(newDist + prevInstruction.getDistance());
+                long flags = edge.getFlags();
+                prevInstruction.setMillis(calcMillis(newDist, flags) + prevInstruction.getMillis());
             }
         });
 
