@@ -34,8 +34,11 @@ public interface Weighting
     double getMinWeight( double distance );
 
     /**
+     * @param edge the edge for which the weight should be calculated
+     * @param reverse if the specified edge is specified in reverse direction e.g. from the reverse
+     * case of a bidirectional search.
      * @return the calculated weight with the specified velocity has to be in the range of 0 and
      * +Infinity
      */
-    double calcWeight( EdgeIteratorState edge );
+    double calcWeight( EdgeIteratorState edge, boolean reverse );
 }

@@ -193,7 +193,7 @@ public class AStarBidirection extends AbstractBidirAlgo
 
         currFrom = prioQueueOpenSetFrom.poll();
         bestWeightMapOther = bestWeightMapTo;
-        fillEdges(currFrom, toCoord, prioQueueOpenSetFrom, bestWeightMapFrom, outEdgeExplorer);
+        fillEdges(currFrom, toCoord, prioQueueOpenSetFrom, bestWeightMapFrom, outEdgeExplorer, false);
         visitedFromCount++;
         return true;
     }
@@ -206,14 +206,14 @@ public class AStarBidirection extends AbstractBidirAlgo
 
         currTo = prioQueueOpenSetTo.poll();
         bestWeightMapOther = bestWeightMapFrom;
-        fillEdges(currTo, fromCoord, prioQueueOpenSetTo, bestWeightMapTo, inEdgeExplorer);
+        fillEdges(currTo, fromCoord, prioQueueOpenSetTo, bestWeightMapTo, inEdgeExplorer, true);
         visitedToCount++;
         return true;
     }
 
     private void fillEdges( AStarEdge currEdge, CoordTrig goal,
             PriorityQueue<AStarEdge> prioQueueOpenSet,
-            TIntObjectMap<AStarEdge> shortestWeightMap, EdgeExplorer explorer )
+            TIntObjectMap<AStarEdge> shortestWeightMap, EdgeExplorer explorer, boolean reverse )
     {
 
         int currNode = currEdge.endNode;
@@ -228,7 +228,7 @@ public class AStarBidirection extends AbstractBidirAlgo
             int neighborNode = iter.getAdjNode();
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
-            double alreadyVisitedWeight = weighting.calcWeight(iter) + currEdge.weightToCompare;
+            double alreadyVisitedWeight = weighting.calcWeight(iter, reverse) + currEdge.weightToCompare;
             AStarEdge de = shortestWeightMap.get(neighborNode);
             if (de == null || de.weightToCompare > alreadyVisitedWeight)
             {

@@ -44,11 +44,11 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
     @Test
     public void testCannotBeLoadedViaDifferentClass()
     {
-        GraphStorage g = newGraph(new RAMDirectory(defaultGraph, true), false).create(defaultSize);
+        GraphStorage g = newGraph(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
         g.flush();
         g.close();
 
-        g = new GraphBuilder(encodingManager).setLocation(defaultGraph).setMmap(false).setStore(true).create();
+        g = new GraphBuilder(encodingManager).setLocation(defaultGraphLoc).setMmap(false).setStore(true).create();
         try
         {
             g.loadExisting();
@@ -57,7 +57,7 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         {
         }
 
-        g = newGraph(new RAMDirectory(defaultGraph, true), false);
+        g = newGraph(new RAMDirectory(defaultGraphLoc, true), false);
         assertTrue(g.loadExisting());
     }
 

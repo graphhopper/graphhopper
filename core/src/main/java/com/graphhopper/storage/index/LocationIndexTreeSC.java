@@ -177,7 +177,7 @@ public class LocationIndexTreeSC extends LocationIndexTree
             public void copyProperties( EdgeIteratorState edge )
             {
                 tmpIter.copyProperties(edge);
-            }            
+            }      
         };
     }
 

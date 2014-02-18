@@ -41,7 +41,7 @@ public abstract class AbstractGraphStorageTester
 {
     private final String location = "./target/graphstorage";
     protected int defaultSize = 100;
-    protected String defaultGraph = "./target/graphstorage/default";
+    protected String defaultGraphLoc = "./target/graphstorage/default";
     protected EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
     protected CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
     protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
@@ -54,7 +54,7 @@ public abstract class AbstractGraphStorageTester
 
     protected GraphStorage createGraph()
     {
-        GraphStorage g = createGraph(defaultGraph, false);
+        GraphStorage g = createGraph(defaultGraphLoc, false);
         carOutExplorer = g.createEdgeExplorer(carOutFilter);
         carInExplorer = g.createEdgeExplorer(carInFilter);
         carAllExplorer = g.createEdgeExplorer();
@@ -1040,6 +1040,34 @@ public abstract class AbstractGraphStorageTester
         
         graph.edge(0, 1).setWayGeometry(Helper.createPointList3D(10, 27, 72));
         assertEquals(Helper.createPointList3D(10, 27, 72), GHUtility.getEdge(graph, 0, 1).fetchWayGeometry(0));
+    }
+    
+    @Test
+    public void testDetachEdge()
+    {
+        graph = createGraph();
+        graph.edge(0, 1, 2, true);
+        graph.edge(0, 2, 2, true);
+        graph.edge(1, 2, 2, true);
+
+        EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(0);
+        try
+        {
+            // currently not possible to implement without a new property inside EdgeIterable
+            iter.detach();
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+        }
+
+        iter.next();
+        EdgeIteratorState iter2 = iter.detach();
+        assertEquals(2, iter.getAdjNode());
+        assertEquals(2, iter2.getAdjNode());
+
+        iter.next();
+        assertEquals(1, iter.getAdjNode());
+        assertEquals(2, iter2.getAdjNode());
     }
 
     static class TmpCarFlagEncoder extends CarFlagEncoder

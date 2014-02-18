@@ -83,7 +83,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
                     continue;
 
                 int tmpNode = iter.getAdjNode();
-                double tmpWeight = weighting.calcWeight(iter) + currEdge.weight;
+                double tmpWeight = weighting.calcWeight(iter, false) + currEdge.weight;
 
                 EdgeEntry nEdge = fromMap.get(tmpNode);
                 if (nEdge == null)
@@ -125,7 +125,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     {
         if (currEdge == null || !finished())
             return createEmptyPath();
-        return new Path(graph, flagEncoder).setEdgeEntry(currEdge).extract();
+        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setEdgeEntry(currEdge).extract();
     }
 
     @Override

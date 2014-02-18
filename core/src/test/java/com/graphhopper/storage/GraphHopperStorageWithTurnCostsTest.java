@@ -50,7 +50,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
     @Test
     public void testSave_and_fileFormat_withTurnCostEntries() throws IOException
     {
-        graph = newGraph(new RAMDirectory(defaultGraph, true), false).create(defaultSize);
+        graph = newGraph(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 10, 10);
         na.setNode(1, 11, 20);
@@ -75,7 +75,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
         graph.flush();
         graph.close();
 
-        graph = newGraph(new MMapDirectory(defaultGraph), false);
+        graph = newGraph(new MMapDirectory(defaultGraphLoc), false);
         assertTrue(graph.loadExisting());
 
         assertEquals(12, graph.getNodes());

@@ -245,11 +245,11 @@ public class GHUtility
                 continue;
 
             bitset.add(newIndex);
-            if(sna.is3D())
-                sna.setNode(newIndex, na.getLatitude(old), na.getLongitude(old), na.getElevation(old));                
+            if (sna.is3D())
+                sna.setNode(newIndex, na.getLatitude(old), na.getLongitude(old), na.getElevation(old));
             else
-                sna.setNode(newIndex, na.getLatitude(old), na.getLongitude(old));                
-            
+                sna.setNode(newIndex, na.getLatitude(old), na.getLongitude(old));
+
             EdgeIterator eIter = explorer.setBaseNode(old);
             while (eIter.next())
             {
@@ -289,7 +289,7 @@ public class GHUtility
             store = new LevelGraphStorage(outdir, encodingManager, is3D);
         else
             store = new GraphHopperStorage(outdir, encodingManager, is3D);
-        
+
         return store;
     }
 
@@ -324,11 +324,11 @@ public class GHUtility
         for (int oldNode = 0; oldNode < len; oldNode++)
         {
             bitset.add(oldNode);
-            if(toNa.is3D())
+            if (toNa.is3D())
                 toNa.setNode(oldNode, na.getLatitude(oldNode), na.getLongitude(oldNode), na.getElevation(oldNode));
             else
                 toNa.setNode(oldNode, na.getLatitude(oldNode), na.getLongitude(oldNode));
-            
+
             EdgeIterator eIter = explorer.setBaseNode(oldNode);
             while (eIter.next())
             {
@@ -485,7 +485,7 @@ public class GHUtility
         public EdgeSkipIterState setWeight( double weight )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
+        }        
     };
 
     /**

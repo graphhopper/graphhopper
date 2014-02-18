@@ -250,9 +250,9 @@ public class QueryGraph implements Graph
         int virtEdgeId = virtualEdges.size() + mainEdges;
 
         // edges between base and snapped point
-        EdgeIteratorState baseEdge = new VirtualEdgeIState(virtEdgeId + VE_BASE, prevNodeId, nodeId,
+        VirtualEdgeIState baseEdge = new VirtualEdgeIState(virtEdgeId + VE_BASE, prevNodeId, nodeId,
                 baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints);
-        EdgeIteratorState baseReverseEdge = new VirtualEdgeIState(virtEdgeId + VE_BASE_REV, nodeId, prevNodeId,
+        VirtualEdgeIState baseReverseEdge = new VirtualEdgeIState(virtEdgeId + VE_BASE_REV, nodeId, prevNodeId,
                 baseDistance, swappedFlags, closestEdge.getName(), baseReversePoints);
 
         virtualEdges.add(baseEdge);
@@ -728,7 +728,7 @@ public class QueryGraph implements Graph
         private final int adjNode;
 
         public VirtualEdgeIState( int edgeId, int baseNode, int adjNode,
-                double distance, long flags, String name, PointList pointList )
+                double distance, long flags, String name, PointList pointList)
         {
             this.edgeId = edgeId;
             this.baseNode = baseNode;
@@ -736,7 +736,7 @@ public class QueryGraph implements Graph
             this.distance = distance;
             this.flags = flags;
             this.name = name;
-            this.pointList = pointList;
+            this.pointList = pointList;            
         }
 
         @Override
@@ -783,7 +783,7 @@ public class QueryGraph implements Graph
         @Override
         public EdgeIteratorState setWayGeometry( PointList list )
         {
-            throw new UnsupportedOperationException("Not supported for in-memory edge. Set when creating it.");
+            throw new UnsupportedOperationException("Not supported for virtual edge. Set when creating it.");
         }
 
         @Override
@@ -836,7 +836,7 @@ public class QueryGraph implements Graph
         {
             return false;
         }
-
+        
         @Override
         public int getAdditionalField()
         {
@@ -890,6 +890,5 @@ public class QueryGraph implements Graph
         {
             throw new UnsupportedOperationException("Not supported.");
         }
-
     }
 }

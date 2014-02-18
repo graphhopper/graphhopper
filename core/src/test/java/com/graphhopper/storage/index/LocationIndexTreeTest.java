@@ -27,7 +27,6 @@ import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
-import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
 import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Test;
 import static org.junit.Assert.*;
