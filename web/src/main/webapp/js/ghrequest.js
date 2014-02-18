@@ -80,7 +80,7 @@ GHRequest.prototype.init = function(params) {
             var points = qStr.split("p:");
             for (var i = 0; i < points.length; i++) {
                 var str = points[i].trim();
-                if (str.length == 0)
+                if (str.length === 0)
                     continue;
 
                 params.point.push(str);
@@ -131,7 +131,7 @@ GHRequest.prototype.createPath = function(url) {
     return url;
 }
 
-function decodePath(encoded, is3D) {
+function decodePolyline(encoded, is3D) {
     var start = new Date().getTime();
     var len = encoded.length;
     var index = 0;
@@ -168,7 +168,7 @@ function decodePath(encoded, is3D) {
             result = 0;
             do
             {
-                b = encoded.charAt(index++) - 63;
+                b =  encoded.charCodeAt(index++) - 63;
                 result |= (b & 0x1f) << shift;
                 shift += 5;
             } while (b >= 0x20);
@@ -192,7 +192,7 @@ GHRequest.prototype.doRequest = function(url, callback) {
             if (tmpEncodedPolyline && json.route) {
                 // convert encoded polyline stuff to normal json
                 if (json.route.coordinates) {
-                    var tmpArray = decodePath(json.route.coordinates, json.route.coordinatesDim);
+                    var tmpArray = decodePolyline(json.route.coordinates, json.route.coordinatesDim === 3);
                     json.route.coordinates = null;
                     json.route.data = {
                         "type": "LineString",
