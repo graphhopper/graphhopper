@@ -103,6 +103,15 @@ GHRequest.prototype.createViaParams = function() {
   return vialist;
 };
 
+GHRequest.prototype.createFullViaParams = function() {
+  var vialist="";
+  for(i=0;i<this.via.length;i++)
+  {
+     vialist=vialist + "&point=" + encodeURIComponent(this.via[i].input);
+  }
+  return vialist;
+};
+
 GHRequest.prototype.createGPXURL = function() {
     // use points instead of strings
     var str = "point=" + encodeURIComponent(this.from.toString()) + this.createViaParams() + "&point=" + encodeURIComponent(this.to.toString());
@@ -110,7 +119,7 @@ GHRequest.prototype.createGPXURL = function() {
 };
 
 GHRequest.prototype.createFullURL = function() {
-    var str = "?point=" + encodeURIComponent(this.from.input) + this.createViaParams() + "&point=" + encodeURIComponent(this.to.input);
+    var str = "?point=" + encodeURIComponent(this.from.input) + this.createFullViaParams() + "&point=" + encodeURIComponent(this.to.input);
     return this.createPath(str);
 };
 

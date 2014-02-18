@@ -187,12 +187,10 @@ function addViaButton()
     pic.appendChild(png);
     
     var element = document.createElement("input");
-    var type="viaInput"+viacounter;
-    element.setAttribute("placeholder", tr("viaHint"));
     //Assign different attributes to the element. 
     element.type = "text";
-    element.id = type;
-    element.name = type;  // And the name too?
+    element.id = "viaInput"+viacounter;
+    element.setAttribute("placeholder", tr("viaHint"));
     //var foo = document.getElementById("viabuttons");
     //Append the element in page (in span).  
     pic.appendChild(element);
@@ -256,12 +254,36 @@ function initFromParams(params, doQuery) {
           var viaarray=new Array();
           for (i=1;i<params.point.length-1;i++)
           {
-             addViaButton();
+             if (ghRequest.via[i-1] === null)
+                 addViaButton();
              viaarray.push(params.point[i]);
           }
           resolveCoords(params.point[0], viaarray , params.point[params.point.length-1], doQuery);
        }
     }
+}
+
+function allViaLats()
+{
+    var res=true;
+    for (i=0;i<ghRequest.via.length;i++)
+    {
+      res=(res && ghRequest.via[i].lat);
+    }
+    return res;
+}
+
+function resolveFromViaTo()
+{
+    console.log("resolveFromViaTo");
+    var res = [];
+    res.push(resolveFrom());
+    for (var i=0;i<ghRequest.via.length;i++)
+    {
+        res.push(resolveVia(i+1));
+    }
+    res.push(resolveTo());    
+    return res;
 }
 
 function resolveCoords(fromStr, viaarray, toStr, doQuery) {
@@ -273,24 +295,34 @@ function resolveCoords(fromStr, viaarray, toStr, doQuery) {
     {
       for (i=0; i<viaarray.length; i++)
       {
+          if (ghRequest.via.length<viaarray.length)
+              addViaButton();
           if (viaarray[i] !== ghRequest.via[i].input || !ghRequest.via[i].isResolved())
+          {
              ghRequest.via[i] = new GHInput(viaarray[i]);
+          }
       }
     }
 
     if (toStr !== ghRequest.to.input || !ghRequest.to.isResolved())
         ghRequest.to = new GHInput(toStr);
 
-    if (ghRequest.from.lat && ghRequest.to.lat) {
+    if (ghRequest.from.lat && ghRequest.to.lat && allViaLats()) {
         // two mouse clicks into the map -> do not wait for resolve
         resolveFrom();
+        for (i=0; i<ghRequest.via.length; i++)
+        {
+          resolveVia(i+1);
+        }
         resolveTo();
         routeLatLng(ghRequest, doQuery);
     } else {
         // at least one text input from user -> wait for resolve as we need the coord for routing
         console.log("at least one text input from user -> wait for resolve as we need the coord for routing");
-        $.when(resolveFrom(), resolveTo()).done(function(fromArgs, toArgs) {
-            console.log("(resolveFrom(), resolveTo()).done");
+        var deferreds = resolveFromViaTo();
+        // See http://stackoverflow.com/questions/5627284/pass-in-an-array-of-deferreds-to-when
+        $.when.apply($, deferreds).done(function() {
+            console.log("resolveFromViaTo.done");
             routeLatLng(ghRequest, doQuery);
         });
     }
@@ -494,7 +526,7 @@ function makeValidLng(lon) {
 }
 
 function setFlag(coord, isFromViaOrTo, viaindex) {
-    console.log("setFlag isFromViaOrTo="+isFromViaOrTo+" viaindex="+viaindex);
+    console.log("setFlag isFromViaOrTo="+isFromViaOrTo+" viaindex="+viaindex + "coord="+coord.toString());
     if (coord.lat) {
         var placeicon;
         var placepopup;
@@ -551,11 +583,8 @@ function resolveFrom() {
 }
 
 function resolveVia(viaindex) {
-  if (ghRequest.via.length!==0)
-  {    
-      setFlag(ghRequest.via[viaindex-1], 2, viaindex);
-      return resolve("via", ghRequest.via[viaindex-1], viaindex);
-  }
+  setFlag(ghRequest.via[viaindex-1], 2, viaindex);
+  return resolve("via", ghRequest.via[viaindex-1], viaindex);
 }
 
 function resolveTo() {
@@ -564,6 +593,7 @@ function resolveTo() {
 }
 
 function resolve(fromOrViaOrTo, locCoord, viaindex) {
+    console.log("resolve(fromOrViaOrTo="+fromOrViaOrTo + " locCoord ="+locCoord + " viaindex="+viaindex);
     if (fromOrViaOrTo==="via")
     {
       $("#" + fromOrViaOrTo + "Flag" + viaindex).hide();
@@ -602,7 +632,7 @@ function resolve(fromOrViaOrTo, locCoord, viaindex) {
             var anchor = String.fromCharCode(0x25BC);
             var linkPart = $("<a>" + anchor + "<small>" + list.length + "</small></a>");
             foundDiv.append(linkPart.click(function(e) {
-                setAutoCompleteList(fromOrViaOrTo, locCoord);
+                setAutoCompleteList(fromOrViaOrTo, locCoord, viaindex);
             }));
         }
 
@@ -647,7 +677,7 @@ function createAmbiguityList(locCoord) {
 
     locCoord.error = "";
     locCoord.resolvedList = [];
-    var timeout = 3000;
+    var timeout = 5000;
     if (locCoord.lat && locCoord.lng) {
         var url = nominatim_reverse + "?lat=" + locCoord.lat + "&lon="
                 + locCoord.lng + "&format=json&zoom=16";
@@ -820,9 +850,9 @@ function routeLatLng(request, doQuery) {
     // doZoom should not show up in the URL but in the request object to avoid zooming for history change
     var doZoom = request.doZoom;
     request.doZoom = true;
-    console.log("routeLatLngdoQuery doQuery="+doQuery);
 
     var urlForHistory = request.createFullURL();
+    console.log("routeLatLng doQuery="+doQuery +" urlForHistory="+urlForHistory);
     // not enabled e.g. if no cookies allowed (?)
     // if disabled we have to do the query and cannot rely on the statechange history event    
     if (!doQuery && History.enabled) {
@@ -1113,7 +1143,7 @@ function mySubmit() {
         // no special function
         return;
     }
-    for (i=1;i<ghRequest.via.length+1;i++)
+    for (i=1; i<=ghRequest.via.length; i++)
     {
       var viaStr = $("#viaInput"+i).val();
       if (viaStr === "Via") {
@@ -1122,9 +1152,6 @@ function mySubmit() {
       }
       ghRequest.via[i-1] = new GHInput(viaStr);
       viaarray.push(viaStr);
-      $.when(resolveVia(i)).done(function() {
-          focus(ghRequest.via[i-1],2,i);
-      });
     }
     
     if (toStr == "To") {
@@ -1207,20 +1234,36 @@ function exportGPX() {
     return false;
 }
 
-function getAutoCompleteDiv(fromOrTo) {
-    if (fromOrTo === "from")
-        return $('#fromInput')
+function getAutoCompleteDiv(fromOrViaOrTo, viaindex) {
+  if (fromOrViaOrTo == "from")
+       return $('#fromInput')
+  else 
+  {
+    if (fromOrViaOrTo == "via")
+       return $('#viaInput'+(viaindex))
     else
-        return $('#toInput');
+       return $('#toInput');
+  }
 }
 
-function setAutoCompleteList(fromOrTo, ghRequestLoc) {
+function setAutoCompleteList(fromOrViaOrTo, ghRequestLoc, viaindex) {
     function formatValue(suggestionValue, currentValue) {
         var pattern = '(' + $.Autocomplete.utils.escapeRegExChars(currentValue) + ')';
         return suggestionValue.replace(new RegExp(pattern, 'gi'), '<strong>$1<\/strong>');
     }
-    var isFrom = fromOrTo === "from";
-    var pointIndex = isFrom ? 1 : 2;
+    var pointIndex;
+    switch(fromOrViaOrTo)
+        {
+            case "from":
+               pointIndex = 1;
+               break;         
+            case "via":
+               pointIndex = 1 + viaindex;
+               break;         
+            case "to":
+               pointIndex = 2 + ghRequest.via.length; 
+               break;         
+        }
     var fakeCurrentInput = ghRequestLoc.input.toLowerCase();
     var valueDataList = [];
     var list = ghRequestLoc.resolvedList;
@@ -1264,7 +1307,7 @@ function setAutoCompleteList(fromOrTo, ghRequestLoc) {
     };
 
     options.containerClass = "complete-" + pointIndex;
-    var myAutoDiv = getAutoCompleteDiv(fromOrTo);
+    var myAutoDiv = getAutoCompleteDiv(fromOrViaOrTo, viaindex);
     myAutoDiv.autocomplete(options);
     myAutoDiv.autocomplete().forceSuggest("");
     myAutoDiv.focus();
