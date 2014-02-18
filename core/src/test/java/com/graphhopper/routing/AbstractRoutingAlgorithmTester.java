@@ -76,7 +76,7 @@ public abstract class AbstractRoutingAlgorithmTester
         Graph graphFastest = createGraph();
         initDirectedAndDiffSpeed(graphFastest);
         Path p2 = prepareGraph(graphFastest, carEncoder, new FastestWeighting(carEncoder)).createAlgo().calcPath(0, 3);
-        assertEquals(Helper.createTList(0, 4, 6, 7, 5, 3), p2.calcNodes());
+        assertEquals(Helper.createTList(0, 4, 6, 7, 5, 3), p2.calcNodes());        
         assertEquals(p2.toString(), 1261.714, p2.getDistance(), 1e-6);
         assertEquals(p2.toString(), 111437, p2.getMillis());
     }
