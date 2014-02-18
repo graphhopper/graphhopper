@@ -41,13 +41,15 @@ input[id^='viaInput'] {
 }
 
 #addViaButton {
-    width: 100px;
+    width: 110px;
     float: left;
+    margin-bottom: 5px;    
 }
 
 #rmViaButton {
-    width: 100px;
+    width: 110px;
     float: right;
+    margin-bottom: 5px;    
 }
 
 div[id^='viaResolveFound a']
@@ -231,8 +233,9 @@ tr.instruction td {
     background-image: linear-gradient(to bottom, #9f9f9f, #e7e7e7);    
 }
 
-.complete-1, .complete-2 { border: 1px solid #999; background: #FFF; overflow: auto; }
-.complete-1 strong, .complete-2 strong { font-weight: normal; /*color: #3399FF;*/; color: #04B431; }
+div[class*='complete-'] { border: 1px solid #999; background: #FFF; overflow: auto; }
+div[class*='complete-'] strong { font-weight: normal; /*color: #3399FF;*/; color: #04B431; }
+
 .autocomplete-suggestion { padding: 2px 5px; white-space: nowrap; overflow: hidden; font-size: 12px; }
 .autocomplete-selected { background: #e7e7e7; }
 .light { font-weight: lighter; color: #9f9f9f; font-size: smaller }
