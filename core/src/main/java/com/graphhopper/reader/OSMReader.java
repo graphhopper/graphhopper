@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
+import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.DistanceCalc;
@@ -76,7 +77,7 @@ import com.graphhopper.util.shapes.GHPoint;
  * <p/>
  * @author Peter Karich
  */
-public class OSMReader
+public class OSMReader implements DataReader
 {
     protected static final int EMPTY = -1;
     // pillar node is >= 3
@@ -116,7 +117,9 @@ public class OSMReader
     private int nextPillarId = 0;
     // negative but increasing to avoid clash with custom created OSM files
     private long newUniqueOSMId = -Long.MAX_VALUE;
+    private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private boolean exitOnlyPillarNodeException = true;
+    private File osmFile;
 
     public OSMReader( GraphStorage storage )
     {
@@ -129,10 +132,14 @@ public class OSMReader
         pillarInfo = new PillarInfo(nodeAccess.is3D(), graphStorage.getDirectory());
     }
 
-    public void doOSM2Graph( File osmFile ) throws IOException
+    @Override
+    public void readGraph() throws IOException
     {
         if (encodingManager == null)
             throw new IllegalStateException("Encoding manager was not set.");
+
+        if (osmFile == null)
+            throw new IllegalStateException("No OSM file specified");
 
         if (!osmFile.exists())
             throw new IllegalStateException("Your specified OSM file does not exist:" + osmFile.getAbsolutePath());
@@ -532,7 +539,7 @@ public class OSMReader
 
         double lat = node.getLat();
         double lon = node.getLon();
-        double ele = node.getEle();
+        double ele = getElevation(node);
         if (nodeType == TOWER_NODE)
         {
             addTowerNode(node.getId(), lat, lon, ele);
@@ -543,6 +550,11 @@ public class OSMReader
             nextPillarId++;
         }
         return true;
+    }
+
+    protected double getElevation( OSMNode node )
+    {
+        return eleProvider.getEle(node.getLat(), node.getLon());
     }
 
     void prepareWaysWithRelationInfo( OSMRelation osmRelation )
@@ -907,6 +919,18 @@ public class OSMReader
     public OSMReader setWorkerThreads( int numOfWorkers )
     {
         this.workerThreads = numOfWorkers;
+        return this;
+    }
+
+    public OSMReader setElevationProvider( ElevationProvider eleProvider )
+    {
+        this.eleProvider = eleProvider;
+        return this;
+    }
+
+    public OSMReader setOSMFile( File osmFile )
+    {
+        this.osmFile = osmFile;
         return this;
     }
 

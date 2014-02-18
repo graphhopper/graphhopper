@@ -17,7 +17,6 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.GHRequest;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -106,25 +105,30 @@ public class OSMReaderTest
             footEncoder = (FootFlagEncoder) getEncodingManager().getEncoder("FOOT");
         }
 
-        OSMReader createReader( GraphStorage tmpGraph )
+        @Override
+        protected DataReader createReader( GraphStorage tmpGraph )
         {
             return new OSMReader(tmpGraph);
         }
 
         @Override
-        protected OSMReader importOSM() throws IOException
+        protected DataReader importData() throws IOException
         {
             GraphStorage tmpGraph = newGraph(dir, getEncodingManager(), is3D(), isEnableTurnRestrictions());
             setGraph(tmpGraph);
-            OSMReader osmReader = createReader(tmpGraph);
-            osmReader.setEncodingManager(getEncodingManager());
+
+            DataReader osmReader = createReader(tmpGraph);
             try
             {
-                osmReader.doOSM2Graph(new File(getClass().getResource(getOSMFile()).toURI()));
+                ((OSMReader) osmReader)
+                        .setOSMFile(new File(getClass().getResource(getOSMFile()).toURI()))
+                        .setEncodingManager(getEncodingManager());
             } catch (URISyntaxException e)
             {
                 throw new RuntimeException(e);
+
             }
+            osmReader.readGraph();
             carOutExplorer = getGraph().createEdgeExplorer(new DefaultEdgeFilter(carEncoder, false, true));
             carAllExplorer = getGraph().createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, true));
             return osmReader;
@@ -205,7 +209,7 @@ public class OSMReaderTest
         GraphHopper hopper = new GraphHopperTest(file1)
         {
             @Override
-            OSMReader createReader( GraphStorage tmpGraph )
+            protected DataReader createReader( GraphStorage tmpGraph )
             {
                 return new OSMReader(tmpGraph)
                 {
@@ -214,7 +218,7 @@ public class OSMReaderTest
                     {
                         return node.getLat() > 49 && node.getLon() > 8;
                     }
-                };
+                }.setEncodingManager(getEncodingManager());
             }
         };
 
@@ -645,13 +649,25 @@ public class OSMReaderTest
     @Test
     public void testReadEleFromCustomOSM()
     {
-        GraphHopper hopper = new GraphHopperTest("custom-osm-ele.xml").
-                set3D(true).
-                importOrLoad();
+        GraphHopper hopper = new GraphHopperTest("custom-osm-ele.xml")
+        {
+            @Override
+            protected DataReader createReader( GraphStorage tmpGraph )
+            {
+                return new OSMReader(tmpGraph)
+                {
+                    @Override
+                    protected double getElevation( OSMNode node )
+                    {
+                        return node.getEle();
+                    }
+                };
+            }
+        }.set3D(true).importOrLoad();
         Graph graph = hopper.getGraph();
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
         int n50 = AbstractGraphStorageTester.getIdOf(graph, 49);
-        
+
         EdgeIteratorState edge = GHUtility.getEdge(graph, n20, n50);
         assertEquals(Helper.createPointList3D(52, 9, -10, 51.25, 9.43, 100, 49, 10, -30), edge.fetchWayGeometry(3));
     }

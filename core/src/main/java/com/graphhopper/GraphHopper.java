@@ -17,6 +17,7 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
@@ -77,7 +78,7 @@ public class GraphHopper implements GraphHopperAPI
     private double logMessages = 20;
     // for OSM import
     private String osmFile;
-    private EncodingManager encodingManager;    
+    private EncodingManager encodingManager;
     private double wayPointMaxDistance = 1;
     private int workerThreads = -1;
     private int defaultSegmentSize = -1;
@@ -115,6 +116,22 @@ public class GraphHopper implements GraphHopperAPI
     public EncodingManager getEncodingManager()
     {
         return encodingManager;
+    }
+
+    /**
+     * Threads for data reading.
+     */
+    protected int getWorkerThreads()
+    {
+        return workerThreads;
+    }
+
+    /**
+     * Return maximum distance (in meter) to reduce points via douglas peucker while OSM import.
+     */
+    protected double getWayPointMaxDistance()
+    {
+        return wayPointMaxDistance;
     }
 
     /**
@@ -513,7 +530,7 @@ public class GraphHopper implements GraphHopperAPI
         setGraphHopperLocation(graphHopperLocation);
         try
         {
-            importOSM();
+            importData();
         } catch (IOException ex)
         {
             throw new RuntimeException("Cannot parse OSM file " + getOSMFile(), ex);
@@ -525,24 +542,30 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
-    protected OSMReader importOSM() throws IOException
+    protected DataReader importData() throws IOException
     {
         if (graph == null)
             throw new IllegalStateException("Load graph before importing OSM data");
 
+        encodingManager.setEnableInstructions(enableInstructions);
+        DataReader reader = createReader(graph);
+        logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
+        reader.readGraph();
+        return reader;
+    }
+
+    protected DataReader createReader( GraphStorage tmpGraph )
+    {
         if (osmFile == null)
             throw new IllegalArgumentException("No OSM file specified");
 
-        File osmTmpFile = new File(osmFile);
         logger.info("start creating graph from " + osmFile);
-        encodingManager.setEnableInstructions(enableInstructions);
-        OSMReader reader = new OSMReader(graph).
+        File osmTmpFile = new File(osmFile);
+        return new OSMReader(tmpGraph).
+                setOSMFile(osmTmpFile).
                 setWorkerThreads(workerThreads).
                 setEncodingManager(encodingManager).
                 setWayPointMaxDistance(wayPointMaxDistance);
-        logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
-        reader.doOSM2Graph(osmTmpFile);
-        return reader;
     }
 
     /**

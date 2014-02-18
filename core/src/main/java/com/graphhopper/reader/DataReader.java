@@ -16,24 +16,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader.dem;
+
+package com.graphhopper.reader;
+
+import java.io.IOException;
 
 /**
  * @author Peter Karich
  */
-public interface ElevationProvider
-{
-    /**
-     * @return returns the hight in meter or Double.NaN if invalid
-     */
-    double getEle( double lat, double lon );
-    
-    public final static ElevationProvider NOOP = new ElevationProvider()
-    {
-        @Override
-        public double getEle( double lat, double lon )
-        {
-            return Double.NaN;
-        }
-    };
+public interface DataReader {
+
+    void readGraph() throws IOException;
 }

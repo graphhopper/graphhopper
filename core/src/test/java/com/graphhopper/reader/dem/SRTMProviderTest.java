@@ -57,19 +57,19 @@ public class SRTMProviderTest
     {
         instance.setCacheDir(new File("./files/"));
         // easy to verify orientation of tile:
-//        instance.getHeight(43, 13);
+//        instance.getEle(43, 13);
 
         // siegesturm
-        assertEquals(466, instance.getHeight(49.969331,11.574783));
+        assertEquals(466, instance.getEle(49.969331,11.574783), 1e-1);
         // am main
-        assertEquals(330, instance.getHeight(49.958233,11.558647));
+        assertEquals(330, instance.getEle(49.958233,11.558647), 1e-1);
         // south america
-        assertEquals(1691, instance.getHeight(-28.88316, -71.070557));
-        assertEquals(0, instance.getHeight(-28.671311, -71.38916));
+        assertEquals(1691, instance.getEle(-28.88316, -71.070557), 1e-1);
+        assertEquals(0, instance.getEle(-28.671311, -71.38916), 1e-1);
         
         // montevideo
-        // assertEquals(45, instance.getHeight(-34.906205,-56.189575));        
+        // assertEquals(45, instance.getEle(-34.906205,-56.189575), 1e-1);
         // new york
-        // assertEquals(21, instance.getHeight(40.730348,-73.985882));        
+        // assertEquals(21, instance.getEle(40.730348,-73.985882), 1e-1);
     }
 }

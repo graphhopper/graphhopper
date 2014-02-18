@@ -42,7 +42,7 @@ public class SRTMProvider implements ElevationProvider
 {
     public static void main( String[] args ) throws IOException
     {
-        new SRTMProvider().getHeight(52.882391, 4.63623);
+        new SRTMProvider().getEle(52.882391, 4.63623);
     }
 
     private static final BitUtil BIT_UTIL = BitUtil.BIG;
@@ -164,7 +164,7 @@ public class SRTMProvider implements ElevationProvider
     }
 
     @Override
-    public int getHeight( double lat, double lon )
+    public double getEle( double lat, double lon )
     {
         int intKey = calcIntKey(lat, lon);
         HeightTile demProvider = cacheData.get(intKey);
@@ -222,10 +222,10 @@ public class SRTMProvider implements ElevationProvider
             }
         }
 
-        // System.out.println(getter.getHeight(52.882391, 4.63623));
+        // System.out.println(getter.getEle(52.882391, 4.63623));
         short val = demProvider.getHeight(lat, lon);
         if (val == Short.MIN_VALUE)
-            return Integer.MIN_VALUE;
+            return Double.NaN;
         return val;
     }
 }
