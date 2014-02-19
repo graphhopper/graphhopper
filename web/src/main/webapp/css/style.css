@@ -30,12 +30,7 @@ body {
 #input, #instructions {
     width: 255px;
 }
-#fromInput, #toInput, #viabuttons {
-    width: 225px;
-    float: right;
-}
-
-input[id^='viaInput'] {
+#fromInput, #toInput, #viabuttons, input[id^='viaInput'] {
     width: 225px;
     float: right;
 }
@@ -66,20 +61,13 @@ input[id^='viaInput'] {
     font-size: 10px;    
 }
 
-div[id^='viaResolveFound a']
-{
+#fromResolveFound a, #toResolveFound a, div[id^='viaResolveFound a'] {
     background-color: white;
     padding-left: 4px;
     padding-right: 3px;    
 }
 
-#fromResolveFound a, #toResolveFound a {
-    background-color: white;
-    padding-left: 4px;
-    padding-right: 3px;    
-}
-
-#fromResolveFound, #toResolveFound {
+#fromResolveFound, #toResolveFound, div[id^='viaResolveFound'] {
     overflow: hidden;
     max-height: 24px;
     font-size: 10px;
@@ -90,26 +78,7 @@ div[id^='viaResolveFound a']
     margin-right: 2px;    
 }
 
-div[id^='viaResolveFound']
-{
-    overflow: hidden;
-    max-height: 24px;
-    font-size: 10px;
-    color: blue;
-    float: right;
-    cursor: pointer;    
-    margin-top: -20px;
-    margin-right: 2px;    
-}
-
-div[id^='viaResolveError']
-{
-    float: right;
-    font-size: 12px;
-    padding-bottom: 4px;
-}
-
-#fromResolveError, #toResolveError {
+#fromResolveError, #toResolveError, div[id^='viaResolveError'] {
     float: right;
     font-size: 12px;
     padding-bottom: 4px;
