@@ -275,7 +275,6 @@ function allViaLats()
 
 function resolveFromViaTo()
 {
-    console.log("resolveFromViaTo");
     var res = [];
     res.push(resolveFrom());
     for (var i=0;i<ghRequest.via.length;i++)
@@ -287,7 +286,6 @@ function resolveFromViaTo()
 }
 
 function resolveCoords(fromStr, viaarray, toStr, doQuery) {
-    console.log("resolveCoords fromStr="+fromStr+" toStr"+toStr+" doQuery="+doQuery);
     if (fromStr !== ghRequest.from.input || !ghRequest.from.isResolved())
         ghRequest.from = new GHInput(fromStr);
 
@@ -322,7 +320,6 @@ function resolveCoords(fromStr, viaarray, toStr, doQuery) {
         var deferreds = resolveFromViaTo();
         // See http://stackoverflow.com/questions/5627284/pass-in-an-array-of-deferreds-to-when
         $.when.apply($, deferreds).done(function() {
-            console.log("resolveFromViaTo.done");
             routeLatLng(ghRequest, doQuery);
         });
     }
@@ -483,7 +480,6 @@ function initMap() {
                  viaflagmissing=i;
               }
            }
-           console.log("viaflagmissing new="+viaflagmissing);
            // Via flag missing
            if (viaflagmissing!==-1)
            {
@@ -526,7 +522,6 @@ function makeValidLng(lon) {
 }
 
 function setFlag(coord, isFromViaOrTo, viaindex) {
-    console.log("setFlag isFromViaOrTo="+isFromViaOrTo+" viaindex="+viaindex + "coord="+coord.toString());
     if (coord.lat) {
         var placeicon;
         var placepopup;
@@ -593,7 +588,6 @@ function resolveTo() {
 }
 
 function resolve(fromOrViaOrTo, locCoord, viaindex) {
-    console.log("resolve(fromOrViaOrTo="+fromOrViaOrTo + " locCoord ="+locCoord + " viaindex="+viaindex);
     if (fromOrViaOrTo==="via")
     {
       $("#" + fromOrViaOrTo + "Flag" + viaindex).hide();
@@ -611,19 +605,17 @@ function resolve(fromOrViaOrTo, locCoord, viaindex) {
         if (fromOrViaOrTo==="via")
         {
           var errorDiv = $("#" + fromOrViaOrTo + "ResolveError" + viaindex);
-          errorDiv.empty();
           var foundDiv = $("#" + fromOrViaOrTo + "ResolveFound" + viaindex);
         }
         else
         {
           var errorDiv = $("#" + fromOrViaOrTo + "ResolveError");
-          errorDiv.empty();
           var foundDiv = $("#" + fromOrViaOrTo + "ResolveFound");
         }
         // deinstallation of completion if there was one
         // if (getAutoCompleteDiv(fromOrViaOrTo).autocomplete())
         //    getAutoCompleteDiv(fromOrViaOrTo).autocomplete().dispose();
-
+        errorDiv.empty();
         foundDiv.empty();
         var list = locCoord.resolvedList;
         if (locCoord.error) {
@@ -677,7 +669,7 @@ function createAmbiguityList(locCoord) {
 
     locCoord.error = "";
     locCoord.resolvedList = [];
-    var timeout = 5000;
+    var timeout = 8000;
     if (locCoord.lat && locCoord.lng) {
         var url = nominatim_reverse + "?lat=" + locCoord.lat + "&lon="
                 + locCoord.lng + "&format=json&zoom=16";
@@ -1135,33 +1127,25 @@ function mySubmit() {
     var fromStr = $("#fromInput").val();
     var toStr = $("#toInput").val();
     var viaarray = new Array();
-    if (toStr == "To" && fromStr == "From") {
+    if (toStr == "") {
         // TODO print warning
         return;
     }
-    if (fromStr == "From") {
+    if (fromStr == "") {
         // no special function
         return;
     }
     for (i=1; i<=ghRequest.via.length; i++)
     {
       var viaStr = $("#viaInput"+i).val();
-      if (viaStr === "Via") {
+      if (viaStr == "") {
           // no special function
           return;
       }
       ghRequest.via[i-1] = new GHInput(viaStr);
       viaarray.push(viaStr);
     }
-    
-    if (toStr == "To") {
-        // lookup area
-        ghRequest.from = new GHInput(fromStr);        
-        $.when(resolveFrom()).done(function() {
-            focus(ghRequest.from,1,0);
-        });
-        return;
-    }
+
     // route!
     resolveCoords(fromStr, viaarray, toStr);
 }

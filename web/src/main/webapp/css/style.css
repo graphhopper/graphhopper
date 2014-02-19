@@ -109,7 +109,7 @@ div[id^='viaResolveError']
 .warn {
     color: orange;
 }
-.error, #fromResolveError, #viaResolveError,#toResolveError {
+.error, #fromResolveError, div[id^='viaResolveError'],#toResolveError {
     color: red;
 }
 #moreattribution a {
