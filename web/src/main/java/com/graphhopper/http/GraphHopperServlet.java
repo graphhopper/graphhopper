@@ -96,7 +96,6 @@ public class GraphHopperServlet extends GHBaseServlet {
         float tookGeocoding = sw.stop().getSeconds();
         GHPlace start = infoPoints.get(0);
         GHPlace end = infoPoints.get(1);
-        String loghelper = "Empty";        
         try {
             // we can reduce the path length based on the maximum differences to the original coordinates
             double minPathPrecision = getDoubleParam(req, "minPathPrecision", 1d);
@@ -117,7 +116,6 @@ public class GraphHopperServlet extends GHBaseServlet {
                 FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
                 if (infoPoints.size()==2)
                 {
-                   loghelper="Calling GHRequest";
                    rsp = hopper.route(new GHRequest(start, end).
                         setVehicle(algoVehicle.toString()).
                         setWeighting(weighting).
