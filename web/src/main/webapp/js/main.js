@@ -190,7 +190,7 @@ function addViaButton()
     //Assign different attributes to the element. 
     element.type = "text";
     element.id = "viaInput"+viacounter;
-    element.setAttribute("placeholder", tr("viaHint"));
+    element.setAttribute("placeholder", tr("viaHint") + " " + viacounter);
     //var foo = document.getElementById("viabuttons");
     //Append the element in page (in span).  
     pic.appendChild(element);

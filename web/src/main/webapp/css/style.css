@@ -1,7 +1,7 @@
 body {                
     color: #000;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;    
-    line-height: 1.4;    
+    line-height: 1.4;
     color: #111111;
     background-color: #EEEEEE;
     margin: 0;
@@ -40,16 +40,30 @@ input[id^='viaInput'] {
     float: right;
 }
 
-#addViaButton {
-    width: 110px;
+#viaButtonFlag {
     float: left;
-    margin-bottom: 5px;    
+    margin-bottom: 5px;
+}
+
+#addViaButton{
+    width: 16px;
+    float: left;
+    height: 16px;
+    margin-left: 13px;
+    margin-bottom: 5px;
+    padding: 2px;
+    padding-top: 2px;
+    font-size: 10px;    
 }
 
 #rmViaButton {
-    width: 110px;
+    width: 16px;
+    height: 16px;    
     float: right;
-    margin-bottom: 5px;    
+    margin-bottom: 5px;
+    padding: 2px;
+    padding-top: 2px;    
+    font-size: 10px;    
 }
 
 div[id^='viaResolveFound a']
