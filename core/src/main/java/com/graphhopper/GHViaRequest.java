@@ -57,7 +57,7 @@ public class GHViaRequest
         if (viaList.get(0) == null)
             throw new IllegalStateException("the 'from' point needs to be initialized but was null");
 
-        if (viaList.get(0) == null)
+        if (viaList.get(1) == null)
             throw new IllegalStateException("the 'to' point needs to be initialized but was null");
     }
     
