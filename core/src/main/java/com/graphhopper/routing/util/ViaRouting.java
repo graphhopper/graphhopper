@@ -78,7 +78,6 @@ public class ViaRouting
         this.lazyUpdates=lazyUpdates;
         this.neighborUpdates=neighborUpdates;
         this.logMessages=logMessages;
-        
     }
 
     public List<Path> calcPathList( QueryResult[] from_via_to_list, String algoname, String vehicle, String weighthing, boolean ch )

@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * GraphHopper request wrapper to simplify requesting GraphHopper.
+ * GraphHopper request wrapper with support of "via" to simplify requesting GraphHopper.
  * <p/>
  * @author ratrun
  */
@@ -78,7 +78,7 @@ public class GHViaRequest
 
     /**
      * Possible values: astar (A* algorithm, default), astarbi (bidirectional A*) dijkstra
-     * (Dijkstra), dijkstrabi and dijkstraNative (a bit faster bidirectional Dijkstra).
+     * (Dijkstra), dijkstrabi and dijkstraNativebi (a bit faster bidirectional Dijkstra).
      */
     public GHViaRequest setAlgorithm( String algo )
     {

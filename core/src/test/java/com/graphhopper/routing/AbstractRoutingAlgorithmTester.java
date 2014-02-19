@@ -28,7 +28,6 @@ import gnu.trove.list.TIntList;
 import java.util.Random;
 import static org.junit.Assert.*;
 import org.junit.Test;
-import java.util.List;
 
 /**
  *
