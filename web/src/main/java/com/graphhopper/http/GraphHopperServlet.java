@@ -85,6 +85,7 @@ public class GraphHopperServlet extends GHBaseServlet {
                 object("bbox", list).
                 object("supportedVehicles", hopper.getEncodingManager()).
                 object("version", Constants.VERSION).
+                object("dimension", hopper.getGraph().getNodeAccess().getDimension()).
                 object("buildDate", Constants.BUILD_DATE);
         writeJson(req, res, json.build());
     }

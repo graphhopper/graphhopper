@@ -26,3 +26,4 @@ debug.sh
 *.dem
 *.log
 core/TODO*.txt
+srtmprovider/
