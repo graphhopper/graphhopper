@@ -191,7 +191,6 @@ function addViaButton()
     element.type = "text";
     element.id = "viaInput"+viacounter;
     element.setAttribute("placeholder", tr("viaHint") + " " + viacounter);
-    //var foo = document.getElementById("viabuttons");
     //Append the element in page (in span).  
     pic.appendChild(element);
     var clear = document.createElement("div");
@@ -211,17 +210,17 @@ function addViaButton()
 
 function rmViaButton()
 {
-    var foo = document.getElementById("viaIndicator"+viacounter);
+    var viaindicator = document.getElementById("viaIndicator"+viacounter);
     //Remove the element
-    foo.parentNode.removeChild(foo);
-    foo = document.getElementById("viaFlag"+viacounter);
-    foo.parentNode.removeChild(foo);
-    foo = document.getElementById("viaInput"+viacounter);
-    foo.parentNode.removeChild(foo);
-    foo = document.getElementById("viaResolveFound"+viacounter);
-    foo.parentNode.removeChild(foo);
-    foo = document.getElementById("viaResolveError"+viacounter);
-    foo.parentNode.removeChild(foo);
+    viaindicator.parentNode.removeChild(viaindicator);
+    viaindicator = document.getElementById("viaFlag"+viacounter);
+    viaindicator.parentNode.removeChild(viaindicator);
+    viaindicator = document.getElementById("viaInput"+viacounter);
+    viaindicator.parentNode.removeChild(viaindicator);
+    viaindicator = document.getElementById("viaResolveFound"+viacounter);
+    viaindicator.parentNode.removeChild(viaindicator);
+    viaindicator = document.getElementById("viaResolveError"+viacounter);
+    viaindicator.parentNode.removeChild(viaindicator);
     
     viacounter--;
     if (viacounter<=0)
