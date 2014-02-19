@@ -44,12 +44,6 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     public Dijkstra( Graph g, FlagEncoder encoder, Weighting weighting )
     {
         super(g, encoder, weighting);
-        reset();
-    }
-
-    @Override
-    public void reset()
-    {
         initCollections(1000);
     }
 

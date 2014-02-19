@@ -51,13 +51,6 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     {
         super(graph, encoder, weighting);
 
-        changedNodes = new TIntArrayListWithCap();
-        reset();
-    }
-  
-    @Override
-    public void reset()
-    {
         parents = new int[graph.getNodes()];
         Arrays.fill(parents, -1);
 
@@ -68,10 +61,9 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         Arrays.fill(weights, Double.MAX_VALUE);
 
         heap = new IntDoubleBinHeap();
-        changedNodes.clear();
-        doClear = true;
+        changedNodes = new TIntArrayListWithCap();
     }
-     
+
     public DijkstraOneToMany setLimitWeight( double weight )
     {
         limitWeight = weight;
@@ -107,7 +99,6 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             return p;
         return p.setEndNode(endNode).extract();
     }
-
 
     public DijkstraOneToMany clear()
     {

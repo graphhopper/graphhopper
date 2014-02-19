@@ -49,15 +49,9 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     public DijkstraBidirectionRef( Graph graph, FlagEncoder encoder, Weighting weighting )
     {
         super(graph, encoder, weighting);
-        reset();
-    }
-
-    @Override
-    public void reset()
-    {
         initCollections(1000);
     }
-    
+
     protected void initCollections( int nodes )
     {
         openSetFrom = new PriorityQueue<EdgeEntry>(nodes / 10);

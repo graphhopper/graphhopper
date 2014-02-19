@@ -82,7 +82,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         setGraph(queryGraph);
         return calcPath(fromRes.getClosestNode(), toRes.getClosestNode());
     }
-     
+
     public RoutingAlgorithm setEdgeFilter( EdgeFilter additionalEdgeFilter )
     {
         this.additionalEdgeFilter = additionalEdgeFilter;

@@ -19,7 +19,6 @@ package com.graphhopper.routing;
 
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.NotThreadSafe;
-import java.util.List;
 
 /**
  * Calculates the shortest path from the specified node ids. Can be used only once.
@@ -47,12 +46,6 @@ public interface RoutingAlgorithm
      */
     Path calcPath( QueryResult from, QueryResult to );
 
-    /**
-     * Reset all internal data such that we can run calcPath( int from, int to ) within a loop
-     * <p/>
-     */
-    public void reset();
-        
     /**
      * @return name of this algorithm
      */
