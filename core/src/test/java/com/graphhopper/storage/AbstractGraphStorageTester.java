@@ -258,7 +258,7 @@ public abstract class AbstractGraphStorageTester
         EdgeIteratorState edge = graph.edge(1, 3, 10, false).setName("testing").setWayGeometry(Helper.createPointList(1, 2));
         
         EdgeIteratorState newEdge = graph.edge(1, 3, 10, false);
-        newEdge.copyProperties(edge);
+        edge.copyPropertiesTo(newEdge);
         assertEquals(edge.getName(), newEdge.getName());
         assertEquals(edge.getDistance(), newEdge.getDistance(), 1e-7);
         assertEquals(edge.getFlags(), newEdge.getFlags());

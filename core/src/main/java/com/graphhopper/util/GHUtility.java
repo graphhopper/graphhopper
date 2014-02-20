@@ -260,7 +260,7 @@ public class GHUtility
                 if (bitset.contains(newNodeIndex))
                     continue;
 
-                sortedGraph.edge(newIndex, newNodeIndex).copyProperties(eIter);
+                eIter.copyPropertiesTo(sortedGraph.edge(newIndex, newNodeIndex));
             }
         }
         return sortedGraph;
@@ -335,8 +335,8 @@ public class GHUtility
                 int adjacentNodeIndex = eIter.getAdjNode();
                 if (bitset.contains(adjacentNodeIndex))
                     continue;
-                
-                to.edge(oldNode, adjacentNodeIndex).copyProperties(eIter);
+
+                eIter.copyPropertiesTo(to.edge(oldNode, adjacentNodeIndex));
             }
         }
         return to;
@@ -469,7 +469,7 @@ public class GHUtility
         }
 
         @Override
-        public void copyProperties( EdgeIteratorState edge )
+        public EdgeIteratorState copyPropertiesTo( EdgeIteratorState edge )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -484,7 +484,7 @@ public class GHUtility
         public EdgeSkipIterState setWeight( double weight )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }        
+        }
     };
 
     /**

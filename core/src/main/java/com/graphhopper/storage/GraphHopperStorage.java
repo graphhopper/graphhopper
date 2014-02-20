@@ -547,7 +547,7 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
-        public void copyProperties( EdgeIteratorState edge )
+        public EdgeIteratorState copyPropertiesTo( EdgeIteratorState edge )
         {
             throw new UnsupportedOperationException("Not supported yet.");
         }
@@ -884,15 +884,17 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
-        public void copyProperties( EdgeIteratorState edge )
+        public EdgeIteratorState copyPropertiesTo( EdgeIteratorState edge )
         {
-            setDistance(edge.getDistance()).
-                    setName(edge.getName()).
-                    setFlags(edge.getFlags()).
-                    setWayGeometry(edge.fetchWayGeometry(0));
+            edge.setDistance(getDistance()).
+                    setName(getName()).
+                    setFlags(getFlags()).
+                    setWayGeometry(fetchWayGeometry(0));
 
             if (E_ADDITIONAL >= 0)
-                setAdditionalField(edge.getAdditionalField());
+                edge.setAdditionalField(getAdditionalField());
+            
+            return edge;
         }
     }
 

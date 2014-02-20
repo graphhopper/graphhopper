@@ -196,11 +196,12 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
         }
 
         @Override
-        public final void copyProperties( EdgeIteratorState edge )
+        public final EdgeIteratorState copyPropertiesTo( EdgeIteratorState edge )
         {
-            super.copyProperties(edge);
-            EdgeSkipIterator eSkip = (EdgeSkipIterator) edge;
+            super.copyPropertiesTo(edge);
+//            EdgeSkipIterator eSkip = (EdgeSkipIterator) edge;
 //            setSkippedEdges(eSkip.getSkippedEdge1(), eSkip.getSkippedEdge2());
+            return edge;
         }
     }
 
