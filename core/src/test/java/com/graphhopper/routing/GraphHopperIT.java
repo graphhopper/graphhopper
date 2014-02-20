@@ -119,17 +119,16 @@ public class GraphHopperIT
         GraphHopper hopper = new GraphHopper().setInMemory(true).setOSMFile(osmFile).
                 disableCHShortcuts().
                 setGraphHopperLocation(graphFile).setEncodingManager(new EncodingManager(importVehicles));
-        
-        hopper.setElevationProvider(new SRTMProvider().setCacheDir(new File("./files/")));        
+
+        hopper.setElevationProvider(new SRTMProvider().setCacheDir(new File("./files/")));
         hopper.importOrLoad();
 
-        Graph g = hopper.getGraph();        
+        Graph g = hopper.getGraph();
         GHResponse rsp = hopper.route(new GHRequest(43.730729, 7.421288, 43.727697, 7.419199).
                 setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
 
-        // TODO SRTM
-        // assertEquals(1628, rsp.getDistance(), .1);
-        // assertEquals(54, rsp.getPoints().getSize());
+        assertEquals(1634.9, rsp.getDistance(), .1);
+        assertEquals(54, rsp.getPoints().getSize());
 
         InstructionList il = rsp.getInstructions();
         assertEquals(10, il.size());

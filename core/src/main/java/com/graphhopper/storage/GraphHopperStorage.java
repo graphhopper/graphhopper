@@ -893,7 +893,7 @@ public class GraphHopperStorage implements GraphStorage
 
             if (E_ADDITIONAL >= 0)
                 edge.setAdditionalField(getAdditionalField());
-            
+
             return edge;
         }
     }
@@ -1540,7 +1540,7 @@ public class GraphHopperStorage implements GraphStorage
         return getClass().getSimpleName()
                 + "|" + encodingManager
                 + "|" + getDirectory().getDefaultType()
-                + "|" + getProperties().versionsToString()
-                + "|" + nodeAccess.getDimension() + "D";
+                + "|" + nodeAccess.getDimension() + "D"
+                + "|" + getProperties().versionsToString();
     }
 }

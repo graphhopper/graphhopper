@@ -36,7 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Main wrapper of the offline API for a simple and efficient usage.
+ * Easy to use access point to configure import and (offline) routing.
  * <p/>
  * @see GraphHopperAPI
  * @author Peter Karich
@@ -48,6 +48,11 @@ public class GraphHopper implements GraphHopperAPI
         CmdArgs args = CmdArgs.read(strs);
         GraphHopper hopper = new GraphHopper().init(args);
         hopper.importOrLoad();
+//        GHResponse res = hopper.route(new GHRequest(43.729317,7.410691, 43.730174,7.413266).
+//                putHint("simplifyRequest", false).
+//                setVehicle("foot").
+//                setWeighting("shortest"));
+//        System.out.println(res.getDistance() + " vs. " + res.getPoints().calcDistance(new DistancePlaneProjection()) + " -> " + res.getDebugInfo());
         RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(hopper);
         if (args.getBool("graph.testIT", false))
             tests.start();
@@ -146,6 +151,12 @@ public class GraphHopper implements GraphHopperAPI
     {
         return wayPointMaxDistance;
     }
+
+    public GraphHopper setWayPointMaxDistance( double wayPointMaxDistance )
+    {
+        this.wayPointMaxDistance = wayPointMaxDistance;
+        return this;
+    }        
 
     /**
      * Configures the underlying storage to be used on a well equipped server.
@@ -284,7 +295,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper set3D( boolean is3D )
     {
-        if(is3D)
+        if (is3D)
             this.dimension = 3;
         else
             this.dimension = 2;
@@ -739,8 +750,8 @@ public class GraphHopper implements GraphHopperAPI
         if (chEnabled)
         {
             if (prepare == null)
-                throw new IllegalStateException(
-                        "Preparation object is null. CH-preparation wasn't done or did you forgot to call disableCHShortcuts()?");
+                throw new IllegalStateException("Preparation object is null. CH-preparation wasn't done or did you "
+                        + "forgot to call disableCHShortcuts()?");
 
             if (request.getAlgorithm().equals("dijkstrabi"))
                 algo = prepare.createAlgo();
@@ -766,6 +777,8 @@ public class GraphHopper implements GraphHopperAPI
         Path path = algo.calcPath(fromRes, toRes);
         debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
 
+        debug += ", edges:" + path.calcEdges().size();
+        
         calcPoints = request.getHint("calcPoints", calcPoints);
         if (calcPoints)
         {

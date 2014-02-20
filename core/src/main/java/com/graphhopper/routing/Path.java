@@ -302,7 +302,9 @@ public class Path
     }
 
     /**
-     * @return the cached list of lat,lon for this path
+     * This method calculated a list of points for this path
+     * <p>
+     * @return this path its geometry (cached)
      */
     public PointList calcPoints()
     {
@@ -392,11 +394,11 @@ public class Path
                 {
                     latitude = wayGeo.getLatitude(1);
                     longitude = wayGeo.getLongitude(1);
-                    
+
                     // overwrite previous lat,lon
                     int baseNode = edge.getBaseNode();
                     prevLat = nodeAccess.getLatitude(baseNode);
-                    prevLon = nodeAccess.getLongitude(baseNode);                    
+                    prevLon = nodeAccess.getLongitude(baseNode);
                 }
 
                 double orientation = Math.atan2(latitude - prevLat, longitude - prevLon);

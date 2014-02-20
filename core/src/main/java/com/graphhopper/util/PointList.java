@@ -202,6 +202,7 @@ public class PointList implements PointAccess
 
     public void reverse()
     {
+        // in-place reverse
         int max = size / 2;
         for (int i = 0; i < max; i++)
         {
@@ -364,9 +365,9 @@ public class PointList implements PointAccess
 
     public double calcDistance( DistanceCalc calc )
     {
-        double prevLat = -1;
-        double prevLon = -1;
-        double prevEle = -1;
+        double prevLat = Double.NaN;
+        double prevLon = Double.NaN;
+        double prevEle = Double.NaN;
         double dist = 0;
         for (int i = 0; i < size; i++)
         {

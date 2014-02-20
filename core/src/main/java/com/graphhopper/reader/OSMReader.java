@@ -697,8 +697,11 @@ public class OSMReader implements DataReader
 
     EdgeIteratorState addEdge( int fromIndex, int toIndex, PointList pointList, long flags, long wayOsmId )
     {
+        // sanity checks
         if (fromIndex < 0 || toIndex < 0)
             throw new AssertionError("to or from index is invalid for this edge " + fromIndex + "->" + toIndex + ", points:" + pointList);
+        if (pointList.getDimension() != nodeAccess.getDimension())
+            throw new AssertionError("Dimension does not match for pointList vs. nodeAccess " + pointList.getDimension() + " <-> " + nodeAccess.getDimension());
 
         double towerNodeDistance = 0;
         double prevLat = pointList.getLatitude(0);
@@ -736,8 +739,10 @@ public class OSMReader implements DataReader
             zeroCounter++;
             towerNodeDistance = 0.0001;
         }
-
+        
         EdgeIteratorState iter = graphStorage.edge(fromIndex, toIndex).setDistance(towerNodeDistance).setFlags(flags);
+        if(iter.getEdge() == 950)
+            iter=iter;
         if (nodes > 2)
         {
             simplifyAlgo.simplify(pillarNodes);
