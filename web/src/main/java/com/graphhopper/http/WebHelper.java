@@ -84,9 +84,9 @@ public class WebHelper
                 } while (b >= 0x20);
                 int deltaElevation = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
                 ele += deltaElevation;
-                poly.add((double) lat / 1E5, (double) lng / 1E5, ele);
+                poly.add((double) lat / 1e5, (double) lng / 1e5, (double) ele / 100);
             } else
-                poly.add((double) lat / 1E5, (double) lng / 1E5);
+                poly.add((double) lat / 1e5, (double) lng / 1e5);
         }
         return poly;
     }
@@ -109,7 +109,7 @@ public class WebHelper
             prevLon = num;
             if (poly.is3D())
             {
-                num = (int) Math.floor(poly.getElevation(i));
+                num = (int) Math.floor(poly.getElevation(i) * 100);
                 encodeNumber(sb, num - prevEle);
                 prevEle = num;
             }

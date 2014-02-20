@@ -75,32 +75,18 @@ public class PillarInfo implements PointAccess
     private void _setNode( int id, double lat, double lon, double ele )
     {
         long tmp = (long) id * rowSizeInBytes;
-        da.incCapacity(tmp + rowSizeInBytes);
-        if (lat >= Double.MAX_VALUE)
-            da.setInt(tmp + LAT, Integer.MAX_VALUE);
-        else
-            da.setInt(tmp + LAT, Helper.degreeToInt(lat));
-
-        if (lon >= Double.MAX_VALUE)
-            da.setInt(tmp + LON, Integer.MAX_VALUE);
-        else
-            da.setInt(tmp + LON, Helper.degreeToInt(lon));
+        da.incCapacity(tmp + rowSizeInBytes);        
+        da.setInt(tmp + LAT, Helper.degreeToInt(lat));
+        da.setInt(tmp + LON, Helper.degreeToInt(lon));
         
-        if (is3D())
-        {
-            if (ele >= Integer.MAX_VALUE)
-                da.setInt(tmp + ELE, Integer.MAX_VALUE);
-            else
-                da.setInt(tmp + ELE, (int) ele);
-        }
+        if (is3D())                    
+            da.setInt(tmp + ELE, Helper.eleToInt(ele));        
     }
 
     @Override
     public double getLatitude( int id )
     {
-        int intVal = da.getInt((long) id * rowSizeInBytes + LAT);
-        if (intVal == Integer.MAX_VALUE)
-            return Double.MAX_VALUE;
+        int intVal = da.getInt((long) id * rowSizeInBytes + LAT);        
         return Helper.intToDegree(intVal);
     }
 
@@ -113,9 +99,7 @@ public class PillarInfo implements PointAccess
     @Override
     public double getLongitude( int id )
     {
-        int intVal = da.getInt((long) id * rowSizeInBytes + LON);
-        if (intVal == Integer.MAX_VALUE)
-            return Double.MAX_VALUE;
+        int intVal = da.getInt((long) id * rowSizeInBytes + LON);        
         return Helper.intToDegree(intVal);
     }
 
@@ -131,10 +115,8 @@ public class PillarInfo implements PointAccess
         if(!is3D())
             return Double.NaN;
         
-        int intVal = da.getInt((long) id * rowSizeInBytes + ELE);
-        if (intVal == Integer.MAX_VALUE)
-            return Double.MAX_VALUE;
-        return intVal;
+        int intVal = da.getInt((long) id * rowSizeInBytes + ELE);        
+        return Helper.intToEle(intVal);
     }
 
     @Override

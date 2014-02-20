@@ -62,10 +62,10 @@ describe("utils", function() {
     });
 
     it("should decode the 3D polyline", function() {
-        var list = decodePolyline("_p~iF~ps|US", true);
+        var list = decodePolyline("_p~iF~ps|Uo}@", true);
         expect(list).toEqual([[-120.2, 38.5, 10]]);
 
-        list = decodePolyline("_p~iF~ps|US_ulLnnqCokA_mqNvxq`@?", true);
+        list = decodePolyline("_p~iF~ps|Uo}@_ulLnnqC_anF_mqNvxq`@?", true);
         expect(list).toEqual([[-120.2, 38.5, 10], [-120.95, 40.7, 1234], [-126.45300000000002, 43.252, 1234]]);       
     });
 });

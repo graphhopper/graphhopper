@@ -174,7 +174,7 @@ function decodePolyline(encoded, is3D) {
             } while (b >= 0x20);
             var deltaEle = ((result & 1) ? ~(result >> 1) : (result >> 1));
             ele += deltaEle;
-            array.push([lng * 1e-5, lat * 1e-5, ele]);
+            array.push([lng * 1e-5, lat * 1e-5, ele / 100]);
         } else
             array.push([lng * 1e-5, lat * 1e-5]);
     }

@@ -50,7 +50,7 @@ public class GraphHopperStorage implements GraphStorage
     // Road networks typically do not have nodes with plenty of edges!
     private static final int MAX_EDGES = 1000;
     // distance of around +-1000 000 meter are ok
-    private static final double INT_DIST_FACTOR = 1000f;
+    private static final double INT_DIST_FACTOR = 1000d;
     private final Directory dir;
     // edge memory layout:
     protected int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS, E_GEO, E_NAME, E_ADDITIONAL;
@@ -940,7 +940,7 @@ public class GraphHopperStorage implements GraphStorage
 
                 if (is3D)
                 {
-                    bitUtil.fromInt(bytes, (int) pillarNodes.getElevation(i), tmpOffset);
+                    bitUtil.fromInt(bytes, Helper.eleToInt(pillarNodes.getElevation(i)), tmpOffset);
                     tmpOffset += 4;
                 }
             }
@@ -988,10 +988,9 @@ public class GraphHopperStorage implements GraphStorage
             double lon = Helper.intToDegree(bitUtil.toInt(bytes, index));
             index += 4;
             if (nodeAccess.is3D())
-            {
-                double ele = bitUtil.toInt(bytes, index);
+            {                                
+                pillarNodes.add(lat, lon, Helper.intToEle(bitUtil.toInt(bytes, index)));
                 index += 4;
-                pillarNodes.add(lat, lon, ele);
             } else
             {
                 pillarNodes.add(lat, lon);

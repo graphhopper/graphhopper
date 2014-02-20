@@ -53,7 +53,7 @@ class GHNodeAccess implements NodeAccess
         if (is3D())
         {
             // meter precision is sufficient for now
-            that.nodes.setInt(tmp + that.N_ELE, (int) ele);
+            that.nodes.setInt(tmp + that.N_ELE, Helper.eleToInt(ele));
             if (ele > that.bounds.maxEle)
                 that.bounds.maxEle = ele;
 
@@ -94,9 +94,9 @@ class GHNodeAccess implements NodeAccess
     public final double getElevation( int nodeId )
     {
         if (!enabled3D)
-            throw new IllegalStateException("Cannot access elevation - this is not enabled");
+            throw new IllegalStateException("Cannot access elevation - 3D is not enabled");
 
-        return that.nodes.getInt((long) nodeId * that.nodeEntryBytes + that.N_ELE);
+        return Helper.intToEle(that.nodes.getInt((long) nodeId * that.nodeEntryBytes + that.N_ELE));
     }
 
     @Override
@@ -149,7 +149,7 @@ class GHNodeAccess implements NodeAccess
     @Override
     public int getDimension()
     {
-        if(enabled3D)
+        if (enabled3D)
             return 3;
         return 2;
     }

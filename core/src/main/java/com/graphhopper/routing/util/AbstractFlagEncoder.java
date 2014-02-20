@@ -459,7 +459,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                     double val = estimatedLength.doubleValue() / 1000;
                     // If duration AND distance is available we can calculate the speed more precisely
                     // and set both speed to the same value. Factor 1.4 slower because of waiting time!
-                    shortTripsSpeed = (int) Math.round(val / durationInHours / 1.4);
+                    shortTripsSpeed = Math.round(val / durationInHours / 1.4);
                     if (shortTripsSpeed > getMaxSpeed())
                         shortTripsSpeed = getMaxSpeed();
                     longTripsSpeed = shortTripsSpeed;
