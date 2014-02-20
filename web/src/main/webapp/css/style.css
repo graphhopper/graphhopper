@@ -19,6 +19,7 @@ body {
 }
 
 #info {
+    margin-top: 10px;
     border: lightgray groove thin;
     display: none;
     padding: 5px;
@@ -76,9 +77,13 @@ body {
     padding-top: 20px;
     color: #666666                    
 }
+#locationpoints {
+    padding-bottom: 10px;
+}
 #fromDiv img, #toDiv img {
-    margin-top: 4px;
-    padding-right: 3px;                
+    margin-top: 6px;
+    padding-left: 3px;
+    padding-right: 3px;
     float: left;
 }
 .left {

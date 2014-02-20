@@ -126,7 +126,7 @@ $(document).ready(function(e) {
                 if (json.dimension === 3) {
                     elevationControl = L.control.elevation({
                         position: "bottomright",
-                        theme: "steelblue-theme", //default: lime-theme
+                        theme: "white-theme", //default: lime-theme
                         width: 450,
                         height: 125,
                         margins: {
@@ -343,6 +343,8 @@ function initMap() {
         }).addTo(map);
 
     routingLayer = L.geoJson().addTo(map);
+    routingLayer.options = { style: {color: "#0099ff", "weight": 7, "opacity": 0.6}};
+    
     firstClickToRoute = true;
     function onMapClick(e) {
         var latlng = e.latlng;
@@ -686,8 +688,7 @@ function routeLatLng(request, doQuery) {
             return;
         }
         var geojsonFeature = {
-            "type": "Feature",
-            // "style": myStyle,                
+            "type": "Feature",            
             "geometry": json.route.data
         };
 
@@ -775,7 +776,7 @@ function routeLatLng(request, doQuery) {
             for (var m = 0; m < descriptions.length; m++) {
                 var indi = indications[m];
                 if (m == 0)
-                    indi = "marker-from";
+                    indi = "marker-small-green";
                 else if (indi == -3)
                     indi = "sharp_left";
                 else if (indi == -2)
@@ -791,7 +792,7 @@ function routeLatLng(request, doQuery) {
                 else if (indi == 3)
                     indi = "sharp_right";
                 else if (indi == 4)
-                    indi = "marker-to";
+                    indi = "marker-small-red";
                 else
                     throw "did not found indication " + indi;
 
