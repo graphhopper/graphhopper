@@ -99,7 +99,7 @@ $(document).ready(function(e) {
                 bounds.maxLat = tmp[3];
                 var vehiclesDiv = $("#vehicles");
                 function createButton(vehicle) {
-                    vehicle = vehicle.toLowerCase();
+                    var vehicle = vehicle.toLowerCase();
                     var button = $("<button class='vehicle-btn' title='" + tr(vehicle) + "'/>")
                     button.attr('id', vehicle);
                     button.html("<img src='img/" + vehicle + ".png' alt='" + tr(vehicle) + "'></img>");
@@ -114,7 +114,7 @@ $(document).ready(function(e) {
 
                 if (json.supportedVehicles) {
                     var vehicles = json.supportedVehicles.split(",");
-                    if (vehicles.length > 1)
+                    if (vehicles.length > 0)
                         ghRequest.vehicle = vehicles[0];
                     for (var i = 0; i < vehicles.length; i++) {
                         vehiclesDiv.append(createButton(vehicles[i]));
