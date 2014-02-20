@@ -135,7 +135,8 @@ public class SRTMProvider implements ElevationProvider
         int intKey = calcIntKey(lat, lon);
         String str = areas.get(intKey);
         if (str == null)
-            throw new IllegalStateException("Area " + intKey + " not found for " + lat + "," + lon);
+            return null;
+            // throw new IllegalStateException("Area " + intKey + " not found for " + lat + "," + lon);
 
         int minLat = Math.abs(down(lat));
         int minLon = Math.abs(down(lon));
@@ -173,6 +174,9 @@ public class SRTMProvider implements ElevationProvider
                 cacheDir.mkdirs();
 
             String fileDetails = getFileString(lat, lon);
+            if(fileDetails == null)
+                return 0;
+            
             String baseUrl = "http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/";
             // mirror: base = "http://mirror.ufs.ac.za/datasets/SRTM3/"        
             String zippedURL = baseUrl + "/" + fileDetails + ".hgt.zip";

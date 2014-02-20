@@ -71,5 +71,8 @@ public class SRTMProviderTest
         // assertEquals(45, instance.getEle(-34.906205,-56.189575), 1e-1);
         // new york
         // assertEquals(21, instance.getEle(40.730348,-73.985882), 1e-1);
+        
+        // use 0 elevation if area not found
+        assertEquals(0, instance.getEle(55.4711873,19.2501641), 1e-1);
     }
 }
