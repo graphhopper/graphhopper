@@ -185,5 +185,24 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
         graph.setEdgeCount(Integer.MAX_VALUE / 2);
         assertTrue(graph.getAllEdges().next());
         graph.close();
-    }    
+    }
+
+    @Test
+    public void testDoThrowExceptionIfDimDoesNotMatch()
+    {
+        graph = newGraph(new RAMDirectory(defaultGraphLoc, true), false);
+        graph.create(1000);
+        graph.flush();
+        graph.close();
+
+        graph = newGraph(new RAMDirectory(defaultGraphLoc, true), true);
+        try
+        {
+            graph.loadExisting();
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+
+        }
+    }
 }

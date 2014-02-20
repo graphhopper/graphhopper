@@ -33,11 +33,11 @@ public class BitUtilBig extends BitUtil
     {
         return (short) ((b[offset] & 0xFF) << 8 | (b[offset + 1] & 0xFF));
     }
-   
+
     @Override
     public final int toInt( byte[] b, int offset )
     {
-        return (b[offset] & 0xFF) << 24 | (b[++offset] & 0xFF) << 16 
+        return (b[offset] & 0xFF) << 24 | (b[++offset] & 0xFF) << 16
                 | (b[++offset] & 0xFF) << 8 | (b[++offset] & 0xFF);
     }
 
@@ -136,5 +136,11 @@ public class BitUtilBig extends BitUtil
     {
         long rest = v & (~((1 << maxBits) - 1));
         return rest | reverse(v, maxBits);
+    }
+
+    @Override
+    public String toString()
+    {
+        return "big";
     }
 }

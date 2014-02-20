@@ -66,6 +66,6 @@ describe("utils", function() {
         expect(list).toEqual([[-120.2, 38.5, 10]]);
 
         list = decodePolyline("_p~iF~ps|US_ulLnnqCokA_mqNvxq`@?", true);
-        expect(list).toEqual([[-120.2, 38.5, 10], [-120.95, 40.7, 1234], [-126.45300000000002, 43.252, 1234]]);
+        expect(list).toEqual([[-120.2, 38.5, 10], [-120.95, 40.7, 1234], [-126.45300000000002, 43.252, 1234]]);       
     });
 });

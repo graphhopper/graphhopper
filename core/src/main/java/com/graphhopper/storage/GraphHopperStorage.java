@@ -127,7 +127,7 @@ public class GraphHopperStorage implements GraphStorage
         return tmp;
     }
 
-    protected final int nextNodeEntryIndex(int sizeInBytes)
+    protected final int nextNodeEntryIndex( int sizeInBytes )
     {
         int tmp = nodeEntryIndex;
         nodeEntryIndex += 4;
@@ -180,6 +180,9 @@ public class GraphHopperStorage implements GraphStorage
 
         properties.put("osmreader.bytesForFlags", encodingManager.getBytesForFlags());
         properties.put("osmreader.acceptWay", encodingManager.toDetailsString());
+
+        properties.put("graph.byteOrder", dir.getByteOrder());
+        properties.put("graph.dimension", nodeAccess.getDimension());
         properties.putCurrentVersions();
         initStorage();
         // 0 stands for no separate geoRef
@@ -883,7 +886,13 @@ public class GraphHopperStorage implements GraphStorage
         @Override
         public void copyProperties( EdgeIteratorState edge )
         {
-            setDistance(edge.getDistance()).setFlags(edge.getFlags()).setWayGeometry(edge.fetchWayGeometry(0));
+            setDistance(edge.getDistance()).
+                    setName(edge.getName()).
+                    setFlags(edge.getFlags()).
+                    setWayGeometry(edge.fetchWayGeometry(0));
+
+            if (E_ADDITIONAL >= 0)
+                setAdditionalField(edge.getAdditionalField());
         }
     }
 
@@ -902,6 +911,10 @@ public class GraphHopperStorage implements GraphStorage
     {
         if (pillarNodes != null && !pillarNodes.isEmpty())
         {
+            if (pillarNodes.getDimension() != nodeAccess.getDimension())
+                throw new IllegalArgumentException("Cannot use pointlist which is " + pillarNodes.getDimension()
+                        + "D for graph which is " + nodeAccess.getDimension() + "D");
+
             int len = pillarNodes.getSize();
             int dim = nodeAccess.getDimension();
             int tmpRef = nextGeoRef(len * dim);
@@ -917,7 +930,8 @@ public class GraphHopperStorage implements GraphStorage
             boolean is3D = nodeAccess.is3D();
             for (int i = 0; i < len; i++)
             {
-                bitUtil.fromInt(bytes, Helper.degreeToInt(pillarNodes.getLatitude(i)), tmpOffset);
+                double lat = pillarNodes.getLatitude(i);
+                bitUtil.fromInt(bytes, Helper.degreeToInt(lat), tmpOffset);
                 tmpOffset += 4;
                 bitUtil.fromInt(bytes, Helper.degreeToInt(pillarNodes.getLongitude(i)), tmpOffset);
                 tmpOffset += 4;
@@ -974,8 +988,8 @@ public class GraphHopperStorage implements GraphStorage
             if (nodeAccess.is3D())
             {
                 double ele = bitUtil.toInt(bytes, index);
-                pillarNodes.add(lat, lon, ele);
                 index += 4;
+                pillarNodes.add(lat, lon, ele);
             } else
             {
                 pillarNodes.add(lat, lon);
@@ -1017,6 +1031,10 @@ public class GraphHopperStorage implements GraphStorage
         if (clonedG.nodeEntryBytes != nodeEntryBytes)
             throw new IllegalStateException("nodeEntryBytes cannot be different for cloned graph. "
                     + "Cloned: " + clonedG.nodeEntryBytes + " vs " + nodeEntryBytes);
+
+        if (clonedG.nodeAccess.getDimension() != nodeAccess.getDimension())
+            throw new IllegalStateException("dimension cannot be different for cloned graph. "
+                    + "Cloned: " + clonedG.nodeAccess.getDimension() + " vs " + nodeAccess.getDimension());
 
         // nodes
         setNodesHeader();
@@ -1355,6 +1373,14 @@ public class GraphHopperStorage implements GraphStorage
                 throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.toDetailsString() + "\nGraph: " + acceptStr);
             }
 
+            String dim = properties.get("graph.dimension");
+            if (!dim.equalsIgnoreCase("" + nodeAccess.getDimension()))
+                throw new IllegalStateException("Configured dimension (" + dim + ") is not equal to dimension of loaded graph (" + nodeAccess.getDimension() + ")");
+
+            String byteOrder = properties.get("graph.byteOrder");
+            if (!byteOrder.equalsIgnoreCase("" + dir.getByteOrder()))
+                throw new IllegalStateException("Configured byteOrder (" + dim + ") is not equal to byteOrder of loaded graph (" + dir.getByteOrder() + ")");
+
             // first define header indices of this storage
             initStorage();
 
@@ -1432,7 +1458,7 @@ public class GraphHopperStorage implements GraphStorage
 
     protected int loadEdgesHeader()
     {
-        edgeEntryBytes = edges.getHeader(0);
+        edgeEntryBytes = edges.getHeader(0 * 4);
         edgeCount = edges.getHeader(1 * 4);
         return 4;
     }
@@ -1492,7 +1518,7 @@ public class GraphHopperStorage implements GraphStorage
     @Override
     public long getCapacity()
     {
-        return edges.getCapacity() + nodes.getCapacity() + nameIndex.getCapacity() + wayGeometry.getCapacity() 
+        return edges.getCapacity() + nodes.getCapacity() + nameIndex.getCapacity() + wayGeometry.getCapacity()
                 + properties.getCapacity() + extStorage.getCapacity();
     }
 

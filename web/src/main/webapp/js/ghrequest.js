@@ -132,7 +132,7 @@ GHRequest.prototype.createPath = function(url) {
 }
 
 function decodePolyline(encoded, is3D) {
-    var start = new Date().getTime();
+    // var start = new Date().getTime();
     var len = encoded.length;
     var index = 0;
     var array = [];
@@ -178,8 +178,8 @@ function decodePolyline(encoded, is3D) {
         } else
             array.push([lng * 1e-5, lat * 1e-5]);
     }
-    var end = new Date().getTime();
-    console.log("decoded " + len + " coordinates in " + ((end - start) / 1000) + "s");
+    // var end = new Date().getTime();
+    // console.log("decoded " + len + " coordinates in " + ((end - start) / 1000) + "s");
     return array;
 }
 

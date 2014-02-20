@@ -129,4 +129,10 @@ public class BitUtilLittle extends BitUtil
         }
         return sb.toString();
     }
+
+    @Override
+    public String toString()
+    {
+        return "little";
+    }
 }

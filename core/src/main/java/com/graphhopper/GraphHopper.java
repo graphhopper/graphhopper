@@ -60,7 +60,7 @@ public class GraphHopper implements GraphHopperAPI
     private DAType dataAccessType = DAType.RAM;
     private boolean sortGraph = false;
     boolean removeZipped = true;
-    private boolean is3D = false;
+    private int dimension = 2;
     // for routing
     private boolean simplifyRequest = true;
     // for index
@@ -276,7 +276,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     public boolean is3D()
     {
-        return is3D;
+        return dimension == 3;
     }
 
     /**
@@ -284,7 +284,10 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper set3D( boolean is3D )
     {
-        this.is3D = is3D;
+        if(is3D)
+            this.dimension = 3;
+        else
+            this.dimension = 2;
         return this;
     }
 
@@ -457,7 +460,7 @@ public class GraphHopper implements GraphHopperAPI
         // graph
         setGraphHopperLocation(graphHopperFolder);
         defaultSegmentSize = args.getInt("graph.dataaccess.segmentSize", defaultSegmentSize);
-        is3D = args.getBool("graph.is3d", is3D);
+        dimension = args.getInt("graph.dimension", dimension);
         String dataAccess = args.get("graph.dataaccess", "RAM_STORE").toUpperCase();
         if (dataAccess.contains("MMAP"))
         {
@@ -647,11 +650,11 @@ public class GraphHopper implements GraphHopperAPI
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
 
         if (chEnabled)
-            graph = new LevelGraphStorage(dir, encodingManager, is3D);
+            graph = new LevelGraphStorage(dir, encodingManager, is3D());
         else if (turnCosts)
-            graph = new GraphHopperStorage(dir, encodingManager, is3D, new TurnCostStorage());
+            graph = new GraphHopperStorage(dir, encodingManager, is3D(), new TurnCostStorage());
         else
-            graph = new GraphHopperStorage(dir, encodingManager, is3D);
+            graph = new GraphHopperStorage(dir, encodingManager, is3D());
 
         graph.setSegmentSize(defaultSegmentSize);
         if (!graph.loadExisting())

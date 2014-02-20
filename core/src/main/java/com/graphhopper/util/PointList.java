@@ -62,10 +62,10 @@ public class PointList implements PointAccess
     @Override
     public int getDimension()
     {
-        if(is3D)
+        if (is3D)
             return 3;
         return 2;
-    }        
+    }
 
     @Override
     public void setNode( int nodeId, double lat, double lon )
@@ -122,12 +122,12 @@ public class PointList implements PointAccess
         size = newSize;
     }
 
-    public void add( PointAccess nodeAccess, int baseNode )
+    public void add( PointAccess nodeAccess, int index )
     {
         if (is3D)
-            add(nodeAccess.getLatitude(baseNode), nodeAccess.getLongitude(baseNode), nodeAccess.getElevation(baseNode));
+            add(nodeAccess.getLatitude(index), nodeAccess.getLongitude(index), nodeAccess.getElevation(index));
         else
-            add(nodeAccess.getLatitude(baseNode), nodeAccess.getLongitude(baseNode));
+            add(nodeAccess.getLatitude(index), nodeAccess.getLongitude(index));
     }
 
     public void add( GHPoint point )
@@ -186,11 +186,10 @@ public class PointList implements PointAccess
     @Override
     public double getElevation( int index )
     {
-        if (!is3D)
-            return Double.NaN;
-
         if (index >= size)
             throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + size);
+        if (!is3D)
+            return Double.NaN;
 
         return elevations[index];
     }
@@ -262,7 +261,7 @@ public class PointList implements PointAccess
     }
 
     /**
-     * Attention: geoJson is LON,LAT
+     * Attention: geoJson is LON,LAT or LON,LAT,ELE
      */
     public List<Double[]> toGeoJson()
     {
@@ -321,7 +320,7 @@ public class PointList implements PointAccess
         else
             for (int i = 0; i < size; i++)
             {
-                clonePL.add(latitudes[i], longitudes[i], Double.NaN);
+                clonePL.add(latitudes[i], longitudes[i]);
             }
         if (reverse)
             clonePL.reverse();
@@ -372,9 +371,9 @@ public class PointList implements PointAccess
         for (int i = 0; i < size; i++)
         {
             if (i > 0)
-            {                
+            {
                 if (is3D)
-                    dist += distCalc3D.calcDist(prevLat, prevLon, prevEle, latitudes[i], longitudes[i], elevations[i]);                
+                    dist += distCalc3D.calcDist(prevLat, prevLon, prevEle, latitudes[i], longitudes[i], elevations[i]);
                 else
                     dist += calc.calcDist(prevLat, prevLon, latitudes[i], longitudes[i]);
             }

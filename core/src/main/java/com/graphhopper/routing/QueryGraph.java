@@ -238,7 +238,7 @@ public class QueryGraph implements Graph
         basePoints.add(prevSnapped.lat, prevSnapped.lon, prevSnapped.ele);
         for (int i = prevWayIndex; i < max; i++)
         {
-            basePoints.add(fullPL.getLatitude(i), fullPL.getLongitude(i), fullPL.getEle(i));
+            basePoints.add(fullPL, i);
         }
 
         if (onEdge)

@@ -39,7 +39,7 @@ import org.junit.Test;
  */
 public abstract class AbstractGraphStorageTester
 {
-    private final String location = "./target/graphstorage";
+    private final String locationParent = "./target/graphstorage";
     protected int defaultSize = 100;
     protected String defaultGraphLoc = "./target/graphstorage/default";
     protected EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
@@ -71,14 +71,14 @@ public abstract class AbstractGraphStorageTester
     @Before
     public void setUp()
     {
-        Helper.removeDir(new File(location));
+        Helper.removeDir(new File(locationParent));
     }
 
     @After
     public void tearDown()
     {
         Helper.close((Closeable) graph);
-        Helper.removeDir(new File(location));
+        Helper.removeDir(new File(locationParent));
     }
 
     @Test
@@ -242,13 +242,27 @@ public abstract class AbstractGraphStorageTester
         na.setNode(3, 5, 9);
         graph.edge(1, 3, 10, true);
 
-        Graph clone = graph.copyTo(createGraph(location + "/clone", false));
+        Graph clone = graph.copyTo(createGraph(locationParent + "/clone", false));
         assertEquals(graph.getNodes(), clone.getNodes());
         assertEquals(count(carOutExplorer.setBaseNode(1)), count(clone.createEdgeExplorer(carOutFilter).setBaseNode(1)));
         clone.edge(1, 4, 10, true);
         assertEquals(3, count(clone.createEdgeExplorer(carOutFilter).setBaseNode(1)));
         assertEquals(graph.getBounds(), clone.getBounds());
         Helper.close((Closeable) clone);
+    }
+
+    @Test
+    public void testCopyProperties()
+    {
+        graph = createGraph();
+        EdgeIteratorState edge = graph.edge(1, 3, 10, false).setName("testing").setWayGeometry(Helper.createPointList(1, 2));
+        
+        EdgeIteratorState newEdge = graph.edge(1, 3, 10, false);
+        newEdge.copyProperties(edge);
+        assertEquals(edge.getName(), newEdge.getName());
+        assertEquals(edge.getDistance(), newEdge.getDistance(), 1e-7);
+        assertEquals(edge.getFlags(), newEdge.getFlags());
+        assertEquals(edge.fetchWayGeometry(0), newEdge.fetchWayGeometry(0));
     }
 
     @Test
@@ -1031,19 +1045,21 @@ public abstract class AbstractGraphStorageTester
 
     @Test
     public void testEnabledElevation()
-    {        
-        graph = createGraph(location, true);
+    {
+        graph = createGraph(defaultGraphLoc, true);
         NodeAccess na = graph.getNodeAccess();
         assertTrue(na.is3D());
         na.setNode(0, 10, 20, -10);
-        na.setNode(1, 1, 2, 100);        
+        na.setNode(1, 11, 2, 100);
         assertEquals(-10, na.getEle(0), 1e-1);
         assertEquals(100, na.getEle(1), 1e-1);
-        
-        graph.edge(0, 1).setWayGeometry(Helper.createPointList3D(10, 27, 72));
-        assertEquals(Helper.createPointList3D(10, 27, 72), GHUtility.getEdge(graph, 0, 1).fetchWayGeometry(0));
+
+        graph.edge(0, 1).setWayGeometry(Helper.createPointList3D(10, 27, 72, 11, 20, 1));
+        assertEquals(Helper.createPointList3D(10, 27, 72, 11, 20, 1), GHUtility.getEdge(graph, 0, 1).fetchWayGeometry(0));
+        assertEquals(Helper.createPointList3D(10, 20, -10, 10, 27, 72, 11, 20, 1, 11, 2, 100), GHUtility.getEdge(graph, 0, 1).fetchWayGeometry(3));
+        assertEquals(Helper.createPointList3D(11, 2, 100, 11, 20, 1, 10, 27, 72, 10, 20, -10), GHUtility.getEdge(graph, 1, 0).fetchWayGeometry(3));
     }
-    
+
     @Test
     public void testDetachEdge()
     {

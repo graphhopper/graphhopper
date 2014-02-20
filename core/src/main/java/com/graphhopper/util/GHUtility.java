@@ -335,9 +335,8 @@ public class GHUtility
                 int adjacentNodeIndex = eIter.getAdjNode();
                 if (bitset.contains(adjacentNodeIndex))
                     continue;
-
-                to.edge(oldNode, adjacentNodeIndex).setDistance(eIter.getDistance()).setFlags(eIter.getFlags()).
-                        setWayGeometry(eIter.fetchWayGeometry(0));
+                
+                to.edge(oldNode, adjacentNodeIndex).copyProperties(eIter);
             }
         }
         return to;

@@ -164,7 +164,6 @@ public class GraphHopperServlet extends GHBaseServlet {
             GHResponse rsp, GHPlace start, GHPlace end,
             float tookGeocoding, float took) throws JSONException {
         boolean enableInstructions = getBooleanParam(req, "instructions", true);
-        boolean useMiles = getBooleanParam(req, "useMiles", false);
         Locale locale = Helper.getLocale(getParam(req, "locale", "en"));
         boolean encodedPolylineParam = getBooleanParam(req, "encodedPolyline", true);
         JSONBuilder builder;
