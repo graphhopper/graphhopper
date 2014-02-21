@@ -343,7 +343,7 @@ function initMap() {
         }).addTo(map);
 
     routingLayer = L.geoJson().addTo(map);
-    routingLayer.options = { style: {color: "#0099ff", "weight": 7, "opacity": 0.6}};
+    routingLayer.options = { style: {color: "#00cc33", "weight": 7, "opacity": 0.6}};
     
     firstClickToRoute = true;
     function onMapClick(e) {
