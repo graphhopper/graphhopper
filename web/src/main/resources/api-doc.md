@@ -1,6 +1,9 @@
 ## Routing Web API Docs
 
-In order to communicate with your own hosted GraphHopper server you need to understand how. If you intend to use the Web API for your project and don't want to host it on your own servers – have a look into our options!
+In order to communicate with your own hosted GraphHopper server you need to understand how. 
+
+If you intend to use the Web API without hosting GraphHopper on your own
+servers you can have a look into [our packages](http://graphhopper.com/#enterprise)!
 
 ### A simple example
 [http://localhost:8989/api/route?point=45.752193%2C-0.686646&point=46.229253%2C-0.32959](http://localhost:8989/api/route?point=45.752193%2C-0.686646&point=46.229253%2C-0.32959)
@@ -105,7 +108,8 @@ route.instructions.indications  | The array of indication numbers for every inst
 
 ## Area information
 
-If you need to find out defails about the area or need to ping the service use api/info:
+If you need to find out defails about the area or need to ping the service use 'api/info'
+
 [http://localhost:8989/api/info](http://localhost:8989/api/info)
 
 ### Example output:
@@ -123,10 +127,4 @@ buildDate           | The GraphHopper build date
 version             | The GraphHopper version
 supportedVehicle    | A comma separated list of supported vehicles
 bbox                | The maximum bounding box of the area, format: <br> minLon, minLat, maxLon, maxLat
-
-
-
-
-
-
 
