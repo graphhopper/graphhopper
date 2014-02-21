@@ -74,21 +74,26 @@ public class EncodingManagerTest
     }
 
     @Test
-    public void testTooManyEncoders()
+    public void testWrongEncoders()
     {
-        List<FlagEncoder> list = new ArrayList<FlagEncoder>();
-        for (int i = 0; i < 4; i++)
-        {
-            list.add(new FootFlagEncoder());
-        }
-        new EncodingManager(list);
-        list.add(new FootFlagEncoder());
         try
         {
-            new EncodingManager(list);
+            FootFlagEncoder foot = new FootFlagEncoder();
+            new EncodingManager(foot, foot);
             assertTrue(false);
         } catch (Exception ex)
         {
+            assertEquals("You must not register a FlagEncoder (foot) twice!", ex.getMessage());
+        }
+        
+        try
+        {
+            new EncodingManager(new FootFlagEncoder(), new CarFlagEncoder(), new BikeFlagEncoder(), new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder());
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+            assertEquals("Encoders are requesting more than 32 bits of way flags. Decrease the number of vehicles or increase the flags to take long.", 
+                    ex.getMessage());
         }
     }
 

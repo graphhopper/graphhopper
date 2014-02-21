@@ -175,25 +175,28 @@ public class EncodingManager
         }
         return resultEncoders;
     }
+    
+    private static final String ERR = "Encoders are requesting more than %s bits of %s flags. ";
+    private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long.";
 
     private void registerEncoder( AbstractFlagEncoder encoder )
     {
         int encoderCount = edgeEncoders.size();
         int usedBits = encoder.defineNodeBits(encoderCount, edgeEncoderNextBit);
         if (usedBits > bytesForFlags)
-            throw new IllegalArgumentException("Encoders are requesting more than " + bytesForFlags + " bits of node flags");
+            throw new IllegalArgumentException(String.format(ERR, bytesForFlags, "node"));
         encoder.setNodeBitMask(usedBits - nextNodeBit, nextNodeBit);
         nextNodeBit = usedBits;
 
         usedBits = encoder.defineWayBits(encoderCount, nextWayBit);
         if (usedBits > bytesForFlags)
-            throw new IllegalArgumentException("Encoders are requesting more than " + bytesForFlags + " bits of way flags");
+            throw new IllegalArgumentException(String.format(ERR, bytesForFlags, "way") + WAY_ERR);
         encoder.setWayBitMask(usedBits - nextWayBit, nextWayBit);
         nextWayBit = usedBits;
 
         usedBits = encoder.defineRelationBits(encoderCount, nextRelBit);
         if (usedBits > bytesForFlags)
-            throw new IllegalArgumentException("Encoders are requesting more than " + bytesForFlags + " bits of relation flags");
+            throw new IllegalArgumentException(String.format(ERR, bytesForFlags, "relation"));
         encoder.setRelBitMask(usedBits - nextRelBit, nextRelBit);
         nextRelBit = usedBits;
 
@@ -202,7 +205,7 @@ public class EncodingManager
         // turn flag bits are independent from edge encoder bits
         usedBits = encoder.defineTurnBits(encoderCount, nextTurnBit, determineRequiredBits(maxTurnCost));
         if (usedBits > maxTurnFlagsBits)
-            throw new IllegalArgumentException("Encoders are requesting more than " + maxTurnFlagsBits + " bits of turn flags");
+            throw new IllegalArgumentException(String.format(ERR, bytesForFlags, "turn"));
         nextTurnBit = usedBits;
 
         //everything okay, add encoder
