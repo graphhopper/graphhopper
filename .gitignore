@@ -4,7 +4,6 @@ target/
 TODO.txt
 *-gh/
 *.osm
-docs/
 nbactions-*.xml
 config.properties
 build.xml
@@ -27,3 +26,5 @@ debug.sh
 *.log
 core/TODO*.txt
 srtmprovider/
+core/docs/
+.*#
