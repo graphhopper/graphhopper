@@ -24,8 +24,6 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 import com.graphhopper.util.TranslationMap.Translation;
-import gnu.trove.list.TDoubleList;
-import gnu.trove.list.TLongList;
 
 import java.io.File;
 import java.util.List;

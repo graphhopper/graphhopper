@@ -1,4 +1,6 @@
 0.3.0
+    dijkstraNative is now dijkstraNativebi
+    fixed #151
     EncodingManager always takes the encoders in constructor, to force always init
     GraphHopper.setMemory(true, true/false) was refactored to GraphHopper.setMemory(true/false), use mmap config via GraphHopper.setMemoryMapped()
     incompatible edges => you need to re-import data and/or update the edges file

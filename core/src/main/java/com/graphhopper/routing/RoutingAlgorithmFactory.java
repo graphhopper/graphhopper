@@ -31,7 +31,7 @@ public class RoutingAlgorithmFactory
 
     /**
      * @param algo possible values are astar (A* algorithm), astarbi (bidirectional A*) dijkstra
-     * (Dijkstra), dijkstrabi and dijkstraNative (a bit faster bidirectional Dijkstra).
+     * (Dijkstra), dijkstrabi and dijkstraNativebi (a bit faster bidirectional Dijkstra).
      */
     public RoutingAlgorithmFactory( String algo, boolean approx )
     {
@@ -44,7 +44,7 @@ public class RoutingAlgorithmFactory
         if ("dijkstrabi".equalsIgnoreCase(algoStr))
         {
             return new DijkstraBidirectionRef(g, encoder, weighting);
-        } else if ("dijkstraNative".equalsIgnoreCase(algoStr))
+        } else if ("dijkstraNativebi".equalsIgnoreCase(algoStr))
         {
             return new DijkstraBidirection(g, encoder, weighting);
         } else if ("dijkstra".equalsIgnoreCase(algoStr))

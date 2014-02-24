@@ -26,6 +26,7 @@ import android.graphics.Path;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -72,7 +73,7 @@ public class MainActivity extends MapActivity
     private String fileListURL = "http://graphhopper.com/public/maps/0.3/";
     private String prefixURL = fileListURL;
     private String downloadURL;
-    private String mapsFolder;
+    private File mapsFolder;
     private String mapFile;
     private SimpleOnGestureListener gestureListener = new SimpleOnGestureListener()
     {
@@ -122,8 +123,7 @@ public class MainActivity extends MapActivity
             return true;
         }
     };
-    private GestureDetector gestureDetector = new GestureDetector(
-            gestureListener);
+    private GestureDetector gestureDetector = new GestureDetector(gestureListener);
 
     @Override
     protected void onCreate( Bundle savedInstanceState )
@@ -148,12 +148,18 @@ public class MainActivity extends MapActivity
 
         final EditText input = new EditText(this);
         input.setText(currentArea);
-        mapsFolder = Environment.getExternalStorageDirectory()
-                .getAbsolutePath() + "/graphhopper/maps/";
-        if (!new File(mapsFolder).exists())
+        boolean greaterOrEqKitkat = Build.VERSION.SDK_INT >= 19;
+        if (greaterOrEqKitkat)
         {
-            new File(mapsFolder).mkdirs();
-        }
+            if (Environment.getExternalStorageState() != Environment.MEDIA_MOUNTED)
+                throw new IllegalStateException("media is not mounted or not readable");
+            mapsFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                    "/graphhopper/maps/");
+        } else
+            mapsFolder = new File(Environment.getExternalStorageDirectory(), "/graphhopper/maps/");
+
+        if (!mapsFolder.exists())
+            mapsFolder.mkdirs();
 
         TextView welcome = (TextView) findViewById(R.id.welcome);
         welcome.setText("Welcome to GraphHopper " + Constants.VERSION + "!");
@@ -188,7 +194,7 @@ public class MainActivity extends MapActivity
     private void chooseAreaFromLocal()
     {
         List<String> nameList = new ArrayList<String>();
-        String[] files = new File(mapsFolder).list(new FilenameFilter()
+        String[] files = mapsFolder.list(new FilenameFilter()
         {
             @Override
             public boolean accept( File dir, String filename )
@@ -261,9 +267,9 @@ public class MainActivity extends MapActivity
                             String selectedFile )
                     {
                         if (selectedFile == null
-                                || new File(mapsFolder + selectedArea + ".ghz")
+                                || new File(mapsFolder, selectedArea + ".ghz")
                                 .exists()
-                                || new File(mapsFolder + selectedArea + "-gh")
+                                || new File(mapsFolder, selectedArea + "-gh")
                                 .exists())
                         {
                             downloadURL = null;

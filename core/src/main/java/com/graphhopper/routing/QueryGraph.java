@@ -321,7 +321,7 @@ public class QueryGraph implements Graph
         // so we need to create the mapping on EVERY call!
         // This needs to be a HashMap (and cannot be an array) as we also need to tweak edges for some mainNodes!
         // The more query points we have the more inefficient this map could be. Hmmh.
-        final TIntObjectMap<VirtualEdgeIterator> node2EdgeIter
+        final TIntObjectMap<VirtualEdgeIterator> node2EdgeMap
                 = new TIntObjectHashMap<VirtualEdgeIterator>(queryResults.size() * 3);
 
         final EdgeExplorer mainExplorer = mainGraph.createEdgeExplorer(edgeFilter);
@@ -340,7 +340,7 @@ public class QueryGraph implements Graph
                 virtEdgeIter.add(adjEdge);
 
             int virtNode = mainNodes + i;
-            node2EdgeIter.put(virtNode, virtEdgeIter);
+            node2EdgeMap.put(virtNode, virtEdgeIter);
 
             // replace edge list of neighboring tower nodes: a) add virtual edges only and collect tower nodes where real edges will be added in step 2.
             // base node
@@ -348,7 +348,7 @@ public class QueryGraph implements Graph
             if (towerNode < mainNodes)
             {
                 towerNodesToChange.add(towerNode);
-                addVirtualEdges(node2EdgeIter, edgeFilter, true, towerNode, i);
+                addVirtualEdges(node2EdgeMap, edgeFilter, true, towerNode, i);
             }
 
             // adj node
@@ -356,7 +356,7 @@ public class QueryGraph implements Graph
             if (towerNode < mainNodes)
             {
                 towerNodesToChange.add(towerNode);
-                addVirtualEdges(node2EdgeIter, edgeFilter, false, towerNode, i);
+                addVirtualEdges(node2EdgeMap, edgeFilter, false, towerNode, i);
             }
         }
 
@@ -368,7 +368,7 @@ public class QueryGraph implements Graph
             @Override
             public boolean execute( int value )
             {
-                fillVirtualEdges(node2EdgeIter, value, mainExplorer);
+                fillVirtualEdges(node2EdgeMap, value, mainExplorer);
                 return true;
             }
         });
@@ -378,7 +378,7 @@ public class QueryGraph implements Graph
             @Override
             public EdgeIterator setBaseNode( int baseNode )
             {
-                VirtualEdgeIterator iter = node2EdgeIter.get(baseNode);
+                VirtualEdgeIterator iter = node2EdgeMap.get(baseNode);
                 if (iter != null)
                     return iter.reset();
 
@@ -390,14 +390,14 @@ public class QueryGraph implements Graph
     /**
      * Creates a fake edge iterator pointing to multiple edge states.
      */
-    private void addVirtualEdges( TIntObjectMap<VirtualEdgeIterator> node2Edge, EdgeFilter filter, boolean base,
+    private void addVirtualEdges( TIntObjectMap<VirtualEdgeIterator> node2EdgeMap, EdgeFilter filter, boolean base,
             int node, int virtNode )
     {
-        VirtualEdgeIterator existingIter = node2Edge.get(node);
+        VirtualEdgeIterator existingIter = node2EdgeMap.get(node);
         if (existingIter == null)
         {
             existingIter = new VirtualEdgeIterator(10);
-            node2Edge.put(node, existingIter);
+            node2EdgeMap.put(node, existingIter);
         }
         EdgeIteratorState edge = base
                 ? virtualEdges.get(virtNode * 4 + VE_BASE)
@@ -412,16 +412,17 @@ public class QueryGraph implements Graph
             throw new IllegalStateException("should not happen:" + towerNode + ", " + node2Edge);
 
         VirtualEdgeIterator vIter = node2Edge.get(towerNode);
-        TIntArrayList ignoreNodes = new TIntArrayList(vIter.count() * 2);
+        TIntArrayList ignoreEdges = new TIntArrayList(vIter.count() * 2);
         while (vIter.next())
         {
-            ignoreNodes.add(queryResults.get(vIter.getAdjNode() - mainNodes).getClosestEdge().getAdjNode());
+            EdgeIteratorState edge = queryResults.get(vIter.getAdjNode() - mainNodes).getClosestEdge();
+            ignoreEdges.add(edge.getEdge());
         }
         vIter.reset();
         EdgeIterator iter = mainExpl.setBaseNode(towerNode);
         while (iter.next())
         {
-            if (!ignoreNodes.contains(iter.getAdjNode()))
+            if (!ignoreEdges.contains(iter.getEdge()))
                 vIter.add(iter.detach());
         }
     }
