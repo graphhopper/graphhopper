@@ -132,7 +132,7 @@ public class DijkstraBidirection extends AbstractBidirAlgo
     }
 
     void fillEdges( int currNode, double currWeight, int currRef,
-            IntDoubleBinHeap openSet, EdgeWrapper wrapper, EdgeExplorer explorer )
+            IntDoubleBinHeap openSet, EdgeWrapper wrapper, EdgeExplorer explorer, boolean reverse)
     {
         EdgeIterator iter = explorer.setBaseNode(currNode);
         while (iter.next())
@@ -146,7 +146,7 @@ public class DijkstraBidirection extends AbstractBidirAlgo
             if (newRef >= 0 && wrapper.getEdgeId(newRef) == iter.getEdge())
                 continue;
 
-            double tmpWeight = weighting.calcWeight(iter) + currWeight;
+            double tmpWeight = weighting.calcWeight(iter, reverse) + currWeight;
             if (newRef < 0)
             {
                 newRef = wrapper.add(neighborNode, tmpWeight, iter.getEdge());
@@ -196,7 +196,7 @@ public class DijkstraBidirection extends AbstractBidirAlgo
         currFromWeight = parentRefFrom.getWeight(currFromRef);
 
         parentRefOther = parentRefTo;
-        fillEdges(currFrom, currFromWeight, currFromRef, openSetFrom, parentRefFrom, outEdgeExplorer);
+        fillEdges(currFrom, currFromWeight, currFromRef, openSetFrom, parentRefFrom, outEdgeExplorer, false);
         visitedFromCount++;
         return true;
     }
@@ -211,7 +211,7 @@ public class DijkstraBidirection extends AbstractBidirAlgo
         currToWeight = parentRefTo.getWeight(currToRef);
 
         parentRefOther = parentRefFrom;
-        fillEdges(currTo, currToWeight, currToRef, openSetTo, parentRefTo, inEdgeExplorer);
+        fillEdges(currTo, currToWeight, currToRef, openSetTo, parentRefTo, inEdgeExplorer, true);
         visitedToCount++;
         return true;
     }

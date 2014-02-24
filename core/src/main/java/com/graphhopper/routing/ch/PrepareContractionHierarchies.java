@@ -70,7 +70,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private final long scFwdDir;
     private final long scBothDir;
     private final Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
-    private IgnoreNodeFilter levelEdgeFilter;
+    private IgnoreNodeFilter ignoreNodeFilter;
     private DijkstraOneToMany algo;
     private boolean removesHigher2LowerEdges = true;
     private long counter;
@@ -576,7 +576,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 continue;
 
             double v_u_dist = incomingEdges.getDistance();
-            double v_u_weight = prepareWeighting.calcWeight(incomingEdges);
+            double v_u_weight = prepareWeighting.calcWeight(incomingEdges, true);
             int skippedEdge1 = incomingEdges.getEdge();
             int incomingEdgeOrigCount = getOrigEdgeCount(skippedEdge1);
             // collect outgoing nodes (goal-nodes) only once
@@ -594,13 +594,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 // Limit weight as ferries or forbidden edges can increase local search too much.
                 // If we decrease the correct weight we only explore less and introduce more shortcuts.
                 // I.e. no change to accuracy is made.
-                double existingDirectWeight = v_u_weight + prepareWeighting.calcWeight(outgoingEdges);
+                double existingDirectWeight = v_u_weight + prepareWeighting.calcWeight(outgoingEdges, false);
                 if (existingDirectWeight >= Double.MAX_VALUE)
                     continue;
                 double existingDistSum = v_u_dist + outgoingEdges.getDistance();
                 algo.setLimitWeight(existingDirectWeight)
                         .setLimitVisitedNodes((int) meanDegree * 100)
-                        .setEdgeFilter(levelEdgeFilter.setAvoidNode(sch.getNode()));
+                        .setEdgeFilter(ignoreNodeFilter.setAvoidNode(sch.getNode()));
 
                 dijkstraSW.start();
                 dijkstraCount++;
@@ -645,7 +645,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 if (iter.isShortcut() && iter.getAdjNode() == sc.to
                         && prepareEncoder.canBeOverwritten(iter.getFlags(), sc.flags))
                 {
-                    if (sc.weight >= prepareWeighting.calcWeight(iter))
+                    if (sc.weight >= prepareWeighting.calcWeight(iter, false))
                         continue NEXT_SC;
 
                     // note: flags overwrite weight => call them first
@@ -660,7 +660,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             if (!updatedInGraph)
-            {                
+            {
                 EdgeSkipIterState edgeState = g.shortcut(sc.from, sc.to);
                 // note: flags overwrite weight => call them first
                 edgeState.setFlags(sc.flags);
@@ -682,7 +682,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         vehicleAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
         vehicleAllTmpExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
         calcPrioAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
-        levelEdgeFilter = new IgnoreNodeFilter(g);
+        ignoreNodeFilter = new IgnoreNodeFilter(g);
         // Use an alternative to PriorityQueue as it has some advantages: 
         //   1. Gets automatically smaller if less entries are stored => less total RAM used (as Graph is increasing until the end)
         //   2. is slightly faster

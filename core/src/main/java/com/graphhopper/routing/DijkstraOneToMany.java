@@ -162,7 +162,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
                 if (edgeIds[adjNode] == iter.getEdge())
                     continue;
 
-                double tmpWeight = weighting.calcWeight(iter) + weights[currNode];
+                double tmpWeight = weighting.calcWeight(iter, false) + weights[currNode];
                 if (weights[adjNode] == Double.MAX_VALUE)
                 {
                     parents[adjNode] = currNode;

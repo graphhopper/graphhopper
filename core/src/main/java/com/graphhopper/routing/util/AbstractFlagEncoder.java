@@ -273,7 +273,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      */
     public long flagsDefault( boolean forward, boolean backward )
     {
-        long flags = setSpeed(0, 0);
+        long flags = speedEncoder.setDefaultValue(0);
         return setAccess(flags, forward, backward);
     }
 

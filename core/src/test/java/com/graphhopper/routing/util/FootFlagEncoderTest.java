@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.GHUtility;
 

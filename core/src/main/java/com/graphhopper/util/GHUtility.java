@@ -471,7 +471,7 @@ public class GHUtility
         public EdgeSkipIterState setWeight( double weight )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
+        }        
     };
 
     /**

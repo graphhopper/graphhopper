@@ -163,9 +163,10 @@ public class Path
         return weight;
     }
 
-    public void setWeight( double w )
+    public Path setWeight( double w )
     {
         this.weight = w;
+        return this;
     }
 
     /**
@@ -240,12 +241,10 @@ public class Path
         for (int i = 0; i < len; i++)
         {
             EdgeIteratorState edgeBase = graph.getEdgeProps(edgeIds.get(i), tmpNode);
-            if (edgeBase == null)
-            {
-                throw new IllegalStateException("Edge " + edgeIds.get(i)
-                        + " was empty when requested with node " + tmpNode
+            if (edgeBase == null)            
+                throw new IllegalStateException("Edge " + edgeIds.get(i) + " was empty when requested with node " + tmpNode
                         + ", array index:" + i + ", edges:" + edgeIds.size());
-            }
+            
             tmpNode = edgeBase.getBaseNode();
             visitor.next(edgeBase, i);
         }

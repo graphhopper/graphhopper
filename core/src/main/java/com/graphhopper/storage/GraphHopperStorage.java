@@ -791,6 +791,18 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
+        public final int getBaseNode()
+        {
+            return baseNode;
+        }
+
+        @Override
+        public final int getAdjNode()
+        {
+            return node;
+        }
+
+        @Override
         public final boolean next()
         {
             int i = 0;
@@ -835,12 +847,6 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
-        public final int getAdjNode()
-        {
-            return node;
-        }
-
-        @Override
         public final double getDistance()
         {
             return getDist(edgePointer);
@@ -880,12 +886,6 @@ public class GraphHopperStorage implements GraphStorage
         {
             GraphHopperStorage.this.setAdditionalEdgeField(edgePointer, value);
             return null;
-        }
-
-        @Override
-        public final int getBaseNode()
-        {
-            return baseNode;
         }
 
         @Override

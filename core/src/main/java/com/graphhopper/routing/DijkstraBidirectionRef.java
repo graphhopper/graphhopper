@@ -114,7 +114,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
 
         currFrom = openSetFrom.poll();
         bestWeightMapOther = bestWeightMapTo;
-        fillEdges(currFrom, openSetFrom, bestWeightMapFrom, outEdgeExplorer);
+        fillEdges(currFrom, openSetFrom, bestWeightMapFrom, outEdgeExplorer, false);
         visitedFromCount++;
         return true;
     }
@@ -126,7 +126,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
             return false;
         currTo = openSetTo.poll();
         bestWeightMapOther = bestWeightMapFrom;
-        fillEdges(currTo, openSetTo, bestWeightMapTo, inEdgeExplorer);
+        fillEdges(currTo, openSetTo, bestWeightMapTo, inEdgeExplorer, true);
         visitedToCount++;
         return true;
     }
@@ -145,7 +145,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     }
 
     void fillEdges( EdgeEntry currEdge, PriorityQueue<EdgeEntry> prioQueue,
-            TIntObjectMap<EdgeEntry> shortestWeightMap, EdgeExplorer explorer )
+            TIntObjectMap<EdgeEntry> shortestWeightMap, EdgeExplorer explorer, boolean reverse )
     {
         int currNode = currEdge.endNode;
         EdgeIterator iter = explorer.setBaseNode(currNode);
@@ -158,7 +158,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
                 continue;
 
             int neighborNode = iter.getAdjNode();
-            double tmpWeight = weighting.calcWeight(iter) + currEdge.weight;
+            double tmpWeight = weighting.calcWeight(iter, reverse) + currEdge.weight;
 
             EdgeEntry de = shortestWeightMap.get(neighborNode);
             if (de == null)
@@ -193,8 +193,8 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         {
             bestPath.setSwitchToFrom(bestWeightMapFrom == bestWeightMapOther);
             bestPath.setEdgeEntry(shortestEE);
-            bestPath.edgeTo = entryOther;
             bestPath.setWeight(newShortest);
+            bestPath.edgeTo = entryOther;
         }
     }
 

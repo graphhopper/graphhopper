@@ -42,6 +42,8 @@ public interface EdgeIterator extends EdgeIteratorState
 {
     /**
      * To be called to go to the next edge state.
+     * <p>
+     * @return true if an edge state is available
      */
     boolean next();
 

@@ -612,25 +612,41 @@ public abstract class AbstractRoutingAlgorithmTester
             }
 
             @Override
-            public double calcWeight( EdgeIteratorState edge )
+            public double calcWeight( EdgeIteratorState edge, boolean reverse )
             {
+                int adj = edge.getAdjNode();
+                int base = edge.getBaseNode();
+                if (reverse)
+                {
+                    int tmp = base;
+                    base = adj;
+                    adj = tmp;
+                }
+
                 // a 'hill' at node 6
-                if (edge.getAdjNode() == 6)
+                if (adj == 6)
                     return 3 * edge.getDistance();
-                else if (edge.getBaseNode() == 6)
+                else if (base == 6)
                     return edge.getDistance() * 0.7;
-                else if (edge.getAdjNode() == 4)
+                else if (adj == 4)
                     return 2 * edge.getDistance();
-                else if (edge.getBaseNode() == 4)
+                else if (base == 4)
                     return edge.getDistance() * 0.8;
+
+                // a small 'hill' at node 11
+                else if (base == 7 && adj == 11)
+                    return 1.1 * edge.getDistance();
                 else
                     return edge.getDistance();
             }
         };
+        QueryResult from = newQR(graph, 3, 0);
+        QueryResult to = newQR(graph, 10, 9);
         graph = createEleGraph();
-        p = prepareGraph(graph, carEncoder, fakeWeighting).createAlgo().calcPath(0, 10);        
-        // GHUtility.printEdgeInfo(graph, carEncoder);        
-        assertEquals(Helper.createTList(0, 1, 2, 11, 7, 10), p.calcNodes());
+        p = prepareGraph(graph, carEncoder, fakeWeighting).createAlgo().calcPath(from, to);
+        assertEquals(Helper.createTList(13, 0, 1, 2, 11, 7, 10, 12), p.calcNodes());
+        assertEquals(616827, p.getDistance(), 1);
+        assertEquals(616827, p.getWeight(), 1);
     }
 
     // 0-1-2
@@ -662,6 +678,18 @@ public abstract class AbstractRoutingAlgorithmTester
         g.edge(8, 9, 10, false);
         g.edge(9, 8, 9, false);
         g.edge(10, 9, 10, false);
+        updateDistancesFor(g, 0, 3, 0);
+        updateDistancesFor(g, 3, 2.5, 0);
+        updateDistancesFor(g, 5, 1, 0);
+        updateDistancesFor(g, 8, 0, 0);
+        updateDistancesFor(g, 1, 3, 1);
+        updateDistancesFor(g, 4, 2, 1);
+        updateDistancesFor(g, 6, 1, 1);
+        updateDistancesFor(g, 9, 0, 1);
+        updateDistancesFor(g, 2, 3, 2);
+        updateDistancesFor(g, 11, 2, 2);
+        updateDistancesFor(g, 7, 1, 2);
+        updateDistancesFor(g, 10, 0, 2);
         return g;
     }
 

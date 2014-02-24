@@ -78,6 +78,12 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
         // not supported
     }
 
+    @Override
+    public void testTwoWeightsPerEdge()
+    {
+        // not supported
+    }
+    
     @Test
     public void testUseCache()
     {

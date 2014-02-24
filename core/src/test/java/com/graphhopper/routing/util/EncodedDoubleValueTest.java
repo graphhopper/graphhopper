@@ -52,14 +52,14 @@ public class EncodedDoubleValueTest
         long expectedFlags = instance2.setDoubleValue(instance1.setDoubleValue(0, 90), 100);
         long swappedFlags = instance1.swap(flags, instance2);
         assertEquals(expectedFlags, swappedFlags);
-        
+
         CarFlagEncoder carEncoder = new CarFlagEncoder(8, 0.5);
         new EncodingManager(carEncoder);
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "70 mph");
         flags = carEncoder.handleWayTags(way, 1, 0);
-                
+
         // double speed = AbstractFlagEncoder.parseSpeed("70 mph");
         carEncoder.swapDirection(flags);
         assertEquals(100, carEncoder.getSpeed(flags), 1e-1);
