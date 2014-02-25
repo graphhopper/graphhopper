@@ -579,12 +579,15 @@ public class GraphHopper implements GraphHopperAPI
         graph.setSegmentSize(defaultSegmentSize);
         if (!graph.loadExisting())
             return false;
-
+        
         postProcessing();
         fullyLoaded = true;
         return true;
     }
 
+    /**
+     * Sets EncodingManager, does the preparation and creates the locationIndex
+     */
     protected void postProcessing()
     {
         encodingManager = graph.getEncodingManager();

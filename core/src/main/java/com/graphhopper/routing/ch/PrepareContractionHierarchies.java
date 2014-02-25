@@ -309,6 +309,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 }
                 periodSW.stop();
                 updateCounter++;
+                if (sortedNodes.isEmpty())
+                    throw new IllegalStateException("Cannot prepare as no unprepared nodes where found. Called preparation twice?");
             }
 
             if (counter % logSize == 0)
