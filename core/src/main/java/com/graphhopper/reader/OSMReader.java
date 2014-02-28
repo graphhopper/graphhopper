@@ -363,7 +363,7 @@ public class OSMReader
             int last = getNodeMap().get(osmNodeIds.get(osmNodeIds.size() - 1));
             double firstLat = getTmpLatitude(first), firstLon = getTmpLongitude(first);
             double lastLat = getTmpLatitude(last), lastLon = getTmpLongitude(last);
-            if (firstLat != Double.NaN && firstLon != Double.NaN && lastLat != Double.NaN && lastLon != Double.NaN)
+            if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon) && !Double.isNaN(lastLat) && !Double.isNaN(lastLon))
             {
                 double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
                 way.setInternalTag("estimated_distance", estimatedDist);
