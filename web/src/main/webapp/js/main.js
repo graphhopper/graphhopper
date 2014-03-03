@@ -236,12 +236,6 @@ function initMap() {
         subdomains: ['topo4', 'topo', 'topo2', 'topo3']
     });
 
-    var cloudmade = L.tileLayer('http://{s}.tile.cloudmade.com/{key}/{styleId}/256/{z}/{x}/{y}.png', {
-        attribution: '<a href="http://cloudmade.com">Cloudmade</a>,' + moreAttr,
-        key: '43b079df806c4e03b102055c4e1a8ba8',
-        styleId: 997
-    });
-
     var osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: moreAttr
     });
@@ -271,7 +265,6 @@ function initMap() {
         "TF Outdoors": thunderOutdoors,
         // didn't found a usage policy for this "Apple": apple,
         "WanderReitKarte": wrk,
-        "Cloudmade": cloudmade,
         "OpenStreetMap": osm,
         "OpenStreetMap.de": osmde
     };
