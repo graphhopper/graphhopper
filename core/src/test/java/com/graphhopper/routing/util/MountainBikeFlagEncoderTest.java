@@ -19,8 +19,6 @@ import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
@@ -171,27 +169,5 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(20, encoder.getSpeed(flags), 1e-1);
         assertEquals(0, encoder.getWayType(flags));
-
-        // test max and min speed
-        final AtomicInteger fakeSpeed = new AtomicInteger(40);
-        MountainBikeFlagEncoder fakeEncoder = new MountainBikeFlagEncoder()
-        {
-            @Override
-            int relationWeightCodeToSpeed( int highwaySpeed, int relationCode )
-            {
-                return fakeSpeed.get();
-            }
-        };
-        // call necessary register
-        new EncodingManager(fakeEncoder);
-        allowed = fakeEncoder.acceptBit;
-
-        flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
-        assertEquals(30, fakeEncoder.getSpeed(flags), 1e-1);
-
-        fakeSpeed.set(-2);
-        flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
-        assertEquals(0, fakeEncoder.getSpeed(flags), 1e-1);
-
     }
 }

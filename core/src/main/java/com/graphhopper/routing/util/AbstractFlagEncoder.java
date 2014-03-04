@@ -291,8 +291,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     public long setSpeed( long flags, double speed )
     {
         if (speed < 0)
-            throw new IllegalArgumentException("Speed cannot be negative: " + speed + ", flags:" + BitUtil.LITTLE.toBitString(flags));
-        
+            throw new IllegalArgumentException("Speed cannot be negative: " + speed
+                    + ", flags:" + BitUtil.LITTLE.toBitString(flags));
+
         if (speed > getMaxSpeed())
             speed = getMaxSpeed();
         return speedEncoder.setDoubleValue(flags, speed);
@@ -435,8 +436,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     /**
-     * Second parsing step. After splitting the edges currently used to offer a hook to calculate
-     * precise speed values based on elevation data stored in the specified edge.
+     * Second parsing step. Invoked after splitting the edges. Currently used to offer a hook to
+     * calculate precise speed values based on elevation data stored in the specified edge.
      */
     public void applyWayTags( OSMWay way, EdgeIteratorState edge )
     {

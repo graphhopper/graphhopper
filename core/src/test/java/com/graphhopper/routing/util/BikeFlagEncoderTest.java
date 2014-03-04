@@ -97,7 +97,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 
     @Test
     public void testHandleWayTags()
-    {        
+    {
         OSMWay way = new OSMWay(1);
         String wayType;
 
@@ -155,7 +155,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertEquals(16, encoder.getSpeed(flags), 1e-1);
         assertEquals(1, encoder.getWayType(flags));
         assertEquals(1, encoder.getPavementType(flags));
-        
+
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
@@ -207,6 +207,15 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertEquals(30, fakeEncoder.getSpeed(flags), 1e-1);
 
         fakeSpeed.set(-2);
+        try
+        {
+            flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
+            assertTrue(false);
+        } catch (IllegalArgumentException ex)
+        {
+        }
+
+        fakeSpeed.set(0);
         flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
         assertEquals(0, fakeEncoder.getSpeed(flags), 1e-1);
 

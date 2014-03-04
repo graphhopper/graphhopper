@@ -47,6 +47,7 @@ public class EncodingManager
 {
     public static final String CAR = "car";
     public static final String BIKE = "bike";
+    public static final String BIKE2 = "bike2";
     public static final String RACINGBIKE = "racingbike";
     public static final String MOUNTAINBIKE = "mtb";
     public static final String FOOT = "foot";
@@ -57,6 +58,7 @@ public class EncodingManager
     {
         defaultEdgeFlagEncoders.put(CAR, CarFlagEncoder.class.getName());
         defaultEdgeFlagEncoders.put(BIKE, BikeFlagEncoder.class.getName());
+        defaultEdgeFlagEncoders.put(BIKE2, Bike2WeightFlagEncoder.class.getName());
         defaultEdgeFlagEncoders.put(RACINGBIKE, RacingBikeFlagEncoder.class.getName());
         defaultEdgeFlagEncoders.put(MOUNTAINBIKE, MountainBikeFlagEncoder.class.getName());
         defaultEdgeFlagEncoders.put(FOOT, FootFlagEncoder.class.getName());

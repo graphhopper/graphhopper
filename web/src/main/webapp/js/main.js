@@ -343,8 +343,8 @@ function initMap() {
         }).addTo(map);
 
     routingLayer = L.geoJson().addTo(map);
-    routingLayer.options = { style: {color: "#00cc33", "weight": 7, "opacity": 0.6}};
-    
+    routingLayer.options = {style: {color: "#00cc33", "weight": 7, "opacity": 0.6}};
+
     firstClickToRoute = true;
     function onMapClick(e) {
         var latlng = e.latlng;
@@ -665,6 +665,9 @@ function routeLatLng(request, doQuery) {
         return;
     }
 
+    if (elevationControl)
+        elevationControl.clear();
+
     routingLayer.clearLayers();
     setFlag(request.from, true);
     setFlag(request.to, false);
@@ -688,14 +691,12 @@ function routeLatLng(request, doQuery) {
             return;
         }
         var geojsonFeature = {
-            "type": "Feature",            
+            "type": "Feature",
             "geometry": json.route.data
         };
 
-        if (elevationControl) {
-            elevationControl.clear();
+        if (elevationControl)
             elevationControl.addData(geojsonFeature);
-        }
 
         routingLayer.addData(geojsonFeature);
 

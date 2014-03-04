@@ -409,4 +409,12 @@ public class Helper
 
         return Character.toUpperCase(sayText.charAt(0)) + sayText.substring(1);
     }
+
+    /**
+     * This methods returns the value or min if too small or max if too big.
+     */
+    public static final double keepIn( double value, double min, double max )
+    {
+        return Math.max(min, Math.min(value, max));
+    }
 }

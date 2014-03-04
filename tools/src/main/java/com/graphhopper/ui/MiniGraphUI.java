@@ -27,7 +27,6 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FastestWeighting;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
-import com.graphhopper.routing.util.ShortestWeighting;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -200,8 +199,8 @@ public class MiniGraphUI
                 }
 
                 StopWatch sw = new StopWatch().start();
-                fromRes = index.findClosest(48.983787742949886, 12.14355546976484, EdgeFilter.ALL_EDGES);
-                toRes = index.findClosest(48.98291180219765, 12.13610228968002, EdgeFilter.ALL_EDGES);
+                fromRes = index.findClosest(43.73146307540901, 7.421162675454106, EdgeFilter.ALL_EDGES);
+                toRes = index.findClosest(43.73125439303159, 7.42127810874829, EdgeFilter.ALL_EDGES);
 
                 logger.info("start searching from:" + fromRes + " to:" + toRes + " " + weighting);
                 path = algo.calcPath(fromRes, toRes);
