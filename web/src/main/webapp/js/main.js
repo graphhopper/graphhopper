@@ -129,6 +129,9 @@ $(document).ready(function(e) {
                         theme: "white-theme", //default: lime-theme
                         width: 450,
                         height: 125,
+                        yAxisMin: 0, // set min domain y axis
+                        // yAxisMax: 550, // set max domain y axis
+                        forceAxisBounds: false,
                         margins: {
                             top: 10,
                             right: 20,
