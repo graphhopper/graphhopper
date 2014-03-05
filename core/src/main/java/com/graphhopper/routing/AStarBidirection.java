@@ -17,8 +17,14 @@
  */
 package com.graphhopper.routing;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+
+import java.util.PriorityQueue;
+
 import com.graphhopper.routing.AStar.AStarEdge;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TurnWeighting;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
@@ -28,9 +34,6 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.shapes.CoordTrig;
 import com.graphhopper.util.shapes.GHPoint;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import java.util.PriorityQueue;
 
 /**
  * This class implements a bidirectional A* algorithm. It is interesting to note that a
@@ -129,7 +132,9 @@ public class AStarBidirection extends AbstractBidirAlgo
     public void initFrom( int from, double dist )
     {
         currFrom = createEdgeEntry(from, dist);
-        bestWeightMapFrom.put(from, currFrom);
+        if(isTraversalNodeBased()){
+            bestWeightMapFrom.put(from, currFrom);    
+        }
         prioQueueOpenSetFrom.add(currFrom);
         fromCoord = new GHPoint(graph.getLatitude(from), graph.getLongitude(from));
         if (currTo != null)
@@ -143,7 +148,9 @@ public class AStarBidirection extends AbstractBidirAlgo
     public void initTo( int to, double dist )
     {
         currTo = createEdgeEntry(to, dist);
-        bestWeightMapTo.put(to, currTo);
+        if(isTraversalNodeBased()){
+            bestWeightMapTo.put(to, currTo);    
+        }
         prioQueueOpenSetTo.add(currTo);
         toCoord = new GHPoint(graph.getLatitude(to), graph.getLongitude(to));
         if (currFrom != null)
@@ -220,16 +227,23 @@ public class AStarBidirection extends AbstractBidirAlgo
         EdgeIterator iter = explorer.setBaseNode(currNode);
         while (iter.next())
         {
-            if (!accept(iter))
+            if (!accept(iter, currEdge))
                 continue;
             if (currEdge.edge == iter.getEdge())
                 continue;
 
             int neighborNode = iter.getAdjNode();
+            int iterationKey = createIdentifier(iter, reverse);
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
             double alreadyVisitedWeight = weighting.calcWeight(iter, reverse) + currEdge.weightToCompare;
-            AStarEdge de = shortestWeightMap.get(neighborNode);
+            
+            if (weighting instanceof TurnWeighting)
+            {
+                alreadyVisitedWeight += ((TurnWeighting) weighting).calcTurnWeight(currEdge.edge, currNode, iter.getEdge(), reverse);
+            }
+            
+            AStarEdge de = shortestWeightMap.get(iterationKey);
             if (de == null || de.weightToCompare > alreadyVisitedWeight)
             {
                 double tmpLat = graph.getLatitude(neighborNode);
@@ -240,7 +254,7 @@ public class AStarBidirection extends AbstractBidirAlgo
                 if (de == null)
                 {
                     de = new AStarEdge(iter.getEdge(), neighborNode, estimationFullDist, alreadyVisitedWeight);
-                    shortestWeightMap.put(neighborNode, de);
+                    shortestWeightMap.put(iterationKey, de);
                 } else
                 {
                     prioQueueOpenSet.remove(de);
@@ -251,7 +265,7 @@ public class AStarBidirection extends AbstractBidirAlgo
 
                 de.parent = currEdge;
                 prioQueueOpenSet.add(de);
-                updateShortest(de, neighborNode);
+                updateShortest(de, iterationKey);
             }
         }
     }
@@ -263,20 +277,51 @@ public class AStarBidirection extends AbstractBidirAlgo
         if (entryOther == null)
             return;
 
+        boolean reverse = bestWeightMapFrom == bestWeightMapOther;
+        if(isTraversalEdgeBased()) {
+            //prevents the path to contain the edge at the meeting point twice in edge-based traversal
+            if (entryOther.edge == shortestDE.edge)
+            {
+                if (reverse)
+                {
+                    entryOther = (AStar.AStarEdge)entryOther.parent;
+                } else
+                {
+                    shortestDE = (AStar.AStarEdge)shortestDE.parent;
+                }
+            }    
+        }
+
         // update μ
         double newShortest = shortestDE.weightToCompare + entryOther.weightToCompare;
+
+        if (weighting instanceof TurnWeighting)
+        {
+            newShortest += ((TurnWeighting) weighting).calcTurnWeight(shortestDE.edge, (reverse) ? entryOther.adjNode : shortestDE.adjNode,
+                    entryOther.edge, reverse);
+        }
+        
         if (newShortest < bestPath.getWeight())
         {
-            bestPath.setSwitchToFrom(bestWeightMapFrom == bestWeightMapOther);
+            bestPath.setSwitchToFrom(reverse);
             bestPath.edgeEntry = shortestDE;
             bestPath.edgeTo = entryOther;
             bestPath.setWeight(newShortest);
         }
+        
     }
 
     @Override
     public String getName()
     {
         return "astarbi";
+    }
+    
+    @Override
+    boolean isTraversalModeSupported( TRAVERSAL_MODE aTraversalMode )
+    {
+        return aTraversalMode == TRAVERSAL_MODE.NODE_BASED ||// 
+                aTraversalMode == TRAVERSAL_MODE.EDGE_BASED || //
+                aTraversalMode == TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE;
     }
 }

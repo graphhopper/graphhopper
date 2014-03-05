@@ -38,9 +38,9 @@ import org.junit.Test;
  */
 public class PrepareContractionHierarchiesTest
 {
-    private final Weighting weighting = new ShortestWeighting();
     private final EncodingManager encodingManager = new EncodingManager("CAR");
     private final CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
+    private final Weighting weighting = new ShortestWeighting(carEncoder);
 
     LevelGraph createGraph()
     {

@@ -75,7 +75,7 @@ public class RoutingAlgorithmSpecialAreaTests
         CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
         boolean ch = true;
         Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = createAlgos(unterfrankenGraph, idx,
-                carEncoder, ch, new ShortestWeighting(), encodingManager);
+                carEncoder, ch, new ShortestWeighting(carEncoder), encodingManager);
         EdgeFilter ef = new DefaultEdgeFilter(carEncoder);
 
         for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)

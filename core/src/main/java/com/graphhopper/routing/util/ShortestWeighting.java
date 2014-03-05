@@ -24,11 +24,13 @@ import com.graphhopper.util.EdgeIteratorState;
  * distance only.
  * <p/>
  * @author Peter Karich
+ * @author Karl Hübner
  */
-public class ShortestWeighting implements Weighting
+public class ShortestWeighting extends AbstractTurnWeighting implements Weighting
 {
-    public ShortestWeighting()
+    public ShortestWeighting( TurnCostEncoder turnCostEncoder )
     {
+        super(turnCostEncoder);
     }
 
     @Override
@@ -47,5 +49,23 @@ public class ShortestWeighting implements Weighting
     public String toString()
     {
         return "SHORTEST";
+    }
+
+    @Override
+    protected double calcTurnWeight( int edgeFrom, int nodeVia, int edgeTo )
+    {
+        int turnFlags = turnCostStorage.getTurnCosts(edgeFrom, nodeVia, edgeTo);
+        if (isEnabledTurnRestrictions() && turnCostEncoder.isTurnRestricted(turnFlags))
+        {
+            //we only consider turn restrictions in shortest calculation
+            return Double.MAX_VALUE;
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean isEnabledTurnCosts()
+    {
+        return false;
     }
 }
