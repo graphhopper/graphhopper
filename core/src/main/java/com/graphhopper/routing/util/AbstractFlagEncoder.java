@@ -258,16 +258,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         return flags ^ directionBitMask;
     }
 
-    @Override
-    public double getSpeed( long flags )
-    {
-        double speedVal = speedEncoder.getDoubleValue(flags);
-        if (speedVal < 0)
-            throw new IllegalStateException("Speed was negative!? " + speedVal);
-
-        return speedVal;
-    }
-
     /**
      * Sets default flags with specified access.
      */
@@ -292,6 +282,28 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (speed > getMaxSpeed())
             speed = getMaxSpeed();
         return speedEncoder.setDoubleValue(flags, speed);
+    }
+
+    @Override
+    public double getSpeed( long flags )
+    {
+        double speedVal = speedEncoder.getDoubleValue(flags);
+        if (speedVal < 0)
+            throw new IllegalStateException("Speed was negative!? " + speedVal);
+
+        return speedVal;
+    }
+
+    @Override
+    public long setReverseSpeed( long flags, double speed )
+    {
+        return setSpeed(flags, speed);
+    }
+
+    @Override
+    public double getReverseSpeed( long flags )
+    {
+        return getSpeed(flags);
     }
 
     @Override
