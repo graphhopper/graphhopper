@@ -32,7 +32,7 @@ import static org.junit.Assert.*;
  */
 public class Bike2WeightFlagEncoderTest
 {
-    private Graph initExampleGraph( Flag2Encoder instance )
+    private Graph initExampleGraph( FlagEncoder instance )
     {
         EncodingManager em = new EncodingManager(instance);
         GraphStorage gs = new GraphHopperStorage(new RAMDirectory(), em, true).create(1000);

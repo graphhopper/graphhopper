@@ -26,14 +26,14 @@ package com.graphhopper.routing.util;
 public interface FlagEncoder
 {
     /**
-     * @return the speed in km/h
-     */
-    double getSpeed( long flags );
-
-    /**
      * @return the maximum speed in km/h
      */
     double getMaxSpeed();
+
+    /**
+     * @return the speed in km/h
+     */
+    double getSpeed( long flags );
 
     /**
      * Sets the speed in km/h.
@@ -41,6 +41,16 @@ public interface FlagEncoder
      * @return modified setProperties
      */
     long setSpeed( long flags, double speed );
+
+    /**
+     * @return the speed of the reverse direction in km/h
+     */
+    double getReverseSpeed( long flags );
+
+    /**
+     * Sets the reverse speed in the flags.
+     */
+    long setReverseSpeed( long flags, double speed );
 
     /**
      * Sets the access of the edge.

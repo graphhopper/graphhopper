@@ -30,7 +30,7 @@ import static com.graphhopper.util.Helper.*;
  * <p>
  * @author Peter Karich
  */
-public class Bike2WeightFlagEncoder extends BikeFlagEncoder implements Flag2Encoder
+public class Bike2WeightFlagEncoder extends BikeFlagEncoder
 {
     private final DistanceCalc3D distCalc = new DistanceCalc3D();
     private EncodedDoubleValue reverseSpeed;
@@ -196,6 +196,6 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder implements Flag2Enco
     @Override
     public String toString()
     {
-        return "BIKE2";
+        return "bike2";
     }
 }
