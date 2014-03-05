@@ -17,15 +17,18 @@
  */
 package com.graphhopper.routing;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+
+import java.util.PriorityQueue;
+
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TurnWeighting;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import java.util.PriorityQueue;
 
 /**
  * Calculates best path in bidirectional way.
@@ -65,7 +68,10 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     public void initFrom( int from, double dist )
     {
         currFrom = createEdgeEntry(from, dist);
-        bestWeightMapFrom.put(from, currFrom);
+        if (isTraversalNodeBased())
+        {
+            bestWeightMapFrom.put(from, currFrom);
+        }
         openSetFrom.add(currFrom);
         if (currTo != null)
         {
@@ -78,7 +84,10 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     public void initTo( int to, double dist )
     {
         currTo = createEdgeEntry(to, dist);
-        bestWeightMapTo.put(to, currTo);
+        if (isTraversalNodeBased())
+        {
+            bestWeightMapTo.put(to, currTo);
+        }
         openSetTo.add(currTo);
         if (currFrom != null)
         {
@@ -151,21 +160,26 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         EdgeIterator iter = explorer.setBaseNode(currNode);
         while (iter.next())
         {
-            if (!accept(iter))
+            if (!accept(iter, currEdge))
                 continue;
             // minor speed up
             if (currEdge.edge == iter.getEdge())
                 continue;
 
-            int neighborNode = iter.getAdjNode();
+            int iterationKey = createIdentifier(iter, reverse);
             double tmpWeight = weighting.calcWeight(iter, reverse) + currEdge.weight;
 
-            EdgeEntry de = shortestWeightMap.get(neighborNode);
+            if (weighting instanceof TurnWeighting)
+            {
+                tmpWeight += ((TurnWeighting) weighting).calcTurnWeight(currEdge.edge, currNode, iter.getEdge(), reverse);
+            }
+
+            EdgeEntry de = shortestWeightMap.get(iterationKey);
             if (de == null)
             {
-                de = new EdgeEntry(iter.getEdge(), neighborNode, tmpWeight);
+                de = new EdgeEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight);
                 de.parent = currEdge;
-                shortestWeightMap.put(neighborNode, de);
+                shortestWeightMap.put(iterationKey, de);
                 prioQueue.add(de);
             } else if (de.weight > tmpWeight)
             {
@@ -176,22 +190,45 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
                 prioQueue.add(de);
             }
 
-            updateShortest(de, neighborNode);
+            updateShortest(de, iterationKey);
         }
     }
 
     @Override
-    protected void updateShortest( EdgeEntry shortestEE, int currLoc )
+    protected void updateShortest( EdgeEntry shortestEE, int iterationKey )
     {
-        EdgeEntry entryOther = bestWeightMapOther.get(currLoc);
+        EdgeEntry entryOther = bestWeightMapOther.get(iterationKey);
         if (entryOther == null)
             return;
 
+        boolean reverse = bestWeightMapFrom == bestWeightMapOther;
+        if (isTraversalEdgeBased())
+        {
+            //prevents the path to contain the edge at the meeting point twice in edge-based traversal
+            if (entryOther.edge == shortestEE.edge)
+            {
+                if (reverse)
+                {
+                    entryOther = entryOther.parent;
+                } else
+                {
+                    shortestEE = shortestEE.parent;
+                }
+            }
+        }
+
         // update μ
         double newShortest = shortestEE.weight + entryOther.weight;
+
+        if (weighting instanceof TurnWeighting)
+        {
+            newShortest += ((TurnWeighting) weighting).calcTurnWeight(shortestEE.edge, (reverse) ? entryOther.endNode : shortestEE.endNode,
+                    entryOther.edge, reverse);
+        }
+
         if (newShortest < bestPath.getWeight())
         {
-            bestPath.setSwitchToFrom(bestWeightMapFrom == bestWeightMapOther);
+            bestPath.setSwitchToFrom(reverse);
             bestPath.setEdgeEntry(shortestEE);
             bestPath.setWeight(newShortest);
             bestPath.edgeTo = entryOther;
@@ -212,5 +249,13 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     public String getName()
     {
         return "dijkstrabi";
+    }
+
+    @Override
+    boolean isTraversalModeSupported( TRAVERSAL_MODE aTraversalMode )
+    {
+        return aTraversalMode == TRAVERSAL_MODE.NODE_BASED || // 
+                aTraversalMode == TRAVERSAL_MODE.EDGE_BASED || //
+                aTraversalMode == TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE;
     }
 }

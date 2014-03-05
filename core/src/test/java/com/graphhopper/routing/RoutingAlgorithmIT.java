@@ -298,7 +298,7 @@ public class RoutingAlgorithmIT
                     importOrLoad();
 
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-            Weighting weighting = new ShortestWeighting();
+            Weighting weighting = new ShortestWeighting(encoder);
             if ("fastest".equalsIgnoreCase(weightCalcStr))
                 weighting = new FastestWeighting(encoder);
 
@@ -344,7 +344,7 @@ public class RoutingAlgorithmIT
         String bigFile = "10000EWD.txt.gz";
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
         Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
-                createAlgos(graph, null, encoder, false, new ShortestWeighting(), eManager);
+                createAlgos(graph, null, encoder, false, new ShortestWeighting(encoder), eManager);
         for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
         {
             AlgorithmPreparation prepare = entry.getKey();
@@ -394,7 +394,7 @@ public class RoutingAlgorithmIT
         // testing if algorithms are independent. should be. so test only two algorithms. 
         // also the preparing is too costly to be called for every thread
         int algosLength = 2;
-        Weighting weighting = new ShortestWeighting();
+        Weighting weighting = new ShortestWeighting(carEncoder);
         final EdgeFilter filter = new DefaultEdgeFilter(carEncoder);
         for (int no = 0; no < MAX; no++)
         {

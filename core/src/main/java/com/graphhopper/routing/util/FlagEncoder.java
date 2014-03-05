@@ -23,7 +23,7 @@ package com.graphhopper.routing.util;
  * <p/>
  * @author Peter Karich
  */
-public interface FlagEncoder
+public interface FlagEncoder extends TurnCostEncoder
 {
     /**
      * @return the speed in km/h
