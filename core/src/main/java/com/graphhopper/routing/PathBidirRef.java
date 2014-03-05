@@ -66,8 +66,8 @@ public class PathBidirRef extends Path
         if (edgeEntry == null || edgeTo == null)
             return this;
 
-        int from = GHUtility.getToNode(graph, edgeEntry.edge, edgeEntry.endNode);
-        int to = GHUtility.getToNode(graph, edgeTo.edge, edgeTo.endNode);
+        int from = GHUtility.getToNode(graph, edgeEntry.edge, edgeEntry.adjNode);
+        int to = GHUtility.getToNode(graph, edgeTo.edge, edgeTo.adjNode);
         if (from != to)
             throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString());
 
@@ -82,20 +82,20 @@ public class PathBidirRef extends Path
         EdgeEntry currEdge = edgeEntry;
         while (EdgeIterator.Edge.isValid(currEdge.edge))
         {
-            processEdge(currEdge.edge, currEdge.endNode);
+            processEdge(currEdge.edge, currEdge.adjNode);
             currEdge = currEdge.parent;
         }
-        setFromNode(currEdge.endNode);
+        setFromNode(currEdge.adjNode);
         reverseOrder();
         currEdge = edgeTo;
         int tmpEdge = currEdge.edge;
         while (EdgeIterator.Edge.isValid(tmpEdge))
         {
             currEdge = currEdge.parent;
-            processEdge(tmpEdge, currEdge.endNode);
+            processEdge(tmpEdge, currEdge.adjNode);
             tmpEdge = currEdge.edge;
         }
-        setEndNode(currEdge.endNode);
+        setEndNode(currEdge.adjNode);
         extractSW.stop();
         return setFound(true);
     }

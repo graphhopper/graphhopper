@@ -50,7 +50,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     {
         if (preparedMatrixGraph == null)
         {
-            LevelGraph lg = createGraph(false);
+            LevelGraph lg = (LevelGraph) createGraph(false);
             getMatrixAlikeGraph().copyTo(lg);
             prepareGraph(lg);
             preparedMatrixGraph = lg;
@@ -59,9 +59,9 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     }
 
     @Override
-    protected LevelGraph createGraph(boolean is3D)
+    protected LevelGraph createGraph( EncodingManager em, boolean is3D )
     {
-        return new GraphBuilder(encodingManager).set3D(is3D).levelGraphCreate();
+        return new GraphBuilder(em).set3D(is3D).levelGraphCreate();
     }
 
     @Override
@@ -124,15 +124,15 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         FlagEncoder tmpFootEncoder = footEncoder;
         FlagEncoder tmpCarEncoder = carEncoder;
         carEncoder = new CarFlagEncoder()
-        {            
+        {
             @Override
             public long setProperties( double speed, boolean forward, boolean backward )
             {
                 return 0;
-            }                        
+            }
         };
-        
-        footEncoder = new EncodingManager("FOOT").getSingle();        
+
+        footEncoder = new EncodingManager("FOOT").getSingle();
         super.testCalcFootPath();
         footEncoder = tmpFootEncoder;
         carEncoder = tmpCarEncoder;

@@ -199,8 +199,8 @@ public class MiniGraphUI
                 }
 
                 StopWatch sw = new StopWatch().start();
-                fromRes = index.findClosest(43.73146307540901, 7.421162675454106, EdgeFilter.ALL_EDGES);
-                toRes = index.findClosest(43.73125439303159, 7.42127810874829, EdgeFilter.ALL_EDGES);
+                fromRes = index.findClosest(49.973878, 11.604132, EdgeFilter.ALL_EDGES);
+                toRes = index.findClosest(49.973896, 11.604363, EdgeFilter.ALL_EDGES);
 
                 logger.info("start searching from:" + fromRes + " to:" + toRes + " " + weighting);
                 path = algo.calcPath(fromRes, toRes);
@@ -215,7 +215,8 @@ public class MiniGraphUI
                     return;
                 }
 
-                logger.info("found path in " + sw.getSeconds() + "s with " + path.calcNodes().size() + " nodes: " + path);
+                logger.info("found path in " + sw.getSeconds() + "s with nodes:"
+                        + path.calcNodes().size() + ", millis: " + path.getMillis() + ", " + path);
                 g2.setColor(Color.BLUE.brighter().brighter());
                 plotPath(path, g2, 1);
             }

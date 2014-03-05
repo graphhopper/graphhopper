@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
@@ -35,7 +36,7 @@ public class PathTest
 {
     private final EncodingManager carManager = new EncodingManager("CAR");
     private final FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
-    
+
     @Test
     public void testFound()
     {
@@ -50,11 +51,15 @@ public class PathTest
     @Test
     public void testTime()
     {
-        GraphStorage g = new GraphBuilder(carManager).create();        
+        GraphStorage g = new GraphBuilder(carManager).create();
         Path p = new Path(g, encoder);
-        assertEquals(60 * 60 * 1000, p.calcMillis(100000, encoder.setProperties(100, true, true)));
+        long flags = encoder.setSpeed(encoder.setReverseSpeed(0, 80), 100);
+        assertEquals(60 * 60 * 1000, p.calcMillis(100000, flags));
+        p.reverseOrder();
+        assertEquals(60 * 60 * 1000, p.calcMillis(100000, flags));
+
         g.close();
-    }    
+    }
 
     @Test
     public void testWayList()
@@ -105,7 +110,7 @@ public class PathTest
         assertPList(Helper.createPointList(2, 0.1, 11, 1, 10, 1, 1, 0.1, 9, 1, 8, 1, 0, 0.1), path.calcPoints());
         instr = path.calcInstructions();
         assertEquals("[" + 144 * 1000 + ", " + 6 * 60 * 1000 + ", 0]", instr.createMillis().toString());
-        assertEquals("[2000.0, 1000.0, 0.0]", instr.createDistances().toString());        
+        assertEquals("[2000.0, 1000.0, 0.0]", instr.createDistances().toString());
         g.close();
     }
 }

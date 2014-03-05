@@ -179,14 +179,14 @@ public class Path
     {
         extractSW.start();
         EdgeEntry goalEdge = edgeEntry;
-        setEndNode(goalEdge.endNode);
+        setEndNode(goalEdge.adjNode);
         while (EdgeIterator.Edge.isValid(goalEdge.edge))
         {
-            processEdge(goalEdge.edge, goalEdge.endNode);
+            processEdge(goalEdge.edge, goalEdge.adjNode);
             goalEdge = goalEdge.parent;
         }
 
-        setFromNode(goalEdge.endNode);
+        setFromNode(goalEdge.adjNode);
         reverseOrder();
         extractSW.stop();
         return setFound(true);
@@ -208,9 +208,9 @@ public class Path
     /**
      * Calls getDistance and adds the edgeId.
      */
-    protected void processEdge( int edgeId, int endNode )
+    protected void processEdge( int edgeId, int adjNode )
     {
-        EdgeIteratorState iter = graph.getEdgeProps(edgeId, endNode);
+        EdgeIteratorState iter = graph.getEdgeProps(edgeId, adjNode);
         double dist = iter.getDistance();
         distance += dist;
         millis += calcMillis(dist, iter.getFlags());
@@ -223,7 +223,8 @@ public class Path
      */
     protected long calcMillis( double distance, long flags )
     {
-        return (long) (distance * 3600 / encoder.getSpeed(flags));
+        double speed = encoder.getSpeed(flags);
+        return (long) (distance * 3600 / speed);
     }
 
     /**

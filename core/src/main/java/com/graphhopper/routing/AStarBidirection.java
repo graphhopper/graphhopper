@@ -216,7 +216,7 @@ public class AStarBidirection extends AbstractBidirAlgo
             TIntObjectMap<AStarEdge> shortestWeightMap, EdgeExplorer explorer, boolean reverse )
     {
 
-        int currNode = currEdge.endNode;
+        int currNode = currEdge.adjNode;
         EdgeIterator iter = explorer.setBaseNode(currNode);
         while (iter.next())
         {
@@ -225,22 +225,22 @@ public class AStarBidirection extends AbstractBidirAlgo
             if (currEdge.edge == iter.getEdge())
                 continue;
 
-            int neighborNode = iter.getAdjNode();
+            int adjNode = iter.getAdjNode();
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
             double alreadyVisitedWeight = weighting.calcWeight(iter, reverse) + currEdge.weightToCompare;
-            AStarEdge de = shortestWeightMap.get(neighborNode);
+            AStarEdge de = shortestWeightMap.get(adjNode);
             if (de == null || de.weightToCompare > alreadyVisitedWeight)
             {
-                double tmpLat = nodeAccess.getLatitude(neighborNode);
-                double tmpLon = nodeAccess.getLongitude(neighborNode);
+                double tmpLat = nodeAccess.getLatitude(adjNode);
+                double tmpLon = nodeAccess.getLongitude(adjNode);
                 double currWeightToGoal = dist.calcDist(goal.lat, goal.lon, tmpLat, tmpLon);
                 currWeightToGoal = weighting.getMinWeight(currWeightToGoal);
                 double estimationFullDist = alreadyVisitedWeight + currWeightToGoal;
                 if (de == null)
                 {
-                    de = new AStarEdge(iter.getEdge(), neighborNode, estimationFullDist, alreadyVisitedWeight);
-                    shortestWeightMap.put(neighborNode, de);
+                    de = new AStarEdge(iter.getEdge(), adjNode, estimationFullDist, alreadyVisitedWeight);
+                    shortestWeightMap.put(adjNode, de);
                 } else
                 {
                     prioQueueOpenSet.remove(de);
@@ -251,7 +251,7 @@ public class AStarBidirection extends AbstractBidirAlgo
 
                 de.parent = currEdge;
                 prioQueueOpenSet.add(de);
-                updateShortest(de, neighborNode);
+                updateShortest(de, adjNode);
             }
         }
     }

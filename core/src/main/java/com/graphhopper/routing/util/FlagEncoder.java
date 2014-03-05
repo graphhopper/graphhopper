@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.util.EdgeIteratorState;
+
 /**
  * This class provides methods to define how a value (like speed or direction) converts to a flag
  * (currently an integer value), which is stored in an edge .
@@ -31,7 +33,7 @@ public interface FlagEncoder
     double getMaxSpeed();
 
     /**
-     * @return the speed in km/h
+     * @return the speed in km/h for this direction, for backward direction use getReverseSpeed
      */
     double getSpeed( long flags );
 

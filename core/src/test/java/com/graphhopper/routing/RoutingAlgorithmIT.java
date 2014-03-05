@@ -169,22 +169,21 @@ public class RoutingAlgorithmIT
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
     
-    @Ignore
-    // TODO use Fastest2Weighting
     // @Test
+    @Ignore
     public void testMonacoBike3D_twoSpeedsPerEdge()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 1850, 89));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 4727, 267));
-        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 3149, 193));
-        list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 2015, 109));
+        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 1724, 85));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3835, 171));
+        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2436, 121));
+        list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1610, 85));
 
         // try reverse direction
-        list.add(new OneRun(43.727687, 7.418737, 43.730864, 7.420771, 2706, 139));
-        list.add(new OneRun(43.74958, 7.436566, 43.727687, 7.418737, 4305, 190));
-        list.add(new OneRun(43.739213, 7.427806, 43.728677, 7.41016, 3299, 155));
-        list.add(new OneRun(43.739662, 7.424355, 43.733802, 7.413433, 4424, 206));
+        list.add(new OneRun(43.727687, 7.418737, 43.730864, 7.420771, 2624, 116));
+        list.add(new OneRun(43.74958, 7.436566, 43.727687, 7.418737, 4255, 159));
+        list.add(new OneRun(43.739213, 7.427806, 43.728677, 7.41016, 2863, 147));
+        list.add(new OneRun(43.739662, 7.424355, 43.733802, 7.413433, 1869, 110));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "BIKE2", true, "BIKE2", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());

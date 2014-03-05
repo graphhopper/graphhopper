@@ -139,7 +139,7 @@ public abstract class AbstractBinHeapTest
 
         for (int i = 0; i < N; i++)
         {
-            assertEquals(juQueue.poll().endNode, binHeap.pollElement(), 1e-5);
+            assertEquals(juQueue.poll().adjNode, binHeap.pollElement(), 1e-5);
         }
 
         assertEquals(binHeap.getSize(), 0);
