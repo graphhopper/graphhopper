@@ -149,7 +149,7 @@ $(document).ready(function(e) {
                         yTicks: undefined, //number of ticks on y axis, calculated by default according to height
                         collapsed: false    //collapsed mode, show chart on click or mouseover
                     });
-                    elevationControl.addTo(map);
+                    elevationControl.addTo(map);                    
                 }
 
 //        var data = JSON.parse("[[10.4049076,48.2802518],[10.405231,48.2801396],...]");

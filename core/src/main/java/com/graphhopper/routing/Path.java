@@ -213,7 +213,7 @@ public class Path
         EdgeIteratorState iter = graph.getEdgeProps(edgeId, adjNode);
         double dist = iter.getDistance();
         distance += dist;
-        millis += calcMillis(dist, iter.getFlags());
+        millis += calcMillis(dist, iter.getFlags(), false);
         addEdge(edgeId);
     }
 
@@ -221,9 +221,9 @@ public class Path
      * Calculates the time in millis for the specified distance in meter and speed (in km/h) via
      * flags.
      */
-    protected long calcMillis( double distance, long flags )
+    protected long calcMillis( double distance, long flags, boolean revert )
     {
-        double speed = encoder.getSpeed(flags);
+        double speed = revert ? encoder.getReverseSpeed(flags) : encoder.getSpeed(flags);
         return (long) (distance * 3600 / speed);
     }
 
@@ -507,7 +507,7 @@ public class Path
                 double newDist = edge.getDistance();
                 prevInstruction.setDistance(newDist + prevInstruction.getDistance());
                 long flags = edge.getFlags();
-                prevInstruction.setMillis(calcMillis(newDist, flags) + prevInstruction.getMillis());
+                prevInstruction.setMillis(calcMillis(newDist, flags, false) + prevInstruction.getMillis());
             }
         });
 
