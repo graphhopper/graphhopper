@@ -47,6 +47,6 @@ public class Edge implements Comparable<Edge>
     @Override
     public String toString()
     {
-        return adjNode + " (" + edge + ") distance is " + weight;
+        return adjNode + " (" + edge + ") weight: " + weight;
     }
 }

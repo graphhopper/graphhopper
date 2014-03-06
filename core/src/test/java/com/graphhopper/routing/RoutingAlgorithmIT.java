@@ -169,8 +169,7 @@ public class RoutingAlgorithmIT
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
     
-    // @Test
-    @Ignore
+    @Test
     public void testMonacoBike3D_twoSpeedsPerEdge()
     {
         List<OneRun> list = new ArrayList<OneRun>();

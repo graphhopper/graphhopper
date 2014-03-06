@@ -17,6 +17,9 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterState;
@@ -155,9 +158,9 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
         assertFalse(g.edge(0, 1).isShortcut());
         assertFalse(g.edge(1, 2).isShortcut());
-        
+
         // only remove edges
-        long flags = carEncoder.setProperties(0, true, true);
+        long flags = carEncoder.setProperties(10, true, true);
         EdgeSkipIterState sc1 = g.shortcut(0, 1);
         assertTrue(sc1.isShortcut());
         sc1.setWeight(2.001);
@@ -173,11 +176,28 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         assertTrue(carEncoder.isBackward(sc1.getFlags()));
         assertTrue(carEncoder.isForward(sc1.getFlags()));
 
-        flags = carEncoder.setProperties(0, false, true);
+        flags = carEncoder.setProperties(10, false, true);
         sc1.setFlags(flags);
         sc1.setWeight(100.123);
         assertEquals(100.123, sc1.getWeight(), 1e-3);
         assertTrue(carEncoder.isBackward(sc1.getFlags()));
         assertFalse(carEncoder.isForward(sc1.getFlags()));
+    }
+
+    @Test
+    public void testGetWeightIfAdvancedEncoder()
+    {
+        FlagEncoder customEncoder = new Bike2WeightFlagEncoder();
+        LevelGraphStorage g = new GraphBuilder(new EncodingManager(customEncoder)).levelGraphCreate();
+
+        EdgeSkipIterState sc1 = g.shortcut(0, 1);
+        long flags = customEncoder.setProperties(10, false, true);
+        sc1.setFlags(flags);
+        sc1.setWeight(100.123);
+
+        assertEquals(100.123, g.getEdgeProps(sc1.getEdge(), sc1.getAdjNode()).getWeight(), 1e-3);
+        assertEquals(100.123, g.getEdgeProps(sc1.getEdge(), sc1.getBaseNode()).getWeight(), 1e-3);
+        assertEquals(100.123, ((EdgeSkipIterState) GHUtility.getEdge(g, sc1.getBaseNode(), sc1.getAdjNode())).getWeight(), 1e-3);
+        assertEquals(100.123, ((EdgeSkipIterState) GHUtility.getEdge(g, sc1.getAdjNode(), sc1.getBaseNode())).getWeight(), 1e-3);
     }
 }
