@@ -65,10 +65,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     // the most important nodes comes last
     private GHTreeMapComposed sortedNodes;
     private int oldPriorities[];
-    private final DataAccess originalEdges;
-    // shortcut is one direction, speed is only involved while recalculating the adjNode weights - see prepareEdges
-    private final long scFwdDir;
-    private final long scBothDir;
+    private final DataAccess originalEdges;    
     private final Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
     private IgnoreNodeFilter ignoreNodeFilter;
     private DijkstraOneToMany algo;
@@ -89,11 +86,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     public PrepareContractionHierarchies( FlagEncoder encoder, Weighting weighting )
     {
         prepareEncoder = encoder;
-        scFwdDir = encoder.setAccess(0, true, false);
-        scBothDir = encoder.setAccess(0, true, true);
+        long scFwdDir = encoder.setAccess(0, true, false);        
 
         // shortcuts store weight in flags where we assume bit 1 and 2 are used for access restriction
-        if ((scFwdDir & 0x1) == 0)
+        if ((scFwdDir & PrepareEncoder.getScFwdDir()) == 0)
             throw new IllegalArgumentException("Currently only one vehicle is supported if you enable CH. "
                     + "It seems that you have imported more than one.");
 
@@ -107,22 +103,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     {
         this.g = (LevelGraph) g;
         return this;
-    }
-
-    /**
-     * A long with only the two access bits enabled
-     */
-    long getScBothDir()
-    {
-        return scBothDir;
-    }
-
-    /**
-     * A long with only the forward access bit enabled
-     */
-    long getScFwdDir()
-    {
-        return scFwdDir;
     }
 
     /**
@@ -491,7 +471,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 Shortcut tmpRetSc = shortcuts.get(tmpSc);
                 if (tmpRetSc != null)
                 {
-                    tmpRetSc.flags = scBothDir;
+                    tmpRetSc.flags = PrepareEncoder.getScDirMask();
                     return;
                 }
             }
@@ -875,7 +855,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         double dist;
         double weight;
         int originalEdges;
-        long flags = scFwdDir;
+        long flags = PrepareEncoder.getScFwdDir();
 
         public Shortcut( int from, int to, double weight, double dist )
         {
@@ -911,7 +891,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         @Override
         public String toString()
         {
-            if (flags == scBothDir)
+            if (flags == PrepareEncoder.getScDirMask())
                 return from + "<->" + to + ", weight:" + weight;
             return from + "->" + to + ", weight:" + weight;
         }

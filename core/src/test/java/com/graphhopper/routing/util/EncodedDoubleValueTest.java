@@ -61,7 +61,7 @@ public class EncodedDoubleValueTest
         flags = carEncoder.handleWayTags(way, 1, 0);
 
         // double speed = AbstractFlagEncoder.parseSpeed("70 mph");
-        carEncoder.swapDirection(flags);
+        flags = carEncoder.swapDirection(flags);
         assertEquals(100, carEncoder.getSpeed(flags), 1e-1);
     }
 }

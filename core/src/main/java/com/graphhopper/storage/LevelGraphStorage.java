@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.AllEdgesSkipIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -43,7 +44,8 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
     private int I_SKIP_EDGE2;
     private int I_LEVEL;
     // after the last edge only shortcuts are stored
-    private int lastEdgeIndex;
+    private int lastEdgeIndex = -1;
+    private final long scDirMask = PrepareEncoder.getScDirMask();
 
     public LevelGraphStorage( Directory dir, EncodingManager encodingManager )
     {
@@ -51,14 +53,15 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
     }
 
     @Override
-    protected void initStorage() {
+    protected void initStorage()
+    {
         super.initStorage();
         I_SKIP_EDGE1 = nextEdgeEntryIndex(4);
         I_SKIP_EDGE2 = nextEdgeEntryIndex(4);
         I_LEVEL = nextNodeEntryIndex(4);
         initNodeAndEdgeEntrySize();
     }
-    
+
     @Override
     public final void setLevel( int index, int level )
     {
@@ -184,6 +187,12 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
         }
 
         @Override
+        public long getFlags()
+        {
+            return LevelGraphStorage.this.getFlags(edgePointer, baseNode > node, isShortcut());
+        }
+
+        @Override
         public final EdgeIteratorState detach()
         {
             if (edgeId == nextEdge)
@@ -202,6 +211,20 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
             EdgeSkipIterator eSkip = (EdgeSkipIterator) edge;
 //            setSkippedEdges(eSkip.getSkippedEdge1(), eSkip.getSkippedEdge2());
         }
+    }
+
+    private long getFlags( long edgePointer, boolean reverse, boolean shortcut )
+    {        
+        if (!shortcut || !reverse)
+            return getFlags(edgePointer, reverse);
+        
+        long flags = getFlags(edgePointer, false);
+        long dir = flags & scDirMask;
+        if (dir == scDirMask || dir == 0)
+            return flags;
+
+        // swap the last bits with this mask
+        return flags ^ scDirMask;
     }
 
     /**
@@ -329,7 +352,13 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
         public final double getWeight()
         {
             return LevelGraphStorage.this.getWeight(this);
-        }       
+        }
+
+        @Override
+        public long getFlags()
+        {
+            return LevelGraphStorage.this.getFlags(edgePointer, switchFlags, isShortcut());
+        }
     }
 
     final void setWeight( EdgeSkipIterState edge, double weight )

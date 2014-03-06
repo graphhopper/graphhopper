@@ -161,9 +161,9 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
         assertFalse(g.edge(0, 1).isShortcut());
         assertFalse(g.edge(1, 2).isShortcut());
-        
+
         // only remove edges
-        long flags = carEncoder.setProperties(0, true, true);
+        long flags = carEncoder.setProperties(10, true, true);
         EdgeSkipIterState sc1 = g.shortcut(0, 1);
         assertTrue(sc1.isShortcut());
         sc1.setWeight(2.001);
@@ -179,7 +179,7 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         assertTrue(carEncoder.isBackward(sc1.getFlags()));
         assertTrue(carEncoder.isForward(sc1.getFlags()));
 
-        flags = carEncoder.setProperties(0, false, true);
+        flags = carEncoder.setProperties(10, false, true);
         sc1.setFlags(flags);
         sc1.setWeight(100.123);
         assertEquals(100.123, sc1.getWeight(), 1e-3);

@@ -699,7 +699,7 @@ public class GraphHopperStorage implements GraphStorage
         return new SingleEdge(edgeId, nodeId);
     }
 
-    private long getFlags( long edgePointer, boolean swap )
+    long getFlags( long edgePointer, boolean swap )
     {
         int low = edges.getInt(edgePointer + E_FLAGS);
         long res = low;

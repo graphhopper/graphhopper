@@ -322,7 +322,7 @@ public class CarFlagEncoderTest
 
         // double speed = AbstractFlagEncoder.parseSpeed("70 mph");
         // => 112.654 * 0.9 => 101
-        instance.swapDirection(flags);
+        flags = instance.swapDirection(flags);
         assertEquals(100, instance.getSpeed(flags), 1e-1);
     }
 
