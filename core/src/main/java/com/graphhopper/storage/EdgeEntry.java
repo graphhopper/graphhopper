@@ -34,7 +34,7 @@ public class EdgeEntry extends Edge implements Cloneable
     @Override
     public EdgeEntry clone()
     {
-        return new EdgeEntry(edge, endNode, weight);
+        return new EdgeEntry(edge, adjNode, weight);
     }
 
     public EdgeEntry cloneFull()

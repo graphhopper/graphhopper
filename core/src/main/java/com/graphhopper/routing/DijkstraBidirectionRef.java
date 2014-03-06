@@ -147,7 +147,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     void fillEdges( EdgeEntry currEdge, PriorityQueue<EdgeEntry> prioQueue,
             TIntObjectMap<EdgeEntry> shortestWeightMap, EdgeExplorer explorer, boolean reverse )
     {
-        int currNode = currEdge.endNode;
+        int currNode = currEdge.adjNode;
         EdgeIterator iter = explorer.setBaseNode(currNode);
         while (iter.next())
         {

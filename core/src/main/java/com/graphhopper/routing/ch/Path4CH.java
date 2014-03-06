@@ -43,14 +43,14 @@ public class Path4CH extends PathBidirRef
         expandEdge((EdgeSkipIterState) graph.getEdgeProps(tmpEdge, endNode), false);
     }
 
-    private void expandEdge( EdgeSkipIterState mainEdgeState, boolean revert )
+    private void expandEdge( EdgeSkipIterState mainEdgeState, boolean reverse )
     {
         if (!mainEdgeState.isShortcut())
         {
             double dist = mainEdgeState.getDistance();
             distance += dist;
             long flags = mainEdgeState.getFlags();
-            millis += calcMillis(dist, flags);
+            millis += calcMillis(dist, flags, reverse);
             addEdge(mainEdgeState.getEdge());
             return;
         }
@@ -58,7 +58,7 @@ public class Path4CH extends PathBidirRef
         int skippedEdge1 = mainEdgeState.getSkippedEdge1();
         int skippedEdge2 = mainEdgeState.getSkippedEdge2();
         int from = mainEdgeState.getBaseNode(), to = mainEdgeState.getAdjNode();
-        if (revert)
+        if (reverse)
         {
             int tmp = from;
             from = to;

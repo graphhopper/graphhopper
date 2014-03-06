@@ -72,8 +72,8 @@ public class Dijkstra extends AbstractRoutingAlgorithm
             if (finished())
                 break;
 
-            int neighborNode = currEdge.endNode;
-            EdgeIterator iter = explorer.setBaseNode(neighborNode);
+            int startNode = currEdge.adjNode;
+            EdgeIterator iter = explorer.setBaseNode(startNode);
             while (iter.next())
             {
                 if (!accept(iter))
@@ -101,7 +101,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
                     fromHeap.add(nEdge);
                 }
 
-                updateShortest(nEdge, neighborNode);
+                updateShortest(nEdge, startNode);
             }
 
             if (fromHeap.isEmpty())
@@ -117,7 +117,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     @Override
     protected boolean finished()
     {
-        return currEdge.endNode == to;
+        return currEdge.adjNode == to;
     }
 
     @Override

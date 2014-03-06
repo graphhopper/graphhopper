@@ -66,7 +66,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private GHTreeMapComposed sortedNodes;
     private int oldPriorities[];
     private final DataAccess originalEdges;
-    // shortcut is one direction, speed is only involved while recalculating the endNode weights - see prepareEdges
+    // shortcut is one direction, speed is only involved while recalculating the adjNode weights - see prepareEdges
     private final long scFwdDir;
     private final long scBothDir;
     private final Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
@@ -480,7 +480,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             // Hint: shortcuts are always one-way due to distinct level of every node but we don't
             // know yet the levels so we need to determine the correct direction or if both directions
             // minor improvement: if (shortcuts.containsKey(sc) 
-            // then two shortcuts with the same nodes (u<->n.endNode) exists => check current shortcut against both
+            // then two shortcuts with the same nodes (u<->n.adjNode) exists => check current shortcut against both
             Shortcut sc = new Shortcut(u_fromNode, w_toNode, existingDirectWeight, existingDistSum);
             if (shortcuts.containsKey(sc))
             {
@@ -510,20 +510,20 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     }
 
     /**
-     * Calculates the priority of endNode v without changing the graph. Warning: the calculated
+     * Calculates the priority of adjNode v without changing the graph. Warning: the calculated
      * priority must NOT depend on priority(v) and therefor findShortcuts should also not depend on
      * the priority(v). Otherwise updating the priority before contracting in contractNodes() could
      * lead to a slowishor even endless loop.
      */
     int calculatePriority( int v )
     {
-        // set of shortcuts that would be added if endNode v would be contracted next.
+        // set of shortcuts that would be added if adjNode v would be contracted next.
         findShortcuts(calcScHandler.setNode(v));
 
 //        System.out.println(v + "\t " + tmpShortcuts);
         // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
         //
-        // every endNode has an 'original edge' number associated. initially it is r=1
+        // every adjNode has an 'original edge' number associated. initially it is r=1
         // when a new shortcut is introduced then r of the associated edges is summed up:
         // r(u,w)=r(u,v)+r(v,w) now we can define
         // originalEdgesCount = σ(v) := sum_{ (u,w) ∈ shortcuts(v) } of r(u, w)
@@ -550,7 +550,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // # low influence: with it the shortcut creation is slightly faster
         //
         // |shortcuts(v)| − |{(u, v) | v uncontracted}| − |{(v, w) | v uncontracted}|        
-        // meanDegree is used instead of outDegree+inDegree as if one endNode is in both directions
+        // meanDegree is used instead of outDegree+inDegree as if one adjNode is in both directions
         // only one bucket memory is used. Additionally one shortcut could also stand for two directions.
         int edgeDifference = calcScHandler.shortcuts - degree;
 
@@ -626,7 +626,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     }
 
     /**
-     * Introduces the necessary shortcuts for endNode v in the graph.
+     * Introduces the necessary shortcuts for adjNode v in the graph.
      */
     int addShortcuts( int v )
     {
@@ -716,7 +716,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         @Override
         public final boolean accept( EdgeIteratorState iter )
         {
-            // ignore if it is skipNode or a endNode already contracted
+            // ignore if it is skipNode or a adjNode already contracted
             int node = iter.getAdjNode();
             return avoidNode != node && graph.getLevel(node) == 0;
         }

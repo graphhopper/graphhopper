@@ -216,7 +216,7 @@ public class AStarBidirection extends AbstractBidirAlgo
             TIntObjectMap<AStarEdge> shortestWeightMap, EdgeExplorer explorer, boolean reverse )
     {
 
-        int currNode = currEdge.endNode;
+        int currNode = currEdge.adjNode;
         EdgeIterator iter = explorer.setBaseNode(currNode);
         while (iter.next())
         {

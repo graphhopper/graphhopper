@@ -89,7 +89,7 @@ public class AStar extends AbstractRoutingAlgorithm
         EdgeExplorer explorer = outEdgeExplorer;
         while (true)
         {
-            int currVertex = currEdge.endNode;
+            int currVertex = currEdge.adjNode;
             visitedCount++;
             if (finished())
                 break;
@@ -155,7 +155,7 @@ public class AStar extends AbstractRoutingAlgorithm
     @Override
     protected boolean finished()
     {
-        return currEdge.endNode == to1;
+        return currEdge.adjNode == to1;
     }
 
     @Override
