@@ -122,38 +122,6 @@ $(document).ready(function(e) {
 
                 initMap();
 
-<<<<<<< HEAD
-=======
-                if (json.dimension === 3) {
-                    elevationControl = L.control.elevation({
-                        position: "bottomright",
-                        theme: "white-theme", //default: lime-theme
-                        width: 450,
-                        height: 125,
-                        yAxisMin: 0, // set min domain y axis
-                        // yAxisMax: 550, // set max domain y axis
-                        forceAxisBounds: false,
-                        margins: {
-                            top: 10,
-                            right: 20,
-                            bottom: 30,
-                            left: 50
-                        },
-                        useHeightIndicator: true, //if false a marker is drawn at map position
-                        interpolation: "linear", //see https://github.com/mbostock/d3/wiki/SVG-Shapes#wiki-area_interpolate
-                        hoverNumber: {
-                            decimalsX: 3, //decimals on distance (always in km)
-                            decimalsY: 0, //deciamls on height (always in m)
-                            formatter: undefined //custom formatter function may be injected
-                        },
-                        xTicks: undefined, //number of ticks in x axis, calculated by default according to width
-                        yTicks: undefined, //number of ticks on y axis, calculated by default according to height
-                        collapsed: false    //collapsed mode, show chart on click or mouseover
-                    });
-                    elevationControl.addTo(map);                    
-                }
-
->>>>>>> 0dca8ca... Path4CH needs to specify orientation(if reverse)
 //        var data = JSON.parse("[[10.4049076,48.2802518],[10.405231,48.2801396],...]");
 //        var tempFeature = {
 //            "type": "Feature", "geometry": { "type": "LineString", "coordinates": data }
