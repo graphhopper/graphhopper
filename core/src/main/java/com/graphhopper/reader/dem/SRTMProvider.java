@@ -236,6 +236,12 @@ public class SRTMProvider implements ElevationProvider
     }
 
     @Override
+    public void release()
+    {
+        cacheData.clear();
+    }        
+
+    @Override
     public String toString()
     {
         return "SRTM";

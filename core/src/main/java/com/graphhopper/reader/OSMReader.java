@@ -735,7 +735,7 @@ public class OSMReader implements DataReader
         if (towerNodeDistance == 0)
         {
             // As investigation shows often two paths should have crossed via one identical point 
-            // but end up in two very close points.
+            // but end up in two very release points.
             zeroCounter++;
             towerNodeDistance = 0.0001;
         }
@@ -791,6 +791,7 @@ public class OSMReader implements DataReader
     {
         printInfo("way");
         pillarInfo.clear();
+        eleProvider.release();
         osmNodeIdToInternalNodeMap = null;
         osmNodeIdToNodeFlagsMap = null;
         osmWayIdToRouteWeightMap = null;

@@ -28,6 +28,11 @@ public interface ElevationProvider
      */
     double getEle( double lat, double lon );
     
+    /**
+     * Release resources.
+     */
+    void release();
+    
     public final static ElevationProvider NOOP = new ElevationProvider()
     {
         @Override
@@ -35,5 +40,10 @@ public interface ElevationProvider
         {
             return Double.NaN;
         }
+
+        @Override
+        public void release()
+        {            
+        }        
     };
 }

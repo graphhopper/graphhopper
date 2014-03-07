@@ -70,7 +70,7 @@ public class RoutingAlgorithmIT
 
         // same special cases where GPS-exact routing could have problems (same edge and neighbor edges)
         list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.41934, 0, 1));
-        // on the same edge and very close
+        // on the same edge and very release
         list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.4193, 2, 2));
         // one way stuff
         list.add(new OneRun(43.729445, 7.415063, 43.728856, 7.41472, 107, 4));
