@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.ShortestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -111,12 +112,54 @@ public class InstructionListTest
         // check order of pillar nodes        
         assertEquals(1.15, gpxes.get(4).getLon(), 1e-6);
         assertEquals(1.16, gpxes.get(5).getLon(), 1e-6);
+        assertEquals(1.16, gpxes.get(5).getLon(), 1e-6);
+        // List<List<Double>> tmpList = createList(p.calcPoints(), wayList.createPointIndices());
+        compare(Arrays.asList(asL(1.2d, 1.0d), asL(1.2d, 1.1), asL(1.1d, 1.1), asL(1.0, 1.1), 
+                asL(1.0, 1.2), asL(1.1, 1.3), asL(1.1, 1.4)),
+                wayList.createLatLngs());
 
         p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestWeighting()).calcPath(6, 2);
         assertEquals(42000, p.getDistance(), 1e-2);
+        assertEquals(Helper.createTList(6, 7, 8, 5, 2), p.calcNodes());
         wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 6-7", "Continue onto 7-8", "Turn left onto 5-8", "Continue onto 5-2", "Finish!"),
                 wayList.createDescription(trMap.getWithFallBack(Locale.CANADA)));
+
+        // assertEquals(Arrays.asList(0, 1, 4, 5, 6), wayList.createPointIndices());
+        // tmpList = createList(p.calcPoints(), wayList.createPointIndices());
+        compare(Arrays.asList(asL(1d, 1d), asL(1d, 1.1), asL(1d, 1.2), asL(1.1, 1.2), asL(1.2, 1.2)),
+                wayList.createLatLngs());
+    }
+
+    List<List<Double>> createList( PointList pl, List<Integer> integs )
+    {
+        List<List<Double>> list = new ArrayList<List<Double>>();
+        for (int i : integs)
+        {
+            List<Double> entryList = new ArrayList<Double>(2);
+            entryList.add(pl.getLatitude(i));
+            entryList.add(pl.getLongitude(i));
+            list.add(entryList);
+        }
+        return list;
+    }
+
+    void compare( List<List<Double>> expected, List<List<Double>> was )
+    {
+        for (int i = 0; i < expected.size(); i++)
+        {
+            List<Double> e = expected.get(i);
+            List<Double> wasE = was.get(i);
+            for (int j = 0; j < e.size(); j++)
+            {
+                assertEquals(e + " vs " + wasE, e.get(j), wasE.get(j), 1e-5d);
+            }
+        }
+    }
+
+    List<Double> asL( Double... list )
+    {
+        return Arrays.asList(list);
     }
 
     double sum( List<Double> list )
