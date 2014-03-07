@@ -62,14 +62,14 @@ public class EncodedDoubleValue extends EncodedValue
 
         // clear value bits
         flags &= ~mask;
-
+        
         // set value
         return flags | tmpValue;
     }
 
     public double getDoubleValue( long flags )
     {
-        // find value
+        // find value        
         flags &= mask;
         flags >>= shift;
         return flags * factor;

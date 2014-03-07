@@ -33,7 +33,11 @@ public interface FlagEncoder
     double getMaxSpeed();
 
     /**
+<<<<<<< HEAD
      * @return the speed in km/h for this direction, for backward direction use getReverseSpeed
+=======
+     * @return the speed in km/h
+>>>>>>> master
      */
     double getSpeed( long flags );
 

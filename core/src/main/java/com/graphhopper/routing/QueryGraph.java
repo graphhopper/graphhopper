@@ -729,7 +729,7 @@ public class QueryGraph implements Graph
         private final int adjNode;
 
         public VirtualEdgeIState( int edgeId, int baseNode, int adjNode,
-                double distance, long flags, String name, PointList pointList )
+                double distance, long flags, String name, PointList pointList)
         {
             this.edgeId = edgeId;
             this.baseNode = baseNode;
@@ -737,7 +737,7 @@ public class QueryGraph implements Graph
             this.distance = distance;
             this.flags = flags;
             this.name = name;
-            this.pointList = pointList;
+            this.pointList = pointList;            
         }
 
         @Override
@@ -837,7 +837,7 @@ public class QueryGraph implements Graph
         {
             return false;
         }
-
+        
         @Override
         public int getAdditionalField()
         {

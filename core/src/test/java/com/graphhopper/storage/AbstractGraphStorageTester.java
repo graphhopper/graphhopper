@@ -1041,7 +1041,7 @@ public abstract class AbstractGraphStorageTester
         assertEquals(44.123, list.get(1).getSpeed(flags), 1e-3);
         assertTrue(list.get(1).isForward(flags));
         assertFalse(list.get(1).isBackward(flags));
-    }
+    }    
 
     @Test
     public void testEnabledElevation()

@@ -1371,7 +1371,8 @@ public class GraphHopperStorage implements GraphStorage
                 encodingManager = new EncodingManager(acceptStr, bytesForFlags);
             } else if (!acceptStr.isEmpty() && !encodingManager.toDetailsString().equalsIgnoreCase(acceptStr))
             {
-                throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.toDetailsString() + "\nGraph: " + acceptStr);
+                throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.toDetailsString() 
+                        + "\nGraph: " + acceptStr + ", dir:" + dir.getLocation());
             }
 
             String dim = properties.get("graph.dimension");

@@ -70,7 +70,7 @@ public class Path
     {
         this(p.graph, p.encoder);
         weight = p.weight;
-        edgeIds = new TIntArrayList(edgeIds);
+        edgeIds = new TIntArrayList(p.edgeIds);
         edgeEntry = p.edgeEntry;
     }
 

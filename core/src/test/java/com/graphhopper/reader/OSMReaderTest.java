@@ -688,9 +688,11 @@ public class OSMReaderTest
         int n50 = AbstractGraphStorageTester.getIdOf(graph, 49.5001);
 
         EdgeIteratorState edge = GHUtility.getEdge(graph, n50, n30);
-        assertEquals(Helper.createPointList3D(49.5001, 11.501, 441, 49.5002, 11.5015, 441, 49.5011, 11.502, 415.0), edge.fetchWayGeometry(3));
+        assertEquals(Helper.createPointList3D(49.5001, 11.501, 441, 49.5002, 11.5015, 441, 49.5011, 11.502, 415.0), 
+                edge.fetchWayGeometry(3));
 
         edge = GHUtility.getEdge(graph, n10, n50);
-        assertEquals(Helper.createPointList3D(49.501, 11.5001, 399.0, 49.5001, 11.501, 441.0), edge.fetchWayGeometry(3));
+        assertEquals(Helper.createPointList3D(49.501, 11.5001, 399.0, 49.5001, 11.501, 441.0), 
+                edge.fetchWayGeometry(3));
     }
 }

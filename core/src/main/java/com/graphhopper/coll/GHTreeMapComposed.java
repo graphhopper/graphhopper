@@ -81,6 +81,9 @@ public class GHTreeMapComposed
      */
     public int pollKey()
     {
+        if (map.isEmpty())
+            throw new IllegalStateException("Cannot poll collection is empty!");
+
         long key = map.pollFirstEntry().getKey();
         return (int) (key & 0xFFFFFFFFL);
     }

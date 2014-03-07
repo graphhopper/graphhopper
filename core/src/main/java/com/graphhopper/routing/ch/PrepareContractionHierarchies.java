@@ -205,9 +205,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     boolean prepareEdges()
     {
-        // In CH the setProperties (speed) are ignored as calculating the new setProperties for a shortcut is often not possible.
-        // Also several shortcuts would be necessary with the different modes (e.g. fastest and shortest)
-        // So calculate the weight and store this as weight, then use only weight instead of calcWeight
         EdgeIterator iter = g.getAllEdges();
         int c = 0;
         while (iter.next())
@@ -290,6 +287,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 }
                 periodSW.stop();
                 updateCounter++;
+                if (sortedNodes.isEmpty())
+                    throw new IllegalStateException("Cannot prepare as no unprepared nodes where found. Called preparation twice?");
             }
 
             if (counter % logSize == 0)
