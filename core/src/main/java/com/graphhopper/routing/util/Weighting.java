@@ -38,7 +38,7 @@ public interface Weighting
      * @param reverse if the specified edge is specified in reverse direction e.g. from the reverse
      * case of a bidirectional search.
      * @return the calculated weight with the specified velocity has to be in the range of 0 and
-     * +Infinity
+     * +Infinity. Make sure your method does not return NaN which can e.g. occur for 0/0.
      */
     double calcWeight( EdgeIteratorState edge, boolean reverse );
 }

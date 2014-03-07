@@ -56,7 +56,7 @@ public class Path4CH extends PathBidirRef
         }
 
         int skippedEdge1 = mainEdgeState.getSkippedEdge1();
-        int skippedEdge2 = mainEdgeState.getSkippedEdge2();
+        int skippedEdge2 = mainEdgeState.getSkippedEdge2();        
         int from = mainEdgeState.getBaseNode(), to = mainEdgeState.getAdjNode();
         if (reverse)
         {

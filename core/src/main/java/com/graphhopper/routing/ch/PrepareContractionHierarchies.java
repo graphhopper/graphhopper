@@ -34,6 +34,7 @@ import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import java.util.*;
 import org.slf4j.Logger;
@@ -65,7 +66,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     // the most important nodes comes last
     private GHTreeMapComposed sortedNodes;
     private int oldPriorities[];
-    private final DataAccess originalEdges;    
+    private final DataAccess originalEdges;
     private final Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
     private IgnoreNodeFilter ignoreNodeFilter;
     private DijkstraOneToMany algo;
@@ -86,7 +87,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     public PrepareContractionHierarchies( FlagEncoder encoder, Weighting weighting )
     {
         prepareEncoder = encoder;
-        long scFwdDir = encoder.setAccess(0, true, false);        
+        long scFwdDir = encoder.setAccess(0, true, false);
 
         // shortcuts store weight in flags where we assume bit 1 and 2 are used for access restriction
         if ((scFwdDir & PrepareEncoder.getScFwdDir()) == 0)
@@ -575,6 +576,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 // If we decrease the correct weight we only explore less and introduce more shortcuts.
                 // I.e. no change to accuracy is made.
                 double existingDirectWeight = v_u_weight + prepareWeighting.calcWeight(outgoingEdges, false);
+                if (Double.isNaN(existingDirectWeight))
+                    throw new IllegalStateException("Weighting should never return NaN values"
+                            + ", in:" + getCoords(incomingEdges, g) + ", out:" + getCoords(outgoingEdges, g)
+                            + ", dist:" + outgoingEdges.getDistance() + ", speed:" + prepareEncoder.getSpeed(outgoingEdges.getFlags()));
+
                 if (existingDirectWeight >= Double.MAX_VALUE)
                     continue;
                 double existingDistSum = v_u_dist + outgoingEdges.getDistance();
@@ -628,6 +634,17 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     if (sc.weight >= prepareWeighting.calcWeight(iter, false))
                         continue NEXT_SC;
 
+                    if (iter.getEdge() == sc.skippedEdge1 || iter.getEdge() == sc.skippedEdge2)
+                    {
+                        throw new IllegalStateException("Shortcut cannot update itself! " + iter.getEdge()
+                                + ", skipEdge1:" + sc.skippedEdge1 + ", skipEdge2:" + sc.skippedEdge2
+                                + ", edge " + iter + ":" + getCoords(iter, g)
+                                + ", sc:" + sc
+                                + ", skippedEdge1: " + getCoords(g.getEdgeProps(sc.skippedEdge1, sc.from), g)
+                                + ", skippedEdge2: " + getCoords(g.getEdgeProps(sc.skippedEdge2, sc.to), g)
+                                + ", neighbors:" + GHUtility.getNeighbors(iter));
+                    }
+
                     // note: flags overwrite weight => call them first
                     iter.setFlags(sc.flags);
                     iter.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
@@ -652,6 +669,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
         }
         return tmpNewShortcuts;
+    }
+
+    String getCoords( EdgeIteratorState e, Graph g )
+    {
+        NodeAccess na = g.getNodeAccess();
+        int base = e.getBaseNode();
+        int adj = e.getAdjNode();
+        return base + "->" + adj + " (" + e.getEdge() + "); "
+                + na.getLat(base) + "," + na.getLon(base) + " -> " + na.getLat(adj) + "," + na.getLon(adj);
     }
 
     PrepareContractionHierarchies initFromGraph()
@@ -892,9 +918,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         @Override
         public String toString()
         {
+            String str;
             if (flags == PrepareEncoder.getScDirMask())
-                return from + "<->" + to + ", weight:" + weight;
-            return from + "->" + to + ", weight:" + weight;
+                str = from + "<->";
+            else
+                str = from + "->";
+
+            return str + to + ", weight:" + weight + " (" + skippedEdge1 + "," + skippedEdge2 + ")";
         }
     }
 }
