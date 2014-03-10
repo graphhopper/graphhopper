@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -199,5 +200,11 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         assertEquals(100.123, g.getEdgeProps(sc1.getEdge(), sc1.getBaseNode()).getWeight(), 1e-3);
         assertEquals(100.123, ((EdgeSkipIterState) GHUtility.getEdge(g, sc1.getBaseNode(), sc1.getAdjNode())).getWeight(), 1e-3);
         assertEquals(100.123, ((EdgeSkipIterState) GHUtility.getEdge(g, sc1.getAdjNode(), sc1.getBaseNode())).getWeight(), 1e-3);
+
+        sc1 = g.shortcut(1, 0);
+        assertTrue(sc1.isShortcut());
+        sc1.setFlags(PrepareEncoder.getScDirMask());
+        sc1.setWeight(1.011011);
+        assertEquals(1.011011, sc1.getWeight(), 1e-3);
     }
 }
