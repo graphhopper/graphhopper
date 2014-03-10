@@ -186,11 +186,11 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
             return LevelGraphStorage.this.getWeight(this);
         }
 
-        @Override
-        public long getFlags()
-        {
-            return LevelGraphStorage.this.getFlags(edgePointer, baseNode > node, isShortcut());
-        }
+//        @Override
+//        public long getFlags()
+//        {
+//            return LevelGraphStorage.this.getFlags(edgePointer, baseNode > node, isShortcut());
+//        }
 
         @Override
         public final EdgeIteratorState detach()
@@ -213,19 +213,19 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
         }
     }
 
-    private long getFlags( long edgePointer, boolean reverse, boolean shortcut )
-    {        
-        if (!shortcut || !reverse)
-            return getFlags(edgePointer, reverse);
-        
-        long flags = getFlags(edgePointer, false);
+    @Override
+    long swapFlags(long edgePointer, long flags) {
+        boolean isShortcut = edgePointer > (long) lastEdgeIndex * edgeEntryBytes;
+        if(!isShortcut)
+            return super.swapFlags(edgePointer, flags);
+                
         long dir = flags & scDirMask;
         if (dir == scDirMask || dir == 0)
             return flags;
 
         // swap the last bits with this mask
         return flags ^ scDirMask;
-    }
+    }    
 
     /**
      * Disconnects the edges (higher->lower node) via the specified edgeState pointing from lower to
@@ -354,11 +354,11 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
             return LevelGraphStorage.this.getWeight(this);
         }
 
-        @Override
-        public long getFlags()
-        {
-            return LevelGraphStorage.this.getFlags(edgePointer, switchFlags, isShortcut());
-        }
+//        @Override
+//        public long getFlags()
+//        {
+//            return LevelGraphStorage.this.getFlags(edgePointer, switchFlags, isShortcut());
+//        }
     }
 
     final void setWeight( EdgeSkipIterState edge, double weight )

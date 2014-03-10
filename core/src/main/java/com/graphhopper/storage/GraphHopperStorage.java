@@ -699,7 +699,7 @@ public class GraphHopperStorage implements GraphStorage
         return new SingleEdge(edgeId, nodeId);
     }
 
-    long getFlags( long edgePointer, boolean swap )
+     private long getFlags( long edgePointer, boolean swap )
     {
         int low = edges.getInt(edgePointer + E_FLAGS);
         long res = low;
@@ -709,14 +709,19 @@ public class GraphHopperStorage implements GraphStorage
             res = ((long) high << 32) | (low & 0xFFFFFFFFL);
         }
         if (swap)
-            return encodingManager.swapDirection(res);
+            return swapFlags(edgePointer, res);
         return res;
     }
+    
+    long swapFlags(long edgePointer, long flags) {
+        return encodingManager.swapDirection(flags);
+    }
 
-    private void setFlags( long edgePointer, int nodeA, int nodeB, long flags )
+     private void setFlags( long edgePointer, int nodeA, int nodeB, long flags )
     {
         if (nodeA > nodeB)
-            flags = encodingManager.swapDirection(flags);
+            flags = swapFlags(edgePointer, flags);
+
         if (flagsSizeIsLong)
         {
             edges.setInt(edgePointer + E_FLAGS, (int) (flags & 0xFFFFFFFFL));
