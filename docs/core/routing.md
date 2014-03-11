@@ -60,3 +60,11 @@ hopper.importOrLoad();
 GHRequest req = new GHRequest(latFrom, lonFrom, latTo, lonTo).setVehicle("bike").setAlgorithm("astar");
 GHResponse res = hopper.route(req);
 ```
+
+In case you need the online routing API in a Java or Android application the GraphHopperWeb comes handy - see the 'web' sub module.
+
+```java
+GraphHopperAPI gh = new GraphHopperWeb();
+gh.load("http://your-graphhopper-service.com/api");
+GHResponse rsp = gh.route(new GHRequest(...));
+```
