@@ -165,7 +165,7 @@ public class Instruction
                 double turnAngle = 180;
                 double prevLat = first ? prevInstr.getLastLat() : points.getLatitude(i - 1);
                 double prevLon = first ? prevInstr.getLastLon() : points.getLongitude(i - 1);
-                turnAngle = ac.calcAngleDeg(prevLat, prevLon, lat, lon, nextLat, nextLon);
+                turnAngle = ac.calcTurnAngleDeg(prevLat, prevLon, lat, lon, nextLat, nextLon);
                 extensions.put("turn-angle", angleFormatter.format(turnAngle));
             }
             

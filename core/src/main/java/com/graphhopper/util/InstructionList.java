@@ -303,7 +303,7 @@ public class InstructionList implements Iterable<Instruction>
     private String createExtensionsBlock(GPXEntry entry) {
         StringBuilder ex = new StringBuilder();
         if (null != entry.extensions && !entry.extensions.isEmpty()) {
-            ex.append("<extensions>");
+            ex.append("\n<extensions>");
             
             for(String key : entry.extensions.keySet()) {
                 ex.append("<").append(key).append(">");

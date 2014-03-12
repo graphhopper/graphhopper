@@ -69,6 +69,27 @@ public class AngleCalc2D
     {
         return Math.toDegrees( calcAngleRad(latPre, lonPre, latTurn, lonTurn, latNext, lonNext) );
     }
+    
+    /**
+     * @return Angle for a turn, where 0 is returned in case of a straight road, 
+     * positive values up to 180 for right turns, and negative values for left turns
+     * 180 degree is returned for a turn which leads in the opposite direction
+     */
+    double calcTurnAngleDeg( double latPre, double lonPre, 
+                           double latTurn, double lonTurn, 
+                           double latNext, double lonNext) 
+    {
+        double angle = 180 - calcAngleDeg(latPre, lonPre, latTurn, lonTurn, latNext, lonNext);
+        
+        // tell apart left and right turns by using partial cross product
+        double turnDir = (latTurn - latPre) * (lonNext - lonTurn) - (latNext - latTurn) * (lonTurn - lonPre);
+        if (turnDir < 0) { // left turn
+            angle = -angle;
+        }
+        
+        return angle;
+    }
+    
     /**
      * Calculate angle between direction given by parameters and north 
      * (north by coordinates, not magnetic...)

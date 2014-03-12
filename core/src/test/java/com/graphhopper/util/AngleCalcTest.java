@@ -46,6 +46,14 @@ public class AngleCalcTest
     }
     
     @Test
+    public void testCalcTurnAngleDeg() {
+        assertEquals(0.0, ac.calcTurnAngleDeg(0.0, 0.0, 10.0, 0.0, 20.0, 0.0), 0.001);
+        assertEquals(90.0, ac.calcTurnAngleDeg(0.0, 0.0, 10.0, 0.0, 10.0, 20.0), 0.001);
+        assertEquals(-90.0, ac.calcTurnAngleDeg(0.0, 0.0, 10.0, 0.0, 10.0, -20.0), 0.001);
+        assertEquals(45.0, ac.calcTurnAngleDeg(0.0, 0.0, 10.0, 0.0, 20.0, 10.0), 0.001);
+    }
+    
+    @Test
     public void testCalcAngleAgainstNorth() {
         assertEquals(0.0, ac.calcAngleAgainstNorthDeg(20.0, 10.0, 30.0, 10.0), 0.001);
         assertEquals(90.0, ac.calcAngleAgainstNorthDeg(20.0, 10.0, 20.0, 20.0), 0.001);
