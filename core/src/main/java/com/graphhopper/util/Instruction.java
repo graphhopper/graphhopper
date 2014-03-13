@@ -160,20 +160,20 @@ public class Instruction
             Map<String, String> extensions = new HashMap<String, String>();
             double distanceToNext = distanceCalc.calcDist(nextLat, nextLon, lat, lon);
             extensions.put("distance", angleFormatter.format(distanceToNext));
-                        
-            if (!(firstInstr && first)) {   // impossible to calculate an angle for first point of first instruction
+
+            if (!(firstInstr && first))
+            {   // impossible to calculate an angle for first point of first instruction
                 double turnAngle = 180;
                 double prevLat = first ? prevInstr.getLastLat() : points.getLatitude(i - 1);
                 double prevLon = first ? prevInstr.getLastLon() : points.getLongitude(i - 1);
                 turnAngle = ac.calcTurnAngleDeg(prevLat, prevLon, lat, lon, nextLat, nextLon);
                 extensions.put("turn-angle", angleFormatter.format(turnAngle));
             }
-            
-            double azimuth = ac.calcAngleAgainstNorthDeg(lat, lon, nextLat, nextLon);
+
+            double azimuth = ac.calcAzimuthDeg(lat, lon, nextLat, nextLon);
             extensions.put("azimuth", angleFormatter.format(azimuth));
             extensions.put("direction", azimuth2compassPoint(azimuth));
-        
-            
+
             list.add(new GPXEntry(lat, lon, prevTime, extensions));
             // TODO in the case of elevation data the air-line distance is probably not precise enough
             prevTime = Math.round(prevTime + millis * distanceCalc.calcDist(nextLat, nextLon, lat, lon) / distance);

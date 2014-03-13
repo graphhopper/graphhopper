@@ -114,7 +114,7 @@ public class InstructionListTest
         assertEquals(1.16, gpxes.get(5).getLon(), 1e-6);
         assertEquals(1.16, gpxes.get(5).getLon(), 1e-6);
         // List<List<Double>> tmpList = createList(p.calcPoints(), wayList.createPointIndices());
-        compare(Arrays.asList(asL(1.2d, 1.0d), asL(1.2d, 1.1), asL(1.1d, 1.1), asL(1.0, 1.1), 
+        compare(Arrays.asList(asL(1.2d, 1.0d), asL(1.2d, 1.1), asL(1.1d, 1.1), asL(1.0, 1.1),
                 asL(1.0, 1.2), asL(1.1, 1.3), asL(1.1, 1.4)),
                 wayList.createLatLngs());
 
@@ -287,8 +287,7 @@ public class InstructionListTest
 
         String gpxStr = wayList.createGPX("test", 0, "GMT+1");
         assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T01:00:00+01:00</time>"));
-        assertTrue(gpxStr, gpxStr.contains("<extensions><distance>10736<distance/><direction>W<direction/><turn-angle>-90<turn-angle/><azimuth>270<azimuth/></extensions></trkpt>"));
-        
+        assertTrue(gpxStr, gpxStr.contains("<extensions><distance>10736<distance/><direction>W<direction/><turn-angle>90<turn-angle/><azimuth>270<azimuth/></extensions></trkpt>"));
     }
 
     @Test

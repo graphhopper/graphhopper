@@ -15,99 +15,93 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package com.graphhopper.util;
 
 /**
  * Calculates the angle of a turn, defined by three points.
- * 
- * Like distance calculation, angle can be calculated in different ways: 
- * 2D, 3D or on spherical surface. Extend if necessary.
- * 
+ * <p>
+ * Like distance calculation, angle can be calculated in different ways: 2D, 3D or on spherical
+ * surface. Extend if necessary.
+ * <p>
  * @author Johannes Pelzer
  */
 public class AngleCalc2D
 {
+
     /**
-     * Calculate angle for a set of 3 points in a plane at point given by latTurn and lonTurn params. 
-     * Angle is returned in radians.
-     * The 3 points must be different from each other.
+     * Return orientation of line relative to north. (North by coordinates, not magnetic north)
+     * <p>
+     * @return Orientation in interval -pi to +pi where 0 is north and pi is south
      */
-    double calcAngleRad( double latPre, double lonPre, 
-                        double latTurn, double lonTurn, 
-                        double latNext, double lonNext) 
+    public double calcOrientation( double lat1, double lon1, double lat2, double lon2 )
     {
-        DistanceCalc2D dc = new DistanceCalc2D();
-        
-        double vectorPreLat = latPre - latTurn;
-        double vectorPreLon = lonPre - lonTurn;
-        double vectorPreLen = dc.calcDist(latPre, lonPre, latTurn, lonTurn);
-        
-        double vectorNextLat = latNext - latTurn;
-        double vectorNextLon = lonNext - lonTurn;
-        double vectorNextLen = dc.calcDist(latNext, lonNext, latTurn, lonTurn);
-        
-        if (0.0 == vectorPreLen || 0.0 == vectorNextLen ) {
-            return Double.NaN;
+        return Math.atan2(lon2 - lon1, lat2 - lat1);
+    }
+
+    /**
+     * Change the representation of an orientation, so the difference to the given baseOrientation
+     * will be smaller or equal to PI (180 degree). This is achieved by adding or substracting a
+     * 2*PI, so the direction of the orientation will not be changed
+     */
+    public double alignOrientation( double baseOrientation, double orientation )
+    {
+        double resultOrientation;
+        if (baseOrientation >= 0)
+        {
+            if (orientation < -Math.PI + baseOrientation)
+                resultOrientation = orientation + 2 * Math.PI;
+            else
+                resultOrientation = orientation;
+
+        } else
+        {
+            if (orientation > +Math.PI + baseOrientation)
+                resultOrientation = orientation - 2 * Math.PI;
+            else
+                resultOrientation = orientation;
         }
-        
-        double dotProduct = vectorPreLat * vectorNextLat + vectorPreLon * vectorNextLon;
-        
-        double angle = Math.acos(dotProduct / (vectorPreLen * vectorNextLen));
-        
-        return angle;
+        return resultOrientation;
     }
-    
-    /**
-     * Calculate angle for a set of 3 points in a plane at point given by latTurn and lonTurn params. 
-     * Angle is returned in degrees.
-     * The 3 points must be different from each other.
-     */
-    double calcAngleDeg( double latPre, double lonPre, 
-                           double latTurn, double lonTurn, 
-                           double latNext, double lonNext) 
+
+    public boolean isLeftTurn( double prevOrientation, double nextOrientation )
     {
-        return Math.toDegrees( calcAngleRad(latPre, lonPre, latTurn, lonTurn, latNext, lonNext) );
+        return (prevOrientation > nextOrientation);
     }
-    
+
     /**
-     * @return Angle for a turn, where 0 is returned in case of a straight road, 
-     * positive values up to 180 for right turns, and negative values for left turns
-     * 180 degree is returned for a turn which leads in the opposite direction
+     * Calculate angle for a set of 3 points in a plane at point given by latTurn and lonTurn
+     * params. Angle is returned in radians. The 3 points must be different from each other.
      */
-    double calcTurnAngleDeg( double latPre, double lonPre, 
-                           double latTurn, double lonTurn, 
-                           double latNext, double lonNext) 
+    double calcTurnAngleRad( double latPre, double lonPre,
+            double latTurn, double lonTurn,
+            double latNext, double lonNext )
     {
-        double angle = 180 - calcAngleDeg(latPre, lonPre, latTurn, lonTurn, latNext, lonNext);
-        
-        // tell apart left and right turns by using partial cross product
-        double turnDir = (latTurn - latPre) * (lonNext - lonTurn) - (latNext - latTurn) * (lonTurn - lonPre);
-        if (turnDir < 0) { // left turn
-            angle = -angle;
-        }
-        
-        return angle;
+        double orientationPre = calcOrientation(latPre, lonPre, latTurn, lonTurn);
+        double orientationNext = calcOrientation(latTurn, lonTurn, latNext, lonNext);
+        double orientationNextAligned = alignOrientation(orientationPre, orientationNext);
+        return orientationPre - orientationNextAligned;
     }
-    
+
     /**
-     * Calculate angle between direction given by parameters and north 
-     * (north by coordinates, not magnetic...)
-     * 
-     * @param lat1 latitude of first point
-     * @param lon1 longitude of first point
-     * @param lat2 latitude of next point
-     * @param lon2 longitude of next point
-     * @return angle between 0 and 360 degree where 0 or 360 is north and 90 is east
+     * @return Angle for a turn, where 0 is returned in case of a straight road, positive values up
+     * to 180 for right turns, and negative values for left turns 180 degree is returned for a turn
+     * which leads in the opposite direction
      */
-    double calcAngleAgainstNorthDeg(double lat1, double lon1, double lat2, double lon2) 
+    double calcTurnAngleDeg( double latPre, double lonPre,
+            double latTurn, double lonTurn,
+            double latNext, double lonNext )
     {
-        double latNorth = lat1 + 1.0;
-        double lonNorth = lon1;
-        double angle = calcAngleDeg(latNorth, lonNorth, lat1, lon1, lat2, lon2);
-        if (lon1 > lon2) {
-            angle = 360 - angle;
-        }
-        return angle;
+        return Math.toDegrees(calcTurnAngleRad(latPre, lonPre, latTurn, lonTurn, latNext, lonNext));
     }
+
+    /**
+     * @return orientation in interval 0 to 360 where 0 and 360 are north
+     */
+    double calcAzimuthDeg( double lat1, double lon1, double lat2, double lon2 )
+    {
+        double orientation = calcOrientation(lat1, lon1, lat2, lon2);
+        double orientation0to360 = alignOrientation(Math.PI, orientation);
+        return Math.toDegrees(orientation0to360);
+    }
+
 }

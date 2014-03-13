@@ -397,7 +397,8 @@ public class Path
                     prevLon = graph.getLongitude(baseNode);
                 }
 
-                double orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
+                AngleCalc2D ac = new AngleCalc2D();
+                double orientation = ac.calcOrientation(prevLat, prevLon, latitude, longitude);
                 if (name == null)
                 {
                     // very first instruction
@@ -409,21 +410,7 @@ public class Path
                     cachedWays.add(prevInstruction);
                 } else
                 {
-                    double tmpOrientation;
-                    if (prevOrientation >= 0)
-                    {
-                        if (orientation < -Math.PI + prevOrientation)
-                            tmpOrientation = orientation + 2 * Math.PI;
-                        else
-                            tmpOrientation = orientation;
-
-                    } else
-                    {
-                        if (orientation > +Math.PI + prevOrientation)
-                            tmpOrientation = orientation - 2 * Math.PI;
-                        else
-                            tmpOrientation = orientation;
-                    }
+                    double tmpOrientation = ac.alignOrientation(prevOrientation, orientation);
 
                     String tmpName = edge.getName();
                     int tmpPavement = encoder.getPavementCode(edge.getFlags());
@@ -447,7 +434,7 @@ public class Path
                         } else if (delta < 0.8)
                         {
                             // 0.8 ~= 40°
-                            if (tmpOrientation > prevOrientation)
+                            if (ac.isLeftTurn(prevOrientation, tmpOrientation))
                                 indication = Instruction.TURN_SLIGHT_LEFT;
                             else
                                 indication = Instruction.TURN_SLIGHT_RIGHT;
@@ -455,14 +442,14 @@ public class Path
                         } else if (delta < 1.8)
                         {
                             // 1.8 ~= 103°
-                            if (tmpOrientation > prevOrientation)
+                            if (ac.isLeftTurn(prevOrientation, tmpOrientation))
                                 indication = Instruction.TURN_LEFT;
                             else
                                 indication = Instruction.TURN_RIGHT;
 
                         } else
                         {
-                            if (tmpOrientation > prevOrientation)
+                            if (ac.isLeftTurn(prevOrientation, tmpOrientation))
                                 indication = Instruction.TURN_SHARP_LEFT;
                             else
                                 indication = Instruction.TURN_SHARP_RIGHT;

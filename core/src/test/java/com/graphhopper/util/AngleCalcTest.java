@@ -15,7 +15,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package com.graphhopper.util;
 
 import static org.junit.Assert.*;
@@ -27,36 +26,54 @@ import org.junit.Test;
  */
 public class AngleCalcTest
 {
-     private AngleCalc2D ac = new AngleCalc2D();
+    private AngleCalc2D ac = new AngleCalc2D();
 
     @Test
-    public void testCalcAngle()
+    public void testOrientation()
     {
-        assertEquals(0.0, ac.calcAngleDeg(20.0, 10.0, 10.0, 10.0, 20.0, 10.0), 0.001);
-        assertEquals(90.0, ac.calcAngleDeg(20.0, 10.0, 10.0, 10.0, 10.0, 30.0), 0.001);
-        
-        assertEquals(45.0, ac.calcAngleDeg(20.0, 10.0, 10.0, 10.0, 20.0, 20.0), 0.001);
-        assertEquals(135.0, ac.calcAngleDeg(20.0, 10.0, 10.0, 10.0, 0.0, 20.0), 0.001);
-        
-        assertEquals(90.0, ac.calcAngleDeg(-10.0, 10.0, 10.0, 10.0, 10.0, 30.0), 0.001);
-        assertEquals(90.0, ac.calcAngleDeg(20.0, 10.0, 10.0, 10.0, 10.0, -30.0), 0.001);
-        assertEquals(90.0, ac.calcAngleDeg(-10.0, 10.0, 10.0, 10.0, 10.0, -30.0), 0.001);
-        
-        assertEquals(Double.NaN, ac.calcAngleDeg(20.0, 10.0, 20.0, 10.0, 10.0, 30.0), 0.001);
+        assertEquals(0.0, Math.toDegrees(ac.calcOrientation(0, 0, 10, 0)), 0.0001);
+        assertEquals(45.0, Math.toDegrees(ac.calcOrientation(0, 0, 10, 10)), 0.0001);
+        assertEquals(90.0, Math.toDegrees(ac.calcOrientation(0, 0, 0, 10)), 0.0001);
+        assertEquals(-135.0, Math.toDegrees(ac.calcOrientation(0, 0, -10, -10)), 0.0001);
     }
-    
+
     @Test
-    public void testCalcTurnAngleDeg() {
+    public void testAlignOrientation()
+    {
+        assertEquals(90.0, Math.toDegrees(ac.alignOrientation(Math.toRadians(90), Math.toRadians(90))), 0.0001);
+        assertEquals(225.0, Math.toDegrees(ac.alignOrientation(Math.toRadians(90), Math.toRadians(-135))), 0.0001);
+        assertEquals(-45.0, Math.toDegrees(ac.alignOrientation(Math.toRadians(-135), Math.toRadians(-45))), 0.0001);
+        assertEquals(-270.0, Math.toDegrees(ac.alignOrientation(Math.toRadians(-135), Math.toRadians(90))), 0.0001);
+    }
+
+    @Test
+    public void testIsLeftTurn()
+    {
+        assertEquals(true, ac.isLeftTurn(1.5, 1.3));
+        assertEquals(true, ac.isLeftTurn(-1.5, -1.6));
+        assertEquals(true, ac.isLeftTurn(0.5, -0.6));
+        
+        assertEquals(false, ac.isLeftTurn(1.5, 1.7));
+        assertEquals(false, ac.isLeftTurn(-1.5, 1.4));
+        assertEquals(false, ac.isLeftTurn(-0.5, 1.3));
+    }
+
+    @Test
+    public void testCalcTurnAngleDeg()
+    {
         assertEquals(0.0, ac.calcTurnAngleDeg(0.0, 0.0, 10.0, 0.0, 20.0, 0.0), 0.001);
         assertEquals(90.0, ac.calcTurnAngleDeg(0.0, 0.0, 10.0, 0.0, 10.0, 20.0), 0.001);
         assertEquals(-90.0, ac.calcTurnAngleDeg(0.0, 0.0, 10.0, 0.0, 10.0, -20.0), 0.001);
         assertEquals(45.0, ac.calcTurnAngleDeg(0.0, 0.0, 10.0, 0.0, 20.0, 10.0), 0.001);
     }
-    
+
     @Test
-    public void testCalcAngleAgainstNorth() {
-        assertEquals(0.0, ac.calcAngleAgainstNorthDeg(20.0, 10.0, 30.0, 10.0), 0.001);
-        assertEquals(90.0, ac.calcAngleAgainstNorthDeg(20.0, 10.0, 20.0, 20.0), 0.001);
-        assertEquals(270.0, ac.calcAngleAgainstNorthDeg(20.0, 10.0, 20.0, -10.0), 0.001);
+    public void testCalcAzimuth()
+    {
+        assertEquals(0.0, ac.calcAzimuthDeg(0.0, 0.0, 20.0, 0.0), 0.001);
+        assertEquals(45.0, ac.calcAzimuthDeg(0.0, 0.0, 20.0, 20.0), 0.001);
+        assertEquals(90.0, ac.calcAzimuthDeg(0.0, 0.0, 0.0, 10.0), 0.001);
+        assertEquals(180.0, ac.calcAzimuthDeg(10.0, 0.0, 5.0, 0.0), 0.001);
+        assertEquals(270.0, ac.calcAzimuthDeg(0.0, 10.0, 0.0, -10.0), 0.001);
     }
 }
