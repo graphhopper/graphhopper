@@ -22,6 +22,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.*;
 import com.graphhopper.util.TranslationMap.Translation;
 import com.graphhopper.util.shapes.BBox;
@@ -86,6 +87,11 @@ public class GraphHopperServlet extends GHBaseServlet {
                 object("supportedVehicles", hopper.getEncodingManager()).
                 object("version", Constants.VERSION).
                 object("buildDate", Constants.BUILD_DATE);
+        
+        StorableProperties props = hopper.getGraph().getProperties();
+        json.object("importDate", props.get("osmreader.import.date"));
+        json.object("prepareDate", props.get("prepare.date"));
+
         writeJson(req, res, json.build());
     }
 
