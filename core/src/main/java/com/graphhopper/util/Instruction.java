@@ -137,13 +137,13 @@ public class Instruction
      * <p>
      * @return the time offset to add for the next instruction
      */
-    long fillGPXList( List<GPXEntry> list, long time, 
+    long fillGPXList( List<GPXEntry> list, long time,
             Instruction prevInstr, Instruction nextInstr, boolean firstInstr )
     {
         DistanceCalc dc = new DistanceCalc2D();
         AngleCalc2D ac = new AngleCalc2D();
         DecimalFormat angleFormatter = new DecimalFormat("#");
-        
+
         checkOne();
         int len = points.size();
         long prevTime = time;
@@ -172,7 +172,7 @@ public class Instruction
 
             double azimuth = ac.calcAzimuthDeg(lat, lon, nextLat, nextLon);
             extensions.put("azimuth", angleFormatter.format(azimuth));
-            extensions.put("direction", azimuth2compassPoint(azimuth));
+            extensions.put("direction", ac.azimuth2compassPoint(azimuth));
 
             list.add(new GPXEntry(lat, lon, prevTime, extensions));
             // TODO in the case of elevation data the air-line distance is probably not precise enough
@@ -181,31 +181,6 @@ public class Instruction
             lon = nextLon;
         }
         return time + millis;
-    }
-    
-    private String azimuth2compassPoint(double azimuth) {
-        
-        String cp = "N";
-        double slice = 360 / 16;
-        
-        if (azimuth > 0 && azimuth <= slice ) {
-            cp = "N";
-        } else if (azimuth > slice && azimuth <= slice * 3 ) {
-            cp = "NE";
-        } else if (azimuth > slice * 3 && azimuth <= slice * 5 ) {
-            cp = "E";
-        } else if (azimuth > slice * 5 && azimuth <= slice * 7 ) {
-            cp = "SE";
-        } else if (azimuth > slice * 7 && azimuth <= slice * 9 ) {
-            cp = "S";
-        } else if (azimuth > slice * 9 && azimuth <= slice * 11 ) {
-            cp = "SW";
-        } else if (azimuth > slice * 11 && azimuth <= slice * 13 ) {
-            cp = "W";
-        } else if (azimuth > slice * 13 && azimuth <= slice * 15 ) {
-            cp = "NW";
-        }
-        return cp;
     }
 
     @Override

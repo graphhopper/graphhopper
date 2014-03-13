@@ -52,10 +52,15 @@ public class AngleCalcTest
         assertEquals(true, ac.isLeftTurn(1.5, 1.3));
         assertEquals(true, ac.isLeftTurn(-1.5, -1.6));
         assertEquals(true, ac.isLeftTurn(0.5, -0.6));
-        
+
         assertEquals(false, ac.isLeftTurn(1.5, 1.7));
         assertEquals(false, ac.isLeftTurn(-1.5, 1.4));
         assertEquals(false, ac.isLeftTurn(-0.5, 1.3));
+
+        AngleCalc2D ac = new AngleCalc2D();
+        double o1 = ac.calcOrientation(1.2, 1.0, 1.2, 1.1);
+        double o2 = ac.calcOrientation(1.2, 1.1, 1.1, 1.1);
+        assertEquals(false, ac.isLeftTurn(o1, o2));
     }
 
     @Test
@@ -75,5 +80,12 @@ public class AngleCalcTest
         assertEquals(90.0, ac.calcAzimuthDeg(0.0, 0.0, 0.0, 10.0), 0.001);
         assertEquals(180.0, ac.calcAzimuthDeg(10.0, 0.0, 5.0, 0.0), 0.001);
         assertEquals(270.0, ac.calcAzimuthDeg(0.0, 10.0, 0.0, -10.0), 0.001);
+        assertEquals(225.0, ac.calcAzimuthDeg(0.0, 0.0, -10.0, -10.0), 0.001);
+    }
+
+    @Test
+    public void testAzimuthCompassPoint()
+    {
+        assertEquals("S", ac.azimuth2compassPoint(199));
     }
 }

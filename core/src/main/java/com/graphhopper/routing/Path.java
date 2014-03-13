@@ -398,7 +398,7 @@ public class Path
                 }
 
                 AngleCalc2D ac = new AngleCalc2D();
-                double orientation = ac.calcOrientation(prevLat, prevLon, latitude, longitude);
+                double orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
                 if (name == null)
                 {
                     // very first instruction
@@ -434,7 +434,7 @@ public class Path
                         } else if (delta < 0.8)
                         {
                             // 0.8 ~= 40°
-                            if (ac.isLeftTurn(prevOrientation, tmpOrientation))
+                            if (tmpOrientation > prevOrientation)
                                 indication = Instruction.TURN_SLIGHT_LEFT;
                             else
                                 indication = Instruction.TURN_SLIGHT_RIGHT;
@@ -442,14 +442,14 @@ public class Path
                         } else if (delta < 1.8)
                         {
                             // 1.8 ~= 103°
-                            if (ac.isLeftTurn(prevOrientation, tmpOrientation))
+                            if (tmpOrientation > prevOrientation)
                                 indication = Instruction.TURN_LEFT;
                             else
                                 indication = Instruction.TURN_RIGHT;
 
                         } else
                         {
-                            if (ac.isLeftTurn(prevOrientation, tmpOrientation))
+                            if (tmpOrientation > prevOrientation)
                                 indication = Instruction.TURN_SHARP_LEFT;
                             else
                                 indication = Instruction.TURN_SHARP_RIGHT;

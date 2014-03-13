@@ -79,7 +79,7 @@ public class AngleCalc2D
         double orientationPre = calcOrientation(latPre, lonPre, latTurn, lonTurn);
         double orientationNext = calcOrientation(latTurn, lonTurn, latNext, lonNext);
         double orientationNextAligned = alignOrientation(orientationPre, orientationNext);
-        return orientationPre - orientationNextAligned;
+        return orientationNextAligned - orientationPre;
     }
 
     /**
@@ -102,6 +102,42 @@ public class AngleCalc2D
         double orientation = calcOrientation(lat1, lon1, lat2, lon2);
         double orientation0to360 = alignOrientation(Math.PI, orientation);
         return Math.toDegrees(orientation0to360);
+    }
+
+    String azimuth2compassPoint( double azimuth )
+    {
+
+        String cp;
+        double slice = 360.0 / 16;
+        if (azimuth < slice)
+        {
+            cp = "N";
+        } else if (azimuth < slice * 3)
+        {
+            cp = "NE";
+        } else if (azimuth < slice * 5)
+        {
+            cp = "E";
+        } else if (azimuth < slice * 7)
+        {
+            cp = "SE";
+        } else if (azimuth < slice * 9)
+        {
+            cp = "S";
+        } else if (azimuth < slice * 11)
+        {
+            cp = "SW";
+        } else if (azimuth < slice * 13)
+        {
+            cp = "W";
+        } else if (azimuth < slice * 15)
+        {
+            cp = "NW";
+        } else
+        {
+            cp = "N";
+        }
+        return cp;
     }
 
 }
