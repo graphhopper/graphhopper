@@ -596,11 +596,11 @@ public class LocationIndexTree implements LocationIndex
         if (regionSearch)
         {
             // search all rasters around minResolutionInMeter as we did not fill empty entries
-            double maxLat = queryLat + deltaLat;
-            double maxLon = queryLon + deltaLon;
-            for (double tmpLat = queryLat - deltaLat; tmpLat <= maxLat; tmpLat += deltaLat)
+            double maxLat = queryLat + 1.5 * deltaLat;
+            double maxLon = queryLon + 1.5 * deltaLon;
+            for (double tmpLat = queryLat - deltaLat; tmpLat < maxLat; tmpLat += deltaLat)
             {
-                for (double tmpLon = queryLon - deltaLon; tmpLon <= maxLon; tmpLon += deltaLon)
+                for (double tmpLon = queryLon - deltaLon; tmpLon < maxLon; tmpLon += deltaLon)
                 {
                     long keyPart = createReverseKey(tmpLat, tmpLon);
                     // System.out.println(BitUtilLittle.toBitString(key, keyAlgo.bits()));
@@ -620,7 +620,7 @@ public class LocationIndexTree implements LocationIndex
             final EdgeFilter edgeFilter )
     {
         final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon);
-        final QueryResult closestMatch = new QueryResult(queryLat, queryLon);               
+        final QueryResult closestMatch = new QueryResult(queryLat, queryLon);
         if (storedNetworkEntryIds.isEmpty())
             return closestMatch;
 
