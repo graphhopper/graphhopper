@@ -290,7 +290,7 @@ public class InstructionListTest
         assertTrue(gpxStr, gpxStr.contains("<extensions>") && gpxStr.contains("</extensions>"));
         assertTrue(gpxStr, gpxStr.contains("<rtept lat=\"15.1\" lon=\"10.0\">"));
         assertTrue(gpxStr, gpxStr.contains("<distance>8000</distance>"));
-        assertTrue(gpxStr, gpxStr.contains("<desc>turn left 2-3</desc>"));
+        assertTrue(gpxStr, gpxStr.contains("<desc>left 2-3</desc>"));
         
         // assertTrue(gpxStr, gpxStr.contains("<direction>W</direction>"));
         // assertTrue(gpxStr, gpxStr.contains("<turn-angle>-90</turn-angle>"));
