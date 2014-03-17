@@ -288,10 +288,13 @@ public class InstructionListTest
         String gpxStr = wayList.createGPX("test", 0, "GMT+1");
         assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T01:00:00+01:00</time>"));
         assertTrue(gpxStr, gpxStr.contains("<extensions>") && gpxStr.contains("</extensions>"));
-        assertTrue(gpxStr, gpxStr.contains("<distance>10736</distance>"));
-        assertTrue(gpxStr, gpxStr.contains("<direction>W</direction>"));
-        assertTrue(gpxStr, gpxStr.contains("<turn-angle>-90</turn-angle>"));
-        assertTrue(gpxStr, gpxStr.contains("<azimuth>270</azimuth/>"));
+        assertTrue(gpxStr, gpxStr.contains("<rtept lat=\"15.1\" lon=\"10.0\">"));
+        assertTrue(gpxStr, gpxStr.contains("<distance>8000</distance>"));
+        assertTrue(gpxStr, gpxStr.contains("<desc>turn left 2-3</desc>"));
+        
+        // assertTrue(gpxStr, gpxStr.contains("<direction>W</direction>"));
+        // assertTrue(gpxStr, gpxStr.contains("<turn-angle>-90</turn-angle>"));
+        // assertTrue(gpxStr, gpxStr.contains("<azimuth>270</azimuth/>"));
     }
 
     @Test

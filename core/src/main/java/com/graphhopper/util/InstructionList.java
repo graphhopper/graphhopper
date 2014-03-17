@@ -146,57 +146,55 @@ public class InstructionList implements Iterable<Instruction>
 
     public List<String> createDescription( TranslationMap.Translation tr )
     {
-        String shLeftTr = tr.tr("sharp_left");
-        String shRightTr = tr.tr("sharp_right");
-        String slLeftTr = tr.tr("slight_left");
-        String slRightTr = tr.tr("slight_right");
-        String leftTr = tr.tr("left");
-        String rightTr = tr.tr("right");
-        String continueTr = tr.tr("continue");
         List<String> res = new ArrayList<String>(instructions.size());
         for (Instruction instruction : instructions)
         {
-            String str;
-            String n = getWayName(instruction.getName(), instruction.getPavement(), instruction.getWayType(), tr);
-            int indi = instruction.getIndication();
-            if (indi == Instruction.FINISH)
-            {
-                str = tr.tr("finish");
-            } else if (indi == Instruction.CONTINUE_ON_STREET)
-            {
-                str = Helper.isEmpty(n) ? continueTr : tr.tr("continue_onto", n);
-            } else
-            {
-                String dir = null;
-                switch (indi)
-                {
-                    case Instruction.TURN_SHARP_LEFT:
-                        dir = shLeftTr;
-                        break;
-                    case Instruction.TURN_LEFT:
-                        dir = leftTr;
-                        break;
-                    case Instruction.TURN_SLIGHT_LEFT:
-                        dir = slLeftTr;
-                        break;
-                    case Instruction.TURN_SLIGHT_RIGHT:
-                        dir = slRightTr;
-                        break;
-                    case Instruction.TURN_RIGHT:
-                        dir = rightTr;
-                        break;
-                    case Instruction.TURN_SHARP_RIGHT:
-                        dir = shRightTr;
-                        break;
-                }
-                if (dir == null)
-                    throw new IllegalStateException("Indication not found " + indi);
-
-                str = Helper.isEmpty(n) ? tr.tr("turn", dir) : tr.tr("turn_onto", dir, n);
-            }
-            res.add(Helper.firstBig(str));
+            res.add(Helper.firstBig(getTurnDescription(instruction, tr)));
         }
         return res;
+    }
+
+    private String getTurnDescription( Instruction instruction, TranslationMap.Translation tr )
+    {
+        String str;
+        String n = getWayName(instruction.getName(), instruction.getPavement(), instruction.getWayType(), tr);
+        int indi = instruction.getIndication();
+        if (indi == Instruction.FINISH)
+        {
+            str = tr.tr("finish");
+        } else if (indi == Instruction.CONTINUE_ON_STREET)
+        {
+            str = Helper.isEmpty(n) ? tr.tr("continue") : tr.tr("continue_onto", n);
+        } else
+        {
+            String dir = null;
+            switch (indi)
+            {
+                case Instruction.TURN_SHARP_LEFT:
+                    dir = tr.tr("sharp_left");
+                    break;
+                case Instruction.TURN_LEFT:
+                    dir = tr.tr("left");
+                    break;
+                case Instruction.TURN_SLIGHT_LEFT:
+                    dir = tr.tr("slight_left");
+                    break;
+                case Instruction.TURN_SLIGHT_RIGHT:
+                    dir = tr.tr("slight_right");
+                    break;
+                case Instruction.TURN_RIGHT:
+                    dir = tr.tr("right");
+                    break;
+                case Instruction.TURN_SHARP_RIGHT:
+                    dir = tr.tr("sharp_right");
+                    break;
+            }
+            if (dir == null)
+                throw new IllegalStateException("Indication not found " + indi);
+
+            str = Helper.isEmpty(n) ? tr.tr("turn", dir) : tr.tr("turn_onto", dir, n);
+        }
+        return str;
     }
 
     public boolean isEmpty()
@@ -273,18 +271,29 @@ public class InstructionList implements Iterable<Instruction>
                 + "</metadata>";
         StringBuilder track = new StringBuilder(header);
         track.append("<trk><name>").append(trackName).append("</name>");
+
         track.append("<trkseg>");
         for (GPXEntry entry : createGPXList())
         {
             track.append("\n<trkpt lat='").append(entry.getLat()).append("' lon='").append(entry.getLon()).append("'>");
             track.append("<time>").append(tzHack(formatter.format(startTimeMillis + entry.getMillis()))).append("</time>");
-
-            track.append(createExtensionsBlock(entry));
-
             track.append("</trkpt>");
         }
         track.append("</trkseg>");
-        track.append("</trk></gpx>");
+        track.append("</trk>");
+
+        if (!isEmpty())
+        {
+            track.append("<rte>");
+            for (Instruction i : instructions)
+            {
+                createExtensionsBlock(track, i);
+            }
+            track.append("</rte>");
+        }
+
+        // TODO #147 use wpt for via points!
+        track.append("</gpx>");
         return track.toString().replaceAll("\\'", "\"");
     }
 
@@ -296,22 +305,58 @@ public class InstructionList implements Iterable<Instruction>
         return str.substring(0, str.length() - 2) + ":" + str.substring(str.length() - 2);
     }
 
-    private String createExtensionsBlock( GPXEntry entry )
+    private static final TranslationMap.Translation NO_TRANSLATE = new TranslationMap.Translation()
     {
-        StringBuilder sbEx = new StringBuilder();
-        if (entry.hasExtensions())
-        {
-            Map<String, String> ex = entry.getExtensions();
-            sbEx.append("\n<extensions>");
-            for (Map.Entry<String, String> exEntry : ex.entrySet())
-            {
-                sbEx.append("<").append(exEntry.getKey()).append(">");
-                sbEx.append(exEntry.getValue());
-                sbEx.append("</").append(exEntry.getKey()).append(">");
-            }
 
-            sbEx.append("</extensions>");
+        @Override
+        public String tr( String key, Object... params )
+        {
+            if (key.equals("turn_onto") || key.equals("turn"))
+                key = "";
+
+            for (Object p : params)
+            {
+                key += " " + p.toString();
+            }
+            return key.trim();
         }
+
+        @Override
+        public Map<String, String> asMap()
+        {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public Locale getLocale()
+        {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public String getLanguage()
+        {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+    };
+
+    private String createExtensionsBlock( StringBuilder sbEx, Instruction instruction )
+    {
+        sbEx.append("<rtept lat=\"").append(InstructionList.round(instruction.getFirstLat(), 6)).
+                append("\" lon=\"").append(InstructionList.round(instruction.getFirstLon(), 6)).append("\">");
+
+        if (!instruction.getName().isEmpty())
+            sbEx.append("<desc>").append(getTurnDescription(instruction, NO_TRANSLATE)).append("</desc>");
+
+        sbEx.append("<extensions>");
+
+        sbEx.append("<distance>").append((int) instruction.getDistance()).append("</distance>");
+        sbEx.append("<time>").append(instruction.getMillis()).append("</time>");
+
+        // sbEx.append("<direction>").append(instruction.getDirection()).append("</direction>");
+        // sbEx.append("<azimuth>").append(instruction.getAzimutz()).append("</azimuth>");
+        sbEx.append("</extensions>");
+        sbEx.append("</rtept>");
         return sbEx.toString();
     }
 
