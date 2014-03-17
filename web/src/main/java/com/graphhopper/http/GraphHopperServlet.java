@@ -109,10 +109,6 @@ public class GraphHopperServlet extends GHBaseServlet {
             boolean calcPoints = getBooleanParam(req, "calcPoints", true);
             String vehicleStr = getParam(req, "vehicle", "CAR").toUpperCase();
             String weighting = getParam(req, "weighting", "fastest");
-            // REMOVE_IN 0.3
-            if (req.getParameterMap().containsKey("algoType"))
-                weighting = getParam(req, "algoType", "fastest");
-
             String algoStr = getParam(req, "algorithm", defaultAlgorithm);
 
             sw = new StopWatch().start();
