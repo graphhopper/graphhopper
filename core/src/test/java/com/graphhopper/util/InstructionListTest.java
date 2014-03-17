@@ -325,7 +325,7 @@ public class InstructionListTest
         way.setTag("maxspeed", String.format("%d km/h", speedKmPerHour));
         return encodingManager.handleWayTags(way, 1, 0);
     }
-    
+
     @Test
     public void testEmptyList()
     {
@@ -335,5 +335,13 @@ public class InstructionListTest
         InstructionList il = p.calcInstructions();
         assertEquals(0, il.size());
         assertEquals(0, il.createLatLngs().size());
+    }
+
+    @Test
+    public void testRound()
+    {
+        assertEquals(100.94, InstructionList.round(100.94, 2), 1e-7);
+        assertEquals(100.9, InstructionList.round(100.94, 1), 1e-7);
+        assertEquals(101.0, InstructionList.round(100.95, 1), 1e-7);
     }
 }

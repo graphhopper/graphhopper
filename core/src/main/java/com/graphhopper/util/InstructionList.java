@@ -89,26 +89,26 @@ public class InstructionList implements Iterable<Instruction>
                 double distInMiles = distInMeter / 1000 / DistanceCalcEarth.KM_MILE;
                 if (distInMiles < 0.9)
                 {
-                    labels.add((int) DistanceCalcEarth.round(distInMiles * 5280, 1) + " " + tr.tr("ftAbbr"));
+                    labels.add((int) round(distInMiles * 5280, 1) + " " + tr.tr("ftAbbr"));
                 } else
                 {
                     if (distInMiles < 100)
-                        labels.add(DistanceCalcEarth.round(distInMiles, 2) + " " + tr.tr("miAbbr"));
+                        labels.add(round(distInMiles, 2) + " " + tr.tr("miAbbr"));
                     else
-                        labels.add((int) DistanceCalcEarth.round(distInMiles, 1) + " " + tr.tr("miAbbr"));
+                        labels.add((int) round(distInMiles, 1) + " " + tr.tr("miAbbr"));
                 }
             } else
             {
                 if (distInMeter < 950)
                 {
-                    labels.add((int) DistanceCalcEarth.round(distInMeter, 1) + " " + tr.tr("mAbbr"));
+                    labels.add((int) round(distInMeter, 1) + " " + tr.tr("mAbbr"));
                 } else
                 {
                     distInMeter /= 1000;
                     if (distInMeter < 100)
-                        labels.add(DistanceCalcEarth.round(distInMeter, 2) + " " + tr.tr("kmAbbr"));
+                        labels.add(round(distInMeter, 2) + " " + tr.tr("kmAbbr"));
                     else
-                        labels.add((int) DistanceCalcEarth.round(distInMeter, 1) + " " + tr.tr("kmAbbr"));
+                        labels.add((int) round(distInMeter, 1) + " " + tr.tr("kmAbbr"));
                 }
             }
         }
@@ -352,4 +352,12 @@ public class InstructionList implements Iterable<Instruction>
             return name + ", " + pavementName;
     }
 
+    /**
+     * Round the value to the specified exponent
+     */
+    static double round( double value, int exponent )
+    {
+        double factor = Math.pow(10, exponent);
+        return Math.round(value * factor) / factor;
+    }
 }

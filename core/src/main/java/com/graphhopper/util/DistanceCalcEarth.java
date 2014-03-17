@@ -268,10 +268,4 @@ public class DistanceCalcEarth implements DistanceCalc
     {
         return "EXACT";
     }
-
-    public static double round( double someDouble, int i )
-    {
-        double factor = Math.pow(10, i);
-        return Math.round(someDouble * factor) / factor;
-    }
 }
