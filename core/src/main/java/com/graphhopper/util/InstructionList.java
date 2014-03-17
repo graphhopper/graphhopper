@@ -307,7 +307,7 @@ public class InstructionList implements Iterable<Instruction>
             {
                 sbEx.append("<").append(exEntry.getKey()).append(">");
                 sbEx.append(exEntry.getValue());
-                sbEx.append("<").append(exEntry.getKey()).append("/>");
+                sbEx.append("</").append(exEntry.getKey()).append(">");
             }
 
             sbEx.append("</extensions>");
