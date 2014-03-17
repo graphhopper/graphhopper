@@ -85,7 +85,12 @@ public class EncodingManager
 
     public EncodingManager( String flagEncodersStr, int bytesForFlags )
     {
-        this(Arrays.asList(readFromEncoderString(defaultEdgeFlagEncoders, flagEncodersStr).toArray(new FlagEncoder[0])), bytesForFlags, 0);
+        this(flagEncodersStr, bytesForFlags, 0);
+    }
+    
+    public EncodingManager( String flagEncodersStr, int bytesForFlags, int maxTurnCost )
+    {
+        this(Arrays.asList(readFromEncoderString(defaultEdgeFlagEncoders, flagEncodersStr).toArray(new FlagEncoder[0])), bytesForFlags, maxTurnCost);
     }
 
     /**
