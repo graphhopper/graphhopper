@@ -879,9 +879,6 @@ public class GraphHopperStorage implements GraphStorage
         @Override
         public final EdgeIteratorState setFlags( long fl )
         {
-            int nep = edges.getInt(getLinkPosInEdgeArea(baseNode, adjNode, edgePointer));
-            int neop = edges.getInt(getLinkPosInEdgeArea(adjNode, baseNode, edgePointer));
-            writeEdge(getEdge(), baseNode, adjNode, nep, neop);
             GraphHopperStorage.this.setFlags(edgePointer, reverse, fl);
             return this;
         }
