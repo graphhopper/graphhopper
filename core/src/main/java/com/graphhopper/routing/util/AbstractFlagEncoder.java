@@ -249,7 +249,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      * Swapping directions means swapping bits which are dependent on the direction of an edge like
      * the access bits. But also direction dependent speed values should be swapped too.
      */
-    public long swapDirection( long flags )
+    public long reverseFlags( long flags )
     {
         long dir = flags & directionBitMask;
         if (dir == directionBitMask || dir == 0)

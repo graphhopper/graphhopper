@@ -193,7 +193,7 @@ public class CarFlagEncoderTest
     public void testOverwrite()
     {
         long forward = encoder.setProperties(10, true, false);
-        long backward = encoder.swapDirection(forward);
+        long backward = encoder.reverseFlags(forward);
         long both = encoder.setProperties(20, true, true);
         assertTrue(encoder.canBeOverwritten(forward, forward));
         assertTrue(encoder.canBeOverwritten(backward, backward));
@@ -210,16 +210,16 @@ public class CarFlagEncoderTest
     @Test
     public void testSwapDir()
     {
-        long swappedFlags = encoder.swapDirection(encoder.flagsDefault(true, true));
+        long swappedFlags = encoder.reverseFlags(encoder.flagsDefault(true, true));
         assertTrue(encoder.isForward(swappedFlags));
         assertTrue(encoder.isBackward(swappedFlags));
 
-        swappedFlags = encoder.swapDirection(encoder.flagsDefault(true, false));
+        swappedFlags = encoder.reverseFlags(encoder.flagsDefault(true, false));
 
         assertFalse(encoder.isForward(swappedFlags));
         assertTrue(encoder.isBackward(swappedFlags));
 
-        assertEquals(0, encoder.swapDirection(0));
+        assertEquals(0, encoder.reverseFlags(0));
     }
 
     @Test
@@ -322,7 +322,7 @@ public class CarFlagEncoderTest
 
         // double speed = AbstractFlagEncoder.parseSpeed("70 mph");
         // => 112.654 * 0.9 => 101
-        flags = instance.swapDirection(flags);
+        flags = instance.reverseFlags(flags);
         assertEquals(100, instance.getSpeed(flags), 1e-1);
     }
 

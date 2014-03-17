@@ -1,4 +1,5 @@
 0.3.0
+    swapDirections is renamed to reverseFlags (EncodingManager and FlagEncoders)
     edgeState.detach has now a reverse parameter, just use false to get previous results
     web api: buildDate contains now timezone
     dijkstraNative is now dijkstraNativebi

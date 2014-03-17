@@ -728,7 +728,7 @@ public class GraphHopperStorage implements GraphStorage
 
     long reverseFlags( long edgePointer, long flags )
     {
-        return encodingManager.swapDirection(flags);
+        return encodingManager.reverseFlags(flags);
     }
 
     private void setFlags( long edgePointer, boolean reverse, long flags )

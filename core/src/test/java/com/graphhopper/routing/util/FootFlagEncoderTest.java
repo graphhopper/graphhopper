@@ -54,7 +54,7 @@ public class FootFlagEncoderTest
         assertEquals(FootFlagEncoder.MEAN, footEncoder.getSpeed(fl), 1e-1);
 
         long fl1 = footEncoder.flagsDefault(true, false);
-        long fl2 = footEncoder.swapDirection(fl1);
+        long fl2 = footEncoder.reverseFlags(fl1);
         assertEquals(footEncoder.getSpeed(fl2), footEncoder.getSpeed(fl1), 1e-1);
     }
 
