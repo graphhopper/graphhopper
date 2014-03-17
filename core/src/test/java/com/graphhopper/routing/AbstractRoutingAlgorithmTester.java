@@ -597,7 +597,6 @@ public abstract class AbstractRoutingAlgorithmTester
     @Test
     public void testTwoWeightsPerEdge()
     {
-
         // other direction should be different!
         Graph graph = createEleGraph();
         Path p = prepareGraph(graph, carEncoder, new ShortestWeighting()).createAlgo().calcPath(0, 10);

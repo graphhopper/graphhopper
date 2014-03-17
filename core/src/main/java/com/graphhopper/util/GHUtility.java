@@ -226,35 +226,54 @@ public class GHUtility
         return createSortedGraph(g, sortedGraph, list);
     }
 
-    static Graph createSortedGraph( Graph g, Graph sortedGraph, final TIntList oldToNewNodeList )
+    static Graph createSortedGraph( Graph fromGraph, Graph toSortedGraph, final TIntList oldToNewNodeList )
     {
-        int len = oldToNewNodeList.size();
-        // important to avoid creating two edges for edges with both directions
-        GHBitSet bitset = new GHBitSetImpl(len);
-        EdgeExplorer explorer = g.createEdgeExplorer();
-        for (int old = 0; old < len; old++)
+        // copy nodes
+        int maxNodeId = fromGraph.getNodes();
+        for (int node = 0; node < maxNodeId; node++)
         {
-            int newIndex = oldToNewNodeList.get(old);
+            int newNode = oldToNewNodeList.get(node);
+            toSortedGraph.setNode(newNode, fromGraph.getLatitude(node), fromGraph.getLongitude(node));
+        }
+
+        AllEdgesIterator eIter = fromGraph.getAllEdges();
+        while (eIter.next())
+        {
+            int base = eIter.getBaseNode();
+            int newBaseIndex = oldToNewNodeList.get(base);
+            int adj = eIter.getAdjNode();
+            int newAdjIndex = oldToNewNodeList.get(adj);
+
             // ignore empty entries
-            if (newIndex < 0)
+            if (newBaseIndex < 0 || newAdjIndex < 0)
                 continue;
 
-            bitset.add(newIndex);
-            sortedGraph.setNode(newIndex, g.getLatitude(old), g.getLongitude(old));
-            EdgeIterator eIter = explorer.setBaseNode(old);
-            while (eIter.next())
-            {
-                int newNodeIndex = oldToNewNodeList.get(eIter.getAdjNode());
-                if (newNodeIndex < 0)
-                    throw new IllegalStateException("empty entries should be connected to the others");
-
-                if (bitset.contains(newNodeIndex))
-                    continue;
-
-                sortedGraph.edge(newIndex, newNodeIndex).copyProperties(eIter);
-            }
+            toSortedGraph.edge(newBaseIndex, newAdjIndex).copyProperties(eIter);
         }
-        return sortedGraph;
+        return toSortedGraph;
+    }
+
+    /**
+     * @return the specified toGraph which is now filled with data from fromGraph
+     */
+    // TODO very similar to createSortedGraph -> use a 'int map(int)' interface
+    public static Graph copyTo( Graph fromGraph, Graph toGraph )
+    {
+        // copy nodes
+        int maxNodeId = fromGraph.getNodes();
+        for (int node = 0; node < maxNodeId; node++)
+        {
+            toGraph.setNode(node, fromGraph.getLatitude(node), fromGraph.getLongitude(node));
+        }
+
+        AllEdgesIterator eIter = fromGraph.getAllEdges();
+        while (eIter.next())
+        {
+            int base = eIter.getBaseNode();
+            int adj = eIter.getAdjNode();
+            toGraph.edge(base, adj).copyProperties(eIter);
+        }
+        return toGraph;
     }
 
     static Directory guessDirectory( GraphStorage store )
@@ -301,34 +320,6 @@ public class GHUtility
         return g.copyTo(outGraph.create(g.getNodes()));
     }
 
-    /**
-     * @return the graph 'to'
-     */
-    // TODO very similar to createSortedGraph -> use a 'int map(int)' interface
-    public static Graph copyTo( Graph from, Graph to )
-    {
-        int len = from.getNodes();
-        // important to avoid creating two edges for edges with both directions        
-        GHBitSet bitset = new GHBitSetImpl(len);
-        EdgeExplorer explorer = from.createEdgeExplorer();
-        for (int oldNode = 0; oldNode < len; oldNode++)
-        {
-            bitset.add(oldNode);
-            to.setNode(oldNode, from.getLatitude(oldNode), from.getLongitude(oldNode));
-            EdgeIterator eIter = explorer.setBaseNode(oldNode);
-            while (eIter.next())
-            {
-                int adjacentNodeIndex = eIter.getAdjNode();
-                if (bitset.contains(adjacentNodeIndex))
-                    continue;
-
-                to.edge(oldNode, adjacentNodeIndex).setDistance(eIter.getDistance()).setFlags(eIter.getFlags()).
-                        setWayGeometry(eIter.fetchWayGeometry(0));
-            }
-        }
-        return to;
-    }
-
     public static int getToNode( Graph g, int edge, int endNode )
     {
         if (EdgeIterator.Edge.isValid(edge))
@@ -342,9 +333,9 @@ public class GHUtility
     public static class DisabledEdgeIterator implements EdgeSkipIterator
     {
         @Override
-        public EdgeIterator detach()
+        public EdgeIterator detach( boolean reverse )
         {
-            return this;
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
@@ -471,7 +462,7 @@ public class GHUtility
         public EdgeSkipIterState setWeight( double weight )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }        
+        }
     };
 
     /**

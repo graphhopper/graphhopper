@@ -132,7 +132,7 @@ public class RoutingAlgorithmSpecialAreaTests
                     setGraph(graphCH);
             prepareCH.doWork();
             LocationIndex idxCH = new LocationIndexTreeSC(graphCH, new RAMDirectory()).prepareIndex();
-            prepare.add(new ME(prepareCH, idxCH));
+            prepare.add(new ME(prepareCH, idxCH));           
 
             // still one failing test regardless of the approx factor
 //            PrepareContractionHierarchies prepareCHAStar = new PrepareContractionHierarchies(encoder, weighting) {

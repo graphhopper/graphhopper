@@ -49,7 +49,7 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
 
     public LevelGraphStorage( Directory dir, EncodingManager encodingManager )
     {
-        super(dir, encodingManager);        
+        super(dir, encodingManager);
     }
 
     @Override
@@ -186,14 +186,8 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
             return LevelGraphStorage.this.getWeight(this);
         }
 
-//        @Override
-//        public long getFlags()
-//        {
-//            return LevelGraphStorage.this.getFlags(edgePointer, baseNode > node, isShortcut());
-//        }
-
         @Override
-        public final EdgeIteratorState detach()
+        public final EdgeIteratorState detach( boolean reverseArg )
         {
             if (edgeId == nextEdge)
                 throw new IllegalStateException("call next before detaching");
@@ -201,6 +195,12 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
             iter.setBaseNode(baseNode);
             iter.setEdgeId(edgeId);
             iter.next();
+            if (reverseArg)
+            {
+                iter.reverse = !this.reverse;
+                iter.adjNode = baseNode;
+                iter.baseNode = adjNode;
+            }
             return iter;
         }
 
@@ -208,24 +208,26 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
         public final void copyProperties( EdgeIteratorState edge )
         {
             super.copyProperties(edge);
-            EdgeSkipIterator eSkip = (EdgeSkipIterator) edge;
+//            EdgeSkipIterator eSkip = (EdgeSkipIterator) edge;
 //            setSkippedEdges(eSkip.getSkippedEdge1(), eSkip.getSkippedEdge2());
         }
     }
 
     @Override
-    long swapFlags(long edgePointer, long flags) {
+    long reverseFlags( long edgePointer, long flags )
+    {
         boolean isShortcut = edgePointer > (long) lastEdgeIndex * edgeEntryBytes;
-        if(!isShortcut)
-            return super.swapFlags(edgePointer, flags);
-                
+        if (!isShortcut)
+            return super.reverseFlags(edgePointer, flags);
+
+        // we need a special swapping for level graph if it is a shortcut as we only store the weight and access flags then
         long dir = flags & scDirMask;
         if (dir == scDirMask || dir == 0)
             return flags;
 
         // swap the last bits with this mask
         return flags ^ scDirMask;
-    }    
+    }
 
     /**
      * Disconnects the edges (higher->lower node) via the specified edgeState pointing from lower to
@@ -353,12 +355,6 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
         {
             return LevelGraphStorage.this.getWeight(this);
         }
-
-//        @Override
-//        public long getFlags()
-//        {
-//            return LevelGraphStorage.this.getFlags(edgePointer, switchFlags, isShortcut());
-//        }
     }
 
     final void setWeight( EdgeSkipIterState edge, double weight )
@@ -374,7 +370,7 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
         else
             weightLong = ((long) (weight * WEIGHT_FACTOR)) << 2;
 
-        long accessFlags = edge.getFlags() & 0x3;
+        long accessFlags = edge.getFlags() & PrepareEncoder.getScDirMask();
         edge.setFlags(weightLong | accessFlags);
     }
 

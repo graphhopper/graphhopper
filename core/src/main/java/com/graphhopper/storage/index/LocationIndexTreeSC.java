@@ -71,12 +71,6 @@ public class LocationIndexTreeSC extends LocationIndexTree
         return new AllEdgesIterator()
         {
             @Override
-            public EdgeIteratorState detach()
-            {
-                return tmpIter.detach();
-            }
-
-            @Override
             public int getMaxId()
             {
                 return tmpIter.getMaxId();
@@ -177,7 +171,13 @@ public class LocationIndexTreeSC extends LocationIndexTree
             public void copyProperties( EdgeIteratorState edge )
             {
                 tmpIter.copyProperties(edge);
-            }      
+            }
+
+            @Override
+            public EdgeIteratorState detach(boolean reverse)
+            {
+                return tmpIter.detach(reverse);
+            }
         };
     }
 

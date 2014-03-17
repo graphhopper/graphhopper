@@ -648,7 +648,7 @@ public class LocationIndexTree implements LocationIndex
                         {
                             closestMatch.setQueryDistance(normedDist);
                             closestMatch.setClosestNode(node);
-                            closestMatch.setClosestEdge(edge.detach());
+                            closestMatch.setClosestEdge(edge.detach(false));
                             closestMatch.setWayIndex(wayIndex);
                             closestMatch.setSnappedPosition(pos);
                             return true;

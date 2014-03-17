@@ -926,6 +926,18 @@ public abstract class AbstractGraphStorageTester
         iter = graph.getAllEdges();
         assertEquals(2, GHUtility.count(iter));
         assertEquals(4, iter.getMaxId());
+
+        iter = graph.getAllEdges();
+        iter.next();
+        EdgeIteratorState eState = iter.detach(false);
+        assertEquals(iter.toString(), eState.toString());
+        iter.next();
+        assertNotEquals(iter.toString(), eState.toString());
+
+        EdgeIteratorState eState2 = iter.detach(true);
+        assertEquals(iter.getAdjNode(), eState2.getBaseNode());
+        iter.next();
+        assertNotEquals(iter.getAdjNode(), eState2.getBaseNode());
     }
 
     public static void assertPList( PointList expected, PointList list )
@@ -1009,33 +1021,56 @@ public abstract class AbstractGraphStorageTester
         assertTrue(list.get(1).isForward(flags));
         assertFalse(list.get(1).isBackward(flags));
     }
-    
+
     @Test
     public void testDetachEdge()
     {
         graph = createGraph();
         graph.edge(0, 1, 2, true);
-        graph.edge(0, 2, 2, true);
+        long flags = carEncoder.setProperties(10, true, false);
+        graph.edge(0, 2, 2, true).setWayGeometry(Helper.createPointList(1, 2, 3, 4)).setFlags(flags);
         graph.edge(1, 2, 2, true);
 
         EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(0);
         try
         {
-            // currently not possible to implement without a new property inside EdgeIterable
-            iter.detach();
+            // currently not possible to detach without next, without introducing a new property inside EdgeIterable
+            iter.detach(false);
             assertTrue(false);
         } catch (Exception ex)
         {
         }
 
         iter.next();
-        EdgeIteratorState iter2 = iter.detach();
+        EdgeIteratorState edgeState2 = iter.detach(false);
         assertEquals(2, iter.getAdjNode());
-        assertEquals(2, iter2.getAdjNode());
+        assertEquals(1, edgeState2.fetchWayGeometry(0).getLatitude(0), 1e-1);
+        assertEquals(2, edgeState2.getAdjNode());
+        assertTrue(carEncoder.isForward(edgeState2.getFlags()));
+
+        EdgeIteratorState edgeState3 = iter.detach(true);
+        assertEquals(0, edgeState3.getAdjNode());
+        assertEquals(2, edgeState3.getBaseNode());
+        assertEquals(3, edgeState3.fetchWayGeometry(0).getLatitude(0), 1e-1);
+        assertFalse(carEncoder.isForward(edgeState3.getFlags()));
+        assertEquals(GHUtility.getEdge(graph, 0, 2).getFlags(), edgeState2.getFlags());
+        assertEquals(GHUtility.getEdge(graph, 2, 0).getFlags(), edgeState3.getFlags());
 
         iter.next();
         assertEquals(1, iter.getAdjNode());
-        assertEquals(2, iter2.getAdjNode());
+        assertEquals(2, edgeState2.getAdjNode());
+        assertEquals(2, edgeState3.getBaseNode());
+
+        assertEquals(0, iter.fetchWayGeometry(0).size());
+        assertEquals(1, edgeState2.fetchWayGeometry(0).getLatitude(0), 1e-1);
+        assertEquals(3, edgeState3.fetchWayGeometry(0).getLatitude(0), 1e-1);
+
+        // #162 a directed self referencing edge should be able to reverse its state too
+        graph.edge(3, 3, 2, true).setFlags(flags);
+        EdgeIterator iter2 = graph.createEdgeExplorer().setBaseNode(3);
+        iter2.next();
+        assertEquals(edgeState2.getFlags(), iter2.detach(false).getFlags());
+        assertEquals(edgeState3.getFlags(), iter2.detach(true).getFlags());
     }
 
     static class TmpCarFlagEncoder extends CarFlagEncoder

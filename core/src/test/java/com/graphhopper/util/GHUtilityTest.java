@@ -96,6 +96,18 @@ public class GHUtilityTest
         g.edge(2, 1, 1.1, false);
         GHUtility.sortDFS(g, createGraph());
     }
+    
+    @Test
+    public void testCopyWithSelfRef()
+    {
+        Graph g = initUnsorted(createGraph());
+        EdgeIteratorState eb = g.edge(0, 0, 11, true);
+        
+        LevelGraph lg = new GraphBuilder(encodingManager).levelGraphCreate();
+        GHUtility.copyTo(g, lg);
+        
+        assertEquals(g.getAllEdges().getMaxId(), lg.getAllEdges().getMaxId());
+    }
 
     @Test
     public void testCopy()
@@ -118,10 +130,10 @@ public class GHUtilityTest
         assertEquals(9, lg.getNodes());
         EdgeIterator iter = lg.createEdgeExplorer().setBaseNode(8);
         iter.next();
-        assertEquals(0.5, iter.getDistance(), 1e-6);
+        assertEquals(2.05, iter.getDistance(), 1e-6);
         assertEquals("11", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));
         iter.next();
-        assertEquals(2.05, iter.getDistance(), 1e-6);
+        assertEquals(0.5, iter.getDistance(), 1e-6);
         assertEquals("11", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));
 
         iter = lg.createEdgeExplorer().setBaseNode(7);

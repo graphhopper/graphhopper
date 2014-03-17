@@ -524,7 +524,7 @@ public class GraphHopper implements GraphHopperAPI
         OSMReader reader = new OSMReader(graph, expectedCapacity).setWorkerThreads(workerThreads).setEncodingManager(encodingManager)
                 .setWayPointMaxDistance(wayPointMaxDistance).setEnableInstructions(enableInstructions);
         logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
-        reader.doOSM2Graph(osmTmpFile);        
+        reader.doOSM2Graph(osmTmpFile);
         return reader;
     }
 
@@ -688,7 +688,7 @@ public class GraphHopper implements GraphHopperAPI
 
         debug += ", algoInit:" + sw.stop().getSeconds() + "s";
         sw = new StopWatch().start();
-
+        
         Path path = algo.calcPath(fromRes, toRes);
         debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
 

@@ -85,6 +85,21 @@ public class RoutingAlgorithmIT
     }
 
     @Test
+    public void testOneWayCircleBug()
+    {
+        // export from http://www.openstreetmap.org/export#map=19/51.37605/-0.53155
+        List<OneRun> list = new ArrayList<OneRun>();
+        // going the bit longer way out of the circle
+        list.add(new OneRun(51.376197, -0.531576, 51.376509, -0.530863, 153, 14));
+        // now exacle the opposite direction: going into the circle (shorter)
+        list.add(new OneRun(51.376509, -0.530863, 51.376197, -0.531576, 75, 13));
+
+        runAlgo(testCollector, "files/circle-bug.osm.gz", "target/graph-circle-bug",
+                list, "CAR", true, "CAR", "shortest");
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
     public void testMoscow()
     {
         // extracted via ./graphhopper.sh extract "37.582641,55.805261,37.626929,55.824455"
@@ -292,9 +307,12 @@ public class RoutingAlgorithmIT
         try
         {
             Helper.removeDir(new File(graphFile));
-            GraphHopper hopper = new GraphHopper().setInMemory(true).setOSMFile(osmFile).
+            GraphHopper hopper = new GraphHopper().
+                    setInMemory(true).
+                    setOSMFile(osmFile).
                     disableCHShortcuts().
-                    setGraphHopperLocation(graphFile).setEncodingManager(new EncodingManager(importVehicles)).
+                    setGraphHopperLocation(graphFile).
+                    setEncodingManager(new EncodingManager(importVehicles)).
                     importOrLoad();
 
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
@@ -326,7 +344,7 @@ public class RoutingAlgorithmIT
                     + ", file " + osmFile, ex);
         } finally
         {
-            Helper.removeDir(new File(graphFile));
+            // Helper.removeDir(new File(graphFile));
         }
     }
 

@@ -27,20 +27,6 @@ package com.graphhopper.util;
 public interface EdgeIteratorState
 {
     /**
-     * Changes direction of this edge state. I.e. the following properties will change/'swap' so
-     * that this edge has the opposite direction: base and adjacent nodes, flags and wayGeometry.
-     * <p>
-     * The problem of this method is that we break the contract of a final state. If calling swap
-     * within a method it can cause side effects after calling this method which is very ugly.
-     * <p>
-     * Another possibility would be to create a new, independent edge state due to this method. But
-     * we already have this behaviour with graph.getEdgeProps
-     * <p>
-     * @return this edge state swapped
-     */
-    // void swap();
-
-    /**
      * @return the edge id of the current edge. Do not make any assumptions about the concrete
      * values, except that for an implemention it is recommended that they'll be contiguous.
      */
@@ -108,11 +94,15 @@ public interface EdgeIteratorState
 
     /**
      * Clones this EdgeIteratorState.
+     * <p>
+     * @param reverse if true a detached edgeState with reversed properties is created where base
+     * and adjacent nodes, flags and wayGeometry are in reversed order. See #162 for more details
+     * about why we need the new reverse parameter.
      */
-    EdgeIteratorState detach();
-    
+    EdgeIteratorState detach( boolean reverse );
+
     /**
      * Copies the specified edge into the current one.
      */
-    void copyProperties(EdgeIteratorState edge);
+    void copyProperties( EdgeIteratorState edge );
 }
