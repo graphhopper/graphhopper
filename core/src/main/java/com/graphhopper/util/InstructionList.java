@@ -19,11 +19,7 @@ package com.graphhopper.util;
 
 import java.text.SimpleDateFormat;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.TimeZone;
+import java.util.*;
 
 /**
  * List of instructions.
@@ -226,8 +222,9 @@ public class InstructionList implements Iterable<Instruction>
     }
 
     /**
-     * This method returns a list of gpx entries where the time (in millis) is relative to the first
-     * which is 0.
+     * @return This method returns a list of gpx entries where the time (in millis) is relative to
+     * the first which is 0.
+     * <p>
      */
     public List<GPXEntry> createGPXList()
     {
@@ -238,11 +235,12 @@ public class InstructionList implements Iterable<Instruction>
         long timeOffset = 0;
         for (int i = 0; i < size() - 1; i++)
         {
+            Instruction prevInstr = (i > 0) ? get(i - 1) : null;
+            boolean instrIsFirst = prevInstr == null;
             Instruction nextInstr = get(i + 1);
-            nextInstr.checkOne();            
+            nextInstr.checkOne();
             // current instruction does not contain last point which is equals to first point of next instruction:
-            double nextLat = nextInstr.getFirstLat(), nextLon = nextInstr.getFirstLon();            
-            timeOffset = get(i).fillGPXList(gpxList, timeOffset, nextLat, nextLon);
+            timeOffset = get(i).fillGPXList(gpxList, timeOffset, prevInstr, nextInstr, instrIsFirst);
         }
         Instruction lastI = get(size() - 1);
         if (lastI.points.size() != 1)
@@ -278,8 +276,11 @@ public class InstructionList implements Iterable<Instruction>
         track.append("<trkseg>");
         for (GPXEntry entry : createGPXList())
         {
-            track.append("<trkpt lat='").append(entry.getLat()).append("' lon='").append(entry.getLon()).append("'>");
+            track.append("\n<trkpt lat='").append(entry.getLat()).append("' lon='").append(entry.getLon()).append("'>");
             track.append("<time>").append(tzHack(formatter.format(startTimeMillis + entry.getMillis()))).append("</time>");
+
+            track.append(createExtensionsBlock(entry));
+
             track.append("</trkpt>");
         }
         track.append("</trkseg>");
@@ -293,6 +294,25 @@ public class InstructionList implements Iterable<Instruction>
     private static String tzHack( String str )
     {
         return str.substring(0, str.length() - 2) + ":" + str.substring(str.length() - 2);
+    }
+
+    private String createExtensionsBlock( GPXEntry entry )
+    {
+        StringBuilder sbEx = new StringBuilder();
+        if (entry.hasExtensions())
+        {
+            Map<String, String> ex = entry.getExtensions();
+            sbEx.append("\n<extensions>");
+            for (Map.Entry<String, String> exEntry : ex.entrySet())
+            {
+                sbEx.append("<").append(exEntry.getKey()).append(">");
+                sbEx.append(exEntry.getValue());
+                sbEx.append("<").append(exEntry.getKey()).append("/>");
+            }
+
+            sbEx.append("</extensions>");
+        }
+        return sbEx.toString();
     }
 
     public static String getWayName( String name, int pavetype, int waytype, TranslationMap.Translation tr )

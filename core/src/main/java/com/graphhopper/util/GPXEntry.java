@@ -17,8 +17,9 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.util.shapes.CoordTrig;
 import com.graphhopper.util.shapes.GHPoint;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Peter Karich
@@ -27,15 +28,42 @@ public class GPXEntry extends GHPoint
 {
     private long time;
 
+    // data which fits the extensions type of the gpx schema definition:
+    private Map<String, String> extensions;
+
+    public GPXEntry( GHPoint p, long millis )
+    {
+        this(p.lat, p.lon, millis);
+    }
+
     public GPXEntry( double lat, double lon, long millis )
     {
         super(lat, lon);
         this.time = millis;
     }
 
-    public GPXEntry( GHPoint p, long millis )
+    public Map<String, String> getExtensions()
     {
-        this(p.lat, p.lon, millis);
+        if (extensions == null)
+            extensions = new HashMap<String, String>();
+
+        return extensions;
+    }
+
+    public String putExtension( String key, String value )
+    {
+        return getExtensions().put(key, value);
+    }
+
+    public boolean hasExtensions()
+    {
+        return extensions != null && !extensions.isEmpty();
+    }
+
+    public GPXEntry setExtensions( Map<String, String> extensions )
+    {
+        this.extensions = extensions;
+        return this;
     }
 
     /**
