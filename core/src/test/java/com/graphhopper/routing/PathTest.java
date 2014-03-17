@@ -22,11 +22,17 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.Helper;
+
 import static com.graphhopper.storage.AbstractGraphStorageTester.*;
+
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Instruction;
 import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.UpcomingInstruction;
+
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
@@ -104,5 +110,46 @@ public class PathTest
         instr = path.calcInstructions();
         assertEquals("[" + 144 * 1000 + ", " + 6 * 60 * 1000 + ", 0]", instr.createMillis().toString());
         assertEquals("[2000.0, 1000.0, 0.0]", instr.createDistances().toString());
+
+
+    }
+
+    @Test
+    public void testNextInstruction()
+    {
+        EncodingManager carManager = new EncodingManager("CAR");
+        FlagEncoder carEnc = carManager.getEncoder("CAR");
+        Graph g = new GraphBuilder(carManager).create();
+
+        g.setNode(0, 1.0, 0.0);
+        g.setNode(1, 1.0, 5.0);
+        g.setNode(2, 4.0, 5.0);
+        g.setNode(3, 3.0, 3.0);
+
+        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(555900).setFlags(carEnc.setProperties(50, true, true));
+        edge1.setWayGeometry(Helper.createPointList(1.0, 1.0));
+        edge1.setName("street1");
+        EdgeIteratorState edge2 = g.edge(1, 2).setDistance(333600).setFlags(carEnc.setProperties(50, true, true));
+        edge2.setWayGeometry(Helper.createPointList());
+        edge2.setName("street2");
+        EdgeIteratorState edge3 = g.edge(2, 3).setDistance(248300).setFlags(carEnc.setProperties(50, true, true));
+        edge3.setWayGeometry(Helper.createPointList());
+        edge3.setName("street3");
+
+        Path path = new Path(g, carEnc);
+        EdgeEntry e1 = new EdgeEntry(edge3.getEdge(), 3, 1);
+        e1.parent = new EdgeEntry(edge2.getEdge(), 2, 1);
+        e1.parent.parent = new EdgeEntry(edge1.getEdge(), 1, 1);
+        e1.parent.parent.parent = new EdgeEntry(-1, 0, 1);
+        path.setEdgeEntry(e1);
+        path.extract();
+
+        InstructionList instr = path.calcInstructions();
+        UpcomingInstruction nextInstruction = path.nextInstruction(1.5, 3);
+
+        assertEquals(222366, nextInstruction.getDistanceToGo(), 500);
+        assertEquals(16010354, nextInstruction.getMillisToGo());
+        assertEquals(Instruction.TURN_LEFT, nextInstruction.getNextInstruction().getIndication());
+
     }
 }

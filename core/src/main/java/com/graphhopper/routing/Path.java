@@ -498,6 +498,105 @@ public class Path
         return cachedWays;
     }
 
+    public UpcomingInstruction nextInstruction(double lat, double lng) {
+        DistanceCalcEarth earthDistance = new DistanceCalcEarth();
+
+        // Closest euclidean distance from (lng,lat) to a path segment
+        double minDistance = Double.MAX_VALUE;
+
+        // Instruction for which the (lng,lat) is closest to a path segment
+        Instruction bestCurrentInstruction = null;
+
+        // Next instruction
+        Instruction bestNextInstruction = null;
+
+        // Projected coordinates on a path segment
+        double bestProjx=0, bestProjy=0;
+
+        // Index in the points list of the closest (lng,lat) match
+        int bestPointIndex=-1;
+
+        // Distance yet to travel to complete the instruction
+        double distanceToGo = -1;
+
+        // Iterate over all instructions in the path
+        for(int i=0; i<cachedWays.getSize()-1; i++) {
+            Instruction instruction = cachedWays.get(i);
+            Instruction nextInstruction = cachedWays.get(i+1);
+            PointList points = instruction.getPoints();
+
+            double distanceTillInstruction = 0;			
+
+            // Iterate over all points in the point list
+            for(int p=0; p<points.size(); p++) {
+                // p1 is the current point
+                double p1x = points.getLongitude(p);
+                double p1y = points.getLatitude(p);
+
+                // p2 is the next point
+                double p2x, p2y;
+                if(p<points.size()-1) {
+                    p2x = points.getLongitude(p+1);
+                    p2y = points.getLatitude(p+1);
+                } else {
+                    p2x = cachedWays.get(i+1).getPoints().getLongitude(0);
+                    p2y = cachedWays.get(i+1).getPoints().getLatitude(0);
+                }
+
+                // Calculate the euclidean distance of point (lng,lat) to the path segment p1p2, and hence obtain the 
+                // projected coordinates on the path segment
+                double distance=0, projx=0, projy=0;
+
+                double l2 = distanceEuclidean(p1x, p1y, p2x, p2y) * distanceEuclidean(p1x, p1y, p2x, p2y); 
+                if (l2 == 0.0) 
+                    distance = distanceEuclidean(p1x, p1y, lng, lat);
+                else {
+                    double t = ((lng - p1x) * (p2x - p1x) + (lat - p1y) * (p2y - p1y)) / l2;
+                    if (t < 0.0) {
+                        distance = distanceEuclidean(lng, lat, p1x, p1y);       // Beyond the 'p1' end of the segment
+                        projx = p1x;
+                        projy = p1y;
+                    }
+                    else if (t > 1.0) { 
+                        distance = distanceEuclidean(lng, lat, p2x, p2y);  // Beyond the 'p2' end of the segment
+                        projx = p2x;
+                        projy = p2y;
+                    }
+                    else {
+                        projx = p1x + t * (p2x - p1x);  // Projection falls on the segment
+                        projy = p1y + t * (p2y - p1y);
+                        distance = distanceEuclidean(lng, lat, projx, projy);
+                    }
+                }
+
+                if (distance<=minDistance) {
+                    minDistance = distance;
+                    bestCurrentInstruction = instruction;
+                    bestNextInstruction = nextInstruction;
+                    distanceToGo = instruction.getDistance() - (distanceTillInstruction + earthDistance.calcDist(p1y, p1x, projy, projx));
+                    bestProjx = projx;
+                    bestProjy = projy;
+                    bestPointIndex = p;
+                }
+
+                distanceTillInstruction += earthDistance.calcDist(p1y, p1x, p2y, p2x);
+            }
+        }
+
+        PointList points = new PointList();
+        points.add(bestProjy, bestProjx);
+        for(int i=bestPointIndex+1; i<bestCurrentInstruction.getPoints().getSize(); i++)
+            points.add(bestCurrentInstruction.getPoints().getLatitude(i), bestCurrentInstruction.getPoints().getLongitude(i));
+
+        UpcomingInstruction upcomingInstruction = new UpcomingInstruction(bestNextInstruction, distanceToGo, 
+                (long)(bestCurrentInstruction.getMillis()*distanceToGo/bestCurrentInstruction.getDistance()), points);
+        return upcomingInstruction;
+    }
+
+    double distanceEuclidean(double ax, double ay, double bx, double by) {
+        return Math.sqrt((ax-bx)*(ax-bx) + (ay-by)*(ay-by));
+    }
+
     @Override
     public String toString()
     {

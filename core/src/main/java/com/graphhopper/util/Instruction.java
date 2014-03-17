@@ -106,6 +106,13 @@ public class Instruction
     }
 
     /**
+     * Get the points that represent the route segment for this instruction
+     */
+    public PointList getPoints() {
+        return this.points;
+    }
+
+    /**
      * Latitude of the location where this instruction should take place.
      */
     double getFirstLat()
