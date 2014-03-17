@@ -397,6 +397,7 @@ public class Path
                     prevLon = graph.getLongitude(baseNode);
                 }
 
+                AngleCalc2D ac = new AngleCalc2D();
                 double orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
                 if (name == null)
                 {
@@ -409,21 +410,7 @@ public class Path
                     cachedWays.add(prevInstruction);
                 } else
                 {
-                    double tmpOrientation;
-                    if (prevOrientation >= 0)
-                    {
-                        if (orientation < -Math.PI + prevOrientation)
-                            tmpOrientation = orientation + 2 * Math.PI;
-                        else
-                            tmpOrientation = orientation;
-
-                    } else
-                    {
-                        if (orientation > +Math.PI + prevOrientation)
-                            tmpOrientation = orientation - 2 * Math.PI;
-                        else
-                            tmpOrientation = orientation;
-                    }
+                    double tmpOrientation = ac.alignOrientation(prevOrientation, orientation);
 
                     String tmpName = edge.getName();
                     int tmpPavement = encoder.getPavementCode(edge.getFlags());
