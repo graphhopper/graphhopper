@@ -69,6 +69,16 @@ public class CarFlagEncoderTest
         map.put("route", "ferry");
         map.put("foot", "yes");
         assertFalse(encoder.acceptWay(way) > 0);
+
+        map.clear();
+        map.put("highway", "primary");
+        long flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertTrue(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
+        map.put("oneway", "yes");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertTrue(encoder.isForward(flags));
+        assertFalse(encoder.isBackward(flags));
     }
 
     @Test
