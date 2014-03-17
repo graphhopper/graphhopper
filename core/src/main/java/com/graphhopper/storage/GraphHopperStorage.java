@@ -966,7 +966,7 @@ public class GraphHopperStorage implements GraphStorage
     {
         if (extStorage.isRequireEdgeField() && E_ADDITIONAL >= 0)
         {
-            nodes.setInt(edgePointer + E_ADDITIONAL, value);
+            edges.setInt(edgePointer + E_ADDITIONAL, value);
         } else
         {
             throw new AssertionError("This graph does not support an additional edge field.");
