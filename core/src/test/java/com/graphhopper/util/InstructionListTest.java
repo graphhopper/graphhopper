@@ -324,4 +324,15 @@ public class InstructionListTest
         way.setTag("maxspeed", String.format("%d km/h", speedKmPerHour));
         return encodingManager.handleWayTags(way, 1, 0);
     }
+    
+    @Test
+    public void testEmptyList()
+    {
+        EncodingManager carManager = new EncodingManager("CAR");
+        Graph g = new GraphBuilder(carManager).create();
+        Path p = new Dijkstra(g, carManager.getSingle(), new ShortestWeighting()).calcPath(0, 1);
+        InstructionList il = p.calcInstructions();
+        assertEquals(0, il.size());
+        assertEquals(0, il.createLatLngs().size());
+    }
 }

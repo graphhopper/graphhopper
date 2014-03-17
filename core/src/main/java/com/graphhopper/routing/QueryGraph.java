@@ -189,10 +189,9 @@ public class QueryGraph implements Graph
 
                     queryResults.add(res);
                     GHPoint currSnapped = res.getSnappedPoint();
-                    boolean onEdge = res.getSnappedPosition() == QueryResult.Position.EDGE;
                     createEdges(prevPoint, prevWayIndex,
                             res.getSnappedPoint(), res.getWayIndex(),
-                            onEdge, fullPL, closestEdge, prevNodeId, virtNodeId, reverseFlags);
+                            fullPL, closestEdge, prevNodeId, virtNodeId, reverseFlags);
                     virtualNodes.add(currSnapped.lat, currSnapped.lon);
 
                     // add edges again to set adjacent edges for newVirtNodeId
@@ -212,7 +211,7 @@ public class QueryGraph implements Graph
 
                 // two edges between last result and adjacent node are still missing
                 createEdges(prevPoint, prevWayIndex, fullPL.toGHPoint(fullPL.getSize() - 1), fullPL.getSize() - 1,
-                        false, fullPL, closestEdge, virtNodeId - 1, adjNode, reverseFlags);
+                        fullPL, closestEdge, virtNodeId - 1, adjNode, reverseFlags);
 
                 return true;
             }
@@ -220,24 +219,22 @@ public class QueryGraph implements Graph
     }
 
     private void createEdges( GHPoint prevSnapped, int prevWayIndex, GHPoint currSnapped, int wayIndex,
-            boolean onEdge, PointList fullPL, EdgeIteratorState closestEdge,
+            PointList fullPL, EdgeIteratorState closestEdge,
             int prevNodeId, int nodeId, long reverseFlags )
     {
         int max = wayIndex + 1;
+        // basePoints must have at least the size of 2 to make sure fetchWayGeometry(3) returns at least 2
         PointList basePoints = new PointList(max - prevWayIndex + 1);
         basePoints.add(prevSnapped.lat, prevSnapped.lon);
         for (int i = prevWayIndex; i < max; i++)
         {
             basePoints.add(fullPL.getLatitude(i), fullPL.getLongitude(i));
-        }
-
-        if (onEdge)
-            basePoints.add(currSnapped.lat, currSnapped.lon);
-
+        }       
+        basePoints.add(currSnapped.lat, currSnapped.lon);
+        
         PointList baseReversePoints = basePoints.clone(true);
         double baseDistance = basePoints.calcDistance(distCalc);
-
-        int virtEdgeId = virtualEdges.size() + mainEdges;
+        int virtEdgeId = virtualEdges.size() + mainEdges;        
 
         // edges between base and snapped point
         VirtualEdgeIState baseEdge = new VirtualEdgeIState(virtEdgeId + VE_BASE, prevNodeId, nodeId,
