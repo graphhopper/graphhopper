@@ -372,6 +372,7 @@ public class Path
             private String name = null;
             private int pavementCode;
             private int wayTypeCode;
+            private AngleCalc2D ac = new AngleCalc2D();
 
             @Override
             public void next( EdgeIteratorState edge, int index )
@@ -396,8 +397,7 @@ public class Path
                     prevLat = graph.getLatitude(baseNode);
                     prevLon = graph.getLongitude(baseNode);
                 }
-
-                AngleCalc2D ac = new AngleCalc2D();
+                
                 double orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
                 if (name == null)
                 {

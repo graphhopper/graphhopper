@@ -174,7 +174,7 @@ public class Instruction
             extensions.put("azimuth", angleFormatter.format(azimuth));
             extensions.put("direction", ac.azimuth2compassPoint(azimuth));
 
-            list.add(new GPXEntry(lat, lon, prevTime, extensions));
+            list.add(new GPXEntry(lat, lon, prevTime).setExtensions(extensions));
             // TODO in the case of elevation data the air-line distance is probably not precise enough
             prevTime = Math.round(prevTime + millis * distanceCalc.calcDist(nextLat, nextLon, lat, lon) / distance);
             lat = nextLat;
