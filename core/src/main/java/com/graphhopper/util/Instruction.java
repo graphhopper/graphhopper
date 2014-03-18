@@ -53,6 +53,10 @@ public class Instruction
         this.waytype = waytype;
         this.pavementType = pavementType;
     }
+    
+    public PointList getPoints(){
+        return points;
+    }
 
     public int getPavement()
     {
