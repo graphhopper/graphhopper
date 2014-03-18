@@ -24,13 +24,14 @@ import com.graphhopper.util.EdgeIteratorState;
  * <p/>
  * @author Peter Karich
  */
-public class FastestWeighting implements Weighting
+public class FastestWeighting extends AbstractTurnWeighting implements Weighting
 {
     private final FlagEncoder encoder;
     private final double maxSpeed;
 
     public FastestWeighting( FlagEncoder encoder )
     {
+        super(encoder);
         this.encoder = encoder;
         maxSpeed = encoder.getMaxSpeed();
     }
@@ -54,5 +55,17 @@ public class FastestWeighting implements Weighting
     public String toString()
     {
         return "FASTEST|" + encoder;
+    }
+
+    @Override
+    protected double calcTurnWeight( int edgeFrom, int nodeVia, int edgeTo )
+    {
+        int turnFlags = turnCostStorage.getTurnCosts(edgeFrom, nodeVia, edgeTo);
+        if (isEnabledTurnRestrictions() && turnCostEncoder.isTurnRestricted(turnFlags))
+        {
+            //we only consider turn restrictions in shortest calculation
+            return Double.MAX_VALUE;
+        }
+        return turnCostEncoder.getTurnCosts(turnFlags);
     }
 }

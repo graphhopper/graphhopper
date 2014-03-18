@@ -625,9 +625,20 @@ public class GraphHopper implements GraphHopperAPI
     {
         // ignore case
         weighting = weighting.toLowerCase();
-        if ("shortest".equals(weighting))
-            return new ShortestWeighting();
-        return new FastestWeighting(encoder);
+        
+        final Weighting weightingImpl;
+        
+        if("shortest".equals(weighting)){
+            weightingImpl = new ShortestWeighting(encoder);
+        }else{
+            weightingImpl = new FastestWeighting(encoder);
+        }
+        
+        if(weightingImpl instanceof TurnWeighting && graph.getExtendedStorage() instanceof TurnCostStorage){
+            ((TurnWeighting)weightingImpl).initTurnWeighting((TurnCostStorage)graph.getExtendedStorage());
+        }
+        
+        return weightingImpl;
     }
 
     @Override
