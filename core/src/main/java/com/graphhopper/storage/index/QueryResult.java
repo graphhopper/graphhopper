@@ -175,10 +175,11 @@ public class QueryResult
 
         double queryLat = getQueryPoint().lat, queryLon = getQueryPoint().lon;
         double adjLat = fullPL.getLatitude(wayIndex + 1), adjLon = fullPL.getLongitude(wayIndex + 1);
-        if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon)) {
-            // TODO improve for 3D case
+        if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon))
+        {            
             GHPoint tmpPoint = distCalc.calcCrossingPointToEdge(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon);
-            snappedPoint = new GHPoint3D(tmpPoint.lat, tmpPoint.lon, tmpEle);
+            double adjEle = fullPL.getElevation(wayIndex + 1);
+            snappedPoint = new GHPoint3D(tmpPoint.lat, tmpPoint.lon, (tmpEle + adjEle) / 2);
         } else
             // outside of edge boundaries
             snappedPoint = new GHPoint3D(tmpLat, tmpLon, tmpEle);

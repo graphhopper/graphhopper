@@ -176,7 +176,7 @@ public class RoutingAlgorithmIT
         List<OneRun> list = createMonacoFoot();
         list.get(0).dist = 1634;
         list.get(1).dist = 3610;
-        list.get(2).dist = 2174;
+        list.get(2).dist = 2182;
         list.get(3).dist = 1498;
 
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
@@ -187,16 +187,16 @@ public class RoutingAlgorithmIT
     @Test
     public void testMonacoBike3D_twoSpeedsPerEdge()
     {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<OneRun>();        
         list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 1724, 85));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3835, 171));
-        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2417, 122));
+        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2425, 122));                            
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1610, 85));
 
         // try reverse direction
         list.add(new OneRun(43.727687, 7.418737, 43.730864, 7.420771, 2624, 116));
         list.add(new OneRun(43.74958, 7.436566, 43.727687, 7.418737, 4255, 159));
-        list.add(new OneRun(43.739213, 7.427806, 43.728677, 7.41016, 2844, 149));
+        list.add(new OneRun(43.739213, 7.427806, 43.728677, 7.41016, 2852, 149));
         list.add(new OneRun(43.739662, 7.424355, 43.733802, 7.413433, 1869, 110));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "BIKE2", true, "BIKE2", "fastest", true);
@@ -355,7 +355,7 @@ public class RoutingAlgorithmIT
                     disableCHShortcuts().
                     setGraphHopperLocation(graphFile).
                     setEncodingManager(new EncodingManager(importVehicles));
-            if (is3D)
+            if (is3D)                
                 hopper.setElevationProvider(new SRTMProvider().setCacheDir(new File("./files")));            
 
             hopper.importOrLoad();

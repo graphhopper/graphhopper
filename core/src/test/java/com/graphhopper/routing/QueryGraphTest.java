@@ -173,7 +173,7 @@ public class QueryGraphTest
         queryGraph.lookup(Arrays.asList(res1));
         EdgeIteratorState state = GHUtility.getEdge(queryGraph, 0, 1);
         assertEquals(4, state.fetchWayGeometry(3).size());
-        
+
         // fetch virtual edge and check way geometry
         state = GHUtility.getEdge(queryGraph, 4, 3);
         assertEquals(2, state.fetchWayGeometry(3).size());
@@ -265,6 +265,33 @@ public class QueryGraphTest
     }
 
     @Test
+    public void testUseMeanElevation()
+    {
+        g.close();
+        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, true).create(100);
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 0, 0, 0);
+        na.setNode(1, 0, 0.0001, 20);
+        EdgeIteratorState edge = g.edge(0, 1);
+        EdgeIteratorState edgeReverse = edge.detach(true);
+
+        DistanceCalc2D distCalc = new DistanceCalc2D();
+        QueryResult qr = new QueryResult(0, 0.00005);
+        qr.setClosestEdge(edge);
+        qr.setWayIndex(0);
+        qr.setSnappedPosition(EDGE);
+        qr.calcSnappedPoint(distCalc);
+        assertEquals(10, qr.getSnappedPoint().getEle(), 1e-1);
+        
+        qr = new QueryResult(0, 0.00005);
+        qr.setClosestEdge(edgeReverse);
+        qr.setWayIndex(0);
+        qr.setSnappedPosition(EDGE);
+        qr.calcSnappedPoint(distCalc);
+        assertEquals(10, qr.getSnappedPoint().getEle(), 1e-1);
+    }
+
+    @Test
     public void testLoopStreet_Issue151()
     {
         // do query at x should result in ignoring only the bottom edge 1-3 not the upper one => getNeighbors are 0, 5, 3 and not only 0, 5
@@ -332,7 +359,7 @@ public class QueryGraphTest
 
         iter.next();
         assertTrue(iter.toString(), carEncoder.isBackward(iter.getFlags()));
-        assertFalse(iter.toString(), carEncoder.isForward(iter.getFlags()));        
+        assertFalse(iter.toString(), carEncoder.isForward(iter.getFlags()));
     }
 
     @Test

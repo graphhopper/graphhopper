@@ -127,7 +127,7 @@ public class GraphHopperIT
         GHResponse rsp = hopper.route(new GHRequest(43.730729, 7.421288, 43.727697, 7.419199).
                 setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
 
-        assertEquals(1634.9, rsp.getDistance(), .1);
+        assertEquals(1634, rsp.getDistance(), .1);
         assertEquals(54, rsp.getPoints().getSize());
 
         InstructionList il = rsp.getInstructions();
