@@ -141,10 +141,10 @@ public class OSMReaderTest
     {
         GraphHopper hopper = new GraphHopperTest(file1).importOrLoad();
         GraphStorage graph = (GraphStorage) hopper.getGraph();
-        
+
         assertNotNull(graph.getProperties().get("osmreader.import.date"));
         assertNotEquals("", graph.getProperties().get("osmreader.import.date"));
-        
+
         assertEquals(4, graph.getNodes());
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
@@ -678,7 +678,8 @@ public class OSMReaderTest
     {
         GraphHopper hopper = new GraphHopperTest("test-osm5.xml");
         // get N10E046.hgt.zip
-        ElevationProvider provider = new SRTMProvider().setCacheDir(new File("./files"));
+        ElevationProvider provider = new SRTMProvider();
+        provider.setCacheDir(new File("./files"));
         hopper.set3D(true).
                 setElevationProvider(provider);
         hopper.importOrLoad();
@@ -689,11 +690,11 @@ public class OSMReaderTest
         int n50 = AbstractGraphStorageTester.getIdOf(graph, 49.5001);
 
         EdgeIteratorState edge = GHUtility.getEdge(graph, n50, n30);
-        assertEquals(Helper.createPointList3D(49.5001, 11.501, 441, 49.5002, 11.5015, 441, 49.5011, 11.502, 415.0), 
+        assertEquals(Helper.createPointList3D(49.5001, 11.501, 441, 49.5002, 11.5015, 441, 49.5011, 11.502, 415.0),
                 edge.fetchWayGeometry(3));
 
         edge = GHUtility.getEdge(graph, n10, n50);
-        assertEquals(Helper.createPointList3D(49.501, 11.5001, 399.0, 49.5001, 11.501, 441.0), 
+        assertEquals(Helper.createPointList3D(49.501, 11.5001, 399.0, 49.5001, 11.501, 441.0),
                 edge.fetchWayGeometry(3));
     }
 }

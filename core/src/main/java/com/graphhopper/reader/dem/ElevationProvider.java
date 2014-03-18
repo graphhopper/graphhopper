@@ -18,21 +18,25 @@
  */
 package com.graphhopper.reader.dem;
 
+import java.io.File;
+
 /**
  * @author Peter Karich
  */
 public interface ElevationProvider
-{    
+{
     /**
      * @return returns the hight in meter or Double.NaN if invalid
      */
     double getEle( double lat, double lon );
-    
+
+    ElevationProvider setCacheDir( File cacheDir );
+
     /**
      * Release resources.
      */
     void release();
-    
+
     public final static ElevationProvider NOOP = new ElevationProvider()
     {
         @Override
@@ -42,8 +46,14 @@ public interface ElevationProvider
         }
 
         @Override
+        public ElevationProvider setCacheDir( File cacheDir )
+        {
+            return this;
+        }
+
+        @Override
         public void release()
-        {            
-        }        
+        {
+        }
     };
 }

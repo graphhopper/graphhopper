@@ -158,7 +158,7 @@ public class GraphHopper implements GraphHopperAPI
     {
         this.wayPointMaxDistance = wayPointMaxDistance;
         return this;
-    }        
+    }
 
     /**
      * Configures the underlying storage to be used on a well equipped server.
@@ -520,20 +520,17 @@ public class GraphHopper implements GraphHopperAPI
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
 
         // elevation
-        String eleProviderStr = args.get("graph.elevationProvider", "noop:").toLowerCase();
-        if (eleProviderStr.startsWith("noop:"))
-        {
-            setElevationProvider(ElevationProvider.NOOP);
-        } else if (eleProviderStr.startsWith("srtm:"))
-        {
-            SRTMProvider tmpProvider = new SRTMProvider();
-            if (eleProviderStr.length() > 5)
-                tmpProvider.setCacheDir(new File(eleProviderStr.substring(5)));
-            setElevationProvider(tmpProvider);
-        }
+        String eleProviderStr = args.get("graph.elevation.provider", "noop").toLowerCase();
+        String cacheDirStr = args.get("graph.elevation.cachedir", "").toLowerCase();
+        ElevationProvider tmpProvider = ElevationProvider.NOOP;
+        if (eleProviderStr.equalsIgnoreCase("srtm"))
+            tmpProvider = new SRTMProvider();        
         // later:
 //        else if(eleProviderStr.startsWith("cgiar:"))        
 //            eleProvider = new CGIARProvider().setCacheDir(new File());        
+
+        tmpProvider.setCacheDir(new File(cacheDirStr));
+        setElevationProvider(tmpProvider);
 
         // index
         preciseIndexResolution = args.getInt("index.highResolution", preciseIndexResolution);
@@ -779,12 +776,12 @@ public class GraphHopper implements GraphHopperAPI
 
         debug += ", algoInit:" + sw.stop().getSeconds() + "s";
         sw = new StopWatch().start();
-        
+
         Path path = algo.calcPath(fromRes, toRes);
         debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
 
         debug += ", edges:" + path.calcEdges().size();
-        
+
         calcPoints = request.getHint("calcPoints", calcPoints);
         if (calcPoints)
         {

@@ -113,7 +113,8 @@ public class SRTMProvider implements ElevationProvider
         this.downloader = downloader;
     }
 
-    public SRTMProvider setCacheDir( File cacheDir )
+    @Override
+    public ElevationProvider setCacheDir( File cacheDir )
     {
         if (cacheDir.exists() && !cacheDir.isDirectory())
             throw new IllegalStateException("Cache path has to be a directory");
