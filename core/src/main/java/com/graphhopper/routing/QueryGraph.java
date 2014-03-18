@@ -100,32 +100,31 @@ public class QueryGraph implements Graph
 
             int base = closestEdge.getBaseNode();
 
-            // identical direction for all closest edges
-            // important to sort multiple results for the same edge by its wayIndex
-            if (base > closestEdge.getAdjNode())
+            // Force the identical direction for all closest edges. 
+            // It is important to sort multiple results for the same edge by its wayIndex
+            boolean doReverse = base > closestEdge.getAdjNode();
+            if (base == closestEdge.getAdjNode())
             {
-                EdgeIteratorState reverseEdge = mainGraph.getEdgeProps(closestEdge.getEdge(), base);
-                // #111 reverse edge can be null if real edges are disconnected while CH-prepare
-                if (reverseEdge != null)
-                {
-                    closestEdge = reverseEdge;
-                    PointList fullPL = reverseEdge.fetchWayGeometry(3);
-                    res.setClosestEdge(reverseEdge);
-                    if (res.getSnappedPosition() == QueryResult.Position.PILLAR)
-                        // ON pillar node                
-                        res.setWayIndex(fullPL.getSize() - res.getWayIndex() - 1);
-                    else
-                        // for case "OFF pillar node"
-                        res.setWayIndex(fullPL.getSize() - res.getWayIndex() - 2);
+                // check for special case #162 where adj == base and force direction via latitude comparison
+                PointList pl = closestEdge.fetchWayGeometry(0);
+                if (pl.size() > 1)
+                    doReverse = pl.getLatitude(0) > pl.getLatitude(pl.size() - 1);
+            }
 
-                    if (res.getWayIndex() < 0)
-                        throw new IllegalStateException("Problem with wayIndex while reversing closest edge:" + closestEdge + ", " + res);
-                } else
-                {
-                    List<QueryResult> tmp = edge2res.get(closestEdge.getEdge());
-                    if (tmp != null && tmp.size() > 1)
-                        throw new IllegalStateException("No reverse edge can be created but multiple of them were found!? " + resList);
-                }
+            if (doReverse)
+            {
+                closestEdge = closestEdge.detach(true);
+                PointList fullPL = closestEdge.fetchWayGeometry(3);
+                res.setClosestEdge(closestEdge);
+                if (res.getSnappedPosition() == QueryResult.Position.PILLAR)
+                    // ON pillar node                
+                    res.setWayIndex(fullPL.getSize() - res.getWayIndex() - 1);
+                else
+                    // for case "OFF pillar node"
+                    res.setWayIndex(fullPL.getSize() - res.getWayIndex() - 2);
+
+                if (res.getWayIndex() < 0)
+                    throw new IllegalStateException("Problem with wayIndex while reversing closest edge:" + closestEdge + ", " + res);
             }
 
             // find multiple results on same edge
@@ -151,7 +150,6 @@ public class QueryGraph implements Graph
                 EdgeIteratorState closestEdge = results.get(0).getClosestEdge();
                 final PointList fullPL = closestEdge.fetchWayGeometry(3);
                 int baseNode = closestEdge.getBaseNode();
-                final EdgeIteratorState reverseState = mainGraph.getEdgeProps(closestEdge.getEdge(), baseNode);
                 // sort results on the same edge by the wayIndex and if equal by distance to pillar node
                 Collections.sort(results, new Comparator<QueryResult>()
                 {
@@ -180,10 +178,7 @@ public class QueryGraph implements Graph
 
                 GHPoint3D prevPoint = fullPL.toGHPoint(0);
                 int adjNode = closestEdge.getAdjNode();
-                long reverseFlags = 0;
-                // #111 avoid this
-                if (reverseState != null)
-                    reverseFlags = reverseState.getFlags();
+                long reverseFlags = closestEdge.detach(true).getFlags();
                 int prevWayIndex = 1;
                 int prevNodeId = baseNode;
                 int counter = 0;
@@ -198,10 +193,9 @@ public class QueryGraph implements Graph
 
                     queryResults.add(res);
                     GHPoint3D currSnapped = res.getSnappedPoint();
-                    boolean onEdge = res.getSnappedPosition() == QueryResult.Position.EDGE;
                     createEdges(prevPoint, prevWayIndex,
                             res.getSnappedPoint(), res.getWayIndex(),
-                            onEdge, fullPL, closestEdge, prevNodeId, virtNodeId, reverseFlags);
+                            fullPL, closestEdge, prevNodeId, virtNodeId, reverseFlags);
 
                     virtualNodes.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
 
@@ -222,7 +216,7 @@ public class QueryGraph implements Graph
 
                 // two edges between last result and adjacent node are still missing
                 createEdges(prevPoint, prevWayIndex, fullPL.toGHPoint(fullPL.getSize() - 1), fullPL.getSize() - 1,
-                        false, fullPL, closestEdge, virtNodeId - 1, adjNode, reverseFlags);
+                        fullPL, closestEdge, virtNodeId - 1, adjNode, reverseFlags);
 
                 return true;
             }
@@ -230,30 +224,28 @@ public class QueryGraph implements Graph
     }
 
     private void createEdges( GHPoint3D prevSnapped, int prevWayIndex, GHPoint3D currSnapped, int wayIndex,
-            boolean onEdge, PointList fullPL, EdgeIteratorState closestEdge,
-            int prevNodeId, int nodeId, long swappedFlags )
+            PointList fullPL, EdgeIteratorState closestEdge,
+            int prevNodeId, int nodeId, long reverseFlags )
     {
         int max = wayIndex + 1;
+        // basePoints must have at least the size of 2 to make sure fetchWayGeometry(3) returns at least 2
         PointList basePoints = new PointList(max - prevWayIndex + 1, mainNodeAccess.is3D());
         basePoints.add(prevSnapped.lat, prevSnapped.lon, prevSnapped.ele);
         for (int i = prevWayIndex; i < max; i++)
         {
             basePoints.add(fullPL, i);
-        }
-
-        if (onEdge)
-            basePoints.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
-
+        }       
+        basePoints.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
+        
         PointList baseReversePoints = basePoints.clone(true);
         double baseDistance = basePoints.calcDistance(distCalc);
-
-        int virtEdgeId = virtualEdges.size() + mainEdges;
+        int virtEdgeId = virtualEdges.size() + mainEdges;        
 
         // edges between base and snapped point
         VirtualEdgeIState baseEdge = new VirtualEdgeIState(virtEdgeId + VE_BASE, prevNodeId, nodeId,
                 baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints);
         VirtualEdgeIState baseReverseEdge = new VirtualEdgeIState(virtEdgeId + VE_BASE_REV, nodeId, prevNodeId,
-                baseDistance, swappedFlags, closestEdge.getName(), baseReversePoints);
+                baseDistance, reverseFlags, closestEdge.getName(), baseReversePoints);
 
         virtualEdges.add(baseEdge);
         virtualEdges.add(baseReverseEdge);
@@ -495,7 +487,7 @@ public class QueryGraph implements Graph
         while (iter.next())
         {
             if (!ignoreEdges.contains(iter.getEdge()))
-                vIter.add(iter.detach());
+                vIter.add(iter.detach(false));
         }
     }
 
@@ -580,8 +572,11 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public EdgeIteratorState detach()
+        public EdgeIteratorState detach( boolean reverse )
         {
+            if (reverse)
+                throw new IllegalStateException("Not yet supported");
+
             return edges.get(current);
         }
 
@@ -729,7 +724,7 @@ public class QueryGraph implements Graph
         private final int adjNode;
 
         public VirtualEdgeIState( int edgeId, int baseNode, int adjNode,
-                double distance, long flags, String name, PointList pointList)
+                double distance, long flags, String name, PointList pointList )
         {
             this.edgeId = edgeId;
             this.baseNode = baseNode;
@@ -737,7 +732,7 @@ public class QueryGraph implements Graph
             this.distance = distance;
             this.flags = flags;
             this.name = name;
-            this.pointList = pointList;            
+            this.pointList = pointList;
         }
 
         @Override
@@ -837,7 +832,7 @@ public class QueryGraph implements Graph
         {
             return false;
         }
-        
+
         @Override
         public int getAdditionalField()
         {
@@ -863,7 +858,7 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public EdgeIteratorState detach()
+        public EdgeIteratorState detach( boolean reverse )
         {
             throw new UnsupportedOperationException("Not supported.");
         }

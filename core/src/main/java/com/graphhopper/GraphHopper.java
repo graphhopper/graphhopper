@@ -31,6 +31,8 @@ import com.graphhopper.util.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -392,7 +394,7 @@ public class GraphHopper implements GraphHopperAPI
      * <p>
      * @throws IllegalStateException if graph is not instantiated.
      */
-    public Graph getGraph()
+    public GraphStorage getGraph()
     {
         if (graph == null)
             throw new IllegalStateException("Graph not initialized");
@@ -574,6 +576,7 @@ public class GraphHopper implements GraphHopperAPI
         try
         {
             importData();
+            graph.getProperties().put("osmreader.import.date", formatDateTime(new Date()));
         } catch (IOException ex)
         {
             throw new RuntimeException("Cannot parse OSM file " + getOSMFile(), ex);
@@ -670,7 +673,7 @@ public class GraphHopper implements GraphHopperAPI
         graph.setSegmentSize(defaultSegmentSize);
         if (!graph.loadExisting())
             return false;
-        
+
         postProcessing();
         fullyLoaded = true;
         return true;
@@ -776,7 +779,7 @@ public class GraphHopper implements GraphHopperAPI
 
         debug += ", algoInit:" + sw.stop().getSeconds() + "s";
         sw = new StopWatch().start();
-
+        
         Path path = algo.calcPath(fromRes, toRes);
         debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
 
@@ -885,6 +888,7 @@ public class GraphHopper implements GraphHopperAPI
 
             logger.info("calling prepare.doWork ... (" + Helper.getMemInfo() + ")");
             prepare.doWork();
+            graph.getProperties().put("prepare.date", formatDateTime(new Date()));
         }
         graph.getProperties().put("prepare.done", tmpPrepare);
     }
@@ -926,5 +930,12 @@ public class GraphHopper implements GraphHopperAPI
     {
         if (fullyLoaded)
             throw new IllegalStateException("No configuration changes are possible after loading the graph");
+    }
+
+    // make sure this is identical to buildDate used in pom.xml
+    // <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZ</maven.build.timestamp.format>
+    private String formatDateTime( Date date )
+    {
+        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(date);
     }
 }

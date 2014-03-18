@@ -50,7 +50,7 @@ public class PathTest
 
     @Test
     public void testTime()
-    {        
+    {
         FlagEncoder tmpEnc = new Bike2WeightFlagEncoder();
         GraphStorage g = new GraphBuilder(new EncodingManager(tmpEnc)).create();
         Path p = new Path(g, tmpEnc);

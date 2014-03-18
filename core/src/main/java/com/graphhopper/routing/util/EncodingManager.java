@@ -340,13 +340,13 @@ public class EncodingManager
     }
 
     /**
-     * Swap direction for all encoders
+     * Reverse flags, to do so all encoders are called.
      */
-    public long swapDirection( long flags )
+    public long reverseFlags( long flags )
     {
         for (AbstractFlagEncoder encoder : edgeEncoders)
         {
-            flags = encoder.swapDirection(flags);
+            flags = encoder.reverseFlags(flags);
         }
         return flags;
     }

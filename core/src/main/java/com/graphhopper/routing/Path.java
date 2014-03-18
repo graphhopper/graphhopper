@@ -377,6 +377,7 @@ public class Path
             private String name = null;
             private int pavementType;
             private int wayType;
+            private AngleCalc2D ac = new AngleCalc2D();
 
             @Override
             public void next( EdgeIteratorState edge, int index )
@@ -401,7 +402,7 @@ public class Path
                     prevLat = nodeAccess.getLatitude(baseNode);
                     prevLon = nodeAccess.getLongitude(baseNode);
                 }
-
+                
                 double orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
                 if (name == null)
                 {
@@ -414,21 +415,7 @@ public class Path
                     cachedWays.add(prevInstruction);
                 } else
                 {
-                    double tmpOrientation;
-                    if (prevOrientation >= 0)
-                    {
-                        if (orientation < -Math.PI + prevOrientation)
-                            tmpOrientation = orientation + 2 * Math.PI;
-                        else
-                            tmpOrientation = orientation;
-
-                    } else
-                    {
-                        if (orientation > +Math.PI + prevOrientation)
-                            tmpOrientation = orientation - 2 * Math.PI;
-                        else
-                            tmpOrientation = orientation;
-                    }
+                    double tmpOrientation = ac.alignOrientation(prevOrientation, orientation);
 
                     String tmpName = edge.getName();
                     int tmpPavement = encoder.getPavementType(edge.getFlags());

@@ -110,10 +110,10 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
     }
 
     @Override
-    public long swapDirection( long flags )
+    public long reverseFlags( long flags )
     {
         // swap access
-        flags = super.swapDirection(flags);
+        flags = super.reverseFlags(flags);
 
         // swap speeds 
         double otherValue = reverseSpeed.getDoubleValue(flags);

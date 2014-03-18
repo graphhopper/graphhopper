@@ -36,14 +36,6 @@ public class DistanceCalcEarthTest
     }
 
     @Test
-    public void testRound()
-    {
-        assertEquals(100.94, DistanceCalcEarth.round(100.94, 2), 1e-7);
-        assertEquals(100.9, DistanceCalcEarth.round(100.94, 1), 1e-7);
-        assertEquals(101.0, DistanceCalcEarth.round(100.95, 1), 1e-7);
-    }
-
-    @Test
     public void testGeohashMaxDist()
     {
         DistanceCalcEarth dce = new DistanceCalcEarth();

@@ -18,9 +18,11 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.QueryResult;
 import static com.graphhopper.storage.index.QueryResult.Position.*;
@@ -28,8 +30,10 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.map.TIntObjectMap;
 import java.util.Arrays;
+import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Before;
 
 /**
  *
@@ -37,6 +41,21 @@ import static org.junit.Assert.*;
  */
 public class QueryGraphTest
 {
+    private final EncodingManager encodingManager = new EncodingManager("CAR");
+    private GraphStorage g;
+
+    @Before
+    public void setUp()
+    {
+        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
+    }
+
+    @After
+    public void tearDown()
+    {
+        g.close();
+    }
+
     void initGraph( Graph g )
     {
         //
@@ -55,8 +74,6 @@ public class QueryGraphTest
     @Test
     public void testOneVirtualNode()
     {
-        EncodingManager encodingManager = new EncodingManager("CAR");
-        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
         initGraph(g);
         EdgeExplorer expl = g.createEdgeExplorer();
 
@@ -94,16 +111,16 @@ public class QueryGraphTest
         queryGraph.lookup(Arrays.asList(res));
         assertEquals(new GHPoint(1.5, 1.5), res.getSnappedPoint());
         assertEquals(3, res.getClosestNode());
-        assertEquals(3, getPoints(queryGraph, 0, 3).getSize());
-        assertEquals(2, getPoints(queryGraph, 3, 1).getSize());
+        assertEquals(4, getPoints(queryGraph, 0, 3).getSize());
+        assertEquals(3, getPoints(queryGraph, 3, 1).getSize());
 
         queryGraph = new QueryGraph(g);
         res = createLocationResult(2, 1.7, iter, 1, PILLAR);
         queryGraph.lookup(Arrays.asList(res));
         assertEquals(new GHPoint(1.5, 1.5), res.getSnappedPoint());
         assertEquals(3, res.getClosestNode());
-        assertEquals(3, getPoints(queryGraph, 0, 3).getSize());
-        assertEquals(2, getPoints(queryGraph, 3, 1).getSize());
+        assertEquals(4, getPoints(queryGraph, 0, 3).getSize());
+        assertEquals(3, getPoints(queryGraph, 3, 1).getSize());
 
         // snap to edge which has pillar nodes        
         queryGraph = new QueryGraph(g);
@@ -112,7 +129,7 @@ public class QueryGraphTest
         assertEquals(new GHPoint(1.300019, 1.899962), res.getSnappedPoint());
         assertEquals(3, res.getClosestNode());
         assertEquals(4, getPoints(queryGraph, 0, 3).getSize());
-        assertEquals(2, getPoints(queryGraph, 3, 1).getSize());
+        assertEquals(3, getPoints(queryGraph, 3, 1).getSize());
 
         // snap to edge which has no pillar nodes
         queryGraph = new QueryGraph(g);
@@ -123,15 +140,14 @@ public class QueryGraphTest
         assertEquals(new GHPoint(0.5, 0), res.getSnappedPoint());
         assertEquals(3, res.getClosestNode());
         assertEquals(2, getPoints(queryGraph, 0, 3).getSize());
-        assertEquals(2, getPoints(queryGraph, 3, 2).getSize());
+        assertEquals(3, getPoints(queryGraph, 3, 2).getSize());
     }
 
     @Test
     public void testFillVirtualEdges()
     {
-        EncodingManager encodingManager = new EncodingManager("CAR");
-        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
         initGraph(g);
+        g.getNodeAccess().setNode(3, 0, 1);
         g.edge(1, 3);
 
         final int baseNode = 1;
@@ -155,14 +171,17 @@ public class QueryGraphTest
             }
         };
         queryGraph.lookup(Arrays.asList(res1));
-        GHUtility.getEdge(queryGraph, 0, 1);
+        EdgeIteratorState state = GHUtility.getEdge(queryGraph, 0, 1);
+        assertEquals(4, state.fetchWayGeometry(3).size());
+        
+        // fetch virtual edge and check way geometry
+        state = GHUtility.getEdge(queryGraph, 4, 3);
+        assertEquals(2, state.fetchWayGeometry(3).size());
     }
 
     @Test
     public void testMultipleVirtualNodes()
     {
-        EncodingManager encodingManager = new EncodingManager("CAR");
-        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
         initGraph(g);
 
         // snap to edge which has pillar nodes        
@@ -173,9 +192,9 @@ public class QueryGraphTest
         queryGraph.lookup(Arrays.asList(res1));
         assertEquals(new GHPoint(1.5, 1.5), res1.getSnappedPoint());
         assertEquals(3, res1.getClosestNode());
-        assertEquals(3, getPoints(queryGraph, 0, 3).getSize());
+        assertEquals(4, getPoints(queryGraph, 0, 3).getSize());
         PointList pl = getPoints(queryGraph, 3, 1);
-        assertEquals(2, pl.getSize());
+        assertEquals(3, pl.getSize());
         assertEquals(new GHPoint(1.5, 1.5), pl.toGHPoint(0));
         assertEquals(new GHPoint(1, 2.5), pl.toGHPoint(1));
 
@@ -199,9 +218,9 @@ public class QueryGraphTest
         assertEquals(3, res1.getClosestNode());
         assertEquals(new GHPoint(1.5, 1.5), res1.getSnappedPoint());
 
-        assertEquals(3, getPoints(queryGraph, 3, 0).getSize());
+        assertEquals(4, getPoints(queryGraph, 3, 0).getSize());
         assertEquals(2, getPoints(queryGraph, 3, 4).getSize());
-        assertEquals(2, getPoints(queryGraph, 4, 1).getSize());
+        assertEquals(3, getPoints(queryGraph, 4, 1).getSize());
         assertNull(GHUtility.getEdge(queryGraph, 4, 0));
         assertNull(GHUtility.getEdge(queryGraph, 3, 1));
     }
@@ -209,8 +228,6 @@ public class QueryGraphTest
     @Test
     public void testOneWay()
     {
-        EncodingManager encodingManager = new EncodingManager("CAR");
-        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 0);
         na.setNode(1, 0, 1);
@@ -228,7 +245,7 @@ public class QueryGraphTest
 
         assertEquals(2, getPoints(queryGraph, 0, 2).getSize());
         assertEquals(2, getPoints(queryGraph, 2, 3).getSize());
-        assertEquals(2, getPoints(queryGraph, 3, 1).getSize());
+        assertEquals(3, getPoints(queryGraph, 3, 1).getSize());
         assertNull(GHUtility.getEdge(queryGraph, 3, 0));
         assertNull(GHUtility.getEdge(queryGraph, 2, 1));
     }
@@ -236,15 +253,13 @@ public class QueryGraphTest
     @Test
     public void testVirtEdges()
     {
-        EncodingManager encodingManager = new EncodingManager("CAR");
-        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
         initGraph(g);
 
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(0);
         iter.next();
 
         QueryGraph.VirtualEdgeIterator vi = new QueryGraph.VirtualEdgeIterator(2);
-        vi.add(iter.detach());
+        vi.add(iter.detach(false));
 
         assertTrue(vi.next());
     }
@@ -258,8 +273,6 @@ public class QueryGraphTest
         //    |  |
         //    x---
         //
-        EncodingManager encodingManager = new EncodingManager("CAR");
-        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
         g.edge(0, 1, 10, true);
         g.edge(1, 3, 10, true);
         g.edge(3, 4, 10, true);
@@ -277,15 +290,54 @@ public class QueryGraphTest
         QueryGraph qg = new QueryGraph(g);
         qg.lookup(Arrays.asList(qr));
         EdgeExplorer ee = qg.createEdgeExplorer();
-        
+
         assertEquals(GHUtility.asSet(0, 5, 3), GHUtility.getNeighbors(ee.setBaseNode(1)));
+    }
+
+    @Test
+    public void testOneWayLoop_Issue162()
+    {
+        // do query at x, where edge is oneway
+        //
+        // |\
+        // | x
+        // 0<-\
+        // |
+        // 1
+        FlagEncoder carEncoder = encodingManager.getSingle();
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 0, 0);
+        na.setNode(1, 0, -0.001);
+        g.edge(0, 1, 10, true);
+        // in the case of identical nodes the wayGeometry defines the direction!
+        EdgeIteratorState edge = g.edge(0, 0).
+                setDistance(100).
+                setFlags(carEncoder.setProperties(20, true, false)).
+                setWayGeometry(Helper.createPointList(0.001, 0, 0, 0.001));
+
+        QueryResult qr = new QueryResult(0.0011, 0.0009);
+        qr.setClosestEdge(edge);
+        qr.setWayIndex(1);
+        qr.calcSnappedPoint(new DistanceCalc2D());
+
+        QueryGraph qg = new QueryGraph(g);
+        qg.lookup(Arrays.asList(qr));
+        EdgeExplorer ee = qg.createEdgeExplorer();
+        assertTrue(qr.getClosestNode() > 1);
+        assertEquals(2, GHUtility.count(ee.setBaseNode(qr.getClosestNode())));
+        EdgeIterator iter = ee.setBaseNode(qr.getClosestNode());
+        iter.next();
+        assertFalse(iter.toString(), carEncoder.isBackward(iter.getFlags()));
+        assertTrue(iter.toString(), carEncoder.isForward(iter.getFlags()));
+
+        iter.next();
+        assertTrue(iter.toString(), carEncoder.isBackward(iter.getFlags()));
+        assertFalse(iter.toString(), carEncoder.isForward(iter.getFlags()));        
     }
 
     @Test
     public void testEdgesShareOneNode()
     {
-        EncodingManager encodingManager = new EncodingManager("CAR");
-        Graph g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
         initGraph(g);
 
         EdgeIteratorState iter = GHUtility.getEdge(g, 0, 2);

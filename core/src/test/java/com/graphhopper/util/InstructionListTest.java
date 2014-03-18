@@ -116,7 +116,7 @@ public class InstructionListTest
         assertEquals(1.16, gpxes.get(5).getLon(), 1e-6);
         assertEquals(1.16, gpxes.get(5).getLon(), 1e-6);
         // List<List<Double>> tmpList = createList(p.calcPoints(), wayList.createPointIndices());
-        compare(Arrays.asList(asL(1.2d, 1.0d), asL(1.2d, 1.1), asL(1.1d, 1.1), asL(1.0, 1.1), 
+        compare(Arrays.asList(asL(1.2d, 1.0d), asL(1.2d, 1.1), asL(1.1d, 1.1), asL(1.0, 1.1),
                 asL(1.0, 1.2), asL(1.1, 1.3), asL(1.1, 1.4)),
                 wayList.createLatLngs());
 
@@ -291,7 +291,15 @@ public class InstructionListTest
         assertEquals(9.9, wayList.get(3).getFirstLon(), 1e-3);
 
         String gpxStr = wayList.createGPX("test", 0, "GMT+1");
-        assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T01:00:00+01:00</time></trkpt>"));
+        assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T01:00:00+01:00</time>"));
+        assertTrue(gpxStr, gpxStr.contains("<extensions>") && gpxStr.contains("</extensions>"));
+        assertTrue(gpxStr, gpxStr.contains("<rtept lat=\"15.1\" lon=\"10.0\">"));
+        assertTrue(gpxStr, gpxStr.contains("<distance>8000</distance>"));
+        assertTrue(gpxStr, gpxStr.contains("<desc>left 2-3</desc>"));
+        
+        // assertTrue(gpxStr, gpxStr.contains("<direction>W</direction>"));
+        // assertTrue(gpxStr, gpxStr.contains("<turn-angle>-90</turn-angle>"));
+        // assertTrue(gpxStr, gpxStr.contains("<azimuth>270</azimuth/>"));
     }
 
     @Test
@@ -328,5 +336,24 @@ public class InstructionListTest
         way.setTag("highway", "motorway");
         way.setTag("maxspeed", String.format("%d km/h", speedKmPerHour));
         return encodingManager.handleWayTags(way, 1, 0);
+    }
+
+    @Test
+    public void testEmptyList()
+    {
+        EncodingManager carManager = new EncodingManager("CAR");
+        Graph g = new GraphBuilder(carManager).create();
+        Path p = new Dijkstra(g, carManager.getSingle(), new ShortestWeighting()).calcPath(0, 1);
+        InstructionList il = p.calcInstructions();
+        assertEquals(0, il.size());
+        assertEquals(0, il.createLatLngs().size());
+    }
+
+    @Test
+    public void testRound()
+    {
+        assertEquals(100.94, InstructionList.round(100.94, 2), 1e-7);
+        assertEquals(100.9, InstructionList.round(100.94, 1), 1e-7);
+        assertEquals(101.0, InstructionList.round(100.95, 1), 1e-7);
     }
 }

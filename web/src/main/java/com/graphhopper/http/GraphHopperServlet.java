@@ -22,6 +22,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.*;
 import com.graphhopper.util.TranslationMap.Translation;
 import com.graphhopper.util.shapes.BBox;
@@ -87,6 +88,11 @@ public class GraphHopperServlet extends GHBaseServlet {
                 object("version", Constants.VERSION).
                 object("dimension", hopper.getGraph().getNodeAccess().getDimension()).
                 object("buildDate", Constants.BUILD_DATE);
+        
+        StorableProperties props = hopper.getGraph().getProperties();
+        json.object("importDate", props.get("osmreader.import.date"));
+        json.object("prepareDate", props.get("prepare.date"));
+
         writeJson(req, res, json.build());
     }
 
@@ -104,10 +110,6 @@ public class GraphHopperServlet extends GHBaseServlet {
             boolean calcPoints = getBooleanParam(req, "calcPoints", true);
             String vehicleStr = getParam(req, "vehicle", "CAR").toUpperCase();
             String weighting = getParam(req, "weighting", "fastest");
-            // REMOVE_IN 0.3
-            if (req.getParameterMap().containsKey("algoType"))
-                weighting = getParam(req, "algoType", "fastest");
-
             String algoStr = getParam(req, "algorithm", defaultAlgorithm);
 
             sw = new StopWatch().start();

@@ -17,7 +17,6 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.util.shapes.CoordTrig;
 import com.graphhopper.util.shapes.GHPoint;
 
 /**
@@ -26,16 +25,16 @@ import com.graphhopper.util.shapes.GHPoint;
 public class GPXEntry extends GHPoint
 {
     private long time;
+    
+    public GPXEntry( GHPoint p, long millis )
+    {
+        this(p.lat, p.lon, millis);
+    }
 
     public GPXEntry( double lat, double lon, long millis )
     {
         super(lat, lon);
         this.time = millis;
-    }
-
-    public GPXEntry( GHPoint p, long millis )
-    {
-        this(p.lat, p.lon, millis);
     }
 
     /**
