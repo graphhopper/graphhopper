@@ -149,19 +149,23 @@ public class InstructionList implements Iterable<Instruction>
         List<String> res = new ArrayList<String>(instructions.size());
         for (int i=0; i<instructions.size(); i++)
         {
-            res.add(Helper.firstBig(getTurnDescription(instruction, tr)));
+            res.add(Helper.firstBig(getTurnDescription(instructions.get(i), tr, i)));
         }
         return res;
     }
 
-    private String getTurnDescription( Instruction instruction, TranslationMap.Translation tr )
+    private String getTurnDescription( Instruction instruction, TranslationMap.Translation tr, int i )
     {
         String str;
         String n = getWayName(instruction.getName(), instruction.getPavement(), instruction.getWayType(), tr);
         int indi = instruction.getIndication();
         if (indi == Instruction.FINISH)
         {
-            str = tr.tr("finish");
+            // Only final finish instruction is finish
+                if (i==instructions.size()-1)
+                    str = tr.tr("finish");
+                else
+                    str = tr.tr("stopover");
         } else if (indi == Instruction.CONTINUE_ON_STREET)
         {
             str = Helper.isEmpty(n) ? tr.tr("continue") : tr.tr("continue_onto", n);
@@ -346,7 +350,7 @@ public class InstructionList implements Iterable<Instruction>
                 append("\" lon=\"").append(InstructionList.round(instruction.getFirstLon(), 6)).append("\">");
 
         if (!instruction.getName().isEmpty())
-            sbEx.append("<desc>").append(getTurnDescription(instruction, NO_TRANSLATE)).append("</desc>");
+            sbEx.append("<desc>").append(getTurnDescription(instruction, NO_TRANSLATE, 0)).append("</desc>");
 
         sbEx.append("<extensions>");
 
