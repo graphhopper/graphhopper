@@ -1,7 +1,7 @@
 Submit a new issue only if you are sure it is a missing feature or a bug. Otherwise discuss the topic on the 
 [mailing list](http://graphhopper.com/#developers) first.
 
-We love pull requests. Here's a quick guide:
+## We love pull requests. Here's a quick guide:
 
 1. [Fork the repo](https://help.github.com/articles/fork-a-repo), optionally create a feature branch
 
@@ -15,8 +15,12 @@ a test!
 
 5. Push to your fork and [submit a pull request](https://help.github.com/articles/using-pull-requests)
 
+## License Agreement
 
-Syntax:
+For contributions like pull requests, bug fixes and translations please read and sign 
+the <a href="http://www.clahub.com/agreements/graphhopper/graphhopper">GraphHopper License Agreement</a>. 
+
+## Syntax:
 
 * Tell this your IDE or just use NetBeans which picks the format from pom.xml. E.g. no tabs - use 4 spaces instead!!
 * Follow the conventions you see used in the source already.

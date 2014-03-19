@@ -89,7 +89,7 @@ public class AStar extends AbstractRoutingAlgorithm
         EdgeExplorer explorer = outEdgeExplorer;
         while (true)
         {
-            int currVertex = currEdge.endNode;
+            int currVertex = currEdge.adjNode;
             visitedCount++;
             if (finished())
                 break;
@@ -103,7 +103,7 @@ public class AStar extends AbstractRoutingAlgorithm
                     continue;
 
                 int neighborNode = iter.getAdjNode();
-                double alreadyVisitedWeight = weighting.calcWeight(iter) + currEdge.weightToCompare;
+                double alreadyVisitedWeight = weighting.calcWeight(iter, false) + currEdge.weightToCompare;
                 AStarEdge nEdge = fromMap.get(neighborNode);
                 if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight)
                 {
@@ -143,7 +143,7 @@ public class AStar extends AbstractRoutingAlgorithm
     @Override
     protected Path extractPath()
     {
-        return new Path(graph, flagEncoder).setEdgeEntry(currEdge).extract();
+        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setEdgeEntry(currEdge).extract();
     }
 
     @Override
@@ -155,7 +155,7 @@ public class AStar extends AbstractRoutingAlgorithm
     @Override
     protected boolean finished()
     {
-        return currEdge.endNode == to1;
+        return currEdge.adjNode == to1;
     }
 
     @Override

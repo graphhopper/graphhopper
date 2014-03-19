@@ -3,7 +3,7 @@ jdk:
   - openjdk7
   - openjdk6
   - oraclejdk7
-# fails with GZIPInputStream creation (readHeader)  - oraclejdk8
+  - oraclejdk8
 # do not install anything instead return true via unix command true
 install: true
 script: ./core/files/travis-build.sh

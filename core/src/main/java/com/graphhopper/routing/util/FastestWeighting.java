@@ -42,9 +42,12 @@ public class FastestWeighting implements Weighting
     }
 
     @Override
-    public double calcWeight( EdgeIteratorState edge )
+    public double calcWeight( EdgeIteratorState edge, boolean reverse )
     {
-        return edge.getDistance() / encoder.getSpeed(edge.getFlags());
+        double speed = reverse ? encoder.getReverseSpeed(edge.getFlags()) : encoder.getSpeed(edge.getFlags());
+        if (speed == 0)
+            return Double.POSITIVE_INFINITY;
+        return edge.getDistance() / speed;
     }
 
     @Override

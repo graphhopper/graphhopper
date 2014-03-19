@@ -61,7 +61,7 @@ public class RoutingAlgorithmIT
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(43.730729, 7.42135, 43.727697, 7.419199, 2581, 91));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3586, 126));
-        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.4277, 2560, 102));
+        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.4277, 2561, 107));
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 2227, 105));
         list.add(new OneRun(43.730949, 7.412338, 43.739643, 7.424542, 2101, 100));
         list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
@@ -82,6 +82,21 @@ public class RoutingAlgorithmIT
     {
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 createMonacoCar(), "CAR", true, "CAR", "shortest");
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testOneWayCircleBug()
+    {
+        // export from http://www.openstreetmap.org/export#map=19/51.37605/-0.53155
+        List<OneRun> list = new ArrayList<OneRun>();
+        // going the bit longer way out of the circle
+        list.add(new OneRun(51.376197, -0.531576, 51.376509, -0.530863, 153, 14));
+        // now exacle the opposite direction: going into the circle (shorter)
+        list.add(new OneRun(51.376509, -0.530863, 51.376197, -0.531576, 75, 13));
+
+        runAlgo(testCollector, "files/circle-bug.osm.gz", "target/graph-circle-bug",
+                list, "CAR", true, "CAR", "shortest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -127,7 +142,7 @@ public class RoutingAlgorithmIT
         List<OneRun> list = createMonacoCar();
         list.get(0).locs = 101;
         list.get(1).locs = 135;
-        list.get(2).locs = 105;
+        list.get(2).locs = 110;
         list.get(3).locs = 117;
         list.get(4).locs = 106;
 
@@ -293,9 +308,12 @@ public class RoutingAlgorithmIT
         try
         {
             Helper.removeDir(new File(graphFile));
-            GraphHopper hopper = new GraphHopper().setInMemory(true).setOSMFile(osmFile).
+            GraphHopper hopper = new GraphHopper().
+                    setInMemory(true).
+                    setOSMFile(osmFile).
                     disableCHShortcuts().
-                    setGraphHopperLocation(graphFile).setEncodingManager(new EncodingManager(importVehicles)).
+                    setGraphHopperLocation(graphFile).
+                    setEncodingManager(new EncodingManager(importVehicles)).
                     importOrLoad();
 
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
@@ -327,7 +345,7 @@ public class RoutingAlgorithmIT
                     + ", file " + osmFile, ex);
         } finally
         {
-            Helper.removeDir(new File(graphFile));
+            // Helper.removeDir(new File(graphFile));
         }
     }
 

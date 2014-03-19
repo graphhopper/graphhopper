@@ -18,6 +18,9 @@
 package com.graphhopper.util;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.text.DecimalFormat;
 
 public class Instruction
 {
@@ -134,7 +137,8 @@ public class Instruction
      * <p>
      * @return the time offset to add for the next instruction
      */
-    long fillGPXList( List<GPXEntry> list, long time, double nextInstrLat, double nextInstrLon )
+    long fillGPXList( List<GPXEntry> list, long time,
+            Instruction prevInstr, Instruction nextInstr, boolean firstInstr )
     {
         checkOne();
         int len = points.size();
@@ -144,8 +148,8 @@ public class Instruction
         for (int i = 0; i < len; i++)
         {
             boolean last = i + 1 == len;
-            double nextLat = last ? nextInstrLat : points.getLatitude(i + 1);
-            double nextLon = last ? nextInstrLon : points.getLongitude(i + 1);
+            double nextLat = last ? nextInstr.getFirstLat() : points.getLatitude(i + 1);
+            double nextLon = last ? nextInstr.getFirstLon() : points.getLongitude(i + 1);
 
             list.add(new GPXEntry(lat, lon, prevTime));
             // TODO in the case of elevation data the air-line distance is probably not precise enough
@@ -170,6 +174,33 @@ public class Instruction
         sb.append(millis);
         sb.append(')');
         return sb.toString();
+    }
+
+    public Map<String, String> calcExtensions()
+    {
+        AngleCalc2D ac = new AngleCalc2D();
+        DecimalFormat angleFormatter = new DecimalFormat("#");
+
+        // Add info for extensions
+        Map<String, String> extensions = new HashMap<String, String>();
+
+        // TODO instead of indication use angle which can be used here
+//        double distanceToNext = distanceCalc.calcDist(nextLat, nextLon, lat, lon);
+//        extensions.put("distance", angleFormatter.format(distanceToNext));
+//
+//        if (!(firstInstr && first))
+//        {
+//            // impossible to calculate an angle for first point of first instruction                
+//            double prevLat = first ? prevInstr.getLastLat() : points.getLatitude(i - 1);
+//            double prevLon = first ? prevInstr.getLastLon() : points.getLongitude(i - 1);
+//            double turnAngle = ac.calcTurnAngleDeg(prevLat, prevLon, lat, lon, nextLat, nextLon);
+//            extensions.put("turn-angle", angleFormatter.format(turnAngle));
+//        }
+//
+//        double azimuth = ac.calcAzimuthDeg(lat, lon, nextLat, nextLon);
+//        extensions.put("azimuth", angleFormatter.format(azimuth));
+//        extensions.put("direction", ac.azimuth2compassPoint(azimuth));
+        return extensions;
     }
 
     void checkOne()

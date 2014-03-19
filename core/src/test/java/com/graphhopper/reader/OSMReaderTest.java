@@ -17,10 +17,7 @@
  */
 package com.graphhopper.reader;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import gnu.trove.list.TLongList;
 
 import java.io.File;
@@ -88,7 +85,7 @@ public class OSMReaderTest
 
     GraphStorage buildGraph( String directory, EncodingManager encodingManager, boolean turnRestrictionsImport )
     {
-        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, 
+        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager,
                 (turnRestrictionsImport) ? new TurnCostStorage() : new ExtendedStorage.NoExtendedStorage());
     }
 
@@ -140,7 +137,11 @@ public class OSMReaderTest
     public void testMain()
     {
         GraphHopper hopper = new GraphHopperTest(file1).importOrLoad();
-        Graph graph = hopper.getGraph();
+        GraphStorage graph = (GraphStorage) hopper.getGraph();
+        
+        assertNotNull(graph.getProperties().get("osmreader.import.date"));
+        assertNotEquals("", graph.getProperties().get("osmreader.import.date"));
+        
         assertEquals(4, graph.getNodes());
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
@@ -589,7 +590,7 @@ public class OSMReaderTest
                 return setSpeed(0, speed);
             }
         };
-        EncodingManager manager = new EncodingManager(encoder);        
+        EncodingManager manager = new EncodingManager(encoder);
         GraphStorage graph = buildGraph(dir, manager, false);
         final Map<Integer, Double> latMap = new HashMap<Integer, Double>();
         final Map<Integer, Double> lonMap = new HashMap<Integer, Double>();

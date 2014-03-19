@@ -87,8 +87,8 @@ public class LinearKeyAlgo implements KeyAlgo
         lat = Math.min(Math.max(lat, bounds.minLat), bounds.maxLat);
         lon = Math.min(Math.max(lon, bounds.minLon), bounds.maxLon);
         // introduce a minor correction to round to lower grid entry!
-        int latIndex = (int) ((lat - bounds.minLat) / latDelta * C);
-        int lonIndex = (int) ((lon - bounds.minLon) / lonDelta * C);
+        long latIndex = (long) ((lat - bounds.minLat) / latDelta * C);
+        long lonIndex = (long) ((lon - bounds.minLon) / lonDelta * C);
         return latIndex * lonUnits + lonIndex;
     }
 
@@ -104,5 +104,15 @@ public class LinearKeyAlgo implements KeyAlgo
         double lon = linearKey % lonUnits * lonDelta + bounds.minLon;
         latLon.lat = lat + latDelta / 2;
         latLon.lon = lon + lonDelta / 2;
+    }
+
+    public double getLatDelta()
+    {
+        return latDelta;
+    }
+
+    public double getLonDelta()
+    {
+        return lonDelta;
     }
 }

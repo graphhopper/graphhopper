@@ -72,8 +72,8 @@ public class Dijkstra extends AbstractRoutingAlgorithm
             if (finished())
                 break;
 
-            int neighborNode = currEdge.endNode;
-            EdgeIterator iter = explorer.setBaseNode(neighborNode);
+            int startNode = currEdge.adjNode;
+            EdgeIterator iter = explorer.setBaseNode(startNode);
             while (iter.next())
             {
                 if (!accept(iter))
@@ -83,7 +83,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
                     continue;
 
                 int tmpNode = iter.getAdjNode();
-                double tmpWeight = weighting.calcWeight(iter) + currEdge.weight;
+                double tmpWeight = weighting.calcWeight(iter, false) + currEdge.weight;
 
                 EdgeEntry nEdge = fromMap.get(tmpNode);
                 if (nEdge == null)
@@ -101,7 +101,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
                     fromHeap.add(nEdge);
                 }
 
-                updateShortest(nEdge, neighborNode);
+                updateShortest(nEdge, startNode);
             }
 
             if (fromHeap.isEmpty())
@@ -117,7 +117,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     @Override
     protected boolean finished()
     {
-        return currEdge.endNode == to;
+        return currEdge.adjNode == to;
     }
 
     @Override
@@ -125,7 +125,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     {
         if (currEdge == null || !finished())
             return createEmptyPath();
-        return new Path(graph, flagEncoder).setEdgeEntry(currEdge).extract();
+        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setEdgeEntry(currEdge).extract();
     }
 
     @Override

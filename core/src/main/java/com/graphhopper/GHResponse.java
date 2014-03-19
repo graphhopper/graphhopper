@@ -93,6 +93,9 @@ public class GHResponse
         return found;
     }
 
+    /**
+     * Calculates the bounding box of this route response
+     */
     public BBox calcRouteBBox( BBox _fallback )
     {
         BBox bounds = BBox.INVERSE.clone();

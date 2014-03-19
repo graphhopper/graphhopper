@@ -249,23 +249,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      * Swapping directions means swapping bits which are dependent on the direction of an edge like
      * the access bits. But also direction dependent speed values should be swapped too.
      */
-    public long swapDirection( long flags )
+    public long reverseFlags( long flags )
     {
         long dir = flags & directionBitMask;
         if (dir == directionBitMask || dir == 0)
             return flags;
 
         return flags ^ directionBitMask;
-    }
-
-    @Override
-    public double getSpeed( long flags )
-    {
-        double speedVal = speedEncoder.getDoubleValue(flags);
-        if (speedVal < 0)
-            throw new IllegalStateException("Speed was negative!? " + speedVal);
-
-        return speedVal;
     }
 
     /**
@@ -292,6 +282,28 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (speed > getMaxSpeed())
             speed = getMaxSpeed();
         return speedEncoder.setDoubleValue(flags, speed);
+    }
+
+    @Override
+    public double getSpeed( long flags )
+    {
+        double speedVal = speedEncoder.getDoubleValue(flags);
+        if (speedVal < 0)
+            throw new IllegalStateException("Speed was negative!? " + speedVal);
+
+        return speedVal;
+    }
+
+    @Override
+    public long setReverseSpeed( long flags, double speed )
+    {
+        return setSpeed(flags, speed);
+    }
+
+    @Override
+    public double getReverseSpeed( long flags )
+    {
+        return getSpeed(flags);
     }
 
     @Override

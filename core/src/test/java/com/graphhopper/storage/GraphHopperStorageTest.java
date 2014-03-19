@@ -72,7 +72,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
     @Test
     public void testSave_and_fileFormat() throws IOException
     {
-        graph = createGraphStorage(new RAMDirectory(defaultGraph, true));
+        graph = (GraphHopperStorage) createGraphStorage(new RAMDirectory(defaultGraphLoc, true));
         graph.setNode(0, 10, 10);
         graph.setNode(1, 11, 20);
         graph.setNode(2, 12, 12);
@@ -92,7 +92,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
         graph.flush();
         graph.close();
 
-        graph = newGraph(new MMapDirectory(defaultGraph));
+        graph = (GraphHopperStorage) newGraph(new MMapDirectory(defaultGraphLoc));
         assertTrue(graph.loadExisting());
 
         assertEquals(12, graph.getNodes());
@@ -188,34 +188,5 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
         tmpGS.setEdgeCount(Integer.MAX_VALUE / 2);
         assertTrue(tmpGS.getAllEdges().next());
         tmpGS.close();
-    }
-
-    @Test
-    public void testDetachEdge()
-    {
-        Directory dir = new RAMDirectory();
-        graph = new GraphHopperStorage(dir, encodingManager).create(defaultSize);
-        graph.edge(0, 1, 2, true);
-        graph.edge(0, 2, 2, true);
-        graph.edge(1, 2, 2, true);
-
-        EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(0);
-        try
-        {
-            // currently not possible to implement without a new property inside EdgeIterable
-            iter.detach();
-            assertTrue(false);
-        } catch (Exception ex)
-        {
-        }
-
-        iter.next();
-        EdgeIteratorState iter2 = iter.detach();
-        assertEquals(2, iter.getAdjNode());
-        assertEquals(2, iter2.getAdjNode());
-
-        iter.next();
-        assertEquals(1, iter.getAdjNode());
-        assertEquals(2, iter2.getAdjNode());
-    }
+    }  
 }

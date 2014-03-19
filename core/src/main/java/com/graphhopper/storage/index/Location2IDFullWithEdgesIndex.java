@@ -107,7 +107,7 @@ public class Location2IDFullWithEdgesIndex implements LocationIndex
                 if (fromDist < foundDist)
                 {
                     res.setQueryDistance(fromDist);
-                    res.setClosestEdge(iter.detach());
+                    res.setClosestEdge(iter.detach(false));
                     res.setClosestNode(node);
                     foundDist = fromDist;
                 }

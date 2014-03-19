@@ -82,10 +82,15 @@ public class EncodingManager
     {
         this(flagEncodersStr, 4);
     }
-    
+
     public EncodingManager( String flagEncodersStr, int bytesForFlags )
     {
-        this(Arrays.asList(readFromEncoderString(defaultEdgeFlagEncoders, flagEncodersStr).toArray(new FlagEncoder[0])), bytesForFlags, 0);
+        this(flagEncodersStr, bytesForFlags, 0);
+    }
+    
+    public EncodingManager( String flagEncodersStr, int bytesForFlags, int maxTurnCost )
+    {
+        this(Arrays.asList(readFromEncoderString(defaultEdgeFlagEncoders, flagEncodersStr).toArray(new FlagEncoder[0])), bytesForFlags, maxTurnCost);
     }
 
     /**
@@ -340,14 +345,14 @@ public class EncodingManager
     }
 
     /**
-     * Swap direction for all encoders
+     * Reverse flags, to do so all encoders are called.
      */
-    public long swapDirection( long flags )
+    public long reverseFlags( long flags )
     {
         int encoderCount = edgeEncoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
-            flags = edgeEncoders.get(i).swapDirection(flags);
+            flags = edgeEncoders.get(i).reverseFlags(flags);
         }
         return flags;
     }

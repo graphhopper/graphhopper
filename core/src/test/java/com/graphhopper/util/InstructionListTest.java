@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.ShortestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -111,12 +112,54 @@ public class InstructionListTest
         // check order of pillar nodes        
         assertEquals(1.15, gpxes.get(4).getLon(), 1e-6);
         assertEquals(1.16, gpxes.get(5).getLon(), 1e-6);
+        assertEquals(1.16, gpxes.get(5).getLon(), 1e-6);
+        // List<List<Double>> tmpList = createList(p.calcPoints(), wayList.createPointIndices());
+        compare(Arrays.asList(asL(1.2d, 1.0d), asL(1.2d, 1.1), asL(1.1d, 1.1), asL(1.0, 1.1),
+                asL(1.0, 1.2), asL(1.1, 1.3), asL(1.1, 1.4)),
+                wayList.createLatLngs());
 
         p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestWeighting()).calcPath(6, 2);
         assertEquals(42000, p.getDistance(), 1e-2);
+        assertEquals(Helper.createTList(6, 7, 8, 5, 2), p.calcNodes());
         wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 6-7", "Continue onto 7-8", "Turn left onto 5-8", "Continue onto 5-2", "Finish!"),
                 wayList.createDescription(trMap.getWithFallBack(Locale.CANADA)));
+
+        // assertEquals(Arrays.asList(0, 1, 4, 5, 6), wayList.createPointIndices());
+        // tmpList = createList(p.calcPoints(), wayList.createPointIndices());
+        compare(Arrays.asList(asL(1d, 1d), asL(1d, 1.1), asL(1d, 1.2), asL(1.1, 1.2), asL(1.2, 1.2)),
+                wayList.createLatLngs());
+    }
+
+    List<List<Double>> createList( PointList pl, List<Integer> integs )
+    {
+        List<List<Double>> list = new ArrayList<List<Double>>();
+        for (int i : integs)
+        {
+            List<Double> entryList = new ArrayList<Double>(2);
+            entryList.add(pl.getLatitude(i));
+            entryList.add(pl.getLongitude(i));
+            list.add(entryList);
+        }
+        return list;
+    }
+
+    void compare( List<List<Double>> expected, List<List<Double>> was )
+    {
+        for (int i = 0; i < expected.size(); i++)
+        {
+            List<Double> e = expected.get(i);
+            List<Double> wasE = was.get(i);
+            for (int j = 0; j < e.size(); j++)
+            {
+                assertEquals(e + " vs " + wasE, e.get(j), wasE.get(j), 1e-5d);
+            }
+        }
+    }
+
+    List<Double> asL( Double... list )
+    {
+        return Arrays.asList(list);
     }
 
     double sum( List<Double> list )
@@ -243,7 +286,15 @@ public class InstructionListTest
         assertEquals(9.9, wayList.get(3).getFirstLon(), 1e-3);
 
         String gpxStr = wayList.createGPX("test", 0, "GMT+1");
-        assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T01:00:00+01:00</time></trkpt>"));
+        assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T01:00:00+01:00</time>"));
+        assertTrue(gpxStr, gpxStr.contains("<extensions>") && gpxStr.contains("</extensions>"));
+        assertTrue(gpxStr, gpxStr.contains("<rtept lat=\"15.1\" lon=\"10.0\">"));
+        assertTrue(gpxStr, gpxStr.contains("<distance>8000</distance>"));
+        assertTrue(gpxStr, gpxStr.contains("<desc>left 2-3</desc>"));
+        
+        // assertTrue(gpxStr, gpxStr.contains("<direction>W</direction>"));
+        // assertTrue(gpxStr, gpxStr.contains("<turn-angle>-90</turn-angle>"));
+        // assertTrue(gpxStr, gpxStr.contains("<azimuth>270</azimuth/>"));
     }
 
     @Test
@@ -280,5 +331,24 @@ public class InstructionListTest
         way.setTag("highway", "motorway");
         way.setTag("maxspeed", String.format("%d km/h", speedKmPerHour));
         return encodingManager.handleWayTags(way, 1, 0);
+    }
+
+    @Test
+    public void testEmptyList()
+    {
+        EncodingManager carManager = new EncodingManager("CAR");
+        Graph g = new GraphBuilder(carManager).create();
+        Path p = new Dijkstra(g, carManager.getSingle(), new ShortestWeighting()).calcPath(0, 1);
+        InstructionList il = p.calcInstructions();
+        assertEquals(0, il.size());
+        assertEquals(0, il.createLatLngs().size());
+    }
+
+    @Test
+    public void testRound()
+    {
+        assertEquals(100.94, InstructionList.round(100.94, 2), 1e-7);
+        assertEquals(100.9, InstructionList.round(100.94, 1), 1e-7);
+        assertEquals(101.0, InstructionList.round(100.95, 1), 1e-7);
     }
 }
