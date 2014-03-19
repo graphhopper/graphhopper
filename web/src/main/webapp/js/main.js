@@ -25,12 +25,21 @@ var routingLayer;
 var map;
 var browserTitle = "GraphHopper Maps - Driving Directions";
 var firstClickToRoute;
+var viacounter = 0;
+var FromAndToFlagCreated=false;
 var defaultTranslationMap = null;
 var enTranslationMap = null;
 var routeSegmentPopup = null;
 
 var iconFrom = L.icon({
     iconUrl: './img/marker-icon-green.png',
+    shadowSize: [50, 64],
+    shadowAnchor: [4, 62],
+    iconAnchor: [12, 40]
+});
+
+var iconVia = L.icon({
+    iconUrl: './img/marker-icon-yellow.png',
     shadowSize: [50, 64],
     shadowAnchor: [4, 62],
     iconAnchor: [12, 40]
@@ -70,6 +79,18 @@ $(document).ready(function(e) {
         e.preventDefault();
         exportGPX();
     });
+    
+    $('#addViaButton').click(function(e) {
+        // no page reload
+        e.preventDefault();
+        addViaButton();
+    });
+
+    $('#rmViaButton').click(function(e) {
+        // no page reload
+        e.preventDefault();
+        rmViaButton();
+    });
 
     var urlParams = parseUrlWithHisto();
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
@@ -105,6 +126,10 @@ $(document).ready(function(e) {
                     button.click(function() {
                         ghRequest.vehicle = vehicle;
                         resolveFrom();
+                        for (i=1; i<=viacounter; i++)
+                        {
+                          resolveVia(i);
+                        }
                         resolveTo();
                         routeLatLng(ghRequest);
                     });
@@ -144,33 +169,156 @@ $(document).ready(function(e) {
             });
 });
 
+function addViaButton()
+{
+    // Create <img id="viaIndicator" class="hidden" src="img/indicator.gif"/>
+    viacounter++;
+    ghRequest.via.push(new GHInput(""));
+    var img = document.createElement("img");
+    img.id = "viaIndicator"+viacounter;
+    img.setAttribute("class", "hidden");
+    img.setAttribute("src", "img/indicator.gif");
+    var pic = document.getElementById("viapics");
+    // Create <img id="viaFlag" src="img/marker-small-yellow.png"/>
+    pic.appendChild(img);
+    var png = document.createElement("img");
+    png.id = "viaFlag"+viacounter;
+    png.setAttribute("src", "img/marker-small-yellow.png");
+    pic.appendChild(png);
+    
+    var element = document.createElement("input");
+    //Assign different attributes to the element. 
+    element.type = "text";
+    element.id = "viaInput"+viacounter;
+    element.setAttribute("placeholder", tr("viaHint") + " " + viacounter);
+    //Append the element in page (in span).  
+    pic.appendChild(element);
+    var clear = document.createElement("div");
+    clear.setAttribute("class", "clear");
+    pic.appendChild(clear);
+    
+    var viaResolveFound = document.createElement("div");
+    viaResolveFound.id = "viaResolveFound"+viacounter;
+    pic.appendChild(viaResolveFound);
+    
+    var viaResolveError = document.createElement("div");
+    viaResolveError.id = "viaResolveError"+viacounter;
+    pic.appendChild(viaResolveError);
+    
+    document.getElementById("rmViaButton").setAttribute("class", "visible");
+}
+
+function rmViaButton()
+{
+    var viaindicator = document.getElementById("viaIndicator"+viacounter);
+    //Remove the element
+    viaindicator.parentNode.removeChild(viaindicator);
+    viaindicator = document.getElementById("viaFlag"+viacounter);
+    viaindicator.parentNode.removeChild(viaindicator);
+    viaindicator = document.getElementById("viaInput"+viacounter);
+    viaindicator.parentNode.removeChild(viaindicator);
+    viaindicator = document.getElementById("viaResolveFound"+viacounter);
+    viaindicator.parentNode.removeChild(viaindicator);
+    viaindicator = document.getElementById("viaResolveError"+viacounter);
+    viaindicator.parentNode.removeChild(viaindicator);
+    
+    viacounter--;
+    if (viacounter<=0)
+    {
+        viacounter=0;
+        document.getElementById("rmViaButton").setAttribute("class", "hidden");
+    }
+    if (ghRequest.via.length !== 0)
+    {
+       ghRequest.via.pop();
+    }
+    routingLayer.clearLayers();
+    mySubmit();
+}
+
 function initFromParams(params, doQuery) {
     ghRequest.init(params);
     var fromAndTo = params.from && params.to;
     var routeNow = params.point && params.point.length == 2 || fromAndTo;
     if (routeNow) {
         if (fromAndTo)
-            resolveCoords(params.from, params.to, doQuery);
+            resolveCoords(params.from, null ,params.to, doQuery);
         else
-            resolveCoords(params.point[0], params.point[1], doQuery);
+            resolveCoords(params.point[0], null , params.point[1], doQuery);
+    }
+    else
+    {
+       if (params.point && params.point.length>2) 
+       {
+          var viaarray=new Array();
+          for (i=1;i<params.point.length-1;i++)
+          {
+             if (ghRequest.via[i-1] === null)
+                 addViaButton();
+             viaarray.push(params.point[i]);
+          }
+          resolveCoords(params.point[0], viaarray , params.point[params.point.length-1], doQuery);
+       }
     }
 }
 
-function resolveCoords(fromStr, toStr, doQuery) {
+function allViaLats()
+{
+    var res=true;
+    for (i=0;i<ghRequest.via.length;i++)
+    {
+      res=(res && ghRequest.via[i].lat);
+    }
+    return res;
+}
+
+function resolveFromViaTo()
+{
+    var res = [];
+    res.push(resolveFrom());
+    for (var i=0;i<ghRequest.via.length;i++)
+    {
+        res.push(resolveVia(i+1));
+    }
+    res.push(resolveTo());    
+    return res;
+}
+
+function resolveCoords(fromStr, viaarray, toStr, doQuery) {
     if (fromStr !== ghRequest.from.input || !ghRequest.from.isResolved())
         ghRequest.from = new GHInput(fromStr);
+
+    if ( (viaarray!=null)&&(viaarray.length !==0 ))
+    {
+      for (i=0; i<viaarray.length; i++)
+      {
+          if (ghRequest.via.length<viaarray.length)
+              addViaButton();
+          if (viaarray[i] !== ghRequest.via[i].input || !ghRequest.via[i].isResolved())
+          {
+             ghRequest.via[i] = new GHInput(viaarray[i]);
+          }
+      }
+    }
 
     if (toStr !== ghRequest.to.input || !ghRequest.to.isResolved())
         ghRequest.to = new GHInput(toStr);
 
-    if (ghRequest.from.lat && ghRequest.to.lat) {
+    if (ghRequest.from.lat && ghRequest.to.lat && allViaLats()) {
         // two mouse clicks into the map -> do not wait for resolve
         resolveFrom();
+        for (i=0; i<ghRequest.via.length; i++)
+        {
+          resolveVia(i+1);
+        }
         resolveTo();
         routeLatLng(ghRequest, doQuery);
     } else {
-        // at least one text input from user -> wait for resolve as we need the coord for routing     
-        $.when(resolveFrom(), resolveTo()).done(function(fromArgs, toArgs) {
+        // at least one text input from user -> wait for resolve as we need the coord for routing
+        console.log("at least one text input from user -> wait for resolve as we need the coord for routing");
+        var deferreds = resolveFromViaTo();
+        // See http://stackoverflow.com/questions/5627284/pass-in-an-array-of-deferreds-to-when
+        $.when.apply($, deferreds).done(function() {
             routeLatLng(ghRequest, doQuery);
         });
     }
@@ -313,20 +461,45 @@ function initMap() {
     function onMapClick(e) {
         var latlng = e.latlng;
         latlng.lng = makeValidLng(latlng.lng);
-        if (firstClickToRoute) {
-            // set start point
-            routingLayer.clearLayers();
-            firstClickToRoute = false;
-            ghRequest.from.setCoord(latlng.lat, latlng.lng);
-            resolveFrom();
-        } else {
-            // set end point
-            ghRequest.to.setCoord(latlng.lat, latlng.lng);
-            resolveTo();
-            // do not wait for resolving
-            routeLatLng(ghRequest);
-            firstClickToRoute = true;
-        }
+           // Check if we have all via flags
+           var viaflagmissing=-1;
+           for (i=0;(viaflagmissing===-1)&&(i<ghRequest.via.length);i++)
+           {
+              var viaStr = $("#viaInput"+(i+1)).val();
+              console.log("viaStr"+(i+1)+"="+viaStr);
+              if (viaStr === "")
+              {
+                 viaflagmissing=i;
+              }
+           }
+           // Via flag missing
+           if (viaflagmissing!==-1)
+           {
+              ghRequest.via[viaflagmissing].setCoord(latlng.lat, latlng.lng);
+              resolveVia(viaflagmissing+1);
+              if (FromAndToFlagCreated )
+                  mySubmit();                  
+           }
+           else
+           {
+             if (firstClickToRoute) {
+                // set start point
+                routingLayer.clearLayers();
+                FromAndToFlagCreated = false;
+                firstClickToRoute = false;
+                ghRequest.from.setCoord(latlng.lat, latlng.lng);
+                resolveFrom();
+             } else 
+             {
+                // set end point
+                ghRequest.to.setCoord(latlng.lat, latlng.lng);
+                FromAndToFlagCreated = true;
+                resolveTo();
+                // do not wait for resolving
+                routeLatLng(ghRequest);
+                firstClickToRoute = true;
+             }
+           }
     }
 
     map.on('click', onMapClick);
@@ -340,23 +513,50 @@ function makeValidLng(lon) {
     return (lon - 180) % 360 + 180;
 }
 
-function setFlag(coord, isFrom) {
+function setFlag(coord, isFromViaOrTo, viaindex) {
     if (coord.lat) {
+        var placeicon;
+        var placepopup;
+        switch(isFromViaOrTo)
+        {
+            case 1:
+               placeicon=iconFrom;
+               placepopup="Start";
+               break;         
+            case 2:
+               placeicon=iconVia;
+               placepopup="Via "+viaindex;
+               break;         
+            case 3:
+               placeicon=iconTo;
+               placepopup="To";
+               break;         
+        }
+        
         var marker = L.marker([coord.lat, coord.lng], {
-            icon: (isFrom ? iconFrom : iconTo),
+            icon: placeicon,
             draggable: true
-        }).addTo(routingLayer).bindPopup(isFrom ? "Start" : "End");
+        }).addTo(routingLayer).bindPopup(placepopup);
         marker.on('dragend', function(e) {
-            routingLayer.clearLayers();
+            // routingLayer.clearLayers();
             // inconsistent leaflet API: event.target.getLatLng vs. mouseEvent.latlng?
             var latlng = e.target.getLatLng();
-            if (isFrom) {
+            switch(isFromViaOrTo)
+            {
+               case 1:
                 ghRequest.from.setCoord(latlng.lat, latlng.lng);
                 resolveFrom();
-            } else {
+                break;
+               case 2:
+                ghRequest.via[viaindex-1].setCoord(latlng.lat, latlng.lng);
+                resolveVia(viaindex);
+                break;
+               case 3:
                 ghRequest.to.setCoord(latlng.lat, latlng.lng);
                 resolveTo();
+                break;
             }
+            
             // do not wait for resolving and avoid zooming when dragging
             ghRequest.doZoom = false;
             routeLatLng(ghRequest, false);
@@ -365,28 +565,49 @@ function setFlag(coord, isFrom) {
 }
 
 function resolveFrom() {
-    setFlag(ghRequest.from, true);
-    return resolve("from", ghRequest.from);
+    setFlag(ghRequest.from, 1, 0);
+    return resolve("from", ghRequest.from, 0);
+}
+
+function resolveVia(viaindex) {
+  setFlag(ghRequest.via[viaindex-1], 2, viaindex);
+  return resolve("via", ghRequest.via[viaindex-1], viaindex);
 }
 
 function resolveTo() {
-    setFlag(ghRequest.to, false);
-    return resolve("to", ghRequest.to);
+    setFlag(ghRequest.to, 3, 0);
+    return resolve("to", ghRequest.to, 0);
 }
 
-function resolve(fromOrTo, locCoord) {
-    $("#" + fromOrTo + "Flag").hide();
-    $("#" + fromOrTo + "Indicator").show();
-    $("#" + fromOrTo + "Input").val(locCoord.input);
+function resolve(fromOrViaOrTo, locCoord, viaindex) {
+    if (fromOrViaOrTo==="via")
+    {
+      $("#" + fromOrViaOrTo + "Flag" + viaindex).hide();
+      $("#" + fromOrViaOrTo + "Indicator" + viaindex).show();
+      $("#" + fromOrViaOrTo + "Input" + viaindex).val(locCoord.input);
+    }
+    else
+    {
+      $("#" + fromOrViaOrTo + "Flag").hide();
+      $("#" + fromOrViaOrTo + "Indicator").show();
+      $("#" + fromOrViaOrTo + "Input").val(locCoord.input);
+    }
 
     return createAmbiguityList(locCoord).done(function(arg1) {
-        var errorDiv = $("#" + fromOrTo + "ResolveError");
-        errorDiv.empty();
-        var foundDiv = $("#" + fromOrTo + "ResolveFound");
+        if (fromOrViaOrTo==="via")
+        {
+          var errorDiv = $("#" + fromOrViaOrTo + "ResolveError" + viaindex);
+          var foundDiv = $("#" + fromOrViaOrTo + "ResolveFound" + viaindex);
+        }
+        else
+        {
+          var errorDiv = $("#" + fromOrViaOrTo + "ResolveError");
+          var foundDiv = $("#" + fromOrViaOrTo + "ResolveFound");
+        }
         // deinstallation of completion if there was one
-        // if (getAutoCompleteDiv(fromOrTo).autocomplete())
-        //    getAutoCompleteDiv(fromOrTo).autocomplete().dispose();
-
+        // if (getAutoCompleteDiv(fromOrViaOrTo).autocomplete())
+        //    getAutoCompleteDiv(fromOrViaOrTo).autocomplete().dispose();
+        errorDiv.empty();
         foundDiv.empty();
         var list = locCoord.resolvedList;
         if (locCoord.error) {
@@ -395,12 +616,20 @@ function resolve(fromOrTo, locCoord) {
             var anchor = String.fromCharCode(0x25BC);
             var linkPart = $("<a>" + anchor + "<small>" + list.length + "</small></a>");
             foundDiv.append(linkPart.click(function(e) {
-                setAutoCompleteList(fromOrTo, locCoord);
+                setAutoCompleteList(fromOrViaOrTo, locCoord, viaindex);
             }));
         }
 
-        $("#" + fromOrTo + "Indicator").hide();
-        $("#" + fromOrTo + "Flag").show();
+        if (fromOrViaOrTo==="via")
+        {
+          $("#" + fromOrViaOrTo + "Indicator" + viaindex).hide();
+          $("#" + fromOrViaOrTo + "Flag" + viaindex).show();
+        }
+        else
+        {
+          $("#" + fromOrViaOrTo + "Indicator").hide();
+          $("#" + fromOrViaOrTo + "Flag").show();
+        }
         return locCoord;
     });
 }
@@ -432,7 +661,7 @@ function createAmbiguityList(locCoord) {
 
     locCoord.error = "";
     locCoord.resolvedList = [];
-    var timeout = 3000;
+    var timeout = 8000;
     if (locCoord.lat && locCoord.lng) {
         var url = nominatim_reverse + "?lat=" + locCoord.lat + "&lon="
                 + locCoord.lng + "&format=json&zoom=16";
@@ -581,21 +810,24 @@ function createCallback(errorFallback) {
     };
 }
 
-function focusWithBounds(coord, bbox, isFrom) {
+function focusWithBounds(coord, bbox, isFromViaOrTo, viaindex) {
+    console.log("focusWithBounds isFromViaOrTo="+isFromViaOrTo+" viaindex="+viaindex);
     routingLayer.clearLayers();
+    FromAndToFlagCreated = false;
     // bbox needs to be in the none-geojson format!?
     // [[lat, lng], [lat2, lng2], ...]
     map.fitBounds(new L.LatLngBounds(bbox));
-    setFlag(coord, isFrom);
+    setFlag(coord, isFromViaOrTo, viaindex);
 }
 
-function focus(coord, zoom, isFrom) {
-    if (coord.lat && coord.lng) {
+function focus(coord, zoom, isFromViaOrTo, viaindex) {
+    console.log("focus isFromViaOrTo="+isFromViaOrTo+" viaindex="+viaindex);    
+    if (coord!=null && coord.lat && coord.lng) {
         if (!zoom)
             zoom = 11;
         routingLayer.clearLayers();
         map.setView(new L.LatLng(coord.lat, coord.lng), zoom);
-        setFlag(coord, isFrom);
+        setFlag(coord, isFromViaOrTo, viaindex);
     }
 }
 function routeLatLng(request, doQuery) {
@@ -604,6 +836,7 @@ function routeLatLng(request, doQuery) {
     request.doZoom = true;
 
     var urlForHistory = request.createFullURL();
+    console.log("routeLatLng doQuery="+doQuery +" urlForHistory="+urlForHistory);
     // not enabled e.g. if no cookies allowed (?)
     // if disabled we have to do the query and cannot rely on the statechange history event    
     if (!doQuery && History.enabled) {
@@ -628,15 +861,19 @@ function routeLatLng(request, doQuery) {
         descriptionDiv.html('<small>' + tr('locationsNotFound') + '</small>');
         return;
     }
-
     routingLayer.clearLayers();
-    setFlag(request.from, true);
-    setFlag(request.to, false);
+    setFlag(request.from, 1, 0);
+    for (i=1; i<=viacounter; i++)
+    {
+         setFlag(request.via[i-1], 2, i);
+    }
+    setFlag(request.to, 3, 0);
 
     $("#vehicles button").removeClass("selectvehicle");
     $("button#" + request.vehicle.toLowerCase()).addClass("selectvehicle");
 
-    var urlForAPI = request.createURL("point=" + from + "&point=" + to);
+    var urlForAPI=request.createURL("point=" + from + request.createViaParams() + "&point=" + to);
+
     descriptionDiv.html('<img src="img/indicator.gif"/> Search Route ...');
     request.doRequest(urlForAPI, function(json) {
         descriptionDiv.html("");
@@ -753,7 +990,7 @@ function routeLatLng(request, doQuery) {
                 else if (indi == 4)
                     indi = "marker-to";
                 else
-                    throw "did not found indication " + indi;
+                    throw "did not find indication " + indi;
 
                 addInstruction(instructionsElement, indi, descriptions[m], distances[m], millis[m], latLngs[m]);
             }
@@ -881,24 +1118,28 @@ function parseUrl(query) {
 function mySubmit() {
     var fromStr = $("#fromInput").val();
     var toStr = $("#toInput").val();
-    if (toStr == "To" && fromStr == "From") {
+    var viaarray = new Array();
+    if (toStr == "") {
         // TODO print warning
         return;
     }
-    if (fromStr == "From") {
+    if (fromStr == "") {
         // no special function
         return;
     }
-    if (toStr == "To") {
-        // lookup area
-        ghRequest.from = new GHInput(fromStr);
-        $.when(resolveFrom()).done(function() {
-            focus(ghRequest.from);
-        });
-        return;
+    for (i=1; i<=ghRequest.via.length; i++)
+    {
+      var viaStr = $("#viaInput"+i).val();
+      if (viaStr == "") {
+          // no special function
+          return;
+      }
+      ghRequest.via[i-1] = new GHInput(viaStr);
+      viaarray.push(viaStr);
     }
+
     // route!
-    resolveCoords(fromStr, toStr);
+    resolveCoords(fromStr, viaarray, toStr);
 }
 
 function floor(val, precision) {
@@ -969,20 +1210,36 @@ function exportGPX() {
     return false;
 }
 
-function getAutoCompleteDiv(fromOrTo) {
-    if (fromOrTo === "from")
-        return $('#fromInput')
+function getAutoCompleteDiv(fromOrViaOrTo, viaindex) {
+  if (fromOrViaOrTo == "from")
+       return $('#fromInput')
+  else 
+  {
+    if (fromOrViaOrTo == "via")
+       return $('#viaInput'+(viaindex))
     else
-        return $('#toInput');
+       return $('#toInput');
+  }
 }
 
-function setAutoCompleteList(fromOrTo, ghRequestLoc) {
+function setAutoCompleteList(fromOrViaOrTo, ghRequestLoc, viaindex) {
     function formatValue(suggestionValue, currentValue) {
         var pattern = '(' + $.Autocomplete.utils.escapeRegExChars(currentValue) + ')';
         return suggestionValue.replace(new RegExp(pattern, 'gi'), '<strong>$1<\/strong>');
     }
-    var isFrom = fromOrTo === "from";
-    var pointIndex = isFrom ? 1 : 2;
+    var pointIndex;
+    switch(fromOrViaOrTo)
+        {
+            case "from":
+               pointIndex = 1;
+               break;         
+            case "via":
+               pointIndex = 1 + viaindex;
+               break;         
+            case "to":
+               pointIndex = 2 + ghRequest.via.length; 
+               break;         
+        }
     var fakeCurrentInput = ghRequestLoc.input.toLowerCase();
     var valueDataList = [];
     var list = ghRequestLoc.resolvedList;
@@ -1020,13 +1277,13 @@ function setAutoCompleteList(fromOrTo, ghRequestLoc) {
             routeLatLng(ghRequest);
         else if (suggestion.data.boundingbox) {
             var bbox = suggestion.data.box;
-            focusWithBounds(ghRequestLoc, [[bbox[0], bbox[2]], [bbox[1], bbox[3]]], isFrom);
+            focusWithBounds(ghRequestLoc, [[bbox[0], bbox[2]], [bbox[1], bbox[3]]], 1, 0);
         } else
-            focus(ghRequestLoc, 15, isFrom);
+            focus(ghRequestLoc, 15, 1, 0);
     };
 
     options.containerClass = "complete-" + pointIndex;
-    var myAutoDiv = getAutoCompleteDiv(fromOrTo);
+    var myAutoDiv = getAutoCompleteDiv(fromOrViaOrTo, viaindex);
     myAutoDiv.autocomplete(options);
     myAutoDiv.autocomplete().forceSuggest("");
     myAutoDiv.focus();

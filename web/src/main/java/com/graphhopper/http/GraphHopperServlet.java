@@ -115,13 +115,26 @@ public class GraphHopperServlet extends GHBaseServlet {
             GHResponse rsp;
             if (hopper.getEncodingManager().supports(vehicleStr)) {
                 FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
-                rsp = hopper.route(new GHRequest(start, end).
+                if (infoPoints.size()==2)
+                {
+                   rsp = hopper.route(new GHRequest(start, end).
                         setVehicle(algoVehicle.toString()).
                         setWeighting(weighting).
                         setAlgorithm(algoStr).
                         putHint("calcPoints", calcPoints).
                         putHint("instructions", enableInstructions).
                         putHint("douglas.minprecision", minPathPrecision));
+                }
+                else
+                {
+                   rsp = hopper.route(new GHRequest(infoPoints).
+                        setVehicle(algoVehicle.toString()).
+                        setWeighting(weighting).
+                        setAlgorithm(algoStr).
+                        putHint("calcPoints", calcPoints).
+                        putHint("instructions", enableInstructions).
+                        putHint("douglas.minprecision", minPathPrecision));
+                }
             } else {
                 rsp = new GHResponse().addError(new IllegalArgumentException("Vehicle not supported: " + vehicleStr));
             }
@@ -283,11 +296,6 @@ public class GraphHopperServlet extends GHBaseServlet {
         // TODO resolve name in a thread if only lat,lon is given but limit to a certain timeout
         if (infoPoints == null || infoPoints.size() < 2) {
             throw new IllegalArgumentException("Did you specify point=<from>&point=<to> ? Use at least 2 points! " + infoPoints);
-        }
-
-        // TODO execute algorithm multiple times!
-        if (infoPoints.size() != 2) {
-            throw new IllegalArgumentException("TODO! At the moment only 2 points can be specified");
         }
 
         return infoPoints;

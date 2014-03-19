@@ -18,6 +18,7 @@
 package com.graphhopper.http;
 
 import com.graphhopper.GHRequest;
+import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.util.Downloader;
@@ -72,7 +73,7 @@ public class GraphHopperWeb implements GraphHopperAPI
         encodePolyline = b;
         return this;
     }
-
+    
     @Override
     public GHResponse route( GHRequest request )
     {

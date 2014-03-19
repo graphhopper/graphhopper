@@ -35,6 +35,7 @@
             </div>
             <form id="locationform">
                 <div id="locationpoints">
+                    
                     <div id="fromDiv">
                         <img id="fromIndicator" class="hidden" src="img/indicator.gif"/>
                         <img id="fromFlag" src="img/marker-small-green.png"/>
@@ -44,9 +45,26 @@
                         <div id="fromResolveError"></div>
                     </div>
                     <div class="clear"> </div>
+                    <div id="viaadd_rm">
+                        <img id="viaButtonFlag" src="img/marker-small-yellow.png"/>
+                        <input id="addViaButton" type="button" value="+"/>
+                        <input id="rmViaButton" type="button" value="-" class="hidden"/>
+                    </div>
+                    <div class="clear"> </div>
+                    <div id="viaDiv">
+                        <span id="viapics"> </span>
+                        <!-- <img id="viaIndicator" class="hidden" src="img/indicator.gif"/>
+                        <img id="viaFlag" src="img/marker-small-yellow.png"/>
+                        <input id="viaInput" type="text" placeholder="Via"/> -->
+                        <!--<div class="clear"> </div>
+                        <div id="viaResolveFound"></div>
+                        <div id="viaResolveError"></div>
+                        -->
+                    </div>
+                    <div class="clear"> </div>                    
                     <div id="toDiv">
                         <img id="toIndicator" class="hidden" src="img/indicator.gif"/>
-                        <img id="toFlag" src="img/marker-small-red.png"/>                    
+                        <img id="toFlag" src="img/marker-small-red.png"/>
                         <input id="toInput" type="text" placeholder="To"/>
                         <div class="clear"> </div>
                         <div id="toResolveFound"></div>

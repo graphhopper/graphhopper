@@ -1,7 +1,7 @@
 body {                
     color: #000;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;    
-    line-height: 1.4;    
+    line-height: 1.4;
     color: #111111;
     background-color: #EEEEEE;
     margin: 0;
@@ -30,17 +30,44 @@ body {
 #input, #instructions {
     width: 255px;
 }
-#fromInput, #toInput {
+#fromInput, #toInput, #viabuttons, input[id^='viaInput'] {
     width: 225px;
-    float: right;    
+    float: right;
 }
 
-#fromResolveFound a, #toResolveFound a {
+#viaButtonFlag {
+    float: left;
+    margin-bottom: 5px;
+}
+
+#addViaButton{
+    width: 16px;
+    float: left;
+    height: 16px;
+    margin-left: 13px;
+    margin-bottom: 5px;
+    padding: 2px;
+    padding-top: 2px;
+    font-size: 10px;    
+}
+
+#rmViaButton {
+    width: 16px;
+    height: 16px;    
+    float: right;
+    margin-bottom: 5px;
+    padding: 2px;
+    padding-top: 2px;    
+    font-size: 10px;    
+}
+
+#fromResolveFound a, #toResolveFound a, div[id^='viaResolveFound a'] {
     background-color: white;
     padding-left: 4px;
     padding-right: 3px;    
 }
-#fromResolveFound, #toResolveFound {
+
+#fromResolveFound, #toResolveFound, div[id^='viaResolveFound'] {
     overflow: hidden;
     max-height: 24px;
     font-size: 10px;
@@ -51,7 +78,7 @@ body {
     margin-right: 2px;    
 }
 
-#fromResolveError, #toResolveError {
+#fromResolveError, #toResolveError, div[id^='viaResolveError'] {
     float: right;
     font-size: 12px;
     padding-bottom: 4px;
@@ -65,7 +92,7 @@ body {
 .warn {
     color: orange;
 }
-.error, #fromResolveError, #toResolveError {
+.error, #fromResolveError, div[id^='viaResolveError'],#toResolveError {
     color: red;
 }
 #moreattribution a {
@@ -76,7 +103,7 @@ body {
     padding-top: 20px;
     color: #666666                    
 }
-#fromDiv img, #toDiv img {
+#fromDiv img, #viaDiv img, #toDiv img {
     margin-top: 4px;
     padding-right: 3px;                
     float: left;
@@ -124,6 +151,7 @@ body {
     float: right;
     margin-bottom: 5px;
 }
+
 .clear {
     clear: both;
 }
@@ -188,8 +216,9 @@ tr.instruction td {
     background-image: linear-gradient(to bottom, #9f9f9f, #e7e7e7);    
 }
 
-.complete-1, .complete-2 { border: 1px solid #999; background: #FFF; overflow: auto; }
-.complete-1 strong, .complete-2 strong { font-weight: normal; /*color: #3399FF;*/; color: #04B431; }
+div[class*='complete-'] { border: 1px solid #999; background: #FFF; overflow: auto; }
+div[class*='complete-'] strong { font-weight: normal; /*color: #3399FF;*/; color: #04B431; }
+
 .autocomplete-suggestion { padding: 2px 5px; white-space: nowrap; overflow: hidden; font-size: 12px; }
 .autocomplete-selected { background: #e7e7e7; }
 .light { font-weight: lighter; color: #9f9f9f; font-size: smaller }

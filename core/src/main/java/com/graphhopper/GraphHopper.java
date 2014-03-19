@@ -25,11 +25,14 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.*;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.GHPlace;
+import java.util.List;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.ArrayList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -629,100 +632,76 @@ public class GraphHopper implements GraphHopperAPI
             return new ShortestWeighting();
         return new FastestWeighting(encoder);
     }
-
+    
+    private QueryResult[] getArray(List<GHPlace> list, EdgeFilter edgeFilter)
+    {
+        List<QueryResult> reslist = new ArrayList<QueryResult>(list.size());
+        for(GHPlace place : list)
+        {
+            QueryResult loc = locationIndex.findClosest(place.getLat(), place.getLon(), edgeFilter);
+            reslist.add(loc);
+        }
+        return reslist.toArray(new QueryResult[reslist.size()]);
+    }
+        
     @Override
     public GHResponse route( GHRequest request )
     {
         request.check();
         if (graph == null || !fullyLoaded)
             throw new IllegalStateException("Call load or importOrLoad before routing");
-
-        StopWatch sw = new StopWatch().start();
+        
+        StopWatch sw = new StopWatch().start();        
         GHResponse rsp = new GHResponse();
-
         if (!encodingManager.supports(request.getVehicle()))
         {
             rsp.addError(new IllegalArgumentException("Vehicle " + request.getVehicle() + " unsupported. Supported are: "
                     + getEncodingManager()));
             return rsp;
         }
-
         FlagEncoder encoder = encodingManager.getEncoder(request.getVehicle());
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-        QueryResult fromRes = locationIndex.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter);
-        QueryResult toRes = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter);
-
-        String debug = "idLookup:" + sw.stop().getSeconds() + "s";
-
-        if (!fromRes.isValid())
-            rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.getFrom()));
-
-        if (!toRes.isValid())
-            rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request.getTo()));
-
-        sw = new StopWatch().start();
-        RoutingAlgorithm algo = null;
-        if (chEnabled)
-        {
-            if (prepare == null)
-                throw new IllegalStateException(
-                        "Preparation object is null. CH-preparation wasn't done or did you forgot to call disableCHShortcuts()?");
-
-            if (request.getAlgorithm().equals("dijkstrabi"))
-                algo = prepare.createAlgo();
-            else if (request.getAlgorithm().equals("astarbi"))
-                algo = ((PrepareContractionHierarchies) prepare).createAStar();
-            else
-                rsp.addError(new IllegalStateException(
-                        "Only dijkstrabi and astarbi is supported for LevelGraph (using contraction hierarchies)!"));
-
-        } else
-        {
-            Weighting weighting = createWeighting(request.getWeighting(), encoder);
-            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.getAlgorithm(), encoder, weighting);
-            algo = prepare.createAlgo();
-        }
-
-        if (rsp.hasErrors())
-            return rsp;
-
-        debug += ", algoInit:" + sw.stop().getSeconds() + "s";
-        sw = new StopWatch().start();
         
-        Path path = algo.calcPath(fromRes, toRes);
-        debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
+        String debug = "idLookup:" + sw.stop().getSeconds() + "s";
+        ViaRouting viaRouter = new ViaRouting(encodingManager,getGraph(),periodicUpdates, lazyUpdates ,neighborUpdates, logMessages);
+        List<Path> pathList;
+        pathList = viaRouter.calcPathList( getArray(request.getViaList(),edgeFilter), request.getAlgorithm(), request.getVehicle(), request.getWeighting(), chEnabled );
 
         calcPoints = request.getHint("calcPoints", calcPoints);
         if (calcPoints)
         {
-            PointList points = path.calcPoints();
-            rsp.setFound(points.getSize() > 1);
-            simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
-            if (simplifyRequest)
-            {
-                sw = new StopWatch().start();
-                int orig = points.getSize();
-                double minPathPrecision = request.getHint("douglas.minprecision", 1d);
-                if (minPathPrecision > 0)
-                    new DouglasPeucker().setMaxDistance(minPathPrecision).simplify(points);
-
-                debug += ", simplify (" + orig + "->" + points.getSize() + "):" + sw.stop().getSeconds() + "s";
+           enableInstructions = request.getHint("instructions", enableInstructions);
+           PointList points = viaRouter.getPoints(pathList);
+           rsp.setFound(points.getSize() > 1);
+           simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
+           if (simplifyRequest)
+           {
+               sw = new StopWatch().start();
+               int orig = points.getSize();
+               double minPathPrecision = request.getHint("douglas.minprecision", 1d);
+               if (minPathPrecision > 0)
+                   new DouglasPeucker().setMaxDistance(minPathPrecision).simplify(points);
+               
+               debug += ", simplify (" + orig + "->" + points.getSize() + "):" + sw.stop().getSeconds() + "s";
             }
-            rsp.setPoints(points);
 
-            enableInstructions = request.getHint("instructions", enableInstructions);
             if (enableInstructions)
             {
                 sw = new StopWatch().start();
-                rsp.setInstructions(path.calcInstructions());
+                rsp.setInstructions(viaRouter.calcInstructions(pathList));
                 debug += ", instructions:" + sw.stop().getSeconds() + "s";
             }
+
+            rsp.setPoints(points);
         } else
-            rsp.setFound(path.isFound());
-
-        return rsp.setDistance(path.getDistance()).setMillis(path.getMillis()).setDebugInfo(debug);
+            rsp.setFound(pathList.get(0).isFound());
+        
+        rsp.setDistance(viaRouter.getPathDistance(pathList));
+        rsp.setMillis(viaRouter.getPathMillis(pathList));
+        rsp.setDebugInfo(debug);
+        return rsp;
     }
-
+    
     protected LocationIndex createLocationIndex( Directory dir )
     {
         LocationIndex tmpIndex;

@@ -24,8 +24,10 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 import com.graphhopper.util.TranslationMap.Translation;
+import com.graphhopper.util.shapes.GHPlace;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import org.junit.Test;
@@ -104,4 +106,80 @@ public class GraphHopperIT
             Helper.removeDir(new File(graphFile));
         }
     }
+
+    @Test
+    public void testMonacoVia()
+    {
+        String osmFile = "files/monaco.osm.gz";
+        String graphFile = "target/graph-monaco";
+        String vehicle = "FOOT";
+        String importVehicles = "FOOT";
+        String weightCalcStr = "shortest";
+
+        try
+        {
+            // make sure we are using fresh graphhopper files with correct vehicle
+            Helper.removeDir(new File(graphFile));
+            GraphHopper hopper = new GraphHopper().setInMemory(true).setOSMFile(osmFile).
+                    disableCHShortcuts().
+                    setGraphHopperLocation(graphFile).setEncodingManager(new EncodingManager(importVehicles)).
+                    importOrLoad();
+
+            Graph g = hopper.getGraph();
+            
+            List<GHPlace> viaList = new ArrayList <GHPlace>();
+            viaList.add(new GHPlace(43.727687, 7.418737));
+            viaList.add(new GHPlace(43.74958, 7.436566));
+            viaList.add(new GHPlace(43.727687, 7.418737));
+            
+            GHResponse rsp = hopper.route(new GHRequest(viaList).
+                    setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
+
+            assertEquals(6875.1, rsp.getDistance(), .1);
+            assertEquals(173, rsp.getPoints().getSize());
+
+            InstructionList il = rsp.getInstructions();
+            assertEquals(26, il.size());
+            Translation tr = trMap.getWithFallBack(Locale.US);
+            List<String> iList = il.createDescription(tr);
+            // TODO roundabout fine tuning -> enter + leave roundabout (+ two rounabouts -> is it necessary if we do not leave the street?)
+            assertEquals("Continue onto Avenue des Guelfes", iList.get(0));
+            assertEquals("Turn slight left onto Avenue des Papalins", iList.get(1));
+            assertEquals("Turn sharp right onto Quai Jean-Charles Rey", iList.get(2));
+            assertEquals("Turn left onto road", iList.get(3));
+            assertEquals("Turn right onto Avenue Albert II", iList.get(4));
+            
+            assertEquals("Stopover!", iList.get(12));
+            
+            assertEquals("Continue onto Avenue Albert II", iList.get(20));
+            assertEquals("Turn left onto road", iList.get(21));
+            assertEquals("Turn right onto Quai Jean-Charles Rey", iList.get(22));
+            assertEquals("Turn sharp left onto Avenue des Papalins", iList.get(23));
+            assertEquals("Turn slight right onto Avenue des Guelfes", iList.get(24));
+            assertEquals("Finish!", iList.get(25));
+
+            List<Double> dists = il.createDistances();
+            assertEquals(11, dists.get(0), 1);
+            assertEquals(289, dists.get(1), 1);
+            assertEquals(10, dists.get(2), 1);
+            assertEquals(43, dists.get(3), 1);
+            assertEquals(122, dists.get(4), 1);
+            assertEquals(447, dists.get(5), 1);
+
+            List<Long> times = il.createMillis();
+            assertEquals(7, times.get(0) / 1000);
+            assertEquals(207, times.get(1) / 1000);
+            assertEquals(7, times.get(2) / 1000);
+            assertEquals(30, times.get(3) / 1000);
+            assertEquals(87, times.get(4) / 1000);
+            assertEquals(321, times.get(5) / 1000);
+        } catch (Exception ex)
+        {
+            throw new RuntimeException("cannot handle osm file " + osmFile, ex);
+        } finally
+        {
+            Helper.removeDir(new File(graphFile));
+        }
+    }
+
 }
