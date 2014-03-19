@@ -19,7 +19,6 @@ package com.graphhopper.http;
 
 import com.graphhopper.search.Geocoding;
 import com.graphhopper.GHRequest;
-import com.graphhopper.GHViaRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -128,7 +127,7 @@ public class GraphHopperServlet extends GHBaseServlet {
                 }
                 else
                 {
-                   rsp = hopper.route(new GHViaRequest(infoPoints).
+                   rsp = hopper.route(new GHRequest(infoPoints).
                         setVehicle(algoVehicle.toString()).
                         setWeighting(weighting).
                         setAlgorithm(algoStr).
