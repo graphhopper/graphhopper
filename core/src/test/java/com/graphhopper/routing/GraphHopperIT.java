@@ -18,7 +18,6 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.GHRequest;
-import com.graphhopper.GHViaRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.util.*;
@@ -133,7 +132,7 @@ public class GraphHopperIT
             viaList.add(new GHPlace(43.74958, 7.436566));
             viaList.add(new GHPlace(43.727687, 7.418737));
             
-            GHResponse rsp = hopper.route(new GHViaRequest(viaList).
+            GHResponse rsp = hopper.route(new GHRequest(viaList).
                     setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
 
             assertEquals(6875.1, rsp.getDistance(), .1);

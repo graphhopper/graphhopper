@@ -18,29 +18,30 @@
 package com.graphhopper;
 
 import com.graphhopper.util.shapes.GHPlace;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayList;
 
 /**
- * GraphHopper request wrapper to simplify requesting GraphHopper.
+ * GraphHopper request wrapper with support of "via" to simplify requesting GraphHopper.
  * <p/>
- * @author Peter Karich
+ * @author ratrun
  */
 public class GHRequest
 {
     private String algo = "dijkstrabi";
-    private GHPlace from;
-    private GHPlace to;
+    private List<GHPlace> viaList;
     private Map<String, Object> hints = new HashMap<String, Object>(5);
     private String vehicle = "CAR";
     private String weighting = "shortest";
 
     /**
-     * Calculate the path from specified startPoint (fromLat, fromLon) to endPoint (toLat, toLon).
+     * Calculate the path via the specified place list
      */
-    public GHRequest( double fromLat, double fromLon, double toLat, double toLon )
+    public GHRequest( List<GHPlace> viaList )
     {
-        this(new GHPlace(fromLat, fromLon), new GHPlace(toLat, toLon));
+        this.viaList = viaList;
     }
 
     /**
@@ -48,27 +49,46 @@ public class GHRequest
      */
     public GHRequest( GHPlace startPoint, GHPlace endPoint )
     {
-        this.from = startPoint;
-        this.to = endPoint;
+        this.viaList = new ArrayList<GHPlace>(2);        
+        this.viaList.add(0, startPoint);
+        this.viaList.add(1, endPoint);
+    }
+
+    /**
+     * Calculate the path from specified from to coordinates
+     */
+    public GHRequest( double fromLat, double fromLon, double toLat, double toLon )
+    {
+        this.viaList = new ArrayList<GHPlace>(2);
+        GHPlace startPoint, endPoint;
+        startPoint = new GHPlace(fromLat, fromLon);
+        endPoint = new GHPlace(toLat, toLon);
+        this.viaList.add(0, startPoint);
+        this.viaList.add(1, endPoint);
     }
 
     public void check()
     {
-        if (from == null)
+        if (viaList.get(0) == null)
             throw new IllegalStateException("the 'from' point needs to be initialized but was null");
 
-        if (to == null)
+        if (viaList.get(1) == null)
             throw new IllegalStateException("the 'to' point needs to be initialized but was null");
+    }
+    
+    public List<GHPlace> getViaList()
+    {
+       return viaList;
     }
 
     public GHPlace getFrom()
     {
-        return from;
+        return viaList.get(0);
     }
 
     public GHPlace getTo()
     {
-        return to;
+        return viaList.get(1);
     }
 
     /**
@@ -108,7 +128,12 @@ public class GHRequest
     @Override
     public String toString()
     {
-        return from + " " + to + " (" + algo + ")";
+        String res = new String();
+        for (GHPlace place : viaList) 
+        {
+            res = res + place.toString();
+        }
+        return res + "(" + algo + ")";
     }
 
     /**
