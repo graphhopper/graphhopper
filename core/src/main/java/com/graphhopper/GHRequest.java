@@ -26,7 +26,7 @@ import java.util.ArrayList;
 /**
  * GraphHopper request wrapper with support of "via" to simplify requesting GraphHopper.
  * <p/>
- * @author ratrun
+ * @author Peter Karich, ratrun
  */
 public class GHRequest
 {
