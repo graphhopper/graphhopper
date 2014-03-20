@@ -511,7 +511,7 @@ public class OSMReader
         {
             // pillar node
             id = id - 3;
-            return pillarLats.getInt(id * 4L);
+            return pillarLats.getInt((long) id * 4L);
         } else
             // e.g. if id is not handled from preparse (e.g. was ignored via isInBounds)
             return Double.NaN;
@@ -530,7 +530,7 @@ public class OSMReader
         {
             // pillar node
             id = id - 3;
-            return pillarLons.getInt(id * 4L);
+            return pillarLons.getInt((long) id * 4L);
         } else
             // e.g. if id is not handled from preparse (e.g. was ignored via isInBounds)
             return Double.NaN;
@@ -777,8 +777,9 @@ public class OSMReader
     private int handlePillarNode( int tmpNode, long osmId, PointList pointList, boolean convertToTowerNode )
     {
         tmpNode = tmpNode - 3;
-        int intlat = pillarLats.getInt(tmpNode * 4);
-        int intlon = pillarLons.getInt(tmpNode * 4);
+        long tmpNode4 = (long) tmpNode * 4;
+        int intlat = pillarLats.getInt(tmpNode4);
+        int intlon = pillarLons.getInt(tmpNode4);
         if (intlat == Integer.MAX_VALUE || intlon == Integer.MAX_VALUE)
         {
             throw new RuntimeException("Conversion pillarNode to towerNode already happended!? " + "osmId:" + osmId + " pillarIndex:"
@@ -791,15 +792,15 @@ public class OSMReader
         if (convertToTowerNode)
         {
             // convert pillarNode type to towerNode, make pillar values invalid
-            pillarLons.setInt(tmpNode * 4, Integer.MAX_VALUE);
-            pillarLats.setInt(tmpNode * 4, Integer.MAX_VALUE);
+            pillarLons.setInt(tmpNode4, Integer.MAX_VALUE);
+            pillarLats.setInt(tmpNode4, Integer.MAX_VALUE);
             tmpNode = addTowerNode(osmId, tmpLat, tmpLon);
         } else
         {
             pointList.add(tmpLat, tmpLon);
         }
 
-        return tmpNode;
+        return (int) tmpNode;
     }
 
     void finishedReading()
@@ -833,8 +834,8 @@ public class OSMReader
         {
             graphIndex = graphIndex - 3;
             newNode = new OSMNode(createNewNodeId(),
-                    Helper.intToDegree(pillarLats.getInt(graphIndex * 4)),
-                    Helper.intToDegree(pillarLons.getInt(graphIndex * 4)));
+                    Helper.intToDegree(pillarLats.getInt((long) graphIndex * 4)),
+                    Helper.intToDegree(pillarLons.getInt((long) graphIndex * 4)));
         }
 
         final long id = newNode.getId();
