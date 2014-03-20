@@ -577,7 +577,7 @@ public class OSMReader
             addTowerNode(node.getId(), lat, lon);
         } else if (nodeType == PILLAR_NODE)
         {
-            int tmp = nextPillarId * 4;
+            long tmp = (long) nextPillarId * 4;
             pillarLats.incCapacity(tmp + 4);
             pillarLats.setInt(tmp, Helper.degreeToInt(lat));
             pillarLons.incCapacity(tmp + 4);
