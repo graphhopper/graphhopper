@@ -184,7 +184,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
         } else
         {
-            encoded = handleFerry(way, SPEED.get("living_street"), SPEED.get("service"), SPEED.get("residential"));
+            encoded = handleFerryTags(way, SPEED.get("living_street"), SPEED.get("service"), SPEED.get("residential"));
             encoded |= directionBitMask;
         }
 
@@ -192,16 +192,15 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long analyzeNodeTags( OSMNode node )
+    public long handleNodeTags( OSMNode node )
     {
         // absolute barriers always block
         if (node.hasTag("barrier", absoluteBarriers))
             return directionBitMask;
 
-        return super.analyzeNodeTags(node);
+        return super.handleNodeTags(node);
     }
 
-    @Override
     public String getWayInfo( OSMWay way )
     {
         String str = "";
@@ -243,18 +242,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             edgeInExplorer = osmReader.getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(this, true, false));
         }
         return turnRelation.getRestrictionAsEntries(this, edgeOutExplorer, edgeInExplorer, osmReader);
-    }
-
-    @Override
-    public int getPavementCode( long flags )
-    {
-        return 0;
-    }
-
-    @Override
-    public int getWayTypeCode( long flags )
-    {
-        return 0;
     }
 
     @Override

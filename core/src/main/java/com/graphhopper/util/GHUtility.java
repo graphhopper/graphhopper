@@ -45,16 +45,17 @@ public class GHUtility
         List<String> problems = new ArrayList<String>();
         int nodes = g.getNodes();
         int nodeIndex = 0;
+        NodeAccess na = g.getNodeAccess();
         try
         {
             EdgeExplorer explorer = g.createEdgeExplorer();
             for (; nodeIndex < nodes; nodeIndex++)
             {
-                double lat = g.getLatitude(nodeIndex);
+                double lat = na.getLatitude(nodeIndex);
                 if (lat > 90 || lat < -90)
                     problems.add("latitude is not within its bounds " + lat);
 
-                double lon = g.getLongitude(nodeIndex);
+                double lon = na.getLongitude(nodeIndex);
                 if (lon > 180 || lon < -180)
                     problems.add("longitude is not within its bounds " + lon);
 
@@ -156,7 +157,8 @@ public class GHUtility
     {
         EdgeSkipExplorer ex = g.createEdgeExplorer(filter);
         EdgeSkipIterator iter = ex.setBaseNode(nodeId);
-        String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
+        NodeAccess na = g.getNodeAccess();
+        String str = nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n";
         while (iter.next())
         {
             str += "  ->" + iter.getAdjNode() + "(" + iter.getSkippedEdge1() + "," + iter.getSkippedEdge2() + ") "
@@ -168,7 +170,8 @@ public class GHUtility
     public static String getNodeInfo( Graph g, int nodeId, EdgeFilter filter )
     {
         EdgeIterator iter = g.createEdgeExplorer(filter).setBaseNode(nodeId);
-        String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
+        NodeAccess na = g.getNodeAccess();
+        String str = nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n";
         while (iter.next())
         {
             str += "  ->" + iter.getAdjNode() + " (" + iter.getDistance() + ") pillars:"
@@ -228,14 +231,6 @@ public class GHUtility
 
     static Graph createSortedGraph( Graph fromGraph, Graph toSortedGraph, final TIntList oldToNewNodeList )
     {
-        // copy nodes
-        int maxNodeId = fromGraph.getNodes();
-        for (int node = 0; node < maxNodeId; node++)
-        {
-            int newNode = oldToNewNodeList.get(node);
-            toSortedGraph.setNode(newNode, fromGraph.getLatitude(node), fromGraph.getLongitude(node));
-        }
-
         AllEdgesIterator eIter = fromGraph.getAllEdges();
         while (eIter.next())
         {
@@ -248,7 +243,19 @@ public class GHUtility
             if (newBaseIndex < 0 || newAdjIndex < 0)
                 continue;
 
-            toSortedGraph.edge(newBaseIndex, newAdjIndex).copyProperties(eIter);
+            eIter.copyPropertiesTo(toSortedGraph.edge(newBaseIndex, newAdjIndex));
+        }
+
+        int nodes = fromGraph.getNodes();
+        NodeAccess na = fromGraph.getNodeAccess();
+        NodeAccess sna = toSortedGraph.getNodeAccess();
+        for (int old = 0; old < nodes; old++)
+        {
+            int newIndex = oldToNewNodeList.get(old);
+            if (sna.is3D())
+                sna.setNode(newIndex, na.getLatitude(old), na.getLongitude(old), na.getElevation(old));
+            else
+                sna.setNode(newIndex, na.getLatitude(old), na.getLongitude(old));
         }
         return toSortedGraph;
     }
@@ -259,19 +266,23 @@ public class GHUtility
     // TODO very similar to createSortedGraph -> use a 'int map(int)' interface
     public static Graph copyTo( Graph fromGraph, Graph toGraph )
     {
-        // copy nodes
-        int maxNodeId = fromGraph.getNodes();
-        for (int node = 0; node < maxNodeId; node++)
-        {
-            toGraph.setNode(node, fromGraph.getLatitude(node), fromGraph.getLongitude(node));
-        }
-
         AllEdgesIterator eIter = fromGraph.getAllEdges();
         while (eIter.next())
         {
             int base = eIter.getBaseNode();
             int adj = eIter.getAdjNode();
-            toGraph.edge(base, adj).copyProperties(eIter);
+            eIter.copyPropertiesTo(toGraph.edge(base, adj));
+        }
+
+        NodeAccess fna = fromGraph.getNodeAccess();
+        NodeAccess tna = toGraph.getNodeAccess();
+        int nodes = fromGraph.getNodes();
+        for (int node = 0; node < nodes; node++)
+        {
+            if (tna.is3D())
+                tna.setNode(node, fna.getLatitude(node), fna.getLongitude(node), fna.getElevation(node));
+            else
+                tna.setNode(node, fna.getLatitude(node), fna.getLongitude(node));
         }
         return toGraph;
     }
@@ -294,13 +305,12 @@ public class GHUtility
     static GraphStorage guessStorage( Graph g, Directory outdir, EncodingManager encodingManager )
     {
         GraphStorage store;
+        boolean is3D = g.getNodeAccess().is3D();
         if (g instanceof LevelGraphStorage)
-        {
-            store = new LevelGraphStorage(outdir, encodingManager);
-        } else
-        {
-            store = new GraphHopperStorage(outdir, encodingManager);
-        }
+            store = new LevelGraphStorage(outdir, encodingManager, is3D);
+        else
+            store = new GraphHopperStorage(outdir, encodingManager, is3D);
+
         return store;
     }
 
@@ -447,7 +457,7 @@ public class GHUtility
         }
 
         @Override
-        public void copyProperties( EdgeIteratorState edge )
+        public EdgeIteratorState copyPropertiesTo( EdgeIteratorState edge )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }

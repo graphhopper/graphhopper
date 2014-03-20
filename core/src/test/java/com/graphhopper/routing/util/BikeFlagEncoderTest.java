@@ -19,11 +19,8 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
-import java.util.Collections;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
@@ -78,123 +75,120 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 
         way.setTag("surface", "paved");
         assertEquals(20, encoder.getSpeed(way));
-        
+
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("surface", "ground");
         assertEquals(4, encoder.getSpeed(way));
-        
+
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("bicycle", "yes");
         way.setTag("surface", "fine_gravel");
         assertEquals(18, encoder.getSpeed(way));
-        
+
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("bicycle", "yes");
         way.setTag("surface", "unknown_surface");
         assertEquals(4, encoder.getSpeed(way));
-        
+
     }
 
     @Test
     public void testHandleWayTags()
     {
-        Map<String, String> wayMap = new HashMap<String, String>();
-        OSMWay way = new OSMWay(1, wayMap);
+        OSMWay way = new OSMWay(1);
         String wayType;
-        
-        wayMap.put("highway", "track");
-        wayType = encodeDecodeWayType("", way);
-        assertEquals("pushing section, unpaved", wayType);
-        
-        wayMap.clear();
-        wayMap.put("highway", "path");
+
+        way.setTag("highway", "track");
         wayType = encodeDecodeWayType("", way);
         assertEquals("pushing section, unpaved", wayType);
 
-        wayMap.clear();
-        wayMap.put("highway", "path");
-        wayMap.put("surface", "grass");
+        way.clearTags();
+        way.setTag("highway", "path");
         wayType = encodeDecodeWayType("", way);
         assertEquals("pushing section, unpaved", wayType);
 
-        wayMap.clear();
-        wayMap.put("highway", "path");
-        wayMap.put("surface", "concrete");
+        way.clearTags();
+        way.setTag("highway", "path");
+        way.setTag("surface", "grass");
+        wayType = encodeDecodeWayType("", way);
+        assertEquals("pushing section, unpaved", wayType);
+
+        way.clearTags();
+        way.setTag("highway", "path");
+        way.setTag("surface", "concrete");
         wayType = encodeDecodeWayType("", way);
         assertEquals("pushing section", wayType);
 
-        wayMap.clear();
-        wayMap.put("highway", "track");
-        wayMap.put("foot", "yes");
-        wayMap.put("surface", "paved");
-        wayMap.put("tracktype", "grade1");
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("foot", "yes");
+        way.setTag("surface", "paved");
+        way.setTag("tracktype", "grade1");
         wayType = encodeDecodeWayType("", way);
         assertEquals("pushing section", wayType);
 
-        wayMap.clear();
-        wayMap.put("highway", "track");
-        wayMap.put("foot", "yes");
-        wayMap.put("surface", "paved");
-        wayMap.put("tracktype", "grade2");
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("foot", "yes");
+        way.setTag("surface", "paved");
+        way.setTag("tracktype", "grade2");
         wayType = encodeDecodeWayType("", way);
         assertEquals("pushing section, unpaved", wayType);
-        
+
     }
 
     @Test
     public void testHandleWayTagsInfluencedByRelation()
     {
-        Map<String, String> wayMap = new HashMap<String, String>();
-        OSMWay osmWay = new OSMWay(1, wayMap);
-        wayMap.put("highway", "track");
-        long allowed=encoder.acceptBit;
+        OSMWay osmWay = new OSMWay(1);
+        osmWay.setTag("highway", "track");
+        long allowed = encoder.acceptBit;
 
-        Map<String, String> relMap = new HashMap<String, String>();
-        OSMRelation osmRel = new OSMRelation(1, relMap);
+        OSMRelation osmRel = new OSMRelation(1);
 
         long relFlags = encoder.handleRelationTags(osmRel, 0);
         // unchanged
         long flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(16, encoder.getSpeed(flags), 1e-1);
-        assertEquals(1, encoder.getWayTypeCode(flags));
-        assertEquals(1, encoder.getPavementCode(flags));
+        assertEquals(1, encoder.getWayType(flags));
+        assertEquals(1, encoder.getPavementType(flags));
 
         // relation code is PREFER
-        relMap.put("route", "bicycle");
-        relMap.put("network", "lcn");
+        osmRel.setTag("route", "bicycle");
+        osmRel.setTag("network", "lcn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(20, encoder.getSpeed(flags), 1e-1);
-        assertEquals(1, encoder.getWayTypeCode(flags));
-        assertEquals(1, encoder.getPavementCode(flags));
+        assertEquals(1, encoder.getWayType(flags));
+        assertEquals(1, encoder.getPavementType(flags));
 
         // relation code is VERY_NICE
-        relMap.put("network", "rcn");
+        osmRel.setTag("network", "rcn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(24, encoder.getSpeed(flags), 1e-1);
 
         // relation code is OUTSTANDING_NICE
-        relMap.put("network", "ncn");
+        osmRel.setTag("network", "ncn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(28, encoder.getSpeed(flags), 1e-1);
 
         // PREFER relation, but tertiary road
         // => no pushing section but road wayTypeCode and faster
-        wayMap.clear();
-        wayMap.put("highway", "tertiary");
+        osmWay.clearTags();
+        osmWay.setTag("highway", "tertiary");
 
-        relMap.put("route", "bicycle");
-        relMap.put("network", "lcn");
+        osmRel.setTag("route", "bicycle");
+        osmRel.setTag("network", "lcn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(22, encoder.getSpeed(flags), 1e-1);
-        assertEquals(0, encoder.getWayTypeCode(flags));
-        
+        assertEquals(0, encoder.getWayType(flags));
+
         // test max and min speed
         final AtomicInteger fakeSpeed = new AtomicInteger(40);
         BikeFlagEncoder fakeEncoder = new BikeFlagEncoder()
@@ -213,63 +207,74 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertEquals(30, fakeEncoder.getSpeed(flags), 1e-1);
 
         fakeSpeed.set(-2);
+        try
+        {
+            flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
+            assertTrue(false);
+        } catch (IllegalArgumentException ex)
+        {
+        }
+
+        fakeSpeed.set(0);
         flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
         assertEquals(0, fakeEncoder.getSpeed(flags), 1e-1);
-        
+
     }
-    
+
     @Test
-    public void testTurnFlagEncoding_noCosts() {
+    public void testTurnFlagEncoding_noCosts()
+    {
         encoder.defineTurnBits(0, 0, 0);
-        
+
         long flags_r0 = encoder.getTurnFlags(true, 0);
         long flags_0 = encoder.getTurnFlags(false, 0);
-        
+
         long flags_r20 = encoder.getTurnFlags(true, 20);
         long flags_20 = encoder.getTurnFlags(false, 20);
-        
+
         assertEquals(0, encoder.getTurnCosts(flags_r0));
         assertEquals(0, encoder.getTurnCosts(flags_0));
-        
+
         assertEquals(0, encoder.getTurnCosts(flags_r20));
         assertEquals(0, encoder.getTurnCosts(flags_20));
-        
+
         assertTrue(encoder.isTurnRestricted(flags_r0));
         assertFalse(encoder.isTurnRestricted(flags_0));
-        
+
         assertTrue(encoder.isTurnRestricted(flags_r20));
         assertFalse(encoder.isTurnRestricted(flags_20));
     }
-    
+
     @Test
-    public void testTurnFlagEncoding_withCosts() {
+    public void testTurnFlagEncoding_withCosts()
+    {
         //arbitrary shift, 7 turn cost bits: [0,127]
         encoder.defineTurnBits(0, 2, 7);
-        
+
         long flags_r0 = encoder.getTurnFlags(true, 0);
         long flags_0 = encoder.getTurnFlags(false, 0);
-        
+
         long flags_r20 = encoder.getTurnFlags(true, 20);
         long flags_20 = encoder.getTurnFlags(false, 20);
-        
+
         long flags_r220 = encoder.getTurnFlags(true, 220);
         long flags_220 = encoder.getTurnFlags(false, 220);
-        
+
         assertEquals(0, encoder.getTurnCosts(flags_r0));
         assertEquals(0, encoder.getTurnCosts(flags_0));
-        
+
         assertEquals(20, encoder.getTurnCosts(flags_r20));
         assertEquals(20, encoder.getTurnCosts(flags_20));
-        
+
         assertEquals(127, encoder.getTurnCosts(flags_r220));
         assertEquals(127, encoder.getTurnCosts(flags_220));
-        
+
         assertTrue(encoder.isTurnRestricted(flags_r0));
         assertFalse(encoder.isTurnRestricted(flags_0));
-        
+
         assertTrue(encoder.isTurnRestricted(flags_r20));
         assertFalse(encoder.isTurnRestricted(flags_20));
-        
+
         assertTrue(encoder.isTurnRestricted(flags_r220));
         assertFalse(encoder.isTurnRestricted(flags_220));
     }

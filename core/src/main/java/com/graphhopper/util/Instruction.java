@@ -39,29 +39,29 @@ public class Instruction
     private long millis;
     final PointList points;
     private final int pavementType;
-    private final int waytype;
+    private final int wayType;
 
     /**
      * The points, distances and times have exactly the same count. The last point of this
      * instruction is not duplicated here and should be in the next one.
      */
-    public Instruction( int indication, String name, int waytype, int pavementType, PointList pl )
+    public Instruction( int indication, String name, int wayType, int pavementType, PointList pl )
     {
         this.indication = indication;
         this.name = name;
         this.points = pl;
-        this.waytype = waytype;
+        this.wayType = wayType;
         this.pavementType = pavementType;
     }
 
-    public int getPavement()
+    public int getPavementType()
     {
         return pavementType;
     }
 
     public int getWayType()
     {
-        return waytype;
+        return wayType;
     }
 
     public int getIndication()

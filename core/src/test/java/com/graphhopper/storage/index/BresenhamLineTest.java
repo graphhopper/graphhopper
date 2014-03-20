@@ -33,13 +33,13 @@ import org.junit.Before;
  */
 public class BresenhamLineTest
 {
-    final PointList points = new PointList();
+    final PointList points = new PointList(10, false);
     PointEmitter emitter = new PointEmitter()
     {
         @Override
         public void set( double lat, double lon )
         {
-            points.add(lat, lon);
+            points.add(lat, lon, Double.NaN);
         }
     };
 

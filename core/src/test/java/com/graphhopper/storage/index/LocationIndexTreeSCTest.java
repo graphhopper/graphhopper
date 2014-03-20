@@ -23,6 +23,7 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeSkipIterState;
@@ -51,26 +52,26 @@ public class LocationIndexTreeSCTest extends LocationIndexTreeTest
     }
 
     @Override
-    LevelGraph createGraph( Directory dir, EncodingManager encodingManager )
+    LevelGraph createGraph( Directory dir, EncodingManager encodingManager, boolean is3D )
     {
-        return new LevelGraphStorage(dir, encodingManager).create(100);
+        return new LevelGraphStorage(dir, encodingManager, is3D).create(100);
     }
 
     @Test
     public void testLevelGraph()
     {
-        LevelGraph g = createGraph(new RAMDirectory(), encodingManager);
+        LevelGraph g = createGraph(new RAMDirectory(), encodingManager, false);
         // 0
         // 1
         // 2
         //  3
         //   4
-
-        g.setNode(0, 1, 0);
-        g.setNode(1, 0.5, 0);
-        g.setNode(2, 0, 0);
-        g.setNode(3, -1, 1);
-        g.setNode(4, -2, 2);
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 1, 0);
+        na.setNode(1, 0.5, 0);
+        na.setNode(2, 0, 0);
+        na.setNode(3, -1, 1);
+        na.setNode(4, -2, 2);
 
         EdgeIteratorState iter1 = g.edge(0, 1, 10, true);
         EdgeIteratorState iter2 = g.edge(1, 2, 10, true);
@@ -97,7 +98,7 @@ public class LocationIndexTreeSCTest extends LocationIndexTreeTest
     @Test
     public void testSortHighLevelFirst()
     {
-        final LevelGraph lg = createGraph(new RAMDirectory(), encodingManager);
+        final LevelGraph lg = createGraph(new RAMDirectory(), encodingManager, false);
         lg.setLevel(1, 10);
         lg.setLevel(2, 30);
         lg.setLevel(3, 20);
@@ -127,11 +128,12 @@ public class LocationIndexTreeSCTest extends LocationIndexTreeTest
         // |
         // 1
 
-        LevelGraphStorage lg = (LevelGraphStorage) createGraph(new RAMDirectory(), encodingManager);
-        lg.setNode(0, 1, 0);
-        lg.setNode(1, 0, 0);
-        lg.setNode(2, 0.5, 0.5);
-        lg.setNode(3, 0.5, 1);
+        LevelGraphStorage lg = (LevelGraphStorage) createGraph(new RAMDirectory(), encodingManager, false);
+        NodeAccess na = lg.getNodeAccess();
+        na.setNode(0, 1, 0);
+        na.setNode(1, 0, 0);
+        na.setNode(2, 0.5, 0.5);
+        na.setNode(3, 0.5, 1);
         EdgeIteratorState iter1 = lg.edge(1, 0, 100, true);
         EdgeIteratorState iter2 = lg.edge(2, 3, 100, true);
 

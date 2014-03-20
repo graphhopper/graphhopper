@@ -22,6 +22,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.CoordTrig;
 import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.GHPoint3D;
 
 /**
  * Result of LocationIndex lookup.
@@ -45,7 +46,7 @@ public class QueryResult
     private int closestNode = -1;
     private EdgeIteratorState closestEdge;
     private final GHPoint queryPoint;
-    private GHPoint snappedPoint;
+    private GHPoint3D snappedPoint;
     private Position snappedPosition;
 
     public static enum Position
@@ -145,7 +146,7 @@ public class QueryResult
      * Calculates the position of the query point 'snapped' to a close road segment or node. Call
      * calcSnappedPoint before, if not, an IllegalStateException is thrown.
      */
-    public GHPoint getSnappedPoint()
+    public GHPoint3D getSnappedPoint()
     {
         if (snappedPoint == null)
             throw new IllegalStateException("Calculate snapped point before!");
@@ -165,19 +166,23 @@ public class QueryResult
         PointList fullPL = getClosestEdge().fetchWayGeometry(3);
         double tmpLat = fullPL.getLatitude(wayIndex);
         double tmpLon = fullPL.getLongitude(wayIndex);
+        double tmpEle = fullPL.getElevation(wayIndex);
         if (snappedPosition != Position.EDGE)
         {
-            snappedPoint = new GHPoint(tmpLat, tmpLon);
+            snappedPoint = new GHPoint3D(tmpLat, tmpLon, tmpEle);
             return;
         }
 
         double queryLat = getQueryPoint().lat, queryLon = getQueryPoint().lon;
         double adjLat = fullPL.getLatitude(wayIndex + 1), adjLon = fullPL.getLongitude(wayIndex + 1);
         if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon))
-            snappedPoint = distCalc.calcCrossingPointToEdge(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon);
-        else
+        {            
+            GHPoint tmpPoint = distCalc.calcCrossingPointToEdge(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon);
+            double adjEle = fullPL.getElevation(wayIndex + 1);
+            snappedPoint = new GHPoint3D(tmpPoint.lat, tmpPoint.lon, (tmpEle + adjEle) / 2);
+        } else
             // outside of edge boundaries
-            snappedPoint = new GHPoint(tmpLat, tmpLon);
+            snappedPoint = new GHPoint3D(tmpLat, tmpLon, tmpEle);
     }
 
     @Override

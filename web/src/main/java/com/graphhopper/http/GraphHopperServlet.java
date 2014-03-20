@@ -86,6 +86,7 @@ public class GraphHopperServlet extends GHBaseServlet {
                 object("bbox", list).
                 object("supportedVehicles", hopper.getEncodingManager()).
                 object("version", Constants.VERSION).
+                object("dimension", hopper.getGraph().getNodeAccess().getDimension()).
                 object("buildDate", Constants.BUILD_DATE);
         
         StorableProperties props = hopper.getGraph().getProperties();
@@ -165,7 +166,6 @@ public class GraphHopperServlet extends GHBaseServlet {
             GHResponse rsp, GHPlace start, GHPlace end,
             float tookGeocoding, float took) throws JSONException {
         boolean enableInstructions = getBooleanParam(req, "instructions", true);
-        boolean useMiles = getBooleanParam(req, "useMiles", false);
         Locale locale = Helper.getLocale(getParam(req, "locale", "en"));
         boolean encodedPolylineParam = getBooleanParam(req, "encodedPolyline", true);
         JSONBuilder builder;
@@ -212,12 +212,13 @@ public class GraphHopperServlet extends GHBaseServlet {
             if (points.getSize() >= 2)
                 builder.object("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
 
+            builder.object("coordinatesDim", points.getDimension());
             if (encodedPolylineParam) {
                 String encodedPolyline = WebHelper.encodePolyline(points);
                 builder.object("coordinates", encodedPolyline);
             } else {
                 builder.startObject("data").
-                        object("type", "LineString").
+                        object("type", "LineString").                        
                         object("coordinates", points.toGeoJson()).
                         endObject();
             }

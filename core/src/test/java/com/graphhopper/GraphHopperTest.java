@@ -208,7 +208,7 @@ public class GraphHopperTest
         instance = new GraphHopper();
         try
         {
-            instance.setOSMFile(testOsm).importOSM();
+            instance.setOSMFile(testOsm).importData();
             assertTrue(false);
         } catch (IllegalStateException ex)
         {

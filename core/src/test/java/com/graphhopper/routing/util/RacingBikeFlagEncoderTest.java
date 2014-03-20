@@ -61,39 +61,37 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     @Test
     public void testHandleWayTagsInfluencedByRelation()
     {
-        Map<String, String> wayMap = new HashMap<String, String>();
-        OSMWay osmWay = new OSMWay(1, wayMap);
-        wayMap.put("highway", "track");
+        OSMWay osmWay = new OSMWay(1);
+        osmWay.setTag("highway", "track");
         long allowed = encoder.acceptBit;
-
-        Map<String, String> relMap = new HashMap<String, String>();
-        OSMRelation osmRel = new OSMRelation(1, relMap);
+        
+        OSMRelation osmRel = new OSMRelation(1);
 
         assertEquals(PUSHING_SECTION_SPEED / 2, getEncodedDecodedSpeed(osmWay), 1e-1);
 
         // relation code is PREFER
-        relMap.put("route", "bicycle");
-        relMap.put("network", "lcn");
+        osmRel.setTag("route", "bicycle");
+        osmRel.setTag("network", "lcn");
         long relFlags = encoder.handleRelationTags(osmRel, 0);
         long flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(2, encoder.getSpeed(flags), 1e-1);
-        assertEquals(1, encoder.getWayTypeCode(flags)); // Pushing section
-        assertEquals(1, encoder.getPavementCode(flags)); //  Unpaved
+        assertEquals(1, encoder.getWayType(flags)); // Pushing section
+        assertEquals(1, encoder.getPavementType(flags)); //  Unpaved
 
         // relation code is OUTSTANDING NICE but as unpaved, the speed is still PUSHING_SECTION_SPEED/2
-        relMap.put("network", "icn");
+        osmRel.setTag("network", "icn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(2, encoder.getSpeed(flags), 1e-1);
 
         // Now we assume bicycle=yes, anyhow still unpaved
-        wayMap.put("bicycle", "yes");
+        osmWay.setTag("bicycle", "yes");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(2, encoder.getSpeed(flags), 1e-1);
 
         // Now we assume bicycle=yes, and paved -> The speed is pushed!
-        wayMap.put("tracktype", "grade1");
+        osmWay.setTag("tracktype", "grade1");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(30, encoder.getSpeed(flags), 1e-1);

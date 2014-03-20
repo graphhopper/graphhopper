@@ -15,6 +15,7 @@ public class PbfBlobResult
     private List<OSMElement> entities;
     private boolean complete;
     private boolean success;
+    private Exception ex;
 
     /**
      * Creates a new instance.
@@ -23,6 +24,7 @@ public class PbfBlobResult
     {
         complete = false;
         success = false;
+        ex = new RuntimeException("no success result stored");
     }
 
     /**
@@ -40,10 +42,11 @@ public class PbfBlobResult
     /**
      * Stores a failure result for a blob decoding operation.
      */
-    public void storeFailureResult()
+    public void storeFailureResult( Exception ex )
     {
         complete = true;
         success = false;
+        this.ex = ex;
     }
 
     /**
@@ -64,6 +67,11 @@ public class PbfBlobResult
     public boolean isSuccess()
     {
         return success;
+    }
+
+    public Exception getException()
+    {
+        return ex;
     }
 
     /**

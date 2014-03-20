@@ -8,7 +8,7 @@
         </goals>
         <properties>
             <maven.test.skip>true</maven.test.skip>
-            <Env.MAVEN_OPTS>-Djetty.port=8989 -Dgraphhopper.config=../config.properties -Dgraphhopper.osmreader.osm=../core/files/krems.osm.gz -Xms1500m -Xms1500m</Env.MAVEN_OPTS>
+            <Env.MAVEN_OPTS>-Djetty.port=8989 -Dgraphhopper.config=../config.properties -Dgraphhopper.osmreader.osm=/home/peterk/Dokumente/download/oberfranken-latest.osm.pbf -Xms1500m -Xms1500m</Env.MAVEN_OPTS>
         </properties>
     </action>
     <action>

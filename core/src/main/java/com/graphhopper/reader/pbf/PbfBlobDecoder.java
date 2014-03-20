@@ -26,11 +26,11 @@ import org.slf4j.LoggerFactory;
  */
 public class PbfBlobDecoder implements Runnable
 {
-    private static Logger log = LoggerFactory.getLogger(PbfBlobDecoder.class);
+    private static final Logger log = LoggerFactory.getLogger(PbfBlobDecoder.class);
     private final boolean checkData = false;
-    private String blobType;
-    private byte[] rawBlob;
-    private PbfBlobDecoderListener listener;
+    private final String blobType;
+    private final byte[] rawBlob;
+    private final PbfBlobDecoderListener listener;
     private List<OSMElement> decodedEntities;
 
     /**
@@ -158,8 +158,9 @@ public class PbfBlobDecoder implements Runnable
         {
             Map<String, String> tags = buildTags(node.getKeysList(), node.getValsList(), fieldDecoder);
 
-            OSMNode osmNode = new OSMNode(node.getId(), tags, fieldDecoder.decodeLatitude(node
+            OSMNode osmNode = new OSMNode(node.getId(), fieldDecoder.decodeLatitude(node
                     .getLat()), fieldDecoder.decodeLatitude(node.getLon()));
+            osmNode.setTags(tags);
 
             // Add the bound object to the results.
             decodedEntities.add(osmNode);
@@ -258,7 +259,8 @@ public class PbfBlobDecoder implements Runnable
                 tags.put(fieldDecoder.decodeString(keyIndex), fieldDecoder.decodeString(valueIndex));
             }
 
-            OSMNode node = new OSMNode(nodeId, tags, ((double) latitude) / 10000000, ((double) longitude) / 10000000);
+            OSMNode node = new OSMNode(nodeId, ((double) latitude) / 10000000, ((double) longitude) / 10000000);
+            node.setTags(tags);
 
             // Add the bound object to the results.
             decodedEntities.add(node);
@@ -270,8 +272,8 @@ public class PbfBlobDecoder implements Runnable
         for (Osmformat.Way way : ways)
         {
             Map<String, String> tags = buildTags(way.getKeysList(), way.getValsList(), fieldDecoder);
-
-            OSMWay osmWay = new OSMWay(way.getId(), tags);
+            OSMWay osmWay = new OSMWay(way.getId());
+            osmWay.setTags(tags);
 
             // Build up the list of way nodes for the way. The node ids are
             // delta encoded meaning that each id is stored as a delta against
@@ -346,7 +348,8 @@ public class PbfBlobDecoder implements Runnable
         {
             Map<String, String> tags = buildTags(relation.getKeysList(), relation.getValsList(), fieldDecoder);
 
-            OSMRelation osmRelation = new OSMRelation(relation.getId(), tags);
+            OSMRelation osmRelation = new OSMRelation(relation.getId());
+            osmRelation.setTags(tags);
 
             buildRelationMembers(osmRelation, relation.getMemidsList(), relation.getRolesSidList(),
                     relation.getTypesList(), fieldDecoder);
@@ -405,7 +408,7 @@ public class PbfBlobDecoder implements Runnable
 
         } catch (RuntimeException e)
         {
-            listener.error();
+            listener.error(e);
         }
     }
 }

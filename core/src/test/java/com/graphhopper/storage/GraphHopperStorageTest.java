@@ -30,23 +30,18 @@ import org.junit.Test;
 public class GraphHopperStorageTest extends AbstractGraphStorageTester
 {
     @Override
-    public GraphStorage createGraph( String location, int size )
+    public GraphStorage createGraph( String location, boolean enabled3D )
     {
         // reduce segment size in order to test the case where multiple segments come into the game
-        GraphStorage gs = newGraph(new RAMDirectory(location));
-        gs.setSegmentSize(size / 2);
-        gs.create(size);
+        GraphStorage gs = newGraph(new RAMDirectory(location), enabled3D);
+        gs.setSegmentSize(defaultSize / 2);
+        gs.create(defaultSize);
         return gs;
     }
 
-    protected GraphStorage newGraph( Directory dir )
+    protected GraphStorage newGraph( Directory dir, boolean enabled3D )
     {
-        return new GraphHopperStorage(dir, encodingManager);
-    }
-
-    protected GraphStorage createGraphStorage( Directory dir )
-    {
-        return newGraph(dir).create(defaultSize);
+        return new GraphHopperStorage(dir, encodingManager, enabled3D);
     }
 
     @Test
@@ -72,10 +67,11 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
     @Test
     public void testSave_and_fileFormat() throws IOException
     {
-        graph = (GraphHopperStorage) createGraphStorage(new RAMDirectory(defaultGraphLoc, true));
-        graph.setNode(0, 10, 10);
-        graph.setNode(1, 11, 20);
-        graph.setNode(2, 12, 12);
+        graph = newGraph(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 10, 10);
+        na.setNode(1, 11, 20);
+        na.setNode(2, 12, 12);
 
         EdgeIteratorState iter2 = graph.edge(0, 1, 100, true);
         iter2.setWayGeometry(Helper.createPointList(1.5, 1, 2, 3));
@@ -92,7 +88,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
         graph.flush();
         graph.close();
 
-        graph = (GraphHopperStorage) newGraph(new MMapDirectory(defaultGraphLoc));
+        graph = newGraph(new MMapDirectory(defaultGraphLoc), false);
         assertTrue(graph.loadExisting());
 
         assertEquals(12, graph.getNodes());
@@ -106,9 +102,10 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
 
     protected void checkGraph( Graph g )
     {
+        NodeAccess na = g.getNodeAccess();
         assertEquals(new BBox(10, 20, 10, 12), g.getBounds());
-        assertEquals(10, g.getLatitude(0), 1e-2);
-        assertEquals(10, g.getLongitude(0), 1e-2);
+        assertEquals(10, na.getLatitude(0), 1e-2);
+        assertEquals(10, na.getLongitude(0), 1e-2);
         EdgeExplorer explorer = g.createEdgeExplorer(carOutFilter);
         assertEquals(2, GHUtility.count(explorer.setBaseNode(0)));
         assertEquals(GHUtility.asSet(2, 1), GHUtility.getNeighbors(explorer.setBaseNode(0)));
@@ -122,13 +119,13 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
         assertEquals(Helper.createPointList(10, 10, 1.5, 1, 2, 3), iter.fetchWayGeometry(1));
         assertEquals(Helper.createPointList(1.5, 1, 2, 3, 11, 20), iter.fetchWayGeometry(2));
 
-        assertEquals(11, g.getLatitude(1), 1e-2);
-        assertEquals(20, g.getLongitude(1), 1e-2);
+        assertEquals(11, na.getLatitude(1), 1e-2);
+        assertEquals(20, na.getLongitude(1), 1e-2);
         assertEquals(2, GHUtility.count(explorer.setBaseNode(1)));
         assertEquals(GHUtility.asSet(2, 0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
 
-        assertEquals(12, g.getLatitude(2), 1e-2);
-        assertEquals(12, g.getLongitude(2), 1e-2);
+        assertEquals(12, na.getLatitude(2), 1e-2);
+        assertEquals(12, na.getLongitude(2), 1e-2);
         assertEquals(1, GHUtility.count(explorer.setBaseNode(2)));
 
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(2)));
@@ -171,7 +168,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
     public void testEnsureSize()
     {
         Directory dir = new RAMDirectory();
-        graph = new GraphHopperStorage(dir, encodingManager).create(defaultSize);
+        graph = newGraph(dir, false).create(defaultSize);
         int testIndex = dir.find("edges").getSegmentSize() * 3;
         graph.edge(0, testIndex, 10, true);
 
@@ -183,10 +180,29 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
     public void testBigDataEdge()
     {
         Directory dir = new RAMDirectory();
-        GraphHopperStorage tmpGS = new GraphHopperStorage(dir, encodingManager);
-        tmpGS.create(defaultSize);
-        tmpGS.setEdgeCount(Integer.MAX_VALUE / 2);
-        assertTrue(tmpGS.getAllEdges().next());
-        tmpGS.close();
-    }  
+        GraphHopperStorage graph = new GraphHopperStorage(dir, encodingManager, false);
+        graph.create(defaultSize);
+        graph.setEdgeCount(Integer.MAX_VALUE / 2);
+        assertTrue(graph.getAllEdges().next());
+        graph.close();
+    }
+
+    @Test
+    public void testDoThrowExceptionIfDimDoesNotMatch()
+    {
+        graph = newGraph(new RAMDirectory(defaultGraphLoc, true), false);
+        graph.create(1000);
+        graph.flush();
+        graph.close();
+
+        graph = newGraph(new RAMDirectory(defaultGraphLoc, true), true);
+        try
+        {
+            graph.loadExisting();
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+
+        }
+    }
 }

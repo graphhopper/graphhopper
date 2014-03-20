@@ -192,18 +192,18 @@ public class OSMInputFile implements Sink, Closeable
                         if ("node".equals(name))
                         {
                             id = Long.parseLong(parser.getAttributeValue(null, "id"));
-                            return new OSMNode(id, parser);
+                            return OSMNode.create(id, parser);
                         }
                         break;
 
                     case 'w':
                     {
                         id = Long.parseLong(parser.getAttributeValue(null, "id"));
-                        return new OSMWay(id, parser);
+                        return OSMWay.create(id, parser);
                     }
                     case 'r':
                         id = Long.parseLong(parser.getAttributeValue(null, "id"));
-                        return new OSMRelation(id, parser);
+                        return OSMRelation.create(id, parser);
                 }
             }
             event = parser.next();

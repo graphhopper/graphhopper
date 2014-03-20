@@ -28,6 +28,7 @@ var firstClickToRoute;
 var defaultTranslationMap = null;
 var enTranslationMap = null;
 var routeSegmentPopup = null;
+var elevationControl = null;
 
 var iconFrom = L.icon({
     iconUrl: './img/marker-icon-green.png',
@@ -98,7 +99,7 @@ $(document).ready(function(e) {
                 bounds.maxLat = tmp[3];
                 var vehiclesDiv = $("#vehicles");
                 function createButton(vehicle) {
-                    vehicle = vehicle.toLowerCase();
+                    var vehicle = vehicle.toLowerCase();
                     var button = $("<button class='vehicle-btn' title='" + tr(vehicle) + "'/>")
                     button.attr('id', vehicle);
                     button.html("<img src='img/" + vehicle + ".png' alt='" + tr(vehicle) + "'></img>");
@@ -113,7 +114,7 @@ $(document).ready(function(e) {
 
                 if (json.supportedVehicles) {
                     var vehicles = json.supportedVehicles.split(",");
-                    if (vehicles.length > 1)
+                    if (vehicles.length > 0)
                         ghRequest.vehicle = vehicles[0];
                     for (var i = 0; i < vehicles.length; i++) {
                         vehiclesDiv.append(createButton(vehicles[i]));
@@ -121,6 +122,35 @@ $(document).ready(function(e) {
                 }
 
                 initMap();
+
+                if (json.dimension === 3) {
+                    elevationControl = L.control.elevation({
+                        position: "bottomright",
+                        theme: "white-theme", //default: lime-theme
+                        width: 450,
+                        height: 125,
+                        yAxisMin: 0, // set min domain y axis
+                        // yAxisMax: 550, // set max domain y axis
+                        forceAxisBounds: false,
+                        margins: {
+                            top: 10,
+                            right: 20,
+                            bottom: 30,
+                            left: 50
+                        },
+                        useHeightIndicator: true, //if false a marker is drawn at map position
+                        interpolation: "linear", //see https://github.com/mbostock/d3/wiki/SVG-Shapes#wiki-area_interpolate
+                        hoverNumber: {
+                            decimalsX: 3, //decimals on distance (always in km)
+                            decimalsY: 0, //deciamls on height (always in m)
+                            formatter: undefined //custom formatter function may be injected
+                        },
+                        xTicks: undefined, //number of ticks in x axis, calculated by default according to width
+                        yTicks: undefined, //number of ticks on y axis, calculated by default according to height
+                        collapsed: false    //collapsed mode, show chart on click or mouseover
+                    });
+                    elevationControl.addTo(map);                    
+                }
 
 //        var data = JSON.parse("[[10.4049076,48.2802518],[10.405231,48.2801396],...]");
 //        var tempFeature = {
@@ -309,6 +339,8 @@ function initMap() {
         }).addTo(map);
 
     routingLayer = L.geoJson().addTo(map);
+    routingLayer.options = {style: {color: "#00cc33", "weight": 7, "opacity": 0.6}};
+
     firstClickToRoute = true;
     function onMapClick(e) {
         var latlng = e.latlng;
@@ -629,6 +661,9 @@ function routeLatLng(request, doQuery) {
         return;
     }
 
+    if (elevationControl)
+        elevationControl.clear();
+
     routingLayer.clearLayers();
     setFlag(request.from, true);
     setFlag(request.to, false);
@@ -653,11 +688,14 @@ function routeLatLng(request, doQuery) {
         }
         var geojsonFeature = {
             "type": "Feature",
-            // "style": myStyle,                
             "geometry": json.route.data
         };
 
+        if (elevationControl)
+            elevationControl.addData(geojsonFeature);
+
         routingLayer.addData(geojsonFeature);
+
         if (json.route.bbox && doZoom) {
             var minLon = json.route.bbox[0];
             var minLat = json.route.bbox[1];
@@ -735,7 +773,7 @@ function routeLatLng(request, doQuery) {
             for (var m = 0; m < descriptions.length; m++) {
                 var indi = indications[m];
                 if (m == 0)
-                    indi = "marker-from";
+                    indi = "marker-small-green";
                 else if (indi == -3)
                     indi = "sharp_left";
                 else if (indi == -2)
@@ -751,7 +789,7 @@ function routeLatLng(request, doQuery) {
                 else if (indi == 3)
                     indi = "sharp_right";
                 else if (indi == 4)
-                    indi = "marker-to";
+                    indi = "marker-small-red";
                 else
                     throw "did not found indication " + indi;
 

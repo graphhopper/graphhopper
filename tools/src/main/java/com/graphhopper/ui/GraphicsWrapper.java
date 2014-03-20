@@ -18,6 +18,7 @@
 package com.graphhopper.ui;
 
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.shapes.BBox;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -30,7 +31,8 @@ import org.slf4j.LoggerFactory;
  */
 public class GraphicsWrapper
 {
-    private Graph g;
+    private final Graph g;
+    private final NodeAccess na;
     private double scaleX;
     private double scaleY;
     private double offsetX;
@@ -40,6 +42,7 @@ public class GraphicsWrapper
     public GraphicsWrapper( Graph g )
     {
         this.g = g;
+        this.na = g.getNodeAccess();
         BBox b = g.getBounds();
         scaleX = scaleY = 0.002 * (b.maxLat - b.minLat);
         offsetY = b.maxLat - 90;
@@ -104,8 +107,8 @@ public class GraphicsWrapper
 
     public void plotNode( Graphics2D g2, int loc, Color c )
     {
-        double lat = g.getLatitude(loc);
-        double lon = g.getLongitude(loc);
+        double lat = na.getLatitude(loc);
+        double lon = na.getLongitude(loc);
         if (lat < bounds.minLat || lat > bounds.maxLat || lon < bounds.minLon || lon > bounds.maxLon)
         {
             return;

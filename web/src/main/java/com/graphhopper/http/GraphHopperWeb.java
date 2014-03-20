@@ -95,13 +95,16 @@ public class GraphHopperWeb implements GraphHopperAPI
             double distance = route.getDouble("distance");
             int millis = route.getInt("time");
             PointList list;
+            boolean is3D = false;
+            if (route.has("coordinatesDimension"))
+                is3D = "3".equals(route.getString("coordinatesDim"));
             if (encodePolyline)
             {
-                list = WebHelper.decodePolyline(route.getString("coordinates"), 100);
+                list = WebHelper.decodePolyline(route.getString("coordinates"), 100, is3D);
             } else
             {
                 JSONArray coords = route.getJSONObject("data").getJSONArray("coordinates");
-                list = new PointList(coords.length());
+                list = new PointList(coords.length(), is3D);
                 for (int i = 0; i < coords.length(); i++)
                 {
                     JSONArray arr = coords.getJSONArray(i);

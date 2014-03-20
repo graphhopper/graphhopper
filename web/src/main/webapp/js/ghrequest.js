@@ -1,11 +1,16 @@
 // IE fix
 if (!window.console) {
     var console = {
-        log: function() {},
-        warn: function() {},
-        error: function() {},
-        time: function() {},
-        timeEnd: function() {}
+        log: function() {
+        },
+        warn: function() {
+        },
+        error: function() {
+        },
+        time: function() {
+        },
+        timeEnd: function() {
+        }
     };
 }
 
@@ -75,7 +80,7 @@ GHRequest.prototype.init = function(params) {
             var points = qStr.split("p:");
             for (var i = 0; i < points.length; i++) {
                 var str = points[i].trim();
-                if (str.length == 0)
+                if (str.length === 0)
                     continue;
 
                 params.point.push(str);
@@ -126,13 +131,14 @@ GHRequest.prototype.createPath = function(url) {
     return url;
 }
 
-function decodePath(encoded, geoJson) {
-    var start = new Date().getTime();
+function decodePolyline(encoded, is3D) {
+    // var start = new Date().getTime();
     var len = encoded.length;
     var index = 0;
     var array = [];
     var lat = 0;
     var lng = 0;
+    var ele = 0;
 
     while (index < len) {
         var b;
@@ -156,13 +162,24 @@ function decodePath(encoded, geoJson) {
         var deltaLon = ((result & 1) ? ~(result >> 1) : (result >> 1));
         lng += deltaLon;
 
-        if (geoJson)
+        if (is3D) {
+            // elevation
+            shift = 0;
+            result = 0;
+            do
+            {
+                b =  encoded.charCodeAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20);
+            var deltaEle = ((result & 1) ? ~(result >> 1) : (result >> 1));
+            ele += deltaEle;
+            array.push([lng * 1e-5, lat * 1e-5, ele / 100]);
+        } else
             array.push([lng * 1e-5, lat * 1e-5]);
-        else
-            array.push([lat * 1e-5, lng * 1e-5]);
     }
-    var end = new Date().getTime();
-    console.log("decoded " + len + " coordinates in " + ((end - start) / 1000) + "s");
+    // var end = new Date().getTime();
+    // console.log("decoded " + len + " coordinates in " + ((end - start) / 1000) + "s");
     return array;
 }
 
@@ -175,7 +192,7 @@ GHRequest.prototype.doRequest = function(url, callback) {
             if (tmpEncodedPolyline && json.route) {
                 // convert encoded polyline stuff to normal json
                 if (json.route.coordinates) {
-                    var tmpArray = decodePath(json.route.coordinates, true);
+                    var tmpArray = decodePolyline(json.route.coordinates, json.route.coordinatesDim === 3);
                     json.route.coordinates = null;
                     json.route.data = {
                         "type": "LineString",

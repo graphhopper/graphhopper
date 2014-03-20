@@ -21,7 +21,6 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.util.ArrayList;
-import java.util.Map;
 
 /**
  * Represents an OSM Relation
@@ -30,23 +29,21 @@ import java.util.Map;
  */
 public class OSMRelation extends OSMElement
 {
-    protected ArrayList<Member> members;
+    protected final ArrayList<Member> members = new ArrayList<Member>(5);
 
-    public OSMRelation( long id, XMLStreamReader parser ) throws XMLStreamException
+    public static OSMRelation create( long id, XMLStreamReader parser ) throws XMLStreamException
     {
-        super(id, RELATION, parser);
-        members = new ArrayList<Member>();
+        OSMRelation rel = new OSMRelation(id);
 
         parser.nextTag();
-        readMembers(parser);
-        readTags(parser);
+        rel.readMembers(parser);
+        rel.readTags(parser);
+        return rel;
     }
 
-    public OSMRelation( long id, Map<String, String> tags )
+    public OSMRelation( long id)
     {
-        super(id, RELATION, tags);
-
-        members = new ArrayList<Member>();
+        super(id, RELATION);
     }
 
     protected void readMembers( XMLStreamReader parser ) throws XMLStreamException
@@ -67,21 +64,12 @@ public class OSMRelation extends OSMElement
     @Override
     public String toString()
     {
-        return "Relation (" + id + ", " + members.size() + " members)";
+        return "Relation (" + getId() + ", " + members.size() + " members)";
     }
 
     public ArrayList<Member> getMembers()
     {
         return members;
-    }
-
-    public void copyMembers( OSMRelation input )
-    {
-        members = new ArrayList<Member>();
-        for (int i = 0; i < input.members.size(); i++)
-        {
-            members.add(new Member(input.members.get(i)));
-        }
     }
 
     public boolean isMetaRelation()

@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
@@ -66,12 +67,13 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     // 2---/---/
     Graph createTestGraph()
     {
-        Graph graph = createGraph(new RAMDirectory(), encodingManager);
-        graph.setNode(0, 0.5, -0.5);
-        graph.setNode(1, -0.5, -0.5);
-        graph.setNode(2, -1, -1);
-        graph.setNode(3, -0.4, 0.9);
-        graph.setNode(4, -0.6, 1.6);
+        Graph graph = createGraph(new RAMDirectory(), encodingManager, false);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 0.5, -0.5);
+        na.setNode(1, -0.5, -0.5);
+        na.setNode(2, -1, -1);
+        na.setNode(3, -0.4, 0.9);
+        na.setNode(4, -0.6, 1.6);
         graph.edge(0, 1, 1, true);
         graph.edge(0, 2, 1, true);
         graph.edge(0, 4, 1, true);
@@ -217,10 +219,11 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     public void testMoreReal()
     {
         Graph graph = createGraph(new EncodingManager("CAR"));
-        graph.setNode(1, 51.2492152, 9.4317166);
-        graph.setNode(0, 52, 9);
-        graph.setNode(2, 51.2, 9.4);
-        graph.setNode(3, 49, 10);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(1, 51.2492152, 9.4317166);
+        na.setNode(0, 52, 9);
+        na.setNode(2, 51.2, 9.4);
+        na.setNode(3, 49, 10);
 
         graph.edge(1, 0, 1000, true);
         graph.edge(0, 2, 1000, true);
@@ -241,11 +244,12 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     private Graph createTestGraphWithWayGeometry()
     {
         Graph graph = createGraph(encodingManager);
-        graph.setNode(0, 0.5, -0.5);
-        graph.setNode(1, -0.5, -0.5);
-        graph.setNode(2, -1, -1);
-        graph.setNode(3, -0.4, 0.9);
-        graph.setNode(4, -0.6, 1.6);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 0.5, -0.5);
+        na.setNode(1, -0.5, -0.5);
+        na.setNode(2, -1, -1);
+        na.setNode(3, -0.4, 0.9);
+        na.setNode(4, -0.6, 1.6);
         graph.edge(0, 1, 1, true);
         graph.edge(0, 2, 1, true);
         // insert A and B, without this we would get 0 for 0,0
@@ -272,10 +276,11 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     public void testFindingWayGeometry()
     {
         Graph g = createGraph(encodingManager);
-        g.setNode(10, 51.2492152, 9.4317166);
-        g.setNode(20, 52, 9);
-        g.setNode(30, 51.2, 9.4);
-        g.setNode(50, 49, 10);
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(10, 51.2492152, 9.4317166);
+        na.setNode(20, 52, 9);
+        na.setNode(30, 51.2, 9.4);
+        na.setNode(50, 49, 10);
         g.edge(20, 50, 1, true).setWayGeometry(Helper.createPointList(51.25, 9.43));
         g.edge(10, 20, 1, true);
         g.edge(20, 30, 1, true);
@@ -304,57 +309,57 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     // see testgraph2.jpg
     Graph createTestGraph2()
     {
-        Graph graph = createGraph(new RAMDirectory(), encodingManager);
+        Graph graph = createGraph(new RAMDirectory(), encodingManager, false);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(8, 49.94553, 11.57214);
+        na.setNode(9, 49.94553, 11.57314);
+        na.setNode(10, 49.94553, 11.57414);
+        na.setNode(11, 49.94553, 11.57514);
+        na.setNode(12, 49.94553, 11.57614);
+        na.setNode(13, 49.94553, 11.57714);
 
-        graph.setNode(8, 49.94553, 11.57214);
-        graph.setNode(9, 49.94553, 11.57314);
-        graph.setNode(10, 49.94553, 11.57414);
-        graph.setNode(11, 49.94553, 11.57514);
-        graph.setNode(12, 49.94553, 11.57614);
-        graph.setNode(13, 49.94553, 11.57714);
+        na.setNode(0, 49.94653, 11.57114);
+        na.setNode(1, 49.94653, 11.57214);
+        na.setNode(2, 49.94653, 11.57314);
+        na.setNode(3, 49.94653, 11.57414);
+        na.setNode(4, 49.94653, 11.57514);
+        na.setNode(5, 49.94653, 11.57614);
+        na.setNode(6, 49.94653, 11.57714);
+        na.setNode(7, 49.94653, 11.57814);
 
-        graph.setNode(0, 49.94653, 11.57114);
-        graph.setNode(1, 49.94653, 11.57214);
-        graph.setNode(2, 49.94653, 11.57314);
-        graph.setNode(3, 49.94653, 11.57414);
-        graph.setNode(4, 49.94653, 11.57514);
-        graph.setNode(5, 49.94653, 11.57614);
-        graph.setNode(6, 49.94653, 11.57714);
-        graph.setNode(7, 49.94653, 11.57814);
+        na.setNode(14, 49.94753, 11.57214);
+        na.setNode(15, 49.94753, 11.57314);
+        na.setNode(16, 49.94753, 11.57614);
+        na.setNode(17, 49.94753, 11.57814);
 
-        graph.setNode(14, 49.94753, 11.57214);
-        graph.setNode(15, 49.94753, 11.57314);
-        graph.setNode(16, 49.94753, 11.57614);
-        graph.setNode(17, 49.94753, 11.57814);
+        na.setNode(18, 49.94853, 11.57114);
+        na.setNode(19, 49.94853, 11.57214);
+        na.setNode(20, 49.94853, 11.57814);
 
-        graph.setNode(18, 49.94853, 11.57114);
-        graph.setNode(19, 49.94853, 11.57214);
-        graph.setNode(20, 49.94853, 11.57814);
+        na.setNode(21, 49.94953, 11.57214);
+        na.setNode(22, 49.94953, 11.57614);
 
-        graph.setNode(21, 49.94953, 11.57214);
-        graph.setNode(22, 49.94953, 11.57614);
+        na.setNode(23, 49.95053, 11.57114);
+        na.setNode(24, 49.95053, 11.57214);
+        na.setNode(25, 49.95053, 11.57314);
+        na.setNode(26, 49.95053, 11.57514);
+        na.setNode(27, 49.95053, 11.57614);
+        na.setNode(28, 49.95053, 11.57714);
+        na.setNode(29, 49.95053, 11.57814);
 
-        graph.setNode(23, 49.95053, 11.57114);
-        graph.setNode(24, 49.95053, 11.57214);
-        graph.setNode(25, 49.95053, 11.57314);
-        graph.setNode(26, 49.95053, 11.57514);
-        graph.setNode(27, 49.95053, 11.57614);
-        graph.setNode(28, 49.95053, 11.57714);
-        graph.setNode(29, 49.95053, 11.57814);
+        na.setNode(30, 49.95153, 11.57214);
+        na.setNode(31, 49.95153, 11.57314);
+        na.setNode(32, 49.95153, 11.57514);
+        na.setNode(33, 49.95153, 11.57614);
+        na.setNode(34, 49.95153, 11.57714);
 
-        graph.setNode(30, 49.95153, 11.57214);
-        graph.setNode(31, 49.95153, 11.57314);
-        graph.setNode(32, 49.95153, 11.57514);
-        graph.setNode(33, 49.95153, 11.57614);
-        graph.setNode(34, 49.95153, 11.57714);
-
-        graph.setNode(34, 49.95153, 11.57714);
+        na.setNode(34, 49.95153, 11.57714);
 
         // to create correct bounds
         // bottom left
-        graph.setNode(100, 49.94053, 11.56614);
+        na.setNode(100, 49.94053, 11.56614);
         // bottom right
-        graph.setNode(101, 49.96053, 11.58814);
+        na.setNode(101, 49.96053, 11.58814);
 
         graph.edge(0, 1, 10, true);
         graph.edge(1, 2, 10, true);

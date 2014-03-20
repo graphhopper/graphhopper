@@ -20,6 +20,7 @@ package com.graphhopper;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.NodeAccess;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -35,11 +36,12 @@ public class GraphHopperAPITest
     public void testLoad()
     {
         GraphStorage graph = new GraphBuilder(encodingManager).create();
-        graph.setNode(0, 42, 10);
-        graph.setNode(1, 42.1, 10.1);
-        graph.setNode(2, 42.1, 10.2);
-        graph.setNode(3, 42, 10.4);
-        graph.setNode(4, 41.9, 10.2);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 42, 10);
+        na.setNode(1, 42.1, 10.1);
+        na.setNode(2, 42.1, 10.2);
+        na.setNode(3, 42, 10.4);
+        na.setNode(4, 41.9, 10.2);
 
         graph.edge(0, 1, 10, true);
         graph.edge(1, 2, 10, false);

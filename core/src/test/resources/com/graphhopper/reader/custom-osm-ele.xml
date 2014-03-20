@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="pbf2osm">
+    <node id="10" lat="51.2492152" lon="9.4317166" uid="24853">
+        <tag k="is_in" v="Wiesbaden,Hessen,Germany,Europe" />
+        <tag k="name" v="Wiesbaden-Naurod" />
+        <tag k="place" v="village" />
+        <tag k="ele" v="3" />
+    </node>
+    <node id="20" lat="52" lon="9" uid="24854">
+        <tag k="name" v="Halbendorf-Spree" />
+        <tag k="ele" v="-10" />
+    </node>
+    <node id="30" lat="51.2" lon="9.4" uid="24855">
+        <tag k="name" v="Dresden" />
+        <tag k="ele" v="10" />
+    </node>
+    
+    <node id="35" lat="45.2" lon="13.431" uid="3212487">
+        <tag k="name" v="Unused1" />
+        <tag k="ele" v="4" />
+    </node>
+
+    <node id="40" lat="51.25" lon="9.43" uid="24856">
+        <tag k="name" v="Cottbus" />
+        <tag k="ele" v="100" />
+    </node>
+    <node id="41" lat="51.23" lon="11.43" uid="3214857">
+        <tag k="name" v="Unused2" />
+        <tag k="ele" v="1000" />
+    </node>
+    <node id="45" lat="41.2" lon="10.431" uid="32124857">
+        <tag k="name" v="Unused3" />
+        <tag k="ele" v="20" />
+    </node>
+    <node id="50" lat="49" lon="10" uid="24857">
+        <tag k="name" v="Tester" />
+        <tag k="ele" v="-30" />
+    </node>
+    
+    <way id="10" uid="85761">
+        <nd ref="10"/>
+        <nd ref="20"/>        
+        <nd ref="30"/>
+        <tag k="name" v="route 666" />
+        <tag k="highway" v="motorway_link" />
+        <tag k="destination" v="hof;fürth" />
+    </way> 
+    
+    <way id="11" uid="85762">
+        <nd ref="20"/>
+        <nd ref="40"/>
+        <nd ref="50"/>        
+        <tag k="name" v="street 123;B 122" />
+        <tag k="highway" v="service" />
+    </way>
+</osm>

@@ -75,8 +75,8 @@ public class AStar extends AbstractRoutingAlgorithm
     public Path calcPath( int from, int to )
     {
         checkAlreadyRun();
-        toLat = graph.getLatitude(to);
-        toLon = graph.getLongitude(to);
+        toLat = nodeAccess.getLatitude(to);
+        toLon = nodeAccess.getLongitude(to);
         to1 = to;
         currEdge = createEdgeEntry(from, 0);
         fromMap.put(from, currEdge);
@@ -102,20 +102,20 @@ public class AStar extends AbstractRoutingAlgorithm
                 if (currEdge.edge == iter.getEdge())
                     continue;
 
-                int neighborNode = iter.getAdjNode();
+                int adjNode = iter.getAdjNode();
                 double alreadyVisitedWeight = weighting.calcWeight(iter, false) + currEdge.weightToCompare;
-                AStarEdge nEdge = fromMap.get(neighborNode);
+                AStarEdge nEdge = fromMap.get(adjNode);
                 if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight)
                 {
-                    tmpLat = graph.getLatitude(neighborNode);
-                    tmpLon = graph.getLongitude(neighborNode);
+                    tmpLat = nodeAccess.getLatitude(adjNode);
+                    tmpLon = nodeAccess.getLongitude(adjNode);
                     currWeightToGoal = dist.calcDist(toLat, toLon, tmpLat, tmpLon);
                     currWeightToGoal = weighting.getMinWeight(currWeightToGoal);
                     distEstimation = alreadyVisitedWeight + currWeightToGoal;
                     if (nEdge == null)
                     {
-                        nEdge = new AStarEdge(iter.getEdge(), neighborNode, distEstimation, alreadyVisitedWeight);
-                        fromMap.put(neighborNode, nEdge);
+                        nEdge = new AStarEdge(iter.getEdge(), adjNode, distEstimation, alreadyVisitedWeight);
+                        fromMap.put(adjNode, nEdge);
                     } else
                     {
                         prioQueueOpenSet.remove(nEdge);
@@ -125,7 +125,7 @@ public class AStar extends AbstractRoutingAlgorithm
                     }
                     nEdge.parent = currEdge;
                     prioQueueOpenSet.add(nEdge);
-                    updateShortest(nEdge, neighborNode);
+                    updateShortest(nEdge, adjNode);
                 }
             }
 
@@ -170,9 +170,9 @@ public class AStar extends AbstractRoutingAlgorithm
         // but to compare distance we need it only from start:
         double weightToCompare;
 
-        public AStarEdge( int edgeId, int node, double weightForHeap, double weightToCompare )
+        public AStarEdge( int edgeId, int adjNode, double weightForHeap, double weightToCompare )
         {
-            super(edgeId, node, weightForHeap);
+            super(edgeId, adjNode, weightForHeap);
             // round makes distance smaller => heuristic should underestimate the distance!
             this.weightToCompare = (float) weightToCompare;
         }

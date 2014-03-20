@@ -94,6 +94,8 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     public Path extractPath()
     {
         PathNative p = new PathNative(graph, flagEncoder, parents, edgeIds);
+        if (endNode >= 0)
+            p.setWeight(weights[endNode]);
         p.setFromNode(fromNode);
         if (endNode < 0)
             return p;
@@ -225,8 +227,8 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     public String getMemoryUsageAsString()
     {
         long len = weights.length;
-        return ((8L + 4L + 4L) * len 
-                + changedNodes.getCapacity() * 4L 
+        return ((8L + 4L + 4L) * len
+                + changedNodes.getCapacity() * 4L
                 + heap.getCapacity() * (4L + 4L)) / Helper.MB
                 + "MB";
     }

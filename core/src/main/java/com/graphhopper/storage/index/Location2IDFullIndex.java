@@ -20,6 +20,7 @@ package com.graphhopper.storage.index;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.DistancePlaneProjection;
@@ -34,10 +35,12 @@ public class Location2IDFullIndex implements LocationIndex
 {
     private DistanceCalc calc = new DistancePlaneProjection();
     private final Graph graph;
+    private final NodeAccess nodeAccess;
 
     public Location2IDFullIndex( Graph g )
     {
         this.graph = g;
+        this.nodeAccess = g.getNodeAccess();
     }
 
     @Override
@@ -50,12 +53,10 @@ public class Location2IDFullIndex implements LocationIndex
     public LocationIndex setApproximation( boolean approxDist )
     {
         if (approxDist)
-        {
             calc = new DistancePlaneProjection();
-        } else
-        {
+        else
             calc = new DistanceCalcEarth();
-        }
+        
         return this;
     }
 
@@ -91,8 +92,8 @@ public class Location2IDFullIndex implements LocationIndex
                 {
                     node = iter.getAdjNode();
                 }
-                double tmpLat = graph.getLatitude(node);
-                double tmpLon = graph.getLongitude(node);
+                double tmpLat = nodeAccess.getLatitude(node);
+                double tmpLon = nodeAccess.getLongitude(node);
                 double dist = calc.calcDist(tmpLat, tmpLon, queryLat, queryLon);
                 if (circle == null || dist < calc.calcDist(circle.getLat(), circle.getLon(), queryLat, queryLon))
                 {

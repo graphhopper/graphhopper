@@ -290,34 +290,29 @@ public class Helper
     public static PointList createPointList( double... list )
     {
         if (list.length % 2 != 0)
-        {
             throw new IllegalArgumentException("list should consist of lat,lon pairs!");
-        }
-        PointList res = new PointList(list.length);
+
         int max = list.length / 2;
+        PointList res = new PointList(max, false);
         for (int i = 0; i < max; i++)
         {
-            res.add(list[2 * i], list[2 * i + 1]);
+            res.add(list[2 * i], list[2 * i + 1], Double.NaN);
         }
         return res;
     }
 
-    /**
-     * Converts a double (maximum value 10000) into an integer.
-     * <p/>
-     * @return the integer to be stored
-     */
-    public static int doubleToInt( double deg )
+    public static PointList createPointList3D( double... list )
     {
-        return (int) (deg * INT_FACTOR);
-    }
+        if (list.length % 3 != 0)
+            throw new IllegalArgumentException("list should consist of lat,lon,ele tuples!");
 
-    /**
-     * Converts back the once transformed storedInt from doubleToInt
-     */
-    public static double intToDouble( int storedInt )
-    {
-        return (double) storedInt / INT_FACTOR;
+        int max = list.length / 3;
+        PointList res = new PointList(max, true);
+        for (int i = 0; i < max; i++)
+        {
+            res.add(list[3 * i], list[3 * i + 1], list[3 * i + 2]);
+        }
+        return res;
     }
 
     /**
@@ -327,8 +322,10 @@ public class Helper
      * <p/>
      * @return the integer of the specified degree
      */
-    public static int degreeToInt( double deg )
+    public static final int degreeToInt( double deg )
     {
+        if (deg >= Double.MAX_VALUE)
+            return Integer.MAX_VALUE;
         return (int) (deg * DEGREE_FACTOR);
     }
 
@@ -337,14 +334,38 @@ public class Helper
      * <p/>
      * @return the degree value of the specified integer
      */
-    public static double intToDegree( int storedInt )
+    public static final double intToDegree( int storedInt )
     {
-        // Double.longBitsToDouble();
+        if (storedInt == Integer.MAX_VALUE)
+            return Double.MAX_VALUE;
         return (double) storedInt / DEGREE_FACTOR;
     }
+
+    /**
+     * Converts elevation value (in meters) into integer for storage.
+     */
+    public static final int eleToInt( double ele )
+    {
+        if (ele >= Integer.MAX_VALUE)
+            return Integer.MAX_VALUE;
+        return (int) (ele * ELE_FACTOR);
+    }
+
+    /**
+     * Converts the integer value retrieved from storage into elevation (in meters). Do not expect
+     * more precision than meters although it currently is!
+     */
+    public static final double intToEle( int integEle )
+    {
+        if (integEle == Integer.MAX_VALUE)
+            return Double.MAX_VALUE;
+        return integEle / ELE_FACTOR;
+    }
+
     // +- 180 and +-90 => let use use 400
     private static final float DEGREE_FACTOR = Integer.MAX_VALUE / 400f;
-    private static final float INT_FACTOR = Integer.MAX_VALUE / 10000f;
+    // milli meter is a bit extreme but we have integers
+    private static final float ELE_FACTOR = 1000f;
 
     public static void cleanMappedByteBuffer( final ByteBuffer buffer )
     {
@@ -387,5 +408,13 @@ public class Helper
         }
 
         return Character.toUpperCase(sayText.charAt(0)) + sayText.substring(1);
+    }
+
+    /**
+     * This methods returns the value or min if too small or max if too big.
+     */
+    public static final double keepIn( double value, double min, double max )
+    {
+        return Math.max(min, Math.min(value, max));
     }
 }
