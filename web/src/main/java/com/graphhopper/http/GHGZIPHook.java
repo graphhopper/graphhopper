@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * <p/>
  * @author Peter Karich
  */
-public class MyGZIPHook extends GzipFilter
+public class GHGZIPHook extends GzipFilter
 {
     private Logger logger = LoggerFactory.getLogger(getClass());
 

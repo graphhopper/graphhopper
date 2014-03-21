@@ -24,8 +24,10 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.storage.AbstractGraphStorageTester.*;
 import com.graphhopper.storage.EdgeEntry;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.*;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -35,6 +37,9 @@ import static org.junit.Assert.*;
  */
 public class PathTest
 {
+    TranslationMap trMap = TranslationMapTest.SINGLETON;
+    TranslationMap.Translation tr = trMap.getWithFallBack(Locale.US);
+
     @Test
     public void testFound()
     {
@@ -77,8 +82,11 @@ public class PathTest
         // 0-1-2
         assertPList(Helper.createPointList(0, 0.1, 8, 1, 9, 1, 1, 0.1, 10, 1, 11, 1, 2, 0.1), path.calcPoints());
         InstructionList instr = path.calcInstructions();
-        assertEquals("[" + 504 * 1000 + ", 0]", instr.createMillis().toString());
-        assertEquals("[3000.0, 0.0]", instr.createDistances().toString());
+        List<Map<String, Object>> res = instr.createJson(tr);
+        assertEquals("[{sign=0, distance=3000.0, time=504000, text=Continue onto road, interval=[0, 6]}, "
+                + "{sign=4, distance=0.0, time=0, text=Finish!, interval=[6, 6]}]", res.toString());
+        int lastIndex = (Integer) ((List) res.get(res.size() - 1).get("interval")).get(0);
+        assertEquals(path.calcPoints().size() - 1, lastIndex);
 
         // force minor change for instructions
         edge2.setName("2");
@@ -89,8 +97,12 @@ public class PathTest
         path.setEdgeEntry(e1);
         path.extract();
         instr = path.calcInstructions();
-        assertEquals("[" + 6 * 60 * 1000 + ", " + 144 * 1000 + ", 0]", instr.createMillis().toString());
-        assertEquals("[1000.0, 2000.0, 0.0]", instr.createDistances().toString());
+        res = instr.createJson(tr);
+        assertEquals("[{sign=0, distance=1000.0, time=360000, text=Continue onto road, interval=[0, 3]}, "
+                + "{sign=3, distance=2000.0, time=144000, text=Turn sharp right onto 2, interval=[3, 6]}, "
+                + "{sign=4, distance=0.0, time=0, text=Finish!, interval=[6, 6]}]", res.toString());
+        lastIndex = (Integer) ((List) res.get(res.size() - 1).get("interval")).get(0);
+        assertEquals(path.calcPoints().size() - 1, lastIndex);
 
         // now reverse order
         path = new Path(g, carEnc);
@@ -102,7 +114,11 @@ public class PathTest
         // 2-1-0
         assertPList(Helper.createPointList(2, 0.1, 11, 1, 10, 1, 1, 0.1, 9, 1, 8, 1, 0, 0.1), path.calcPoints());
         instr = path.calcInstructions();
-        assertEquals("[" + 144 * 1000 + ", " + 6 * 60 * 1000 + ", 0]", instr.createMillis().toString());
-        assertEquals("[2000.0, 1000.0, 0.0]", instr.createDistances().toString());
+        res = instr.createJson(tr);
+        assertEquals("[{sign=0, distance=2000.0, time=144000, text=Continue onto 2, interval=[0, 3]}, "
+                + "{sign=-3, distance=1000.0, time=360000, text=Turn sharp left onto road, interval=[3, 6]}, "
+                + "{sign=4, distance=0.0, time=0, text=Finish!, interval=[6, 6]}]", res.toString());
+        lastIndex = (Integer) ((List) res.get(res.size() - 1).get("interval")).get(0);
+        assertEquals(path.calcPoints().size() - 1, lastIndex);
     }
 }

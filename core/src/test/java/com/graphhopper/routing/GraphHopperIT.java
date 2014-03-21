@@ -28,6 +28,7 @@ import com.graphhopper.util.TranslationMap.Translation;
 import java.io.File;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -61,44 +62,39 @@ public class GraphHopperIT
                     setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
 
             assertEquals(3437.6, rsp.getDistance(), .1);
-            assertEquals(87, rsp.getPoints().getSize());
+            assertEquals(89, rsp.getPoints().getSize());
 
             InstructionList il = rsp.getInstructions();
             assertEquals(13, il.size());
             Translation tr = trMap.getWithFallBack(Locale.US);
-            List<String> iList = il.createDescription(tr);
+            List<Map<String, Object>> resultJson = il.createJson(tr);
             // TODO roundabout fine tuning -> enter + leave roundabout (+ two rounabouts -> is it necessary if we do not leave the street?)
-            assertEquals("Continue onto Avenue des Guelfes", iList.get(0));
-            assertEquals("Turn slight left onto Avenue des Papalins", iList.get(1));
-            assertEquals("Turn sharp right onto Quai Jean-Charles Rey", iList.get(2));
-            assertEquals("Turn left onto road", iList.get(3));
-            assertEquals("Turn right onto Avenue Albert II", iList.get(4));
+            assertEquals("Continue onto Avenue des Guelfes", resultJson.get(0).get("text"));
+            assertEquals("Turn slight left onto Avenue des Papalins", resultJson.get(1).get("text"));
+            assertEquals("Turn sharp right onto Quai Jean-Charles Rey", resultJson.get(2).get("text"));
+            assertEquals("Turn left onto road", resultJson.get(3).get("text"));
+            assertEquals("Turn right onto Avenue Albert II", resultJson.get(4).get("text"));
 
-            List<Double> dists = il.createDistances();
-            assertEquals(11, dists.get(0), 1);
-            assertEquals(289, dists.get(1), 1);
-            assertEquals(10, dists.get(2), 1);
-            assertEquals(43, dists.get(3), 1);
-            assertEquals(122, dists.get(4), 1);
-            assertEquals(447, dists.get(5), 1);
+            assertEquals(11, (Double) resultJson.get(0).get("distance"), 1);
+            assertEquals(289, (Double) resultJson.get(1).get("distance"), 1);
+            assertEquals(10, (Double) resultJson.get(2).get("distance"), 1);
+            assertEquals(43, (Double) resultJson.get(3).get("distance"), 1);
+            assertEquals(122, (Double) resultJson.get(4).get("distance"), 1);
+            assertEquals(447, (Double) resultJson.get(5).get("distance"), 1);
 
-            List<Long> times = il.createMillis();
-            assertEquals(7, times.get(0) / 1000);
-            assertEquals(207, times.get(1) / 1000);
-            assertEquals(7, times.get(2) / 1000);
-            assertEquals(30, times.get(3) / 1000);
-            assertEquals(87, times.get(4) / 1000);
-            assertEquals(321, times.get(5) / 1000);
+            assertEquals(7, (Long) resultJson.get(0).get("time") / 1000);
+            assertEquals(207, (Long) resultJson.get(1).get("time") / 1000);
+            assertEquals(7, (Long) resultJson.get(2).get("time") / 1000);
+            assertEquals(30, (Long) resultJson.get(3).get("time") / 1000);
+            assertEquals(87, (Long) resultJson.get(4).get("time") / 1000);
+            assertEquals(321, (Long) resultJson.get(5).get("time") / 1000);
 
             List<GPXEntry> list = rsp.getInstructions().createGPXList();
-            assertEquals(123, list.size());
+            assertEquals(89, list.size());
             final long lastEntryMillis = list.get(list.size() - 1).getMillis();
             final long totalResponseMillis = rsp.getMillis();
             assertEquals(totalResponseMillis, lastEntryMillis);
 
-        } catch (Exception ex)
-        {
-            throw new RuntimeException("cannot handle osm file " + osmFile, ex);
         } finally
         {
             Helper.removeDir(new File(graphFile));

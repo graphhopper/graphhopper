@@ -53,36 +53,12 @@ public class InstructionList implements Iterable<Instruction>
         return instructions.size();
     }
 
-    /**
-     * @return list of indications useful to create images
-     */
-    public List<Integer> createIndications()
-    {
-        List<Integer> res = new ArrayList<Integer>(instructions.size());
-        for (Instruction instruction : instructions)
-        {
-            res.add(instruction.getIndication());
-        }
-        return res;
-    }
-
-    public List<Double> createDistances()
-    {
-        List<Double> res = new ArrayList<Double>(instructions.size());
-        for (Instruction instruction : instructions)
-        {
-            res.add(instruction.getDistance());
-        }
-        return res;
-    }
-
     public List<String> createDistances( TranslationMap.Translation tr, boolean mile )
     {
-        List<Double> distances = createDistances();
-        List<String> labels = new ArrayList<String>(distances.size());
-        for (int i = 0; i < distances.size(); i++)
+        List<String> labels = new ArrayList<String>(instructions.size());
+        for (int i = 0; i < instructions.size(); i++)
         {
-            double distInMeter = distances.get(i);
+            double distInMeter = instructions.get(i).getDistance();
             if (mile)
             {
                 // calculate miles
@@ -115,50 +91,39 @@ public class InstructionList implements Iterable<Instruction>
         return labels;
     }
 
-    /**
-     * @return string representations of the times until no new instruction.
-     */
-    public List<Long> createMillis()
+    public List<Map<String, Object>> createJson( TranslationMap.Translation tr )
     {
-        List<Long> res = new ArrayList<Long>(instructions.size());
+        List<Map<String, Object>> instrList = new ArrayList<Map<String, Object>>(instructions.size());
+        int pointsIndex = 0;
+        int counter = 0;
         for (Instruction instruction : instructions)
         {
-            res.add(instruction.getMillis());
-        }
-        return res;
-    }
+            Map<String, Object> instrJson = new HashMap<String, Object>();
+            instrList.add(instrJson);
 
-    /**
-     * @return the lat,lon positions at which the instructions have to be presented.
-     */
-    public List<List<Double>> createLatLngs()
-    {
-        List<List<Double>> res = new ArrayList<List<Double>>();
-        for (Instruction instruction : instructions)
-        {
-            List<Double> latLng = new ArrayList<Double>(2);
-            latLng.add(instruction.getFirstLat());
-            latLng.add(instruction.getFirstLon());
-            res.add(latLng);
-        }
-        return res;
-    }
+            instrJson.put("text", Helper.firstBig(getTurnDescription(instruction, tr)));
+            instrJson.put("time", instruction.getTime());
+            instrJson.put("distance", instruction.getDistance());
+            instrJson.put("sign", instruction.getSign());
 
-    public List<String> createDescription( TranslationMap.Translation tr )
-    {
-        List<String> res = new ArrayList<String>(instructions.size());
-        for (Instruction instruction : instructions)
-        {
-            res.add(Helper.firstBig(getTurnDescription(instruction, tr)));
+            int tmpIndex = pointsIndex + instruction.getPoints().size();
+            // the last instruction should not point to the next instruction
+            if (counter + 1 == instructions.size())
+                tmpIndex--;
+            
+            instrJson.put("interval", Arrays.asList(pointsIndex, tmpIndex));
+            pointsIndex = tmpIndex;
+
+            counter++;
         }
-        return res;
+        return instrList;
     }
 
     private String getTurnDescription( Instruction instruction, TranslationMap.Translation tr )
     {
         String str;
         String n = getWayName(instruction.getName(), instruction.getPavement(), instruction.getWayType(), tr);
-        int indi = instruction.getIndication();
+        int indi = instruction.getSign();
         if (indi == Instruction.FINISH)
         {
             str = tr.tr("finish");
@@ -351,7 +316,7 @@ public class InstructionList implements Iterable<Instruction>
         sbEx.append("<extensions>");
 
         sbEx.append("<distance>").append((int) instruction.getDistance()).append("</distance>");
-        sbEx.append("<time>").append(instruction.getMillis()).append("</time>");
+        sbEx.append("<time>").append(instruction.getTime()).append("</time>");
 
         // sbEx.append("<direction>").append(instruction.getDirection()).append("</direction>");
         // sbEx.append("<azimuth>").append(instruction.getAzimutz()).append("</azimuth>");
@@ -404,5 +369,18 @@ public class InstructionList implements Iterable<Instruction>
     {
         double factor = Math.pow(10, exponent);
         return Math.round(value * factor) / factor;
+    }
+
+    /**
+     * @return list of lat lon
+     */
+    List<List<Double>> createStartPoints()
+    {
+        List<List<Double>> res = new ArrayList<List<Double>>(instructions.size());
+        for (Instruction instruction : instructions)
+        {
+            res.add(Arrays.asList(instruction.getFirstLat(), instruction.getFirstLon()));
+        }
+        return res;
     }
 }

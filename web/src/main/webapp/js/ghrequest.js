@@ -10,17 +10,17 @@ if (!window.console) {
 }
 
 GHRequest = function(host) {
-    this.minPathPrecision = 1;
+    this.min_path_precision = 1;
     this.host = host;
     this.from = new GHInput("");
     this.to = new GHInput("");
     this.vehicle = "car";
     this.weighting = "fastest";
-    this.encodedPolyline = true;
+    this.points_encoded = true;
     this.instructions = true;
     this.debug = false;
     this.locale = "en";
-    this.doZoom = true;
+    this.do_zoom = true;
     // if your server allows CORS you can use json here
     this.dataType = "jsonp";
 };
@@ -52,9 +52,9 @@ GHRequest.prototype.init = function(params) {
     if (params.locale)
         this.locale = params.locale;
 
-    this.handleBoolean("doZoom", params);
+    this.handleBoolean("do_zoom", params);
     this.handleBoolean("instructions", params);
-    this.handleBoolean("encodedPolyline", params);
+    this.handleBoolean("points_encoded", params);
 
     if (params.q) {
         var qStr = params.q;
@@ -86,7 +86,7 @@ GHRequest.prototype.init = function(params) {
 
 GHRequest.prototype.handleBoolean = function(key, params) {
     if (key in params)
-        this.doZoom = params[key] == "true" || params[key] == true;
+        this.do_zoom = params[key] == "true" || params[key] == true;
 };
 
 GHRequest.prototype.createURL = function(demoUrl) {
@@ -117,10 +117,10 @@ GHRequest.prototype.createPath = function(url) {
         url += "&algorithm=" + this.algorithm;
     if (!this.instructions)
         url += "&instructions=false";
-    if (!this.encodedPolyline)
-        url += "&encodedPolyline=false";
-    if (this.minPathPrecision != 1)
-        url += "&minPathPrecision=" + this.minPathPrecision;
+    if (!this.points_encoded)
+        url += "&points_encoded=false";
+    if (this.min_path_precision !== 1)
+        url += "&min_path_precision=" + this.min_path_precision;
     if (this.debug)
         url += "&debug=true";
     return url;
@@ -166,23 +166,23 @@ function decodePath(encoded, geoJson) {
     return array;
 }
 
-GHRequest.prototype.doRequest = function(url, callback) {
-    var tmpEncodedPolyline = this.encodedPolyline;
+GHRequest.prototype.doRequest = function(url, callback) {    
     $.ajax({
         "timeout": 30000,
         "url": url,
-        "success": function(json) {
-            if (tmpEncodedPolyline && json.route) {
-                // convert encoded polyline stuff to normal json
-                if (json.route.coordinates) {
-                    var tmpArray = decodePath(json.route.coordinates, true);
-                    json.route.coordinates = null;
-                    json.route.data = {
-                        "type": "LineString",
-                        "coordinates": tmpArray
-                    };
-                } else
-                    console.log("something wrong on server? wrong server version? as we have encodedPolyline=" + tmpEncodedPolyline + " but no encoded data was return?");
+        "success": function(json) {            
+            if (json.paths) {
+                for(var i = 0; i < json.paths.length; i++) {
+                    var path = json.paths[i];
+                    // convert encoded polyline to geo json
+                    if (path.points_encoded) {
+                        var tmpArray = decodePath(path.points, true);
+                        path.points = {
+                            "type": "LineString",
+                            "coordinates": tmpArray
+                        };
+                    }
+                }
             }
             callback(json);
         },

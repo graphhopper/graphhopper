@@ -632,8 +632,7 @@ public class GraphHopper implements GraphHopperAPI
 
     @Override
     public GHResponse route( GHRequest request )
-    {
-        request.check();
+    {        
         if (graph == null || !fullyLoaded)
             throw new IllegalStateException("Call load or importOrLoad before routing");
 
@@ -688,35 +687,56 @@ public class GraphHopper implements GraphHopperAPI
 
         debug += ", algoInit:" + sw.stop().getSeconds() + "s";
         sw = new StopWatch().start();
-        
+
         Path path = algo.calcPath(fromRes, toRes);
         debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
 
+        enableInstructions = request.getHint("instructions", enableInstructions);
         calcPoints = request.getHint("calcPoints", calcPoints);
-        if (calcPoints)
+        simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
+        double minPathPrecision = request.getHint("douglas.minprecision", 1d);
+        DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(minPathPrecision);
+
+        if (enableInstructions)
+        {
+            InstructionList il = path.calcInstructions();
+            rsp.setInstructions(il);
+            rsp.setFound(il.getSize() > 0);
+
+            sw = new StopWatch().start();
+            int orig = 0;
+            PointList points = new PointList(il.size() * 5);
+            for (Instruction i : il)
+            {
+                if (simplifyRequest && minPathPrecision > 0)
+                {
+                    orig += i.getPoints().size();
+                    peucker.simplify(i.getPoints());
+                }
+                points.add(i.getPoints());
+            }
+
+            if (simplifyRequest)
+                debug += ", simplify (" + orig + "->" + points.getSize() + "):" + sw.stop().getSeconds() + "s";
+
+            rsp.setPoints(points);
+
+        } else if (calcPoints)
         {
             PointList points = path.calcPoints();
             rsp.setFound(points.getSize() > 1);
-            simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
+
             if (simplifyRequest)
             {
                 sw = new StopWatch().start();
                 int orig = points.getSize();
-                double minPathPrecision = request.getHint("douglas.minprecision", 1d);
+
                 if (minPathPrecision > 0)
-                    new DouglasPeucker().setMaxDistance(minPathPrecision).simplify(points);
+                    peucker.simplify(points);
 
                 debug += ", simplify (" + orig + "->" + points.getSize() + "):" + sw.stop().getSeconds() + "s";
             }
             rsp.setPoints(points);
-
-            enableInstructions = request.getHint("instructions", enableInstructions);
-            if (enableInstructions)
-            {
-                sw = new StopWatch().start();
-                rsp.setInstructions(path.calcInstructions());
-                debug += ", instructions:" + sw.stop().getSeconds() + "s";
-            }
         } else
             rsp.setFound(path.isFound());
 

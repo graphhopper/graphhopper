@@ -33,10 +33,10 @@ public class Instruction
     public static final int TURN_RIGHT = 2;
     public static final int TURN_SHARP_RIGHT = 3;
     public static final int FINISH = 4;
-    private final int indication;
+    private final int sign;
     private final String name;
     private double distance;
-    private long millis;
+    private long time;
     final PointList points;
     private final int pavementType;
     private final int waytype;
@@ -45,9 +45,9 @@ public class Instruction
      * The points, distances and times have exactly the same count. The last point of this
      * instruction is not duplicated here and should be in the next one.
      */
-    public Instruction( int indication, String name, int waytype, int pavementType, PointList pl )
+    public Instruction( int sign, String name, int waytype, int pavementType, PointList pl )
     {
-        this.indication = indication;
+        this.sign = sign;
         this.name = name;
         this.points = pl;
         this.waytype = waytype;
@@ -64,9 +64,9 @@ public class Instruction
         return waytype;
     }
 
-    public int getIndication()
+    public int getSign()
     {
-        return indication;
+        return sign;
     }
 
     /**
@@ -91,18 +91,18 @@ public class Instruction
         return distance;
     }
 
-    public Instruction setMillis( long millis )
+    public Instruction setTime( long time )
     {
-        this.millis = millis;
+        this.time = time;
         return this;
     }
 
     /**
-     * Time in millis until no new instruction
+     * Time in time until no new instruction
      */
-    public long getMillis()
+    public long getTime()
     {
-        return millis;
+        return time;
     }
 
     /**
@@ -112,7 +112,7 @@ public class Instruction
     {
         return points.getLatitude(0);
     }
-
+    
     /**
      * Longitude of the location where this instruction should take place.
      */
@@ -121,18 +121,13 @@ public class Instruction
         return points.getLongitude(0);
     }
 
-    double getLastLat()
+    public PointList getPoints()
     {
-        return points.getLatitude(points.size() - 1);
-    }
-
-    double getLastLon()
-    {
-        return points.getLongitude(points.size() - 1);
+        return points;
     }
 
     /**
-     * This method returns a list of gpx entries where the time (in millis) is relative to the first
+     * This method returns a list of gpx entries where the time (in time) is relative to the first
      * which is 0. It does NOT contain the last point which is the first of the next instruction.
      * <p>
      * @return the time offset to add for the next instruction
@@ -153,11 +148,11 @@ public class Instruction
 
             list.add(new GPXEntry(lat, lon, prevTime));
             // TODO in the case of elevation data the air-line distance is probably not precise enough
-            prevTime = Math.round(prevTime + millis * distanceCalc.calcDist(nextLat, nextLon, lat, lon) / distance);
+            prevTime = Math.round(prevTime + this.time * distanceCalc.calcDist(nextLat, nextLon, lat, lon) / distance);
             lat = nextLat;
             lon = nextLon;
         }
-        return time + millis;
+        return time + this.time;
     }
 
     @Override
@@ -165,13 +160,13 @@ public class Instruction
     {
         StringBuilder sb = new StringBuilder();
         sb.append('(');
-        sb.append(indication);
+        sb.append(sign);
         sb.append(',');
         sb.append(name);
         sb.append(',');
         sb.append(distance);
         sb.append(',');
-        sb.append(millis);
+        sb.append(time);
         sb.append(')');
         return sb.toString();
     }

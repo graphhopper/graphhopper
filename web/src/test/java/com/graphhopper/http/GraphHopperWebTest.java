@@ -22,7 +22,6 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.util.Downloader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -30,35 +29,46 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class GraphHopperWebTest {
+public class GraphHopperWebTest
+{
 
     @Test
-    public void testReadUnencoded() throws Exception {
-        Downloader downloader = new Downloader("GraphHopper Test") {
+    public void testReadUnencoded() throws Exception
+    {
+        Downloader downloader = new Downloader("GraphHopper Test")
+        {
             @Override
-            public InputStream fetch(String url) throws IOException {
+            public InputStream fetch( String url ) throws IOException
+            {
                 return getClass().getResourceAsStream("test.json");
             }
         };
-        GraphHopperWeb instance = new GraphHopperWeb().setEncodePolyline(false);
+        GraphHopperWeb instance = new GraphHopperWeb().setPointsEncoded(false);
         instance.setDownloader(downloader);
-        GHResponse res = instance.route(new GHRequest(11.561415, 49.9516, 11.560439, 49.950357));
-        assertEquals(0.218915, res.getDistance(), 1e-5);
-        assertEquals(7, res.getPoints().getSize());
+        GHResponse res = instance.route(new GHRequest(52.47379, 13.362808, 52.4736925, 13.3904394));
+        assertEquals(2138.3, res.getDistance(), 1e-1);
+        assertEquals(17, res.getPoints().getSize());
+        assertEquals(5, res.getInstructions().getSize());
     }
 
     @Test
-    public void testReadEncoded() throws Exception {
-        Downloader downloader = new Downloader("GraphHopper Test") {
+    public void testReadEncoded() throws Exception
+    {
+        Downloader downloader = new Downloader("GraphHopper Test")
+        {
             @Override
-            public InputStream fetch(String url) throws IOException {
+            public InputStream fetch( String url ) throws IOException
+            {
                 return getClass().getResourceAsStream("test_encoded.json");
             }
         };
-        GraphHopperWeb instance = new GraphHopperWeb().setEncodePolyline(true);
+        GraphHopperWeb instance = new GraphHopperWeb().setPointsEncoded(true);
         instance.setDownloader(downloader);
-        GHResponse res = instance.route(new GHRequest(11.561415, 49.9516, 11.560439, 49.950357));
-        assertEquals(0.218915, res.getDistance(), 1e-5);
-        assertEquals(7, res.getPoints().getSize());
+        GHResponse res = instance.route(new GHRequest(52.47379, 13.362808, 52.4736925, 13.3904394));
+        assertEquals(2138.3, res.getDistance(), 1e-1);
+        assertEquals(17, res.getPoints().getSize());
+        assertEquals(5, res.getInstructions().getSize());
+        assertEquals("(0,Geradeaus auf A 100,1268.519329705091,65237)", res.getInstructions().get(0).toString());
+        assertEquals(11, res.getInstructions().get(0).getPoints().size());
     }
 }

@@ -29,6 +29,7 @@ import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPlace;
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.ServletException;
@@ -36,6 +37,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import static javax.servlet.http.HttpServletResponse.*;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Servlet to use GraphHopper in a remote application (mobile or browser). Attention: If type is
@@ -53,7 +55,7 @@ public class GraphHopperServlet extends GHBaseServlet
     private Geocoding geocoding;
     @Inject
     @Named("defaultAlgorithm")
-    private String defaultAlgorithm;    
+    private String defaultAlgorithm;
     @Inject
     private TranslationMap trMap;
 
@@ -84,38 +86,36 @@ public class GraphHopperServlet extends GHBaseServlet
         list.add(bb.minLat);
         list.add(bb.maxLon);
         list.add(bb.maxLat);
-        JSONBuilder json = new JSONBuilder().
-                object("bbox", list).
-                object("supportedVehicles", hopper.getEncodingManager()).
-                object("version", Constants.VERSION).
-                object("buildDate", Constants.BUILD_DATE);
+        JSONObject json = new JSONObject();
+        json.put("bbox", list);
+        json.put("supportedVehicles", hopper.getEncodingManager());
+        json.put("version", Constants.VERSION);
+        json.put("buildDate", Constants.BUILD_DATE);
 
         StorableProperties props = hopper.getGraph().getProperties();
-        json.object("importDate", props.get("osmreader.import.date"));
-        json.object("prepareDate", props.get("prepare.date"));
+        json.put("importDate", props.get("osmreader.import.date"));
+        json.put("prepareDate", props.get("prepare.date"));
 
-        writeJson(req, res, json.build());
+        writeJson(req, res, json);
     }
 
     void writePath( HttpServletRequest req, HttpServletResponse res ) throws Exception
     {
-        StopWatch sw = new StopWatch().start();
         List<GHPlace> infoPoints = getPoints(req);
-        float tookGeocoding = sw.stop().getSeconds();
         GHPlace start = infoPoints.get(0);
         GHPlace end = infoPoints.get(1);
         try
         {
             // we can reduce the path length based on the maximum differences to the original coordinates
-            double minPathPrecision = getDoubleParam(req, "minPathPrecision", 1d);
+            double minPathPrecision = getDoubleParam(req, "min_path_precision", 1d);
             boolean writeGPX = "gpx".equalsIgnoreCase(getParam(req, "type", "json"));
             boolean enableInstructions = writeGPX || getBooleanParam(req, "instructions", true);
-            boolean calcPoints = getBooleanParam(req, "calcPoints", true);
+            boolean calcPoints = getBooleanParam(req, "calc_points", true);
             String vehicleStr = getParam(req, "vehicle", "CAR").toUpperCase();
             String weighting = getParam(req, "weighting", "fastest");
             String algoStr = getParam(req, "algorithm", defaultAlgorithm);
 
-            sw = new StopWatch().start();
+            StopWatch sw = new StopWatch().start();
             GHResponse rsp;
             if (hopper.getEncodingManager().supports(vehicleStr))
             {
@@ -149,7 +149,7 @@ public class GraphHopperServlet extends GHBaseServlet
             if (writeGPX)
                 writeGPX(req, res, rsp);
             else
-                writeJson(req, res, rsp, start, end, tookGeocoding, took);
+                writeJson(req, res, rsp, took);
 
         } catch (Exception ex)
         {
@@ -170,16 +170,22 @@ public class GraphHopperServlet extends GHBaseServlet
     }
 
     private void writeJson( HttpServletRequest req, HttpServletResponse res,
-            GHResponse rsp, GHPlace start, GHPlace end,
-            float tookGeocoding, float took ) throws JSONException
+            GHResponse rsp, float took ) throws JSONException
     {
         boolean enableInstructions = getBooleanParam(req, "instructions", true);
         Locale locale = Helper.getLocale(getParam(req, "locale", "en"));
-        boolean encodedPolylineParam = getBooleanParam(req, "encodedPolyline", true);
-        JSONBuilder builder;
+        boolean pointsEncoded = getBooleanParam(req, "points_encoded", true);
+        boolean calcPoints = getBooleanParam(req, "calc_points", true);
+        JSONObject json = new JSONObject();
+
+        JSONObject jsonPath = new JSONObject();
+        json.put("paths", Collections.singletonList(jsonPath));
+
+        JSONObject jsonInfo = new JSONObject();
+        json.put("info", jsonInfo);
+
         if (rsp.hasErrors())
         {
-            builder = new JSONBuilder().startObject("info");
             List<Map<String, String>> list = new ArrayList<Map<String, String>>();
             for (Throwable t : rsp.getErrors())
             {
@@ -188,79 +194,55 @@ public class GraphHopperServlet extends GHBaseServlet
                 map.put("details", t.getClass().getName());
                 list.add(map);
             }
-            builder = builder.object("errors", list).endObject();
+            jsonInfo.put("errors", list);
+        } else if (!rsp.isFound())
+        {
+            Map<String, String> map = new HashMap<String, String>();
+            map.put("message", "Not found");
+            map.put("details", "");
+            jsonInfo.put("errors", Arrays.asList(map));
         } else
         {
-            builder = new JSONBuilder().
-                    startObject("info").
-                    object("routeFound", rsp.isFound()).
-                    object("took", took).
-                    object("tookGeocoding", tookGeocoding).
-                    endObject();
-            builder = builder.startObject("route").
-                    object("from", new Double[]
-                            {
-                                start.lon, start.lat
-                    }).
-                    object("to", new Double[]
-                            {
-                                end.lon, end.lat
-                    }).
-                    object("distance", rsp.getDistance()).
-                    object("time", rsp.getMillis());
+            jsonInfo.put("took", took);
+            jsonPath.put("distance", rsp.getDistance());
+            jsonPath.put("time", rsp.getMillis());
 
-            if (enableInstructions)
+            if (calcPoints)
             {
-                Translation tr = trMap.getWithFallBack(locale);
-                InstructionList instructions = rsp.getInstructions();
-                builder.startObject("instructions").
-                        object("descriptions", instructions.createDescription(tr)).
-                        object("distances", instructions.createDistances()).
-                        object("indications", instructions.createIndications()).
-                        object("millis", instructions.createMillis()).
-                        object("latLngs", instructions.createLatLngs()).
-                        endObject();
+                jsonPath.put("points_encoded", pointsEncoded);
+
+                PointList points = rsp.getPoints();
+                if (points.getSize() >= 2)
+                    jsonPath.put("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
+
+                jsonPath.put("points", createPoints(points, pointsEncoded));
+
+                if (enableInstructions)
+                {
+                    Translation tr = trMap.getWithFallBack(locale);
+                    InstructionList instructions = rsp.getInstructions();
+                    jsonPath.put("instructions", instructions.createJson(tr));
+                }
             }
-
-            PointList points = rsp.getPoints();
-            if (points.getSize() >= 2)
-                builder.object("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
-
-            if (encodedPolylineParam)
-            {
-                String encodedPolyline = WebHelper.encodePolyline(points);
-                builder.object("coordinates", encodedPolyline);
-            } else
-            {
-                builder.startObject("data").
-                        object("type", "LineString").
-                        object("coordinates", points.toGeoJson()).
-                        endObject();
-            }
-            // end route
-            builder = builder.endObject();
         }
 
-        writeJson(req, res, builder.build());
+        writeJson(req, res, json);
+    }
+
+    Object createPoints( PointList points, boolean pointsEncoded ) throws JSONException
+    {
+        if (pointsEncoded)
+            return WebHelper.encodePolyline(points);
+
+        JSONObject jsonPoints = new JSONObject();
+        jsonPoints.put("type", "LineString");
+        jsonPoints.put("coordinates", points.toGeoJson());
+        return jsonPoints;
     }
 
     private List<GHPlace> getPoints( HttpServletRequest req ) throws IOException
     {
         String[] pointsAsStr = getParams(req, "point");
-        // allow two formats
-        if (pointsAsStr.length == 0)
-        {
-            String from = getParam(req, "from", "");
-            String to = getParam(req, "to", "");
-            if (!Helper.isEmpty(from) && !Helper.isEmpty(to))
-            {
-                pointsAsStr = new String[]
-                {
-                    from, to
-                };
-            }
-        }
-
         final List<GHPlace> infoPoints = new ArrayList<GHPlace>();
         for (int pointNo = 0; pointNo < pointsAsStr.length; pointNo++)
         {
@@ -274,17 +256,12 @@ public class GraphHopperServlet extends GHBaseServlet
             }
         }
 
-        // TODO resolve name in a thread if only lat,lon is given but limit to a certain timeout
-        if (infoPoints == null || infoPoints.size() < 2)
-        {
+        if (infoPoints.size() < 2)
             throw new IllegalArgumentException("Did you specify point=<from>&point=<to> ? Use at least 2 points! " + infoPoints);
-        }
 
         // TODO execute algorithm multiple times!
         if (infoPoints.size() != 2)
-        {
             throw new IllegalArgumentException("TODO! At the moment only 2 points can be specified");
-        }
 
         return infoPoints;
     }

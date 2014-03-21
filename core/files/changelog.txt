@@ -1,4 +1,5 @@
 0.3.0
+    completely different web API response format. see docs/web
     swapDirections is renamed to reverseFlags (EncodingManager and FlagEncoders)
     edgeState.detach has now a reverse parameter, just use false to get previous results
     web api: buildDate contains now timezone, algoType is replaced with weighting
@@ -11,8 +12,7 @@
     the instructions of the web response does not contain times (string) but instead millis (long)
     PrepareContractionHierarchies.setPeriodicUpdates is now in percentage not in absolute counts
     improved bike routing #132, #138, #139, #150
-    gpx export via API, HTTP (route?type=gpx) and web interface is possible: #113, #136, #141
-    breaking: The web response, Path.time and GHResponse.time change to milliseconds and 'long' (instead of seconds and double)
+    gpx export via API, HTTP (route?type=gpx) and web interface is possible: #113, #136, #141   
 
 0.2.0
 23 Nov 2013

@@ -54,9 +54,8 @@ public class PointList
         longitudes[index] = lon;
     }
 
-    public void add( double lat, double lon )
+    private void incCap( int newSize )
     {
-        int newSize = size + 1;
         if (newSize >= latitudes.length)
         {
             int cap = (int) (newSize * 1.7);
@@ -65,9 +64,27 @@ public class PointList
             latitudes = Arrays.copyOf(latitudes, cap);
             longitudes = Arrays.copyOf(longitudes, cap);
         }
+    }
 
+    public void add( double lat, double lon )
+    {
+        int newSize = size + 1;
+        incCap(newSize);
         latitudes[size] = lat;
         longitudes[size] = lon;
+        size = newSize;
+    }
+
+    public void add( PointList points )
+    {
+        int newSize = size + points.getSize();
+        incCap(newSize);
+        for (int i = 0; i < points.getSize(); i++)
+        {
+            int tmp = size + i;
+            latitudes[tmp] = points.getLatitude(i);
+            longitudes[tmp] = points.getLongitude(i);
+        }
         size = newSize;
     }
 
@@ -328,5 +345,9 @@ public class PointList
     public GHPoint toGHPoint( int index )
     {
         return new GHPoint(getLatitude(index), getLongitude(index));
+    }
+    
+    int getCapacity() {
+        return latitudes.length;
     }
 }
