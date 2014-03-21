@@ -88,13 +88,15 @@ public class GraphHopperServlet extends GHBaseServlet
         list.add(bb.maxLat);
         JSONObject json = new JSONObject();
         json.put("bbox", list);
-        json.put("supportedVehicles", hopper.getEncodingManager());
+        json.put("supported_vehicles", hopper.getEncodingManager());
         json.put("version", Constants.VERSION);
-        json.put("buildDate", Constants.BUILD_DATE);
+        json.put("build_date", Constants.BUILD_DATE);
 
         StorableProperties props = hopper.getGraph().getProperties();
-        json.put("importDate", props.get("osmreader.import.date"));
-        json.put("prepareDate", props.get("prepare.date"));
+        json.put("import_date", props.get("osmreader.import.date"));
+
+        if (!Helper.isEmpty(props.get("prepare.date")))
+            json.put("prepare_date", props.get("prepare.date"));
 
         writeJson(req, res, json);
     }
