@@ -25,6 +25,11 @@ import com.graphhopper.util.Helper;
 import static com.graphhopper.storage.AbstractGraphStorageTester.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.InstructionList;
+import com.graphhopper.storage.EdgeEntry;
+import com.graphhopper.util.*;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -36,6 +41,8 @@ public class PathTest
 {
     private final EncodingManager carManager = new EncodingManager("CAR");
     private final FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
+    private final TranslationMap trMap = TranslationMapTest.SINGLETON;
+    private final TranslationMap.Translation tr = trMap.getWithFallBack(Locale.US);
 
     @Test
     public void testFound()
@@ -84,8 +91,20 @@ public class PathTest
         // 0-1-2
         assertPList(Helper.createPointList(0, 0.1, 8, 1, 9, 1, 1, 0.1, 10, 1, 11, 1, 2, 0.1), path.calcPoints());
         InstructionList instr = path.calcInstructions();
-        assertEquals("[" + 504 * 1000 + ", 0]", instr.createMillis().toString());
-        assertEquals("[3000.0, 0.0]", instr.createDistances().toString());
+        List<Map<String, Object>> res = instr.createJson(tr);
+        Map<String, Object> tmp = res.get(0);
+        assertEquals(3000.0, tmp.get("distance"));
+        assertEquals(504000L, tmp.get("time"));
+        assertEquals("Continue onto road", tmp.get("text"));
+        assertEquals("[0, 6]", tmp.get("interval").toString());
+
+        tmp = res.get(1);
+        assertEquals(0.0, tmp.get("distance"));
+        assertEquals(0L, tmp.get("time"));
+        assertEquals("Finish!", tmp.get("text"));
+        assertEquals("[6, 6]", tmp.get("interval").toString());
+        int lastIndex = (Integer) ((List) res.get(res.size() - 1).get("interval")).get(0);
+        assertEquals(path.calcPoints().size() - 1, lastIndex);
 
         // force minor change for instructions
         edge2.setName("2");
@@ -96,8 +115,21 @@ public class PathTest
         path.setEdgeEntry(e1);
         path.extract();
         instr = path.calcInstructions();
-        assertEquals("[" + 6 * 60 * 1000 + ", " + 144 * 1000 + ", 0]", instr.createMillis().toString());
-        assertEquals("[1000.0, 2000.0, 0.0]", instr.createDistances().toString());
+        res = instr.createJson(tr);
+
+        tmp = res.get(0);
+        assertEquals(1000.0, tmp.get("distance"));
+        assertEquals(360000L, tmp.get("time"));
+        assertEquals("Continue onto road", tmp.get("text"));
+        assertEquals("[0, 3]", tmp.get("interval").toString());
+
+        tmp = res.get(1);
+        assertEquals(2000.0, tmp.get("distance"));
+        assertEquals(144000L, tmp.get("time"));
+        assertEquals("Turn sharp right onto 2", tmp.get("text"));
+        assertEquals("[3, 6]", tmp.get("interval").toString());
+        lastIndex = (Integer) ((List) res.get(res.size() - 1).get("interval")).get(0);
+        assertEquals(path.calcPoints().size() - 1, lastIndex);
 
         // now reverse order
         path = new Path(g, encoder);
@@ -109,8 +141,22 @@ public class PathTest
         // 2-1-0
         assertPList(Helper.createPointList(2, 0.1, 11, 1, 10, 1, 1, 0.1, 9, 1, 8, 1, 0, 0.1), path.calcPoints());
         instr = path.calcInstructions();
-        assertEquals("[" + 144 * 1000 + ", " + 6 * 60 * 1000 + ", 0]", instr.createMillis().toString());
-        assertEquals("[2000.0, 1000.0, 0.0]", instr.createDistances().toString());
+
+        res = instr.createJson(tr);
+        tmp = res.get(0);
+        assertEquals(2000.0, tmp.get("distance"));
+        assertEquals(144000L, tmp.get("time"));
+        assertEquals("Continue onto 2", tmp.get("text"));
+        assertEquals("[0, 3]", tmp.get("interval").toString());
+
+        tmp = res.get(1);
+        assertEquals(1000.0, tmp.get("distance"));
+        assertEquals(360000L, tmp.get("time"));
+        assertEquals("Turn sharp left onto road", tmp.get("text"));
+        assertEquals("[3, 6]", tmp.get("interval").toString());
+        lastIndex = (Integer) ((List) res.get(res.size() - 1).get("interval")).get(0);
+        assertEquals(path.calcPoints().size() - 1, lastIndex);
+
         g.close();
     }
 }

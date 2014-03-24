@@ -152,12 +152,6 @@ $(document).ready(function(e) {
                     elevationControl.addTo(map);                    
                 }
 
-//        var data = JSON.parse("[[10.4049076,48.2802518],[10.405231,48.2801396],...]");
-//        var tempFeature = {
-//            "type": "Feature", "geometry": { "type": "LineString", "coordinates": data }
-//        };        
-//        routingLayer.addData(tempFeature);
-
                 // execute query
                 initFromParams(urlParams, true);
             }, function(err) {
@@ -390,7 +384,7 @@ function setFlag(coord, isFrom) {
                 resolveTo();
             }
             // do not wait for resolving and avoid zooming when dragging
-            ghRequest.doZoom = false;
+            ghRequest.do_zoom = false;
             routeLatLng(ghRequest, false);
         });
     }
@@ -631,9 +625,9 @@ function focus(coord, zoom, isFrom) {
     }
 }
 function routeLatLng(request, doQuery) {
-    // doZoom should not show up in the URL but in the request object to avoid zooming for history change
-    var doZoom = request.doZoom;
-    request.doZoom = true;
+    // do_zoom should not show up in the URL but in the request object to avoid zooming for history change
+    var doZoom = request.do_zoom;
+    request.do_zoom = true;
 
     var urlForHistory = request.createFullURL();
     // not enabled e.g. if no cookies allowed (?)
@@ -642,7 +636,7 @@ function routeLatLng(request, doQuery) {
         // 2. important workaround for encoding problems in history.js
         var params = parseUrl(urlForHistory);
         console.log(params);
-        params.doZoom = doZoom;
+        params.do_zoom = doZoom;
         // force a new request even if we have the same parameters
         params.mathRandom = Math.random();
         History.pushState(params, browserTitle, urlForHistory);
@@ -682,31 +676,29 @@ function routeLatLng(request, doQuery) {
                 descriptionDiv.append("<div class='error'>" + tmpErrors[m].message + "</div>");
             }
             return;
-        } else if (json.info.routeFound === false) {
-            descriptionDiv.html('Route not found! Disconnected areas?');
-            return;
         }
+        var path = json.paths[0];
         var geojsonFeature = {
             "type": "Feature",
-            "geometry": json.route.data
+            // "style": myStyle,                
+            "geometry": path.points
         };
 
         if (elevationControl)
             elevationControl.addData(geojsonFeature);
 
         routingLayer.addData(geojsonFeature);
-
-        if (json.route.bbox && doZoom) {
-            var minLon = json.route.bbox[0];
-            var minLat = json.route.bbox[1];
-            var maxLon = json.route.bbox[2];
-            var maxLat = json.route.bbox[3];
+        if (path.bbox && doZoom) {
+            var minLon = path.bbox[0];
+            var minLat = path.bbox[1];
+            var maxLon = path.bbox[2];
+            var maxLat = path.bbox[3];
             var tmpB = new L.LatLngBounds(new L.LatLng(minLat, minLon), new L.LatLng(maxLat, maxLon));
             map.fitBounds(tmpB);
         }
 
-        var tmpTime = createTimeString(json.route.time);
-        var tmpDist = createDistanceString(json.route.distance);
+        var tmpTime = createTimeString(path.time);
+        var tmpDist = createDistanceString(path.distance);
         descriptionDiv.html(tr("routeInfo", [tmpDist, tmpTime]));
 
         var hiddenDiv = $("<div id='routeDetails'/>");
@@ -718,9 +710,8 @@ function routeLatLng(request, doQuery) {
         });
         $("#info").prepend(toggly);
         var infoStr = "took: " + round(json.info.took, 1000) + "s"
-                + ", points: " + json.route.data.coordinates.length;
-        //if (json.route.instructions)
-        //    infoStr += ", instructions: " + json.route.instructions.descriptions.length;
+                + ", points: " + path.points.length;
+
         hiddenDiv.append("<span>" + infoStr + "</span>");
         $("#info").append(hiddenDiv);
 
@@ -761,39 +752,36 @@ function routeLatLng(request, doQuery) {
             $(element).css("color", "black");
         });
 
-        if (json.route.instructions) {
+        if (path.instructions) {
             var instructionsElement = $("<table id='instructions'><colgroup>"
                     + "<col width='10%'><col width='65%'><col width='25%'></colgroup>");
             $("#info").append(instructionsElement);
-            var descriptions = json.route.instructions.descriptions;
-            var distances = json.route.instructions.distances;
-            var indications = json.route.instructions.indications;
-            var millis = json.route.instructions.millis;
-            var latLngs = json.route.instructions.latLngs;
-            for (var m = 0; m < descriptions.length; m++) {
-                var indi = indications[m];
+            for (var m = 0; m < path.instructions.length; m++) {
+                var instr = path.instructions[m];
+                var sign = instr.sign;
                 if (m == 0)
-                    indi = "marker-small-green";
-                else if (indi == -3)
-                    indi = "sharp_left";
-                else if (indi == -2)
-                    indi = "left";
-                else if (indi == -1)
-                    indi = "slight_left";
-                else if (indi == 0)
-                    indi = "continue";
-                else if (indi == 1)
-                    indi = "slight_right";
-                else if (indi == 2)
-                    indi = "right";
-                else if (indi == 3)
-                    indi = "sharp_right";
-                else if (indi == 4)
-                    indi = "marker-small-red";
+                    sign = "marker-from";
+                else if (sign == -3)
+                    sign = "sharp_left";
+                else if (sign == -2)
+                    sign = "left";
+                else if (sign == -1)
+                    sign = "slight_left";
+                else if (sign == 0)
+                    sign = "continue";
+                else if (sign == 1)
+                    sign = "slight_right";
+                else if (sign == 2)
+                    sign = "right";
+                else if (sign == 3)
+                    sign = "sharp_right";
+                else if (sign == 4)
+                    sign = "marker-to";
                 else
-                    throw "did not found indication " + indi;
+                    throw "did not found indication " + sign;
 
-                addInstruction(instructionsElement, indi, descriptions[m], distances[m], millis[m], latLngs[m]);
+                var lngLat = path.points.coordinates[instr.interval[0]];
+                addInstruction(instructionsElement, sign, instr.text, instr.distance, instr.time, lngLat);
             }
         }
     });
@@ -829,13 +817,14 @@ function createTimeString(time) {
     return resTimeStr;
 }
 
-function addInstruction(main, indi, title, distance, milliEntry, latLng) {
+function addInstruction(main, indi, title, distance, milliEntry, lngLat) {
     var indiPic = "<img class='instr_pic' style='vertical-align: middle' src='" +
             window.location.pathname + "img/" + indi + ".png'/>";
     var str = "<td class='instr_title'>" + title + "</td>";
 
     if (distance > 0) {
-        str += " <td class='instr_distance_td'><span class='instr_distance'>" + createDistanceString(distance) + "<br/>"
+        str += " <td class='instr_distance_td'><span class='instr_distance'>"
+                + createDistanceString(distance) + "<br/>"
                 + createTimeString(milliEntry) + "</span></td>";
     }
 
@@ -845,25 +834,18 @@ function addInstruction(main, indi, title, distance, milliEntry, latLng) {
         str = "<td/>" + str;
     var instructionDiv = $("<tr class='instruction'/>");
     instructionDiv.html(str);
-    if (latLng) {
+    if (lngLat) {
         instructionDiv.click(function() {
-            hideRouteSegmentPopup();
-            showRouteSegmentPopup(indiPic + " " + title, latLng);
+            if (routeSegmentPopup)
+                map.removeLayer(routeSegmentPopup);
+            
+            routeSegmentPopup = L.popup().
+                    setLatLng([lngLat[1], lngLat[0]]).
+                    setContent(indiPic + " " + title).
+                    openOn(map);
         });
     }
     main.append(instructionDiv);
-}
-
-function showRouteSegmentPopup(html, latLng) {
-    hideRouteSegmentPopup();
-    routeSegmentPopup = L.popup().setLatLng(latLng).setContent(html).openOn(map);
-}
-
-function hideRouteSegmentPopup() {
-    if (routeSegmentPopup) {
-        map.removeLayer(routeSegmentPopup);
-        routeSegmentPopup = null;
-    }
 }
 
 function getCenter(bounds) {

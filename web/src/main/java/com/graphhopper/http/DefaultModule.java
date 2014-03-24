@@ -31,14 +31,19 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultModule extends AbstractModule
 {
-    private Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final CmdArgs args;
+
+    public DefaultModule( CmdArgs args )
+    {
+        this.args = args;
+    }
 
     @Override
     protected void configure()
     {
         try
         {
-            CmdArgs args = CmdArgs.readFromConfig("config.properties", "graphhopper.config");
             GraphHopper hopper = new GraphHopper().forServer().init(args);
             hopper.importOrLoad();
             logger.info("loaded graph at:" + hopper.getGraphHopperLocation()
@@ -56,7 +61,6 @@ public class DefaultModule extends AbstractModule
             bind(Geocoding.class).toInstance(new NominatimGeocoder().
                     setTimeout((int) timeout).
                     setBounds(hopper.getGraph().getBounds()));
-            bind(GHThreadPool.class).toInstance(new GHThreadPool(1000, 50).startService());
 
             bind(TranslationMap.class).toInstance(new TranslationMap().doImport());
         } catch (Exception ex)

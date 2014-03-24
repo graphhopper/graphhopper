@@ -372,8 +372,7 @@ public class Path
             private double prevLon = nodeAccess.getLongitude(tmpNode);
             private double prevOrientation;
             private Instruction prevInstruction;
-            // we do not expose the pointlist in Instruction => no need for elevation
-            private PointList points = new PointList();
+            private PointList points = new PointList(10, nodeAccess.is3D());
             private String name = null;
             private int pavementType;
             private int wayType;
@@ -402,7 +401,7 @@ public class Path
                     prevLat = nodeAccess.getLatitude(baseNode);
                     prevLon = nodeAccess.getLongitude(baseNode);
                 }
-                
+
                 double orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
                 if (name == null)
                 {
@@ -424,44 +423,43 @@ public class Path
                             || (pavementType != tmpPavement)
                             || (wayType != tmpWayType))
                     {
-                        // we do not expose the pointlist in Instruction => no need for elevation
-                        points = new PointList();
+                        points = new PointList(10, nodeAccess.is3D());
                         name = tmpName;
                         pavementType = tmpPavement;
                         wayType = tmpWayType;
                         double delta = Math.abs(tmpOrientation - prevOrientation);
-                        int indication;
+                        int sign;
                         if (delta < 0.2)
                         {
                             // 0.2 ~= 11°
-                            indication = Instruction.CONTINUE_ON_STREET;
+                            sign = Instruction.CONTINUE_ON_STREET;
 
                         } else if (delta < 0.8)
                         {
                             // 0.8 ~= 40°
                             if (tmpOrientation > prevOrientation)
-                                indication = Instruction.TURN_SLIGHT_LEFT;
+                                sign = Instruction.TURN_SLIGHT_LEFT;
                             else
-                                indication = Instruction.TURN_SLIGHT_RIGHT;
+                                sign = Instruction.TURN_SLIGHT_RIGHT;
 
                         } else if (delta < 1.8)
                         {
                             // 1.8 ~= 103°
                             if (tmpOrientation > prevOrientation)
-                                indication = Instruction.TURN_LEFT;
+                                sign = Instruction.TURN_LEFT;
                             else
-                                indication = Instruction.TURN_RIGHT;
+                                sign = Instruction.TURN_RIGHT;
 
                         } else
                         {
                             if (tmpOrientation > prevOrientation)
-                                indication = Instruction.TURN_SHARP_LEFT;
+                                sign = Instruction.TURN_SHARP_LEFT;
                             else
-                                indication = Instruction.TURN_SHARP_RIGHT;
+                                sign = Instruction.TURN_SHARP_RIGHT;
 
                         }
 
-                        prevInstruction = new Instruction(indication, name, wayType, pavementType, points);
+                        prevInstruction = new Instruction(sign, name, wayType, pavementType, points);
                         cachedWays.add(prevInstruction);
                     }
 
@@ -480,7 +478,8 @@ public class Path
 
                 boolean lastEdge = index == edgeIds.size() - 1;
                 if (lastEdge)
-                    cachedWays.add(new FinishInstruction(prevLat, prevLon));
+                    cachedWays.add(new FinishInstruction(adjLat, adjLon, 
+                            nodeAccess.is3D() ? nodeAccess.getElevation(adjNode) : 0));
             }
 
             private void updatePointsAndInstruction( EdgeIteratorState edge, PointList pl )
@@ -494,7 +493,7 @@ public class Path
                 double newDist = edge.getDistance();
                 prevInstruction.setDistance(newDist + prevInstruction.getDistance());
                 long flags = edge.getFlags();
-                prevInstruction.setMillis(calcMillis(newDist, flags, false) + prevInstruction.getMillis());
+                prevInstruction.setTime(calcMillis(newDist, flags, false) + prevInstruction.getTime());
             }
         });
 

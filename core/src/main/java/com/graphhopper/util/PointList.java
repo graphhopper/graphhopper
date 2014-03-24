@@ -92,16 +92,8 @@ public class PointList implements PointAccess
             throw new IllegalStateException("This is a 2D list we cannot store elevation: " + ele);
     }
 
-    public void add( double lat, double lon )
+    private void incCap( int newSize )
     {
-        if (is3D)
-            throw new IllegalStateException("Cannot add point without elevation data in 3D mode");
-        add(lat, lon, Double.NaN);
-    }
-
-    public void add( double lat, double lon, double ele )
-    {
-        int newSize = size + 1;
         if (newSize >= latitudes.length)
         {
             int cap = (int) (newSize * 1.7);
@@ -112,7 +104,19 @@ public class PointList implements PointAccess
             if (is3D)
                 elevations = Arrays.copyOf(elevations, cap);
         }
+    }
 
+    public void add( double lat, double lon )
+    {
+        if (is3D)
+            throw new IllegalStateException("Cannot add point without elevation data in 3D mode");
+        add(lat, lon, Double.NaN);
+    }
+
+    public void add( double lat, double lon, double ele )
+    {
+        int newSize = size + 1;
+        incCap(newSize);
         latitudes[size] = lat;
         longitudes[size] = lon;
         if (is3D)
@@ -136,6 +140,21 @@ public class PointList implements PointAccess
             add(point.lat, point.lon, ((GHPoint3D) point).ele);
         else
             add(point.lat, point.lon);
+    }
+
+    public void add( PointList points )
+    {
+        int newSize = size + points.getSize();
+        incCap(newSize);
+        for (int i = 0; i < points.getSize(); i++)
+        {
+            int tmp = size + i;
+            latitudes[tmp] = points.getLatitude(i);
+            longitudes[tmp] = points.getLongitude(i);
+            if (is3D)
+                elevations[tmp] = points.getElevation(i);
+        }
+        size = newSize;
     }
 
     public int size()
@@ -537,4 +556,9 @@ public class PointList implements PointAccess
             throw new UnsupportedOperationException("cannot access EMPTY PointList");
         }
     };
+
+    int getCapacity()
+    {
+        return latitudes.length;
+    }
 }

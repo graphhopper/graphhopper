@@ -50,15 +50,11 @@ public class GHRequest
     {
         this.from = startPoint;
         this.to = endPoint;
-    }
-
-    public void check()
-    {
         if (from == null)
-            throw new IllegalStateException("the 'from' point needs to be initialized but was null");
+            throw new IllegalStateException("'from' cannot be null");
 
         if (to == null)
-            throw new IllegalStateException("the 'to' point needs to be initialized but was null");
+            throw new IllegalStateException("'to' cannot be null");
     }
 
     public GHPlace getFrom()

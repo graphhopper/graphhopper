@@ -55,4 +55,36 @@ public class PointListTest
 
         assertEquals(clonedList, instance.clone(true));
     }
+    
+    @Test
+    public void testAddPL()
+    {
+        PointList instance = new PointList();
+        for (int i = 0; i < 7; i++)
+        {                        
+            instance.add(0, 0);
+        }
+        assertEquals(7, instance.getSize());
+        assertEquals(10, instance.getCapacity());
+        
+        PointList toAdd = new PointList();                
+        instance.add(toAdd);        
+        assertEquals(7, instance.getSize());
+        assertEquals(10, instance.getCapacity());
+        
+        toAdd.add(1, 1);
+        toAdd.add(2, 2);
+        toAdd.add(3, 3);
+        toAdd.add(4, 4);
+        toAdd.add(5, 5);
+        instance.add(toAdd);
+        
+        assertEquals(12, instance.getSize());
+        assertEquals(20, instance.getCapacity());
+        
+        for (int i = 0; i < toAdd.size(); i++)
+        {            
+            assertEquals(toAdd.getLatitude(i), instance.getLatitude(7 + i), 1e-1);
+        }
+    }
 }

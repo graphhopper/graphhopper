@@ -204,10 +204,16 @@ if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
   if [ "x$JETTY_PORT" = "x" ]; then  
     JETTY_PORT=8989
   fi
-  "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/web/pom.xml" -Djetty.port=$JETTY_PORT -Djetty.reload=manual \
-      -Dgraphhopper.config=$CONFIG \
-      $GH_WEB_OPTS -Dgraphhopper.graph.location="$GRAPH" -Dgraphhopper.osmreader.osm="$OSM_FILE" \
-      jetty:run
+  WEB_JAR="$GH_HOME/web/target/graphhopper-web-$VERSION-jar-with-dependencies.jar"
+  if [ ! -s "$WEB_JAR" ]; then         
+    "$MAVEN_HOME/bin/mvn" --projects web -DskipTests=true install assembly:single > /tmp/graphhopper-web-compile.log
+    returncode=$?
+    if [[ $returncode != 0 ]] ; then
+      echo "## compilation of web failed"
+      cat /tmp/graphhopper-web-compile.log
+      exit $returncode
+    fi
+  fi
 
   if [ "x$GH_FOREGROUND" = "x" ]; then
     exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.port=$JETTY_PORT config=$CONFIG \
