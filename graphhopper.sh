@@ -215,7 +215,7 @@ if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
     fi
   fi
 
-  if [ "x$GH_FOREGROUND" != "x" ]; then
+  if [ "x$GH_FOREGROUND" = "x" ]; then
     exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.port=$JETTY_PORT config=$CONFIG \
          $GH_WEB_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE"
     # foreground => we never reach this here
