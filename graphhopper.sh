@@ -209,6 +209,15 @@ if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
       $GH_WEB_OPTS -Dgraphhopper.graph.location="$GRAPH" -Dgraphhopper.osmreader.osm="$OSM_FILE" \
       jetty:run
 
+  if [ "x$GH_FOREGROUND" = "x" ]; then
+    exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.port=$JETTY_PORT config=$CONFIG \
+         $GH_WEB_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE"
+    # foreground => we never reach this here
+  else
+    exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.port=$JETTY_PORT config=$CONFIG \
+         $GH_WEB_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE" <&- &
+    return $?
+  fi
 
 elif [ "x$ACTION" = "ximport" ]; then
  "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS printVersion=true \
