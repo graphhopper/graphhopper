@@ -111,8 +111,8 @@ $(document).ready(function(e) {
                     return button;
                 }
 
-                if (json.supportedVehicles) {
-                    var vehicles = json.supportedVehicles.split(",");
+                if (json.supported_vehicles) {
+                    var vehicles = json.supported_vehicles.split(",");
                     if (vehicles.length > 1)
                         ghRequest.vehicle = vehicles[0];
                     for (var i = 0; i < vehicles.length; i++) {
