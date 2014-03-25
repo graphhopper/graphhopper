@@ -90,7 +90,6 @@ public class GraphHopperServlet extends GHBaseServlet
         json.put("supported_vehicles", hopper.getEncodingManager());
         json.put("version", Constants.VERSION);
         json.put("build_date", Constants.BUILD_DATE);
-        json.put("dimension", hopper.getGraph().getNodeAccess().getDimension());
 
         StorableProperties props = hopper.getGraph().getProperties();
         json.put("import_date", props.get("osmreader.import.date"));

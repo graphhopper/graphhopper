@@ -140,8 +140,7 @@ JSON path/attribute | Description
 :-------------------|:------------
 build_date          | The GraphHopper build date
 version             | The GraphHopper version
-supported_vehicle   | A comma separated list of supported vehicles
+supported_vehicles   | A comma separated list of supported vehicles
 bbox                | The maximum bounding box of the area, format: <br> minLon, minLat, maxLon, maxLat
-import_date         | The date time at which the OSM import was done
-prepare_date        | The date time at which the preparation (contraction hierarchies) was done. If nothing was done this is empty
-dimension           | A number. Either 2 or 3. 3 if elevation data is supported
+import_date         | [optional] The date time at which the OSM import was done
+prepare_date        | [optional] The date time at which the preparation (contraction hierarchies) was done. If nothing was done this is empty
