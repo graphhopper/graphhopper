@@ -53,6 +53,8 @@ public class SRTMProvider implements ElevationProvider
     // use a map as an array is not quite useful if we want to hold only parts of the world
     private final TIntObjectHashMap<HeightTile> cacheData = new TIntObjectHashMap<HeightTile>();
     private final TIntObjectHashMap<String> areas = new TIntObjectHashMap<String>();
+    private final double precision = 1e6;
+    private final double invPrecision = 1 / precision;
 
     public SRTMProvider()
     {
@@ -126,7 +128,7 @@ public class SRTMProvider implements ElevationProvider
     int down( double val )
     {
         int intVal = (int) val;
-        if (val >= 0 || intVal - val < 1e-5)
+        if (val >= 0 || intVal - val < invPrecision)
             return intVal;
         return intVal - 1;
     }
@@ -137,7 +139,7 @@ public class SRTMProvider implements ElevationProvider
         String str = areas.get(intKey);
         if (str == null)
             return null;
-            // throw new IllegalStateException("Area " + intKey + " not found for " + lat + "," + lon);
+        // throw new IllegalStateException("Area " + intKey + " not found for " + lat + "," + lon);
 
         int minLat = Math.abs(down(lat));
         int minLon = Math.abs(down(lon));
@@ -167,6 +169,8 @@ public class SRTMProvider implements ElevationProvider
     @Override
     public double getEle( double lat, double lon )
     {
+        lat = (int) (lat * precision) / precision;
+        lon = (int) (lon * precision) / precision;
         int intKey = calcIntKey(lat, lon);
         HeightTile demProvider = cacheData.get(intKey);
         if (demProvider == null)
@@ -175,9 +179,9 @@ public class SRTMProvider implements ElevationProvider
                 cacheDir.mkdirs();
 
             String fileDetails = getFileString(lat, lon);
-            if(fileDetails == null)
+            if (fileDetails == null)
                 return 0;
-            
+
             String baseUrl = "http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/";
             // mirror: base = "http://mirror.ufs.ac.za/datasets/SRTM3/"        
             String zippedURL = baseUrl + "/" + fileDetails + ".hgt.zip";
@@ -240,11 +244,11 @@ public class SRTMProvider implements ElevationProvider
     public void release()
     {
         cacheData.clear();
-    }        
+    }
 
     @Override
     public String toString()
     {
         return "SRTM";
-    }        
+    }
 }
