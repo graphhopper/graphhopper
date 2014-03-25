@@ -30,6 +30,16 @@ public interface ElevationProvider
      */
     double getEle( double lat, double lon );
 
+    /**
+     * Specifies the service URL where to download the elevation data. An empty string should set it
+     * to the default URL.
+     */
+    ElevationProvider setBaseURL( String baseURL );
+
+    /**
+     * Specifies the directory where to temporarily store the elevation data after fetched from base
+     * URL.
+     */
     ElevationProvider setCacheDir( File cacheDir );
 
     /**
@@ -47,6 +57,12 @@ public interface ElevationProvider
 
         @Override
         public ElevationProvider setCacheDir( File cacheDir )
+        {
+            return this;
+        }
+
+        @Override
+        public ElevationProvider setBaseURL( String baseURL )
         {
             return this;
         }

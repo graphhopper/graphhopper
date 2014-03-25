@@ -55,6 +55,8 @@ public class SRTMProvider implements ElevationProvider
     private final TIntObjectHashMap<String> areas = new TIntObjectHashMap<String>();
     private final double precision = 1e7;
     private final double invPrecision = 1 / precision;
+    // mirror: base = "http://mirror.ufs.ac.za/datasets/SRTM3/"
+    private String baseUrl = "http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/";
 
     public SRTMProvider()
     {
@@ -125,6 +127,16 @@ public class SRTMProvider implements ElevationProvider
         return this;
     }
 
+    @Override
+    public ElevationProvider setBaseURL( String baseUrl )
+    {
+        if(baseUrl.isEmpty())
+            return this;
+        
+        this.baseUrl = baseUrl;
+        return this;
+    }        
+
     int down( double val )
     {
         int intVal = (int) val;
@@ -181,9 +193,7 @@ public class SRTMProvider implements ElevationProvider
             String fileDetails = getFileString(lat, lon);
             if (fileDetails == null)
                 return 0;
-
-            String baseUrl = "http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/";
-            // mirror: base = "http://mirror.ufs.ac.za/datasets/SRTM3/"        
+            
             String zippedURL = baseUrl + "/" + fileDetails + ".hgt.zip";
             File file = new File(cacheDir, new File(zippedURL).getName());
             int minLat = down(lat);

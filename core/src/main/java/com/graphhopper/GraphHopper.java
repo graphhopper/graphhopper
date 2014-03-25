@@ -522,6 +522,7 @@ public class GraphHopper implements GraphHopperAPI
         // elevation
         String eleProviderStr = args.get("graph.elevation.provider", "noop").toLowerCase();
         String cacheDirStr = args.get("graph.elevation.cachedir", "").toLowerCase();
+        String baseURL = args.get("graph.elevation.baseurl", "").toLowerCase();
         ElevationProvider tmpProvider = ElevationProvider.NOOP;
         if (eleProviderStr.equalsIgnoreCase("srtm"))
             tmpProvider = new SRTMProvider();        
@@ -530,6 +531,7 @@ public class GraphHopper implements GraphHopperAPI
 //            eleProvider = new CGIARProvider().setCacheDir(new File());        
 
         tmpProvider.setCacheDir(new File(cacheDirStr));
+        tmpProvider.setBaseURL(baseURL);
         setElevationProvider(tmpProvider);
 
         // index
