@@ -57,10 +57,7 @@ public class DefaultModule extends AbstractModule
             bind(String.class).annotatedWith(Names.named("defaultAlgorithm")).toInstance(algo);
 
             long timeout = args.getLong("web.timeout", 3000);
-            bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);
-            bind(Geocoding.class).toInstance(new NominatimGeocoder().
-                    setTimeout((int) timeout).
-                    setBounds(hopper.getGraph().getBounds()));
+            bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);            
 
             bind(TranslationMap.class).toInstance(new TranslationMap().doImport());
         } catch (Exception ex)

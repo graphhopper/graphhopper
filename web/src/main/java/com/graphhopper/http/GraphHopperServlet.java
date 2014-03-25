@@ -17,7 +17,6 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.search.Geocoding;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GHResponse;
@@ -29,7 +28,6 @@ import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPlace;
 import java.io.IOException;
 import java.util.*;
-import java.util.Map.Entry;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.ServletException;
@@ -51,8 +49,6 @@ public class GraphHopperServlet extends GHBaseServlet
 
     @Inject
     private GraphHopper hopper;
-    @Inject
-    private Geocoding geocoding;
     @Inject
     @Named("defaultAlgorithm")
     private String defaultAlgorithm;
