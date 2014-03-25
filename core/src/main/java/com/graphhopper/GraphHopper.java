@@ -521,8 +521,8 @@ public class GraphHopper implements GraphHopperAPI
 
         // elevation
         String eleProviderStr = args.get("graph.elevation.provider", "noop").toLowerCase();
-        String cacheDirStr = args.get("graph.elevation.cachedir", "").toLowerCase();
-        String baseURL = args.get("graph.elevation.baseurl", "").toLowerCase();
+        String cacheDirStr = args.get("graph.elevation.cachedir", "");
+        String baseURL = args.get("graph.elevation.baseurl", "");
         ElevationProvider tmpProvider = ElevationProvider.NOOP;
         if (eleProviderStr.equalsIgnoreCase("srtm"))
             tmpProvider = new SRTMProvider();        

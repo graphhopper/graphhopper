@@ -130,12 +130,12 @@ public class SRTMProvider implements ElevationProvider
     @Override
     public ElevationProvider setBaseURL( String baseUrl )
     {
-        if(baseUrl.isEmpty())
+        if (baseUrl.isEmpty())
             return this;
-        
+
         this.baseUrl = baseUrl;
         return this;
-    }        
+    }
 
     int down( double val )
     {
@@ -193,7 +193,7 @@ public class SRTMProvider implements ElevationProvider
             String fileDetails = getFileString(lat, lon);
             if (fileDetails == null)
                 return 0;
-            
+
             String zippedURL = baseUrl + "/" + fileDetails + ".hgt.zip";
             File file = new File(cacheDir, new File(zippedURL).getName());
             int minLat = down(lat);
