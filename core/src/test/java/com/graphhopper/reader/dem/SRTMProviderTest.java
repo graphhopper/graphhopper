@@ -76,8 +76,10 @@ public class SRTMProviderTest
 
         assertEquals(160, instance.getEle(55.8943144, -3), 1e-1);
         // precision = 1e6 => -3
-        assertEquals(160, instance.getEle(55.8943144, -3.0000004), 1e-1);
+        // assertEquals(160, instance.getEle(55.8943144, -3.0000004), 1e-1);
         // precision = 1e7 => -4
-        // assertEquals(154, instance.getEle(55.8943144,-3.0000004), 1e-1);
+        assertEquals(154, instance.getEle(55.8943144, -3.0000004), 1e-1);
+
+        // assertEquals(93, instance.getEle(52.127272, -1.000001), 1e-1);
     }
 }

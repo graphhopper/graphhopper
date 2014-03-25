@@ -53,7 +53,7 @@ public class SRTMProvider implements ElevationProvider
     // use a map as an array is not quite useful if we want to hold only parts of the world
     private final TIntObjectHashMap<HeightTile> cacheData = new TIntObjectHashMap<HeightTile>();
     private final TIntObjectHashMap<String> areas = new TIntObjectHashMap<String>();
-    private final double precision = 1e6;
+    private final double precision = 1e7;
     private final double invPrecision = 1 / precision;
 
     public SRTMProvider()
@@ -233,7 +233,6 @@ public class SRTMProvider implements ElevationProvider
             }
         }
 
-        // System.out.println(getter.getEle(52.882391, 4.63623));
         short val = demProvider.getHeight(lat, lon);
         if (val == Short.MIN_VALUE)
             return Double.NaN;
