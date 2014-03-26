@@ -371,7 +371,7 @@ public class Path
             private String name = null;
             private int pavementCode;
             private int wayTypeCode;
-            private AngleCalc2D ac = new AngleCalc2D();
+            private final AngleCalc2D ac = new AngleCalc2D();
 
             @Override
             public void next( EdgeIteratorState edge, int index )
@@ -397,7 +397,7 @@ public class Path
                     prevLon = graph.getLongitude(baseNode);
                 }
 
-                double orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
+                double orientation = ac.calcOrientation(prevLat, prevLon, latitude, longitude);
                 if (name == null)
                 {
                     // very first instruction
@@ -410,7 +410,6 @@ public class Path
                 } else
                 {
                     double tmpOrientation = ac.alignOrientation(prevOrientation, orientation);
-
                     String tmpName = edge.getName();
                     int tmpPavement = encoder.getPavementCode(edge.getFlags());
                     int tmpWayType = encoder.getWayTypeCode(edge.getFlags());
@@ -468,7 +467,8 @@ public class Path
                 else
                 {
                     int beforeLast = wayGeo.getSize() - 2;
-                    prevOrientation = Math.atan2(adjLat - wayGeo.getLatitude(beforeLast), adjLon - wayGeo.getLongitude(beforeLast));
+                    prevOrientation = ac.calcOrientation(wayGeo.getLatitude(beforeLast), wayGeo.getLongitude(beforeLast), 
+                            adjLat, adjLon);
                 }
 
                 boolean lastEdge = index == edgeIds.size() - 1;

@@ -98,9 +98,11 @@ public class InstructionListTest
 
         assertEquals(70000.0, sumDistances(wayList), 1e-1);
         List<String> distStrings = wayList.createDistances(trMap.get("de"), false);
-        assertEquals(Arrays.asList("10.0 km", "10.0 km", "10.0 km", "10.0 km", "20.0 km", "10.0 km", "0 m"), distStrings);
+        assertEquals(Arrays.asList("10.0 km", "10.0 km", "10.0 km", "10.0 km", "20.0 km", "10.0 km", "0 m"), 
+                distStrings);
         distStrings = wayList.createDistances(trMap.get("en_US"), true);
-        assertEquals(Arrays.asList("6.21 mi", "6.21 mi", "6.21 mi", "6.21 mi", "12.43 mi", "6.21 mi", "0 ft"), distStrings);
+        assertEquals(Arrays.asList("6.21 mi", "6.21 mi", "6.21 mi", "6.21 mi", "12.43 mi", "6.21 mi", "0 ft"), 
+                distStrings);
         List<GPXEntry> gpxes = wayList.createGPXList();
         assertEquals(10, gpxes.size());
         // check order of tower nodes        
@@ -121,7 +123,8 @@ public class InstructionListTest
         assertEquals(Helper.createTList(6, 7, 8, 5, 2), p.calcNodes());
         wayList = p.calcInstructions();
         tmpList = pick("text", wayList.createJson(trMap.getWithFallBack(Locale.CANADA)));
-        assertEquals(Arrays.asList("Continue onto 6-7", "Continue onto 7-8", "Turn left onto 5-8", "Continue onto 5-2", "Finish!"),
+        assertEquals(Arrays.asList("Continue onto 6-7", "Continue onto 7-8", "Turn left onto 5-8", 
+                "Continue onto 5-2", "Finish!"),
                 tmpList);
 
         // assertEquals(Arrays.asList(0, 1, 4, 5, 6), wayList.createPointIndices());

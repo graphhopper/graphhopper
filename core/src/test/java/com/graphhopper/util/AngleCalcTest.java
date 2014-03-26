@@ -21,19 +21,19 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 /**
- *
  * @author Johannes Pelzer
+ * @author Peter Karich
  */
 public class AngleCalcTest
 {
-    private AngleCalc2D ac = new AngleCalc2D();
+    private final AngleCalc2D ac = new AngleCalc2D();
 
     @Test
     public void testOrientation()
     {
-        assertEquals(0.0, Math.toDegrees(ac.calcOrientation(0, 0, 10, 0)), 0.0001);
+        assertEquals(90.0, Math.toDegrees(ac.calcOrientation(0, 0, 10, 0)), 0.0001);
         assertEquals(45.0, Math.toDegrees(ac.calcOrientation(0, 0, 10, 10)), 0.0001);
-        assertEquals(90.0, Math.toDegrees(ac.calcOrientation(0, 0, 0, 10)), 0.0001);
+        assertEquals(0.0, Math.toDegrees(ac.calcOrientation(0, 0, 0, 10)), 0.0001);
         assertEquals(-135.0, Math.toDegrees(ac.calcOrientation(0, 0, -10, -10)), 0.0001);
     }
 
@@ -47,40 +47,10 @@ public class AngleCalcTest
     }
 
     @Test
-    public void testIsLeftTurn()
+    public void testCombined()
     {
-        assertEquals(true, ac.isLeftTurn(1.5, 1.3));
-        assertEquals(true, ac.isLeftTurn(-1.5, -1.6));
-        assertEquals(true, ac.isLeftTurn(0.5, -0.6));
-
-        assertEquals(false, ac.isLeftTurn(1.5, 1.7));
-        assertEquals(false, ac.isLeftTurn(-1.5, 1.4));
-        assertEquals(false, ac.isLeftTurn(-0.5, 1.3));
-
-        AngleCalc2D ac = new AngleCalc2D();
-        double o1 = ac.calcOrientation(1.2, 1.0, 1.2, 1.1);
-        double o2 = ac.calcOrientation(1.2, 1.1, 1.1, 1.1);
-        assertEquals(false, ac.isLeftTurn(o1, o2));
-    }
-
-    @Test
-    public void testCalcTurnAngleDeg()
-    {
-        assertEquals(0.0, ac.calcTurnAngleDeg(0.0, 0.0, 10.0, 0.0, 20.0, 0.0), 0.001);
-        assertEquals(90.0, ac.calcTurnAngleDeg(0.0, 0.0, 10.0, 0.0, 10.0, 20.0), 0.001);
-        assertEquals(-90.0, ac.calcTurnAngleDeg(0.0, 0.0, 10.0, 0.0, 10.0, -20.0), 0.001);
-        assertEquals(45.0, ac.calcTurnAngleDeg(0.0, 0.0, 10.0, 0.0, 20.0, 10.0), 0.001);
-    }
-
-    @Test
-    public void testCalcAzimuth()
-    {
-        assertEquals(0.0, ac.calcAzimuthDeg(0.0, 0.0, 20.0, 0.0), 0.001);
-        assertEquals(45.0, ac.calcAzimuthDeg(0.0, 0.0, 20.0, 20.0), 0.001);
-        assertEquals(90.0, ac.calcAzimuthDeg(0.0, 0.0, 0.0, 10.0), 0.001);
-        assertEquals(180.0, ac.calcAzimuthDeg(10.0, 0.0, 5.0, 0.0), 0.001);
-        assertEquals(270.0, ac.calcAzimuthDeg(0.0, 10.0, 0.0, -10.0), 0.001);
-        assertEquals(225.0, ac.calcAzimuthDeg(0.0, 0.0, -10.0, -10.0), 0.001);
+        double orientation = ac.calcOrientation(52.414918, 13.244221, 52.415333, 13.243595);
+        assertEquals(146.458, Math.toDegrees(ac.alignOrientation(0, orientation)), 0.001);
     }
 
     @Test

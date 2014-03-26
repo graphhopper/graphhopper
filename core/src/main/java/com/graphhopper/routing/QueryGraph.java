@@ -210,7 +210,7 @@ public class QueryGraph implements Graph
                 }
 
                 // two edges between last result and adjacent node are still missing
-                createEdges(prevPoint, prevWayIndex, fullPL.toGHPoint(fullPL.getSize() - 1), fullPL.getSize() - 1,
+                createEdges(prevPoint, prevWayIndex, fullPL.toGHPoint(fullPL.getSize() - 1), fullPL.getSize() - 2,
                         fullPL, closestEdge, virtNodeId - 1, adjNode, reverseFlags);
 
                 return true;
@@ -229,7 +229,7 @@ public class QueryGraph implements Graph
         for (int i = prevWayIndex; i < max; i++)
         {
             basePoints.add(fullPL.getLatitude(i), fullPL.getLongitude(i));
-        }       
+        }
         basePoints.add(currSnapped.lat, currSnapped.lon);
         
         PointList baseReversePoints = basePoints.clone(true);
