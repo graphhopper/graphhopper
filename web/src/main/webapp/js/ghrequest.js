@@ -86,7 +86,7 @@ GHRequest.prototype.init = function(params) {
 
 GHRequest.prototype.handleBoolean = function(key, params) {
     if (key in params)
-        this.do_zoom = params[key] == "true" || params[key] == true;
+        params[key] = params[key] == "true" || params[key] == true;
 };
 
 GHRequest.prototype.createURL = function(demoUrl) {
