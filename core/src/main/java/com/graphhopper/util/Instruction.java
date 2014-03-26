@@ -112,7 +112,7 @@ public class Instruction
     {
         return points.getLatitude(0);
     }
-    
+
     /**
      * Longitude of the location where this instruction should take place.
      */

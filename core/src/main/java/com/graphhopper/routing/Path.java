@@ -496,6 +496,36 @@ public class Path
         return cachedWays;
     }
 
+    public Instruction findInstruction( double lat, double lon )
+    {
+        DistanceCalcEarth distanceCalc = new DistanceCalcEarth();
+
+        double distanceToPath = Double.MAX_VALUE;
+
+        int nextInstrNumber = 0;
+
+        // Search the closest edge to the point
+        for (int i = 0; i < cachedWays.getSize() - 1; i++)
+        {
+            double edgeNodeLat1 = cachedWays.get(i).getPoints().getLatitude(0);
+            double edgeNodeLon1 = cachedWays.get(i).getPoints().getLongitude(0);
+            int node2NOP = cachedWays.get(i + 1).getPoints().getSize();
+            double edgeNodeLat2 = cachedWays.get(i + 1).getPoints().getLatitude(node2NOP - 1);
+            double edgeNodeLon2 = cachedWays.get(i + 1).getPoints().getLongitude(node2NOP - 1);
+
+            //Calculate the distance from the point to the edge
+            double distanceToEdge = distanceCalc.calcNormalizedEdgeDistance(lat, lon, edgeNodeLat1, edgeNodeLon1, edgeNodeLat2, edgeNodeLon2);
+
+            if (distanceToEdge < distanceToPath)
+            {
+                distanceToPath = distanceToEdge;
+                nextInstrNumber = i + 1;
+            }
+        }
+
+        return cachedWays.get(nextInstrNumber);
+    }
+
     @Override
     public String toString()
     {
