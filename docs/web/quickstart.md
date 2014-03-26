@@ -1,7 +1,7 @@
 ## Quickstart
 
 If you want to build GraphHopper from source look at the [Developers page](../core/quickstart-from-source.md). 
-The following steps are simpler and only need the JRE, jetty, a war file and and an OSM file.
+The following steps are simpler and only need the JRE, a jar file and an OSM file.
 
  1. Download the latest [graphhopper](https://oss.sonatype.org/content/repositories/snapshots/com/graphhopper/graphhopper-web/0.3-SNAPSHOT/) (a zip file, ~7MB)
  2. Unzip it and copy an OSM file into the created directory. For example [berlin-latest.osm.pbf](http://download.geofabrik.de/europe/germany/berlin.html)
