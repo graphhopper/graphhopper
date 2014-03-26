@@ -42,7 +42,7 @@ public class SRTMProvider implements ElevationProvider
 {
     public static void main( String[] args ) throws IOException
     {
-        new SRTMProvider().getEle(52.882391, 4.63623);
+        new SRTMProvider().getEle(55, -161);
     }
 
     private static final BitUtil BIT_UTIL = BitUtil.BIG;
@@ -194,19 +194,31 @@ public class SRTMProvider implements ElevationProvider
             if (fileDetails == null)
                 return 0;
 
-            String zippedURL = baseUrl + "/" + fileDetails + ".hgt.zip";
-            File file = new File(cacheDir, new File(zippedURL).getName());
             int minLat = down(lat);
             int minLon = down(lon);
             demProvider = new HeightTile(minLat, minLon, WIDTH, precision);
             cacheData.put(intKey, demProvider);
             try
             {
+                String zippedURL = baseUrl + "/" + fileDetails + "hgt.zip";
+                File file = new File(cacheDir, new File(zippedURL).getName());
                 InputStream is;
+                // get zip file if not already in cacheDir - unzip later and in-memory only!
                 if (!file.exists())
                 {
-                    // get zip file if not already in cacheDir - unzip later and in-memory only!
-                    downloader.downloadFile(zippedURL, file.getAbsolutePath());
+                    for (int i = 0; i < 2; i++)
+                    {
+                        try
+                        {
+                            downloader.downloadFile(zippedURL, file.getAbsolutePath());
+                            break;
+                        } catch (FileNotFoundException ex)
+                        {
+                            // now try with point if mirror is used
+                            zippedURL = baseUrl + "/" + fileDetails + ".hgt.zip";
+                            continue;
+                        }                        
+                    }
                 }
 
                 is = new FileInputStream(file);
