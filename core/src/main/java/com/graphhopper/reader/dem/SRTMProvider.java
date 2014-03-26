@@ -198,7 +198,7 @@ public class SRTMProvider implements ElevationProvider
             File file = new File(cacheDir, new File(zippedURL).getName());
             int minLat = down(lat);
             int minLon = down(lon);
-            demProvider = new HeightTile(minLat, minLon, WIDTH);
+            demProvider = new HeightTile(minLat, minLon, WIDTH, precision);
             cacheData.put(intKey, demProvider);
             try
             {

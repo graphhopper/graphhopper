@@ -37,12 +37,17 @@ public class HeightTile
     private final int minLat;
     private final int minLon;
     private final int width;
+    private final double lowerBound;
+    private final double higherBound;
 
-    public HeightTile( int minLat, int minLon, int width )
+    public HeightTile( int minLat, int minLon, int width, double precision )
     {
         this.minLat = minLat;
         this.minLon = minLon;
         this.width = width;
+
+        this.lowerBound = -1 / precision;
+        this.higherBound = 1 + 1 / precision;
     }
 
     void setHeights( DataAccess da )
@@ -53,10 +58,10 @@ public class HeightTile
     public short getHeight( double lat, double lon )
     {
         double deltaLat = lat - minLat;
-        double deltaLon = lon - minLon;
-        if (deltaLat > 1 || deltaLat < 0)
+        double deltaLon = lon - minLon;        
+        if (deltaLat > higherBound || deltaLat < lowerBound)
             throw new IllegalStateException("latitude not in boundary of this file:" + lat + "," + lon + ", this:" + this.toString());
-        if (deltaLon > 1 || deltaLon < 0)
+        if (deltaLon > higherBound || deltaLon < lowerBound)
             throw new IllegalStateException("longitude not in boundary of this file:" + lat + "," + lon + ", this:" + this.toString());
 
         // first row in the file is the northernmost one
