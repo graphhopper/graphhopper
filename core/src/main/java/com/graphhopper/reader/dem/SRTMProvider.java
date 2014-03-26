@@ -48,7 +48,7 @@ public class SRTMProvider implements ElevationProvider
     private static final BitUtil BIT_UTIL = BitUtil.BIG;
     private final int WIDTH = 1201;
     private final Directory dir;
-    private Downloader downloader = new Downloader("GraphHopper SRTMReader");
+    private Downloader downloader = new Downloader("GraphHopper SRTMReader").setTimeout(10000);
     private File cacheDir = new File("/tmp/srtm");
     // use a map as an array is not quite useful if we want to hold only parts of the world
     private final TIntObjectHashMap<HeightTile> cacheData = new TIntObjectHashMap<HeightTile>();
