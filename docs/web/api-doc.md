@@ -4,7 +4,7 @@ In order to communicate with your or [our](http://graphhopper.com/#enterprise) h
 server you need to understand how to use it.
 
 ### A simple example
-[http://localhost:8989/api/route?point=45.752193%2C-0.686646&point=46.229253%2C-0.32959](http://localhost:8989/api/route?point=45.752193%2C-0.686646&point=46.229253%2C-0.32959)
+[http://localhost:8989/route?point=45.752193%2C-0.686646&point=46.229253%2C-0.32959](http://localhost:8989/route?point=45.752193%2C-0.686646&point=46.229253%2C-0.32959)
 
 The end point of the local instance is [http://localhost:8989](http://localhost:8989)
 
@@ -125,7 +125,7 @@ paths[0].instructions[0].sign        | A number which specifies the sign to show
 
 If you need to find out defails about the area or need to ping the service use 'api/info'
 
-[http://localhost:8989/api/info](http://localhost:8989/api/info)
+[http://localhost:8989/info](http://localhost:8989/info)
 
 ### Example output:
 ```json

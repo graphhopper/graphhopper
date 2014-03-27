@@ -65,6 +65,6 @@ In case you need the online routing API in a Java or Android application the Gra
 
 ```java
 GraphHopperAPI gh = new GraphHopperWeb();
-gh.load("http://your-graphhopper-service.com/api");
+gh.load("http://your-graphhopper-service.com");
 GHResponse rsp = gh.route(new GHRequest(...));
 ```

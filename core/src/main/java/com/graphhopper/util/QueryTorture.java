@@ -70,8 +70,8 @@ public class QueryTorture
 
         if (baseUrl.endsWith("/"))
             baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
-        if (!baseUrl.endsWith("/api/route"))
-            baseUrl += "/api/route";
+        if (!baseUrl.endsWith("/route"))
+            baseUrl += "/route";
         if (!baseUrl.endsWith("?"))
             baseUrl += "?";
 

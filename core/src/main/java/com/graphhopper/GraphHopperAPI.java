@@ -29,7 +29,7 @@ package com.graphhopper;
  *
  * // init online service
  * GraphHopperAPI gh = new GraphHopperWeb();
- * gh.load("http://your-graphhopper-service.com/api");
+ * gh.load("http://your-graphhopper-service.com");
  *
  * gh.algorithm("astar");
  * GHResponse ph = gh.route(new GHRequest(new GHPoint(fromLat, fromLon), new GHPoint(toLat, toLon)));
