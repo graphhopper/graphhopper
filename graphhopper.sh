@@ -1,14 +1,14 @@
 #!/bin/bash
 
 GH_CLASS=com.graphhopper.GraphHopper
-GH_HOME=$(dirname $0)
+GH_HOME=$(dirname "$0")
 JAVA=$JAVA_HOME/bin/java
 if [ "x$JAVA_HOME" = "x" ]; then
  JAVA=java
 fi
 
-vers=`$JAVA -version 2>&1 | grep "java version" | awk '{print $3}' | tr -d \"`
-bit64=`$JAVA -version 2>&1 | grep "64-Bit"`
+vers=$($JAVA -version 2>&1 | grep "java version" | awk '{print $3}' | tr -d \")
+bit64=$($JAVA -version 2>&1 | grep "64-Bit")
 if [ "x$bit64" != "x" ]; then
   vers="$vers (64bit)"
 fi
@@ -39,14 +39,14 @@ function ensureOsmXml {
     echo "## now downloading OSM file from $LINK and extracting to $OSM_FILE"
     
     if [ ${OSM_FILE: -4} == ".pbf" ]; then
-       wget -S -nv -O "$OSM_FILE" $LINK
+       wget -S -nv -O "$OSM_FILE" "$LINK"
     elif [ ${OSM_FILE: -4} == ".ghz" ]; then
-       wget -S -nv -O "$OSM_FILE" $LINK
-       unzip "$FILE" -d $NAME-gh             
+       wget -S -nv -O "$OSM_FILE" "$LINK"
+       unzip "$FILE" -d "$NAME-gh"
     else    
        # make sure aborting download does not result in loading corrupt osm file
        TMP_OSM=temp.osm
-       wget -S -nv -O - $LINK | bzip2 -d > $TMP_OSM
+       wget -S -nv -O - "$LINK" | bzip2 -d > $TMP_OSM
        mv $TMP_OSM "$OSM_FILE"
     fi
   
@@ -63,7 +63,7 @@ function ensureMaven {
   # maven home existent?
   if [ "x$MAVEN_HOME" = "x" ]; then
     # not existent but probably is maven in the path?
-    MAVEN_HOME=`mvn -v | grep "Maven home" | cut -d' ' -f3`
+    MAVEN_HOME=$(mvn -v | grep "Maven home" | cut -d' ' -f3)
     if [ "x$MAVEN_HOME" = "x" ]; then
       # try to detect previous downloaded version
       MAVEN_HOME="$GH_HOME/maven"
@@ -117,7 +117,7 @@ function prepareEclipse {
 
 ## now handle actions which do not take an OSM file
 if [ "x$ACTION" = "xclean" ]; then
- rm -rf */target
+ rm -rf ./*/target
  exit
 
 elif [ "x$ACTION" = "xeclipse" ]; then
@@ -132,7 +132,7 @@ elif [ "x$ACTION" = "xextract" ]; then
  echo use "./graphhopper.sh extract \"left,bottom,right,top\""
  URL="http://overpass-api.de/api/map?bbox=$2"
  #echo "$URL"
- wget -O extract.osm $URL
+ wget -O extract.osm "$URL"
  exit
  
 elif [ "x$ACTION" = "xandroid" ]; then
@@ -163,7 +163,7 @@ elif [ ${FILE: -3} == "-gh" ]; then
 elif [ ${FILE: -4} == ".ghz" ]; then
    OSM_FILE="$FILE"
    if [[ ! -d "$NAME-gh" ]]; then
-      unzip "$FILE" -d $NAME-gh
+      unzip "$FILE" -d "$NAME-gh"
    fi
 else
    # no known end -> no import
@@ -171,10 +171,10 @@ else
 fi
 
 GRAPH=$NAME-gh
-VERSION=`grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1`
+VERSION=$(grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1)
 JAR=core/target/graphhopper-$VERSION-jar-with-dependencies.jar
 
-LINK=`echo $NAME | tr '_' '/'`
+LINK=$(echo $NAME | tr '_' '/')
 if [ "x$FILE" == "x-" ]; then
    LINK=
 elif [ ${FILE: -4} == ".osm" ]; then 
@@ -261,7 +261,7 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
 
  function startMeasurement {
     COUNT=5000
-    commit_info=`git log -n 1 --pretty=oneline`     
+    commit_info=$(git log -n 1 --pretty=oneline)
     echo -e "\nperform measurement via jar=> $JAR and ARGS=> $ARGS"
     "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS measurement.count=$COUNT measurement.location="$M_FILE_NAME" \
             graph.importTime=$IMPORT_TIME measurement.gitinfo="$commit_info"
@@ -278,11 +278,11 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
    exit
  fi
 
- current_commit=`git log -n 1 --pretty=oneline | cut -d' ' -f1` 
+ current_commit=$(git log -n 1 --pretty=oneline | cut -d' ' -f1)
  commits=$(git rev-list HEAD -n $last_commits)
  for commit in $commits; do
    git checkout $commit -q
-   M_FILE_NAME=`git log -n 1 --pretty=oneline | grep -o "\ .*" |  tr " ,;" "_"`
+   M_FILE_NAME=$(git log -n 1 --pretty=oneline | grep -o "\ .*" |  tr " ,;" "_")
    M_FILE_NAME="measurement$M_FILE_NAME.properties"
    echo -e "\nusing commit $commit and $M_FILE_NAME"
    
