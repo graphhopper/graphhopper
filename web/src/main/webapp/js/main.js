@@ -114,7 +114,7 @@ $(document).ready(function(e) {
 
                 if (json.supported_vehicles) {
                     var vehicles = json.supported_vehicles;
-                    if (vehicles.length > 1)
+                    if (vehicles.length > 0)
                         ghRequest.vehicle = vehicles[0];
                     
                     for (var i = 0; i < vehicles.length; i++) {
