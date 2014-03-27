@@ -135,38 +135,34 @@ public class GHDirectory implements Directory
     }
 
     @Override
-    public DataAccess rename( DataAccess da, String newName )
-    {
-        String oldName = da.getName();
-        da.rename(newName);
-        removeByName(oldName);
-        map.put(newName, da);
-        return da;
-    }
-
-    @Override
     public void clear()
     {
-        for (String daName : map.keySet())
+        for (DataAccess da : map.values())
         {
-            removeByName(daName);
+            removeDA(da, da.getName());
         }
+        map.clear();
     }
 
     @Override
     public void remove( DataAccess da )
     {
-        removeByName(da.getName());
+        removeFromMap(da.getName());
+        removeDA(da, da.getName());
     }
 
-    void removeByName( String name )
+    void removeDA( DataAccess da, String name )
+    {
+        da.close();
+        if (da.getType().isStoring())
+            Helper.removeDir(new File(location + name));
+    }
+
+    void removeFromMap( String name )
     {
         DataAccess da = map.remove(name);
         if (da == null)
             throw new IllegalStateException("Couldn't remove dataAccess object:" + name);
-        da.close();
-        if (da.getType().isStoring())
-            Helper.removeDir(new File(location + name));
     }
 
     @Override

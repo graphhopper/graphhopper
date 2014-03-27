@@ -49,16 +49,6 @@ public abstract class AbstractDirectoryTester
     }
 
     @Test
-    public void testRename()
-    {
-        Directory dir = createDir();
-        da = dir.find("testing");
-        da.create(100);
-        da.flush();
-        dir.rename(da, "newtesting");
-    }
-
-    @Test
     public void testRequestedDataAccessHasToBeTheIdenticalType()
     {
         Directory dir = createDir();

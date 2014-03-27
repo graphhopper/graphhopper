@@ -28,13 +28,13 @@ public class GHServletModule extends ServletModule
                 + "application/javascript,"
                 + "image/svg+xml");
 
-        filter("/*").through(GHGZIPHook.class, params);
+        filter("*").through(GHGZIPHook.class, params);
         bind(GHGZIPHook.class).in(Singleton.class);
 
-        serve("/api/i18n*").with(I18NServlet.class);
+        serve("/i18n*").with(I18NServlet.class);
         bind(I18NServlet.class).in(Singleton.class);
 
-        serve("/api*").with(GraphHopperServlet.class);
+        serve("*").with(GraphHopperServlet.class);
         bind(GraphHopperServlet.class).in(Singleton.class);
     }
 }

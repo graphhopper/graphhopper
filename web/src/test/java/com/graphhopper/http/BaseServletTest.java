@@ -107,7 +107,7 @@ public class BaseServletTest
     protected String getTestAPIUrl()
     {
         String host = "localhost";
-        return "http://" + host + ":" + port + "/api/route";
+        return "http://" + host + ":" + port + "/route";
     }
 
     protected JSONObject query( String query ) throws Exception

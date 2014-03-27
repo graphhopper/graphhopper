@@ -26,8 +26,9 @@ GHRequest = function(host) {
     this.debug = false;
     this.locale = "en";
     this.do_zoom = true;
-    // if your server allows CORS you can use json here
+    // use jsonp here if host allows CORS
     this.dataType = "jsonp";
+    this.key = "tcV28oCCNIzu4GD1Hsp8dYGAHqFBXvYrBvBwthGE";
 };
 
 GHRequest.prototype.init = function(params) {
@@ -95,13 +96,13 @@ GHRequest.prototype.handleBoolean = function(key, params) {
 };
 
 GHRequest.prototype.createURL = function(demoUrl) {
-    return this.createPath(this.host + "/api/route?" + demoUrl + "&type=" + this.dataType);
+    return this.createPath(this.host + "/route?" + demoUrl + "&type=" + this.dataType + "&key=" + this.key);
 };
 
 GHRequest.prototype.createGPXURL = function() {
     // use points instead of strings
     var str = "point=" + encodeURIComponent(this.from.toString()) + "&point=" + encodeURIComponent(this.to.toString());
-    return this.createPath(this.host + "/api/route?" + str + "&type=gpx");
+    return this.createPath(this.host + "/route?" + str + "&type=gpx&key=" + this.key);
 };
 
 GHRequest.prototype.createFullURL = function() {
@@ -204,6 +205,8 @@ GHRequest.prototype.doRequest = function(url, callback) {
             callback(json);
         },
         "error": function(err) {
+            // problematic: this callback is not invoked when using JSONP!
+            // http://stackoverflow.com/questions/19035557/jsonp-request-error-handling
             var msg = "API did not respond! ";
             if (err && err.statusText && err.statusText != "OK")
                 msg += err.statusText;
@@ -226,7 +229,7 @@ GHRequest.prototype.doRequest = function(url, callback) {
 };
 
 GHRequest.prototype.getInfo = function() {
-    var url = this.host + "/api/info?type=" + this.dataType;
+    var url = this.host + "/info?type=" + this.dataType + "&key=" + this.key;
     console.log(url);
     return $.ajax({
         "url": url,
@@ -280,7 +283,7 @@ GHRequest.prototype.fetchTranslationMap = function(urlLocaleParam) {
     if (!urlLocaleParam)
         // let servlet figure out the locale from the Accept-Language header
         urlLocaleParam = "";
-    var url = this.host + "/api/i18n/" + urlLocaleParam + "?type=" + this.dataType;
+    var url = this.host + "/i18n/" + urlLocaleParam + "?type=" + this.dataType + "&key=" + this.key;
     console.log(url);
     return $.ajax({
         "url": url,

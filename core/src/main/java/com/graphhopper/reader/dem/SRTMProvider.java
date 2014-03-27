@@ -277,7 +277,8 @@ public class SRTMProvider implements ElevationProvider
         cacheData.clear();
 
         // for memory mapped type we create temporary unpacked files which should be removed
-        dir.clear();
+        if (dir != null)
+            dir.clear();
     }
 
     @Override

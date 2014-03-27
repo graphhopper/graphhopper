@@ -132,7 +132,7 @@ If you need to find out defails about the area or need to ping the service use '
 { "build_date":"2014-02-21T16:52",
   "bbox":[13.0726237909337,52.33350773901,13.7639719344073,52.679616459003],
   "version":"0.3",
-  "supported_vehicles":"foot"
+  "supported_vehicles": ["foot"]
 }
 ```
 
@@ -140,7 +140,7 @@ JSON path/attribute | Description
 :-------------------|:------------
 build_date          | The GraphHopper build date
 version             | The GraphHopper version
-supported_vehicles   | A comma separated list of supported vehicles
+supported_vehicles  | An array of strings indicating the supported vehicles
 bbox                | The maximum bounding box of the area, format: <br> minLon, minLat, maxLon, maxLat
 import_date         | [optional] The date time at which the OSM import was done
 prepare_date        | [optional] The date time at which the preparation (contraction hierarchies) was done. If nothing was done this is empty

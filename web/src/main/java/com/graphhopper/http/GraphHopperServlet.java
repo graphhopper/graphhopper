@@ -28,7 +28,6 @@ import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPlace;
 import java.io.IOException;
 import java.util.*;
-import java.util.Map.Entry;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.ServletException;
@@ -68,6 +67,9 @@ public class GraphHopperServlet extends GHBaseServlet
             {
                 writePath(req, res);
             }
+        } catch (IllegalArgumentException ex)
+        {
+            writeError(res, SC_BAD_REQUEST, ex.getMessage());
         } catch (Exception ex)
         {
             logger.error("Error while executing request: " + req.getQueryString(), ex);
@@ -86,7 +88,7 @@ public class GraphHopperServlet extends GHBaseServlet
 
         JSONObject json = new JSONObject();
         json.put("bbox", list);
-        json.put("supported_vehicles", hopper.getEncodingManager());
+        json.put("supported_vehicles", hopper.getGraph().getEncodingManager().toString().split(","));
         json.put("version", Constants.VERSION);
         json.put("build_date", Constants.BUILD_DATE);
 
@@ -104,58 +106,51 @@ public class GraphHopperServlet extends GHBaseServlet
         List<GHPlace> infoPoints = getPoints(req);
         GHPlace start = infoPoints.get(0);
         GHPlace end = infoPoints.get(1);
-        try
+
+        // we can reduce the path length based on the maximum differences to the original coordinates
+        double minPathPrecision = getDoubleParam(req, "min_path_precision", 1d);
+        boolean writeGPX = "gpx".equalsIgnoreCase(getParam(req, "type", "json"));
+        boolean enableInstructions = writeGPX || getBooleanParam(req, "instructions", true);
+        boolean calcPoints = getBooleanParam(req, "calc_points", true);
+        String vehicleStr = getParam(req, "vehicle", "CAR").toUpperCase();
+        String weighting = getParam(req, "weighting", "fastest");
+        String algoStr = getParam(req, "algorithm", defaultAlgorithm);
+
+        StopWatch sw = new StopWatch().start();
+        GHResponse rsp;
+        if (hopper.getEncodingManager().supports(vehicleStr))
         {
-            // we can reduce the path length based on the maximum differences to the original coordinates
-            double minPathPrecision = getDoubleParam(req, "min_path_precision", 1d);
-            boolean writeGPX = "gpx".equalsIgnoreCase(getParam(req, "type", "json"));
-            boolean enableInstructions = writeGPX || getBooleanParam(req, "instructions", true);
-            boolean calcPoints = getBooleanParam(req, "calc_points", true);
-            String vehicleStr = getParam(req, "vehicle", "CAR").toUpperCase();
-            String weighting = getParam(req, "weighting", "fastest");
-            String algoStr = getParam(req, "algorithm", defaultAlgorithm);
-
-            StopWatch sw = new StopWatch().start();
-            GHResponse rsp;
-            if (hopper.getEncodingManager().supports(vehicleStr))
-            {
-                FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
-                rsp = hopper.route(new GHRequest(start, end).
-                        setVehicle(algoVehicle.toString()).
-                        setWeighting(weighting).
-                        setAlgorithm(algoStr).
-                        putHint("calcPoints", calcPoints).
-                        putHint("instructions", enableInstructions).
-                        putHint("douglas.minprecision", minPathPrecision));
-            } else
-            {
-                rsp = new GHResponse().addError(new IllegalArgumentException("Vehicle not supported: " + vehicleStr));
-            }
-
-            float took = sw.stop().getSeconds();
-            String infoStr = req.getRemoteAddr() + " " + req.getLocale() + " " + req.getHeader("User-Agent");
-            PointList points = rsp.getPoints();
-            String logStr = req.getQueryString() + " " + infoStr + " " + start + "->" + end
-                    + ", distance: " + rsp.getDistance() + ", time:" + Math.round(rsp.getMillis() / 60000f)
-                    + "min, points:" + points.getSize() + ", took:" + took
-                    + ", debug - " + rsp.getDebugInfo() + ", " + algoStr + ", "
-                    + weighting + ", " + vehicleStr;
-
-            if (rsp.hasErrors())
-                logger.error(logStr + ", errors:" + rsp.getErrors());
-            else
-                logger.info(logStr);
-
-            if (writeGPX)
-                writeGPX(req, res, rsp);
-            else
-                writeJson(req, res, rsp, took);
-
-        } catch (Exception ex)
+            FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
+            rsp = hopper.route(new GHRequest(start, end).
+                    setVehicle(algoVehicle.toString()).
+                    setWeighting(weighting).
+                    setAlgorithm(algoStr).
+                    putHint("calcPoints", calcPoints).
+                    putHint("instructions", enableInstructions).
+                    putHint("douglas.minprecision", minPathPrecision));
+        } else
         {
-            logger.error("Error while query:" + start + "->" + end, ex);
-            writeError(res, SC_INTERNAL_SERVER_ERROR, "Problem occured:" + ex.getMessage());
+            rsp = new GHResponse().addError(new IllegalArgumentException("Vehicle not supported: " + vehicleStr));
         }
+
+        float took = sw.stop().getSeconds();
+        String infoStr = req.getRemoteAddr() + " " + req.getLocale() + " " + req.getHeader("User-Agent");
+        PointList points = rsp.getPoints();
+        String logStr = req.getQueryString() + " " + infoStr + " " + start + "->" + end
+                + ", distance: " + rsp.getDistance() + ", time:" + Math.round(rsp.getMillis() / 60000f)
+                + "min, points:" + points.getSize() + ", took:" + took
+                + ", debug - " + rsp.getDebugInfo() + ", " + algoStr + ", "
+                + weighting + ", " + vehicleStr;
+
+        if (rsp.hasErrors())
+            logger.error(logStr + ", errors:" + rsp.getErrors());
+        else
+            logger.info(logStr);
+
+        if (writeGPX)
+            writeGPX(req, res, rsp);
+        else
+            writeJson(req, res, rsp, took);
     }
 
     private void writeGPX( HttpServletRequest req, HttpServletResponse res, GHResponse rsp )
@@ -170,7 +165,7 @@ public class GraphHopperServlet extends GHBaseServlet
     }
 
     private void writeJson( HttpServletRequest req, HttpServletResponse res,
-            GHResponse rsp, float took ) throws JSONException
+            GHResponse rsp, float took ) throws JSONException, IOException
     {
         boolean enableInstructions = getBooleanParam(req, "instructions", true);
         Locale locale = Helper.getLocale(getParam(req, "locale", "en"));
@@ -215,7 +210,7 @@ public class GraphHopperServlet extends GHBaseServlet
                 if (points.getSize() >= 2)
                     jsonPath.put("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
 
-                jsonPath.put("points", createPoints(points, pointsEncoded));                
+                jsonPath.put("points", createPoints(points, pointsEncoded));
                 jsonPath.put("points_dim", points.getDimension());
 
                 if (enableInstructions)

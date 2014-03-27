@@ -20,6 +20,7 @@ package com.graphhopper.reader.dem;
 
 import java.io.File;
 import java.io.IOException;
+import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.Before;
@@ -36,6 +37,12 @@ public class SRTMProviderTest
     public void setUp()
     {
         instance = new SRTMProvider();
+    }
+
+    @After
+    public void tearDown()
+    {
+        instance.release();
     }
 
     @Test
@@ -79,16 +86,15 @@ public class SRTMProviderTest
         // assertEquals(160, instance.getEle(55.8943144, -3.0000004), 1e-1);
         // precision = 1e7 => -4
         assertEquals(154, instance.getEle(55.8943144, -3.0000004), 1e-1);
-        
+
         assertEquals(160, instance.getEle(55.8943144, -3.0000001), 1e-1);
     }
-    
+
     @Test
     public void testGetHeightMMap() throws IOException
     {
         instance.setCacheDir(new File("./files/"));
         instance.setInMemory(false);
         assertEquals(160, instance.getEle(55.8943144, -3), 1e-1);
-        instance.release();
     }
 }

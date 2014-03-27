@@ -5,7 +5,7 @@
  */
 var tmpArgs = parseUrlWithHisto();
 var host = tmpArgs["host"];
-//var host = "http://graphhopper.com/routing";
+// var host = "http://graphhopper.com/api/1";
 if (host == null) {
     if (location.port === '') {
         host = location.protocol + '//' + location.hostname;
@@ -113,7 +113,7 @@ $(document).ready(function(e) {
                 }
 
                 if (json.supported_vehicles) {
-                    var vehicles = json.supported_vehicles.split(",");
+                    var vehicles = json.supported_vehicles;
                     if (vehicles.length > 1)
                         ghRequest.vehicle = vehicles[0];
                     
@@ -305,7 +305,7 @@ function initMap() {
         }).addTo(map);
 
     routingLayer = L.geoJson().addTo(map);
-    routingLayer.options = {style: {color: "#00cc33", "weight": 7, "opacity": 0.6}};
+    routingLayer.options = {style: {color: "#00cc33", "weight": 5, "opacity": 0.6}};
 
     firstClickToRoute = true;
     function onMapClick(e) {
@@ -747,8 +747,8 @@ function routeLatLng(request, doQuery) {
         bingLink.attr("href", "http://www.bing.com/maps/default.aspx?rtp=adr." + from + "~adr." + to + addToBing);
         hiddenDiv.append(bingLink);
 
-        if (host.indexOf("gpsies.com") > 0)
-            hiddenDiv.append("<div id='hosting'>The routing API is hosted by <a href='http://gpsies.com'>GPSies.com</a></div>");
+        if (host.indexOf("graphhopper.com") > 0)
+            hiddenDiv.append("<div id='hosting'>Powered by <a href='http://graphhopper.com/#enterprise'>GraphHopper Routing API</a></div>");
 
         $('.defaulting').each(function(index, element) {
             $(element).css("color", "black");
@@ -762,7 +762,7 @@ function routeLatLng(request, doQuery) {
                 var instr = path.instructions[m];
                 var sign = instr.sign;
                 if (m == 0)
-                    sign = "marker-from";
+                    sign = "marker-icon-green";
                 else if (sign == -3)
                     sign = "sharp_left";
                 else if (sign == -2)
@@ -778,7 +778,7 @@ function routeLatLng(request, doQuery) {
                 else if (sign == 3)
                     sign = "sharp_right";
                 else if (sign == 4)
-                    sign = "marker-to";
+                    sign = "marker-icon-red";
                 else
                     throw "did not found indication " + sign;
 

@@ -40,7 +40,7 @@ public class GraphHopperWeb implements GraphHopperAPI
     public static void main( String[] args )
     {
         GraphHopperAPI gh = new GraphHopperWeb();
-        gh.load("http://localhost:8989/api/route");
+        gh.load("http://localhost:8989/route");
         //GHResponse ph = gh.route(new GHRequest(53.080827, 9.074707, 50.597186, 11.184082));
         GHResponse ph = gh.route(new GHRequest(49.6724, 11.3494, 49.6550, 11.4180));
         System.out.println(ph);
@@ -61,7 +61,7 @@ public class GraphHopperWeb implements GraphHopperAPI
     }
 
     /**
-     * Example url: http://localhost:8989/api or http://217.92.216.224:8080/api
+     * Example url: http://localhost:8989 or http://217.92.216.224:8080
      */
     @Override
     public boolean load( String url )
