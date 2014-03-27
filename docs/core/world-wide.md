@@ -9,6 +9,10 @@ With CH the service is able to handle about 180 queries per second (from localho
 Measured for CAR routing, real world requests, at least 100km long, on a linux machine with 8 cores and 32GB, 
 java 1.7.0_25, jetty 8.1.10 via custom QueryTorture class (10 worker threads).
 
+## JVM
+
+If GC pauses are too long try `-XX:+UseG1GC`
+
 ## Elevation Data 
 
 If you want to use elevation data you need to increase the allowed number of open files. Under linux this works as follows:
