@@ -68,4 +68,5 @@ class MyGraphHopper extends GraphHopper {
 }
 ```
 
-For forbiddenEdges you need to determine the edges from some GPS coordinates. Have a look into the location-api docs.
+For forbiddenEdges you need to determine the edges from some GPS coordinates. 
+Have a look into the [location index docs](./location-index.md).
