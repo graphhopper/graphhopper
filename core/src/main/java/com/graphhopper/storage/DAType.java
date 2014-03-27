@@ -150,6 +150,27 @@ public class DAType
         return str;
     }
 
+    public static DAType fromString( String dataAccess )
+    {
+        dataAccess = dataAccess.toUpperCase();
+        DAType type;
+        if (dataAccess.contains("MMAP"))
+            type = DAType.MMAP;
+        else if (dataAccess.contains("UNSAFE"))
+            type = DAType.UNSAFE_STORE;
+        else
+        {
+            if (dataAccess.contains("RAM_STORE"))
+                type = DAType.RAM_STORE;
+            else
+                type = DAType.RAM;
+        }
+
+        if (dataAccess.contains("SYNC"))
+            type = new DAType(type, true);
+        return type;
+    }
+
     @Override
     public int hashCode()
     {

@@ -18,15 +18,15 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.storage.DataAccess;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.io.*;
 import java.util.zip.ZipInputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Elevation data from NASA (SRTM). Downloaded from http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/
@@ -46,8 +46,10 @@ public class SRTMProvider implements ElevationProvider
     }
 
     private static final BitUtil BIT_UTIL = BitUtil.BIG;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int WIDTH = 1201;
-    private final Directory dir;
+    private Directory dir;
+    private DAType daType = DAType.RAM;
     private Downloader downloader = new Downloader("GraphHopper SRTMReader").setTimeout(10000);
     private File cacheDir = new File("/tmp/srtm");
     // use a map as an array is not quite useful if we want to hold only parts of the world
@@ -62,7 +64,6 @@ public class SRTMProvider implements ElevationProvider
     {
         // move to explicit calls?
         init();
-        dir = new RAMDirectory();
     }
 
     /**
@@ -137,6 +138,16 @@ public class SRTMProvider implements ElevationProvider
         return this;
     }
 
+    @Override
+    public ElevationProvider setInMemory( boolean inMem )
+    {
+        if (inMem)
+            daType = DAType.RAM;
+        else
+            daType = DAType.MMAP;
+        return this;
+    }
+
     int down( double val )
     {
         int intVal = (int) val;
@@ -151,7 +162,6 @@ public class SRTMProvider implements ElevationProvider
         String str = areas.get(intKey);
         if (str == null)
             return null;
-        // throw new IllegalStateException("Area " + intKey + " not found for " + lat + "," + lon);
 
         int minLat = Math.abs(down(lat));
         int minLon = Math.abs(down(lon));
@@ -217,7 +227,7 @@ public class SRTMProvider implements ElevationProvider
                             // now try with point if mirror is used
                             zippedURL = baseUrl + "/" + fileDetails + ".hgt.zip";
                             continue;
-                        }                        
+                        }
                     }
                 }
 
@@ -226,7 +236,7 @@ public class SRTMProvider implements ElevationProvider
                 zis.getNextEntry();
                 BufferedInputStream buff = new BufferedInputStream(zis);
                 byte[] bytes = new byte[2 * WIDTH * WIDTH];
-                DataAccess heights = dir.find("dem" + intKey);
+                DataAccess heights = getDirectory().find("dem" + intKey);
                 heights.create(bytes.length);
 
                 demProvider.setHeights(heights);
@@ -265,11 +275,23 @@ public class SRTMProvider implements ElevationProvider
     public void release()
     {
         cacheData.clear();
+
+        // for memory mapped type we create temporary unpacked files which should be removed
+        dir.clear();
     }
 
     @Override
     public String toString()
     {
         return "SRTM";
+    }
+
+    private Directory getDirectory()
+    {
+        if (dir != null)
+            return dir;
+
+        logger.info("SRTM Elevation Provider, from: " + baseUrl + ", to: " + cacheDir + ", as: " + daType);
+        return dir = new GHDirectory(cacheDir.getAbsolutePath(), daType);
     }
 }

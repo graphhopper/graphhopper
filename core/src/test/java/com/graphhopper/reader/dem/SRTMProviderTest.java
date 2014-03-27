@@ -82,4 +82,13 @@ public class SRTMProviderTest
         
         assertEquals(160, instance.getEle(55.8943144, -3.0000001), 1e-1);
     }
+    
+    @Test
+    public void testGetHeightMMap() throws IOException
+    {
+        instance.setCacheDir(new File("./files/"));
+        instance.setInMemory(false);
+        assertEquals(160, instance.getEle(55.8943144, -3), 1e-1);
+        instance.release();
+    }
 }

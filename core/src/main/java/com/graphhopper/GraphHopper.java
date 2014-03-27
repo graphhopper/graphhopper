@@ -474,23 +474,9 @@ public class GraphHopper implements GraphHopperAPI
         setGraphHopperLocation(graphHopperFolder);
         defaultSegmentSize = args.getInt("graph.dataaccess.segmentSize", defaultSegmentSize);
         dimension = args.getInt("graph.dimension", dimension);
-        String dataAccess = args.get("graph.dataaccess", "RAM_STORE").toUpperCase();
-        if (dataAccess.contains("MMAP"))
-        {
-            setMemoryMapped();
-        } else if (dataAccess.contains("UNSAFE"))
-        {
-            setUnsafeMemory();
-        } else
-        {
-            if (dataAccess.contains("RAM_STORE"))
-                setInMemory(true);
-            else
-                setInMemory(false);
-        }
 
-        if (dataAccess.contains("SYNC"))
-            dataAccessType = new DAType(dataAccessType, true);
+        String graphDATypeStr = args.get("graph.dataaccess", "RAM_STORE");
+        dataAccessType = DAType.fromString(graphDATypeStr);        
 
         sortGraph = args.getBool("graph.doSort", sortGraph);
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
@@ -523,15 +509,17 @@ public class GraphHopper implements GraphHopperAPI
         String eleProviderStr = args.get("graph.elevation.provider", "noop").toLowerCase();
         String cacheDirStr = args.get("graph.elevation.cachedir", "");
         String baseURL = args.get("graph.elevation.baseurl", "");
+        DAType elevationDAType = DAType.fromString(args.get("graph.elevation.dataaccess", "RAM"));
         ElevationProvider tmpProvider = ElevationProvider.NOOP;
         if (eleProviderStr.equalsIgnoreCase("srtm"))
-            tmpProvider = new SRTMProvider();        
+            tmpProvider = new SRTMProvider();
         // later:
 //        else if(eleProviderStr.startsWith("cgiar:"))        
 //            eleProvider = new CGIARProvider().setCacheDir(new File());        
 
         tmpProvider.setCacheDir(new File(cacheDirStr));
         tmpProvider.setBaseURL(baseURL);
+        tmpProvider.setInMemory(elevationDAType.isInMemory());
         setElevationProvider(tmpProvider);
 
         // index
@@ -722,7 +710,7 @@ public class GraphHopper implements GraphHopperAPI
 
     @Override
     public GHResponse route( GHRequest request )
-    {        
+    {
         if (graph == null || !fullyLoaded)
             throw new IllegalStateException("Call load or importOrLoad before routing");
 

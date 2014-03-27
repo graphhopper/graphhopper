@@ -43,6 +43,11 @@ public interface ElevationProvider
     ElevationProvider setCacheDir( File cacheDir );
 
     /**
+     * Set to true if you have a small area and need high speed access.
+     */
+    ElevationProvider setInMemory( boolean b );
+
+    /**
      * Release resources.
      */
     void release();
@@ -63,6 +68,12 @@ public interface ElevationProvider
 
         @Override
         public ElevationProvider setBaseURL( String baseURL )
+        {
+            return this;
+        }
+
+        @Override
+        public ElevationProvider setInMemory( boolean b )
         {
             return this;
         }

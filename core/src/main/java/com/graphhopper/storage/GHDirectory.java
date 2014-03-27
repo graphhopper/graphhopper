@@ -145,6 +145,15 @@ public class GHDirectory implements Directory
     }
 
     @Override
+    public void clear()
+    {
+        for (String daName : map.keySet())
+        {
+            removeByName(daName);
+        }
+    }
+
+    @Override
     public void remove( DataAccess da )
     {
         removeByName(da.getName());
