@@ -58,7 +58,6 @@ public class DefaultModule extends AbstractModule
 
             long timeout = args.getLong("web.timeout", 3000);
             bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);            
-
             bind(TranslationMap.class).toInstance(new TranslationMap().doImport());
         } catch (Exception ex)
         {

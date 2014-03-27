@@ -24,8 +24,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.junit.Test;
 
@@ -76,33 +74,35 @@ public class EncodingManagerTest
     }
 
     @Test
-    public void testTooManyEncoders()
+    public void testWrongEncoders()
     {
-        List<FlagEncoder> list = new ArrayList<FlagEncoder>();
-        for (int i = 0; i < 4; i++)
-        {
-            list.add(new FootFlagEncoder());
-        }
-        new EncodingManager(list);
-        list.add(new FootFlagEncoder());
         try
         {
-            new EncodingManager(list);
+            FootFlagEncoder foot = new FootFlagEncoder();
+            new EncodingManager(foot, foot);
             assertTrue(false);
         } catch (Exception ex)
         {
+            assertEquals("You must not register a FlagEncoder (foot) twice!", ex.getMessage());
+        }
+        
+        try
+        {
+            new EncodingManager(new FootFlagEncoder(), new CarFlagEncoder(), new BikeFlagEncoder(), new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder());
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+            assertEquals("Encoders are requesting more than 32 bits of way flags. Decrease the number of vehicles or increase the flags to take long.", 
+                    ex.getMessage());
         }
     }
 
     @Test
     public void testCombineRelations()
-    {
-        Map<String, String> wayMap = new HashMap<String, String>();
-        wayMap.put("highway", "track");
-        OSMWay osmWay = new OSMWay(1, wayMap);
-
-        Map<String, String> relMap = new HashMap<String, String>();
-        OSMRelation osmRel = new OSMRelation(1, relMap);
+    {        
+        OSMWay osmWay = new OSMWay(1);
+        osmWay.setTag("highway", "track");
+        OSMRelation osmRel = new OSMRelation(1);
 
         BikeFlagEncoder defaultBike = new BikeFlagEncoder();
         BikeFlagEncoder lessRelationCodes = new BikeFlagEncoder()
@@ -137,8 +137,8 @@ public class EncodingManagerTest
         EncodingManager manager = new EncodingManager(defaultBike, lessRelationCodes);
 
         // relation code is PREFER
-        relMap.put("route", "bicycle");
-        relMap.put("network", "lcn");
+        osmRel.setTag("route", "bicycle");
+        osmRel.setTag("network", "lcn");
         long relFlags = manager.handleRelationTags(osmRel, 0);
         long allow = defaultBike.acceptBit | lessRelationCodes.acceptBit;
         long flags = manager.handleWayTags(osmWay, allow, relFlags);
@@ -149,29 +149,27 @@ public class EncodingManagerTest
 
     @Test
     public void testMixBikeTypesAndRelationCombination()
-    {
-        Map<String, String> wayMap = new HashMap<String, String>();
-        wayMap.put("highway", "track");
-        wayMap.put("tracktype", "grade1");
-        OSMWay osmWay = new OSMWay(1, wayMap);
+    {        
+        OSMWay osmWay = new OSMWay(1);
+        osmWay.setTag("highway", "track");
+        osmWay.setTag("tracktype", "grade1");
 
-        Map<String, String> relMap = new HashMap<String, String>();
-        OSMRelation osmRel = new OSMRelation(1, relMap);
+        OSMRelation osmRel = new OSMRelation(1);
 
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
         MountainBikeFlagEncoder mtbEncoder = new MountainBikeFlagEncoder();
         EncodingManager manager = new EncodingManager(bikeEncoder, mtbEncoder);
 
         // relation code for network rcn is VERY_NICE for bike and PREFER for mountainbike
-        relMap.put("route", "bicycle");
-        relMap.put("network", "rcn");
+        osmRel.setTag("route", "bicycle");
+        osmRel.setTag("network", "rcn");
         long relFlags = manager.handleRelationTags(osmRel, 0);
         long allow = bikeEncoder.acceptBit | mtbEncoder.acceptBit;
         long flags = manager.handleWayTags(osmWay, allow, relFlags);
 
-        // Uninfluenced speed for grade1 bikeencoder = 4 (pushing section) -> smaller than 15 -> VERYNICE -> 22
+        // uninfluenced speed for grade1 bikeencoder = 4 (pushing section) -> smaller than 15 -> VERYNICE -> 22
         assertEquals(24, bikeEncoder.getSpeed(flags), 1e-1);
-        // Uninfluenced speed for grade1 bikeencoder = 12 -> smaller than 15 -> PREFER -> 18
+        // uninfluenced speed for grade1 bikeencoder = 12 -> smaller than 15 -> PREFER -> 18
         assertEquals(20, mtbEncoder.getSpeed(flags), 1e-1);
     }
 
@@ -203,9 +201,9 @@ public class EncodingManagerTest
             }
 
             @Override
-            public long analyzeNodeTags( OSMNode node )
+            public long handleNodeTags( OSMNode node )
             {
-                String tmp = node.getTags().get("test");
+                String tmp = node.getTag("test");
                 // return negative value to indicate that this is not a barrier
                 if (tmp == null)
                     return -nodeEncoder.setValue(0, 1);
@@ -222,29 +220,27 @@ public class EncodingManagerTest
         };
         EncodingManager manager = new EncodingManager(car, car2);
 
-        Map<String, String> nodeMap = new HashMap<String, String>();
-        OSMNode node = new OSMNode(1, nodeMap, Double.NaN, Double.NaN);
-        Map<String, String> wayMap = new HashMap<String, String>();
-        wayMap.put("highway", "secondary");
-        OSMWay way = new OSMWay(2, wayMap);
+        OSMNode node = new OSMNode(1, Double.NaN, Double.NaN);
+        OSMWay way = new OSMWay(2);
+        way.setTag("highway", "secondary");
 
         long wayFlags = manager.handleWayTags(way, manager.acceptWay(way), 0);
-        long nodeFlags = manager.analyzeNodeTags(node);
+        long nodeFlags = manager.handleNodeTags(node);
         wayFlags = manager.applyNodeFlags(wayFlags, -nodeFlags);
         assertEquals(60, car.getSpeed(wayFlags), 1e-1);
         assertEquals(59, car2.getSpeed(wayFlags), 1e-1);
 
-        nodeMap.put("test", "something");
+        node.setTag("test", "something");
         wayFlags = manager.handleWayTags(way, manager.acceptWay(way), 0);
-        nodeFlags = manager.analyzeNodeTags(node);
+        nodeFlags = manager.handleNodeTags(node);
         wayFlags = manager.applyNodeFlags(wayFlags, -nodeFlags);
         assertEquals(58, car2.getSpeed(wayFlags), 1e-1);
         assertEquals(60, car.getSpeed(wayFlags), 1e-1);
 
-        wayMap.put("maxspeed", "130");
+        way.setTag("maxspeed", "130");
         wayFlags = manager.handleWayTags(way, manager.acceptWay(way), 0);
         assertEquals(car.getMaxSpeed(), car2.getSpeed(wayFlags), 1e-1);
-        nodeFlags = manager.analyzeNodeTags(node);
+        nodeFlags = manager.handleNodeTags(node);
         wayFlags = manager.applyNodeFlags(wayFlags, -nodeFlags);
         assertEquals(98, car2.getSpeed(wayFlags), 1e-1);
         assertEquals(100, car.getSpeed(wayFlags), 1e-1);
@@ -285,7 +281,7 @@ public class EncodingManagerTest
             }
         };
 
-        EncodingManager manager = new EncodingManager(Arrays.asList(bike, foot, car), 4, 127);        
+        EncodingManager manager = new EncodingManager(Arrays.asList(bike, foot, car), 4, 127);
 
         // turn cost entries for car and foot are for the same relations (same viaNode, edgeFrom and edgeTo), turn cost entry for bike is for another relation (different viaNode) 
         turnCostEntry_car.edgeFrom = 1;
@@ -320,7 +316,7 @@ public class EncodingManagerTest
                 assertEquals(0, foot.getTurnCosts(entry.flags));
                 assertEquals(0, bike.getTurnCosts(entry.flags));
             } else if (entry.edgeFrom == 2)
-            { 
+            {
                 // the 2nd entry provides turn flags for bike only
                 assertEquals(assertFlag2, entry.flags);
                 assertFalse(car.isTurnRestricted(entry.flags));
@@ -332,7 +328,12 @@ public class EncodingManagerTest
                 assertEquals(10, bike.getTurnCosts(entry.flags));
             }
         }
-
     }
 
+    @Test
+    public void testFixWayName()
+    {
+        assertEquals("B8, B12", EncodingManager.fixWayName("B8;B12"));
+        assertEquals("B8, B12", EncodingManager.fixWayName("B8; B12"));
+    }
 }

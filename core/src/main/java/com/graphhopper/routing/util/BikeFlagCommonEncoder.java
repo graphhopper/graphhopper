@@ -42,7 +42,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
     private int unpavedBit = 0;
     // Pushing section heighways are parts where you need to get off your bike and push it (German: Schiebestrecke)
     private final HashSet<String> pushingSections = new HashSet<String>();
-    private final HashSet<String> oppositeLanes = new HashSet<String>();
+    protected final HashSet<String> oppositeLanes = new HashSet<String>();
     private final Set<String> unpavedSurfaceTags = new HashSet<String>();
     private final Map<String, Integer> trackTypeSpeed = new HashMap<String, Integer>();
     private final Map<String, Integer> surfaceSpeed = new HashMap<String, Integer>();
@@ -243,66 +243,12 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
                 speed = relationWeightCodeToSpeed(getSpeed(way), (int) relationCodeEncoder.getValue(relationFlags));
             }
 
-            // Make sure that we do not exceed the limits:
-            if (speed > speedEncoder.getMaxValue())
-                speed = speedEncoder.getMaxValue();
-            else if (speed < 0)
-                speed = 0;
-            encoded = setSpeed(0, speed);
-
-            // handle oneways
-            if ((way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))
-                    && !way.hasTag("oneway:bicycle", "no")
-                    && !way.hasTag("cycleway", oppositeLanes))
-            {
-
-                if (way.hasTag("oneway", "-1"))
-                {
-                    encoded |= backwardBit;
-                } else
-                {
-                    encoded |= forwardBit;
-                }
-            } else
-            {
-                encoded |= directionBitMask;
-            }
-
-            String highway = way.getTag("highway");
-
-            /*            
-             // mark safe ways or ways with cycle lanes
-             if (SAFE_HIGHWAY_TAGS.contains(highway) || way.hasTag("cycleway"))
-             {
-             encoded |= safeWayBit;
-             }
-             */
-            // mark unpaved bit
-            String surfaceTag = way.getTag("surface");
-            String trackType = way.getTag("tracktype");
-            if ("track".equals(highway) && trackType == null
-                    || ("track".equals(highway) && !"grade1".equals(trackType))
-                    || (surfaceTag == null && way.hasTag("highway", "path"))
-                    || unpavedSurfaceTags.contains(surfaceTag))
-            {
-                encoded |= unpavedBit;
-            }
-
-            // Populate bits at wayTypeMask with wayType            
-            WayType ourWayType = WayType.OTHER_SMALL_WAY;
-            if (way.hasTag("highway", pushingSections))
-                ourWayType = WayType.PUSHING_SECTION;
-            if ((way.hasTag("bicycle", intended) && way.hasTag("highway", pushingSections))
-                    || ("cycleway".equals(way.getTag("highway"))))
-                ourWayType = WayType.CYCLEWAY;
-            if (way.hasTag("highway", roadValues))
-                ourWayType = WayType.ROAD;
-
-            encoded = wayTypeEncoder.setValue(encoded, ourWayType.getValue());
+            encoded = handleSpeed(way, speed, 0);
+            encoded = handleBikeRelated(way, encoded);
 
         } else
         {
-            encoded = handleFerry(way,
+            encoded = handleFerryTags(way,
                     highwaySpeed.get("living_street"),
                     highwaySpeed.get("track"),
                     highwaySpeed.get("primary"));
@@ -312,13 +258,13 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long analyzeNodeTags( OSMNode node )
+    public long handleNodeTags( OSMNode node )
     {
         // absolute barriers always block
         if (node.hasTag("barrier", absoluteBarriers))
             return directionBitMask;
 
-        return super.analyzeNodeTags(node);
+        return super.handleNodeTags(node);
     }
 
     int getSpeed( OSMWay way )
@@ -371,7 +317,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public int getPavementCode( long flags )
+    public int getPavementType( long flags )
     {
         if ((flags & unpavedBit) != 0)
             return 1; // unpaved
@@ -380,9 +326,65 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public int getWayTypeCode( long flags )
+    public int getWayType( long flags )
     {
         return (int) wayTypeEncoder.getValue(flags);
+    }
+
+    protected long handleBikeRelated( OSMWay way, long encoded )
+    {
+        String highway = way.getTag("highway");
+
+        /*            
+         // mark safe ways or ways with cycle lanes
+         if (SAFE_HIGHWAY_TAGS.contains(highway) || way.hasTag("cycleway"))
+         {
+         encoded |= safeWayBit;
+         }
+         */
+        // mark unpaved bit
+        String surfaceTag = way.getTag("surface");
+        String trackType = way.getTag("tracktype");
+        if ("track".equals(highway) && trackType == null
+                || ("track".equals(highway) && !"grade1".equals(trackType))
+                || (surfaceTag == null && way.hasTag("highway", "path"))
+                || unpavedSurfaceTags.contains(surfaceTag))
+        {
+            encoded |= unpavedBit;
+        }
+
+        // Populate bits at wayTypeMask with wayType            
+        WayType ourWayType = WayType.OTHER_SMALL_WAY;
+        if (way.hasTag("highway", pushingSections))
+            ourWayType = WayType.PUSHING_SECTION;
+        if ((way.hasTag("bicycle", intended) && way.hasTag("highway", pushingSections))
+                || ("cycleway".equals(way.getTag("highway"))))
+            ourWayType = WayType.CYCLEWAY;
+        if (way.hasTag("highway", roadValues))
+            ourWayType = WayType.ROAD;
+
+        return wayTypeEncoder.setValue(encoded, ourWayType.getValue());
+    }
+
+    protected long handleSpeed( OSMWay way, double speed, long encoded )
+    {
+        encoded = setSpeed(0, speed);
+
+        // handle oneways
+        if ((way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))
+                && !way.hasTag("oneway:bicycle", "no")
+                && !way.hasTag("cycleway", oppositeLanes))
+        {
+            if (way.hasTag("oneway", "-1"))
+                encoded |= backwardBit;
+            else
+                encoded |= forwardBit;
+            
+        } else
+        {
+            encoded |= directionBitMask;
+        }
+        return encoded;
     }
 
     public enum RelationMapCode
@@ -443,27 +445,32 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
 
     };
 
-    public void setTrackTypeSpeed( String tracktype, int speed )
+    protected void setTrackTypeSpeed( String tracktype, int speed )
     {
         trackTypeSpeed.put(tracktype, speed);
     }
 
-    public void setSurfaceSpeed( String surface, int speed )
+    protected void setSurfaceSpeed( String surface, int speed )
     {
         surfaceSpeed.put(surface, speed);
     }
 
-    public void setHighwaySpeed( String highway, int speed )
+    protected void setHighwaySpeed( String highway, int speed )
     {
         highwaySpeed.put(highway, speed);
     }
 
-    public void setCyclingNetworkPreference( String network, int code )
+    protected int getHighwaySpeed( String key )
+    {
+        return highwaySpeed.get(key);
+    }
+
+    protected void setCyclingNetworkPreference( String network, int code )
     {
         bikeNetworkToCode.put(network, code);
     }
 
-    public void setPushingSection( String highway )
+    protected void setPushingSection( String highway )
     {
         pushingSections.add(highway);
     }

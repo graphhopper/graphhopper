@@ -90,83 +90,81 @@ public class FootFlagEncoderTest
     @Test
     public void testAccess()
     {
-        Map<String, String> map = new HashMap<String, String>();
-        OSMWay way = new OSMWay(1, map);
+        OSMWay way = new OSMWay(1);
 
-        map.put("highway", "motorway");
-        map.put("sidewalk", "yes");
+        way.setTag("highway", "motorway");
+        way.setTag("sidewalk", "yes");
         assertTrue(footEncoder.acceptWay(way) > 0);
-        map.put("sidewalk", "left");
+        way.setTag("sidewalk", "left");
         assertTrue(footEncoder.acceptWay(way) > 0);
 
-        map.put("sidewalk", "none");
+        way.setTag("sidewalk", "none");
         assertFalse(footEncoder.acceptWay(way) > 0);
-        map.clear();
+        way.clearTags();
 
-        map.put("highway", "pedestrian");
+        way.setTag("highway", "pedestrian");
         assertTrue(footEncoder.acceptWay(way) > 0);
 
-        map.put("highway", "footway");
+        way.setTag("highway", "footway");
         assertTrue(footEncoder.acceptWay(way) > 0);
 
-        map.put("highway", "motorway");
-        assertFalse(footEncoder.acceptWay(way) > 0);
-
-        map.put("highway", "path");
-        assertTrue(footEncoder.acceptWay(way) > 0);
-
-        map.put("bicycle", "official");
+        way.setTag("highway", "motorway");
         assertFalse(footEncoder.acceptWay(way) > 0);
 
-        map.put("foot", "official");
+        way.setTag("highway", "path");
         assertTrue(footEncoder.acceptWay(way) > 0);
 
-        map.clear();
-        map.put("highway", "service");
-        map.put("access", "no");
+        way.setTag("bicycle", "official");
         assertFalse(footEncoder.acceptWay(way) > 0);
 
-        map.clear();
-        map.put("highway", "tertiary");
-        map.put("motorroad", "yes");
-        assertFalse(footEncoder.acceptWay(way) > 0);
-
-        map.clear();
-        map.put("highway", "cycleway");
-        assertFalse(footEncoder.acceptWay(way) > 0);
-        map.put("foot", "yes");
+        way.setTag("foot", "official");
         assertTrue(footEncoder.acceptWay(way) > 0);
 
-        map.clear();
-        map.put("highway", "track");
-        map.put("ford", "yes");
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("access", "no");
         assertFalse(footEncoder.acceptWay(way) > 0);
-        map.put("foot", "yes");
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("motorroad", "yes");
+        assertFalse(footEncoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "cycleway");
+        assertFalse(footEncoder.acceptWay(way) > 0);
+        way.setTag("foot", "yes");
         assertTrue(footEncoder.acceptWay(way) > 0);
 
-        map.clear();
-        map.put("route", "ferry");
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("ford", "yes");
+        assertFalse(footEncoder.acceptWay(way) > 0);
+        way.setTag("foot", "yes");
         assertTrue(footEncoder.acceptWay(way) > 0);
-        map.put("foot", "no");
+
+        way.clearTags();
+        way.setTag("route", "ferry");
+        assertTrue(footEncoder.acceptWay(way) > 0);
+        way.setTag("foot", "no");
         assertFalse(footEncoder.acceptWay(way) > 0);
     }
 
     @Test
     public void testMixSpeedAndSafe()
     {
-        Map<String, String> map = new HashMap<String, String>();
-        OSMWay way = new OSMWay(1, map);
+        OSMWay way = new OSMWay(1);
 
-        map.put("highway", "motorway");
+        way.setTag("highway", "motorway");
         long flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
         assertEquals(0, flags);
 
-        map.put("sidewalk", "yes");
+        way.setTag("sidewalk", "yes");
         flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
         assertEquals(5, footEncoder.getSpeed(flags), 1e-1);
 
-        map.clear();
-        map.put("highway", "track");
+        way.clearTags();
+        way.setTag("highway", "track");
         flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
         assertEquals(5, footEncoder.getSpeed(flags), 1e-1);
     }
@@ -174,15 +172,14 @@ public class FootFlagEncoderTest
     @Test
     public void testSlowHiking()
     {
-        Map<String, String> map = new HashMap<String, String>();
-        OSMWay way = new OSMWay(1, map);
-        map.put("highway", "track");
-        map.put("sac_scale", "hiking");
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "track");
+        way.setTag("sac_scale", "hiking");
         long flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
         assertEquals(FootFlagEncoder.MEAN, footEncoder.getSpeed(flags), 1e-1);
 
-        map.put("highway", "track");
-        map.put("sac_scale", "mountain_hiking");
+        way.setTag("highway", "track");
+        way.setTag("sac_scale", "mountain_hiking");
         flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
         assertEquals(FootFlagEncoder.SLOW, footEncoder.getSpeed(flags), 1e-1);
     }

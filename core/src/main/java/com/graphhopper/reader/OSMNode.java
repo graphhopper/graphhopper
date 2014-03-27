@@ -17,9 +17,9 @@
  */
 package com.graphhopper.reader;
 
+import com.graphhopper.util.PointAccess;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import java.util.Map;
 
 /**
  * Represents an OSM Node
@@ -28,26 +28,28 @@ import java.util.Map;
  */
 public class OSMNode extends OSMElement
 {
-    private double lat;
-    private double lon;
+    private final double lat;
+    private final double lon;
 
-    public OSMNode( long id, XMLStreamReader parser ) throws XMLStreamException
+    public static OSMNode create( long id, XMLStreamReader parser ) throws XMLStreamException
     {
-        super(id, NODE, parser);
-
-        // read location
-        lat = Double.parseDouble(parser.getAttributeValue(null, "lat"));
-        lon = Double.parseDouble(parser.getAttributeValue(null, "lon"));
+        OSMNode node = new OSMNode(id,
+                Double.parseDouble(parser.getAttributeValue(null, "lat")),
+                Double.parseDouble(parser.getAttributeValue(null, "lon")));
 
         parser.nextTag();
-        readTags(parser);
+        node.readTags(parser);
+        return node;
     }
 
-    public OSMNode( long id, Map<String, String> tags, double lat, double lon )
+    public OSMNode( long id, PointAccess pointAccess, int accessId )
     {
-        super(id, NODE, tags);
-        this.lat = lat;
-        this.lon = lon;
+        super(id, NODE);
+
+        this.lat = pointAccess.getLatitude(accessId);
+        this.lon = pointAccess.getLongitude(accessId);
+        if (pointAccess.is3D())
+            setTag("ele", pointAccess.getElevation(accessId));
     }
 
     public OSMNode( long id, double lat, double lon )
@@ -68,27 +70,57 @@ public class OSMNode extends OSMElement
         return lon;
     }
 
+    public double getEle()
+    {
+        Object ele = getTags().get("ele");
+        if (ele == null)
+            return Double.NaN;
+        return (Double) ele;
+    }
+
+    @Override
+    public void setTag( String name, Object value )
+    {
+        if ("ele".equals(name))
+        {
+            if (value == null)
+                value = null;
+            else if (value instanceof String)
+            {
+                String str = (String) value;
+                str = str.trim().replaceAll("\\,", ".");
+                if (str.isEmpty())
+                    value = null;
+                else
+                    try
+                    {
+                        value = Double.parseDouble(str);
+                    } catch (NumberFormatException ex)
+                    {
+                        return;
+                    }
+            } else
+                // force cast
+                value = ((Number) value).doubleValue();
+        }
+        super.setTag(name, value);
+    }
+
     @Override
     public String toString()
     {
-        if (tags == null)
+        StringBuilder txt = new StringBuilder();
+        txt.append("Node: ");
+        txt.append(getId());
+        txt.append(" lat=");
+        txt.append(getLat());
+        txt.append(" lon=");
+        txt.append(getLon());
+        if (!getTags().isEmpty())
         {
-            return "Node (" + id + ")";
-        } else
-        {
-//            return "Node (" + id + ", " + tags.size() + " tags)";
-            StringBuilder txt = new StringBuilder();
-            txt.append("Node: ");
-            txt.append(id);
-            txt.append(" lat=");
-            txt.append(lat);
-            txt.append(" lon=");
-            txt.append(lon);
             txt.append("\n");
             txt.append(tagsToString());
-            return txt.toString();
         }
-
-        //return "Node at " + lat + ", " + lon;
+        return txt.toString();
     }
 }

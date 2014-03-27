@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.NodeAccess;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -39,15 +40,16 @@ public class GHUtilityTest
 
     Graph initUnsorted( Graph g )
     {
-        g.setNode(0, 0, 1);
-        g.setNode(1, 2.5, 4.5);
-        g.setNode(2, 4.5, 4.5);
-        g.setNode(3, 3, 0.5);
-        g.setNode(4, 2.8, 2.8);
-        g.setNode(5, 4.2, 1.6);
-        g.setNode(6, 2.3, 2.2);
-        g.setNode(7, 5, 1.5);
-        g.setNode(8, 4.6, 4);
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 0, 1);
+        na.setNode(1, 2.5, 4.5);
+        na.setNode(2, 4.5, 4.5);
+        na.setNode(3, 3, 0.5);
+        na.setNode(4, 2.8, 2.8);
+        na.setNode(5, 4.2, 1.6);
+        na.setNode(6, 2.3, 2.2);
+        na.setNode(7, 5, 1.5);
+        na.setNode(8, 4.6, 4);
         g.edge(8, 2, 0.5, true);
         g.edge(7, 3, 2.1, false);
         g.edge(1, 0, 3.9, true);
@@ -63,13 +65,14 @@ public class GHUtilityTest
         Graph g = initUnsorted(createGraph());
         Graph newG = GHUtility.sortDFS(g, createGraph());
         assertEquals(g.getNodes(), newG.getNodes());
-        assertEquals(0, newG.getLatitude(0), 1e-4); // 0
-        assertEquals(2.5, newG.getLatitude(1), 1e-4); // 1
-        assertEquals(4.6, newG.getLatitude(2), 1e-4); // 8
-        assertEquals(4.5, newG.getLatitude(3), 1e-4); // 2                
-        assertEquals(3.0, newG.getLatitude(4), 1e-4); // 3
-        assertEquals(5.0, newG.getLatitude(5), 1e-4); // 7
-        assertEquals(4.2, newG.getLatitude(6), 1e-4); // 5
+        NodeAccess na = newG.getNodeAccess();
+        assertEquals(0, na.getLatitude(0), 1e-4); // 0
+        assertEquals(2.5, na.getLatitude(1), 1e-4); // 1
+        assertEquals(4.6, na.getLatitude(2), 1e-4); // 8
+        assertEquals(4.5, na.getLatitude(3), 1e-4); // 2                
+        assertEquals(3.0, na.getLatitude(4), 1e-4); // 3
+        assertEquals(5.0, na.getLatitude(5), 1e-4); // 7
+        assertEquals(4.2, na.getLatitude(6), 1e-4); // 5
     }
 
     @Test
@@ -79,19 +82,21 @@ public class GHUtilityTest
         Graph newG = GHUtility.sortDFS(g, createGraph());
         // TODO does not handle subnetworks
         assertEquals(g.getNodes(), newG.getNodes());
-        assertEquals(0, newG.getLatitude(0), 1e-4); // 0
-        assertEquals(2.5, newG.getLatitude(1), 1e-4); // 1
-        assertEquals(4.6, newG.getLatitude(2), 1e-4); // 8
-        assertEquals(4.5, newG.getLatitude(3), 1e-4); // 2        
+        NodeAccess na = newG.getNodeAccess();
+        assertEquals(0, na.getLatitude(0), 1e-4); // 0
+        assertEquals(2.5, na.getLatitude(1), 1e-4); // 1
+        assertEquals(4.6, na.getLatitude(2), 1e-4); // 8
+        assertEquals(4.5, na.getLatitude(3), 1e-4); // 2        
     }
 
     @Test
     public void testSortDirected()
     {
         Graph g = createGraph();
-        g.setNode(0, 0, 1);
-        g.setNode(1, 2.5, 2);
-        g.setNode(2, 3.5, 3);
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 0, 1);
+        na.setNode(1, 2.5, 2);
+        na.setNode(2, 3.5, 3);
         g.edge(0, 1, 1.1, false);
         g.edge(2, 1, 1.1, false);
         GHUtility.sortDFS(g, createGraph());
@@ -123,10 +128,11 @@ public class GHUtilityTest
 
         assertEquals(0, lg.getLevel(0));
         assertEquals(0, lg.getLevel(1));
-        assertEquals(0, lg.getLatitude(0), 1e-6);
-        assertEquals(1, lg.getLongitude(0), 1e-6);
-        assertEquals(2.5, lg.getLatitude(1), 1e-6);
-        assertEquals(4.5, lg.getLongitude(1), 1e-6);
+        NodeAccess na = lg.getNodeAccess();
+        assertEquals(0, na.getLatitude(0), 1e-6);
+        assertEquals(1, na.getLongitude(0), 1e-6);
+        assertEquals(2.5, na.getLatitude(1), 1e-6);
+        assertEquals(4.5, na.getLongitude(1), 1e-6);
         assertEquals(9, lg.getNodes());
         EdgeIterator iter = lg.createEdgeExplorer().setBaseNode(8);
         iter.next();

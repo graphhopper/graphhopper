@@ -17,20 +17,20 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.storage.AbstractGraphStorageTester.*;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Instruction;
+import com.graphhopper.util.InstructionList;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.util.*;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Instruction;
-import com.graphhopper.util.InstructionList;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -39,44 +39,51 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class PathTest
-{
-    TranslationMap trMap = TranslationMapTest.SINGLETON;
-    TranslationMap.Translation tr = trMap.getWithFallBack(Locale.US);
+{    
+    private final EncodingManager carManager = new EncodingManager("CAR");
+    private final FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
+    private final TranslationMap trMap = TranslationMapTest.SINGLETON;
+    private final TranslationMap.Translation tr = trMap.getWithFallBack(Locale.US);
 
     @Test
     public void testFound()
     {
-        Path p = new Path(null, null);
+        GraphStorage g = new GraphBuilder(carManager).create();
+        Path p = new Path(g, encoder);
         assertFalse(p.isFound());
         assertEquals(0, p.getDistance(), 1e-7);
         assertEquals(0, p.calcNodes().size());
+        g.close();
     }
 
     @Test
     public void testTime()
     {
-        FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
-        Path p = new Path(null, encoder);
-        assertEquals(60 * 60 * 1000, p.calcMillis(100000, encoder.setProperties(100, true, true), false));
+        FlagEncoder tmpEnc = new Bike2WeightFlagEncoder();
+        GraphStorage g = new GraphBuilder(new EncodingManager(tmpEnc)).create();
+        Path p = new Path(g, tmpEnc);
+        long flags = tmpEnc.setSpeed(tmpEnc.setReverseSpeed(0, 10), 15);
+        assertEquals(375 * 60 * 1000, p.calcMillis(100000, flags, false));
+        assertEquals(600 * 60 * 1000, p.calcMillis(100000, flags, true));
+
+        g.close();
     }
 
     @Test
     public void testWayList()
     {
-        EncodingManager carManager = new EncodingManager("CAR");
-        FlagEncoder carEnc = carManager.getEncoder("CAR");
-        Graph g = new GraphBuilder(carManager).create();
+        GraphStorage g = new GraphBuilder(carManager).create();
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 0.0, 0.1);
+        na.setNode(1, 1.0, 0.1);
+        na.setNode(2, 2.0, 0.1);
 
-        g.setNode(0, 0.0, 0.1);
-        g.setNode(1, 1.0, 0.1);
-        g.setNode(2, 2.0, 0.1);
-
-        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).setFlags(carEnc.setProperties(10, true, true));
+        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).setFlags(encoder.setProperties(10, true, true));
         edge1.setWayGeometry(Helper.createPointList(8, 1, 9, 1));
-        EdgeIteratorState edge2 = g.edge(2, 1).setDistance(2000).setFlags(carEnc.setProperties(50, true, true));
+        EdgeIteratorState edge2 = g.edge(2, 1).setDistance(2000).setFlags(encoder.setProperties(50, true, true));
         edge2.setWayGeometry(Helper.createPointList(11, 1, 10, 1));
 
-        Path path = new Path(g, carEnc);
+        Path path = new Path(g, encoder);
         EdgeEntry e1 = new EdgeEntry(edge2.getEdge(), 2, 1);
         e1.parent = new EdgeEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent = new EdgeEntry(-1, 0, 1);
@@ -102,7 +109,7 @@ public class PathTest
 
         // force minor change for instructions
         edge2.setName("2");
-        path = new Path(g, carEnc);
+        path = new Path(g, encoder);
         e1 = new EdgeEntry(edge2.getEdge(), 2, 1);
         e1.parent = new EdgeEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent = new EdgeEntry(-1, 0, 1);
@@ -126,7 +133,7 @@ public class PathTest
         assertEquals(path.calcPoints().size() - 1, lastIndex);
 
         // now reverse order
-        path = new Path(g, carEnc);
+        path = new Path(g, encoder);
         e1 = new EdgeEntry(edge1.getEdge(), 0, 1);
         e1.parent = new EdgeEntry(edge2.getEdge(), 1, 1);
         e1.parent.parent = new EdgeEntry(-1, 2, 1);
@@ -135,6 +142,7 @@ public class PathTest
         // 2-1-0
         assertPList(Helper.createPointList(2, 0.1, 11, 1, 10, 1, 1, 0.1, 9, 1, 8, 1, 0, 0.1), path.calcPoints());
         instr = path.calcInstructions();
+
         res = instr.createJson(tr);
         tmp = res.get(0);
         assertEquals(2000.0, tmp.get("distance"));
@@ -154,30 +162,28 @@ public class PathTest
     @Test
     public void testFindInstruction()
     {
-        EncodingManager carManager = new EncodingManager("CAR");
-        FlagEncoder carEnc = carManager.getEncoder("CAR");
         Graph g = new GraphBuilder(carManager).create();
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 0.0, 0.0);
+        na.setNode(1, 5.0, 0.0);
+        na.setNode(2, 5.0, 0.5);
+        na.setNode(3, 10.0, 0.5);
+        na.setNode(4, 7.5, 0.25);
 
-        g.setNode(0, 0.0, 0.0);
-        g.setNode(1, 5.0, 0.0);
-        g.setNode(2, 5.0, 0.5);
-        g.setNode(3, 10.0, 0.5);
-        g.setNode(4, 7.5, 0.25);
-
-        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).setFlags(carEnc.setProperties(50, true, true));
+        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).setFlags(encoder.setProperties(50, true, true));
         edge1.setWayGeometry(Helper.createPointList());
         edge1.setName("Street 1");
-        EdgeIteratorState edge2 = g.edge(1, 2).setDistance(1000).setFlags(carEnc.setProperties(50, true, true));
+        EdgeIteratorState edge2 = g.edge(1, 2).setDistance(1000).setFlags(encoder.setProperties(50, true, true));
         edge2.setWayGeometry(Helper.createPointList());
         edge2.setName("Street 2");
-        EdgeIteratorState edge3 = g.edge(2, 3).setDistance(1000).setFlags(carEnc.setProperties(50, true, true));
+        EdgeIteratorState edge3 = g.edge(2, 3).setDistance(1000).setFlags(encoder.setProperties(50, true, true));
         edge3.setWayGeometry(Helper.createPointList());
         edge3.setName("Street 3");
-        EdgeIteratorState edge4 = g.edge(3, 4).setDistance(500).setFlags(carEnc.setProperties(50, true, true));
+        EdgeIteratorState edge4 = g.edge(3, 4).setDistance(500).setFlags(encoder.setProperties(50, true, true));
         edge4.setWayGeometry(Helper.createPointList());
         edge4.setName("Street 4");
 
-        Path path = new Path(g, carEnc);
+        Path path = new Path(g, encoder);
         EdgeEntry e1 = new EdgeEntry(edge4.getEdge(), 4, 1);
         e1.parent = new EdgeEntry(edge3.getEdge(), 3, 1);
         e1.parent.parent = new EdgeEntry(edge2.getEdge(), 2, 1);

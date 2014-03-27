@@ -348,4 +348,25 @@ public abstract class DataAccessTest
         assertEquals(256, bufferIndex);
         assertEquals(11111, index);
     }
+
+    @Test
+    public void testSet_Get_Short_Long()
+    {
+        DataAccess da = createDataAccess(name);
+        da.create(300);
+        da.setShort(6, (short) (Short.MAX_VALUE / 5));
+        assertEquals(Short.MAX_VALUE / 5, da.getShort(6));
+
+        da.setShort(8, (short) (Short.MAX_VALUE / 7));
+        assertEquals(Short.MAX_VALUE / 7, da.getShort(8));
+
+        // currently RAMIntDA does not support arbitrary byte positions
+        if (!(da instanceof RAMIntDataAccess))
+        {
+            da.setShort(7, (short) (Short.MAX_VALUE / 3));
+            assertEquals(Short.MAX_VALUE / 3, da.getShort(7));
+            // should be overwritten
+            assertNotEquals(Short.MAX_VALUE / 3, da.getShort(8));
+        }
+    }
 }

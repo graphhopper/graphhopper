@@ -43,14 +43,24 @@ public interface DataAccess extends Storable<DataAccess>
     void rename( String newName );
 
     /**
-     * Set 4 bytes at position 'index' to the specified value
+     * Set 4 bytes at position 'bytePos' to the specified value
      */
     void setInt( long bytePos, int value );
 
     /**
-     * Get 4 bytes from position 'index'
+     * Get 4 bytes from position 'bytePos'
      */
     int getInt( long bytePos );
+    
+    /**
+     * Set 2 bytes at position 'index' to the specified value
+     */
+    void setShort( long bytePos, short value );
+
+    /**
+     * Get 2 bytes from position 'index'
+     */
+    short getShort( long bytePos );
 
     /**
      * Set bytes from position 'index' to the specified values

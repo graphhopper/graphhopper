@@ -17,17 +17,19 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.storage.NodeAccess;
+
 /**
  * @author Peter Karich
  */
 public class FinishInstruction extends Instruction
 {
-    public FinishInstruction( final double lat, final double lon )
+    public FinishInstruction( final double lat, final double lon, final double ele )
     {
-        super(FINISH, "", 0, 0, new PointList()
-        {            
+        super(FINISH, "", 0, 0, new PointList(2, true)
+        {
             {
-                add(lat, lon);
+                add(lat, lon, ele);
             }
         });
     }

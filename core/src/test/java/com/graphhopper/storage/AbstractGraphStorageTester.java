@@ -39,7 +39,7 @@ import org.junit.Test;
  */
 public abstract class AbstractGraphStorageTester
 {
-    private final String location = "./target/graphstorage";
+    private final String locationParent = "./target/graphstorage";
     protected int defaultSize = 100;
     protected String defaultGraphLoc = "./target/graphstorage/default";
     protected EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
@@ -54,31 +54,31 @@ public abstract class AbstractGraphStorageTester
 
     protected GraphStorage createGraph()
     {
-        GraphStorage g = createGraph(defaultGraphLoc, defaultSize);
+        GraphStorage g = createGraph(defaultGraphLoc, false);
         carOutExplorer = g.createEdgeExplorer(carOutFilter);
         carInExplorer = g.createEdgeExplorer(carInFilter);
         carAllExplorer = g.createEdgeExplorer();
         return g;
     }
 
-    abstract GraphStorage createGraph( String location, int size );
+    abstract GraphStorage createGraph( String location, boolean is3D );
 
     protected GraphStorage newRAMGraph()
     {
-        return new GraphHopperStorage(new RAMDirectory(), encodingManager);
+        return new GraphHopperStorage(new RAMDirectory(), encodingManager, false);
     }
 
     @Before
     public void setUp()
     {
-        Helper.removeDir(new File(location));
+        Helper.removeDir(new File(locationParent));
     }
 
     @After
     public void tearDown()
     {
         Helper.close((Closeable) graph);
-        Helper.removeDir(new File(location));
+        Helper.removeDir(new File(locationParent));
     }
 
     @Test
@@ -94,9 +94,10 @@ public abstract class AbstractGraphStorageTester
     public void testSetNodes()
     {
         graph = createGraph();
+        NodeAccess na = graph.getNodeAccess();
         for (int i = 0; i < defaultSize * 2; i++)
         {
-            graph.setNode(i, 2 * i, 3 * i);
+            na.setNode(i, 2 * i, 3 * i);
         }
         graph.edge(defaultSize + 1, defaultSize + 2, 10, true);
         graph.edge(defaultSize + 1, defaultSize + 3, 10, true);
@@ -234,13 +235,14 @@ public abstract class AbstractGraphStorageTester
     {
         graph = createGraph();
         graph.edge(1, 2, 10, true);
-        graph.setNode(0, 12, 23);
-        graph.setNode(1, 8, 13);
-        graph.setNode(2, 2, 10);
-        graph.setNode(3, 5, 9);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 12, 23);
+        na.setNode(1, 8, 13);
+        na.setNode(2, 2, 10);
+        na.setNode(3, 5, 9);
         graph.edge(1, 3, 10, true);
 
-        Graph clone = graph.copyTo(createGraph(location + "/clone", defaultSize));
+        Graph clone = graph.copyTo(createGraph(locationParent + "/clone", false));
         assertEquals(graph.getNodes(), clone.getNodes());
         assertEquals(count(carOutExplorer.setBaseNode(1)), count(clone.createEdgeExplorer(carOutFilter).setBaseNode(1)));
         clone.edge(1, 4, 10, true);
@@ -250,11 +252,26 @@ public abstract class AbstractGraphStorageTester
     }
 
     @Test
+    public void testCopyProperties()
+    {
+        graph = createGraph();
+        EdgeIteratorState edge = graph.edge(1, 3, 10, false).setName("testing").setWayGeometry(Helper.createPointList(1, 2));
+        
+        EdgeIteratorState newEdge = graph.edge(1, 3, 10, false);
+        edge.copyPropertiesTo(newEdge);
+        assertEquals(edge.getName(), newEdge.getName());
+        assertEquals(edge.getDistance(), newEdge.getDistance(), 1e-7);
+        assertEquals(edge.getFlags(), newEdge.getFlags());
+        assertEquals(edge.fetchWayGeometry(0), newEdge.fetchWayGeometry(0));
+    }
+
+    @Test
     public void testGetLocations()
     {
         graph = createGraph();
-        graph.setNode(0, 12, 23);
-        graph.setNode(1, 22, 23);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 12, 23);
+        na.setNode(1, 22, 23);
         assertEquals(2, graph.getNodes());
 
         graph.edge(0, 1, 10, true);
@@ -310,12 +327,13 @@ public abstract class AbstractGraphStorageTester
 
     protected void initExampleGraph( Graph g )
     {
-        g.setNode(0, 12, 23);
-        g.setNode(1, 38.33f, 135.3f);
-        g.setNode(2, 6, 139);
-        g.setNode(3, 78, 89);
-        g.setNode(4, 2, 1);
-        g.setNode(5, 7, 5);
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 12, 23);
+        na.setNode(1, 38.33f, 135.3f);
+        na.setNode(2, 6, 139);
+        na.setNode(3, 78, 89);
+        na.setNode(4, 2, 1);
+        na.setNode(5, 7, 5);
         g.edge(0, 1, 12, true);
         g.edge(0, 2, 212, true);
         g.edge(0, 3, 212, true);
@@ -325,17 +343,18 @@ public abstract class AbstractGraphStorageTester
 
     private void checkExampleGraph( Graph graph )
     {
-        assertEquals(12f, graph.getLatitude(0), 1e-6);
-        assertEquals(23f, graph.getLongitude(0), 1e-6);
+        NodeAccess na = graph.getNodeAccess();
+        assertEquals(12f, na.getLatitude(0), 1e-6);
+        assertEquals(23f, na.getLongitude(0), 1e-6);
 
-        assertEquals(38.33f, graph.getLatitude(1), 1e-6);
-        assertEquals(135.3f, graph.getLongitude(1), 1e-6);
+        assertEquals(38.33f, na.getLatitude(1), 1e-6);
+        assertEquals(135.3f, na.getLongitude(1), 1e-6);
 
-        assertEquals(6, graph.getLatitude(2), 1e-6);
-        assertEquals(139, graph.getLongitude(2), 1e-6);
+        assertEquals(6, na.getLatitude(2), 1e-6);
+        assertEquals(139, na.getLongitude(2), 1e-6);
 
-        assertEquals(78, graph.getLatitude(3), 1e-6);
-        assertEquals(89, graph.getLongitude(3), 1e-6);
+        assertEquals(78, na.getLatitude(3), 1e-6);
+        assertEquals(89, na.getLongitude(3), 1e-6);
 
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(carOutExplorer.setBaseNode((1))));
         assertEquals(GHUtility.asSet(5, 4, 3, 2, 1), GHUtility.getNeighbors(carOutExplorer.setBaseNode(0)));
@@ -427,10 +446,11 @@ public abstract class AbstractGraphStorageTester
     public void testDeleteNodeForUnidir()
     {
         graph = createGraph();
-        graph.setNode(10, 10, 1);
-        graph.setNode(6, 6, 1);
-        graph.setNode(20, 20, 1);
-        graph.setNode(21, 21, 1);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(10, 10, 1);
+        na.setNode(6, 6, 1);
+        na.setNode(20, 20, 1);
+        na.setNode(21, 21, 1);
 
         graph.edge(10, 20, 10, false);
         graph.edge(21, 6, 10, false);
@@ -469,17 +489,18 @@ public abstract class AbstractGraphStorageTester
     public void testDeleteNodes( int fillToSize )
     {
         graph = createGraph();
-        graph.setNode(0, 12, 23);
-        graph.setNode(1, 38.33f, 135.3f);
-        graph.setNode(2, 3, 3);
-        graph.setNode(3, 78, 89);
-        graph.setNode(4, 2, 1);
-        graph.setNode(5, 2.5f, 1);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 12, 23);
+        na.setNode(1, 38.33f, 135.3f);
+        na.setNode(2, 3, 3);
+        na.setNode(3, 78, 89);
+        na.setNode(4, 2, 1);
+        na.setNode(5, 2.5f, 1);
 
         int deleted = 2;
         for (int i = 6; i < fillToSize; i++)
         {
-            graph.setNode(i, i * 1.5, i * 1.6);
+            na.setNode(i, i * 1.5, i * 1.6);
             if (i % 3 == 0)
             {
                 graph.markNodeRemoved(i);
@@ -515,21 +536,22 @@ public abstract class AbstractGraphStorageTester
 
         assertEquals(fillToSize - deleted, graph.getNodes());
         int id1 = getIdOf(graph, 38.33f);
-        assertEquals(135.3f, graph.getLongitude(id1), 1e-4);
+        assertEquals(135.3f, na.getLongitude(id1), 1e-4);
         assertTrue(containsLatitude(graph, carAllExplorer.setBaseNode(id1), 2.5));
         assertFalse(containsLatitude(graph, carAllExplorer.setBaseNode(id1), 12));
 
         int id3 = getIdOf(graph, 78);
-        assertEquals(89, graph.getLongitude(id3), 1e-4);
+        assertEquals(89, na.getLongitude(id3), 1e-4);
         assertTrue(containsLatitude(graph, carAllExplorer.setBaseNode(id3), 2.5));
         assertFalse(containsLatitude(graph, carAllExplorer.setBaseNode(id3), 12));
     }
 
     public boolean containsLatitude( Graph g, EdgeIterator iter, double latitude )
     {
+        NodeAccess na = g.getNodeAccess();
         while (iter.next())
         {
-            if (Math.abs(g.getLatitude(iter.getAdjNode()) - latitude) < 1e-4)
+            if (Math.abs(na.getLatitude(iter.getAdjNode()) - latitude) < 1e-4)
                 return true;
         }
         return false;
@@ -539,10 +561,11 @@ public abstract class AbstractGraphStorageTester
     public void testSimpleDelete()
     {
         graph = createGraph();
-        graph.setNode(0, 12, 23);
-        graph.setNode(1, 38.33f, 135.3f);
-        graph.setNode(2, 3, 3);
-        graph.setNode(3, 78, 89);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 12, 23);
+        na.setNode(1, 38.33f, 135.3f);
+        na.setNode(2, 3, 3);
+        na.setNode(3, 78, 89);
 
         graph.edge(3, 0, 21, true);
         graph.edge(5, 0, 22, true);
@@ -569,12 +592,13 @@ public abstract class AbstractGraphStorageTester
     public void testSimpleDelete2()
     {
         graph = createGraph();
+        NodeAccess na = graph.getNodeAccess();
         assertEquals(-1, getIdOf(graph, 12));
-        graph.setNode(9, 9, 1);
+        na.setNode(9, 9, 1);
         assertEquals(-1, getIdOf(graph, 12));
 
-        graph.setNode(11, 11, 1);
-        graph.setNode(12, 12, 1);
+        na.setNode(11, 11, 1);
+        na.setNode(12, 12, 1);
 
         // mini subnetwork which gets completely removed:
         graph.edge(5, 10, 510, true);
@@ -582,8 +606,8 @@ public abstract class AbstractGraphStorageTester
         graph.markNodeRemoved(10);
 
         PointList pl = new PointList();
-        pl.add(1, 2);
-        pl.add(1, 3);
+        pl.add(1, 2, Double.NaN);
+        pl.add(1, 3, Double.NaN);
         graph.edge(9, 11, 911, true).setWayGeometry(pl);
         graph.edge(9, 12, 912, true).setWayGeometry(pl);
 
@@ -617,10 +641,11 @@ public abstract class AbstractGraphStorageTester
     public void testSimpleDelete3()
     {
         graph = createGraph();
-        graph.setNode(7, 7, 1);
-        graph.setNode(8, 8, 1);
-        graph.setNode(9, 9, 1);
-        graph.setNode(11, 11, 1);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(7, 7, 1);
+        na.setNode(8, 8, 1);
+        na.setNode(9, 9, 1);
+        na.setNode(11, 11, 1);
 
         // mini subnetwork which gets completely removed:
         graph.edge(5, 10, 510, true);
@@ -648,11 +673,12 @@ public abstract class AbstractGraphStorageTester
     public void testDeleteAndOptimize()
     {
         graph = createGraph();
-        graph.setNode(20, 10, 10);
-        graph.setNode(21, 10, 11);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(20, 10, 10);
+        na.setNode(21, 10, 11);
         graph.markNodeRemoved(20);
         graph.optimize();
-        assertEquals(11, graph.getLongitude(20), 1e-5);
+        assertEquals(11, na.getLongitude(20), 1e-5);
     }
 
     @Test
@@ -662,11 +688,12 @@ public abstract class AbstractGraphStorageTester
         BBox b = graph.getBounds();
         assertEquals(BBox.INVERSE.maxLat, b.maxLat, 1e-6);
 
-        graph.setNode(0, 10, 20);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 10, 20);
         assertEquals(10, b.maxLat, 1e-6);
         assertEquals(20, b.maxLon, 1e-6);
 
-        graph.setNode(0, 15, -15);
+        na.setNode(0, 15, -15);
         assertEquals(15, b.maxLat, 1e-6);
         assertEquals(20, b.maxLon, 1e-6);
         assertEquals(10, b.minLat, 1e-6);
@@ -819,10 +846,11 @@ public abstract class AbstractGraphStorageTester
     public void testPillarNodes()
     {
         graph = createGraph();
-        graph.setNode(0, 0.01, 0.01);
-        graph.setNode(4, 0.4, 0.4);
-        graph.setNode(14, 0.14, 0.14);
-        graph.setNode(10, 0.99, 0.99);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 0.01, 0.01);
+        na.setNode(4, 0.4, 0.4);
+        na.setNode(14, 0.14, 0.14);
+        na.setNode(10, 0.99, 0.99);
 
         PointList pointList = Helper.createPointList(1, 1, 1, 2, 1, 3);
         graph.edge(0, 4).setDistance(100).setFlags(carEncoder.setProperties(10, true, false)).setWayGeometry(pointList);
@@ -908,10 +936,11 @@ public abstract class AbstractGraphStorageTester
     public void testGetAllEdgesWithDelete()
     {
         graph = createGraph();
-        graph.setNode(0, 0, 5);
-        graph.setNode(1, 1, 5);
-        graph.setNode(2, 2, 5);
-        graph.setNode(3, 3, 5);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 0, 5);
+        na.setNode(1, 1, 5);
+        na.setNode(2, 2, 5);
+        na.setNode(3, 3, 5);
         graph.edge(0, 1, 1, true);
         graph.edge(0, 2, 1, true);
         graph.edge(1, 2, 1, true);
@@ -953,9 +982,10 @@ public abstract class AbstractGraphStorageTester
     public static int getIdOf( Graph g, double latitude )
     {
         int s = g.getNodes();
+        NodeAccess na = g.getNodeAccess();
         for (int i = 0; i < s; i++)
         {
-            if (Math.abs(g.getLatitude(i) - latitude) < 1e-4)
+            if (Math.abs(na.getLatitude(i) - latitude) < 1e-4)
             {
                 return i;
             }
@@ -966,9 +996,10 @@ public abstract class AbstractGraphStorageTester
     public static int getIdOf( Graph g, double latitude, double longitude )
     {
         int s = g.getNodes();
+        NodeAccess na = g.getNodeAccess();
         for (int i = 0; i < s; i++)
         {
-            if (Math.abs(g.getLatitude(i) - latitude) < 1e-4 && Math.abs(g.getLongitude(i) - longitude) < 1e-4)
+            if (Math.abs(na.getLatitude(i) - latitude) < 1e-4 && Math.abs(na.getLongitude(i) - longitude) < 1e-4)
             {
                 return i;
             }
@@ -998,14 +1029,16 @@ public abstract class AbstractGraphStorageTester
         list.add(new TmpCarFlagEncoder(30, 0.001));
         list.add(new TmpCarFlagEncoder(30, 0.001));
         EncodingManager manager = new EncodingManager(list, 8, 0);
-        graph = new GraphHopperStorage(dir, manager).create(defaultSize);
+        graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
+
         EdgeIteratorState edge = graph.edge(0, 1);
         edge.setFlags(Long.MAX_VALUE / 3);
         // System.out.println(BitUtil.LITTLE.toBitString(Long.MAX_VALUE / 3) + "\n" + BitUtil.LITTLE.toBitString(edge.getFlags()));
         assertEquals(Long.MAX_VALUE / 3, edge.getFlags());
         graph.close();
 
-        graph = new GraphHopperStorage(dir, manager).create(defaultSize);
+        graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
+
         edge = graph.edge(0, 1);
         edge.setFlags(list.get(0).setProperties(99.123, true, true));
         assertEquals(99.123, list.get(0).getSpeed(edge.getFlags()), 1e-3);
@@ -1020,6 +1053,23 @@ public abstract class AbstractGraphStorageTester
         assertEquals(44.123, list.get(1).getSpeed(flags), 1e-3);
         assertTrue(list.get(1).isForward(flags));
         assertFalse(list.get(1).isBackward(flags));
+    }    
+
+    @Test
+    public void testEnabledElevation()
+    {
+        graph = createGraph(defaultGraphLoc, true);
+        NodeAccess na = graph.getNodeAccess();
+        assertTrue(na.is3D());
+        na.setNode(0, 10, 20, -10);
+        na.setNode(1, 11, 2, 100);
+        assertEquals(-10, na.getEle(0), 1e-1);
+        assertEquals(100, na.getEle(1), 1e-1);
+
+        graph.edge(0, 1).setWayGeometry(Helper.createPointList3D(10, 27, 72, 11, 20, 1));
+        assertEquals(Helper.createPointList3D(10, 27, 72, 11, 20, 1), GHUtility.getEdge(graph, 0, 1).fetchWayGeometry(0));
+        assertEquals(Helper.createPointList3D(10, 20, -10, 10, 27, 72, 11, 20, 1, 11, 2, 100), GHUtility.getEdge(graph, 0, 1).fetchWayGeometry(3));
+        assertEquals(Helper.createPointList3D(11, 2, 100, 11, 20, 1, 10, 27, 72, 10, 20, -10), GHUtility.getEdge(graph, 1, 0).fetchWayGeometry(3));
     }
 
     @Test

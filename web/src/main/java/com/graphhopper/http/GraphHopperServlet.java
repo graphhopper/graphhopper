@@ -28,6 +28,7 @@ import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPlace;
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.ServletException;
@@ -82,6 +83,7 @@ public class GraphHopperServlet extends GHBaseServlet
         list.add(bb.minLat);
         list.add(bb.maxLon);
         list.add(bb.maxLat);
+
         JSONObject json = new JSONObject();
         json.put("bbox", list);
         json.put("supported_vehicles", hopper.getEncodingManager());
@@ -213,7 +215,8 @@ public class GraphHopperServlet extends GHBaseServlet
                 if (points.getSize() >= 2)
                     jsonPath.put("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
 
-                jsonPath.put("points", createPoints(points, pointsEncoded));
+                jsonPath.put("points", createPoints(points, pointsEncoded));                
+                jsonPath.put("points_dim", points.getDimension());
 
                 if (enableInstructions)
                 {

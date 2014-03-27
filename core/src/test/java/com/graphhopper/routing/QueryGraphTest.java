@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.QueryResult;
@@ -46,7 +47,7 @@ public class QueryGraphTest
     @Before
     public void setUp()
     {
-        g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
+        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
     }
 
     @After
@@ -62,9 +63,10 @@ public class QueryGraphTest
         // 0     1
         // |
         // 2
-        g.setNode(0, 1, 0);
-        g.setNode(1, 1, 2.5);
-        g.setNode(2, 0, 0);
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 1, 0);
+        na.setNode(1, 1, 2.5);
+        na.setNode(2, 0, 0);
         g.edge(0, 2, 10, true);
         g.edge(0, 1, 10, true).setWayGeometry(Helper.createPointList(1.5, 1, 1.5, 1.5));
     }
@@ -144,9 +146,8 @@ public class QueryGraphTest
     @Test
     public void testFillVirtualEdges()
     {
-        g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
         initGraph(g);
-        g.setNode(3, 0, 1);
+        g.getNodeAccess().setNode(3, 0, 1);
         g.edge(1, 3);
 
         final int baseNode = 1;
@@ -172,7 +173,7 @@ public class QueryGraphTest
         queryGraph.lookup(Arrays.asList(res1));
         EdgeIteratorState state = GHUtility.getEdge(queryGraph, 0, 1);
         assertEquals(4, state.fetchWayGeometry(3).size());
-        
+
         // fetch virtual edge and check way geometry
         state = GHUtility.getEdge(queryGraph, 4, 3);
         assertEquals(2, state.fetchWayGeometry(3).size());
@@ -181,7 +182,6 @@ public class QueryGraphTest
     @Test
     public void testMultipleVirtualNodes()
     {
-        g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
         initGraph(g);
 
         // snap to edge which has pillar nodes        
@@ -228,9 +228,9 @@ public class QueryGraphTest
     @Test
     public void testOneWay()
     {
-        g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
-        g.setNode(0, 0, 0);
-        g.setNode(1, 0, 1);
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 0, 0);
+        na.setNode(1, 0, 1);
         g.edge(0, 1, 10, false);
 
         EdgeIteratorState edge = GHUtility.getEdge(g, 0, 1);
@@ -253,7 +253,6 @@ public class QueryGraphTest
     @Test
     public void testVirtEdges()
     {
-        g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
         initGraph(g);
 
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(0);
@@ -266,6 +265,33 @@ public class QueryGraphTest
     }
 
     @Test
+    public void testUseMeanElevation()
+    {
+        g.close();
+        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, true).create(100);
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 0, 0, 0);
+        na.setNode(1, 0, 0.0001, 20);
+        EdgeIteratorState edge = g.edge(0, 1);
+        EdgeIteratorState edgeReverse = edge.detach(true);
+
+        DistanceCalc2D distCalc = new DistanceCalc2D();
+        QueryResult qr = new QueryResult(0, 0.00005);
+        qr.setClosestEdge(edge);
+        qr.setWayIndex(0);
+        qr.setSnappedPosition(EDGE);
+        qr.calcSnappedPoint(distCalc);
+        assertEquals(10, qr.getSnappedPoint().getEle(), 1e-1);
+        
+        qr = new QueryResult(0, 0.00005);
+        qr.setClosestEdge(edgeReverse);
+        qr.setWayIndex(0);
+        qr.setSnappedPosition(EDGE);
+        qr.calcSnappedPoint(distCalc);
+        assertEquals(10, qr.getSnappedPoint().getEle(), 1e-1);
+    }
+
+    @Test
     public void testLoopStreet_Issue151()
     {
         // do query at x should result in ignoring only the bottom edge 1-3 not the upper one => getNeighbors are 0, 5, 3 and not only 0, 5
@@ -274,7 +300,6 @@ public class QueryGraphTest
         //    |  |
         //    x---
         //
-        g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
         g.edge(0, 1, 10, true);
         g.edge(1, 3, 10, true);
         g.edge(3, 4, 10, true);
@@ -307,9 +332,9 @@ public class QueryGraphTest
         // |
         // 1
         FlagEncoder carEncoder = encodingManager.getSingle();
-        g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
-        g.setNode(0, 0, 0);
-        g.setNode(1, 0, -0.001);
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 0, 0);
+        na.setNode(1, 0, -0.001);
         g.edge(0, 1, 10, true);
         // in the case of identical nodes the wayGeometry defines the direction!
         EdgeIteratorState edge = g.edge(0, 0).
@@ -334,13 +359,12 @@ public class QueryGraphTest
 
         iter.next();
         assertTrue(iter.toString(), carEncoder.isBackward(iter.getFlags()));
-        assertFalse(iter.toString(), carEncoder.isForward(iter.getFlags()));        
+        assertFalse(iter.toString(), carEncoder.isForward(iter.getFlags()));
     }
 
     @Test
     public void testEdgesShareOneNode()
     {
-        g = new GraphHopperStorage(new RAMDirectory(), encodingManager).create(100);
         initGraph(g);
 
         EdgeIteratorState iter = GHUtility.getEdge(g, 0, 2);

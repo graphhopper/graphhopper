@@ -39,29 +39,29 @@ public class Instruction
     private long time;
     final PointList points;
     private final int pavementType;
-    private final int waytype;
+    private final int wayType;
 
     /**
      * The points, distances and times have exactly the same count. The last point of this
      * instruction is not duplicated here and should be in the next one.
      */
-    public Instruction( int sign, String name, int waytype, int pavementType, PointList pl )
+    public Instruction( int sign, String name, int wayType, int pavementType, PointList pl )
     {
         this.sign = sign;
         this.name = name;
         this.points = pl;
-        this.waytype = waytype;
+        this.wayType = wayType;
         this.pavementType = pavementType;
     }
 
-    public int getPavement()
+    public int getPavementType()
     {
         return pavementType;
     }
 
     public int getWayType()
     {
-        return waytype;
+        return wayType;
     }
 
     public int getSign()
@@ -112,7 +112,7 @@ public class Instruction
     {
         return points.getLatitude(0);
     }
-
+    
     /**
      * Longitude of the location where this instruction should take place.
      */

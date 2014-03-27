@@ -36,25 +36,25 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
     private TurnCostStorage turnCostStorage;
 
     @Override
-    protected GraphStorage newGraph( Directory dir )
+    protected GraphStorage newGraph( Directory dir, boolean is3D )
     {
         turnCostStorage = new TurnCostStorage();
-        return new GraphHopperStorage(dir, encodingManager, turnCostStorage);
+        return new GraphHopperStorage(dir, encodingManager, is3D, turnCostStorage);
     }
-
+    
     @Override
-    protected GraphStorage newRAMGraph()
-    {
-        return newGraph(new RAMDirectory());
+    protected GraphStorage newRAMGraph() {
+        return newGraph(new RAMDirectory(), false);
     }
 
     @Test
     public void testSave_and_fileFormat_withTurnCostEntries() throws IOException
     {
-        graph = createGraphStorage(new RAMDirectory(defaultGraphLoc, true));
-        graph.setNode(0, 10, 10);
-        graph.setNode(1, 11, 20);
-        graph.setNode(2, 12, 12);
+        graph = newGraph(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 10, 10);
+        na.setNode(1, 11, 20);
+        na.setNode(2, 12, 12);
 
         EdgeIteratorState iter2 = graph.edge(0, 1, 100, true);
         iter2.setWayGeometry(Helper.createPointList(1.5, 1, 2, 3));
@@ -75,7 +75,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
         graph.flush();
         graph.close();
 
-        graph = newGraph(new MMapDirectory(defaultGraphLoc));
+        graph = newGraph(new MMapDirectory(defaultGraphLoc), false);
         assertTrue(graph.loadExisting());
 
         assertEquals(12, graph.getNodes());

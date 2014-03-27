@@ -34,6 +34,7 @@ import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import java.util.*;
 import org.slf4j.Logger;
@@ -671,10 +672,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     String getCoords( EdgeIteratorState e, Graph g )
     {
+        NodeAccess na = g.getNodeAccess();
         int base = e.getBaseNode();
         int adj = e.getAdjNode();
         return base + "->" + adj + " (" + e.getEdge() + "); "
-                + g.getLatitude(base) + "," + g.getLongitude(base) + " -> " + g.getLatitude(adj) + "," + g.getLongitude(adj);
+                + na.getLat(base) + "," + na.getLon(base) + " -> " + na.getLat(adj) + "," + na.getLon(adj);
     }
 
     PrepareContractionHierarchies initFromGraph()

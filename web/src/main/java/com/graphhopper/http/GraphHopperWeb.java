@@ -101,22 +101,29 @@ public class GraphHopperWeb implements GraphHopperAPI
             took = json.getJSONObject("info").getDouble("took");
             JSONArray paths = json.getJSONArray("paths");
             JSONObject firstPath = paths.getJSONObject(0);
+
+            boolean is3D = false;
+            if (firstPath.has("points_dim"))
+                is3D = "3".equals(firstPath.getString("points_dim"));
             double distance = firstPath.getDouble("distance");
             int time = firstPath.getInt("time");
             PointList pointList;
             if (pointsEncoded)
             {
-                pointList = WebHelper.decodePolyline(firstPath.getString("points"), 100);
+                pointList = WebHelper.decodePolyline(firstPath.getString("points"), 100, is3D);
             } else
             {
                 JSONArray coords = firstPath.getJSONObject("points").getJSONArray("coordinates");
-                pointList = new PointList(coords.length());
+                pointList = new PointList(coords.length(), is3D);
                 for (int i = 0; i < coords.length(); i++)
                 {
                     JSONArray arr = coords.getJSONArray(i);
                     double lon = arr.getDouble(0);
                     double lat = arr.getDouble(1);
-                    pointList.add(lat, lon);
+                    if (is3D)
+                        pointList.add(lat, lon, arr.getDouble(2));
+                    else
+                        pointList.add(lat, lon);
                 }
             }
             GHResponse res = new GHResponse();
@@ -135,10 +142,10 @@ public class GraphHopperWeb implements GraphHopperAPI
                     JSONArray iv = jsonObj.getJSONArray("interval");
                     int from = iv.getInt(0);
                     int to = iv.getInt(1);
-                    PointList instPL = new PointList(to - from);
+                    PointList instPL = new PointList(to - from, is3D);
                     for (int j = from; j <= to; j++)
                     {
-                        instPL.add(pointList.getLatitude(j), pointList.getLongitude(j));
+                        instPL.add(pointList, j);
                     }
 
                     // TODO way and payment type

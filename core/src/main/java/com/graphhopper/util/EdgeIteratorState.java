@@ -102,7 +102,9 @@ public interface EdgeIteratorState
     EdgeIteratorState detach( boolean reverse );
 
     /**
-     * Copies the specified edge into the current one.
+     * Copies the properties of this edge into the specified edge. Does not change nodes!
+     * <p>
+     * @return the specified edge e
      */
-    void copyProperties( EdgeIteratorState edge );
+    EdgeIteratorState copyPropertiesTo( EdgeIteratorState e );
 }

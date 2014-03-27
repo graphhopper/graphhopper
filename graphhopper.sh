@@ -39,15 +39,15 @@ function ensureOsmXml {
     echo "## now downloading OSM file from $LINK and extracting to $OSM_FILE"
     
     if [ ${OSM_FILE: -4} == ".pbf" ]; then
-       wget -S -nv -O $OSM_FILE $LINK
+       wget -S -nv -O "$OSM_FILE" $LINK
     elif [ ${OSM_FILE: -4} == ".ghz" ]; then
-       wget -S -nv -O $OSM_FILE $LINK
-       unzip $FILE -d $NAME-gh             
+       wget -S -nv -O "$OSM_FILE" $LINK
+       unzip "$FILE" -d $NAME-gh             
     else    
        # make sure aborting download does not result in loading corrupt osm file
        TMP_OSM=temp.osm
        wget -S -nv -O - $LINK | bzip2 -d > $TMP_OSM
-       mv $TMP_OSM $OSM_FILE
+       mv $TMP_OSM "$OSM_FILE"
     fi
   
     if [[ ! -s "$OSM_FILE" ]]; then
@@ -152,18 +152,18 @@ NAME="${FILE%.*}"
 if [ "x$FILE" == "x-" ]; then
    OSM_FILE=
 elif [ ${FILE: -4} == ".osm" ]; then
-   OSM_FILE=$FILE
+   OSM_FILE="$FILE"
 elif [ ${FILE: -4} == ".pbf" ]; then
-   OSM_FILE=$FILE
+   OSM_FILE="$FILE"
 elif [ ${FILE: -7} == ".osm.gz" ]; then
-   OSM_FILE=$FILE   
+   OSM_FILE="$FILE"
 elif [ ${FILE: -3} == "-gh" ]; then
-   OSM_FILE=$FILE
+   OSM_FILE="$FILE"
    NAME=${FILE%%???}
 elif [ ${FILE: -4} == ".ghz" ]; then
-   OSM_FILE=$FILE
+   OSM_FILE="$FILE"
    if [[ ! -d "$NAME-gh" ]]; then
-      unzip $FILE -d $NAME-gh
+      unzip "$FILE" -d $NAME-gh
    fi
 else
    # no known end -> no import
@@ -204,7 +204,7 @@ if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
   if [ "x$JETTY_PORT" = "x" ]; then  
     JETTY_PORT=8989
   fi
-  WEB_JAR="$GH_HOME/web/target/graphhopper-web-$VERSION-jar-with-dependencies.jar"
+  WEB_JAR="$GH_HOME/web/target/graphhopper-web-$VERSION-with-dep.jar"
   if [ ! -s "$WEB_JAR" ]; then         
     "$MAVEN_HOME/bin/mvn" --projects web -DskipTests=true install assembly:single > /tmp/graphhopper-web-compile.log
     returncode=$?
@@ -263,7 +263,7 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
     COUNT=5000
     commit_info=`git log -n 1 --pretty=oneline`     
     echo -e "\nperform measurement via jar=> $JAR and ARGS=> $ARGS"
-    "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS measurement.count=$COUNT measurement.location=$M_FILE_NAME \
+    "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS measurement.count=$COUNT measurement.location="$M_FILE_NAME" \
             graph.importTime=$IMPORT_TIME measurement.gitinfo="$commit_info"
  }
  
@@ -288,7 +288,7 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
    
    "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests clean install assembly:single
    startMeasurement
-   echo -e "\nmeasurement.commit=$commit\n" >> $M_FILE_NAME
+   echo -e "\nmeasurement.commit=$commit\n" >> "$M_FILE_NAME"
  done
  # revert checkout
  git checkout $current_commit

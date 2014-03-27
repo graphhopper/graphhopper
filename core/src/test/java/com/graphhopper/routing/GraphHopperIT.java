@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
@@ -29,8 +30,10 @@ import java.io.File;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Before;
 
 /**
  * @author Peter Karich
@@ -38,66 +41,109 @@ import static org.junit.Assert.*;
 public class GraphHopperIT
 {
     TranslationMap trMap = TranslationMapTest.SINGLETON;
+    Translation tr = trMap.getWithFallBack(Locale.US);
+    String graphFile = "target/graph-GraphHopperIT";
+
+    @Before
+    public void setUp()
+    {
+        // make sure we are using fresh graphhopper files with correct vehicle
+        Helper.removeDir(new File(graphFile));
+    }
+
+    @After
+    public void tearDown()
+    {
+        Helper.removeDir(new File(graphFile));
+    }
 
     @Test
-    public void testMonacoWithInstructions()
+    public void testMonacoWithInstructions() throws Exception
     {
         String osmFile = "files/monaco.osm.gz";
-        String graphFile = "target/graph-monaco";
+        String vehicle = "FOOT";
+        String importVehicles = "FOOT";
+        String weightCalcStr = "shortest";
+        GraphHopper hopper = new GraphHopper().setInMemory(true).setOSMFile(osmFile).
+                disableCHShortcuts().
+                setGraphHopperLocation(graphFile).setEncodingManager(new EncodingManager(importVehicles)).
+                importOrLoad();
+
+        Graph g = hopper.getGraph();
+        GHResponse rsp = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
+
+        assertEquals(3437.6, rsp.getDistance(), .1);
+        assertEquals(89, rsp.getPoints().getSize());
+
+        InstructionList il = rsp.getInstructions();
+        assertEquals(13, il.size());
+
+        List<Map<String, Object>> resultJson = il.createJson(tr);
+        // TODO roundabout fine tuning -> enter + leave roundabout (+ two rounabouts -> is it necessary if we do not leave the street?)
+        assertEquals("Continue onto Avenue des Guelfes", resultJson.get(0).get("text"));
+        assertEquals("Turn slight left onto Avenue des Papalins", resultJson.get(1).get("text"));
+        assertEquals("Turn sharp right onto Quai Jean-Charles Rey", resultJson.get(2).get("text"));
+        assertEquals("Turn left onto road", resultJson.get(3).get("text"));
+        assertEquals("Turn right onto Avenue Albert II", resultJson.get(4).get("text"));
+
+        assertEquals(11, (Double) resultJson.get(0).get("distance"), 1);
+        assertEquals(289, (Double) resultJson.get(1).get("distance"), 1);
+        assertEquals(10, (Double) resultJson.get(2).get("distance"), 1);
+        assertEquals(43, (Double) resultJson.get(3).get("distance"), 1);
+        assertEquals(122, (Double) resultJson.get(4).get("distance"), 1);
+        assertEquals(447, (Double) resultJson.get(5).get("distance"), 1);
+
+        assertEquals(7, (Long) resultJson.get(0).get("time") / 1000);
+        assertEquals(207, (Long) resultJson.get(1).get("time") / 1000);
+        assertEquals(7, (Long) resultJson.get(2).get("time") / 1000);
+        assertEquals(30, (Long) resultJson.get(3).get("time") / 1000);
+        assertEquals(87, (Long) resultJson.get(4).get("time") / 1000);
+        assertEquals(321, (Long) resultJson.get(5).get("time") / 1000);
+
+        List<GPXEntry> list = rsp.getInstructions().createGPXList();
+        assertEquals(89, list.size());
+        final long lastEntryMillis = list.get(list.size() - 1).getMillis();
+        final long totalResponseMillis = rsp.getMillis();
+        assertEquals(totalResponseMillis, lastEntryMillis);
+    }
+
+    @Test
+    public void testSRTMWithInstructions() throws Exception
+    {
+        String osmFile = "files/monaco.osm.gz";
         String vehicle = "FOOT";
         String importVehicles = "FOOT";
         String weightCalcStr = "shortest";
 
-        try
-        {
-            // make sure we are using fresh graphhopper files with correct vehicle
-            Helper.removeDir(new File(graphFile));
-            GraphHopper hopper = new GraphHopper().setInMemory(true).setOSMFile(osmFile).
-                    disableCHShortcuts().
-                    setGraphHopperLocation(graphFile).setEncodingManager(new EncodingManager(importVehicles)).
-                    importOrLoad();
+        GraphHopper hopper = new GraphHopper().setInMemory(true).setOSMFile(osmFile).
+                disableCHShortcuts().
+                setGraphHopperLocation(graphFile).setEncodingManager(new EncodingManager(importVehicles));
 
-            Graph g = hopper.getGraph();
-            GHResponse rsp = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
-                    setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
+        hopper.setElevationProvider(new SRTMProvider().setCacheDir(new File("./files/")));
+        hopper.importOrLoad();
 
-            assertEquals(3437.6, rsp.getDistance(), .1);
-            assertEquals(89, rsp.getPoints().getSize());
+        Graph g = hopper.getGraph();
+        GHResponse rsp = hopper.route(new GHRequest(43.730729, 7.421288, 43.727697, 7.419199).
+                setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
 
-            InstructionList il = rsp.getInstructions();
-            assertEquals(13, il.size());
-            Translation tr = trMap.getWithFallBack(Locale.US);
-            List<Map<String, Object>> resultJson = il.createJson(tr);
-            // TODO roundabout fine tuning -> enter + leave roundabout (+ two rounabouts -> is it necessary if we do not leave the street?)
-            assertEquals("Continue onto Avenue des Guelfes", resultJson.get(0).get("text"));
-            assertEquals("Turn slight left onto Avenue des Papalins", resultJson.get(1).get("text"));
-            assertEquals("Turn sharp right onto Quai Jean-Charles Rey", resultJson.get(2).get("text"));
-            assertEquals("Turn left onto road", resultJson.get(3).get("text"));
-            assertEquals("Turn right onto Avenue Albert II", resultJson.get(4).get("text"));
+        assertEquals(1634, rsp.getDistance(), .1);
+        assertEquals(60, rsp.getPoints().getSize());
+        assertTrue(rsp.getPoints().is3D());
 
-            assertEquals(11, (Double) resultJson.get(0).get("distance"), 1);
-            assertEquals(289, (Double) resultJson.get(1).get("distance"), 1);
-            assertEquals(10, (Double) resultJson.get(2).get("distance"), 1);
-            assertEquals(43, (Double) resultJson.get(3).get("distance"), 1);
-            assertEquals(122, (Double) resultJson.get(4).get("distance"), 1);
-            assertEquals(447, (Double) resultJson.get(5).get("distance"), 1);
+        InstructionList il = rsp.getInstructions();
+        assertEquals(10, il.size());
+        assertTrue(il.get(0).getPoints().is3D());
 
-            assertEquals(7, (Long) resultJson.get(0).get("time") / 1000);
-            assertEquals(207, (Long) resultJson.get(1).get("time") / 1000);
-            assertEquals(7, (Long) resultJson.get(2).get("time") / 1000);
-            assertEquals(30, (Long) resultJson.get(3).get("time") / 1000);
-            assertEquals(87, (Long) resultJson.get(4).get("time") / 1000);
-            assertEquals(321, (Long) resultJson.get(5).get("time") / 1000);
-
-            List<GPXEntry> list = rsp.getInstructions().createGPXList();
-            assertEquals(89, list.size());
-            final long lastEntryMillis = list.get(list.size() - 1).getMillis();
-            final long totalResponseMillis = rsp.getMillis();
-            assertEquals(totalResponseMillis, lastEntryMillis);
-
-        } finally
-        {
-            Helper.removeDir(new File(graphFile));
-        }
+        String str = rsp.getPoints().toString();
+        assertTrue(str,
+                str.startsWith("(43.73068455771767,7.421283689825812,66.0), (43.73067957305937,7.421382123709815,66.0), "
+                        + "(43.73109792316924,7.421546222751131,66.0), (43.73129908884985,7.421589994913116,66.0), "
+                        + "(43.731327028527716,7.421414533736137,66.0), (43.73125047381037,7.421366291225693,66.0), "
+                        + "(43.73125457162979,7.421274090288746,66.0), "
+                        + "(43.73128213877862,7.421115579183003,66.0), (43.731362232521825,7.421145381506057,66.0), "
+                        + "(43.731371359483255,7.421123216028286,66.0), (43.731485725897976,7.42117332118392,45.0), "
+                        + "(43.731575132867135,7.420868778695214,52.0), (43.73160605277731,7.420824820268709,52.0), "
+                        + "(43.7316401391843,7.420850152243305,52.0), (43.731674039326776,7.421050014072285,45.0)"));        
     }
 }

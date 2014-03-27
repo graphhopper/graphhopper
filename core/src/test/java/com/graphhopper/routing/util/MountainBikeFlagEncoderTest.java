@@ -19,8 +19,6 @@ import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
@@ -81,44 +79,43 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     @Test
     public void testHandleWayTags()
     {
-        Map<String, String> wayMap = new HashMap<String, String>();
-        OSMWay way = new OSMWay(1, wayMap);
+        OSMWay way = new OSMWay(1);
         String wayType;
 
-        wayMap.put("highway", "track");
+        way.setTag("highway", "track");
         wayType = encodeDecodeWayType("", way);
         assertEquals("way, unpaved", wayType);
 
-        wayMap.clear();
-        wayMap.put("highway", "path");
+        way.clearTags();
+        way.setTag("highway", "path");
         wayType = encodeDecodeWayType("", way);
         assertEquals("way, unpaved", wayType);
 
-        wayMap.clear();
-        wayMap.put("highway", "path");
-        wayMap.put("surface", "grass");
+        way.clearTags();
+        way.setTag("highway", "path");
+        way.setTag("surface", "grass");
         wayType = encodeDecodeWayType("", way);
         assertEquals("way, unpaved", wayType);
 
-        wayMap.clear();
-        wayMap.put("highway", "path");
-        wayMap.put("surface", "concrete");
+        way.clearTags();
+        way.setTag("highway", "path");
+        way.setTag("surface", "concrete");
         wayType = encodeDecodeWayType("", way);
         assertEquals("way", wayType);
 
-        wayMap.clear();
-        wayMap.put("highway", "track");
-        wayMap.put("foot", "yes");
-        wayMap.put("surface", "paved");
-        wayMap.put("tracktype", "grade1");
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("foot", "yes");
+        way.setTag("surface", "paved");
+        way.setTag("tracktype", "grade1");
         wayType = encodeDecodeWayType("", way);
         assertEquals("way", wayType);
 
-        wayMap.clear();
-        wayMap.put("highway", "track");
-        wayMap.put("foot", "yes");
-        wayMap.put("surface", "paved");
-        wayMap.put("tracktype", "grade2");
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("foot", "yes");
+        way.setTag("surface", "paved");
+        way.setTag("tracktype", "grade2");
         wayType = encodeDecodeWayType("", way);
         assertEquals("way, unpaved", wayType);
 
@@ -127,74 +124,50 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     @Test
     public void testHandleWayTagsInfluencedByRelation()
     {
-        Map<String, String> wayMap = new HashMap<String, String>();
-        OSMWay osmWay = new OSMWay(1, wayMap);
-        wayMap.put("highway", "track");
+        OSMWay osmWay = new OSMWay(1);
+        osmWay.setTag("highway", "track");
         long allowed = encoder.acceptBit;
 
-        Map<String, String> relMap = new HashMap<String, String>();
-        OSMRelation osmRel = new OSMRelation(1, relMap);
+        OSMRelation osmRel = new OSMRelation(1);
 
         long relFlags = encoder.handleRelationTags(osmRel, 0);
         // unchanged
         long flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(24, encoder.getSpeed(flags), 1e-1);
-        assertEquals(3, encoder.getWayTypeCode(flags));
-        assertEquals(1, encoder.getPavementCode(flags));
+        assertEquals(3, encoder.getWayType(flags));
+        assertEquals(1, encoder.getPavementType(flags));
 
         // relation code is PREFER
-        relMap.put("route", "bicycle");
-        relMap.put("network", "lcn");
+        osmRel.setTag("route", "bicycle");
+        osmRel.setTag("network", "lcn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(28, encoder.getSpeed(flags), 1e-1);
-        assertEquals(3, encoder.getWayTypeCode(flags));
-        assertEquals(1, encoder.getPavementCode(flags));
+        assertEquals(3, encoder.getWayType(flags));
+        assertEquals(1, encoder.getPavementType(flags));
 
         // relation code is PREFER
-        relMap.put("network", "rcn");
+        osmRel.setTag("network", "rcn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(28, encoder.getSpeed(flags), 1e-1);
 
         // relation code is PREFER
-        relMap.put("network", "ncn");
+        osmRel.setTag("network", "ncn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(28, encoder.getSpeed(flags), 1e-1);
 
         // PREFER relation, but tertiary road
         // => no pushing section but road wayTypeCode and faster
-        wayMap.clear();
-        wayMap.put("highway", "tertiary");
+        osmWay.clearTags();
+        osmWay.setTag("highway", "tertiary");
 
-        relMap.put("route", "bicycle");
-        relMap.put("network", "lcn");
+        osmRel.setTag("route", "bicycle");
+        osmRel.setTag("network", "lcn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(20, encoder.getSpeed(flags), 1e-1);
-        assertEquals(0, encoder.getWayTypeCode(flags));
-
-        // test max and min speed
-        final AtomicInteger fakeSpeed = new AtomicInteger(40);
-        MountainBikeFlagEncoder fakeEncoder = new MountainBikeFlagEncoder()
-        {
-            @Override
-            int relationWeightCodeToSpeed( int highwaySpeed, int relationCode )
-            {
-                return fakeSpeed.get();
-            }
-        };
-        // call necessary register
-        new EncodingManager(fakeEncoder);
-        allowed = fakeEncoder.acceptBit;
-
-        flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
-        assertEquals(30, fakeEncoder.getSpeed(flags), 1e-1);
-
-        fakeSpeed.set(-2);
-        flags = fakeEncoder.handleWayTags(osmWay, allowed, 1);
-        assertEquals(0, fakeEncoder.getSpeed(flags), 1e-1);
-
+        assertEquals(0, encoder.getWayType(flags));
     }
 }

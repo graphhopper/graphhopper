@@ -28,7 +28,6 @@ import java.nio.ByteOrder;
  */
 public interface Directory
 {
-
     /**
      * @return an id or location in the local filesystem.
      */
@@ -61,4 +60,9 @@ public interface Directory
      * @return the default type of a newly created DataAccess object
      */
     DAType getDefaultType();
+
+    /**
+     * Removes all contained objects from the directory and releases its resources.
+     */
+    void clear();
 }

@@ -19,6 +19,7 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -50,7 +51,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     {
         if (preparedMatrixGraph == null)
         {
-            LevelGraph lg = createGraph();
+            LevelGraph lg = (LevelGraph) createGraph(false);
             getMatrixAlikeGraph().copyTo(lg);
             prepareGraph(lg);
             preparedMatrixGraph = lg;
@@ -59,9 +60,9 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     }
 
     @Override
-    protected LevelGraph createGraph()
+    protected LevelGraph createGraph( EncodingManager em, boolean is3D )
     {
-        return new GraphBuilder(encodingManager).levelGraphCreate();
+        return new GraphBuilder(em).set3D(is3D).levelGraphCreate();
     }
 
     @Override
@@ -78,10 +79,13 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     @Test
     public void testPathRecursiveUnpacking()
     {
-        LevelGraphStorage g2 = (LevelGraphStorage) createGraph();
+        // use an encoder where it is possible to store 2 weights per edge
+        FlagEncoder encoder = new Bike2WeightFlagEncoder();
+        EncodingManager em = new EncodingManager(encoder);        
+        LevelGraphStorage g2 = (LevelGraphStorage) createGraph(em, false);
         g2.edge(0, 1, 1, true);
-        EdgeIteratorState iter1_1 = g2.edge(0, 2, 1.4, true);
-        EdgeIteratorState iter1_2 = g2.edge(2, 5, 1.4, true);
+        EdgeIteratorState iter1_1 = g2.edge(0, 2, 1.4, false);
+        EdgeIteratorState iter1_2 = g2.edge(2, 5, 1.4, false);
         g2.edge(1, 2, 1, true);
         g2.edge(1, 3, 3, true);
         g2.edge(2, 3, 1, true);
@@ -90,17 +94,16 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         g2.edge(3, 5, 1, true);
         g2.edge(5, 6, 1, true);
         g2.edge(4, 6, 1, true);
-        g2.edge(5, 7, 1.4, true);
-        g2.edge(6, 7, 1, true);
+        g2.edge(6, 7, 1, true);                
+        EdgeIteratorState iter2_2 = g2.edge(5, 7);
+        iter2_2.setDistance(1.4).setFlags(encoder.setProperties(10, true, false));
         
         // simulate preparation
-        EdgeIteratorState iter2_2 = g2.edge(5, 7);
-        iter2_2.setDistance(1.4).setFlags(carEncoder.setProperties(0, true, true));
         EdgeSkipIterState iter2_1 = g2.shortcut(0, 5);
-        iter2_1.setDistance(2.8).setFlags(carEncoder.setProperties(0, true, true));
+        iter2_1.setDistance(2.8).setFlags(encoder.setProperties(10, true, false));
         iter2_1.setSkippedEdges(iter1_1.getEdge(), iter1_2.getEdge());
         EdgeSkipIterState tmp = g2.shortcut(0, 7);
-        tmp.setDistance(4.2).setFlags(carEncoder.setProperties(0, true, true));
+        tmp.setDistance(4.2).setFlags(encoder.setProperties(10, true, false));
         tmp.setSkippedEdges(iter2_1.getEdge(), iter2_2.getEdge());
         g2.setLevel(1, 0);
         g2.setLevel(3, 1);
@@ -111,9 +114,11 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         g2.setLevel(7, 6);
         g2.setLevel(0, 7);
 
-        Path p = new PrepareContractionHierarchies(carEncoder, new ShortestWeighting()).setGraph(g2).createAlgo().calcPath(0, 7);
+        Path p = new PrepareContractionHierarchies(encoder, new ShortestWeighting()).
+                setGraph(g2).createAlgo().calcPath(0, 7);
+        
         assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());
-        assertEquals(4, p.calcNodes().size());
+        assertEquals(1064, p.getMillis());
         assertEquals(4.2, p.getDistance(), 1e-5);
     }
 
@@ -124,15 +129,15 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         FlagEncoder tmpFootEncoder = footEncoder;
         FlagEncoder tmpCarEncoder = carEncoder;
         carEncoder = new CarFlagEncoder()
-        {            
+        {
             @Override
             public long setProperties( double speed, boolean forward, boolean backward )
             {
                 return 0;
-            }                        
+            }
         };
-        
-        footEncoder = new EncodingManager("FOOT").getSingle();        
+
+        footEncoder = new EncodingManager("FOOT").getSingle();
         super.testCalcFootPath();
         footEncoder = tmpFootEncoder;
         carEncoder = tmpCarEncoder;

@@ -51,39 +51,39 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     @Override
     public void testViaEdges_BiGraph()
     {
-        // not supported
+        // calcPath with QueryResult not supported
     }
 
     @Override
     public void testViaEdges_SpecialCases()
     {
-        // not supported
+        // calcPath with QueryResult not supported
     }
 
     @Override
     public void testViaEdges_FromEqualsTo()
     {
-        // not supported
+        // calcPath with QueryResult not supported
     }
 
     @Override
     public void testViaEdges_WithCoordinates()
     {
-        // not supported
+        // calcPath with QueryResult not supported
     }
 
     @Override
     public void testQueryGraphAndFastest()
     {
-        // not supported
+        // calcPath with QueryResult not supported
     }
 
     @Override
-    public void testTwoWeightsPerEdge()
+    public void testTwoWeightsPerEdge2()
     {
-        // not supported
-    }
-    
+        // calcPath with QueryResult not supported
+    }            
+
     @Test
     public void testUseCache()
     {

@@ -24,6 +24,11 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.ShortestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.NodeAccess;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 import java.util.*;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -46,18 +51,19 @@ public class InstructionListTest
         // 3-4-5  9-10
         // | | |  |
         // 6-7-8--*
-        g.setNode(0, 1.2, 1.0);
-        g.setNode(1, 1.2, 1.1);
-        g.setNode(2, 1.2, 1.2);
-        g.setNode(3, 1.1, 1.0);
-        g.setNode(4, 1.1, 1.1);
-        g.setNode(5, 1.1, 1.2);
-        g.setNode(9, 1.1, 1.3);
-        g.setNode(10, 1.1, 1.4);
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 1.2, 1.0);
+        na.setNode(1, 1.2, 1.1);
+        na.setNode(2, 1.2, 1.2);
+        na.setNode(3, 1.1, 1.0);
+        na.setNode(4, 1.1, 1.1);
+        na.setNode(5, 1.1, 1.2);
+        na.setNode(9, 1.1, 1.3);
+        na.setNode(10, 1.1, 1.4);
 
-        g.setNode(6, 1.0, 1.0);
-        g.setNode(7, 1.0, 1.1);
-        g.setNode(8, 1.0, 1.2);
+        na.setNode(6, 1.0, 1.0);
+        na.setNode(7, 1.0, 1.1);
+        na.setNode(8, 1.0, 1.2);
         g.edge(0, 1, 10000, true).setName("0-1");
         g.edge(1, 2, 11000, true).setName("1-2");
 
@@ -123,8 +129,7 @@ public class InstructionListTest
         assertEquals(Helper.createTList(6, 7, 8, 5, 2), p.calcNodes());
         wayList = p.calcInstructions();
         tmpList = pick("text", wayList.createJson(trMap.getWithFallBack(Locale.CANADA)));
-        assertEquals(Arrays.asList("Continue onto 6-7", "Continue onto 7-8", "Turn left onto 5-8", 
-                "Continue onto 5-2", "Finish!"),
+        assertEquals(Arrays.asList("Continue onto 6-7", "Continue onto 7-8", "Turn left onto 5-8", "Continue onto 5-2", "Finish!"),
                 tmpList);
 
         // assertEquals(Arrays.asList(0, 1, 4, 5, 6), wayList.createPointIndices());
@@ -196,10 +201,11 @@ public class InstructionListTest
         //      4
         //     /
         //    3
-        g.setNode(2, 10.3, 10.15);
-        g.setNode(3, 10.0, 10.08);
-        g.setNode(4, 10.1, 10.10);
-        g.setNode(5, 10.2, 10.13);
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(2, 10.3, 10.15);
+        na.setNode(3, 10.0, 10.08);
+        na.setNode(4, 10.1, 10.10);
+        na.setNode(5, 10.2, 10.13);
         g.edge(3, 4, 100, true).setName("3-4");
         g.edge(4, 5, 100, true).setName("4-5");
 
@@ -234,10 +240,11 @@ public class InstructionListTest
         //      4
         //     /
         //    3
-        g.setNode(2, 10.3, 10.15);
-        g.setNode(3, 10.0, 10.05);
-        g.setNode(4, 10.1, 10.10);
-        g.setNode(5, 10.2, 10.15);
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(2, 10.3, 10.15);
+        na.setNode(3, 10.0, 10.05);
+        na.setNode(4, 10.1, 10.10);
+        na.setNode(5, 10.2, 10.15);
         g.edge(3, 4, 100, true).setName("street");
         g.edge(4, 5, 100, true).setName("4-5");
 
@@ -263,11 +270,12 @@ public class InstructionListTest
         //   3-2
         //     |
         //     1
-        g.setNode(1, 15.0, 10);
-        g.setNode(2, 15.1, 10);
-        g.setNode(3, 15.1, 9.9);
-        g.setNode(4, 15.2, 9.9);
-        g.setNode(5, 15.2, 10);
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(1, 15.0, 10);
+        na.setNode(2, 15.1, 10);
+        na.setNode(3, 15.1, 9.9);
+        na.setNode(4, 15.2, 9.9);
+        na.setNode(5, 15.2, 10);
 
         g.edge(1, 2, 7000, true).setName("1-2").setFlags(flagsForSpeed(carManager, 70));
         g.edge(2, 3, 8000, true).setName("2-3").setFlags(flagsForSpeed(carManager, 80));
@@ -329,7 +337,7 @@ public class InstructionListTest
         pl = new PointList();
         pl.add(49.941389, 11.584311);
         instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", 0, 0, pl).setDistance(25).setTime(3000));
-        instructions.add(new FinishInstruction(49.941029, 11.584514));
+        instructions.add(new FinishInstruction(49.941029, 11.584514, 0));
 
         List<GPXEntry> result = instructions.createGPXList();
         assertEquals(5, result.size());

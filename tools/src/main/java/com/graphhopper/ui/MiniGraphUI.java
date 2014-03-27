@@ -27,9 +27,9 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FastestWeighting;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
-import com.graphhopper.routing.util.ShortestWeighting;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -65,6 +65,7 @@ public class MiniGraphUI
     private Path path;
     private AlgorithmPreparation prepare;
     private final Graph graph;
+    private final NodeAccess na;
     private LocationIndex index;
     private String latLon = "";
     private GraphicsWrapper mg;
@@ -78,6 +79,7 @@ public class MiniGraphUI
     public MiniGraphUI( GraphHopper hopper, boolean debug )
     {
         this.graph = hopper.getGraph();
+        this.na = graph.getNodeAccess();
         prepare = hopper.getPreparation();
         FlagEncoder encoder = hopper.getEncodingManager().getSingle();
         weighting = new FastestWeighting(encoder);
@@ -154,9 +156,9 @@ public class MiniGraphUI
                 {
                     if (fastPaint && rand.nextInt(30) > 1)
                         continue;
+                    double lat = na.getLatitude(nodeIndex);
+                    double lon = na.getLongitude(nodeIndex);
 
-                    double lat = graph.getLatitude(nodeIndex);
-                    double lon = graph.getLongitude(nodeIndex);
                     // mg.plotText(g2, lat, lon, "" + nodeIndex);
                     if (lat < b.minLat || lat > b.maxLat || lon < b.minLon || lon > b.maxLon)
                         continue;
@@ -173,8 +175,8 @@ public class MiniGraphUI
 
                             bitset.add(sum);
                         }
-                        double lat2 = graph.getLatitude(nodeId);
-                        double lon2 = graph.getLongitude(nodeId);
+                        double lat2 = na.getLatitude(nodeId);
+                        double lon2 = na.getLongitude(nodeId);
                         mg.plotEdge(g2, lat, lon, lat2, lon2);
                     }
                 }
@@ -197,8 +199,8 @@ public class MiniGraphUI
                 }
 
                 StopWatch sw = new StopWatch().start();
-                fromRes = index.findClosest(48.983787742949886, 12.14355546976484, EdgeFilter.ALL_EDGES);
-                toRes = index.findClosest(48.98291180219765, 12.13610228968002, EdgeFilter.ALL_EDGES);
+                fromRes = index.findClosest(49.973878, 11.604132, EdgeFilter.ALL_EDGES);
+                toRes = index.findClosest(49.973896, 11.604363, EdgeFilter.ALL_EDGES);
 
                 logger.info("start searching from:" + fromRes + " to:" + toRes + " " + weighting);
                 path = algo.calcPath(fromRes, toRes);
@@ -213,7 +215,8 @@ public class MiniGraphUI
                     return;
                 }
 
-                logger.info("found path in " + sw.getSeconds() + "s with " + path.calcNodes().size() + " nodes: " + path);
+                logger.info("found path in " + sw.getSeconds() + "s with nodes:"
+                        + path.calcNodes().size() + ", millis: " + path.getMillis() + ", " + path);
                 g2.setColor(Color.BLUE.brighter().brighter());
                 plotPath(path, g2, 1);
             }
@@ -244,8 +247,8 @@ public class MiniGraphUI
 
     void plotNodeName( Graphics2D g2, int node )
     {
-        double lat = graph.getLatitude(node);
-        double lon = graph.getLongitude(node);
+        double lat = na.getLatitude(node);
+        double lon = na.getLongitude(node);
         mg.plotText(g2, lat, lon, "" + node);
     }
 

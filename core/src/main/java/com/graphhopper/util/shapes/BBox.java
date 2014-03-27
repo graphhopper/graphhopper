@@ -44,51 +44,71 @@ public class BBox implements Shape, Cloneable
         INVERSE.maxLon = -Double.MAX_VALUE;
         INVERSE.minLat = Double.MAX_VALUE;
         INVERSE.maxLat = -Double.MAX_VALUE;
+        INVERSE.minEle = Double.MAX_VALUE;
+        INVERSE.maxEle = -Double.MAX_VALUE;
     }
-    // longitude (theta) = x, latitude (phi) = y
+    // longitude (theta) = x, latitude (phi) = y, elevation = z
     public double minLon;
     public double maxLon;
     public double minLat;
     public double maxLat;
+    public double minEle;
+    public double maxEle;
+    private final boolean is3D;
 
     private BBox()
     {
+        this.is3D = false;
+    }
+
+    private BBox( boolean is3D )
+    {
+        this.is3D = is3D;
     }
 
     public BBox( double minLon, double maxLon, double minLat, double maxLat )
     {
+        this(minLon, maxLon, minLat, maxLat, Double.NaN, Double.NaN, false);
+    }
+
+    public BBox( double minLon, double maxLon, double minLat, double maxLat, double minEle, double maxEle )
+    {
+        this(minLon, maxLon, minLat, maxLat, minEle, maxEle, true);
+    }
+
+    public BBox( double minLon, double maxLon, double minLat, double maxLat, double minEle, double maxEle, boolean is3D )
+    {
+        this.is3D = is3D;
         this.maxLat = maxLat;
         this.minLon = minLon;
         this.minLat = minLat;
         this.maxLon = maxLon;
+        this.minEle = minEle;
+        this.maxEle = maxEle;
     }
 
     public boolean check()
     {
-        // "second longitude should be bigger than the first";
+        // second longitude should be bigger than the first
         if (minLon >= maxLon)
-        {
             return false;
-        }
 
-        //"second latitude should be smaller than the first";
+        // second latitude should be smaller than the first
         if (minLat >= maxLat)
-        {
             return false;
-        }
+        
+        // second elevation should be smaller than the first
+        if (is3D && minEle >= maxEle)
+            return false;
+
         return true;
 
-    }
-
-    public static BBox createEarthMax()
-    {
-        return new BBox(-180.0, 180.0, -90.0, 90.0);
     }
 
     @Override
     public BBox clone()
     {
-        return new BBox(minLon, maxLon, minLat, maxLat);
+        return new BBox(minLon, maxLon, minLat, maxLat, minEle, maxEle, is3D);
     }
 
     @Override
@@ -150,7 +170,11 @@ public class BBox implements Shape, Cloneable
     @Override
     public String toString()
     {
-        return minLon + "," + maxLon + "," + minLat + "," + maxLat;
+        String str = minLon + "," + maxLon + "," + minLat + "," + maxLat;
+        if(is3D)
+            str += "," + minEle + "," + maxEle;
+        
+        return str;
     }
 
     public String toLessPrecisionString()
@@ -196,15 +220,23 @@ public class BBox implements Shape, Cloneable
     }
 
     /**
-     * @return array containing this bounding box. Attention: GeoJson is lon,lat!
+     * @return array containing this bounding box. Attention: GeoJson is lon,lat! If 3D is gets even
+     * worse: lon,lat,ele
      */
     public List<Double> toGeoJson()
     {
         List<Double> list = new ArrayList<Double>(4);
         list.add(minLon);
         list.add(minLat);
+        // hmh
+        if (is3D)
+            list.add(minEle);
+
         list.add(maxLon);
         list.add(maxLat);
+        if (is3D)
+            list.add(maxEle);
+
         return list;
     }
 }

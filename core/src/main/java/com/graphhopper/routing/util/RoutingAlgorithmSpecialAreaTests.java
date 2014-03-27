@@ -127,7 +127,8 @@ public class RoutingAlgorithmSpecialAreaTests
 
         if (withCh)
         {
-            LevelGraph graphCH = (LevelGraph) ((GraphStorage) g).copyTo(new GraphBuilder(manager).levelGraphCreate());
+            LevelGraph graphCH = (LevelGraph) ((GraphStorage) g).copyTo(new GraphBuilder(manager).
+                    set3D(g.getNodeAccess().is3D()).levelGraphCreate());
             PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(encoder, weighting).
                     setGraph(graphCH);
             prepareCH.doWork();

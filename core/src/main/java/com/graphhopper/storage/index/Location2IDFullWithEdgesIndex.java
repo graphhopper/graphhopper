@@ -20,6 +20,7 @@ package com.graphhopper.storage.index;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
@@ -32,11 +33,13 @@ import com.graphhopper.util.DistanceCalcEarth;
 public class Location2IDFullWithEdgesIndex implements LocationIndex
 {
     private DistanceCalc calc = new DistanceCalcEarth();
-    private Graph graph;
+    private final Graph graph;
+    private final NodeAccess nodeAccess;
 
     public Location2IDFullWithEdgesIndex( Graph g )
     {
         this.graph = g;
+        this.nodeAccess = g.getNodeAccess();
     }
 
     @Override
@@ -98,8 +101,8 @@ public class Location2IDFullWithEdgesIndex implements LocationIndex
                     node = iter.getAdjNode();
                 }
 
-                double fromLat = graph.getLatitude(node);
-                double fromLon = graph.getLongitude(node);
+                double fromLat = nodeAccess.getLatitude(node);
+                double fromLon = nodeAccess.getLongitude(node);
                 double fromDist = calc.calcDist(fromLat, fromLon, queryLat, queryLon);
                 if (fromDist < 0)
                     continue;
@@ -117,8 +120,8 @@ public class Location2IDFullWithEdgesIndex implements LocationIndex
                     continue;
 
                 int toNode = iter.getAdjNode();
-                double toLat = graph.getLatitude(toNode);
-                double toLon = graph.getLongitude(toNode);
+                double toLat = nodeAccess.getLatitude(toNode);
+                double toLon = nodeAccess.getLongitude(toNode);
 
                 if (calc.validEdgeDistance(queryLat, queryLon,
                         fromLat, fromLon, toLat, toLon))

@@ -305,6 +305,22 @@ public class MMapDataAccess extends AbstractDataAccess
     }
 
     @Override
+    public final void setShort( long bytePos, short value )
+    {
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        segments.get(bufferIndex).putShort(index, value);
+    }
+
+    @Override
+    public final short getShort( long bytePos )
+    {
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        return segments.get(bufferIndex).getShort(index);
+    }
+
+    @Override
     public void setBytes( long bytePos, byte[] values, int length )
     {
         assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;

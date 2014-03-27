@@ -25,6 +25,7 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.MMapDirectory;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
@@ -103,13 +104,14 @@ public abstract class AbstractLocationIndexTester
         // ---|-------------------
         //    |-2 -1 0 1 2 3 4
         //
-        g.setNode(0, -1, -2);
-        g.setNode(1, 2, -1);
-        g.setNode(2, 0, 1);
-        g.setNode(3, 1, 2);
-        g.setNode(4, 6, 1);
-        g.setNode(5, 4, 4);
-        g.setNode(6, 4.5, -0.5);
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, -1, -2);
+        na.setNode(1, 2, -1);
+        na.setNode(2, 0, 1);
+        na.setNode(3, 1, 2);
+        na.setNode(4, 6, 1);
+        na.setNode(5, 4, 4);
+        na.setNode(6, 4.5, -0.5);
         g.edge(0, 1, 3.5, true);
         g.edge(0, 2, 2.5, true);
         g.edge(2, 3, 1, true);
@@ -155,10 +157,11 @@ public abstract class AbstractLocationIndexTester
         // if we would use less array entries then some points gets the same key so avoid that for this test
         // e.g. for 16 we get "expected 6 but was 9" i.e 6 was overwritten by node j9 which is a bit closer to the grid center        
         // go through every point of the graph if all points are reachable
+        NodeAccess na = g.getNodeAccess();
         for (int i = 0; i < locs; i++)
         {
-            double lat = g.getLatitude(i);
-            double lon = g.getLongitude(i);
+            double lat = na.getLatitude(i);
+            double lon = na.getLongitude(i);
             assertEquals("nodeId:" + i + " " + (float) lat + "," + (float) lon, i, idx.findID(lat, lon));
         }
 
@@ -176,12 +179,12 @@ public abstract class AbstractLocationIndexTester
             double lat = rand.nextDouble() * 5;
             double lon = rand.nextDouble() * 5;
             int fullId = fullIndex.findID(lat, lon);
-            double fullLat = g.getLatitude(fullId);
-            double fullLon = g.getLongitude(fullId);
+            double fullLat = na.getLatitude(fullId);
+            double fullLon = na.getLongitude(fullId);
             float fullDist = (float) dist.calcDist(lat, lon, fullLat, fullLon);
             int newId = idx.findID(lat, lon);
-            double newLat = g.getLatitude(newId);
-            double newLon = g.getLongitude(newId);
+            double newLat = na.getLatitude(newId);
+            double newLon = na.getLongitude(newId);
             float newDist = (float) dist.calcDist(lat, lon, newLat, newLon);
 
             if (testGridIgnore(i))
@@ -245,11 +248,12 @@ public abstract class AbstractLocationIndexTester
     {
         final EncodingManager encodingManager = new EncodingManager("CAR");
         int locs = 10000;
-        Graph g = createGraph(new MMapDirectory(location), encodingManager);
+        Graph g = createGraph(new MMapDirectory(location), encodingManager, false);
+        NodeAccess na = g.getNodeAccess();
         Random rand = new Random(12);
         for (int i = 0; i < locs; i++)
         {
-            g.setNode(i, (float) rand.nextDouble() * 10 + 10, (float) rand.nextDouble() * 10 + 10);
+            na.setNode(i, (float) rand.nextDouble() * 10 + 10, (float) rand.nextDouble() * 10 + 10);
         }
         idx = createIndex(g, 200);
         Helper.close((Closeable) g);
@@ -257,12 +261,12 @@ public abstract class AbstractLocationIndexTester
 
     Graph createGraph( EncodingManager encodingManager )
     {
-        return createGraph(new RAMDirectory(), encodingManager);
+        return createGraph(new RAMDirectory(), encodingManager, false);
     }
 
-    Graph createGraph( Directory dir, EncodingManager encodingManager )
+    Graph createGraph( Directory dir, EncodingManager encodingManager, boolean is3D )
     {
-        return new GraphHopperStorage(dir, encodingManager).create(100);
+        return new GraphHopperStorage(dir, encodingManager, is3D).create(100);
     }
 
     public Graph createSampleGraph( EncodingManager encodingManager )
@@ -286,39 +290,40 @@ public abstract class AbstractLocationIndexTester
 //        
 //   lon: 0   1   2   3   4   5
         int a0 = 0;
-        graph.setNode(0, 0, 1.0001f);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 0, 1.0001f);
         int b1 = 1;
-        graph.setNode(1, 1, 2);
+        na.setNode(1, 1, 2);
         int c2 = 2;
-        graph.setNode(2, 0.5f, 4.5f);
+        na.setNode(2, 0.5f, 4.5f);
         int d3 = 3;
-        graph.setNode(3, 1.5f, 3.8f);
+        na.setNode(3, 1.5f, 3.8f);
         int e4 = 4;
-        graph.setNode(4, 2.01f, 0.5f);
+        na.setNode(4, 2.01f, 0.5f);
         int f5 = 5;
-        graph.setNode(5, 2, 3);
+        na.setNode(5, 2, 3);
         int g6 = 6;
-        graph.setNode(6, 3, 1.5f);
+        na.setNode(6, 3, 1.5f);
         int h7 = 7;
-        graph.setNode(7, 2.99f, 3.01f);
+        na.setNode(7, 2.99f, 3.01f);
         int i8 = 8;
-        graph.setNode(8, 3, 4);
+        na.setNode(8, 3, 4);
         int j9 = 9;
-        graph.setNode(9, 3.3f, 2.2f);
+        na.setNode(9, 3.3f, 2.2f);
         int k10 = 10;
-        graph.setNode(10, 4, 1);
+        na.setNode(10, 4, 1);
         int l11 = 11;
-        graph.setNode(11, 4.1f, 3);
+        na.setNode(11, 4.1f, 3);
         int m12 = 12;
-        graph.setNode(12, 4, 4.5f);
+        na.setNode(12, 4, 4.5f);
         int n13 = 13;
-        graph.setNode(13, 4.5f, 4.1f);
+        na.setNode(13, 4.5f, 4.1f);
         int o14 = 14;
-        graph.setNode(14, 5, 0);
+        na.setNode(14, 5, 0);
         int p15 = 15;
-        graph.setNode(15, 4.9f, 2.5f);
+        na.setNode(15, 4.9f, 2.5f);
         int q16 = 16;
-        graph.setNode(16, 5, 5);
+        na.setNode(16, 5, 5);
         // => 17 locations
 
         graph.edge(a0, b1, 1, true);

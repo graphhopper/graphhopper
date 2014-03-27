@@ -1,4 +1,6 @@
 0.3.0
+    refactor edge.copyProperties into copyPropertiesTo to have similar semantics as Graph.copyTo
+    calcWeight now contains reverse boolean to calculate correct direction dependent weight
     completely different web API response format. see docs/web
     swapDirections is renamed to reverseFlags (EncodingManager and FlagEncoders)
     edgeState.detach has now a reverse parameter, just use false to get previous results

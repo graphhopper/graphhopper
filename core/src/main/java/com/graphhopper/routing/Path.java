@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
@@ -51,11 +52,13 @@ public class Path
     private PointList cachedPoints;
     private InstructionList cachedWays;
     private double weight;
+    private NodeAccess nodeAccess;
 
     public Path( Graph graph, FlagEncoder encoder )
     {
         this.weight = Double.MAX_VALUE;
         this.graph = graph;
+        this.nodeAccess = graph.getNodeAccess();
         this.encoder = encoder;
         this.edgeIds = new TIntArrayList();
     }
@@ -205,9 +208,9 @@ public class Path
     /**
      * Calls getDistance and adds the edgeId.
      */
-    protected void processEdge( int edgeId, int endNode )
+    protected void processEdge( int edgeId, int adjNode )
     {
-        EdgeIteratorState iter = graph.getEdgeProps(edgeId, endNode);
+        EdgeIteratorState iter = graph.getEdgeProps(edgeId, adjNode);
         double dist = iter.getDistance();
         distance += dist;
         millis += calcMillis(dist, iter.getFlags(), false);
@@ -300,19 +303,21 @@ public class Path
     }
 
     /**
-     * @return the cached list of lat,lon for this path
+     * This method calculated a list of points for this path
+     * <p>
+     * @return this path its geometry (cached)
      */
     public PointList calcPoints()
     {
         if (cachedPoints != null)
             return cachedPoints;
 
-        cachedPoints = new PointList(edgeIds.size() + 1);
+        cachedPoints = new PointList(edgeIds.size() + 1, nodeAccess.is3D());
         if (edgeIds.isEmpty())
             return cachedPoints;
 
         int tmpNode = getFromNode();
-        cachedPoints.add(graph.getLatitude(tmpNode), graph.getLongitude(tmpNode));
+        cachedPoints.add(nodeAccess, tmpNode);
         forEveryEdge(new EdgeVisitor()
         {
             @Override
@@ -321,7 +326,7 @@ public class Path
                 PointList pl = eb.fetchWayGeometry(2);
                 for (int j = 0; j < pl.getSize(); j++)
                 {
-                    cachedPoints.add(pl.getLatitude(j), pl.getLongitude(j));
+                    cachedPoints.add(pl, j);
                 }
             }
         });
@@ -363,23 +368,23 @@ public class Path
              * considering orientation belonging to the interval
              * [ - pi + previousOrientation , + pi + previousOrientation ]
              */
-            private double prevLat = graph.getLatitude(tmpNode);
-            private double prevLon = graph.getLongitude(tmpNode);
+            private double prevLat = nodeAccess.getLatitude(tmpNode);
+            private double prevLon = nodeAccess.getLongitude(tmpNode);
             private double prevOrientation;
             private Instruction prevInstruction;
-            private PointList points = new PointList();
+            private PointList points = new PointList(10, nodeAccess.is3D());
             private String name = null;
-            private int pavementCode;
-            private int wayTypeCode;
-            private final AngleCalc2D ac = new AngleCalc2D();
+            private int pavementType;
+            private int wayType;
+            private AngleCalc2D ac = new AngleCalc2D();
 
             @Override
             public void next( EdgeIteratorState edge, int index )
             {
                 // baseNode is the current node and adjNode is the next
                 int adjNode = edge.getAdjNode();
-                double adjLat = graph.getLatitude(adjNode);
-                double adjLon = graph.getLongitude(adjNode);
+                double adjLat = nodeAccess.getLatitude(adjNode);
+                double adjLon = nodeAccess.getLongitude(adjNode);
                 double latitude, longitude;
                 PointList wayGeo = edge.fetchWayGeometry(3);
                 if (wayGeo.getSize() <= 2)
@@ -393,8 +398,8 @@ public class Path
 
                     // overwrite previous lat,lon
                     int baseNode = edge.getBaseNode();
-                    prevLat = graph.getLatitude(baseNode);
-                    prevLon = graph.getLongitude(baseNode);
+                    prevLat = nodeAccess.getLatitude(baseNode);
+                    prevLon = nodeAccess.getLongitude(baseNode);
                 }
 
                 double orientation = ac.calcOrientation(prevLat, prevLon, latitude, longitude);
@@ -402,25 +407,25 @@ public class Path
                 {
                     // very first instruction
                     name = edge.getName();
-                    pavementCode = encoder.getPavementCode(edge.getFlags());
-                    wayTypeCode = encoder.getWayTypeCode(edge.getFlags());
-                    prevInstruction = new Instruction(Instruction.CONTINUE_ON_STREET, name, wayTypeCode, pavementCode, points);
+                    pavementType = encoder.getPavementType(edge.getFlags());
+                    wayType = encoder.getWayType(edge.getFlags());
+                    prevInstruction = new Instruction(Instruction.CONTINUE_ON_STREET, name, wayType, pavementType, points);
                     updatePointsAndInstruction(edge, wayGeo);
                     cachedWays.add(prevInstruction);
                 } else
                 {
                     double tmpOrientation = ac.alignOrientation(prevOrientation, orientation);
                     String tmpName = edge.getName();
-                    int tmpPavement = encoder.getPavementCode(edge.getFlags());
-                    int tmpWayType = encoder.getWayTypeCode(edge.getFlags());
+                    int tmpPavement = encoder.getPavementType(edge.getFlags());
+                    int tmpWayType = encoder.getWayType(edge.getFlags());
                     if ((!name.equals(tmpName))
-                            || (pavementCode != tmpPavement)
-                            || (wayTypeCode != tmpWayType))
+                            || (pavementType != tmpPavement)
+                            || (wayType != tmpWayType))
                     {
-                        points = new PointList();
+                        points = new PointList(10, nodeAccess.is3D());
                         name = tmpName;
-                        pavementCode = tmpPavement;
-                        wayTypeCode = tmpWayType;
+                        pavementType = tmpPavement;
+                        wayType = tmpWayType;
                         double delta = Math.abs(tmpOrientation - prevOrientation);
                         int sign;
                         if (delta < 0.2)
@@ -453,7 +458,7 @@ public class Path
 
                         }
 
-                        prevInstruction = new Instruction(sign, name, wayTypeCode, pavementCode, points);
+                        prevInstruction = new Instruction(sign, name, wayType, pavementType, points);
                         cachedWays.add(prevInstruction);
                     }
 
@@ -473,7 +478,8 @@ public class Path
 
                 boolean lastEdge = index == edgeIds.size() - 1;
                 if (lastEdge)
-                    cachedWays.add(new FinishInstruction(prevLat, prevLon));
+                    cachedWays.add(new FinishInstruction(adjLat, adjLon, 
+                            nodeAccess.is3D() ? nodeAccess.getElevation(adjNode) : 0));
             }
 
             private void updatePointsAndInstruction( EdgeIteratorState edge, PointList pl )
@@ -482,9 +488,7 @@ public class Path
                 int len = pl.size() - 1;
                 for (int i = 0; i < len; i++)
                 {
-                    double lat = pl.getLatitude(i);
-                    double lon = pl.getLongitude(i);
-                    points.add(lat, lon);
+                    points.add(pl, i);
                 }
                 double newDist = edge.getDistance();
                 prevInstruction.setDistance(newDist + prevInstruction.getDistance());

@@ -40,11 +40,12 @@ public class WebHelper
         }
     }
 
-    public static PointList decodePolyline( String encoded, int initCap )
+    public static PointList decodePolyline( String encoded, int initCap, boolean is3D )
     {
-        PointList poly = new PointList(initCap);
-        int index = 0, len = encoded.length();
-        int lat = 0, lng = 0;
+        PointList poly = new PointList(initCap, is3D);
+        int index = 0;
+        int len = encoded.length();
+        int lat = 0, lng = 0, ele = 0;
         while (index < len)
         {
             // latitude
@@ -69,7 +70,23 @@ public class WebHelper
             } while (b >= 0x20);
             int deltaLongitude = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
             lng += deltaLongitude;
-            poly.add((double) lat / 1E5, (double) lng / 1E5);
+
+            if (is3D)
+            {
+                // elevation
+                shift = 0;
+                result = 0;
+                do
+                {
+                    b = encoded.charAt(index++) - 63;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                int deltaElevation = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+                ele += deltaElevation;
+                poly.add((double) lat / 1e5, (double) lng / 1e5, (double) ele / 100);
+            } else
+                poly.add((double) lat / 1e5, (double) lng / 1e5);
         }
         return poly;
     }
@@ -81,6 +98,7 @@ public class WebHelper
         int size = poly.getSize();
         int prevLat = 0;
         int prevLon = 0;
+        int prevEle = 0;
         for (int i = 0; i < size; i++)
         {
             int num = (int) Math.floor(poly.getLatitude(i) * 1e5);
@@ -89,6 +107,12 @@ public class WebHelper
             num = (int) Math.floor(poly.getLongitude(i) * 1e5);
             encodeNumber(sb, num - prevLon);
             prevLon = num;
+            if (poly.is3D())
+            {
+                num = (int) Math.floor(poly.getElevation(i) * 100);
+                encodeNumber(sb, num - prevEle);
+                prevEle = num;
+            }
         }
         return sb.toString();
     }

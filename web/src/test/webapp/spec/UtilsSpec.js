@@ -4,18 +4,18 @@
 describe("utils", function() {
     it("should format time string correctly", function() {
         defaultTranslationMap = {};
-        defaultTranslationMap["minabbr"]='min';
-        defaultTranslationMap["hourabbr"]='h';
-        defaultTranslationMap["dayabbr"]='d';
+        defaultTranslationMap["minabbr"] = 'min';
+        defaultTranslationMap["hourabbr"] = 'h';
+        defaultTranslationMap["dayabbr"] = 'd';
         expect(createTimeString(10773331)).toBe("2h 59min");
-        
+
         expect(createTimeString(10773331 * 24)).toBe("2d 23h");
-        
+
         expect(createTimeString(260493166)).toBe("3d");
         expect(createTimeString(3642407)).toBe("1h");
         expect(createTimeString(12000)).toBe("0min");
     });
-    
+
     it("should format translation string correctly", function() {
         // toBe, toBeTruthy, toBeFalsy
         defaultTranslationMap = {};
@@ -51,5 +51,21 @@ describe("utils", function() {
             "continent": "Europäischen Union"
         });
         expect(res).toEqual({postcode: undefined, city: "Rixdorf, Neukölln", country: "Deutschland", more: "Berlin, Europäischen Union"});
+    });
+
+    it("should decode the polyline", function() {
+        var list = decodePath("_p~iF~ps|U", false);
+        expect(list).toEqual([[-120.2, 38.5]]);
+
+        list = decodePath("_p~iF~ps|U_ulLnnqC_mqNvxq`@", false);
+        expect(list).toEqual([[-120.2, 38.5], [-120.95, 40.7], [-126.45300000000002, 43.252]]);
+    });
+
+    it("should decode the 3D polyline", function() {
+        var list = decodePath("_p~iF~ps|Uo}@", true);
+        expect(list).toEqual([[-120.2, 38.5, 10]]);
+
+        list = decodePath("_p~iF~ps|Uo}@_ulLnnqC_anF_mqNvxq`@?", true);
+        expect(list).toEqual([[-120.2, 38.5, 10], [-120.95, 40.7, 1234], [-126.45300000000002, 43.252, 1234]]);       
     });
 });

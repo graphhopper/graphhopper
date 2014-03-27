@@ -49,6 +49,11 @@ public class GHResponse
         return this;
     }
 
+    /**
+     * This method returns all points on the path. Keep in mind that calculating the distance from
+     * these point might yield different results compared to getDistance as points could have been
+     * simplified on import or after querying.
+     */
     public PointList getPoints()
     {
         return list;
@@ -61,6 +66,9 @@ public class GHResponse
     }
 
     /**
+     * This method returns the distance of the path. Always prefer this method over
+     * getPoints().calcDistance
+     * <p>
      * @return distance in meter
      */
     public double getDistance()
@@ -158,10 +166,10 @@ public class GHResponse
         String str = "found:" + isFound() + ", nodes:" + list.getSize() + ": " + list.toString();
         if (!instructions.isEmpty())
             str += ", " + instructions.toString();
-        
-        if (!errors.isEmpty())            
+
+        if (!errors.isEmpty())
             str += ", " + errors.toString();
-        
+
         return str;
     }
 

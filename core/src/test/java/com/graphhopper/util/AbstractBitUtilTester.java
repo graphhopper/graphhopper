@@ -60,6 +60,22 @@ public abstract class AbstractBitUtilTester
     }
 
     @Test
+    public void testToShort()
+    {
+        byte[] bytes = bitUtil.fromShort(Short.MAX_VALUE);
+        assertEquals(Short.MAX_VALUE, bitUtil.toShort(bytes));
+
+        bytes = bitUtil.fromShort((short) (Short.MAX_VALUE / 3));
+        assertEquals(Short.MAX_VALUE / 3, bitUtil.toShort(bytes));
+
+        bytes = bitUtil.fromShort((short) -123);
+        assertEquals(-123, bitUtil.toShort(bytes));
+        
+        bytes = bitUtil.fromShort((short) (0xFF | 0xFF));
+        assertEquals(0xFF | 0xFF, bitUtil.toShort(bytes));
+    }
+
+    @Test
     public void testToLong()
     {
         byte[] bytes = bitUtil.fromLong(Long.MAX_VALUE);

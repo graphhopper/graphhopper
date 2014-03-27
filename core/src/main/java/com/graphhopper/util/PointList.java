@@ -19,6 +19,7 @@
 package com.graphhopper.util;
 
 import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.GHPoint3D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,30 +29,67 @@ import java.util.List;
  * <p/>
  * @author Peter Karich
  */
-public class PointList
+public class PointList implements PointAccess
 {
+    private final static DistanceCalc3D distCalc3D = new DistanceCalc3D();
+    private static String ERR_MSG = "Tried to access PointList with too big index!";
     private double[] latitudes;
     private double[] longitudes;
-    private int size = 0;
+    private double[] elevations;
+    protected int size = 0;
+    protected boolean is3D;
 
     public PointList()
     {
-        this(10);
+        this(10, false);
     }
 
-    public PointList( int cap )
+    public PointList( int cap, boolean is3D )
     {
         latitudes = new double[cap];
         longitudes = new double[cap];
+        this.is3D = is3D;
+        if (is3D)
+            elevations = new double[cap];
     }
 
-    public void set( int index, double lat, double lon )
+    @Override
+    public boolean is3D()
+    {
+        return is3D;
+    }
+
+    @Override
+    public int getDimension()
+    {
+        if (is3D)
+            return 3;
+        return 2;
+    }
+
+    @Override
+    public void setNode( int nodeId, double lat, double lon )
+    {
+        set(nodeId, lat, lon, Double.NaN);
+    }
+
+    @Override
+    public void setNode( int nodeId, double lat, double lon, double ele )
+    {
+        set(nodeId, lat, lon, ele);
+    }
+
+    public void set( int index, double lat, double lon, double ele )
     {
         if (index >= size)
             throw new ArrayIndexOutOfBoundsException("index has to be smaller than size " + size);
 
         latitudes[index] = lat;
         longitudes[index] = lon;
+        if (is3D)
+            elevations[index] = ele;
+        else if (!Double.isNaN(ele))
+            throw new IllegalStateException("This is a 2D list we cannot store elevation: " + ele);
     }
 
     private void incCap( int newSize )
@@ -63,16 +101,45 @@ public class PointList
                 cap = 8;
             latitudes = Arrays.copyOf(latitudes, cap);
             longitudes = Arrays.copyOf(longitudes, cap);
+            if (is3D)
+                elevations = Arrays.copyOf(elevations, cap);
         }
     }
 
     public void add( double lat, double lon )
     {
+        if (is3D)
+            throw new IllegalStateException("Cannot add point without elevation data in 3D mode");
+        add(lat, lon, Double.NaN);
+    }
+
+    public void add( double lat, double lon, double ele )
+    {
         int newSize = size + 1;
         incCap(newSize);
         latitudes[size] = lat;
         longitudes[size] = lon;
+        if (is3D)
+            elevations[size] = ele;
+        else if (!Double.isNaN(ele))
+            throw new IllegalStateException("This is a 2D list we cannot store elevation: " + ele);
         size = newSize;
+    }
+
+    public void add( PointAccess nodeAccess, int index )
+    {
+        if (is3D)
+            add(nodeAccess.getLatitude(index), nodeAccess.getLongitude(index), nodeAccess.getElevation(index));
+        else
+            add(nodeAccess.getLatitude(index), nodeAccess.getLongitude(index));
+    }
+
+    public void add( GHPoint point )
+    {
+        if (is3D)
+            add(point.lat, point.lon, ((GHPoint3D) point).ele);
+        else
+            add(point.lat, point.lon);
     }
 
     public void add( PointList points )
@@ -84,6 +151,8 @@ public class PointList
             int tmp = size + i;
             latitudes[tmp] = points.getLatitude(i);
             longitudes[tmp] = points.getLongitude(i);
+            if (is3D)
+                elevations[tmp] = points.getElevation(i);
         }
         size = newSize;
     }
@@ -103,27 +172,56 @@ public class PointList
         return size == 0;
     }
 
+    @Override
+    public double getLat( int index )
+    {
+        return getLatitude(index);
+    }
+
+    @Override
     public double getLatitude( int index )
     {
         if (index >= size)
-        {
-            throw new ArrayIndexOutOfBoundsException("Tried to access PointList with too big index! "
-                    + "index:" + index + ", size:" + size);
-        }
+            throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + size);
+
         return latitudes[index];
     }
 
+    @Override
+    public double getLon( int index )
+    {
+        return getLongitude(index);
+    }
+
+    @Override
     public double getLongitude( int index )
     {
         if (index >= size)
-            throw new ArrayIndexOutOfBoundsException("Tried to access PointList with too big index! "
-                    + "index:" + index + ", size:" + size);
+            throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + size);
 
         return longitudes[index];
     }
 
+    @Override
+    public double getElevation( int index )
+    {
+        if (index >= size)
+            throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + size);
+        if (!is3D)
+            return Double.NaN;
+
+        return elevations[index];
+    }
+
+    @Override
+    public double getEle( int index )
+    {
+        return getElevation(index);
+    }
+
     public void reverse()
     {
+        // in-place reverse
         int max = size / 2;
         for (int i = 0; i < max; i++)
         {
@@ -136,6 +234,13 @@ public class PointList
             tmp = longitudes[i];
             longitudes[i] = longitudes[swapIndex];
             longitudes[swapIndex] = tmp;
+
+            if (is3D)
+            {
+                tmp = elevations[i];
+                elevations[i] = elevations[swapIndex];
+                elevations[swapIndex] = tmp;
+            }
         }
     }
 
@@ -165,23 +270,34 @@ public class PointList
             sb.append(latitudes[i]);
             sb.append(',');
             sb.append(longitudes[i]);
+            if (is3D)
+            {
+                sb.append(',');
+                sb.append(elevations[i]);
+            }
             sb.append(')');
         }
         return sb.toString();
     }
 
     /**
-     * Attention: geoJson is LON,LAT
+     * Attention: geoJson is LON,LAT or LON,LAT,ELE
      */
     public List<Double[]> toGeoJson()
     {
         ArrayList<Double[]> points = new ArrayList<Double[]>(size);
         for (int i = 0; i < size; i++)
         {
-            points.add(new Double[]
-            {
-                getLongitude(i), getLatitude(i)
-            });
+            if (is3D)
+                points.add(new Double[]
+                {
+                    getLongitude(i), getLatitude(i), getElevation(i)
+                });
+            else
+                points.add(new Double[]
+                {
+                    getLongitude(i), getLatitude(i)
+                });
         }
         return points;
     }
@@ -192,8 +308,11 @@ public class PointList
         if (obj == null)
             return false;
 
-        final PointList other = (PointList) obj;
-        if (this.size != other.size)
+        PointList other = (PointList) obj;
+        if (other.isEmpty() && other.isEmpty())
+            return true;
+
+        if (this.getSize() != other.getSize() || this.is3D() != other.is3D())
             return false;
 
         for (int i = 0; i < size; i++)
@@ -203,17 +322,26 @@ public class PointList
 
             if (!NumHelper.equalsEps(longitudes[i], other.longitudes[i]))
                 return false;
+
+            if (is3D && !NumHelper.equalsEps(elevations[i], other.elevations[i]))
+                return false;
         }
         return true;
     }
 
     public PointList clone( boolean reverse )
     {
-        PointList clonePL = new PointList(size);
-        for (int i = 0; i < size; i++)
-        {
-            clonePL.add(latitudes[i], longitudes[i]);
-        }
+        PointList clonePL = new PointList(size, is3D);
+        if (is3D)
+            for (int i = 0; i < size; i++)
+            {
+                clonePL.add(latitudes[i], longitudes[i], elevations[i]);
+            }
+        else
+            for (int i = 0; i < size; i++)
+            {
+                clonePL.add(latitudes[i], longitudes[i]);
+            }
         if (reverse)
             clonePL.reverse();
         return clonePL;
@@ -226,11 +354,18 @@ public class PointList
         if (from < 0 || end > size)
             throw new IllegalArgumentException("Illegal interval: " + from + ", " + end + ", size:" + size);
 
-        PointList copyPL = new PointList(size);
-        for (int i = from; i < end; i++)
-        {
-            copyPL.add(latitudes[i], longitudes[i]);
-        }
+        PointList copyPL = new PointList(size, is3D);
+        if (is3D)
+            for (int i = from; i < end; i++)
+            {
+                copyPL.add(latitudes[i], longitudes[i], elevations[i]);
+            }
+        else
+            for (int i = from; i < end; i++)
+            {
+                copyPL.add(latitudes[i], longitudes[i], Double.NaN);
+            }
+
         return copyPL;
     }
 
@@ -249,16 +384,24 @@ public class PointList
 
     public double calcDistance( DistanceCalc calc )
     {
-        double lat = -1;
-        double lon = -1;
+        double prevLat = Double.NaN;
+        double prevLon = Double.NaN;
+        double prevEle = Double.NaN;
         double dist = 0;
         for (int i = 0; i < size; i++)
         {
             if (i > 0)
-                dist += calc.calcDist(lat, lon, latitudes[i], longitudes[i]);
+            {
+                if (is3D)
+                    dist += distCalc3D.calcDist(prevLat, prevLon, prevEle, latitudes[i], longitudes[i], elevations[i]);
+                else
+                    dist += calc.calcDist(prevLat, prevLon, latitudes[i], longitudes[i]);
+            }
 
-            lat = latitudes[i];
-            lon = longitudes[i];
+            prevLat = latitudes[i];
+            prevLon = longitudes[i];
+            if (is3D)
+                prevEle = elevations[i];
         }
         return dist;
     }
@@ -267,7 +410,7 @@ public class PointList
      * Takes the string from a json array ala [lon1,lat1], [lon2,lat2], ... and fills the list from
      * it.
      */
-    public void parseJSON( String str )
+    public void parse2DJSON( String str )
     {
         for (String latlon : str.split("\\["))
         {
@@ -276,19 +419,25 @@ public class PointList
 
             String ll[] = latlon.split(",");
             String lat = ll[1].replace("]", "").trim();
-            add(Double.parseDouble(lat), Double.parseDouble(ll[0].trim()));
+            add(Double.parseDouble(lat), Double.parseDouble(ll[0].trim()), Double.NaN);
         }
     }
-    public static final PointList EMPTY = new PointList(0)
+
+    public GHPoint3D toGHPoint( int index )
+    {
+        return new GHPoint3D(getLatitude(index), getLongitude(index), getElevation(index));
+    }
+
+    public static PointList EMPTY = new PointList(0, true)
     {
         @Override
-        public void set( int index, double lat, double lon )
+        public void set( int index, double lat, double lon, double ele )
         {
             throw new RuntimeException("cannot change EMPTY PointList");
         }
 
         @Override
-        public void add( double lat, double lon )
+        public void add( double lat, double lon, double ele )
         {
             throw new RuntimeException("cannot change EMPTY PointList");
         }
@@ -306,6 +455,12 @@ public class PointList
         }
 
         @Override
+        public boolean isEmpty()
+        {
+            return true;
+        }
+
+        @Override
         public void clear()
         {
             throw new RuntimeException("cannot change EMPTY PointList");
@@ -318,7 +473,7 @@ public class PointList
         }
 
         @Override
-        public void parseJSON( String str )
+        public void parse2DJSON( String str )
         {
             throw new RuntimeException("cannot change EMPTY PointList");
         }
@@ -326,7 +481,7 @@ public class PointList
         @Override
         public double calcDistance( DistanceCalc calc )
         {
-            return 0;
+            throw new UnsupportedOperationException("cannot access EMPTY PointList");
         }
 
         @Override
@@ -338,16 +493,72 @@ public class PointList
         @Override
         public PointList clone( boolean reverse )
         {
-            return this;
+            throw new UnsupportedOperationException("cannot access EMPTY PointList");
+        }
+
+        @Override
+        public double getElevation( int index )
+        {
+            throw new UnsupportedOperationException("cannot access EMPTY PointList");
+        }
+
+        @Override
+        public double getLat( int index )
+        {
+            throw new UnsupportedOperationException("cannot access EMPTY PointList");
+        }
+
+        @Override
+        public double getLon( int index )
+        {
+            throw new UnsupportedOperationException("cannot access EMPTY PointList");
+        }
+
+        @Override
+        public double getEle( int index )
+        {
+            throw new UnsupportedOperationException("cannot access EMPTY PointList");
+        }
+
+        @Override
+        public List<Double[]> toGeoJson()
+        {
+            throw new UnsupportedOperationException("cannot access EMPTY PointList");
+        }
+
+        @Override
+        public void reverse()
+        {
+            throw new UnsupportedOperationException("cannot change EMPTY PointList");
+        }
+
+        @Override
+        public int getSize()
+        {
+            return 0;
+        }
+
+        @Override
+        public int size()
+        {
+            return 0;
+        }
+
+        @Override
+        public GHPoint3D toGHPoint( int index )
+        {
+            throw new UnsupportedOperationException("cannot access EMPTY PointList");
+        }
+
+        @Override
+        public boolean is3D()
+        {
+            throw new UnsupportedOperationException("cannot access EMPTY PointList");
         }
     };
 
-    public GHPoint toGHPoint( int index )
+    int getCapacity()
     {
-        return new GHPoint(getLatitude(index), getLongitude(index));
-    }
-    
-    int getCapacity() {
         return latitudes.length;
     }
 }

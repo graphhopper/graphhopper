@@ -20,13 +20,13 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class PbfDecoder implements Runnable
 {
-    private PbfStreamSplitter streamSplitter;
-    private ExecutorService executorService;
-    private int maxPendingBlobs;
-    private Sink sink;
-    private Lock lock;
-    private Condition dataWaitCondition;
-    private Queue<PbfBlobResult> blobResults;
+    private final PbfStreamSplitter streamSplitter;
+    private final ExecutorService executorService;
+    private final int maxPendingBlobs;
+    private final Sink sink;
+    private final Lock lock;
+    private final Condition dataWaitCondition;
+    private final Queue<PbfBlobResult> blobResults;
 
     /**
      * Creates a new instance.
@@ -92,7 +92,7 @@ public class PbfDecoder implements Runnable
 
             if (!blobResult.isSuccess())
             {
-                throw new RuntimeException("A PBF decoding worker thread failed, aborting.");
+                throw new RuntimeException("A PBF decoding worker thread failed, aborting.", blobResult.getException());
             }
 
             // Send the processed entities to the sink. We can release the lock
@@ -130,13 +130,13 @@ public class PbfDecoder implements Runnable
             PbfBlobDecoderListener decoderListener = new PbfBlobDecoderListener()
             {
                 @Override
-                public void error()
+                public void error(Exception ex)
                 {
                     lock.lock();
                     try
                     {
-                        System.out.println("ERROR: " + new Date());
-                        blobResult.storeFailureResult();
+                        // System.out.println("ERROR: " + new Date());
+                        blobResult.storeFailureResult(ex);
                         signalUpdate();
 
                     } finally

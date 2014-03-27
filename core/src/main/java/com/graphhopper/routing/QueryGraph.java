@@ -20,10 +20,12 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.GHPoint3D;
 
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
@@ -47,6 +49,7 @@ import java.util.List;
 public class QueryGraph implements Graph
 {
     private final Graph mainGraph;
+    private final NodeAccess mainNodeAccess;
     private final int mainNodes;
     private final int mainEdges;
     private List<QueryResult> queryResults;
@@ -66,6 +69,7 @@ public class QueryGraph implements Graph
     public QueryGraph( Graph graph )
     {
         mainGraph = graph;
+        mainNodeAccess = graph.getNodeAccess();
         mainNodes = graph.getNodes();
         mainEdges = graph.getAllEdges().getMaxId();
     }
@@ -80,7 +84,7 @@ public class QueryGraph implements Graph
             throw new IllegalStateException("Call lookup only once. Otherwise you'll have problems for queries sharing the same edge.");
 
         virtualEdges = new ArrayList<EdgeIteratorState>(resList.size() * 2);
-        virtualNodes = new PointList(resList.size());
+        virtualNodes = new PointList(resList.size(), mainNodeAccess.is3D());
         queryResults = new ArrayList<QueryResult>(resList.size());
 
         TIntObjectMap<List<QueryResult>> edge2res = new TIntObjectHashMap<List<QueryResult>>(resList.size());
@@ -172,7 +176,7 @@ public class QueryGraph implements Graph
                     }
                 });
 
-                GHPoint prevPoint = fullPL.toGHPoint(0);
+                GHPoint3D prevPoint = fullPL.toGHPoint(0);
                 int adjNode = closestEdge.getAdjNode();
                 long reverseFlags = closestEdge.detach(true).getFlags();
                 int prevWayIndex = 1;
@@ -188,11 +192,12 @@ public class QueryGraph implements Graph
                         throw new IllegalStateException("Base nodes have to be identical but were not: " + closestEdge + " vs " + res.getClosestEdge());
 
                     queryResults.add(res);
-                    GHPoint currSnapped = res.getSnappedPoint();
+                    GHPoint3D currSnapped = res.getSnappedPoint();
                     createEdges(prevPoint, prevWayIndex,
                             res.getSnappedPoint(), res.getWayIndex(),
                             fullPL, closestEdge, prevNodeId, virtNodeId, reverseFlags);
-                    virtualNodes.add(currSnapped.lat, currSnapped.lon);
+
+                    virtualNodes.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
 
                     // add edges again to set adjacent edges for newVirtNodeId
                     if (counter > 0)
@@ -218,19 +223,19 @@ public class QueryGraph implements Graph
         });
     }
 
-    private void createEdges( GHPoint prevSnapped, int prevWayIndex, GHPoint currSnapped, int wayIndex,
+    private void createEdges( GHPoint3D prevSnapped, int prevWayIndex, GHPoint3D currSnapped, int wayIndex,
             PointList fullPL, EdgeIteratorState closestEdge,
             int prevNodeId, int nodeId, long reverseFlags )
     {
         int max = wayIndex + 1;
         // basePoints must have at least the size of 2 to make sure fetchWayGeometry(3) returns at least 2
-        PointList basePoints = new PointList(max - prevWayIndex + 1);
-        basePoints.add(prevSnapped.lat, prevSnapped.lon);
+        PointList basePoints = new PointList(max - prevWayIndex + 1, mainNodeAccess.is3D());
+        basePoints.add(prevSnapped.lat, prevSnapped.lon, prevSnapped.ele);
         for (int i = prevWayIndex; i < max; i++)
         {
-            basePoints.add(fullPL.getLatitude(i), fullPL.getLongitude(i));
-        }
-        basePoints.add(currSnapped.lat, currSnapped.lon);
+            basePoints.add(fullPL, i);
+        }       
+        basePoints.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
         
         PointList baseReversePoints = basePoints.clone(true);
         double baseDistance = basePoints.calcDistance(distCalc);
@@ -253,26 +258,93 @@ public class QueryGraph implements Graph
     }
 
     @Override
-    public double getLatitude( int nodeId )
+    public NodeAccess getNodeAccess()
     {
-        if (nodeId >= mainNodes)
-            return virtualNodes.getLatitude(nodeId - mainNodes);
-        return mainGraph.getLatitude(nodeId);
+        return nodeAccess;
     }
 
-    @Override
-    public double getLongitude( int nodeId )
+    private final NodeAccess nodeAccess = new NodeAccess()
     {
-        if (nodeId >= mainNodes)
-            return virtualNodes.getLongitude(nodeId - mainNodes);
-        return mainGraph.getLongitude(nodeId);
-    }
+        @Override
+        public boolean is3D()
+        {
+            return mainNodeAccess.is3D();
+        }
 
-    @Override
-    public int getAdditionalNodeField( int nodeId )
-    {
-        return mainGraph.getAdditionalNodeField(nodeId);
-    }
+        @Override
+        public int getDimension()
+        {
+            return mainNodeAccess.getDimension();
+        }
+
+        @Override
+        public double getLatitude( int nodeId )
+        {
+            if (nodeId >= mainNodes)
+                return virtualNodes.getLatitude(nodeId - mainNodes);
+            return mainNodeAccess.getLatitude(nodeId);
+        }
+
+        @Override
+        public double getLongitude( int nodeId )
+        {
+            if (nodeId >= mainNodes)
+                return virtualNodes.getLongitude(nodeId - mainNodes);
+            return mainNodeAccess.getLongitude(nodeId);
+        }
+
+        @Override
+        public double getElevation( int nodeId )
+        {
+            if (nodeId >= mainNodes)
+                return virtualNodes.getElevation(nodeId - mainNodes);
+            return mainNodeAccess.getElevation(nodeId);
+        }
+
+        @Override
+        public int getAdditionalNodeField( int nodeId )
+        {
+            if (nodeId >= mainNodes)
+                return 0;
+            return mainNodeAccess.getAdditionalNodeField(nodeId);
+        }
+
+        @Override
+        public void setNode( int nodeId, double lat, double lon )
+        {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void setNode( int nodeId, double lat, double lon, double ele )
+        {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void setAdditionalNodeField( int nodeId, int additionalValue )
+        {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public double getLat( int nodeId )
+        {
+            return getLatitude(nodeId);
+        }
+
+        @Override
+        public double getLon( int nodeId )
+        {
+            return getLongitude(nodeId);
+        }
+
+        @Override
+        public double getEle( int nodeId )
+        {
+            return getElevation(nodeId);
+        }
+    };
 
     @Override
     public BBox getBounds()
@@ -437,18 +509,6 @@ public class QueryGraph implements Graph
     }
 
     @Override
-    public void setNode( int node, double lat, double lon )
-    {
-        throw exc();
-    }
-
-    @Override
-    public void setAdditionalNodeField( int nodeId, int additionalValue )
-    {
-        exc();
-    }
-
-    @Override
     public EdgeIteratorState edge( int a, int b )
     {
         throw exc();
@@ -605,9 +665,9 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public void copyProperties( EdgeIteratorState edge )
+        public EdgeIteratorState copyPropertiesTo( EdgeIteratorState edge )
         {
-            edges.get(current).copyProperties(edge);
+            return edges.get(current).copyPropertiesTo(edge);
         }
 
         @Override
@@ -810,7 +870,7 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public void copyProperties( EdgeIteratorState edge )
+        public EdgeIteratorState copyPropertiesTo( EdgeIteratorState edge )
         {
             throw new UnsupportedOperationException("Not supported.");
         }

@@ -223,23 +223,55 @@ class RAMIntDataAccess extends AbstractDataAccess
     }
 
     @Override
-    public final void setInt( long longIndex, int value )
+    public final void setInt( long bytePos, int value )
     {
         assert segmentSizeIntsPower > 0 : "call create or loadExisting before usage!";
-        longIndex >>>= 2;
-        int bufferIndex = (int) (longIndex >>> segmentSizeIntsPower);
-        int index = (int) (longIndex & indexDivisor);
+        bytePos >>>= 2;
+        int bufferIndex = (int) (bytePos >>> segmentSizeIntsPower);
+        int index = (int) (bytePos & indexDivisor);
         segments[bufferIndex][index] = value;
     }
 
     @Override
-    public final int getInt( long longIndex )
+    public final int getInt( long bytePos )
     {
         assert segmentSizeIntsPower > 0 : "call create or loadExisting before usage!";
-        longIndex >>>= 2;
-        int bufferIndex = (int) (longIndex >>> segmentSizeIntsPower);
-        int index = (int) (longIndex & indexDivisor);
+        bytePos >>>= 2;
+        int bufferIndex = (int) (bytePos >>> segmentSizeIntsPower);
+        int index = (int) (bytePos & indexDivisor);
         return segments[bufferIndex][index];
+    }
+
+    @Override
+    public final void setShort( long bytePos, short value )
+    {
+        assert segmentSizeIntsPower > 0 : "call create or loadExisting before usage!";
+        if (bytePos % 4 != 0 && bytePos % 4 != 2)
+            throw new IllegalMonitorStateException("bytePos of wrong multiple for RAMInt " + bytePos);
+
+        long tmpIndex = bytePos >>> 1;
+        int bufferIndex = (int) (tmpIndex >>> segmentSizeIntsPower);
+        int index = (int) (tmpIndex & indexDivisor);
+        if (tmpIndex * 2 == bytePos)
+            segments[bufferIndex][index] = value;
+        else
+            segments[bufferIndex][index] = value << 16;
+    }
+
+    @Override
+    public final short getShort( long bytePos )
+    {
+        assert segmentSizeIntsPower > 0 : "call create or loadExisting before usage!";
+        if (bytePos % 4 != 0 && bytePos % 4 != 2)
+            throw new IllegalMonitorStateException("bytePos of wrong multiple for RAMInt " + bytePos);
+        
+        long tmpIndex = bytePos >>> 1;
+        int bufferIndex = (int) (tmpIndex >>> segmentSizeIntsPower);
+        int index = (int) (tmpIndex & indexDivisor);
+        if (tmpIndex * 2 == bytePos)
+            return (short) segments[bufferIndex][index];
+        else
+            return (short) (segments[bufferIndex][index] >> 16);
     }
 
     @Override

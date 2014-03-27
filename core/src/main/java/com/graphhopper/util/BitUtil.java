@@ -107,6 +107,13 @@ public abstract class BitUtil
         fromInt(bytes, Float.floatToRawIntBits(value), offset);
     }
 
+    public final short toShort( byte[] b )
+    {
+        return toShort(b, 0);
+    }
+
+    public abstract short toShort( byte[] b, int offset );
+
     public final int toInt( byte[] b )
     {
         return toInt(b, 0);
@@ -125,6 +132,20 @@ public abstract class BitUtil
     {
         fromInt(bytes, value, 0);
     }
+
+    public final byte[] fromShort( short value )
+    {
+        byte[] bytes = new byte[4];
+        fromShort(bytes, value, 0);
+        return bytes;
+    }
+
+    public final void fromShort( byte[] bytes, short value )
+    {
+        fromShort(bytes, value, 0);
+    }
+
+    public abstract void fromShort( byte[] bytes, short value, int offset );
 
     public abstract void fromInt( byte[] bytes, int value, int offset );
 

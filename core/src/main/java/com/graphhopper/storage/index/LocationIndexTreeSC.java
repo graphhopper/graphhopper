@@ -168,9 +168,9 @@ public class LocationIndexTreeSC extends LocationIndexTree
             }
 
             @Override
-            public void copyProperties( EdgeIteratorState edge )
+            public EdgeIteratorState copyPropertiesTo( EdgeIteratorState edge )
             {
-                tmpIter.copyProperties(edge);
+                return tmpIter.copyPropertiesTo(edge);
             }
 
             @Override
