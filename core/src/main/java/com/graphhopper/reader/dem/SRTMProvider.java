@@ -49,7 +49,7 @@ public class SRTMProvider implements ElevationProvider
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int WIDTH = 1201;
     private Directory dir;
-    private DAType daType = DAType.RAM;
+    private DAType daType = DAType.MMAP;
     private Downloader downloader = new Downloader("GraphHopper SRTMReader").setTimeout(10000);
     private File cacheDir = new File("/tmp/srtm");
     // use a map as an array is not quite useful if we want to hold only parts of the world
