@@ -200,7 +200,7 @@ public class GraphHopperServlet extends GHBaseServlet
             Map<String, String> map = new HashMap<String, String>();
             map.put("message", "Not found");
             map.put("details", "");
-            jsonInfo.put("errors", Arrays.asList(map));
+            jsonInfo.put("errors", Collections.singletonList(map));
         } else
         {
             jsonInfo.put("took", took);
