@@ -39,7 +39,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class PathTest
-{    
+{
     private final EncodingManager carManager = new EncodingManager("CAR");
     private final FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
@@ -158,7 +158,7 @@ public class PathTest
         lastIndex = (Integer) ((List) res.get(res.size() - 1).get("interval")).get(0);
         assertEquals(path.calcPoints().size() - 1, lastIndex);
     }
-    
+
     @Test
     public void testFindInstruction()
     {
@@ -191,17 +191,17 @@ public class PathTest
         e1.parent.parent.parent.parent = new EdgeEntry(-1, 0, 1);
         path.setEdgeEntry(e1);
         path.extract();
-            
+
         path.calcInstructions();
         Instruction nextInstr1 = path.findInstruction(0.0, 0.1);
         Instruction nextInstr2 = path.findInstruction(5.0, 0.4);
         Instruction nextInstr3 = path.findInstruction(9.0, 0.53);
         Instruction nextInstr4 = path.findInstruction(7.8, 0.25);
-        
+
         assertEquals(Instruction.TURN_RIGHT, nextInstr1.getSign());
         assertEquals(Instruction.TURN_LEFT, nextInstr2.getSign());
         assertEquals(Instruction.TURN_SHARP_LEFT, nextInstr3.getSign());
         assertEquals(Instruction.FINISH, nextInstr4.getSign());
     }
-    
+
 }

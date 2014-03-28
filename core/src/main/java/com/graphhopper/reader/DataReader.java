@@ -16,7 +16,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package com.graphhopper.reader;
 
 import java.io.IOException;
@@ -24,7 +23,8 @@ import java.io.IOException;
 /**
  * @author Peter Karich
  */
-public interface DataReader {
+public interface DataReader
+{
 
     void readGraph() throws IOException;
 }

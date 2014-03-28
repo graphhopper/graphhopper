@@ -126,7 +126,7 @@ public class TurnCostStorage implements ExtendedStorage
     {
         if (index >= graph.getNodes() || index < 0)
             return NO_COST_ENTRY;
-        
+
         return nodeAccess.getAdditionalNodeField(index);
     }
 

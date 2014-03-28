@@ -472,13 +472,13 @@ public class Path
                 else
                 {
                     int beforeLast = wayGeo.getSize() - 2;
-                    prevOrientation = ac.calcOrientation(wayGeo.getLatitude(beforeLast), wayGeo.getLongitude(beforeLast), 
+                    prevOrientation = ac.calcOrientation(wayGeo.getLatitude(beforeLast), wayGeo.getLongitude(beforeLast),
                             adjLat, adjLon);
                 }
 
                 boolean lastEdge = index == edgeIds.size() - 1;
                 if (lastEdge)
-                    cachedWays.add(new FinishInstruction(adjLat, adjLon, 
+                    cachedWays.add(new FinishInstruction(adjLat, adjLon,
                             nodeAccess.is3D() ? nodeAccess.getElevation(adjNode) : 0));
             }
 

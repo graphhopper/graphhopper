@@ -232,7 +232,7 @@ public class RAMDataAccess extends AbstractDataAccess
         }
         return bitUtil.toInt(segments[bufferIndex], index);
     }
- 
+
     @Override
     public final void setShort( long bytePos, short value )
     {

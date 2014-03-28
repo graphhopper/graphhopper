@@ -81,7 +81,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     {
         // use an encoder where it is possible to store 2 weights per edge
         FlagEncoder encoder = new Bike2WeightFlagEncoder();
-        EncodingManager em = new EncodingManager(encoder);        
+        EncodingManager em = new EncodingManager(encoder);
         LevelGraphStorage g2 = (LevelGraphStorage) createGraph(em, false);
         g2.edge(0, 1, 1, true);
         EdgeIteratorState iter1_1 = g2.edge(0, 2, 1.4, false);
@@ -94,10 +94,10 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         g2.edge(3, 5, 1, true);
         g2.edge(5, 6, 1, true);
         g2.edge(4, 6, 1, true);
-        g2.edge(6, 7, 1, true);                
+        g2.edge(6, 7, 1, true);
         EdgeIteratorState iter2_2 = g2.edge(5, 7);
         iter2_2.setDistance(1.4).setFlags(encoder.setProperties(10, true, false));
-        
+
         // simulate preparation
         EdgeSkipIterState iter2_1 = g2.shortcut(0, 5);
         iter2_1.setDistance(2.8).setFlags(encoder.setProperties(10, true, false));
@@ -116,7 +116,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
 
         Path p = new PrepareContractionHierarchies(encoder, new ShortestWeighting()).
                 setGraph(g2).createAlgo().calcPath(0, 7);
-        
+
         assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());
         assertEquals(1064, p.getMillis());
         assertEquals(4.2, p.getDistance(), 1e-5);

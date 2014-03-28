@@ -183,14 +183,14 @@ public class RoutingAlgorithmIT
                 list, "FOOT", true, "FOOT", "shortest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
-    
+
     @Test
     public void testMonacoBike3D_twoSpeedsPerEdge()
     {
-        List<OneRun> list = new ArrayList<OneRun>();        
+        List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 1724, 85));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3835, 171));
-        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2425, 122));                            
+        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2425, 122));
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1610, 85));
 
         // try reverse direction
@@ -355,8 +355,8 @@ public class RoutingAlgorithmIT
                     disableCHShortcuts().
                     setGraphHopperLocation(graphFile).
                     setEncodingManager(new EncodingManager(importVehicles));
-            if (is3D)                
-                hopper.setElevationProvider(new SRTMProvider().setCacheDir(new File("./files")));            
+            if (is3D)
+                hopper.setElevationProvider(new SRTMProvider().setCacheDir(new File("./files")));
 
             hopper.importOrLoad();
 

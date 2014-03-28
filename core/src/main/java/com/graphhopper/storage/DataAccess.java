@@ -51,7 +51,7 @@ public interface DataAccess extends Storable<DataAccess>
      * Get 4 bytes from position 'bytePos'
      */
     int getInt( long bytePos );
-    
+
     /**
      * Set 2 bytes at position 'index' to the specified value
      */

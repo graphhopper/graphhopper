@@ -572,15 +572,15 @@ public class GraphHopper implements GraphHopperAPI
     protected DataReader importData() throws IOException
     {
         if (graph == null)
-            throw new IllegalStateException("Load graph before importing OSM data");                
+            throw new IllegalStateException("Load graph before importing OSM data");
 
         if (osmFile == null)
             throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
                     + " but also cannot import from OSM file as it wasn't specified!");
 
-        if(encodingManager == null)
+        if (encodingManager == null)
             throw new IllegalStateException("Missing encoding manager");
-            
+
         encodingManager.setEnableInstructions(enableInstructions);
         DataReader reader = createReader(graph);
         logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());

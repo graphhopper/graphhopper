@@ -58,7 +58,7 @@ public class HeightTile
     public short getHeight( double lat, double lon )
     {
         double deltaLat = lat - minLat;
-        double deltaLon = lon - minLon;        
+        double deltaLon = lon - minLon;
         if (deltaLat > higherBound || deltaLat < lowerBound)
             throw new IllegalStateException("latitude not in boundary of this file:" + lat + "," + lon + ", this:" + this.toString());
         if (deltaLon > higherBound || deltaLon < lowerBound)

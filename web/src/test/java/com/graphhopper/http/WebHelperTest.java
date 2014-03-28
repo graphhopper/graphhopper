@@ -64,10 +64,10 @@ public class WebHelperTest
 
     @Test
     public void testDecode3D() throws Exception
-    {        
+    {
         PointList list = WebHelper.decodePolyline("_p~iF~ps|Uo}@", 1, true);
         assertEquals(Helper.createPointList3D(38.5, -120.2, 10), list);
-        
+
         list = WebHelper.decodePolyline("_p~iF~ps|Uo}@_ulLnnqC_anF_mqNvxq`@?", 3, true);
         assertEquals(Helper.createPointList3D(38.5, -120.2, 10, 40.7, -120.95, 1234, 43.252, -126.453, 1234), list);
     }

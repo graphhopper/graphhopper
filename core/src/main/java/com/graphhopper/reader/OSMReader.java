@@ -739,8 +739,8 @@ public class OSMReader implements DataReader
             zeroCounter++;
             towerNodeDistance = 0.0001;
         }
-        
-        EdgeIteratorState iter = graphStorage.edge(fromIndex, toIndex).setDistance(towerNodeDistance).setFlags(flags);        
+
+        EdgeIteratorState iter = graphStorage.edge(fromIndex, toIndex).setDistance(towerNodeDistance).setFlags(flags);
         if (nodes > 2)
         {
             simplifyAlgo.simplify(pillarNodes);

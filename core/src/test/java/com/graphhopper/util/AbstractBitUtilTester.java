@@ -70,7 +70,7 @@ public abstract class AbstractBitUtilTester
 
         bytes = bitUtil.fromShort((short) -123);
         assertEquals(-123, bitUtil.toShort(bytes));
-        
+
         bytes = bitUtil.fromShort((short) (0xFF | 0xFF));
         assertEquals(0xFF | 0xFF, bitUtil.toShort(bytes));
     }

@@ -234,12 +234,12 @@ public class QueryGraph implements Graph
         for (int i = prevWayIndex; i < max; i++)
         {
             basePoints.add(fullPL, i);
-        }       
+        }
         basePoints.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
-        
+
         PointList baseReversePoints = basePoints.clone(true);
         double baseDistance = basePoints.calcDistance(distCalc);
-        int virtEdgeId = virtualEdges.size() + mainEdges;        
+        int virtEdgeId = virtualEdges.size() + mainEdges;
 
         // edges between base and snapped point
         VirtualEdgeIState baseEdge = new VirtualEdgeIState(virtEdgeId + VE_BASE, prevNodeId, nodeId,

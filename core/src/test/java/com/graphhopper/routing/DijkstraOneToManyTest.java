@@ -82,7 +82,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     public void testTwoWeightsPerEdge2()
     {
         // calcPath with QueryResult not supported
-    }            
+    }
 
     @Test
     public void testUseCache()

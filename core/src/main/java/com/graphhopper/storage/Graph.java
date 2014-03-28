@@ -39,7 +39,7 @@ public interface Graph
     /**
      * Creates a node explorer to access node properties.
      */
-    NodeAccess getNodeAccess();    
+    NodeAccess getNodeAccess();
 
     /**
      * Returns the implicit bounds of this graph calculated from the lat,lon input of setNode

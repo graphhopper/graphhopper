@@ -36,7 +36,7 @@ public class OSMElementTest
         assertTrue(instance.hasTag("surface", "now", "something"));
         assertFalse(instance.hasTag("surface", "now", "not"));
     }
-    
+
     @Test
     public void testSetTags()
     {
@@ -45,7 +45,7 @@ public class OSMElementTest
         map.put("test", "xy");
         instance.setTags(map);
         assertTrue(instance.hasTag("test", "xy"));
-        
+
         instance.setTags(null);
         assertFalse(instance.hasTag("test", "xy"));
     }

@@ -92,7 +92,7 @@ public class EncodingManager
     {
         this(flagEncodersStr, bytesForFlags, 0);
     }
-    
+
     public EncodingManager( String flagEncodersStr, int bytesForFlags, int maxTurnCost )
     {
         this(Arrays.asList(readFromEncoderString(defaultEdgeFlagEncoders, flagEncodersStr).toArray(new FlagEncoder[0])), bytesForFlags, maxTurnCost);
@@ -182,7 +182,7 @@ public class EncodingManager
         }
         return resultEncoders;
     }
-    
+
     private static final String ERR = "Encoders are requesting more than %s bits of %s flags. ";
     private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long.";
 

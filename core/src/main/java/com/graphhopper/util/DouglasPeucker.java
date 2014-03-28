@@ -85,7 +85,6 @@ public class DouglasPeucker
         return removed;
     }
 
-
     /**
      * compress list: move points into EMPTY slots
      */
@@ -98,7 +97,7 @@ public class DouglasPeucker
             {
                 if (freeIndex < 0)
                     freeIndex = currentIndex;
-                
+
                 continue;
             } else if (freeIndex < 0)
             {

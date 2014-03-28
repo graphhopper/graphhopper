@@ -41,7 +41,7 @@ public class OSMRelation extends OSMElement
         return rel;
     }
 
-    public OSMRelation( long id)
+    public OSMRelation( long id )
     {
         super(id, RELATION);
     }

@@ -41,9 +41,10 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
         turnCostStorage = new TurnCostStorage();
         return new GraphHopperStorage(dir, encodingManager, is3D, turnCostStorage);
     }
-    
+
     @Override
-    protected GraphStorage newRAMGraph() {
+    protected GraphStorage newRAMGraph()
+    {
         return newGraph(new RAMDirectory(), false);
     }
 

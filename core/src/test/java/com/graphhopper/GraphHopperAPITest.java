@@ -89,6 +89,6 @@ public class GraphHopperAPITest
         } catch (Exception ex)
         {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Call load or importOrLoad before routing"));
-        }        
+        }
     }
 }

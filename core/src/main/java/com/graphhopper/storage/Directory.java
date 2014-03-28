@@ -50,7 +50,6 @@ public interface Directory
      * Renames the specified DataAccess object into one.
      */
     // DataAccess rename( DataAccess da, String newName );
-
     /**
      * Removes the specified object from the directory.
      */

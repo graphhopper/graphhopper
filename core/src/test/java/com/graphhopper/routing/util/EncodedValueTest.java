@@ -36,7 +36,7 @@ public class EncodedValueTest
         assertEquals(10, instance.getValue(instance.setValue(0, 10)));
 
         instance = new EncodedValue("test", 0, 4, 1, 5, 10);
-        assertEquals(5, instance.getValue(instance.setDefaultValue(0)));                
+        assertEquals(5, instance.getValue(instance.setDefaultValue(0)));
     }
 
     @Test

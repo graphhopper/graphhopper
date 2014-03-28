@@ -379,7 +379,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
                 encoded |= backwardBit;
             else
                 encoded |= forwardBit;
-            
+
         } else
         {
             encoded |= directionBitMask;

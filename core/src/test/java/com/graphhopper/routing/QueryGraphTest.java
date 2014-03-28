@@ -282,7 +282,7 @@ public class QueryGraphTest
         qr.setSnappedPosition(EDGE);
         qr.calcSnappedPoint(distCalc);
         assertEquals(10, qr.getSnappedPoint().getEle(), 1e-1);
-        
+
         qr = new QueryResult(0, 0.00005);
         qr.setClosestEdge(edgeReverse);
         qr.setWayIndex(0);

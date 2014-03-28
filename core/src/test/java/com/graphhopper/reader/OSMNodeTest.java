@@ -16,7 +16,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package com.graphhopper.reader;
 
 import org.junit.Test;
@@ -33,17 +32,17 @@ public class OSMNodeTest
     {
         OSMNode instance = new OSMNode(0, 10, 10);
         assertTrue(Double.isNaN(instance.getEle()));
-        
+
         instance.setTag("ele", "-10.1");
         assertEquals(-10.1, instance.getEle(), 1e-1);
-        
+
         // oh OSM
         instance.setTag("ele", "-10,1");
         assertEquals(-10.1, instance.getEle(), 1e-1);
         // do not parse other stuff
         instance.setTag("ele", "-9.1 m.");
         assertEquals(-10.1, instance.getEle(), 1e-1);
-        
+
         // empty values
         instance.setTag("ele", "");
         assertTrue(Double.isNaN(instance.getEle()));

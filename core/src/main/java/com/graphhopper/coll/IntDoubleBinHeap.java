@@ -51,10 +51,11 @@ public class IntDoubleBinHeap implements BinHeapWrapper<Number, Integer>
         return size;
     }
 
-    public int size() {
+    public int size()
+    {
         return size;
     }
-    
+
     @Override
     public boolean isEmpty()
     {

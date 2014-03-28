@@ -38,7 +38,7 @@ public class CarFlagEncoderTest
 
     @Test
     public void testAccess()
-    {        
+    {
         OSMWay way = new OSMWay(1);
         assertFalse(encoder.acceptWay(way) > 0);
         way.setTag("highway", "service");
@@ -243,14 +243,14 @@ public class CarFlagEncoderTest
         node.setTag("bicycle", "yes");
         // barrier!
         assertTrue(encoder.handleNodeTags(node) > 0);
-        
+
         node = new OSMNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
         node.setTag("access", "yes");
         node.setTag("bicycle", "yes");
         // should this be a barrier for motorcars too?
         // assertTrue(encoder.handleNodeTags(node) > 0);
-        
+
         node = new OSMNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
         node.setTag("access", "no");

@@ -110,7 +110,7 @@ public class InstructionList implements Iterable<Instruction>
             // the last instruction should not point to the next instruction
             if (counter + 1 == instructions.size())
                 tmpIndex--;
-            
+
             instrJson.put("interval", Arrays.asList(pointsIndex, tmpIndex));
             pointsIndex = tmpIndex;
 

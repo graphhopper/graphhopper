@@ -176,7 +176,7 @@ public class QueryResult
         double queryLat = getQueryPoint().lat, queryLon = getQueryPoint().lon;
         double adjLat = fullPL.getLatitude(wayIndex + 1), adjLon = fullPL.getLongitude(wayIndex + 1);
         if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon))
-        {            
+        {
             GHPoint tmpPoint = distCalc.calcCrossingPointToEdge(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon);
             double adjEle = fullPL.getElevation(wayIndex + 1);
             snappedPoint = new GHPoint3D(tmpPoint.lat, tmpPoint.lon, (tmpEle + adjEle) / 2);

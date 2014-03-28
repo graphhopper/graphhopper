@@ -67,7 +67,7 @@ public abstract class AbstractBikeFlagEncoderTester
 
     @Test
     public void testAccess()
-    {        
+    {
         OSMWay way = new OSMWay(1);
 
         way.setTag("highway", "motorway");
@@ -154,7 +154,7 @@ public abstract class AbstractBikeFlagEncoderTester
 
     @Test
     public void testTramStations()
-    {        
+    {
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "secondary");
         way.setTag("railway", "rail");
@@ -184,7 +184,7 @@ public abstract class AbstractBikeFlagEncoderTester
 
     @Test
     public void testHandleCommonWayTags()
-    {        
+    {
         OSMWay way = new OSMWay(1);
         String wayType;
 

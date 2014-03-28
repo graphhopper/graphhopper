@@ -174,7 +174,7 @@ public class LocationIndexTreeSC extends LocationIndexTree
             }
 
             @Override
-            public EdgeIteratorState detach(boolean reverse)
+            public EdgeIteratorState detach( boolean reverse )
             {
                 return tmpIter.detach(reverse);
             }

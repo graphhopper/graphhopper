@@ -22,5 +22,5 @@ public interface PbfBlobDecoderListener
     /**
      * Notifies the listener that an error occurred during processing.
      */
-    void error(Exception ex);
+    void error( Exception ex );
 }

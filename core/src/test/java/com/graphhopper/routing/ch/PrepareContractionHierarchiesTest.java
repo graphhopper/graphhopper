@@ -299,16 +299,16 @@ public class PrepareContractionHierarchiesTest
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
         EdgeSkipIterState tmp = g.shortcut(1, 4);
         tmp.setFlags(PrepareEncoder.getScDirMask());
-        tmp.setWeight(2);        
+        tmp.setWeight(2);
         tmp.setSkippedEdges(iter1_1.getEdge(), iter1_2.getEdge());
         long f = PrepareEncoder.getScFwdDir();
         tmp = g.shortcut(4, 6);
         tmp.setFlags(f);
-        tmp.setWeight(2);        
+        tmp.setWeight(2);
         tmp.setSkippedEdges(iter2_1.getEdge(), iter2_2.getEdge());
         tmp = g.shortcut(6, 4);
         tmp.setFlags(f);
-        tmp.setWeight(3);        
+        tmp.setWeight(3);
         tmp.setSkippedEdges(iter3_1.getEdge(), iter3_2.getEdge());
 
         prepare.initFromGraph();

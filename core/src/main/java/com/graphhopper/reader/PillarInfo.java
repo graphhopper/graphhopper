@@ -25,6 +25,7 @@ import com.graphhopper.util.PointAccess;
 
 /**
  * This class helps to store lat,lon,ele for every node parsed in OSMReader
+ * <p>
  * @author Peter Karich
  */
 public class PillarInfo implements PointAccess
@@ -75,18 +76,18 @@ public class PillarInfo implements PointAccess
     private void _setNode( int id, double lat, double lon, double ele )
     {
         long tmp = (long) id * rowSizeInBytes;
-        da.incCapacity(tmp + rowSizeInBytes);        
+        da.incCapacity(tmp + rowSizeInBytes);
         da.setInt(tmp + LAT, Helper.degreeToInt(lat));
         da.setInt(tmp + LON, Helper.degreeToInt(lon));
-        
-        if (is3D())                    
-            da.setInt(tmp + ELE, Helper.eleToInt(ele));        
+
+        if (is3D())
+            da.setInt(tmp + ELE, Helper.eleToInt(ele));
     }
 
     @Override
     public double getLatitude( int id )
     {
-        int intVal = da.getInt((long) id * rowSizeInBytes + LAT);        
+        int intVal = da.getInt((long) id * rowSizeInBytes + LAT);
         return Helper.intToDegree(intVal);
     }
 
@@ -99,7 +100,7 @@ public class PillarInfo implements PointAccess
     @Override
     public double getLongitude( int id )
     {
-        int intVal = da.getInt((long) id * rowSizeInBytes + LON);        
+        int intVal = da.getInt((long) id * rowSizeInBytes + LON);
         return Helper.intToDegree(intVal);
     }
 
@@ -112,10 +113,10 @@ public class PillarInfo implements PointAccess
     @Override
     public double getElevation( int id )
     {
-        if(!is3D())
+        if (!is3D())
             return Double.NaN;
-        
-        int intVal = da.getInt((long) id * rowSizeInBytes + ELE);        
+
+        int intVal = da.getInt((long) id * rowSizeInBytes + ELE);
         return Helper.intToEle(intVal);
     }
 

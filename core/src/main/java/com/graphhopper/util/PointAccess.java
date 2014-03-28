@@ -23,6 +23,7 @@ package com.graphhopper.util;
  */
 public interface PointAccess
 {
+
     /**
      * @return true if elevation data is stored and can be retrieved
      */

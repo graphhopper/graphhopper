@@ -130,7 +130,7 @@ public class PbfDecoder implements Runnable
             PbfBlobDecoderListener decoderListener = new PbfBlobDecoderListener()
             {
                 @Override
-                public void error(Exception ex)
+                public void error( Exception ex )
                 {
                     lock.lock();
                     try

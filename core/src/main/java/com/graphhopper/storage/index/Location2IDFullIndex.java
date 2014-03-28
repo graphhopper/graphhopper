@@ -56,7 +56,7 @@ public class Location2IDFullIndex implements LocationIndex
             calc = new DistancePlaneProjection();
         else
             calc = new DistanceCalcEarth();
-        
+
         return this;
     }
 

@@ -50,7 +50,10 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     protected CarFlagEncoder( int speedBits, double speedFactor )
     {
         super(speedBits, speedFactor);
-        restrictions = new String[] { "motorcar", "motor_vehicle", "vehicle", "access" };
+        restrictions = new String[]
+        {
+            "motorcar", "motor_vehicle", "vehicle", "access"
+        };
         restrictedValues.add("private");
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -237,7 +240,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     @Override
     public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
     {
-        if(edgeOutExplorer == null || edgeInExplorer == null) {
+        if (edgeOutExplorer == null || edgeInExplorer == null)
+        {
             edgeOutExplorer = osmReader.getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(this, false, true));
             edgeInExplorer = osmReader.getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(this, true, false));
         }

@@ -104,10 +104,10 @@ public class InstructionListTest
 
         assertEquals(70000.0, sumDistances(wayList), 1e-1);
         List<String> distStrings = wayList.createDistances(trMap.get("de"), false);
-        assertEquals(Arrays.asList("10.0 km", "10.0 km", "10.0 km", "10.0 km", "20.0 km", "10.0 km", "0 m"), 
+        assertEquals(Arrays.asList("10.0 km", "10.0 km", "10.0 km", "10.0 km", "20.0 km", "10.0 km", "0 m"),
                 distStrings);
         distStrings = wayList.createDistances(trMap.get("en_US"), true);
-        assertEquals(Arrays.asList("6.21 mi", "6.21 mi", "6.21 mi", "6.21 mi", "12.43 mi", "6.21 mi", "0 ft"), 
+        assertEquals(Arrays.asList("6.21 mi", "6.21 mi", "6.21 mi", "6.21 mi", "12.43 mi", "6.21 mi", "0 ft"),
                 distStrings);
         List<GPXEntry> gpxes = wayList.createGPXList();
         assertEquals(10, gpxes.size());
@@ -119,7 +119,7 @@ public class InstructionListTest
         assertEquals(1.15, gpxes.get(4).getLon(), 1e-6);
         assertEquals(1.16, gpxes.get(5).getLon(), 1e-6);
         assertEquals(1.16, gpxes.get(5).getLon(), 1e-6);
-                
+
         compare(Arrays.asList(asL(1.2d, 1.0d), asL(1.2d, 1.1), asL(1.1d, 1.1), asL(1.0, 1.1),
                 asL(1.0, 1.2), asL(1.1, 1.3), asL(1.1, 1.4)),
                 wayList.createStartPoints());

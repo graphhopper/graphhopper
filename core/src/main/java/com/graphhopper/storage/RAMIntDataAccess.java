@@ -63,7 +63,7 @@ class RAMIntDataAccess extends AbstractDataAccess
         if (da instanceof RAMIntDataAccess)
         {
             copyHeader(da);
-            RAMIntDataAccess rda = (RAMIntDataAccess) da;            
+            RAMIntDataAccess rda = (RAMIntDataAccess) da;
             // TODO PERFORMANCE we could reuse rda segments!
             rda.segments = new int[segments.length][];
             for (int i = 0; i < segments.length; i++)
@@ -264,7 +264,7 @@ class RAMIntDataAccess extends AbstractDataAccess
         assert segmentSizeIntsPower > 0 : "call create or loadExisting before usage!";
         if (bytePos % 4 != 0 && bytePos % 4 != 2)
             throw new IllegalMonitorStateException("bytePos of wrong multiple for RAMInt " + bytePos);
-        
+
         long tmpIndex = bytePos >>> 1;
         int bufferIndex = (int) (tmpIndex >>> segmentSizeIntsPower);
         int index = (int) (tmpIndex & indexDivisor);

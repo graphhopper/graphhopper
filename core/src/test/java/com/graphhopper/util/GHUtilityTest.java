@@ -101,16 +101,16 @@ public class GHUtilityTest
         g.edge(2, 1, 1.1, false);
         GHUtility.sortDFS(g, createGraph());
     }
-    
+
     @Test
     public void testCopyWithSelfRef()
     {
         Graph g = initUnsorted(createGraph());
         EdgeIteratorState eb = g.edge(0, 0, 11, true);
-        
+
         LevelGraph lg = new GraphBuilder(encodingManager).levelGraphCreate();
         GHUtility.copyTo(g, lg);
-        
+
         assertEquals(g.getAllEdges().getMaxId(), lg.getAllEdges().getMaxId());
     }
 

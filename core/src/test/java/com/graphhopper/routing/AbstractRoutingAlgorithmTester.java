@@ -45,7 +45,7 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         return new GraphBuilder(em).set3D(is3D).create();
     }
-    
+
     protected Graph createGraph( boolean is3D )
     {
         return createGraph(encodingManager, is3D);
@@ -81,7 +81,7 @@ public abstract class AbstractRoutingAlgorithmTester
         Graph graphFastest = createGraph(false);
         initDirectedAndDiffSpeed(graphFastest);
         Path p2 = prepareGraph(graphFastest, carEncoder, new FastestWeighting(carEncoder)).createAlgo().calcPath(0, 3);
-        assertEquals(Helper.createTList(0, 4, 6, 7, 5, 3), p2.calcNodes());        
+        assertEquals(Helper.createTList(0, 4, 6, 7, 5, 3), p2.calcNodes());
         assertEquals(p2.toString(), 1261.714, p2.getDistance(), 1e-6);
         assertEquals(p2.toString(), 111437, p2.getMillis());
     }
@@ -609,7 +609,7 @@ public abstract class AbstractRoutingAlgorithmTester
         Graph graph = initEleGraph(createGraph(new EncodingManager(encoder), true));
         // force the other path
         GHUtility.getEdge(graph, 0, 3).setFlags(encoder.setProperties(10, false, true));
-        
+
         // for two weights per edge it happened that Path (and also the Weighting) read the wrong side 
         // of the speed and read 0 => infinity weight => overflow of millis => negative millis!
         Path p = prepareGraph(graph, encoder, new FastestWeighting(encoder)).
@@ -654,7 +654,7 @@ public abstract class AbstractRoutingAlgorithmTester
                     return edge.getDistance() * 0.9;
                 else if (adj == 4)
                     return 2 * edge.getDistance();
-                
+
                 return edge.getDistance() * 0.8;
             }
         };

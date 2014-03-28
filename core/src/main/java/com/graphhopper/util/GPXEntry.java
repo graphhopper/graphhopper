@@ -25,7 +25,7 @@ import com.graphhopper.util.shapes.GHPoint;
 public class GPXEntry extends GHPoint
 {
     private long time;
-    
+
     public GPXEntry( GHPoint p, long millis )
     {
         this(p.lat, p.lon, millis);

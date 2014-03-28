@@ -64,7 +64,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         OSMWay osmWay = new OSMWay(1);
         osmWay.setTag("highway", "track");
         long allowed = encoder.acceptBit;
-        
+
         OSMRelation osmRel = new OSMRelation(1);
 
         assertEquals(PUSHING_SECTION_SPEED / 2, getEncodedDecodedSpeed(osmWay), 1e-1);

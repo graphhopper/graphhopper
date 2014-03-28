@@ -96,7 +96,7 @@ public class BBox implements Shape, Cloneable
         // second latitude should be smaller than the first
         if (minLat >= maxLat)
             return false;
-        
+
         // second elevation should be smaller than the first
         if (is3D && minEle >= maxEle)
             return false;
@@ -171,9 +171,9 @@ public class BBox implements Shape, Cloneable
     public String toString()
     {
         String str = minLon + "," + maxLon + "," + minLat + "," + maxLat;
-        if(is3D)
+        if (is3D)
             str += "," + minEle + "," + maxEle;
-        
+
         return str;
     }
 

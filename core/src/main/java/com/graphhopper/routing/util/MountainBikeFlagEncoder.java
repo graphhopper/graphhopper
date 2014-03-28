@@ -34,11 +34,11 @@ public class MountainBikeFlagEncoder extends BikeFlagCommonEncoder
         setTrackTypeSpeed("grade4", 20);
         setTrackTypeSpeed("grade5", 20); // like sand/grass     
 
-        setSurfaceSpeed("paved", 12);        
+        setSurfaceSpeed("paved", 12);
         setSurfaceSpeed("asphalt", 12);
         setSurfaceSpeed("cobblestone", 10);
         setSurfaceSpeed("cobblestone:flattened", 10);
-        setSurfaceSpeed("sett",10);
+        setSurfaceSpeed("sett", 10);
         setSurfaceSpeed("concrete", 12);
         setSurfaceSpeed("concrete:lanes", 14);
         setSurfaceSpeed("concrete:plates", 14);
