@@ -49,7 +49,11 @@ public class GraphHopperAPITest
         graph.edge(0, 4, 40, true);
         graph.edge(4, 3, 40, true);
 
-        GraphHopperAPI instance = new GraphHopper().setEncodingManager(encodingManager).disableCHShortcuts().loadGraph(graph);
+        GraphHopper instance = new GraphHopper().
+                setInMemory(false).
+                setEncodingManager(encodingManager).
+                disableCHShortcuts().
+                loadGraph(graph);
         GHResponse ph = instance.route(new GHRequest(42, 10.4, 42, 10));
         assertTrue(ph.isFound());
         assertEquals(80, ph.getDistance(), 1e-6);
@@ -58,13 +62,16 @@ public class GraphHopperAPITest
         assertEquals(41.9, ph.getPoints().getLatitude(1), 1e-5);
         assertEquals(10.2, ph.getPoints().getLongitude(1), 1e-5);
         assertEquals(3, ph.getPoints().getSize());
+        instance.close();
     }
 
     @Test
     public void testNoLoad()
     {
-
-        GraphHopperAPI instance = new GraphHopper().setEncodingManager(encodingManager).disableCHShortcuts();
+        GraphHopper instance = new GraphHopper().
+                setInMemory(false).
+                setEncodingManager(encodingManager).
+                disableCHShortcuts();
         try
         {
             instance.route(new GHRequest(42, 10.4, 42, 10));
@@ -82,7 +89,6 @@ public class GraphHopperAPITest
         } catch (Exception ex)
         {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Call load or importOrLoad before routing"));
-        }
-
+        }        
     }
 }

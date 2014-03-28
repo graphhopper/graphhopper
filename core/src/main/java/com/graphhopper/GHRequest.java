@@ -33,7 +33,7 @@ public class GHRequest
     private GHPlace to;
     private Map<String, Object> hints = new HashMap<String, Object>(5);
     private String vehicle = "CAR";
-    private String weighting = "shortest";
+    private String weighting = "fastest";
 
     /**
      * Calculate the path from specified startPoint (fromLat, fromLon) to endPoint (toLat, toLon).

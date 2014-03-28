@@ -59,7 +59,7 @@ public class GraphHopper implements GraphHopperAPI
     // for graph:
     private GraphStorage graph;
     private String ghLocation = "";
-    private DAType dataAccessType = DAType.RAM;
+    private DAType dataAccessType = DAType.RAM_STORE;
     private boolean sortGraph = false;
     boolean removeZipped = true;
     private int dimension = 2;
@@ -204,6 +204,8 @@ public class GraphHopper implements GraphHopperAPI
      * This method call results in an in-memory graph. Specify storeOnFlush to true if you want that
      * existing data will be loaded FROM disc and all in-memory data will be flushed TO disc after
      * flush is called e.g. while OSM import.
+     * <p>
+     * @param storeOnFlush true by default
      */
     public GraphHopper setInMemory( boolean storeOnFlush )
     {
@@ -471,7 +473,7 @@ public class GraphHopper implements GraphHopperAPI
         dimension = args.getInt("graph.dimension", dimension);
 
         String graphDATypeStr = args.get("graph.dataaccess", "RAM_STORE");
-        dataAccessType = DAType.fromString(graphDATypeStr);        
+        dataAccessType = DAType.fromString(graphDATypeStr);
 
         sortGraph = args.getBool("graph.doSort", sortGraph);
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
@@ -537,9 +539,6 @@ public class GraphHopper implements GraphHopperAPI
     {
         if (!load(ghLocation))
         {
-            if (osmFile == null)
-                throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
-                        + " but also cannot import from OSM file as it wasn't specified!");
             printInfo();
             process(ghLocation);
         } else
@@ -573,8 +572,15 @@ public class GraphHopper implements GraphHopperAPI
     protected DataReader importData() throws IOException
     {
         if (graph == null)
-            throw new IllegalStateException("Load graph before importing OSM data");
+            throw new IllegalStateException("Load graph before importing OSM data");                
 
+        if (osmFile == null)
+            throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
+                    + " but also cannot import from OSM file as it wasn't specified!");
+
+        if(encodingManager == null)
+            throw new IllegalStateException("Missing encoding manager");
+            
         encodingManager.setEnableInstructions(enableInstructions);
         DataReader reader = createReader(graph);
         logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
@@ -705,7 +711,7 @@ public class GraphHopper implements GraphHopperAPI
 
     @Override
     public GHResponse route( GHRequest request )
-    {        
+    {
         if (graph == null || !fullyLoaded)
             throw new IllegalStateException("Call load or importOrLoad before routing");
 

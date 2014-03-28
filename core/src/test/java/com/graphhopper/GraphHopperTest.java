@@ -75,7 +75,8 @@ public class GraphHopperTest
     @Test
     public void testPrepare()
     {
-        instance = new GraphHopper().setInMemory(false).
+        instance = new GraphHopper().
+                setInMemory(false).
                 setEncodingManager(new EncodingManager("CAR")).
                 setCHShortcuts("shortest").
                 setGraphHopperLocation(ghLoc).
@@ -154,6 +155,7 @@ public class GraphHopperTest
     {
         instance = new GraphHopper().init(
                 new CmdArgs().
+                put("osmreader.dataaccess", "RAM").
                 put("osmreader.acceptWay", "FOOT,CAR").
                 put("prepare.chShortcuts", "no").
                 put("osmreader.osm", testOsm3)).
@@ -164,9 +166,11 @@ public class GraphHopperTest
 
         instance = new GraphHopper().init(
                 new CmdArgs().
+                put("osmreader.dataaccess", "RAM").
                 put("osmreader.acceptWay", "FOOT").
                 put("prepare.chShortcuts", "no").
-                put("osmreader.osm", testOsm3)).setOSMFile(testOsm3);
+                put("osmreader.osm", testOsm3)).
+                setOSMFile(testOsm3);
         try
         {
             instance.load(ghLoc);
@@ -178,9 +182,11 @@ public class GraphHopperTest
         // different order should be ok
         instance = new GraphHopper().init(
                 new CmdArgs().
+                put("osmreader.dataaccess", "RAM").
                 put("osmreader.acceptWay", "CAR,FOOT").
                 put("prepare.chShortcuts", "no").
-                put("osmreader.osm", testOsm3)).setOSMFile(testOsm3);
+                put("osmreader.osm", testOsm3)).
+                setOSMFile(testOsm3);
         assertTrue(instance.load(ghLoc));
         assertEquals(5, instance.getGraph().getNodes());
     }
@@ -226,8 +232,9 @@ public class GraphHopperTest
             assertEquals("graphHopperLocation is not specified. call init before", ex.getMessage());
         }
 
-        // missing encoding manager
-        instance = new GraphHopper().setInMemory(true).
+        // missing OSM file to import
+        instance = new GraphHopper().
+                setInMemory(true).
                 setGraphHopperLocation(ghLoc);
         try
         {
@@ -235,7 +242,35 @@ public class GraphHopperTest
             assertTrue(false);
         } catch (IllegalStateException ex)
         {
-            assertEquals("Couldn't load from existing folder: " + ghLoc 
+            assertEquals("Couldn't load from existing folder: " + ghLoc
+                    + " but also cannot import from OSM file as it wasn't specified!", ex.getMessage());
+        }
+
+        // missing encoding manager          
+        instance = new GraphHopper().
+                setInMemory(true).
+                setGraphHopperLocation(ghLoc).
+                setOSMFile(testOsm3);
+        try
+        {
+            instance.importOrLoad();
+            assertTrue(false);
+        } catch (IllegalStateException ex)
+        {
+            assertEquals("Missing encoding manager", ex.getMessage());
+        }
+
+        // Import is possible even if no storeOnFlush but missing OSM file
+        instance = new GraphHopper().
+                setInMemory(false).
+                setGraphHopperLocation(ghLoc);
+        try
+        {
+            instance.importOrLoad();
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+            assertEquals("Couldn't load from existing folder: " + ghLoc
                     + " but also cannot import from OSM file as it wasn't specified!", ex.getMessage());
         }
     }
