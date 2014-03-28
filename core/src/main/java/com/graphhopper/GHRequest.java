@@ -31,7 +31,7 @@ public class GHRequest
     private String algo = "dijkstrabi";
     private GHPlace from;
     private GHPlace to;
-    private Map<String, Object> hints = new HashMap<String, Object>(5);
+    private final Map<String, Object> hints = new HashMap<String, Object>(5);
     private String vehicle = "CAR";
     private String weighting = "fastest";
 
@@ -97,6 +97,15 @@ public class GHRequest
         Object obj = hints.get(key);
         if (obj == null)
             return defaultValue;
+
+        if (defaultValue != null && defaultValue instanceof Number)
+        {
+            // what a monster! see #173
+            if (defaultValue instanceof Double)
+                return (T) (Double) ((Number) obj).doubleValue();
+            if (defaultValue instanceof Long)
+                return (T) (Long) ((Number) obj).longValue();
+        }
 
         return (T) obj;
     }

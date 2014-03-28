@@ -483,8 +483,7 @@ public class MainActivity extends MapActivity
                 StopWatch sw = new StopWatch().start();
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
                         setAlgorithm("dijkstrabi").
-                        putHint("instructions", false).
-                        putHint("douglas.minprecision", 1);
+                        putHint("instructions", false);
                 GHResponse resp = hopper.route(req);
                 time = sw.stop().getSeconds();
                 return resp;
