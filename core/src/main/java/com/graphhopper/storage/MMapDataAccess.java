@@ -134,6 +134,7 @@ public class MMapDataAccess extends AbstractDataAccess
             {
                 newSegments = segmentsToMap;
                 clean(0, segments.size());
+                cleanHack();
                 segments.clear();
             } else
             {
@@ -276,13 +277,24 @@ public class MMapDataAccess extends AbstractDataAccess
     @Override
     public void close()
     {
+        close(true);
+    }
+
+    /**
+     * @param forceClean if true the clean hack (system.gc) will be executed and forces the system
+     * to cleanup the mmap resources. Set false if you need to close many MMapDataAccess objects.
+     */
+    void close( boolean forceClean )
+    {
         clean(0, segments.size());
         segments.clear();
         Helper.close(raFile);
+        if (forceClean)
+            cleanHack();
         closed = true;
     }
 
-    private void cleanHack()
+    void cleanHack()
     {
         // trying to force the release of the mapped ByteBuffer
         System.gc();
@@ -397,7 +409,6 @@ public class MMapDataAccess extends AbstractDataAccess
             Helper.cleanMappedByteBuffer(bb);
             segments.set(i, null);
         }
-        cleanHack();
     }
 
     @Override
@@ -414,6 +425,7 @@ public class MMapDataAccess extends AbstractDataAccess
         }
 
         clean(remainingSegNo, segments.size());
+        cleanHack();
         segments = new ArrayList<ByteBuffer>(segments.subList(0, remainingSegNo));
 
         try

@@ -137,10 +137,20 @@ public class GHDirectory implements Directory
     @Override
     public void clear()
     {
+        // If there is at least one MMap DA then do not apply the cleanHack 
+        // for every single mmap DA as this is very slow if lots of DataAccess objects were collected 
+        // => forceClean == false
+
+        MMapDataAccess mmapDA = null;
         for (DataAccess da : map.values())
         {
-            removeDA(da, da.getName());
+            if (da instanceof MMapDataAccess)
+                mmapDA = (MMapDataAccess) da;
+
+            removeDA(da, da.getName(), false);
         }
+        if (mmapDA != null)
+            mmapDA.cleanHack();
         map.clear();
     }
 
@@ -148,12 +158,16 @@ public class GHDirectory implements Directory
     public void remove( DataAccess da )
     {
         removeFromMap(da.getName());
-        removeDA(da, da.getName());
+        removeDA(da, da.getName(), true);
     }
 
-    void removeDA( DataAccess da, String name )
+    void removeDA( DataAccess da, String name, boolean forceClean )
     {
-        da.close();
+        if (da instanceof MMapDataAccess)
+            ((MMapDataAccess) da).close(forceClean);
+        else
+            da.close();
+
         if (da.getType().isStoring())
             Helper.removeDir(new File(location + name));
     }
