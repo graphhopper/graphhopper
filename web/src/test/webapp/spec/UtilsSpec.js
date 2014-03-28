@@ -66,6 +66,18 @@ describe("utils", function() {
         expect(list).toEqual([[-120.2, 38.5, 10]]);
 
         list = decodePath("_p~iF~ps|Uo}@_ulLnnqC_anF_mqNvxq`@?", true);
-        expect(list).toEqual([[-120.2, 38.5, 10], [-120.95, 40.7, 1234], [-126.45300000000002, 43.252, 1234]]);       
+        expect(list).toEqual([[-120.2, 38.5, 10], [-120.95, 40.7, 1234], [-126.45300000000002, 43.252, 1234]]);
+    });
+
+    it("ghrequest should init correctly from params", function() {
+        var ghRequest = new GHRequest("http://test.de");
+        var params = {};
+        params.do_zoom = true;
+        ghRequest.init(params);
+        expect(ghRequest.do_zoom).toEqual(params.do_zoom);
+
+        params.do_zoom = false;
+        ghRequest.init(params);
+        expect(ghRequest.do_zoom).toEqual(params.do_zoom);
     });
 });

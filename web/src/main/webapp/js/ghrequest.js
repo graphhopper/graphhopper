@@ -57,7 +57,7 @@ GHRequest.prototype.init = function(params) {
         this.algorithm = params.algorithm;
     if (params.locale)
         this.locale = params.locale;
-
+     
     this.handleBoolean("do_zoom", params);
     this.handleBoolean("instructions", params);
     this.handleBoolean("points_encoded", params);
@@ -92,7 +92,7 @@ GHRequest.prototype.init = function(params) {
 
 GHRequest.prototype.handleBoolean = function(key, params) {
     if (key in params)
-        params[key] = params[key] == "true" || params[key] == true;
+        this[key] = params[key] === "true" || params[key] === true;
 };
 
 GHRequest.prototype.createURL = function(demoUrl) {
@@ -229,7 +229,7 @@ GHRequest.prototype.doRequest = function(url, callback) {
 };
 
 GHRequest.prototype.getInfo = function() {
-    var url = this.host + "/info?type=" + this.dataType + "&key=" + this.key;
+    var url = "http://graphhopper.com/routing/api" + "/info?type=" + this.dataType + "&key=" + this.key;
     console.log(url);
     return $.ajax({
         "url": url,

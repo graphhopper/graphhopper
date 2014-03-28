@@ -5,7 +5,7 @@
  */
 var tmpArgs = parseUrlWithHisto();
 var host = tmpArgs["host"];
-// var host = "http://graphhopper.com/api/1";
+var host = "http://graphhopper.com/api/1";
 if (host == null) {
     if (location.port === '') {
         host = location.protocol + '//' + location.hostname;
@@ -147,7 +147,7 @@ $(document).ready(function(e) {
 function initFromParams(params, doQuery) {
     ghRequest.init(params);
     var fromAndTo = params.from && params.to;
-    var routeNow = params.point && params.point.length == 2 || fromAndTo;
+    var routeNow = params.point && params.point.length === 2 || fromAndTo;
     if (routeNow) {
         if (fromAndTo)
             resolveCoords(params.from, params.to, doQuery);
