@@ -90,7 +90,7 @@ public class Downloader
     {
         URL url = new URL(urlStr);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setDoOutput(true);
+        conn.setDoInput(true);
         conn.setUseCaches(true);
         conn.setRequestProperty("Referrer", referrer);
         conn.setRequestProperty("User-Agent", userAgent);

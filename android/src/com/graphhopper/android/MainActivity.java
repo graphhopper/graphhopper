@@ -117,7 +117,7 @@ public class MainActivity extends MapActivity
                 if (marker != null)
                 {
                     pathOverlay.getOverlayItems().add(marker);
-                    mapView.redraw();
+                    mapView.redraw(); 
                 }
             }
             return true;
@@ -151,8 +151,10 @@ public class MainActivity extends MapActivity
         boolean greaterOrEqKitkat = Build.VERSION.SDK_INT >= 19;
         if (greaterOrEqKitkat)
         {
-            if (Environment.getExternalStorageState() != Environment.MEDIA_MOUNTED)
-                throw new IllegalStateException("media is not mounted or not readable");
+            if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+                logUser("GraphHopper is not usable without an external storage!");
+                return;
+            }
             mapsFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
                     "/graphhopper/maps/");
         } else
