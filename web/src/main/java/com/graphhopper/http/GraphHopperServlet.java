@@ -211,7 +211,7 @@ public class GraphHopperServlet extends GHBaseServlet
                     jsonPath.put("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
 
                 jsonPath.put("points", createPoints(points, pointsEncoded));
-                jsonPath.put("points_dim", points.getDimension());
+                jsonPath.put("points_dimension", points.getDimension());
 
                 if (enableInstructions)
                 {

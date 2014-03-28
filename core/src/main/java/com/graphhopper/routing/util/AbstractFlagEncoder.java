@@ -354,9 +354,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected static double parseSpeed( String str )
     {
         if (Helper.isEmpty(str))
-        {
-            return -1;
-        }
+            return -1;        
 
         try
         {

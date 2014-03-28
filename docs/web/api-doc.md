@@ -103,17 +103,17 @@ so you should not rely on them!
 
 The JSON result contains the following structure:
 
-JSON path/attribute     | Description
-:-----------------------|:------------
-info.took               | How many ms the request took on the server, of course without network latency taken into account.
-paths                   | An array of possible paths
-paths[0].distance       | The overall distance of the route, in meter
-paths[0].time           | The overall time of the route, in ms
-paths[0].points         | The polyline encoded coordinates of the path. Order is lat,lon,elelevation as it is no geoJson!
-paths[0].points_encoded | Is true if the points are encoded, if not paths[0].points contains the geo json of the path (then order is lon,lat,elevation), which is easier to handle but consumes more bandwidth compared to encoded version
-paths[0].points_dim     | The dimension of the coordinates. Currently 2 or 3.
-paths[0].bbox           | The bounding box of the route, format: <br> minLon, minLat, maxLon, maxLat
-paths[0].instructions   | Contains information about the instructions for this route. The last instruction is always the Finish instruction and takes 0ms and 0meter. Keep in mind that instructions are currently under active development and can sometimes contain misleading information, so, make sure you always show an image of the map at the same time when navigating your users!
+JSON path/attribute        | Description
+:--------------------------|:------------
+info.took                  | How many ms the request took on the server, of course without network latency taken into account.
+paths                      | An array of possible paths
+paths[0].distance          | The overall distance of the route, in meter
+paths[0].time              | The overall time of the route, in ms
+paths[0].points            | The polyline encoded coordinates of the path. Order is lat,lon,elelevation as it is no geoJson!
+paths[0].points_encoded    | Is true if the points are encoded, if not paths[0].points contains the geo json of the path (then order is lon,lat,elevation), which is easier to handle but consumes more bandwidth compared to encoded version
+paths[0].points_dimension  | The dimension of the points field. Can be 2 or 3.
+paths[0].bbox              | The bounding box of the route, format: <br> minLon, minLat, maxLon, maxLat
+paths[0].instructions      | Contains information about the instructions for this route. The last instruction is always the Finish instruction and takes 0ms and 0meter. Keep in mind that instructions are currently under active development and can sometimes contain misleading information, so, make sure you always show an image of the map at the same time when navigating your users!
 paths[0].instructions[0].description | A description what the user has to do in order to follow the route. The language depends on the locale parameter.
 paths[0].instructions[0].distance    | The distance for this instruction, in meter
 paths[0].instructions[0].time        | The duration for this instruction, in ms
