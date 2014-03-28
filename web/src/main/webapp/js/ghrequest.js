@@ -49,15 +49,12 @@ GHRequest.prototype.init = function(params) {
     if (params.vehicle)
         this.vehicle = params.vehicle;
     if (params.weighting)
-        this.weighting = params.weighting;
-    // REMOVE_IN 0.3
-    if (params.algoType)
-        this.weighting = params.algoType;
+        this.weighting = params.weighting;    
     if (params.algorithm)
         this.algorithm = params.algorithm;
     if (params.locale)
         this.locale = params.locale;
-     
+
     this.handleBoolean("do_zoom", params);
     this.handleBoolean("instructions", params);
     this.handleBoolean("points_encoded", params);
@@ -169,7 +166,7 @@ function decodePath(encoded, is3D) {
             result = 0;
             do
             {
-                b =  encoded.charCodeAt(index++) - 63;
+                b = encoded.charCodeAt(index++) - 63;
                 result |= (b & 0x1f) << shift;
                 shift += 5;
             } while (b >= 0x20);
@@ -184,13 +181,13 @@ function decodePath(encoded, is3D) {
     return array;
 }
 
-GHRequest.prototype.doRequest = function(url, callback) {    
+GHRequest.prototype.doRequest = function(url, callback) {
     $.ajax({
         "timeout": 30000,
         "url": url,
-        "success": function(json) {            
+        "success": function(json) {
             if (json.paths) {
-                for(var i = 0; i < json.paths.length; i++) {
+                for (var i = 0; i < json.paths.length; i++) {
                     var path = json.paths[i];
                     // convert encoded polyline to geo json
                     if (path.points_encoded) {
@@ -229,7 +226,7 @@ GHRequest.prototype.doRequest = function(url, callback) {
 };
 
 GHRequest.prototype.getInfo = function() {
-    var url = "http://graphhopper.com/routing/api" + "/info?type=" + this.dataType + "&key=" + this.key;
+    var url = this.host + "/info?type=" + this.dataType + "&key=" + this.key;
     console.log(url);
     return $.ajax({
         "url": url,
@@ -246,12 +243,12 @@ GHInput = function(str) {
         var index = str.indexOf(",");
         if (index >= 0) {
             this.lat = round(parseFloat(str.substr(0, index)));
-            this.lng = round(parseFloat(str.substr(index + 1)));
+            this.lng = round(parseFloat(str.substr(index + 1)));            
             if (!isNaN(this.lat) && !isNaN(this.lng)) {
                 this.input = this.toString();
             } else {
-                this.lat = false;
-                this.lng = false;
+                this.lat = undefined;
+                this.lng = undefined;
             }
         }
     } catch (ex) {
@@ -269,7 +266,7 @@ GHInput.prototype.setCoord = function(lat, lng) {
 };
 
 GHInput.prototype.toString = function() {
-    if (this.lat && this.lng)
+    if (this.lat !== undefined && this.lng !== undefined)
         return this.lat + "," + this.lng;
     return undefined;
 };

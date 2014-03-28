@@ -80,4 +80,15 @@ describe("utils", function() {
         ghRequest.init(params);
         expect(ghRequest.do_zoom).toEqual(params.do_zoom);
     });
+
+    it("input should accept 0", function() {        
+        var input = new GHInput("12,0");
+        expect(input.toString()).toEqual("12,0");
+        var input = new GHInput("bluo,0");
+        expect(input.toString()).toEqual(undefined);
+        var input = new GHInput("bluo");
+        expect(input.toString()).toEqual(undefined);
+        var input = new GHInput("");
+        expect(input.toString()).toEqual(undefined);
+    });
 });
