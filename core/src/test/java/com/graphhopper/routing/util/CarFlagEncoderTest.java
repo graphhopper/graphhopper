@@ -18,13 +18,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMNode;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.graphhopper.reader.OSMWay;
-
 import org.junit.Test;
-
 import static org.junit.Assert.*;
 
 /**
@@ -94,7 +89,7 @@ public class CarFlagEncoderTest
     }
 
     @Test
-    public void testSpeedLimitBiggerThanMaxValue()
+    public void testMaxSpeed()
     {
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "trunk");
@@ -102,6 +97,13 @@ public class CarFlagEncoderTest
         long allowed = encoder.acceptWay(way);
         long encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(100, encoder.getSpeed(encoded), 1e-1);
+
+        way = new OSMWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("maxspeed:backward", "10");
+        way.setTag("maxspeed:forward", "20");
+        encoded = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertEquals(10, encoder.getSpeed(encoded), 1e-1);
     }
 
     @Test
