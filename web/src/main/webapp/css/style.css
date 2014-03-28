@@ -115,10 +115,11 @@ body {
 }
 #header_img {
     padding-top: 15px;
+    padding-left: 20px;
     padding-bottom: 15px;
 }
 #header_img img {
-    width: 200px;
+    width: 230px;
 }
 #gpxExportButton {
     margin-top: -3px;
@@ -134,16 +135,21 @@ body {
     clear: both;
 }
 #hosting {
-    float: right;
+    display: none;
+/*    float: left;*/
     padding-top: 4px;
     padding-bottom: 10px;
-    color: darkgray;
+    /* color: #666666; */
     font-size: smaller;
+    opacity: 0.8;
 }
 #hosting a {
-    color: darkgray;
+    text-decoration: none;
+    color: #00cc33;
 }
-
+#exportLink {
+    float: left;
+}
 .instruction {    
     padding-top: 5px;
     padding-bottom: 5px;

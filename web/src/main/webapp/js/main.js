@@ -44,9 +44,13 @@ var iconTo = L.icon({
     iconAnchor: [12, 40]
 });
 
-$(document).ready(function(e) {
+$(document).ready(function(e) {    
     // fixing cross domain support e.g in Opera
     jQuery.support.cors = true;
+    
+    if (host.indexOf("graphhopper.com") > 0)
+        $('#hosting').show();
+    
     var History = window.History;
     if (History.enabled) {
         History.Adapter.bind(window, 'statechange', function() {
@@ -180,7 +184,7 @@ function initMap() {
     var height = $(window).height() - 5;
     mapDiv.width(width).height(height);
     if (height > 350)
-        height -= 220;
+        height -= $("#input").height() + 22;
     $("#info").css("max-height", height);
     console.log("init map at " + JSON.stringify(bounds));
 
@@ -701,10 +705,7 @@ function routeLatLng(request, doQuery) {
 
         var tmpTime = createTimeString(path.time);
         var tmpDist = createDistanceString(path.distance);
-        descriptionDiv.append(tr("routeInfo", [tmpDist, tmpTime]));
-        
-        if (host.indexOf("graphhopper.com") > 0)
-            descriptionDiv.append("<div id='hosting'>Powered by <a href='http://graphhopper.com/#enterprise'>GraphHopper Routing API</a></div>");
+        descriptionDiv.append(tr("routeInfo", [tmpDist, tmpTime]));       
 
         $('.defaulting').each(function(index, element) {
             $(element).css("color", "black");
