@@ -116,7 +116,7 @@ $(document).ready(function(e) {
                     var vehicles = json.supported_vehicles;
                     if (vehicles.length > 0)
                         ghRequest.vehicle = vehicles[0];
-                    
+
                     for (var i = 0; i < vehicles.length; i++) {
                         vehiclesDiv.append(createButton(vehicles[i]));
                     }
@@ -180,7 +180,7 @@ function initMap() {
     var height = $(window).height() - 5;
     mapDiv.width(width).height(height);
     if (height > 350)
-        height -= 265;
+        height -= 220;
     $("#info").css("max-height", height);
     console.log("init map at " + JSON.stringify(bounds));
 
@@ -685,7 +685,7 @@ function routeLatLng(request, doQuery) {
                 });
                 elevationControl.addTo(map);
             }
-            
+
             elevationControl.addData(geojsonFeature);
         }
 
@@ -697,58 +697,14 @@ function routeLatLng(request, doQuery) {
             var maxLat = path.bbox[3];
             var tmpB = new L.LatLngBounds(new L.LatLng(minLat, minLon), new L.LatLng(maxLat, maxLon));
             map.fitBounds(tmpB);
-        }
+        }        
 
         var tmpTime = createTimeString(path.time);
         var tmpDist = createDistanceString(path.distance);
-        descriptionDiv.html(tr("routeInfo", [tmpDist, tmpTime]));
-
-        var hiddenDiv = $("<div id='routeDetails'/>");
-        hiddenDiv.hide();
-
-        var toggly = $("<button style='font-size:14px; float: right; font-weight: bold; padding: 0px'>+</button>");
-        toggly.click(function() {
-            hiddenDiv.toggle();
-        });
-        $("#info").prepend(toggly);
-        var infoStr = "took: " + round(json.info.took, 1000) + "s"
-                + ", points: " + path.points.length;
-
-        hiddenDiv.append("<span>" + infoStr + "</span>");
-        $("#info").append(hiddenDiv);
-
-        var exportLink = $("#exportLink a");
-        exportLink.attr('href', urlForHistory);
-        var startOsmLink = $("<a>start</a>");
-        startOsmLink.attr("href", "http://www.openstreetmap.org/?zoom=14&mlat=" + request.from.lat + "&mlon=" + request.from.lng);
-        var endOsmLink = $("<a>end</a>");
-        endOsmLink.attr("href", "http://www.openstreetmap.org/?zoom=14&mlat=" + request.to.lat + "&mlon=" + request.to.lng);
-        hiddenDiv.append("<br/><span>View on OSM: </span>").append(startOsmLink).append(endOsmLink);
-
-        var osrmLink = $("<a>OSRM</a>");
-        osrmLink.attr("href", "http://map.project-osrm.org/?loc=" + from + "&loc=" + to);
-        hiddenDiv.append("<br/><span>Compare with: </span>");
-        hiddenDiv.append(osrmLink);
-        var googleLink = $("<a>Google</a> ");
-        var addToGoogle = "";
-        var addToBing = "";
-        if (request.vehicle.toUpperCase() == "FOOT") {
-            addToGoogle = "&dirflg=w";
-            addToBing = "&mode=W";
-        } else if ((request.vehicle.toUpperCase() == "BIKE") ||
-                (request.vehicle.toUpperCase() == "RACINGBIKE") ||
-                (request.vehicle.toUpperCase() == "MTB")) {
-            addToGoogle = "&dirflg=b";
-            // ? addToBing = "&mode=B";
-        }
-        googleLink.attr("href", "http://maps.google.com/?q=from:" + from + "+to:" + to + addToGoogle);
-        hiddenDiv.append(googleLink);
-        var bingLink = $("<a>Bing</a> ");
-        bingLink.attr("href", "http://www.bing.com/maps/default.aspx?rtp=adr." + from + "~adr." + to + addToBing);
-        hiddenDiv.append(bingLink);
-
+        descriptionDiv.append(tr("routeInfo", [tmpDist, tmpTime]));
+        
         if (host.indexOf("graphhopper.com") > 0)
-            hiddenDiv.append("<div id='hosting'>Powered by <a href='http://graphhopper.com/#enterprise'>GraphHopper Routing API</a></div>");
+            descriptionDiv.append("<div id='hosting'>Powered by <a href='http://graphhopper.com/#enterprise'>GraphHopper Routing API</a></div>");
 
         $('.defaulting').each(function(index, element) {
             $(element).css("color", "black");
@@ -785,6 +741,50 @@ function routeLatLng(request, doQuery) {
                 var lngLat = path.points.coordinates[instr.interval[0]];
                 addInstruction(instructionsElement, sign, instr.text, instr.distance, instr.time, lngLat);
             }
+
+            var hiddenDiv = $("<div id='routeDetails'/>");
+            hiddenDiv.hide();            
+
+            var toggly = $("<button id='expandDetails'>+</button>");
+            toggly.click(function() {
+                hiddenDiv.toggle();
+            });
+            $("#info").append(toggly);
+            var infoStr = "took: " + round(json.info.took, 1000) + "s"
+                    + ", points: " + path.points.coordinates.length;
+
+            hiddenDiv.append("<span>" + infoStr + "</span>");
+
+            var exportLink = $("#exportLink a");
+            exportLink.attr('href', urlForHistory);
+            var startOsmLink = $("<a>start</a>");
+            startOsmLink.attr("href", "http://www.openstreetmap.org/?zoom=14&mlat=" + request.from.lat + "&mlon=" + request.from.lng);
+            var endOsmLink = $("<a>end</a>");
+            endOsmLink.attr("href", "http://www.openstreetmap.org/?zoom=14&mlat=" + request.to.lat + "&mlon=" + request.to.lng);
+            hiddenDiv.append("<br/><span>View on OSM: </span>").append(startOsmLink).append(endOsmLink);
+
+            var osrmLink = $("<a>OSRM</a>");
+            osrmLink.attr("href", "http://map.project-osrm.org/?loc=" + from + "&loc=" + to);
+            hiddenDiv.append("<br/><span>Compare with: </span>");
+            hiddenDiv.append(osrmLink);
+            var googleLink = $("<a>Google</a> ");
+            var addToGoogle = "";
+            var addToBing = "";
+            if (request.vehicle.toUpperCase() == "FOOT") {
+                addToGoogle = "&dirflg=w";
+                addToBing = "&mode=W";
+            } else if ((request.vehicle.toUpperCase() == "BIKE") ||
+                    (request.vehicle.toUpperCase() == "RACINGBIKE") ||
+                    (request.vehicle.toUpperCase() == "MTB")) {
+                addToGoogle = "&dirflg=b";
+                // ? addToBing = "&mode=B";
+            }
+            googleLink.attr("href", "http://maps.google.com/?q=from:" + from + "+to:" + to + addToGoogle);
+            hiddenDiv.append(googleLink);
+            var bingLink = $("<a>Bing</a> ");
+            bingLink.attr("href", "http://www.bing.com/maps/default.aspx?rtp=adr." + from + "~adr." + to + addToBing);
+            hiddenDiv.append(bingLink);  
+            $("#info").append(hiddenDiv);
         }
     });
 }

@@ -90,6 +90,7 @@ body {
     float: left;
 }
 #routeDetails {
+    padding: 20px;
     font-size: 12px;
 }
 .hidden {
@@ -133,19 +134,22 @@ body {
     clear: both;
 }
 #hosting {
-    padding-top: 10px;
-    color: gray;                
+    float: right;
+    padding-top: 4px;
+    padding-bottom: 10px;
+    color: darkgray;
+    font-size: smaller;
 }
 #hosting a {
-    color: gray;                
+    color: darkgray;
 }
 
 .instruction {    
     padding-top: 5px;
     padding-bottom: 5px;
 }
-tr.instruction td {
-    border-bottom: beige groove thin;
+tr.instruction td {    
+    border-bottom: #dadada dashed thin;
 }
 #instructions {
     border-collapse: collapse;
@@ -204,3 +208,14 @@ tr.instruction td {
 .roadseg {}
 .cityseg {}
 .moreseg { font-size: 9px; }
+
+#expandDetails {
+    color: gray;
+    font-size:14px; 
+    float: right;
+    font-weight: bold;    
+    
+    width: 20px;
+    height: 20px;    
+    background-image: linear-gradient(to bottom, white, #e7e7e7);
+}
