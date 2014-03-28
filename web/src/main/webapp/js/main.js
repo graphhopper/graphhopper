@@ -660,7 +660,7 @@ function routeLatLng(request, doQuery) {
             "geometry": path.points
         };
 
-        if (path.points_dim === 3) {
+        if (path.points_dimension === 3) {
             if (elevationControl === null) {
                 elevationControl = L.control.elevation({
                     position: "bottomright",

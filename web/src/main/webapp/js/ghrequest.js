@@ -191,7 +191,7 @@ GHRequest.prototype.doRequest = function(url, callback) {
                     var path = json.paths[i];
                     // convert encoded polyline to geo json
                     if (path.points_encoded) {
-                        var tmpArray = decodePath(path.points, path.points_dim === 3);
+                        var tmpArray = decodePath(path.points, path.points_dimension === 3);
                         path.points = {
                             "type": "LineString",
                             "coordinates": tmpArray
