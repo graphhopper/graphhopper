@@ -368,5 +368,6 @@ public abstract class DataAccessTest
             // should be overwritten
             assertNotEquals(Short.MAX_VALUE / 3, da.getShort(8));
         }
+        da.close();
     }
 }
