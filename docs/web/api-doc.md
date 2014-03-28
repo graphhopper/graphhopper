@@ -145,3 +145,34 @@ bbox                | The maximum bounding box of the area, format: <br> minLon,
 import_date         | [optional] The date time at which the OSM import was done
 prepare_date        | [optional] The date time at which the preparation (contraction hierarchies) was done. If nothing was done this is empty
 prepare_date        | [optional] The date time at which the preparation (contraction hierarchies) was done. If nothing was done this is empty
+
+### Output if expected error(s) while routing:
+```json
+{
+  "info": {"errors": [{
+    "details": "java.lang.IllegalArgumentException",
+    "message": "Cannot find point 2: 2248.224673, 3.867187"
+  }]},
+  "paths": [{}]
+}
+```
+
+Sometimes a point can be too offroad and you'll get 'cannot find point', this normally does not
+indicate a bug in the routing engine and is expected to a certain degree.
+
+JSON path/attribute    | Description
+:----------------------|:------------
+info.errors            | A list of error messages
+info.errors[0].defails | E.g. to see the underlying exception, if any
+info.errors[0].message | Not intended to be displayed to the user as it is currently not translated
+
+
+### HTTP Error codes, some applies to the hosted API only
+
+HTTP error code | Reason
+:---------------|:------------
+500             | Internal server error. It is strongely recommended to send us the message and the link to it, as it is very likely a bug in our system.
+501             | Only a special list of vehicles is supported
+400             | Something was wrong in your request
+401             | Authentication necessary
+403             | Not paid or API limit reached
