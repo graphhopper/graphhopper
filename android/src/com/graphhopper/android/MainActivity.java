@@ -75,14 +75,12 @@ public class MainActivity extends Activity
     private String prefixURL = fileListURL;
     private String downloadURL;
     private File mapsFolder;
-    private String mapFile;
     private TileCache tileCache;
-    
-    protected boolean onMapTap(LatLong tapLatLong, Point layerXY, Point tapXY) {
-        if (!initFiles(currentArea))
-        {
+
+    protected boolean onMapTap( LatLong tapLatLong, Point layerXY, Point tapXY )
+    {
+        if (!isReady())
             return false;
-        }
 
         if (shortestPathRunning)
         {
@@ -90,7 +88,7 @@ public class MainActivity extends Activity
             return false;
         }
         Layers layers = mapView.getLayerManager().getLayers();
-        
+
         if (start != null && end == null)
         {
             end = tapLatLong;
@@ -98,7 +96,7 @@ public class MainActivity extends Activity
             Marker marker = createMarker(tapLatLong, R.drawable.flag_red);
             if (marker != null)
             {
-            	layers.add(marker);
+                layers.add(marker);
             }
 
             calcPath(start.latitude, start.longitude, end.latitude,
@@ -109,17 +107,18 @@ public class MainActivity extends Activity
             end = null;
             // remove all layers but the first one, which is the map
             while (layers.size() > 1)
-            	layers.remove(1);
-            
+            {
+                layers.remove(1);
+            }
+
             Marker marker = createMarker(start, R.drawable.flag_green);
             if (marker != null)
             {
-            	layers.add(marker);
+                layers.add(marker);
             }
         }
         return true;
     }
-
 
     @Override
     protected void onCreate( Bundle savedInstanceState )
@@ -128,22 +127,23 @@ public class MainActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         AndroidGraphicFactory.createInstance(getApplication());
-        
+
         mapView = new MapView(this);
         mapView.setClickable(true);
         mapView.setBuiltInZoomControls(true);
 
         tileCache = AndroidUtil.createTileCache(this, getClass().getSimpleName(), mapView.getModel().displayModel.getTileSize(),
-                                                1f, mapView.getModel().frameBufferModel.getOverdrawFactor());
+                1f, mapView.getModel().frameBufferModel.getOverdrawFactor());
 
         final EditText input = new EditText(this);
         input.setText(currentArea);
         boolean greaterOrEqKitkat = Build.VERSION.SDK_INT >= 19;
         if (greaterOrEqKitkat)
         {
-            if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-            	logUser("GraphHopper is not usable without an external storage!");
-            	return;
+            if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
+            {
+                logUser("GraphHopper is not usable without an external storage!");
+                return;
             }
             mapsFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
                     "/graphhopper/maps/");
@@ -166,7 +166,7 @@ public class MainActivity extends Activity
         chooseAreaFromLocal();
     }
 
-    private boolean initFiles( String area )
+    boolean isReady()
     {
         // only return true if already loaded
         if (hopper != null)
@@ -177,10 +177,15 @@ public class MainActivity extends Activity
             logUser("Preparation still in progress");
             return false;
         }
+        log("Prepare finished but hopper not ready. This happens when there was an error while loading the files");
+        return false;
+    }
+
+    private void initFiles( String area )
+    {
         prepareInProgress = true;
         currentArea = area;
         downloadingFiles();
-        return false;
     }
 
     private void chooseAreaFromLocal()
@@ -222,7 +227,8 @@ public class MainActivity extends Activity
             protected List<String> saveDoInBackground( Void... params )
                     throws Exception
             {
-                String[] lines = new Downloader("GraphHopper Android").downloadAsString(fileListURL).split("\n");
+                String[] lines = new Downloader("GraphHopper Android").
+                        downloadAsString(fileListURL).split("\n");
                 List<String> res = new ArrayList<String>();
                 for (String str : lines)
                 {
@@ -232,10 +238,8 @@ public class MainActivity extends Activity
                         index += 6;
                         int lastIndex = str.indexOf(".ghz", index);
                         if (lastIndex >= 0)
-                        {
                             res.add(prefixURL + str.substring(index, lastIndex)
                                     + ".ghz");
-                        }
                     }
                 }
 
@@ -247,16 +251,14 @@ public class MainActivity extends Activity
             {
                 if (hasError())
                 {
-                    logUser("To get downloadable areas restart when connected to internet. "
-                            + "Problem while fetching remote area list: "
+                    logUser("Are you connected to the internet? Problem while fetching remote area list: "
                             + getErrorMessage());
                     return;
                 }
                 MySpinnerListener spinnerListener = new MySpinnerListener()
                 {
                     @Override
-                    public void onSelect( String selectedArea,
-                            String selectedFile )
+                    public void onSelect( String selectedArea, String selectedFile )
                     {
                         if (selectedFile == null
                                 || new File(mapsFolder, selectedArea + ".ghz")
@@ -321,9 +323,10 @@ public class MainActivity extends Activity
 
     void downloadingFiles()
     {
-        if (downloadURL == null)
+        final File areaFolder = new File(mapsFolder, currentArea + "-gh");
+        if (downloadURL == null || areaFolder.exists())
         {
-            loadMap();
+            loadMap(areaFolder);
             return;
         }
 
@@ -340,7 +343,7 @@ public class MainActivity extends Activity
                     throws Exception
             {
                 String localFolder = Helper.pruneFileEnd(AndroidHelper.getFileName(downloadURL));
-                localFolder = mapsFolder + localFolder + "-gh";
+                localFolder = new File(mapsFolder, localFolder + "-gh").getAbsolutePath();
                 log("downloading & unzipping " + downloadURL + " to " + localFolder);
                 new Downloader("GraphHopper Android").downloadAndUnzip(downloadURL, localFolder,
                         new ProgressListener()
@@ -370,32 +373,34 @@ public class MainActivity extends Activity
                     logUser(str);
                 } else
                 {
-                    loadMap();
+                    loadMap(areaFolder);
                 }
             }
         }.execute();
     }
 
-    void loadMap()
+    void loadMap( File areaFolder )
     {
         logUser("loading map");
-        mapFile = mapsFolder + currentArea + "-gh/" + currentArea + ".map";
-        
+        File mapFile = new File(areaFolder, currentArea + ".map");
+
         mapView.getLayerManager().getLayers().clear();
-        
+
         TileRendererLayer tileRendererLayer = new TileRendererLayer(tileCache, mapView.getModel().mapViewPosition,
-        		                                                    true, AndroidGraphicFactory.INSTANCE) {
-        	@Override
-        	public boolean onTap(LatLong tapLatLong, Point layerXY, Point tapXY) {
-        		return onMapTap(tapLatLong, layerXY, tapXY);
-        	}
-        };
-		tileRendererLayer.setMapFile(new File(mapFile));
-		tileRendererLayer.setTextScale(1.5f);
-		tileRendererLayer.setXmlRenderTheme(InternalRenderTheme.OSMARENDER);
-		mapView.getModel().mapViewPosition.setMapPosition(new MapPosition(tileRendererLayer.getMapDatabase().getMapFileInfo().boundingBox.getCenterPoint(), (byte) 15));
+                true, AndroidGraphicFactory.INSTANCE)
+                {
+                    @Override
+                    public boolean onTap( LatLong tapLatLong, Point layerXY, Point tapXY )
+                    {
+                        return onMapTap(tapLatLong, layerXY, tapXY);
+                    }
+                };
+        tileRendererLayer.setMapFile(mapFile);
+        tileRendererLayer.setTextScale(1.5f);
+        tileRendererLayer.setXmlRenderTheme(InternalRenderTheme.OSMARENDER);
+        mapView.getModel().mapViewPosition.setMapPosition(new MapPosition(tileRendererLayer.getMapDatabase().getMapFileInfo().boundingBox.getCenterPoint(), (byte) 15));
         mapView.getLayerManager().getLayers().add(tileRendererLayer);
-		
+
         setContentView(mapView);
         loadGraphStorage();
     }
@@ -409,7 +414,7 @@ public class MainActivity extends Activity
             {
                 GraphHopper tmpHopp = new GraphHopper().forMobile();
                 tmpHopp.setCHShortcuts("fastest");
-                tmpHopp.load(mapsFolder + currentArea);
+                tmpHopp.load(new File(mapsFolder, currentArea).getAbsolutePath());
                 log("found graph " + tmpHopp.getGraph().toString() + ", nodes:" + tmpHopp.getGraph().getNodes());
                 hopper = tmpHopp;
                 return null;
@@ -446,11 +451,10 @@ public class MainActivity extends Activity
             25, 15
         });
         paintStroke.setStrokeWidth(8);
-        
+
         // TODO: new mapsforge version wants an mapsforge-paint, not an android paint.
         // This doesn't seem to support transparceny
         //paintStroke.setAlpha(128);
-        
         Polyline line = new Polyline((org.mapsforge.core.graphics.Paint) paintStroke, AndroidGraphicFactory.INSTANCE);
         List<LatLong> geoPoints = line.getLatLongs();
         PointList tmp = response.getPoints();
@@ -458,14 +462,14 @@ public class MainActivity extends Activity
         {
             geoPoints.add(new LatLong(tmp.getLatitude(i), tmp.getLongitude(i)));
         }
-        
+
         return line;
     }
 
     private Marker createMarker( LatLong p, int resource )
     {
-    	Drawable drawable = getResources().getDrawable(resource);
-		Bitmap bitmap = AndroidGraphicFactory.convertToBitmap(drawable);
+        Drawable drawable = getResources().getDrawable(resource);
+        Bitmap bitmap = AndroidGraphicFactory.convertToBitmap(drawable);
         return new Marker(p, bitmap, -bitmap.getHeight(), -bitmap.getWidth() / 2);
     }
 

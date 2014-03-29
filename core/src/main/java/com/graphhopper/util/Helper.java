@@ -271,9 +271,7 @@ public class Helper
     {
         int index = file.lastIndexOf(".");
         if (index < 0)
-        {
             return file;
-        }
         return file.substring(0, index);
     }
 
