@@ -104,6 +104,18 @@ public class CarFlagEncoderTest
         way.setTag("maxspeed:forward", "20");
         encoded = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertEquals(10, encoder.getSpeed(encoded), 1e-1);
+        
+        way = new OSMWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("maxspeed:forward", "20");
+        encoded = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertEquals(20, encoder.getSpeed(encoded), 1e-1);
+        
+        way = new OSMWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("maxspeed:backward", "20");
+        encoded = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertEquals(20, encoder.getSpeed(encoded), 1e-1);
     }
 
     @Test

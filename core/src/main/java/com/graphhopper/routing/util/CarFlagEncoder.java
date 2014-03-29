@@ -164,23 +164,18 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         {
             // get assumed speed from highway type
             double speed = getSpeed(way);
-            if (way.hasTag("maxspeed"))
-            {
-                double maxspeed = parseSpeed(way.getTag("maxspeed"));
-                // apply speed limit no matter of the road type
-                if (maxspeed >= 0)
-                    // reduce speed limit to reflect average speed
-                    speed = maxspeed * 0.9;
-            }
+            double maxspeed = parseSpeed(way.getTag("maxspeed"));
+            // apply speed limit no matter of the road type
+            if (maxspeed >= 0)
+                // reduce speed limit to reflect average speed
+                speed = maxspeed * 0.9;
 
-            if (way.hasTag("maxspeed:forward") && way.hasTag("maxspeed:backward"))
-            {
-                double maxSpeed = parseSpeed(way.getTag("maxspeed:forward"));
-                double backSpeed = parseSpeed(way.getTag("maxspeed:backward"));
-                // can happen only if both exist at the same time
-                if (maxSpeed >= 0 && backSpeed >= 0)
-                    speed = Math.min(maxSpeed, backSpeed) * 0.9;
-            }
+            double maxSpeed = parseSpeed(way.getTag("maxspeed:forward"));
+            double backSpeed = parseSpeed(way.getTag("maxspeed:backward"));
+            if (maxSpeed >= 0)
+                speed = maxSpeed * 0.9;
+            if (backSpeed >= 0 && speed > backSpeed * 0.9)
+                speed = backSpeed * 0.9;
 
             // limit speed to max 30 km/h if bad surface
             if (speed > 30 && way.hasTag("surface", BAD_SURFACE))
