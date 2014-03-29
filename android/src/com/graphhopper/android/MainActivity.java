@@ -141,8 +141,10 @@ public class MainActivity extends Activity
         boolean greaterOrEqKitkat = Build.VERSION.SDK_INT >= 19;
         if (greaterOrEqKitkat)
         {
-            if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
-                throw new IllegalStateException("media is not mounted or not readable");
+            if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            	logUser("GraphHopper is not usable without an external storage!");
+            	return;
+            }
             mapsFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
                     "/graphhopper/maps/");
         } else
