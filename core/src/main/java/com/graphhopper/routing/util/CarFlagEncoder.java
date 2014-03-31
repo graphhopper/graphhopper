@@ -39,6 +39,15 @@ import com.graphhopper.util.Helper;
  */
 public class CarFlagEncoder extends AbstractFlagEncoder
 {
+    protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<String, Integer>();
+    protected final Set<String> badSurfaceSpeedMap = new HashSet<String>();
+    /**
+     * A map which associates string to speed. Get some impression:
+     * http://www.itoworld.com/map/124#fullscreen
+     * http://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed
+     */
+    protected final Map<String, Integer> defaultSpeedMap = new HashMap<String, Integer>();
+
     /**
      * Should be only instantied via EncodingManager
      */
@@ -73,6 +82,46 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         absoluteBarriers.add("turnstile");
         absoluteBarriers.add("cycle_barrier");
         absoluteBarriers.add("block");
+
+        trackTypeSpeedMap.put("grade1", 20); // paved
+        trackTypeSpeedMap.put("grade2", 15); // now unpaved - gravel mixed with ...
+        trackTypeSpeedMap.put("grade3", 10); // ... hard and soft materials
+        trackTypeSpeedMap.put("grade4", 5); // ... some hard or compressed materials
+        trackTypeSpeedMap.put("grade5", 5); // ... no hard materials. soil/sand/grass
+
+        badSurfaceSpeedMap.add("cobblestone");
+        badSurfaceSpeedMap.add("grass_paver");
+        badSurfaceSpeedMap.add("gravel");
+        badSurfaceSpeedMap.add("sand");
+        badSurfaceSpeedMap.add("paving_stones");
+        badSurfaceSpeedMap.add("dirt");
+        badSurfaceSpeedMap.add("ground");
+        badSurfaceSpeedMap.add("grass");
+
+        // autobahn
+        defaultSpeedMap.put("motorway", 100);
+        defaultSpeedMap.put("motorway_link", 70);
+        // bundesstraße
+        defaultSpeedMap.put("trunk", 70);
+        defaultSpeedMap.put("trunk_link", 65);
+        // linking bigger town
+        defaultSpeedMap.put("primary", 65);
+        defaultSpeedMap.put("primary_link", 60);
+        // linking towns + villages
+        defaultSpeedMap.put("secondary", 60);
+        defaultSpeedMap.put("secondary_link", 50);
+        // streets without middle line separation
+        defaultSpeedMap.put("tertiary", 50);
+        defaultSpeedMap.put("tertiary_link", 40);
+        defaultSpeedMap.put("unclassified", 30);
+        defaultSpeedMap.put("residential", 30);
+        // spielstraße
+        defaultSpeedMap.put("living_street", 5);
+        defaultSpeedMap.put("service", 20);
+        // unknown road
+        defaultSpeedMap.put("road", 20);
+        // forestry stuff
+        defaultSpeedMap.put("track", 15);
     }
 
     /**
@@ -83,14 +132,14 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     {
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
-        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, SPEED.get("secondary"), SPEED.get("motorway"));
+        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, defaultSpeedMap.get("secondary"), defaultSpeedMap.get("motorway"));
         return shift + speedBits;
     }
 
     protected double getSpeed( OSMWay way )
     {
         String highwayValue = way.getTag("highway");
-        Integer speed = SPEED.get(highwayValue);
+        Integer speed = defaultSpeedMap.get(highwayValue);
         if (speed == null)
             throw new IllegalStateException("car, no speed found for:" + highwayValue);
 
@@ -99,7 +148,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             String tt = way.getTag("tracktype");
             if (!Helper.isEmpty(tt))
             {
-                Integer tInt = TRACKTYPE_SPEED.get(tt);
+                Integer tInt = trackTypeSpeedMap.get(tt);
                 if (tInt != null)
                     speed = tInt;
             }
@@ -126,7 +175,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             return 0;
         }
 
-        if (!SPEED.containsKey(highwayValue))
+        if (!defaultSpeedMap.containsKey(highwayValue))
             return 0;
 
         if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
@@ -178,7 +227,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
                 speed = backSpeed * 0.9;
 
             // limit speed to max 30 km/h if bad surface
-            if (speed > 30 && way.hasTag("surface", BAD_SURFACE))
+            if (speed > 30 && way.hasTag("surface", badSurfaceSpeedMap))
                 speed = 30;
 
             encoded = setSpeed(0, speed);
@@ -194,7 +243,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
         } else
         {
-            encoded = handleFerryTags(way, SPEED.get("living_street"), SPEED.get("service"), SPEED.get("residential"));
+            encoded = handleFerryTags(way, defaultSpeedMap.get("living_street"), defaultSpeedMap.get("service"), defaultSpeedMap.get("residential"));
             encoded |= directionBitMask;
         }
 
@@ -259,58 +308,5 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     public String toString()
     {
         return "car";
-    }
-
-    private static final Map<String, Integer> TRACKTYPE_SPEED = new HashMap<String, Integer>();
-    protected static final Set<String> BAD_SURFACE = new HashSet<String>();
-    /**
-     * A map which associates string to speed. Get some impression:
-     * http://www.itoworld.com/map/124#fullscreen
-     * http://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed
-     */
-    private static final Map<String, Integer> SPEED = new HashMap<String, Integer>();
-
-    static
-    {
-
-        TRACKTYPE_SPEED.put("grade1", 20); // paved
-        TRACKTYPE_SPEED.put("grade2", 15); // now unpaved - gravel mixed with ...
-        TRACKTYPE_SPEED.put("grade3", 10); // ... hard and soft materials
-        TRACKTYPE_SPEED.put("grade4", 5); // ... some hard or compressed materials
-        TRACKTYPE_SPEED.put("grade5", 5); // ... no hard materials. soil/sand/grass
-
-        BAD_SURFACE.add("cobblestone");
-        BAD_SURFACE.add("grass_paver");
-        BAD_SURFACE.add("gravel");
-        BAD_SURFACE.add("sand");
-        BAD_SURFACE.add("paving_stones");
-        BAD_SURFACE.add("dirt");
-        BAD_SURFACE.add("ground");
-        BAD_SURFACE.add("grass");
-
-        // autobahn
-        SPEED.put("motorway", 100);
-        SPEED.put("motorway_link", 70);
-        // bundesstraße
-        SPEED.put("trunk", 70);
-        SPEED.put("trunk_link", 65);
-        // linking bigger town
-        SPEED.put("primary", 65);
-        SPEED.put("primary_link", 60);
-        // linking towns + villages
-        SPEED.put("secondary", 60);
-        SPEED.put("secondary_link", 50);
-        // streets without middle line separation
-        SPEED.put("tertiary", 50);
-        SPEED.put("tertiary_link", 40);
-        SPEED.put("unclassified", 30);
-        SPEED.put("residential", 30);
-        // spielstraße
-        SPEED.put("living_street", 5);
-        SPEED.put("service", 20);
-        // unknown road
-        SPEED.put("road", 20);
-        // forestry stuff
-        SPEED.put("track", 15);
     }
 }
