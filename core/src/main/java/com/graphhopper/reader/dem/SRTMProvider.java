@@ -24,6 +24,7 @@ import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.io.*;
+import java.net.SocketTimeoutException;
 import java.util.zip.ZipInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -216,15 +217,20 @@ public class SRTMProvider implements ElevationProvider
                 // get zip file if not already in cacheDir - unzip later and in-memory only!
                 if (!file.exists())
                 {
-                    for (int i = 0; i < 2; i++)
+                    for (int i = 0; i < 3; i++)
                     {
                         try
                         {
                             downloader.downloadFile(zippedURL, file.getAbsolutePath());
                             break;
+                        } catch (SocketTimeoutException ex)
+                        {
+                            // just try again after a little nap
+                            Thread.sleep(2000);
+                            continue;
                         } catch (FileNotFoundException ex)
                         {
-                            // now try with point if mirror is used
+                            // now try different URL (with point!), necessary if mirror is used
                             zippedURL = baseUrl + "/" + fileDetails + ".hgt.zip";
                             continue;
                         }
