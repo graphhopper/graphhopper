@@ -440,7 +440,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             }
         } catch (Exception ex)
         {
-            logger.error("Cannot parse " + str + " using 0 minutes");
+            logger.warn("Cannot parse " + str + " using 0 minutes");
         }
         return 0;
     }
