@@ -22,9 +22,9 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 import com.graphhopper.util.TranslationMap.Translation;
+import com.graphhopper.util.shapes.GHPlace;
 
 import java.io.File;
 import java.util.List;
@@ -43,6 +43,10 @@ public class GraphHopperIT
     TranslationMap trMap = TranslationMapTest.SINGLETON;
     Translation tr = trMap.getWithFallBack(Locale.US);
     String graphFile = "target/graph-GraphHopperIT";
+    String osmFile = "files/monaco.osm.gz";
+    String vehicle = "FOOT";
+    String importVehicles = "FOOT";
+    String weightCalcStr = "shortest";
 
     @Before
     public void setUp()
@@ -60,16 +64,14 @@ public class GraphHopperIT
     @Test
     public void testMonacoWithInstructions() throws Exception
     {
-        String osmFile = "files/monaco.osm.gz";
-        String vehicle = "FOOT";
-        String importVehicles = "FOOT";
-        String weightCalcStr = "shortest";
-        GraphHopper hopper = new GraphHopper().setInMemory(true).setOSMFile(osmFile).
+        GraphHopper hopper = new GraphHopper().
+                setInMemory(true).
+                setOSMFile(osmFile).
                 disableCHShortcuts().
-                setGraphHopperLocation(graphFile).setEncodingManager(new EncodingManager(importVehicles)).
+                setGraphHopperLocation(graphFile).
+                setEncodingManager(new EncodingManager(importVehicles)).
                 importOrLoad();
 
-        Graph g = hopper.getGraph();
         GHResponse rsp = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
 
@@ -111,19 +113,16 @@ public class GraphHopperIT
     @Test
     public void testSRTMWithInstructions() throws Exception
     {
-        String osmFile = "files/monaco.osm.gz";
-        String vehicle = "FOOT";
-        String importVehicles = "FOOT";
-        String weightCalcStr = "shortest";
-
-        GraphHopper hopper = new GraphHopper().setInMemory(true).setOSMFile(osmFile).
+        GraphHopper hopper = new GraphHopper().
+                setInMemory(true).
+                setOSMFile(osmFile).
                 disableCHShortcuts().
-                setGraphHopperLocation(graphFile).setEncodingManager(new EncodingManager(importVehicles));
+                setGraphHopperLocation(graphFile).
+                setEncodingManager(new EncodingManager(importVehicles));
 
         hopper.setElevationProvider(new SRTMProvider().setCacheDir(new File("./files/")));
         hopper.importOrLoad();
 
-        Graph g = hopper.getGraph();
         GHResponse rsp = hopper.route(new GHRequest(43.730729, 7.421288, 43.727697, 7.419199).
                 setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
 
@@ -145,5 +144,58 @@ public class GraphHopperIT
                         + "(43.731371359483255,7.421123216028286,66.0), (43.731485725897976,7.42117332118392,45.0), "
                         + "(43.731575132867135,7.420868778695214,52.0), (43.73160605277731,7.420824820268709,52.0), "
                         + "(43.7316401391843,7.420850152243305,52.0), (43.731674039326776,7.421050014072285,45.0)"));
+    }
+
+    @Test
+    public void testMonacoVia()
+    {
+        GraphHopper hopper = new GraphHopper().
+                setInMemory(true).
+                setOSMFile(osmFile).
+                disableCHShortcuts().
+                setGraphHopperLocation(graphFile).
+                setEncodingManager(new EncodingManager(importVehicles)).
+                importOrLoad();
+
+        GHResponse rsp = hopper.route(new GHRequest().
+                addPlace(new GHPlace(43.727687, 7.418737)).
+                addPlace(new GHPlace(43.74958, 7.436566)).
+                addPlace(new GHPlace(43.727687, 7.418737)).
+                setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
+
+        assertEquals(6875.1, rsp.getDistance(), .1);
+        assertEquals(179, rsp.getPoints().getSize());
+
+        InstructionList il = rsp.getInstructions();
+        assertEquals(26, il.size());
+        List<Map<String, Object>> resultJson = il.createJson(tr);
+        assertEquals("Continue onto Avenue des Guelfes", resultJson.get(0).get("text"));
+        assertEquals("Turn slight left onto Avenue des Papalins", resultJson.get(1).get("text"));
+        assertEquals("Turn sharp right onto Quai Jean-Charles Rey", resultJson.get(2).get("text"));
+        assertEquals("Turn left onto road", resultJson.get(3).get("text"));
+        assertEquals("Turn right onto Avenue Albert II", resultJson.get(4).get("text"));
+
+        assertEquals("Stopover 1", resultJson.get(12).get("text"));
+
+        assertEquals("Continue onto Avenue Albert II", resultJson.get(20).get("text"));
+        assertEquals("Turn left onto road", resultJson.get(21).get("text"));
+        assertEquals("Turn right onto Quai Jean-Charles Rey", resultJson.get(22).get("text"));
+        assertEquals("Turn sharp left onto Avenue des Papalins", resultJson.get(23).get("text"));
+        assertEquals("Turn slight right onto Avenue des Guelfes", resultJson.get(24).get("text"));
+        assertEquals("Finish!", resultJson.get(25).get("text"));
+
+        assertEquals(11, (Double) resultJson.get(0).get("distance"), 1);
+        assertEquals(289, (Double) resultJson.get(1).get("distance"), 1);
+        assertEquals(10, (Double) resultJson.get(2).get("distance"), 1);
+        assertEquals(43, (Double) resultJson.get(3).get("distance"), 1);
+        assertEquals(122, (Double) resultJson.get(4).get("distance"), 1);
+        assertEquals(447, (Double) resultJson.get(5).get("distance"), 1);
+
+        assertEquals(7, (Long) resultJson.get(0).get("time") / 1000);
+        assertEquals(207, (Long) resultJson.get(1).get("time") / 1000);
+        assertEquals(7, (Long) resultJson.get(2).get("time") / 1000);
+        assertEquals(30, (Long) resultJson.get(3).get("time") / 1000);
+        assertEquals(87, (Long) resultJson.get(4).get("time") / 1000);
+        assertEquals(321, (Long) resultJson.get(5).get("time") / 1000);
     }
 }

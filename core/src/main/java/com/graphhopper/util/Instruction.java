@@ -31,9 +31,10 @@ public class Instruction
     public static final int CONTINUE_ON_STREET = 0;
     public static final int TURN_SLIGHT_RIGHT = 1;
     public static final int TURN_RIGHT = 2;
-    public static final int TURN_SHARP_RIGHT = 3;
+    public static final int TURN_SHARP_RIGHT = 3;    
     public static final int FINISH = 4;
-    private final int sign;
+    public static final int REACHED_VIA = 5;
+    protected int sign;
     private final String name;
     private double distance;
     private long time;

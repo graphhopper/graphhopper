@@ -34,3 +34,4 @@ cycleway=Radweg
 way=Weg
 paved=befestigt
 unpaved=unbefestigt
+stopover=Zwischenziel %1$s

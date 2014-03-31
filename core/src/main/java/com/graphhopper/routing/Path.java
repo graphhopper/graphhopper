@@ -376,7 +376,7 @@ public class Path
             private String name = null;
             private int pavementType;
             private int wayType;
-            private AngleCalc2D ac = new AngleCalc2D();
+            private final AngleCalc2D ac = new AngleCalc2D();
 
             @Override
             public void next( EdgeIteratorState edge, int index )

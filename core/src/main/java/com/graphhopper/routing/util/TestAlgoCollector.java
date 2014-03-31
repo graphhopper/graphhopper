@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.GHResponse;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.Graph;
@@ -24,6 +25,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
@@ -43,39 +45,50 @@ public class TestAlgoCollector
         this.name = name;
     }
 
-    public TestAlgoCollector assertDistance( RoutingAlgorithm algo,
-            QueryResult from, QueryResult to, double distance, int pointCount )
+    public TestAlgoCollector assertDistance( AlgorithmPreparation prepare, List<QueryResult> queryList, OneRun oneRun )
     {
-        Path path = algo.calcPath(from, to);
-        if (!path.isFound())
+        List<Path> viaPaths = new ArrayList<Path>();
+        for (int i = 0; i < queryList.size() - 1; i++)
         {
-            errors.add(algo + " returns no path! expected distance: " + distance
-                    + ", expected locations: " + pointCount + ". from:" + from + ", to:" + to);
+            Path path = prepare.createAlgo().calcPath(queryList.get(i), queryList.get(i + 1));
+            viaPaths.add(path);path.calcPoints().size();
+        }
+        PathMerger pathMerger = new PathMerger().
+                setCalcPoints(true).
+                setSimplifyRequest(false).
+                setEnableInstructions(true);
+        GHResponse rsp = new GHResponse();
+        pathMerger.doWork(rsp, viaPaths);
+
+        if (!rsp.isFound())
+        {
+            errors.add(prepare + " returns no path! expected distance: " + rsp.getDistance()
+                    + ", expected points: " + oneRun + ". " + queryList);
             return this;
         }
 
-        PointList pointList = path.calcPoints();
+        PointList pointList = rsp.getPoints();
         double tmpDist = pointList.calcDistance(distCalc);
-        if (Math.abs(path.getDistance() - tmpDist) > 5)
+        if (Math.abs(rsp.getDistance() - tmpDist) > 5)
         {
-            errors.add(algo + " path.getDistance was  " + path.getDistance()
-                    + "\t pointList.calcDistance was " + tmpDist + "\t (expected points " + pointCount
-                    + ", expected distance " + distance + ") from:" + from + ", to:" + to);
+            errors.add(prepare + " path.getDistance was  " + rsp.getDistance()
+                    + "\t pointList.calcDistance was " + tmpDist + "\t (expected points " + oneRun.getLocs()
+                    + ", expected distance " + oneRun.getDistance() + ") " + queryList);
         }
 
-        if (Math.abs(path.getDistance() - distance) > 4)
+        if (Math.abs(rsp.getDistance() - oneRun.getDistance()) > 4)
         {
-            errors.add(algo + " returns path not matching the expected distance of " + distance
-                    + "\t Returned was " + path.getDistance() + "\t (expected points " + pointCount
-                    + ", was " + pointList.getSize() + ") from:" + from + ", to:" + to);
+            errors.add(prepare + " returns path not matching the expected distance of " + oneRun.getDistance()
+                    + "\t Returned was " + rsp.getDistance() + "\t (expected points " + oneRun.getLocs()
+                    + ", was " + pointList.getSize() + ") " + queryList);
         }
 
         // There are real world instances where A-B-C is identical to A-C (in meter precision).
-        if (Math.abs(pointList.getSize() - pointCount) > 4)
+        if (Math.abs(pointList.getSize() - oneRun.getLocs()) > 4)
         {
-            errors.add(algo + " returns path not matching the expected points of " + pointCount
-                    + "\t Returned was " + pointList.getSize() + "\t (expected distance " + distance
-                    + ", was " + path.getDistance() + ") from:" + from + ", to:" + to);
+            errors.add(prepare + " returns path not matching the expected points of " + oneRun.getLocs()
+                    + "\t Returned was " + pointList.getSize() + "\t (expected distance " + oneRun.getDistance()
+                    + ", was " + rsp.getDistance() + ") " + queryList);
         }
         return this;
     }
@@ -120,6 +133,94 @@ public class TestAlgoCollector
         } else
         {
             System.out.println("SUCCESS for " + name + "!");
+        }
+    }
+
+    public static class OneRun
+    {
+        private final List<AssumptionPerPath> assumptions = new ArrayList<AssumptionPerPath>();
+
+        public OneRun()
+        {
+        }
+
+        public OneRun( double fromLat, double fromLon, double toLat, double toLon, double dist, int locs )
+        {
+            add(fromLat, fromLon, 0, 0);
+            add(toLat, toLon, dist, locs);
+        }
+
+        public OneRun add( double lat, double lon, double dist, int locs )
+        {
+            assumptions.add(new AssumptionPerPath(lat, lon, dist, locs));
+            return this;
+        }
+
+        public int getLocs()
+        {
+            int sum = 0;
+            for (AssumptionPerPath as : assumptions)
+            {
+                sum += as.locs;
+            }
+            return sum;
+        }
+
+        public void setLocs( int index, int locs )
+        {
+            assumptions.get(index).locs = locs;
+        }
+
+        public double getDistance()
+        {
+            double sum = 0;
+            for (AssumptionPerPath as : assumptions)
+            {
+                sum += as.distance;
+            }
+            return sum;
+        }
+
+        public void setDistance( int index, double dist )
+        {
+            assumptions.get(index).distance = dist;
+        }
+
+        public List<QueryResult> getList( LocationIndex idx, EdgeFilter edgeFilter )
+        {
+            List<QueryResult> qr = new ArrayList<QueryResult>();
+            for (AssumptionPerPath or : assumptions)
+            {
+                qr.add(idx.findClosest(or.lat, or.lon, edgeFilter));
+            }
+            return qr;
+        }
+
+        @Override
+        public String toString()
+        {
+            return assumptions.toString();
+        }
+    }
+
+    static class AssumptionPerPath
+    {
+        double lat, lon;
+        int locs;
+        double distance;
+
+        public AssumptionPerPath( double lat, double lon, double distance, int locs )
+        {
+            this.lat = lat;
+            this.lon = lon;
+            this.locs = locs;
+            this.distance = distance;
+        }
+
+        @Override
+        public String toString()
+        {
+            return lat + ", " + lon + ", locs:" + locs + ", dist:" + distance;
         }
     }
 }

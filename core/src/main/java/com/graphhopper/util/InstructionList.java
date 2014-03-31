@@ -127,6 +127,9 @@ public class InstructionList implements Iterable<Instruction>
         if (indi == Instruction.FINISH)
         {
             str = tr.tr("finish");
+        } else if (indi == Instruction.REACHED_VIA)
+        {
+            str = tr.tr("stopover", ((FinishInstruction) instruction).getViaPosition());
         } else if (indi == Instruction.CONTINUE_ON_STREET)
         {
             str = Helper.isEmpty(n) ? tr.tr("continue") : tr.tr("continue_onto", n);

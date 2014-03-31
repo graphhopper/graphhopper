@@ -14,7 +14,7 @@ All official parameters are shown in the following table
 
 Parameter   | Default | Description
 :-----------|:--------|:-----------
-point       | -       |Specifiy multiple points for which the route should be calculated. The order is important. Currently only two point parameter are supported. At least two points have to be specified.
+point       | -       | Specifiy multiple points for which the route should be calculated. The order is important. Specify at least two points.
 locale      | en      | The locale of the result. E.g. pt_PT for Portuguese or de for German
 instructions| true  | If instruction should be calculated and returned
 vehicle     | car     | The vehicle for which the route should be calculated. Other vehicles are foot and bike
@@ -118,7 +118,7 @@ paths[0].instructions[0].description | A description what the user has to do in 
 paths[0].instructions[0].distance    | The distance for this instruction, in meter
 paths[0].instructions[0].time        | The duration for this instruction, in ms
 paths[0].instructions[0].interval    | An array containing the first and the last index (relative to paths[0].points) of the points for this instruction
-paths[0].instructions[0].sign        | A number which specifies the sign to show e.g. for right turn etc <br>TURN_SHARP_LEFT = -3<br>TURN_LEFT = -2<br>TURN_SLIGHT_LEFT = -1<br>CONTINUE_ON_STREET = 0<br>TURN_SLIGHT_RIGHT = 1<br>TURN_RIGHT = 2<br>TURN_SHARP_RIGHT = 3
+paths[0].instructions[0].sign        | A number which specifies the sign to show e.g. for right turn etc <br>TURN_SHARP_LEFT = -3<br>TURN_LEFT = -2<br>TURN_SLIGHT_LEFT = -1<br>CONTINUE_ON_STREET = 0<br>TURN_SLIGHT_RIGHT = 1<br>TURN_RIGHT = 2<br>TURN_SHARP_RIGHT = 3<br>FINISH = 4<br>VIA_REACHED = 5
 
 
 ## Area information

@@ -25,6 +25,7 @@ import com.graphhopper.util.Instruction;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.shapes.GHPlace;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -89,9 +90,14 @@ public class GraphHopperWeb implements GraphHopperAPI
         double took = 0;
         try
         {
+            String places = "";
+            for (GHPlace p : request.getPlaces())
+            {
+                places += "point=" + p.lat + "," + p.lon + "&";
+            }
             String url = serviceUrl
-                    + "?point=" + request.getFrom().lat + "," + request.getFrom().lon
-                    + "&point=" + request.getTo().lat + "," + request.getTo().lon
+                    + "?"
+                    + places
                     + "&type=json"
                     + "&points_encoded=" + pointsEncoded
                     + "&min_path_precision=" + request.getHint("douglas.minprecision", 1)
@@ -158,7 +164,7 @@ public class GraphHopperWeb implements GraphHopperAPI
             return res.setPoints(pointList).setDistance(distance).setMillis(time);
         } catch (Exception ex)
         {
-            throw new RuntimeException("Problem while fetching path " + request.getFrom() + "->" + request.getTo(), ex);
+            throw new RuntimeException("Problem while fetching path " + request.getPlaces(), ex);
         } finally
         {
             logger.debug("Full request took:" + sw.stop().getSeconds() + ", API took:" + took);

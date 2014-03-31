@@ -23,6 +23,7 @@ import com.graphhopper.reader.PrinctonReader;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TestAlgoCollector.OneRun;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.index.LocationIndex;
@@ -40,7 +41,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
 import static org.junit.Assert.*;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -124,11 +124,11 @@ public class RoutingAlgorithmIT
     public void testMonacoFastest()
     {
         List<OneRun> list = createMonacoCar();
-        list.get(0).locs = 105;
-        list.get(3).dist = 2276;
-        list.get(3).locs = 133;
-        list.get(4).dist = 2150;
-        list.get(4).locs = 115;
+        list.get(0).setLocs(1, 105);
+        list.get(3).setDistance(1, 2276);
+        list.get(3).setLocs(1, 133);
+        list.get(4).setDistance(1, 2149);
+        list.get(4).setLocs(1, 115);
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "CAR", true, "CAR", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -140,11 +140,11 @@ public class RoutingAlgorithmIT
         // Additional locations are inserted because of new crossings from foot to highway paths!
         // Distance is the same.
         List<OneRun> list = createMonacoCar();
-        list.get(0).locs = 107;
-        list.get(1).locs = 165;
-        list.get(2).locs = 132;
-        list.get(3).locs = 132;
-        list.get(4).locs = 114;
+        list.get(0).setLocs(1, 107);
+        list.get(1).setLocs(1, 165);
+        list.get(2).setLocs(1, 132);
+        list.get(3).setLocs(1, 132);
+        list.get(4).setLocs(1, 114);
 
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "CAR,FOOT", false, "CAR", "shortest", false);
@@ -174,10 +174,10 @@ public class RoutingAlgorithmIT
     {
         // same number of points as testMonaceFoot results but longer distance due to elevation difference
         List<OneRun> list = createMonacoFoot();
-        list.get(0).dist = 1634;
-        list.get(1).dist = 3610;
-        list.get(2).dist = 2182;
-        list.get(3).dist = 1498;
+        list.get(0).setDistance(1, 1634);
+        list.get(1).setDistance(1, 3610);
+        list.get(2).setDistance(1, 2182);
+        list.get(3).setDistance(1, 1498);
 
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "FOOT", true, "FOOT", "shortest", true);
@@ -312,10 +312,10 @@ public class RoutingAlgorithmIT
     public void testAndorraFoot()
     {
         List<OneRun> list = createAndorra();
-        list.get(0).dist = 16354;
-        list.get(0).locs = 633;
-        list.get(1).dist = 12701;
-        list.get(1).locs = 427;
+        list.get(0).setDistance(1, 16354);
+        list.get(0).setLocs(1, 633);
+        list.get(1).setDistance(1, 12701);
+        list.get(1).setLocs(1, 427);
 
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra",
                 list, "FOOT", true, "FOOT", "shortest", false);
@@ -335,6 +335,22 @@ public class RoutingAlgorithmIT
         list.add(new OneRun(-20.43, -54.54, -20.537, -54.674, 18009, 234));
         runAlgo(testCollector, "files/campo-grande.osm.gz", "target/graph-campo-grande", list,
                 "CAR", false, "CAR", "shortest", false);
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testMonacoVia()
+    {
+        OneRun oneRun = new OneRun();
+        oneRun.add(43.730729, 7.42135, 0, 0);
+        oneRun.add(43.727697, 7.419199, 2581, 102);
+        oneRun.add(43.726387, 7.4, 3001, 89);
+
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(oneRun);
+
+        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
+                list, "CAR", true, "CAR", "shortest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -375,9 +391,8 @@ public class RoutingAlgorithmIT
                 for (OneRun oneRun : forEveryAlgo)
                 {
                     tmpOneRun = oneRun;
-                    QueryResult from = idx.findClosest(oneRun.fromLat, oneRun.fromLon, edgeFilter);
-                    QueryResult to = idx.findClosest(oneRun.toLat, oneRun.toLon, edgeFilter);
-                    testCollector.assertDistance(tmpPrepare.createAlgo(), from, to, oneRun.dist, oneRun.locs);
+                    List<QueryResult> list = oneRun.getList(idx, edgeFilter);
+                    testCollector.assertDistance(tmpPrepare, list, oneRun);
                 }
             }
         } catch (Exception ex)
@@ -481,9 +496,14 @@ public class RoutingAlgorithmIT
                         public void run()
                         {
                             OneRun oneRun = instances.get(instanceIndex);
-                            QueryResult from = idx.findClosest(oneRun.fromLat, oneRun.fromLon, filter);
-                            QueryResult to = idx.findClosest(oneRun.toLat, oneRun.toLon, filter);
-                            testCollector.assertDistance(algo, from, to, oneRun.dist, oneRun.locs);
+                            testCollector.assertDistance(new NoOpAlgorithmPreparation()
+                            {
+                                @Override
+                                public RoutingAlgorithm createAlgo()
+                                {
+                                    return algo;
+                                }
+                            }, oneRun.getList(idx, filter), oneRun);
                             integ.addAndGet(1);
                         }
                     };
@@ -507,29 +527,5 @@ public class RoutingAlgorithmIT
         assertEquals(MAX * algosLength * instances.size(), integ.get());
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
         hopper.close();
-    }
-
-    static class OneRun
-    {
-        double fromLat, fromLon;
-        double toLat, toLon;
-        double dist;
-        int locs;
-
-        public OneRun( double fromLat, double fromLon, double toLat, double toLon, double dist, int locs )
-        {
-            this.fromLat = fromLat;
-            this.fromLon = fromLon;
-            this.toLat = toLat;
-            this.toLon = toLon;
-            this.dist = dist;
-            this.locs = locs;
-        }
-
-        @Override
-        public String toString()
-        {
-            return fromLat + "," + fromLon + " -> " + toLat + "," + toLon + " with dist " + dist + " and locs " + locs;
-        }
     }
 }

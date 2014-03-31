@@ -26,6 +26,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.StopWatch;
 import static com.graphhopper.routing.util.NoOpAlgorithmPreparation.*;
+import com.graphhopper.routing.util.TestAlgoCollector.OneRun;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTreeSC;
 import java.util.ArrayList;
@@ -84,20 +85,20 @@ public class RoutingAlgorithmSpecialAreaTests
             LocationIndex currIdx = entry.getValue();
             int failed = testCollector.errors.size();
 
-            testCollector.assertDistance(prepare.createAlgo(),
-                    currIdx.findClosest(50.0314, 10.5105, ef), currIdx.findClosest(50.0303, 10.5070, ef), 570, 22);
-            testCollector.assertDistance(prepare.createAlgo(),
-                    currIdx.findClosest(49.51451, 9.967346, ef), currIdx.findClosest(50.2920, 10.4650, ef), 107545, 1712);
-            testCollector.assertDistance(prepare.createAlgo(),
-                    currIdx.findClosest(50.0780, 9.1570, ef), currIdx.findClosest(49.5860, 9.9750, ef), 91715, 1299);
-            testCollector.assertDistance(prepare.createAlgo(),
-                    currIdx.findClosest(50.2800, 9.7190, ef), currIdx.findClosest(49.8960, 10.3890, ef), 76411, 1406);
-            testCollector.assertDistance(prepare.createAlgo(),
-                    currIdx.findClosest(49.8020, 9.2470, ef), currIdx.findClosest(50.4940, 10.1970, ef), 125633, 2253);
-            testCollector.assertDistance(prepare.createAlgo(),
-                    currIdx.findClosest(49.72449, 9.23482, ef), currIdx.findClosest(50.4140, 10.2750, ef), 137260.8, 2401);
-            testCollector.assertDistance(prepare.createAlgo(),
-                    currIdx.findClosest(50.1100, 10.7530, ef), currIdx.findClosest(49.6500, 10.3410, ef), 73530, 1462);
+            OneRun or = new OneRun(50.0314, 10.5105, 50.0303, 10.5070, 570, 22);
+            testCollector.assertDistance(prepare, or.getList(idx, ef), or);
+            or = new OneRun(49.51451, 9.967346, 50.2920, 10.4650, 107545, 1712);
+            testCollector.assertDistance(prepare, or.getList(idx, ef), or);
+            or = new OneRun(50.0780, 9.1570, 49.5860, 9.9750, 91715, 1299);
+            testCollector.assertDistance(prepare, or.getList(idx, ef), or);
+            or = new OneRun(50.2800, 9.7190, 49.8960, 10.3890, 76411, 1406);
+            testCollector.assertDistance(prepare, or.getList(idx, ef), or);
+            or = new OneRun(49.8020, 9.2470, 50.4940, 10.1970, 125633, 2253);
+            testCollector.assertDistance(prepare, or.getList(idx, ef), or);
+            or = new OneRun(49.72449, 9.23482, 50.4140, 10.2750, 137260.8, 2401);
+            testCollector.assertDistance(prepare, or.getList(idx, ef), or);
+            or = new OneRun(50.1100, 10.7530, 49.6500, 10.3410, 73530, 1462);
+            testCollector.assertDistance(prepare, or.getList(idx, ef), or);
 
             System.out.println("unterfranken " + prepare.createAlgo() + ": " + (testCollector.errors.size() - failed) + " failed");
         }

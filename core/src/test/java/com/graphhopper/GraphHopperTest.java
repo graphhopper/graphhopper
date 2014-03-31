@@ -20,6 +20,8 @@ package com.graphhopper;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Instruction;
+import com.graphhopper.util.shapes.GHPlace;
 import com.graphhopper.util.shapes.GHPoint;
 import java.io.File;
 import java.io.IOException;
@@ -327,5 +329,36 @@ public class GraphHopperTest
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
         instance.load(ghLoc);
+    }
+
+    @Test
+    public void testVia()
+    {
+        instance = new GraphHopper().setInMemory(true).
+                setEncodingManager(new EncodingManager("CAR")).
+                setGraphHopperLocation(ghLoc).
+                setOSMFile(testOsm3);
+        instance.importOrLoad();
+
+        // A -> B -> C
+        GHPlace first = new GHPlace(11.1, 50);
+        GHPlace second = new GHPlace(12, 51);
+        GHPlace third = new GHPlace(11.2, 51.9);
+        GHResponse rsp12 = instance.route(new GHRequest().addPlace(first).addPlace(second));
+        assertTrue("should find 1->2", rsp12.isFound());
+        assertEquals(147931.5, rsp12.getDistance(), .1);
+        GHResponse rsp23 = instance.route(new GHRequest().addPlace(second).addPlace(third));
+        assertTrue("should find 2->3", rsp23.isFound());
+        assertEquals(176608.9, rsp23.getDistance(), .1);
+
+        GHResponse rsp = instance.route(new GHRequest().
+                addPlace(first).addPlace(second).addPlace(third));
+
+        assertFalse(rsp.hasErrors());
+        assertTrue("should find 1->2->3", rsp.isFound());
+        assertEquals(rsp12.getDistance() + rsp23.getDistance(), rsp.getDistance(), 1e-6);
+        assertEquals(5, rsp.getPoints().getSize());
+        assertEquals(5, rsp.getInstructions().size());
+        assertEquals(Instruction.REACHED_VIA, rsp.getInstructions().get(1).getSign());
     }
 }

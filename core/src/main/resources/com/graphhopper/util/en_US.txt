@@ -34,3 +34,4 @@ cycleway=cycleway
 way=way
 paved=paved
 unpaved=unpaved
+stopover=stopover %1$s

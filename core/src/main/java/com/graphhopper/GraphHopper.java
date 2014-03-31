@@ -28,11 +28,14 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.*;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.GHPlace;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -715,9 +718,7 @@ public class GraphHopper implements GraphHopperAPI
         if (graph == null || !fullyLoaded)
             throw new IllegalStateException("Call load or importOrLoad before routing");
 
-        StopWatch sw = new StopWatch().start();
         GHResponse rsp = new GHResponse();
-
         if (!encodingManager.supports(request.getVehicle()))
         {
             rsp.addError(new IllegalArgumentException("Vehicle " + request.getVehicle() + " unsupported. Supported are: "
@@ -725,101 +726,89 @@ public class GraphHopper implements GraphHopperAPI
             return rsp;
         }
 
-        FlagEncoder encoder = encodingManager.getEncoder(request.getVehicle());
-        EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-        QueryResult fromRes = locationIndex.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter);
-        QueryResult toRes = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter);
-
-        String debug = "idLookup:" + sw.stop().getSeconds() + "s";
-
-        if (!fromRes.isValid())
-            rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.getFrom()));
-
-        if (!toRes.isValid())
-            rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request.getTo()));
-
-        sw = new StopWatch().start();
-        RoutingAlgorithm algo = null;
-        if (chEnabled)
+        List<GHPlace> places = request.getPlaces();
+        if (places.size() < 2)
         {
-            if (prepare == null)
-                throw new IllegalStateException("Preparation object is null. CH-preparation wasn't done or did you "
-                        + "forgot to call disableCHShortcuts()?");
-
-            if (request.getAlgorithm().equals("dijkstrabi"))
-                algo = prepare.createAlgo();
-            else if (request.getAlgorithm().equals("astarbi"))
-                algo = ((PrepareContractionHierarchies) prepare).createAStar();
-            else
-                rsp.addError(new IllegalStateException(
-                        "Only dijkstrabi and astarbi is supported for LevelGraph (using contraction hierarchies)!"));
-
-        } else
-        {
-            Weighting weighting = createWeighting(request.getWeighting(), encoder);
-            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.getAlgorithm(), encoder, weighting);
-            algo = prepare.createAlgo();
+            rsp.addError(new IllegalStateException("At least 2 points has to be specified, but was:" + places.size()));
+            return rsp;
         }
 
-        if (rsp.hasErrors())
-            return rsp;
+        FlagEncoder encoder = encodingManager.getEncoder(request.getVehicle());
+        EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
+        GHPlace startPlace = request.getPlaces().get(0);
+        StopWatch sw = new StopWatch().start();
+        QueryResult fromRes = locationIndex.findClosest(startPlace.lat, startPlace.lon, edgeFilter);
+        sw.stop();
+        if (!fromRes.isValid())
+            rsp.addError(new IllegalArgumentException("Cannot find point 0: " + startPlace));
 
-        debug += ", algoInit:" + sw.stop().getSeconds() + "s";
-        sw = new StopWatch().start();
+        List<Path> paths = new ArrayList<Path>(places.size() - 1);
+        String debug = "";
+        for (int placeIndex = 1; placeIndex < request.getPlaces().size(); placeIndex++)
+        {
+            GHPlace place = request.getPlaces().get(placeIndex);
+            sw.start();
+            QueryResult toRes = locationIndex.findClosest(place.lat, place.lon, edgeFilter);
+            debug += "[" + placeIndex + "]";
+            debug += ", idLookup:" + sw.stop().getSeconds() + "s";
+            if (!toRes.isValid())
+                rsp.addError(new IllegalArgumentException("Cannot find point " + placeIndex + ": " + place));
 
-        Path path = algo.calcPath(fromRes, toRes);
-        debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
+            if (rsp.hasErrors())
+                return rsp;
+
+            sw = new StopWatch().start();
+            RoutingAlgorithm algo = null;
+            if (chEnabled)
+            {
+                if (prepare == null)
+                    throw new IllegalStateException("Preparation object is null. CH-preparation wasn't done or did you "
+                            + "forgot to call disableCHShortcuts()?");
+
+                if (request.getAlgorithm().equals("dijkstrabi"))
+                    algo = prepare.createAlgo();
+                else if (request.getAlgorithm().equals("astarbi"))
+                    algo = ((PrepareContractionHierarchies) prepare).createAStar();
+                else
+                {
+                    rsp.addError(new IllegalStateException(
+                            "Only dijkstrabi and astarbi is supported for LevelGraph (using contraction hierarchies)!"));
+                    return rsp;
+                }
+            } else
+            {
+                Weighting weighting = createWeighting(request.getWeighting(), encoder);
+                prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.getAlgorithm(), encoder, weighting);
+                algo = prepare.createAlgo();
+            }
+
+            debug += ", algoInit:" + sw.stop().getSeconds() + "s";
+            sw = new StopWatch().start();
+
+            Path path = algo.calcPath(fromRes, toRes);
+            paths.add(path);
+            debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
+            fromRes = toRes;
+        }
 
         enableInstructions = request.getHint("instructions", enableInstructions);
         calcPoints = request.getHint("calcPoints", calcPoints);
         simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
         double minPathPrecision = request.getHint("douglas.minprecision", 1d);
         DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(minPathPrecision);
+        rsp.setDebugInfo(debug);
+        
+        if (places.size() - 1 != paths.size())
+            throw new IllegalStateException("There should be exactly one more places than paths, "
+                    + "but places:" + places.size() + ", paths:" + paths.size());
 
-        if (enableInstructions)
-        {
-            InstructionList il = path.calcInstructions();
-            rsp.setInstructions(il);
-            rsp.setFound(il.getSize() > 0);
-
-            sw = new StopWatch().start();
-            int orig = 0;
-            PointList points = new PointList(il.size() * 5, graph.getNodeAccess().is3D());
-            for (Instruction i : il)
-            {
-                if (simplifyRequest && minPathPrecision > 0)
-                {
-                    orig += i.getPoints().size();
-                    peucker.simplify(i.getPoints());
-                }
-                points.add(i.getPoints());
-            }
-
-            if (simplifyRequest)
-                debug += ", simplify (" + orig + "->" + points.getSize() + "):" + sw.stop().getSeconds() + "s";
-
-            rsp.setPoints(points);
-
-        } else if (calcPoints)
-        {
-            PointList points = path.calcPoints();
-            rsp.setFound(points.getSize() > 1);
-
-            if (simplifyRequest)
-            {
-                sw = new StopWatch().start();
-                int orig = points.getSize();
-
-                if (minPathPrecision > 0)
-                    peucker.simplify(points);
-
-                debug += ", simplify (" + orig + "->" + points.getSize() + "):" + sw.stop().getSeconds() + "s";
-            }
-            rsp.setPoints(points);
-        } else
-            rsp.setFound(path.isFound());
-
-        return rsp.setDistance(path.getDistance()).setMillis(path.getMillis()).setDebugInfo(debug);
+        new PathMerger().
+                setCalcPoints(calcPoints).
+                setDouglasPeucker(peucker).
+                setEnableInstructions(enableInstructions).
+                setSimplifyRequest(simplifyRequest && minPathPrecision > 0).
+                doWork(rsp, paths);
+        return rsp;
     }
 
     protected LocationIndex createLocationIndex( Directory dir )

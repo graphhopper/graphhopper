@@ -104,8 +104,6 @@ public class GraphHopperServlet extends GHBaseServlet
     void writePath( HttpServletRequest req, HttpServletResponse res ) throws Exception
     {
         List<GHPlace> infoPoints = getPoints(req);
-        GHPlace start = infoPoints.get(0);
-        GHPlace end = infoPoints.get(1);
 
         // we can reduce the path length based on the maximum differences to the original coordinates
         double minPathPrecision = getDoubleParam(req, "min_path_precision", 1d);
@@ -121,7 +119,7 @@ public class GraphHopperServlet extends GHBaseServlet
         if (hopper.getEncodingManager().supports(vehicleStr))
         {
             FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
-            rsp = hopper.route(new GHRequest(start, end).
+            rsp = hopper.route(new GHRequest(infoPoints).
                     setVehicle(algoVehicle.toString()).
                     setWeighting(weighting).
                     setAlgorithm(algoStr).
@@ -136,7 +134,7 @@ public class GraphHopperServlet extends GHBaseServlet
         float took = sw.stop().getSeconds();
         String infoStr = req.getRemoteAddr() + " " + req.getLocale() + " " + req.getHeader("User-Agent");
         PointList points = rsp.getPoints();
-        String logStr = req.getQueryString() + " " + infoStr + " " + start + "->" + end
+        String logStr = req.getQueryString() + " " + infoStr + " " + infoPoints
                 + ", distance: " + rsp.getDistance() + ", time:" + Math.round(rsp.getMillis() / 60000f)
                 + "min, points:" + points.getSize() + ", took:" + took
                 + ", debug - " + rsp.getDebugInfo() + ", " + algoStr + ", "
@@ -251,13 +249,6 @@ public class GraphHopperServlet extends GHBaseServlet
                     infoPoints.add(place);
             }
         }
-
-        if (infoPoints.size() < 2)
-            throw new IllegalArgumentException("Did you specify point=<from>&point=<to> ? Use at least 2 points! " + infoPoints);
-
-        // TODO execute algorithm multiple times!
-        if (infoPoints.size() != 2)
-            throw new IllegalArgumentException("TODO! At the moment only 2 points can be specified");
 
         return infoPoints;
     }

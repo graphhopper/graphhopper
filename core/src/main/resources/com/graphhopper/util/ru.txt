@@ -28,3 +28,4 @@ kmAbbr=km
 mAbbr=m
 miAbbr=mi
 ftAbbr=ft
+stopover=stopover %1$s

@@ -22,13 +22,26 @@ package com.graphhopper.util;
  */
 public class FinishInstruction extends Instruction
 {
+    private int count = -1;
+
     public FinishInstruction( final double lat, final double lon, final double ele )
     {
         super(FINISH, "", 0, 0, new PointList(2, true)
-        {           
+        {   
             {
                 add(lat, lon, ele);
             }
         });
+    }
+
+    void setVia( int i )
+    {
+        sign = REACHED_VIA;
+        count = i;
+    }
+
+    public int getViaPosition()
+    {
+        return count;
     }
 }
