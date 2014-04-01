@@ -224,7 +224,10 @@ if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
   else
     exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.resourcebase=$RC_BASE jetty.port=$JETTY_PORT config=$CONFIG \
          $GH_WEB_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE" <&- &
-    exit $?
+    if [ "x$GH_PID_FILE" != "x" ]; then
+       echo $! > $GH_PID_FILE
+    fi
+    exit $?                    
   fi
 
 elif [ "x$ACTION" = "ximport" ]; then
