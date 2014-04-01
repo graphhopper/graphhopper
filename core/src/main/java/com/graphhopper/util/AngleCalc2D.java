@@ -27,13 +27,28 @@ public class AngleCalc2D
 {
 
     /**
+     * Return orientation of line relative to east.
+     * <p>
+     * @return Orientation in interval -pi to +pi where 0 is east
+     * <p>
+     * @Deprecated because it seems to be nicer to align to north so try to use calcOrientationNorth
+     * instaead
+     */
+    @Deprecated
+    public double calcOrientation( double lat1, double lon1, double lat2, double lon2 )
+    {
+        return Math.atan2(lat2 - lat1, lon2 - lon1);
+        //return Math.atan2(lon2 - lon1, lat2 - lat1);
+    }
+
+    /**
      * Return orientation of line relative to north. (North by coordinates, not magnetic north)
      * <p>
      * @return Orientation in interval -pi to +pi where 0 is north and pi is south
      */
-    public double calcOrientation( double lat1, double lon1, double lat2, double lon2 )
+    public double calcOrientationNorth( double lat1, double lon1, double lat2, double lon2 )
     {
-        return Math.atan2(lat2 - lat1, lon2 - lon1);
+        return Math.atan2(lon2 - lon1, lat2 - lat1);
     }
 
     /**
@@ -59,6 +74,25 @@ public class AngleCalc2D
                 resultOrientation = orientation;
         }
         return resultOrientation;
+    }
+
+    /**
+     * Calculate Azimuth for a line given by two coordinates. Direction in Degree where 0 is North,
+     * 90 is East, and 270 is West
+     * <p>
+     * @param lat1
+     * @param lon1
+     * @param lat2
+     * @param lon2
+     * @return
+     */
+    double calcAzimuth( double lat1, double lon1, double lat2, double lon2 )
+    {
+        double orientation = calcOrientationNorth(lat1, lon1, lat2, lon2);
+        double baseOrientation = calcOrientationNorth(2, 0, 1, 0);    // south
+        double alignedOrientation = alignOrientation(baseOrientation, orientation);
+
+        return Math.toDegrees(alignedOrientation);
     }
 
     String azimuth2compassPoint( double azimuth )

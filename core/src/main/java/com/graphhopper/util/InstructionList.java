@@ -250,10 +250,20 @@ public class InstructionList implements Iterable<Instruction>
         if (!isEmpty())
         {
             track.append("<rte>");
+            //Instruction prevI = null, middleI = null, nextI = null;
+            Instruction thisI = null, nextI;
+
             for (Instruction i : instructions)
             {
-                createExtensionsBlock(track, i);
+                nextI = i;
+
+                if (null != thisI)
+                {
+                    createRteptBlock(track, thisI, nextI);
+                }
+                thisI = nextI;
             }
+            createRteptBlock(track, thisI, null);
             track.append("</rte>");
         }
 
@@ -305,24 +315,31 @@ public class InstructionList implements Iterable<Instruction>
         }
     };
 
-    private String createExtensionsBlock( StringBuilder sbEx, Instruction instruction )
+    private void createRteptBlock( StringBuilder output, Instruction instruction, Instruction nextI )
     {
-        sbEx.append("<rtept lat=\"").append(InstructionList.round(instruction.getFirstLat(), 6)).
+        output.append("<rtept lat=\"").append(InstructionList.round(instruction.getFirstLat(), 6)).
                 append("\" lon=\"").append(InstructionList.round(instruction.getFirstLon(), 6)).append("\">");
 
         if (!instruction.getName().isEmpty())
-            sbEx.append("<desc>").append(getTurnDescription(instruction, NO_TRANSLATE)).append("</desc>");
+            output.append("<desc>").append(getTurnDescription(instruction, NO_TRANSLATE)).append("</desc>");
 
-        sbEx.append("<extensions>");
+        output.append("<extensions>");
 
-        sbEx.append("<distance>").append((int) instruction.getDistance()).append("</distance>");
-        sbEx.append("<time>").append(instruction.getTime()).append("</time>");
+        output.append("<distance>").append((int) instruction.getDistance()).append("</distance>");
+        output.append("<time>").append(instruction.getTime()).append("</time>");
 
-        // sbEx.append("<direction>").append(instruction.getDirection()).append("</direction>");
-        // sbEx.append("<azimuth>").append(instruction.getAzimutz()).append("</azimuth>");
-        sbEx.append("</extensions>");
-        sbEx.append("</rtept>");
-        return sbEx.toString();
+        String direction = instruction.getDirection(nextI);
+        if (null != direction)
+        {
+            output.append("<direction>").append(direction).append("</direction>");
+        }
+        String azimuth = instruction.getAzimuth(nextI);
+        if (null != azimuth)
+        {
+            output.append("<azimuth>").append(azimuth).append("</azimuth>");
+        }
+        output.append("</extensions>");
+        output.append("</rtept>");
     }
 
     public static String getWayName( String name, int paveType, int wayType, TranslationMap.Translation tr )
