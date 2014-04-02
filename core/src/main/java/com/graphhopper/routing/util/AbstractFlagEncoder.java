@@ -226,17 +226,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         return (flags & backwardBit) != 0;
     }
 
-    public boolean isBoth( long flags )
-    {
-        return (flags & directionBitMask) == directionBitMask;
-    }
-
-    @Override
-    public boolean canBeOverwritten( long flags1, long flags2 )
-    {
-        return isBoth(flags2) || (flags1 & directionBitMask) == (flags2 & directionBitMask);
-    }
-
     @Override
     public int getPavementType( long flags )
     {

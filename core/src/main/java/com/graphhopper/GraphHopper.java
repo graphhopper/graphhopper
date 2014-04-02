@@ -786,6 +786,9 @@ public class GraphHopper implements GraphHopperAPI
             sw = new StopWatch().start();
 
             Path path = algo.calcPath(fromRes, toRes);
+            if (path.getMillis() < 0)
+                throw new RuntimeException("Time was negative. Please report as bug and include:" + request);
+                
             paths.add(path);
             debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
             fromRes = toRes;
@@ -797,10 +800,9 @@ public class GraphHopper implements GraphHopperAPI
         double minPathPrecision = request.getHint("douglas.minprecision", 1d);
         DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(minPathPrecision);
         rsp.setDebugInfo(debug);
-        
+
         if (places.size() - 1 != paths.size())
-            throw new IllegalStateException("There should be exactly one more places than paths, "
-                    + "but places:" + places.size() + ", paths:" + paths.size());
+            throw new RuntimeException("There should be exactly one more places than paths. places:" + places.size() + ", paths:" + paths.size());
 
         new PathMerger().
                 setCalcPoints(calcPoints).

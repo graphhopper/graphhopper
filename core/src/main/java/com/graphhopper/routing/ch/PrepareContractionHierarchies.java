@@ -56,7 +56,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final PreparationWeighting prepareWeighting;
-    private final FlagEncoder prepareEncoder;
+    private final FlagEncoder prepareFlagEncoder;
     private EdgeSkipExplorer vehicleInExplorer;
     private EdgeSkipExplorer vehicleOutExplorer;
     private EdgeSkipExplorer vehicleAllExplorer;
@@ -86,7 +86,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     public PrepareContractionHierarchies( FlagEncoder encoder, Weighting weighting )
     {
-        prepareEncoder = encoder;
+        prepareFlagEncoder = encoder;
         long scFwdDir = encoder.setAccess(0, true, false);
 
         // shortcuts store weight in flags where we assume bit 1 and 2 are used for access restriction
@@ -183,7 +183,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     public PrepareContractionHierarchies doWork()
     {
         checkGraph();
-        if (prepareEncoder == null)
+        if (prepareFlagEncoder == null)
             throw new IllegalStateException("No vehicle encoder set.");
 
         if (prepareWeighting == null)
@@ -363,7 +363,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         logger.info("took:" + (int) allSW.stop().getSeconds()
                 + ", new shortcuts: " + newShortcuts
                 + ", " + prepareWeighting
-                + ", " + prepareEncoder
+                + ", " + prepareFlagEncoder
                 + ", removeHigher2LowerEdges:" + removesHigher2LowerEdges
                 + ", dijkstras:" + dijkstraCount
                 + ", t(dijk):" + (int) dijkstraSW.getSeconds()
@@ -578,7 +578,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 if (Double.isNaN(existingDirectWeight))
                     throw new IllegalStateException("Weighting should never return NaN values"
                             + ", in:" + getCoords(incomingEdges, g) + ", out:" + getCoords(outgoingEdges, g)
-                            + ", dist:" + outgoingEdges.getDistance() + ", speed:" + prepareEncoder.getSpeed(outgoingEdges.getFlags()));
+                            + ", dist:" + outgoingEdges.getDistance() + ", speed:" + prepareFlagEncoder.getSpeed(outgoingEdges.getFlags()));
 
                 if (existingDirectWeight >= Double.MAX_VALUE)
                     continue;
@@ -628,7 +628,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             while (iter.next())
             {
                 if (iter.isShortcut() && iter.getAdjNode() == sc.to
-                        && prepareEncoder.canBeOverwritten(iter.getFlags(), sc.flags))
+                        && PrepareEncoder.canBeOverwritten(iter.getFlags(), sc.flags))
                 {
                     if (sc.weight >= prepareWeighting.calcWeight(iter, false))
                         continue NEXT_SC;
@@ -682,11 +682,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     PrepareContractionHierarchies initFromGraph()
     {
         checkGraph();
-        vehicleInExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, false));
-        vehicleOutExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, false, true));
-        vehicleAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
-        vehicleAllTmpExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
-        calcPrioAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
+        vehicleInExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
+        vehicleOutExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
+        vehicleAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, true));
+        vehicleAllTmpExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, true));
+        calcPrioAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, true));
         ignoreNodeFilter = new IgnoreNodeFilter(g);
         // Use an alternative to PriorityQueue as it has some advantages: 
         //   1. Gets automatically smaller if less entries are stored => less total RAM used (as Graph is increasing until the end)
@@ -694,7 +694,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         //   but we need additional priorities array to keep old value which is necessary for update method
         sortedNodes = new GHTreeMapComposed();
         oldPriorities = new int[g.getNodes()];
-        algo = new DijkstraOneToMany(g, prepareEncoder, prepareWeighting);
+        algo = new DijkstraOneToMany(g, prepareFlagEncoder, prepareWeighting);
         return this;
     }
 
@@ -748,7 +748,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     {
         checkGraph();
         // do not change weight within DijkstraBidirectionRef => so use ShortestWeighting
-        DijkstraBidirectionRef dijkstrabi = new DijkstraBidirectionRef(g, prepareEncoder, prepareWeighting)
+        DijkstraBidirectionRef dijkstrabi = new DijkstraBidirectionRef(g, prepareFlagEncoder, prepareWeighting)
         {
             @Override
             protected void initCollections( int nodes )
@@ -796,7 +796,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     public AStarBidirection createAStar()
     {
         checkGraph();
-        AStarBidirection astar = new AStarBidirection(g, prepareEncoder, prepareWeighting)
+        AStarBidirection astar = new AStarBidirection(g, prepareFlagEncoder, prepareWeighting)
         {
             @Override
             protected void initCollections( int nodes )

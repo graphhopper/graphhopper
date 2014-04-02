@@ -203,29 +203,9 @@ public class CarFlagEncoderTest
     {
         assertTrue(encoder.isForward(encoder.flagsDefault(true, true)));
         assertTrue(encoder.isBackward(encoder.flagsDefault(true, true)));
-        assertTrue(encoder.isBoth(encoder.flagsDefault(true, true)));
 
         assertTrue(encoder.isForward(encoder.flagsDefault(true, false)));
         assertFalse(encoder.isBackward(encoder.flagsDefault(true, false)));
-        assertFalse(encoder.isBoth(encoder.flagsDefault(true, false)));
-    }
-
-    @Test
-    public void testOverwrite()
-    {
-        long forward = encoder.setProperties(10, true, false);
-        long backward = encoder.reverseFlags(forward);
-        long both = encoder.setProperties(20, true, true);
-        assertTrue(encoder.canBeOverwritten(forward, forward));
-        assertTrue(encoder.canBeOverwritten(backward, backward));
-        assertTrue(encoder.canBeOverwritten(forward, both));
-        assertTrue(encoder.canBeOverwritten(backward, both));
-
-        assertTrue(encoder.canBeOverwritten(both, both));
-        assertFalse(encoder.canBeOverwritten(both, forward));
-        assertFalse(encoder.canBeOverwritten(both, backward));
-        assertFalse(encoder.canBeOverwritten(forward, backward));
-        assertFalse(encoder.canBeOverwritten(backward, forward));
     }
 
     @Test

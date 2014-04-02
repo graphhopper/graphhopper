@@ -133,10 +133,13 @@ public class GHRequest
     @Override
     public String toString()
     {
-        String res = new String();
+        String res = "";
         for (GHPlace place : places)
         {
-            res = res + place.toString();
+            if (res.isEmpty())
+                res = place.toString();
+            else
+                res += "; " + place.toString();
         }
         return res + "(" + algo + ")";
     }

@@ -68,18 +68,7 @@ public interface FlagEncoder
 
     boolean isForward( long flags );
 
-    boolean isBackward( long flags );
-
-    /**
-     * Returns true if flags1 can be overwritten by flags2 without restricting or changing the
-     * directions of flags1.
-     */
-    //        \  flags2:
-    // flags1  \ -> | <- | <->
-    // ->         t | f  | t
-    // <-         f | t  | t
-    // <->        f | f  | t
-    boolean canBeOverwritten( long flags1, long flags2 );
+    boolean isBackward( long flags );    
 
     /**
      * @return the number to identify a pavement of a road.

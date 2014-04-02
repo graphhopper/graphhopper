@@ -223,7 +223,7 @@ public class Path
      */
     protected long calcMillis( double distance, long flags, boolean revert )
     {
-        double speed = revert ? encoder.getReverseSpeed(flags) : encoder.getSpeed(flags);
+        double speed = revert ? encoder.getReverseSpeed(flags) : encoder.getSpeed(flags);        
         return (long) (distance * 3600 / speed);
     }
 

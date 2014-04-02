@@ -801,13 +801,13 @@ public abstract class AbstractGraphStorageTester
         assertEquals(13, oneIter.getDistance(), 1e-6);
         assertEquals(2, oneIter.getBaseNode());
         assertTrue(carEncoder.isForward(oneIter.getFlags()));
-        assertFalse(carEncoder.isBoth(oneIter.getFlags()));
+        assertFalse(carEncoder.isBackward(oneIter.getFlags()));
 
         oneIter = graph.getEdgeProps(iter.getEdge(), 2);
         assertEquals(13, oneIter.getDistance(), 1e-6);
         assertEquals(3, oneIter.getBaseNode());
         assertTrue(carEncoder.isBackward(oneIter.getFlags()));
-        assertFalse(carEncoder.isBoth(oneIter.getFlags()));
+        assertFalse(carEncoder.isForward(oneIter.getFlags()));
 
         graph.edge(3, 2, 14, true);
         assertEquals(4, GHUtility.count(carOutExplorer.setBaseNode(2)));
