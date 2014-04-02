@@ -29,7 +29,7 @@ public class Instruction
     public static final int CONTINUE_ON_STREET = 0;
     public static final int TURN_SLIGHT_RIGHT = 1;
     public static final int TURN_RIGHT = 2;
-    public static final int TURN_SHARP_RIGHT = 3;    
+    public static final int TURN_SHARP_RIGHT = 3;
     public static final int FINISH = 4;
     public static final int REACHED_VIA = 5;
     protected int sign;
@@ -180,10 +180,9 @@ public class Instruction
     {
         AngleCalc2D ac = new AngleCalc2D();
         double azimuth = calcAzimuth(nextI);
-        if (Double.compare(Double.NaN, azimuth) == 0)
-        {
+        if (Double.isNaN(azimuth))
             return null;
-        }
+
         String dir = ac.azimuth2compassPoint(azimuth);
         return dir;
     }
@@ -197,14 +196,11 @@ public class Instruction
     String getAzimuth( Instruction nextI )
     {
         double az = calcAzimuth(nextI);
-        if (Double.compare(Double.NaN, az) == 0)
-        {
+        if (Double.isNaN(az))
             return null;
-        }
 
         DecimalFormat angleFormatter = new DecimalFormat("#");
         return angleFormatter.format(az);
-
     }
 
     private double calcAzimuth( Instruction nextI )
