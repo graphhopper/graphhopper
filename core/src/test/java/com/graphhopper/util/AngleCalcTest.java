@@ -38,6 +38,15 @@ public class AngleCalcTest
     }
 
     @Test
+    public void testOrientationNorth()
+    {
+        assertEquals(0.0, Math.toDegrees(ac.calcOrientationNorth(0, 0, 10, 0)), 0.0001);
+        assertEquals(45.0, Math.toDegrees(ac.calcOrientationNorth(0, 0, 10, 10)), 0.0001);
+        assertEquals(90.0, Math.toDegrees(ac.calcOrientationNorth(0, 0, 0, 10)), 0.0001);
+        assertEquals(-135.0, Math.toDegrees(ac.calcOrientationNorth(0, 0, -10, -10)), 0.0001);
+    }
+
+    @Test
     public void testAlignOrientation()
     {
         assertEquals(90.0, Math.toDegrees(ac.alignOrientation(Math.toRadians(90), Math.toRadians(90))), 0.0001);
@@ -51,6 +60,14 @@ public class AngleCalcTest
     {
         double orientation = ac.calcOrientation(52.414918, 13.244221, 52.415333, 13.243595);
         assertEquals(146.458, Math.toDegrees(ac.alignOrientation(0, orientation)), 0.001);
+    }
+
+    @Test
+    public void testCalcAzimuth()
+    {
+        assertEquals(90.0, ac.calcAzimuth(0, 0, 0, 10), 0.0001);
+        assertEquals(180.0, ac.calcAzimuth(0, 0, -10, 0), 0.0001);
+        assertEquals(270.0, ac.calcAzimuth(0, 0, 0, -10), 0.0001);
     }
 
     @Test

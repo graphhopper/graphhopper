@@ -18,8 +18,6 @@
 package com.graphhopper.util;
 
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 import java.text.DecimalFormat;
 
 public class Instruction
@@ -172,31 +170,68 @@ public class Instruction
         return sb.toString();
     }
 
-    public Map<String, String> calcExtensions()
+    /**
+     * Return Direction/Compass point based on the first tracksegment of the instruction. If
+     * Instruction does not contain enough coordinate points, NULL will be returned.
+     * <p>
+     * @return
+     */
+    String getDirection( Instruction nextI )
     {
         AngleCalc2D ac = new AngleCalc2D();
+        double azimuth = calcAzimuth(nextI);
+        if (Double.compare(Double.NaN, azimuth) == 0)
+        {
+            return null;
+        }
+        String dir = ac.azimuth2compassPoint(azimuth);
+        return dir;
+    }
+
+    /**
+     * Return Azimuth based on the first tracksegment of the instruction. If Instruction does not
+     * contain enough coordinate points, NULL will be returned.
+     * <p>
+     * @return
+     */
+    String getAzimuth( Instruction nextI )
+    {
+        double az = calcAzimuth(nextI);
+        if (Double.compare(Double.NaN, az) == 0)
+        {
+            return null;
+        }
+
         DecimalFormat angleFormatter = new DecimalFormat("#");
+        return angleFormatter.format(az);
 
-        // Add info for extensions
-        Map<String, String> extensions = new HashMap<String, String>();
+    }
 
-        // TODO instead of indication use angle which can be used here
-//        double distanceToNext = distanceCalc.calcDist(nextLat, nextLon, lat, lon);
-//        extensions.put("distance", angleFormatter.format(distanceToNext));
-//
-//        if (!(firstInstr && first))
-//        {
-//            // impossible to calculate an angle for first point of first instruction                
-//            double prevLat = first ? prevInstr.getLastLat() : points.getLatitude(i - 1);
-//            double prevLon = first ? prevInstr.getLastLon() : points.getLongitude(i - 1);
-//            double turnAngle = ac.calcTurnAngleDeg(prevLat, prevLon, lat, lon, nextLat, nextLon);
-//            extensions.put("turn-angle", angleFormatter.format(turnAngle));
-//        }
-//
-//        double azimuth = ac.calcAzimuthDeg(lat, lon, nextLat, nextLon);
-//        extensions.put("azimuth", angleFormatter.format(azimuth));
-//        extensions.put("direction", ac.azimuth2compassPoint(azimuth));
-        return extensions;
+    private double calcAzimuth( Instruction nextI )
+    {
+        double nextLat;
+        double nextLon;
+
+        if (points.getSize() >= 2)
+        {
+            nextLat = points.getLatitude(1);
+            nextLon = points.getLongitude(1);
+        } else if (points.getSize() == 1 && null != nextI)
+        {
+            nextLat = nextI.points.getLatitude(0);
+            nextLon = nextI.points.getLongitude(0);
+        } else
+        {
+            return Double.NaN;
+        }
+
+        double lat = points.getLatitude(0);
+        double lon = points.getLongitude(0);
+
+        AngleCalc2D ac = new AngleCalc2D();
+
+        double azimuth = ac.calcAzimuth(lat, lon, nextLat, nextLon);
+        return azimuth;
     }
 
     void checkOne()
