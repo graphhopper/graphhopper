@@ -62,7 +62,7 @@ public class PathTest
         FlagEncoder tmpEnc = new Bike2WeightFlagEncoder();
         GraphStorage g = new GraphBuilder(new EncodingManager(tmpEnc)).create();
         Path p = new Path(g, tmpEnc);
-        long flags = tmpEnc.setSpeed(tmpEnc.setReverseSpeed(0, 10), 15);
+        long flags = tmpEnc.setSpeed(tmpEnc.setReverseSpeed(tmpEnc.setAccess(0, true, true), 10), 15);
         assertEquals(375 * 60 * 1000, p.calcMillis(100000, flags, false));
         assertEquals(600 * 60 * 1000, p.calcMillis(100000, flags, true));
 

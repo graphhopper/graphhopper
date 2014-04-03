@@ -644,11 +644,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                                 + ", neighbors:" + GHUtility.getNeighbors(iter));
                     }
 
-                    // note: flags overwrite weight => call them first
+                    // note: flags overwrite weight => call first
                     iter.setFlags(sc.flags);
-                    iter.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
-                    iter.setDistance(sc.dist);
                     iter.setWeight(sc.weight);
+                    iter.setDistance(sc.dist);
+                    iter.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
                     setOrigEdgeCount(iter.getEdge(), sc.originalEdges);
                     updatedInGraph = true;
                     break;
@@ -658,7 +658,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             if (!updatedInGraph)
             {
                 EdgeSkipIterState edgeState = g.shortcut(sc.from, sc.to);
-                // note: flags overwrite weight => call them first
+                // note: flags overwrite weight => call first
                 edgeState.setFlags(sc.flags);
                 edgeState.setWeight(sc.weight);
                 edgeState.setDistance(sc.dist);
