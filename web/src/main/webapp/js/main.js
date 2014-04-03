@@ -5,7 +5,7 @@
  */
 var tmpArgs = parseUrlWithHisto();
 var host = tmpArgs["host"];
-// var host = "http://graphhopper.com/api/1";
+var host = "http://graphhopper.com/api/1";
 if (host == null) {
     if (location.port === '') {
         host = location.protocol + '//' + location.hostname;
@@ -44,13 +44,13 @@ var iconTo = L.icon({
     iconAnchor: [12, 40]
 });
 
-$(document).ready(function(e) {    
+$(document).ready(function(e) {
     // fixing cross domain support e.g in Opera
     jQuery.support.cors = true;
-    
+
     if (host.indexOf("graphhopper.com") > 0)
         $('#hosting').show();
-    
+
     var History = window.History;
     if (History.enabled) {
         History.Adapter.bind(window, 'statechange', function() {
@@ -701,11 +701,11 @@ function routeLatLng(request, doQuery) {
             var maxLat = path.bbox[3];
             var tmpB = new L.LatLngBounds(new L.LatLng(minLat, minLon), new L.LatLng(maxLat, maxLon));
             map.fitBounds(tmpB);
-        }        
+        }
 
         var tmpTime = createTimeString(path.time);
         var tmpDist = createDistanceString(path.distance);
-        descriptionDiv.append(tr("routeInfo", [tmpDist, tmpTime]));       
+        descriptionDiv.append(tr("routeInfo", [tmpDist, tmpTime]));
 
         $('.defaulting').each(function(index, element) {
             $(element).css("color", "black");
@@ -714,37 +714,31 @@ function routeLatLng(request, doQuery) {
         if (path.instructions) {
             var instructionsElement = $("<table id='instructions'><colgroup>"
                     + "<col width='10%'><col width='65%'><col width='25%'></colgroup>");
-            $("#info").append(instructionsElement);
-            for (var m = 0; m < path.instructions.length; m++) {
-                var instr = path.instructions[m];
-                var sign = instr.sign;
-                if (m == 0)
-                    sign = "marker-icon-green";
-                else if (sign == -3)
-                    sign = "sharp_left";
-                else if (sign == -2)
-                    sign = "left";
-                else if (sign == -1)
-                    sign = "slight_left";
-                else if (sign == 0)
-                    sign = "continue";
-                else if (sign == 1)
-                    sign = "slight_right";
-                else if (sign == 2)
-                    sign = "right";
-                else if (sign == 3)
-                    sign = "sharp_right";
-                else if (sign == 4)
-                    sign = "marker-icon-red";
-                else
-                    throw "did not found indication " + sign;
 
+            var partialInstr = path.instructions.length > 100;
+            var len = Math.min(path.instructions.length, 100);
+            for (var m = 0; m < len; m++) {
+                var instr = path.instructions[m];
                 var lngLat = path.points.coordinates[instr.interval[0]];
-                addInstruction(instructionsElement, sign, instr.text, instr.distance, instr.time, lngLat);
+                addInstruction(instructionsElement, instr, m, lngLat);
+            }
+            $("#info").append(instructionsElement);
+
+            if (partialInstr) {
+                var moreDiv = $("<button id='moreButton'>More...</button>");                
+                moreDiv.click(function() {
+                    moreDiv.remove();
+                    for (var m = len; m < path.instructions.length; m++) {
+                        var instr = path.instructions[m];
+                        var lngLat = path.points.coordinates[instr.interval[0]];
+                        addInstruction(instructionsElement, instr, m, lngLat);
+                    }
+                })
+                instructionsElement.append(moreDiv);
             }
 
             var hiddenDiv = $("<div id='routeDetails'/>");
-            hiddenDiv.hide();            
+            hiddenDiv.hide();
 
             var toggly = $("<button id='expandDetails'>+</button>");
             toggly.click(function() {
@@ -784,7 +778,7 @@ function routeLatLng(request, doQuery) {
             hiddenDiv.append(googleLink);
             var bingLink = $("<a>Bing</a> ");
             bingLink.attr("href", "http://www.bing.com/maps/default.aspx?rtp=adr." + from + "~adr." + to + addToBing);
-            hiddenDiv.append(bingLink);  
+            hiddenDiv.append(bingLink);
             $("#info").append(hiddenDiv);
         }
     });
@@ -820,20 +814,43 @@ function createTimeString(time) {
     return resTimeStr;
 }
 
-function addInstruction(main, indi, title, distance, milliEntry, lngLat) {
-    var indiPic = "<img class='instr_pic' style='vertical-align: middle' src='" +
-            window.location.pathname + "img/" + indi + ".png'/>";
+function addInstruction(main, instr, instrIndex, lngLat) {
+    var sign = instr.sign;
+    if (instrIndex === 0)
+        sign = "marker-icon-green";
+    else if (sign === -3)
+        sign = "sharp_left";
+    else if (sign === -2)
+        sign = "left";
+    else if (sign === -1)
+        sign = "slight_left";
+    else if (sign === 0)
+        sign = "continue";
+    else if (sign === 1)
+        sign = "slight_right";
+    else if (sign === 2)
+        sign = "right";
+    else if (sign === 3)
+        sign = "sharp_right";
+    else if (sign === 4)
+        sign = "marker-icon-red";
+    else
+        throw "did not found sign " + sign;
+    var title = instr.text;
+    var distance = instr.distance;
     var str = "<td class='instr_title'>" + title + "</td>";
 
     if (distance > 0) {
         str += " <td class='instr_distance_td'><span class='instr_distance'>"
                 + createDistanceString(distance) + "<br/>"
-                + createTimeString(milliEntry) + "</span></td>";
+                + createTimeString(instr.time) + "</span></td>";
     }
 
-    if (indi !== "continue")
+    if (sign !== "continue") {
+        var indiPic = "<img class='instr_pic' style='vertical-align: middle' src='" +
+                window.location.pathname + "img/" + sign + ".png'/>";
         str = "<td>" + indiPic + "</td>" + str;
-    else
+    } else
         str = "<td/>" + str;
     var instructionDiv = $("<tr class='instruction'/>");
     instructionDiv.html(str);
@@ -844,7 +861,7 @@ function addInstruction(main, indi, title, distance, milliEntry, lngLat) {
 
             routeSegmentPopup = L.popup().
                     setLatLng([lngLat[1], lngLat[0]]).
-                    setContent(indiPic + " " + title).
+                    setContent(title).
                     openOn(map);
         });
     }

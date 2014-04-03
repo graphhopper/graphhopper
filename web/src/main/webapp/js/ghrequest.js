@@ -185,7 +185,7 @@ GHRequest.prototype.doRequest = function(url, callback) {
     $.ajax({
         "timeout": 30000,
         "url": url,
-        "success": function(json) {
+        "success": function(json) {            
             if (json.paths) {
                 for (var i = 0; i < json.paths.length; i++) {
                     var path = json.paths[i];
@@ -198,8 +198,8 @@ GHRequest.prototype.doRequest = function(url, callback) {
                         };
                     }
                 }
-            }
-            callback(json);
+            }            
+            callback(json);            
         },
         "error": function(err) {
             // problematic: this callback is not invoked when using JSONP!

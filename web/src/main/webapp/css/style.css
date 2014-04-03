@@ -225,3 +225,6 @@ tr.instruction td {
     height: 20px;    
     background-image: linear-gradient(to bottom, white, #e7e7e7);
 }
+#moreButton {
+    background-image: linear-gradient(to bottom, white, #e7e7e7);
+}
