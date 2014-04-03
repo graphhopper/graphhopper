@@ -151,6 +151,7 @@ body {
     float: left;
 }
 .instruction {    
+    cursor: pointer;
     padding-top: 5px;
     padding-bottom: 5px;
 }
@@ -158,6 +159,7 @@ tr.instruction td {
     border-bottom: #dadada dashed thin;
 }
 #instructions {
+    table-layout:fixed;
     border-collapse: collapse;
     padding-top: 10px;
     width: 100%;
@@ -166,17 +168,20 @@ tr.instruction td {
 #instructions th, #instructions td {
     padding: 3px;
 }
-.instr_title {    
+td.instr_title {
+    width: 130px;
 }
-.instr_distance_td {
-    min-width: 40px;
-}
-.instr_distance {
+td.instr_distance {
+    min-width: 50px;
     float: right;    
     color: gray;
     text-align: right;
 }
-.instr_pic {    
+
+#instructions tr .instr_pic {
+    width: 20px;
+}
+td img.pic {    
     max-height: 24px;
     max-width: 16px;
 }

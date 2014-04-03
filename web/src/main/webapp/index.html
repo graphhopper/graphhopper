@@ -13,7 +13,7 @@
         <link rel="stylesheet" href="css/Leaflet.Elevation-0.0.2.css" />
         <script type="text/javascript" src="js/d3.min.js"></script>
         <script type="text/javascript" src="js/Leaflet.Elevation-0.0.2.min.js"></script>        
-        
+
         <script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>        
         <!--
         <script type="text/javascript" src="http://code.jquery.com/jquery-2.1.0.min.js"></script>        
@@ -27,6 +27,7 @@
     </head>
     <body>
         <div id="input">
+            <div id="input_header">
             <div id="header_img">
                 <a class="no_link" href="http://graphhopper.com">
                     <img alt="GraphHopper" src="./img/header.png"/>                    
@@ -62,13 +63,14 @@
             </form>      
             <div id="exportLink" title="Static Link" class="left"><a href="/maps"><img src='img/link.png'></a></div>
             <div id="gpxExportButton" title="GPX Download"><a href=""><img alt="gpx" src='img/gpx.png'></a></div>
-            <div id="hosting">Powered by <a href='http://graphhopper.com/#enterprise'>GraphHopper API</a></div>
+            <div id="hosting">Powered by <a href='http://graphhopper.com/#enterprise'>GraphHopper API</a></div>            
+            </div>
             <div class="clear"> </div>
             <div id="info" class="small_text">
             </div>
             <div id="error" class="error">
             </div>
-        </div>
+        </div>        
 
         <div id="map">
         </div>

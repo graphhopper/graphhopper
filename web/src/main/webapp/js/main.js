@@ -142,6 +142,10 @@ $(document).ready(function(e) {
                 };
                 initMap();
             });
+
+    $(window).resize(function() {
+        adjustMapSize();
+    });
 });
 
 function initFromParams(params, doQuery) {
@@ -176,79 +180,69 @@ function resolveCoords(fromStr, toStr, doQuery) {
     }
 }
 
-function initMap() {
+function adjustMapSize() {
     var mapDiv = $("#map");
-    var width = $(window).width() - 300;
+    var width = $(window).width() - 280;
     if (width < 100)
-        width = $(window).width() - 5;
-    var height = $(window).height() - 5;
+        width = $(window).width();
+    var height = $(window).height();
     mapDiv.width(width).height(height);
-    if (height > 350)
-        height -= $("#input").height() + 22;
-    $("#info").css("max-height", height);
+    $("#input").height(height);
+    $("#info").css("max-height", height - $("#input_header").height() - 25);
+}
+
+function initMap() {
+    adjustMapSize();    
     console.log("init map at " + JSON.stringify(bounds));
 
     // mapquest provider
-    var moreAttr = 'Data &copy; <a href="http://www.openstreetmap.org/copyright">OSM</a>,'
-            + 'JS: <a href="http://leafletjs.com/">Leaflet</a>';
+    var osmAttr = '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
     var tp = "ls";
     if (L.Browser.retina)
         tp = "lr";
 
     var lyrk = L.tileLayer('http://{s}.tiles.lyrk.org/' + tp + '/{z}/{x}/{y}?apikey=6e8cfef737a140e2a58c8122aaa26077', {
-        attribution: '<a href="http://geodienste.lyrk.de/">Lyrk</a>,' + moreAttr,
+        attribution: osmAttr + ', <a href="http://geodienste.lyrk.de/">Lyrk</a>',
         subdomains: ['a', 'b', 'c']
     });
 
     var mapquest = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
-        attribution: '<a href="http://open.mapquest.co.uk">MapQuest</a>,' + moreAttr,
+        attribution: osmAttr + ', <a href="http://open.mapquest.co.uk">MapQuest</a>',
         subdomains: ['otile1', 'otile2', 'otile3', 'otile4']
     });
 
     var mapquestAerial = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.png', {
-        attribution: '<a href="http://open.mapquest.co.uk">MapQuest</a>,' + moreAttr,
+        attribution: osmAttr + ', <a href="http://open.mapquest.co.uk">MapQuest</a>',
         subdomains: ['otile1', 'otile2', 'otile3', 'otile4']
     });
 
     var thunderTransport = L.tileLayer('http://{s}.tile.thunderforest.com/transport/{z}/{x}/{y}.png', {
-        attribution: '<a href="http://www.thunderforest.com/transport/">Thunderforest Transport</a>,' + moreAttr,
+        attribution: osmAttr + ', <a href="http://www.thunderforest.com/transport/">Thunderforest Transport</a>',
         subdomains: ['a', 'b', 'c']
     });
 
     var thunderCycle = L.tileLayer('http://{s}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png', {
-        attribution: '<a href="http://www.thunderforest.com/opencyclemap/">Thunderforest Cycle</a>,' + moreAttr,
+        attribution: osmAttr + ', <a href="http://www.thunderforest.com/opencyclemap/">Thunderforest Cycle</a>',
         subdomains: ['a', 'b', 'c']
     });
 
     var thunderOutdoors = L.tileLayer('http://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png', {
-        attribution: '<a href="http://www.thunderforest.com/outdoors/">Thunderforest Outdoors</a>,' + moreAttr,
+        attribution: osmAttr + ', <a href="http://www.thunderforest.com/outdoors/">Thunderforest Outdoors</a>',
         subdomains: ['a', 'b', 'c']
     });
 
-    //    var mapbox = L.tileLayer('http://a.tiles.mapbox.com/v3/mapbox.world-bright/{z}/{x}/{y}.png', {
-    //        attribution: '<a href="http://www.mapbox.com">MapBox</a>,' + moreAttr, 
-    //        subdomains: ['a','b','c']
-    //    });    
-
     var wrk = L.tileLayer('http://{s}.wanderreitkarte.de/topo/{z}/{x}/{y}.png', {
-        attribution: '<a href="http://wanderreitkarte.de">WanderReitKarte</a>,' + moreAttr,
+        attribution: osmAttr + ', <a href="http://wanderreitkarte.de">WanderReitKarte</a>',
         subdomains: ['topo4', 'topo', 'topo2', 'topo3']
     });
 
     var osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: moreAttr
+        attribution: osmAttr
     });
 
     var osmde = L.tileLayer('http://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png', {
-        attribution: moreAttr
-    });
-
-    // only work if you zoom a bit deeper
-    var lang = "en_US";
-    var apple = L.tileLayer('http://gsp2.apple.com/tile?api=1&style=slideshow&layers=default&lang=' + lang + '&z={z}&x={x}&y={y}&v=9', {
-        maxZoom: 17,
-        attribution: 'Map data and Imagery &copy; <a href="http://www.apple.com/ios/maps/">Apple</a>,' + moreAttr
+        attribution: osmAttr
     });
 
     // default
@@ -263,7 +257,6 @@ function initMap() {
         "TF Transport": thunderTransport,
         "TF Cycle": thunderCycle,
         "TF Outdoors": thunderOutdoors,
-        // didn't found a usage policy for this "Apple": apple,
         "WanderReitKarte": wrk,
         "OpenStreetMap": osm,
         "OpenStreetMap.de": osmde
@@ -712,8 +705,7 @@ function routeLatLng(request, doQuery) {
         });
 
         if (path.instructions) {
-            var instructionsElement = $("<table id='instructions'><colgroup>"
-                    + "<col width='10%'><col width='65%'><col width='25%'></colgroup>");
+            var instructionsElement = $("<table id='instructions'>");
 
             var partialInstr = path.instructions.length > 100;
             var len = Math.min(path.instructions.length, 100);
@@ -725,7 +717,7 @@ function routeLatLng(request, doQuery) {
             $("#info").append(instructionsElement);
 
             if (partialInstr) {
-                var moreDiv = $("<button id='moreButton'>More...</button>");                
+                var moreDiv = $("<button id='moreButton'>More...</button>");
                 moreDiv.click(function() {
                     moreDiv.remove();
                     for (var m = len; m < path.instructions.length; m++) {
@@ -841,17 +833,17 @@ function addInstruction(main, instr, instrIndex, lngLat) {
     var str = "<td class='instr_title'>" + title + "</td>";
 
     if (distance > 0) {
-        str += " <td class='instr_distance_td'><span class='instr_distance'>"
+        str += " <td class='instr_distance'><span>"
                 + createDistanceString(distance) + "<br/>"
                 + createTimeString(instr.time) + "</span></td>";
     }
 
     if (sign !== "continue") {
-        var indiPic = "<img class='instr_pic' style='vertical-align: middle' src='" +
+        var indiPic = "<img class='pic' style='vertical-align: middle' src='" +
                 window.location.pathname + "img/" + sign + ".png'/>";
-        str = "<td>" + indiPic + "</td>" + str;
+        str = "<td class='instr_pic'>" + indiPic + "</td>" + str;
     } else
-        str = "<td/>" + str;
+        str = "<td class='instr_pic'/>" + str;
     var instructionDiv = $("<tr class='instruction'/>");
     instructionDiv.html(str);
     if (lngLat) {
