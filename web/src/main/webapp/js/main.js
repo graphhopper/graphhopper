@@ -1031,7 +1031,7 @@ function setAutoCompleteList(fromOrTo, ghRequestLoc) {
             return response;
         },
         onSearchError: function(element, q, jqXHR, textStatus, errorThrown) {
-            console.log(element + ", " + JSON.stringify(q) + ", textStatus " + textStatus + ", " + errorThrown);
+            // too many errors if interrupted console.log(element + ", " + JSON.stringify(q) + ", textStatus " + textStatus + ", " + errorThrown);
         },
         formatResult: function(suggestion, currInput) {
             // avoid highlighting for now as this breaks the html sometimes
@@ -1093,11 +1093,14 @@ function dataToText(data) {
     if (data.name)
         text += data.name;
     
+    if (data.postcode)
+        text = insComma(text, data.postcode);
+    
     // make sure name won't be duplicated
     if (data.city && text.indexOf(data.city) < 0)
         text = insComma(text, data.city);
     
     if (data.country && text.indexOf(data.country) < 0)
-        text = insComma(text, data.country);
+        text = insComma(text, data.country);       
     return text;
 }
