@@ -17,7 +17,6 @@ if (host == null) {
 var ghRequest = new GHRequest(host);
 var bounds = {};
 
-var addressSuggestionURL = "http://graphhopper.com/api/1/geocode";
 //var nominatim = "http://open.mapquestapi.com/nominatim/v1/search.php";
 //var nominatim_reverse = "http://open.mapquestapi.com/nominatim/v1/reverse.php";
 var nominatim = "http://nominatim.openstreetmap.org/search";
@@ -1010,13 +1009,16 @@ function setAutoCompleteList(fromOrTo, ghRequestLoc) {
 
     var options = {
         containerClass: "complete-" + pointIndex,
+        /* as we use jsonp we need to set the timeout to a small value */        
+        timeout: 1000,
+        deferRequestBy: 10,
         maxHeight: 510,
         triggerSelectOnValidInput: false,
         autoSelectFirst: false,
         paramName: "q",
-        dataType: "json",
+        dataType: "jsonp",
         serviceUrl: function() {
-            return addressSuggestionURL + "?limit=8&lang=" + ghRequest.locale;
+            return ghRequest.createGeocodeURL();
         },
         transformResult: function(response, originalQuery) {
             response.suggestions = [];
@@ -1027,7 +1029,7 @@ function setAutoCompleteList(fromOrTo, ghRequestLoc) {
             return response;
         },
         onSearchError: function(element, q, jqXHR, textStatus, errorThrown) {
-            console.log(element + ", " + q + ", textStatus " + textStatus + ", " + errorThrown);
+            console.log(element + ", " + JSON.stringify(q) + ", textStatus " + textStatus + ", " + errorThrown);
         },
         formatResult: function(suggestion, currInput) {
             // avoid highlighting for now as this breaks the html sometimes
@@ -1064,21 +1066,22 @@ function dataToHtml(data, query) {
     if (data.name)
         element += "<div class='nameseg'>" + formatValue(data.name, query) + "</div>";
     var addStr = "";
-    if(data.postcode)
+    if (data.postcode)
         addStr = data.postcode;
     if (data.city)
         addStr = insComma(addStr, data.city);
-    if(data.country)
+    if (data.country)
         addStr = insComma(addStr, data.country);
-    
-    if(addStr)
+
+    if (addStr)
         element += "<div class='cityseg'>" + formatValue(addStr, query) + "</div>";
-    
+
     if (data.osm_key == "highway") {
         // ignore
-    } if (data.osm_key == "place") {
+    }
+    if (data.osm_key == "place") {
         element += "<span class='moreseg'>" + data.osm_value + "</span>";
-    } else        
+    } else
         element += "<span class='moreseg'>" + data.osm_key + "</span>";
     return element;
 }

@@ -49,7 +49,7 @@ GHRequest.prototype.init = function(params) {
     if (params.vehicle)
         this.vehicle = params.vehicle;
     if (params.weighting)
-        this.weighting = params.weighting;    
+        this.weighting = params.weighting;
     if (params.algorithm)
         this.algorithm = params.algorithm;
     if (params.locale)
@@ -90,6 +90,10 @@ GHRequest.prototype.init = function(params) {
 GHRequest.prototype.handleBoolean = function(key, params) {
     if (key in params)
         this[key] = params[key] === "true" || params[key] === true;
+};
+
+GHRequest.prototype.createGeocodeURL = function() {
+    return this.createPath(this.host + "/geocode?limit=8&type=" + this.dataType + "&key=" + this.key);
 };
 
 GHRequest.prototype.createURL = function(demoUrl) {
@@ -185,7 +189,7 @@ GHRequest.prototype.doRequest = function(url, callback) {
     $.ajax({
         "timeout": 30000,
         "url": url,
-        "success": function(json) {            
+        "success": function(json) {
             if (json.paths) {
                 for (var i = 0; i < json.paths.length; i++) {
                     var path = json.paths[i];
@@ -198,8 +202,8 @@ GHRequest.prototype.doRequest = function(url, callback) {
                         };
                     }
                 }
-            }            
-            callback(json);            
+            }
+            callback(json);
         },
         "error": function(err) {
             // problematic: this callback is not invoked when using JSONP!
@@ -243,7 +247,7 @@ GHInput = function(str) {
         var index = str.indexOf(",");
         if (index >= 0) {
             this.lat = round(parseFloat(str.substr(0, index)));
-            this.lng = round(parseFloat(str.substr(index + 1)));            
+            this.lng = round(parseFloat(str.substr(index + 1)));
             if (!isNaN(this.lat) && !isNaN(this.lng)) {
                 this.input = this.toString();
             } else {
