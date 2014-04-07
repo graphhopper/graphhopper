@@ -1091,10 +1091,13 @@ function dataToHtml(data, query) {
 function dataToText(data) {
     var text = "";
     if (data.name)
-        text += data.name
-    if (data.city)
+        text += data.name;
+    
+    // make sure name won't be duplicated
+    if (data.city && text.indexOf(data.city) < 0)
         text = insComma(text, data.city);
-    if (data.country)
+    
+    if (data.country && text.indexOf(data.country) < 0)
         text = insComma(text, data.country);
     return text;
 }
