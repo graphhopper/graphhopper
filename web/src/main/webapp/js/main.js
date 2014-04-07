@@ -380,10 +380,7 @@ function resolve(fromOrTo, locCoord) {
     return createAmbiguityList(locCoord).done(function(arg1) {
         var errorDiv = $("#" + fromOrTo + "ResolveError");
         errorDiv.empty();
-        // deinstallation of completion if there was one
-//        if (getAutoCompleteDiv(fromOrTo).autocomplete())
-//            getAutoCompleteDiv(fromOrTo).autocomplete().dispose();
-
+        
         if (locCoord.error)
             errorDiv.text(locCoord.error);
 
@@ -718,7 +715,7 @@ function routeLatLng(request, doQuery) {
                         var lngLat = path.points.coordinates[instr.interval[0]];
                         addInstruction(instructionsElement, instr, m, lngLat);
                     }
-                })
+                });
                 instructionsElement.append(moreDiv);
             }
 
@@ -750,12 +747,12 @@ function routeLatLng(request, doQuery) {
             var googleLink = $("<a>Google</a> ");
             var addToGoogle = "";
             var addToBing = "";
-            if (request.vehicle.toUpperCase() == "FOOT") {
+            if (request.vehicle.toUpperCase() === "FOOT") {
                 addToGoogle = "&dirflg=w";
                 addToBing = "&mode=W";
-            } else if ((request.vehicle.toUpperCase() == "BIKE") ||
-                    (request.vehicle.toUpperCase() == "RACINGBIKE") ||
-                    (request.vehicle.toUpperCase() == "MTB")) {
+            } else if ((request.vehicle.toUpperCase() === "BIKE") ||
+                    (request.vehicle.toUpperCase() === "RACINGBIKE") ||
+                    (request.vehicle.toUpperCase() === "MTB")) {
                 addToGoogle = "&dirflg=b";
                 // ? addToBing = "&mode=B";
             }
@@ -1006,13 +1003,18 @@ function formatValue(orig, query) {
 function setAutoCompleteList(fromOrTo, ghRequestLoc) {
     var isFrom = fromOrTo === "from";
     var pointIndex = isFrom ? 1 : 2;
-
+    var myAutoDiv = getAutoCompleteDiv(fromOrTo);
+    
     var options = {
         containerClass: "complete-" + pointIndex,
         /* as we use jsonp we need to set the timeout to a small value */        
         timeout: 1000,
-        deferRequestBy: 10,
+        /* avoid too many requests when typing quickly */
+        deferRequestBy: 5,
+        minChars: 2,
         maxHeight: 510,
+        noCache: true,
+        /* this default could be problematic: preventBadQueries: true, */
         triggerSelectOnValidInput: false,
         autoSelectFirst: false,
         paramName: "q",
@@ -1043,21 +1045,21 @@ function setAutoCompleteList(fromOrTo, ghRequestLoc) {
             if (isFrom)
                 req = ghRequest.from;
 
+            myAutoDiv.autocomplete().disable();
+            
             var point = suggestion.data.point;
-            req.setCoord(point.lat, point.lng);
-            req.input = suggestion.value;
+            req.setCoord(point.lat, point.lng);            
+            
+            req.input = suggestion.value;            
             if (ghRequest.from.isResolved() && ghRequest.to.isResolved())
                 routeLatLng(ghRequest);
-//            else if (suggestion.data.boundingbox) {
-//                var bbox = suggestion.data.box;
-//                focusWithBounds(ghRequestLoc, [[bbox[0], bbox[2]], [bbox[1], bbox[3]]], isFrom);
-//          }
             else
                 focus(req, 15, isFrom);
+            
+            myAutoDiv.autocomplete().enable();
         }
     };
-
-    var myAutoDiv = getAutoCompleteDiv(fromOrTo);
+    
     myAutoDiv.autocomplete(options);
 }
 
@@ -1076,10 +1078,10 @@ function dataToHtml(data, query) {
     if (addStr)
         element += "<div class='cityseg'>" + formatValue(addStr, query) + "</div>";
 
-    if (data.osm_key == "highway") {
+    if (data.osm_key === "highway") {
         // ignore
     }
-    if (data.osm_key == "place") {
+    if (data.osm_key === "place") {
         element += "<span class='moreseg'>" + data.osm_value + "</span>";
     } else
         element += "<span class='moreseg'>" + data.osm_key + "</span>";
