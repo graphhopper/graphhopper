@@ -1,7 +1,7 @@
 body {                
     color: #000;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;    
-    line-height: 1.4;    
+    line-height: 1.4;
     color: #111111;
     background-color: #EEEEEE;
     margin: 0;
@@ -136,7 +136,7 @@ body {
 }
 #hosting {
     display: none;
-/*    float: left;*/
+    /*    float: left;*/
     padding-top: 4px;
     padding-bottom: 10px;
     /* color: #666666; */
@@ -209,23 +209,32 @@ td img.pic {
 }
 
 .complete-1, .complete-2 { border: 1px solid #999; background: #FFF; overflow: auto; }
-.complete-1 strong, .complete-2 strong { font-weight: normal; /*color: #3399FF;*/; color: #04B431; }
-.autocomplete-suggestion { padding: 2px 5px; white-space: nowrap; overflow: hidden; font-size: 12px; }
-.autocomplete-selected { background: #e7e7e7; }
+.complete-1 strong, .complete-2 strong { font-weight: normal; color: #04B431; }
+.autocomplete-suggestion { 
+    padding: 5px 5px; 
+    white-space: nowrap; 
+    overflow: hidden;
+    font-size: small;
+    background-image: linear-gradient(to bottom, white, #e7e7e7);
+}
+.autocomplete-selected { 
+    padding: 5px 5px; background: #e7e7e7; 
+    background-image: linear-gradient(to bottom, #9f9f9f, #e7e7e7);
+}
 .light { font-weight: lighter; color: #9f9f9f; font-size: smaller }
 .wikilink { float: right; }
 .wikilink img { max-width: 16px; }
 
-.roadseg {}
-.cityseg {}
-.moreseg { font-size: 9px; }
+.nameseg { /*border-top: #dadada dashed thin;*/ }
+.cityseg { float: left; font-size: 10px; }
+.moreseg { float: right; font-size: 9px; }
 
 #expandDetails {
     color: gray;
     font-size:14px; 
     float: right;
     font-weight: bold;    
-    
+
     width: 20px;
     height: 20px;    
     background-image: linear-gradient(to bottom, white, #e7e7e7);

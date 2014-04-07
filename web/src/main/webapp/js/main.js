@@ -1,6 +1,6 @@
 /*
  * If you want to query another API append this something like
- * &host=http://graphhopper.com/routing
+ * &host=http://localhost:9000/
  * to the URL or overwrite the 'host' variable.
  */
 var tmpArgs = parseUrlWithHisto();
@@ -17,6 +17,7 @@ if (host == null) {
 var ghRequest = new GHRequest(host);
 var bounds = {};
 
+var addressSuggestionURL = "http://graphhopper.com/api/1/geocode";
 //var nominatim = "http://open.mapquestapi.com/nominatim/v1/search.php";
 //var nominatim_reverse = "http://open.mapquestapi.com/nominatim/v1/reverse.php";
 var nominatim = "http://nominatim.openstreetmap.org/search";
@@ -146,6 +147,9 @@ $(document).ready(function(e) {
     $(window).resize(function() {
         adjustMapSize();
     });
+
+    setAutoCompleteList("from");
+    setAutoCompleteList("to");
 });
 
 function initFromParams(params, doQuery) {
@@ -192,7 +196,7 @@ function adjustMapSize() {
 }
 
 function initMap() {
-    adjustMapSize();    
+    adjustMapSize();
     console.log("init map at " + JSON.stringify(bounds));
 
     // mapquest provider
@@ -377,22 +381,12 @@ function resolve(fromOrTo, locCoord) {
     return createAmbiguityList(locCoord).done(function(arg1) {
         var errorDiv = $("#" + fromOrTo + "ResolveError");
         errorDiv.empty();
-        var foundDiv = $("#" + fromOrTo + "ResolveFound");
         // deinstallation of completion if there was one
-        // if (getAutoCompleteDiv(fromOrTo).autocomplete())
-        //    getAutoCompleteDiv(fromOrTo).autocomplete().dispose();
+//        if (getAutoCompleteDiv(fromOrTo).autocomplete())
+//            getAutoCompleteDiv(fromOrTo).autocomplete().dispose();
 
-        foundDiv.empty();
-        var list = locCoord.resolvedList;
-        if (locCoord.error) {
+        if (locCoord.error)
             errorDiv.text(locCoord.error);
-        } else if (list) {
-            var anchor = String.fromCharCode(0x25BC);
-            var linkPart = $("<a>" + anchor + "<small>" + list.length + "</small></a>");
-            foundDiv.append(linkPart.click(function(e) {
-                setAutoCompleteList(fromOrTo, locCoord);
-            }));
-        }
 
         $("#" + fromOrTo + "Indicator").hide();
         $("#" + fromOrTo + "Flag").show();
@@ -1002,105 +996,100 @@ function exportGPX() {
 }
 
 function getAutoCompleteDiv(fromOrTo) {
-    if (fromOrTo === "from")
-        return $('#fromInput')
-    else
-        return $('#toInput');
+    return $('#' + fromOrTo + 'Input');
+}
+
+function formatValue(orig, query) {
+    var pattern = '(' + $.Autocomplete.utils.escapeRegExChars(query) + ')';
+    return orig.replace(new RegExp(pattern, 'gi'), '<strong>$1<\/strong>');
 }
 
 function setAutoCompleteList(fromOrTo, ghRequestLoc) {
-    function formatValue(suggestionValue, currentValue) {
-        var pattern = '(' + $.Autocomplete.utils.escapeRegExChars(currentValue) + ')';
-        return suggestionValue.replace(new RegExp(pattern, 'gi'), '<strong>$1<\/strong>');
-    }
     var isFrom = fromOrTo === "from";
     var pointIndex = isFrom ? 1 : 2;
-    var fakeCurrentInput = ghRequestLoc.input.toLowerCase();
-    var valueDataList = [];
-    var list = ghRequestLoc.resolvedList;
-    for (var index in list) {
-        var dataItem = list[index];
-        valueDataList.push({value: dataToText(dataItem), data: dataItem});
-    }
 
     var options = {
+        containerClass: "complete-" + pointIndex,
         maxHeight: 510,
         triggerSelectOnValidInput: false,
         autoSelectFirst: false,
-        lookup: valueDataList,
+        paramName: "q",
+        dataType: "json",
+        serviceUrl: function() {
+            return addressSuggestionURL + "?limit=8&lang=" + ghRequest.locale;
+        },
+        transformResult: function(response, originalQuery) {
+            response.suggestions = [];
+            for (var i = 0; i < response.hits.length; i++) {
+                var hit = response.hits[i];
+                response.suggestions.push({value: dataToText(hit), data: hit});
+            }
+            return response;
+        },
         onSearchError: function(element, q, jqXHR, textStatus, errorThrown) {
             console.log(element + ", " + q + ", textStatus " + textStatus + ", " + errorThrown);
         },
         formatResult: function(suggestion, currInput) {
             // avoid highlighting for now as this breaks the html sometimes
-            return dataToHtml(suggestion.data);
+            return dataToHtml(suggestion.data, currInput);
         },
-        lookupFilter: function(suggestion, originalQuery, queryLowerCase) {
-            if (queryLowerCase === fakeCurrentInput)
-                return true;
-            return suggestion.value.toLowerCase().indexOf(queryLowerCase) !== -1;
+        onSelect: function(suggestion) {
+            options.onPreSelect(suggestion);
+        },
+        onPreSelect: function(suggestion) {
+            var req = ghRequest.to;
+            if (isFrom)
+                req = ghRequest.from;
+
+            var point = suggestion.data.point;
+            req.setCoord(point.lat, point.lng);
+            req.input = suggestion.value;
+            if (ghRequest.from.isResolved() && ghRequest.to.isResolved())
+                routeLatLng(ghRequest);
+//            else if (suggestion.data.boundingbox) {
+//                var bbox = suggestion.data.box;
+//                focusWithBounds(ghRequestLoc, [[bbox[0], bbox[2]], [bbox[1], bbox[3]]], isFrom);
+//          }
+            else
+                focus(req, 15, isFrom);
         }
     };
-    options.onSelect = function(suggestion) {
-        options.onPreSelect(suggestion);
-    };
-    options.onPreSelect = function(suggestion) {
-        var data = suggestion.data;
-        ghRequestLoc.setCoord(data.lat, data.lng);
-        ghRequestLoc.input = dataToText(suggestion.data);
-        if (ghRequest.from.isResolved() && ghRequest.to.isResolved())
-            routeLatLng(ghRequest);
-        else if (suggestion.data.boundingbox) {
-            var bbox = suggestion.data.box;
-            focusWithBounds(ghRequestLoc, [[bbox[0], bbox[2]], [bbox[1], bbox[3]]], isFrom);
-        } else
-            focus(ghRequestLoc, 15, isFrom);
-    };
 
-    options.containerClass = "complete-" + pointIndex;
     var myAutoDiv = getAutoCompleteDiv(fromOrTo);
     myAutoDiv.autocomplete(options);
-    myAutoDiv.autocomplete().forceSuggest("");
-    myAutoDiv.focus();
 }
 
-function dataToHtml(data) {
-    var data = data.locationDetails;
-    var text = "";
-    if (data.road)
-        text += "<div class='roadseg'>" + data.road + "</div>";
-    if (data.city) {
-        text += "<div class='cityseg'>" + insComma(data.city, data.country) + "</div>";
-    }
-    if (data.country)
-        text += "<div class='moreseg'>" + data.more + "</div>";
-    return text;
+function dataToHtml(data, query) {
+    var element = "";
+    if (data.name)
+        element += "<div class='nameseg'>" + formatValue(data.name, query) + "</div>";
+    var addStr = "";
+    if(data.postcode)
+        addStr = data.postcode;
+    if (data.city)
+        addStr = insComma(addStr, data.city);
+    if(data.country)
+        addStr = insComma(addStr, data.country);
+    
+    if(addStr)
+        element += "<div class='cityseg'>" + formatValue(addStr, query) + "</div>";
+    
+    if (data.osm_key == "highway") {
+        // ignore
+    } if (data.osm_key == "place") {
+        element += "<span class='moreseg'>" + data.osm_value + "</span>";
+    } else        
+        element += "<span class='moreseg'>" + data.osm_key + "</span>";
+    return element;
 }
 
-// do not print everything as nominatim slows down or doesn't properly handle if continent etc is included
 function dataToText(data) {
-    var data = data.locationDetails;
     var text = "";
-    if (data.road)
-        text += data.road;
-
-    if (data.city) {
-        if (text.length > 0)
-            text += ", ";
-        text += data.city;
-    }
-
-    if (data.postcode) {
-        if (text.length > 0)
-            text += ", ";
-        text += data.postcode;
-    }
-
-    if (data.country) {
-        if (text.length > 0)
-            text += ", ";
-        var tmp = $.trim(data.country.replace(data.city, '').replace(data.city + ", ", ''));
-        text += tmp;
-    }
+    if (data.name)
+        text += data.name
+    if (data.city)
+        text = insComma(text, data.city);
+    if (data.country)
+        text = insComma(text, data.country);
     return text;
 }
