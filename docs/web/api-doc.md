@@ -167,12 +167,10 @@ info.errors[0].defails | E.g. to see the underlying exception, if any
 info.errors[0].message | Not intended to be displayed to the user as it is currently not translated
 
 
-### HTTP Error codes, some applies to the hosted API only
+### HTTP Error codes
 
 HTTP error code | Reason
 :---------------|:------------
 500             | Internal server error. It is strongely recommended to send us the message and the link to it, as it is very likely a bug in our system.
 501             | Only a special list of vehicles is supported
 400             | Something was wrong in your request
-401             | Authentication necessary
-403             | Not paid or API limit reached
