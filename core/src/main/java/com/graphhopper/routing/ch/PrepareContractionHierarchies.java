@@ -464,13 +464,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             // then two shortcuts with the same nodes (u<->n.adjNode) exists => check current shortcut against both
             Shortcut sc = new Shortcut(u_fromNode, w_toNode, existingDirectWeight, existingDistSum);
             if (shortcuts.containsKey(sc))
-            {
                 return;
-            } else
+
+            Shortcut tmpSc = new Shortcut(w_toNode, u_fromNode, existingDirectWeight, existingDistSum);
+            Shortcut tmpRetSc = shortcuts.get(tmpSc);
+            if (tmpRetSc != null)
             {
-                Shortcut tmpSc = new Shortcut(w_toNode, u_fromNode, existingDirectWeight, existingDistSum);
-                Shortcut tmpRetSc = shortcuts.get(tmpSc);
-                if (tmpRetSc != null)
+                // overwrite flags only if skipped edges are identical
+                if (tmpRetSc.skippedEdge2 == skippedEdge1 && tmpRetSc.skippedEdge1 == outgoingEdges.getEdge())
                 {
                     tmpRetSc.flags = PrepareEncoder.getScDirMask();
                     return;

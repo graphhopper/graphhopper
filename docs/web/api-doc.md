@@ -163,7 +163,7 @@ indicate a bug in the routing engine and is expected to a certain degree.
 JSON path/attribute    | Description
 :----------------------|:------------
 info.errors            | A list of error messages
-info.errors[0].defails | E.g. to see the underlying exception, if any
+info.errors[0].details | E.g. to see the underlying exception, if any
 info.errors[0].message | Not intended to be displayed to the user as it is currently not translated
 
 

@@ -115,6 +115,16 @@ public class GHUtility
         }
         return list;
     }
+    
+    public static List<Integer> getEdgeIds( EdgeIterator iter )
+    {
+        List<Integer> list = new ArrayList<Integer>();
+        while (iter.next())
+        {
+            list.add(iter.getEdge());
+        }
+        return list;
+    }
 
     public static void printEdgeInfo( final Graph g, FlagEncoder encoder )
     {

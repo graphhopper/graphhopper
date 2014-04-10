@@ -211,7 +211,19 @@ public class Measurement
                 double fromLon = na.getLongitude(from);
                 double toLat = na.getLatitude(to);
                 double toLon = na.getLongitude(to);
-                GHResponse res = hopper.route(new GHRequest(fromLat, fromLon, toLat, toLon).setWeighting("fastest").setVehicle(vehicle));
+                GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
+                        setWeighting("fastest").
+                        setVehicle(vehicle);
+                GHResponse res;
+                try
+                {
+                    res = hopper.route(req);
+                } catch (Exception ex)
+                {
+                    throw new RuntimeException("Error while calculating route! "
+                            + "nodes:" + from + " -> " + to + ", request:" + req, ex);
+                }
+
                 if (res.hasErrors())
                     throw new IllegalStateException("errors should NOT happen in Measurement! " + res.getErrors());
 

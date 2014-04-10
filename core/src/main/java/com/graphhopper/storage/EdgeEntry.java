@@ -26,9 +26,9 @@ public class EdgeEntry extends Edge implements Cloneable
 {
     public EdgeEntry parent;
 
-    public EdgeEntry( int edgeId, int adjNode, double distance )
+    public EdgeEntry( int edgeId, int adjNode, double weight )
     {
-        super(edgeId, adjNode, distance);
+        super(edgeId, adjNode, weight);
     }
 
     @Override
