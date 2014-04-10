@@ -66,6 +66,30 @@ public class GraphHopperAPITest
     }
 
     @Test
+    public void testDisconnected179()
+    {
+        GraphStorage graph = new GraphBuilder(encodingManager).create();
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 42, 10);
+        na.setNode(1, 42.1, 10.1);
+        na.setNode(2, 42.1, 10.2);
+        na.setNode(3, 42, 10.4);
+
+        graph.edge(0, 1, 10, true);
+        graph.edge(2, 3, 10, true);
+        
+        GraphHopper instance = new GraphHopper().
+                setInMemory(false).
+                setEncodingManager(encodingManager).
+                disableCHShortcuts().
+                loadGraph(graph);
+        GHResponse ph = instance.route(new GHRequest(42, 10, 42, 10.4));
+        assertFalse(ph.isFound());
+        assertEquals(0, ph.getPoints().getSize());        
+        instance.close();
+    }
+
+    @Test
     public void testNoLoad()
     {
         GraphHopper instance = new GraphHopper().
