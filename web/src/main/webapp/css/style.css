@@ -7,11 +7,14 @@ body {
     margin: 0;
 }
 #map {
-    /*    float: right;*/
+    position: absolute;
+    right: 0;    
+    /* set via JS
     width: 800px;
-    height: 600px;
+    height: 600px;*/
     cursor: default;
 }
+
 #input {
     float: left;                
     padding-left: 10px; 
@@ -29,11 +32,11 @@ body {
     padding-right: 5px;
 }
 #input, #instructions {
-    width: 255px;
+    width: 280px;
 }
 #fromInput, #toInput {
-    width: 225px;
-    float: right;    
+    width: 250px;
+    float: right;
 }
 
 #fromResolveFound a, #toResolveFound a {

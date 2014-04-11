@@ -185,13 +185,13 @@ function resolveCoords(fromStr, toStr, doQuery) {
 
 function adjustMapSize() {
     var mapDiv = $("#map");
-    var width = $(window).width() - 280;
-    if (width < 100)
+    var width = $(window).width() - 295;
+    if (width < 200)
         width = $(window).width();
     var height = $(window).height();
     mapDiv.width(width).height(height);
     $("#input").height(height);
-    $("#info").css("max-height", height - $("#input_header").height() - 25);
+    $("#info").css("max-height", height - $("#input_header").height() - 35);
 }
 
 function initMap() {
