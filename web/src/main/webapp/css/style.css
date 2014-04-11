@@ -153,12 +153,9 @@ body {
 #exportLink {
     float: left;
 }
-.instruction {    
+
+tr.instruction {
     cursor: pointer;
-    padding-top: 5px;
-    padding-bottom: 5px;
-}
-tr.instruction td {    
     border-bottom: #dadada dashed thin;
 }
 #instructions {
@@ -168,9 +165,11 @@ tr.instruction td {
     width: 100%;
     font-size: smaller;
 }
+
 #instructions th, #instructions td {
-    padding: 3px;
+    padding: 6px 3px;
 }
+
 td.instr_title {
     width: 130px;
 }
