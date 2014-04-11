@@ -111,17 +111,6 @@ public class Path
         return fromNode;
     }
 
-    /**
-     * @return the last node of this Path.
-     */
-    private int getEndNode()
-    {
-        if (endNode < 0)
-            throw new IllegalStateException("Call extract() before retrieving endNode");
-
-        return endNode;
-    }
-
     public boolean isFound()
     {
         return found;
