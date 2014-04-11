@@ -186,8 +186,12 @@ function resolveCoords(fromStr, toStr, doQuery) {
 function adjustMapSize() {
     var mapDiv = $("#map");
     var width = $(window).width() - 295;
-    if (width < 200)
-        width = $(window).width();
+    if (width < 400) {
+        width = 290;
+        mapDiv.attr("style", "position: relative; float: right;");
+    } else {
+        mapDiv.attr("style", "position: absolute; right: 0;");
+    }
     var height = $(window).height();
     mapDiv.width(width).height(height);
     $("#input").height(height);

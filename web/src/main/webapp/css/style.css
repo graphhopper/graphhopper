@@ -5,13 +5,10 @@ body {
     color: #111111;
     background-color: white;
     margin: 0;
+    min-width: 600px;
 }
-#map {
-    position: absolute;
-    right: 0;    
-    /* set via JS
-    width: 800px;
-    height: 600px;*/
+#map {    
+    /* set size via JS */
     cursor: default;
 }
 
