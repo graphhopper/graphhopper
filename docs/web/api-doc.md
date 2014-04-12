@@ -151,8 +151,7 @@ prepare_date        | [optional] The date time at which the preparation (contrac
   "info": {"errors": [{
     "details": "java.lang.IllegalArgumentException",
     "message": "Cannot find point 2: 2248.224673, 3.867187"
-  }]},
-  "paths": [{}]
+  }]}
 }
 ```
 

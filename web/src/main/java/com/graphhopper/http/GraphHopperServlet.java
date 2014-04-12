@@ -170,10 +170,6 @@ public class GraphHopperServlet extends GHBaseServlet
         boolean pointsEncoded = getBooleanParam(req, "points_encoded", true);
         boolean calcPoints = getBooleanParam(req, "calc_points", true);
         JSONObject json = new JSONObject();
-
-        JSONObject jsonPath = new JSONObject();
-        json.put("paths", Collections.singletonList(jsonPath));
-
         JSONObject jsonInfo = new JSONObject();
         json.put("info", jsonInfo);
 
@@ -196,6 +192,7 @@ public class GraphHopperServlet extends GHBaseServlet
             jsonInfo.put("errors", Collections.singletonList(map));
         } else
         {
+            JSONObject jsonPath = new JSONObject();
             jsonInfo.put("took", took);
             jsonPath.put("distance", rsp.getDistance());
             jsonPath.put("time", rsp.getMillis());
@@ -218,7 +215,8 @@ public class GraphHopperServlet extends GHBaseServlet
                     jsonPath.put("instructions", instructions.createJson(tr));
                 }
             }
-        }
+            json.put("paths", Collections.singletonList(jsonPath));
+        }                        
 
         writeJson(req, res, json);
     }
