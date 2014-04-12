@@ -144,7 +144,6 @@ supported_vehicles  | An array of strings indicating the supported vehicles
 bbox                | The maximum bounding box of the area, format: <br> minLon, minLat, maxLon, maxLat
 import_date         | [optional] The date time at which the OSM import was done
 prepare_date        | [optional] The date time at which the preparation (contraction hierarchies) was done. If nothing was done this is empty
-prepare_date        | [optional] The date time at which the preparation (contraction hierarchies) was done. If nothing was done this is empty
 
 ### Output if expected error(s) while routing:
 ```json
