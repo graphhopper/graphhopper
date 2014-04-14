@@ -31,11 +31,11 @@ import java.util.Map;
  */
 public class GHRequest
 {
-    private String algo = "dijkstrabi";
+    private String algo = "";
     private List<GHPlace> places = new ArrayList<GHPlace>(5);
     private final Map<String, Object> hints = new HashMap<String, Object>(5);
-    private String vehicle = "CAR";
-    private String weighting = "fastest";
+    private String vehicle = "";
+    private String weighting = "";
     private boolean possibleToAdd = false;
 
     public GHRequest()
@@ -89,17 +89,49 @@ public class GHRequest
 
     /**
      * Possible values: astar (A* algorithm, default), astarbi (bidirectional A*) dijkstra
-     * (Dijkstra), dijkstrabi and dijkstraNativebi (a bit faster bidirectional Dijkstra).
+     * (Dijkstra), dijkstrabi and dijkstraNativebi (a bit faster bidirectional Dijkstra). Or specify
+     * empty to use default.
      */
     public GHRequest setAlgorithm( String algo )
     {
-        this.algo = algo;
+        if (algo != null)
+            this.algo = algo;
         return this;
     }
 
     public String getAlgorithm()
     {
         return algo;
+    }
+
+    /**
+     * By default it supports fastest and shortest. Or specify empty to use default.
+     */
+    public GHRequest setWeighting( String w )
+    {
+        if (w != null)
+            this.weighting = w;
+        return this;
+    }
+
+    public String getWeighting()
+    {
+        return weighting;
+    }
+
+    /**
+     * Specifiy car, bike or foot. Or specify empty to use default.
+     */
+    public GHRequest setVehicle( String vehicle )
+    {
+        if (vehicle != null)
+            this.vehicle = vehicle;
+        return this;
+    }
+
+    public String getVehicle()
+    {
+        return vehicle;
     }
 
     public GHRequest putHint( String key, Object value )
@@ -142,30 +174,5 @@ public class GHRequest
                 res += "; " + place.toString();
         }
         return res + "(" + algo + ")";
-    }
-
-    /**
-     * By default it supports fastest and shortest
-     */
-    public GHRequest setWeighting( String w )
-    {
-        this.weighting = w;
-        return this;
-    }
-
-    public String getWeighting()
-    {
-        return weighting;
-    }
-
-    public GHRequest setVehicle( String vehicle )
-    {
-        this.vehicle = vehicle;
-        return this;
-    }
-
-    public String getVehicle()
-    {
-        return vehicle;
     }
 }

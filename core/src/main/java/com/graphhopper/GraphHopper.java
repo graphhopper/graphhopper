@@ -703,7 +703,12 @@ public class GraphHopper implements GraphHopperAPI
         prepare.setGraph(graph);
     }
 
-    protected Weighting createWeighting( String weighting, FlagEncoder encoder )
+    /**
+     * @param weighting specify e.g. fastest or shortest (or empty for default)
+     * @param encoder
+     * @return the weighting to be used for route calculation
+     */
+    public Weighting createWeighting( String weighting, FlagEncoder encoder )
     {
         // ignore case
         weighting = weighting.toLowerCase();
@@ -719,10 +724,14 @@ public class GraphHopper implements GraphHopperAPI
             throw new IllegalStateException("Call load or importOrLoad before routing");
 
         GHResponse rsp = new GHResponse();
-        if (!encodingManager.supports(request.getVehicle()))
+        String vehicle = request.getVehicle();
+        if (vehicle.isEmpty())
+            vehicle = encodingManager.getSingle().toString();
+
+        if (!encodingManager.supports(vehicle))
         {
-            rsp.addError(new IllegalArgumentException("Vehicle " + request.getVehicle() + " unsupported. Supported are: "
-                    + getEncodingManager()));
+            rsp.addError(new IllegalArgumentException("Vehicle " + vehicle + " unsupported. "
+                    + "Supported are: " + getEncodingManager()));
             return rsp;
         }
 
@@ -733,7 +742,7 @@ public class GraphHopper implements GraphHopperAPI
             return rsp;
         }
 
-        FlagEncoder encoder = encodingManager.getEncoder(request.getVehicle());
+        FlagEncoder encoder = encodingManager.getEncoder(vehicle);
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
         GHPlace startPlace = request.getPlaces().get(0);
         StopWatch sw = new StopWatch().start();
@@ -758,6 +767,7 @@ public class GraphHopper implements GraphHopperAPI
                 return rsp;
 
             sw = new StopWatch().start();
+            String algoStr = request.getAlgorithm().isEmpty() ? "dijkstrabi" : request.getAlgorithm();
             RoutingAlgorithm algo = null;
             if (chEnabled)
             {
@@ -765,9 +775,9 @@ public class GraphHopper implements GraphHopperAPI
                     throw new IllegalStateException("Preparation object is null. CH-preparation wasn't done or did you "
                             + "forgot to call disableCHShortcuts()?");
 
-                if (request.getAlgorithm().equals("dijkstrabi"))
+                if (algoStr.equals("dijkstrabi"))
                     algo = prepare.createAlgo();
-                else if (request.getAlgorithm().equals("astarbi"))
+                else if (algoStr.equals("astarbi"))
                     algo = ((PrepareContractionHierarchies) prepare).createAStar();
                 else
                 {
@@ -778,7 +788,7 @@ public class GraphHopper implements GraphHopperAPI
             } else
             {
                 Weighting weighting = createWeighting(request.getWeighting(), encoder);
-                prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.getAlgorithm(), encoder, weighting);
+                prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, algoStr, encoder, weighting);
                 algo = prepare.createAlgo();
             }
 
@@ -788,7 +798,7 @@ public class GraphHopper implements GraphHopperAPI
             Path path = algo.calcPath(fromRes, toRes);
             if (path.getMillis() < 0)
                 throw new RuntimeException("Time was negative. Please report as bug and include:" + request);
-                
+
             paths.add(path);
             debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
             fromRes = toRes;

@@ -46,12 +46,8 @@ import org.json.JSONObject;
  */
 public class GraphHopperServlet extends GHBaseServlet
 {
-
     @Inject
     private GraphHopper hopper;
-    @Inject
-    @Named("defaultAlgorithm")
-    private String defaultAlgorithm;
     @Inject
     private TranslationMap trMap;
 
@@ -112,7 +108,7 @@ public class GraphHopperServlet extends GHBaseServlet
         boolean calcPoints = getBooleanParam(req, "calc_points", true);
         String vehicleStr = getParam(req, "vehicle", "CAR").toUpperCase();
         String weighting = getParam(req, "weighting", "fastest");
-        String algoStr = getParam(req, "algorithm", defaultAlgorithm);
+        String algoStr = getParam(req, "algorithm", "");
 
         StopWatch sw = new StopWatch().start();
         GHResponse rsp;
