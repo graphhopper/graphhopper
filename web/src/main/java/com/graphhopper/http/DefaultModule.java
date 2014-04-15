@@ -17,7 +17,6 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.search.Geocoding;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import com.graphhopper.GraphHopper;

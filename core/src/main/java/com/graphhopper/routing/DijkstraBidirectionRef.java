@@ -88,7 +88,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     }
 
     @Override
-    protected void initPath()
+    public void initPath()
     {
         bestPath = new PathBidirRef(graph, flagEncoder);
     }
@@ -107,7 +107,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     }
 
     @Override
-    protected boolean fillEdgesFrom()
+    public boolean fillEdgesFrom()
     {
         if (openSetFrom.isEmpty())
             return false;
@@ -120,7 +120,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     }
 
     @Override
-    protected boolean fillEdgesTo()
+    public boolean fillEdgesTo()
     {
         if (openSetTo.isEmpty())
             return false;
@@ -136,7 +136,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     // => when scanning an arc (v, w) in the forward search and w is scanned in the reverseOrder 
     //    search, update extractPath = μ if df (v) + (v, w) + dr (w) < μ            
     @Override
-    protected boolean finished()
+    public boolean finished()
     {
         if (finishedFrom || finishedTo)
             return true;
@@ -194,18 +194,24 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
             bestPath.setSwitchToFrom(bestWeightMapFrom == bestWeightMapOther);
             bestPath.setEdgeEntry(shortestEE);
             bestPath.setWeight(newShortest);
-            bestPath.edgeTo = entryOther;
+            bestPath.setEdgeEntryTo(entryOther);
         }
     }
 
-    public EdgeEntry shortestWeightFrom( int nodeId )
+    public TIntObjectMap<EdgeEntry> getBestFromMap()
     {
-        return bestWeightMapFrom.get(nodeId);
+        return bestWeightMapFrom;
     }
 
-    public EdgeEntry shortestWeightTo( int nodeId )
+    public TIntObjectMap<EdgeEntry> getBestToMap()
     {
-        return bestWeightMapTo.get(nodeId);
+        return bestWeightMapTo;
+    }
+
+    @Override
+    public RoutingAlgorithm setGraph( Graph graph )
+    {
+        return super.setGraph(graph);
     }
 
     @Override

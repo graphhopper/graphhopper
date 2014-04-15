@@ -100,9 +100,9 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * For testing
+     * For testing only
      */
-    GraphHopper loadGraph( GraphStorage g )
+    protected GraphHopper loadGraph( GraphStorage g )
     {
         this.graph = g;
         fullyLoaded = true;

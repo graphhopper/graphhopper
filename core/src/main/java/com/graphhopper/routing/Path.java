@@ -166,6 +166,9 @@ public class Path
      */
     public Path extract()
     {
+        if (isFound())
+            throw new IllegalStateException("Extract can only be called once");
+
         extractSW.start();
         EdgeEntry goalEdge = edgeEntry;
         setEndNode(goalEdge.adjNode);
