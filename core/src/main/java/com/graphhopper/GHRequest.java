@@ -18,77 +18,73 @@
 package com.graphhopper;
 
 import com.graphhopper.util.shapes.GHPlace;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * GraphHopper request wrapper with support of "via" to simplify requesting GraphHopper.
+ * GraphHopper request wrapper to simplify requesting GraphHopper.
  * <p/>
- * @author Peter Karich, ratrun
+ * @author Peter Karich
+ * @author ratrun
  */
 public class GHRequest
 {
     private String algo = "dijkstrabi";
-    private List<GHPlace> viaList;
-    private Map<String, Object> hints = new HashMap<String, Object>(5);
+    private List<GHPlace> places = new ArrayList<GHPlace>(5);
+    private final Map<String, Object> hints = new HashMap<String, Object>(5);
     private String vehicle = "CAR";
-    private String weighting = "shortest";
+    private String weighting = "fastest";
+    private boolean possibleToAdd = false;
 
-    /**
-     * Calculate the path via the specified place list
-     */
-    public GHRequest( List<GHPlace> viaList )
+    public GHRequest()
     {
-        this.viaList = viaList;
+        possibleToAdd = true;
     }
 
     /**
-     * Calculate the path from specified startPoint to endPoint.
-     */
-    public GHRequest( GHPlace startPoint, GHPlace endPoint )
-    {
-        this.viaList = new ArrayList<GHPlace>(2);        
-        this.viaList.add(0, startPoint);
-        this.viaList.add(1, endPoint);
-    }
-
-    /**
-     * Calculate the path from specified from to coordinates
+     * Calculate the path from specified startPlace (fromLat, fromLon) to endPlace (toLat, toLon).
      */
     public GHRequest( double fromLat, double fromLon, double toLat, double toLon )
     {
-        this.viaList = new ArrayList<GHPlace>(2);
-        GHPlace startPoint, endPoint;
-        startPoint = new GHPlace(fromLat, fromLon);
-        endPoint = new GHPlace(toLat, toLon);
-        this.viaList.add(0, startPoint);
-        this.viaList.add(1, endPoint);
+        this(new GHPlace(fromLat, fromLon), new GHPlace(toLat, toLon));
     }
 
-    public void check()
+    /**
+     * Calculate the path from specified startPlace to endPlace.
+     */
+    public GHRequest( GHPlace startPlace, GHPlace endPlace )
     {
-        if (viaList.get(0) == null)
-            throw new IllegalStateException("the 'from' point needs to be initialized but was null");
+        if (startPlace == null)
+            throw new IllegalStateException("'from' cannot be null");
 
-        if (viaList.get(1) == null)
-            throw new IllegalStateException("the 'to' point needs to be initialized but was null");
-    }
-    
-    public List<GHPlace> getViaList()
-    {
-       return viaList;
-    }
-
-    public GHPlace getFrom()
-    {
-        return viaList.get(0);
+        if (endPlace == null)
+            throw new IllegalStateException("'to' cannot be null");
+        places.add(startPlace);
+        places.add(endPlace);
     }
 
-    public GHPlace getTo()
+    public GHRequest( List<GHPlace> places )
     {
-        return viaList.get(1);
+        this.places = places;
+    }
+
+    public GHRequest addPlace( GHPlace place )
+    {
+        if (place == null)
+            throw new IllegalArgumentException("place cannot be null");
+        if (!possibleToAdd)
+            throw new IllegalStateException("Please call empty constructor if you intent to use "
+                    + "more than two places via addPlace method.");
+
+        places.add(place);
+        return this;
+    }
+
+    public List<GHPlace> getPlaces()
+    {
+        return places;
     }
 
     /**
@@ -122,16 +118,28 @@ public class GHRequest
         if (obj == null)
             return defaultValue;
 
+        if (defaultValue != null && defaultValue instanceof Number)
+        {
+            // what a monster! see #173
+            if (defaultValue instanceof Double)
+                return (T) (Double) ((Number) obj).doubleValue();
+            if (defaultValue instanceof Long)
+                return (T) (Long) ((Number) obj).longValue();
+        }
+
         return (T) obj;
     }
 
     @Override
     public String toString()
     {
-        String res = new String();
-        for (GHPlace place : viaList) 
+        String res = "";
+        for (GHPlace place : places)
         {
-            res = res + place.toString();
+            if (res.isEmpty())
+                res = place.toString();
+            else
+                res += "; " + place.toString();
         }
         return res + "(" + algo + ")";
     }

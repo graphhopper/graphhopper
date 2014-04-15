@@ -31,11 +31,11 @@ public class Edge implements Comparable<Edge>
     public int adjNode;
     public double weight;
 
-    public Edge( int edgeId, int endNode, double distance )
+    public Edge( int edgeId, int adjNode, double weight )
     {
         this.edge = edgeId;
-        this.adjNode = endNode;
-        this.weight = distance;
+        this.adjNode = adjNode;
+        this.weight = weight;
     }
 
     @Override

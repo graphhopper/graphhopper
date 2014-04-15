@@ -84,9 +84,9 @@ public class PathBidir extends Path
             if (edgeId < 0)
                 break;
 
-            processEdge(edgeId, nodeTo);
             int tmpRef = edgeWTo.getParent(currRef);
             nodeTo = edgeWTo.getNode(tmpRef);
+            processEdge(edgeId, nodeTo);
             currRef = tmpRef;
         }
         setEndNode(nodeTo);

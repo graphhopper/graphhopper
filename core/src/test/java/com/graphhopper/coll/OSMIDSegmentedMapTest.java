@@ -26,6 +26,7 @@ import static org.junit.Assert.*;
  */
 public class OSMIDSegmentedMapTest
 {
+
     @Test
     public void testZeroKey()
     {

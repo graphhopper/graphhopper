@@ -28,7 +28,7 @@ public class DouglasPeuckerTest
 {
 
     // get some real life points from graphhopper API
-    // http://217.92.216.224:8080/api?from=49.945642,11.571436&to=49.946001,11.580706
+    // http://217.92.216.224:8080/?point=49.945642,11.571436&point=49.946001,11.580706
     String points1 = "[[11.571499218899739,49.945605917549265],[11.571664621792689,49.94570668665409],[11.571787742639804,49.94578156499077],[11.572065649302282,49.94590338198625],[11.572209445511016,49.94595944760649],[11.57229438213172,49.94598850487147],"
             + "[11.573315297960832,49.946237913062525],[11.57367665112786,49.946338495902836],[11.573895511937787,49.94641784458796],[11.574013417378367,49.94646347939514],[11.574228180368875,49.94654916107392],[11.574703899950622,49.94677509993557],"
             + "[11.575003599561832,49.946924670344394],[11.575434615658997,49.94711838544425],[11.575559971680342,49.94716010869652],[11.57563783024932,49.947186185729194],[11.57609697228887,49.94727875919518],[11.57656188852851,49.947290121330845],"
@@ -40,7 +40,7 @@ public class DouglasPeuckerTest
     public void testParse()
     {
         PointList pointList = new PointList();
-        pointList.parseJSON("[[11.571499218899739,49.945605917549265],[11.571664621792689,49.94570668665409]]");
+        pointList.parse2DJSON("[[11.571499218899739,49.945605917549265],[11.571664621792689,49.94570668665409]]");
         assertEquals(49.945605917549265, pointList.getLatitude(0), 1e-6);
         assertEquals(11.571499218899739, pointList.getLongitude(0), 1e-6);
         assertEquals(49.94570668665409, pointList.getLatitude(1), 1e-6);
@@ -51,7 +51,7 @@ public class DouglasPeuckerTest
     public void testPathSimplify()
     {
         PointList pointList = new PointList();
-        pointList.parseJSON(points1);
+        pointList.parse2DJSON(points1);
         assertEquals(32, pointList.getSize());
         new DouglasPeucker().setMaxDistance(.5).simplify(pointList);
         // Arrays.asList(2, 4, 6, 7, 8, 9, 12, 14, 15, 17, 18, 19, 20, 22, 24, 27, 28, 29, 31, 33),
@@ -62,7 +62,7 @@ public class DouglasPeuckerTest
     public void testSimplifyCheckPointCount()
     {
         PointList pointList = new PointList();
-        pointList.parseJSON(points1);
+        pointList.parse2DJSON(points1);
         DouglasPeucker dp = new DouglasPeucker().setMaxDistance(.5);
         assertEquals(32, pointList.getSize());
         dp.simplify(pointList);
@@ -76,7 +76,7 @@ public class DouglasPeuckerTest
     public void testSimplifyCheckPointOrder()
     {
         PointList pointList = new PointList();
-        pointList.parseJSON(points2);
+        pointList.parse2DJSON(points2);
         assertEquals(13, pointList.getSize());
         new DouglasPeucker().setMaxDistance(.5).simplify(pointList);
         assertEquals(11, pointList.getSize());

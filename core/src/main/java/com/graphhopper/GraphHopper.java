@@ -17,7 +17,10 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.OSMReader;
+import com.graphhopper.reader.dem.ElevationProvider;
+import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
@@ -26,19 +29,19 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPlace;
-import java.util.List;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Main wrapper of the offline API for a simple and efficient usage.
+ * Easy to use access point to configure import and (offline) routing.
  * <p/>
  * @see GraphHopperAPI
  * @author Peter Karich
@@ -59,12 +62,13 @@ public class GraphHopper implements GraphHopperAPI
     // for graph:
     private GraphStorage graph;
     private String ghLocation = "";
-    private DAType dataAccessType = DAType.RAM;
+    private DAType dataAccessType = DAType.RAM_STORE;
     private boolean sortGraph = false;
     boolean removeZipped = true;
-    // for routing:
+    private int dimension = 2;
+    // for routing
     private boolean simplifyRequest = true;
-    // for index:
+    // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 500;
     private boolean searchRegion = true;
@@ -79,10 +83,9 @@ public class GraphHopper implements GraphHopperAPI
     private int lazyUpdates = 10;
     private int neighborUpdates = 20;
     private double logMessages = 20;
-    // for OSM import:
+    // for OSM import
     private String osmFile;
     private EncodingManager encodingManager;
-    private long expectedCapacity = 100;
     private double wayPointMaxDistance = 1;
     private int workerThreads = -1;
     private int defaultSegmentSize = -1;
@@ -90,6 +93,7 @@ public class GraphHopper implements GraphHopperAPI
     private boolean enableInstructions = true;
     private boolean calcPoints = true;
     private boolean fullyLoaded = false;
+    private ElevationProvider eleProvider = ElevationProvider.NOOP;
 
     public GraphHopper()
     {
@@ -120,6 +124,38 @@ public class GraphHopper implements GraphHopperAPI
     public EncodingManager getEncodingManager()
     {
         return encodingManager;
+    }
+
+    public GraphHopper setElevationProvider( ElevationProvider eleProvider )
+    {
+        if (eleProvider == null || eleProvider == ElevationProvider.NOOP)
+            set3D(false);
+        else
+            set3D(true);
+        this.eleProvider = eleProvider;
+        return this;
+    }
+
+    /**
+     * Threads for data reading.
+     */
+    protected int getWorkerThreads()
+    {
+        return workerThreads;
+    }
+
+    /**
+     * Return maximum distance (in meter) to reduce points via douglas peucker while OSM import.
+     */
+    protected double getWayPointMaxDistance()
+    {
+        return wayPointMaxDistance;
+    }
+
+    public GraphHopper setWayPointMaxDistance( double wayPointMaxDistance )
+    {
+        this.wayPointMaxDistance = wayPointMaxDistance;
+        return this;
     }
 
     /**
@@ -171,6 +207,8 @@ public class GraphHopper implements GraphHopperAPI
      * This method call results in an in-memory graph. Specify storeOnFlush to true if you want that
      * existing data will be loaded FROM disc and all in-memory data will be flushed TO disc after
      * flush is called e.g. while OSM import.
+     * <p>
+     * @param storeOnFlush true by default
      */
     public GraphHopper setInMemory( boolean storeOnFlush )
     {
@@ -244,6 +282,26 @@ public class GraphHopper implements GraphHopperAPI
     public boolean isCHEnabled()
     {
         return chEnabled;
+    }
+
+    /**
+     * @return true if storing and fetching elevation data is enabled. Default is false
+     */
+    public boolean is3D()
+    {
+        return dimension == 3;
+    }
+
+    /**
+     * Enable storing and fetching elevation data. Default is false
+     */
+    public GraphHopper set3D( boolean is3D )
+    {
+        if (is3D)
+            this.dimension = 3;
+        else
+            this.dimension = 2;
+        return this;
     }
 
     /**
@@ -414,25 +472,11 @@ public class GraphHopper implements GraphHopperAPI
 
         // graph
         setGraphHopperLocation(graphHopperFolder);
-        expectedCapacity = args.getLong("graph.expectedCapacity", expectedCapacity);
         defaultSegmentSize = args.getInt("graph.dataaccess.segmentSize", defaultSegmentSize);
-        String dataAccess = args.get("graph.dataaccess", "RAM_STORE").toUpperCase();
-        if (dataAccess.contains("MMAP"))
-        {
-            setMemoryMapped();
-        } else if (dataAccess.contains("UNSAFE"))
-        {
-            setUnsafeMemory();
-        } else
-        {
-            if (dataAccess.contains("RAM_STORE"))
-                setInMemory(true);
-            else
-                setInMemory(false);
-        }
+        dimension = args.getInt("graph.dimension", dimension);
 
-        if (dataAccess.contains("SYNC"))
-            dataAccessType = new DAType(dataAccessType, true);
+        String graphDATypeStr = args.get("graph.dataaccess", "RAM_STORE");
+        dataAccessType = DAType.fromString(graphDATypeStr);
 
         sortGraph = args.getBool("graph.doSort", sortGraph);
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
@@ -461,6 +505,23 @@ public class GraphHopper implements GraphHopperAPI
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
 
+        // elevation
+        String eleProviderStr = args.get("graph.elevation.provider", "noop").toLowerCase();
+        String cacheDirStr = args.get("graph.elevation.cachedir", "");
+        String baseURL = args.get("graph.elevation.baseurl", "");
+        DAType elevationDAType = DAType.fromString(args.get("graph.elevation.dataaccess", "MMAP"));
+        ElevationProvider tmpProvider = ElevationProvider.NOOP;
+        if (eleProviderStr.equalsIgnoreCase("srtm"))
+            tmpProvider = new SRTMProvider();
+        // later:
+//        else if(eleProviderStr.startsWith("cgiar:"))        
+//            eleProvider = new CGIARProvider().setCacheDir(new File());        
+
+        tmpProvider.setCacheDir(new File(cacheDirStr));
+        tmpProvider.setBaseURL(baseURL);
+        tmpProvider.setInMemory(elevationDAType.isInMemory());
+        setElevationProvider(tmpProvider);
+
         // index
         preciseIndexResolution = args.getInt("index.highResolution", preciseIndexResolution);
         return this;
@@ -481,9 +542,6 @@ public class GraphHopper implements GraphHopperAPI
     {
         if (!load(ghLocation))
         {
-            if (osmFile == null)
-                throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
-                        + " but also cannot import from OSM file as it wasn't specified!");
             printInfo();
             process(ghLocation);
         } else
@@ -501,7 +559,7 @@ public class GraphHopper implements GraphHopperAPI
         setGraphHopperLocation(graphHopperLocation);
         try
         {
-            importOSM();
+            importData();
             graph.getProperties().put("osmreader.import.date", formatDateTime(new Date()));
         } catch (IOException ex)
         {
@@ -514,21 +572,42 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
-    protected OSMReader importOSM() throws IOException
+    protected DataReader importData() throws IOException
     {
         if (graph == null)
             throw new IllegalStateException("Load graph before importing OSM data");
 
         if (osmFile == null)
+            throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
+                    + " but also cannot import from OSM file as it wasn't specified!");
+
+        if (encodingManager == null)
+            throw new IllegalStateException("Missing encoding manager");
+
+        encodingManager.setEnableInstructions(enableInstructions);
+        DataReader reader = createReader(graph);
+        logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
+        reader.readGraph();
+        return reader;
+    }
+
+    protected DataReader createReader( GraphStorage tmpGraph )
+    {
+        return initOSMReader(new OSMReader(tmpGraph));
+    }
+
+    protected OSMReader initOSMReader( OSMReader reader )
+    {
+        if (osmFile == null)
             throw new IllegalArgumentException("No OSM file specified");
 
-        File osmTmpFile = new File(osmFile);
         logger.info("start creating graph from " + osmFile);
-        OSMReader reader = new OSMReader(graph, expectedCapacity).setWorkerThreads(workerThreads).setEncodingManager(encodingManager)
-                .setWayPointMaxDistance(wayPointMaxDistance).setEnableInstructions(enableInstructions);
-        logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
-        reader.doOSM2Graph(osmTmpFile);
-        return reader;
+        File osmTmpFile = new File(osmFile);
+        return reader.setOSMFile(osmTmpFile).
+                setElevationProvider(eleProvider).
+                setWorkerThreads(workerThreads).
+                setEncodingManager(encodingManager).
+                setWayPointMaxDistance(wayPointMaxDistance);
     }
 
     /**
@@ -576,11 +655,11 @@ public class GraphHopper implements GraphHopperAPI
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
 
         if (chEnabled)
-            graph = new LevelGraphStorage(dir, encodingManager);
+            graph = new LevelGraphStorage(dir, encodingManager, is3D());
         else if (turnCosts)
-            graph = new GraphHopperStorage(dir, encodingManager, new TurnCostStorage());
+            graph = new GraphHopperStorage(dir, encodingManager, is3D(), new TurnCostStorage());
         else
-            graph = new GraphHopperStorage(dir, encodingManager);
+            graph = new GraphHopperStorage(dir, encodingManager, is3D());
 
         graph.setSegmentSize(defaultSegmentSize);
         if (!graph.loadExisting())
@@ -632,26 +711,13 @@ public class GraphHopper implements GraphHopperAPI
             return new ShortestWeighting();
         return new FastestWeighting(encoder);
     }
-    
-    private QueryResult[] getArray(List<GHPlace> list, EdgeFilter edgeFilter)
-    {
-        List<QueryResult> reslist = new ArrayList<QueryResult>(list.size());
-        for(GHPlace place : list)
-        {
-            QueryResult loc = locationIndex.findClosest(place.getLat(), place.getLon(), edgeFilter);
-            reslist.add(loc);
-        }
-        return reslist.toArray(new QueryResult[reslist.size()]);
-    }
-        
+
     @Override
     public GHResponse route( GHRequest request )
     {
-        request.check();
         if (graph == null || !fullyLoaded)
             throw new IllegalStateException("Call load or importOrLoad before routing");
-        
-        StopWatch sw = new StopWatch().start();        
+
         GHResponse rsp = new GHResponse();
         if (!encodingManager.supports(request.getVehicle()))
         {
@@ -659,49 +725,94 @@ public class GraphHopper implements GraphHopperAPI
                     + getEncodingManager()));
             return rsp;
         }
+
+        List<GHPlace> places = request.getPlaces();
+        if (places.size() < 2)
+        {
+            rsp.addError(new IllegalStateException("At least 2 points has to be specified, but was:" + places.size()));
+            return rsp;
+        }
+
         FlagEncoder encoder = encodingManager.getEncoder(request.getVehicle());
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-        
-        String debug = "idLookup:" + sw.stop().getSeconds() + "s";
-        ViaRouting viaRouter = new ViaRouting(encodingManager,getGraph(),periodicUpdates, lazyUpdates ,neighborUpdates, logMessages);
-        List<Path> pathList;
-        pathList = viaRouter.calcPathList( getArray(request.getViaList(),edgeFilter), request.getAlgorithm(), request.getVehicle(), request.getWeighting(), chEnabled );
+        GHPlace startPlace = request.getPlaces().get(0);
+        StopWatch sw = new StopWatch().start();
+        QueryResult fromRes = locationIndex.findClosest(startPlace.lat, startPlace.lon, edgeFilter);
+        sw.stop();
+        if (!fromRes.isValid())
+            rsp.addError(new IllegalArgumentException("Cannot find point 0: " + startPlace));
 
-        calcPoints = request.getHint("calcPoints", calcPoints);
-        if (calcPoints)
+        List<Path> paths = new ArrayList<Path>(places.size() - 1);
+        String debug = "";
+        for (int placeIndex = 1; placeIndex < request.getPlaces().size(); placeIndex++)
         {
-           enableInstructions = request.getHint("instructions", enableInstructions);
-           PointList points = viaRouter.getPoints(pathList);
-           rsp.setFound(points.getSize() > 1);
-           simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
-           if (simplifyRequest)
-           {
-               sw = new StopWatch().start();
-               int orig = points.getSize();
-               double minPathPrecision = request.getHint("douglas.minprecision", 1d);
-               if (minPathPrecision > 0)
-                   new DouglasPeucker().setMaxDistance(minPathPrecision).simplify(points);
-               
-               debug += ", simplify (" + orig + "->" + points.getSize() + "):" + sw.stop().getSeconds() + "s";
-            }
+            GHPlace place = request.getPlaces().get(placeIndex);
+            sw.start();
+            QueryResult toRes = locationIndex.findClosest(place.lat, place.lon, edgeFilter);
+            debug += "[" + placeIndex + "]";
+            debug += ", idLookup:" + sw.stop().getSeconds() + "s";
+            if (!toRes.isValid())
+                rsp.addError(new IllegalArgumentException("Cannot find point " + placeIndex + ": " + place));
 
-            if (enableInstructions)
+            if (rsp.hasErrors())
+                return rsp;
+
+            sw = new StopWatch().start();
+            RoutingAlgorithm algo = null;
+            if (chEnabled)
             {
-                sw = new StopWatch().start();
-                rsp.setInstructions(viaRouter.calcInstructions(pathList));
-                debug += ", instructions:" + sw.stop().getSeconds() + "s";
+                if (prepare == null)
+                    throw new IllegalStateException("Preparation object is null. CH-preparation wasn't done or did you "
+                            + "forgot to call disableCHShortcuts()?");
+
+                if (request.getAlgorithm().equals("dijkstrabi"))
+                    algo = prepare.createAlgo();
+                else if (request.getAlgorithm().equals("astarbi"))
+                    algo = ((PrepareContractionHierarchies) prepare).createAStar();
+                else
+                {
+                    rsp.addError(new IllegalStateException(
+                            "Only dijkstrabi and astarbi is supported for LevelGraph (using contraction hierarchies)!"));
+                    return rsp;
+                }
+            } else
+            {
+                Weighting weighting = createWeighting(request.getWeighting(), encoder);
+                prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.getAlgorithm(), encoder, weighting);
+                algo = prepare.createAlgo();
             }
 
-            rsp.setPoints(points);
-        } else
-            rsp.setFound(pathList.get(0).isFound());
-        
-        rsp.setDistance(viaRouter.getPathDistance(pathList));
-        rsp.setMillis(viaRouter.getPathMillis(pathList));
+            debug += ", algoInit:" + sw.stop().getSeconds() + "s";
+            sw = new StopWatch().start();
+
+            Path path = algo.calcPath(fromRes, toRes);
+            if (path.getMillis() < 0)
+                throw new RuntimeException("Time was negative. Please report as bug and include:" + request);
+                
+            paths.add(path);
+            debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
+            fromRes = toRes;
+        }
+
+        enableInstructions = request.getHint("instructions", enableInstructions);
+        calcPoints = request.getHint("calcPoints", calcPoints);
+        simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
+        double minPathPrecision = request.getHint("douglas.minprecision", 1d);
+        DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(minPathPrecision);
         rsp.setDebugInfo(debug);
+
+        if (places.size() - 1 != paths.size())
+            throw new RuntimeException("There should be exactly one more places than paths. places:" + places.size() + ", paths:" + paths.size());
+
+        new PathMerger().
+                setCalcPoints(calcPoints).
+                setDouglasPeucker(peucker).
+                setEnableInstructions(enableInstructions).
+                setSimplifyRequest(simplifyRequest && minPathPrecision > 0).
+                doWork(rsp, paths);
         return rsp;
     }
-    
+
     protected LocationIndex createLocationIndex( Directory dir )
     {
         LocationIndex tmpIndex;

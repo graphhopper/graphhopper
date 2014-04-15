@@ -7,10 +7,14 @@
 # if we would do it via normal maven dependency management we run into strange things which I was not able to fix
 # http://stackoverflow.com/a/8315600/194609
 
-MAPSFORGE=`ls ./libs/mapsforge*.jar`
-echo "installing file: $MAPSFORGE"
-ARGS="-DgroupId=com.graphhopper -DartifactId=mapsforge-gh -Dversion=0.3-0.3.1-SNAPSHOT -Dpackaging=jar -Dfile=$MAPSFORGE"
-    
-$MAVEN_HOME/bin/mvn install:install-file $ARGS
+# MAVEN_HOME/bin/mvn
+MVN=mvn
+VERSION=0.4.0-SNAPSHOT
+libs="map map-android map-reader core"
 
-# $MAVEN_HOME/bin/mvn -DperformRelease=true -DskipTests=true -Dpgp.secretkey=keyring:id=54EA4B68 deploy:deploy-file $ARGS
+for lib in $libs; do
+  FILE=$(ls ./libs/mapsforge-$lib-$VERSION.jar)
+  echo "installing file: $FILE"
+  ARGS="-DgroupId=com.graphhopper -DartifactId=mapsforge-$lib -Dversion=0.3-0.4.0-SNAPSHOT -Dpackaging=jar -Dfile=$FILE"
+  $MVN install:install-file $ARGS
+done

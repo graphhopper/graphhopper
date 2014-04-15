@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-
 /**
  * Encodes and decodes a turn restriction and turn costs within a integer flag
  * <p>
@@ -26,20 +25,20 @@ package com.graphhopper.routing.util;
 public interface TurnCostEncoder
 {
     /**
-     * @return true, if, and only if it is encoded in flag 
+     * @return true, if, and only if it is encoded in flag
      */
     boolean isTurnRestricted( long flag );
 
     /**
-     * @return the costs in seconds encoded in flag 
+     * @return the costs in seconds encoded in flag
      */
     int getTurnCosts( long flag );
-    
+
     long getTurnFlags( boolean restriction, int costs );
 
     /**
-     * whether turn costs nor turn restrictions will be encoded by this
-     * encoder, should be used for pedestrians  
+     * whether turn costs nor turn restrictions will be encoded by this encoder, should be used for
+     * pedestrians
      */
     static class NoTurnCostsEncoder implements TurnCostEncoder
     {
@@ -63,8 +62,5 @@ public interface TurnCostEncoder
         }
 
     }
-
-    
-
 
 }

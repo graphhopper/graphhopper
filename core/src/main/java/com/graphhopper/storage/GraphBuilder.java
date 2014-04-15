@@ -31,6 +31,7 @@ public class GraphBuilder
     private boolean mmap;
     private boolean store;
     private boolean level;
+    private boolean is3D;
     private long byteCapacity = 100;
 
     public GraphBuilder( EncodingManager encodingManager )
@@ -73,6 +74,17 @@ public class GraphBuilder
         return this;
     }
 
+    public GraphBuilder set3D( boolean is3D )
+    {
+        this.is3D = is3D;
+        return this;
+    }
+
+    public boolean is3D()
+    {
+        return is3D;
+    }
+
     public LevelGraphStorage levelGraphBuild()
     {
         return (LevelGraphStorage) setLevelGraph(true).build();
@@ -95,20 +107,16 @@ public class GraphBuilder
     {
         Directory dir;
         if (mmap)
-        {
             dir = new MMapDirectory(location);
-        } else
-        {
+        else
             dir = new RAMDirectory(location, store);
-        }
+
         GraphStorage graph;
         if (level)
-        {
-            graph = new LevelGraphStorage(dir, encodingManager);
-        } else
-        {
-            graph = new GraphHopperStorage(dir, encodingManager);
-        }
+            graph = new LevelGraphStorage(dir, encodingManager, is3D);
+        else
+            graph = new GraphHopperStorage(dir, encodingManager, is3D);
+
         return graph;
     }
 

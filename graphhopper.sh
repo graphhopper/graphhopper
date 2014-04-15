@@ -1,14 +1,14 @@
 #!/bin/bash
 
 GH_CLASS=com.graphhopper.GraphHopper
-GH_HOME=$(dirname $0)
+GH_HOME=$(dirname "$0")
 JAVA=$JAVA_HOME/bin/java
 if [ "x$JAVA_HOME" = "x" ]; then
  JAVA=java
 fi
 
-vers=`$JAVA -version 2>&1 | grep "java version" | awk '{print $3}' | tr -d \"`
-bit64=`$JAVA -version 2>&1 | grep "64-Bit"`
+vers=$($JAVA -version 2>&1 | grep "java version" | awk '{print $3}' | tr -d \")
+bit64=$($JAVA -version 2>&1 | grep "64-Bit")
 if [ "x$bit64" != "x" ]; then
   vers="$vers (64bit)"
 fi
@@ -39,15 +39,15 @@ function ensureOsmXml {
     echo "## now downloading OSM file from $LINK and extracting to $OSM_FILE"
     
     if [ ${OSM_FILE: -4} == ".pbf" ]; then
-       wget -S -nv -O $OSM_FILE $LINK
+       wget -S -nv -O "$OSM_FILE" "$LINK"
     elif [ ${OSM_FILE: -4} == ".ghz" ]; then
-       wget -S -nv -O $OSM_FILE $LINK
-       unzip $FILE -d $NAME-gh             
+       wget -S -nv -O "$OSM_FILE" "$LINK"
+       unzip "$FILE" -d "$NAME-gh"
     else    
        # make sure aborting download does not result in loading corrupt osm file
        TMP_OSM=temp.osm
-       wget -S -nv -O - $LINK | bzip2 -d > $TMP_OSM
-       mv $TMP_OSM $OSM_FILE
+       wget -S -nv -O - "$LINK" | bzip2 -d > $TMP_OSM
+       mv $TMP_OSM "$OSM_FILE"
     fi
   
     if [[ ! -s "$OSM_FILE" ]]; then
@@ -63,15 +63,15 @@ function ensureMaven {
   # maven home existent?
   if [ "x$MAVEN_HOME" = "x" ]; then
     # not existent but probably is maven in the path?
-    MAVEN_HOME=`mvn -v | grep "Maven home" | cut -d' ' -f3`
+    MAVEN_HOME=$(mvn -v | grep "Maven home" | cut -d' ' -f3)
     if [ "x$MAVEN_HOME" = "x" ]; then
       # try to detect previous downloaded version
       MAVEN_HOME="$GH_HOME/maven"
       if [ ! -f "$MAVEN_HOME/bin/mvn" ]; then
         echo "No Maven found in the PATH. Now downloading+installing it to $MAVEN_HOME"
         cd "$GH_HOME"
-        MVN_PACKAGE=apache-maven-3.0.5
-        wget -O maven.zip http://www.eu.apache.org/dist/maven/maven-3/3.0.5/binaries/$MVN_PACKAGE-bin.zip
+        MVN_PACKAGE=apache-maven-3.2.1
+        wget -O maven.zip http://www.eu.apache.org/dist/maven/maven-3/3.2.1/binaries/$MVN_PACKAGE-bin.zip
         unzip maven.zip
         mv $MVN_PACKAGE maven
         rm maven.zip
@@ -117,7 +117,7 @@ function prepareEclipse {
 
 ## now handle actions which do not take an OSM file
 if [ "x$ACTION" = "xclean" ]; then
- rm -rf */target
+ rm -rf ./*/target
  exit
 
 elif [ "x$ACTION" = "xeclipse" ]; then
@@ -132,7 +132,7 @@ elif [ "x$ACTION" = "xextract" ]; then
  echo use "./graphhopper.sh extract \"left,bottom,right,top\""
  URL="http://overpass-api.de/api/map?bbox=$2"
  #echo "$URL"
- wget -O extract.osm $URL
+ wget -O extract.osm "$URL"
  exit
  
 elif [ "x$ACTION" = "xandroid" ]; then
@@ -152,18 +152,18 @@ NAME="${FILE%.*}"
 if [ "x$FILE" == "x-" ]; then
    OSM_FILE=
 elif [ ${FILE: -4} == ".osm" ]; then
-   OSM_FILE=$FILE
+   OSM_FILE="$FILE"
 elif [ ${FILE: -4} == ".pbf" ]; then
-   OSM_FILE=$FILE
+   OSM_FILE="$FILE"
 elif [ ${FILE: -7} == ".osm.gz" ]; then
-   OSM_FILE=$FILE   
+   OSM_FILE="$FILE"
 elif [ ${FILE: -3} == "-gh" ]; then
-   OSM_FILE=$FILE
+   OSM_FILE="$FILE"
    NAME=${FILE%%???}
 elif [ ${FILE: -4} == ".ghz" ]; then
-   OSM_FILE=$FILE
+   OSM_FILE="$FILE"
    if [[ ! -d "$NAME-gh" ]]; then
-      unzip $FILE -d $NAME-gh
+      unzip "$FILE" -d "$NAME-gh"
    fi
 else
    # no known end -> no import
@@ -171,10 +171,10 @@ else
 fi
 
 GRAPH=$NAME-gh
-VERSION=`grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1`
+VERSION=$(grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1)
 JAR=core/target/graphhopper-$VERSION-jar-with-dependencies.jar
 
-LINK=`echo $NAME | tr '_' '/'`
+LINK=$(echo $NAME | tr '_' '/')
 if [ "x$FILE" == "x-" ]; then
    LINK=
 elif [ ${FILE: -4} == ".osm" ]; then 
@@ -204,11 +204,31 @@ if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
   if [ "x$JETTY_PORT" = "x" ]; then  
     JETTY_PORT=8989
   fi
-  "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/web/pom.xml" -Djetty.port=$JETTY_PORT -Djetty.reload=manual \
-      -Dgraphhopper.config=$CONFIG \
-      $GH_WEB_OPTS -Dgraphhopper.graph.location="$GRAPH" -Dgraphhopper.osmreader.osm="$OSM_FILE" \
-      jetty:run
+  WEB_JAR="$GH_HOME/web/target/graphhopper-web-$VERSION-with-dep.jar"
+  if [ ! -s "$WEB_JAR" ]; then         
+    "$MAVEN_HOME/bin/mvn" --projects web -DskipTests=true install assembly:single > /tmp/graphhopper-web-compile.log
+    returncode=$?
+    if [[ $returncode != 0 ]] ; then
+      echo "## compilation of web failed"
+      cat /tmp/graphhopper-web-compile.log
+      exit $returncode
+    fi
+  fi
 
+  RC_BASE=./web/src/main/webapp
+
+  if [ "x$GH_FOREGROUND" = "x" ]; then
+    exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.resourcebase=$RC_BASE jetty.port=$JETTY_PORT config=$CONFIG \
+         $GH_WEB_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE"
+    # foreground => we never reach this here
+  else
+    exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.resourcebase=$RC_BASE jetty.port=$JETTY_PORT config=$CONFIG \
+         $GH_WEB_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE" <&- &
+    if [ "x$GH_PID_FILE" != "x" ]; then
+       echo $! > $GH_PID_FILE
+    fi
+    exit $?                    
+  fi
 
 elif [ "x$ACTION" = "ximport" ]; then
  "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS printVersion=true \
@@ -244,9 +264,9 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
 
  function startMeasurement {
     COUNT=5000
-    commit_info=`git log -n 1 --pretty=oneline`     
+    commit_info=$(git log -n 1 --pretty=oneline)
     echo -e "\nperform measurement via jar=> $JAR and ARGS=> $ARGS"
-    "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS measurement.count=$COUNT measurement.location=$M_FILE_NAME \
+    "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS measurement.count=$COUNT measurement.location="$M_FILE_NAME" \
             graph.importTime=$IMPORT_TIME measurement.gitinfo="$commit_info"
  }
  
@@ -261,17 +281,17 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
    exit
  fi
 
- current_commit=`git log -n 1 --pretty=oneline | cut -d' ' -f1` 
+ current_commit=$(git log -n 1 --pretty=oneline | cut -d' ' -f1)
  commits=$(git rev-list HEAD -n $last_commits)
  for commit in $commits; do
    git checkout $commit -q
-   M_FILE_NAME=`git log -n 1 --pretty=oneline | grep -o "\ .*" |  tr " ,;" "_"`
+   M_FILE_NAME=$(git log -n 1 --pretty=oneline | grep -o "\ .*" |  tr " ,;" "_")
    M_FILE_NAME="measurement$M_FILE_NAME.properties"
    echo -e "\nusing commit $commit and $M_FILE_NAME"
    
    "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests clean install assembly:single
    startMeasurement
-   echo -e "\nmeasurement.commit=$commit\n" >> $M_FILE_NAME
+   echo -e "\nmeasurement.commit=$commit\n" >> "$M_FILE_NAME"
  done
  # revert checkout
  git checkout $current_commit

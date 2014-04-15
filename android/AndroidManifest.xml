@@ -3,17 +3,16 @@
           android:versionCode="1"
           android:versionName="0.1" >
 
-    <!-- mapsforge cache  -->
+    <!-- mapsforge cache and saving maps -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     
     <!-- necessary to easily download maps via wifi -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> 
-    
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />    
 
     <uses-sdk
         android:minSdkVersion="8"
-        android:targetSdkVersion="17" />
+        android:targetSdkVersion="19" />
 
     <application
         android:allowBackup="true"

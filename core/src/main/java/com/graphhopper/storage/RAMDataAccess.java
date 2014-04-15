@@ -234,6 +234,26 @@ public class RAMDataAccess extends AbstractDataAccess
     }
 
     @Override
+    public final void setShort( long bytePos, short value )
+    {
+        assert segmentSizePower > 0 : "call create or loadExisting before usage!";
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        assert index + 2 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
+        bitUtil.fromShort(segments[bufferIndex], value, index);
+    }
+
+    @Override
+    public final short getShort( long bytePos )
+    {
+        assert segmentSizePower > 0 : "call create or loadExisting before usage!";
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        assert index + 2 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
+        return bitUtil.toShort(segments[bufferIndex], index);
+    }
+
+    @Override
     public void setBytes( long bytePos, byte[] values, int length )
     {
         assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;

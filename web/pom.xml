@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-web</artifactId>
-    <packaging>war</packaging>
+    <packaging>jar</packaging>
     <version>0.3-SNAPSHOT</version>
     <name>GraphHopper Web</name>
     <description>Example on how to use GraphHopper in a web-based application</description>
@@ -16,7 +16,7 @@
         <version>0.3-SNAPSHOT</version>
     </parent>
     <properties>
-        <jetty.version>8.1.10.v20130312</jetty.version>
+        <jetty.version>8.1.14.v20131031</jetty.version>
     </properties>
     
     <dependencies>
@@ -38,7 +38,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20090211</version>            
+            <version>20140107</version>            
         </dependency>        
         <dependency>
             <groupId>com.google.inject</groupId>
@@ -84,6 +84,17 @@
             <version>${jetty.version}</version>
         </dependency>
         
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-server</artifactId>
+            <version>${jetty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-servlet</artifactId>
+            <version>${jetty.version}</version>
+        </dependency>
+        
         <!-- for integration tests of service -->
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
@@ -106,27 +117,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.14</version>
-            </plugin>
-            <plugin>
-                <groupId>org.mortbay.jetty</groupId>
-                <artifactId>jetty-maven-plugin</artifactId>
-                <version>${jetty.version}</version>
-                <configuration>
-                    <!--
-                    <connectors>
-                        <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">	
-                            <port>8989</port>
-                        </connector>
-                    </connectors>
-                    -->
-                                        
-                    <!-- to be used in combination with netbeans compile on save feature -->
-                    <scanTargets>
-                        <scanTarget>target/classes/</scanTarget>
-                    </scanTargets>
-                    <scanIntervalSeconds>1</scanIntervalSeconds>
-                </configuration>
+                <version>2.17</version>
             </plugin>
             <!-- create a jar file too, so others can use it more easily -->
             <plugin>
@@ -135,7 +126,79 @@
                 <configuration>
                     <attachClasses>true</attachClasses>
                 </configuration>
+            </plugin>            
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.graphhopper.http.GHServer</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptors>
+                        <descriptor>src/main/assembly/jar.xml</descriptor>
+                        <!-- this is defined to be executed afterwards -->
+                        <descriptor>src/main/assembly/zip.xml</descriptor>
+                    </descriptors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+
+<!--
+                <executions>
+                    <execution>
+                        <id>build-jar</id>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>com.graphhopper.http.GHServer</mainClass>
+                                </manifest>
+                            </archive>
+                    
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>                        
+                    </execution>
+                    <execution>
+                        <id>build-zip</id>
+                        
+                        <configuration>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <descriptors>
+                                <descriptor>src/main/assembly/zip.xml</descriptor>                                        
+                            </descriptors>                            
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                -->
+                <!--                <executions>
+                    <execution>
+                        <id>make-assembly</id>  this is used for inheritance merges 
+                        <phase>package</phase>  bind to the packaging phase 
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>-->
             </plugin>
+ 
         </plugins>
     </build>
 

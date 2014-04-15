@@ -30,7 +30,7 @@ public interface EdgeFilter
      * @return true if the current edge should be processed and false otherwise.
      */
     boolean accept( EdgeIteratorState edgeIterState );
-    
+
     static final EdgeFilter ALL_EDGES = new EdgeFilter()
     {
         @Override

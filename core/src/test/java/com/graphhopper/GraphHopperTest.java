@@ -20,6 +20,8 @@ package com.graphhopper;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Instruction;
+import com.graphhopper.util.shapes.GHPlace;
 import com.graphhopper.util.shapes.GHPoint;
 import java.io.File;
 import java.io.IOException;
@@ -75,7 +77,8 @@ public class GraphHopperTest
     @Test
     public void testPrepare()
     {
-        instance = new GraphHopper().setInMemory(false).
+        instance = new GraphHopper().
+                setInMemory(false).
                 setEncodingManager(new EncodingManager("CAR")).
                 setCHShortcuts("shortest").
                 setGraphHopperLocation(ghLoc).
@@ -141,12 +144,12 @@ public class GraphHopperTest
         // A to E only for foot
         res = instance.route(new GHRequest(11.1, 50, 10, 51).setVehicle(EncodingManager.FOOT));
         assertTrue(res.isFound());
-        assertEquals(2, res.getPoints().getSize());
+        assertEquals(3, res.getPoints().size());
 
         // A D E for car
         res = instance.route(new GHRequest(11.1, 50, 10, 51).setVehicle(EncodingManager.CAR));
         assertTrue(res.isFound());
-        assertEquals(3, res.getPoints().getSize());
+        assertEquals(4, res.getPoints().getSize());
     }
 
     @Test
@@ -154,6 +157,7 @@ public class GraphHopperTest
     {
         instance = new GraphHopper().init(
                 new CmdArgs().
+                put("osmreader.dataaccess", "RAM").
                 put("osmreader.acceptWay", "FOOT,CAR").
                 put("prepare.chShortcuts", "no").
                 put("osmreader.osm", testOsm3)).
@@ -164,9 +168,11 @@ public class GraphHopperTest
 
         instance = new GraphHopper().init(
                 new CmdArgs().
+                put("osmreader.dataaccess", "RAM").
                 put("osmreader.acceptWay", "FOOT").
                 put("prepare.chShortcuts", "no").
-                put("osmreader.osm", testOsm3)).setOSMFile(testOsm3);
+                put("osmreader.osm", testOsm3)).
+                setOSMFile(testOsm3);
         try
         {
             instance.load(ghLoc);
@@ -178,9 +184,11 @@ public class GraphHopperTest
         // different order should be ok
         instance = new GraphHopper().init(
                 new CmdArgs().
+                put("osmreader.dataaccess", "RAM").
                 put("osmreader.acceptWay", "CAR,FOOT").
                 put("prepare.chShortcuts", "no").
-                put("osmreader.osm", testOsm3)).setOSMFile(testOsm3);
+                put("osmreader.osm", testOsm3)).
+                setOSMFile(testOsm3);
         assertTrue(instance.load(ghLoc));
         assertEquals(5, instance.getGraph().getNodes());
     }
@@ -208,7 +216,7 @@ public class GraphHopperTest
         instance = new GraphHopper();
         try
         {
-            instance.setOSMFile(testOsm).importOSM();
+            instance.setOSMFile(testOsm).importData();
             assertTrue(false);
         } catch (IllegalStateException ex)
         {
@@ -226,8 +234,9 @@ public class GraphHopperTest
             assertEquals("graphHopperLocation is not specified. call init before", ex.getMessage());
         }
 
-        // missing encoding manager
-        instance = new GraphHopper().setInMemory(true).
+        // missing OSM file to import
+        instance = new GraphHopper().
+                setInMemory(true).
                 setGraphHopperLocation(ghLoc);
         try
         {
@@ -235,7 +244,35 @@ public class GraphHopperTest
             assertTrue(false);
         } catch (IllegalStateException ex)
         {
-            assertEquals("Couldn't load from existing folder: " + ghLoc 
+            assertEquals("Couldn't load from existing folder: " + ghLoc
+                    + " but also cannot import from OSM file as it wasn't specified!", ex.getMessage());
+        }
+
+        // missing encoding manager          
+        instance = new GraphHopper().
+                setInMemory(true).
+                setGraphHopperLocation(ghLoc).
+                setOSMFile(testOsm3);
+        try
+        {
+            instance.importOrLoad();
+            assertTrue(false);
+        } catch (IllegalStateException ex)
+        {
+            assertEquals("Missing encoding manager", ex.getMessage());
+        }
+
+        // Import is possible even if no storeOnFlush but missing OSM file
+        instance = new GraphHopper().
+                setInMemory(false).
+                setGraphHopperLocation(ghLoc);
+        try
+        {
+            instance.importOrLoad();
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+            assertEquals("Couldn't load from existing folder: " + ghLoc
                     + " but also cannot import from OSM file as it wasn't specified!", ex.getMessage());
         }
     }
@@ -292,5 +329,36 @@ public class GraphHopperTest
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
         instance.load(ghLoc);
+    }
+
+    @Test
+    public void testVia()
+    {
+        instance = new GraphHopper().setInMemory(true).
+                setEncodingManager(new EncodingManager("CAR")).
+                setGraphHopperLocation(ghLoc).
+                setOSMFile(testOsm3);
+        instance.importOrLoad();
+
+        // A -> B -> C
+        GHPlace first = new GHPlace(11.1, 50);
+        GHPlace second = new GHPlace(12, 51);
+        GHPlace third = new GHPlace(11.2, 51.9);
+        GHResponse rsp12 = instance.route(new GHRequest().addPlace(first).addPlace(second));
+        assertTrue("should find 1->2", rsp12.isFound());
+        assertEquals(147931.5, rsp12.getDistance(), .1);
+        GHResponse rsp23 = instance.route(new GHRequest().addPlace(second).addPlace(third));
+        assertTrue("should find 2->3", rsp23.isFound());
+        assertEquals(176608.9, rsp23.getDistance(), .1);
+
+        GHResponse rsp = instance.route(new GHRequest().
+                addPlace(first).addPlace(second).addPlace(third));
+
+        assertFalse(rsp.hasErrors());
+        assertTrue("should find 1->2->3", rsp.isFound());
+        assertEquals(rsp12.getDistance() + rsp23.getDistance(), rsp.getDistance(), 1e-6);
+        assertEquals(5, rsp.getPoints().getSize());
+        assertEquals(5, rsp.getInstructions().size());
+        assertEquals(Instruction.REACHED_VIA, rsp.getInstructions().get(1).getSign());
     }
 }

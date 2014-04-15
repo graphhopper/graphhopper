@@ -20,6 +20,7 @@ package com.graphhopper;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.NodeAccess;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -35,11 +36,12 @@ public class GraphHopperAPITest
     public void testLoad()
     {
         GraphStorage graph = new GraphBuilder(encodingManager).create();
-        graph.setNode(0, 42, 10);
-        graph.setNode(1, 42.1, 10.1);
-        graph.setNode(2, 42.1, 10.2);
-        graph.setNode(3, 42, 10.4);
-        graph.setNode(4, 41.9, 10.2);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 42, 10);
+        na.setNode(1, 42.1, 10.1);
+        na.setNode(2, 42.1, 10.2);
+        na.setNode(3, 42, 10.4);
+        na.setNode(4, 41.9, 10.2);
 
         graph.edge(0, 1, 10, true);
         graph.edge(1, 2, 10, false);
@@ -47,7 +49,11 @@ public class GraphHopperAPITest
         graph.edge(0, 4, 40, true);
         graph.edge(4, 3, 40, true);
 
-        GraphHopperAPI instance = new GraphHopper().setEncodingManager(encodingManager).disableCHShortcuts().loadGraph(graph);
+        GraphHopper instance = new GraphHopper().
+                setInMemory(false).
+                setEncodingManager(encodingManager).
+                disableCHShortcuts().
+                loadGraph(graph);
         GHResponse ph = instance.route(new GHRequest(42, 10.4, 42, 10));
         assertTrue(ph.isFound());
         assertEquals(80, ph.getDistance(), 1e-6);
@@ -56,13 +62,40 @@ public class GraphHopperAPITest
         assertEquals(41.9, ph.getPoints().getLatitude(1), 1e-5);
         assertEquals(10.2, ph.getPoints().getLongitude(1), 1e-5);
         assertEquals(3, ph.getPoints().getSize());
+        instance.close();
+    }
+
+    @Test
+    public void testDisconnected179()
+    {
+        GraphStorage graph = new GraphBuilder(encodingManager).create();
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 42, 10);
+        na.setNode(1, 42.1, 10.1);
+        na.setNode(2, 42.1, 10.2);
+        na.setNode(3, 42, 10.4);
+
+        graph.edge(0, 1, 10, true);
+        graph.edge(2, 3, 10, true);
+        
+        GraphHopper instance = new GraphHopper().
+                setInMemory(false).
+                setEncodingManager(encodingManager).
+                disableCHShortcuts().
+                loadGraph(graph);
+        GHResponse ph = instance.route(new GHRequest(42, 10, 42, 10.4));
+        assertFalse(ph.isFound());
+        assertEquals(0, ph.getPoints().getSize());        
+        instance.close();
     }
 
     @Test
     public void testNoLoad()
     {
-
-        GraphHopperAPI instance = new GraphHopper().setEncodingManager(encodingManager).disableCHShortcuts();
+        GraphHopper instance = new GraphHopper().
+                setInMemory(false).
+                setEncodingManager(encodingManager).
+                disableCHShortcuts();
         try
         {
             instance.route(new GHRequest(42, 10.4, 42, 10));
@@ -81,6 +114,5 @@ public class GraphHopperAPITest
         {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Call load or importOrLoad before routing"));
         }
-
     }
 }

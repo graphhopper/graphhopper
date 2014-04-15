@@ -20,20 +20,33 @@ package com.graphhopper.util;
 /**
  * Calculates the angle of a turn, defined by three points.
  * <p>
- * Like distance calculation, angle can be calculated in different ways: 2D, 3D or on spherical
- * surface. Extend if necessary.
- * <p>
  * @author Johannes Pelzer
+ * @author Peter Karich
  */
 public class AngleCalc2D
 {
+
+    /**
+     * Return orientation of line relative to east.
+     * <p>
+     * @return Orientation in interval -pi to +pi where 0 is east
+     * <p>
+     * @Deprecated because it seems to be nicer to align to north so try to use calcOrientationNorth
+     * instaead
+     */
+    @Deprecated
+    public double calcOrientation( double lat1, double lon1, double lat2, double lon2 )
+    {
+        return Math.atan2(lat2 - lat1, lon2 - lon1);
+        //return Math.atan2(lon2 - lon1, lat2 - lat1);
+    }
 
     /**
      * Return orientation of line relative to north. (North by coordinates, not magnetic north)
      * <p>
      * @return Orientation in interval -pi to +pi where 0 is north and pi is south
      */
-    public double calcOrientation( double lat1, double lon1, double lat2, double lon2 )
+    public double calcOrientationNorth( double lat1, double lon1, double lat2, double lon2 )
     {
         return Math.atan2(lon2 - lon1, lat2 - lat1);
     }
@@ -63,45 +76,23 @@ public class AngleCalc2D
         return resultOrientation;
     }
 
-    public boolean isLeftTurn( double prevOrientation, double nextOrientation )
-    {
-        return (prevOrientation > nextOrientation);
-    }
-
     /**
-     * Calculate angle for a set of 3 points in a plane at point given by latTurn and lonTurn
-     * params. Angle is returned in radians. The 3 points must be different from each other.
+     * Calculate Azimuth for a line given by two coordinates. Direction in Degree where 0 is North,
+     * 90 is East, and 270 is West
+     * <p>
+     * @param lat1
+     * @param lon1
+     * @param lat2
+     * @param lon2
+     * @return
      */
-    double calcTurnAngleRad( double latPre, double lonPre,
-            double latTurn, double lonTurn,
-            double latNext, double lonNext )
+    double calcAzimuth( double lat1, double lon1, double lat2, double lon2 )
     {
-        double orientationPre = calcOrientation(latPre, lonPre, latTurn, lonTurn);
-        double orientationNext = calcOrientation(latTurn, lonTurn, latNext, lonNext);
-        double orientationNextAligned = alignOrientation(orientationPre, orientationNext);
-        return orientationNextAligned - orientationPre;
-    }
+        double orientation = calcOrientationNorth(lat1, lon1, lat2, lon2);
+        double baseOrientation = calcOrientationNorth(2, 0, 1, 0);    // south
+        double alignedOrientation = alignOrientation(baseOrientation, orientation);
 
-    /**
-     * @return Angle for a turn, where 0 is returned in case of a straight road, positive values up
-     * to 180 for right turns, and negative values for left turns 180 degree is returned for a turn
-     * which leads in the opposite direction
-     */
-    double calcTurnAngleDeg( double latPre, double lonPre,
-            double latTurn, double lonTurn,
-            double latNext, double lonNext )
-    {
-        return Math.toDegrees(calcTurnAngleRad(latPre, lonPre, latTurn, lonTurn, latNext, lonNext));
-    }
-
-    /**
-     * @return orientation in interval 0 to 360 where 0 and 360 are north
-     */
-    double calcAzimuthDeg( double lat1, double lon1, double lat2, double lon2 )
-    {
-        double orientation = calcOrientation(lat1, lon1, lat2, lon2);
-        double orientation0to360 = alignOrientation(Math.PI, orientation);
-        return Math.toDegrees(orientation0to360);
+        return Math.toDegrees(alignedOrientation);
     }
 
     String azimuth2compassPoint( double azimuth )

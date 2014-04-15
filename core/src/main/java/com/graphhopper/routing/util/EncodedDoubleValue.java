@@ -62,7 +62,7 @@ public class EncodedDoubleValue extends EncodedValue
 
         // clear value bits
         flags &= ~mask;
-        
+
         // set value
         return flags | tmpValue;
     }

@@ -21,15 +21,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.servlet.GuiceFilter;
-import com.graphhopper.util.Constants;
+import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Downloader;
-import java.util.EnumSet;
-import javax.servlet.DispatcherType;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.bio.SocketConnector;
-import org.eclipse.jetty.webapp.WebAppContext;
-import org.eclipse.jetty.webapp.WebXmlConfiguration;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +32,7 @@ import org.slf4j.LoggerFactory;
  */
 public class BaseServletTest
 {
-    private static Server server;
+    private static GHServer server;
     protected static Logger logger = LoggerFactory.getLogger(GraphHopperServletIT.class);
     protected static int port;
     protected Injector injector;
@@ -65,47 +58,24 @@ public class BaseServletTest
         if (server != null)
             return;
 
-        System.setProperty("graphhopper.config", "../config-example.properties");
-        System.setProperty("graphhopper.osmreader.osm", "../core/files/andorra.osm.pbf");
-        System.setProperty("graphhopper.graph.location", "./target/andorra-gh/");
+        CmdArgs args = new CmdArgs().
+                put("config", "../config-example.properties").
+                put("osmreader.osm", "../core/files/andorra.osm.pbf").
+                put("graph.location", "./target/andorra-gh/");
 
-        String webapp = "./target/graphhopper-web-" + Constants.VERSION;
-        WebAppContext app = new WebAppContext(webapp, "/");
-        // jetty 8:
-        app.addFilter(GuiceFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
-        // jetty 7:
-        // app.addFilter(GuiceFilter.class, "/*", 0);
-        app.setConfigurationClasses(new String[]
-        {
-            WebXmlConfiguration.class.getName()
-        });
+        server = new GHServer(args);
 
-        app.addEventListener(new GuiceServletConfig()
-        {
-            @Override
-            protected Injector getInjector()
-            {
-                if (injector == null)
-                    setUpGuice(createDefaultModule(), createServletModule());
-
-                return injector;
-            }
-        });
-        app.setParentLoaderPriority(true);
+        if (injector == null)
+            setUpGuice(new DefaultModule(args), new GHServletModule());
 
         for (int i = 0; i < retryCount; i++)
         {
-            // We explicitly use the SocketConnector because the SelectChannelConnector locks files
-            Connector connector = new SocketConnector();
-            connector.setPort(port = 18080 + i);
-            connector.setMaxIdleTime(10000);
-            server = new Server();
-            server.addConnector(connector);
-            server.setHandler(app);
+            port = 18080 + i;
+            args.put("jetty.port", "" + port);
             try
             {
                 logger.info("Trying to start jetty at port " + port);
-                server.start();
+                server.start(injector);
 //                server.join();
                 break;
             } catch (Exception ex)
@@ -137,7 +107,7 @@ public class BaseServletTest
     protected String getTestAPIUrl()
     {
         String host = "localhost";
-        return "http://" + host + ":" + port + "/api/route";
+        return "http://" + host + ":" + port + "/route";
     }
 
     protected JSONObject query( String query ) throws Exception

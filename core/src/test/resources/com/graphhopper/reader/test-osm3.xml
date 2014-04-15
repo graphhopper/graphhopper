@@ -29,7 +29,7 @@
         <nd ref="10"/>
         <nd ref="20"/>
         <nd ref="30"/>
-        <tag k="tmpStr" v="A B C" />
+        <tag k="name" v="A B C" />
         <tag k="oneway" v="true" />
         <tag k="highway" v="secondary" />
     </way>    
@@ -38,7 +38,7 @@
         <nd ref="10"/>
         <nd ref="40"/>
         <nd ref="30"/>
-        <tag k="tmpStr" v="A D C" />
+        <tag k="name" v="A D C" />
         <tag k="oneway" v="true" />
         <tag k="highway" v="motorway" />      
     </way>
@@ -47,15 +47,15 @@
         <nd ref="10"/>
         <nd ref="50"/>
         <nd ref="30"/>
-        <tag k="tmpStr" v="A E C" />
-        <tag k="highway" v="footway"/>
+        <tag k="name" v="A E C" />
+        <tag k="highway" v="footway"/>        
     </way>    
     
     <way id="13">
         <nd ref="20"/>
         <nd ref="40"/>
         <nd ref="50"/>
-        <tag k="tmpStr" v="B D E" />
+        <tag k="name" v="B D E" />
         <tag k="highway" v="motorway" />
         <tag k="maxspeed" v="40" />
     </way>

@@ -34,3 +34,4 @@ cycleway=ciclovia
 way=caminho
 paved=asfaltado
 unpaved=não asfaltado
+stopover=stopover %1$s

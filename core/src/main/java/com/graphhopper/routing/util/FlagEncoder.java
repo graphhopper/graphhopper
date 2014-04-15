@@ -31,7 +31,7 @@ public interface FlagEncoder
     double getMaxSpeed();
 
     /**
-     * @return the speed in km/h
+     * @return the speed in km/h for this direction, for backward direction use getReverseSpeed
      */
     double getSpeed( long flags );
 
@@ -68,20 +68,17 @@ public interface FlagEncoder
 
     boolean isForward( long flags );
 
-    boolean isBackward( long flags );
+    boolean isBackward( long flags );    
 
     /**
-     * Returns true if flags1 can be overwritten by flags2 without restricting or changing the
-     * directions of flags1.
+     * @return the number to identify a pavement of a road.
+     * @see InstructionList#getWayName
      */
-    //        \  flags2:
-    // flags1  \ -> | <- | <->
-    // ->         t | f  | t
-    // <-         f | t  | t
-    // <->        f | f  | t
-    boolean canBeOverwritten( long flags1, long flags2 );
+    int getPavementType( long flags );
 
-    int getPavementCode( long flags );
-
-    int getWayTypeCode( long flags );
+    /**
+     * @return the number to identify a pushing section, cycle way etc.
+     * @see InstructionList#getWayName
+     */
+    int getWayType( long flags );
 }

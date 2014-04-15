@@ -22,8 +22,11 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.util.Downloader;
+import com.graphhopper.util.Instruction;
+import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.shapes.GHPlace;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -39,15 +42,16 @@ public class GraphHopperWeb implements GraphHopperAPI
     public static void main( String[] args )
     {
         GraphHopperAPI gh = new GraphHopperWeb();
-        gh.load("http://localhost:8989/api/route");
+        gh.load("http://localhost:8989/route");
         //GHResponse ph = gh.route(new GHRequest(53.080827, 9.074707, 50.597186, 11.184082));
         GHResponse ph = gh.route(new GHRequest(49.6724, 11.3494, 49.6550, 11.4180));
         System.out.println(ph);
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
     private String serviceUrl;
-    private boolean encodePolyline = true;
+    private boolean pointsEncoded = true;
     private Downloader downloader = new Downloader("GraphHopperWeb");
+    private boolean instructions = true;
 
     public GraphHopperWeb()
     {
@@ -59,7 +63,7 @@ public class GraphHopperWeb implements GraphHopperAPI
     }
 
     /**
-     * Example url: http://localhost:8989/api or http://217.92.216.224:8080/api
+     * Example url: http://localhost:8989 or http://217.92.216.224:8080
      */
     @Override
     public boolean load( String url )
@@ -68,53 +72,100 @@ public class GraphHopperWeb implements GraphHopperAPI
         return true;
     }
 
-    public GraphHopperWeb setEncodePolyline( boolean b )
+    public GraphHopperWeb setPointsEncoded( boolean b )
     {
-        encodePolyline = b;
+        pointsEncoded = b;
+        return this;
+    }
+
+    public GraphHopperWeb setInstructions( boolean b )
+    {
+        instructions = b;
         return this;
     }
     
     @Override
     public GHResponse route( GHRequest request )
     {
-        request.check();
         StopWatch sw = new StopWatch().start();
         double took = 0;
         try
         {
+            String places = "";
+            for (GHPlace p : request.getPlaces())
+            {
+                places += "point=" + p.lat + "," + p.lon + "&";
+            }
             String url = serviceUrl
-                    + "?from=" + request.getFrom().lat + "," + request.getFrom().lon
-                    + "&to=" + request.getTo().lat + "," + request.getTo().lon
+                    + "?"
+                    + places
                     + "&type=json"
-                    + "&encodedPolyline=" + encodePolyline
-                    + "&minPathPrecision=" + request.getHint("douglas.minprecision", 1)
+                    + "&points_encoded=" + pointsEncoded
+                    + "&min_path_precision=" + request.getHint("douglas.minprecision", 1)
                     + "&algo=" + request.getAlgorithm();
             String str = downloader.downloadAsString(url);
             JSONObject json = new JSONObject(str);
             took = json.getJSONObject("info").getDouble("took");
-            JSONObject route = json.getJSONObject("route");
-            double distance = route.getDouble("distance");
-            int millis = route.getInt("time");
-            PointList list;
-            if (encodePolyline)
+            JSONArray paths = json.getJSONArray("paths");
+            JSONObject firstPath = paths.getJSONObject(0);
+
+            boolean is3D = false;
+            if (firstPath.has("points_dim"))
+                is3D = "3".equals(firstPath.getString("points_dim"));
+            double distance = firstPath.getDouble("distance");
+            int time = firstPath.getInt("time");
+            PointList pointList;
+            if (pointsEncoded)
             {
-                list = WebHelper.decodePolyline(route.getString("coordinates"), 100);
+                pointList = WebHelper.decodePolyline(firstPath.getString("points"), 100, is3D);
             } else
             {
-                JSONArray coords = route.getJSONObject("data").getJSONArray("coordinates");
-                list = new PointList(coords.length());
+                JSONArray coords = firstPath.getJSONObject("points").getJSONArray("coordinates");
+                pointList = new PointList(coords.length(), is3D);
                 for (int i = 0; i < coords.length(); i++)
                 {
                     JSONArray arr = coords.getJSONArray(i);
                     double lon = arr.getDouble(0);
                     double lat = arr.getDouble(1);
-                    list.add(lat, lon);
+                    if (is3D)
+                        pointList.add(lat, lon, arr.getDouble(2));
+                    else
+                        pointList.add(lat, lon);
                 }
             }
-            return new GHResponse().setPoints(list).setDistance(distance).setMillis(millis);
+            GHResponse res = new GHResponse();
+            if (instructions)
+            {
+                JSONArray instrArr = firstPath.getJSONArray("instructions");
+
+                InstructionList il = new InstructionList();
+                for (int instrIndex = 0; instrIndex < instrArr.length(); instrIndex++)
+                {
+                    JSONObject jsonObj = instrArr.getJSONObject(instrIndex);
+                    double instDist = jsonObj.getDouble("distance");
+                    String text = jsonObj.getString("text");
+                    long instTime = jsonObj.getLong("time");
+                    int sign = jsonObj.getInt("sign");
+                    JSONArray iv = jsonObj.getJSONArray("interval");
+                    int from = iv.getInt(0);
+                    int to = iv.getInt(1);
+                    PointList instPL = new PointList(to - from, is3D);
+                    for (int j = from; j <= to; j++)
+                    {
+                        instPL.add(pointList, j);
+                    }
+
+                    // TODO way and payment type
+                    Instruction instr = new Instruction(sign, text, -1, -1, instPL).
+                            setDistance(instDist).setTime(instTime);
+                    il.add(instr);
+                }
+                res.setInstructions(il);
+            }
+            return res.setPoints(pointList).setDistance(distance).setMillis(time);
         } catch (Exception ex)
         {
-            throw new RuntimeException("Problem while fetching path " + request.getFrom() + "->" + request.getTo(), ex);
+            throw new RuntimeException("Problem while fetching path " + request.getPlaces(), ex);
         } finally
         {
             logger.debug("Full request took:" + sw.stop().getSeconds() + ", API took:" + took);

@@ -1,0 +1,86 @@
+/*
+ *  Licensed to Peter Karich under one or more contributor license
+ *  agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  Peter Karich licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License. You may obtain a copy of the
+ *  License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package com.graphhopper.reader.dem;
+
+import java.io.File;
+
+/**
+ * @author Peter Karich
+ */
+public interface ElevationProvider
+{
+    /**
+     * @return returns the hight in meter or Double.NaN if invalid
+     */
+    double getEle( double lat, double lon );
+
+    /**
+     * Specifies the service URL where to download the elevation data. An empty string should set it
+     * to the default URL.
+     */
+    ElevationProvider setBaseURL( String baseURL );
+
+    /**
+     * Specifies the directory where to temporarily store the elevation data after fetched from base
+     * URL.
+     */
+    ElevationProvider setCacheDir( File cacheDir );
+
+    /**
+     * Set to true if you have a small area and need high speed access.
+     */
+    ElevationProvider setInMemory( boolean b );
+
+    /**
+     * Release resources.
+     */
+    void release();
+
+    public final static ElevationProvider NOOP = new ElevationProvider()
+    {
+        @Override
+        public double getEle( double lat, double lon )
+        {
+            return Double.NaN;
+        }
+
+        @Override
+        public ElevationProvider setCacheDir( File cacheDir )
+        {
+            return this;
+        }
+
+        @Override
+        public ElevationProvider setBaseURL( String baseURL )
+        {
+            return this;
+        }
+
+        @Override
+        public ElevationProvider setInMemory( boolean b )
+        {
+            return this;
+        }
+
+        @Override
+        public void release()
+        {
+        }
+    };
+}

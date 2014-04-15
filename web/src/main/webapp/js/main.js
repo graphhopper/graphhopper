@@ -1,11 +1,11 @@
 /*
  * If you want to query another API append this something like
- * &host=http://graphhopper.com/routing
+ * &host=http://localhost:9000/
  * to the URL or overwrite the 'host' variable.
  */
 var tmpArgs = parseUrlWithHisto();
 var host = tmpArgs["host"];
-//var host = "http://graphhopper.com/routing";
+// var host = "http://graphhopper.com/api/1";
 if (host == null) {
     if (location.port === '') {
         host = location.protocol + '//' + location.hostname;
@@ -30,6 +30,7 @@ var FromAndToFlagCreated=false;
 var defaultTranslationMap = null;
 var enTranslationMap = null;
 var routeSegmentPopup = null;
+var elevationControl = null;
 
 var iconFrom = L.icon({
     iconUrl: './img/marker-icon-green.png',
@@ -55,6 +56,10 @@ var iconTo = L.icon({
 $(document).ready(function(e) {
     // fixing cross domain support e.g in Opera
     jQuery.support.cors = true;
+
+    if (host.indexOf("graphhopper.com") > 0)
+        $('#hosting').show();
+
     var History = window.History;
     if (History.enabled) {
         History.Adapter.bind(window, 'statechange', function() {
@@ -119,7 +124,7 @@ $(document).ready(function(e) {
                 bounds.maxLat = tmp[3];
                 var vehiclesDiv = $("#vehicles");
                 function createButton(vehicle) {
-                    vehicle = vehicle.toLowerCase();
+                    var vehicle = vehicle.toLowerCase();
                     var button = $("<button class='vehicle-btn' title='" + tr(vehicle) + "'/>")
                     button.attr('id', vehicle);
                     button.html("<img src='img/" + vehicle + ".png' alt='" + tr(vehicle) + "'></img>");
@@ -136,22 +141,17 @@ $(document).ready(function(e) {
                     return button;
                 }
 
-                if (json.supportedVehicles) {
-                    var vehicles = json.supportedVehicles.split(",");
-                    if (vehicles.length > 1)
+                if (json.supported_vehicles) {
+                    var vehicles = json.supported_vehicles;
+                    if (vehicles.length > 0)
                         ghRequest.vehicle = vehicles[0];
+
                     for (var i = 0; i < vehicles.length; i++) {
                         vehiclesDiv.append(createButton(vehicles[i]));
                     }
                 }
 
                 initMap();
-
-//        var data = JSON.parse("[[10.4049076,48.2802518],[10.405231,48.2801396],...]");
-//        var tempFeature = {
-//            "type": "Feature", "geometry": { "type": "LineString", "coordinates": data }
-//        };        
-//        routingLayer.addData(tempFeature);
 
                 // execute query
                 initFromParams(urlParams, true);
@@ -167,6 +167,13 @@ $(document).ready(function(e) {
                 };
                 initMap();
             });
+
+    $(window).resize(function() {
+        adjustMapSize();
+    });
+
+    setAutoCompleteList("from");
+    setAutoCompleteList("to");
 });
 
 function addViaButton()
@@ -239,7 +246,7 @@ function rmViaButton()
 function initFromParams(params, doQuery) {
     ghRequest.init(params);
     var fromAndTo = params.from && params.to;
-    var routeNow = params.point && params.point.length == 2 || fromAndTo;
+    var routeNow = params.point && params.point.length === 2 || fromAndTo;
     if (routeNow) {
         if (fromAndTo)
             resolveCoords(params.from, null ,params.to, doQuery);
@@ -324,79 +331,73 @@ function resolveCoords(fromStr, viaarray, toStr, doQuery) {
     }
 }
 
-function initMap() {
+function adjustMapSize() {
     var mapDiv = $("#map");
-    var width = $(window).width() - 300;
-    if (width < 100)
-        width = $(window).width() - 5;
-    var height = $(window).height() - 5;
+    var width = $(window).width() - 295;
+    if (width < 400) {
+        width = 290;
+        mapDiv.attr("style", "position: relative; float: right;");
+    } else {
+        mapDiv.attr("style", "position: absolute; right: 0;");
+    }
+    var height = $(window).height();
     mapDiv.width(width).height(height);
-    if (height > 350)
-        height -= 265;
-    $("#info").css("max-height", height);
+    $("#input").height(height);
+    $("#info").css("max-height", height - $("#input_header").height() - 35);
+}
+
+function initMap() {
+    adjustMapSize();
     console.log("init map at " + JSON.stringify(bounds));
 
     // mapquest provider
-    var moreAttr = 'Data &copy; <a href="http://www.openstreetmap.org/copyright">OSM</a>,'
-            + 'JS: <a href="http://leafletjs.com/">Leaflet</a>';
+    var osmAttr = '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
     var tp = "ls";
     if (L.Browser.retina)
         tp = "lr";
 
     var lyrk = L.tileLayer('http://{s}.tiles.lyrk.org/' + tp + '/{z}/{x}/{y}?apikey=6e8cfef737a140e2a58c8122aaa26077', {
-        attribution: '<a href="http://geodienste.lyrk.de/">Lyrk</a>,' + moreAttr,
+        attribution: osmAttr + ', <a href="http://geodienste.lyrk.de/">Lyrk</a>',
         subdomains: ['a', 'b', 'c']
     });
 
     var mapquest = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
-        attribution: '<a href="http://open.mapquest.co.uk">MapQuest</a>,' + moreAttr,
+        attribution: osmAttr + ', <a href="http://open.mapquest.co.uk">MapQuest</a>',
         subdomains: ['otile1', 'otile2', 'otile3', 'otile4']
     });
 
     var mapquestAerial = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.png', {
-        attribution: '<a href="http://open.mapquest.co.uk">MapQuest</a>,' + moreAttr,
+        attribution: osmAttr + ', <a href="http://open.mapquest.co.uk">MapQuest</a>',
         subdomains: ['otile1', 'otile2', 'otile3', 'otile4']
     });
 
     var thunderTransport = L.tileLayer('http://{s}.tile.thunderforest.com/transport/{z}/{x}/{y}.png', {
-        attribution: '<a href="http://www.thunderforest.com/transport/">Thunderforest Transport</a>,' + moreAttr,
+        attribution: osmAttr + ', <a href="http://www.thunderforest.com/transport/">Thunderforest Transport</a>',
         subdomains: ['a', 'b', 'c']
     });
 
     var thunderCycle = L.tileLayer('http://{s}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png', {
-        attribution: '<a href="http://www.thunderforest.com/opencyclemap/">Thunderforest Cycle</a>,' + moreAttr,
+        attribution: osmAttr + ', <a href="http://www.thunderforest.com/opencyclemap/">Thunderforest Cycle</a>',
         subdomains: ['a', 'b', 'c']
     });
 
     var thunderOutdoors = L.tileLayer('http://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png', {
-        attribution: '<a href="http://www.thunderforest.com/outdoors/">Thunderforest Outdoors</a>,' + moreAttr,
+        attribution: osmAttr + ', <a href="http://www.thunderforest.com/outdoors/">Thunderforest Outdoors</a>',
         subdomains: ['a', 'b', 'c']
     });
 
-    //    var mapbox = L.tileLayer('http://a.tiles.mapbox.com/v3/mapbox.world-bright/{z}/{x}/{y}.png', {
-    //        attribution: '<a href="http://www.mapbox.com">MapBox</a>,' + moreAttr, 
-    //        subdomains: ['a','b','c']
-    //    });    
-
     var wrk = L.tileLayer('http://{s}.wanderreitkarte.de/topo/{z}/{x}/{y}.png', {
-        attribution: '<a href="http://wanderreitkarte.de">WanderReitKarte</a>,' + moreAttr,
+        attribution: osmAttr + ', <a href="http://wanderreitkarte.de">WanderReitKarte</a>',
         subdomains: ['topo4', 'topo', 'topo2', 'topo3']
     });
 
     var osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: moreAttr
+        attribution: osmAttr
     });
 
     var osmde = L.tileLayer('http://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png', {
-        attribution: moreAttr
-    });
-
-    // only work if you zoom a bit deeper
-    var lang = "en_US";
-    var apple = L.tileLayer('http://gsp2.apple.com/tile?api=1&style=slideshow&layers=default&lang=' + lang + '&z={z}&x={x}&y={y}&v=9', {
-        maxZoom: 17,
-        attribution: 'Map data and Imagery &copy; <a href="http://www.apple.com/ios/maps/">Apple</a>,' + moreAttr
+        attribution: osmAttr
     });
 
     // default
@@ -411,7 +412,6 @@ function initMap() {
         "TF Transport": thunderTransport,
         "TF Cycle": thunderCycle,
         "TF Outdoors": thunderOutdoors,
-        // didn't found a usage policy for this "Apple": apple,
         "WanderReitKarte": wrk,
         "OpenStreetMap": osm,
         "OpenStreetMap.de": osmde
@@ -457,6 +457,8 @@ function initMap() {
         }).addTo(map);
 
     routingLayer = L.geoJson().addTo(map);
+    routingLayer.options = {style: {color: "#00cc33", "weight": 5, "opacity": 0.6}};
+
     firstClickToRoute = true;
     function onMapClick(e) {
         var latlng = e.latlng;
@@ -558,7 +560,7 @@ function setFlag(coord, isFromViaOrTo, viaindex) {
             }
             
             // do not wait for resolving and avoid zooming when dragging
-            ghRequest.doZoom = false;
+            ghRequest.do_zoom = false;
             routeLatLng(ghRequest, false);
         });
     }
@@ -831,9 +833,9 @@ function focus(coord, zoom, isFromViaOrTo, viaindex) {
     }
 }
 function routeLatLng(request, doQuery) {
-    // doZoom should not show up in the URL but in the request object to avoid zooming for history change
-    var doZoom = request.doZoom;
-    request.doZoom = true;
+    // do_zoom should not show up in the URL but in the request object to avoid zooming for history change
+    var doZoom = request.do_zoom;
+    request.do_zoom = true;
 
     var urlForHistory = request.createFullURL();
     console.log("routeLatLng doQuery="+doQuery +" urlForHistory="+urlForHistory);
@@ -843,7 +845,7 @@ function routeLatLng(request, doQuery) {
         // 2. important workaround for encoding problems in history.js
         var params = parseUrl(urlForHistory);
         console.log(params);
-        params.doZoom = doZoom;
+        params.do_zoom = doZoom;
         // force a new request even if we have the same parameters
         params.mathRandom = Math.random();
         History.pushState(params, browserTitle, urlForHistory);
@@ -861,6 +863,10 @@ function routeLatLng(request, doQuery) {
         descriptionDiv.html('<small>' + tr('locationsNotFound') + '</small>');
         return;
     }
+
+    if (elevationControl)
+        elevationControl.clear();
+
     routingLayer.clearLayers();
     setFlag(request.from, 1, 0);
     for (i=1; i<=viacounter; i++)
@@ -884,116 +890,133 @@ function routeLatLng(request, doQuery) {
                 descriptionDiv.append("<div class='error'>" + tmpErrors[m].message + "</div>");
             }
             return;
-        } else if (json.info.routeFound === false) {
-            descriptionDiv.html('Route not found! Disconnected areas?');
-            return;
         }
+        var path = json.paths[0];
         var geojsonFeature = {
             "type": "Feature",
             // "style": myStyle,                
-            "geometry": json.route.data
+            "geometry": path.points
         };
 
+        if (path.points_dimension === 3) {
+            if (elevationControl === null) {
+                elevationControl = L.control.elevation({
+                    position: "bottomright",
+                    theme: "white-theme", //default: lime-theme
+                    width: 450,
+                    height: 125,
+                    yAxisMin: 0, // set min domain y axis
+                    // yAxisMax: 550, // set max domain y axis
+                    forceAxisBounds: false,
+                    margins: {
+                        top: 10,
+                        right: 20,
+                        bottom: 30,
+                        left: 50
+                    },
+                    useHeightIndicator: true, //if false a marker is drawn at map position
+                    interpolation: "linear", //see https://github.com/mbostock/d3/wiki/SVG-Shapes#wiki-area_interpolate
+                    hoverNumber: {
+                        decimalsX: 3, //decimals on distance (always in km)
+                        decimalsY: 0, //deciamls on height (always in m)
+                        formatter: undefined //custom formatter function may be injected
+                    },
+                    xTicks: undefined, //number of ticks in x axis, calculated by default according to width
+                    yTicks: undefined, //number of ticks on y axis, calculated by default according to height
+                    collapsed: false    //collapsed mode, show chart on click or mouseover
+                });
+                elevationControl.addTo(map);
+            }
+
+            elevationControl.addData(geojsonFeature);
+        }
+
         routingLayer.addData(geojsonFeature);
-        if (json.route.bbox && doZoom) {
-            var minLon = json.route.bbox[0];
-            var minLat = json.route.bbox[1];
-            var maxLon = json.route.bbox[2];
-            var maxLat = json.route.bbox[3];
+        if (path.bbox && doZoom) {
+            var minLon = path.bbox[0];
+            var minLat = path.bbox[1];
+            var maxLon = path.bbox[2];
+            var maxLat = path.bbox[3];
             var tmpB = new L.LatLngBounds(new L.LatLng(minLat, minLon), new L.LatLng(maxLat, maxLon));
             map.fitBounds(tmpB);
         }
 
-        var tmpTime = createTimeString(json.route.time);
-        var tmpDist = createDistanceString(json.route.distance);
-        descriptionDiv.html(tr("routeInfo", [tmpDist, tmpTime]));
-
-        var hiddenDiv = $("<div id='routeDetails'/>");
-        hiddenDiv.hide();
-
-        var toggly = $("<button style='font-size:14px; float: right; font-weight: bold; padding: 0px'>+</button>");
-        toggly.click(function() {
-            hiddenDiv.toggle();
-        });
-        $("#info").prepend(toggly);
-        var infoStr = "took: " + round(json.info.took, 1000) + "s"
-                + ", points: " + json.route.data.coordinates.length;
-        //if (json.route.instructions)
-        //    infoStr += ", instructions: " + json.route.instructions.descriptions.length;
-        hiddenDiv.append("<span>" + infoStr + "</span>");
-        $("#info").append(hiddenDiv);
-
-        var exportLink = $("#exportLink a");
-        exportLink.attr('href', urlForHistory);
-        var startOsmLink = $("<a>start</a>");
-        startOsmLink.attr("href", "http://www.openstreetmap.org/?zoom=14&mlat=" + request.from.lat + "&mlon=" + request.from.lng);
-        var endOsmLink = $("<a>end</a>");
-        endOsmLink.attr("href", "http://www.openstreetmap.org/?zoom=14&mlat=" + request.to.lat + "&mlon=" + request.to.lng);
-        hiddenDiv.append("<br/><span>View on OSM: </span>").append(startOsmLink).append(endOsmLink);
-
-        var osrmLink = $("<a>OSRM</a>");
-        osrmLink.attr("href", "http://map.project-osrm.org/?loc=" + from + "&loc=" + to);
-        hiddenDiv.append("<br/><span>Compare with: </span>");
-        hiddenDiv.append(osrmLink);
-        var googleLink = $("<a>Google</a> ");
-        var addToGoogle = "";
-        var addToBing = "";
-        if (request.vehicle.toUpperCase() == "FOOT") {
-            addToGoogle = "&dirflg=w";
-            addToBing = "&mode=W";
-        } else if ((request.vehicle.toUpperCase() == "BIKE") ||
-                (request.vehicle.toUpperCase() == "RACINGBIKE") ||
-                (request.vehicle.toUpperCase() == "MTB")) {
-            addToGoogle = "&dirflg=b";
-            // ? addToBing = "&mode=B";
-        }
-        googleLink.attr("href", "http://maps.google.com/?q=from:" + from + "+to:" + to + addToGoogle);
-        hiddenDiv.append(googleLink);
-        var bingLink = $("<a>Bing</a> ");
-        bingLink.attr("href", "http://www.bing.com/maps/default.aspx?rtp=adr." + from + "~adr." + to + addToBing);
-        hiddenDiv.append(bingLink);
-
-        if (host.indexOf("gpsies.com") > 0)
-            hiddenDiv.append("<div id='hosting'>The routing API is hosted by <a href='http://gpsies.com'>GPSies.com</a></div>");
+        var tmpTime = createTimeString(path.time);
+        var tmpDist = createDistanceString(path.distance);
+        descriptionDiv.append(tr("routeInfo", [tmpDist, tmpTime]));
 
         $('.defaulting').each(function(index, element) {
             $(element).css("color", "black");
         });
 
-        if (json.route.instructions) {
-            var instructionsElement = $("<table id='instructions'><colgroup>"
-                    + "<col width='10%'><col width='65%'><col width='25%'></colgroup>");
-            $("#info").append(instructionsElement);
-            var descriptions = json.route.instructions.descriptions;
-            var distances = json.route.instructions.distances;
-            var indications = json.route.instructions.indications;
-            var millis = json.route.instructions.millis;
-            var latLngs = json.route.instructions.latLngs;
-            for (var m = 0; m < descriptions.length; m++) {
-                var indi = indications[m];
-                if (m == 0)
-                    indi = "marker-from";
-                else if (indi == -3)
-                    indi = "sharp_left";
-                else if (indi == -2)
-                    indi = "left";
-                else if (indi == -1)
-                    indi = "slight_left";
-                else if (indi == 0)
-                    indi = "continue";
-                else if (indi == 1)
-                    indi = "slight_right";
-                else if (indi == 2)
-                    indi = "right";
-                else if (indi == 3)
-                    indi = "sharp_right";
-                else if (indi == 4)
-                    indi = "marker-to";
-                else
-                    throw "did not find indication " + indi;
+        if (path.instructions) {
+            var instructionsElement = $("<table id='instructions'>");
 
-                addInstruction(instructionsElement, indi, descriptions[m], distances[m], millis[m], latLngs[m]);
+            var partialInstr = path.instructions.length > 100;
+            var len = Math.min(path.instructions.length, 100);
+            for (var m = 0; m < len; m++) {
+                var instr = path.instructions[m];
+                var lngLat = path.points.coordinates[instr.interval[0]];
+                addInstruction(instructionsElement, instr, m, lngLat);
             }
+            $("#info").append(instructionsElement);
+
+            if (partialInstr) {
+                var moreDiv = $("<button id='moreButton'>More...</button>");
+                moreDiv.click(function() {
+                    moreDiv.remove();
+                    for (var m = len; m < path.instructions.length; m++) {
+                        var instr = path.instructions[m];
+                        var lngLat = path.points.coordinates[instr.interval[0]];
+                        addInstruction(instructionsElement, instr, m, lngLat);
+                    }
+                });
+                instructionsElement.append(moreDiv);
+            }
+
+            var hiddenDiv = $("<div id='routeDetails'/>");
+            hiddenDiv.hide();
+
+            var toggly = $("<button id='expandDetails'>+</button>");
+            toggly.click(function() {
+                hiddenDiv.toggle();
+            });
+            $("#info").append(toggly);
+            var infoStr = "took: " + round(json.info.took, 1000) + "s"
+                    + ", points: " + path.points.coordinates.length;
+
+            hiddenDiv.append("<span>" + infoStr + "</span>");
+
+            var exportLink = $("#exportLink a");
+            exportLink.attr('href', urlForHistory);
+            var startOsmLink = $("<a>start</a>");
+            startOsmLink.attr("href", "http://www.openstreetmap.org/?zoom=14&mlat=" + request.from.lat + "&mlon=" + request.from.lng);
+            var endOsmLink = $("<a>end</a>");
+            endOsmLink.attr("href", "http://www.openstreetmap.org/?zoom=14&mlat=" + request.to.lat + "&mlon=" + request.to.lng);
+            hiddenDiv.append("<br/><span>View on OSM: </span>").append(startOsmLink).append(endOsmLink);
+
+            var osrmLink = $("<a>OSRM</a>");
+            osrmLink.attr("href", "http://map.project-osrm.org/?loc=" + from + "&loc=" + to);
+            hiddenDiv.append("<br/><span>Compare with: </span>");
+            hiddenDiv.append(osrmLink);
+            var googleLink = $("<a>Google</a> ");
+            var addToGoogle = "";
+            var addToBing = "";
+            if (request.vehicle.toUpperCase() === "FOOT") {
+                addToGoogle = "&dirflg=w";
+                addToBing = "&mode=W";
+            } else if ((request.vehicle.toUpperCase() === "BIKE") ||
+                    (request.vehicle.toUpperCase() === "RACINGBIKE") ||
+                    (request.vehicle.toUpperCase() === "MTB")) {
+                addToGoogle = "&dirflg=b";
+                // ? addToBing = "&mode=B";
+            }
+            googleLink.attr("href", "http://maps.google.com/?q=from:" + from + "+to:" + to + addToGoogle);
+            hiddenDiv.append(googleLink);
+            var bingLink = $("<a>Bing</a> ");
+            bingLink.attr("href", "http://www.bing.com/maps/default.aspx?rtp=adr." + from + "~adr." + to + addToBing);
+            hiddenDiv.append(bingLink);
+            $("#info").append(hiddenDiv);
         }
     });
 }
@@ -1028,41 +1051,60 @@ function createTimeString(time) {
     return resTimeStr;
 }
 
-function addInstruction(main, indi, title, distance, milliEntry, latLng) {
-    var indiPic = "<img class='instr_pic' style='vertical-align: middle' src='" +
-            window.location.pathname + "img/" + indi + ".png'/>";
+function addInstruction(main, instr, instrIndex, lngLat) {
+    var sign = instr.sign;
+    if (instrIndex === 0)
+        sign = "marker-icon-green";
+    else if (sign === -3)
+        sign = "sharp_left";
+    else if (sign === -2)
+        sign = "left";
+    else if (sign === -1)
+        sign = "slight_left";
+    else if (sign === 0)
+        sign = "continue";
+    else if (sign === 1)
+        sign = "slight_right";
+    else if (sign === 2)
+        sign = "right";
+    else if (sign === 3)
+        sign = "sharp_right";
+    else if (sign === 4)
+        sign = "marker-icon-red";
+    else if (sign === 5)
+        sign = "marker-icon-yellow";
+    else
+        throw "did not found sign " + sign;
+    var title = instr.text;
+    var distance = instr.distance;
     var str = "<td class='instr_title'>" + title + "</td>";
 
     if (distance > 0) {
-        str += " <td class='instr_distance_td'><span class='instr_distance'>" + createDistanceString(distance) + "<br/>"
-                + createTimeString(milliEntry) + "</span></td>";
+        str += " <td class='instr_distance'><span>"
+                + createDistanceString(distance) + "<br/>"
+                + createTimeString(instr.time) + "</span></td>";
     }
 
-    if (indi !== "continue")
-        str = "<td>" + indiPic + "</td>" + str;
-    else
-        str = "<td/>" + str;
+    if (sign !== "continue") {
+        var indiPic = "<img class='pic' style='vertical-align: middle' src='" +
+                window.location.pathname + "img/" + sign + ".png'/>";
+        str = "<td class='instr_pic'>" + indiPic + "</td>" + str;
+    } else
+        str = "<td class='instr_pic'/>" + str;
     var instructionDiv = $("<tr class='instruction'/>");
     instructionDiv.html(str);
-    if (latLng) {
+    if (lngLat) {
         instructionDiv.click(function() {
-            hideRouteSegmentPopup();
-            showRouteSegmentPopup(indiPic + " " + title, latLng);
+            if (routeSegmentPopup)
+                map.removeLayer(routeSegmentPopup);
+
+            routeSegmentPopup = L.popup().
+                    setLatLng([lngLat[1], lngLat[0]]).
+                    setContent(title).
+                    openOn(map);
         });
     }
     main.append(instructionDiv);
-}
-
-function showRouteSegmentPopup(html, latLng) {
-    hideRouteSegmentPopup();
-    routeSegmentPopup = L.popup().setLatLng(latLng).setContent(html).openOn(map);
-}
-
-function hideRouteSegmentPopup() {
-    if (routeSegmentPopup) {
-        map.removeLayer(routeSegmentPopup);
-        routeSegmentPopup = null;
-    }
 }
 
 function getCenter(bounds) {
@@ -1137,7 +1179,6 @@ function mySubmit() {
       ghRequest.via[i-1] = new GHInput(viaStr);
       viaarray.push(viaStr);
     }
-
     // route!
     resolveCoords(fromStr, viaarray, toStr);
 }
@@ -1210,122 +1251,116 @@ function exportGPX() {
     return false;
 }
 
-function getAutoCompleteDiv(fromOrViaOrTo, viaindex) {
-  if (fromOrViaOrTo == "from")
-       return $('#fromInput')
-  else 
-  {
-    if (fromOrViaOrTo == "via")
-       return $('#viaInput'+(viaindex))
-    else
-       return $('#toInput');
-  }
+function getAutoCompleteDiv(fromOrTo) {
+    return $('#' + fromOrTo + 'Input');
 }
 
-function setAutoCompleteList(fromOrViaOrTo, ghRequestLoc, viaindex) {
-    function formatValue(suggestionValue, currentValue) {
-        var pattern = '(' + $.Autocomplete.utils.escapeRegExChars(currentValue) + ')';
-        return suggestionValue.replace(new RegExp(pattern, 'gi'), '<strong>$1<\/strong>');
-    }
-    var pointIndex;
-    switch(fromOrViaOrTo)
-        {
-            case "from":
-               pointIndex = 1;
-               break;         
-            case "via":
-               pointIndex = 1 + viaindex;
-               break;         
-            case "to":
-               pointIndex = 2 + ghRequest.via.length; 
-               break;         
-        }
-    var fakeCurrentInput = ghRequestLoc.input.toLowerCase();
-    var valueDataList = [];
-    var list = ghRequestLoc.resolvedList;
-    for (var index in list) {
-        var dataItem = list[index];
-        valueDataList.push({value: dataToText(dataItem), data: dataItem});
-    }
+function formatValue(orig, query) {
+    var pattern = '(' + $.Autocomplete.utils.escapeRegExChars(query) + ')';
+    return orig.replace(new RegExp(pattern, 'gi'), '<strong>$1<\/strong>');
+}
 
+function setAutoCompleteList(fromOrTo, ghRequestLoc) {
+    var isFrom = fromOrTo === "from";
+    var pointIndex = isFrom ? 1 : 2;
+    var myAutoDiv = getAutoCompleteDiv(fromOrTo);
+    
     var options = {
+        containerClass: "complete-" + pointIndex,
+        /* as we use jsonp we need to set the timeout to a small value */        
+        timeout: 1000,
+        /* avoid too many requests when typing quickly */
+        deferRequestBy: 5,
+        minChars: 2,
         maxHeight: 510,
+        noCache: true,
+        /* this default could be problematic: preventBadQueries: true, */
         triggerSelectOnValidInput: false,
         autoSelectFirst: false,
-        lookup: valueDataList,
+        paramName: "q",
+        dataType: "jsonp",
+        serviceUrl: function() {
+            return ghRequest.createGeocodeURL();
+        },
+        transformResult: function(response, originalQuery) {
+            response.suggestions = [];
+            for (var i = 0; i < response.hits.length; i++) {
+                var hit = response.hits[i];
+                response.suggestions.push({value: dataToText(hit), data: hit});
+            }
+            return response;
+        },
         onSearchError: function(element, q, jqXHR, textStatus, errorThrown) {
-            console.log(element + ", " + q + ", textStatus " + textStatus + ", " + errorThrown);
+            // too many errors if interrupted console.log(element + ", " + JSON.stringify(q) + ", textStatus " + textStatus + ", " + errorThrown);
         },
         formatResult: function(suggestion, currInput) {
             // avoid highlighting for now as this breaks the html sometimes
-            return dataToHtml(suggestion.data);
+            return dataToHtml(suggestion.data, currInput);
         },
-        lookupFilter: function(suggestion, originalQuery, queryLowerCase) {
-            if (queryLowerCase === fakeCurrentInput)
-                return true;
-            return suggestion.value.toLowerCase().indexOf(queryLowerCase) !== -1;
+        onSelect: function(suggestion) {
+            options.onPreSelect(suggestion);
+        },
+        onPreSelect: function(suggestion) {
+            var req = ghRequest.to;
+            if (isFrom)
+                req = ghRequest.from;
+
+            myAutoDiv.autocomplete().disable();
+            
+            var point = suggestion.data.point;
+            req.setCoord(point.lat, point.lng);            
+            
+            req.input = suggestion.value;            
+            if (ghRequest.from.isResolved() && ghRequest.to.isResolved())
+                routeLatLng(ghRequest);
+            else
+                focus(req, 15, isFrom);
+            
+            myAutoDiv.autocomplete().enable();
         }
     };
-    options.onSelect = function(suggestion) {
-        options.onPreSelect(suggestion);
-    };
-    options.onPreSelect = function(suggestion) {
-        var data = suggestion.data;
-        ghRequestLoc.setCoord(data.lat, data.lng);
-        ghRequestLoc.input = dataToText(suggestion.data);
-        if (ghRequest.from.isResolved() && ghRequest.to.isResolved())
-            routeLatLng(ghRequest);
-        else if (suggestion.data.boundingbox) {
-            var bbox = suggestion.data.box;
-            focusWithBounds(ghRequestLoc, [[bbox[0], bbox[2]], [bbox[1], bbox[3]]], 1, 0);
-        } else
-            focus(ghRequestLoc, 15, 1, 0);
-    };
-
-    options.containerClass = "complete-" + pointIndex;
-    var myAutoDiv = getAutoCompleteDiv(fromOrViaOrTo, viaindex);
+    
     myAutoDiv.autocomplete(options);
-    myAutoDiv.autocomplete().forceSuggest("");
-    myAutoDiv.focus();
 }
 
-function dataToHtml(data) {
-    var data = data.locationDetails;
-    var text = "";
-    if (data.road)
-        text += "<div class='roadseg'>" + data.road + "</div>";
-    if (data.city) {
-        text += "<div class='cityseg'>" + insComma(data.city, data.country) + "</div>";
-    }
+function dataToHtml(data, query) {
+    var element = "";
+    if (data.name)
+        element += "<div class='nameseg'>" + formatValue(data.name, query) + "</div>";
+    var addStr = "";
+    if (data.postcode)
+        addStr = data.postcode;
+    if (data.city)
+        addStr = insComma(addStr, data.city);
     if (data.country)
-        text += "<div class='moreseg'>" + data.more + "</div>";
-    return text;
+        addStr = insComma(addStr, data.country);
+
+    if (addStr)
+        element += "<div class='cityseg'>" + formatValue(addStr, query) + "</div>";
+
+    if (data.osm_key === "highway") {
+        // ignore
+    }
+    if (data.osm_key === "place") {
+        element += "<span class='moreseg'>" + data.osm_value + "</span>";
+    } else
+        element += "<span class='moreseg'>" + data.osm_key + "</span>";
+    return element;
 }
 
-// do not print everything as nominatim slows down or doesn't properly handle if continent etc is included
 function dataToText(data) {
-    var data = data.locationDetails;
     var text = "";
-    if (data.road)
-        text += data.road;
-
-    if (data.city) {
-        if (text.length > 0)
-            text += ", ";
-        text += data.city;
-    }
-
-    if (data.postcode) {
-        if (text.length > 0)
-            text += ", ";
-        text += data.postcode;
-    }
-
-    if (data.country) {
-        if (text.length > 0)
-            text += ", ";
-        var tmp = $.trim(data.country.replace(data.city, '').replace(data.city + ", ", ''));
-        text += tmp;
-    }
+    if (data.name)
+        text += data.name;
+    
+    if (data.postcode)
+        text = insComma(text, data.postcode);
+    
+    // make sure name won't be duplicated
+    if (data.city && text.indexOf(data.city) < 0)
+        text = insComma(text, data.city);
+    
+    if (data.country && text.indexOf(data.country) < 0)
+        text = insComma(text, data.country);       
     return text;
 }

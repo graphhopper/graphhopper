@@ -1,34 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <actions>
     <action>
-        <actionName>CUSTOM-jetty:run</actionName>
-        <displayName>jetty:run</displayName>
+        <actionName>CUSTOM-failsafe verify</actionName>
+        <displayName>failsafe verify</displayName>
         <goals>
-            <goal>jetty:run</goal>
+            <goal>failsafe:integration-test</goal>
+            <goal>verify</goal>
         </goals>
-        <properties>
-            <maven.test.skip>true</maven.test.skip>
-            <Env.MAVEN_OPTS>-Djetty.port=8989 -Dgraphhopper.config=../config.properties -Dgraphhopper.osmreader.osm=../core/files/krems.osm.gz -Xms1500m -Xms1500m</Env.MAVEN_OPTS>
-        </properties>
     </action>
     <action>
-        <actionName>CUSTOM-jetty:run debug</actionName>
-        <displayName>jetty:run debug</displayName>
-        <goals>
-            <goal>jetty:run</goal>
-        </goals>
-        
-        <properties>
-            <maven.test.skip>true</maven.test.skip>
-            <Env.MAVEN_OPTS>-Djetty.port=8989 -Dgraphhopper.config=../config.properties -Dgraphhopper.osmreader.osm=../core/files/circle-bug.osm.gz -Xms1500m -Xms1500m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=8000</Env.MAVEN_OPTS>
-        </properties>
-    </action>
-    <action>
-            <actionName>CUSTOM-failsafe verify</actionName>
-            <displayName>failsafe verify</displayName>
+            <actionName>run</actionName>
+            <packagings>
+                <packaging>jar</packaging>
+            </packagings>
             <goals>
-                <goal>failsafe:integration-test</goal>
-                <goal>verify</goal>
+                <goal>process-classes</goal>
+                <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
+            <properties>
+                <exec.args>-classpath %classpath com.graphhopper.http.GHServer graph.elevation.cachedir=../srtmprovider jetty.port=8900 config=../config.properties osmreader.osm=/media/SAMSUNG/maps/berlin.pbf</exec.args>
+                <exec.executable>java</exec.executable>
+            </properties>
+        </action>
+    <action>
+            <actionName>debug</actionName>
+            <packagings>
+                <packaging>jar</packaging>
+            </packagings>
+            <goals>
+                <goal>process-classes</goal>
+                <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
+            </goals>
+            <properties>
+                <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -classpath %classpath com.graphhopper.http.GHServer graph.elevation.cachedir=../srtmprovider jetty.port=8900 config=../config.properties osmreader.osm=/media/SAMSUNG/maps/berlin.pbf</exec.args>
+                <exec.executable>java</exec.executable>
+                <jpda.listen>true</jpda.listen>
+            </properties>
+        </action>
+    <action>
+            <actionName>profile</actionName>
+            <packagings>
+                <packaging>jar</packaging>
+            </packagings>
+            <goals>
+                <goal>process-classes</goal>
+                <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
+            </goals>
+            <properties>
+                <exec.args>-classpath %classpath com.graphhopper.http.GHServer graph.elevation.cachedir=../srtmprovider jetty.port=8900 config=../config.properties osmreader.osm=/media/SAMSUNG/maps/berlin.pbf</exec.args>
+                <exec.executable>java</exec.executable>
+            </properties>
         </action>
 </actions>

@@ -1,29 +1,35 @@
 // IE fix
 if (!window.console) {
     var console = {
-        log: function() {},
-        warn: function() {},
-        error: function() {},
-        time: function() {},
-        timeEnd: function() {}
+        log: function() {
+        },
+        warn: function() {
+        },
+        error: function() {
+        },
+        time: function() {
+        },
+        timeEnd: function() {
+        }
     };
 }
 
 GHRequest = function(host) {
-    this.minPathPrecision = 1;
+    this.min_path_precision = 1;
     this.host = host;
     this.from = new GHInput("");
     this.via = new Array();
     this.to = new GHInput("");
     this.vehicle = "car";
     this.weighting = "fastest";
-    this.encodedPolyline = true;
+    this.points_encoded = true;
     this.instructions = true;
     this.debug = false;
     this.locale = "en";
-    this.doZoom = true;
-    // if your server allows CORS you can use json here
+    this.do_zoom = true;
+    // use jsonp here if host allows CORS
     this.dataType = "jsonp";
+    this.key = "tcV28oCCNIzu4GD1Hsp8dYGAHqFBXvYrBvBwthGE";
 };
 
 GHRequest.prototype.init = function(params) {
@@ -45,17 +51,14 @@ GHRequest.prototype.init = function(params) {
         this.vehicle = params.vehicle;
     if (params.weighting)
         this.weighting = params.weighting;
-    // REMOVE_IN 0.3
-    if (params.algoType)
-        this.weighting = params.algoType;
     if (params.algorithm)
         this.algorithm = params.algorithm;
     if (params.locale)
         this.locale = params.locale;
 
-    this.handleBoolean("doZoom", params);
+    this.handleBoolean("do_zoom", params);
     this.handleBoolean("instructions", params);
-    this.handleBoolean("encodedPolyline", params);
+    this.handleBoolean("points_encoded", params);
 
     if (params.q) {
         var qStr = params.q;
@@ -76,7 +79,7 @@ GHRequest.prototype.init = function(params) {
             var points = qStr.split("p:");
             for (var i = 0; i < points.length; i++) {
                 var str = points[i].trim();
-                if (str.length == 0)
+                if (str.length === 0)
                     continue;
 
                 params.point.push(str);
@@ -87,11 +90,15 @@ GHRequest.prototype.init = function(params) {
 
 GHRequest.prototype.handleBoolean = function(key, params) {
     if (key in params)
-        this.doZoom = params[key] == "true" || params[key] == true;
+        this[key] = params[key] === "true" || params[key] === true;
+};
+
+GHRequest.prototype.createGeocodeURL = function() {
+    return this.createPath(this.host + "/geocode?limit=8&type=" + this.dataType + "&key=" + this.key);
 };
 
 GHRequest.prototype.createURL = function(demoUrl) {
-    return this.createPath(this.host + "/api/route?" + demoUrl + "&type=" + this.dataType);
+    return this.createPath(this.host + "/route?" + demoUrl + "&type=" + this.dataType + "&key=" + this.key);
 };
 
 GHRequest.prototype.createViaParams = function() {
@@ -115,7 +122,7 @@ GHRequest.prototype.createFullViaParams = function() {
 GHRequest.prototype.createGPXURL = function() {
     // use points instead of strings
     var str = "point=" + encodeURIComponent(this.from.toString()) + this.createViaParams() + "&point=" + encodeURIComponent(this.to.toString());
-    return this.createPath(this.host + "/api/route?" + str + "&type=gpx");
+    return this.createPath(this.host + "/route?" + str + "&type=gpx");
 };
 
 GHRequest.prototype.createFullURL = function() {
@@ -136,22 +143,23 @@ GHRequest.prototype.createPath = function(url) {
         url += "&algorithm=" + this.algorithm;
     if (!this.instructions)
         url += "&instructions=false";
-    if (!this.encodedPolyline)
-        url += "&encodedPolyline=false";
-    if (this.minPathPrecision != 1)
-        url += "&minPathPrecision=" + this.minPathPrecision;
+    if (!this.points_encoded)
+        url += "&points_encoded=false";
+    if (this.min_path_precision !== 1)
+        url += "&min_path_precision=" + this.min_path_precision;
     if (this.debug)
         url += "&debug=true";
     return url;
 }
 
-function decodePath(encoded, geoJson) {
-    var start = new Date().getTime();
+function decodePath(encoded, is3D) {
+    // var start = new Date().getTime();
     var len = encoded.length;
     var index = 0;
     var array = [];
     var lat = 0;
     var lng = 0;
+    var ele = 0;
 
     while (index < len) {
         var b;
@@ -175,37 +183,50 @@ function decodePath(encoded, geoJson) {
         var deltaLon = ((result & 1) ? ~(result >> 1) : (result >> 1));
         lng += deltaLon;
 
-        if (geoJson)
+        if (is3D) {
+            // elevation
+            shift = 0;
+            result = 0;
+            do
+            {
+                b = encoded.charCodeAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20);
+            var deltaEle = ((result & 1) ? ~(result >> 1) : (result >> 1));
+            ele += deltaEle;
+            array.push([lng * 1e-5, lat * 1e-5, ele / 100]);
+        } else
             array.push([lng * 1e-5, lat * 1e-5]);
-        else
-            array.push([lat * 1e-5, lng * 1e-5]);
     }
-    var end = new Date().getTime();
-    console.log("decoded " + len + " coordinates in " + ((end - start) / 1000) + "s");
+    // var end = new Date().getTime();
+    // console.log("decoded " + len + " coordinates in " + ((end - start) / 1000) + "s");
     return array;
 }
 
 GHRequest.prototype.doRequest = function(url, callback) {
-    var tmpEncodedPolyline = this.encodedPolyline;
     $.ajax({
         "timeout": 30000,
         "url": url,
         "success": function(json) {
-            if (tmpEncodedPolyline && json.route) {
-                // convert encoded polyline stuff to normal json
-                if (json.route.coordinates) {
-                    var tmpArray = decodePath(json.route.coordinates, true);
-                    json.route.coordinates = null;
-                    json.route.data = {
-                        "type": "LineString",
-                        "coordinates": tmpArray
-                    };
-                } else
-                    console.log("something wrong on server? wrong server version? as we have encodedPolyline=" + tmpEncodedPolyline + " but no encoded data was return?");
+            if (json.paths) {
+                for (var i = 0; i < json.paths.length; i++) {
+                    var path = json.paths[i];
+                    // convert encoded polyline to geo json
+                    if (path.points_encoded) {
+                        var tmpArray = decodePath(path.points, path.points_dimension === 3);
+                        path.points = {
+                            "type": "LineString",
+                            "coordinates": tmpArray
+                        };
+                    }
+                }
             }
             callback(json);
         },
         "error": function(err) {
+            // problematic: this callback is not invoked when using JSONP!
+            // http://stackoverflow.com/questions/19035557/jsonp-request-error-handling
             var msg = "API did not respond! ";
             if (err && err.statusText && err.statusText != "OK")
                 msg += err.statusText;
@@ -228,7 +249,7 @@ GHRequest.prototype.doRequest = function(url, callback) {
 };
 
 GHRequest.prototype.getInfo = function() {
-    var url = this.host + "/api/info?type=" + this.dataType;
+    var url = this.host + "/info?type=" + this.dataType + "&key=" + this.key;
     console.log(url);
     return $.ajax({
         "url": url,
@@ -249,8 +270,8 @@ GHInput = function(str) {
             if (!isNaN(this.lat) && !isNaN(this.lng)) {
                 this.input = this.toString();
             } else {
-                this.lat = false;
-                this.lng = false;
+                this.lat = undefined;
+                this.lng = undefined;
             }
         }
     } catch (ex) {
@@ -268,7 +289,7 @@ GHInput.prototype.setCoord = function(lat, lng) {
 };
 
 GHInput.prototype.toString = function() {
-    if (this.lat && this.lng)
+    if (this.lat !== undefined && this.lng !== undefined)
         return this.lat + "," + this.lng;
     return undefined;
 };
@@ -282,7 +303,7 @@ GHRequest.prototype.fetchTranslationMap = function(urlLocaleParam) {
     if (!urlLocaleParam)
         // let servlet figure out the locale from the Accept-Language header
         urlLocaleParam = "";
-    var url = this.host + "/api/i18n/" + urlLocaleParam + "?type=" + this.dataType;
+    var url = this.host + "/i18n/" + urlLocaleParam + "?type=" + this.dataType + "&key=" + this.key;
     console.log(url);
     return $.ajax({
         "url": url,

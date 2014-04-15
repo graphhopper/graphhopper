@@ -1,7 +1,8 @@
 ## Low level API
 
-If you just start to use GraphHopper please refer to routing.md and come back here later if the
-higher level API does not suit your needs.
+If you just start to use GraphHopper please refer to [routing docs](./routing.md)
+or [the quickstart for developers](./quickstart-from-source.md)
+and come back here later if the higher level API does not suit your needs.
 
 ### Create and save the graph
 
@@ -30,6 +31,8 @@ if (!index.loadExisting())
 ```
 
 ### Calculate Path with LocationIndex
+
+```java
 QueryResult fromQR = index.findClosest(latitudeFrom, longituteFrom, EdgeFilter.ALL_EDGES);
 QueryResult toQR = index.findID(latitudeTo, longituteTo, EdgeFilter.ALL_EDGES);
 Path path = new Dijkstra(graph, encoder).calcPath(fromQR, toQR);

@@ -34,7 +34,7 @@ public class GHBaseServlet extends HttpServlet
 {
     protected Logger logger = LoggerFactory.getLogger(getClass());
 
-    protected void writeJson( HttpServletRequest req, HttpServletResponse res, JSONObject json ) throws JSONException
+    protected void writeJson( HttpServletRequest req, HttpServletResponse res, JSONObject json ) throws JSONException, IOException
     {
         String type = getParam(req, "type", "json");
         res.setCharacterEncoding("UTF-8");
@@ -43,6 +43,12 @@ public class GHBaseServlet extends HttpServlet
         {
             res.setContentType("application/javascript");
             String callbackName = getParam(req, "callback", null);
+            if (callbackName == null)
+            {
+                res.sendError(SC_BAD_REQUEST, "No callback provided, necessary if type=jsonp");
+                return;
+            }
+
             if (debug)
             {
                 writeResponse(res, callbackName + "(" + json.toString(2) + ")");

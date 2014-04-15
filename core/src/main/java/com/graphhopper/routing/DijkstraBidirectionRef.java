@@ -157,15 +157,15 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
             if (currEdge.edge == iter.getEdge())
                 continue;
 
-            int neighborNode = iter.getAdjNode();
+            int adjNode = iter.getAdjNode();
             double tmpWeight = weighting.calcWeight(iter, reverse) + currEdge.weight;
 
-            EdgeEntry de = shortestWeightMap.get(neighborNode);
+            EdgeEntry de = shortestWeightMap.get(adjNode);
             if (de == null)
             {
-                de = new EdgeEntry(iter.getEdge(), neighborNode, tmpWeight);
+                de = new EdgeEntry(iter.getEdge(), adjNode, tmpWeight);
                 de.parent = currEdge;
-                shortestWeightMap.put(neighborNode, de);
+                shortestWeightMap.put(adjNode, de);
                 prioQueue.add(de);
             } else if (de.weight > tmpWeight)
             {
@@ -176,7 +176,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
                 prioQueue.add(de);
             }
 
-            updateShortest(de, neighborNode);
+            updateShortest(de, adjNode);
         }
     }
 

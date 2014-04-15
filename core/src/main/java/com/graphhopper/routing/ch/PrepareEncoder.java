@@ -40,4 +40,22 @@ public class PrepareEncoder
     {
         return scFwdDir;
     }
+
+    /**
+     * Returns true if flags1 can be overwritten in the edge by flags2 without restricting or
+     * changing the directions of flags1.
+     * <p>
+     * @return true if flags2 is enabled in both directions or if both flags are pointing into the
+     * same direction.
+     */
+    //        \  flags2:
+    // flags1  \ -> | <- | <->
+    // ->         t | f  | t
+    // <-         f | t  | t
+    // <->        f | f  | t
+    public static final boolean canBeOverwritten( long flags1, long flags2 )
+    {
+        return (flags2 & scDirMask) == scDirMask
+                || (flags1 & scDirMask) == (flags2 & scDirMask);
+    }
 }

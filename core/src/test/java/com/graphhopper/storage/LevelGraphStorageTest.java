@@ -17,6 +17,10 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.ch.PrepareEncoder;
+import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterState;
@@ -36,21 +40,15 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
     }
 
     @Override
-    protected LevelGraphStorage createGraphStorage( Directory dir )
+    public GraphStorage newGraph( Directory dir, boolean is3D )
     {
-        return (LevelGraphStorage) super.createGraphStorage(dir);
-    }
-
-    @Override
-    public GraphStorage newGraph( Directory dir )
-    {
-        return new LevelGraphStorage(dir, encodingManager);
+        return new LevelGraphStorage(dir, encodingManager, is3D);
     }
 
     @Test
     public void testCannotBeLoadedViaDifferentClass()
     {
-        GraphStorage g = createGraphStorage(new RAMDirectory(defaultGraphLoc, true));
+        GraphStorage g = newGraph(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
         g.flush();
         g.close();
 
@@ -63,7 +61,7 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         {
         }
 
-        g = newGraph(new RAMDirectory(defaultGraphLoc, true));
+        g = newGraph(new RAMDirectory(defaultGraphLoc, true), false);
         assertTrue(g.loadExisting());
     }
 
@@ -185,5 +183,28 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         assertEquals(100.123, sc1.getWeight(), 1e-3);
         assertTrue(carEncoder.isBackward(sc1.getFlags()));
         assertFalse(carEncoder.isForward(sc1.getFlags()));
+    }
+
+    @Test
+    public void testGetWeightIfAdvancedEncoder()
+    {
+        FlagEncoder customEncoder = new Bike2WeightFlagEncoder();
+        LevelGraphStorage g = new GraphBuilder(new EncodingManager(customEncoder)).levelGraphCreate();
+
+        EdgeSkipIterState sc1 = g.shortcut(0, 1);
+        long flags = customEncoder.setProperties(10, false, true);
+        sc1.setFlags(flags);
+        sc1.setWeight(100.123);
+
+        assertEquals(100.123, g.getEdgeProps(sc1.getEdge(), sc1.getAdjNode()).getWeight(), 1e-3);
+        assertEquals(100.123, g.getEdgeProps(sc1.getEdge(), sc1.getBaseNode()).getWeight(), 1e-3);
+        assertEquals(100.123, ((EdgeSkipIterState) GHUtility.getEdge(g, sc1.getBaseNode(), sc1.getAdjNode())).getWeight(), 1e-3);
+        assertEquals(100.123, ((EdgeSkipIterState) GHUtility.getEdge(g, sc1.getAdjNode(), sc1.getBaseNode())).getWeight(), 1e-3);
+
+        sc1 = g.shortcut(1, 0);
+        assertTrue(sc1.isShortcut());
+        sc1.setFlags(PrepareEncoder.getScDirMask());
+        sc1.setWeight(1.011011);
+        assertEquals(1.011011, sc1.getWeight(), 1e-3);
     }
 }

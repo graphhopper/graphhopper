@@ -18,13 +18,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMNode;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.graphhopper.reader.OSMWay;
-
 import org.junit.Test;
-
 import static org.junit.Assert.*;
 
 /**
@@ -39,43 +34,42 @@ public class CarFlagEncoderTest
     @Test
     public void testAccess()
     {
-        Map<String, String> map = new HashMap<String, String>();
-        OSMWay way = new OSMWay(1, map);
+        OSMWay way = new OSMWay(1);
         assertFalse(encoder.acceptWay(way) > 0);
-        map.put("highway", "service");
+        way.setTag("highway", "service");
         assertTrue(encoder.acceptWay(way) > 0);
-        map.put("access", "no");
+        way.setTag("access", "no");
         assertFalse(encoder.acceptWay(way) > 0);
 
-        map.clear();
-        map.put("highway", "track");
-        map.put("motorcar", "no");
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("motorcar", "no");
         assertFalse(encoder.acceptWay(way) > 0);
 
-        map.clear();
-        map.put("highway", "unclassified");
-        map.put("ford", "yes");
+        way.clearTags();
+        way.setTag("highway", "unclassified");
+        way.setTag("ford", "yes");
         assertFalse(encoder.acceptWay(way) > 0);
-        map.put("motorcar", "yes");
+        way.setTag("motorcar", "yes");
         assertTrue(encoder.acceptWay(way) > 0);
 
-        map.clear();
-        map.put("route", "ferry");
+        way.clearTags();
+        way.setTag("route", "ferry");
         assertTrue(encoder.acceptWay(way) > 0);
-        map.put("motorcar", "no");
+        way.setTag("motorcar", "no");
         assertFalse(encoder.acceptWay(way) > 0);
 
-        map.clear();
-        map.put("route", "ferry");
-        map.put("foot", "yes");
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("foot", "yes");
         assertFalse(encoder.acceptWay(way) > 0);
 
-        map.clear();
-        map.put("highway", "primary");
+        way.clearTags();
+        way.setTag("highway", "primary");
         long flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertTrue(encoder.isForward(flags));
         assertTrue(encoder.isBackward(flags));
-        map.put("oneway", "yes");
+        way.setTag("oneway", "yes");
         flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertTrue(encoder.isForward(flags));
         assertFalse(encoder.isBackward(flags));
@@ -95,52 +89,69 @@ public class CarFlagEncoderTest
     }
 
     @Test
-    public void testSpeedLimitBiggerThanMaxValue()
+    public void testMaxSpeed()
     {
-        Map<String, String> map = new HashMap<String, String>();
-        OSMWay way = new OSMWay(1, map);
-        map.put("highway", "trunk");
-        map.put("maxspeed", "500");
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "trunk");
+        way.setTag("maxspeed", "500");
         long allowed = encoder.acceptWay(way);
         long encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(100, encoder.getSpeed(encoded), 1e-1);
+
+        way = new OSMWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("maxspeed:backward", "10");
+        way.setTag("maxspeed:forward", "20");
+        encoded = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertEquals(10, encoder.getSpeed(encoded), 1e-1);
+        
+        way = new OSMWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("maxspeed:forward", "20");
+        encoded = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertEquals(20, encoder.getSpeed(encoded), 1e-1);
+        
+        way = new OSMWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("maxspeed:backward", "20");
+        encoded = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertEquals(20, encoder.getSpeed(encoded), 1e-1);
     }
 
     @Test
     public void testSpeed()
     {
         // limit bigger than default road speed
-        Map<String, String> map = new HashMap<String, String>();
-        OSMWay way = new OSMWay(1, map);
-        map.put("highway", "trunk");
-        map.put("maxspeed", "110");
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "trunk");
+        way.setTag("maxspeed", "110");
         long allowed = encoder.acceptWay(way);
         long encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(100, encoder.getSpeed(encoded), 1e-1);
 
-        map.clear();
-        map.put("highway", "residential");
-        map.put("surface", "cobblestone");
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("surface", "cobblestone");
         allowed = encoder.acceptWay(way);
         encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(30, encoder.getSpeed(encoded), 1e-1);
 
-        map.clear();
-        map.put("highway", "track");
+        way.clearTags();
+        way.setTag("highway", "track");
         allowed = encoder.acceptWay(way);
         encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(15, encoder.getSpeed(encoded), 1e-1);
 
-        map.clear();
-        map.put("highway", "track");
-        map.put("tracktype", "grade1");
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("tracktype", "grade1");
         allowed = encoder.acceptWay(way);
         encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(20, encoder.getSpeed(encoded), 1e-1);
 
-        map.clear();
-        map.put("highway", "track");
-        map.put("tracktype", "grade5");
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("tracktype", "grade5");
         allowed = encoder.acceptWay(way);
         encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(5, encoder.getSpeed(encoded), 1e-1);
@@ -180,11 +191,11 @@ public class CarFlagEncoderTest
         way.setTag("motorcar", "yes");
         way.setTag("bicycle", "no");
         way.setTag("duration", "35");
-        way.setInternalTag("estimated_distance", 50000);
+        way.setTag("estimated_distance", 50000);
         // accept
         assertNotSame(0, encoder.acceptWay(way));
         // calculate speed from estimated_distance and duration
-        assertEquals(60, encoder.getSpeed(encoder.handleFerry(way, 20, 30, 40)), 1e-1);
+        assertEquals(60, encoder.getSpeed(encoder.handleFerryTags(way, 20, 30, 40)), 1e-1);
     }
 
     @Test
@@ -192,29 +203,9 @@ public class CarFlagEncoderTest
     {
         assertTrue(encoder.isForward(encoder.flagsDefault(true, true)));
         assertTrue(encoder.isBackward(encoder.flagsDefault(true, true)));
-        assertTrue(encoder.isBoth(encoder.flagsDefault(true, true)));
 
         assertTrue(encoder.isForward(encoder.flagsDefault(true, false)));
         assertFalse(encoder.isBackward(encoder.flagsDefault(true, false)));
-        assertFalse(encoder.isBoth(encoder.flagsDefault(true, false)));
-    }
-
-    @Test
-    public void testOverwrite()
-    {
-        long forward = encoder.setProperties(10, true, false);
-        long backward = encoder.reverseFlags(forward);
-        long both = encoder.setProperties(20, true, true);
-        assertTrue(encoder.canBeOverwritten(forward, forward));
-        assertTrue(encoder.canBeOverwritten(backward, backward));
-        assertTrue(encoder.canBeOverwritten(forward, both));
-        assertTrue(encoder.canBeOverwritten(backward, both));
-
-        assertTrue(encoder.canBeOverwritten(both, both));
-        assertFalse(encoder.canBeOverwritten(both, forward));
-        assertFalse(encoder.canBeOverwritten(both, backward));
-        assertFalse(encoder.canBeOverwritten(forward, backward));
-        assertFalse(encoder.canBeOverwritten(backward, forward));
     }
 
     @Test
@@ -239,27 +230,27 @@ public class CarFlagEncoderTest
         node.setTag("barrier", "lift_gate");
         node.setTag("access", "yes");
         // no barrier!
-        assertTrue(encoder.analyzeNodeTags(node) == 0);
+        assertTrue(encoder.handleNodeTags(node) == 0);
 
         node = new OSMNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
         node.setTag("bicycle", "yes");
         // barrier!
-        assertTrue(encoder.analyzeNodeTags(node) > 0);
+        assertTrue(encoder.handleNodeTags(node) > 0);
 
         node = new OSMNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
         node.setTag("access", "yes");
         node.setTag("bicycle", "yes");
         // should this be a barrier for motorcars too?
-        // assertTrue(encoder.analyzeNodeTags(node) > 0);
+        // assertTrue(encoder.handleNodeTags(node) > 0);
 
         node = new OSMNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
         node.setTag("access", "no");
         node.setTag("motorcar", "yes");
         // no barrier!
-        assertTrue(encoder.analyzeNodeTags(node) == 0);
+        assertTrue(encoder.handleNodeTags(node) == 0);
     }
 
     @Test

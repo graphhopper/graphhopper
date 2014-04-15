@@ -58,6 +58,18 @@ class SynchedDAWrapper implements DataAccess
     }
 
     @Override
+    public synchronized void setShort( long bytePos, short value )
+    {
+        inner.setShort(bytePos, value);
+    }
+
+    @Override
+    public synchronized short getShort( long bytePos )
+    {
+        return inner.getShort(bytePos);
+    }
+
+    @Override
     public synchronized void setBytes( long bytePos, byte[] values, int length )
     {
         inner.setBytes(bytePos, values, length);

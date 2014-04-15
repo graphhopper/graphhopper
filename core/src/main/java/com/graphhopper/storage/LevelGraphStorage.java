@@ -47,9 +47,9 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
     private int lastEdgeIndex = -1;
     private final long scDirMask = PrepareEncoder.getScDirMask();
 
-    public LevelGraphStorage( Directory dir, EncodingManager encodingManager )
+    public LevelGraphStorage( Directory dir, EncodingManager encodingManager, boolean enabled3D )
     {
-        super(dir, encodingManager);
+        super(dir, encodingManager, enabled3D);
     }
 
     @Override
@@ -107,7 +107,7 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
     @Override
     public EdgeSkipExplorer createEdgeExplorer()
     {
-        return createEdgeExplorer(allEdgesFilter);
+        return createEdgeExplorer(EdgeFilter.ALL_EDGES);
     }
 
     @Override
@@ -205,11 +205,13 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
         }
 
         @Override
-        public final void copyProperties( EdgeIteratorState edge )
+        public final EdgeIteratorState copyPropertiesTo( EdgeIteratorState edge )
         {
-            super.copyProperties(edge);
+            super.copyPropertiesTo(edge);
+
 //            EdgeSkipIterator eSkip = (EdgeSkipIterator) edge;
 //            setSkippedEdges(eSkip.getSkippedEdge1(), eSkip.getSkippedEdge2());
+            return edge;
         }
     }
 

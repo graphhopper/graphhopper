@@ -29,7 +29,7 @@ package com.graphhopper;
  *
  * // init online service
  * GraphHopperAPI gh = new GraphHopperWeb();
- * gh.load("http://your-graphhopper-service.com/api");
+ * gh.load("http://your-graphhopper-service.com");
  *
  * gh.algorithm("astar");
  * GHResponse ph = gh.route(new GHRequest(new GHPoint(fromLat, fromLon), new GHPoint(toLat, toLon)));
@@ -54,10 +54,9 @@ public interface GraphHopperAPI
     boolean load( String urlOrFile );
 
     /**
-     * Calculates the path from specified request visiting the via list of locations.
+     * Calculates the path from specified request visiting the specified locations.
      * <p/>
      * @return the response with the route and possible errors
      */
     GHResponse route( GHRequest request );
-    
 }

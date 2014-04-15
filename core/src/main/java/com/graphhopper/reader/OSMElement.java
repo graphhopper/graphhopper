@@ -22,34 +22,23 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 /**
  * Base class for all OSM objects
  * <p/>
  * @author Nop
+ * @author Peter
  */
 public abstract class OSMElement
 {
     public static final int NODE = 0;
     public static final int WAY = 1;
     public static final int RELATION = 2;
-    protected final int type;
-    protected final long id;
-    protected Map<String, String> tags;
-    protected Map<String, Object> iProperties;
-
-    public OSMElement( long id, int type, XMLStreamReader parser )
-    {
-        this.type = type;
-        this.id = id;
-    }
-
-    public OSMElement( long id, int type, Map<String, String> tags )
-    {
-        this(id, type);
-        this.tags = tags;
-    }
+    private final int type;
+    private final long id;
+    private final Map<String, Object> properties = new HashMap<String, Object>(5);
 
     protected OSMElement( long id, int type )
     {
@@ -60,15 +49,6 @@ public abstract class OSMElement
     public long getId()
     {
         return id;
-    }
-
-    public void copyTags( OSMElement input )
-    {
-        if (input.hasTags())
-        {
-            tags = new HashMap<String, String>();
-            tags.putAll(input.getTags());
-        }
     }
 
     protected void readTags( XMLStreamReader parser ) throws XMLStreamException
@@ -83,15 +63,7 @@ public abstract class OSMElement
                 String value = parser.getAttributeValue(null, "v");
                 // ignore tags with empty values
                 if (value != null && value.length() > 0)
-                {
-                    // create map only if needed
-                    if (tags == null)
-                    {
-                        tags = new HashMap<String, String>();
-                    }
-
-                    tags.put(key, value);
-                }
+                    setTag(key, value);
             }
 
             event = parser.nextTag();
@@ -100,13 +72,11 @@ public abstract class OSMElement
 
     protected String tagsToString()
     {
-        if (tags == null)
-        {
+        if (properties.isEmpty())
             return "<empty>";
-        }
 
         StringBuilder tagTxt = new StringBuilder();
-        for (Map.Entry<String, String> entry : tags.entrySet())
+        for (Map.Entry<String, Object> entry : properties.entrySet())
         {
             tagTxt.append(entry.getKey());
             tagTxt.append("=");
@@ -116,47 +86,51 @@ public abstract class OSMElement
         return tagTxt.toString();
     }
 
-    public Map<String, String> getTags()
+    protected Map<String, Object> getTags()
     {
-        return tags;
+        return properties;
     }
 
-    public void replaceTags( HashMap<String, String> newTags )
+    public void setTags( Map<String, String> newTags )
     {
-        tags = newTags;
+        properties.clear();
+        if (newTags != null)
+            for (Entry<String, String> e : newTags.entrySet())
+            {
+                setTag(e.getKey(), e.getValue());
+            }
     }
 
     public boolean hasTags()
     {
-        return tags != null && !tags.isEmpty();
+        return !properties.isEmpty();
     }
 
     public String getTag( String name )
     {
-        if (tags == null)
-            return null;
-
-        return tags.get(name);
+        return (String) properties.get(name);
     }
 
-    public void setTag( String name, String value )
+    @SuppressWarnings("unchecked")
+    public <T> T getTag( String key, T defaultValue )
     {
-        if (tags == null)
-            tags = new HashMap<String, String>();
+        T val = (T) properties.get(key);
+        if (val == null)
+            return defaultValue;
+        return val;
+    }
 
-        tags.put(name, value);
+    public void setTag( String name, Object value )
+    {
+        properties.put(name, value);
     }
 
     /**
      * Chaeck that the object has a given tag with a given value.
      */
-    public boolean hasTag( String key, String value )
+    public boolean hasTag( String key, Object value )
     {
-        if (tags == null)
-            return false;
-
-        String val = tags.get(key);
-        return value.equals(val);
+        return value.equals(properties.get(key));
     }
 
     /**
@@ -165,10 +139,7 @@ public abstract class OSMElement
      */
     public boolean hasTag( String key, String... values )
     {
-        if (tags == null)
-            return false;
-
-        String osmValue = tags.get(key);
+        Object osmValue = properties.get(key);
         if (osmValue == null)
             return false;
 
@@ -189,11 +160,7 @@ public abstract class OSMElement
      */
     public final boolean hasTag( String key, Set<String> values )
     {
-        if (tags == null)
-            return false;
-
-        String osmValue = tags.get(key);
-        return osmValue != null && values.contains(osmValue);
+        return values.contains(properties.get(key));
     }
 
     /**
@@ -202,53 +169,22 @@ public abstract class OSMElement
      */
     public boolean hasTag( String[] keyList, Set<String> values )
     {
-        if (tags == null)
-            return false;
-
-        for (int i = 0; i < keyList.length; i++)
+        for (String key : keyList)
         {
-            String osmValue = tags.get(keyList[i]);
-            if (osmValue != null && values.contains(osmValue))
+            if (values.contains(properties.get(key)))
                 return true;
         }
         return false;
     }
 
-    public void setInternalTag( String key, Object value )
-    {
-        if (iProperties == null)
-            iProperties = new HashMap<String, Object>();
-
-        iProperties.put(key, value);
-    }
-
-    public boolean hasInternalTag( String key )
-    {
-        if (iProperties == null)
-            return false;
-        return iProperties.containsKey(key);
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> T getInternalTag( String key, T defaultValue )
-    {
-        if (iProperties == null)
-            return defaultValue;
-        T val = (T) iProperties.get(key);
-        if (val == null)
-            return defaultValue;
-        return val;
-    }
-
     public void removeTag( String name )
     {
-        if (tags != null)
-            tags.remove(name);
+        properties.remove(name);
     }
 
     public void clearTags()
     {
-        tags = null;
+        properties.clear();
     }
 
     public int getType()

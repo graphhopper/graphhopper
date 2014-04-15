@@ -52,7 +52,7 @@ public class GHDirectory implements Directory
             throw new RuntimeException("file '" + dir + "' exists but is not a directory");
 
         // set default access to integer based
-        // improves performance on server side, 10% faster for queries, 20% faster for preparation
+        // improves performance on server side, 10% faster for queries and preparation
         if (this.defaultType.isInMemory())
         {
             if (isStoring())
@@ -135,29 +135,48 @@ public class GHDirectory implements Directory
     }
 
     @Override
-    public DataAccess rename( DataAccess da, String newName )
+    public void clear()
     {
-        String oldName = da.getName();
-        da.rename(newName);
-        removeByName(oldName);
-        map.put(newName, da);
-        return da;
+        // If there is at least one MMap DA then do not apply the cleanHack 
+        // for every single mmap DA as this is very slow if lots of DataAccess objects were collected 
+        // => forceClean == false
+
+        MMapDataAccess mmapDA = null;
+        for (DataAccess da : map.values())
+        {
+            if (da instanceof MMapDataAccess)
+                mmapDA = (MMapDataAccess) da;
+
+            removeDA(da, da.getName(), false);
+        }
+        if (mmapDA != null)
+            mmapDA.cleanHack();
+        map.clear();
     }
 
     @Override
     public void remove( DataAccess da )
     {
-        removeByName(da.getName());
+        removeFromMap(da.getName());
+        removeDA(da, da.getName(), true);
     }
 
-    void removeByName( String name )
+    void removeDA( DataAccess da, String name, boolean forceClean )
+    {
+        if (da instanceof MMapDataAccess)
+            ((MMapDataAccess) da).close(forceClean);
+        else
+            da.close();
+
+        if (da.getType().isStoring())
+            Helper.removeDir(new File(location + name));
+    }
+
+    void removeFromMap( String name )
     {
         DataAccess da = map.remove(name);
         if (da == null)
             throw new IllegalStateException("Couldn't remove dataAccess object:" + name);
-        da.close();
-        if (da.getType().isStoring())
-            Helper.removeDir(new File(location + name));
     }
 
     @Override
@@ -174,9 +193,7 @@ public class GHDirectory implements Directory
     protected void mkdirs()
     {
         if (isStoring())
-        {
             new File(location).mkdirs();
-        }
     }
 
     Collection<DataAccess> getAll()
