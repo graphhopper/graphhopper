@@ -39,6 +39,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     private final TIntArrayListWithCap changedNodes;
     private int[] parents;
     private int[] edgeIds;
+    private boolean[] processedNodes;
     private IntDoubleBinHeap heap;
     private int visitedNodes;
     private boolean doClear = true;
@@ -56,6 +57,9 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
 
         edgeIds = new int[graph.getNodes()];
         Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
+        
+        processedNodes = new boolean[graph.getNodes()];
+        Arrays.fill(processedNodes, false);
 
         weights = new double[graph.getNodes()];
         Arrays.fill(weights, Double.MAX_VALUE);
@@ -140,8 +144,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         } else
         {
             // Cached! Re-use existing data structures
-            int parentNode = parents[to];
-            if (parentNode >= 0 || heap.isEmpty())
+            if (processedNodes[to] == true || heap.isEmpty())
                 return to;
 
             currNode = heap.poll_element();
@@ -188,6 +191,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
 
             // calling just peek and not poll is important if the next query is cached
             currNode = heap.peek_element();
+            processedNodes[currNode] = true;
             if (finished())
                 return currNode;
 
