@@ -243,6 +243,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
                 speed = relationWeightCodeToSpeed(getSpeed(way), (int) relationCodeEncoder.getValue(relationFlags));
             }
 
+            speed = reduceToMaxSpeed(speed, way);
             encoded = handleSpeed(way, speed, 0);
             encoded = handleBikeRelated(way, encoded);
 
