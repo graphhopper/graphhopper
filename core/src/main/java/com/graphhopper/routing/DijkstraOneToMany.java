@@ -141,7 +141,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         {
             // Cached! Re-use existing data structures
             int parentNode = parents[to];
-            if (parentNode >= 0 || heap.isEmpty())
+            if (parentNode >= 0 && weights[to] < weights[currNode] || heap.isEmpty())
                 return to;
 
             currNode = heap.poll_element();

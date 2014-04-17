@@ -85,6 +85,19 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     }
 
     @Test
+    public void testIssue182()
+    {
+        AlgorithmPreparation prep = prepareGraph(initGraph(createGraph(false)));
+        RoutingAlgorithm algo = prep.createAlgo();
+        Path p = algo.calcPath(0, 8);
+        assertEquals(Helper.createTList(0, 7, 8), p.calcNodes());
+
+        // expand SPT
+        p = algo.calcPath(0, 10);
+        assertEquals(Helper.createTList(0, 1, 2, 3, 4, 10), p.calcNodes());
+    }
+
+    @Test
     public void testUseCache()
     {
         AlgorithmPreparation prep = prepareGraph(createTestGraph());
@@ -136,5 +149,23 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
         });
         p = algo.calcPath(4, 6);
         assertEquals(Helper.createTList(4, 5, 6), p.calcNodes());
+    }
+
+    private Graph initGraph( Graph g )
+    {
+        // 0-1-2-3-4
+        // |       /
+        // 7-10----
+        // \-8
+        g.edge(0, 1, 1, true);
+        g.edge(1, 2, 1, true);
+        g.edge(2, 3, 1, true);
+        g.edge(3, 4, 1, true);
+        g.edge(4, 10, 1, true);
+
+        g.edge(0, 7, 1, true);
+        g.edge(7, 8, 1, true);
+        g.edge(7, 10, 10, true);
+        return g;
     }
 }
