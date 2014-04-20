@@ -53,9 +53,12 @@ public class GraphHopper implements GraphHopperAPI
         CmdArgs args = CmdArgs.read(strs);
         GraphHopper hopper = new GraphHopper().init(args);
         hopper.importOrLoad();
-        RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(hopper);
         if (args.getBool("graph.testIT", false))
+        {
+            RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(hopper);
             tests.start();
+        }
+        hopper.close();
     }
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
