@@ -1,3 +1,5 @@
+# do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
+
 sharp_left=左
 sharp_right=右
 left=左
@@ -35,3 +37,5 @@ way=way
 paved=paved
 unpaved=unpaved
 stopover=stopover %1$s
+roundaboutInstruction=Enter roundabout and use exit %1$s
+roundaboutInstructionWithDir=Enter roundabout and use exit %1$s in direction %2$s

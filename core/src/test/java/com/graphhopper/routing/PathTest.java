@@ -96,7 +96,7 @@ public class PathTest
         Map<String, Object> tmp = res.get(0);
         assertEquals(3000.0, tmp.get("distance"));
         assertEquals(504000L, tmp.get("time"));
-        assertEquals("Continue onto road", tmp.get("text"));
+        assertEquals("Continue", tmp.get("text"));
         assertEquals("[0, 6]", tmp.get("interval").toString());
 
         tmp = res.get(1);
@@ -121,7 +121,7 @@ public class PathTest
         tmp = res.get(0);
         assertEquals(1000.0, tmp.get("distance"));
         assertEquals(360000L, tmp.get("time"));
-        assertEquals("Continue onto road", tmp.get("text"));
+        assertEquals("Continue", tmp.get("text"));
         assertEquals("[0, 3]", tmp.get("interval").toString());
 
         tmp = res.get(1);
@@ -153,7 +153,7 @@ public class PathTest
         tmp = res.get(1);
         assertEquals(1000.0, tmp.get("distance"));
         assertEquals(360000L, tmp.get("time"));
-        assertEquals("Turn sharp left onto road", tmp.get("text"));
+        assertEquals("Turn sharp left", tmp.get("text"));
         assertEquals("[3, 6]", tmp.get("interval").toString());
         lastIndex = (Integer) ((List) res.get(res.size() - 1).get("interval")).get(0);
         assertEquals(path.calcPoints().size() - 1, lastIndex);

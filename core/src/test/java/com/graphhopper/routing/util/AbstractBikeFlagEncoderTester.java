@@ -21,9 +21,7 @@ import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.TranslationMap;
 import static com.graphhopper.util.TranslationMapTest.SINGLETON;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
@@ -207,7 +205,7 @@ public abstract class AbstractBikeFlagEncoderTester
 
         way.setTag("highway", "residential");
         wayType = encodeDecodeWayType("", way);
-        assertEquals("road", wayType);
+        assertEquals("", wayType);
 
         way.setTag("highway", "cycleway");
         wayType = encodeDecodeWayType("", way);

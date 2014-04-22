@@ -15,3 +15,8 @@
  * ocampana, initial implementation for instructions
  * ratrun, route relations, GPX information and bike handling
  * rodo, more descriptions
+
+# Translations
+
+A lot people helped to create translations - thanks!
+See [this spreadsheet](https://docs.google.com/spreadsheet/ccc?key=0AmukcXek0JP6dGM4R1VTV2d3TkRSUFVQakhVeVBQRHc#gid=0)

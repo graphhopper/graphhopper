@@ -94,12 +94,12 @@ public class InstructionListTest
         InstructionList wayList = p.calcInstructions();
         List<String> tmpList = pick("text", wayList.createJson(trMap.getWithFallBack(Locale.CANADA)));
         assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Continue onto 4-7",
-                "Turn left onto 7-8", "Continue onto 8-9", "Turn right onto road", "Finish!"),
+                "Turn left onto 7-8", "Continue onto 8-9", "Turn right", "Finish!"),
                 tmpList);
 
         tmpList = pick("text", wayList.createJson(trMap.getWithFallBack(Locale.GERMAN)));
         assertEquals(Arrays.asList("Geradeaus auf 0-1", "Rechts abbiegen auf 1-4", "Geradeaus auf 4-7",
-                "Links abbiegen auf 7-8", "Geradeaus auf 8-9", "Rechts abbiegen auf Strasse", "Ziel erreicht!"),
+                "Links abbiegen auf 7-8", "Geradeaus auf 8-9", "Rechts abbiegen", "Ziel erreicht!"),
                 tmpList);
 
         assertEquals(70000.0, sumDistances(wayList), 1e-1);
