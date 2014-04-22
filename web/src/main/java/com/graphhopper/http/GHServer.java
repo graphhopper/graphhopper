@@ -75,7 +75,7 @@ public class GHServer
         server = new Server();
         // getSessionHandler and getSecurityHandler should always return null
         ServletContextHandler servHandler = new ServletContextHandler(ServletContextHandler.NO_SECURITY | ServletContextHandler.NO_SESSIONS);
-        servHandler.setContextPath("/");
+        servHandler.setContextPath("/");        
 
         servHandler.addServlet(new ServletHolder(new InvalidRequestServlet()), "/*");
 

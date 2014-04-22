@@ -5,13 +5,13 @@ body {
     color: #111111;
     background-color: white;
     margin: 0;
+    min-width: 600px;
 }
-#map {
-    /*    float: right;*/
-    width: 800px;
-    height: 600px;
+#map {    
+    /* set size via JS */
     cursor: default;
 }
+
 #input {
     float: left;                
     padding-left: 10px; 
@@ -29,11 +29,11 @@ body {
     padding-right: 5px;
 }
 #input, #instructions {
-    width: 255px;
+    width: 280px;
 }
 #fromInput, #toInput {
-    width: 225px;
-    float: right;    
+    width: 250px;
+    float: right;
 }
 
 #fromResolveFound a, #toResolveFound a {
@@ -150,12 +150,9 @@ body {
 #exportLink {
     float: left;
 }
-.instruction {    
+
+tr.instruction {
     cursor: pointer;
-    padding-top: 5px;
-    padding-bottom: 5px;
-}
-tr.instruction td {    
     border-bottom: #dadada dashed thin;
 }
 #instructions {
@@ -165,9 +162,11 @@ tr.instruction td {
     width: 100%;
     font-size: smaller;
 }
+
 #instructions th, #instructions td {
-    padding: 3px;
+    padding: 6px 3px;
 }
+
 td.instr_title {
     width: 130px;
 }

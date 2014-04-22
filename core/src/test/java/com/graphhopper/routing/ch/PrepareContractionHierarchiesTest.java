@@ -403,6 +403,30 @@ public class PrepareContractionHierarchiesTest
         assertEquals(0, prepare.getShortcuts());
     }
 
+    @Test
+    public void testBug178()
+    {
+        // 5--------6__
+        // |        |  \
+        // 0-1->-2--3--4
+        //   \-<-/
+        //
+        LevelGraph g = createGraph();
+        g.edge(1, 2, 1, false);
+        g.edge(2, 1, 1, false);
+        
+        g.edge(5, 0, 1, true);
+        g.edge(5, 6, 1, true);
+        g.edge(0, 1, 1, true);
+        g.edge(2, 3, 1, true);
+        g.edge(3, 4, 1, true);
+        g.edge(6, 3, 1, true);
+        
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
+        prepare.doWork();
+        assertEquals(2, prepare.getShortcuts());
+    }
+
     // 0-1-2-3-4
     // |     / |
     // |    8  |

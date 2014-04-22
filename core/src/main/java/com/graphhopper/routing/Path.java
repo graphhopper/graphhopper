@@ -111,17 +111,6 @@ public class Path
         return fromNode;
     }
 
-    /**
-     * @return the last node of this Path.
-     */
-    private int getEndNode()
-    {
-        if (endNode < 0)
-            throw new IllegalStateException("Call extract() before retrieving endNode");
-
-        return endNode;
-    }
-
     public boolean isFound()
     {
         return found;
@@ -177,6 +166,9 @@ public class Path
      */
     public Path extract()
     {
+        if (isFound())
+            throw new IllegalStateException("Extract can only be called once");
+
         extractSW.start();
         EdgeEntry goalEdge = edgeEntry;
         setEndNode(goalEdge.adjNode);
@@ -223,13 +215,15 @@ public class Path
      */
     protected long calcMillis( double distance, long flags, boolean revert )
     {
-        // TODO critical
-//        if (revert && !encoder.isBackward(flags)
-//                || !revert && !encoder.isForward(flags))
-//            throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. "
-//                    + "Reverse:" + revert + ", fwd:" + encoder.isForward(flags) + ", bwd:" + encoder.isBackward(flags));
+        if (revert && !encoder.isBackward(flags)
+                || !revert && !encoder.isForward(flags))
+            throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. "
+                    + "Reverse:" + revert + ", fwd:" + encoder.isForward(flags) + ", bwd:" + encoder.isBackward(flags));
 
         double speed = revert ? encoder.getReverseSpeed(flags) : encoder.getSpeed(flags);
+        if (Double.isInfinite(speed) || Double.isNaN(speed))
+            throw new IllegalStateException("Invalid speed stored in edge!");
+
         return (long) (distance * 3600 / speed);
     }
 

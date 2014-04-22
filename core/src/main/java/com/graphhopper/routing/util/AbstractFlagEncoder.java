@@ -312,6 +312,23 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         return speedEncoder.getMaxValue();
     }
 
+    protected double reduceToMaxSpeed( double speed, OSMWay way )
+    {
+        double maxspeed = parseSpeed(way.getTag("maxspeed"));
+        // apply speed limit no matter of the road type
+        if (maxspeed >= 0)
+            // reduce speed limit to reflect average speed
+            speed = maxspeed * 0.9;
+
+        double maxSpeed = parseSpeed(way.getTag("maxspeed:forward"));
+        double backSpeed = parseSpeed(way.getTag("maxspeed:backward"));
+        if (maxSpeed >= 0)
+            speed = maxSpeed * 0.9;
+        if (backSpeed >= 0 && speed > backSpeed * 0.9)
+            speed = backSpeed * 0.9;
+        return speed;
+    }
+
     @Override
     public int hashCode()
     {
@@ -343,7 +360,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected static double parseSpeed( String str )
     {
         if (Helper.isEmpty(str))
-            return -1;        
+            return -1;
 
         try
         {

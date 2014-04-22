@@ -1,3 +1,5 @@
+# do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
+
 sharp_left=Curva acentuada à esquerda
 sharp_right=Curva acentuada à direita
 left=esquerda
@@ -28,10 +30,12 @@ kmAbbr=km
 mAbbr=m
 miAbbr=mi
 ftAbbr=ft
-road=estrada
-pushing_section=pushing section
-cycleway=ciclovia
-way=caminho
-paved=asfaltado
-unpaved=não asfaltado
-stopover=stopover %1$s
+road=
+pushing_section=
+cycleway=
+way=
+paved=
+unpaved=
+stopover=
+roundaboutInstruction=
+roundaboutInstructionWithDir=

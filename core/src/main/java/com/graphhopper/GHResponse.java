@@ -21,21 +21,16 @@ import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Wrapper to simplify output of GraphHopper.
  * <p/>
  * @author Peter Karich
  */
-public class GHResponse
+public class GHResponse extends GHBaseResponse<GHResponse>
 {
     private PointList list = PointList.EMPTY;
     private double distance;
     private long time;
-    private String debugInfo = "";
-    private final List<Throwable> errors = new ArrayList<Throwable>(4);
     private InstructionList instructions = new InstructionList(0);
     private boolean found;
 
@@ -130,36 +125,6 @@ public class GHResponse
         return bounds;
     }
 
-    public String getDebugInfo()
-    {
-        return debugInfo;
-    }
-
-    public GHResponse setDebugInfo( String debugInfo )
-    {
-        this.debugInfo = debugInfo;
-        return this;
-    }
-
-    /**
-     * @return true if one or more error found
-     */
-    public boolean hasErrors()
-    {
-        return !errors.isEmpty();
-    }
-
-    public List<Throwable> getErrors()
-    {
-        return errors;
-    }
-
-    public GHResponse addError( Throwable error )
-    {
-        errors.add(error);
-        return this;
-    }
-
     @Override
     public String toString()
     {
@@ -167,8 +132,8 @@ public class GHResponse
         if (!instructions.isEmpty())
             str += ", " + instructions.toString();
 
-        if (!errors.isEmpty())
-            str += ", " + errors.toString();
+        if (hasErrors())
+            str += ", " + super.toString();
 
         return str;
     }

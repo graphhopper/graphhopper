@@ -1,5 +1,6 @@
 Submit a new issue only if you are sure it is a missing feature or a bug. Otherwise discuss the topic on the 
-[mailing list](http://graphhopper.com/#developers) first.
+[mailing list](http://graphhopper.com/#developers) first. For new translations or problems in an existing one
+please refer to [this documentation](https://github.com/graphhopper/graphhopper/edit/master/docs/index.md).
 
 ## We love pull requests. Here's a quick guide:
 

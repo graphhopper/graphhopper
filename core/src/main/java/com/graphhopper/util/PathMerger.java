@@ -20,7 +20,6 @@ package com.graphhopper.util;
 
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.Path;
-import com.graphhopper.util.shapes.GHPlace;
 import java.util.List;
 
 /**
@@ -45,7 +44,7 @@ public class PathMerger
         boolean allFound = true;
 
         InstructionList fullInstructions = new InstructionList();
-        PointList fullPoints = null;
+        PointList fullPoints = PointList.EMPTY;
         for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++)
         {
             Path path = paths.get(pathIndex);
@@ -58,7 +57,7 @@ public class PathMerger
 
                 if (!il.isEmpty())
                 {
-                    if (fullPoints == null)
+                    if (fullPoints.isEmpty())
                         fullPoints = createSimilarPL(il.get(0).getPoints());
 
                     for (Instruction i : il)
@@ -66,7 +65,7 @@ public class PathMerger
                         if (simplifyRequest)
                         {
                             origPoints += i.getPoints().size();
-                            douglasPeucker.simplify(i.getPoints());                            
+                            douglasPeucker.simplify(i.getPoints());
                         }
                         fullInstructions.add(i);
                         fullPoints.add(i.getPoints());
@@ -80,11 +79,11 @@ public class PathMerger
                         fi.setVia(pathIndex + 1);
                     }
                 }
-                
+
             } else if (calcPoints)
             {
-                PointList tmpPoints = path.calcPoints();                
-                if (fullPoints == null)
+                PointList tmpPoints = path.calcPoints();
+                if (fullPoints.isEmpty())
                     fullPoints = createSimilarPL(tmpPoints);
 
                 if (simplifyRequest)
@@ -99,8 +98,8 @@ public class PathMerger
 
             allFound = allFound && path.isFound();
         }
-        
-        if (fullPoints != null)
+
+        if (!fullPoints.isEmpty())
         {
             String debug = rsp.getDebugInfo() + ", simplify (" + origPoints + "->" + fullPoints.getSize() + ")";
             rsp.setDebugInfo(debug);

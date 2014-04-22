@@ -188,13 +188,17 @@ function resolveCoords(fromStr, toStr, doQuery) {
 
 function adjustMapSize() {
     var mapDiv = $("#map");
-    var width = $(window).width() - 280;
-    if (width < 100)
-        width = $(window).width();
+    var width = $(window).width() - 295;
+    if (width < 400) {
+        width = 290;
+        mapDiv.attr("style", "position: relative; float: right;");
+    } else {
+        mapDiv.attr("style", "position: absolute; right: 0;");
+    }
     var height = $(window).height();
     mapDiv.width(width).height(height);
     $("#input").height(height);
-    $("#info").css("max-height", height - $("#input_header").height() - 25);
+    $("#info").css("max-height", height - $("#input_header").height() - 35);
 }
 
 function initMap() {
@@ -1040,7 +1044,7 @@ function setAutoCompleteList(fromOrTo, ghRequestLoc) {
             return response;
         },
         onSearchError: function(element, q, jqXHR, textStatus, errorThrown) {
-            console.log(element + ", " + JSON.stringify(q) + ", textStatus " + textStatus + ", " + errorThrown);
+            // too many errors if interrupted console.log(element + ", " + JSON.stringify(q) + ", textStatus " + textStatus + ", " + errorThrown);
         },
         formatResult: function(suggestion, currInput) {
             // avoid highlighting for now as this breaks the html sometimes
@@ -1102,11 +1106,14 @@ function dataToText(data) {
     if (data.name)
         text += data.name;
     
+    if (data.postcode)
+        text = insComma(text, data.postcode);
+    
     // make sure name won't be duplicated
     if (data.city && text.indexOf(data.city) < 0)
         text = insComma(text, data.city);
     
     if (data.country && text.indexOf(data.country) < 0)
-        text = insComma(text, data.country);
+        text = insComma(text, data.country);       
     return text;
 }

@@ -246,6 +246,17 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     }
 
     @Test
+    public void testMaxSpeed()
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "secondary");
+        way.setTag("maxspeed", "10");
+        long allowed = encoder.acceptWay(way);
+        long encoded = encoder.handleWayTags(way, allowed, 0);
+        assertEquals(10, encoder.getSpeed(encoded), 1e-1);
+    }
+
+    @Test
     public void testTurnFlagEncoding_withCosts()
     {
         //arbitrary shift, 7 turn cost bits: [0,127]

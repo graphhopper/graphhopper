@@ -51,7 +51,7 @@ public class TestAlgoCollector
         for (int i = 0; i < queryList.size() - 1; i++)
         {
             Path path = prepare.createAlgo().calcPath(queryList.get(i), queryList.get(i + 1));
-            viaPaths.add(path);path.calcPoints().size();
+            viaPaths.add(path);
         }
         PathMerger pathMerger = new PathMerger().
                 setCalcPoints(true).
@@ -69,7 +69,7 @@ public class TestAlgoCollector
 
         PointList pointList = rsp.getPoints();
         double tmpDist = pointList.calcDistance(distCalc);
-        if (Math.abs(rsp.getDistance() - tmpDist) > 5)
+        if (Math.abs(rsp.getDistance() - tmpDist) > 8)
         {
             errors.add(prepare + " path.getDistance was  " + rsp.getDistance()
                     + "\t pointList.calcDistance was " + tmpDist + "\t (expected points " + oneRun.getLocs()

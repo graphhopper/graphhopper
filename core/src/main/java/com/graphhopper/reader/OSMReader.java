@@ -712,7 +712,7 @@ public class OSMReader implements DataReader
         int nodes = pointList.getSize();
         for (int i = 1; i < nodes; i++)
         {
-            // we could save some lines if we would use pointList.calculateDistance(distCalc);
+            // we could save some lines if we would use pointList.calcDistance(distCalc);
             lat = pointList.getLatitude(i);
             lon = pointList.getLongitude(i);
             if (pointList.is3D())

@@ -114,11 +114,11 @@ paths[0].points_encoded    | Is true if the points are encoded, if not paths[0].
 paths[0].points_dimension  | The dimension of the points field. Can be 2 or 3.
 paths[0].bbox              | The bounding box of the route, format: <br> minLon, minLat, maxLon, maxLat
 paths[0].instructions      | Contains information about the instructions for this route. The last instruction is always the Finish instruction and takes 0ms and 0meter. Keep in mind that instructions are currently under active development and can sometimes contain misleading information, so, make sure you always show an image of the map at the same time when navigating your users!
-paths[0].instructions[0].description | A description what the user has to do in order to follow the route. The language depends on the locale parameter.
-paths[0].instructions[0].distance    | The distance for this instruction, in meter
-paths[0].instructions[0].time        | The duration for this instruction, in ms
-paths[0].instructions[0].interval    | An array containing the first and the last index (relative to paths[0].points) of the points for this instruction
-paths[0].instructions[0].sign        | A number which specifies the sign to show e.g. for right turn etc <br>TURN_SHARP_LEFT = -3<br>TURN_LEFT = -2<br>TURN_SLIGHT_LEFT = -1<br>CONTINUE_ON_STREET = 0<br>TURN_SLIGHT_RIGHT = 1<br>TURN_RIGHT = 2<br>TURN_SHARP_RIGHT = 3<br>FINISH = 4<br>VIA_REACHED = 5
+paths[0].instructions[0].text     | A description what the user has to do in order to follow the route. The language depends on the locale parameter.
+paths[0].instructions[0].distance | The distance for this instruction, in meter
+paths[0].instructions[0].time     | The duration for this instruction, in ms
+paths[0].instructions[0].interval | An array containing the first and the last index (relative to paths[0].points) of the points for this instruction
+paths[0].instructions[0].sign     | A number which specifies the sign to show e.g. for right turn etc <br>TURN_SHARP_LEFT = -3<br>TURN_LEFT = -2<br>TURN_SLIGHT_LEFT = -1<br>CONTINUE_ON_STREET = 0<br>TURN_SLIGHT_RIGHT = 1<br>TURN_RIGHT = 2<br>TURN_SHARP_RIGHT = 3<br>FINISH = 4<br>VIA_REACHED = 5
 
 
 ## Area information
@@ -144,7 +144,6 @@ supported_vehicles  | An array of strings indicating the supported vehicles
 bbox                | The maximum bounding box of the area, format: <br> minLon, minLat, maxLon, maxLat
 import_date         | [optional] The date time at which the OSM import was done
 prepare_date        | [optional] The date time at which the preparation (contraction hierarchies) was done. If nothing was done this is empty
-prepare_date        | [optional] The date time at which the preparation (contraction hierarchies) was done. If nothing was done this is empty
 
 ### Output if expected error(s) while routing:
 ```json
@@ -152,8 +151,7 @@ prepare_date        | [optional] The date time at which the preparation (contrac
   "info": {"errors": [{
     "details": "java.lang.IllegalArgumentException",
     "message": "Cannot find point 2: 2248.224673, 3.867187"
-  }]},
-  "paths": [{}]
+  }]}
 }
 ```
 
@@ -163,7 +161,7 @@ indicate a bug in the routing engine and is expected to a certain degree.
 JSON path/attribute    | Description
 :----------------------|:------------
 info.errors            | A list of error messages
-info.errors[0].defails | E.g. to see the underlying exception, if any
+info.errors[0].details | E.g. to see the underlying exception, if any
 info.errors[0].message | Not intended to be displayed to the user as it is currently not translated
 
 

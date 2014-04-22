@@ -15,38 +15,61 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage;
+package com.graphhopper;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * 'Edges' do not exist as separate objects in GraphHopper for the storage as this would be too
- * memory intensive. Look into EdgeIterator and Graph.getEdges(index) instead. But it is used as
- * base class in all algorithms except the native BidirectionalDijkstra.
+ * GraphHopper its base response class.
  * <p/>
- * @see EdgeEntry
  * @author Peter Karich
  */
-public class Edge implements Comparable<Edge>
+public class GHBaseResponse<T>
 {
-    public int edge;
-    public int adjNode;
-    public double weight;
+    private String debugInfo = "";
+    private final List<Throwable> errors = new ArrayList<Throwable>(4);
 
-    public Edge( int edgeId, int adjNode, double weight )
+    public GHBaseResponse()
     {
-        this.edge = edgeId;
-        this.adjNode = adjNode;
-        this.weight = weight;
     }
 
-    @Override
-    public int compareTo( Edge o )
+    public String getDebugInfo()
     {
-        return Double.compare(weight, o.weight);
+        return debugInfo;
+    }
+
+    @SuppressWarnings("unchecked")
+    public T setDebugInfo( String debugInfo )
+    {
+        if (debugInfo != null)
+            this.debugInfo = debugInfo;
+        return (T) this;
+    }
+
+    /**
+     * @return true if one or more error found
+     */
+    public boolean hasErrors()
+    {
+        return !errors.isEmpty();
+    }
+
+    public List<Throwable> getErrors()
+    {
+        return errors;
+    }
+
+    @SuppressWarnings("unchecked")
+    public T addError( Throwable error )
+    {
+        errors.add(error);
+        return (T) this;
     }
 
     @Override
     public String toString()
     {
-        return adjNode + " (" + edge + ") weight: " + weight;
+        return errors.toString();
     }
 }

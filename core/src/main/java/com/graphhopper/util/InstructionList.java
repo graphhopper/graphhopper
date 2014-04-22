@@ -375,8 +375,11 @@ public class InstructionList implements Iterable<Instruction>
 
         if (name.isEmpty())
             if (pavementName.isEmpty())
+            {
+                if (wayType == 0 || wayType == 3)
+                    return "";
                 return wayClass;
-            else
+            } else
                 return wayClass + ", " + pavementName;
         else if (pavementName.isEmpty())
             if (wayType == 0)

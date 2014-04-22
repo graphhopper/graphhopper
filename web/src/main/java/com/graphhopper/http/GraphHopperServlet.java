@@ -30,7 +30,6 @@ import com.graphhopper.util.shapes.GHPlace;
 import java.io.IOException;
 import java.util.*;
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -47,12 +46,8 @@ import org.json.JSONObject;
  */
 public class GraphHopperServlet extends GHBaseServlet
 {
-
     @Inject
     private GraphHopper hopper;
-    @Inject
-    @Named("defaultAlgorithm")
-    private String defaultAlgorithm;
     @Inject
     private TranslationMap trMap;
 
@@ -61,13 +56,7 @@ public class GraphHopperServlet extends GHBaseServlet
     {
         try
         {
-            if ("/info".equals(req.getPathInfo()))
-            {
-                writeInfos(req, res);
-            } else if ("/route".equals(req.getPathInfo()))
-            {
-                writePath(req, res);
-            }
+            writePath(req, res);
         } catch (IllegalArgumentException ex)
         {
             writeError(res, SC_BAD_REQUEST, ex.getMessage());
@@ -77,31 +66,6 @@ public class GraphHopperServlet extends GHBaseServlet
             writeError(res, SC_INTERNAL_SERVER_ERROR, "Problem occured:" + ex.getMessage());
         }
     }
-
-    void writeInfos( HttpServletRequest req, HttpServletResponse res ) throws Exception
-    {
-        BBox bb = hopper.getGraph().getBounds();
-        List<Double> list = new ArrayList<Double>(4);
-        list.add(bb.minLon);
-        list.add(bb.minLat);
-        list.add(bb.maxLon);
-        list.add(bb.maxLat);
-
-        JSONObject json = new JSONObject();
-        json.put("bbox", list);
-        json.put("supported_vehicles", hopper.getGraph().getEncodingManager().toString().split(","));
-        json.put("version", Constants.VERSION);
-        json.put("build_date", Constants.BUILD_DATE);
-
-        StorableProperties props = hopper.getGraph().getProperties();
-        json.put("import_date", props.get("osmreader.import.date"));
-
-        if (!Helper.isEmpty(props.get("prepare.date")))
-            json.put("prepare_date", props.get("prepare.date"));
-
-        writeJson(req, res, json);
-    }
-
     void writePath( HttpServletRequest req, HttpServletResponse res ) throws Exception
     {
         List<GHPlace> infoPoints = getPoints(req);
@@ -113,7 +77,7 @@ public class GraphHopperServlet extends GHBaseServlet
         boolean calcPoints = getBooleanParam(req, "calc_points", true);
         String vehicleStr = getParam(req, "vehicle", "CAR").toUpperCase();
         String weighting = getParam(req, "weighting", "fastest");
-        String algoStr = getParam(req, "algorithm", defaultAlgorithm);
+        String algoStr = getParam(req, "algorithm", "");
 
         StopWatch sw = new StopWatch().start();
         GHResponse rsp;
@@ -172,10 +136,6 @@ public class GraphHopperServlet extends GHBaseServlet
         boolean calcPoints = getBooleanParam(req, "calc_points", true);
         int precision = (int) getLongParam(req, "max_precision", 6);
         JSONObject json = new JSONObject();
-
-        JSONObject jsonPath = new JSONObject();
-        json.put("paths", Collections.singletonList(jsonPath));
-
         JSONObject jsonInfo = new JSONObject();
         json.put("info", jsonInfo);
 
@@ -199,6 +159,7 @@ public class GraphHopperServlet extends GHBaseServlet
         } else
         {
             jsonInfo.put("took", Helper.round(took, precision));
+            JSONObject jsonPath = new JSONObject();
             jsonPath.put("distance", Helper.round(rsp.getDistance(), precision));
             jsonPath.put("time", rsp.getMillis());
 
@@ -237,6 +198,7 @@ public class GraphHopperServlet extends GHBaseServlet
                     jsonPath.put("instructions", instructions.createJson(tr, precision));
                 }
             }
+            json.put("paths", Collections.singletonList(jsonPath));
         }
 
         writeJson(req, res, json);
