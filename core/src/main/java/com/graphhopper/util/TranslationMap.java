@@ -33,7 +33,7 @@ import java.util.Map.Entry;
 public class TranslationMap
 {
     // use 'en_US' as reference
-    private static final List<String> LOCALES = Arrays.asList("bg", "de_DE", "en_US", "es", "fil", "fr", "it", "ja", "nl", "pt_BR", "pt_PT", "ro", "ru", "si", "tr");
+    private static final List<String> LOCALES = Arrays.asList("bg", "de_DE", "el", "en_US", "es", "fil", "fr", "it", "ja", "nl", "pt_BR", "pt_PT", "ro", "ru", "si", "tr");
     private Map<String, Translation> translations = new HashMap<String, Translation>();
 
     /**
@@ -49,7 +49,7 @@ public class TranslationMap
                 trMap.doImport(new FileInputStream(new File(folder, locale + ".txt")));
                 add(trMap);
             }
-            checkTranslations();
+            postImportHook();
             return this;
         } catch (Exception ex)
         {
@@ -70,7 +70,7 @@ public class TranslationMap
                 trMap.doImport(TranslationMap.class.getResourceAsStream(locale + ".txt"));
                 add(trMap);
             }
-            checkTranslations();
+            postImportHook();
             return this;
         } catch (Exception ex)
         {
@@ -82,7 +82,7 @@ public class TranslationMap
     {
         Locale locale = tr.getLocale();
         translations.put(locale.toString(), tr);
-        if (!locale.getCountry().isEmpty())
+        if (!locale.getCountry().isEmpty() && !translations.containsKey(tr.getLanguage()))
             translations.put(tr.getLanguage(), tr);
     }
 
@@ -122,23 +122,29 @@ public class TranslationMap
         return phrase.trim().split(splitter).length;
     }
 
-    private void checkTranslations()
+    /**
+     * This method does some checks and fills missing translation from en
+     */
+    private void postImportHook()
     {
         Map<String, String> enMap = get("en").asMap();
-        // check against english!
         StringBuilder sb = new StringBuilder();
         for (Translation tr : translations.values())
         {
             Map<String, String> trMap = tr.asMap();
-            for (Entry<String, String> e : enMap.entrySet())
+            for (Entry<String, String> enEntry : enMap.entrySet())
             {
-                String value = trMap.get(e.getKey());
+                String value = trMap.get(enEntry.getKey());
                 if (Helper.isEmpty(value))
+                {
+                    trMap.put(enEntry.getKey(), enEntry.getValue());
                     continue;
-                int expectedCount = countOccurence(e.getValue(), "\\%");
+                }
+
+                int expectedCount = countOccurence(enEntry.getValue(), "\\%");
                 if (expectedCount != countOccurence(value, "\\%"))
                 {
-                    sb.append(tr.getLocale()).append(" - error in ").append(e.getKey()).append("->").
+                    sb.append(tr.getLocale()).append(" - error in ").append(enEntry.getKey()).append("->").
                             append(value).append("\n");
                 }
             }
@@ -234,9 +240,6 @@ public class TranslationMap
                         throw new IllegalStateException("No key provided:" + line);
 
                     String value = line.substring(index + 1);
-                    if (value.isEmpty() && !key.contains("web"))
-                        throw new IllegalStateException("A key for the core cannot be empty: " + key);
-
                     if (!value.isEmpty())
                         put(key, value);
 

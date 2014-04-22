@@ -3,7 +3,7 @@ cd $HOME/..
 
 destination=src/main/resources/com/graphhopper/util/
 
-translations="en_US SKIP de_DE ro pt_PT pt_BR bg es ru ja fr si tr nl it fil SKIP"
+translations="en_US SKIP de_DE ro pt_PT pt_BR bg es ru ja fr si tr nl it fil SKIP el"
 file=$1
 #file=/tmp/gh.csv
 #rm $file
