@@ -23,6 +23,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.*;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap.Translation;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPlace;
@@ -169,6 +170,7 @@ public class GraphHopperServlet extends GHBaseServlet
         Locale locale = Helper.getLocale(getParam(req, "locale", "en"));
         boolean pointsEncoded = getBooleanParam(req, "points_encoded", true);
         boolean calcPoints = getBooleanParam(req, "calc_points", true);
+        int precision = (int) getLongParam(req, "max_precision", 6);
         JSONObject json = new JSONObject();
 
         JSONObject jsonPath = new JSONObject();
@@ -196,8 +198,8 @@ public class GraphHopperServlet extends GHBaseServlet
             jsonInfo.put("errors", Collections.singletonList(map));
         } else
         {
-            jsonInfo.put("took", took);
-            jsonPath.put("distance", rsp.getDistance());
+            jsonInfo.put("took", Helper.round(took, precision));
+            jsonPath.put("distance", Helper.round(rsp.getDistance(), precision));
             jsonPath.put("time", rsp.getMillis());
 
             if (calcPoints)
@@ -205,6 +207,23 @@ public class GraphHopperServlet extends GHBaseServlet
                 jsonPath.put("points_encoded", pointsEncoded);
 
                 PointList points = rsp.getPoints();
+                
+                // Adjust precision of coordinates to 1e-6
+                for (int i = 0; i < points.getSize(); i++)
+                {
+                    double newLat = Helper.round(points.getLat(i), precision);
+                    double newLon = Helper.round(points.getLon(i), precision);
+
+                    if (points.is3D())
+                    {
+                        double newEle = Helper.round(points.getEle(i), precision);
+                        points.setNode(i, newLat, newLon, newEle);
+                    } else
+                    {
+                        points.setNode(i, newLat, newLon);
+                    }
+                }
+
                 if (points.getSize() >= 2)
                     jsonPath.put("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
 
@@ -215,7 +234,7 @@ public class GraphHopperServlet extends GHBaseServlet
                 {
                     Translation tr = trMap.getWithFallBack(locale);
                     InstructionList instructions = rsp.getInstructions();
-                    jsonPath.put("instructions", instructions.createJson(tr));
+                    jsonPath.put("instructions", instructions.createJson(tr, precision));
                 }
             }
         }

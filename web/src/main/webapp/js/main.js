@@ -104,7 +104,7 @@ $(document).ready(function(e) {
                 var vehiclesDiv = $("#vehicles");
                 function createButton(vehicle) {
                     var vehicle = vehicle.toLowerCase();
-                    var button = $("<button class='vehicle-btn' title='" + tr(vehicle) + "'/>")
+                    var button = $("<button class='vehicle-btn' title='" + tr(vehicle) + "'/>");
                     button.attr('id', vehicle);
                     button.html("<img src='img/" + vehicle + ".png' alt='" + tr(vehicle) + "'></img>");
                     button.click(function() {
@@ -149,6 +149,9 @@ $(document).ready(function(e) {
 
     setAutoCompleteList("from");
     setAutoCompleteList("to");
+	
+	$("#fromInput").focusout( function() { $('.' + getAutoCompleteListClass(1)).hide();});
+	$("#toInput").focusout( function() { $('.' + getAutoCompleteListClass(2)).hide();});
 });
 
 function initFromParams(params, doQuery) {
@@ -349,9 +352,11 @@ function setFlag(coord, isFrom) {
             // inconsistent leaflet API: event.target.getLatLng vs. mouseEvent.latlng?
             var latlng = e.target.getLatLng();
             if (isFrom) {
-                ghRequest.from.setCoord(latlng.lat, latlng.lng);
+				$('.' + getAutoCompleteListClass(1)).hide();
+				ghRequest.from.setCoord(latlng.lat, latlng.lng);
                 resolveFrom();
             } else {
+				$('.' + getAutoCompleteListClass(2)).hide();
                 ghRequest.to.setCoord(latlng.lat, latlng.lng);
                 resolveTo();
             }
@@ -995,6 +1000,10 @@ function getAutoCompleteDiv(fromOrTo) {
     return $('#' + fromOrTo + 'Input');
 }
 
+function getAutoCompleteListClass(index) {
+	return "complete-" + index;
+}
+
 function formatValue(orig, query) {
     var pattern = '(' + $.Autocomplete.utils.escapeRegExChars(query) + ')';
     return orig.replace(new RegExp(pattern, 'gi'), '<strong>$1<\/strong>');
@@ -1006,7 +1015,7 @@ function setAutoCompleteList(fromOrTo, ghRequestLoc) {
     var myAutoDiv = getAutoCompleteDiv(fromOrTo);
     
     var options = {
-        containerClass: "complete-" + pointIndex,
+        containerClass: getAutoCompleteListClass(pointIndex),
         /* as we use jsonp we need to set the timeout to a small value */        
         timeout: 1000,
         /* avoid too many requests when typing quickly */

@@ -34,18 +34,10 @@ public class AngleCalcTest
         assertEquals(90.0, Math.toDegrees(ac.calcOrientation(0, 0, 10, 0)), 0.0001);
         assertEquals(45.0, Math.toDegrees(ac.calcOrientation(0, 0, 10, 10)), 0.0001);
         assertEquals(0.0, Math.toDegrees(ac.calcOrientation(0, 0, 0, 10)), 0.0001);
+        assertEquals(-45.0, Math.toDegrees(ac.calcOrientation(0, 0, -10, 10)), 0.0001);
         assertEquals(-135.0, Math.toDegrees(ac.calcOrientation(0, 0, -10, -10)), 0.0001);
     }
-
-    @Test
-    public void testOrientationNorth()
-    {
-        assertEquals(0.0, Math.toDegrees(ac.calcOrientationNorth(0, 0, 10, 0)), 0.0001);
-        assertEquals(45.0, Math.toDegrees(ac.calcOrientationNorth(0, 0, 10, 10)), 0.0001);
-        assertEquals(90.0, Math.toDegrees(ac.calcOrientationNorth(0, 0, 0, 10)), 0.0001);
-        assertEquals(-135.0, Math.toDegrees(ac.calcOrientationNorth(0, 0, -10, -10)), 0.0001);
-    }
-
+    
     @Test
     public void testAlignOrientation()
     {
@@ -65,6 +57,7 @@ public class AngleCalcTest
     @Test
     public void testCalcAzimuth()
     {
+        assertEquals(45.0, ac.calcAzimuth(0, 0, 10, 10), 0.0001);
         assertEquals(90.0, ac.calcAzimuth(0, 0, 0, 10), 0.0001);
         assertEquals(180.0, ac.calcAzimuth(0, 0, -10, 0), 0.0001);
         assertEquals(270.0, ac.calcAzimuth(0, 0, 0, -10), 0.0001);

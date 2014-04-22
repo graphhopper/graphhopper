@@ -34,6 +34,7 @@
                     div.className = containerClass;
                     div.style.position = 'absolute';
                     div.style.display = 'none';
+					div.style.cursor = 'pointer';
                     return div;
                 }
             };
