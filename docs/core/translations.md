@@ -16,3 +16,7 @@ and add a column for your language. Revisit it regularly to update or add new it
     Example: "Enter roundabout and use exit %1$s". In German language you have to add the word 'nehmen' after the
     exit-number parameter: "In den Kreisverkehr einfahren und Ausfahrt %1$s nehmen". 
     It is very important that you do not forget about these parameter placeholders, please ask if you are unsure.
+
+## License Agreement
+
+Please sign the <a href="http://www.clahub.com/agreements/graphhopper/graphhopper">GraphHopper License Agreement</a>.
