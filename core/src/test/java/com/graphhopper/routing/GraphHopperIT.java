@@ -86,7 +86,7 @@ public class GraphHopperIT
         assertEquals("Continue onto Avenue des Guelfes", resultJson.get(0).get("text"));
         assertEquals("Turn slight left onto Avenue des Papalins", resultJson.get(1).get("text"));
         assertEquals("Turn sharp right onto Quai Jean-Charles Rey", resultJson.get(2).get("text"));
-        assertEquals("Turn left onto road", resultJson.get(3).get("text"));
+        assertEquals("Turn left", resultJson.get(3).get("text"));
         assertEquals("Turn right onto Avenue Albert II", resultJson.get(4).get("text"));
 
         assertEquals(11, (Double) resultJson.get(0).get("distance"), 1);
@@ -172,13 +172,13 @@ public class GraphHopperIT
         assertEquals("Continue onto Avenue des Guelfes", resultJson.get(0).get("text"));
         assertEquals("Turn slight left onto Avenue des Papalins", resultJson.get(1).get("text"));
         assertEquals("Turn sharp right onto Quai Jean-Charles Rey", resultJson.get(2).get("text"));
-        assertEquals("Turn left onto road", resultJson.get(3).get("text"));
+        assertEquals("Turn left", resultJson.get(3).get("text"));
         assertEquals("Turn right onto Avenue Albert II", resultJson.get(4).get("text"));
 
         assertEquals("Stopover 1", resultJson.get(12).get("text"));
 
         assertEquals("Continue onto Avenue Albert II", resultJson.get(20).get("text"));
-        assertEquals("Turn left onto road", resultJson.get(21).get("text"));
+        assertEquals("Turn left", resultJson.get(21).get("text"));
         assertEquals("Turn right onto Quai Jean-Charles Rey", resultJson.get(22).get("text"));
         assertEquals("Turn sharp left onto Avenue des Papalins", resultJson.get(23).get("text"));
         assertEquals("Turn slight right onto Avenue des Guelfes", resultJson.get(24).get("text"));
