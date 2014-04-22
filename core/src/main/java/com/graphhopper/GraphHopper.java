@@ -34,6 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -726,7 +727,28 @@ public class GraphHopper implements GraphHopperAPI
         if (graph == null || !fullyLoaded)
             throw new IllegalStateException("Call load or importOrLoad before routing");
 
-        GHResponse rsp = new GHResponse();
+        GHResponse response = new GHResponse();
+        List<Path> paths = getPaths(request, response);
+        if (response.hasErrors())
+            return response;
+
+        enableInstructions = request.getHint("instructions", enableInstructions);
+        calcPoints = request.getHint("calcPoints", calcPoints);
+        simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
+        double minPathPrecision = request.getHint("douglas.minprecision", 1d);
+        DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(minPathPrecision);
+
+        new PathMerger().
+                setCalcPoints(calcPoints).
+                setDouglasPeucker(peucker).
+                setEnableInstructions(enableInstructions).
+                setSimplifyRequest(simplifyRequest && minPathPrecision > 0).
+                doWork(response, paths);
+        return response;
+    }
+
+    protected List<Path> getPaths( GHRequest request, GHResponse rsp )
+    {
         String vehicle = request.getVehicle();
         if (vehicle.isEmpty())
             vehicle = encodingManager.getSingle().toString();
@@ -735,39 +757,41 @@ public class GraphHopper implements GraphHopperAPI
         {
             rsp.addError(new IllegalArgumentException("Vehicle " + vehicle + " unsupported. "
                     + "Supported are: " + getEncodingManager()));
-            return rsp;
+            return Collections.emptyList();
         }
 
         List<GHPlace> places = request.getPlaces();
         if (places.size() < 2)
         {
             rsp.addError(new IllegalStateException("At least 2 points has to be specified, but was:" + places.size()));
-            return rsp;
+            return Collections.emptyList();
         }
 
         FlagEncoder encoder = encodingManager.getEncoder(vehicle);
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-        GHPlace startPlace = request.getPlaces().get(0);
+        GHPlace startPlace = places.get(0);
         StopWatch sw = new StopWatch().start();
         QueryResult fromRes = locationIndex.findClosest(startPlace.lat, startPlace.lon, edgeFilter);
+        String debug = "idLookup[0]:" + sw.stop().getSeconds() + "s";
         sw.stop();
         if (!fromRes.isValid())
+        {
             rsp.addError(new IllegalArgumentException("Cannot find point 0: " + startPlace));
+            return Collections.emptyList();
+        }
 
         List<Path> paths = new ArrayList<Path>(places.size() - 1);
-        String debug = "";
-        for (int placeIndex = 1; placeIndex < request.getPlaces().size(); placeIndex++)
+        for (int placeIndex = 1; placeIndex < places.size(); placeIndex++)
         {
-            GHPlace place = request.getPlaces().get(placeIndex);
-            sw.start();
+            GHPlace place = places.get(placeIndex);
+            sw = new StopWatch().start();
             QueryResult toRes = locationIndex.findClosest(place.lat, place.lon, edgeFilter);
-            debug += "[" + placeIndex + "]";
-            debug += ", idLookup:" + sw.stop().getSeconds() + "s";
+            debug += ", [" + placeIndex + "] idLookup:" + sw.stop().getSeconds() + "s";
             if (!toRes.isValid())
+            {
                 rsp.addError(new IllegalArgumentException("Cannot find point " + placeIndex + ": " + place));
-
-            if (rsp.hasErrors())
-                return rsp;
+                break;
+            }
 
             sw = new StopWatch().start();
             String algoStr = request.getAlgorithm().isEmpty() ? "dijkstrabi" : request.getAlgorithm();
@@ -786,7 +810,7 @@ public class GraphHopper implements GraphHopperAPI
                 {
                     rsp.addError(new IllegalStateException(
                             "Only dijkstrabi and astarbi is supported for LevelGraph (using contraction hierarchies)!"));
-                    return rsp;
+                    break;
                 }
             } else
             {
@@ -807,23 +831,14 @@ public class GraphHopper implements GraphHopperAPI
             fromRes = toRes;
         }
 
-        enableInstructions = request.getHint("instructions", enableInstructions);
-        calcPoints = request.getHint("calcPoints", calcPoints);
-        simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
-        double minPathPrecision = request.getHint("douglas.minprecision", 1d);
-        DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(minPathPrecision);
-        rsp.setDebugInfo(debug);
+        if (rsp.hasErrors())
+            return Collections.emptyList();
 
         if (places.size() - 1 != paths.size())
             throw new RuntimeException("There should be exactly one more places than paths. places:" + places.size() + ", paths:" + paths.size());
 
-        new PathMerger().
-                setCalcPoints(calcPoints).
-                setDouglasPeucker(peucker).
-                setEnableInstructions(enableInstructions).
-                setSimplifyRequest(simplifyRequest && minPathPrecision > 0).
-                doWork(rsp, paths);
-        return rsp;
+        rsp.setDebugInfo(debug);
+        return paths;
     }
 
     protected LocationIndex createLocationIndex( Directory dir )
