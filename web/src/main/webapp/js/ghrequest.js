@@ -92,8 +92,11 @@ GHRequest.prototype.handleBoolean = function(key, params) {
         this[key] = params[key] === "true" || params[key] === true;
 };
 
-GHRequest.prototype.createGeocodeURL = function() {
-    return this.createPath(this.host + "/geocode?limit=8&type=" + this.dataType + "&key=" + this.key);
+GHRequest.prototype.createGeocodeURL = function(host) {
+    var tmpHost = this.host;
+    if(host)
+        tmpHost = host;
+    return this.createPath(tmpHost + "/geocode?limit=8&type=" + this.dataType + "&key=" + this.key);
 };
 
 GHRequest.prototype.createURL = function(demoUrl) {

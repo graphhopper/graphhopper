@@ -311,17 +311,14 @@ public class InstructionListTest
 
         String gpxStr = wayList.createGPX("test", 0, "GMT+1");
 
-//        System.out.println(">>>>>>>>" + gpxStr);
-        
         assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T01:00:00+01:00</time>"));
         assertTrue(gpxStr, gpxStr.contains("<extensions>") && gpxStr.contains("</extensions>"));
         assertTrue(gpxStr, gpxStr.contains("<rtept lat=\"15.1\" lon=\"10.0\">"));
         assertTrue(gpxStr, gpxStr.contains("<distance>8000.0</distance>"));
         assertTrue(gpxStr, gpxStr.contains("<desc>left 2-3</desc>"));
 
-        // assertTrue(gpxStr, gpxStr.contains("<direction>W</direction>"));
-        // assertTrue(gpxStr, gpxStr.contains("<turn-angle>-90</turn-angle>"));
-        // assertTrue(gpxStr, gpxStr.contains("<azimuth>270</azimuth/>"));
+        assertTrue(gpxStr, gpxStr.contains("<direction>N</direction>"));
+        assertTrue(gpxStr, gpxStr.contains("<azimuth>0</azimuth>"));
     }
 
     @Test
@@ -370,5 +367,5 @@ public class InstructionListTest
         assertEquals(0, il.size());
         assertEquals(0, il.createStartPoints().size());
     }
- 
+
 }

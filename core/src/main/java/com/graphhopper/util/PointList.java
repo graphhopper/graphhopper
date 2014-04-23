@@ -291,12 +291,12 @@ public class PointList implements PointAccess
             if (is3D)
                 points.add(new Double[]
                 {
-                    getLongitude(i), getLatitude(i), getElevation(i)
+                    Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i)), Helper.round2(getElevation(i))
                 });
             else
                 points.add(new Double[]
                 {
-                    getLongitude(i), getLatitude(i)
+                    Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i))
                 });
         }
         return points;

@@ -37,6 +37,7 @@ import java.util.List;
  */
 public class Path
 {
+    private static final AngleCalc2D ac = new AngleCalc2D();
     protected Graph graph;
     private FlagEncoder encoder;
     protected double distance;
@@ -376,7 +377,6 @@ public class Path
             private String name = null;
             private int pavementType;
             private int wayType;
-            private final AngleCalc2D ac = new AngleCalc2D();
 
             @Override
             public void next( EdgeIteratorState edge, int index )

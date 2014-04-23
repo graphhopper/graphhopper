@@ -91,4 +91,12 @@ describe("utils", function() {
         var input = new GHInput("");
         expect(input.toString()).toEqual(undefined);
     });
+    
+    it("point should be parsable", function() {
+        expect(new GHInput("12.44, 68.44").lat).toEqual(12.44);
+        expect(new GHInput("12.44, 68.44").lng).toEqual(68.44);
+        expect(new GHInput("12.44,68.44").lat).toEqual(12.44);
+        expect(new GHInput("12.44,68.44").lng).toEqual(68.44);
+        expect(new GHInput("london").lon).toEqual(undefined);
+    });
 });

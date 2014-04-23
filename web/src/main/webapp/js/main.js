@@ -6,7 +6,7 @@
 var tmpArgs = parseUrlWithHisto();
 var host = tmpArgs["host"];
 // var host = "http://graphhopper.com/api/1";
-if (host == null) {
+if (host === null) {
     if (location.port === '') {
         host = location.protocol + '//' + location.hostname;
     } else {
@@ -149,9 +149,6 @@ $(document).ready(function(e) {
 
     setAutoCompleteList("from");
     setAutoCompleteList("to");
-	
-	$("#fromInput").focusout( function() { $('.' + getAutoCompleteListClass(1)).hide();});
-	$("#toInput").focusout( function() { $('.' + getAutoCompleteListClass(2)).hide();});
 });
 
 function initFromParams(params, doQuery) {
@@ -355,12 +352,11 @@ function setFlag(coord, isFrom) {
             routingLayer.clearLayers();
             // inconsistent leaflet API: event.target.getLatLng vs. mouseEvent.latlng?
             var latlng = e.target.getLatLng();
-            if (isFrom) {
-				$('.' + getAutoCompleteListClass(1)).hide();
-				ghRequest.from.setCoord(latlng.lat, latlng.lng);
+            hideAutoComplete();
+            if (isFrom) {                
+                ghRequest.from.setCoord(latlng.lat, latlng.lng);
                 resolveFrom();
             } else {
-				$('.' + getAutoCompleteListClass(2)).hide();
                 ghRequest.to.setCoord(latlng.lat, latlng.lng);
                 resolveTo();
             }
@@ -389,7 +385,7 @@ function resolve(fromOrTo, locCoord) {
     return createAmbiguityList(locCoord).done(function(arg1) {
         var errorDiv = $("#" + fromOrTo + "ResolveError");
         errorDiv.empty();
-        
+
         if (locCoord.error)
             errorDiv.text(locCoord.error);
 
@@ -736,7 +732,7 @@ function routeLatLng(request, doQuery) {
                 hiddenDiv.toggle();
             });
             $("#info").append(toggly);
-            var infoStr = "took: " + round(json.info.took, 1000) + "s"
+            var infoStr = "took: " + round(json.info.took / 1000, 1000) + "s"
                     + ", points: " + path.points.coordinates.length;
 
             hiddenDiv.append("<span>" + infoStr + "</span>");
@@ -1004,8 +1000,9 @@ function getAutoCompleteDiv(fromOrTo) {
     return $('#' + fromOrTo + 'Input');
 }
 
-function getAutoCompleteListClass(index) {
-	return "complete-" + index;
+function hideAutoComplete() {
+    getAutoCompleteDiv("from").autocomplete().hide();
+    getAutoCompleteDiv("to").autocomplete().hide();
 }
 
 function formatValue(orig, query) {
@@ -1016,11 +1013,11 @@ function formatValue(orig, query) {
 function setAutoCompleteList(fromOrTo, ghRequestLoc) {
     var isFrom = fromOrTo === "from";
     var pointIndex = isFrom ? 1 : 2;
-    var myAutoDiv = getAutoCompleteDiv(fromOrTo);
-    
+    var myAutoDiv = getAutoCompleteDiv(fromOrTo);    
+
     var options = {
-        containerClass: getAutoCompleteListClass(pointIndex),
-        /* as we use jsonp we need to set the timeout to a small value */        
+        containerClass: "complete-" + pointIndex,
+        /* as we use jsonp we need to set the timeout to a small value */
         timeout: 1000,
         /* avoid too many requests when typing quickly */
         deferRequestBy: 5,
@@ -1032,6 +1029,11 @@ function setAutoCompleteList(fromOrTo, ghRequestLoc) {
         autoSelectFirst: false,
         paramName: "q",
         dataType: "jsonp",
+        onSearchStart: function(params) {
+            // query server only if not a parsable point (i.e. format lat,lon)
+            var val = new GHInput(params.q).lat;
+            return val === undefined;
+        },
         serviceUrl: function() {
             return ghRequest.createGeocodeURL();
         },
@@ -1059,21 +1061,24 @@ function setAutoCompleteList(fromOrTo, ghRequestLoc) {
                 req = ghRequest.from;
 
             myAutoDiv.autocomplete().disable();
-            
+
             var point = suggestion.data.point;
-            req.setCoord(point.lat, point.lng);            
-            
-            req.input = suggestion.value;            
+            req.setCoord(point.lat, point.lng);
+
+            req.input = suggestion.value;
             if (ghRequest.from.isResolved() && ghRequest.to.isResolved())
                 routeLatLng(ghRequest);
             else
                 focus(req, 15, isFrom);
-            
+
             myAutoDiv.autocomplete().enable();
         }
     };
-    
+
     myAutoDiv.autocomplete(options);
+    $("#"+fromOrTo+"Input").focusout(function() {
+        myAutoDiv.autocomplete().hide();
+    });
 }
 
 function dataToHtml(data, query) {
@@ -1105,15 +1110,15 @@ function dataToText(data) {
     var text = "";
     if (data.name)
         text += data.name;
-    
+
     if (data.postcode)
         text = insComma(text, data.postcode);
-    
+
     // make sure name won't be duplicated
     if (data.city && text.indexOf(data.city) < 0)
         text = insComma(text, data.city);
-    
+
     if (data.country && text.indexOf(data.country) < 0)
-        text = insComma(text, data.country);       
+        text = insComma(text, data.country);
     return text;
 }

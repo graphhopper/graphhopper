@@ -22,6 +22,7 @@ import java.text.DecimalFormat;
 
 public class Instruction
 {
+    private static final AngleCalc2D ac = new AngleCalc2D();
     private static final DistanceCalc distanceCalc = new DistanceCalcEarth();
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
@@ -178,7 +179,6 @@ public class Instruction
      */
     String getDirection( Instruction nextI )
     {
-        AngleCalc2D ac = new AngleCalc2D();
         double azimuth = calcAzimuth(nextI);
         if (Double.isNaN(azimuth))
             return null;
@@ -223,8 +223,6 @@ public class Instruction
 
         double lat = points.getLatitude(0);
         double lon = points.getLongitude(0);
-
-        AngleCalc2D ac = new AngleCalc2D();
 
         double azimuth = ac.calcAzimuth(lat, lon, nextLat, nextLon);
         return azimuth;

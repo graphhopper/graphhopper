@@ -90,12 +90,8 @@ public class InstructionList implements Iterable<Instruction>
         }
         return labels;
     }
-    
-    public List<Map<String, Object>> createJson( TranslationMap.Translation tr ) {
-        return createJson(tr, 6);
-    }
-    
-    public List<Map<String, Object>> createJson( TranslationMap.Translation tr, int precision )
+
+    public List<Map<String, Object>> createJson( TranslationMap.Translation tr )
     {
         List<Map<String, Object>> instrList = new ArrayList<Map<String, Object>>(instructions.size());
         int pointsIndex = 0;
@@ -107,7 +103,7 @@ public class InstructionList implements Iterable<Instruction>
 
             instrJson.put("text", Helper.firstBig(getTurnDescription(instruction, tr)));
             instrJson.put("time", instruction.getTime());
-            instrJson.put("distance", Helper.round(instruction.getDistance(), precision));
+            instrJson.put("distance", Helper.round(instruction.getDistance(), 3));
             instrJson.put("sign", instruction.getSign());
 
             int tmpIndex = pointsIndex + instruction.getPoints().size();
@@ -247,8 +243,8 @@ public class InstructionList implements Iterable<Instruction>
         track.append("<trkseg>");
         for (GPXEntry entry : createGPXList())
         {
-            track.append("\n<trkpt lat='").append(Helper.round(entry.getLat(), 6));
-            track.append("' lon='").append(Helper.round(entry.getLon(), 6)).append("'>");
+            track.append("\n<trkpt lat='").append(Helper.round6(entry.getLat()));
+            track.append("' lon='").append(Helper.round6(entry.getLon())).append("'>");
             track.append("<time>").append(tzHack(formatter.format(startTimeMillis + entry.getMillis())));
             track.append("</time>").append("</trkpt>");
         }
@@ -258,20 +254,15 @@ public class InstructionList implements Iterable<Instruction>
         if (!isEmpty())
         {
             track.append("<rte>");
-            //Instruction prevI = null, middleI = null, nextI = null;
-            Instruction thisI = null, nextI;
-
-            for (Instruction i : instructions)
+            Instruction nextI = null;
+            for (Instruction instr : instructions)
             {
-                nextI = i;
+                if (null != nextI)
+                    createRteptBlock(track, nextI, instr);
 
-                if (null != thisI)
-                {
-                    createRteptBlock(track, thisI, nextI);
-                }
-                thisI = nextI;
+                nextI = instr;
             }
-            createRteptBlock(track, thisI, null);
+            createRteptBlock(track, nextI, null);
             track.append("</rte>");
         }
 
@@ -325,27 +316,24 @@ public class InstructionList implements Iterable<Instruction>
 
     private void createRteptBlock( StringBuilder output, Instruction instruction, Instruction nextI )
     {
-        output.append("<rtept lat=\"").append(Helper.round(instruction.getFirstLat(), 6)).
-                append("\" lon=\"").append(Helper.round(instruction.getFirstLon(), 6)).append("\">");
+        output.append("<rtept lat=\"").append(Helper.round6(instruction.getFirstLat())).
+                append("\" lon=\"").append(Helper.round6(instruction.getFirstLon())).append("\">");
 
         if (!instruction.getName().isEmpty())
             output.append("<desc>").append(getTurnDescription(instruction, NO_TRANSLATE)).append("</desc>");
 
         output.append("<extensions>");
-
-        output.append("<distance>").append(Helper.round(instruction.getDistance(), 6)).append("</distance>");
+        output.append("<distance>").append(Helper.round(instruction.getDistance(), 3)).append("</distance>");
         output.append("<time>").append(instruction.getTime()).append("</time>");
 
         String direction = instruction.getDirection(nextI);
-        if (null != direction)
-        {
+        if (direction != null)
             output.append("<direction>").append(direction).append("</direction>");
-        }
+
         String azimuth = instruction.getAzimuth(nextI);
-        if (null != azimuth)
-        {
+        if (azimuth != null)
             output.append("<azimuth>").append(azimuth).append("</azimuth>");
-        }
+
         output.append("</extensions>");
         output.append("</rtept>");
     }
