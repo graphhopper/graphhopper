@@ -33,7 +33,7 @@ so you should not rely on them!
 
 ```json
 {
-  "info": {"took": 0.00414920412003994},
+  "info": {"took": 4},
   "paths": [{
     "bbox": [
       13.362853824187303,

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util.shapes;
 
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.NumHelper;
 import java.util.ArrayList;
 import java.util.List;
@@ -226,16 +227,16 @@ public class BBox implements Shape, Cloneable
     public List<Double> toGeoJson()
     {
         List<Double> list = new ArrayList<Double>(4);
-        list.add(minLon);
-        list.add(minLat);
+        list.add(Helper.round6(minLon));
+        list.add(Helper.round6(minLat));
         // hmh
         if (is3D)
-            list.add(minEle);
+            list.add(Helper.round2(minEle));
 
-        list.add(maxLon);
-        list.add(maxLat);
+        list.add(Helper.round6(maxLon));
+        list.add(Helper.round6(maxLat));
         if (is3D)
-            list.add(maxEle);
+            list.add(Helper.round2(maxEle));
 
         return list;
     }

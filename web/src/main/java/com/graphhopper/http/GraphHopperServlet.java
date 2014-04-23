@@ -21,10 +21,9 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.*;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap.Translation;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPlace;
 import java.io.IOException;
 import java.util.*;
@@ -65,6 +64,7 @@ public class GraphHopperServlet extends GHBaseServlet
             writeError(res, SC_INTERNAL_SERVER_ERROR, "Problem occured:" + ex.getMessage());
         }
     }
+
     void writePath( HttpServletRequest req, HttpServletResponse res ) throws Exception
     {
         List<GHPlace> infoPoints = getPoints(req);
@@ -156,9 +156,9 @@ public class GraphHopperServlet extends GHBaseServlet
             jsonInfo.put("errors", Collections.singletonList(map));
         } else
         {
+            jsonInfo.put("took", Math.round(took * 1000));
             JSONObject jsonPath = new JSONObject();
-            jsonInfo.put("took", took);
-            jsonPath.put("distance", rsp.getDistance());
+            jsonPath.put("distance", Helper.round(rsp.getDistance(), 3));
             jsonPath.put("time", rsp.getMillis());
 
             if (calcPoints)

@@ -415,4 +415,23 @@ public class Helper
     {
         return Math.max(min, Math.min(value, max));
     }
+
+    /**
+     * Round the value to the specified exponent
+     */
+    public static double round( double value, int exponent )
+    {
+        double factor = Math.pow(10, exponent);
+        return Math.round(value * factor) / factor;
+    }
+
+    public static final double round6( double value )
+    {
+        return Math.round(value * 1e6) / 1e6;
+    }
+
+    public static final double round2( double value )
+    {
+        return Math.round(value * 100) / 100;
+    }
 }

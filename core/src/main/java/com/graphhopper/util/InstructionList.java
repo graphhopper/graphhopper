@@ -65,26 +65,26 @@ public class InstructionList implements Iterable<Instruction>
                 double distInMiles = distInMeter / 1000 / DistanceCalcEarth.KM_MILE;
                 if (distInMiles < 0.9)
                 {
-                    labels.add((int) round(distInMiles * 5280, 1) + " " + tr.tr("ftAbbr"));
+                    labels.add((int) Helper.round(distInMiles * 5280, 1) + " " + tr.tr("ftAbbr"));
                 } else
                 {
                     if (distInMiles < 100)
-                        labels.add(round(distInMiles, 2) + " " + tr.tr("miAbbr"));
+                        labels.add(Helper.round(distInMiles, 2) + " " + tr.tr("miAbbr"));
                     else
-                        labels.add((int) round(distInMiles, 1) + " " + tr.tr("miAbbr"));
+                        labels.add((int) Helper.round(distInMiles, 1) + " " + tr.tr("miAbbr"));
                 }
             } else
             {
                 if (distInMeter < 950)
                 {
-                    labels.add((int) round(distInMeter, 1) + " " + tr.tr("mAbbr"));
+                    labels.add((int) Helper.round(distInMeter, 1) + " " + tr.tr("mAbbr"));
                 } else
                 {
                     distInMeter /= 1000;
                     if (distInMeter < 100)
-                        labels.add(round(distInMeter, 2) + " " + tr.tr("kmAbbr"));
+                        labels.add(Helper.round(distInMeter, 2) + " " + tr.tr("kmAbbr"));
                     else
-                        labels.add((int) round(distInMeter, 1) + " " + tr.tr("kmAbbr"));
+                        labels.add((int) Helper.round(distInMeter, 1) + " " + tr.tr("kmAbbr"));
                 }
             }
         }
@@ -103,7 +103,7 @@ public class InstructionList implements Iterable<Instruction>
 
             instrJson.put("text", Helper.firstBig(getTurnDescription(instruction, tr)));
             instrJson.put("time", instruction.getTime());
-            instrJson.put("distance", instruction.getDistance());
+            instrJson.put("distance", Helper.round(instruction.getDistance(), 3));
             instrJson.put("sign", instruction.getSign());
 
             int tmpIndex = pointsIndex + instruction.getPoints().size();
@@ -243,9 +243,10 @@ public class InstructionList implements Iterable<Instruction>
         track.append("<trkseg>");
         for (GPXEntry entry : createGPXList())
         {
-            track.append("\n<trkpt lat='").append(entry.getLat()).append("' lon='").append(entry.getLon()).append("'>");
-            track.append("<time>").append(tzHack(formatter.format(startTimeMillis + entry.getMillis()))).append("</time>");
-            track.append("</trkpt>");
+            track.append("\n<trkpt lat='").append(Helper.round6(entry.getLat()));
+            track.append("' lon='").append(Helper.round6(entry.getLon())).append("'>");
+            track.append("<time>").append(tzHack(formatter.format(startTimeMillis + entry.getMillis())));
+            track.append("</time>").append("</trkpt>");
         }
         track.append("</trkseg>");
         track.append("</trk>");
@@ -253,20 +254,15 @@ public class InstructionList implements Iterable<Instruction>
         if (!isEmpty())
         {
             track.append("<rte>");
-            //Instruction prevI = null, middleI = null, nextI = null;
-            Instruction thisI = null, nextI;
-
-            for (Instruction i : instructions)
+            Instruction nextI = null;
+            for (Instruction instr : instructions)
             {
-                nextI = i;
+                if (null != nextI)
+                    createRteptBlock(track, nextI, instr);
 
-                if (null != thisI)
-                {
-                    createRteptBlock(track, thisI, nextI);
-                }
-                thisI = nextI;
+                nextI = instr;
             }
-            createRteptBlock(track, thisI, null);
+            createRteptBlock(track, nextI, null);
             track.append("</rte>");
         }
 
@@ -320,27 +316,24 @@ public class InstructionList implements Iterable<Instruction>
 
     private void createRteptBlock( StringBuilder output, Instruction instruction, Instruction nextI )
     {
-        output.append("<rtept lat=\"").append(InstructionList.round(instruction.getFirstLat(), 6)).
-                append("\" lon=\"").append(InstructionList.round(instruction.getFirstLon(), 6)).append("\">");
+        output.append("<rtept lat=\"").append(Helper.round6(instruction.getFirstLat())).
+                append("\" lon=\"").append(Helper.round6(instruction.getFirstLon())).append("\">");
 
         if (!instruction.getName().isEmpty())
             output.append("<desc>").append(getTurnDescription(instruction, NO_TRANSLATE)).append("</desc>");
 
         output.append("<extensions>");
-
-        output.append("<distance>").append((int) instruction.getDistance()).append("</distance>");
+        output.append("<distance>").append(Helper.round(instruction.getDistance(), 3)).append("</distance>");
         output.append("<time>").append(instruction.getTime()).append("</time>");
 
         String direction = instruction.getDirection(nextI);
-        if (null != direction)
-        {
+        if (direction != null)
             output.append("<direction>").append(direction).append("</direction>");
-        }
+
         String azimuth = instruction.getAzimuth(nextI);
-        if (null != azimuth)
-        {
+        if (azimuth != null)
             output.append("<azimuth>").append(azimuth).append("</azimuth>");
-        }
+
         output.append("</extensions>");
         output.append("</rtept>");
     }
@@ -383,15 +376,6 @@ public class InstructionList implements Iterable<Instruction>
                 return name + ", " + wayClass;
         else
             return name + ", " + pavementName;
-    }
-
-    /**
-     * Round the value to the specified exponent
-     */
-    static double round( double value, int exponent )
-    {
-        double factor = Math.pow(10, exponent);
-        return Math.round(value * factor) / factor;
     }
 
     /**

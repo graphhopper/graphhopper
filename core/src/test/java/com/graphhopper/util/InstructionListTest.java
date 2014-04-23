@@ -314,12 +314,11 @@ public class InstructionListTest
         assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T01:00:00+01:00</time>"));
         assertTrue(gpxStr, gpxStr.contains("<extensions>") && gpxStr.contains("</extensions>"));
         assertTrue(gpxStr, gpxStr.contains("<rtept lat=\"15.1\" lon=\"10.0\">"));
-        assertTrue(gpxStr, gpxStr.contains("<distance>8000</distance>"));
+        assertTrue(gpxStr, gpxStr.contains("<distance>8000.0</distance>"));
         assertTrue(gpxStr, gpxStr.contains("<desc>left 2-3</desc>"));
 
-        // assertTrue(gpxStr, gpxStr.contains("<direction>W</direction>"));
-        // assertTrue(gpxStr, gpxStr.contains("<turn-angle>-90</turn-angle>"));
-        // assertTrue(gpxStr, gpxStr.contains("<azimuth>270</azimuth/>"));
+        assertTrue(gpxStr, gpxStr.contains("<direction>N</direction>"));
+        assertTrue(gpxStr, gpxStr.contains("<azimuth>0</azimuth>"));
     }
 
     @Test
@@ -369,11 +368,4 @@ public class InstructionListTest
         assertEquals(0, il.createStartPoints().size());
     }
 
-    @Test
-    public void testRound()
-    {
-        assertEquals(100.94, InstructionList.round(100.94, 2), 1e-7);
-        assertEquals(100.9, InstructionList.round(100.94, 1), 1e-7);
-        assertEquals(101.0, InstructionList.round(100.95, 1), 1e-7);
-    }
 }

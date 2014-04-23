@@ -34,21 +34,9 @@ public class AngleCalc2D
      * @Deprecated because it seems to be nicer to align to north so try to use calcOrientationNorth
      * instaead
      */
-    @Deprecated
     public double calcOrientation( double lat1, double lon1, double lat2, double lon2 )
     {
         return Math.atan2(lat2 - lat1, lon2 - lon1);
-        //return Math.atan2(lon2 - lon1, lat2 - lat1);
-    }
-
-    /**
-     * Return orientation of line relative to north. (North by coordinates, not magnetic north)
-     * <p>
-     * @return Orientation in interval -pi to +pi where 0 is north and pi is south
-     */
-    public double calcOrientationNorth( double lat1, double lon1, double lat2, double lon2 )
-    {
-        return Math.atan2(lon2 - lon1, lat2 - lat1);
     }
 
     /**
@@ -88,11 +76,14 @@ public class AngleCalc2D
      */
     double calcAzimuth( double lat1, double lon1, double lat2, double lon2 )
     {
-        double orientation = calcOrientationNorth(lat1, lon1, lat2, lon2);
-        double baseOrientation = calcOrientationNorth(2, 0, 1, 0);    // south
-        double alignedOrientation = alignOrientation(baseOrientation, orientation);
-
-        return Math.toDegrees(alignedOrientation);
+        double orientation = -calcOrientation(lat1, lon1, lat2, lon2);
+        orientation += (Math.PI/2);
+        
+        if (orientation < 0) 
+        {
+            orientation += 2*Math.PI;
+        }
+        return Math.toDegrees(orientation);
     }
 
     String azimuth2compassPoint( double azimuth )
