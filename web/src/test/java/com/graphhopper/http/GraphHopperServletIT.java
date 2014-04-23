@@ -47,6 +47,17 @@ public class GraphHopperServletIT extends BaseServletTest
         assertTrue("distance wasn't correct:" + distance, distance > 9000);
         assertTrue("distance wasn't correct:" + distance, distance < 9500);
     }
+    
+    @Test
+    public void testJsonRounding() throws Exception
+    {
+        JSONObject json = query("point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false&max_precision=3");
+        
+        //System.out.println(">>> json (basic query): " + json);
+        
+        JSONObject cson = json.getJSONArray("paths").getJSONObject(0).getJSONObject("points");
+        assertTrue("unexpected coordinates!", cson.toString().indexOf("[1.536,42.555]") >= 0);
+    }
 
     @Test
     public void testGraphHopperWeb() throws Exception
