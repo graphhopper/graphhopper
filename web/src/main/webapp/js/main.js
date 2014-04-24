@@ -6,7 +6,7 @@
 var tmpArgs = parseUrlWithHisto();
 var host = tmpArgs["host"];
 // var host = "http://graphhopper.com/api/1";
-if (host === null) {
+if (!host) {
     if (location.port === '') {
         host = location.protocol + '//' + location.hostname;
     } else {
