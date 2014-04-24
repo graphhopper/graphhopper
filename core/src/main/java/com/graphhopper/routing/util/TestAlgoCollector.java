@@ -19,7 +19,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -69,14 +68,14 @@ public class TestAlgoCollector
 
         PointList pointList = rsp.getPoints();
         double tmpDist = pointList.calcDistance(distCalc);
-        if (Math.abs(rsp.getDistance() - tmpDist) > 8)
+        if (Math.abs(rsp.getDistance() - tmpDist) > .9)
         {
             errors.add(prepare + " path.getDistance was  " + rsp.getDistance()
                     + "\t pointList.calcDistance was " + tmpDist + "\t (expected points " + oneRun.getLocs()
                     + ", expected distance " + oneRun.getDistance() + ") " + queryList);
         }
 
-        if (Math.abs(rsp.getDistance() - oneRun.getDistance()) > 4)
+        if (Math.abs(rsp.getDistance() - oneRun.getDistance()) > .9)
         {
             errors.add(prepare + " returns path not matching the expected distance of " + oneRun.getDistance()
                     + "\t Returned was " + rsp.getDistance() + "\t (expected points " + oneRun.getLocs()
@@ -84,7 +83,7 @@ public class TestAlgoCollector
         }
 
         // There are real world instances where A-B-C is identical to A-C (in meter precision).
-        if (Math.abs(pointList.getSize() - oneRun.getLocs()) > 4)
+        if (Math.abs(pointList.getSize() - oneRun.getLocs()) > 1)
         {
             errors.add(prepare + " returns path not matching the expected points of " + oneRun.getLocs()
                     + "\t Returned was " + pointList.getSize() + "\t (expected distance " + oneRun.getDistance()

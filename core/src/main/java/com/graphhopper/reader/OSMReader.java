@@ -113,6 +113,7 @@ public class OSMReader implements DataReader
     private final DistanceCalc distCalc = new DistanceCalcEarth();
     private final DistanceCalc3D distCalc3D = new DistanceCalc3D();
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
+    private boolean doSimplify = true;
     private int nextTowerId = 0;
     private int nextPillarId = 0;
     // negative but increasing to avoid clash with custom created OSM files
@@ -743,7 +744,9 @@ public class OSMReader implements DataReader
         EdgeIteratorState iter = graphStorage.edge(fromIndex, toIndex).setDistance(towerNodeDistance).setFlags(flags);
         if (nodes > 2)
         {
-            simplifyAlgo.simplify(pillarNodes);
+            if (doSimplify)
+                simplifyAlgo.simplify(pillarNodes);
+
             iter.setWayGeometry(pillarNodes);
         }
         storeOSMWayID(iter.getEdge(), wayOsmId);
@@ -916,6 +919,7 @@ public class OSMReader implements DataReader
 
     public OSMReader setWayPointMaxDistance( double maxDist )
     {
+        doSimplify = maxDist > 0;
         simplifyAlgo.setMaxDistance(maxDist);
         return this;
     }

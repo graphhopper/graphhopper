@@ -61,20 +61,20 @@ public class RoutingAlgorithmIT
     List<OneRun> createMonacoCar()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(43.730729, 7.42135, 43.727697, 7.419199, 2581, 102));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3586, 162));
-        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.4277, 2560, 131));
-        list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 2227, 128));
-        list.add(new OneRun(43.730949, 7.412338, 43.739643, 7.424542, 2101, 110));
+        list.add(new OneRun(43.730729, 7.42135, 43.727697, 7.419199, 2580, 110));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3588, 170));
+        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.4277, 2561, 133));
+        list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 2230, 137));
+        list.add(new OneRun(43.730949, 7.412338, 43.739643, 7.424542, 2100, 116));
         list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
 
         // same special cases where GPS-exact routing could have problems (same edge and neighbor edges)
         list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.41934, 0, 1));
         // on the same edge and very release
-        list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.4193, 2, 2));
+        list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.4193, 3, 2));
         // one way stuff
-        list.add(new OneRun(43.729445, 7.415063, 43.728856, 7.41472, 107, 4));
-        list.add(new OneRun(43.728856, 7.41472, 43.729445, 7.415063, 316, 11));
+        list.add(new OneRun(43.729445, 7.415063, 43.728856, 7.41472, 103, 4));
+        list.add(new OneRun(43.728856, 7.41472, 43.729445, 7.415063, 320, 11));
         return list;
     }
 
@@ -92,9 +92,9 @@ public class RoutingAlgorithmIT
         // export from http://www.openstreetmap.org/export#map=19/51.37605/-0.53155
         List<OneRun> list = new ArrayList<OneRun>();
         // going the bit longer way out of the circle
-        list.add(new OneRun(51.376197, -0.531576, 51.376509, -0.530863, 153, 19));
+        list.add(new OneRun(51.376197, -0.531576, 51.376509, -0.530863, 153, 18));
         // now exacle the opposite direction: going into the circle (shorter)
-        list.add(new OneRun(51.376509, -0.530863, 51.376197, -0.531576, 75, 13));
+        list.add(new OneRun(51.376509, -0.530863, 51.376197, -0.531576, 75, 15));
 
         runAlgo(testCollector, "files/circle-bug.osm.gz", "target/graph-circle-bug",
                 list, "CAR", true, "CAR", "shortest", false);
@@ -124,11 +124,12 @@ public class RoutingAlgorithmIT
     public void testMonacoFastest()
     {
         List<OneRun> list = createMonacoCar();
-        list.get(0).setLocs(1, 105);
-        list.get(3).setDistance(1, 2276);
-        list.get(3).setLocs(1, 133);
+        list.get(0).setLocs(1, 117);
+        list.get(0).setDistance(1, 2584);
+        list.get(3).setDistance(1, 2279);
+        list.get(3).setLocs(1, 141);
         list.get(4).setDistance(1, 2149);
-        list.get(4).setLocs(1, 115);
+        list.get(4).setLocs(1, 120);
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "CAR", true, "CAR", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -140,11 +141,11 @@ public class RoutingAlgorithmIT
         // Additional locations are inserted because of new crossings from foot to highway paths!
         // Distance is the same.
         List<OneRun> list = createMonacoCar();
-        list.get(0).setLocs(1, 107);
-        list.get(1).setLocs(1, 165);
+        list.get(0).setLocs(1, 110);
+        list.get(1).setLocs(1, 170);
         list.get(2).setLocs(1, 132);
-        list.get(3).setLocs(1, 132);
-        list.get(4).setLocs(1, 114);
+        list.get(3).setLocs(1, 137);
+        list.get(4).setLocs(1, 116);
 
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "CAR,FOOT", false, "CAR", "shortest", false);
@@ -155,8 +156,8 @@ public class RoutingAlgorithmIT
     {
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(43.730729, 7.421288, 43.727697, 7.419199, 1566, 92));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3435, 132));
-        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2085, 111));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3438, 136));
+        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2085, 112));
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1425, 89));
         return list;
     }
@@ -188,16 +189,16 @@ public class RoutingAlgorithmIT
     public void testMonacoBike3D_twoSpeedsPerEdge()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 1724, 85));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3835, 171));
+        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 1724, 87));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3835, 176));
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2425, 122));
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1578, 86));
 
         // try reverse direction
-        list.add(new OneRun(43.727687, 7.418737, 43.730864, 7.420771, 2624, 116));
-        list.add(new OneRun(43.74958, 7.436566, 43.727687, 7.418737, 4255, 159));
+        list.add(new OneRun(43.727687, 7.418737, 43.730864, 7.420771, 2623, 117));
+        list.add(new OneRun(43.74958, 7.436566, 43.727687, 7.418737, 4255, 163));
         list.add(new OneRun(43.739213, 7.427806, 43.728677, 7.41016, 2852, 149));
-        list.add(new OneRun(43.739662, 7.424355, 43.733802, 7.413433, 2379, 103));
+        list.add(new OneRun(43.739662, 7.424355, 43.733802, 7.413433, 2382, 107));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "BIKE2", true, "BIKE2", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -207,8 +208,8 @@ public class RoutingAlgorithmIT
     public void testMonacoBike()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 1641, 85));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3580, 163));
+        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 1642, 87));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3580, 168));
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2323, 121));
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1434, 89));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
@@ -220,8 +221,8 @@ public class RoutingAlgorithmIT
     public void testMonacoMountainBike()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2332, 107));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3588, 165));
+        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2332, 108));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3588, 170));
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2700, 170));
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1475, 88));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
@@ -237,9 +238,9 @@ public class RoutingAlgorithmIT
     public void testMonacoRacingBike()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2597, 115));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3588, 165));
-        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2323, 121));
+        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2597, 118));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3588, 170));
+        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2323, 122));
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1490, 84));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "RACINGBIKE", true, "RACINGBIKE", "fastest", false);
@@ -254,9 +255,9 @@ public class RoutingAlgorithmIT
     public void testKremsBikeRelation()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(48.409523, 15.602394, 48.375466, 15.72916, 12489, 155));
+        list.add(new OneRun(48.409523, 15.602394, 48.375466, 15.72916, 12491, 159));
         list.add(new OneRun(48.410061, 15.63951, 48.411386, 15.604899, 3113, 87));
-        list.add(new OneRun(48.412294, 15.62007, 48.398306, 15.609667, 3965, 93));
+        list.add(new OneRun(48.412294, 15.62007, 48.398306, 15.609667, 3965, 94));
 
         runAlgo(testCollector, "files/krems.osm.gz", "target/graph-krems",
                 list, "BIKE", true, "BIKE", "fastest", false);
@@ -271,9 +272,9 @@ public class RoutingAlgorithmIT
     public void testKremsMountainBikeRelation()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(48.409523, 15.602394, 48.375466, 15.72916, 12479, 153));
+        list.add(new OneRun(48.409523, 15.602394, 48.375466, 15.72916, 12480, 156));
         list.add(new OneRun(48.410061, 15.63951, 48.411386, 15.604899, 3113, 87));
-        list.add(new OneRun(48.412294, 15.62007, 48.398306, 15.609667, 3965, 93));
+        list.add(new OneRun(48.412294, 15.62007, 48.398306, 15.609667, 3965, 95));
 
         runAlgo(testCollector, "files/krems.osm.gz", "target/graph-krems",
                 list, "MTB", true, "MTB", "fastest", false);
@@ -287,8 +288,8 @@ public class RoutingAlgorithmIT
     List<OneRun> createAndorra()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 17710, 498));
-        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 11408, 287));
+        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 17708, 524));
+        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 11408, 305));
         return list;
     }
 
@@ -313,9 +314,9 @@ public class RoutingAlgorithmIT
     {
         List<OneRun> list = createAndorra();
         list.get(0).setDistance(1, 16354);
-        list.get(0).setLocs(1, 633);
+        list.get(0).setLocs(1, 648);
         list.get(1).setDistance(1, 12701);
-        list.get(1).setLocs(1, 427);
+        list.get(1).setLocs(1, 431);
 
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra",
                 list, "FOOT", true, "FOOT", "shortest", false);
@@ -331,8 +332,8 @@ public class RoutingAlgorithmIT
         //   | ./bin/osmosis --read-xml enableDateParsing=no file=- --bounding-box top=-20.4 left=-54.6 bottom=-20.6 right=-54.5 --write-xml file=- 
         //   | bzip2 > campo-grande.extracted.osm.bz2
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(-20.4, -54.6, -20.6, -54.54, 25515, 267));
-        list.add(new OneRun(-20.43, -54.54, -20.537, -54.674, 18009, 234));
+        list.add(new OneRun(-20.4, -54.6, -20.6, -54.54, 25516, 271));
+        list.add(new OneRun(-20.43, -54.54, -20.537, -54.674, 18009, 237));
         runAlgo(testCollector, "files/campo-grande.osm.gz", "target/graph-campo-grande", list,
                 "CAR", false, "CAR", "shortest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -343,8 +344,8 @@ public class RoutingAlgorithmIT
     {
         OneRun oneRun = new OneRun();
         oneRun.add(43.730729, 7.42135, 0, 0);
-        oneRun.add(43.727697, 7.419199, 2581, 102);
-        oneRun.add(43.726387, 7.4, 3001, 89);
+        oneRun.add(43.727697, 7.419199, 2581, 110);
+        oneRun.add(43.726387, 7.4, 3001, 90);
 
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(oneRun);
@@ -366,7 +367,7 @@ public class RoutingAlgorithmIT
             GraphHopper hopper = new GraphHopper().
                     setInMemory(true).
                     // avoid that path.getDistance is too different to path.getPoint.calcDistance
-                    setWayPointMaxDistance(0.1).
+                    setWayPointMaxDistance(0).
                     setOSMFile(osmFile).
                     disableCHShortcuts().
                     setGraphHopperLocation(graphFile).
@@ -461,7 +462,7 @@ public class RoutingAlgorithmIT
                 setInMemory(true).
                 setEncodingManager(encodingManager).
                 disableCHShortcuts().
-                setWayPointMaxDistance(0.1).
+                setWayPointMaxDistance(0).
                 setOSMFile("files/monaco.osm.gz").setGraphHopperLocation(graphFile).
                 importOrLoad();
         final Graph g = hopper.getGraph();
@@ -503,6 +504,13 @@ public class RoutingAlgorithmIT
                                 {
                                     return algo;
                                 }
+
+                                @Override
+                                public String toString()
+                                {
+                                    return algo.toString();
+                                }
+                                
                             }, oneRun.getList(idx, filter), oneRun);
                             integ.addAndGet(1);
                         }
