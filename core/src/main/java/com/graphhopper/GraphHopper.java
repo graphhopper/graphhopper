@@ -56,6 +56,7 @@ public class GraphHopper implements GraphHopperAPI
         hopper.importOrLoad();
         if (args.getBool("graph.testIT", false))
         {
+            // important: use osmreader.wayPointMaxDistance=0
             RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(hopper);
             tests.start();
         }

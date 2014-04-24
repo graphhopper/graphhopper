@@ -81,13 +81,12 @@ public class RoutingAlgorithmSpecialAreaTests
 
         for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
         {
-            AlgorithmPreparation prepare = entry.getKey();
-            LocationIndex currIdx = entry.getValue();
+            AlgorithmPreparation prepare = entry.getKey();            
             int failed = testCollector.errors.size();
 
-            OneRun or = new OneRun(50.0314, 10.5105, 50.0303, 10.5070, 570, 22);
+            OneRun or = new OneRun(50.0314, 10.5105, 50.0303, 10.5070, 571, 22);
             testCollector.assertDistance(prepare, or.getList(idx, ef), or);
-            or = new OneRun(49.51451, 9.967346, 50.2920, 10.4650, 107545, 1712);
+            or = new OneRun(49.51451, 9.967346, 50.2920, 10.4650, 107542, 1712);
             testCollector.assertDistance(prepare, or.getList(idx, ef), or);
             or = new OneRun(50.0780, 9.1570, 49.5860, 9.9750, 91715, 1299);
             testCollector.assertDistance(prepare, or.getList(idx, ef), or);
