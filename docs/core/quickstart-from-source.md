@@ -30,10 +30,29 @@ Open the project with NetBeans or enable Maven in your IDE.
 [Maven](http://maven.apache.org/download.cgi) is downloaded to ```graphhopper/maven``` if not 
 installed when executing graphhopper.sh.
 
-Have a look into the [Java API documentation](./) 
-for further details.
+Have a look into the [Java API documentation](./) for further details.
 
 For more details on Android-usage have a look into this [Android site](https://github.com/graphhopper/graphhopper/wiki/Android)
+
+### Library
+
+To use an unreleased snapshot version of GraphHopper you need the following snippet in your pom.xml
+as those versions are not in maven central:
+
+```xml
+    <repositories>
+        <repository>
+            <id>sonatype-oss-public</id>
+            <url>https://oss.sonatype.org/content/groups/public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+```
 
 ### Debug
 
