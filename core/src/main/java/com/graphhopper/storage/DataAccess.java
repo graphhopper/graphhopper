@@ -23,7 +23,7 @@ package com.graphhopper.storage;
  * Directory.create. Current implementations are RAM and memory mapped access.
  * <p/>
  * Life cycle: (1) object creation, (2) configuration (e.g. segment size), (3) create or
- * loadExisting, (4) usage, (5) close
+ * loadExisting, (4) usage and calling incCapacity if necessary, (5) close
  * <p/>
  * @author Peter Karich
  */
@@ -127,5 +127,8 @@ public interface DataAccess extends Storable<DataAccess>
      */
     int getSegments();
 
+    /**
+     * @return the data access type of this object.
+     */
     DAType getType();
 }
