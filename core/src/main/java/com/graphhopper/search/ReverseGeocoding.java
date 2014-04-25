@@ -30,5 +30,5 @@ public interface ReverseGeocoding
     /**
      * Tries to retrieve a locational string from the specified points (list of lat,lon).
      */
-    List<GHPlace> point2name( GHPlace... points );
+    List<GHPlace> places2names( GHPlace... points );
 }

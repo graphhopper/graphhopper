@@ -1,4 +1,5 @@
 0.3.0
+    CoordTrig and the like are removed, GHPlace is mostly replaced by GHPoint and so GHRequest has now methods ala addPoint instead
     removed isBoth from AbstractFlagEncoder, moved canBeOverwritten and associated test to PrepareEncoder
     removed unused directory.rename
     refactor edge.copyProperties into copyPropertiesTo to have similar semantics as Graph.copyTo

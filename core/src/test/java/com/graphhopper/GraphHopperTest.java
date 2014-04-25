@@ -21,7 +21,6 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
-import com.graphhopper.util.shapes.GHPlace;
 import com.graphhopper.util.shapes.GHPoint;
 import java.io.File;
 import java.io.IOException;
@@ -341,18 +340,17 @@ public class GraphHopperTest
         instance.importOrLoad();
 
         // A -> B -> C
-        GHPlace first = new GHPlace(11.1, 50);
-        GHPlace second = new GHPlace(12, 51);
-        GHPlace third = new GHPlace(11.2, 51.9);
-        GHResponse rsp12 = instance.route(new GHRequest().addPlace(first).addPlace(second));
+        GHPoint first = new GHPoint(11.1, 50);
+        GHPoint second = new GHPoint(12, 51);
+        GHPoint third = new GHPoint(11.2, 51.9);
+        GHResponse rsp12 = instance.route(new GHRequest().addPoint(first).addPoint(second));
         assertTrue("should find 1->2", rsp12.isFound());
         assertEquals(147931.5, rsp12.getDistance(), .1);
-        GHResponse rsp23 = instance.route(new GHRequest().addPlace(second).addPlace(third));
+        GHResponse rsp23 = instance.route(new GHRequest().addPoint(second).addPoint(third));
         assertTrue("should find 2->3", rsp23.isFound());
         assertEquals(176608.9, rsp23.getDistance(), .1);
 
-        GHResponse rsp = instance.route(new GHRequest().
-                addPlace(first).addPlace(second).addPlace(third));
+        GHResponse rsp = instance.route(new GHRequest().addPoint(first).addPoint(second).addPoint(third));
 
         assertFalse(rsp.hasErrors());
         assertTrue("should find 1->2->3", rsp.isFound());

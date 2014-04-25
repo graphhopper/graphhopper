@@ -24,7 +24,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap.Translation;
-import com.graphhopper.util.shapes.GHPlace;
+import com.graphhopper.util.shapes.GHPoint;
 import java.io.IOException;
 import java.util.*;
 import javax.inject.Inject;
@@ -67,7 +67,7 @@ public class GraphHopperServlet extends GHBaseServlet
 
     void writePath( HttpServletRequest req, HttpServletResponse res ) throws Exception
     {
-        List<GHPlace> infoPoints = getPoints(req);
+        List<GHPoint> infoPoints = getPoints(req);
 
         // we can reduce the path length based on the maximum differences to the original coordinates
         double minPathPrecision = getDoubleParam(req, "min_path_precision", 1d);
@@ -196,17 +196,17 @@ public class GraphHopperServlet extends GHBaseServlet
         return jsonPoints;
     }
 
-    private List<GHPlace> getPoints( HttpServletRequest req ) throws IOException
+    private List<GHPoint> getPoints( HttpServletRequest req ) throws IOException
     {
         String[] pointsAsStr = getParams(req, "point");
-        final List<GHPlace> infoPoints = new ArrayList<GHPlace>();
+        final List<GHPoint> infoPoints = new ArrayList<GHPoint>(pointsAsStr.length);
         for (int pointNo = 0; pointNo < pointsAsStr.length; pointNo++)
         {
             final String str = pointsAsStr[pointNo];
             String[] fromStrs = str.split(",");
             if (fromStrs.length == 2)
             {
-                GHPlace place = GHPlace.parse(str);
+                GHPoint place = GHPoint.parse(str);
                 if (place != null)
                     infoPoints.add(place);
             }

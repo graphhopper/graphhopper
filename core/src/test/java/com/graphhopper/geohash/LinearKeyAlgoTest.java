@@ -17,7 +17,6 @@
  */
 package com.graphhopper.geohash;
 
-import com.graphhopper.util.shapes.CoordTrig;
 import com.graphhopper.util.shapes.GHPoint;
 import static org.junit.Assert.*;
 import org.junit.Test;

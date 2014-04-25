@@ -17,7 +17,7 @@
  */
 package com.graphhopper.coll;
 
-import com.graphhopper.util.shapes.CoordTrig;
+import com.graphhopper.util.shapes.GHPoint;
 import java.util.Random;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -37,7 +37,7 @@ public class CompressedArrayTest
         arr.write(12, 3);
         arr.flush();
 
-        CoordTrig coord = arr.get(0);
+        GHPoint coord = arr.get(0);
         assertEquals(10, coord.lat, 1e-6);
         assertEquals(1, coord.lon, 1e-6);
 
@@ -64,7 +64,7 @@ public class CompressedArrayTest
         }
 
         arr.flush();
-        CoordTrig coord = arr.get(0);
+        GHPoint coord = arr.get(0);
         assertEquals(0, coord.lat, 1e-6);
         assertEquals(65.787100, coord.lon, 1e-6);
 

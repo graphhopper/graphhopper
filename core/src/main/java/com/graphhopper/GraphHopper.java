@@ -28,7 +28,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.*;
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPlace;
+import com.graphhopper.util.shapes.GHPoint;
 
 import java.io.File;
 import java.io.IOException;
@@ -761,36 +761,36 @@ public class GraphHopper implements GraphHopperAPI
             return Collections.emptyList();
         }
 
-        List<GHPlace> places = request.getPlaces();
-        if (places.size() < 2)
+        List<GHPoint> points = request.getPoints();
+        if (points.size() < 2)
         {
-            rsp.addError(new IllegalStateException("At least 2 points has to be specified, but was:" + places.size()));
+            rsp.addError(new IllegalStateException("At least 2 points has to be specified, but was:" + points.size()));
             return Collections.emptyList();
         }
 
         FlagEncoder encoder = encodingManager.getEncoder(vehicle);
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-        GHPlace startPlace = places.get(0);
+        GHPoint startPoint = points.get(0);
         StopWatch sw = new StopWatch().start();
-        QueryResult fromRes = locationIndex.findClosest(startPlace.lat, startPlace.lon, edgeFilter);
+        QueryResult fromRes = locationIndex.findClosest(startPoint.lat, startPoint.lon, edgeFilter);
         String debug = "idLookup[0]:" + sw.stop().getSeconds() + "s";
         sw.stop();
         if (!fromRes.isValid())
         {
-            rsp.addError(new IllegalArgumentException("Cannot find point 0: " + startPlace));
+            rsp.addError(new IllegalArgumentException("Cannot find point 0: " + startPoint));
             return Collections.emptyList();
         }
 
-        List<Path> paths = new ArrayList<Path>(places.size() - 1);
-        for (int placeIndex = 1; placeIndex < places.size(); placeIndex++)
+        List<Path> paths = new ArrayList<Path>(points.size() - 1);
+        for (int placeIndex = 1; placeIndex < points.size(); placeIndex++)
         {
-            GHPlace place = places.get(placeIndex);
+            GHPoint point = points.get(placeIndex);
             sw = new StopWatch().start();
-            QueryResult toRes = locationIndex.findClosest(place.lat, place.lon, edgeFilter);
+            QueryResult toRes = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
             debug += ", [" + placeIndex + "] idLookup:" + sw.stop().getSeconds() + "s";
             if (!toRes.isValid())
             {
-                rsp.addError(new IllegalArgumentException("Cannot find point " + placeIndex + ": " + place));
+                rsp.addError(new IllegalArgumentException("Cannot find point " + placeIndex + ": " + point));
                 break;
             }
 
@@ -835,8 +835,8 @@ public class GraphHopper implements GraphHopperAPI
         if (rsp.hasErrors())
             return Collections.emptyList();
 
-        if (places.size() - 1 != paths.size())
-            throw new RuntimeException("There should be exactly one more places than paths. places:" + places.size() + ", paths:" + paths.size());
+        if (points.size() - 1 != paths.size())
+            throw new RuntimeException("There should be exactly one more places than paths. places:" + points.size() + ", paths:" + paths.size());
 
         rsp.setDebugInfo(debug);
         return paths;

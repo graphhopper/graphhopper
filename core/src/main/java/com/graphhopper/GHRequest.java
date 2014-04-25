@@ -17,7 +17,7 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.util.shapes.GHPlace;
+import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +32,7 @@ import java.util.Map;
 public class GHRequest
 {
     private String algo = "";
-    private List<GHPlace> places = new ArrayList<GHPlace>(5);
+    private List<GHPoint> points;
     private final Map<String, Object> hints = new HashMap<String, Object>(5);
     private String vehicle = "";
     private String weighting = "";
@@ -40,6 +40,12 @@ public class GHRequest
 
     public GHRequest()
     {
+        this(5);
+    }
+
+    public GHRequest( int size )
+    {
+        points = new ArrayList<GHPoint>(size);
         possibleToAdd = true;
     }
 
@@ -48,43 +54,44 @@ public class GHRequest
      */
     public GHRequest( double fromLat, double fromLon, double toLat, double toLon )
     {
-        this(new GHPlace(fromLat, fromLon), new GHPlace(toLat, toLon));
+        this(new GHPoint(fromLat, fromLon), new GHPoint(toLat, toLon));
     }
 
     /**
      * Calculate the path from specified startPlace to endPlace.
      */
-    public GHRequest( GHPlace startPlace, GHPlace endPlace )
+    public GHRequest( GHPoint startPlace, GHPoint endPlace )
     {
         if (startPlace == null)
             throw new IllegalStateException("'from' cannot be null");
 
         if (endPlace == null)
             throw new IllegalStateException("'to' cannot be null");
-        places.add(startPlace);
-        places.add(endPlace);
+        points = new ArrayList<GHPoint>(2);
+        points.add(startPlace);
+        points.add(endPlace);
     }
 
-    public GHRequest( List<GHPlace> places )
+    public GHRequest( List<GHPoint> points )
     {
-        this.places = places;
+        this.points = points;
     }
 
-    public GHRequest addPlace( GHPlace place )
+    public GHRequest addPoint( GHPoint point )
     {
-        if (place == null)
-            throw new IllegalArgumentException("place cannot be null");
+        if (point == null)
+            throw new IllegalArgumentException("point cannot be null");
         if (!possibleToAdd)
             throw new IllegalStateException("Please call empty constructor if you intent to use "
                     + "more than two places via addPlace method.");
 
-        places.add(place);
+        points.add(point);
         return this;
     }
 
-    public List<GHPlace> getPlaces()
+    public List<GHPoint> getPoints()
     {
-        return places;
+        return points;
     }
 
     /**
@@ -166,12 +173,12 @@ public class GHRequest
     public String toString()
     {
         String res = "";
-        for (GHPlace place : places)
+        for (GHPoint point : points)
         {
             if (res.isEmpty())
-                res = place.toString();
+                res = point.toString();
             else
-                res += "; " + place.toString();
+                res += "; " + point.toString();
         }
         return res + "(" + algo + ")";
     }

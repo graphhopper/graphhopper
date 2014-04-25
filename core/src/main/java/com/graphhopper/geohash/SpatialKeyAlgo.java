@@ -18,7 +18,7 @@
 package com.graphhopper.geohash;
 
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.CoordTrig;
+import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * This class implements the idea of a geohash but in 'binary form' - to avoid confusion this is
@@ -135,7 +135,7 @@ public class SpatialKeyAlgo implements KeyAlgo
     }
 
     @Override
-    public long encode( CoordTrig coord )
+    public long encode( GHPoint coord )
     {
         return encode(coord.lat, coord.lon);
     }
@@ -206,7 +206,7 @@ public class SpatialKeyAlgo implements KeyAlgo
      * @param spatialKey is the input
      */
     @Override
-    public final void decode( long spatialKey, CoordTrig latLon )
+    public final void decode( long spatialKey, GHPoint latLon )
     {
         // Performance: calculating 'midLon' and 'midLat' on the fly is not slower than using 
         // precalculated values from arrays and for 'bits' a precalculated array is even slightly slower!

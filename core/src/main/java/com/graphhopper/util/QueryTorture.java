@@ -17,7 +17,7 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.util.shapes.GHPlace;
+import com.graphhopper.util.shapes.GHPoint;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -236,8 +236,8 @@ public class QueryTorture
     static class Query
     {
         String queryString;
-        GHPlace start;
-        GHPlace end;
+        GHPoint start;
+        GHPoint end;
 
         static Query parse( String logLine )
         {
@@ -259,15 +259,15 @@ public class QueryTorture
                 if (!param.startsWith("point="))
                     continue;
 
-                GHPlace place = GHPlace.parse(param.substring(6));
-                if (place == null)
+                GHPoint point = GHPoint.parse(param.substring(6));
+                if (point == null)
                     continue;
 
                 if (q.start == null)
-                    q.start = place;
+                    q.start = point;
                 else if (q.end == null)
                 {
-                    q.end = place;
+                    q.end = point;
                     break;
                 }
             }

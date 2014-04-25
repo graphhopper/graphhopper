@@ -40,9 +40,9 @@ public class NominatimGeocoder implements Geocoding, ReverseGeocoding
 {
     public static void main( String[] args )
     {
-        System.out.println("search " + new NominatimGeocoder().name2point(new GHPlace("bayreuth"), new GHPlace("berlin")));
+        System.out.println("search " + new NominatimGeocoder().names2places(new GHPlace("bayreuth"), new GHPlace("berlin")));
 
-        System.out.println("reverse " + new NominatimGeocoder().point2name(new GHPlace(49.9027606, 11.577197),
+        System.out.println("reverse " + new NominatimGeocoder().places2names(new GHPlace(49.9027606, 11.577197),
                 new GHPlace(52.5198535, 13.4385964)));
     }
     private String nominatimUrl;
@@ -71,7 +71,7 @@ public class NominatimGeocoder implements Geocoding, ReverseGeocoding
     }
 
     @Override
-    public List<GHPlace> name2point( GHPlace... places )
+    public List<GHPlace> names2places( GHPlace... places )
     {
         List<GHPlace> resList = new ArrayList<GHPlace>();
         for (GHPlace place : places)
@@ -105,7 +105,7 @@ public class NominatimGeocoder implements Geocoding, ReverseGeocoding
     }
 
     @Override
-    public List<GHPlace> point2name( GHPlace... points )
+    public List<GHPlace> places2names( GHPlace... points )
     {
         List<GHPlace> resList = new ArrayList<GHPlace>();
         for (GHPlace point : points)

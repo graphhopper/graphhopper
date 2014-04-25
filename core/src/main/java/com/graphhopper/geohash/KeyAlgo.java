@@ -17,7 +17,7 @@
  */
 package com.graphhopper.geohash;
 
-import com.graphhopper.util.shapes.CoordTrig;
+import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * Defines the mapping between a one dimensional 'number' and a point (lat, lon) which is limited to
@@ -33,9 +33,9 @@ public interface KeyAlgo
      */
     KeyAlgo setBounds( double minLonInit, double maxLonInit, double minLatInit, double maxLatInit );
 
-    long encode( CoordTrig coord );
+    long encode( GHPoint coord );
 
     long encode( double lat, double lon );
 
-    void decode( long spatialKey, CoordTrig latLon );
+    void decode( long spatialKey, GHPoint latLon );
 }

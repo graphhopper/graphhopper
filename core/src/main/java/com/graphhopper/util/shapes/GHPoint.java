@@ -17,18 +17,76 @@
  */
 package com.graphhopper.util.shapes;
 
+import com.graphhopper.util.NumHelper;
+
 /**
  * @author Peter Karich
  */
-public class GHPoint extends CoordTrig<Void>
+public class GHPoint
 {
+    public double lat = Double.NaN;
+    public double lon = Double.NaN;
+
     public GHPoint()
     {
     }
 
     public GHPoint( double lat, double lon )
     {
-        super(lat, lon);
+        this.lat = lat;
+        this.lon = lon;
+    }
+
+    public double getLon()
+    {
+        return lon;
+    }
+
+    public double getLat()
+    {
+        return lat;
+    }
+
+    public boolean isValid()
+    {
+        return !Double.isNaN(lat) && !Double.isNaN(lon);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        int hash = 7;
+        hash = 83 * hash + (int) (Double.doubleToLongBits(this.lat) ^ (Double.doubleToLongBits(this.lat) >>> 32));
+        hash = 83 * hash + (int) (Double.doubleToLongBits(this.lon) ^ (Double.doubleToLongBits(this.lon) >>> 32));
+        return hash;
+    }
+
+    @Override
+    public boolean equals( Object obj )
+    {
+        if (obj == null)
+            return false;
+
+        @SuppressWarnings("unchecked")
+        final GHPoint other = (GHPoint) obj;
+        return NumHelper.equalsEps(lat, other.lat) && NumHelper.equalsEps(lon, other.lon);
+    }
+
+    @Override
+    public String toString()
+    {
+        return lat + "," + lon;
+    }
+
+    /**
+     * Attention: geoJson is LON,LAT
+     */
+    public Double[] toGeoJson()
+    {
+        return new Double[]
+        {
+            lon, lat
+        };
     }
 
     public static GHPoint parse( String str )

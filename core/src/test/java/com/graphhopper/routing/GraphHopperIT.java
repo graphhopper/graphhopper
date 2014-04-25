@@ -24,7 +24,7 @@ import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.TranslationMap.Translation;
-import com.graphhopper.util.shapes.GHPlace;
+import com.graphhopper.util.shapes.GHPoint;
 
 import java.io.File;
 import java.util.List;
@@ -158,9 +158,9 @@ public class GraphHopperIT
                 importOrLoad();
 
         GHResponse rsp = hopper.route(new GHRequest().
-                addPlace(new GHPlace(43.727687, 7.418737)).
-                addPlace(new GHPlace(43.74958, 7.436566)).
-                addPlace(new GHPlace(43.727687, 7.418737)).
+                addPoint(new GHPoint(43.727687, 7.418737)).
+                addPoint(new GHPoint(43.74958, 7.436566)).
+                addPoint(new GHPoint(43.727687, 7.418737)).
                 setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
 
         assertEquals(6875.1, rsp.getDistance(), .1);

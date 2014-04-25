@@ -25,7 +25,16 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class CoordTrigTest
+public class GHPointTest
 {
-
+    @Test
+    public void testIsValid()
+    {
+        GHPoint instance = new GHPoint();
+        assertFalse(instance.isValid());
+        instance.lat = 1;
+        assertFalse(instance.isValid());
+        instance.lon = 1;
+        assertTrue(instance.isValid());
+    }
 }

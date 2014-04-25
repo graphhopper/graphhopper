@@ -20,7 +20,6 @@ package com.graphhopper.storage.index;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.CoordTrig;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 
@@ -137,7 +136,7 @@ public class QueryResult
         return closestEdge;
     }
 
-    public CoordTrig getQueryPoint()
+    public GHPoint getQueryPoint()
     {
         return queryPoint;
     }

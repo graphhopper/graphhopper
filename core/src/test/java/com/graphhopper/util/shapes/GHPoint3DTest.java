@@ -25,7 +25,25 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class CoordTrigTest
+public class GHPoint3DTest
 {
+    @Test
+    public void testEquals()
+    {
+        GHPoint3D point1 = new GHPoint3D(1, 2, Double.NaN);
+        GHPoint3D point2 = new GHPoint3D(1, 2, Double.NaN);
+        assertEquals(point1, point2);
 
+        point1 = new GHPoint3D(1, 2, 0);
+        point2 = new GHPoint3D(1, 2, 1);
+        assertNotEquals(point1, point2);
+
+        point1 = new GHPoint3D(1, 2, 0);
+        point2 = new GHPoint3D(1, 2.1, 0);
+        assertNotEquals(point1, point2);
+
+        point1 = new GHPoint3D(1, 2.1, 0);
+        point2 = new GHPoint3D(1, 2.1, 0);
+        assertEquals(point1, point2);
+    }
 }

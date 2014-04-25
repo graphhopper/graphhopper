@@ -18,9 +18,7 @@
 package com.graphhopper.geohash;
 
 import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.shapes.CoordTrig;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -148,11 +146,11 @@ public class SpatialKeyAlgoTest
     public void testBijection( int bits )
     {
         SpatialKeyAlgo algo = new SpatialKeyAlgo(bits);
-        CoordTrig coord11 = new CoordTrig();
+        GHPoint coord11 = new GHPoint();
         long key = algo.encode(1, 1);
         algo.decode(key, coord11);
         long resKey = algo.encode(coord11.lat, coord11.lon);
-        CoordTrig coord2 = new CoordTrig();
+        GHPoint coord2 = new GHPoint();
         algo.decode(resKey, coord2);
         assertEquals(key, resKey);
 
@@ -197,7 +195,7 @@ public class SpatialKeyAlgoTest
     {
         SpatialKeyAlgo algo = new SpatialKeyAlgo(4).setBounds(0, 5, 0, 5);
         // 1001
-        CoordTrig coord = new CoordTrig();
+        GHPoint coord = new GHPoint();
         algo.decode(9, coord);
         assertEquals(3.125, coord.lat, 1e-4);
         assertEquals(1.875, coord.lon, 1e-4);
@@ -206,7 +204,7 @@ public class SpatialKeyAlgoTest
     @Test
     public void testOddBits()
     {
-        CoordTrig coord = new CoordTrig();
+        GHPoint coord = new GHPoint();
         SpatialKeyAlgo algo = new SpatialKeyAlgo(8);
         long key = algo.encode(5, 30);
         assertEquals("11000001", BitUtil.BIG.toLastBitString(key, 8));
@@ -228,7 +226,7 @@ public class SpatialKeyAlgoTest
         assertEquals(1, algo.encode(0, 0.5));
         assertEquals(5, algo.encode(0, 1));
 
-        CoordTrig coord = new CoordTrig();
+        GHPoint coord = new GHPoint();
         algo.decode(5, coord);
         assertEquals(5, algo.encode(coord));
 
