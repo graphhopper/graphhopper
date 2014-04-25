@@ -386,6 +386,11 @@ public class Helper
             });
         } catch (PrivilegedActionException e)
         {
+            if (e.getException() instanceof NoSuchMethodException)
+            {
+                // ignore if method not available like on Android
+                return;
+            }
             throw new RuntimeException("unable to unmap the mapped buffer", e);
         }
     }

@@ -50,7 +50,6 @@ import android.widget.Toast;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
@@ -61,7 +60,7 @@ import com.graphhopper.util.StopWatch;
 public class MainActivity extends Activity
 {
     private MapView mapView;
-    private GraphHopperAPI hopper;
+    private GraphHopper hopper;
     private LatLong start;
     private LatLong end;
     private Spinner localSpinner;
@@ -166,6 +165,14 @@ public class MainActivity extends Activity
         chooseAreaFromLocal();
     }
 
+    @Override
+    protected void onStop()
+    {
+        // see #188 for more details
+        hopper.close();
+        System.gc();
+    }
+    
     boolean isReady()
     {
         // only return true if already loaded
