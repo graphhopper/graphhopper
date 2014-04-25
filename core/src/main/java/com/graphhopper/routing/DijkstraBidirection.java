@@ -100,9 +100,10 @@ public class DijkstraBidirection extends AbstractBidirAlgo
     }
 
     @Override
-    protected void initPath()
+    protected Path createAndInitPath()
     {
         nativeBestPath = new PathBidir(graph, flagEncoder, parentRefFrom, parentRefTo);
+        return nativeBestPath;
     }
 
     @Override
@@ -197,7 +198,7 @@ public class DijkstraBidirection extends AbstractBidirAlgo
 
         parentRefOther = parentRefTo;
         fillEdges(currFrom, currFromWeight, currFromRef, openSetFrom, parentRefFrom, outEdgeExplorer, false);
-        visitedFromCount++;
+        visitedCountFrom++;
         return true;
     }
 
@@ -212,7 +213,7 @@ public class DijkstraBidirection extends AbstractBidirAlgo
 
         parentRefOther = parentRefFrom;
         fillEdges(currTo, currToWeight, currToRef, openSetTo, parentRefTo, inEdgeExplorer, true);
-        visitedToCount++;
+        visitedCountTo++;
         return true;
     }
 

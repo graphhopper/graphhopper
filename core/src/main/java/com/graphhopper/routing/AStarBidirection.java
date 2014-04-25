@@ -153,9 +153,10 @@ public class AStarBidirection extends AbstractBidirAlgo
     }
 
     @Override
-    protected void initPath()
+    protected Path createAndInitPath()
     {
         bestPath = new PathBidirRef(graph, flagEncoder);
+        return bestPath;
     }
 
     @Override
@@ -193,7 +194,7 @@ public class AStarBidirection extends AbstractBidirAlgo
         currFrom = prioQueueOpenSetFrom.poll();
         bestWeightMapOther = bestWeightMapTo;
         fillEdges(currFrom, toCoord, prioQueueOpenSetFrom, bestWeightMapFrom, outEdgeExplorer, false);
-        visitedFromCount++;
+        visitedCountFrom++;
         return true;
     }
 
@@ -206,7 +207,7 @@ public class AStarBidirection extends AbstractBidirAlgo
         currTo = prioQueueOpenSetTo.poll();
         bestWeightMapOther = bestWeightMapFrom;
         fillEdges(currTo, fromCoord, prioQueueOpenSetTo, bestWeightMapTo, inEdgeExplorer, true);
-        visitedToCount++;
+        visitedCountTo++;
         return true;
     }
 

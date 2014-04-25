@@ -28,16 +28,16 @@ import com.graphhopper.storage.Graph;
  */
 public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
 {
-    int visitedFromCount;
-    int visitedToCount;
+    int visitedCountFrom;
+    int visitedCountTo;
     protected boolean finishedFrom;
     protected boolean finishedTo;
 
-    public abstract void initFrom( int from, double dist );
+    abstract void initFrom( int from, double dist );
 
-    public abstract void initTo( int to, double dist );
+    abstract void initTo( int to, double dist );
 
-    protected abstract void initPath();
+    protected abstract Path createAndInitPath();
 
     abstract void checkState( int fromBase, int fromAdj, int toBase, int toAdj );
 
@@ -54,13 +54,14 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
     public Path calcPath( int from, int to )
     {
         checkAlreadyRun();
-        initPath();
+        createAndInitPath();
         initFrom(from, 0);
         initTo(to, 0);
-        return runAlgo();
+        runAlgo();
+        return extractPath();
     }
 
-    private Path runAlgo()
+    void runAlgo()
     {
         while (!finished())
         {
@@ -70,13 +71,11 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
             if (!finishedTo)
                 finishedTo = !fillEdgesTo();
         }
-
-        return extractPath();
     }
 
     @Override
     public int getVisitedNodes()
     {
-        return visitedFromCount + visitedToCount;
+        return visitedCountFrom + visitedCountTo;
     }
 }

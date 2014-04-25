@@ -18,15 +18,12 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.coll.GHTreeMapComposed;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.Weighting;
-import com.graphhopper.routing.AStarBidirection;
-import com.graphhopper.routing.DijkstraBidirectionRef;
-import com.graphhopper.routing.DijkstraOneToMany;
-import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.DAType;
@@ -770,9 +767,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             @Override
-            public void initPath()
+            protected Path createAndInitPath()
             {
                 bestPath = new Path4CH(graph, flagEncoder);
+                return bestPath;
             }
 
             @Override
@@ -819,9 +817,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             @Override
-            protected void initPath()
+            protected Path createAndInitPath()
             {
                 bestPath = new Path4CH(graph, flagEncoder);
+                return bestPath;
             }
 
             @Override
