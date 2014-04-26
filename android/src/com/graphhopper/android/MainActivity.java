@@ -167,12 +167,13 @@ public class MainActivity extends Activity
 
     @Override
     protected void onStop()
-    {
-        // see #188 for more details
+    {        
+        super.onStop();
         hopper.close();
+        // see #188 for more details
         System.gc();
     }
-    
+
     boolean isReady()
     {
         // only return true if already loaded
@@ -397,7 +398,7 @@ public class MainActivity extends Activity
                 true, AndroidGraphicFactory.INSTANCE)
                 {
                     @Override
-                    public boolean onTap( LatLong tapLatLong, Point layerXY, Point tapXY )
+                    public boolean onLongPress( LatLong tapLatLong, Point layerXY, Point tapXY )
                     {
                         return onMapTap(tapLatLong, layerXY, tapXY);
                     }
@@ -435,7 +436,7 @@ public class MainActivity extends Activity
                             + getErrorMessage());
                 } else
                 {
-                    logUser("Finished loading graph. Touch to route.");
+                    logUser("Finished loading graph. Press long to define where to start and end the route.");
                 }
 
                 finishPrepare();

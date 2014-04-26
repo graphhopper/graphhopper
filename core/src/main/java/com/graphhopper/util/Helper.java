@@ -374,23 +374,22 @@ public class Helper
                 @Override
                 public Object run() throws Exception
                 {
-                    final Method getCleanerMethod = buffer.getClass().getMethod("cleaner");
-                    getCleanerMethod.setAccessible(true);
-                    final Object cleaner = getCleanerMethod.invoke(buffer);
-                    if (cleaner != null)
+                    try
                     {
-                        cleaner.getClass().getMethod("clean").invoke(cleaner);
+                        final Method getCleanerMethod = buffer.getClass().getMethod("cleaner");
+                        getCleanerMethod.setAccessible(true);
+                        final Object cleaner = getCleanerMethod.invoke(buffer);
+                        if (cleaner != null)
+                            cleaner.getClass().getMethod("clean").invoke(cleaner);
+                    } catch (NoSuchMethodException ex)
+                    {
+                        // ignore if method cleaner or clean is not available, like on Android
                     }
                     return null;
                 }
             });
         } catch (PrivilegedActionException e)
         {
-            if (e.getException() instanceof NoSuchMethodException)
-            {
-                // ignore if method not available like on Android
-                return;
-            }
             throw new RuntimeException("unable to unmap the mapped buffer", e);
         }
     }
