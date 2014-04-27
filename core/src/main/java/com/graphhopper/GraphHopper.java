@@ -728,6 +728,9 @@ public class GraphHopper implements GraphHopperAPI
         if (graph == null || !fullyLoaded)
             throw new IllegalStateException("Call load or importOrLoad before routing");
 
+        if (graph.isClosed())
+            throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
+
         GHResponse response = new GHResponse();
         List<Path> paths = getPaths(request, response);
         if (response.hasErrors())

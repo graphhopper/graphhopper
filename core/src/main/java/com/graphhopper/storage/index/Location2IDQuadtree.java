@@ -322,6 +322,9 @@ public class Location2IDQuadtree implements LocationIndex
     public QueryResult findClosest( final double queryLat, final double queryLon,
             final EdgeFilter edgeFilter )
     {
+        if (isClosed())
+            throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
+
         if (edgeFilter != EdgeFilter.ALL_EDGES)
             throw new UnsupportedOperationException("edge filters are not yet implemented for " + Location2IDQuadtree.class.getSimpleName());
 
@@ -399,6 +402,12 @@ public class Location2IDQuadtree implements LocationIndex
     public void close()
     {
         index.close();
+    }
+
+    @Override
+    public boolean isClosed()
+    {
+        return index.isClosed();
     }
 
     @Override

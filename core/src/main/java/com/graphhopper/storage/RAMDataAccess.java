@@ -131,7 +131,10 @@ public class RAMDataAccess extends AbstractDataAccess
         if (segments.length > 0)
             throw new IllegalStateException("already initialized");
 
-        if (!store || closed)
+        if (isClosed())
+            throw new IllegalStateException("already closed");
+
+        if (!store)
             return false;
 
         File file = new File(getFullName());

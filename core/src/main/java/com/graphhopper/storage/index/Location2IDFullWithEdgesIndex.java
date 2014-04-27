@@ -35,6 +35,7 @@ public class Location2IDFullWithEdgesIndex implements LocationIndex
     private DistanceCalc calc = new DistanceCalcEarth();
     private final Graph graph;
     private final NodeAccess nodeAccess;
+    private boolean closed = false;
 
     public Location2IDFullWithEdgesIndex( Graph g )
     {
@@ -82,6 +83,9 @@ public class Location2IDFullWithEdgesIndex implements LocationIndex
     @Override
     public QueryResult findClosest( double queryLat, double queryLon, EdgeFilter filter )
     {
+        if (isClosed())
+            throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
+
         QueryResult res = new QueryResult(queryLat, queryLon);
         double foundDist = Double.MAX_VALUE;
         AllEdgesIterator iter = graph.getAllEdges();
@@ -158,6 +162,13 @@ public class Location2IDFullWithEdgesIndex implements LocationIndex
     @Override
     public void close()
     {
+        closed = true;
+    }
+
+    @Override
+    public boolean isClosed()
+    {
+        return closed;
     }
 
     @Override

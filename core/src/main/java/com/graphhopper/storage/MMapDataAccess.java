@@ -42,7 +42,6 @@ public class MMapDataAccess extends AbstractDataAccess
     private RandomAccessFile raFile;
     private List<ByteBuffer> segments = new ArrayList<ByteBuffer>();
     private boolean cleanAndRemap = false;
-    private transient boolean closed = false;
 
     MMapDataAccess( String name, String location, ByteOrder order )
     {
@@ -224,8 +223,8 @@ public class MMapDataAccess extends AbstractDataAccess
         if (segments.size() > 0)
             throw new IllegalStateException("already initialized");
 
-        if (closed)
-            return false;
+        if (isClosed())
+            throw new IllegalStateException("already closed");
 
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
@@ -249,10 +248,9 @@ public class MMapDataAccess extends AbstractDataAccess
     @Override
     public void flush()
     {
-        if (closed)
-        {
+        if (isClosed())
             throw new IllegalStateException("already closed");
-        }
+
         try
         {
             if (!segments.isEmpty() && segments.get(0) instanceof MappedByteBuffer)
@@ -277,6 +275,7 @@ public class MMapDataAccess extends AbstractDataAccess
     @Override
     public void close()
     {
+        super.close();
         close(true);
     }
 
@@ -291,7 +290,6 @@ public class MMapDataAccess extends AbstractDataAccess
         Helper.close(raFile);
         if (forceClean)
             cleanHack();
-        closed = true;
     }
 
     void cleanHack()

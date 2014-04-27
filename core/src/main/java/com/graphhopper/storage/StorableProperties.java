@@ -110,6 +110,12 @@ public class StorableProperties implements Storable<StorableProperties>
     }
 
     @Override
+    public boolean isClosed()
+    {
+        return da.isClosed();
+    }        
+
+    @Override
     public StorableProperties create( long size )
     {
         da.create(size);

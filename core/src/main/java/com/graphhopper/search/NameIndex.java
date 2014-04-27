@@ -162,6 +162,12 @@ public class NameIndex implements Storable<NameIndex>
         names.close();
     }
 
+    @Override
+    public boolean isClosed()
+    {
+        return names.isClosed();
+    }        
+
     public void setSegmentSize( int segments )
     {
         names.setSegmentSize(segments);

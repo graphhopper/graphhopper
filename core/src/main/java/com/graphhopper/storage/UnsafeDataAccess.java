@@ -61,8 +61,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
     }
 
     private long address;
-    private long capacity;
-    private transient boolean closed = false;
+    private long capacity;    
 
     UnsafeDataAccess( String name, String location, ByteOrder order )
     {
@@ -127,8 +126,8 @@ public class UnsafeDataAccess extends AbstractDataAccess
     @Override
     public boolean loadExisting()
     {
-        if (closed)
-            return false;
+        if (isClosed())
+            throw new IllegalStateException("already closed");
 
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
@@ -173,7 +172,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
     @Override
     public void flush()
     {
-        if (closed)
+        if (isClosed())
             throw new IllegalStateException("already closed");
 
         try
@@ -204,7 +203,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
     @Override
     public void close()
     {
-        closed = true;
+        super.close();
         UNSAFE.freeMemory(address);
     }
 

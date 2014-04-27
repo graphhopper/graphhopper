@@ -26,10 +26,11 @@ import java.io.Closeable;
  * Then the lifecycle is identical for all such objects:
  * <ol>
  * <li>object creation via new</li>
- * <li>optional configuration via additional setters and getters which are not in this interface</li>
+ * <li>optional configuration via additional setters and getters which are not in this
+ * interface</li>
  * <li>if(!storable.loadExisting()) storable.create()</li>
- * <li>usage storable and optional flush() calls in-between. Keep in mind that some data structure could require a
- * call to increase memory while usage. E.g. DataAccess.incCapacity()</li>
+ * <li>usage storable and optional flush() calls in-between. Keep in mind that some data structure
+ * could require a call to increase memory while usage. E.g. DataAccess.incCapacity()</li>
  * <li>Finally do close() which does no flush()</li>
  * </ol>
  * <p/>
@@ -60,6 +61,8 @@ public interface Storable<T> extends Closeable
      */
     @Override
     void close();
+
+    boolean isClosed();
 
     /**
      * @return the allocated storage size in bytes

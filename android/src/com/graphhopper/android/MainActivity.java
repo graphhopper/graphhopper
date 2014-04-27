@@ -166,11 +166,12 @@ public class MainActivity extends Activity
     }
 
     @Override
-    protected void onStop()
-    {        
-        super.onStop();
+    protected void onDestroy()
+    {
+        super.onDestroy();
         hopper.close();
-        // see #188 for more details
+        hopper = null;
+        // necessary?
         System.gc();
     }
 

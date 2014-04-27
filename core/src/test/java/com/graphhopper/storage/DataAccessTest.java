@@ -75,7 +75,14 @@ public abstract class DataAccessTest
         da.close();
 
         // cannot load data if already closed
-        assertFalse(da.loadExisting());
+        try
+        {
+            da.loadExisting();
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+            assertEquals("already closed", ex.getMessage());
+        }
 
         da = createDataAccess(name);
         assertTrue(da.loadExisting());

@@ -1530,6 +1530,12 @@ public class GraphHopperStorage implements GraphStorage
         extStorage.close();
     }
 
+    @Override
+    public boolean isClosed()
+    {
+        return nodes.isClosed();
+    }
+    
     public ExtendedStorage getExtendedStorage()
     {
         return extStorage;

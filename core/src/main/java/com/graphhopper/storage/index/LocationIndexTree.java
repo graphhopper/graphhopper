@@ -326,6 +326,12 @@ public class LocationIndexTree implements LocationIndex
     }
 
     @Override
+    public boolean isClosed()
+    {
+        return dataAccess.isClosed();
+    }
+
+    @Override
     public long getCapacity()
     {
         return dataAccess.getCapacity();
@@ -622,6 +628,9 @@ public class LocationIndexTree implements LocationIndex
     public QueryResult findClosest( final double queryLat, final double queryLon,
             final EdgeFilter edgeFilter )
     {
+        if (isClosed())
+            throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
+
         final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon);
         final QueryResult closestMatch = new QueryResult(queryLat, queryLon);
         if (storedNetworkEntryIds.isEmpty())

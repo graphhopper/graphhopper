@@ -154,6 +154,12 @@ class SynchedDAWrapper implements DataAccess
     }
 
     @Override
+    public boolean isClosed()
+    {
+        return inner.isClosed();
+    }
+
+    @Override
     public synchronized long getCapacity()
     {
         return inner.getCapacity();
