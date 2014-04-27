@@ -148,6 +148,12 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("route", "ferry");
         way.setTag("foot", "yes");
         assertFalse(encoder.acceptWay(way) > 0);
+        
+        way.clearTags();
+        way.setTag("highway", "cycleway");
+        way.setTag("cycleway", "track");
+        way.setTag("railway", "abandoned");
+        assertTrue(encoder.acceptWay(way) > 0);
     }
 
     @Test
