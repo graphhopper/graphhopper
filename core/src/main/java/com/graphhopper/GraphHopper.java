@@ -443,13 +443,19 @@ public class GraphHopper implements GraphHopperAPI
     /*
      * Command line configuration overwrites the ones in the config file
      */
-    protected CmdArgs mergeArgsFromConfig( CmdArgs args ) throws IOException
+    protected CmdArgs mergeArgsFromConfig( CmdArgs args )
     {
         if (!Helper.isEmpty(args.get("config", "")))
         {
-            CmdArgs tmp = CmdArgs.readFromConfig(args.get("config", ""), "graphhopper.config");
-            tmp.merge(args);
-            return tmp;
+            try
+            {
+                CmdArgs tmp = CmdArgs.readFromConfig(args.get("config", ""), "graphhopper.config");
+                tmp.merge(args);
+                return tmp;
+            } catch (Exception ex)
+            {
+                throw new RuntimeException(ex);
+            }
         }
         return args;
     }
@@ -459,7 +465,7 @@ public class GraphHopper implements GraphHopperAPI
      * args) ala CmdArgs.read(args) or via configuration file ala
      * CmdArgs.readFromConfig("config.properties", "graphhopper.config")
      */
-    public GraphHopper init( CmdArgs args ) throws IOException
+    public GraphHopper init( CmdArgs args )
     {
         args = mergeArgsFromConfig(args);
         String tmpOsmFile = args.get("osmreader.osm", "");
