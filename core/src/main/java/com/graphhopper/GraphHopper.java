@@ -84,10 +84,10 @@ public class GraphHopper implements GraphHopperAPI
     private boolean doPrepare = true;
     private boolean chEnabled = true;
     private String chWeighting = "fastest";
-    private int periodicUpdates = 20;
-    private int lazyUpdates = 10;
-    private int neighborUpdates = 20;
-    private double logMessages = 20;
+    private int periodicUpdates = -1;
+    private int lazyUpdates = -1;
+    private int neighborUpdates = -1;
+    private double logMessages = -1;
     // for OSM import
     private String osmFile;
     private EncodingManager encodingManager;

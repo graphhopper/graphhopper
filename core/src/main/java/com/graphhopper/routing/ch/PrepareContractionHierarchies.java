@@ -74,11 +74,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private double meanDegree;
     private final Random rand = new Random(123);
     private StopWatch dijkstraSW = new StopWatch();
+    private final StopWatch allSW = new StopWatch();
     private int periodicUpdatesPercentage = 20;
     private int lastNodesLazyUpdatePercentage = 10;
-    private final StopWatch allSW = new StopWatch();
-    private int neighborUpdatePercentage = 10;
-    private int initialCollectionSize = 10000;
+    private int neighborUpdatePercentage = 20;
+    private int initialCollectionSize = 5000;
+    private double nodesContractedPercentage = 100;
     private double logMessagesPercentage = 20;
 
     public PrepareContractionHierarchies( FlagEncoder encoder, Weighting weighting )
@@ -113,7 +114,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     public PrepareContractionHierarchies setPeriodicUpdates( int periodicUpdates )
     {
         if (periodicUpdates < 0)
-            throw new IllegalArgumentException("periodicUpdates has to be in [0, 100]. To disable it use 0");
+            return this;
+        if (periodicUpdates > 100)
+            throw new IllegalArgumentException("periodicUpdates has to be in [0, 100], to disable it use 0");
 
         this.periodicUpdatesPercentage = periodicUpdates;
         return this;
@@ -125,7 +128,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
      */
     public PrepareContractionHierarchies setLazyUpdates( int lazyUpdates )
     {
-        if (lazyUpdates < 0 || lazyUpdates > 100)
+        if (lazyUpdates < 0)
+            return this;
+
+        if (lazyUpdates > 100)
             throw new IllegalArgumentException("lazyUpdates has to be in [0, 100], to disable it use 0");
 
         this.lastNodesLazyUpdatePercentage = lazyUpdates;
@@ -137,7 +143,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
      */
     public PrepareContractionHierarchies setNeighborUpdates( int neighborUpdates )
     {
-        if (neighborUpdates < 0 || neighborUpdates > 100)
+        if (neighborUpdates < 0)
+            return this;
+
+        if (neighborUpdates > 100)
             throw new IllegalArgumentException("neighborUpdates has to be in [0, 100], to disable it use 0");
 
         this.neighborUpdatePercentage = neighborUpdates;
@@ -150,8 +159,31 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
      */
     public PrepareContractionHierarchies setLogMessages( double logMessages )
     {
-        this.logMessagesPercentage = logMessages;
+        if (logMessages >= 0)
+            this.logMessagesPercentage = logMessages;
         return this;
+    }
+
+    /**
+     * Define how many nodes (percentage) should be contracted. Less nodes means slower query but
+     * faster contraction duration. Not yet ready for prime time.
+     */
+    void setNodesContracted( double nodesContracted )
+    {
+        if (nodesContracted > 100)
+            throw new IllegalArgumentException("setNodesContracted can be 100% maximum");
+
+        this.nodesContractedPercentage = nodesContracted;
+    }
+
+    /**
+     * While creating an algorithm out of this preparation class 10 000 nodes are assumed which can
+     * be too high for your mobile application. E.g. A 500km query only traverses roughly 2000
+     * nodes.
+     */
+    public void setInitialCollectionSize( int initialCollectionSize )
+    {
+        this.initialCollectionSize = initialCollectionSize;
     }
 
     /**
@@ -164,16 +196,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     {
         this.removesHigher2LowerEdges = removeHigher2LowerEdges;
         return this;
-    }
-
-    /**
-     * While creating an algorithm out of this preparation class 10 000 nodes are assumed which can
-     * be too high for your mobile application. E.g. A 500km query only traverses roughly 2000
-     * nodes.
-     */
-    public void setInitialCollectionSize( int initialCollectionSize )
-    {
-        this.initialCollectionSize = initialCollectionSize;
     }
 
     @Override
@@ -238,7 +260,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         int level = 1;
         counter = 0;
         int initSize = sortedNodes.getSize();
-        int logSize = (int) Math.round(Math.max(10, sortedNodes.getSize() / 100 * logMessagesPercentage));
+        long logSize = Math.round(Math.max(10, sortedNodes.getSize() / 100 * logMessagesPercentage));
         if (logMessagesPercentage == 0)
             logSize = Integer.MAX_VALUE;
 
@@ -247,14 +269,18 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         boolean periodicUpdate = true;
         StopWatch periodSW = new StopWatch();
         int updateCounter = 0;
-        int periodicUpdatesCount = Math.max(10, sortedNodes.getSize() / 100 * periodicUpdatesPercentage);
+        long periodicUpdatesCount = Math.round(Math.max(10, sortedNodes.getSize() / 100d * periodicUpdatesPercentage));
         if (periodicUpdatesPercentage == 0)
             periodicUpdate = false;
 
         // disable as preparation is slower and query time does not benefit
-        int lastNodesLazyUpdates = lastNodesLazyUpdatePercentage == 0
-                ? 0
-                : sortedNodes.getSize() / 100 * lastNodesLazyUpdatePercentage;
+        long lastNodesLazyUpdates = lastNodesLazyUpdatePercentage == 0
+                ? 0l
+                : Math.round(sortedNodes.getSize() / 100d * lastNodesLazyUpdatePercentage);
+
+        // according to paper "Polynomial-time Construction of Contraction Hierarchies for Multi-criteria Objectives" by Funke and Storandt
+        // we don't need to wait for all nodes to be contracted
+        long nodesToAvoidContract = Math.round((100 - nodesContractedPercentage) / 100 * sortedNodes.getSize());
         StopWatch lazySW = new StopWatch();
 
         // Recompute priority of uncontracted neighbors.
@@ -329,6 +355,16 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             newShortcuts += addShortcuts(polledNode);
             g.setLevel(polledNode, level);
             level++;
+
+            if (sortedNodes.getSize() < nodesToAvoidContract)
+            {
+                while (!sortedNodes.isEmpty())
+                {
+                    polledNode = sortedNodes.pollKey();
+                    g.setLevel(polledNode, level);
+                }
+                break;
+            }
 
             EdgeSkipIterator iter = vehicleAllExplorer.setBaseNode(polledNode);
             while (iter.next())

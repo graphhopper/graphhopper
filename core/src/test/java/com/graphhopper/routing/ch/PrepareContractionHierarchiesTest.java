@@ -274,7 +274,7 @@ public class PrepareContractionHierarchiesTest
         int old = g.getAllEdges().getMaxId();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
         prepare.doWork();
-        assertEquals(old + 23, g.getAllEdges().getMaxId());
+        assertEquals(old + 22, g.getAllEdges().getMaxId());
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(4, 7);
         assertEquals(Helper.createTList(4, 5, 6, 7), p.calcNodes());
@@ -414,14 +414,14 @@ public class PrepareContractionHierarchiesTest
         LevelGraph g = createGraph();
         g.edge(1, 2, 1, false);
         g.edge(2, 1, 1, false);
-        
+
         g.edge(5, 0, 1, true);
         g.edge(5, 6, 1, true);
         g.edge(0, 1, 1, true);
         g.edge(2, 3, 1, true);
         g.edge(3, 4, 1, true);
         g.edge(6, 3, 1, true);
-        
+
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
