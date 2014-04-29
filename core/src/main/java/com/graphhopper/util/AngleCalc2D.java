@@ -18,13 +18,72 @@
 package com.graphhopper.util;
 
 /**
- * Calculates the angle of a turn, defined by three points.
+ * Calculates the angle of a turn, defined by three points. The fast atan2 method is by Riven
+ * http://riven8192.blogspot.de/2009/08/fastmath-atan2-lookup-table.html
  * <p>
  * @author Johannes Pelzer
  * @author Peter Karich
  */
 public class AngleCalc2D
 {
+    private static final int ATAN2_BITS = 7;
+    private static final int ATAN2_BITS2 = ATAN2_BITS << 1;
+    private static final int ATAN2_MASK = ~(-1 << ATAN2_BITS2);
+    private static final int ATAN2_COUNT = ATAN2_MASK + 1;
+    private static final int ATAN2_DIM = (int) Math.sqrt(ATAN2_COUNT);
+    private static final double INV_ATAN2_DIM_MINUS_1 = 1.0 / (ATAN2_DIM - 1);
+    private static final double[] atan2 = new double[ATAN2_COUNT];
+
+    static
+    {
+        for (int i = 0; i < ATAN2_DIM; i++)
+        {
+            for (int j = 0; j < ATAN2_DIM; j++)
+            {
+                double x0 = (double) i / ATAN2_DIM;
+                double y0 = (double) j / ATAN2_DIM;
+
+                atan2[j * ATAN2_DIM + i] = Math.atan2(y0, x0);
+            }
+        }
+    }
+
+    public static final double atan2( double y, double x )
+    {
+        double add, mul;
+        if (x < 0.0)
+        {
+            if (y < 0.0)
+            {
+                x = -x;
+                y = -y;
+                mul = 1.0;
+            } else
+            {
+                x = -x;
+                mul = -1.0;
+            }
+
+            add = -Math.PI;
+        } else
+        {
+            if (y < 0.0)
+            {
+                y = -y;
+                mul = -1.0;
+            } else
+            {
+                mul = 1.0;
+            }
+
+            add = 0.0;
+        }
+
+        double invDiv = 1.0 / (((x < y) ? y : x) * INV_ATAN2_DIM_MINUS_1);
+        int xi = Math.min((int) (x * invDiv), ATAN2_DIM);
+        int yi = Math.min((int) (y * invDiv), ATAN2_DIM);
+        return (atan2[yi * ATAN2_DIM + xi] + add) * mul;
+    }
 
     /**
      * Return orientation of line relative to east.
@@ -36,7 +95,7 @@ public class AngleCalc2D
      */
     public double calcOrientation( double lat1, double lon1, double lat2, double lon2 )
     {
-        return Math.atan2(lat2 - lat1, lon2 - lon1);
+        return atan2((lat2 - lat1), (lon2 - lon1));
     }
 
     /**
@@ -77,11 +136,11 @@ public class AngleCalc2D
     double calcAzimuth( double lat1, double lon1, double lat2, double lon2 )
     {
         double orientation = -calcOrientation(lat1, lon1, lat2, lon2);
-        orientation += (Math.PI/2);
-        
-        if (orientation < 0) 
+        orientation += (Math.PI / 2);
+
+        if (orientation < 0)
         {
-            orientation += 2*Math.PI;
+            orientation += 2 * Math.PI;
         }
         return Math.toDegrees(orientation);
     }

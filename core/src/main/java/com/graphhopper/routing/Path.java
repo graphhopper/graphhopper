@@ -472,7 +472,7 @@ public class Path
                 else
                 {
                     int beforeLast = wayGeo.getSize() - 2;
-                    prevOrientation = ac.calcOrientation(wayGeo.getLatitude(beforeLast), wayGeo.getLongitude(beforeLast),
+                    prevOrientation = ac.calcOrientation(wayGeo.getLatitude(beforeLast), wayGeo.getLongitude(beforeLast), 
                             adjLat, adjLon);
                 }
 

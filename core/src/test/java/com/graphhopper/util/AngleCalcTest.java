@@ -51,7 +51,7 @@ public class AngleCalcTest
     public void testCombined()
     {
         double orientation = ac.calcOrientation(52.414918, 13.244221, 52.415333, 13.243595);
-        assertEquals(146.458, Math.toDegrees(ac.alignOrientation(0, orientation)), 0.001);
+        assertEquals(146.5, Math.toDegrees(ac.alignOrientation(0, orientation)), 0.1);
     }
 
     @Test
