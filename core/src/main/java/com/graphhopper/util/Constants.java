@@ -73,7 +73,7 @@ public class Constants
         String version = "0.0";
         try
         {
-            List<String> v = readFile(new InputStreamReader(Helper.class.getResourceAsStream("/version"), "UTF-8"));
+            List<String> v = readFile(new InputStreamReader(Helper.class.getResourceAsStream("/version"), Helper.UTF_CS));
             version = v.get(0);
         } catch (Exception ex)
         {
@@ -103,7 +103,7 @@ public class Constants
         String buildDate = "";
         try
         {
-            List<String> v = readFile(new InputStreamReader(Helper.class.getResourceAsStream("/builddate"), "UTF-8"));
+            List<String> v = readFile(new InputStreamReader(Helper.class.getResourceAsStream("/builddate"), Helper.UTF_CS));
             buildDate = v.get(0);
         } catch (Exception ex)
         {

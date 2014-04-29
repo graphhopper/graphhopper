@@ -53,7 +53,7 @@ public class StorableProperties implements Storable<StorableProperties>
         da.getBytes(0, bytes, len);
         try
         {
-            Helper.loadProperties(map, new StringReader(new String(bytes, "UTF-8")));
+            Helper.loadProperties(map, new StringReader(new String(bytes, Helper.UTF_CS)));
             return true;
         } catch (IOException ex)
         {
@@ -69,7 +69,7 @@ public class StorableProperties implements Storable<StorableProperties>
             StringWriter sw = new StringWriter();
             Helper.saveProperties(map, sw);
             // TODO at the moment the size is limited to da.segmentSize() !
-            byte[] bytes = sw.toString().getBytes("UTF-8");
+            byte[] bytes = sw.toString().getBytes(Helper.UTF_CS);
             da.setBytes(0, bytes, bytes.length);
             da.flush();
         } catch (IOException ex)

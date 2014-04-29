@@ -189,7 +189,7 @@ public class QueryTorture
             {
                 try
                 {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(logFile), "UTF-8"));
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(logFile), Helper.UTF_CS));
                     try
                     {
                         int logLineNo = 0;

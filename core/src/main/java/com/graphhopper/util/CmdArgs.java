@@ -150,7 +150,7 @@ public class CmdArgs
 
         Map<String, String> map = new LinkedHashMap<String, String>();
         Helper.loadProperties(map, new InputStreamReader(new FileInputStream(
-                new File(configLocation).getAbsoluteFile()), "UTF-8"));
+                new File(configLocation).getAbsoluteFile()), Helper.UTF_CS));
         CmdArgs args = new CmdArgs();
         args.merge(map);
 

@@ -227,7 +227,7 @@ public class TranslationMap
                 throw new IllegalStateException("No input stream found in class path!?");
             try
             {
-                for (String line : Helper.readFile(new InputStreamReader(is, "UTF-8")))
+                for (String line : Helper.readFile(new InputStreamReader(is, Helper.UTF_CS)))
                 {
                     if (line.isEmpty() || line.startsWith("//") || line.startsWith("#"))
                         continue;

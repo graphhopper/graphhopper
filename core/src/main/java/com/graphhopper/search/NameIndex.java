@@ -20,6 +20,7 @@ package com.graphhopper.search;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Storable;
+import com.graphhopper.util.Helper;
 import java.io.UnsupportedEncodingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,22 +101,16 @@ public class NameIndex implements Storable<NameIndex>
         byte[] bytes = null;
         for (int i = 0; i < 2; i++)
         {
-            try
+            bytes = name.getBytes(Helper.UTF_CS);
+            // we have to store the size of the array into *one* byte
+            if (bytes.length > 255)
             {
-                bytes = name.getBytes("UTF-8");
-                // we have to store the size of the array into *one* byte
-                if (bytes.length > 255)
-                {
-                    String newName = name.substring(0, 256 / 4);
-                    logger.info("Way name is too long: " + name + " truncated to " + newName);
-                    name = newName;
-                    continue;
-                }
-                break;
-            } catch (UnsupportedEncodingException ex)
-            {
-                throw new RuntimeException("Encoding not supported", ex);
+                String newName = name.substring(0, 256 / 4);
+                logger.info("Way name is too long: " + name + " truncated to " + newName);
+                name = newName;
+                continue;
             }
+            break;
         }
         if (bytes.length > 255)
         {
@@ -140,13 +135,7 @@ public class NameIndex implements Storable<NameIndex>
         int size = sizeBytes[0] & 0xFF;
         byte[] bytes = new byte[size];
         names.getBytes(pointer + sizeBytes.length, bytes, size);
-        try
-        {
-            return new String(bytes, "UTF-8");
-        } catch (UnsupportedEncodingException ex)
-        {
-            throw new RuntimeException("Encoding not supported", ex);
-        }
+        return new String(bytes, Helper.UTF_CS);
     }
 
     @Override
@@ -166,7 +155,7 @@ public class NameIndex implements Storable<NameIndex>
     public boolean isClosed()
     {
         return names.isClosed();
-    }        
+    }
 
     public void setSegmentSize( int segments )
     {

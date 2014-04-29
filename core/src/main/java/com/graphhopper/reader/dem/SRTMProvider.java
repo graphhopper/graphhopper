@@ -84,7 +84,7 @@ public class SRTMProvider implements ElevationProvider
                 InputStream is = getClass().getResourceAsStream(str + "_names.txt.zip");
                 ZipInputStream zis = new ZipInputStream(is);
                 zis.getNextEntry();
-                for (String line : Helper.readFile(new InputStreamReader(zis, "UTF-8")))
+                for (String line : Helper.readFile(new InputStreamReader(zis, Helper.UTF_CS)))
                 {
                     int lat = Integer.parseInt(line.substring(1, 3));
                     if (line.substring(0, 1).charAt(0) == 'S')

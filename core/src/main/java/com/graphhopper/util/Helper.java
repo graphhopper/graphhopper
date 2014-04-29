@@ -24,6 +24,7 @@ import java.io.*;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
+import java.nio.charset.Charset;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -40,9 +41,10 @@ import org.slf4j.LoggerFactory;
  * @author Peter Karich
  */
 public class Helper
-{
+{    
     private static final DistanceCalc dce = new DistanceCalcEarth();
     private static final Logger logger = LoggerFactory.getLogger(Helper.class);
+    public static Charset UTF_CS = Charset.forName("UTF-8");
     public static final long MB = 1L << 20;
 
     public static ArrayList<Integer> tIntListToArrayList( TIntList from )
@@ -131,7 +133,7 @@ public class Helper
 
     public static List<String> readFile( String file ) throws IOException
     {
-        return readFile(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+        return readFile(new InputStreamReader(new FileInputStream(file), UTF_CS));
     }
 
     public static List<String> readFile( Reader simpleReader ) throws IOException
