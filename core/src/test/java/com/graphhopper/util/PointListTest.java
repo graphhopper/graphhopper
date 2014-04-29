@@ -80,7 +80,7 @@ public class PointListTest
         instance.add(toAdd);
 
         assertEquals(12, instance.getSize());
-        assertEquals(20, instance.getCapacity());
+        assertEquals(24, instance.getCapacity());
 
         for (int i = 0; i < toAdd.size(); i++)
         {
