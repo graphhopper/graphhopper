@@ -94,16 +94,16 @@ public class PointList implements PointAccess
 
     private void incCap( int newSize )
     {
-        if (newSize >= latitudes.length)
-        {
-            int cap = (int) (newSize * 1.7);
-            if (cap < 8)
-                cap = 8;
-            latitudes = Arrays.copyOf(latitudes, cap);
-            longitudes = Arrays.copyOf(longitudes, cap);
-            if (is3D)
-                elevations = Arrays.copyOf(elevations, cap);
-        }
+        if (newSize < latitudes.length)
+            return;
+
+        int cap = newSize * 2;
+        if (cap < 15)
+            cap = 15;
+        latitudes = Arrays.copyOf(latitudes, cap);
+        longitudes = Arrays.copyOf(longitudes, cap);
+        if (is3D)
+            elevations = Arrays.copyOf(elevations, cap);
     }
 
     public void add( double lat, double lon )
