@@ -353,7 +353,7 @@ function setFlag(coord, isFrom) {
             // inconsistent leaflet API: event.target.getLatLng vs. mouseEvent.latlng?
             var latlng = e.target.getLatLng();
             hideAutoComplete();
-            if (isFrom) {                
+            if (isFrom) {
                 ghRequest.from.setCoord(latlng.lat, latlng.lng);
                 resolveFrom();
             } else {
@@ -1010,14 +1010,14 @@ function formatValue(orig, query) {
     return orig.replace(new RegExp(pattern, 'gi'), '<strong>$1<\/strong>');
 }
 
-function setAutoCompleteList(fromOrTo, ghRequestLoc) {
+function setAutoCompleteList(fromOrTo) {
     var isFrom = fromOrTo === "from";
     var pointIndex = isFrom ? 1 : 2;
-    var myAutoDiv = getAutoCompleteDiv(fromOrTo);    
+    var myAutoDiv = getAutoCompleteDiv(fromOrTo);
 
     var options = {
         containerClass: "complete-" + pointIndex,
-        /* as we use jsonp we need to set the timeout to a small value */
+        /* as we use can potentially use jsonp we need to set the timeout to a small value */
         timeout: 1000,
         /* avoid too many requests when typing quickly */
         deferRequestBy: 5,
@@ -1028,7 +1028,7 @@ function setAutoCompleteList(fromOrTo, ghRequestLoc) {
         triggerSelectOnValidInput: false,
         autoSelectFirst: false,
         paramName: "q",
-        dataType: "jsonp",
+        dataType: ghRequest.dataType,
         onSearchStart: function(params) {
             // query server only if not a parsable point (i.e. format lat,lon)
             var val = new GHInput(params.q).lat;
@@ -1076,7 +1076,7 @@ function setAutoCompleteList(fromOrTo, ghRequestLoc) {
     };
 
     myAutoDiv.autocomplete(options);
-    $("#"+fromOrTo+"Input").focusout(function() {
+    $("#" + fromOrTo + "Input").focusout(function() {
         myAutoDiv.autocomplete().hide();
     });
 }

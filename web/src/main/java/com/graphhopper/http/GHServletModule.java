@@ -46,6 +46,9 @@ public class GHServletModule extends ServletModule
     {
         filter("*").through(GHGZIPHook.class, params);
         bind(GHGZIPHook.class).in(Singleton.class);
+        
+        filter("*").through(CORSFilter.class, params);
+        bind(CORSFilter.class).in(Singleton.class);
 
         serve("/i18n*").with(I18NServlet.class);
         bind(I18NServlet.class).in(Singleton.class);

@@ -27,7 +27,7 @@ GHRequest = function(host) {
     this.locale = "en";
     this.do_zoom = true;
     // use jsonp here if host allows CORS
-    this.dataType = "jsonp";
+    this.dataType = "json";
     this.key = "tcV28oCCNIzu4GD1Hsp8dYGAHqFBXvYrBvBwthGE";
 };
 
