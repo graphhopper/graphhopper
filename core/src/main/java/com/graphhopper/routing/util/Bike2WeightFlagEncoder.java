@@ -185,7 +185,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
             {
                 double speedReverse = getReverseSpeed(flags);
                 double bwFaster = keepIn(11.1 * fwdInc * fwdInc + 1, 1, 2);
-                double bwSlower = keepIn(-8.3 * fwdDec * fwdDec + 1, 1 / 4, 1);
+                double bwSlower = keepIn(-8.3 * fwdDec * fwdDec + 1, 0.25, 1);
                 speedReverse = speedReverse * (bwFaster * incDist2DSum + bwSlower * decDist2DSum + 1 * restDist2D) / fullDist2D;
                 flags = this.setReverseSpeed(flags, keepIn(speedReverse, PUSHING_SECTION_SPEED, maxSpeed));
             }

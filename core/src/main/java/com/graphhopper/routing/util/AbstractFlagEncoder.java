@@ -70,7 +70,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     /* restriction definitions */
     protected String[] restrictions;
-    protected HashSet<String> intended = new HashSet<String>();
+    protected HashSet<String> intendedValues = new HashSet<String>();
     protected HashSet<String> restrictedValues = new HashSet<String>(5);
     protected HashSet<String> ferries = new HashSet<String>(5);
     protected HashSet<String> oneways = new HashSet<String>(5);
@@ -196,12 +196,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     {
         // movable barriers block if they are not marked as passable
         if (node.hasTag("barrier", potentialBarriers)
-                && !node.hasTag(restrictions, intended)
+                && !node.hasTag(restrictions, intendedValues)
                 && !node.hasTag("locked", "no"))
             return directionBitMask;
 
         if ((node.hasTag("highway", "ford")
-                || node.hasTag("ford")) && !node.hasTag(restrictions, intended))
+                || node.hasTag("ford")) && !node.hasTag(restrictions, intendedValues))
             return directionBitMask;
 
         return 0;
@@ -313,21 +313,21 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         return speedEncoder.getMaxValue();
     }
 
-    protected double reduceToMaxSpeed( double speed, OSMWay way )
+    /**
+     * @return -1 if no maxspeed found
+     */
+    protected double getMaxSpeed( OSMWay way )
     {
-        double maxspeed = parseSpeed(way.getTag("maxspeed"));
-        // apply speed limit no matter of the road type
-        if (maxspeed >= 0)
-            // reduce speed limit to reflect average speed
-            speed = maxspeed * 0.9;
+        double maxSpeed = parseSpeed(way.getTag("maxspeed"));
+        double fwdSpeed = parseSpeed(way.getTag("maxspeed:forward"));
+        if (fwdSpeed >= 0 && (maxSpeed < 0 || fwdSpeed < maxSpeed))
+            maxSpeed = fwdSpeed;
 
-        double maxSpeed = parseSpeed(way.getTag("maxspeed:forward"));
         double backSpeed = parseSpeed(way.getTag("maxspeed:backward"));
-        if (maxSpeed >= 0)
-            speed = maxSpeed * 0.9;
-        if (backSpeed >= 0 && speed > backSpeed * 0.9)
-            speed = backSpeed * 0.9;
-        return speed;
+        if (backSpeed >= 0 && (maxSpeed < 0 || backSpeed < maxSpeed))
+            maxSpeed = backSpeed;
+
+        return maxSpeed;
     }
 
     @Override

@@ -36,7 +36,6 @@ import java.util.Set;
  */
 public class BikeFlagCommonEncoder extends AbstractFlagEncoder
 {
-    protected static final int DEFAULT_REL_CODE = 4;
     protected static final int PUSHING_SECTION_SPEED = 4;
     // private int safeWayBit = 0;
     private int unpavedBit = 0;
@@ -73,10 +72,10 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
         restrictedValues.add("no");
         restrictedValues.add("restricted");
 
-        intended.add("yes");
-        intended.add("designated");
-        intended.add("official");
-        intended.add("permissive");
+        intendedValues.add("yes");
+        intendedValues.add("designated");
+        intendedValues.add("official");
+        intendedValues.add("permissive");
 
         oppositeLanes.add("opposite");
         oppositeLanes.add("opposite_lane");
@@ -168,7 +167,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
             return 0;
 
         // use the way if it is tagged for bikes
-        if (way.hasTag("bicycle", intended))
+        if (way.hasTag("bicycle", intendedValues))
             return acceptBit;
 
         if (way.hasTag("motorroad", "yes"))
@@ -198,6 +197,11 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
             Integer val = bikeNetworkToCode.get(relation.getTag("network"));
             if (val != null)
                 code = val;
+        } else if (relation.hasTag("route", "road") && relation.hasTag("type", "route"))
+        {
+            // http://wiki.openstreetmap.org/wiki/Relation:route#Road_routes
+            // negative influence if probably more traffic than usually as they are national highways
+            code = RelationMapCode.AVOID_IF_POSSIBLE.getValue();
         }
         int oldCode = (int) relationCodeEncoder.getValue(oldRelationFlags);
         if (oldCode < code)
@@ -205,20 +209,15 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
         return oldRelationFlags;
     }
 
-    // In case that the way belongs to a relation for which we do have a relation triggered weight change.    
-    // FIXME: Re-write in case that there is a more generic way to influence the weighting (issue #124).
-    // Here we boost or reduce the speed according to the relationWeightCode:
-    int relationWeightCodeToSpeed( int highwaySpeed, int relationCode )
+    double relationWeightCodeToSpeed( double highwaySpeed, int relationCode )
     {
-        int speed;
         if (highwaySpeed < 15)
             // We know that our way belongs to a cycle route, so we are optimistic and assume 15km/h minimum,
             // irrespective of the tracktype and surface
-            speed = 15;
-        else
-            speed = highwaySpeed;
+            highwaySpeed = 15;
+
         // Add or remove 4km/h per every relation weight boost point
-        return speed + 4 * (relationCode - DEFAULT_REL_CODE);
+        return highwaySpeed + 4 * (relationCode - RelationMapCode.UNCHANGED.getValue());
     }
 
     @Override
@@ -229,21 +228,13 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
 
         long encoded;
         if ((allowed & ferryBit) == 0)
-        {
-            // set speed
-            // FIXME Rewrite necessary after decision #124 for other weighting than speed!
-            // Currently there is only speed, so we increase it.
-            double speed;
-            if (relationFlags == 0)
-            {
-                // In case that the way does not belong to a relation
-                speed = getSpeed(way);
-            } else
-            {
-                speed = relationWeightCodeToSpeed(getSpeed(way), (int) relationCodeEncoder.getValue(relationFlags));
-            }
+        {            
+            double speed = getSpeed(way);            
+            if (relationFlags != 0)
+                speed = relationWeightCodeToSpeed(speed, (int) relationCodeEncoder.getValue(relationFlags));
 
-            speed = reduceToMaxSpeed(speed, way);
+            // bike maxspeed handling is different from car as we don't increase speed
+            speed = reduceToMaxSpeed(way, speed);
             encoded = handleSpeed(way, speed, 0);
             encoded = handleBikeRelated(way, encoded);
 
@@ -256,6 +247,15 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
             encoded |= directionBitMask;
         }
         return encoded;
+    }
+
+    protected double reduceToMaxSpeed( OSMWay way, double speed )
+    {
+        double maxSpeed = getMaxSpeed(way);
+        // apply only if smaller maxSpeed
+        if (maxSpeed > 0 && maxSpeed < speed)
+            return maxSpeed * 0.9;
+        return speed;
     }
 
     @Override
@@ -306,7 +306,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
         // Until now we assumed that the way is no pusing section
         // Now we check, but only in case that our speed is bigger compared to the PUSHING_SECTION_SPEED
         if ((speed > PUSHING_SECTION_SPEED)
-                && (!way.hasTag("bicycle", intended) && way.hasTag("highway", pushingSections)))
+                && (!way.hasTag("bicycle", intendedValues) && way.hasTag("highway", pushingSections)))
         {
             if (way.hasTag("highway", "steps"))
                 speed = PUSHING_SECTION_SPEED / 2;
@@ -358,7 +358,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
         WayType ourWayType = WayType.OTHER_SMALL_WAY;
         if (way.hasTag("highway", pushingSections))
             ourWayType = WayType.PUSHING_SECTION;
-        if ((way.hasTag("bicycle", intended) && way.hasTag("highway", pushingSections))
+        if ((way.hasTag("bicycle", intendedValues) && way.hasTag("highway", pushingSections))
                 || ("cycleway".equals(way.getTag("highway"))))
             ourWayType = WayType.CYCLEWAY;
         if (way.hasTag("highway", roadValues))
@@ -388,7 +388,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
         return encoded;
     }
 
-    public enum RelationMapCode
+    enum RelationMapCode
     {
         /* Inspired by http://wiki.openstreetmap.org/wiki/Class:bicycle
          "-3" = Avoid at all cost. 
@@ -400,14 +400,14 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
          "1" = Prefer 
          "2" = Very Nice way to cycle 
          "3" = This way is so nice, it pays out to make a detour also if this means taking 
-         many unsuitable ways to get here. Outstanding for its intended usage class.
+         many unsuitable ways to get here. Outstanding for its intendedValues usage class.
          */
         //We can't store negative numbers into our map, therefore we add 
         //unspecifiedRelationWeight=4 to the schema from above
         AVOID_AT_ALL_COSTS(1),
         REACH_DEST(2),
         AVOID_IF_POSSIBLE(3),
-        UNCHANGED(DEFAULT_REL_CODE),
+        UNCHANGED(4),
         PREFER(5),
         VERY_NICE(6),
         OUTSTANDING_NICE(7);
@@ -446,16 +446,6 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
 
     };
 
-    protected void setTrackTypeSpeed( String tracktype, int speed )
-    {
-        trackTypeSpeed.put(tracktype, speed);
-    }
-
-    protected void setSurfaceSpeed( String surface, int speed )
-    {
-        surfaceSpeed.put(surface, speed);
-    }
-
     protected void setHighwaySpeed( String highway, int speed )
     {
         highwaySpeed.put(highway, speed);
@@ -466,12 +456,22 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
         return highwaySpeed.get(key);
     }
 
-    protected void setCyclingNetworkPreference( String network, int code )
+    void setTrackTypeSpeed( String tracktype, int speed )
+    {
+        trackTypeSpeed.put(tracktype, speed);
+    }
+
+    void setSurfaceSpeed( String surface, int speed )
+    {
+        surfaceSpeed.put(surface, speed);
+    }
+
+    void setCyclingNetworkPreference( String network, int code )
     {
         bikeNetworkToCode.put(network, code);
     }
 
-    protected void setPushingSection( String highway )
+    void setPushingSection( String highway )
     {
         pushingSections.add(highway);
     }

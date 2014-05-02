@@ -30,7 +30,7 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class Bike2WeightFlagEncoderTest
+public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest
 {
     private Graph initExampleGraph( FlagEncoder instance )
     {

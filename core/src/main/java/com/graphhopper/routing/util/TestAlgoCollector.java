@@ -50,6 +50,7 @@ public class TestAlgoCollector
         for (int i = 0; i < queryList.size() - 1; i++)
         {
             Path path = prepare.createAlgo().calcPath(queryList.get(i), queryList.get(i + 1));
+            // System.out.println(path.calcInstructions().createGPX("temp", 0, "GMT"));
             viaPaths.add(path);
         }
         PathMerger pathMerger = new PathMerger().

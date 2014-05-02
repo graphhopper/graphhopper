@@ -92,27 +92,15 @@ public class RacingBikeFlagEncoder extends BikeFlagCommonEncoder
         setCyclingNetworkPreference("rcn", RelationMapCode.VERY_NICE.getValue());
         setCyclingNetworkPreference("lcn", RelationMapCode.UNCHANGED.getValue());
         setCyclingNetworkPreference("mtb", RelationMapCode.UNCHANGED.getValue());
-
     }
 
-    // In case that the way belongs to a relation for which we do have a relation triggered weight change.    
-    // FIXME: Re-write in case that there is a more generic way to influence the weighting (issue #124).
-    // Here we boost or reduce the speed according to the relationWeightCode:
     @Override
-    int relationWeightCodeToSpeed( int highwaySpeed, int relationCode )
+    double relationWeightCodeToSpeed( double highwaySpeed, int relationCode )
     {
-        int speed;
-        if ((highwaySpeed > PUSHING_SECTION_SPEED) && (highwaySpeed < 15))
-            // We know that our way belongs to a cycle route, so we assume 15km/h minimum
-            speed = 15;
-        else
-            speed = highwaySpeed;
+        if (highwaySpeed <= PUSHING_SECTION_SPEED)
+            return highwaySpeed;
 
-        if (speed > PUSHING_SECTION_SPEED)
-            // Add or remove 4km/h per every relation weight boost point
-            return speed + 4 * (relationCode - DEFAULT_REL_CODE);
-        else
-            return speed;   // We are not pushing unpaved parts
+        return super.relationWeightCodeToSpeed(highwaySpeed, relationCode);
     }
 
     @Override

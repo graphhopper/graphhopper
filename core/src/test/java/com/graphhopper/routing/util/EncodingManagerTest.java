@@ -123,7 +123,7 @@ public class EncodingManagerTest
             }
 
             @Override
-            int relationWeightCodeToSpeed( int highwaySpeed, int relationCode )
+            double relationWeightCodeToSpeed( double highwaySpeed, int relationCode )
             {
                 return highwaySpeed;
             }
@@ -167,9 +167,9 @@ public class EncodingManagerTest
         long allow = bikeEncoder.acceptBit | mtbEncoder.acceptBit;
         long flags = manager.handleWayTags(osmWay, allow, relFlags);
 
-        // uninfluenced speed for grade1 bikeencoder = 4 (pushing section) -> smaller than 15 -> VERYNICE -> 22
+        // uninfluenced speed for grade but via network => VERY_NICE
         assertEquals(24, bikeEncoder.getSpeed(flags), 1e-1);
-        // uninfluenced speed for grade1 bikeencoder = 12 -> smaller than 15 -> PREFER -> 18
+        // uninfluenced speed but PREFER
         assertEquals(20, mtbEncoder.getSpeed(flags), 1e-1);
     }
 

@@ -148,7 +148,7 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("route", "ferry");
         way.setTag("foot", "yes");
         assertFalse(encoder.acceptWay(way) > 0);
-        
+
         way.clearTags();
         way.setTag("highway", "cycleway");
         way.setTag("cycleway", "track");
@@ -239,4 +239,11 @@ public abstract class AbstractBikeFlagEncoderTester
         assertEquals("cycleway, unpaved", wayType);
     }
 
+    @Test
+    public void testReduceToMaxSpeed()
+    {
+        OSMWay way = new OSMWay(12);
+        way.setTag("maxspeed", "90");
+        assertEquals(12, encoder.reduceToMaxSpeed(way, 12), 1e-2);
+    }
 }
