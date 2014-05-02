@@ -48,7 +48,7 @@ public class AngleCalc2D
         }
     }
 
-    public static final double atan2( double y, double x )
+    static final double atan2( double y, double x )
     {
         double add, mul;
         if (x < 0.0)

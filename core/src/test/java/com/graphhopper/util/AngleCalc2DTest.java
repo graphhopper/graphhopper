@@ -24,7 +24,7 @@ import org.junit.Test;
  * @author Johannes Pelzer
  * @author Peter Karich
  */
-public class AngleCalcTest
+public class AngleCalc2DTest
 {
     private final AngleCalc2D ac = new AngleCalc2D();
 
@@ -37,7 +37,7 @@ public class AngleCalcTest
         assertEquals(-45.0, Math.toDegrees(ac.calcOrientation(0, 0, -10, 10)), 0.0001);
         assertEquals(-135.0, Math.toDegrees(ac.calcOrientation(0, 0, -10, -10)), 0.0001);
     }
-    
+
     @Test
     public void testAlignOrientation()
     {
@@ -67,5 +67,19 @@ public class AngleCalcTest
     public void testAzimuthCompassPoint()
     {
         assertEquals("S", ac.azimuth2compassPoint(199));
+    }
+
+    @Test
+    public void testAtan2()
+    {
+        assertEquals(0, AngleCalc2D.atan2(0, 0), 1e-4);
+        assertEquals(45, AngleCalc2D.atan2(5, 5) * 180 / Math.PI, 1e-2);
+        assertEquals(-45, AngleCalc2D.atan2(-5, 5) * 180 / Math.PI, 1e-2);
+        assertEquals(11.14, AngleCalc2D.atan2(1, 5) * 180 / Math.PI, 1e-2);
+        assertEquals(180, AngleCalc2D.atan2(0, -5) * 180 / Math.PI, 1e-2);
+        assertEquals(-90, AngleCalc2D.atan2(-5, 0) * 180 / Math.PI, 1e-2);
+
+        assertEquals(90, Math.atan2(1, 0) * 180 / Math.PI, 1e-2);
+        assertEquals(90, AngleCalc2D.atan2(1, 0) * 180 / Math.PI, 1e-2);
     }
 }
