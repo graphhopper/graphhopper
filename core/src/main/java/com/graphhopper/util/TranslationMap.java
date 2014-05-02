@@ -149,8 +149,12 @@ public class TranslationMap
                 }
             }
         }
+
         if (sb.length() > 0)
+        {
+            System.out.println(sb);
             throw new IllegalStateException(sb.toString());
+        }
     }
 
     public static interface Translation
