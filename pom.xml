@@ -77,7 +77,6 @@
         <module>core</module>
         <module>tools</module>
         <module>web</module>
-        <module>android</module>
     </modules>
         
     <build>        
@@ -177,6 +176,16 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        
+        <profile>
+            <id>include-android</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>android</module>
+            </modules>
         </profile>
     </profiles>
     
