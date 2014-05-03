@@ -45,6 +45,33 @@ Now that you have a running android app you need to copy somehow the routing and
 
  * [A memory bound a* algoritm](http://en.wikipedia.org/wiki/SMA*) is not yet implemented so you can use disableShortcuts only for small routes. Let me know if you need this!
 
+## Problems
+
+If you encounter problems like 'trouble writing output: Too many methods: 72332; max is 65536.' or you 
+want to reduce the size of the jar/apk size you can try to apply autojar on trove4j:
+
+```bash
+java -jar autojar-2.1/autojar.jar -o trove4j-stripped.jar -c $TROVE_SRC/target/classes @trove-class.list
+```
+
+where trove-class.list is a file with the required classes for GraphHopper as content:
+
+```text
+gnu.trove.list.TDoubleList.class
+gnu.trove.list.TIntList.class
+gnu.trove.list.array.TDoubleArrayList.class
+gnu.trove.list.array.TIntArrayList.class
+gnu.trove.map.TIntObjectMap.class
+gnu.trove.map.hash.TIntObjectHashMap.class
+gnu.trove.map.hash.TIntIntHashMap.class
+gnu.trove.set.hash.TIntHashSet.class
+gnu.trove.iterator.TIntIterator.class
+gnu.trove.procedure.TIntProcedure.class
+gnu.trove.procedure.TObjectProcedure.class
+gnu.trove.stack.array.TIntArrayStack.class
+```
+
+
 ## Example
 
 Routes for areas of up to 500km^2 are calculated in under 5s with the help of Contraction Hierarchies
