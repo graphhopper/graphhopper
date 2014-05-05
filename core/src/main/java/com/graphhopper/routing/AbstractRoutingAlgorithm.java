@@ -97,7 +97,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
     }
 
-    protected void updateShortest( EdgeEntry shortestDE, int currLoc )
+    protected void updateBestPath( EdgeEntry shortestDE, int currLoc )
     {
     }
 

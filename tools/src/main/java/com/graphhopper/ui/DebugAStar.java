@@ -46,12 +46,12 @@ public class DebugAStar extends AStar implements DebugAlgo
     }
 
     @Override
-    public void updateShortest( EdgeEntry shortestDE, int currLoc )
+    public void updateBestPath( EdgeEntry shortestDE, int currLoc )
     {
         if (g2 != null)
         {
             mg.plotNode(g2, currLoc, Color.YELLOW);
         }
-        super.updateShortest(shortestDE, currLoc);
+        super.updateBestPath(shortestDE, currLoc);
     }
 }

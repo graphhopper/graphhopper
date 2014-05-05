@@ -45,6 +45,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     protected EdgeEntry currFrom;
     protected EdgeEntry currTo;
     protected PathBidirRef bestPath;
+    private boolean updateBestPath = true;
 
     public DijkstraBidirectionRef( Graph graph, FlagEncoder encoder, Weighting weighting )
     {
@@ -70,7 +71,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         if (currTo != null)
         {
             bestWeightMapOther = bestWeightMapTo;
-            updateShortest(currTo, from);
+            updateBestPath(currTo, from);
         }
     }
 
@@ -83,7 +84,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         if (currFrom != null)
         {
             bestWeightMapOther = bestWeightMapFrom;
-            updateShortest(currFrom, to);
+            updateBestPath(currFrom, to);
         }
     }
 
@@ -177,12 +178,13 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
                 prioQueue.add(de);
             }
 
-            updateShortest(de, adjNode);
+            if (updateBestPath)
+                updateBestPath(de, adjNode);
         }
     }
 
     @Override
-    protected void updateShortest( EdgeEntry shortestEE, int currLoc )
+    protected void updateBestPath( EdgeEntry shortestEE, int currLoc )
     {
         EdgeEntry entryOther = bestWeightMapOther.get(currLoc);
         if (entryOther == null)
@@ -238,6 +240,11 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         currTo = dijkstra.currTo;
         visitedCountTo = dijkstra.visitedCountTo;
         // inEdgeExplorer
+    }
+
+    void setUpdateBestPath( boolean b )
+    {
+        updateBestPath = b;
     }
 
     void setBestPath( PathBidirRef bestPath )
