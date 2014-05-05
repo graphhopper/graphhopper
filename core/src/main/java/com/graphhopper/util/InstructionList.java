@@ -18,7 +18,6 @@
 package com.graphhopper.util;
 
 import java.text.SimpleDateFormat;
-
 import java.util.*;
 
 /**
