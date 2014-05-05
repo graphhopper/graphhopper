@@ -335,14 +335,11 @@ public class Path
     }
 
     /**
-     * @return the cached list of ways for this path
+     * @return the list of instructions for this path.
      */
-    public InstructionList calcInstructions()
+    public InstructionList calcInstructions( final Translation tr )
     {
-        if (cachedWays != null)
-            return cachedWays;
-
-        cachedWays = new InstructionList(edgeIds.size() / 4);
+        cachedWays = new InstructionList(edgeIds.size() / 4, tr);
         if (edgeIds.isEmpty())
             return cachedWays;
 
@@ -375,14 +372,14 @@ public class Path
             private Instruction prevInstruction;
             private PointList points = new PointList(10, nodeAccess.is3D());
             private String name = null;
-            private int pavementType;
-            private int wayType;
+            private InstructionAnnotation annotation;
 
             @Override
             public void next( EdgeIteratorState edge, int index )
             {
                 // baseNode is the current node and adjNode is the next
                 int adjNode = edge.getAdjNode();
+                long flags = edge.getFlags();
                 double adjLat = nodeAccess.getLatitude(adjNode);
                 double adjLon = nodeAccess.getLongitude(adjNode);
                 double latitude, longitude;
@@ -407,25 +404,21 @@ public class Path
                 {
                     // very first instruction
                     name = edge.getName();
-                    pavementType = encoder.getPavementType(edge.getFlags());
-                    wayType = encoder.getWayType(edge.getFlags());
-                    prevInstruction = new Instruction(Instruction.CONTINUE_ON_STREET, name, wayType, pavementType, points);
+                    annotation = encoder.getAnnotation(flags, tr);
+                    prevInstruction = new Instruction(Instruction.CONTINUE_ON_STREET, name, annotation, points);
                     updatePointsAndInstruction(edge, wayGeo);
                     cachedWays.add(prevInstruction);
                 } else
                 {
                     double tmpOrientation = ac.alignOrientation(prevOrientation, orientation);
                     String tmpName = edge.getName();
-                    int tmpPavement = encoder.getPavementType(edge.getFlags());
-                    int tmpWayType = encoder.getWayType(edge.getFlags());
+                    InstructionAnnotation tmpAnnotation = encoder.getAnnotation(flags, tr);
                     if ((!name.equals(tmpName))
-                            || (pavementType != tmpPavement)
-                            || (wayType != tmpWayType))
+                            || (!annotation.equals(tmpAnnotation)))
                     {
                         points = new PointList(10, nodeAccess.is3D());
                         name = tmpName;
-                        pavementType = tmpPavement;
-                        wayType = tmpWayType;
+                        annotation = tmpAnnotation;
                         double delta = Math.abs(tmpOrientation - prevOrientation);
                         int sign;
                         if (delta < 0.2)
@@ -458,7 +451,7 @@ public class Path
 
                         }
 
-                        prevInstruction = new Instruction(sign, name, wayType, pavementType, points);
+                        prevInstruction = new Instruction(sign, name, annotation, points);
                         cachedWays.add(prevInstruction);
                     }
 

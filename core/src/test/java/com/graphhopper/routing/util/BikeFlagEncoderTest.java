@@ -34,7 +34,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     @Override
     BikeFlagCommonEncoder createBikeEncoder()
     {
-        return (BikeFlagCommonEncoder) new EncodingManager("BIKE,MTB,RACINGBIKE").getEncoder("BIKE");
+        return (BikeFlagCommonEncoder) new EncodingManager("BIKE,MTB").getEncoder("BIKE");
     }
 
     @Test
@@ -104,19 +104,19 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         // assertEquals("pushing section, unpaved", wayType);
         way.clearTags();
         way.setTag("highway", "path");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("pushing section, unpaved", wayType);
 
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("surface", "grass");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("pushing section, unpaved", wayType);
 
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("surface", "concrete");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("pushing section", wayType);
 
         way.clearTags();
@@ -124,7 +124,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.setTag("foot", "yes");
         way.setTag("surface", "paved");
         way.setTag("tracktype", "grade1");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("pushing section", wayType);
 
         way.clearTags();
@@ -132,7 +132,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.setTag("foot", "yes");
         way.setTag("surface", "paved");
         way.setTag("tracktype", "grade2");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("pushing section, unpaved", wayType);
 
     }
@@ -150,8 +150,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         // unchanged
         long flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(16, encoder.getSpeed(flags), 1e-1);
-        assertEquals(1, encoder.getWayType(flags));
-        assertEquals(1, encoder.getPavementType(flags));
+        assertEquals("pushing section, unpaved", getWayTypeFromFlags(osmWay));
 
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
@@ -159,8 +158,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(20, encoder.getSpeed(flags), 1e-1);
-        assertEquals(1, encoder.getWayType(flags));
-        assertEquals(1, encoder.getPavementType(flags));
+        assertEquals("pushing section, unpaved", getWayTypeFromFlags(osmWay));
 
         // relation code is VERY_NICE
         osmRel.setTag("network", "rcn");
@@ -182,7 +180,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(22, encoder.getSpeed(flags), 1e-1);
-        assertEquals(0, encoder.getWayType(flags));
+        assertEquals("", getWayTypeFromFlags(osmWay));
 
         // test max and min speed
         final AtomicInteger fakeSpeed = new AtomicInteger(40);

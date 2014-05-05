@@ -20,8 +20,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
 import static com.graphhopper.routing.util.BikeFlagCommonEncoder.PUSHING_SECTION_SPEED;
-import java.util.HashMap;
-import java.util.Map;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -34,7 +32,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     @Override
     BikeFlagCommonEncoder createBikeEncoder()
     {
-        return (BikeFlagCommonEncoder) new EncodingManager("BIKE,MTB,RACINGBIKE").getEncoder("RACINGBIKE");
+        return (BikeFlagCommonEncoder) new EncodingManager("BIKE,RACINGBIKE").getEncoder("RACINGBIKE");
     }
 
     @Test
@@ -46,15 +44,15 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade3");
         // Pushing section speed/2
-        assertEquals(PUSHING_SECTION_SPEED / 2, getEncodedDecodedSpeed(way), 1e-1);
+        assertEquals(PUSHING_SECTION_SPEED / 2, getSpeedFromFlags(way), 1e-1);
 
         // Even if it is part of a cycle way PUSHING_SECTION_SPEED/2
         way.setTag("bicycle", "yes");
-        assertEquals(PUSHING_SECTION_SPEED / 2, getEncodedDecodedSpeed(way), 1e-1);
+        assertEquals(PUSHING_SECTION_SPEED / 2, getSpeedFromFlags(way), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "steps");
-        assertEquals(2, getEncodedDecodedSpeed(way), 1e-1);
+        assertEquals(2, getSpeedFromFlags(way), 1e-1);
 
     }
 
@@ -67,7 +65,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 
         OSMRelation osmRel = new OSMRelation(1);
 
-        assertEquals(PUSHING_SECTION_SPEED / 2, getEncodedDecodedSpeed(osmWay), 1e-1);
+        assertEquals(PUSHING_SECTION_SPEED / 2, getSpeedFromFlags(osmWay), 1e-1);
 
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
@@ -75,8 +73,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         long relFlags = encoder.handleRelationTags(osmRel, 0);
         long flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(2, encoder.getSpeed(flags), 1e-1);
-        assertEquals(1, encoder.getWayType(flags)); // Pushing section
-        assertEquals(1, encoder.getPavementType(flags)); //  Unpaved
+        assertEquals("pushing section, unpaved", getWayTypeFromFlags(osmWay));        
 
         // relation code is OUTSTANDING NICE but as unpaved, the speed is still PUSHING_SECTION_SPEED/2
         osmRel.setTag("network", "icn");

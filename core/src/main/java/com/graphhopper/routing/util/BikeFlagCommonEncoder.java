@@ -20,7 +20,10 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.OSMRelation;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.InstructionAnnotation;
+import com.graphhopper.util.Translation;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,6 +54,7 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
     private final Map<String, Integer> bikeNetworkToCode = new HashMap<String, Integer>();
     protected EncodedValue relationCodeEncoder;
     private EncodedValue wayTypeEncoder;
+    private EncodedValue preferWayEncoder;
 
     /**
      * Should be only instantied via EncodingManager
@@ -131,20 +135,25 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
         speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, highwaySpeed.get("cycleway"), 30);
-        shift += speedBits;
+        shift += speedEncoder.getBits();
 
         //safeWayBit = 1 << shift++;
         unpavedBit = 1 << shift++;
         // 2 bits
-        wayTypeEncoder = new EncodedValue("WayType", shift, 2, 1, 0, 3);
-        return shift + 2;
+        wayTypeEncoder = new EncodedValue("WayType", shift, 2, 1, 0, 3, true);
+        shift += wayTypeEncoder.getBits();
+
+        preferWayEncoder = new EncodedValue("PreferWay", shift, 3, 1, 0, 7);
+        shift += preferWayEncoder.getBits();
+
+        return shift;
     }
 
     @Override
     public int defineRelationBits( int index, int shift )
     {
         relationCodeEncoder = new EncodedValue("RelationCode", shift, 3, 1, 0, 7);
-        return shift + 3;
+        return shift + relationCodeEncoder.getBits();
     }
 
     @Override
@@ -228,8 +237,8 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
 
         long encoded;
         if ((allowed & ferryBit) == 0)
-        {            
-            double speed = getSpeed(way);            
+        {
+            double speed = getSpeed(way);
             if (relationFlags != 0)
                 speed = relationWeightCodeToSpeed(speed, (int) relationCodeEncoder.getValue(relationFlags));
 
@@ -318,18 +327,51 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public int getPavementType( long flags )
+    public InstructionAnnotation getAnnotation( long flags, Translation tr )
     {
+        int paveType = 0; // paved
         if ((flags & unpavedBit) != 0)
-            return 1; // unpaved
-        else
-            return 0; // paved
+            paveType = 1; // unpaved        
+
+        int wayType = (int) wayTypeEncoder.getValue(flags);
+        return new InstructionAnnotation(0, getWayName(paveType, wayType, tr));
     }
 
-    @Override
-    public int getWayType( long flags )
+    String getWayName( int pavementType, int wayType, Translation tr )
     {
-        return (int) wayTypeEncoder.getValue(flags);
+        String pavementName = "";
+        if (pavementType == 1)
+            pavementName = tr.tr("unpaved");
+
+        String wayTypeName = "";
+        switch (wayType)
+        {
+            case 0:
+                wayTypeName = tr.tr("road");
+                break;
+            case 1:
+                wayTypeName = tr.tr("pushing_section");
+                break;
+            case 2:
+                wayTypeName = tr.tr("cycleway");
+                break;
+            case 3:
+                wayTypeName = tr.tr("way");
+                break;
+        }
+
+        if (pavementName.isEmpty())
+        {
+            if (wayType == 0 || wayType == 3)
+                return "";
+            return wayTypeName;
+        } else
+        {
+            if (wayTypeName.isEmpty())
+                return pavementName;
+            else
+                return wayTypeName + ", " + pavementName;
+        }
     }
 
     protected long handleBikeRelated( OSMWay way, long encoded )
@@ -355,16 +397,16 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
         }
 
         // Populate bits at wayTypeMask with wayType            
-        WayType ourWayType = WayType.OTHER_SMALL_WAY;
+        WayType wayType = WayType.OTHER_SMALL_WAY;
         if (way.hasTag("highway", pushingSections))
-            ourWayType = WayType.PUSHING_SECTION;
+            wayType = WayType.PUSHING_SECTION;
         if ((way.hasTag("bicycle", intendedValues) && way.hasTag("highway", pushingSections))
                 || ("cycleway".equals(way.getTag("highway"))))
-            ourWayType = WayType.CYCLEWAY;
+            wayType = WayType.CYCLEWAY;
         if (way.hasTag("highway", roadValues))
-            ourWayType = WayType.ROAD;
+            wayType = WayType.ROAD;
 
-        return wayTypeEncoder.setValue(encoded, ourWayType.getValue());
+        return wayTypeEncoder.setValue(encoded, wayType.getValue());
     }
 
     protected long handleSpeed( OSMWay way, double speed, long encoded )
@@ -386,6 +428,11 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
             encoded |= directionBitMask;
         }
         return encoded;
+    }
+
+    public double calcPriority( EdgeIteratorState edge )
+    {
+        return 1;
     }
 
     enum RelationMapCode
@@ -443,7 +490,6 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
         {
             return value;
         }
-
     };
 
     protected void setHighwaySpeed( String highway, int speed )

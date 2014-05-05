@@ -1,4 +1,6 @@
 0.3.0
+    introduced prefer bits, now bike uses more bits and 3 bike encoder do not fit into 32 bit anymore, will be fixed later
+    moved Translation argument into Path.calcInstruction for more fine grained control, instructions are now uncached and GHRequest: new locale parameter
     CoordTrig and the like are removed, GHPlace is mostly replaced by GHPoint and so GHRequest has now methods ala addPoint instead
     removed isBoth from AbstractFlagEncoder, moved canBeOverwritten and associated test to PrepareEncoder
     removed unused directory.rename

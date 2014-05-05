@@ -228,15 +228,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     @Override
-    public int getPavementType( long flags )
+    public InstructionAnnotation getAnnotation( long flags, Translation tr )
     {
-        return 0;
-    }
-
-    @Override
-    public int getWayType( long flags )
-    {
-        return 0;
+        return InstructionAnnotation.EMPTY;
     }
 
     /**

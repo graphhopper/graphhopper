@@ -16,7 +16,7 @@ Parameter   | Default | Description
 :-----------|:--------|:-----------
 point       | -       | Specifiy multiple points for which the route should be calculated. The order is important. Specify at least two points.
 locale      | en      | The locale of the result. E.g. pt_PT for Portuguese or de for German
-instructions| true  | If instruction should be calculated and returned
+instructions| true    | If instruction should be calculated and returned
 vehicle     | car     | The vehicle for which the route should be calculated. Other vehicles are foot and bike
 weighting   | fastest | Which kind of 'best' route calculation you need. Other option is 'shortest', currently not available in the public service.
 algorithm   | dijkstrabi | The algorithm to calculate the route. Other options are dijkstra, astar and astarbi. For the public service only dijkstrabi is supported.
@@ -114,11 +114,13 @@ paths[0].points_encoded    | Is true if the points are encoded, if not paths[0].
 paths[0].points_dimension  | The dimension of the points field. Can be 2 or 3.
 paths[0].bbox              | The bounding box of the route, format: <br> minLon, minLat, maxLon, maxLat
 paths[0].instructions      | Contains information about the instructions for this route. The last instruction is always the Finish instruction and takes 0ms and 0meter. Keep in mind that instructions are currently under active development and can sometimes contain misleading information, so, make sure you always show an image of the map at the same time when navigating your users!
-paths[0].instructions[0].text     | A description what the user has to do in order to follow the route. The language depends on the locale parameter.
-paths[0].instructions[0].distance | The distance for this instruction, in meter
-paths[0].instructions[0].time     | The duration for this instruction, in ms
-paths[0].instructions[0].interval | An array containing the first and the last index (relative to paths[0].points) of the points for this instruction
-paths[0].instructions[0].sign     | A number which specifies the sign to show e.g. for right turn etc <br>TURN_SHARP_LEFT = -3<br>TURN_LEFT = -2<br>TURN_SLIGHT_LEFT = -1<br>CONTINUE_ON_STREET = 0<br>TURN_SLIGHT_RIGHT = 1<br>TURN_RIGHT = 2<br>TURN_SHARP_RIGHT = 3<br>FINISH = 4<br>VIA_REACHED = 5
+paths[0].instructions[0].text                 | A description what the user has to do in order to follow the route. The language depends on the locale parameter.
+paths[0].instructions[0].distance             | The distance for this instruction, in meter
+paths[0].instructions[0].time                 | The duration for this instruction, in ms
+paths[0].instructions[0].interval             | An array containing the first and the last index (relative to paths[0].points) of the points for this instruction
+paths[0].instructions[0].sign                 | A number which specifies the sign to show e.g. for right turn etc <br>TURN_SHARP_LEFT = -3<br>TURN_LEFT = -2<br>TURN_SLIGHT_LEFT = -1<br>CONTINUE_ON_STREET = 0<br>TURN_SLIGHT_RIGHT = 1<br>TURN_RIGHT = 2<br>TURN_SHARP_RIGHT = 3<br>FINISH = 4<br>VIA_REACHED = 5
+paths[0].instructions[0].annotationText       | [optional] A text describing the instruction in more detail, e.g. like surface of the way, warnings or involved costs
+paths[0].instructions[0].annotationImportance | [optional] 0 stands for INFO, 1 for warning, 2 for costs, 3 for costs and warning
 
 
 ## Area information

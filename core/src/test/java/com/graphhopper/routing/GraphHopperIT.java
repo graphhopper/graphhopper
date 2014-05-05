@@ -23,7 +23,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.util.*;
-import com.graphhopper.util.TranslationMap.Translation;
+import com.graphhopper.util.Translation;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.io.File;
@@ -40,8 +40,6 @@ import org.junit.Before;
  */
 public class GraphHopperIT
 {
-    TranslationMap trMap = TranslationMapTest.SINGLETON;
-    Translation tr = trMap.getWithFallBack(Locale.US);
     String graphFile = "target/graph-GraphHopperIT";
     String osmFile = "files/monaco.osm.gz";
     String vehicle = "FOOT";
@@ -81,7 +79,7 @@ public class GraphHopperIT
         InstructionList il = rsp.getInstructions();
         assertEquals(13, il.size());
 
-        List<Map<String, Object>> resultJson = il.createJson(tr);
+        List<Map<String, Object>> resultJson = il.createJson();
         // TODO roundabout fine tuning -> enter + leave roundabout (+ two rounabouts -> is it necessary if we do not leave the street?)
         assertEquals("Continue onto Avenue des Guelfes", resultJson.get(0).get("text"));
         assertEquals("Turn slight left onto Avenue des Papalins", resultJson.get(1).get("text"));
@@ -168,7 +166,7 @@ public class GraphHopperIT
 
         InstructionList il = rsp.getInstructions();
         assertEquals(26, il.size());
-        List<Map<String, Object>> resultJson = il.createJson(tr);
+        List<Map<String, Object>> resultJson = il.createJson();
         assertEquals("Continue onto Avenue des Guelfes", resultJson.get(0).get("text"));
         assertEquals("Turn slight left onto Avenue des Papalins", resultJson.get(1).get("text"));
         assertEquals("Turn sharp right onto Quai Jean-Charles Rey", resultJson.get(2).get("text"));

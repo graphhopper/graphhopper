@@ -39,8 +39,9 @@ import static org.junit.Assert.*;
  */
 public class InstructionListTest
 {
-    TranslationMap trMap = TranslationMapTest.SINGLETON;
-
+    private final TranslationMap trMap = TranslationMapTest.SINGLETON;
+    private final Translation usTR = trMap.getWithFallBack(Locale.US);
+    
     @Test
     public void testWayList()
     {
@@ -91,24 +92,26 @@ public class InstructionListTest
         iter2.setWayGeometry(list);
 
         Path p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestWeighting()).calcPath(0, 10);
-        InstructionList wayList = p.calcInstructions();
-        List<String> tmpList = pick("text", wayList.createJson(trMap.getWithFallBack(Locale.CANADA)));
+        InstructionList wayList = p.calcInstructions(trMap.getWithFallBack(Locale.CANADA));
+        List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Continue onto 4-7",
                 "Turn left onto 7-8", "Continue onto 8-9", "Turn right", "Finish!"),
                 tmpList);
+        List<String> distStrings = wayList.createDistances(true);
+        assertEquals(Arrays.asList("6.21 mi", "6.21 mi", "6.21 mi", "6.21 mi", "12.43 mi", "6.21 mi", "0 ft"),
+                distStrings);
 
-        tmpList = pick("text", wayList.createJson(trMap.getWithFallBack(Locale.GERMAN)));
+        wayList = p.calcInstructions(trMap.getWithFallBack(Locale.GERMAN));
+        tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Geradeaus auf 0-1", "Rechts abbiegen auf 1-4", "Geradeaus auf 4-7",
                 "Links abbiegen auf 7-8", "Geradeaus auf 8-9", "Rechts abbiegen", "Ziel erreicht!"),
                 tmpList);
 
         assertEquals(70000.0, sumDistances(wayList), 1e-1);
-        List<String> distStrings = wayList.createDistances(trMap.get("de"), false);
+        distStrings = wayList.createDistances(false);
         assertEquals(Arrays.asList("10.0 km", "10.0 km", "10.0 km", "10.0 km", "20.0 km", "10.0 km", "0 m"),
                 distStrings);
-        distStrings = wayList.createDistances(trMap.get("en_US"), true);
-        assertEquals(Arrays.asList("6.21 mi", "6.21 mi", "6.21 mi", "6.21 mi", "12.43 mi", "6.21 mi", "0 ft"),
-                distStrings);
+
         List<GPXEntry> gpxes = wayList.createGPXList();
         assertEquals(10, gpxes.size());
         // check order of tower nodes        
@@ -127,8 +130,9 @@ public class InstructionListTest
         p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestWeighting()).calcPath(6, 2);
         assertEquals(42000, p.getDistance(), 1e-2);
         assertEquals(Helper.createTList(6, 7, 8, 5, 2), p.calcNodes());
-        wayList = p.calcInstructions();
-        tmpList = pick("text", wayList.createJson(trMap.getWithFallBack(Locale.CANADA)));
+
+        wayList = p.calcInstructions(trMap.getWithFallBack(Locale.CANADA));
+        tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto 6-7", "Continue onto 7-8", "Turn left onto 5-8", "Continue onto 5-2", "Finish!"),
                 tmpList);
 
@@ -216,14 +220,14 @@ public class InstructionListTest
         iter.setWayGeometry(list);
 
         Path p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestWeighting()).calcPath(2, 3);
-        InstructionList wayList = p.calcInstructions();
-        List<String> tmpList = pick("text", wayList.createJson(trMap.getWithFallBack(Locale.CANADA)));
+        InstructionList wayList = p.calcInstructions(trMap.getWithFallBack(Locale.CANADA));
+        List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto 2-4", "Turn slight right onto 3-4", "Finish!"),
                 tmpList);
 
         p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestWeighting()).calcPath(3, 5);
-        wayList = p.calcInstructions();
-        tmpList = pick("text", wayList.createJson(trMap.getWithFallBack(Locale.CANADA)));
+        wayList = p.calcInstructions(trMap.getWithFallBack(Locale.CANADA));
+        tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto 3-4", "Continue onto 4-5", "Finish!"),
                 tmpList);
     }
@@ -255,8 +259,8 @@ public class InstructionListTest
         iter.setWayGeometry(list);
 
         Path p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestWeighting()).calcPath(2, 3);
-        InstructionList wayList = p.calcInstructions();
-        List<String> tmpList = pick("text", wayList.createJson(trMap.getWithFallBack(Locale.CANADA)));
+        InstructionList wayList = p.calcInstructions(trMap.getWithFallBack(Locale.CANADA));
+        List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto street", "Finish!"), tmpList);
     }
 
@@ -283,7 +287,7 @@ public class InstructionListTest
         g.edge(4, 5, 10000, true).setName("4-5").setFlags(flagsForSpeed(carManager, 100));
 
         Path p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestWeighting()).calcPath(1, 5);
-        InstructionList wayList = p.calcInstructions();
+        InstructionList wayList = p.calcInstructions(usTR);
         assertEquals(5, wayList.size());
 
         List<GPXEntry> gpxList = wayList.createGPXList();
@@ -315,7 +319,7 @@ public class InstructionListTest
         assertTrue(gpxStr, gpxStr.contains("<extensions>") && gpxStr.contains("</extensions>"));
         assertTrue(gpxStr, gpxStr.contains("<rtept lat=\"15.1\" lon=\"10.0\">"));
         assertTrue(gpxStr, gpxStr.contains("<distance>8000.0</distance>"));
-        assertTrue(gpxStr, gpxStr.contains("<desc>left 2-3</desc>"));
+        assertTrue(gpxStr, gpxStr.contains("<desc>turn left onto 2-3</desc>"));
 
         assertTrue(gpxStr, gpxStr.contains("<direction>N</direction>"));
         assertTrue(gpxStr, gpxStr.contains("<azimuth>0</azimuth>"));
@@ -324,19 +328,20 @@ public class InstructionListTest
     @Test
     public void testCreateGPX()
     {
-        InstructionList instructions = new InstructionList();
+        InstructionAnnotation ea = InstructionAnnotation.EMPTY;
+        InstructionList instructions = new InstructionList(usTR);
         PointList pl = new PointList();
         pl.add(49.942576, 11.580384);
         pl.add(49.941858, 11.582422);
-        instructions.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp", 0, 0, pl).setDistance(240).setTime(15000));
+        instructions.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, pl).setDistance(240).setTime(15000));
 
         pl = new PointList();
         pl.add(49.941575, 11.583501);
-        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", 0, 0, pl).setDistance(25).setTime(4000));
+        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", ea, pl).setDistance(25).setTime(4000));
 
         pl = new PointList();
         pl.add(49.941389, 11.584311);
-        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", 0, 0, pl).setDistance(25).setTime(3000));
+        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", ea, pl).setDistance(25).setTime(3000));
         instructions.add(new FinishInstruction(49.941029, 11.584514, 0));
 
         List<GPXEntry> result = instructions.createGPXList();
@@ -363,7 +368,7 @@ public class InstructionListTest
         EncodingManager carManager = new EncodingManager("CAR");
         Graph g = new GraphBuilder(carManager).create();
         Path p = new Dijkstra(g, carManager.getSingle(), new ShortestWeighting()).calcPath(0, 1);
-        InstructionList il = p.calcInstructions();
+        InstructionList il = p.calcInstructions(usTR);
         assertEquals(0, il.size());
         assertEquals(0, il.createStartPoints().size());
     }

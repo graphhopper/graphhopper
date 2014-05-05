@@ -18,14 +18,10 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.Translation;
 import static com.graphhopper.util.TranslationMapTest.SINGLETON;
 import java.util.Locale;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -45,22 +41,20 @@ public abstract class AbstractBikeFlagEncoderTester
 
     abstract BikeFlagCommonEncoder createBikeEncoder();
 
-    public double getEncodedDecodedSpeed( OSMWay way )
+    public double getSpeedFromFlags( OSMWay way )
     {
         long allowed = encoder.acceptBit;
         long flags = encoder.handleWayTags(way, allowed, 0);
         return encoder.getSpeed(flags);
     }
 
-    public String encodeDecodeWayType( String name, OSMWay way )
+    public String getWayTypeFromFlags( OSMWay way )
     {
         long allowed = encoder.acceptBit;
         long flags = encoder.handleWayTags(way, allowed, 0);
-        int pavement = encoder.getPavementType(flags);
-        int wayType = encoder.getWayType(flags);
 
-        TranslationMap.Translation enMap = SINGLETON.getWithFallBack(Locale.UK);
-        return InstructionList.getWayName(name, pavement, wayType, enMap);
+        Translation enMap = SINGLETON.getWithFallBack(Locale.UK);
+        return encoder.getAnnotation(flags, enMap).getMessage();
     }
 
     @Test
@@ -193,49 +187,45 @@ public abstract class AbstractBikeFlagEncoderTester
         String wayType;
 
         way.setTag("highway", "steps");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("pushing section", wayType);
 
-        way.setTag("highway", "steps");
-        wayType = encodeDecodeWayType("Famous steps", way);
-        assertEquals("Famous steps, pushing section", wayType);
-
         way.setTag("highway", "footway");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("pushing section", wayType);
 
         way.setTag("highway", "footway");
         way.setTag("surface", "pebblestone");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("pushing section", wayType);
 
         way.setTag("highway", "residential");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("", wayType);
 
         way.setTag("highway", "cycleway");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("cycleway", wayType);
 
         way.setTag("surface", "grass");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("cycleway, unpaved", wayType);
 
         way.setTag("surface", "asphalt");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("cycleway", wayType);
 
         way.setTag("highway", "footway");
         way.setTag("bicycle", "yes");
         way.setTag("surface", "grass");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("cycleway, unpaved", wayType);
 
         way.clearTags();
         way.setTag("highway", "footway");
         way.setTag("bicycle", "yes");
         way.setTag("surface", "grass");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("cycleway, unpaved", wayType);
     }
 

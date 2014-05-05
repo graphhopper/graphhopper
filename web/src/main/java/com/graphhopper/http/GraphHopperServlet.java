@@ -23,7 +23,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.TranslationMap.Translation;
+import com.graphhopper.util.Translation;
 import com.graphhopper.util.shapes.GHPoint;
 import java.io.IOException;
 import java.util.*;
@@ -46,8 +46,6 @@ public class GraphHopperServlet extends GHBaseServlet
 {
     @Inject
     private GraphHopper hopper;
-    @Inject
-    private TranslationMap trMap;
 
     @Override
     public void doGet( HttpServletRequest req, HttpServletResponse res ) throws ServletException, IOException
@@ -77,6 +75,7 @@ public class GraphHopperServlet extends GHBaseServlet
         String vehicleStr = getParam(req, "vehicle", "CAR").toUpperCase();
         String weighting = getParam(req, "weighting", "fastest");
         String algoStr = getParam(req, "algorithm", "");
+        String localeStr = getParam(req, "locale", "en");
 
         StopWatch sw = new StopWatch().start();
         GHResponse rsp;
@@ -87,6 +86,7 @@ public class GraphHopperServlet extends GHBaseServlet
                     setVehicle(algoVehicle.toString()).
                     setWeighting(weighting).
                     setAlgorithm(algoStr).
+                    setLocale(localeStr).
                     putHint("calcPoints", calcPoints).
                     putHint("instructions", enableInstructions).
                     putHint("douglas.minprecision", minPathPrecision));
@@ -130,7 +130,6 @@ public class GraphHopperServlet extends GHBaseServlet
             GHResponse rsp, float took ) throws JSONException, IOException
     {
         boolean enableInstructions = getBooleanParam(req, "instructions", true);
-        Locale locale = Helper.getLocale(getParam(req, "locale", "en"));
         boolean pointsEncoded = getBooleanParam(req, "points_encoded", true);
         boolean calcPoints = getBooleanParam(req, "calc_points", true);
         JSONObject json = new JSONObject();
@@ -174,9 +173,8 @@ public class GraphHopperServlet extends GHBaseServlet
 
                 if (enableInstructions)
                 {
-                    Translation tr = trMap.getWithFallBack(locale);
                     InstructionList instructions = rsp.getInstructions();
-                    jsonPath.put("instructions", instructions.createJson(tr));
+                    jsonPath.put("instructions", instructions.createJson());
                 }
             }
             json.put("paths", Collections.singletonList(jsonPath));

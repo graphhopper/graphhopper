@@ -252,16 +252,4 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         return encoded;
     }
-
-    @Override
-    public int getPavementType( long flags )
-    {
-        return 0;
-    }
-
-    @Override
-    public int getWayType( long flags )
-    {
-        return 0;
-    }
 }

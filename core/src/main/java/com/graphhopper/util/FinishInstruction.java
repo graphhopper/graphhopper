@@ -26,7 +26,7 @@ public class FinishInstruction extends Instruction
 
     public FinishInstruction( final double lat, final double lon, final double ele )
     {
-        super(FINISH, "", 0, 0, new PointList(2, true)
+        super(FINISH, "", InstructionAnnotation.EMPTY, new PointList(2, true)
         {   
             {
                 add(lat, lon, ele);

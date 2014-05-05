@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.util.InstructionAnnotation;
+import com.graphhopper.util.Translation;
+
 /**
  * This class provides methods to define how a value (like speed or direction) converts to a flag
  * (currently an integer value), which is stored in an edge .
@@ -68,17 +71,10 @@ public interface FlagEncoder
 
     boolean isForward( long flags );
 
-    boolean isBackward( long flags );    
+    boolean isBackward( long flags );
 
     /**
-     * @return the number to identify a pavement of a road.
-     * @see InstructionList#getWayName
+     * @return additional cost or warning information for an instruction like ferry or road charges.
      */
-    int getPavementType( long flags );
-
-    /**
-     * @return the number to identify a pushing section, cycle way etc.
-     * @see InstructionList#getWayName
-     */
-    int getWayType( long flags );
+    InstructionAnnotation getAnnotation( long flags, Translation tr );
 }
