@@ -433,10 +433,9 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
     {
         double prio = preferWayEncoder.getValue(flags);
         if (prio == 0)
-            prio = UNCHANGED.getValue() / OUTSTANDING_NICE.getValue();
-        else
-            prio = prio / OUTSTANDING_NICE.getValue();
-        return 0.6 + 0.4 * prio;
+            return UNCHANGED.getValue() / OUTSTANDING_NICE.getValue();
+
+        return prio / OUTSTANDING_NICE.getValue();
     }
 
     /**
