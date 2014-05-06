@@ -96,6 +96,10 @@ public class MountainBikeFlagEncoder extends BikeFlagCommonEncoder
         setCyclingNetworkPreference("lcn", PREFER.getValue());
         setCyclingNetworkPreference("mtb", OUTSTANDING_NICE.getValue());
 
+        addPushingSection("footway");
+        addPushingSection("pedestrian");
+        addPushingSection("steps");
+        
         avoidHighwayTags.add("primary");
         avoidHighwayTags.add("primary_link");
         avoidHighwayTags.add("secondary");

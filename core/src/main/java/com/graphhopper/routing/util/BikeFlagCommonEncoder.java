@@ -431,7 +431,12 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
      */
     public double getPriority( long flags )
     {
-        return (double) preferWayEncoder.getValue(flags) / PriorityCode.OUTSTANDING_NICE.getValue();
+        double prio = preferWayEncoder.getValue(flags);
+        if (prio == 0)
+            prio = UNCHANGED.getValue() / OUTSTANDING_NICE.getValue();
+        else
+            prio = prio / OUTSTANDING_NICE.getValue();
+        return 0.6 + 0.4 * prio;
     }
 
     /**
@@ -510,9 +515,9 @@ public class BikeFlagCommonEncoder extends AbstractFlagEncoder
     }
 
     boolean isPushingSection( OSMWay way )
-    {        
+    {
         return way.hasTag("highway", pushingSections);
-    }    
+    }
 
     protected long handleSpeed( OSMWay way, double speed, long encoded )
     {
