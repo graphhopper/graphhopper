@@ -20,11 +20,7 @@ package com.graphhopper.routing.util;
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMReader;
@@ -34,7 +30,6 @@ import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
-import java.util.*;
 
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders
@@ -121,6 +116,7 @@ public class EncodingManager
 
     public EncodingManager( List<? extends FlagEncoder> flagEncoders, int bytesForFlags, int maxTurnCost )
     {
+        System.out.println( "*******************************" );
         if (bytesForFlags != 4 && bytesForFlags != 8)
             throw new IllegalStateException("For 'flags' currently only 4 or 8 bytes supported");
 
@@ -172,9 +168,10 @@ public class EncodingManager
 
             try
             {
+                System.out.println( className );
                 @SuppressWarnings("unchecked")
                 Class<FlagEncoder> cls = (Class<FlagEncoder>) Class.forName(className);
-                resultEncoders.add((FlagEncoder) cls.getDeclaredConstructor().newInstance());
+                resultEncoders.add(cls.getDeclaredConstructor().newInstance());
             } catch (Exception e)
             {
                 throw new IllegalArgumentException("Cannot instantiate class " + className, e);

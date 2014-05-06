@@ -46,6 +46,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     protected FootFlagEncoder()
     {
         this(4, 1);
+        System.out.println( restrictedValues );
+        System.out.println( restrictedValues.size() );
     }
 
     protected FootFlagEncoder( int speedBits, double speedFactor )

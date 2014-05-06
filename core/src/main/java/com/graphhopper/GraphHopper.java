@@ -17,19 +17,6 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.reader.DataReader;
-import com.graphhopper.reader.OSMReader;
-import com.graphhopper.reader.dem.ElevationProvider;
-import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.*;
-import com.graphhopper.storage.index.*;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
-
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -40,6 +27,23 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.graphhopper.reader.DataReader;
+import com.graphhopper.reader.OSMReader;
+import com.graphhopper.reader.dem.ElevationProvider;
+import com.graphhopper.reader.dem.SRTMProvider;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.util.*;
+import com.graphhopper.storage.*;
+import com.graphhopper.storage.index.Location2IDQuadtree;
+import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.storage.index.LocationIndexTreeSC;
+import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -76,7 +80,7 @@ public class GraphHopper implements GraphHopperAPI
     // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 500;
-    private boolean searchRegion = true;
+    private final boolean searchRegion = true;
     // for prepare
     private int minNetworkSize = 200;
     // for CH prepare
@@ -102,6 +106,7 @@ public class GraphHopper implements GraphHopperAPI
 
     public GraphHopper()
     {
+        System.out.println( "*******************************" );
     }
 
     /**
