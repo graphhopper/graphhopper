@@ -17,6 +17,10 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMWay;
+import static com.graphhopper.routing.util.BikeFlagCommonEncoder.PriorityCode.*;
+import java.util.TreeMap;
+
 /**
  * Specifies the settings for racebikeing
  * <p/>
@@ -26,8 +30,15 @@ public class RacingBikeFlagEncoder extends BikeFlagCommonEncoder
 {
     RacingBikeFlagEncoder()
     {
+        preferHighwayTags.add("road");
+        preferHighwayTags.add("secondary");
+        preferHighwayTags.add("secondary_link");
+        preferHighwayTags.add("tertiary");
+        preferHighwayTags.add("tertiary_link");
+        preferHighwayTags.add("residential");
+
         setTrackTypeSpeed("grade1", 20); // paved
-        setTrackTypeSpeed("grade2", PUSHING_SECTION_SPEED); // now unpaved ...
+        setTrackTypeSpeed("grade2", 12); // now unpaved ...
         setTrackTypeSpeed("grade3", PUSHING_SECTION_SPEED / 2);
         setTrackTypeSpeed("grade4", PUSHING_SECTION_SPEED / 2);
         setTrackTypeSpeed("grade5", PUSHING_SECTION_SPEED / 2); // like sand/grass     
@@ -59,48 +70,64 @@ public class RacingBikeFlagEncoder extends BikeFlagCommonEncoder
         setSurfaceSpeed("sand", PUSHING_SECTION_SPEED / 2);
         setSurfaceSpeed("wood", PUSHING_SECTION_SPEED / 2);
 
-        setHighwaySpeed("living_street", 15);
-        setHighwaySpeed("steps", PUSHING_SECTION_SPEED / 2);
-
         setHighwaySpeed("cycleway", 18);
-        setHighwaySpeed("path", 15);
-        setHighwaySpeed("footway", 15);
-        setHighwaySpeed("pedestrian", 15);
-        setHighwaySpeed("road", 10);
+        setHighwaySpeed("path", 8);
+        setHighwaySpeed("footway", 6);
+        setHighwaySpeed("pedestrian", 6);
+        setHighwaySpeed("road", 12);
         setHighwaySpeed("track", PUSHING_SECTION_SPEED / 2); // assume unpaved
-        setHighwaySpeed("service", 20);
-        setHighwaySpeed("unclassified", 20);
-        setHighwaySpeed("residential", 20);
+        setHighwaySpeed("service", 12);
+        setHighwaySpeed("unclassified", 16);
+        setHighwaySpeed("residential", 16);
 
         setHighwaySpeed("trunk", 20);
         setHighwaySpeed("trunk_link", 20);
         setHighwaySpeed("primary", 20);
         setHighwaySpeed("primary_link", 20);
-        setHighwaySpeed("secondary", 24);
-        setHighwaySpeed("secondary_link", 24);
-        setHighwaySpeed("tertiary", 24);
-        setHighwaySpeed("tertiary_link", 24);
+        setHighwaySpeed("secondary", 20);
+        setHighwaySpeed("secondary_link", 20);
+        setHighwaySpeed("tertiary", 20);
+        setHighwaySpeed("tertiary_link", 20);
 
-        setPushingSection("path");
-        setPushingSection("track");
-        setPushingSection("footway");
-        setPushingSection("pedestrian");
-        setPushingSection("steps");
+        addPushingSection("path");
+        addPushingSection("track");
+        addPushingSection("footway");
+        addPushingSection("pedestrian");
+        addPushingSection("steps");
 
-        setCyclingNetworkPreference("icn", RelationMapCode.OUTSTANDING_NICE.getValue());
-        setCyclingNetworkPreference("ncn", RelationMapCode.OUTSTANDING_NICE.getValue());
-        setCyclingNetworkPreference("rcn", RelationMapCode.VERY_NICE.getValue());
-        setCyclingNetworkPreference("lcn", RelationMapCode.UNCHANGED.getValue());
-        setCyclingNetworkPreference("mtb", RelationMapCode.UNCHANGED.getValue());
+        setCyclingNetworkPreference("icn", PriorityCode.OUTSTANDING_NICE.getValue());
+        setCyclingNetworkPreference("ncn", PriorityCode.OUTSTANDING_NICE.getValue());
+        setCyclingNetworkPreference("rcn", PriorityCode.VERY_NICE.getValue());
+        setCyclingNetworkPreference("lcn", PriorityCode.UNCHANGED.getValue());
+        setCyclingNetworkPreference("mtb", PriorityCode.UNCHANGED.getValue());
     }
 
     @Override
-    double relationWeightCodeToSpeed( double highwaySpeed, int relationCode )
+    void collect( OSMWay way, TreeMap<Double, Integer> weightToPrioMap )
     {
-        if (highwaySpeed <= PUSHING_SECTION_SPEED)
-            return highwaySpeed;
+        super.collect(way, weightToPrioMap);
 
-        return super.relationWeightCodeToSpeed(highwaySpeed, relationCode);
+        String highway = way.getTag("highway");
+        if ("service".equals(highway))
+        {
+            weightToPrioMap.put(40d, UNCHANGED.getValue());
+        } else if ("track".equals(highway))
+        {
+            String trackType = way.getTag("tracktype");
+            if ("grade1".equals(trackType))
+                weightToPrioMap.put(110d, PREFER.getValue());
+            else if (trackType == null || trackType.startsWith("grade"))
+                weightToPrioMap.put(110d, AVOID_AT_ALL_COSTS.getValue());
+        }
+    }
+
+    @Override
+    boolean isPushingSection( OSMWay way )
+    {
+        String highway = way.getTag("highway");
+        String trackType = way.getTag("tracktype");
+        return way.hasTag("highway", pushingSections)
+                || "track".equals(highway) && trackType != null && !"grade1".equals(trackType);
     }
 
     @Override

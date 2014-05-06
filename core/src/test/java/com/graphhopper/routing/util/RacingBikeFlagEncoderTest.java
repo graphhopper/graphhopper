@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
 import static com.graphhopper.routing.util.BikeFlagCommonEncoder.PUSHING_SECTION_SPEED;
+import static com.graphhopper.routing.util.BikeFlagCommonEncoder.PriorityCode.*;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -30,9 +31,23 @@ import static org.junit.Assert.*;
 public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 {
     @Override
-    BikeFlagCommonEncoder createBikeEncoder()
+    protected BikeFlagCommonEncoder createBikeEncoder()
     {
         return (BikeFlagCommonEncoder) new EncodingManager("BIKE,RACINGBIKE").getEncoder("RACINGBIKE");
+    }
+
+    @Test
+    @Override
+    public void testService()
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "service");
+        assertEquals(12, encoder.getSpeed(way));
+        assertPriority(UNCHANGED.getValue(), way);
+
+        way.setTag("service", "parking_aisle");
+        assertEquals(6, encoder.getSpeed(way));
+        assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
     }
 
     @Test
@@ -53,7 +68,6 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.clearTags();
         way.setTag("highway", "steps");
         assertEquals(2, getSpeedFromFlags(way), 1e-1);
-
     }
 
     @Test
@@ -73,24 +87,29 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         long relFlags = encoder.handleRelationTags(osmRel, 0);
         long flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(2, encoder.getSpeed(flags), 1e-1);
-        assertEquals("pushing section, unpaved", getWayTypeFromFlags(osmWay));        
+        assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay, relFlags);
+        // TODO unpaved if tracktype == null?
+        assertEquals("pushing section", getWayTypeFromFlags(osmWay));
 
         // relation code is OUTSTANDING NICE but as unpaved, the speed is still PUSHING_SECTION_SPEED/2
         osmRel.setTag("network", "icn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(2, encoder.getSpeed(flags), 1e-1);
+        assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay, relFlags);
 
         // Now we assume bicycle=yes, anyhow still unpaved
         osmWay.setTag("bicycle", "yes");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(2, encoder.getSpeed(flags), 1e-1);
+        assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay, relFlags);
 
-        // Now we assume bicycle=yes, and paved -> The speed is pushed!
+        // Now we assume bicycle=yes, and paved
         osmWay.setTag("tracktype", "grade1");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(30, encoder.getSpeed(flags), 1e-1);
+        assertEquals(20, encoder.getSpeed(flags), 1e-1);
+        assertPriority(PREFER.getValue(), osmWay, relFlags);
     }
 }

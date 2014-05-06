@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
+import static com.graphhopper.routing.util.BikeFlagCommonEncoder.PriorityCode.*;
 import com.graphhopper.util.Translation;
 import static com.graphhopper.util.TranslationMapTest.SINGLETON;
 import java.util.Locale;
@@ -39,20 +40,29 @@ public abstract class AbstractBikeFlagEncoderTester
         encoder = createBikeEncoder();
     }
 
-    abstract BikeFlagCommonEncoder createBikeEncoder();
+    protected abstract BikeFlagCommonEncoder createBikeEncoder();
 
-    public double getSpeedFromFlags( OSMWay way )
+    protected void assertPriority( int expectedPrio, OSMWay way )
+    {
+        assertPriority(expectedPrio, way, 0);
+    }
+
+    protected void assertPriority( int expectedPrio, OSMWay way, long relationFlags )
+    {
+        assertEquals(expectedPrio, encoder.handlePriority(way, (int) encoder.relationCodeEncoder.getValue(relationFlags)));
+    }
+
+    protected double getSpeedFromFlags( OSMWay way )
     {
         long allowed = encoder.acceptBit;
         long flags = encoder.handleWayTags(way, allowed, 0);
         return encoder.getSpeed(flags);
     }
 
-    public String getWayTypeFromFlags( OSMWay way )
+    protected String getWayTypeFromFlags( OSMWay way )
     {
         long allowed = encoder.acceptBit;
         long flags = encoder.handleWayTags(way, allowed, 0);
-
         Translation enMap = SINGLETON.getWithFallBack(Locale.UK);
         return encoder.getAnnotation(flags, enMap).getMessage();
     }
@@ -181,6 +191,20 @@ public abstract class AbstractBikeFlagEncoderTester
     }
 
     @Test
+    public void testTram()
+    {
+        OSMWay way = new OSMWay(1);
+        // very dangerous
+        way.setTag("highway", "secondary");
+        way.setTag("railway", "tram");
+        assertPriority(AVOID_AT_ALL_COSTS.getValue(), way);
+
+        // should be safe now
+        way.setTag("bicycle", "designated");
+        assertPriority(PREFER.getValue(), way);
+    }
+
+    @Test
     public void testHandleCommonWayTags()
     {
         OSMWay way = new OSMWay(1);
@@ -227,6 +251,19 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("surface", "grass");
         wayType = getWayTypeFromFlags(way);
         assertEquals("cycleway, unpaved", wayType);
+    }
+
+    @Test
+    public void testService()
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "service");
+        assertEquals(14, encoder.getSpeed(way));
+        assertPriority(PREFER.getValue(), way);
+
+        way.setTag("service", "parking_aisle");
+        assertEquals(6, encoder.getSpeed(way));
+        assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
     }
 
     @Test

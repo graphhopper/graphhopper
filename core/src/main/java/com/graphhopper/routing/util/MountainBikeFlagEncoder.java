@@ -17,7 +17,10 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMWay;
 import static com.graphhopper.routing.util.BikeFlagCommonEncoder.PUSHING_SECTION_SPEED;
+import static com.graphhopper.routing.util.BikeFlagCommonEncoder.PriorityCode.*;
+import java.util.TreeMap;
 
 /**
  * Specifies the settings for mountain biking
@@ -28,72 +31,102 @@ public class MountainBikeFlagEncoder extends BikeFlagCommonEncoder
 {
     MountainBikeFlagEncoder()
     {
-        setTrackTypeSpeed("grade1", 12); // paved
-        setTrackTypeSpeed("grade2", 20); // now unpaved ...
-        setTrackTypeSpeed("grade3", 20);
-        setTrackTypeSpeed("grade4", 20);
-        setTrackTypeSpeed("grade5", 20); // like sand/grass     
+        setTrackTypeSpeed("grade1", 18); // paved
+        setTrackTypeSpeed("grade2", 16); // now unpaved ...
+        setTrackTypeSpeed("grade3", 16);
+        setTrackTypeSpeed("grade4", 14);
+        setTrackTypeSpeed("grade5", 10); // like sand/grass     
 
-        setSurfaceSpeed("paved", 12);
-        setSurfaceSpeed("asphalt", 12);
+        setSurfaceSpeed("paved", 18);
+        setSurfaceSpeed("asphalt", 18);
         setSurfaceSpeed("cobblestone", 10);
         setSurfaceSpeed("cobblestone:flattened", 10);
         setSurfaceSpeed("sett", 10);
-        setSurfaceSpeed("concrete", 12);
-        setSurfaceSpeed("concrete:lanes", 14);
-        setSurfaceSpeed("concrete:plates", 14);
-        setSurfaceSpeed("paving_stones", 14);
-        setSurfaceSpeed("paving_stones:30", 14);
-        setSurfaceSpeed("unpaved", 20);
-        setSurfaceSpeed("compacted", 20);
-        setSurfaceSpeed("dirt", 20);
-        setSurfaceSpeed("earth", 20);
-        setSurfaceSpeed("fine_gravel", 20);
-        setSurfaceSpeed("grass", 20);
+        setSurfaceSpeed("concrete", 14);
+        setSurfaceSpeed("concrete:lanes", 16);
+        setSurfaceSpeed("concrete:plates", 16);
+        setSurfaceSpeed("paving_stones", 16);
+        setSurfaceSpeed("paving_stones:30", 16);
+        setSurfaceSpeed("unpaved", 14);
+        setSurfaceSpeed("compacted", 14);
+        setSurfaceSpeed("dirt", 14);
+        setSurfaceSpeed("earth", 14);
+        setSurfaceSpeed("fine_gravel", 18);
+        setSurfaceSpeed("grass", 14);
         setSurfaceSpeed("grass_paver", 14);
-        setSurfaceSpeed("gravel", 20);
-        setSurfaceSpeed("ground", 20);
+        setSurfaceSpeed("gravel", 16);
+        setSurfaceSpeed("ground", 16);
         setSurfaceSpeed("ice", PUSHING_SECTION_SPEED / 2);
         setSurfaceSpeed("metal", 10);
-        setSurfaceSpeed("mud", 20);
+        setSurfaceSpeed("mud", 12);
         setSurfaceSpeed("pebblestone", 12);
         setSurfaceSpeed("salt", 12);
-        setSurfaceSpeed("sand", 20);
-        setSurfaceSpeed("wood", 20);
+        setSurfaceSpeed("sand", 10);
+        setSurfaceSpeed("wood", 10);
 
-        setHighwaySpeed("living_street", 15);
+        setHighwaySpeed("living_street", 6);
         setHighwaySpeed("steps", PUSHING_SECTION_SPEED / 2);
 
-        setHighwaySpeed("cycleway", 12);
-        setHighwaySpeed("path", 24);
-        setHighwaySpeed("footway", 15);
-        setHighwaySpeed("pedestrian", 15);
-        setHighwaySpeed("road", 10);
-        setHighwaySpeed("track", 24);
-        setHighwaySpeed("service", 15);
-        setHighwaySpeed("unclassified", 15);
-        setHighwaySpeed("residential", 15);
+        setHighwaySpeed("cycleway", 18);
+        setHighwaySpeed("path", 18);
+        setHighwaySpeed("footway", 6);
+        setHighwaySpeed("pedestrian", 6);
+        setHighwaySpeed("road", 12);
+        setHighwaySpeed("track", 18);
+        setHighwaySpeed("service", 14);
+        setHighwaySpeed("unclassified", 16);
+        setHighwaySpeed("residential", 16);
 
-        setHighwaySpeed("trunk", 12);
-        setHighwaySpeed("trunk_link", 12);
-        setHighwaySpeed("primary", 10);
-        setHighwaySpeed("primary_link", 10);
-        setHighwaySpeed("secondary", 12);
-        setHighwaySpeed("secondary_link", 12);
-        setHighwaySpeed("tertiary", 14);
-        setHighwaySpeed("tertiary_link", 14);
+        setHighwaySpeed("trunk", 18);
+        setHighwaySpeed("trunk_link", 18);
+        setHighwaySpeed("primary", 18);
+        setHighwaySpeed("primary_link", 18);
+        setHighwaySpeed("secondary", 18);
+        setHighwaySpeed("secondary_link", 18);
+        setHighwaySpeed("tertiary", 18);
+        setHighwaySpeed("tertiary_link", 18);
 
-        setPushingSection("footway");
-        setPushingSection("pedestrian");
-        setPushingSection("steps");
+        addPushingSection("footway");
+        addPushingSection("pedestrian");
+        addPushingSection("steps");
 
-        setCyclingNetworkPreference("icn", BikeFlagCommonEncoder.RelationMapCode.PREFER.getValue());
-        setCyclingNetworkPreference("ncn", BikeFlagCommonEncoder.RelationMapCode.PREFER.getValue());
-        setCyclingNetworkPreference("rcn", BikeFlagCommonEncoder.RelationMapCode.PREFER.getValue());
-        setCyclingNetworkPreference("lcn", BikeFlagCommonEncoder.RelationMapCode.PREFER.getValue());
-        setCyclingNetworkPreference("mtb", BikeFlagCommonEncoder.RelationMapCode.OUTSTANDING_NICE.getValue());
+        setCyclingNetworkPreference("icn", PREFER.getValue());
+        setCyclingNetworkPreference("ncn", PREFER.getValue());
+        setCyclingNetworkPreference("rcn", PREFER.getValue());
+        setCyclingNetworkPreference("lcn", PREFER.getValue());
+        setCyclingNetworkPreference("mtb", OUTSTANDING_NICE.getValue());
 
+        avoidHighwayTags.add("primary");
+        avoidHighwayTags.add("primary_link");
+        avoidHighwayTags.add("secondary");
+        avoidHighwayTags.add("secondary_link");
+
+        preferHighwayTags.add("road");
+        preferHighwayTags.add("track");
+        preferHighwayTags.add("path");
+        preferHighwayTags.add("service");
+        preferHighwayTags.add("tertiary");
+        preferHighwayTags.add("tertiary_link");
+        preferHighwayTags.add("residential");
     }
+
+    @Override
+    void collect( OSMWay way, TreeMap<Double, Integer> weightToPrioMap)
+    {
+        super.collect(way, weightToPrioMap);
+        
+        String highway = way.getTag("highway");
+        if ("track".equals(highway))
+        {
+            String trackType = way.getTag("tracktype");
+            if ("grade1".equals(trackType))
+                weightToPrioMap.put(50d, UNCHANGED.getValue());
+            else if (trackType == null)
+                weightToPrioMap.put(90d, PREFER.getValue());
+            else if (trackType.startsWith("grade"))
+                weightToPrioMap.put(100d, VERY_NICE.getValue());
+        }
+    }       
 
     @Override
     public String toString()

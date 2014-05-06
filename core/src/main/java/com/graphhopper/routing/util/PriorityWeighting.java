@@ -21,7 +21,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
- * Special weighting for bike, uses the experimental API of encoder.calcPriority(EdgeIteratorState)
+ * Special weighting for bike, uses the experimental API of encoder.getPriority(EdgeIteratorState)
  * <p>
  * @author Peter Karich
  */
@@ -38,6 +38,6 @@ public class PriorityWeighting extends FastestWeighting
     @Override
     public double calcWeight( EdgeIteratorState edge, boolean reverse )
     {
-        return encoder.calcPriority(edge) * super.calcWeight(edge, reverse);
+        return encoder.getPriority(edge.getFlags()) * super.calcWeight(edge, reverse);
     }
 }
