@@ -18,15 +18,16 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
-import static com.graphhopper.routing.util.BikeFlagCommonEncoder.PriorityCode.*;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.*;
 import java.util.TreeMap;
 
 /**
  * Specifies the settings for racebikeing
  * <p/>
  * @author ratrun
+ * @author Peter Karich
  */
-public class RacingBikeFlagEncoder extends BikeFlagCommonEncoder
+public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
 {
     RacingBikeFlagEncoder()
     {
@@ -95,8 +96,8 @@ public class RacingBikeFlagEncoder extends BikeFlagCommonEncoder
         addPushingSection("pedestrian");
         addPushingSection("steps");
 
-        setCyclingNetworkPreference("icn", PriorityCode.OUTSTANDING_NICE.getValue());
-        setCyclingNetworkPreference("ncn", PriorityCode.OUTSTANDING_NICE.getValue());
+        setCyclingNetworkPreference("icn", PriorityCode.BEST.getValue());
+        setCyclingNetworkPreference("ncn", PriorityCode.BEST.getValue());
         setCyclingNetworkPreference("rcn", PriorityCode.VERY_NICE.getValue());
         setCyclingNetworkPreference("lcn", PriorityCode.UNCHANGED.getValue());
         setCyclingNetworkPreference("mtb", PriorityCode.UNCHANGED.getValue());

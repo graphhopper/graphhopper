@@ -17,17 +17,19 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
-import static com.graphhopper.routing.util.BikeFlagCommonEncoder.PUSHING_SECTION_SPEED;
-import static com.graphhopper.routing.util.BikeFlagCommonEncoder.PriorityCode.*;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PUSHING_SECTION_SPEED;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.*;
 import java.util.TreeMap;
 
 /**
  * Specifies the settings for mountain biking
  * <p/>
  * @author ratrun
+ * @author Peter Karich
  */
-public class MountainBikeFlagEncoder extends BikeFlagCommonEncoder
+public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
 {
     MountainBikeFlagEncoder()
     {
@@ -65,7 +67,7 @@ public class MountainBikeFlagEncoder extends BikeFlagCommonEncoder
         setSurfaceSpeed("wood", 10);
 
         setHighwaySpeed("living_street", 6);
-        setHighwaySpeed("steps", PUSHING_SECTION_SPEED / 2);
+        setHighwaySpeed("steps", PUSHING_SECTION_SPEED);
 
         setHighwaySpeed("cycleway", 18);
         setHighwaySpeed("path", 18);
@@ -94,12 +96,12 @@ public class MountainBikeFlagEncoder extends BikeFlagCommonEncoder
         setCyclingNetworkPreference("ncn", PREFER.getValue());
         setCyclingNetworkPreference("rcn", PREFER.getValue());
         setCyclingNetworkPreference("lcn", PREFER.getValue());
-        setCyclingNetworkPreference("mtb", OUTSTANDING_NICE.getValue());
+        setCyclingNetworkPreference("mtb", BEST.getValue());
 
         addPushingSection("footway");
         addPushingSection("pedestrian");
         addPushingSection("steps");
-        
+
         avoidHighwayTags.add("primary");
         avoidHighwayTags.add("primary_link");
         avoidHighwayTags.add("secondary");
@@ -112,13 +114,14 @@ public class MountainBikeFlagEncoder extends BikeFlagCommonEncoder
         preferHighwayTags.add("tertiary");
         preferHighwayTags.add("tertiary_link");
         preferHighwayTags.add("residential");
+        preferHighwayTags.add("unclassified");
     }
 
     @Override
-    void collect( OSMWay way, TreeMap<Double, Integer> weightToPrioMap)
+    void collect( OSMWay way, TreeMap<Double, Integer> weightToPrioMap )
     {
         super.collect(way, weightToPrioMap);
-        
+
         String highway = way.getTag("highway");
         if ("track".equals(highway))
         {
@@ -130,7 +133,21 @@ public class MountainBikeFlagEncoder extends BikeFlagCommonEncoder
             else if (trackType.startsWith("grade"))
                 weightToPrioMap.put(100d, VERY_NICE.getValue());
         }
-    }       
+    }
+
+    @Override
+    public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
+    {
+        oldRelationFlags = super.handleRelationTags(relation, oldRelationFlags);
+        int code = 0;
+        if (relation.hasTag("route", "mtb"))
+            code = PREFER.getValue();
+
+        int oldCode = (int) relationCodeEncoder.getValue(oldRelationFlags);
+        if (oldCode < code)
+            return relationCodeEncoder.setValue(0, code);
+        return oldRelationFlags;
+    }
 
     @Override
     public String toString()

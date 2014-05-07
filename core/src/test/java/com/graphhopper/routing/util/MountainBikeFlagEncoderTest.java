@@ -19,17 +19,17 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
-import com.graphhopper.routing.util.BikeFlagCommonEncoder.PriorityCode;
-import static com.graphhopper.routing.util.BikeFlagCommonEncoder.PriorityCode.*;
+import com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.*;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 {
     @Override
-    protected BikeFlagCommonEncoder createBikeEncoder()
+    protected BikeCommonFlagEncoder createBikeEncoder()
     {
-        return (BikeFlagCommonEncoder) new EncodingManager("BIKE,MTB").getEncoder("MTB");
+        return (BikeCommonFlagEncoder) new EncodingManager("BIKE,MTB").getEncoder("MTB");
     }
 
     @Test
@@ -56,7 +56,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertPriority(PREFER.getValue(), way);
 
         way.setTag("highway", "steps");
-        assertEquals(2, encoder.getSpeed(way));
+        assertEquals(4, encoder.getSpeed(way));
         assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
         way.clearTags();
 
@@ -124,7 +124,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.setTag("tracktype", "grade2");
         wayType = getWayTypeFromFlags(way);
         assertEquals("way, unpaved", wayType);
-        
+
         way.clearTags();
         way.setTag("highway", "pedestrian");
         wayType = getWayTypeFromFlags(way);

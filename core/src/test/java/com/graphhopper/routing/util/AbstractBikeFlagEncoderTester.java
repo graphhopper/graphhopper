@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
-import static com.graphhopper.routing.util.BikeFlagCommonEncoder.PriorityCode.*;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.*;
 import com.graphhopper.util.Translation;
 import static com.graphhopper.util.TranslationMapTest.SINGLETON;
 import java.util.Locale;
@@ -32,7 +32,7 @@ import org.junit.Test;
  */
 public abstract class AbstractBikeFlagEncoderTester
 {
-    protected BikeFlagCommonEncoder encoder;
+    protected BikeCommonFlagEncoder encoder;
 
     @Before
     public void setUp()
@@ -40,7 +40,7 @@ public abstract class AbstractBikeFlagEncoderTester
         encoder = createBikeEncoder();
     }
 
-    protected abstract BikeFlagCommonEncoder createBikeEncoder();
+    protected abstract BikeCommonFlagEncoder createBikeEncoder();
 
     protected void assertPriority( int expectedPrio, OSMWay way )
     {
@@ -191,6 +191,22 @@ public abstract class AbstractBikeFlagEncoderTester
     }
 
     @Test
+    public void testAvoidTunnel()
+    {
+        OSMWay osmWay = new OSMWay(1);
+        osmWay.setTag("highway", "residential");
+        osmWay.setTag("tunnel", "yes");
+        assertPriority(UNCHANGED.getValue(), osmWay);
+        
+        osmWay.setTag("highway", "secondary");
+        osmWay.setTag("tunnel", "yes");
+        assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay);
+
+        osmWay.setTag("bicycle", "designated");
+        assertPriority(PREFER.getValue(), osmWay);
+    }
+
+    @Test
     public void testTram()
     {
         OSMWay way = new OSMWay(1);
@@ -224,12 +240,15 @@ public abstract class AbstractBikeFlagEncoderTester
         assertEquals("pushing section", wayType);
 
         way.setTag("highway", "residential");
-        wayType = getWayTypeFromFlags(way);
+        wayType = getWayTypeFromFlags(way);        
         assertEquals("", wayType);
+        assertPriority(PREFER.getValue(), way);
 
+        way.clearTags();
         way.setTag("highway", "cycleway");
         wayType = getWayTypeFromFlags(way);
         assertEquals("cycleway", wayType);
+        assertPriority(VERY_NICE.getValue(), way);
 
         way.setTag("surface", "grass");
         wayType = getWayTypeFromFlags(way);
@@ -238,6 +257,7 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("surface", "asphalt");
         wayType = getWayTypeFromFlags(way);
         assertEquals("cycleway", wayType);
+        assertPriority(VERY_NICE.getValue(), way);
 
         way.setTag("highway", "footway");
         way.setTag("bicycle", "yes");

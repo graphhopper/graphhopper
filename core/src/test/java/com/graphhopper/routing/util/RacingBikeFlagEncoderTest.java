@@ -19,8 +19,8 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
-import static com.graphhopper.routing.util.BikeFlagCommonEncoder.PUSHING_SECTION_SPEED;
-import static com.graphhopper.routing.util.BikeFlagCommonEncoder.PriorityCode.*;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PUSHING_SECTION_SPEED;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.*;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -31,9 +31,27 @@ import static org.junit.Assert.*;
 public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 {
     @Override
-    protected BikeFlagCommonEncoder createBikeEncoder()
+    protected BikeCommonFlagEncoder createBikeEncoder()
     {
-        return (BikeFlagCommonEncoder) new EncodingManager("BIKE,RACINGBIKE").getEncoder("RACINGBIKE");
+        return (BikeCommonFlagEncoder) new EncodingManager("BIKE,RACINGBIKE").getEncoder("RACINGBIKE");
+    }
+
+    @Test
+    @Override
+    public void testAvoidTunnel()
+    {
+        // tunnel is not that bad for racing bike
+        OSMWay osmWay = new OSMWay(1);
+        osmWay.setTag("highway", "residential");
+        osmWay.setTag("tunnel", "yes");
+        assertPriority(UNCHANGED.getValue(), osmWay);
+       
+        osmWay.setTag("highway", "secondary");
+        osmWay.setTag("tunnel", "yes");
+        assertPriority(UNCHANGED.getValue(), osmWay);
+
+        osmWay.setTag("bicycle", "designated");
+        assertPriority(PREFER.getValue(), osmWay);
     }
 
     @Test

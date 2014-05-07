@@ -21,7 +21,6 @@ package com.graphhopper.util;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.Path;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * This class merges a list of points into one point recognizing the specified places.
@@ -44,7 +43,6 @@ public class PathMerger
         double fullDistance = 0;
         boolean allFound = true;
 
-        
         InstructionList fullInstructions = new InstructionList(tr);
         PointList fullPoints = PointList.EMPTY;
         for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++)

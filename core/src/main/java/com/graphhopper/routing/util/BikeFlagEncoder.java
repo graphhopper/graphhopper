@@ -23,8 +23,9 @@ import com.graphhopper.reader.OSMWay;
  * Specifies the settings for cycletouring/trekking
  * <p/>
  * @author ratrun
+ * @author Peter Karich
  */
-public class BikeFlagEncoder extends BikeFlagCommonEncoder
+public class BikeFlagEncoder extends BikeCommonFlagEncoder
 {
     BikeFlagEncoder()
     {
@@ -32,12 +33,18 @@ public class BikeFlagEncoder extends BikeFlagCommonEncoder
         addPushingSection("footway");
         addPushingSection("pedestrian");
         addPushingSection("steps");
-
+        
+        avoidHighwayTags.add("primary");
+        avoidHighwayTags.add("primary_link");
+        avoidHighwayTags.add("secondary");
+        avoidHighwayTags.add("secondary_link");
+        
         preferHighwayTags.add("road");
         preferHighwayTags.add("service");
         preferHighwayTags.add("tertiary");
         preferHighwayTags.add("tertiary_link");
         preferHighwayTags.add("residential");
+        preferHighwayTags.add("unclassified");
     }
     
     @Override

@@ -726,8 +726,8 @@ public class GraphHopper implements GraphHopperAPI
         weighting = weighting.toLowerCase();
         if ("fastest".equals(weighting))
         {
-            if (encoder instanceof BikeFlagCommonEncoder)
-                return new PriorityWeighting((BikeFlagCommonEncoder) encoder);
+            if (encoder instanceof BikeCommonFlagEncoder)
+                return new PriorityWeighting((BikeCommonFlagEncoder) encoder);
             else
                 return new FastestWeighting(encoder);
         }
