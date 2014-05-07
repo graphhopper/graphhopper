@@ -33,12 +33,14 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
         addPushingSection("footway");
         addPushingSection("pedestrian");
         addPushingSection("steps");
-        
+
+        avoidHighwayTags.add("trunk");
+        avoidHighwayTags.add("trunk_link");
         avoidHighwayTags.add("primary");
         avoidHighwayTags.add("primary_link");
         avoidHighwayTags.add("secondary");
         avoidHighwayTags.add("secondary_link");
-        
+
         preferHighwayTags.add("road");
         preferHighwayTags.add("service");
         preferHighwayTags.add("tertiary");
@@ -46,7 +48,7 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
         preferHighwayTags.add("residential");
         preferHighwayTags.add("unclassified");
     }
-    
+
     @Override
     boolean isPushingSection( OSMWay way )
     {
@@ -55,7 +57,7 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
         return way.hasTag("highway", pushingSections)
                 || "track".equals(highway) && trackType != null && !"grade1".equals(trackType);
     }
-    
+
     @Override
     public String toString()
     {

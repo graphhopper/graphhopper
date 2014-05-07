@@ -40,9 +40,9 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
 
         setTrackTypeSpeed("grade1", 20); // paved
         setTrackTypeSpeed("grade2", 12); // now unpaved ...
-        setTrackTypeSpeed("grade3", PUSHING_SECTION_SPEED / 2);
-        setTrackTypeSpeed("grade4", PUSHING_SECTION_SPEED / 2);
-        setTrackTypeSpeed("grade5", PUSHING_SECTION_SPEED / 2); // like sand/grass     
+        setTrackTypeSpeed("grade3", PUSHING_SECTION_SPEED);
+        setTrackTypeSpeed("grade4", PUSHING_SECTION_SPEED);
+        setTrackTypeSpeed("grade5", PUSHING_SECTION_SPEED);
 
         setSurfaceSpeed("paved", 20);
         setSurfaceSpeed("asphalt", 20);

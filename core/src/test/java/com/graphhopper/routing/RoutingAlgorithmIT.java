@@ -192,7 +192,7 @@ public class RoutingAlgorithmIT
         // 1.
         list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2728, 111));
         // 2.
-        list.add(new OneRun(43.728499,7.417907, 43.74958, 7.436566, 3702, 167));
+        list.add(new OneRun(43.728499, 7.417907, 43.74958, 7.436566, 3702, 167));
         // 3.
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2425, 122));
         // 4.
@@ -201,7 +201,7 @@ public class RoutingAlgorithmIT
         // try reverse direction
         // 1. now go over steps 'Rampe Major' => shorter
         list.add(new OneRun(43.727687, 7.418737, 43.730864, 7.420771, 1652, 91));
-        list.add(new OneRun(43.74958, 7.436566, 43.728499,7.417907, 4122, 154));
+        list.add(new OneRun(43.74958, 7.436566, 43.728499, 7.417907, 4122, 154));
         list.add(new OneRun(43.739213, 7.427806, 43.728677, 7.41016, 2852, 149));
         // 4. avoid tunnel(s)!
         list.add(new OneRun(43.739662, 7.424355, 43.733802, 7.413433, 1868, 110));
@@ -366,10 +366,25 @@ public class RoutingAlgorithmIT
     public void testHarsdorf()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        // do NOT use national street which is shorter 3720
-        list.add(new OneRun(50.004374, 11.600425, 50.027648, 11.567788, 3833, 97));
+        // choose Unterloher Weg and the following residential + cycleway
+        list.add(new OneRun(50.004374, 11.600425, 50.044077, 11.542168, 6918, 176));
         runAlgo(testCollector, "files/harsdorf.osm.pbf", "target/harsdorf-gh",
                 list, "bike", true, "bike", "fastest-bike", false);
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testNeudrossenfeld()
+    {
+        List<OneRun> list = new ArrayList<OneRun>();
+        // choose cycleway (Dreschenauer Straße)
+        list.add(new OneRun(49.987132,11.510496, 50.018839,11.505024, 3988, 106));
+
+        runAlgo(testCollector, "files/neudrossenfeld.osm.pbf", "target/neudrossenfeld-gh",
+                list, "bike", true, "bike", "fastest-bike", true);
+
+        runAlgo(testCollector, "files/neudrossenfeld.osm.pbf", "target/neudrossenfeld2-gh",
+                list, "bike2", true, "bike2", "fastest-bike", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 

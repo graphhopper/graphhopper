@@ -197,7 +197,7 @@ public abstract class AbstractBikeFlagEncoderTester
         osmWay.setTag("highway", "residential");
         osmWay.setTag("tunnel", "yes");
         assertPriority(UNCHANGED.getValue(), osmWay);
-        
+
         osmWay.setTag("highway", "secondary");
         osmWay.setTag("tunnel", "yes");
         assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay);
@@ -240,7 +240,7 @@ public abstract class AbstractBikeFlagEncoderTester
         assertEquals("pushing section", wayType);
 
         way.setTag("highway", "residential");
-        wayType = getWayTypeFromFlags(way);        
+        wayType = getWayTypeFromFlags(way);
         assertEquals("", wayType);
         assertPriority(PREFER.getValue(), way);
 
@@ -292,5 +292,28 @@ public abstract class AbstractBikeFlagEncoderTester
         OSMWay way = new OSMWay(12);
         way.setTag("maxspeed", "90");
         assertEquals(12, encoder.reduceToMaxSpeed(way, 12), 1e-2);
+    }
+
+    @Test
+    public void testMaxAndMinSpeed()
+    {
+        OSMWay osmWay = new OSMWay(1);
+        osmWay.setTag("highway", "tertiary");
+        assertEquals(30, encoder.getSpeed(encoder.setSpeed(0, encoder.reduceToMaxSpeed(osmWay, 49))), 1e-1);
+        assertPriority(PREFER.getValue(), osmWay);
+
+        osmWay.setTag("highway", "tertiary");
+        osmWay.setTag("maxspeed", "90");
+        assertEquals(20, encoder.getSpeed(encoder.setSpeed(0, encoder.reduceToMaxSpeed(osmWay, 20))), 1e-1);
+        assertPriority(REACH_DEST.getValue(), osmWay);
+    }
+
+    @Test
+    public void testHandleWayTagsCallsHandlePriority()
+    {
+        OSMWay osmWay = new OSMWay(1);
+        osmWay.setTag("highway", "cycleway");
+        long encoded = encoder.handleWayTags(osmWay, encoder.acceptBit, 0);
+        assertEquals((double) VERY_NICE.getValue() / BEST.getValue(), encoder.getPriority(encoded), 1e-3);
     }
 }

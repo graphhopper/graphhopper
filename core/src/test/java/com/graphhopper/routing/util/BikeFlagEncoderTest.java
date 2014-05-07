@@ -92,7 +92,6 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         osmWay.setTag("bicycle", "yes");
         osmWay.setTag("surface", "unknown_surface");
         assertEquals(4, encoder.getSpeed(osmWay));
-
     }
 
     @Test
@@ -189,25 +188,11 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testMaxAndMinSpeed()
-    {
-        OSMWay osmWay = new OSMWay(1);
-        osmWay.setTag("highway", "tertiary");
-        assertEquals(30, encoder.getSpeed(encoder.setSpeed(0, encoder.reduceToMaxSpeed(osmWay, 49))), 1e-1);
-        assertPriority(PREFER.getValue(), osmWay);
-
-        osmWay.setTag("highway", "tertiary");
-        osmWay.setTag("maxspeed", "90");
-        assertEquals(20, encoder.getSpeed(encoder.setSpeed(0, encoder.reduceToMaxSpeed(osmWay, 20))), 1e-1);
-        assertPriority(REACH_DEST.getValue(), osmWay);
-    }
-
-    @Test
     public void testUnchangedRelationShouldNotInfluencePriority()
     {
-        OSMWay osmWay = new OSMWay(1);        
+        OSMWay osmWay = new OSMWay(1);
         osmWay.setTag("highway", "secondary");
-        
+
         OSMRelation osmRel = new OSMRelation(1);
         osmRel.setTag("description", "something");
         long relFlags = encoder.handleRelationTags(osmRel, 0);
@@ -228,7 +213,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 
         // important: UNCHANGED should not get 0 priority!
         osmWay = new OSMWay(1);
-        osmWay.setTag("highway", "path");
+        osmWay.setTag("highway", "somethingelse");
         flags = encoder.handleWayTags(osmWay, allowed, 0);
         assertEquals((double) UNCHANGED.getValue() / BEST.getValue(), encoder.getPriority(flags), 1e-3);
     }

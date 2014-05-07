@@ -45,7 +45,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         osmWay.setTag("highway", "residential");
         osmWay.setTag("tunnel", "yes");
         assertPriority(UNCHANGED.getValue(), osmWay);
-       
+
         osmWay.setTag("highway", "secondary");
         osmWay.setTag("tunnel", "yes");
         assertPriority(UNCHANGED.getValue(), osmWay);
@@ -76,12 +76,12 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade3");
-        // Pushing section speed/2
-        assertEquals(PUSHING_SECTION_SPEED / 2, getSpeedFromFlags(way), 1e-1);
+        // Pushing section
+        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 1e-1);
 
-        // Even if it is part of a cycle way PUSHING_SECTION_SPEED/2
+        // Even if it is part of a cycle way
         way.setTag("bicycle", "yes");
-        assertEquals(PUSHING_SECTION_SPEED / 2, getSpeedFromFlags(way), 1e-1);
+        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "steps");

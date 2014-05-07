@@ -122,7 +122,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         roadValues.add("tertiary");
         roadValues.add("tertiary_link");
 
-        setTrackTypeSpeed("grade1", 20); // paved
+        setTrackTypeSpeed("grade1", 18); // paved
         setTrackTypeSpeed("grade2", 12); // now unpaved ...
         setTrackTypeSpeed("grade3", 10);
         setTrackTypeSpeed("grade4", 8);
@@ -262,10 +262,11 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             Integer val = bikeNetworkToCode.get(relation.getTag("network"));
             if (val != null)
                 code = val;
-        } else if (relation.hasTag("route", "ferry")) {
+        } else if (relation.hasTag("route", "ferry"))
+        {
             code = PriorityCode.AVOID_IF_POSSIBLE.getValue();
         }
-        
+
         int oldCode = (int) relationCodeEncoder.getValue(oldRelationFlags);
         if (oldCode < code)
             return relationCodeEncoder.setValue(0, code);
@@ -282,11 +283,11 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         if ((allowed & ferryBit) == 0)
         {
             double speed = getSpeed(way);
+            int priorityFromRelation = 0;
             if (relationFlags != 0)
-            {
-                int priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
-                encoded = preferWayEncoder.setValue(encoded, handlePriority(way, priorityFromRelation));
-            }
+                priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
+
+            encoded = preferWayEncoder.setValue(encoded, handlePriority(way, priorityFromRelation));
 
             // bike maxspeed handling is different from car as we don't increase speed
             speed = reduceToMaxSpeed(way, speed);
