@@ -84,7 +84,7 @@ public class MiniGraphUI
         this.graph = hopper.getGraph();
         this.na = graph.getNodeAccess();
         prepare = hopper.getPreparation();
-        encoder = (BikeCommonFlagEncoder) hopper.getEncodingManager().getEncoder("bike");
+        encoder = (BikeCommonFlagEncoder) hopper.getEncodingManager().getEncoder("bike2");
         weighting = new PriorityWeighting(encoder);
         if (prepare == null)
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, "dijkstrabi", encoder, weighting);
@@ -180,6 +180,8 @@ public class MiniGraphUI
                         }
                         double lat2 = na.getLatitude(nodeId);
                         double lon2 = na.getLongitude(nodeId);
+
+                        // mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, "s:" + (int) encoder.getSpeed(iter.getFlags()));
 
                         double prio = encoder.getPriority(iter.getFlags());
                         if (prio < 0.2)

@@ -189,22 +189,22 @@ public class RoutingAlgorithmIT
     public void testMonacoBike3D_twoSpeedsPerEdge()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        // 1.
+        // 1. alternative: go over steps 'Rampe Major' => 1600m
         list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2728, 111));
         // 2.
-        list.add(new OneRun(43.728499, 7.417907, 43.74958, 7.436566, 3702, 167));
+        list.add(new OneRun(43.728499, 7.417907, 43.74958, 7.436566, 3664, 175));
         // 3.
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2425, 122));
         // 4.
-        list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1609, 86));
+        list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1578, 86));
 
         // try reverse direction
-        // 1. now go over steps 'Rampe Major' => shorter
-        list.add(new OneRun(43.727687, 7.418737, 43.730864, 7.420771, 1652, 91));
-        list.add(new OneRun(43.74958, 7.436566, 43.728499, 7.417907, 4122, 154));
-        list.add(new OneRun(43.739213, 7.427806, 43.728677, 7.41016, 2852, 149));
+        // 1.
+        list.add(new OneRun(43.727687, 7.418737, 43.730864, 7.420771, 2603, 113));
+        list.add(new OneRun(43.74958, 7.436566, 43.728499, 7.417907, 4126, 179));
+        list.add(new OneRun(43.739213, 7.427806, 43.728677, 7.41016, 3041, 154));
         // 4. avoid tunnel(s)!
-        list.add(new OneRun(43.739662, 7.424355, 43.733802, 7.413433, 1868, 110));
+        list.add(new OneRun(43.739662, 7.424355, 43.733802, 7.413433, 1586, 80));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
                 list, "BIKE2", true, "BIKE2", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -378,7 +378,7 @@ public class RoutingAlgorithmIT
     {
         List<OneRun> list = new ArrayList<OneRun>();
         // choose cycleway (Dreschenauer Straße)
-        list.add(new OneRun(49.987132, 11.510496, 50.018839, 11.505024, 3988, 106));
+        list.add(new OneRun(49.987132, 11.510496, 50.018839, 11.505024, 3989, 106));
 
         runAlgo(testCollector, "files/neudrossenfeld.osm.pbf", "target/neudrossenfeld-gh",
                 list, "bike", true, "bike", "fastest-bike", true);

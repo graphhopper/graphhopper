@@ -130,7 +130,10 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
 
         long flags = edge.getFlags();
 
-        // TODO increase speed due to decline only if surface is okay
+        // Decrease the speed for ele increase (incline), and decrease the speed for ele decrease (decline). The speed-decrease 
+        // has to be bigger (compared to the speed-increase) for the same elevation difference to simulate loosing energy and avoiding hills.
+        // For the reverse speed this has to be the opposite but again keeping in mind that up+down difference.
+        // TODO increase the speed due to a decline only if surface is okay
         if (way.hasTag("highway", "steps"))
         {
             double speed = getHighwaySpeed("steps");
@@ -160,9 +163,10 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
                 fullDist2D += dist2D;
                 prevLat = lat;
                 prevLon = lon;
+                prevEle = ele;
             }
 
-            // Calculate slop via tan(asin(height/distance)) but for rather smallish angles tan a=a and sin a=a.
+            // Calculate slop via tan(asin(height/distance)) but for rather smallish angles where we can assume tan a=a and sin a=a.
             // Then calculate a factor which decreases or increases the speed.
             // Do this via a simple quadratic equation where y(0)=1 and y(0.3)=1/4 for incline and y(0.3)=2 for decline        
             double fwdInc = incDist2DSum > 1 ? incEleSum / incDist2DSum : 0;
