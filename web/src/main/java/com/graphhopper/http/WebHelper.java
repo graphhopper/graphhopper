@@ -94,6 +94,11 @@ public class WebHelper
     // https://developers.google.com/maps/documentation/utilities/polylinealgorithm?hl=de
     public static String encodePolyline( PointList poly )
     {
+        return encodePolyline(poly, poly.is3D());
+    }
+
+    public static String encodePolyline( PointList poly, boolean includeElevation )
+    {
         StringBuilder sb = new StringBuilder();
         int size = poly.getSize();
         int prevLat = 0;
@@ -107,7 +112,7 @@ public class WebHelper
             num = (int) Math.floor(poly.getLongitude(i) * 1e5);
             encodeNumber(sb, num - prevLon);
             prevLon = num;
-            if (poly.is3D())
+            if (includeElevation)
             {
                 num = (int) Math.floor(poly.getElevation(i) * 100);
                 encodeNumber(sb, num - prevEle);

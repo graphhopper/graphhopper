@@ -74,13 +74,20 @@ public class GraphHopperServlet extends GHBaseServlet
         boolean writeGPX = "gpx".equalsIgnoreCase(getParam(req, "type", "json"));
         boolean enableInstructions = writeGPX || getBooleanParam(req, "instructions", true);
         boolean calcPoints = getBooleanParam(req, "calc_points", true);
+        boolean elevation = getBooleanParam(req, "elevation", false);
         String vehicleStr = getParam(req, "vehicle", "CAR").toUpperCase();
         String weighting = getParam(req, "weighting", "fastest");
         String algoStr = getParam(req, "algorithm", "");
 
         StopWatch sw = new StopWatch().start();
         GHResponse rsp;
-        if (hopper.getEncodingManager().supports(vehicleStr))
+        if (!hopper.getEncodingManager().supports(vehicleStr))
+        {
+            rsp = new GHResponse().addError(new IllegalArgumentException("Vehicle not supported: " + vehicleStr));
+        } else if (elevation && !hopper.is3D())
+        {
+            rsp = new GHResponse().addError(new IllegalArgumentException("Elevation not supported!"));
+        } else
         {
             FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
             rsp = hopper.route(new GHRequest(infoPoints).
@@ -90,9 +97,6 @@ public class GraphHopperServlet extends GHBaseServlet
                     putHint("calcPoints", calcPoints).
                     putHint("instructions", enableInstructions).
                     putHint("douglas.minprecision", minPathPrecision));
-        } else
-        {
-            rsp = new GHResponse().addError(new IllegalArgumentException("Vehicle not supported: " + vehicleStr));
         }
 
         float took = sw.stop().getSeconds();
@@ -133,6 +137,7 @@ public class GraphHopperServlet extends GHBaseServlet
         Locale locale = Helper.getLocale(getParam(req, "locale", "en"));
         boolean pointsEncoded = getBooleanParam(req, "points_encoded", true);
         boolean calcPoints = getBooleanParam(req, "calc_points", true);
+        boolean includeElevation = getBooleanParam(req, "elevation", false);
         JSONObject json = new JSONObject();
         JSONObject jsonInfo = new JSONObject();
         json.put("info", jsonInfo);
@@ -169,8 +174,8 @@ public class GraphHopperServlet extends GHBaseServlet
                 if (points.getSize() >= 2)
                     jsonPath.put("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
 
-                jsonPath.put("points", createPoints(points, pointsEncoded));
-                jsonPath.put("points_dimension", points.getDimension());
+                jsonPath.put("points", createPoints(points, pointsEncoded, includeElevation));
+                jsonPath.put("points_dimension", includeElevation ? 3 : 2);
 
                 if (enableInstructions)
                 {
@@ -185,14 +190,14 @@ public class GraphHopperServlet extends GHBaseServlet
         writeJson(req, res, json);
     }
 
-    Object createPoints( PointList points, boolean pointsEncoded ) throws JSONException
+    Object createPoints( PointList points, boolean pointsEncoded, boolean includeElevation ) throws JSONException
     {
         if (pointsEncoded)
-            return WebHelper.encodePolyline(points);
+            return WebHelper.encodePolyline(points, includeElevation);
 
         JSONObject jsonPoints = new JSONObject();
         jsonPoints.put("type", "LineString");
-        jsonPoints.put("coordinates", points.toGeoJson());
+        jsonPoints.put("coordinates", points.toGeoJson(includeElevation));
         return jsonPoints;
     }
 

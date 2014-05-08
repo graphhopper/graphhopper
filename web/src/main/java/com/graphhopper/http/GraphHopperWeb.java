@@ -109,8 +109,9 @@ public class GraphHopperWeb implements GraphHopperAPI
             JSONObject firstPath = paths.getJSONObject(0);
 
             boolean is3D = false;
-            if (firstPath.has("points_dim"))
-                is3D = "3".equals(firstPath.getString("points_dim"));
+            if (firstPath.has("points_dimension"))
+                is3D = 3 == firstPath.getInt("points_dimension");
+            
             double distance = firstPath.getDouble("distance");
             int time = firstPath.getInt("time");
             PointList pointList;

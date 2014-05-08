@@ -16,15 +16,16 @@ Parameter   | Default | Description
 :-----------|:--------|:-----------
 point       | -       | Specifiy multiple points for which the route should be calculated. The order is important. Specify at least two points.
 locale      | en      | The locale of the result. E.g. pt_PT for Portuguese or de for German
-instructions| true  | If instruction should be calculated and returned
+instructions| true    | If instruction should be calculated and returned
 vehicle     | car     | The vehicle for which the route should be calculated. Other vehicles are foot and bike
 weighting   | fastest | Which kind of 'best' route calculation you need. Other option is 'shortest', currently not available in the public service.
-algorithm   | dijkstrabi | The algorithm to calculate the route. Other options are dijkstra, astar and astarbi. For the public service only dijkstrabi is supported.
-points_encoded     | true | If the resulting route should be 'compressed' using a special algorithm leading to massive bandwith reduction. You'll need a special handling on the client, if enabled. We provide Open Source code in Java and JavaScript.
+elevation   | false   | Include a third dimension - the elevation - in the polyline or in the GeoJson. IMPORTANT: If enabled you have to use a modified version of the decoding method or set points_encoded to `false`. See the points_encoded attribute for more details. Additionally a request can fail if the vehicle does not support elevation.
+algorithm   | dijkstrabi     | The algorithm to calculate the route. Other options are dijkstra, astar and astarbi. For the public service only dijkstrabi is supported.
+points_encoded     | true    | If `false` a GeoJson array in `point` is returned. If `true` the resulting route will be encoded leading to big bandwith reduction. You'll need a special code handling the decoding of this string in `points` on the client-side. For that we provide Open Source code in [Java](https://github.com/graphhopper/graphhopper/blob/d70b63660ac5200b03c38ba3406b8f93976628a6/web/src/main/java/com/graphhopper/http/WebHelper.java#L43) and [JavaScript](https://github.com/graphhopper/graphhopper/blob/d70b63660ac5200b03c38ba3406b8f93976628a6/web/src/main/webapp/js/ghrequest.js#L139). It is especially important to use our decoding methods if you set `elevation=true`!
 debug              | false   | If true, the output will be formated.
 calc_points        | true    | If the points for the route should be calculated at all. Sometimes only the distance and time is necessary.
 type               | json    | Specifies the resulting format of the route, for json the content type will be application/json. Other possible format options: <br> jsonp you'll need to provide the callback function via the callback parameter. The content type will be application/javascript<br> gpx, the content type will be application/xml
-min_path_precision | 1  | Not recommended to change. Increase this number if you want to further reduce bandwith.
+min_path_precision | 1       | Not recommended to change. Increase this number if you want to further reduce bandwith.
 
 ## Example output for the case type=json
 
@@ -111,7 +112,7 @@ paths[0].distance          | The overall distance of the route, in meter
 paths[0].time              | The overall time of the route, in ms
 paths[0].points            | The polyline encoded coordinates of the path. Order is lat,lon,elelevation as it is no geoJson!
 paths[0].points_encoded    | Is true if the points are encoded, if not paths[0].points contains the geo json of the path (then order is lon,lat,elevation), which is easier to handle but consumes more bandwidth compared to encoded version
-paths[0].points_dimension  | The dimension of the points field. Can be 2 or 3.
+paths[0].points_dimension  | The dimension of the points field. Can be 2 or 3. Important to parse especially if you specify the `elevation` parameter.
 paths[0].bbox              | The bounding box of the route, format: <br> minLon, minLat, maxLon, maxLat
 paths[0].instructions      | Contains information about the instructions for this route. The last instruction is always the Finish instruction and takes 0ms and 0meter. Keep in mind that instructions are currently under active development and can sometimes contain misleading information, so, make sure you always show an image of the map at the same time when navigating your users!
 paths[0].instructions[0].text     | A description what the user has to do in order to follow the route. The language depends on the locale parameter.
