@@ -63,7 +63,6 @@ public class GraphHopperServletIT extends BaseServletTester
         double distance = path.getDouble("distance");
         assertTrue("distance wasn't correct:" + distance, distance > 9000);
         assertTrue("distance wasn't correct:" + distance, distance < 9500);
-        assertEquals(2, path.getInt("points_dimension"));
     }
 
     @Test

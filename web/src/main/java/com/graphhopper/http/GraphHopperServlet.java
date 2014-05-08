@@ -83,7 +83,7 @@ public class GraphHopperServlet extends GHBaseServlet
         if (!hopper.getEncodingManager().supports(vehicleStr))
         {
             rsp = new GHResponse().addError(new IllegalArgumentException("Vehicle not supported: " + vehicleStr));
-        } else if (elevation && !hopper.is3D())
+        } else if (elevation && !hopper.hasElevation())
         {
             rsp = new GHResponse().addError(new IllegalArgumentException("Elevation not supported!"));
         } else
@@ -174,8 +174,7 @@ public class GraphHopperServlet extends GHBaseServlet
                 if (points.getSize() >= 2)
                     jsonPath.put("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
 
-                jsonPath.put("points", createPoints(points, pointsEncoded, includeElevation));
-                jsonPath.put("points_dimension", includeElevation ? 3 : 2);
+                jsonPath.put("points", createPoints(points, pointsEncoded, includeElevation));                
 
                 if (enableInstructions)
                 {

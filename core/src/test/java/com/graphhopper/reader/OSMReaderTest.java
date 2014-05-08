@@ -114,7 +114,7 @@ public class OSMReaderTest
         @Override
         protected DataReader importData() throws IOException
         {
-            GraphStorage tmpGraph = newGraph(dir, getEncodingManager(), is3D(), isEnableTurnRestrictions());
+            GraphStorage tmpGraph = newGraph(dir, getEncodingManager(), hasElevation(), isEnableTurnRestrictions());
             setGraph(tmpGraph);
 
             DataReader osmReader = createReader(tmpGraph);
@@ -664,7 +664,7 @@ public class OSMReaderTest
                     }
                 });
             }
-        }.set3D(true).importOrLoad();
+        }.setElevation(true).importOrLoad();
 
         Graph graph = hopper.getGraph();
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
@@ -681,8 +681,7 @@ public class OSMReaderTest
         // get N10E046.hgt.zip
         ElevationProvider provider = new SRTMProvider();
         provider.setCacheDir(new File("./files"));
-        hopper.set3D(true).
-                setElevationProvider(provider);
+        hopper.setElevationProvider(provider);
         hopper.importOrLoad();
 
         Graph graph = hopper.getGraph();

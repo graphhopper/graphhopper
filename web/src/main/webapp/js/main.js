@@ -102,13 +102,14 @@ $(document).ready(function(e) {
                 bounds.maxLon = tmp[2];
                 bounds.maxLat = tmp[3];
                 var vehiclesDiv = $("#vehicles");
-                function createButton(vehicle) {
-                    var vehicle = vehicle.toLowerCase();
+                function createButton(vehicleJson) {                    
+                    var vehicle = vehicleJson.name.toLowerCase();
                     var button = $("<button class='vehicle-btn' title='" + tr(vehicle) + "'/>");
                     button.attr('id', vehicle);
                     button.html("<img src='img/" + vehicle + ".png' alt='" + tr(vehicle) + "'></img>");
                     button.click(function() {
                         ghRequest.vehicle = vehicle;
+                        ghRequest.setElevation(vehicleJson.elevation);
                         resolveFrom();
                         resolveTo();
                         routeLatLng(ghRequest);
@@ -116,10 +117,10 @@ $(document).ready(function(e) {
                     return button;
                 }
 
-                if (json.supported_vehicles) {
-                    var vehicles = json.supported_vehicles;
+                if (json.features) {
+                    var vehicles = json.features;
                     if (vehicles.length > 0)
-                        ghRequest.vehicle = vehicles[0];
+                        ghRequest.vehicle = vehicles[0].name;
 
                     for (var i = 0; i < vehicles.length; i++) {
                         vehiclesDiv.append(createButton(vehicles[i]));
@@ -648,7 +649,7 @@ function routeLatLng(request, doQuery) {
             "geometry": path.points
         };
 
-        if (path.points_dimension === 3) {
+        if (request.hasElevation()) {
             if (elevationControl === null) {
                 elevationControl = L.control.elevation({
                     position: "bottomright",

@@ -92,6 +92,9 @@ public class GraphHopperWeb implements GraphHopperAPI
             {
                 places += "point=" + p.lat + "," + p.lon + "&";
             }
+            
+            boolean withElevation = false;
+            
             String url = serviceUrl
                     + "?"
                     + places
@@ -99,34 +102,30 @@ public class GraphHopperWeb implements GraphHopperAPI
                     + "&points_encoded=" + pointsEncoded
                     + "&min_path_precision=" + request.getHint("douglas.minprecision", 1)
                     + "&algo=" + request.getAlgorithm()
-                    + "&locale=" + request.getLocale().toString();
+                    + "&locale=" + request.getLocale().toString()
+                    + "&elevation=" + withElevation;
             
             String str = downloader.downloadAsString(url);
             JSONObject json = new JSONObject(str);
             took = json.getJSONObject("info").getDouble("took");
             JSONArray paths = json.getJSONArray("paths");
-            JSONObject firstPath = paths.getJSONObject(0);
-
-            boolean is3D = false;
-            if (firstPath.has("points_dimension"))
-                is3D = 3 == firstPath.getInt("points_dimension");
-            
+            JSONObject firstPath = paths.getJSONObject(0);            
             double distance = firstPath.getDouble("distance");
             int time = firstPath.getInt("time");
             PointList pointList;
             if (pointsEncoded)
             {
-                pointList = WebHelper.decodePolyline(firstPath.getString("points"), 100, is3D);
+                pointList = WebHelper.decodePolyline(firstPath.getString("points"), 100, withElevation);
             } else
             {
                 JSONArray coords = firstPath.getJSONObject("points").getJSONArray("coordinates");
-                pointList = new PointList(coords.length(), is3D);
+                pointList = new PointList(coords.length(), withElevation);
                 for (int i = 0; i < coords.length(); i++)
                 {
                     JSONArray arr = coords.getJSONArray(i);
                     double lon = arr.getDouble(0);
                     double lat = arr.getDouble(1);
-                    if (is3D)
+                    if (withElevation)
                         pointList.add(lat, lon, arr.getDouble(2));
                     else
                         pointList.add(lat, lon);
@@ -148,7 +147,7 @@ public class GraphHopperWeb implements GraphHopperAPI
                     JSONArray iv = jsonObj.getJSONArray("interval");
                     int from = iv.getInt(0);
                     int to = iv.getInt(1);
-                    PointList instPL = new PointList(to - from, is3D);
+                    PointList instPL = new PointList(to - from, withElevation);
                     for (int j = from; j <= to; j++)
                     {
                         instPL.add(pointList, j);

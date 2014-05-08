@@ -71,7 +71,7 @@ public class GraphHopper implements GraphHopperAPI
     private DAType dataAccessType = DAType.RAM_STORE;
     private boolean sortGraph = false;
     boolean removeZipped = true;
-    private int dimension = 2;
+    private boolean elevation = false;
     // for routing
     private boolean simplifyRequest = true;
     // for index
@@ -136,9 +136,9 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setElevationProvider( ElevationProvider eleProvider )
     {
         if (eleProvider == null || eleProvider == ElevationProvider.NOOP)
-            set3D(false);
+            setElevation(false);
         else
-            set3D(true);
+            setElevation(true);
         this.eleProvider = eleProvider;
         return this;
     }
@@ -294,20 +294,17 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * @return true if storing and fetching elevation data is enabled. Default is false
      */
-    public boolean is3D()
+    public boolean hasElevation()
     {
-        return dimension == 3;
+        return elevation;
     }
 
     /**
      * Enable storing and fetching elevation data. Default is false
      */
-    public GraphHopper set3D( boolean is3D )
+    public GraphHopper setElevation( boolean includeElevation )
     {
-        if (is3D)
-            this.dimension = 3;
-        else
-            this.dimension = 2;
+        this.elevation = includeElevation;
         return this;
     }
 
@@ -491,7 +488,6 @@ public class GraphHopper implements GraphHopperAPI
         // graph
         setGraphHopperLocation(graphHopperFolder);
         defaultSegmentSize = args.getInt("graph.dataaccess.segmentSize", defaultSegmentSize);
-        dimension = args.getInt("graph.dimension", dimension);
 
         String graphDATypeStr = args.get("graph.dataaccess", "RAM_STORE");
         dataAccessType = DAType.fromString(graphDATypeStr);
@@ -673,11 +669,11 @@ public class GraphHopper implements GraphHopperAPI
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
 
         if (chEnabled)
-            graph = new LevelGraphStorage(dir, encodingManager, is3D());
+            graph = new LevelGraphStorage(dir, encodingManager, hasElevation());
         else if (turnCosts)
-            graph = new GraphHopperStorage(dir, encodingManager, is3D(), new TurnCostStorage());
+            graph = new GraphHopperStorage(dir, encodingManager, hasElevation(), new TurnCostStorage());
         else
-            graph = new GraphHopperStorage(dir, encodingManager, is3D());
+            graph = new GraphHopperStorage(dir, encodingManager, hasElevation());
 
         graph.setSegmentSize(defaultSegmentSize);
         if (!graph.loadExisting())
