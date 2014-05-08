@@ -118,12 +118,12 @@ public class RoutingAlgorithmSpecialAreaTests
     {
         // List<Entry<AlgorithmPreparation, LocationIndex>> prepare = new ArrayList<Entry<AlgorithmPreparation, LocationIndex>>();
         List<Entry<AlgorithmPreparation, LocationIndex>> prepare = new ArrayList<Entry<AlgorithmPreparation, LocationIndex>>();
-        prepare.add(new ME(createAlgoPrepare(g, "astar", encoder, weighting), idx));
-        // prepare.add(new ME(createAlgoPrepare(g, "dijkstraOneToMany", encoder, weighting), idx));
-        prepare.add(new ME(createAlgoPrepare(g, "astarbi", encoder, weighting), idx));
-        prepare.add(new ME(createAlgoPrepare(g, "dijkstraNativebi", encoder, weighting), idx));
+//        prepare.add(new ME(createAlgoPrepare(g, "astar", encoder, weighting), idx));
+//        // prepare.add(new ME(createAlgoPrepare(g, "dijkstraOneToMany", encoder, weighting), idx));
+//        prepare.add(new ME(createAlgoPrepare(g, "astarbi", encoder, weighting), idx));
+//        prepare.add(new ME(createAlgoPrepare(g, "dijkstraNativebi", encoder, weighting), idx));
         prepare.add(new ME(createAlgoPrepare(g, "dijkstrabi", encoder, weighting), idx));
-        prepare.add(new ME(createAlgoPrepare(g, "dijkstra", encoder, weighting), idx));
+//        prepare.add(new ME(createAlgoPrepare(g, "dijkstra", encoder, weighting), idx));
 
         if (withCh)
         {

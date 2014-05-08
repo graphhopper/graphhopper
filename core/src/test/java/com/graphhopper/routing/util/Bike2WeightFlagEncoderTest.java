@@ -30,7 +30,7 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class Bike2WeightFlagEncoderTest
+public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest
 {
     private Graph initExampleGraph( FlagEncoder instance )
     {
@@ -58,7 +58,7 @@ public class Bike2WeightFlagEncoderTest
 
         long flags = edge.getFlags();
         // decrease speed
-        assertEquals(6, instance.getSpeed(flags), 1e-1);
+        assertEquals(8, instance.getSpeed(flags), 1e-1);
         // increase speed but use maximum speed (calculated was 24)
         assertEquals(18, instance.getReverseSpeed(flags), 1e-1);
     }

@@ -38,30 +38,23 @@ public class Instruction
     private double distance;
     private long time;
     final PointList points;
-    private final int pavementType;
-    private final int wayType;
+    private final InstructionAnnotation annotation;
 
     /**
      * The points, distances and times have exactly the same count. The last point of this
      * instruction is not duplicated here and should be in the next one.
      */
-    public Instruction( int sign, String name, int wayType, int pavementType, PointList pl )
+    public Instruction( int sign, String name, InstructionAnnotation ia, PointList pl )
     {
         this.sign = sign;
         this.name = name;
         this.points = pl;
-        this.wayType = wayType;
-        this.pavementType = pavementType;
+        this.annotation = ia;
     }
 
-    public int getPavementType()
+    public InstructionAnnotation getAnnotation()
     {
-        return pavementType;
-    }
-
-    public int getWayType()
-    {
-        return wayType;
+        return annotation;
     }
 
     public int getSign()
@@ -247,5 +240,51 @@ public class Instruction
     {
         if (points.size() < 1)
             throw new IllegalStateException("Instruction must contain at least one point " + toString());
+    }
+
+    String getTurnDescription( Translation tr )
+    {
+        String str;
+        String n = getName();
+        int indi = getSign();
+        if (indi == Instruction.FINISH)
+        {
+            str = tr.tr("finish");
+        } else if (indi == Instruction.REACHED_VIA)
+        {
+            str = tr.tr("stopover", ((FinishInstruction) this).getViaPosition());
+        } else if (indi == Instruction.CONTINUE_ON_STREET)
+        {
+            str = Helper.isEmpty(n) ? tr.tr("continue") : tr.tr("continue_onto", n);
+        } else
+        {
+            String dir = null;
+            switch (indi)
+            {
+                case Instruction.TURN_SHARP_LEFT:
+                    dir = tr.tr("sharp_left");
+                    break;
+                case Instruction.TURN_LEFT:
+                    dir = tr.tr("left");
+                    break;
+                case Instruction.TURN_SLIGHT_LEFT:
+                    dir = tr.tr("slight_left");
+                    break;
+                case Instruction.TURN_SLIGHT_RIGHT:
+                    dir = tr.tr("slight_right");
+                    break;
+                case Instruction.TURN_RIGHT:
+                    dir = tr.tr("right");
+                    break;
+                case Instruction.TURN_SHARP_RIGHT:
+                    dir = tr.tr("sharp_right");
+                    break;
+            }
+            if (dir == null)
+                throw new IllegalStateException("Indication not found " + indi);
+
+            str = Helper.isEmpty(n) ? tr.tr("turn", dir) : tr.tr("turn_onto", dir, n);
+        }
+        return str;
     }
 }

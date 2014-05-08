@@ -59,10 +59,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         restrictedValues.add("no");
         restrictedValues.add("restricted");
 
-        intended.add("yes");
-        intended.add("designated");
-        intended.add("official");
-        intended.add("permissive");
+        intendedValues.add("yes");
+        intendedValues.add("designated");
+        intendedValues.add("official");
+        intendedValues.add("permissive");
 
         sidewalks.add("yes");
         sidewalks.add("both");
@@ -182,7 +182,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             return acceptBit;
 
         // no need to evaluate ferries or fords - already included here
-        if (way.hasTag("foot", intended))
+        if (way.hasTag("foot", intendedValues))
             return acceptBit;
 
         if (!allowedHighwayTags.contains(highwayValue))
@@ -251,17 +251,5 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         }
 
         return encoded;
-    }
-
-    @Override
-    public int getPavementType( long flags )
-    {
-        return 0;
-    }
-
-    @Override
-    public int getWayType( long flags )
-    {
-        return 0;
     }
 }

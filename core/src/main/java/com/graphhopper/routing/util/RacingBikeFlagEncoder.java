@@ -17,20 +17,32 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMWay;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.*;
+import java.util.TreeMap;
+
 /**
  * Specifies the settings for racebikeing
  * <p/>
  * @author ratrun
+ * @author Peter Karich
  */
-public class RacingBikeFlagEncoder extends BikeFlagCommonEncoder
+public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
 {
     RacingBikeFlagEncoder()
     {
+        preferHighwayTags.add("road");
+        preferHighwayTags.add("secondary");
+        preferHighwayTags.add("secondary_link");
+        preferHighwayTags.add("tertiary");
+        preferHighwayTags.add("tertiary_link");
+        preferHighwayTags.add("residential");
+
         setTrackTypeSpeed("grade1", 20); // paved
-        setTrackTypeSpeed("grade2", PUSHING_SECTION_SPEED); // now unpaved ...
-        setTrackTypeSpeed("grade3", PUSHING_SECTION_SPEED / 2);
-        setTrackTypeSpeed("grade4", PUSHING_SECTION_SPEED / 2);
-        setTrackTypeSpeed("grade5", PUSHING_SECTION_SPEED / 2); // like sand/grass     
+        setTrackTypeSpeed("grade2", 10); // now unpaved ...
+        setTrackTypeSpeed("grade3", PUSHING_SECTION_SPEED);
+        setTrackTypeSpeed("grade4", PUSHING_SECTION_SPEED);
+        setTrackTypeSpeed("grade5", PUSHING_SECTION_SPEED);
 
         setSurfaceSpeed("paved", 20);
         setSurfaceSpeed("asphalt", 20);
@@ -59,60 +71,64 @@ public class RacingBikeFlagEncoder extends BikeFlagCommonEncoder
         setSurfaceSpeed("sand", PUSHING_SECTION_SPEED / 2);
         setSurfaceSpeed("wood", PUSHING_SECTION_SPEED / 2);
 
-        setHighwaySpeed("living_street", 15);
-        setHighwaySpeed("steps", PUSHING_SECTION_SPEED / 2);
-
         setHighwaySpeed("cycleway", 18);
-        setHighwaySpeed("path", 15);
-        setHighwaySpeed("footway", 15);
-        setHighwaySpeed("pedestrian", 15);
-        setHighwaySpeed("road", 10);
+        setHighwaySpeed("path", 8);
+        setHighwaySpeed("footway", 6);
+        setHighwaySpeed("pedestrian", 6);
+        setHighwaySpeed("road", 12);
         setHighwaySpeed("track", PUSHING_SECTION_SPEED / 2); // assume unpaved
-        setHighwaySpeed("service", 20);
-        setHighwaySpeed("unclassified", 20);
-        setHighwaySpeed("residential", 20);
+        setHighwaySpeed("service", 12);
+        setHighwaySpeed("unclassified", 16);
+        setHighwaySpeed("residential", 16);
 
         setHighwaySpeed("trunk", 20);
         setHighwaySpeed("trunk_link", 20);
         setHighwaySpeed("primary", 20);
         setHighwaySpeed("primary_link", 20);
-        setHighwaySpeed("secondary", 24);
-        setHighwaySpeed("secondary_link", 24);
-        setHighwaySpeed("tertiary", 24);
-        setHighwaySpeed("tertiary_link", 24);
+        setHighwaySpeed("secondary", 20);
+        setHighwaySpeed("secondary_link", 20);
+        setHighwaySpeed("tertiary", 20);
+        setHighwaySpeed("tertiary_link", 20);
 
-        setPushingSection("path");
-        setPushingSection("track");
-        setPushingSection("footway");
-        setPushingSection("pedestrian");
-        setPushingSection("steps");
+        addPushingSection("path");
+        addPushingSection("track");
+        addPushingSection("footway");
+        addPushingSection("pedestrian");
+        addPushingSection("steps");
 
-        setCyclingNetworkPreference("icn", RelationMapCode.OUTSTANDING_NICE.getValue());
-        setCyclingNetworkPreference("ncn", RelationMapCode.OUTSTANDING_NICE.getValue());
-        setCyclingNetworkPreference("rcn", RelationMapCode.VERY_NICE.getValue());
-        setCyclingNetworkPreference("lcn", RelationMapCode.UNCHANGED.getValue());
-        setCyclingNetworkPreference("mtb", RelationMapCode.UNCHANGED.getValue());
-
+        setCyclingNetworkPreference("icn", PriorityCode.BEST.getValue());
+        setCyclingNetworkPreference("ncn", PriorityCode.BEST.getValue());
+        setCyclingNetworkPreference("rcn", PriorityCode.VERY_NICE.getValue());
+        setCyclingNetworkPreference("lcn", PriorityCode.UNCHANGED.getValue());
+        setCyclingNetworkPreference("mtb", PriorityCode.UNCHANGED.getValue());
     }
 
-    // In case that the way belongs to a relation for which we do have a relation triggered weight change.    
-    // FIXME: Re-write in case that there is a more generic way to influence the weighting (issue #124).
-    // Here we boost or reduce the speed according to the relationWeightCode:
     @Override
-    int relationWeightCodeToSpeed( int highwaySpeed, int relationCode )
+    void collect( OSMWay way, TreeMap<Double, Integer> weightToPrioMap )
     {
-        int speed;
-        if ((highwaySpeed > PUSHING_SECTION_SPEED) && (highwaySpeed < 15))
-            // We know that our way belongs to a cycle route, so we assume 15km/h minimum
-            speed = 15;
-        else
-            speed = highwaySpeed;
+        super.collect(way, weightToPrioMap);
 
-        if (speed > PUSHING_SECTION_SPEED)
-            // Add or remove 4km/h per every relation weight boost point
-            return speed + 4 * (relationCode - DEFAULT_REL_CODE);
-        else
-            return speed;   // We are not pushing unpaved parts
+        String highway = way.getTag("highway");
+        if ("service".equals(highway))
+        {
+            weightToPrioMap.put(40d, UNCHANGED.getValue());
+        } else if ("track".equals(highway))
+        {
+            String trackType = way.getTag("tracktype");
+            if ("grade1".equals(trackType))
+                weightToPrioMap.put(110d, PREFER.getValue());
+            else if (trackType == null || trackType.startsWith("grade"))
+                weightToPrioMap.put(110d, AVOID_AT_ALL_COSTS.getValue());
+        }
+    }
+
+    @Override
+    boolean isPushingSection( OSMWay way )
+    {
+        String highway = way.getTag("highway");
+        String trackType = way.getTag("tracktype");
+        return way.hasTag("highway", pushingSections)
+                || "track".equals(highway) && trackType != null && !"grade1".equals(trackType);
     }
 
     @Override

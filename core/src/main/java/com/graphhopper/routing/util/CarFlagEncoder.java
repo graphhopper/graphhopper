@@ -69,8 +69,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         restrictedValues.add("no");
         restrictedValues.add("restricted");
 
-        intended.add("yes");
-        intended.add("permissive");
+        intendedValues.add("yes");
+        intendedValues.add("permissive");
 
         potentialBarriers.add("gate");
         potentialBarriers.add("lift_gate");
@@ -182,7 +182,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // do not drive street cars into fords
-        if ((way.hasTag("highway", "ford") || way.hasTag("ford")) && !way.hasTag(restrictions, intended))
+        if ((way.hasTag("highway", "ford") || way.hasTag("ford")) && !way.hasTag(restrictions, intendedValues))
             return 0;
 
         // check access restrictions
@@ -213,7 +213,10 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         {
             // get assumed speed from highway type
             double speed = getSpeed(way);
-            speed = reduceToMaxSpeed(speed, way);            
+            double maxSpeed = getMaxSpeed(way);
+            if (maxSpeed > 0)
+                // apply maxSpeed which can mean increase or decrease
+                speed = maxSpeed * 0.9;
 
             // limit speed to max 30 km/h if bad surface
             if (speed > 30 && way.hasTag("surface", badSurfaceSpeedMap))

@@ -123,9 +123,9 @@ public class EncodingManagerTest
             }
 
             @Override
-            int relationWeightCodeToSpeed( int highwaySpeed, int relationCode )
+            protected int handlePriority( OSMWay way, int priorityFromRelation )
             {
-                return highwaySpeed;
+                return priorityFromRelation;
             }
 
             @Override
@@ -143,8 +143,7 @@ public class EncodingManagerTest
         long allow = defaultBike.acceptBit | lessRelationCodes.acceptBit;
         long flags = manager.handleWayTags(osmWay, allow, relFlags);
 
-        assertEquals(20, defaultBike.getSpeed(flags), 1e-1);
-        assertEquals(4, lessRelationCodes.getSpeed(flags), 1e-1);
+        assertTrue(defaultBike.getPriority(flags) > lessRelationCodes.getPriority(flags));
     }
 
     @Test
@@ -167,10 +166,9 @@ public class EncodingManagerTest
         long allow = bikeEncoder.acceptBit | mtbEncoder.acceptBit;
         long flags = manager.handleWayTags(osmWay, allow, relFlags);
 
-        // uninfluenced speed for grade1 bikeencoder = 4 (pushing section) -> smaller than 15 -> VERYNICE -> 22
-        assertEquals(24, bikeEncoder.getSpeed(flags), 1e-1);
-        // uninfluenced speed for grade1 bikeencoder = 12 -> smaller than 15 -> PREFER -> 18
-        assertEquals(20, mtbEncoder.getSpeed(flags), 1e-1);
+        // bike: uninfluenced speed for grade but via network => VERY_NICE                
+        // mtb: uninfluenced speed only PREFER
+        assertTrue(bikeEncoder.getPriority(flags) > mtbEncoder.getPriority(flags));
     }
 
     public void testFullBitMask()

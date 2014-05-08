@@ -26,16 +26,24 @@ import java.util.*;
  */
 public class InstructionList implements Iterable<Instruction>
 {
+    public static final InstructionList EMPTY = new InstructionList();
     private final List<Instruction> instructions;
+    private final Translation tr;
 
-    public InstructionList()
+    private InstructionList()
     {
-        this(10);
+        this(0, null);
     }
 
-    public InstructionList( int cap )
+    public InstructionList( Translation tr )
+    {
+        this(10, tr);
+    }
+
+    public InstructionList( int cap, Translation tr )
     {
         instructions = new ArrayList<Instruction>(cap);
+        this.tr = tr;
     }
 
     public void add( Instruction instr )
@@ -53,7 +61,10 @@ public class InstructionList implements Iterable<Instruction>
         return instructions.size();
     }
 
-    public List<String> createDistances( TranslationMap.Translation tr, boolean mile )
+    /**
+     * Returns the descriptions of the distance per instruction.
+     */
+    public List<String> createDistances( boolean mile )
     {
         List<String> labels = new ArrayList<String>(instructions.size());
         for (int i = 0; i < instructions.size(); i++)
@@ -91,7 +102,7 @@ public class InstructionList implements Iterable<Instruction>
         return labels;
     }
 
-    public List<Map<String, Object>> createJson( TranslationMap.Translation tr )
+    public List<Map<String, Object>> createJson()
     {
         List<Map<String, Object>> instrList = new ArrayList<Map<String, Object>>(instructions.size());
         int pointsIndex = 0;
@@ -101,7 +112,17 @@ public class InstructionList implements Iterable<Instruction>
             Map<String, Object> instrJson = new HashMap<String, Object>();
             instrList.add(instrJson);
 
-            instrJson.put("text", Helper.firstBig(getTurnDescription(instruction, tr)));
+            InstructionAnnotation ia = instruction.getAnnotation();
+            String str = instruction.getTurnDescription(tr);
+            if (Helper.isEmpty(str))
+                str = ia.getMessage();
+            instrJson.put("text", Helper.firstBig(str));
+            if (!ia.isEmpty())
+            {
+                instrJson.put("annotationText", Helper.firstBig(ia.getMessage()));
+                instrJson.put("annotationImportance", ia.getImportance());
+            }
+
             instrJson.put("time", instruction.getTime());
             instrJson.put("distance", Helper.round(instruction.getDistance(), 3));
             instrJson.put("sign", instruction.getSign());
@@ -117,52 +138,6 @@ public class InstructionList implements Iterable<Instruction>
             counter++;
         }
         return instrList;
-    }
-
-    private String getTurnDescription( Instruction instruction, TranslationMap.Translation tr )
-    {
-        String str;
-        String n = getWayName(instruction.getName(), instruction.getPavementType(), instruction.getWayType(), tr);
-        int indi = instruction.getSign();
-        if (indi == Instruction.FINISH)
-        {
-            str = tr.tr("finish");
-        } else if (indi == Instruction.REACHED_VIA)
-        {
-            str = tr.tr("stopover", ((FinishInstruction) instruction).getViaPosition());
-        } else if (indi == Instruction.CONTINUE_ON_STREET)
-        {
-            str = Helper.isEmpty(n) ? tr.tr("continue") : tr.tr("continue_onto", n);
-        } else
-        {
-            String dir = null;
-            switch (indi)
-            {
-                case Instruction.TURN_SHARP_LEFT:
-                    dir = tr.tr("sharp_left");
-                    break;
-                case Instruction.TURN_LEFT:
-                    dir = tr.tr("left");
-                    break;
-                case Instruction.TURN_SLIGHT_LEFT:
-                    dir = tr.tr("slight_left");
-                    break;
-                case Instruction.TURN_SLIGHT_RIGHT:
-                    dir = tr.tr("slight_right");
-                    break;
-                case Instruction.TURN_RIGHT:
-                    dir = tr.tr("right");
-                    break;
-                case Instruction.TURN_SHARP_RIGHT:
-                    dir = tr.tr("sharp_right");
-                    break;
-            }
-            if (dir == null)
-                throw new IllegalStateException("Indication not found " + indi);
-
-            str = Helper.isEmpty(n) ? tr.tr("turn", dir) : tr.tr("turn_onto", dir, n);
-        }
-        return str;
     }
 
     public boolean isEmpty()
@@ -293,48 +268,13 @@ public class InstructionList implements Iterable<Instruction>
         return str.substring(0, str.length() - 2) + ":" + str.substring(str.length() - 2);
     }
 
-    private static final TranslationMap.Translation NO_TRANSLATE = new TranslationMap.Translation()
-    {
-
-        @Override
-        public String tr( String key, Object... params )
-        {
-            if (key.equals("turn_onto") || key.equals("turn"))
-                key = "";
-
-            for (Object p : params)
-            {
-                key += " " + p.toString();
-            }
-            return key.trim();
-        }
-
-        @Override
-        public Map<String, String> asMap()
-        {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public Locale getLocale()
-        {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public String getLanguage()
-        {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-    };
-
     private void createRteptBlock( StringBuilder output, Instruction instruction, Instruction nextI )
     {
         output.append("<rtept lat=\"").append(Helper.round6(instruction.getFirstLat())).
                 append("\" lon=\"").append(Helper.round6(instruction.getFirstLon())).append("\">");
 
         if (!instruction.getName().isEmpty())
-            output.append("<desc>").append(getTurnDescription(instruction, NO_TRANSLATE)).append("</desc>");
+            output.append("<desc>").append(instruction.getTurnDescription(tr)).append("</desc>");
 
         output.append("<extensions>");
         output.append("<distance>").append(Helper.round(instruction.getDistance(), 3)).append("</distance>");
@@ -350,46 +290,6 @@ public class InstructionList implements Iterable<Instruction>
 
         output.append("</extensions>");
         output.append("</rtept>");
-    }
-
-    public static String getWayName( String name, int paveType, int wayType, TranslationMap.Translation tr )
-    {
-        String pavementName = "";
-        if (paveType == 1)
-            pavementName = tr.tr("unpaved");
-
-        String wayClass = "";
-        switch (wayType)
-        {
-            case 0:
-                wayClass = tr.tr("road");
-                break;
-            case 1:
-                wayClass = tr.tr("pushing_section");
-                break;
-            case 2:
-                wayClass = tr.tr("cycleway");
-                break;
-            case 3:
-                wayClass = tr.tr("way");
-                break;
-        }
-
-        if (name.isEmpty())
-            if (pavementName.isEmpty())
-            {
-                if (wayType == 0 || wayType == 3)
-                    return "";
-                return wayClass;
-            } else
-                return wayClass + ", " + pavementName;
-        else if (pavementName.isEmpty())
-            if (wayType == 0)
-                return name;
-            else
-                return name + ", " + wayClass;
-        else
-            return name + ", " + pavementName;
     }
 
     /**

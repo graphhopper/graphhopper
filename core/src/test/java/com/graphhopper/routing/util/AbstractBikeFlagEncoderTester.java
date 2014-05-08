@@ -18,14 +18,11 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.TranslationMap;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.*;
+import com.graphhopper.util.Translation;
 import static com.graphhopper.util.TranslationMapTest.SINGLETON;
 import java.util.Locale;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,7 +32,7 @@ import org.junit.Test;
  */
 public abstract class AbstractBikeFlagEncoderTester
 {
-    protected BikeFlagCommonEncoder encoder;
+    protected BikeCommonFlagEncoder encoder;
 
     @Before
     public void setUp()
@@ -43,24 +40,36 @@ public abstract class AbstractBikeFlagEncoderTester
         encoder = createBikeEncoder();
     }
 
-    abstract BikeFlagCommonEncoder createBikeEncoder();
+    protected abstract BikeCommonFlagEncoder createBikeEncoder();
 
-    public double getEncodedDecodedSpeed( OSMWay way )
+    protected void assertPriority( int expectedPrio, OSMWay way )
+    {
+        assertPriority(expectedPrio, way, 0);
+    }
+
+    protected void assertPriority( int expectedPrio, OSMWay way, long relationFlags )
+    {
+        assertEquals(expectedPrio, encoder.handlePriority(way, (int) encoder.relationCodeEncoder.getValue(relationFlags)));
+    }
+
+    protected double getSpeedFromFlags( OSMWay way )
     {
         long allowed = encoder.acceptBit;
         long flags = encoder.handleWayTags(way, allowed, 0);
         return encoder.getSpeed(flags);
     }
 
-    public String encodeDecodeWayType( String name, OSMWay way )
+    protected String getWayTypeFromFlags( OSMWay way )
+    {
+        return getWayTypeFromFlags(way, 0);
+    }
+
+    protected String getWayTypeFromFlags( OSMWay way, long relationFlags )
     {
         long allowed = encoder.acceptBit;
-        long flags = encoder.handleWayTags(way, allowed, 0);
-        int pavement = encoder.getPavementType(flags);
-        int wayType = encoder.getWayType(flags);
-
-        TranslationMap.Translation enMap = SINGLETON.getWithFallBack(Locale.UK);
-        return InstructionList.getWayName(name, pavement, wayType, enMap);
+        long flags = encoder.handleWayTags(way, allowed, relationFlags);
+        Translation enMap = SINGLETON.getWithFallBack(Locale.UK);
+        return encoder.getAnnotation(flags, enMap).getMessage();
     }
 
     @Test
@@ -148,7 +157,7 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("route", "ferry");
         way.setTag("foot", "yes");
         assertFalse(encoder.acceptWay(way) > 0);
-        
+
         way.clearTags();
         way.setTag("highway", "cycleway");
         way.setTag("cycleway", "track");
@@ -187,56 +196,129 @@ public abstract class AbstractBikeFlagEncoderTester
     }
 
     @Test
+    public void testAvoidTunnel()
+    {
+        OSMWay osmWay = new OSMWay(1);
+        osmWay.setTag("highway", "residential");
+        osmWay.setTag("tunnel", "yes");
+        assertPriority(UNCHANGED.getValue(), osmWay);
+
+        osmWay.setTag("highway", "secondary");
+        osmWay.setTag("tunnel", "yes");
+        assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay);
+
+        osmWay.setTag("bicycle", "designated");
+        assertPriority(PREFER.getValue(), osmWay);
+    }
+
+    @Test
+    public void testTram()
+    {
+        OSMWay way = new OSMWay(1);
+        // very dangerous
+        way.setTag("highway", "secondary");
+        way.setTag("railway", "tram");
+        assertPriority(AVOID_AT_ALL_COSTS.getValue(), way);
+
+        // should be safe now
+        way.setTag("bicycle", "designated");
+        assertPriority(PREFER.getValue(), way);
+    }
+
+    @Test
     public void testHandleCommonWayTags()
     {
         OSMWay way = new OSMWay(1);
         String wayType;
 
         way.setTag("highway", "steps");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("pushing section", wayType);
 
-        way.setTag("highway", "steps");
-        wayType = encodeDecodeWayType("Famous steps", way);
-        assertEquals("Famous steps, pushing section", wayType);
-
         way.setTag("highway", "footway");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("pushing section", wayType);
 
         way.setTag("highway", "footway");
         way.setTag("surface", "pebblestone");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("pushing section", wayType);
 
         way.setTag("highway", "residential");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("", wayType);
+        assertPriority(PREFER.getValue(), way);
 
+        way.clearTags();
         way.setTag("highway", "cycleway");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("cycleway", wayType);
+        assertPriority(VERY_NICE.getValue(), way);
 
         way.setTag("surface", "grass");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("cycleway, unpaved", wayType);
 
         way.setTag("surface", "asphalt");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("cycleway", wayType);
+        assertPriority(VERY_NICE.getValue(), way);
 
         way.setTag("highway", "footway");
         way.setTag("bicycle", "yes");
         way.setTag("surface", "grass");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("cycleway, unpaved", wayType);
 
         way.clearTags();
         way.setTag("highway", "footway");
         way.setTag("bicycle", "yes");
         way.setTag("surface", "grass");
-        wayType = encodeDecodeWayType("", way);
+        wayType = getWayTypeFromFlags(way);
         assertEquals("cycleway, unpaved", wayType);
     }
 
+    @Test
+    public void testService()
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "service");
+        assertEquals(14, encoder.getSpeed(way));
+        assertPriority(PREFER.getValue(), way);
+
+        way.setTag("service", "parking_aisle");
+        assertEquals(6, encoder.getSpeed(way));
+        assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
+    }
+
+    @Test
+    public void testReduceToMaxSpeed()
+    {
+        OSMWay way = new OSMWay(12);
+        way.setTag("maxspeed", "90");
+        assertEquals(12, encoder.reduceToMaxSpeed(way, 12), 1e-2);
+    }
+
+    @Test
+    public void testMaxAndMinSpeed()
+    {
+        OSMWay osmWay = new OSMWay(1);
+        osmWay.setTag("highway", "tertiary");
+        assertEquals(30, encoder.getSpeed(encoder.setSpeed(0, encoder.reduceToMaxSpeed(osmWay, 49))), 1e-1);
+        assertPriority(PREFER.getValue(), osmWay);
+
+        osmWay.setTag("highway", "tertiary");
+        osmWay.setTag("maxspeed", "90");
+        assertEquals(20, encoder.getSpeed(encoder.setSpeed(0, encoder.reduceToMaxSpeed(osmWay, 20))), 1e-1);
+        assertPriority(REACH_DEST.getValue(), osmWay);
+    }
+
+    @Test
+    public void testHandleWayTagsCallsHandlePriority()
+    {
+        OSMWay osmWay = new OSMWay(1);
+        osmWay.setTag("highway", "cycleway");
+        long encoded = encoder.handleWayTags(osmWay, encoder.acceptBit, 0);
+        assertEquals((double) VERY_NICE.getValue() / BEST.getValue(), encoder.getPriority(encoded), 1e-3);
+    }
 }

@@ -157,21 +157,10 @@ public class TranslationMap
         }
     }
 
-    public static interface Translation
-    {
-        String tr( String key, Object... params );
-
-        Map<String, String> asMap();
-
-        Locale getLocale();
-
-        String getLanguage();
-    }
-
     public static class TranslationHashMap implements Translation
     {
         private final Map<String, String> map = new HashMap<String, String>();
-        private final Locale locale;
+        final Locale locale;
 
         public TranslationHashMap( Locale locale )
         {
@@ -261,4 +250,40 @@ public class TranslationMap
     {
         return translations.toString();
     }
+
+    // unused
+    private static final Translation NO_TRANSLATE = new Translation()
+    {
+
+        @Override
+        public String tr( String key, Object... params )
+        {
+            if (key.equals("turn_onto") || key.equals("turn"))
+                key = "";
+
+            for (Object p : params)
+            {
+                key += " " + p.toString();
+            }
+            return key.trim();
+        }
+
+        @Override
+        public Map<String, String> asMap()
+        {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public Locale getLocale()
+        {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public String getLanguage()
+        {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+    };
 }

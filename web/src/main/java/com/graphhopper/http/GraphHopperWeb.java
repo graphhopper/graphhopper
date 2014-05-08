@@ -20,11 +20,7 @@ package com.graphhopper.http;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.util.Downloader;
-import com.graphhopper.util.Instruction;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -51,6 +47,7 @@ public class GraphHopperWeb implements GraphHopperAPI
     private boolean pointsEncoded = true;
     private Downloader downloader = new Downloader("GraphHopperWeb");
     private boolean instructions = true;
+    private final TranslationMap trMap = new TranslationMap().doImport();
 
     public GraphHopperWeb()
     {
@@ -101,7 +98,9 @@ public class GraphHopperWeb implements GraphHopperAPI
                     + "&type=json"
                     + "&points_encoded=" + pointsEncoded
                     + "&min_path_precision=" + request.getHint("douglas.minprecision", 1)
-                    + "&algo=" + request.getAlgorithm();
+                    + "&algo=" + request.getAlgorithm()
+                    + "&locale=" + request.getLocale().toString();
+            
             String str = downloader.downloadAsString(url);
             JSONObject json = new JSONObject(str);
             took = json.getJSONObject("info").getDouble("took");
@@ -137,8 +136,8 @@ public class GraphHopperWeb implements GraphHopperAPI
             if (instructions)
             {
                 JSONArray instrArr = firstPath.getJSONArray("instructions");
-
-                InstructionList il = new InstructionList();
+                
+                InstructionList il = new InstructionList(trMap.getWithFallBack(request.getLocale()));
                 for (int instrIndex = 0; instrIndex < instrArr.length(); instrIndex++)
                 {
                     JSONObject jsonObj = instrArr.getJSONObject(instrIndex);
@@ -156,7 +155,7 @@ public class GraphHopperWeb implements GraphHopperAPI
                     }
 
                     // TODO way and payment type
-                    Instruction instr = new Instruction(sign, text, -1, -1, instPL).
+                    Instruction instr = new Instruction(sign, text, InstructionAnnotation.EMPTY, instPL).
                             setDistance(instDist).setTime(instTime);
                     il.add(instr);
                 }

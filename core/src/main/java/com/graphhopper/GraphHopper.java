@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,6 +99,7 @@ public class GraphHopper implements GraphHopperAPI
     private boolean enableInstructions = true;
     private boolean calcPoints = true;
     private boolean fullyLoaded = false;
+    private final TranslationMap trMap = new TranslationMap().doImport();
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
 
     public GraphHopper()
@@ -440,6 +442,11 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
+    public TranslationMap getTranslationMap()
+    {
+        return trMap;
+    }
+
     /*
      * Command line configuration overwrites the ones in the config file
      */
@@ -723,9 +730,14 @@ public class GraphHopper implements GraphHopperAPI
     {
         // ignore case
         weighting = weighting.toLowerCase();
-        if ("shortest".equals(weighting))
-            return new ShortestWeighting();
-        return new FastestWeighting(encoder);
+        if ("fastest".equals(weighting))
+        {
+            if (encoder instanceof BikeCommonFlagEncoder)
+                return new PriorityWeighting((BikeCommonFlagEncoder) encoder);
+            else
+                return new FastestWeighting(encoder);
+        }
+        return new ShortestWeighting();
     }
 
     @Override
@@ -746,6 +758,7 @@ public class GraphHopper implements GraphHopperAPI
         calcPoints = request.getHint("calcPoints", calcPoints);
         simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
         double minPathPrecision = request.getHint("douglas.minprecision", 1d);
+        Locale locale = request.getLocale();
         DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(minPathPrecision);
 
         new PathMerger().
@@ -753,7 +766,7 @@ public class GraphHopper implements GraphHopperAPI
                 setDouglasPeucker(peucker).
                 setEnableInstructions(enableInstructions).
                 setSimplifyRequest(simplifyRequest && minPathPrecision > 0).
-                doWork(response, paths);
+                doWork(response, paths, trMap.getWithFallBack(locale));
         return response;
     }
 

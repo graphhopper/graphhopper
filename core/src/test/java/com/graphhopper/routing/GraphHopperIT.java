@@ -23,12 +23,10 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.util.*;
-import com.graphhopper.util.TranslationMap.Translation;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.io.File;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import org.junit.After;
 import org.junit.Test;
@@ -40,8 +38,6 @@ import org.junit.Before;
  */
 public class GraphHopperIT
 {
-    TranslationMap trMap = TranslationMapTest.SINGLETON;
-    Translation tr = trMap.getWithFallBack(Locale.US);
     String graphFile = "target/graph-GraphHopperIT";
     String osmFile = "files/monaco.osm.gz";
     String vehicle = "FOOT";
@@ -81,7 +77,7 @@ public class GraphHopperIT
         InstructionList il = rsp.getInstructions();
         assertEquals(13, il.size());
 
-        List<Map<String, Object>> resultJson = il.createJson(tr);
+        List<Map<String, Object>> resultJson = il.createJson();
         // TODO roundabout fine tuning -> enter + leave roundabout (+ two rounabouts -> is it necessary if we do not leave the street?)
         assertEquals("Continue onto Avenue des Guelfes", resultJson.get(0).get("text"));
         assertEquals("Turn slight left onto Avenue des Papalins", resultJson.get(1).get("text"));
@@ -147,6 +143,64 @@ public class GraphHopperIT
     }
 
     @Test
+    public void testKremsCyclewayInstructionsWithWayTypeInfo()
+    {
+        String osmFile = "files/krems.osm.gz";
+        String graphFile = "target/graph-krems";
+        String vehicle = "BIKE";
+        String importVehicles = "CAR,BIKE";
+        String weightCalcStr = "fastest";
+
+        try
+        {
+            // make sure we are using fresh graphhopper files with correct vehicle
+            Helper.removeDir(new File(graphFile));
+            GraphHopper hopper = new GraphHopper().
+                    setInMemory(true).
+                    setOSMFile(osmFile).
+                    disableCHShortcuts().
+                    setGraphHopperLocation(graphFile).
+                    setEncodingManager(new EncodingManager(importVehicles)).
+                    importOrLoad();
+
+            GHResponse rsp = hopper.route(new GHRequest(48.410987, 15.599492, 48.383419, 15.659294).
+                    setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
+
+            assertEquals(6932.24, rsp.getDistance(), .1);
+            assertEquals(110, rsp.getPoints().getSize());
+
+            InstructionList il = rsp.getInstructions();
+            assertEquals(19, il.size());
+            List<Map<String, Object>> resultJson = il.createJson();
+
+            assertEquals("Continue onto Obere Landstraße", resultJson.get(0).get("text"));
+            assertEquals("Pushing section", resultJson.get(0).get("annotationText"));
+            assertEquals("Turn sharp left onto Kirchengasse", resultJson.get(1).get("text"));
+            assertEquals("Pushing section", resultJson.get(1).get("annotationText"));
+
+            assertEquals("Turn sharp right onto Pfarrplatz", resultJson.get(2).get("text"));
+            assertEquals("Turn right onto Margarethenstraße", resultJson.get(3).get("text"));
+            assertEquals("Turn left onto Hoher Markt", resultJson.get(4).get("text"));
+            assertEquals("Turn slight right onto Wegscheid", resultJson.get(5).get("text"));
+            assertEquals("Turn slight left onto Untere Landstraße", resultJson.get(6).get("text"));
+            assertEquals("Turn right onto Ringstraße, L73", resultJson.get(7).get("text"));
+            assertEquals("Continue onto Eyblparkstraße", resultJson.get(8).get("text"));
+            assertEquals("Continue onto Austraße", resultJson.get(9).get("text"));
+            assertEquals("Turn slight left onto Rechte Kremszeile", resultJson.get(10).get("text"));
+            //..
+            assertEquals("Turn right onto Treppelweg", resultJson.get(15).get("text"));
+            assertEquals("Cycleway", resultJson.get(15).get("annotationText"));
+
+        } catch (Exception ex)
+        {
+            throw new RuntimeException("cannot handle osm file " + osmFile, ex);
+        } finally
+        {
+            Helper.removeDir(new File(graphFile));
+        }
+    }
+
+    @Test
     public void testMonacoVia()
     {
         GraphHopper hopper = new GraphHopper().
@@ -168,7 +222,7 @@ public class GraphHopperIT
 
         InstructionList il = rsp.getInstructions();
         assertEquals(26, il.size());
-        List<Map<String, Object>> resultJson = il.createJson(tr);
+        List<Map<String, Object>> resultJson = il.createJson();
         assertEquals("Continue onto Avenue des Guelfes", resultJson.get(0).get("text"));
         assertEquals("Turn slight left onto Avenue des Papalins", resultJson.get(1).get("text"));
         assertEquals("Turn sharp right onto Quai Jean-Charles Rey", resultJson.get(2).get("text"));

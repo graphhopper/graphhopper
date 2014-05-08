@@ -17,10 +17,12 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -37,6 +39,7 @@ public class GHRequest
     private String vehicle = "";
     private String weighting = "";
     private boolean possibleToAdd = false;
+    private Locale locale = Locale.US;
 
     public GHRequest()
     {
@@ -109,6 +112,23 @@ public class GHRequest
     public String getAlgorithm()
     {
         return algo;
+    }
+
+    public Locale getLocale()
+    {
+        return locale;
+    }
+
+    public GHRequest setLocale( Locale locale )
+    {
+        if (locale != null)
+            this.locale = locale;
+        return this;
+    }
+
+    public GHRequest setLocale( String localeStr )
+    {
+        return setLocale(Helper.getLocale(localeStr));
     }
 
     /**
