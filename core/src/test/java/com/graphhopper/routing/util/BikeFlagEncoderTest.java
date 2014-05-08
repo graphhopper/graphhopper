@@ -25,8 +25,8 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
+ * @ratrun
  */
 public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 {
@@ -185,6 +185,35 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertEquals(18, encoder.getSpeed(flags), 1e-1);
         assertPriority(PREFER.getValue(), osmWay, relFlags);
         assertEquals("", getWayTypeFromFlags(osmWay));
+
+        // A footway is not of waytype pushing section in case that it is part of a cycle route
+        osmRel.clearTags();
+        osmWay.clearTags();
+        osmWay.setTag("highway", "footway");
+        osmWay.setTag("surface", "grass");
+
+        // First tests without a cycle route relation, this is a pushing section
+        relFlags = encoder.handleRelationTags(osmRel, 0);
+        flags = encoder.handleWayTags(osmWay, allowed, relFlags);
+        String wayType = getWayTypeFromFlags(osmWay, relFlags);
+        assertEquals("pushing section, unpaved", wayType);
+
+        // now as part of a cycle route relation
+        osmRel.setTag("type", "route");
+        osmRel.setTag("route", "bicycle");
+        osmRel.setTag("network", "lcn");
+        relFlags = encoder.handleRelationTags(osmRel, 0);
+        flags = encoder.handleWayTags(osmWay, allowed, relFlags);
+        wayType = getWayTypeFromFlags(osmWay, relFlags);
+        assertEquals("way, unpaved", wayType);
+
+        // steps are still shown as pushing section
+        osmWay.clearTags();
+        osmWay.setTag("highway", "steps");
+        relFlags = encoder.handleRelationTags(osmRel, 0);
+        flags = encoder.handleWayTags(osmWay, allowed, relFlags);
+        wayType = getWayTypeFromFlags(osmWay, relFlags);
+        assertEquals("pushing section", wayType);
     }
 
     @Test

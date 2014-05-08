@@ -292,7 +292,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             // bike maxspeed handling is different from car as we don't increase speed
             speed = reduceToMaxSpeed(way, speed);
             encoded = handleSpeed(way, speed, encoded);
-            encoded = handleBikeRelated(way, encoded);
+            encoded = handleBikeRelated(way, encoded, relationFlags > UNCHANGED.getValue());
 
         } else
         {
@@ -495,7 +495,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     /**
      * Handle surface and wayType encoding
      */
-    long handleBikeRelated( OSMWay way, long encoded )
+    long handleBikeRelated( OSMWay way, long encoded, boolean partOfCycleRelation )
     {
         String surfaceTag = way.getTag("surface");
         String highway = way.getTag("highway");
@@ -504,7 +504,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         // Populate bits at wayTypeMask with wayType            
         WayType wayType = WayType.OTHER_SMALL_WAY;
         boolean isPusingSection = isPushingSection(way);
-        if (isPusingSection)
+        if (isPusingSection && !partOfCycleRelation || way.hasTag("highway", "steps"))
             wayType = WayType.PUSHING_SECTION;
 
         if ("track".equals(highway) && trackType != null && !"grade1".equals(trackType)

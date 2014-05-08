@@ -61,8 +61,13 @@ public abstract class AbstractBikeFlagEncoderTester
 
     protected String getWayTypeFromFlags( OSMWay way )
     {
+        return getWayTypeFromFlags(way, 0);
+    }
+
+    protected String getWayTypeFromFlags( OSMWay way, long relationFlags )
+    {
         long allowed = encoder.acceptBit;
-        long flags = encoder.handleWayTags(way, allowed, 0);
+        long flags = encoder.handleWayTags(way, allowed, relationFlags);
         Translation enMap = SINGLETON.getWithFallBack(Locale.UK);
         return encoder.getAnnotation(flags, enMap).getMessage();
     }
