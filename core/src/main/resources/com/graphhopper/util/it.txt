@@ -2,8 +2,8 @@
 
 sharp_left=nettamente a sinistra
 sharp_right=nettamente a destra
-left=sinistra
-right=destra
+left=a sinistra
+right=a destra
 slight_left=leggermente a sinistra
 slight_right=leggermente a destra
 continue=continua
