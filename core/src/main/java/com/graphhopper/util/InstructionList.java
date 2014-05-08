@@ -228,7 +228,7 @@ public class InstructionList implements Iterable<Instruction>
 
     public String createGPX( String trackName, long startTimeMillis, String timeZoneId )
     {
-        boolean includeElevation = instructions.size() > 0 ? instructions.get(0).getPoints().is3D() : false;
+        boolean includeElevation = getSize() > 0 ? get(0).getPoints().is3D() : false;
         return createGPX(trackName, startTimeMillis, timeZoneId, includeElevation);
     }
 
