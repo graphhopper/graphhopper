@@ -217,11 +217,22 @@ public class InstructionList implements Iterable<Instruction>
     }
 
     /**
-     * Creates the GPX Format out of the points.
+     * Creates the standard GPX string out of the points.
      * <p/>
      * @return string to be stored as gpx file
      */
+    public String createGPX()
+    {
+        return createGPX("GraphHopper", 0, "GMT");
+    }
+
     public String createGPX( String trackName, long startTimeMillis, String timeZoneId )
+    {
+        boolean includeElevation = instructions.size() > 0 ? instructions.get(0).getPoints().is3D() : false;
+        return createGPX(trackName, startTimeMillis, timeZoneId, includeElevation);
+    }
+
+    public String createGPX( String trackName, long startTimeMillis, String timeZoneId, boolean includeElevation )
     {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
         TimeZone tz = TimeZone.getDefault();
@@ -245,8 +256,11 @@ public class InstructionList implements Iterable<Instruction>
         {
             track.append("\n<trkpt lat='").append(Helper.round6(entry.getLat()));
             track.append("' lon='").append(Helper.round6(entry.getLon())).append("'>");
-            track.append("<time>").append(tzHack(formatter.format(startTimeMillis + entry.getMillis())));
-            track.append("</time>").append("</trkpt>");
+            track.append("<time>").append(tzHack(formatter.format(startTimeMillis + entry.getMillis()))).append("</time>");
+            if (includeElevation)
+                track.append("<ele>").append(Helper.round2(entry.getEle())).append("</ele>");
+
+            track.append("</trkpt>");
         }
         track.append("</trkseg>");
         track.append("</trk>");

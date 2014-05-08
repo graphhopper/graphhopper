@@ -18,11 +18,12 @@
 package com.graphhopper.util;
 
 import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.GHPoint3D;
 
 /**
  * @author Peter Karich
  */
-public class GPXEntry extends GHPoint
+public class GPXEntry extends GHPoint3D
 {
     private long time;
 
@@ -33,8 +34,19 @@ public class GPXEntry extends GHPoint
 
     public GPXEntry( double lat, double lon, long millis )
     {
-        super(lat, lon);
+        super(lat, lon, Double.NaN);
         this.time = millis;
+    }
+
+    public GPXEntry( double lat, double lon, double ele, long millis )
+    {
+        super(lat, lon, ele);
+        this.time = millis;
+    }
+
+    boolean is3D()
+    {
+        return !Double.isNaN(ele);
     }
 
     /**

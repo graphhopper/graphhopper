@@ -121,13 +121,14 @@ public class GraphHopperServlet extends GHBaseServlet
 
     private void writeGPX( HttpServletRequest req, HttpServletResponse res, GHResponse rsp )
     {
+        boolean includeElevation = getBooleanParam(req, "elevation", false);
         res.setCharacterEncoding("UTF-8");
         res.setContentType("application/xml");
         String trackName = getParam(req, "track", "GraphHopper Track");
         res.setHeader("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
         String timeZone = getParam(req, "timezone", "GMT");
         long time = getLongParam(req, "millis", System.currentTimeMillis());
-        writeResponse(res, rsp.getInstructions().createGPX(trackName, time, timeZone));
+        writeResponse(res, rsp.getInstructions().createGPX(trackName, time, timeZone, includeElevation));
     }
 
     private void writeJson( HttpServletRequest req, HttpServletResponse res,

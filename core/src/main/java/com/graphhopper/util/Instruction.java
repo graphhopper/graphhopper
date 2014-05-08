@@ -23,7 +23,7 @@ import java.text.DecimalFormat;
 public class Instruction
 {
     private static final AngleCalc2D ac = new AngleCalc2D();
-    private static final DistanceCalc distanceCalc = new DistanceCalcEarth();
+    private static final DistanceCalc3D distanceCalc = new DistanceCalc3D();
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
     public static final int TURN_SLIGHT_LEFT = -1;
@@ -121,6 +121,11 @@ public class Instruction
         return points.getLongitude(0);
     }
 
+    double getFirstEle()
+    {
+        return points.getElevation(0);
+    }
+
     public PointList getPoints()
     {
         return points;
@@ -140,17 +145,27 @@ public class Instruction
         long prevTime = time;
         double lat = points.getLatitude(0);
         double lon = points.getLongitude(0);
+        double ele = Double.NaN;
+        boolean is3D = points.is3D();
+        if (is3D)
+            ele = points.getLongitude(0);
+
         for (int i = 0; i < len; i++)
         {
             boolean last = i + 1 == len;
             double nextLat = last ? nextInstr.getFirstLat() : points.getLatitude(i + 1);
             double nextLon = last ? nextInstr.getFirstLon() : points.getLongitude(i + 1);
+            double nextEle = is3D ? (last ? nextInstr.getFirstEle() : points.getElevation(i + 1)) : Double.NaN;
 
-            list.add(new GPXEntry(lat, lon, prevTime));
-            // TODO in the case of elevation data the air-line distance is probably not precise enough
-            prevTime = Math.round(prevTime + this.time * distanceCalc.calcDist(nextLat, nextLon, lat, lon) / distance);
+            list.add(new GPXEntry(lat, lon, ele, prevTime));
+            if (is3D)
+                prevTime = Math.round(prevTime + this.time * distanceCalc.calcDist(nextLat, nextLon, nextEle, lat, lon, ele) / distance);
+            else
+                prevTime = Math.round(prevTime + this.time * distanceCalc.calcDist(nextLat, nextLon, lat, lon) / distance);
+
             lat = nextLat;
             lon = nextLon;
+            ele = nextEle;
         }
         return time + this.time;
     }
