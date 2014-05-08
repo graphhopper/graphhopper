@@ -39,7 +39,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
         preferHighwayTags.add("residential");
 
         setTrackTypeSpeed("grade1", 20); // paved
-        setTrackTypeSpeed("grade2", 12); // now unpaved ...
+        setTrackTypeSpeed("grade2", 10); // now unpaved ...
         setTrackTypeSpeed("grade3", PUSHING_SECTION_SPEED);
         setTrackTypeSpeed("grade4", PUSHING_SECTION_SPEED);
         setTrackTypeSpeed("grade5", PUSHING_SECTION_SPEED);

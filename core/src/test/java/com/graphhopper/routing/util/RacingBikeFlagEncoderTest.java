@@ -92,22 +92,20 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     public void testHandleWayTagsInfluencedByRelation()
     {
         OSMWay osmWay = new OSMWay(1);
-        osmWay.setTag("highway", "track");
-        long allowed = encoder.acceptBit;
-
-        OSMRelation osmRel = new OSMRelation(1);
-
+        osmWay.setTag("highway", "track");        
         assertEquals(PUSHING_SECTION_SPEED / 2, getSpeedFromFlags(osmWay), 1e-1);
-
+        assertEquals("pushing section, unpaved", getWayTypeFromFlags(osmWay, 0));
+        
         // relation code is PREFER
+        long allowed = encoder.acceptBit;
+        OSMRelation osmRel = new OSMRelation(1);
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
         long relFlags = encoder.handleRelationTags(osmRel, 0);
         long flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(2, encoder.getSpeed(flags), 1e-1);
         assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay, relFlags);
-        // TODO unpaved if tracktype == null?
-        assertEquals("pushing section", getWayTypeFromFlags(osmWay));
+        assertEquals("way, unpaved", getWayTypeFromFlags(osmWay, relFlags));
 
         // relation code is OUTSTANDING NICE but as unpaved, the speed is still PUSHING_SECTION_SPEED/2
         osmRel.setTag("network", "icn");
@@ -129,5 +127,36 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(20, encoder.getSpeed(flags), 1e-1);
         assertPriority(PREFER.getValue(), osmWay, relFlags);
+        assertEquals("cycleway", getWayTypeFromFlags(osmWay, relFlags));
+
+        // Now we assume bicycle=yes, and unpaved as part of a cycle relation
+        osmWay.setTag("tracktype", "grade2");
+        osmWay.setTag("bicycle", "yes");
+        relFlags = encoder.handleRelationTags(osmRel, 0);
+        flags = encoder.handleWayTags(osmWay, allowed, relFlags);
+        assertEquals(10, encoder.getSpeed(flags), 1e-1);
+        assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay, relFlags);
+        assertEquals("cycleway, unpaved", getWayTypeFromFlags(osmWay, relFlags));
+
+        // Now we assume bicycle=yes, and unpaved not part of a cycle relation
+        osmRel.clearTags();
+        osmWay.clearTags();
+        osmWay.setTag("highway", "track");
+        osmWay.setTag("tracktype", "grade3");
+        relFlags = encoder.handleRelationTags(osmRel, 0);
+        flags = encoder.handleWayTags(osmWay, allowed, relFlags);
+        assertEquals(4, encoder.getSpeed(flags), 1e-1);
+        assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay, relFlags);
+        assertEquals("pushing section, unpaved", getWayTypeFromFlags(osmWay, relFlags));
+
+        // Now we assume bicycle=yes, and tracktype = null
+        osmRel.clearTags();
+        osmWay.clearTags();
+        osmWay.setTag("highway", "track");
+        relFlags = encoder.handleRelationTags(osmRel, 0);
+        flags = encoder.handleWayTags(osmWay, allowed, relFlags);
+        assertEquals(2, encoder.getSpeed(flags), 1e-1);
+        assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay, relFlags);
+        assertEquals("pushing section, unpaved", getWayTypeFromFlags(osmWay, relFlags));
     }
 }

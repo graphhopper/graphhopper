@@ -170,7 +170,7 @@ public class GraphHopperIT
             assertEquals(110, rsp.getPoints().getSize());
 
             InstructionList il = rsp.getInstructions();
-            assertEquals(18, il.size());
+            assertEquals(19, il.size());
             List<Map<String, Object>> resultJson = il.createJson();
 
             assertEquals("Continue onto Obere Landstraße", resultJson.get(0).get("text"));
