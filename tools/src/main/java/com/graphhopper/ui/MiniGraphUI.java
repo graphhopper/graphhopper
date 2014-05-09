@@ -25,8 +25,6 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.BikeCommonFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FastestWeighting;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.PriorityWeighting;
 import com.graphhopper.routing.util.Weighting;
@@ -84,7 +82,7 @@ public class MiniGraphUI
         this.graph = hopper.getGraph();
         this.na = graph.getNodeAccess();
         prepare = hopper.getPreparation();
-        encoder = (BikeCommonFlagEncoder) hopper.getEncodingManager().getEncoder("bike2");
+        encoder = (BikeCommonFlagEncoder) hopper.getEncodingManager().getEncoder("bike");
         weighting = new PriorityWeighting(encoder);
         if (prepare == null)
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, "dijkstrabi", encoder, weighting);
@@ -181,7 +179,9 @@ public class MiniGraphUI
                         double lat2 = na.getLatitude(nodeId);
                         double lon2 = na.getLongitude(nodeId);
 
-                        // mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, "s:" + (int) encoder.getSpeed(iter.getFlags()));
+                        // mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, iter.getName());
+                        mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, "s:" + (int) encoder.getSpeed(iter.getFlags()));
+                        g2.setColor(Color.BLACK);
 
                         double prio = encoder.getPriority(iter.getFlags());
                         if (prio < 0.2)

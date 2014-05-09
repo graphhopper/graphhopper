@@ -133,7 +133,6 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
         // Decrease the speed for ele increase (incline), and decrease the speed for ele decrease (decline). The speed-decrease 
         // has to be bigger (compared to the speed-increase) for the same elevation difference to simulate loosing energy and avoiding hills.
         // For the reverse speed this has to be the opposite but again keeping in mind that up+down difference.
-        // TODO increase the speed due to a decline only if surface is okay
         if (way.hasTag("highway", "steps"))
         {
             double speed = getHighwaySpeed("steps");
@@ -142,56 +141,72 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
         {
             double incEleSum = 0, incDist2DSum = 0;
             double decEleSum = 0, decDist2DSum = 0;
-            double prevLat = pl.getLatitude(0), prevLon = pl.getLongitude(0), prevEle = pl.getElevation(0);
+            // double prevLat = pl.getLatitude(0), prevLon = pl.getLongitude(0);
+            double prevEle = pl.getElevation(0);
             double fullDist2D = 0;
-            for (int i = 1; i < pl.size(); i++)
+
+            fullDist2D = edge.getDistance();
+            double eleDelta = pl.getElevation(pl.size() - 1) - prevEle;
+            if (eleDelta > 0.1)
             {
-                double lat = pl.getLatitude(i);
-                double lon = pl.getLongitude(i);
-                double ele = pl.getElevation(i);
-                double eleDelta = ele - prevEle;
-                double dist2D = distCalc.calcDist(prevLat, prevLon, lat, lon);
-                if (eleDelta > 0)
-                {
-                    incEleSum += eleDelta;
-                    incDist2DSum += dist2D;
-                } else
-                {
-                    decEleSum += -eleDelta;
-                    decDist2DSum += dist2D;
-                }
-                fullDist2D += dist2D;
-                prevLat = lat;
-                prevLon = lon;
-                prevEle = ele;
+                incEleSum = eleDelta;
+                incDist2DSum = fullDist2D;
+            } else if (eleDelta < -0.1)
+            {
+                decEleSum = -eleDelta;
+                decDist2DSum = fullDist2D;
             }
 
+//            // get a more detailed elevation information, but due to bad SRTM data this does not make sense now.
+//            for (int i = 1; i < pl.size(); i++)
+//            {
+//                double lat = pl.getLatitude(i);
+//                double lon = pl.getLongitude(i);
+//                double ele = pl.getElevation(i);
+//                double eleDelta = ele - prevEle;
+//                double dist2D = distCalc.calcDist(prevLat, prevLon, lat, lon);
+//                if (eleDelta > 0.1)
+//                {
+//                    incEleSum += eleDelta;
+//                    incDist2DSum += dist2D;
+//                } else if (eleDelta < -0.1)
+//                {
+//                    decEleSum += -eleDelta;
+//                    decDist2DSum += dist2D;
+//                }
+//                fullDist2D += dist2D;
+//                prevLat = lat;
+//                prevLon = lon;
+//                prevEle = ele;
+//            }
             // Calculate slop via tan(asin(height/distance)) but for rather smallish angles where we can assume tan a=a and sin a=a.
             // Then calculate a factor which decreases or increases the speed.
             // Do this via a simple quadratic equation where y(0)=1 and y(0.3)=1/4 for incline and y(0.3)=2 for decline        
-            double fwdInc = incDist2DSum > 1 ? incEleSum / incDist2DSum : 0;
-            double fwdDec = decDist2DSum > 1 ? decEleSum / decDist2DSum : 0;
+            double fwdIncline = incDist2DSum > 1 ? incEleSum / incDist2DSum : 0;
+            double fwdDecline = decDist2DSum > 1 ? decEleSum / decDist2DSum : 0;
             double restDist2D = fullDist2D - incDist2DSum - decDist2DSum;
             double maxSpeed = getHighwaySpeed("cycleway");
             if (isForward(flags))
             {
+                // use weighted mean so that longer incline infuences speed more than shorter
                 double speed = getSpeed(flags);
-                // for decline use a maximum factor between 1 and 2
-                double fwdFaster = keepIn(11.1 * fwdDec * fwdDec + 1, 1, 2);
-                // for ascending use a minimum factor of 1/4 and 1
-                double fwdSlower = keepIn(-8.3 * fwdInc * fwdInc + 1, .25, 1);
-                // use weighted mean so that longer incline infuences speed more            
+                double fwdFaster = 1 + 2 * keepIn(fwdDecline, 0, 0.2);
+                fwdFaster = fwdFaster * fwdFaster;
+                double fwdSlower = 1 - 5 * keepIn(fwdIncline, 0, 0.2);
+                fwdSlower = fwdSlower * fwdSlower;
                 speed = speed * (fwdSlower * incDist2DSum + fwdFaster * decDist2DSum + 1 * restDist2D) / fullDist2D;
-                flags = this.setSpeed(flags, keepIn(speed, PUSHING_SECTION_SPEED, maxSpeed));
+                flags = this.setSpeed(flags, keepIn(speed, PUSHING_SECTION_SPEED / 2, maxSpeed));
             }
 
             if (isBackward(flags))
             {
                 double speedReverse = getReverseSpeed(flags);
-                double bwFaster = keepIn(11.1 * fwdInc * fwdInc + 1, 1, 2);
-                double bwSlower = keepIn(-8.3 * fwdDec * fwdDec + 1, 0.25, 1);
+                double bwFaster = 1 + 2 * keepIn(fwdIncline, 0, 0.2);
+                bwFaster = bwFaster * bwFaster;
+                double bwSlower = 1 - 5 * keepIn(fwdDecline, 0, 0.2);
+                bwSlower = bwSlower * bwSlower;
                 speedReverse = speedReverse * (bwFaster * incDist2DSum + bwSlower * decDist2DSum + 1 * restDist2D) / fullDist2D;
-                flags = this.setReverseSpeed(flags, keepIn(speedReverse, PUSHING_SECTION_SPEED, maxSpeed));
+                flags = this.setReverseSpeed(flags, keepIn(speedReverse, PUSHING_SECTION_SPEED / 2, maxSpeed));
             }
         }
         edge.setFlags(flags);

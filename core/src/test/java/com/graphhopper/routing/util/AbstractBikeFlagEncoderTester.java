@@ -200,6 +200,8 @@ public abstract class AbstractBikeFlagEncoderTester
     {
         OSMWay osmWay = new OSMWay(1);
         osmWay.setTag("highway", "residential");
+        assertPriority(PREFER.getValue(), osmWay);
+        
         osmWay.setTag("tunnel", "yes");
         assertPriority(UNCHANGED.getValue(), osmWay);
 

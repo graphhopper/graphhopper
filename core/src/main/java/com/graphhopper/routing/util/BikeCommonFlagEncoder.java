@@ -43,7 +43,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     protected final HashSet<String> oppositeLanes = new HashSet<String>();
     protected final Set<String> preferHighwayTags = new HashSet<String>();
     protected final Set<String> avoidHighwayTags = new HashSet<String>();
-    private final Set<String> unpavedSurfaceTags = new HashSet<String>();
+    protected final Set<String> unpavedSurfaceTags = new HashSet<String>();
     private final Map<String, Integer> trackTypeSpeed = new HashMap<String, Integer>();
     private final Map<String, Integer> surfaceSpeed = new HashMap<String, Integer>();
     private final Set<String> roadValues = new HashSet<String>();
@@ -124,9 +124,9 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
 
         setTrackTypeSpeed("grade1", 18); // paved
         setTrackTypeSpeed("grade2", 12); // now unpaved ...
-        setTrackTypeSpeed("grade3", 10);
-        setTrackTypeSpeed("grade4", 8);
-        setTrackTypeSpeed("grade5", 6); // like sand/grass     
+        setTrackTypeSpeed("grade3", 8);
+        setTrackTypeSpeed("grade4", 6);
+        setTrackTypeSpeed("grade5", 4); // like sand/grass     
 
         setSurfaceSpeed("paved", 18);
         setSurfaceSpeed("asphalt", 18);
@@ -162,11 +162,13 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         setHighwaySpeed("path", 18);
         setHighwaySpeed("footway", 6);
         setHighwaySpeed("pedestrian", 6);
-        setHighwaySpeed("road", 10);
-        setHighwaySpeed("track", 18);
+        setHighwaySpeed("track", 12);
         setHighwaySpeed("service", 14);
-        setHighwaySpeed("unclassified", 18);
         setHighwaySpeed("residential", 18);
+        // no other highway applies:
+        setHighwaySpeed("unclassified", 16);
+        // unknown road:
+        setHighwaySpeed("road", 12);
 
         setHighwaySpeed("trunk", 18);
         setHighwaySpeed("trunk_link", 18);
