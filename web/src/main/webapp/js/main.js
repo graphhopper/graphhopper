@@ -1086,7 +1086,10 @@ function setAutoCompleteList(fromOrTo) {
 
     myAutoDiv.autocomplete(options);
     $("#" + fromOrTo + "Input").focusout(function() {
-        myAutoDiv.autocomplete().hide();
+        myAutoDiv.autocomplete().disable();
+    });
+    $("#" + fromOrTo + "Input").focusin(function() {
+        myAutoDiv.autocomplete().enable();
     });
 }
 

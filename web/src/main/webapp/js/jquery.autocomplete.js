@@ -195,7 +195,7 @@
             var that = this;
             that.fixPosition();
             if (that.options.minChars <= that.el.val().length) {
-                that.onValueChange();
+                // that.onValueChange();
             }
         },
 
