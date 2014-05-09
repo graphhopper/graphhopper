@@ -33,8 +33,9 @@ import java.util.Map.Entry;
 public class TranslationMap
 {
     // use 'en_US' as reference
-    private static final List<String> LOCALES = Arrays.asList("bg", "de_DE", "el", "en_US", "es", "fil", "fr", "it", "ja", "nl", "pt_BR", "pt_PT", "ro", "ru", "si", "tr");
-    private Map<String, Translation> translations = new HashMap<String, Translation>();
+    private static final List<String> LOCALES = Arrays.asList("bg", "ca", "de_DE", "el", "en_US", "es", "fil",
+            "fr", "gl", "it", "ja", "nl", "pt_BR", "pt_PT", "ro", "ru", "si", "tr", "uk");
+    private final Map<String, Translation> translations = new HashMap<String, Translation>();
 
     /**
      * This loads the translation files from the specified folder.
