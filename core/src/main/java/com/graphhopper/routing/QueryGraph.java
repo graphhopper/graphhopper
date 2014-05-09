@@ -360,7 +360,7 @@ public class QueryGraph implements Graph
 
         int edgeId = origEdgeId - mainEdges;
         EdgeIteratorState eis = virtualEdges.get(edgeId);
-        if (eis.getAdjNode() == adjNode)
+        if (eis.getAdjNode() == adjNode || adjNode == Integer.MIN_VALUE)
             return eis;
 
         // find reverse edge via convention. see virtualEdges comment above
