@@ -127,7 +127,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(20, encoder.getSpeed(flags), 1e-1);
         assertPriority(PREFER.getValue(), osmWay, relFlags);
-        assertEquals("cycleway", getWayTypeFromFlags(osmWay, relFlags));
+        assertEquals("", getWayTypeFromFlags(osmWay, relFlags));
 
         // Now we assume bicycle=yes, and unpaved as part of a cycle relation
         osmWay.setTag("tracktype", "grade2");
@@ -136,7 +136,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(10, encoder.getSpeed(flags), 1e-1);
         assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay, relFlags);
-        assertEquals("cycleway, unpaved", getWayTypeFromFlags(osmWay, relFlags));
+        assertEquals("way, unpaved", getWayTypeFromFlags(osmWay, relFlags));
 
         // Now we assume bicycle=yes, and unpaved not part of a cycle relation
         osmRel.clearTags();

@@ -516,8 +516,13 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             encoded |= unpavedBit;
         }
 
-        if ((way.hasTag("bicycle", intendedValues) && way.hasTag("highway", pushingSections))
-                || ("cycleway".equals(way.getTag("highway"))))
+        if (way.hasTag("bicycle", intendedValues))
+        {
+            if (way.hasTag("highway", pushingSections))
+                wayType = WayType.OTHER_SMALL_WAY;
+            else
+                wayType = WayType.CYCLEWAY;
+        } else if ("cycleway".equals(way.getTag("highway")))
             wayType = WayType.CYCLEWAY;
         else if (way.hasTag("highway", roadValues))
             wayType = WayType.ROAD;
