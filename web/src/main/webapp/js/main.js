@@ -389,6 +389,8 @@ function resolve(fromOrTo, locCoord) {
 
         if (locCoord.error)
             errorDiv.text(locCoord.error);
+        else
+            errorDiv.text("");
 
         $("#" + fromOrTo + "Indicator").hide();
         $("#" + fromOrTo + "Flag").show();
