@@ -68,6 +68,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         restrictedValues.add("forestry");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
+        restrictedValues.add("delivery");
 
         intendedValues.add("yes");
         intendedValues.add("permissive");
@@ -182,11 +183,12 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // do not drive street cars into fords
-        if ((way.hasTag("highway", "ford") || way.hasTag("ford")) && !way.hasTag(restrictions, intendedValues))
+        boolean carsAllowed = way.hasTag(restrictions, intendedValues);
+        if (("ford".equals(highwayValue) || way.hasTag("ford")) && !carsAllowed)
             return 0;
 
         // check access restrictions
-        if (way.hasTag(restrictions, restrictedValues))
+        if (way.hasTag(restrictions, restrictedValues) && !carsAllowed)
             return 0;
 
         // do not drive cars over railways (sometimes incorrectly mapped!)

@@ -45,6 +45,17 @@ public class CarFlagEncoderTest
         way.setTag("highway", "track");
         way.setTag("motorcar", "no");
         assertFalse(encoder.acceptWay(way) > 0);
+        
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("access", "no");
+        way.setTag("motorcar", "yes");
+        assertTrue(encoder.acceptWay(way) > 0);
+        
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("access", "delivery");        
+        assertFalse(encoder.acceptWay(way) > 0);
 
         way.clearTags();
         way.setTag("highway", "unclassified");

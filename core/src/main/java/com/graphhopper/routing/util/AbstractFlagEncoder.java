@@ -94,6 +94,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
         acceptedRailways.add("tram");
         acceptedRailways.add("abandoned");
+        acceptedRailways.add("disused");
     }
 
     /**
