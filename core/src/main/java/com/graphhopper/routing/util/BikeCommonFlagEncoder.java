@@ -506,25 +506,25 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         // Populate bits at wayTypeMask with wayType            
         WayType wayType = WayType.OTHER_SMALL_WAY;
         boolean isPusingSection = isPushingSection(way);
-        if (isPusingSection && !partOfCycleRelation || way.hasTag("highway", "steps"))
+        if (isPusingSection && !partOfCycleRelation || "steps".equals(highway))
             wayType = WayType.PUSHING_SECTION;
 
         if ("track".equals(highway) && (trackType == null || !"grade1".equals(trackType))
-                || (surfaceTag == null && way.hasTag("highway", "path"))
+                || "path".equals(highway) && surfaceTag == null
                 || unpavedSurfaceTags.contains(surfaceTag))
         {
             encoded |= unpavedBit;
         }
 
         if (way.hasTag("bicycle", intendedValues))
-        {
-            if (way.hasTag("highway", pushingSections))
+        {            
+            if (isPusingSection && !way.hasTag("bicycle", "designated"))
                 wayType = WayType.OTHER_SMALL_WAY;
             else
                 wayType = WayType.CYCLEWAY;
-        } else if ("cycleway".equals(way.getTag("highway")))
+        } else if ("cycleway".equals(highway))
             wayType = WayType.CYCLEWAY;
-        else if (way.hasTag("highway", roadValues))
+        else if (roadValues.contains(highway))
             wayType = WayType.ROAD;
 
         return wayTypeEncoder.setValue(encoded, wayType.getValue());

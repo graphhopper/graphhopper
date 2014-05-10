@@ -201,7 +201,7 @@ public abstract class AbstractBikeFlagEncoderTester
         OSMWay osmWay = new OSMWay(1);
         osmWay.setTag("highway", "residential");
         assertPriority(PREFER.getValue(), osmWay);
-        
+
         osmWay.setTag("tunnel", "yes");
         assertPriority(UNCHANGED.getValue(), osmWay);
 
@@ -271,6 +271,10 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("surface", "grass");
         wayType = getWayTypeFromFlags(way);
         assertEquals("way, unpaved", wayType);
+
+        way.setTag("bicycle", "designated");
+        wayType = getWayTypeFromFlags(way);
+        assertEquals("cycleway, unpaved", wayType);
 
         way.clearTags();
         way.setTag("highway", "footway");
