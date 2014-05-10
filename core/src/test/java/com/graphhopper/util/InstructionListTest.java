@@ -42,6 +42,7 @@ public class InstructionListTest
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation usTR = trMap.getWithFallBack(Locale.US);
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testWayList()
     {

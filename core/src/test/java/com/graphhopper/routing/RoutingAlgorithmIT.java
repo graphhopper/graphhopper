@@ -279,7 +279,7 @@ public class RoutingAlgorithmIT
     public void testKremsMountainBikeRelation()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(48.409523, 15.602394, 48.375466, 15.72916, 12573, 169));
+        list.add(new OneRun(48.409523, 15.602394, 48.375466, 15.72916, 12574, 169));
         list.add(new OneRun(48.410061, 15.63951, 48.411386, 15.604899, 3101, 94));
         list.add(new OneRun(48.412294, 15.62007, 48.398306, 15.609667, 3965, 95));
 
@@ -367,7 +367,7 @@ public class RoutingAlgorithmIT
     {
         List<OneRun> list = new ArrayList<OneRun>();
         // choose Unterloher Weg and the following residential + cycleway
-        list.add(new OneRun(50.004333,11.600254, 50.044449,11.543434, 6931, 184));
+        list.add(new OneRun(50.004333, 11.600254, 50.044449, 11.543434, 6931, 184));
         runAlgo(testCollector, "files/harsdorf.osm.pbf", "target/harsdorf-gh",
                 list, "bike", true, "bike", "fastest-bike", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());

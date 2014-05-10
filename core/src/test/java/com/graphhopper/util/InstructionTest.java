@@ -25,54 +25,47 @@ import static org.junit.Assert.*;
  * @author Johannes Pelzer
  */
 public class InstructionTest
-{   
+{
     @Test
-    public void testGetAzimuthAndGetDirection() {
+    public void testGetAzimuthAndGetDirection()
+    {
         InstructionAnnotation ea = InstructionAnnotation.EMPTY;
         PointList pl = new PointList();
         pl.add(49.942, 11.584);
         pl.add(49.942, 11.582);
         Instruction i1 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, pl).setDistance(240).setTime(15000);
-        
+
         assertEquals("270", i1.getAzimuth(null));
         assertEquals("W", i1.getDirection(null));
 
-        
         PointList p2 = new PointList();
         p2.add(49.942, 11.580);
         p2.add(49.944, 11.582);
         Instruction i2 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, p2).setDistance(240).setTime(15000);
-        
+
         assertEquals("45", i2.getAzimuth(null));
         assertEquals("NE", i2.getDirection(null));
-        
-        
+
         PointList p3 = new PointList();
         p3.add(49.942, 11.580);
         p3.add(49.944, 11.580);
         Instruction i3 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, p3).setDistance(240).setTime(15000);
-        
-        
+
         assertEquals("0", i3.getAzimuth(null));
         assertEquals("N", i3.getDirection(null));
-        
+
         PointList p4 = new PointList();
         p4.add(49.940, 11.580);
         p4.add(49.920, 11.586);
         Instruction i4 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, p4).setDistance(240).setTime(15000);
-        
-        
-        
+
         assertEquals("S", i4.getDirection(null));
- 
+
         PointList p5 = new PointList();
         p5.add(49.940, 11.580);
         Instruction i5 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, p5).setDistance(240).setTime(15000);
-        
-        assertEquals(null, i5.getAzimuth(null));
-        assertEquals(null, i5.getDirection(null));
+
+        assertEquals("", i5.getAzimuth(null));
+        assertEquals("", i5.getDirection(null));
     }
-    
-    
-    
 }

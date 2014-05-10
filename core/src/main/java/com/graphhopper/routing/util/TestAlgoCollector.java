@@ -72,14 +72,14 @@ public class TestAlgoCollector
 
         PointList pointList = rsp.getPoints();
         double tmpDist = pointList.calcDistance(distCalc);
-        if (Math.abs(rsp.getDistance() - tmpDist) > .9)
+        if (Math.abs(rsp.getDistance() - tmpDist) > 2)
         {
             errors.add(prepare + " path.getDistance was  " + rsp.getDistance()
                     + "\t pointList.calcDistance was " + tmpDist + "\t (expected points " + oneRun.getLocs()
                     + ", expected distance " + oneRun.getDistance() + ") " + queryList);
         }
 
-        if (Math.abs(rsp.getDistance() - oneRun.getDistance()) > .9)
+        if (Math.abs(rsp.getDistance() - oneRun.getDistance()) > 2)
         {
             errors.add(prepare + " returns path not matching the expected distance of " + oneRun.getDistance()
                     + "\t Returned was " + rsp.getDistance() + "\t (expected points " + oneRun.getLocs()

@@ -103,9 +103,7 @@ public class DistanceCalcEarth implements DistanceCalc
     public BBox createBBox( double lat, double lon, double radiusInMeter )
     {
         if (radiusInMeter <= 0)
-        {
             throw new IllegalArgumentException("Distance must not be zero or negative! " + radiusInMeter + " lat,lon:" + lat + "," + lon);
-        }
 
         // length of a circle at specified lat / dist
         double dLon = (360 / (calcCircumference(lat) / radiusInMeter));

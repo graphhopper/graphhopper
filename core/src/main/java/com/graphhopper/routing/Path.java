@@ -37,7 +37,7 @@ import java.util.List;
  */
 public class Path
 {
-    private static final AngleCalc2D ac = new AngleCalc2D();
+    private static final AngleCalc ac = new AngleCalc();
     protected Graph graph;
     private FlagEncoder encoder;
     protected double distance;

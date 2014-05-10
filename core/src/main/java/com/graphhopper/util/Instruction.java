@@ -18,11 +18,10 @@
 package com.graphhopper.util;
 
 import java.util.List;
-import java.text.DecimalFormat;
 
 public class Instruction
 {
-    private static final AngleCalc2D ac = new AngleCalc2D();
+    private static final AngleCalc ac = new AngleCalc();
     private static final DistanceCalc3D distanceCalc = new DistanceCalc3D();
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
@@ -168,12 +167,9 @@ public class Instruction
     {
         StringBuilder sb = new StringBuilder();
         sb.append('(');
-        sb.append(sign);
-        sb.append(',');
-        sb.append(name);
-        sb.append(',');
-        sb.append(distance);
-        sb.append(',');
+        sb.append(sign).append(',');
+        sb.append(name).append(',');
+        sb.append(distance).append(',');
         sb.append(time);
         sb.append(')');
         return sb.toString();
@@ -181,7 +177,7 @@ public class Instruction
 
     /**
      * Return Direction/Compass point based on the first tracksegment of the instruction. If
-     * Instruction does not contain enough coordinate points, NULL will be returned.
+     * Instruction does not contain enough coordinate points, an empty string will be returned.
      * <p>
      * @return
      */
@@ -189,26 +185,22 @@ public class Instruction
     {
         double azimuth = calcAzimuth(nextI);
         if (Double.isNaN(azimuth))
-            return null;
+            return "";
 
-        String dir = ac.azimuth2compassPoint(azimuth);
-        return dir;
+        return ac.azimuth2compassPoint(azimuth);
     }
 
     /**
      * Return Azimuth based on the first tracksegment of the instruction. If Instruction does not
-     * contain enough coordinate points, NULL will be returned.
-     * <p>
-     * @return
+     * contain enough coordinate points, an empty string will be returned.
      */
     String getAzimuth( Instruction nextI )
     {
         double az = calcAzimuth(nextI);
         if (Double.isNaN(az))
-            return null;
+            return "";
 
-        DecimalFormat angleFormatter = new DecimalFormat("#");
-        return angleFormatter.format(az);
+        return "" + Math.round(az);
     }
 
     private double calcAzimuth( Instruction nextI )
@@ -231,9 +223,7 @@ public class Instruction
 
         double lat = points.getLatitude(0);
         double lon = points.getLongitude(0);
-
-        double azimuth = ac.calcAzimuth(lat, lon, nextLat, nextLon);
-        return azimuth;
+        return ac.calcAzimuth(lat, lon, nextLat, nextLon);
     }
 
     void checkOne()

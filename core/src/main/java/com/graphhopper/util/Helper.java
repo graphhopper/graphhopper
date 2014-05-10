@@ -435,6 +435,11 @@ public class Helper
     {
         return Math.round(value * 1e6) / 1e6;
     }
+    
+    public static final double round4( double value )
+    {
+        return Math.round(value * 1e4) / 1e4;
+    }
 
     public static final double round2( double value )
     {
