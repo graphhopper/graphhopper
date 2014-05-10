@@ -24,6 +24,7 @@ GHRequest = function(host) {
     this.points_encoded = true;
     this.instructions = true;
     this.elevation = false;
+    this.features = {};
     this.debug = false;
     this.locale = "en";
     this.do_zoom = true;
@@ -56,10 +57,21 @@ GHRequest.prototype.init = function(params) {
     if (params.locale)
         this.locale = params.locale;
 
-    this.handleBoolean("do_zoom", params);
-    this.handleBoolean("instructions", params);
-    this.handleBoolean("points_encoded", params);
-    this.setElevation(params.elevation);
+    if ('do_zoom' in params)
+        this.do_zoom = params.do_zoom;
+    if ('instructions' in params)
+        this.instructions = params.instructions;
+    if ('points_encoded' in params)
+        this.points_encoded = params.points_encoded;
+
+    this.elevation = false;
+    var featureSet = this.features[this.vehicle];
+    if (featureSet && featureSet.elevation) {
+        if ('elevation' in params)
+            this.elevation = params.elevation;
+        else
+            this.elevation = true;
+    }
 
     if (params.q) {
         var qStr = params.q;
@@ -89,19 +101,18 @@ GHRequest.prototype.init = function(params) {
     }
 };
 
-GHRequest.prototype.handleBoolean = function(key, params) {
-    if (key in params)
-        this[key] = params[key] === "true" || params[key] === true;
-};
-
-GHRequest.prototype.setElevation = function(ele) {
-    if(ele)        
-        this.elevation = ele === "true" || ele === true;
+GHRequest.prototype.initVehicle = function(vehicle) {
+    this.vehicle = vehicle;
+    var featureSet = this.features[this.vehicle];
+    if (featureSet && featureSet.elevation)
+        this.elevation = true;
+    else
+        this.elevation = false;
 };
 
 GHRequest.prototype.hasElevation = function() {
     return this.elevation;
-}
+};
 
 GHRequest.prototype.createGeocodeURL = function(host) {
     var tmpHost = this.host;
@@ -137,13 +148,14 @@ GHRequest.prototype.createPath = function(url) {
     if (this.algorithm && this.algorithm !== "dijkstrabi")
         url += "&algorithm=" + this.algorithm;
     if (this.min_path_precision !== 1)
-        url += "&min_path_precision=" + this.min_path_precision;   
+        url += "&min_path_precision=" + this.min_path_precision;
     if (!this.instructions)
         url += "&instructions=false";
     if (!this.points_encoded)
         url += "&points_encoded=false";
-    if (this.elevation)
-        url += "&elevation=true";    
+
+    if(this.elevation)
+        url += "&elevation=true";
     if (this.debug)
         url += "&debug=true";
     return url;

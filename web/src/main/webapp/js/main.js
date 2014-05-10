@@ -102,14 +102,12 @@ $(document).ready(function(e) {
                 bounds.maxLon = tmp[2];
                 bounds.maxLat = tmp[3];
                 var vehiclesDiv = $("#vehicles");
-                function createButton(vehicleJson) {                    
-                    var vehicle = vehicleJson.name.toLowerCase();
+                function createButton(vehicle, vehicleJson) {                    
                     var button = $("<button class='vehicle-btn' title='" + tr(vehicle) + "'/>");
                     button.attr('id', vehicle);
                     button.html("<img src='img/" + vehicle + ".png' alt='" + tr(vehicle) + "'></img>");
                     button.click(function() {
-                        ghRequest.vehicle = vehicle;
-                        ghRequest.setElevation(vehicleJson.elevation);
+                        ghRequest.initVehicle(vehicle);
                         resolveFrom();
                         resolveTo();
                         routeLatLng(ghRequest);
@@ -118,12 +116,13 @@ $(document).ready(function(e) {
                 }
 
                 if (json.features) {
-                    var vehicles = json.features;
+                    ghRequest.features = json.features;
+                    var vehicles = Object.keys(json.features);
                     if (vehicles.length > 0)
-                        ghRequest.vehicle = vehicles[0].name;
+                        ghRequest.initVehicle(vehicles[0]);
 
-                    for (var i = 0; i < vehicles.length; i++) {
-                        vehiclesDiv.append(createButton(vehicles[i]));
+                    for (var key in json.features) {
+                        vehiclesDiv.append(createButton(key.toLowerCase(), json.features[key]));
                     }
                 }
 
@@ -902,9 +901,19 @@ function parseUrl(query) {
         var value = vars[i].substring(indexPos + 1);
         value = decodeURIComponent(value.replace(/\+/g, ' '));
 
-        if (typeof res[key] === "undefined")
-            res[key] = value;
-        else if (typeof res[key] === "string") {
+        if (typeof res[key] === "undefined") {
+            if(value === 'true')
+                res[key] = true;
+            else if(value === 'false')
+                res[key] = false;
+            else {
+                var tmp = Number(value);
+                if(isNaN(tmp))
+                    res[key] = value;
+                else
+                    res[key] = Number(value);
+            }
+        } else if (typeof res[key] === "string") {
             var arr = [res[key], value];
             res[key] = arr;
         } else

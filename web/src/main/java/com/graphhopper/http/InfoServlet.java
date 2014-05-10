@@ -71,15 +71,14 @@ public class InfoServlet extends GHBaseServlet
 
         String[] vehicles = hopper.getGraph().getEncodingManager().toString().split(",");
         json.put("supported_vehicles", vehicles);
-        List<JSONObject> arr = new ArrayList<JSONObject>(vehicles.length);
+        JSONObject features = new JSONObject();
         for (String v : vehicles)
         {
-            JSONObject features = new JSONObject();
-            features.put("name", v);
-            features.put("elevation", hopper.hasElevation());
-            arr.add(features);
+            JSONObject perVehicleJson = new JSONObject();
+            perVehicleJson.put("elevation", hopper.hasElevation());
+            features.put(v, perVehicleJson);
         }
-        json.put("features", arr);
+        json.put("features", features);
 
         json.put("version", Constants.VERSION);
         json.put("build_date", Constants.BUILD_DATE);
