@@ -86,7 +86,7 @@ public class RoutingAlgorithmSpecialAreaTests
 
             OneRun or = new OneRun(50.0314, 10.5105, 50.0303, 10.5070, 571, 22);
             testCollector.assertDistance(prepare, or.getList(idx, ef), or);
-            or = new OneRun(49.51451, 9.967346, 50.2920, 10.4650, 107545, 1946);
+            or = new OneRun(49.51451, 9.967346, 50.2920, 10.4650, 107584, 1952);
             testCollector.assertDistance(prepare, or.getList(idx, ef), or);
             or = new OneRun(50.0780, 9.1570, 49.5860, 9.9750, 91715, 1413);
             testCollector.assertDistance(prepare, or.getList(idx, ef), or);
