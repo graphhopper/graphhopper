@@ -104,7 +104,7 @@ public class TranslationMap
     }
 
     /**
-     * Returns the Translation object for the specified locale.
+     * Returns the Translation object for the specified locale and returns null if not found.
      */
     public Translation get( String locale )
     {

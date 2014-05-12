@@ -102,7 +102,7 @@ $(document).ready(function(e) {
                 bounds.maxLon = tmp[2];
                 bounds.maxLat = tmp[3];
                 var vehiclesDiv = $("#vehicles");
-                function createButton(vehicle, vehicleJson) {                    
+                function createButton(vehicle) {                    
                     var button = $("<button class='vehicle-btn' title='" + tr(vehicle) + "'/>");
                     button.attr('id', vehicle);
                     button.html("<img src='img/" + vehicle + ".png' alt='" + tr(vehicle) + "'></img>");
@@ -122,7 +122,7 @@ $(document).ready(function(e) {
                         ghRequest.initVehicle(vehicles[0]);
 
                     for (var key in json.features) {
-                        vehiclesDiv.append(createButton(key.toLowerCase(), json.features[key]));
+                        vehiclesDiv.append(createButton(key.toLowerCase()));
                     }
                 }
 
@@ -714,7 +714,7 @@ function routeLatLng(request, doQuery) {
             $("#info").append(instructionsElement);
 
             if (partialInstr) {
-                var moreDiv = $("<button id='moreButton'>More...</button>");
+                var moreDiv = $("<button id='moreButton'>"+tr("moreButton")+"..</button>");
                 moreDiv.click(function() {
                     moreDiv.remove();
                     for (var m = len; m < path.instructions.length; m++) {
@@ -1006,6 +1006,7 @@ function initI18N() {
     $('#searchButton').attr("value", tr("searchButton"));
     $('#fromInput').attr("placeholder", tr("fromHint"));
     $('#toInput').attr("placeholder", tr("toHint"));
+    $('#gpxExportButton').attr("title", tr("gpxExportButton"));
 }
 
 function exportGPX() {

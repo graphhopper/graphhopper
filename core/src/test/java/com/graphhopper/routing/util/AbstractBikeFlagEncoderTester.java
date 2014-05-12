@@ -235,16 +235,16 @@ public abstract class AbstractBikeFlagEncoderTester
 
         way.setTag("highway", "steps");
         wayType = getWayTypeFromFlags(way);
-        assertEquals("pushing section", wayType);
+        assertEquals("get off the bike", wayType);
 
         way.setTag("highway", "footway");
         wayType = getWayTypeFromFlags(way);
-        assertEquals("pushing section", wayType);
+        assertEquals("get off the bike", wayType);
 
         way.setTag("highway", "footway");
         way.setTag("surface", "pebblestone");
         wayType = getWayTypeFromFlags(way);
-        assertEquals("pushing section", wayType);
+        assertEquals("get off the bike", wayType);
 
         way.setTag("highway", "residential");
         wayType = getWayTypeFromFlags(way);

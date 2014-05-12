@@ -128,7 +128,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.clearTags();
         way.setTag("highway", "pedestrian");
         wayType = getWayTypeFromFlags(way);
-        assertEquals("pushing section", wayType);
+        assertEquals("get off the bike", wayType);
     }
 
     @Test

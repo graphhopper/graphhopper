@@ -1,6 +1,6 @@
 # do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
 
-sharp_left=рязко няляво
+sharp_left=рязко наляво
 sharp_right=рязко надясно
 left=наляво
 right=надясно
@@ -31,11 +31,11 @@ mAbbr=m
 miAbbr=mi
 ftAbbr=ft
 road=улица
-pushing_section=участък, забранен/невъзможен за движение на велосипеди
-cycleway=велотрасе/велоалея
+off_bike=в този участък трябва да слезеш от колелото!
+cycleway=велоалея
 way=път
-paved=павиран път
-unpaved=непавиран път
+paved=асфалтиран
+unpaved=черен
 stopover=прехвърляне %1$s
 roundaboutInstruction=Влез в кръговото и използвай изход %1$s
 roundaboutInstructionWithDir=Влез в кръговото и използвай изход %1$s в посока %2$s

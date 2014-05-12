@@ -402,7 +402,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                 wayTypeName = tr.tr("road");
                 break;
             case 1:
-                wayTypeName = tr.tr("pushing_section");
+                wayTypeName = tr.tr("off_bike");
                 break;
             case 2:
                 wayTypeName = tr.tr("cycleway");
