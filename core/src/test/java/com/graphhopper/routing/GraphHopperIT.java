@@ -174,9 +174,9 @@ public class GraphHopperIT
             List<Map<String, Object>> resultJson = il.createJson();
 
             assertEquals("Continue onto Obere Landstraße", resultJson.get(0).get("text"));
-            assertEquals("Pushing section", resultJson.get(0).get("annotationText"));
+            assertEquals("get off the bike", resultJson.get(0).get("annotationText"));
             assertEquals("Turn sharp left onto Kirchengasse", resultJson.get(1).get("text"));
-            assertEquals("Pushing section", resultJson.get(1).get("annotationText"));
+            assertEquals("get off the bike", resultJson.get(1).get("annotationText"));
 
             assertEquals("Turn sharp right onto Pfarrplatz", resultJson.get(2).get("text"));
             assertEquals("Turn right onto Margarethenstraße", resultJson.get(3).get("text"));
@@ -189,7 +189,7 @@ public class GraphHopperIT
             assertEquals("Turn slight left onto Rechte Kremszeile", resultJson.get(10).get("text"));
             //..
             assertEquals("Turn right onto Treppelweg", resultJson.get(15).get("text"));
-            assertEquals("Cycleway", resultJson.get(15).get("annotationText"));
+            assertEquals("cycleway", resultJson.get(15).get("annotationText"));
 
         } catch (Exception ex)
         {
