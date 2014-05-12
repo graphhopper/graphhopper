@@ -80,6 +80,10 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("highway", "motorway");
         assertFalse(encoder.acceptWay(way) > 0);
 
+        way.setTag("highway", "motorway");
+        way.setTag("bicycle", "yes");
+        assertTrue(encoder.acceptWay(way) > 0);
+
         way.setTag("highway", "footway");
         assertTrue(encoder.acceptWay(way) > 0);
 
@@ -326,5 +330,14 @@ public abstract class AbstractBikeFlagEncoderTester
         osmWay.setTag("highway", "cycleway");
         long encoded = encoder.handleWayTags(osmWay, encoder.acceptBit, 0);
         assertEquals((double) VERY_NICE.getValue() / BEST.getValue(), encoder.getPriority(encoded), 1e-3);
+    }
+
+    @Test
+    public void testAvoidMotorway()
+    {
+        OSMWay osmWay = new OSMWay(1);
+        osmWay.setTag("highway", "motorway");
+        osmWay.setTag("bicycle", "yes");
+        assertPriority(REACH_DEST.getValue(), osmWay);
     }
 }

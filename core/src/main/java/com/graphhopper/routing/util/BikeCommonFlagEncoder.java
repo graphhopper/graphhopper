@@ -179,6 +179,12 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         setHighwaySpeed("tertiary", 18);
         setHighwaySpeed("tertiary_link", 18);
 
+        // special case see tests and #191
+        setHighwaySpeed("motorway", 18);
+        setHighwaySpeed("motorway_link", 18);
+        avoidHighwayTags.add("motorway");
+        avoidHighwayTags.add("motorway_link");
+
         setCyclingNetworkPreference("icn", PriorityCode.BEST.getValue());
         setCyclingNetworkPreference("ncn", PriorityCode.BEST.getValue());
         setCyclingNetworkPreference("rcn", PriorityCode.VERY_NICE.getValue());
@@ -236,6 +242,10 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         // use the way if it is tagged for bikes
         if (way.hasTag("bicycle", intendedValues))
             return acceptBit;
+
+        // accept only if explicitely tagged for bike usage
+        if ("motorway".equals(highwayValue) || "motorway_link".equals(highwayValue))
+            return 0;
 
         if (way.hasTag("motorroad", "yes"))
             return 0;
@@ -517,7 +527,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         }
 
         if (way.hasTag("bicycle", intendedValues))
-        {            
+        {
             if (isPusingSection && !way.hasTag("bicycle", "designated"))
                 wayType = WayType.OTHER_SMALL_WAY;
             else

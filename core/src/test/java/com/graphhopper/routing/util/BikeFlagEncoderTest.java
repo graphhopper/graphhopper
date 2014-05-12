@@ -41,62 +41,67 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     {
         long result = encoder.setProperties(10, true, true);
         assertEquals(10, encoder.getSpeed(result), 1e-1);
-        OSMWay osmWay = new OSMWay(1);
-        osmWay.setTag("highway", "primary");
-        assertEquals(18, encoder.getSpeed(osmWay));
-        assertPriority(REACH_DEST.getValue(), osmWay);
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "primary");
+        assertEquals(18, encoder.getSpeed(way));
+        assertPriority(REACH_DEST.getValue(), way);
 
-        osmWay.setTag("highway", "footway");
-        assertEquals(4, encoder.getSpeed(osmWay));
-        assertPriority(AVOID_IF_POSSIBLE.getValue(), osmWay);
+        way.setTag("highway", "footway");
+        assertEquals(4, encoder.getSpeed(way));
+        assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
 
-        osmWay.setTag("highway", "track");
-        assertEquals(12, encoder.getSpeed(osmWay));
-        assertPriority(UNCHANGED.getValue(), osmWay);
+        way.setTag("highway", "track");
+        assertEquals(12, encoder.getSpeed(way));
+        assertPriority(UNCHANGED.getValue(), way);
 
-        osmWay.setTag("tracktype", "grade1");
-        assertEquals(18, encoder.getSpeed(osmWay));
-        assertPriority(UNCHANGED.getValue(), osmWay);
+        way.setTag("tracktype", "grade1");
+        assertEquals(18, encoder.getSpeed(way));
+        assertPriority(UNCHANGED.getValue(), way);
 
-        osmWay.setTag("highway", "track");
-        osmWay.setTag("tracktype", "grade2");
-        assertEquals(12, encoder.getSpeed(osmWay));
-        assertPriority(UNCHANGED.getValue(), osmWay);
+        way.setTag("highway", "track");
+        way.setTag("tracktype", "grade2");
+        assertEquals(12, encoder.getSpeed(way));
+        assertPriority(UNCHANGED.getValue(), way);
 
         // test speed for allowed get off the bike types
-        osmWay.setTag("highway", "track");
-        osmWay.setTag("bicycle", "yes");
-        assertEquals(12, encoder.getSpeed(osmWay));
+        way.setTag("highway", "track");
+        way.setTag("bicycle", "yes");
+        assertEquals(12, encoder.getSpeed(way));
 
-        osmWay.clearTags();
-        osmWay.setTag("highway", "steps");
-        assertEquals(2, encoder.getSpeed(osmWay));
-        assertPriority(AVOID_IF_POSSIBLE.getValue(), osmWay);
+        way.clearTags();
+        way.setTag("highway", "steps");
+        assertEquals(2, encoder.getSpeed(way));
+        assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
 
-        osmWay.clearTags();
-        osmWay.setTag("highway", "track");
-        osmWay.setTag("surface", "paved");
-        assertEquals(18, encoder.getSpeed(osmWay));
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("surface", "paved");
+        assertEquals(18, encoder.getSpeed(way));
 
-        osmWay.clearTags();
-        osmWay.setTag("highway", "path");
-        osmWay.setTag("surface", "ground");
-        assertEquals(4, encoder.getSpeed(osmWay));
-        assertPriority(AVOID_IF_POSSIBLE.getValue(), osmWay);
+        way.clearTags();
+        way.setTag("highway", "path");
+        way.setTag("surface", "ground");
+        assertEquals(4, encoder.getSpeed(way));
+        assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
 
-        osmWay.clearTags();
-        osmWay.setTag("highway", "track");
-        osmWay.setTag("bicycle", "yes");
-        osmWay.setTag("surface", "fine_gravel");
-        assertEquals(18, encoder.getSpeed(osmWay));
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("bicycle", "yes");
+        way.setTag("surface", "fine_gravel");
+        assertEquals(18, encoder.getSpeed(way));
 
-        osmWay.setTag("surface", "unknown_surface");
-        assertEquals(4, encoder.getSpeed(osmWay));
+        way.setTag("surface", "unknown_surface");
+        assertEquals(4, encoder.getSpeed(way));
         
-        osmWay.clearTags();
-        osmWay.setTag("highway", "residential");
-        osmWay.setTag("surface", "asphalt");
-        assertEquals(18, encoder.getSpeed(osmWay));
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("surface", "asphalt");
+        assertEquals(18, encoder.getSpeed(way));
+        
+        way.clearTags();
+        way.setTag("highway", "motorway");
+        way.setTag("bicycle", "yes");
+        assertEquals(18, encoder.getSpeed(way));
     }
 
     @Test
