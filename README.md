@@ -9,14 +9,14 @@ It is tuned towards road networks with OpenStreetMap data but can be useful for 
 Get Started & Contribute
 ---------------
 
-Read through our [wiki](https://github.com/graphhopper/graphhopper/wiki/), 
+Read through our [docs](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md), 
 [how to contribute](https://github.com/graphhopper/graphhopper/blob/master/CONTRIBUTING.md) and 
 ask questions on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper)
 or sign up to the [mailing list](http://graphhopper.com/#developers).
 
 **Please only email me directly if you need consultancy** or can't explain your problem in the public.
 
-There are subprojects to make GraphHopper working on [Android](https://github.com/graphhopper/graphhopper/wiki/Android) or 
+There are subprojects to make GraphHopper working on [Android](https://github.com/graphhopper/graphhopper/blob/master/docs/android/index.md) or 
 as a [web application](https://github.com/graphhopper/graphhopper/tree/master/web). Have a look into our [live application](http://graphhopper.com/maps)
 
 
