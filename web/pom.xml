@@ -146,8 +146,8 @@
                     <execution>
                         <id>make-assembly</id>
                         <!-- bind to verify and not package to pass integration tests before creating assemblies -->
-                        <phase>install</phase>
-                        <goals>                            
+                        <phase>integration-test</phase> 
+                       <goals>
                             <goal>single</goal>
                         </goals>
                     </execution>
