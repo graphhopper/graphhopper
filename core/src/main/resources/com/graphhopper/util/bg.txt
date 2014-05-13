@@ -22,6 +22,7 @@ web.racingbike=Състезателно колело
 web.mtb=Планинско колело
 web.car=Автомобил
 web.foot=Пеш
+web.staticlink=
 finish=Крайна цел!
 hourAbbr=ч
 dayAbbr=д

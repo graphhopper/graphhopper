@@ -22,6 +22,7 @@ web.racingbike=BicicletadeCorrida
 web.mtb=Mountainbike
 web.car=Carro
 web.foot=A pé
+web.staticlink=
 finish=Destino alcançado
 hourAbbr=h
 dayAbbr=d

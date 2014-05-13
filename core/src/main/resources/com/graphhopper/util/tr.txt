@@ -22,6 +22,7 @@ web.racingbike=
 web.mtb=
 web.car=Otomobil
 web.foot=Yürüyerek
+web.staticlink=
 finish=Bitti !
 hourAbbr=s
 dayAbbr=g

@@ -22,6 +22,7 @@ web.racingbike=RacingBike
 web.mtb=MountainBike
 web.car=kotse
 web.foot=lumakad
+web.staticlink=
 finish=Tapusin!
 hourAbbr=h
 dayAbbr=d

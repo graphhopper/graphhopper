@@ -22,6 +22,7 @@ web.racingbike=Шосейний велосипед
 web.mtb=Гірський велосипед
 web.car=Автомобіль
 web.foot=Пішки
+web.staticlink=
 finish=Фініш!
 hourAbbr=год
 dayAbbr=д

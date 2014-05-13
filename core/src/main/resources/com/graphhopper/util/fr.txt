@@ -22,6 +22,7 @@ web.racingbike=Vélo de route
 web.mtb=VTT
 web.car=Voiture
 web.foot=À pied
+web.staticlink=
 finish=Fini!
 hourAbbr=h
 dayAbbr=j
