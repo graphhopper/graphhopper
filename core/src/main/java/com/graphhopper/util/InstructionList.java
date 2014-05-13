@@ -118,7 +118,7 @@ public class InstructionList implements Iterable<Instruction>
         return instrList;
     }
 
-    private String getTurnDescription( Instruction instruction, TranslationMap.Translation tr )
+    public static String getTurnDescription( Instruction instruction, TranslationMap.Translation tr )
     {
         String str;
         String n = getWayName(instruction.getName(), instruction.getPavementType(), instruction.getWayType(), tr);
