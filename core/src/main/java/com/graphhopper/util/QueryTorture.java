@@ -68,10 +68,10 @@ public class QueryTorture
         if (Helper.isEmpty(baseUrl))
             throw new IllegalArgumentException("baseUrl cannot be empty!?");
 
-        if (baseUrl.endsWith("/"))
-            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
-        if (!baseUrl.endsWith("/route"))
-            baseUrl += "/route";
+        if (!baseUrl.endsWith("/"))
+            baseUrl += "/";
+        if (!baseUrl.endsWith("route/"))
+            baseUrl += "route/";
         if (!baseUrl.endsWith("?"))
             baseUrl += "?";
 
@@ -167,7 +167,8 @@ public class QueryTorture
         Query query = queryQueue.take();
         try
         {
-            String res = new Downloader("QueryTorture!").setTimeout(timeout).downloadAsString(baseUrl + query.queryString);
+            String url = baseUrl + query.queryString;
+            String res = new Downloader("QueryTorture!").setTimeout(timeout).downloadAsString(url);
             if (res.contains("errors"))
                 routingErrorCounter.incrementAndGet();
             else
@@ -259,6 +260,7 @@ public class QueryTorture
                 if (!param.startsWith("point="))
                     continue;
 
+                param = param.replace("%2C", ",");
                 GHPoint point = GHPoint.parse(param.substring(6));
                 if (point == null)
                     continue;
