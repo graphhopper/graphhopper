@@ -106,7 +106,6 @@ public class GraphHopper implements GraphHopperAPI
 
     public GraphHopper()
     {
-        System.out.println( "*******************************" );
     }
 
     /**

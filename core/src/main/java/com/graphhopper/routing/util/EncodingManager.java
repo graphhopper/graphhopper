@@ -116,7 +116,6 @@ public class EncodingManager
 
     public EncodingManager( List<? extends FlagEncoder> flagEncoders, int bytesForFlags, int maxTurnCost )
     {
-        System.out.println( "*******************************" );
         if (bytesForFlags != 4 && bytesForFlags != 8)
             throw new IllegalStateException("For 'flags' currently only 4 or 8 bytes supported");
 
@@ -168,7 +167,6 @@ public class EncodingManager
 
             try
             {
-                System.out.println( className );
                 @SuppressWarnings("unchecked")
                 Class<FlagEncoder> cls = (Class<FlagEncoder>) Class.forName(className);
                 resultEncoders.add(cls.getDeclaredConstructor().newInstance());
