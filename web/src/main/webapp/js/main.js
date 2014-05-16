@@ -48,7 +48,7 @@ $(document).ready(function(e) {
     // fixing cross domain support e.g in Opera
     jQuery.support.cors = true;
 
-    if (host.indexOf("graphhopper.com") > 0)
+    if (isProduction())
         $('#hosting').show();
 
     var History = window.History;
@@ -88,7 +88,7 @@ $(document).ready(function(e) {
                 ghRequest.setLocale(translations["locale"]);
                 defaultTranslationMap = translations["default"];
                 enTranslationMap = translations["en"];
-                if (defaultTranslationMap == null)
+                if (!defaultTranslationMap)
                     defaultTranslationMap = enTranslationMap;
 
                 initI18N();
@@ -117,6 +117,9 @@ $(document).ready(function(e) {
 
                 if (json.features) {
                     ghRequest.features = json.features;
+                    if(isProduction())
+                        delete json.features['bike']
+                    
                     var vehicles = Object.keys(json.features);
                     if (vehicles.length > 0)
                         ghRequest.initVehicle(vehicles[0]);
@@ -963,19 +966,19 @@ function tr(key, args) {
 }
 
 function tr2(key, args) {
-    if (key == null) {
+    if (key === null) {
         console.log("ERROR: key was null?");
         return "";
     }
-    if (defaultTranslationMap == null) {
+    if (defaultTranslationMap === null) {
         console.log("ERROR: defaultTranslationMap was not initialized?");
         return key;
     }
     key = key.toLowerCase();
     var val = defaultTranslationMap[key];
-    if (val == null && enTranslationMap)
+    if (!val && enTranslationMap)
         val = enTranslationMap[key];
-    if (val == null)
+    if (!val)
         return key;
 
     return stringFormat(val, args);
@@ -1143,4 +1146,8 @@ function dataToText(data) {
     if (data.country && text.indexOf(data.country) < 0)
         text = insComma(text, data.country);
     return text;
+}
+
+function isProduction() {
+    return host.indexOf("graphhopper.com") > 0;
 }

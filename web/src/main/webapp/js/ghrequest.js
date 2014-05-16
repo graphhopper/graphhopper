@@ -30,7 +30,7 @@ GHRequest = function(host) {
     this.do_zoom = true;
     // use jsonp here if host allows CORS
     this.dataType = "json";
-    this.key = "tcV28oCCNIzu4GD1Hsp8dYGAHqFBXvYrBvBwthGE";
+    this.key = "K1KVyGYve5choCJAbyejstj5Ho0dEa6RbBnwHbSw";
 };
 
 GHRequest.prototype.init = function(params) {
