@@ -257,7 +257,7 @@ function initMap() {
 
     // default
     map = L.map('map', {
-        layers: [mapquest]
+        layers: [lyrk]
     });
 
     var baseMaps = {
