@@ -102,7 +102,7 @@ $(document).ready(function(e) {
                 bounds.maxLon = tmp[2];
                 bounds.maxLat = tmp[3];
                 var vehiclesDiv = $("#vehicles");
-                function createButton(vehicle) {                    
+                function createButton(vehicle) {
                     var button = $("<button class='vehicle-btn' title='" + tr(vehicle) + "'/>");
                     button.attr('id', vehicle);
                     button.html("<img src='img/" + vehicle + ".png' alt='" + tr(vehicle) + "'></img>");
@@ -117,9 +117,9 @@ $(document).ready(function(e) {
 
                 if (json.features) {
                     ghRequest.features = json.features;
-                    if(isProduction())
+                    if (isProduction())
                         delete json.features['bike']
-                    
+
                     var vehicles = Object.keys(json.features);
                     if (vehicles.length > 0)
                         ghRequest.initVehicle(vehicles[0]);
@@ -135,7 +135,8 @@ $(document).ready(function(e) {
                 initFromParams(urlParams, true);
             }, function(err) {
                 console.log(err);
-                $('#error').html('GraphHopper API offline? ' + host);
+                $('#error').html('GraphHopper API offline? <a href="http://graphhopper.com/maps">Refresh</a>'
+                        + '<br/>Status: ' + err.statusText + '<br/>' + host);
 
                 bounds = {
                     "minLon": -180,
@@ -717,7 +718,7 @@ function routeLatLng(request, doQuery) {
             $("#info").append(instructionsElement);
 
             if (partialInstr) {
-                var moreDiv = $("<button id='moreButton'>"+tr("moreButton")+"..</button>");
+                var moreDiv = $("<button id='moreButton'>" + tr("moreButton") + "..</button>");
                 moreDiv.click(function() {
                     moreDiv.remove();
                     for (var m = len; m < path.instructions.length; m++) {
@@ -829,8 +830,8 @@ function addInstruction(main, instr, instrIndex, lngLat) {
     else
         throw "did not found sign " + sign;
     var title = instr.text;
-    if(instr.annotationText) {
-        if(!title)
+    if (instr.annotationText) {
+        if (!title)
             title = instr.annotationText;
         else
             title = title + ", " + instr.annotationText;
@@ -905,13 +906,13 @@ function parseUrl(query) {
         value = decodeURIComponent(value.replace(/\+/g, ' '));
 
         if (typeof res[key] === "undefined") {
-            if(value === 'true')
+            if (value === 'true')
                 res[key] = true;
-            else if(value === 'false')
+            else if (value === 'false')
                 res[key] = false;
             else {
                 var tmp = Number(value);
-                if(isNaN(tmp))
+                if (isNaN(tmp))
                     res[key] = value;
                 else
                     res[key] = Number(value);
