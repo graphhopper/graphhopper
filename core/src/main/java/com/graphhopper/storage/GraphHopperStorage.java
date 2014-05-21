@@ -91,12 +91,12 @@ public class GraphHopperStorage implements GraphStorage
     final ExtendedStorage extStorage;
     private final NodeAccess nodeAccess;
 
-    public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean enabledEle )
+    public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation )
     {
-        this(dir, encodingManager, enabledEle, new ExtendedStorage.NoExtendedStorage());
+        this(dir, encodingManager, withElevation, new ExtendedStorage.NoExtendedStorage());
     }
 
-    public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean enabled3D, ExtendedStorage extendedStorage )
+    public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation, ExtendedStorage extendedStorage )
     {
         // here encoding manager can be null e.g. if we want to load existing graph
         this.encodingManager = encodingManager;
@@ -109,7 +109,7 @@ public class GraphHopperStorage implements GraphStorage
         this.nameIndex = new NameIndex(dir);
         this.properties = new StorableProperties(dir);
         this.bounds = BBox.INVERSE.clone();
-        this.nodeAccess = new GHNodeAccess(this, enabled3D);
+        this.nodeAccess = new GHNodeAccess(this, withElevation);
         extendedStorage.init(this);
     }
 

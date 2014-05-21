@@ -50,7 +50,7 @@ public class LocationIndexTree implements LocationIndex
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int MAGIC_INT;
-    protected static DistanceCalc distCalc = new DistancePlaneProjection();
+    protected DistanceCalc distCalc = new DistancePlaneProjection();
     private DistanceCalc preciseDistCalc = new DistanceCalcEarth();
     protected final Graph graph;
     private final NodeAccess nodeAccess;

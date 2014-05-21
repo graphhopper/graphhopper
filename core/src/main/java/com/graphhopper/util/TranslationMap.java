@@ -33,8 +33,9 @@ import java.util.Map.Entry;
 public class TranslationMap
 {
     // use 'en_US' as reference
-    private static final List<String> LOCALES = Arrays.asList("bg", "de_DE", "el", "en_US", "es", "fil", "fr", "it", "ja", "nl", "pt_BR", "pt_PT", "ro", "ru", "si", "tr");
-    private Map<String, Translation> translations = new HashMap<String, Translation>();
+    private static final List<String> LOCALES = Arrays.asList("bg", "ca", "de_DE", "el", "en_US", "es", "fil",
+            "fr", "gl", "it", "ja", "nl", "pt_BR", "pt_PT", "ro", "ru", "si", "tr", "uk");
+    private final Map<String, Translation> translations = new HashMap<String, Translation>();
 
     /**
      * This loads the translation files from the specified folder.
@@ -103,7 +104,7 @@ public class TranslationMap
     }
 
     /**
-     * Returns the Translation object for the specified locale.
+     * Returns the Translation object for the specified locale and returns null if not found.
      */
     public Translation get( String locale )
     {
@@ -157,21 +158,10 @@ public class TranslationMap
         }
     }
 
-    public static interface Translation
-    {
-        String tr( String key, Object... params );
-
-        Map<String, String> asMap();
-
-        Locale getLocale();
-
-        String getLanguage();
-    }
-
     public static class TranslationHashMap implements Translation
     {
         private final Map<String, String> map = new HashMap<String, String>();
-        private final Locale locale;
+        final Locale locale;
 
         public TranslationHashMap( Locale locale )
         {
@@ -261,4 +251,40 @@ public class TranslationMap
     {
         return translations.toString();
     }
+
+    // unused
+    private static final Translation NO_TRANSLATE = new Translation()
+    {
+
+        @Override
+        public String tr( String key, Object... params )
+        {
+            if (key.equals("turn_onto") || key.equals("turn"))
+                key = "";
+
+            for (Object p : params)
+            {
+                key += " " + p.toString();
+            }
+            return key.trim();
+        }
+
+        @Override
+        public Map<String, String> asMap()
+        {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public Locale getLocale()
+        {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public String getLanguage()
+        {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+    };
 }

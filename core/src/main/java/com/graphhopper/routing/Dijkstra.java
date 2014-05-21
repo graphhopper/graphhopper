@@ -101,7 +101,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
                     fromHeap.add(nEdge);
                 }
 
-                updateShortest(nEdge, startNode);
+                updateBestPath(nEdge, startNode);
             }
 
             if (fromHeap.isEmpty())

@@ -68,9 +68,10 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         restrictedValues.add("forestry");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
+        restrictedValues.add("delivery");
 
-        intended.add("yes");
-        intended.add("permissive");
+        intendedValues.add("yes");
+        intendedValues.add("permissive");
 
         potentialBarriers.add("gate");
         potentialBarriers.add("lift_gate");
@@ -175,6 +176,13 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             return 0;
         }
 
+        if ("track".equals(highwayValue))
+        {
+            String tt = way.getTag("tracktype");
+            if (tt != null && !tt.equals("grade1"))
+                return 0;
+        }
+
         if (!defaultSpeedMap.containsKey(highwayValue))
             return 0;
 
@@ -182,11 +190,12 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // do not drive street cars into fords
-        if ((way.hasTag("highway", "ford") || way.hasTag("ford")) && !way.hasTag(restrictions, intended))
+        boolean carsAllowed = way.hasTag(restrictions, intendedValues);
+        if (("ford".equals(highwayValue) || way.hasTag("ford")) && !carsAllowed)
             return 0;
 
         // check access restrictions
-        if (way.hasTag(restrictions, restrictedValues))
+        if (way.hasTag(restrictions, restrictedValues) && !carsAllowed)
             return 0;
 
         // do not drive cars over railways (sometimes incorrectly mapped!)
@@ -213,7 +222,10 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         {
             // get assumed speed from highway type
             double speed = getSpeed(way);
-            speed = reduceToMaxSpeed(speed, way);            
+            double maxSpeed = getMaxSpeed(way);
+            if (maxSpeed > 0)
+                // apply maxSpeed which can mean increase or decrease
+                speed = maxSpeed * 0.9;
 
             // limit speed to max 30 km/h if bad surface
             if (speed > 30 && way.hasTag("surface", badSurfaceSpeedMap))

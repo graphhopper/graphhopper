@@ -26,9 +26,11 @@ import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author Peter Karich
@@ -37,6 +39,7 @@ public class TestAlgoCollector
 {
     private final String name;
     private final DistanceCalc distCalc = new DistanceCalcEarth();
+    private final TranslationMap trMap = new TranslationMap().doImport();
     public List<String> errors = new ArrayList<String>();
 
     public TestAlgoCollector( String name )
@@ -50,6 +53,7 @@ public class TestAlgoCollector
         for (int i = 0; i < queryList.size() - 1; i++)
         {
             Path path = prepare.createAlgo().calcPath(queryList.get(i), queryList.get(i + 1));
+            // System.out.println(path.calcInstructions().createGPX("temp", 0, "GMT"));
             viaPaths.add(path);
         }
         PathMerger pathMerger = new PathMerger().
@@ -57,7 +61,7 @@ public class TestAlgoCollector
                 setSimplifyRequest(false).
                 setEnableInstructions(true);
         GHResponse rsp = new GHResponse();
-        pathMerger.doWork(rsp, viaPaths);
+        pathMerger.doWork(rsp, viaPaths, trMap.getWithFallBack(Locale.US));
 
         if (!rsp.isFound())
         {
@@ -68,14 +72,14 @@ public class TestAlgoCollector
 
         PointList pointList = rsp.getPoints();
         double tmpDist = pointList.calcDistance(distCalc);
-        if (Math.abs(rsp.getDistance() - tmpDist) > .9)
+        if (Math.abs(rsp.getDistance() - tmpDist) > 2)
         {
             errors.add(prepare + " path.getDistance was  " + rsp.getDistance()
                     + "\t pointList.calcDistance was " + tmpDist + "\t (expected points " + oneRun.getLocs()
                     + ", expected distance " + oneRun.getDistance() + ") " + queryList);
         }
 
-        if (Math.abs(rsp.getDistance() - oneRun.getDistance()) > .9)
+        if (Math.abs(rsp.getDistance() - oneRun.getDistance()) > 2)
         {
             errors.add(prepare + " returns path not matching the expected distance of " + oneRun.getDistance()
                     + "\t Returned was " + rsp.getDistance() + "\t (expected points " + oneRun.getLocs()

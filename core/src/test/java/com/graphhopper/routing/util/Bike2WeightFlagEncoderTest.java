@@ -19,6 +19,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -30,7 +31,7 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class Bike2WeightFlagEncoderTest
+public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest
 {
     private Graph initExampleGraph( FlagEncoder instance )
     {
@@ -42,6 +43,7 @@ public class Bike2WeightFlagEncoderTest
         na.setNode(1, 51.1, 12.002, 60);
         EdgeIteratorState edge = gs.edge(0, 1).
                 setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
+        edge.setDistance(100);
 
         edge.setFlags(instance.setReverseSpeed(instance.setProperties(10, true, true), 15));
         return gs;
@@ -58,11 +60,11 @@ public class Bike2WeightFlagEncoderTest
 
         long flags = edge.getFlags();
         // decrease speed
-        assertEquals(6, instance.getSpeed(flags), 1e-1);
+        assertEquals(2, instance.getSpeed(flags), 1e-1);
         // increase speed but use maximum speed (calculated was 24)
         assertEquals(18, instance.getReverseSpeed(flags), 1e-1);
     }
-
+        
     @Test
     public void testSteps()
     {

@@ -3,7 +3,7 @@ cd $HOME/..
 
 destination=src/main/resources/com/graphhopper/util/
 
-translations="en_US SKIP de_DE ro pt_PT pt_BR bg es ru ja fr si tr nl it fil SKIP el"
+translations="en_US SKIP de_DE ro pt_PT pt_BR bg es ru ja fr si tr nl it fil gl el uk ca"
 file=$1
 
 # TODO we need tsv but Google throws Internal Error when doing (works for csv):

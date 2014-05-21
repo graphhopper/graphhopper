@@ -23,12 +23,14 @@ GHRequest = function(host) {
     this.weighting = "fastest";
     this.points_encoded = true;
     this.instructions = true;
+    this.elevation = false;
+    this.features = {};
     this.debug = false;
     this.locale = "en";
     this.do_zoom = true;
     // use jsonp here if host allows CORS
     this.dataType = "json";
-    this.key = "tcV28oCCNIzu4GD1Hsp8dYGAHqFBXvYrBvBwthGE";
+    this.key = "K1KVyGYve5choCJAbyejstj5Ho0dEa6RbBnwHbSw";
 };
 
 GHRequest.prototype.init = function(params) {
@@ -55,9 +57,21 @@ GHRequest.prototype.init = function(params) {
     if (params.locale)
         this.locale = params.locale;
 
-    this.handleBoolean("do_zoom", params);
-    this.handleBoolean("instructions", params);
-    this.handleBoolean("points_encoded", params);
+    if ('do_zoom' in params)
+        this.do_zoom = params.do_zoom;
+    if ('instructions' in params)
+        this.instructions = params.instructions;
+    if ('points_encoded' in params)
+        this.points_encoded = params.points_encoded;
+
+    this.elevation = false;
+    var featureSet = this.features[this.vehicle];
+    if (featureSet && featureSet.elevation) {
+        if ('elevation' in params)
+            this.elevation = params.elevation;
+        else
+            this.elevation = true;
+    }
 
     if (params.q) {
         var qStr = params.q;
@@ -87,14 +101,22 @@ GHRequest.prototype.init = function(params) {
     }
 };
 
-GHRequest.prototype.handleBoolean = function(key, params) {
-    if (key in params)
-        this[key] = params[key] === "true" || params[key] === true;
+GHRequest.prototype.initVehicle = function(vehicle) {
+    this.vehicle = vehicle;
+    var featureSet = this.features[this.vehicle];
+    if (featureSet && featureSet.elevation)
+        this.elevation = true;
+    else
+        this.elevation = false;
+};
+
+GHRequest.prototype.hasElevation = function() {
+    return this.elevation;
 };
 
 GHRequest.prototype.createGeocodeURL = function(host) {
     var tmpHost = this.host;
-    if(host)
+    if (host)
         tmpHost = host;
     return this.createPath(tmpHost + "/geocode?limit=8&type=" + this.dataType + "&key=" + this.key);
 };
@@ -115,26 +137,29 @@ GHRequest.prototype.createFullURL = function() {
 };
 
 GHRequest.prototype.createPath = function(url) {
-    if (this.vehicle && this.vehicle != "car")
+    if (this.vehicle && this.vehicle !== "car")
         url += "&vehicle=" + this.vehicle;
     // fastest or shortest
-    if (this.weighting && this.weighting != "fastest")
+    if (this.weighting && this.weighting !== "fastest")
         url += "&weighting=" + this.weighting;
-    if (this.locale && this.locale != "en")
+    if (this.locale && this.locale !== "en")
         url += "&locale=" + this.locale;
     // dijkstra, dijkstrabi, astar, astarbi
-    if (this.algorithm && this.algorithm != "dijkstrabi")
+    if (this.algorithm && this.algorithm !== "dijkstrabi")
         url += "&algorithm=" + this.algorithm;
+    if (this.min_path_precision !== 1)
+        url += "&min_path_precision=" + this.min_path_precision;
     if (!this.instructions)
         url += "&instructions=false";
     if (!this.points_encoded)
         url += "&points_encoded=false";
-    if (this.min_path_precision !== 1)
-        url += "&min_path_precision=" + this.min_path_precision;
+
+    if(this.elevation)
+        url += "&elevation=true";
     if (this.debug)
         url += "&debug=true";
     return url;
-}
+};
 
 function decodePath(encoded, is3D) {
     // var start = new Date().getTime();
@@ -189,6 +214,7 @@ function decodePath(encoded, is3D) {
 }
 
 GHRequest.prototype.doRequest = function(url, callback) {
+    var that = this;
     $.ajax({
         "timeout": 30000,
         "url": url,
@@ -198,7 +224,7 @@ GHRequest.prototype.doRequest = function(url, callback) {
                     var path = json.paths[i];
                     // convert encoded polyline to geo json
                     if (path.points_encoded) {
-                        var tmpArray = decodePath(path.points, path.points_dimension === 3);
+                        var tmpArray = decodePath(path.points, that.hasElevation());
                         path.points = {
                             "type": "LineString",
                             "coordinates": tmpArray
@@ -212,7 +238,7 @@ GHRequest.prototype.doRequest = function(url, callback) {
             // problematic: this callback is not invoked when using JSONP!
             // http://stackoverflow.com/questions/19035557/jsonp-request-error-handling
             var msg = "API did not respond! ";
-            if (err && err.statusText && err.statusText != "OK")
+            if (err && err.statusText && err.statusText !== "OK")
                 msg += err.statusText;
 
             console.log(msg + " " + JSON.stringify(err));

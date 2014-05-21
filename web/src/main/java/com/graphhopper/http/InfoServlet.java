@@ -68,7 +68,18 @@ public class InfoServlet extends GHBaseServlet
 
         JSONObject json = new JSONObject();
         json.put("bbox", list);
-        json.put("supported_vehicles", hopper.getGraph().getEncodingManager().toString().split(","));
+
+        String[] vehicles = hopper.getGraph().getEncodingManager().toString().split(",");
+        json.put("supported_vehicles", vehicles);
+        JSONObject features = new JSONObject();
+        for (String v : vehicles)
+        {
+            JSONObject perVehicleJson = new JSONObject();
+            perVehicleJson.put("elevation", hopper.hasElevation());
+            features.put(v, perVehicleJson);
+        }
+        json.put("features", features);
+
         json.put("version", Constants.VERSION);
         json.put("build_date", Constants.BUILD_DATE);
 

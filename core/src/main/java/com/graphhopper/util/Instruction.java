@@ -18,12 +18,11 @@
 package com.graphhopper.util;
 
 import java.util.List;
-import java.text.DecimalFormat;
 
 public class Instruction
 {
-    private static final AngleCalc2D ac = new AngleCalc2D();
-    private static final DistanceCalc distanceCalc = new DistanceCalcEarth();
+    private static final AngleCalc ac = new AngleCalc();
+    private static final DistanceCalc3D distanceCalc = new DistanceCalc3D();
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
     public static final int TURN_SLIGHT_LEFT = -1;
@@ -38,30 +37,23 @@ public class Instruction
     private double distance;
     private long time;
     final PointList points;
-    private final int pavementType;
-    private final int wayType;
+    private final InstructionAnnotation annotation;
 
     /**
      * The points, distances and times have exactly the same count. The last point of this
      * instruction is not duplicated here and should be in the next one.
      */
-    public Instruction( int sign, String name, int wayType, int pavementType, PointList pl )
+    public Instruction( int sign, String name, InstructionAnnotation ia, PointList pl )
     {
         this.sign = sign;
         this.name = name;
         this.points = pl;
-        this.wayType = wayType;
-        this.pavementType = pavementType;
+        this.annotation = ia;
     }
 
-    public int getPavementType()
+    public InstructionAnnotation getAnnotation()
     {
-        return pavementType;
-    }
-
-    public int getWayType()
-    {
-        return wayType;
+        return annotation;
     }
 
     public int getSign()
@@ -121,6 +113,11 @@ public class Instruction
         return points.getLongitude(0);
     }
 
+    double getFirstEle()
+    {
+        return points.getElevation(0);
+    }
+
     public PointList getPoints()
     {
         return points;
@@ -140,17 +137,27 @@ public class Instruction
         long prevTime = time;
         double lat = points.getLatitude(0);
         double lon = points.getLongitude(0);
+        double ele = Double.NaN;
+        boolean is3D = points.is3D();
+        if (is3D)
+            ele = points.getLongitude(0);
+
         for (int i = 0; i < len; i++)
         {
             boolean last = i + 1 == len;
             double nextLat = last ? nextInstr.getFirstLat() : points.getLatitude(i + 1);
             double nextLon = last ? nextInstr.getFirstLon() : points.getLongitude(i + 1);
+            double nextEle = is3D ? (last ? nextInstr.getFirstEle() : points.getElevation(i + 1)) : Double.NaN;
 
-            list.add(new GPXEntry(lat, lon, prevTime));
-            // TODO in the case of elevation data the air-line distance is probably not precise enough
-            prevTime = Math.round(prevTime + this.time * distanceCalc.calcDist(nextLat, nextLon, lat, lon) / distance);
+            list.add(new GPXEntry(lat, lon, ele, prevTime));
+            if (is3D)
+                prevTime = Math.round(prevTime + this.time * distanceCalc.calcDist(nextLat, nextLon, nextEle, lat, lon, ele) / distance);
+            else
+                prevTime = Math.round(prevTime + this.time * distanceCalc.calcDist(nextLat, nextLon, lat, lon) / distance);
+
             lat = nextLat;
             lon = nextLon;
+            ele = nextEle;
         }
         return time + this.time;
     }
@@ -160,12 +167,9 @@ public class Instruction
     {
         StringBuilder sb = new StringBuilder();
         sb.append('(');
-        sb.append(sign);
-        sb.append(',');
-        sb.append(name);
-        sb.append(',');
-        sb.append(distance);
-        sb.append(',');
+        sb.append(sign).append(',');
+        sb.append(name).append(',');
+        sb.append(distance).append(',');
         sb.append(time);
         sb.append(')');
         return sb.toString();
@@ -173,7 +177,7 @@ public class Instruction
 
     /**
      * Return Direction/Compass point based on the first tracksegment of the instruction. If
-     * Instruction does not contain enough coordinate points, NULL will be returned.
+     * Instruction does not contain enough coordinate points, an empty string will be returned.
      * <p>
      * @return
      */
@@ -181,26 +185,22 @@ public class Instruction
     {
         double azimuth = calcAzimuth(nextI);
         if (Double.isNaN(azimuth))
-            return null;
+            return "";
 
-        String dir = ac.azimuth2compassPoint(azimuth);
-        return dir;
+        return ac.azimuth2compassPoint(azimuth);
     }
 
     /**
      * Return Azimuth based on the first tracksegment of the instruction. If Instruction does not
-     * contain enough coordinate points, NULL will be returned.
-     * <p>
-     * @return
+     * contain enough coordinate points, an empty string will be returned.
      */
     String getAzimuth( Instruction nextI )
     {
         double az = calcAzimuth(nextI);
         if (Double.isNaN(az))
-            return null;
+            return "";
 
-        DecimalFormat angleFormatter = new DecimalFormat("#");
-        return angleFormatter.format(az);
+        return "" + Math.round(az);
     }
 
     private double calcAzimuth( Instruction nextI )
@@ -223,14 +223,58 @@ public class Instruction
 
         double lat = points.getLatitude(0);
         double lon = points.getLongitude(0);
-
-        double azimuth = ac.calcAzimuth(lat, lon, nextLat, nextLon);
-        return azimuth;
+        return ac.calcAzimuth(lat, lon, nextLat, nextLon);
     }
 
     void checkOne()
     {
         if (points.size() < 1)
             throw new IllegalStateException("Instruction must contain at least one point " + toString());
+    }
+
+    public String getTurnDescription( Translation tr )
+    {
+        String str;
+        String n = getName();
+        int indi = getSign();
+        if (indi == Instruction.FINISH)
+        {
+            str = tr.tr("finish");
+        } else if (indi == Instruction.REACHED_VIA)
+        {
+            str = tr.tr("stopover", ((FinishInstruction) this).getViaPosition());
+        } else if (indi == Instruction.CONTINUE_ON_STREET)
+        {
+            str = Helper.isEmpty(n) ? tr.tr("continue") : tr.tr("continue_onto", n);
+        } else
+        {
+            String dir = null;
+            switch (indi)
+            {
+                case Instruction.TURN_SHARP_LEFT:
+                    dir = tr.tr("sharp_left");
+                    break;
+                case Instruction.TURN_LEFT:
+                    dir = tr.tr("left");
+                    break;
+                case Instruction.TURN_SLIGHT_LEFT:
+                    dir = tr.tr("slight_left");
+                    break;
+                case Instruction.TURN_SLIGHT_RIGHT:
+                    dir = tr.tr("slight_right");
+                    break;
+                case Instruction.TURN_RIGHT:
+                    dir = tr.tr("right");
+                    break;
+                case Instruction.TURN_SHARP_RIGHT:
+                    dir = tr.tr("sharp_right");
+                    break;
+            }
+            if (dir == null)
+                throw new IllegalStateException("Indication not found " + indi);
+
+            str = Helper.isEmpty(n) ? tr.tr("turn", dir) : tr.tr("turn_onto", dir, n);
+        }
+        return str;
     }
 }

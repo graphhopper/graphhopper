@@ -17,7 +17,6 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.util.TranslationMap.Translation;
 import java.util.Locale;
 import org.junit.Test;
 import static org.junit.Assert.*;

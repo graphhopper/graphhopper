@@ -53,8 +53,8 @@ public class DefaultModule extends AbstractModule
             bind(GraphHopper.class).toInstance(hopper);
 
             long timeout = args.getLong("web.timeout", 3000);
-            bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);
-            bind(TranslationMap.class).toInstance(new TranslationMap().doImport());
+            bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);            
+            bind(TranslationMap.class).toInstance(hopper.getTranslationMap());
         } catch (Exception ex)
         {
             throw new IllegalStateException("Couldn't load graph", ex);

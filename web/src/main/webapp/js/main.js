@@ -5,7 +5,7 @@
  */
 var tmpArgs = parseUrlWithHisto();
 var host = tmpArgs["host"];
-// var host = "http://graphhopper.com/api/1";
+var host = "http://graphhopper.com/api/1";
 if (!host) {
     if (location.port === '') {
         host = location.protocol + '//' + location.hostname;
@@ -48,7 +48,7 @@ $(document).ready(function(e) {
     // fixing cross domain support e.g in Opera
     jQuery.support.cors = true;
 
-    if (host.indexOf("graphhopper.com") > 0)
+    if (isProduction())
         $('#hosting').show();
 
     var History = window.History;
@@ -88,7 +88,7 @@ $(document).ready(function(e) {
                 ghRequest.setLocale(translations["locale"]);
                 defaultTranslationMap = translations["default"];
                 enTranslationMap = translations["en"];
-                if (defaultTranslationMap == null)
+                if (!defaultTranslationMap)
                     defaultTranslationMap = enTranslationMap;
 
                 initI18N();
@@ -103,12 +103,11 @@ $(document).ready(function(e) {
                 bounds.maxLat = tmp[3];
                 var vehiclesDiv = $("#vehicles");
                 function createButton(vehicle) {
-                    var vehicle = vehicle.toLowerCase();
                     var button = $("<button class='vehicle-btn' title='" + tr(vehicle) + "'/>");
                     button.attr('id', vehicle);
                     button.html("<img src='img/" + vehicle + ".png' alt='" + tr(vehicle) + "'></img>");
                     button.click(function() {
-                        ghRequest.vehicle = vehicle;
+                        ghRequest.initVehicle(vehicle);
                         resolveFrom();
                         resolveTo();
                         routeLatLng(ghRequest);
@@ -116,13 +115,17 @@ $(document).ready(function(e) {
                     return button;
                 }
 
-                if (json.supported_vehicles) {
-                    var vehicles = json.supported_vehicles;
-                    if (vehicles.length > 0)
-                        ghRequest.vehicle = vehicles[0];
+                if (json.features) {
+                    ghRequest.features = json.features;
+                    if (isProduction())
+                        delete json.features['bike']
 
-                    for (var i = 0; i < vehicles.length; i++) {
-                        vehiclesDiv.append(createButton(vehicles[i]));
+                    var vehicles = Object.keys(json.features);
+                    if (vehicles.length > 0)
+                        ghRequest.initVehicle(vehicles[0]);
+
+                    for (var key in json.features) {
+                        vehiclesDiv.append(createButton(key.toLowerCase()));
                     }
                 }
 
@@ -132,7 +135,8 @@ $(document).ready(function(e) {
                 initFromParams(urlParams, true);
             }, function(err) {
                 console.log(err);
-                $('#error').html('GraphHopper API offline? ' + host);
+                $('#error').html('GraphHopper API offline? <a href="http://graphhopper.com/maps">Refresh</a>'
+                        + '<br/>Status: ' + err.statusText + '<br/>' + host);
 
                 bounds = {
                     "minLon": -180,
@@ -254,7 +258,7 @@ function initMap() {
 
     // default
     map = L.map('map', {
-        layers: [mapquest]
+        layers: [lyrk]
     });
 
     var baseMaps = {
@@ -386,8 +390,11 @@ function resolve(fromOrTo, locCoord) {
         var errorDiv = $("#" + fromOrTo + "ResolveError");
         errorDiv.empty();
 
-        if (locCoord.error)
-            errorDiv.text(locCoord.error);
+        if (locCoord.error) {
+            errorDiv.show();
+            errorDiv.text(locCoord.error).fadeOut(5000);
+            locCoord.error = '';
+        }
 
         $("#" + fromOrTo + "Indicator").hide();
         $("#" + fromOrTo + "Flag").show();
@@ -648,7 +655,7 @@ function routeLatLng(request, doQuery) {
             "geometry": path.points
         };
 
-        if (path.points_dimension === 3) {
+        if (request.hasElevation()) {
             if (elevationControl === null) {
                 elevationControl = L.control.elevation({
                     position: "bottomright",
@@ -712,7 +719,7 @@ function routeLatLng(request, doQuery) {
             $("#info").append(instructionsElement);
 
             if (partialInstr) {
-                var moreDiv = $("<button id='moreButton'>More...</button>");
+                var moreDiv = $("<button id='moreButton'>" + tr("moreButton") + "..</button>");
                 moreDiv.click(function() {
                     moreDiv.remove();
                     for (var m = len; m < path.instructions.length; m++) {
@@ -824,6 +831,12 @@ function addInstruction(main, instr, instrIndex, lngLat) {
     else
         throw "did not found sign " + sign;
     var title = instr.text;
+    if (instr.annotationText) {
+        if (!title)
+            title = instr.annotationText;
+        else
+            title = title + ", " + instr.annotationText;
+    }
     var distance = instr.distance;
     var str = "<td class='instr_title'>" + title + "</td>";
 
@@ -893,9 +906,19 @@ function parseUrl(query) {
         var value = vars[i].substring(indexPos + 1);
         value = decodeURIComponent(value.replace(/\+/g, ' '));
 
-        if (typeof res[key] === "undefined")
-            res[key] = value;
-        else if (typeof res[key] === "string") {
+        if (typeof res[key] === "undefined") {
+            if (value === 'true')
+                res[key] = true;
+            else if (value === 'false')
+                res[key] = false;
+            else {
+                var tmp = Number(value);
+                if (isNaN(tmp))
+                    res[key] = value;
+                else
+                    res[key] = Number(value);
+            }
+        } else if (typeof res[key] === "string") {
             var arr = [res[key], value];
             res[key] = arr;
         } else
@@ -945,19 +968,19 @@ function tr(key, args) {
 }
 
 function tr2(key, args) {
-    if (key == null) {
+    if (key === null) {
         console.log("ERROR: key was null?");
         return "";
     }
-    if (defaultTranslationMap == null) {
+    if (defaultTranslationMap === null) {
         console.log("ERROR: defaultTranslationMap was not initialized?");
         return key;
     }
     key = key.toLowerCase();
     var val = defaultTranslationMap[key];
-    if (val == null && enTranslationMap)
+    if (!val && enTranslationMap)
         val = enTranslationMap[key];
-    if (val == null)
+    if (!val)
         return key;
 
     return stringFormat(val, args);
@@ -988,6 +1011,7 @@ function initI18N() {
     $('#searchButton').attr("value", tr("searchButton"));
     $('#fromInput').attr("placeholder", tr("fromHint"));
     $('#toInput').attr("placeholder", tr("toHint"));
+    $('#gpxExportButton').attr("title", tr("gpxExportButton"));
 }
 
 function exportGPX() {
@@ -1035,7 +1059,7 @@ function setAutoCompleteList(fromOrTo) {
             return val === undefined;
         },
         serviceUrl: function() {
-            return ghRequest.createGeocodeURL();
+            return ghRequest.createGeocodeURL("http://graphhopper.com/api/1");
         },
         transformResult: function(response, originalQuery) {
             response.suggestions = [];
@@ -1077,7 +1101,11 @@ function setAutoCompleteList(fromOrTo) {
 
     myAutoDiv.autocomplete(options);
     $("#" + fromOrTo + "Input").focusout(function() {
+        myAutoDiv.autocomplete().disable();
         myAutoDiv.autocomplete().hide();
+    });
+    $("#" + fromOrTo + "Input").focusin(function() {
+        myAutoDiv.autocomplete().enable();
     });
 }
 
@@ -1121,4 +1149,8 @@ function dataToText(data) {
     if (data.country && text.indexOf(data.country) < 0)
         text = insComma(text, data.country);
     return text;
+}
+
+function isProduction() {
+    return host.indexOf("graphhopper.com") > 0;
 }

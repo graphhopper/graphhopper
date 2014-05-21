@@ -43,7 +43,26 @@ public class CarFlagEncoderTest
 
         way.clearTags();
         way.setTag("highway", "track");
+        assertTrue(encoder.acceptWay(way) > 0);
+        
         way.setTag("motorcar", "no");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("tracktype", "grade2");
+        // disallow too rough tracks
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("access", "no");
+        way.setTag("motorcar", "yes");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("access", "delivery");
         assertFalse(encoder.acceptWay(way) > 0);
 
         way.clearTags();
@@ -104,13 +123,13 @@ public class CarFlagEncoderTest
         way.setTag("maxspeed:forward", "20");
         encoded = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertEquals(10, encoder.getSpeed(encoded), 1e-1);
-        
+
         way = new OSMWay(1);
         way.setTag("highway", "primary");
         way.setTag("maxspeed:forward", "20");
         encoded = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertEquals(20, encoder.getSpeed(encoded), 1e-1);
-        
+
         way = new OSMWay(1);
         way.setTag("highway", "primary");
         way.setTag("maxspeed:backward", "20");
@@ -149,13 +168,6 @@ public class CarFlagEncoderTest
         encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(20, encoder.getSpeed(encoded), 1e-1);
 
-        way.clearTags();
-        way.setTag("highway", "track");
-        way.setTag("tracktype", "grade5");
-        allowed = encoder.acceptWay(way);
-        encoded = encoder.handleWayTags(way, allowed, 0);
-        assertEquals(5, encoder.getSpeed(encoded), 1e-1);
-
         try
         {
             encoder.setSpeed(0, -1);
@@ -178,7 +190,18 @@ public class CarFlagEncoderTest
         way.setTag("highway", "secondary");
         way.setTag("railway", "rail");
         // disallow rail
-        assertEquals(0, encoder.acceptWay(way));
+        assertTrue(encoder.acceptWay(way) == 0);
+
+        way.clearTags();
+        way.setTag("highway", "path");
+        way.setTag("railway", "abandoned");
+        assertTrue(encoder.acceptWay(way) == 0);
+
+        way.setTag("highway", "track");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.setTag("motorcar", "no");
+        assertTrue(encoder.acceptWay(way) == 0);
 
         way = new OSMWay(1);
         way.setTag("highway", "secondary");
@@ -340,5 +363,13 @@ public class CarFlagEncoderTest
         {
 
         }
+    }
+
+    @Test
+    public void testSetToMaxSpeed()
+    {
+        OSMWay way = new OSMWay(12);
+        way.setTag("maxspeed", "90");
+        assertEquals(90, encoder.getMaxSpeed(way), 1e-2);
     }
 }

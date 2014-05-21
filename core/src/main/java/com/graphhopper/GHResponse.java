@@ -31,7 +31,7 @@ public class GHResponse extends GHBaseResponse<GHResponse>
     private PointList list = PointList.EMPTY;
     private double distance;
     private long time;
-    private InstructionList instructions = new InstructionList(0);
+    private InstructionList instructions = InstructionList.EMPTY;
     private boolean found;
 
     public GHResponse()

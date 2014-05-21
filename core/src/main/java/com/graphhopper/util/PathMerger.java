@@ -30,12 +30,12 @@ import java.util.List;
  */
 public class PathMerger
 {
-    boolean enableInstructions = true;
-    boolean simplifyRequest = false;
-    DouglasPeucker douglasPeucker;
-    boolean calcPoints;
+    private boolean enableInstructions = true;
+    private boolean simplifyRequest = false;
+    private DouglasPeucker douglasPeucker;
+    private boolean calcPoints;
 
-    public void doWork( GHResponse rsp, List<Path> paths )
+    public void doWork( GHResponse rsp, List<Path> paths, Translation tr )
     {
         int origPoints = 0;
         StopWatch sw;
@@ -43,7 +43,7 @@ public class PathMerger
         double fullDistance = 0;
         boolean allFound = true;
 
-        InstructionList fullInstructions = new InstructionList();
+        InstructionList fullInstructions = new InstructionList(tr);
         PointList fullPoints = PointList.EMPTY;
         for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++)
         {
@@ -52,7 +52,7 @@ public class PathMerger
             fullDistance += path.getDistance();
             if (enableInstructions)
             {
-                InstructionList il = path.calcInstructions();
+                InstructionList il = path.calcInstructions(tr);
                 sw = new StopWatch().start();
 
                 if (!il.isEmpty())

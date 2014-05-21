@@ -24,13 +24,14 @@ import com.google.inject.servlet.GuiceFilter;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Downloader;
 import org.json.JSONObject;
+import org.junit.AfterClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * @author Peter Karich
  */
-public class BaseServletTest
+public class BaseServletTester
 {
     private static GHServer server;
     protected static Logger logger = LoggerFactory.getLogger(GraphHopperServletIT.class);
@@ -45,23 +46,18 @@ public class BaseServletTest
     /**
      * This method will start jetty with andorra area loaded as OSM.
      */
-    public void setUpJetty()
+    public void setUpJetty( CmdArgs args )
     {
         if (injector != null)
             throw new UnsupportedOperationException("do not call guice before");
 
-        bootJetty(3);
+        bootJetty(args, 3);
     }
 
-    private void bootJetty( int retryCount )
+    private void bootJetty( CmdArgs args, int retryCount )
     {
         if (server != null)
             return;
-
-        CmdArgs args = new CmdArgs().
-                put("config", "../config-example.properties").
-                put("osmreader.osm", "../core/files/andorra.osm.pbf").
-                put("graph.location", "./target/andorra-gh/");
 
         server = new GHServer(args);
 
@@ -86,7 +82,7 @@ public class BaseServletTest
         }
     }
 
-    public void shutdownJetty( boolean force )
+    public static void shutdownJetty( boolean force )
     {
         // this is too slow so allow force == false. Then on setUpJetty a new server is created on a different port
         if (force && server != null)
@@ -98,9 +94,6 @@ public class BaseServletTest
                 logger.error("Cannot stop jetty", ex);
             }
 
-        if (injector != null)
-            new GuiceFilter().destroy();
-        injector = null;
         server = null;
     }
 

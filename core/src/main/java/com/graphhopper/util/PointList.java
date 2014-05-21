@@ -285,10 +285,16 @@ public class PointList implements PointAccess
      */
     public List<Double[]> toGeoJson()
     {
+        return toGeoJson(is3D);
+    }
+
+    public List<Double[]> toGeoJson( boolean includeElevation )
+    {
+
         ArrayList<Double[]> points = new ArrayList<Double[]>(size);
         for (int i = 0; i < size; i++)
         {
-            if (is3D)
+            if (includeElevation)
                 points.add(new Double[]
                 {
                     Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i)), Helper.round2(getElevation(i))

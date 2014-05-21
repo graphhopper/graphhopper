@@ -379,6 +379,20 @@ public class QueryGraphTest
         assertNotNull(GHUtility.getEdge(queryGraph, 0, 3));
     }
 
+    @Test
+    public void testGetEdgeProps()
+    {
+        initGraph(g);
+        EdgeIteratorState e1 = GHUtility.getEdge(g, 0, 2);
+        QueryGraph queryGraph = new QueryGraph(g);
+        QueryResult res1 = createLocationResult(0.5, 0, e1, 0, EDGE);
+        queryGraph.lookup(Arrays.asList(res1));
+        // get virtual edge
+        e1 = GHUtility.getEdge(queryGraph, res1.getClosestNode(), 0);
+        EdgeIteratorState e2 = queryGraph.getEdgeProps(e1.getEdge(), Integer.MIN_VALUE);
+        assertEquals(e1.getEdge(), e2.getEdge());
+    }
+
     PointList getPoints( Graph g, int base, int adj )
     {
         EdgeIteratorState edge = GHUtility.getEdge(g, base, adj);

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +75,7 @@ public class GraphHopper implements GraphHopperAPI
     private DAType dataAccessType = DAType.RAM_STORE;
     private boolean sortGraph = false;
     boolean removeZipped = true;
-    private int dimension = 2;
+    private boolean elevation = false;
     // for routing
     private boolean simplifyRequest = true;
     // for index
@@ -102,6 +103,7 @@ public class GraphHopper implements GraphHopperAPI
     private boolean enableInstructions = true;
     private boolean calcPoints = true;
     private boolean fullyLoaded = false;
+    private final TranslationMap trMap = new TranslationMap().doImport();
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
 
     public GraphHopper()
@@ -138,9 +140,9 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setElevationProvider( ElevationProvider eleProvider )
     {
         if (eleProvider == null || eleProvider == ElevationProvider.NOOP)
-            set3D(false);
+            setElevation(false);
         else
-            set3D(true);
+            setElevation(true);
         this.eleProvider = eleProvider;
         return this;
     }
@@ -296,20 +298,17 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * @return true if storing and fetching elevation data is enabled. Default is false
      */
-    public boolean is3D()
+    public boolean hasElevation()
     {
-        return dimension == 3;
+        return elevation;
     }
 
     /**
      * Enable storing and fetching elevation data. Default is false
      */
-    public GraphHopper set3D( boolean is3D )
+    public GraphHopper setElevation( boolean includeElevation )
     {
-        if (is3D)
-            this.dimension = 3;
-        else
-            this.dimension = 2;
+        this.elevation = includeElevation;
         return this;
     }
 
@@ -444,6 +443,11 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
+    public TranslationMap getTranslationMap()
+    {
+        return trMap;
+    }
+
     /*
      * Command line configuration overwrites the ones in the config file
      */
@@ -488,7 +492,6 @@ public class GraphHopper implements GraphHopperAPI
         // graph
         setGraphHopperLocation(graphHopperFolder);
         defaultSegmentSize = args.getInt("graph.dataaccess.segmentSize", defaultSegmentSize);
-        dimension = args.getInt("graph.dimension", dimension);
 
         String graphDATypeStr = args.get("graph.dataaccess", "RAM_STORE");
         dataAccessType = DAType.fromString(graphDATypeStr);
@@ -670,11 +673,11 @@ public class GraphHopper implements GraphHopperAPI
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
 
         if (chEnabled)
-            graph = new LevelGraphStorage(dir, encodingManager, is3D());
+            graph = new LevelGraphStorage(dir, encodingManager, hasElevation());
         else if (turnCosts)
-            graph = new GraphHopperStorage(dir, encodingManager, is3D(), new TurnCostStorage());
+            graph = new GraphHopperStorage(dir, encodingManager, hasElevation(), new TurnCostStorage());
         else
-            graph = new GraphHopperStorage(dir, encodingManager, is3D());
+            graph = new GraphHopperStorage(dir, encodingManager, hasElevation());
 
         graph.setSegmentSize(defaultSegmentSize);
         if (!graph.loadExisting())
@@ -727,9 +730,14 @@ public class GraphHopper implements GraphHopperAPI
     {
         // ignore case
         weighting = weighting.toLowerCase();
-        if ("shortest".equals(weighting))
-            return new ShortestWeighting();
-        return new FastestWeighting(encoder);
+        if ("fastest".equals(weighting))
+        {
+            if (encoder instanceof BikeCommonFlagEncoder)
+                return new PriorityWeighting((BikeCommonFlagEncoder) encoder);
+            else
+                return new FastestWeighting(encoder);
+        }
+        return new ShortestWeighting();
     }
 
     @Override
@@ -750,6 +758,7 @@ public class GraphHopper implements GraphHopperAPI
         calcPoints = request.getHint("calcPoints", calcPoints);
         simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
         double minPathPrecision = request.getHint("douglas.minprecision", 1d);
+        Locale locale = request.getLocale();
         DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(minPathPrecision);
 
         new PathMerger().
@@ -757,7 +766,7 @@ public class GraphHopper implements GraphHopperAPI
                 setDouglasPeucker(peucker).
                 setEnableInstructions(enableInstructions).
                 setSimplifyRequest(simplifyRequest && minPathPrecision > 0).
-                doWork(response, paths);
+                doWork(response, paths, trMap.getWithFallBack(locale));
         return response;
     }
 

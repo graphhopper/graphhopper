@@ -125,7 +125,7 @@ public class AStar extends AbstractRoutingAlgorithm
                     }
                     nEdge.parent = currEdge;
                     prioQueueOpenSet.add(nEdge);
-                    updateShortest(nEdge, adjNode);
+                    updateBestPath(nEdge, adjNode);
                 }
             }
 

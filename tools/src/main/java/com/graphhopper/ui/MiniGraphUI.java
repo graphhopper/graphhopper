@@ -23,10 +23,10 @@ import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.BikeCommonFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FastestWeighting;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
+import com.graphhopper.routing.util.PriorityWeighting;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -75,14 +75,15 @@ public class MiniGraphUI
     private final MapLayer pathLayer;
     private boolean fastPaint = false;
     private final Weighting weighting;
+    private final BikeCommonFlagEncoder encoder;
 
     public MiniGraphUI( GraphHopper hopper, boolean debug )
     {
         this.graph = hopper.getGraph();
         this.na = graph.getNodeAccess();
         prepare = hopper.getPreparation();
-        FlagEncoder encoder = hopper.getEncodingManager().getSingle();
-        weighting = new FastestWeighting(encoder);
+        encoder = (BikeCommonFlagEncoder) hopper.getEncodingManager().getEncoder("bike");
+        weighting = new PriorityWeighting(encoder);
         if (prepare == null)
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, "dijkstrabi", encoder, weighting);
 
@@ -177,7 +178,27 @@ public class MiniGraphUI
                         }
                         double lat2 = na.getLatitude(nodeId);
                         double lon2 = na.getLongitude(nodeId);
+
+                        // mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, iter.getName());
+                        mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, "s:" + (int) encoder.getSpeed(iter.getFlags()));
+                        g2.setColor(Color.BLACK);
+
+                        double prio = encoder.getPriority(iter.getFlags());
+                        if (prio < 0.2)
+                            g2.setColor(Color.RED.darker());
+                        else if (prio < 0.3)
+                            g2.setColor(Color.RED.brighter());
+                        else if (prio < 0.5)
+                            g2.setColor(Color.ORANGE);
+                        else if (prio < 0.6)
+                            g2.setColor(Color.GRAY);
+                        else if (prio < 0.8)
+                            g2.setColor(Color.GREEN.brighter());
+                        else
+                            g2.setColor(Color.GREEN.darker());
+
                         mg.plotEdge(g2, lat, lon, lat2, lon2);
+                        g2.setColor(Color.BLACK);
                     }
                 }
             }
@@ -199,9 +220,6 @@ public class MiniGraphUI
                 }
 
                 StopWatch sw = new StopWatch().start();
-                fromRes = index.findClosest(49.973878, 11.604132, EdgeFilter.ALL_EDGES);
-                toRes = index.findClosest(49.973896, 11.604363, EdgeFilter.ALL_EDGES);
-
                 logger.info("start searching from:" + fromRes + " to:" + toRes + " " + weighting);
                 path = algo.calcPath(fromRes, toRes);
 //                mg.plotNode(g2, dijkstraFromId, Color.red);
