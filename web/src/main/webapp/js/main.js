@@ -5,7 +5,7 @@
  */
 var tmpArgs = parseUrlWithHisto();
 var host = tmpArgs["host"];
-// var host = "http://graphhopper.com/api/1";
+var host = "http://graphhopper.com/api/1";
 if (!host) {
     if (location.port === '') {
         host = location.protocol + '//' + location.hostname;
@@ -390,10 +390,11 @@ function resolve(fromOrTo, locCoord) {
         var errorDiv = $("#" + fromOrTo + "ResolveError");
         errorDiv.empty();
 
-        if (locCoord.error)
-            errorDiv.text(locCoord.error);
-        else
-            errorDiv.text("");
+        if (locCoord.error) {
+            errorDiv.show();
+            errorDiv.text(locCoord.error).fadeOut(5000);
+            locCoord.error = '';
+        }
 
         $("#" + fromOrTo + "Indicator").hide();
         $("#" + fromOrTo + "Flag").show();
@@ -1058,7 +1059,7 @@ function setAutoCompleteList(fromOrTo) {
             return val === undefined;
         },
         serviceUrl: function() {
-            return ghRequest.createGeocodeURL();
+            return ghRequest.createGeocodeURL("http://graphhopper.com/api/1");
         },
         transformResult: function(response, originalQuery) {
             response.suggestions = [];
@@ -1101,6 +1102,7 @@ function setAutoCompleteList(fromOrTo) {
     myAutoDiv.autocomplete(options);
     $("#" + fromOrTo + "Input").focusout(function() {
         myAutoDiv.autocomplete().disable();
+        myAutoDiv.autocomplete().hide();
     });
     $("#" + fromOrTo + "Input").focusin(function() {
         myAutoDiv.autocomplete().enable();
