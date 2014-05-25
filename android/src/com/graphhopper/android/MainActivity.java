@@ -479,7 +479,7 @@ public class MainActivity extends Activity
     {
         Drawable drawable = getResources().getDrawable(resource);
         Bitmap bitmap = AndroidGraphicFactory.convertToBitmap(drawable);
-        return new Marker(p, bitmap, -bitmap.getHeight(), -bitmap.getWidth() / 2);
+        return new Marker(p, bitmap, 0, -bitmap.getHeight() / 2);
     }
 
     public void calcPath( final double fromLat, final double fromLon,
