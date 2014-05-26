@@ -454,7 +454,7 @@ public class MainActivity extends Activity
     {
         Paint paintStroke = AndroidGraphicFactory.INSTANCE.createPaint();
         paintStroke.setStyle(Style.STROKE);
-        paintStroke.setColor(Color.BLUE);
+        paintStroke.setColor(Color.argb(200, 0, 0xCC, 0x33));
         paintStroke.setDashPathEffect(new float[]
         {
             25, 15
