@@ -1059,7 +1059,7 @@ function setAutoCompleteList(fromOrTo) {
             return val === undefined;
         },
         serviceUrl: function() {
-            return ghRequest.createGeocodeURL("http://graphhopper.com/api/1");
+            return ghRequest.createGeocodeURL();
         },
         transformResult: function(response, originalQuery) {
             response.suggestions = [];
