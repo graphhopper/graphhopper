@@ -1100,13 +1100,15 @@ function setAutoCompleteList(fromOrTo) {
     };
 
     myAutoDiv.autocomplete(options);
-    $("#" + fromOrTo + "Input").focusout(function() {
-        myAutoDiv.autocomplete().disable();
-        myAutoDiv.autocomplete().hide();
-    });
-    $("#" + fromOrTo + "Input").focusin(function() {
-        myAutoDiv.autocomplete().enable();
-    });
+    
+    // with the following more stable code we cannot click on suggestions anylonger
+//    $("#" + fromOrTo + "Input").focusout(function() {
+//        myAutoDiv.autocomplete().disable();
+//        myAutoDiv.autocomplete().hide();
+//    });
+//    $("#" + fromOrTo + "Input").focusin(function() {
+//        myAutoDiv.autocomplete().enable();
+//    });
 }
 
 function dataToHtml(data, query) {
