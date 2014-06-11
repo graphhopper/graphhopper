@@ -102,7 +102,7 @@ public class GHServer
         logger.info("Started server at HTTP " + host + ":" + httpPort);
     }
 
-    private Module createModule()
+    protected Module createModule()
     {
         return new AbstractModule()
         {
