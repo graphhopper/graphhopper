@@ -23,7 +23,6 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.Translation;
 import com.graphhopper.util.shapes.GHPoint;
 import java.io.IOException;
 import java.util.*;

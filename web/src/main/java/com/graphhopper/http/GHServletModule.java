@@ -18,6 +18,7 @@
 package com.graphhopper.http;
 
 import com.google.inject.servlet.ServletModule;
+import com.graphhopper.util.CmdArgs;
 import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Singleton;
@@ -28,9 +29,11 @@ import javax.inject.Singleton;
 public class GHServletModule extends ServletModule
 {
     protected Map<String, String> params = new HashMap<String, String>();
+    private final CmdArgs args;
 
-    public GHServletModule()
+    public GHServletModule( CmdArgs args )
     {
+        this.args = args;
         params.put("mimeTypes", "text/html,"
                 + "text/plain,"
                 + "text/xml,"
@@ -46,9 +49,12 @@ public class GHServletModule extends ServletModule
     {
         filter("*").through(GHGZIPHook.class, params);
         bind(GHGZIPHook.class).in(Singleton.class);
-        
+
         filter("*").through(CORSFilter.class, params);
         bind(CORSFilter.class).in(Singleton.class);
+
+        filter("*").through(IPFilter.class);
+        bind(IPFilter.class).toInstance(new IPFilter(args.get("jetty.whiteips", ""), args.get("jetty.blackips", "")));
 
         serve("/i18n*").with(I18NServlet.class);
         bind(I18NServlet.class).in(Singleton.class);

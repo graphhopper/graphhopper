@@ -112,7 +112,7 @@ public class GHServer
                 binder().requireExplicitBindings();
 
                 install(new DefaultModule(args));
-                install(new GHServletModule());
+                install(new GHServletModule(args));
 
                 bind(GuiceFilter.class);
             }
