@@ -189,7 +189,7 @@ else
 fi
 
 if [ "x$JAVA_OPTS" = "x" ]; then
-  JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1000m -Xms1000m -server"
+  JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1500m -Xms1000m -server"
 fi
 
 
@@ -231,7 +231,6 @@ if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
   fi
 
 elif [ "x$ACTION" = "ximport" ]; then
-echo "hello"
 echo "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS printVersion=true config=$CONFIG $GH_IMPORT_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE" 
  "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS printVersion=true \
       config=$CONFIG \
