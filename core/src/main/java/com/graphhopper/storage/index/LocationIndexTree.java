@@ -17,6 +17,18 @@
  */
 package com.graphhopper.storage.index;
 
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.procedure.TIntProcedure;
+import gnu.trove.set.hash.TIntHashSet;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.geohash.SpatialKeyAlgo;
@@ -28,12 +40,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.procedure.TIntProcedure;
-import gnu.trove.set.hash.TIntHashSet;
-import java.util.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This implementation implements an n-tree to get node ids from GPS location. This replaces
@@ -51,7 +57,7 @@ public class LocationIndexTree implements LocationIndex
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int MAGIC_INT;
     protected DistanceCalc distCalc = new DistancePlaneProjection();
-    private DistanceCalc preciseDistCalc = new DistanceCalcEarth();
+    private final DistanceCalc preciseDistCalc = new DistanceCalcEarth();
     protected final Graph graph;
     private final NodeAccess nodeAccess;
     final DataAccess dataAccess;
@@ -63,11 +69,12 @@ public class LocationIndexTree implements LocationIndex
     private int minResolutionInMeter = 500;
     private double deltaLat;
     private double deltaLon;
-    private int initSizeLeafEntries = 4;
+    private final int initSizeLeafEntries = 4;
     private boolean initialized = false;
     // do not start with 0 as a positive value means leaf and a negative means "entry with subentries"
     static final int START_POINTER = 1;
     private boolean regionSearch = true;
+    private int regionSize = 1;
     /**
      * If normed distance is smaller than this value the node or edge is 'identical' and the
      * algorithm can stop search.
@@ -105,6 +112,13 @@ public class LocationIndexTree implements LocationIndex
         this.regionSearch = regionAround;
         return this;
     }
+    
+    
+    public void setSearchRegionSize( int regionSize )
+    {
+        this.regionSize = regionSize;
+    }
+    
 
     void prepareAlgo()
     {
@@ -441,7 +455,7 @@ public class LocationIndexTree implements LocationIndex
         Collection<InMemEntry> getEntriesOf( int selectDepth )
         {
             List<InMemEntry> list = new ArrayList<InMemEntry>();
-            fillLayer(list, selectDepth, 0, ((InMemTreeEntry) root).getSubEntriesForDebug());
+            fillLayer(list, selectDepth, 0, root.getSubEntriesForDebug());
             return list;
         }
 
@@ -605,11 +619,11 @@ public class LocationIndexTree implements LocationIndex
         if (regionSearch)
         {
             // search all rasters around minResolutionInMeter as we did not fill empty entries
-            double maxLat = queryLat + 1.5 * deltaLat;
-            double maxLon = queryLon + 1.5 * deltaLon;
-            for (double tmpLat = queryLat - deltaLat; tmpLat < maxLat; tmpLat += deltaLat)
+            double maxLat = queryLat + 1.5 * regionSize * deltaLat;
+            double maxLon = queryLon + 1.5 * regionSize * deltaLon;
+            for (double tmpLat = queryLat - ( deltaLat * regionSize ); tmpLat < maxLat; tmpLat += deltaLat)
             {
-                for (double tmpLon = queryLon - deltaLon; tmpLon < maxLon; tmpLon += deltaLon)
+                for (double tmpLon = queryLon - ( deltaLon * regionSize); tmpLon < maxLon; tmpLon += deltaLon)
                 {
                     long keyPart = createReverseKey(tmpLat, tmpLon);
                     // System.out.println(BitUtilLittle.toBitString(key, keyAlgo.bits()));
@@ -812,7 +826,7 @@ public class LocationIndexTree implements LocationIndex
 
     static class InMemLeafEntry extends SortedIntSet implements InMemEntry
     {
-        private long key;
+        private final long key;
 
         public InMemLeafEntry( int count, long key )
         {
