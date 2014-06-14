@@ -580,16 +580,6 @@ public class OSMReaderTest
                     return -objectEncoder.setValue(0, 1);
                 return 0;
             }
-
-            @Override
-            public long applyNodeFlags( long wayFlags, long nodeFlags )
-            {
-                double speed = getSpeed(wayFlags);
-                if (objectEncoder.getValue(nodeFlags) != 0)
-                    speed -= 5;
-
-                return setSpeed(0, speed);
-            }
         };
         EncodingManager manager = new EncodingManager(encoder);
         GraphStorage graph = newGraph(dir, manager, false, false);

@@ -395,20 +395,6 @@ public class EncodingManager
         return flags;
     }
 
-    /**
-     * When parsing the ways we have the node flags as long variable encoded in analyzeNode.
-     */
-    public long applyNodeFlags( long wayFlags, long nodeFlags )
-    {
-        long flags = 0;
-        for (AbstractFlagEncoder encoder : edgeEncoders)
-        {
-            flags |= encoder.applyNodeFlags(wayFlags & encoder.getWayBitMask(), nodeFlags);
-        }
-
-        return flags;
-    }
-
     private static int determineRequiredBits( int value )
     {
         int numberOfBits = 0;

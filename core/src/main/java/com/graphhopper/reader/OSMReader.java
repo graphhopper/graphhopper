@@ -104,11 +104,10 @@ public class OSMReader implements DataReader
     private LongIntMap osmNodeIdToInternalNodeMap;
     private TLongLongHashMap osmNodeIdToNodeFlagsMap;
     private TLongLongHashMap osmWayIdToRouteWeightMap;
-    // stores osm ids used by relations to identify which edge ids needs to be mapped later
+    // stores osm way ids used by relations to identify which edge ids needs to be mapped later
     private TLongHashSet osmIdStoreRequiredSet = new TLongHashSet();
-    ; 
-    private TIntLongMap edgeIdToOsmidMap;
-    private final TLongList barrierNodeIDs = new TLongArrayList();
+    private TIntLongMap edgeIdToOsmIdMap;
+    private final TLongList barrierNodeIds = new TLongArrayList();
     protected PillarInfo pillarInfo;
     private final DistanceCalc distCalc = new DistanceCalcEarth();
     private final DistanceCalc3D distCalc3D = new DistanceCalc3D();
@@ -117,7 +116,7 @@ public class OSMReader implements DataReader
     private int nextTowerId = 0;
     private int nextPillarId = 0;
     // negative but increasing to avoid clash with custom created OSM files
-    private long newUniqueOSMId = -Long.MAX_VALUE;
+    private long newUniqueOsmId = -Long.MAX_VALUE;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private boolean exitOnlyPillarNodeException = true;
     private File osmFile;
@@ -236,10 +235,10 @@ public class OSMReader implements DataReader
 
     private TIntLongMap getEdgeIdToOsmidMap()
     {
-        if (edgeIdToOsmidMap == null)
-            edgeIdToOsmidMap = new TIntLongHashMap(getOsmIdStoreRequiredSet().size());
+        if (edgeIdToOsmIdMap == null)
+            edgeIdToOsmIdMap = new TIntLongHashMap(getOsmIdStoreRequiredSet().size());
 
-        return edgeIdToOsmidMap;
+        return edgeIdToOsmIdMap;
     }
 
     /**
@@ -411,9 +410,6 @@ public class OSMReader implements DataReader
                     // remember barrier for processing the way behind it
                     lastBarrier = i;
                 }
-            } else if (nodeFlags < 0)
-            {
-                wayFlags = encodingManager.applyNodeFlags(wayFlags, -nodeFlags);
             }
         }
 
@@ -790,7 +786,7 @@ public class OSMReader implements DataReader
         return (int) tmpNode;
     }
 
-    void finishedReading()
+    protected void finishedReading()
     {
         printInfo("way");
         pillarInfo.clear();
@@ -799,7 +795,7 @@ public class OSMReader implements DataReader
         osmNodeIdToNodeFlagsMap = null;
         osmWayIdToRouteWeightMap = null;
         osmIdStoreRequiredSet = null;
-        edgeIdToOsmidMap = null;
+        edgeIdToOsmIdMap = null;
     }
 
     /**
@@ -827,7 +823,7 @@ public class OSMReader implements DataReader
 
     private long createNewNodeId()
     {
-        return newUniqueOSMId++;
+        return newUniqueOsmId++;
     }
 
     /**
@@ -838,10 +834,10 @@ public class OSMReader implements DataReader
         // clear barred directions from routing flags
         flags &= ~nodeFlags;
         // add edge
-        barrierNodeIDs.clear();
-        barrierNodeIDs.add(fromId);
-        barrierNodeIDs.add(toId);
-        return addOSMWay(barrierNodeIDs, flags, wayOsmId);
+        barrierNodeIds.clear();
+        barrierNodeIds.add(fromId);
+        barrierNodeIds.add(toId);
+        return addOSMWay(barrierNodeIds, flags, wayOsmId);
     }
 
     /**
@@ -893,12 +889,12 @@ public class OSMReader implements DataReader
     /**
      * Maps OSM IDs (long) to internal node IDs (int)
      */
-    LongIntMap getNodeMap()
+    protected LongIntMap getNodeMap()
     {
         return osmNodeIdToInternalNodeMap;
     }
 
-    TLongLongMap getNodeFlagsMap()
+    protected TLongLongMap getNodeFlagsMap()
     {
         return osmNodeIdToNodeFlagsMap;
     }

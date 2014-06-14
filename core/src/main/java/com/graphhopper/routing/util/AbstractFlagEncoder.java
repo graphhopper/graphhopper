@@ -208,14 +208,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         return 0;
     }
 
-    /**
-     * This method is called after determining the node flags and way flags.
-     */
-    public long applyNodeFlags( long wayFlags, long nodeFlags )
-    {
-        return nodeFlags | wayFlags;
-    }
-
     @Override
     public boolean isForward( long flags )
     {
