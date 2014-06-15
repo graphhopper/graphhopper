@@ -28,9 +28,9 @@ public class IPFilter implements Filter
         whites = createSet(whiteList.split(","));
         blacks = createSet(blackList.split(","));
         if (!whites.isEmpty())
-            logger.info("whitelist:" + whites);
+            logger.debug("whitelist:" + whites);
         if (!blackList.isEmpty())
-            logger.info("blacklist:" + blacks);
+            logger.debug("blacklist:" + blacks);
 
         if (!blacks.isEmpty() && !whites.isEmpty())
             throw new IllegalArgumentException("blacklist and whitelist at the same time?");
