@@ -43,7 +43,9 @@ public class SRTMProvider implements ElevationProvider
 {
     public static void main( String[] args ) throws IOException
     {
-        new SRTMProvider().getEle(55, -161);
+        SRTMProvider provider = new SRTMProvider();
+        System.out.println(provider.getEle(49.949784, 11.57517));
+        System.out.println(provider.getEle(49.968668, 11.575127));
     }
 
     private static final BitUtil BIT_UTIL = BitUtil.BIG;
@@ -298,7 +300,7 @@ public class SRTMProvider implements ElevationProvider
         if (dir != null)
             return dir;
 
-        logger.info("SRTM Elevation Provider, from: " + baseUrl + ", to: " + cacheDir + ", as: " + daType);
+        logger.info(this.toString() + " Elevation Provider, from: " + baseUrl + ", to: " + cacheDir + ", as: " + daType);
         return dir = new GHDirectory(cacheDir.getAbsolutePath(), daType);
     }
 }
