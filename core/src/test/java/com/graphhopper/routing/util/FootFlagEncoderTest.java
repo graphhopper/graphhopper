@@ -20,15 +20,10 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.GHUtility;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.junit.Test;
-
 import static org.junit.Assert.*;
 
 /**
@@ -64,12 +59,12 @@ public class FootFlagEncoderTest
         FlagEncoder carEncoder = encodingManager.getEncoder("CAR");
         long fl = footEncoder.setProperties(10, true, true) | carEncoder.setProperties(100, true, false);
         assertEquals(10, footEncoder.getSpeed(fl), 1e-1);
-        assertTrue(footEncoder.isForward(fl));
-        assertTrue(footEncoder.isBackward(fl));
+        assertTrue(footEncoder.isBool(fl, FlagEncoder.FORWARD));
+        assertTrue(footEncoder.isBool(fl, FlagEncoder.BACKWARD));
 
         assertEquals(100, carEncoder.getSpeed(fl), 1e-1);
-        assertTrue(carEncoder.isForward(fl));
-        assertFalse(carEncoder.isBackward(fl));
+        assertTrue(carEncoder.isBool(fl, FlagEncoder.FORWARD));
+        assertFalse(carEncoder.isBool(fl, FlagEncoder.BACKWARD));
 
         assertEquals(0, carEncoder.getSpeed(footEncoder.setProperties(10, true, true)), 1e-1);
     }

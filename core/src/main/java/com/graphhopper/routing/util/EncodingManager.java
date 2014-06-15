@@ -240,7 +240,7 @@ public class EncodingManager
                 return encoder;
         }
         if (throwExc)
-            throw new IllegalArgumentException("Encoder for " + name + " not found.");
+            throw new IllegalArgumentException("Encoder for " + name + " not found. Existing: " + toDetailsString());
         return null;
     }
 
@@ -326,10 +326,10 @@ public class EncodingManager
     public FlagEncoder getSingle()
     {
         if (getVehicleCount() > 1)
-            throw new IllegalStateException("multiple encoders are active. cannot return one:" + toString());
+            throw new IllegalStateException("Multiple encoders are active. cannot return one:" + toString());
 
         if (getVehicleCount() == 0)
-            throw new IllegalStateException("no encoder is active!");
+            throw new IllegalStateException("No encoder is active!");
 
         return edgeEncoders.get(0);
     }

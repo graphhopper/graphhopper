@@ -216,10 +216,10 @@ public class Path
      */
     protected long calcMillis( double distance, long flags, boolean revert )
     {
-        if (revert && !encoder.isBackward(flags)
-                || !revert && !encoder.isForward(flags))
+        if (revert && !encoder.isBool(flags, FlagEncoder.BACKWARD)
+                || !revert && !encoder.isBool(flags, FlagEncoder.FORWARD))
             throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. "
-                    + "Reverse:" + revert + ", fwd:" + encoder.isForward(flags) + ", bwd:" + encoder.isBackward(flags));
+                    + "Reverse:" + revert + ", fwd:" + encoder.isBool(flags, FlagEncoder.FORWARD) + ", bwd:" + encoder.isBool(flags, FlagEncoder.BACKWARD));
 
         double speed = revert ? encoder.getReverseSpeed(flags) : encoder.getSpeed(flags);
         if (Double.isInfinite(speed) || Double.isNaN(speed))

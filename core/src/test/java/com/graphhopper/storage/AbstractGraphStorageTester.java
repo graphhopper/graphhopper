@@ -800,14 +800,14 @@ public abstract class AbstractGraphStorageTester
         EdgeIteratorState oneIter = graph.getEdgeProps(iter.getEdge(), 3);
         assertEquals(13, oneIter.getDistance(), 1e-6);
         assertEquals(2, oneIter.getBaseNode());
-        assertTrue(carEncoder.isForward(oneIter.getFlags()));
-        assertFalse(carEncoder.isBackward(oneIter.getFlags()));
+        assertTrue(carEncoder.isBool(oneIter.getFlags(), FlagEncoder.FORWARD));
+        assertFalse(carEncoder.isBool(oneIter.getFlags(), FlagEncoder.BACKWARD));
 
         oneIter = graph.getEdgeProps(iter.getEdge(), 2);
         assertEquals(13, oneIter.getDistance(), 1e-6);
         assertEquals(3, oneIter.getBaseNode());
-        assertTrue(carEncoder.isBackward(oneIter.getFlags()));
-        assertFalse(carEncoder.isForward(oneIter.getFlags()));
+        assertFalse(carEncoder.isBool(oneIter.getFlags(), FlagEncoder.FORWARD));
+        assertTrue(carEncoder.isBool(oneIter.getFlags(), FlagEncoder.BACKWARD));
 
         graph.edge(3, 2, 14, true);
         assertEquals(4, GHUtility.count(carOutExplorer.setBaseNode(2)));
@@ -1044,15 +1044,15 @@ public abstract class AbstractGraphStorageTester
         assertEquals(99.123, list.get(0).getSpeed(edge.getFlags()), 1e-3);
         long flags = GHUtility.getEdge(graph, 1, 0).getFlags();
         assertEquals(99.123, list.get(0).getSpeed(flags), 1e-3);
-        assertTrue(list.get(0).isForward(flags));
-        assertTrue(list.get(0).isBackward(flags));
+        assertTrue(list.get(0).isBool(flags, FlagEncoder.FORWARD));
+        assertTrue(list.get(0).isBool(flags, FlagEncoder.BACKWARD));
         edge = graph.edge(2, 3);
         edge.setFlags(list.get(1).setProperties(44.123, true, false));
         assertEquals(44.123, list.get(1).getSpeed(edge.getFlags()), 1e-3);
         flags = GHUtility.getEdge(graph, 3, 2).getFlags();
         assertEquals(44.123, list.get(1).getSpeed(flags), 1e-3);
-        assertTrue(list.get(1).isForward(flags));
-        assertFalse(list.get(1).isBackward(flags));
+        assertTrue(list.get(1).isBool(flags, FlagEncoder.FORWARD));
+        assertFalse(list.get(1).isBool(flags, FlagEncoder.BACKWARD));
     }
 
     @Test
@@ -1096,13 +1096,13 @@ public abstract class AbstractGraphStorageTester
         assertEquals(2, iter.getAdjNode());
         assertEquals(1, edgeState2.fetchWayGeometry(0).getLatitude(0), 1e-1);
         assertEquals(2, edgeState2.getAdjNode());
-        assertTrue(carEncoder.isForward(edgeState2.getFlags()));
+        assertTrue(carEncoder.isBool(edgeState2.getFlags(), FlagEncoder.FORWARD));
 
         EdgeIteratorState edgeState3 = iter.detach(true);
         assertEquals(0, edgeState3.getAdjNode());
         assertEquals(2, edgeState3.getBaseNode());
         assertEquals(3, edgeState3.fetchWayGeometry(0).getLatitude(0), 1e-1);
-        assertFalse(carEncoder.isForward(edgeState3.getFlags()));
+        assertFalse(carEncoder.isBool(edgeState3.getFlags(), FlagEncoder.FORWARD));
         assertEquals(GHUtility.getEdge(graph, 0, 2).getFlags(), edgeState2.getFlags());
         assertEquals(GHUtility.getEdge(graph, 2, 0).getFlags(), edgeState3.getFlags());
 

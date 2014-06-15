@@ -70,7 +70,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     /* restriction definitions */
     protected String[] restrictions;
-    protected HashSet<String> intendedValues = new HashSet<String>();
+    protected HashSet<String> intendedValues = new HashSet<String>(5);
     protected HashSet<String> restrictedValues = new HashSet<String>(5);
     protected HashSet<String> ferries = new HashSet<String>(5);
     protected HashSet<String> oneways = new HashSet<String>(5);
@@ -209,18 +209,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     @Override
-    public boolean isForward( long flags )
-    {
-        return (flags & forwardBit) != 0;
-    }
-
-    @Override
-    public boolean isBackward( long flags )
-    {
-        return (flags & backwardBit) != 0;
-    }
-
-    @Override
     public InstructionAnnotation getAnnotation( long flags, Translation tr )
     {
         return InstructionAnnotation.EMPTY;
@@ -251,7 +239,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     @Override
     public long setAccess( long flags, boolean forward, boolean backward )
     {
-        return flags | (forward ? forwardBit : 0) | (backward ? backwardBit : 0);
+        return setBool(setBool(flags, BACKWARD, backward), FORWARD, forward);
     }
 
     @Override
@@ -552,5 +540,57 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
     {
         return Collections.emptyList();
+    }
+
+    @Override
+    public long setBool( long flags, int key, boolean value )
+    {
+        switch (key)
+        {
+            case FORWARD:
+                return value ? flags | forwardBit : flags & ~forwardBit;
+            case BACKWARD:
+                return value ? flags | backwardBit : flags & ~backwardBit;
+            default:
+                throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
+        }
+    }
+
+    @Override
+    public boolean isBool( long flags, int key )
+    {
+        switch (key)
+        {
+            case FORWARD:
+                return (flags & forwardBit) != 0;
+            case BACKWARD:
+                return (flags & backwardBit) != 0;
+            default:
+                throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
+        }
+    }
+
+    @Override
+    public long setLong( long flags, int key, long value )
+    {
+        throw new UnsupportedOperationException("Unknown key " + key + " for long value.");
+    }
+
+    @Override
+    public long getLong( long flags, int key )
+    {
+        throw new UnsupportedOperationException("Unknown key " + key + " for long value.");
+    }
+
+    @Override
+    public long setDouble( long flags, int key, double value )
+    {
+        throw new UnsupportedOperationException("Unknown key " + key + " for double value.");
+    }
+
+    @Override
+    public double getDouble( long flags, int key )
+    {
+        throw new UnsupportedOperationException("Unknown key " + key + " for double value.");
     }
 }

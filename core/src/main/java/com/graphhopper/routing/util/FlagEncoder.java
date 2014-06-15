@@ -69,9 +69,30 @@ public interface FlagEncoder
      */
     long setProperties( double speed, boolean forward, boolean backward );
 
-    boolean isForward( long flags );
+    static final int FORWARD = 0, BACKWARD = 1, ROUNDABOUT = 2, LAST_IDX = ROUNDABOUT;
 
-    boolean isBackward( long flags );
+    /**
+     * Returns arbitrary boolean value identified by the specified key.
+     */
+    boolean isBool( long flags, int key );
+
+    long setBool( long flags, int key, boolean value );
+
+    /**
+     * Returns arbitrary long value identified by the specified key. E.g. can be used to return the
+     * way or surface type of an edge
+     */
+    long getLong( long flags, int key );
+
+    long setLong( long flags, int key, long value );
+
+    /**
+     * Returns arbitrary long value identified by the specified key. E.g. can be used to return the
+     * maximum width or height allowed for an edge.
+     */
+    double getDouble( long flags, int key );
+
+    long setDouble( long flags, int key, double value );
 
     /**
      * @return additional cost or warning information for an instruction like ferry or road charges.

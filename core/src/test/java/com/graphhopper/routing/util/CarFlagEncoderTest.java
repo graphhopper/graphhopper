@@ -44,7 +44,7 @@ public class CarFlagEncoderTest
         way.clearTags();
         way.setTag("highway", "track");
         assertTrue(encoder.acceptWay(way) > 0);
-        
+
         way.setTag("motorcar", "no");
         assertFalse(encoder.acceptWay(way) > 0);
 
@@ -86,25 +86,36 @@ public class CarFlagEncoderTest
         way.clearTags();
         way.setTag("highway", "primary");
         long flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
-        assertTrue(encoder.isForward(flags));
-        assertTrue(encoder.isBackward(flags));
+        assertTrue(encoder.isBool(flags, FlagEncoder.FORWARD));
+        assertTrue(encoder.isBool(flags, FlagEncoder.BACKWARD));
         way.setTag("oneway", "yes");
         flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
-        assertTrue(encoder.isForward(flags));
-        assertFalse(encoder.isBackward(flags));
+        assertTrue(encoder.isBool(flags, FlagEncoder.FORWARD));
+        assertFalse(encoder.isBool(flags, FlagEncoder.BACKWARD));
     }
 
     @Test
     public void testSetAccess()
     {
-        assertTrue(encoder.isForward(encoder.setProperties(0, true, true)));
-        assertTrue(encoder.isBackward(encoder.setProperties(0, true, true)));
+        assertTrue(encoder.isBool(encoder.setProperties(0, true, true), FlagEncoder.FORWARD));
+        assertTrue(encoder.isBool(encoder.setProperties(0, true, true), FlagEncoder.BACKWARD));
 
-        assertTrue(encoder.isForward(encoder.setProperties(0, true, false)));
-        assertFalse(encoder.isBackward(encoder.setProperties(0, true, false)));
+        assertTrue(encoder.isBool(encoder.setProperties(0, true, false), FlagEncoder.FORWARD));
+        assertFalse(encoder.isBool(encoder.setProperties(0, true, false), FlagEncoder.BACKWARD));
 
-        assertFalse(encoder.isForward(encoder.setProperties(0, false, true)));
-        assertTrue(encoder.isBackward(encoder.setProperties(0, false, true)));
+        assertFalse(encoder.isBool(encoder.setProperties(0, false, true), FlagEncoder.FORWARD));
+        assertTrue(encoder.isBool(encoder.setProperties(0, false, true), FlagEncoder.BACKWARD));
+
+        assertTrue(encoder.isBool(encoder.flagsDefault(true, true), FlagEncoder.FORWARD));
+        assertTrue(encoder.isBool(encoder.flagsDefault(true, true), FlagEncoder.BACKWARD));
+
+        assertTrue(encoder.isBool(encoder.flagsDefault(true, false), FlagEncoder.FORWARD));
+        assertFalse(encoder.isBool(encoder.flagsDefault(true, false), FlagEncoder.BACKWARD));
+
+        long flags = encoder.flagsDefault(true, true);
+        // disable access
+        assertFalse(encoder.isBool(encoder.setAccess(flags, false, false), FlagEncoder.FORWARD));
+        assertFalse(encoder.isBool(encoder.setAccess(flags, false, false), FlagEncoder.BACKWARD));
     }
 
     @Test
@@ -222,26 +233,16 @@ public class CarFlagEncoderTest
     }
 
     @Test
-    public void testBasics()
-    {
-        assertTrue(encoder.isForward(encoder.flagsDefault(true, true)));
-        assertTrue(encoder.isBackward(encoder.flagsDefault(true, true)));
-
-        assertTrue(encoder.isForward(encoder.flagsDefault(true, false)));
-        assertFalse(encoder.isBackward(encoder.flagsDefault(true, false)));
-    }
-
-    @Test
     public void testSwapDir()
     {
         long swappedFlags = encoder.reverseFlags(encoder.flagsDefault(true, true));
-        assertTrue(encoder.isForward(swappedFlags));
-        assertTrue(encoder.isBackward(swappedFlags));
+        assertTrue(encoder.isBool(swappedFlags, FlagEncoder.FORWARD));
+        assertTrue(encoder.isBool(swappedFlags, FlagEncoder.BACKWARD));
 
         swappedFlags = encoder.reverseFlags(encoder.flagsDefault(true, false));
 
-        assertFalse(encoder.isForward(swappedFlags));
-        assertTrue(encoder.isBackward(swappedFlags));
+        assertFalse(encoder.isBool(swappedFlags, FlagEncoder.FORWARD));
+        assertTrue(encoder.isBool(swappedFlags, FlagEncoder.BACKWARD));
 
         assertEquals(0, encoder.reverseFlags(0));
     }

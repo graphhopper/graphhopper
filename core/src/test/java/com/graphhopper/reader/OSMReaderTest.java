@@ -161,8 +161,8 @@ public class OSMReaderTest
         assertEquals(n50, iter.getAdjNode());
         AbstractGraphStorageTester.assertPList(Helper.createPointList(51.25, 9.43), iter.fetchWayGeometry(0));
         CarFlagEncoder flags = carEncoder;
-        assertTrue(flags.isForward(iter.getFlags()));
-        assertTrue(flags.isBackward(iter.getFlags()));
+        assertTrue(flags.isBool(iter.getFlags(), FlagEncoder.FORWARD));
+        assertTrue(flags.isBool(iter.getFlags(), FlagEncoder.BACKWARD));
 
         assertTrue(iter.next());
         assertEquals("route 666", iter.getName());
@@ -174,8 +174,8 @@ public class OSMReaderTest
         assertEquals(n10, iter.getAdjNode());
         assertEquals(88643, iter.getDistance(), 1);
 
-        assertTrue(flags.isForward(iter.getFlags()));
-        assertTrue(flags.isBackward(iter.getFlags()));
+        assertTrue(flags.isBool(iter.getFlags(), FlagEncoder.FORWARD));
+        assertTrue(flags.isBool(iter.getFlags(), FlagEncoder.BACKWARD));
         assertFalse(iter.next());
 
         // get third added location id=30
@@ -281,27 +281,27 @@ public class OSMReaderTest
         iter = carAllExplorer.setBaseNode(n20);
         assertTrue(iter.next());
         assertEquals(n23, iter.getAdjNode());
-        assertTrue(encoder.isForward(iter.getFlags()));
-        assertFalse(encoder.isBackward(iter.getFlags()));
+        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.FORWARD));
+        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.BACKWARD));
 
         assertTrue(iter.next());
         assertEquals(n22, iter.getAdjNode());
-        assertFalse(encoder.isForward(iter.getFlags()));
-        assertTrue(encoder.isBackward(iter.getFlags()));
+        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.FORWARD));
+        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.BACKWARD));
 
         assertTrue(iter.next());
-        assertFalse(encoder.isForward(iter.getFlags()));
-        assertTrue(encoder.isBackward(iter.getFlags()));
+        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.FORWARD));
+        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.BACKWARD));
 
         assertTrue(iter.next());
         assertEquals(n30, iter.getAdjNode());
-        assertTrue(encoder.isForward(iter.getFlags()));
-        assertFalse(encoder.isBackward(iter.getFlags()));
+        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.FORWARD));
+        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.BACKWARD));
 
         assertTrue(iter.next());
         assertEquals(n10, iter.getAdjNode());
-        assertFalse(encoder.isForward(iter.getFlags()));
-        assertTrue(encoder.isBackward(iter.getFlags()));
+        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.FORWARD));
+        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.BACKWARD));
     }
 
     @Test
@@ -609,9 +609,6 @@ public class OSMReaderTest
             @Override
             Collection<EdgeIteratorState> addOSMWay( TLongList osmNodeIds, long wayFlags, long osmId )
             {
-                // reduced speed due to node tags
-                increased.incrementAndGet();
-                assertEquals(100 - 5, encoder.getSpeed(wayFlags), 1e-1);
                 return Collections.emptyList();
             }
         };
@@ -634,7 +631,6 @@ public class OSMReaderTest
         assertEquals(1.0, p.lon, 1e-3);
         Double d = way.getTag("estimated_distance", null);
         assertEquals(11119.5, d, 1e-1);
-        assertEquals(1, increased.get());
     }
 
     @Test
