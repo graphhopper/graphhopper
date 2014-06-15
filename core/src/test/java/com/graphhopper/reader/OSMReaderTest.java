@@ -161,8 +161,8 @@ public class OSMReaderTest
         assertEquals(n50, iter.getAdjNode());
         AbstractGraphStorageTester.assertPList(Helper.createPointList(51.25, 9.43), iter.fetchWayGeometry(0));
         CarFlagEncoder flags = carEncoder;
-        assertTrue(flags.isBool(iter.getFlags(), FlagEncoder.FORWARD));
-        assertTrue(flags.isBool(iter.getFlags(), FlagEncoder.BACKWARD));
+        assertTrue(flags.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
+        assertTrue(flags.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
 
         assertTrue(iter.next());
         assertEquals("route 666", iter.getName());
@@ -174,8 +174,8 @@ public class OSMReaderTest
         assertEquals(n10, iter.getAdjNode());
         assertEquals(88643, iter.getDistance(), 1);
 
-        assertTrue(flags.isBool(iter.getFlags(), FlagEncoder.FORWARD));
-        assertTrue(flags.isBool(iter.getFlags(), FlagEncoder.BACKWARD));
+        assertTrue(flags.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
+        assertTrue(flags.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
         assertFalse(iter.next());
 
         // get third added location id=30
@@ -281,27 +281,27 @@ public class OSMReaderTest
         iter = carAllExplorer.setBaseNode(n20);
         assertTrue(iter.next());
         assertEquals(n23, iter.getAdjNode());
-        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.FORWARD));
-        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.BACKWARD));
+        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
+        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
 
         assertTrue(iter.next());
         assertEquals(n22, iter.getAdjNode());
-        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.FORWARD));
-        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.BACKWARD));
+        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
+        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
 
         assertTrue(iter.next());
-        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.FORWARD));
-        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.BACKWARD));
+        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
+        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
 
         assertTrue(iter.next());
         assertEquals(n30, iter.getAdjNode());
-        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.FORWARD));
-        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.BACKWARD));
+        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
+        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
 
         assertTrue(iter.next());
         assertEquals(n10, iter.getAdjNode());
-        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.FORWARD));
-        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.BACKWARD));
+        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
+        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
     }
 
     @Test

@@ -138,8 +138,8 @@ public class GHUtility
                 AllEdgesSkipIterator aeSkip = (AllEdgesSkipIterator) iter;
                 sc = aeSkip.isShortcut() ? "sc" : "  ";
             }
-            String fwdStr = encoder.isBool(iter.getFlags(), FlagEncoder.FORWARD) ? "fwd" : "   ";
-            String bckStr = encoder.isBool(iter.getFlags(), FlagEncoder.BACKWARD) ? "bckwd" : "";
+            String fwdStr = encoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD) ? "fwd" : "   ";
+            String bckStr = encoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD) ? "bckwd" : "";
             System.out.println(sc + " " + iter + " " + fwdStr + " " + bckStr);
         }
     }

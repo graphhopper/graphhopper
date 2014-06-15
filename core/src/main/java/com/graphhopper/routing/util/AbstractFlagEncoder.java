@@ -239,7 +239,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     @Override
     public long setAccess( long flags, boolean forward, boolean backward )
     {
-        return setBool(setBool(flags, BACKWARD, backward), FORWARD, forward);
+        return setBool(setBool(flags, K_BACKWARD, backward), K_FORWARD, forward);
     }
 
     @Override
@@ -547,10 +547,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     {
         switch (key)
         {
-            case FORWARD:
+            case K_FORWARD:
                 return value ? flags | forwardBit : flags & ~forwardBit;
-            case BACKWARD:
+            case K_BACKWARD:
                 return value ? flags | backwardBit : flags & ~backwardBit;
+            case K_FERRY:
+                return value ? flags | ferryBit : flags & ~ferryBit;
             default:
                 throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
         }
@@ -561,10 +563,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     {
         switch (key)
         {
-            case FORWARD:
+            case K_FORWARD:
                 return (flags & forwardBit) != 0;
-            case BACKWARD:
+            case K_BACKWARD:
                 return (flags & backwardBit) != 0;
+            case K_FERRY:
+                return (flags & ferryBit) != 0;
             default:
                 throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
         }

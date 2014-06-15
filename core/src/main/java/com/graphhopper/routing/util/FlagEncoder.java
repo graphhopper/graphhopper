@@ -69,11 +69,27 @@ public interface FlagEncoder
      */
     long setProperties( double speed, boolean forward, boolean backward );
 
-    /**
-     * Simple rule: every subclass uses a minimum value which is two magnitudes higher than those
-     * here. Currently this means start from 100, and subclasses of this class start from 10000 and so on.
+    /*
+     * Simple rules for every subclass which introduces a new key. It has to use the prefix K_ and
+     * uses a minimum value which is two magnitudes higher than in the super class. 
+     * Currently this means starting from 100, and subclasses of this class start from 10000 and so on.
      */
-    static final int FORWARD = 0, BACKWARD = 1, ROUNDABOUT = 2;
+    /**
+     * Reports wether the edge is available in forward direction for a certain vehicle
+     */
+    static final int K_FORWARD = 0;
+    /**
+     * Reports wether the edge is available in backward direction for a certain vehicle
+     */
+    static final int K_BACKWARD = 1;
+    /**
+     * Reports wether this edge is a ferry route.
+     */
+    static final int K_FERRY = 2;
+    /**
+     * Reports wether this edge is part of a roundabout.
+     */
+    static final int K_ROUNDABOUT = 3;
 
     /**
      * Returns arbitrary boolean value identified by the specified key.

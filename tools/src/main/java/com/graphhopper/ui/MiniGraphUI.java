@@ -183,7 +183,7 @@ public class MiniGraphUI
                         mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, "s:" + (int) encoder.getSpeed(iter.getFlags()));
                         g2.setColor(Color.BLACK);
 
-                        double prio = encoder.getPriority(iter.getFlags());
+                        double prio = encoder.getDouble(iter.getFlags(), BikeCommonFlagEncoder.K_PRIORITY);
                         if (prio < 0.2)
                             g2.setColor(Color.RED.darker());
                         else if (prio < 0.3)

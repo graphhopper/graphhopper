@@ -354,12 +354,12 @@ public class QueryGraphTest
         assertEquals(2, GHUtility.count(ee.setBaseNode(qr.getClosestNode())));
         EdgeIterator iter = ee.setBaseNode(qr.getClosestNode());
         iter.next();        
-        assertTrue(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.FORWARD));
-        assertFalse(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.BACKWARD));
+        assertTrue(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
+        assertFalse(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
 
         iter.next();        
-        assertFalse(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.FORWARD));
-        assertTrue(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.BACKWARD));
+        assertFalse(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
+        assertTrue(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
     }
 
     @Test

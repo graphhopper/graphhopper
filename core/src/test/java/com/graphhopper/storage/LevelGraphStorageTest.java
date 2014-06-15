@@ -174,15 +174,15 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         sc1.setFlags(flags);
         sc1.setWeight(100.123);
         assertEquals(100.123, sc1.getWeight(), 1e-3);
-        assertTrue(carEncoder.isBool(sc1.getFlags(), FlagEncoder.FORWARD));
-        assertTrue(carEncoder.isBool(sc1.getFlags(), FlagEncoder.BACKWARD));
+        assertTrue(carEncoder.isBool(sc1.getFlags(), FlagEncoder.K_FORWARD));
+        assertTrue(carEncoder.isBool(sc1.getFlags(), FlagEncoder.K_BACKWARD));
 
         flags = carEncoder.setProperties(10, false, true);
         sc1.setFlags(flags);
         sc1.setWeight(100.123);
         assertEquals(100.123, sc1.getWeight(), 1e-3);        
-        assertFalse(carEncoder.isBool(sc1.getFlags(), FlagEncoder.FORWARD));
-        assertTrue(carEncoder.isBool(sc1.getFlags(), FlagEncoder.BACKWARD));
+        assertFalse(carEncoder.isBool(sc1.getFlags(), FlagEncoder.K_FORWARD));
+        assertTrue(carEncoder.isBool(sc1.getFlags(), FlagEncoder.K_BACKWARD));
     }
 
     @Test

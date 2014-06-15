@@ -34,9 +34,9 @@ import java.util.Arrays;
  */
 public class FootFlagEncoder extends AbstractFlagEncoder
 {
-    static final int SLOW = 2;
-    static final int MEAN = 5;
-    static final int FERRY = 10;
+    static final int SLOW_SPEED = 2;
+    static final int MEAN_SPEED = 5;
+    static final int FERRY_SPEED = 10;
     private int safeWayBit = 0;
     protected HashSet<String> sidewalks = new HashSet<String>();
     private final Set<String> safeHighwayTags = new HashSet<String>();
@@ -105,7 +105,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
         // larger value required - ferries are faster than pedestrians
-        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, MEAN, FERRY);
+        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, MEAN_SPEED, FERRY_SPEED);
         shift += speedBits;
 
         safeWayBit = 1 << shift++;
@@ -221,18 +221,18 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         long encoded;
-        if ((allowed & ferryBit) == 0)
+        if (!isBool(allowed, K_FERRY))
         {
             String sacScale = way.getTag("sac_scale");
             if (sacScale != null)
             {
                 if ("hiking".equals(sacScale))
-                    encoded = speedEncoder.setDoubleValue(0, MEAN);
+                    encoded = speedEncoder.setDoubleValue(0, MEAN_SPEED);
                 else
-                    encoded = speedEncoder.setDoubleValue(0, SLOW);
+                    encoded = speedEncoder.setDoubleValue(0, SLOW_SPEED);
             } else
             {
-                encoded = speedEncoder.setDoubleValue(0, MEAN);
+                encoded = speedEncoder.setDoubleValue(0, MEAN_SPEED);
             }
             encoded |= directionBitMask;
 
@@ -245,7 +245,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         } else
         {
-            encoded = handleFerryTags(way, SLOW, MEAN, FERRY);
+            encoded = handleFerryTags(way, SLOW_SPEED, MEAN_SPEED, FERRY_SPEED);
             encoded |= directionBitMask;
         }
 

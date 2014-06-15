@@ -289,14 +289,14 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         long encoded = 0;
-        if ((allowed & ferryBit) == 0)
+        if (!isBool(allowed, K_FERRY))
         {
             double speed = getSpeed(way);
             int priorityFromRelation = 0;
             if (relationFlags != 0)
                 priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
 
-            encoded = preferWayEncoder.setValue(encoded, handlePriority(way, priorityFromRelation));
+            encoded = setLong(encoded, K_PRIORITY_LONG, handlePriority(way, priorityFromRelation));
 
             // bike maxspeed handling is different from car as we don't increase speed
             speed = reduceToMaxSpeed(way, speed);
@@ -388,7 +388,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     public InstructionAnnotation getAnnotation( long flags, Translation tr )
     {
         int paveType = 0; // paved
-        if ((flags & unpavedBit) != 0)
+        if (isBool(flags, K_UNPAVED))
             paveType = 1; // unpaved        
 
         int wayType = (int) wayTypeEncoder.getValue(flags);
@@ -431,19 +431,6 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             else
                 return wayTypeName + ", " + pavementName;
         }
-    }
-
-    /**
-     * Returns a double value in [0, 1] to identify ways as good or bad regarding safety or other
-     * preferences.
-     */
-    public double getPriority( long flags )
-    {
-        double prio = preferWayEncoder.getValue(flags);
-        if (prio == 0)
-            return (double) UNCHANGED.getValue() / BEST.getValue();
-
-        return prio / BEST.getValue();
     }
 
     /**
@@ -520,7 +507,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                 || "path".equals(highway) && surfaceTag == null
                 || unpavedSurfaceTags.contains(surfaceTag))
         {
-            encoded |= unpavedBit;
+            encoded = setBool(encoded, K_UNPAVED, true);
         }
 
         if (way.hasTag("bicycle", intendedValues))
@@ -535,6 +522,76 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             wayType = WayType.ROAD;
 
         return wayTypeEncoder.setValue(encoded, wayType.getValue());
+    }
+
+    /**
+     * Reports wether this edge is unpaved.
+     */
+    public static final int K_UNPAVED = 100;
+    public static final int K_PRIORITY = 101, K_PRIORITY_LONG = 102;
+
+    @Override
+    public long setBool( long flags, int key, boolean value )
+    {
+        switch (key)
+        {
+            case K_UNPAVED:
+                return value ? flags | unpavedBit : flags & ~unpavedBit;
+            default:
+                return super.setBool(flags, key, value);
+        }
+    }
+
+    @Override
+    public boolean isBool( long flags, int key )
+    {
+        switch (key)
+        {
+            case K_UNPAVED:
+                return (flags & unpavedBit) != 0;
+            default:
+                return super.isBool(flags, key);
+        }
+    }
+
+    @Override
+    public double getDouble( long flags, int key )
+    {
+        switch (key)
+        {
+            case K_PRIORITY:
+                double prio = preferWayEncoder.getValue(flags);
+                if (prio == 0)
+                    return (double) UNCHANGED.getValue() / BEST.getValue();
+
+                return prio / BEST.getValue();
+            default:
+                return super.getDouble(flags, key);
+        }
+    }
+
+    @Override
+    public long getLong( long flags, int key )
+    {
+        switch (key)
+        {
+            case K_PRIORITY_LONG:
+                return preferWayEncoder.getValue(flags);
+            default:
+                return super.getLong(flags, key);
+        }
+    }
+
+    @Override
+    public long setLong( long flags, int key, long value )
+    {
+        switch (key)
+        {
+            case K_PRIORITY_LONG:
+                return preferWayEncoder.setValue(flags, value);
+            default:
+                return super.setLong(flags, key, value);
+        }
     }
 
     boolean isPushingSection( OSMWay way )

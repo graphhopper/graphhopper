@@ -26,7 +26,7 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public class FastestWeighting implements Weighting
 {
-    private final FlagEncoder encoder;
+    protected final FlagEncoder encoder;
     private final double maxSpeed;
 
     public FastestWeighting( FlagEncoder encoder )

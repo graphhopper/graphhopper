@@ -27,12 +27,9 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public class PriorityWeighting extends FastestWeighting
 {
-    private final BikeCommonFlagEncoder encoder;
-
-    public PriorityWeighting( BikeCommonFlagEncoder encoder )
+    public PriorityWeighting( FlagEncoder encoder )
     {
         super(encoder);
-        this.encoder = encoder;
     }
 
     @Override
@@ -40,7 +37,7 @@ public class PriorityWeighting extends FastestWeighting
     {
         double weight = super.calcWeight(edge, reverse);
         if (Double.isInfinite(weight))
-            return Double.POSITIVE_INFINITY;        
-        return weight / (0.5 + encoder.getPriority(edge.getFlags()));
+            return Double.POSITIVE_INFINITY;
+        return weight / (0.5 + encoder.getDouble(edge.getFlags(), BikeCommonFlagEncoder.K_PRIORITY));
     }
 }

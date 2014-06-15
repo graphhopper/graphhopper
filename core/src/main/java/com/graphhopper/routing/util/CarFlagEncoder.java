@@ -216,7 +216,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         long encoded;
-        if ((allowed & ferryBit) == 0)
+        if (!isBool(allowed, K_FERRY))
         {
             // get assumed speed from highway type
             double speed = getSpeed(way);
