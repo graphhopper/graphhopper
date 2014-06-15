@@ -217,11 +217,11 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     @Override
     public long handleWayTags( OSMWay way, long allowed, long relationCode )
     {
-        if ((allowed & acceptBit) == 0)
+        if (!isAccept(allowed))
             return 0;
 
         long encoded;
-        if (!isBool(allowed, K_FERRY))
+        if (!isFerry(allowed))
         {
             String sacScale = way.getTag("sac_scale");
             if (sacScale != null)

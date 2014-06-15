@@ -83,13 +83,9 @@ public interface FlagEncoder
      */
     static final int K_BACKWARD = 1;
     /**
-     * Reports wether this edge is a ferry route.
-     */
-    static final int K_FERRY = 2;
-    /**
      * Reports wether this edge is part of a roundabout.
      */
-    static final int K_ROUNDABOUT = 3;
+    static final int K_ROUNDABOUT = 2;
 
     /**
      * Returns arbitrary boolean value identified by the specified key.

@@ -285,11 +285,11 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     @Override
     public long handleWayTags( OSMWay way, long allowed, long relationFlags )
     {
-        if ((allowed & acceptBit) == 0)
+        if (!isAccept(allowed))
             return 0;
 
         long encoded = 0;
-        if (!isBool(allowed, K_FERRY))
+        if (!isFerry(allowed))
         {
             double speed = getSpeed(way);
             int priorityFromRelation = 0;

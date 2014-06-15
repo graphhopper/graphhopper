@@ -212,11 +212,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     @Override
     public long handleWayTags( OSMWay way, long allowed, long relationCode )
     {
-        if ((allowed & acceptBit) == 0)
+        if (!isAccept(allowed))
             return 0;
 
         long encoded;
-        if (!isBool(allowed, K_FERRY))
+        if (!isFerry(allowed))
         {
             // get assumed speed from highway type
             double speed = getSpeed(way);
@@ -231,7 +231,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
             encoded = setSpeed(0, speed);
 
-            if (way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))
+            boolean isRoundabout = way.hasTag("junction", "roundabout");
+            if (isRoundabout)
+                encoded = setBool(encoded, K_ROUNDABOUT, true);
+
+            if (way.hasTag("oneway", oneways) || isRoundabout)
             {
                 if (way.hasTag("oneway", "-1"))
                     encoded |= backwardBit;
