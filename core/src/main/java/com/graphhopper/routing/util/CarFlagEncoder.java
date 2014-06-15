@@ -30,6 +30,7 @@ import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.Helper;
+import java.util.*;
 
 /**
  * Defines bit layout for cars. (speed, access, ferries, ...)
@@ -59,10 +60,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     protected CarFlagEncoder( int speedBits, double speedFactor )
     {
         super(speedBits, speedFactor);
-        restrictions = new String[]
-        {
-            "motorcar", "motor_vehicle", "vehicle", "access"
-        };
+        restrictions = new ArrayList<String>(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
         restrictedValues.add("private");
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");

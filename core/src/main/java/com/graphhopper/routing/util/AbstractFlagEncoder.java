@@ -30,7 +30,7 @@ import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.util.*;
-import java.util.Collections;
+import java.util.*;
 
 /**
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
@@ -68,8 +68,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected EdgeExplorer edgeOutExplorer;
     protected EdgeExplorer edgeInExplorer;
 
-    /* restriction definitions */
-    protected String[] restrictions;
+    /* restriction definitions where order is important */
+    protected List<String> restrictions = new ArrayList<String>(5);
     protected HashSet<String> intendedValues = new HashSet<String>(5);
     protected HashSet<String> restrictedValues = new HashSet<String>(5);
     protected HashSet<String> ferries = new HashSet<String>(5);

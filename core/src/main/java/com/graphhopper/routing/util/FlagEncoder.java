@@ -69,7 +69,11 @@ public interface FlagEncoder
      */
     long setProperties( double speed, boolean forward, boolean backward );
 
-    static final int FORWARD = 0, BACKWARD = 1, ROUNDABOUT = 2, LAST_IDX = ROUNDABOUT;
+    /**
+     * Simple rule: every subclass uses a minimum value which is two magnitudes higher than those
+     * here. Currently this means start from 100, and subclasses of this class start from 10000 and so on.
+     */
+    static final int FORWARD = 0, BACKWARD = 1, ROUNDABOUT = 2;
 
     /**
      * Returns arbitrary boolean value identified by the specified key.

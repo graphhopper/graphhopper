@@ -22,6 +22,8 @@ import java.util.Set;
 
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Defines bit layout for pedestrians (speed, access, surface, ...).
@@ -51,10 +53,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     protected FootFlagEncoder( int speedBits, double speedFactor )
     {
         super(speedBits, speedFactor);
-        restrictions = new String[]
-        {
-            "foot", "access"
-        };
+        restrictions = new ArrayList<String>(Arrays.asList("foot", "access"));
         restrictedValues.add("private");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
