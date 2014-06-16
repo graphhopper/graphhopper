@@ -17,6 +17,7 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.index.QueryResult;
@@ -26,6 +27,10 @@ import com.graphhopper.util.Instruction;
 import com.graphhopper.util.shapes.GHPoint;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -93,6 +98,95 @@ public class GraphHopperTest
         {
             assertEquals("You need to create a new LocationIndex instance as it is already closed", ex.getMessage());
         }
+    }
+
+    @Test
+    public void testAllowMultipleReadingInstances()
+    {
+        GraphHopper instance1 = new GraphHopper().setInMemory(true).
+                setEncodingManager(new EncodingManager("CAR")).
+                setGraphHopperLocation(ghLoc).
+                setOSMFile(testOsm);
+        instance1.importOrLoad();
+
+        GraphHopper instance2 = new GraphHopper().setInMemory(true).
+                setEncodingManager(new EncodingManager("CAR")).
+                setOSMFile(testOsm);
+        instance2.load(ghLoc);
+
+        GraphHopper instance3 = new GraphHopper().setInMemory(true).
+                setEncodingManager(new EncodingManager("CAR")).
+                setOSMFile(testOsm);
+        instance3.load(ghLoc);
+
+        instance1.close();
+        instance2.close();
+        instance3.close();
+    }
+
+    @Test
+    public void testDoNotAllowWritingAndLoadingAtTheSameTime() throws Exception
+    {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final GraphHopper instance1 = new GraphHopper()
+        {
+            @Override
+            protected DataReader importData() throws IOException
+            {
+                try
+                {
+                    latch.await();
+                } catch (InterruptedException ex)
+                {                   
+                }
+                return super.importData();
+            }
+        }.setInMemory(true).
+                setEncodingManager(new EncodingManager("CAR")).
+                setGraphHopperLocation(ghLoc).
+                setOSMFile(testOsm);
+        final AtomicReference<Exception> ar = new AtomicReference<Exception>();
+        Thread thread = new Thread()
+        {
+            @Override
+            public void run()
+            {
+                try
+                {
+                    instance1.importOrLoad();
+                } catch (Exception ex)
+                {
+                    ar.set(ex);
+                }
+            }
+        };
+        thread.start();
+
+        GraphHopper instance2 = new GraphHopper().setInMemory(true).
+                setEncodingManager(new EncodingManager("CAR")).
+                setOSMFile(testOsm);
+        try
+        {
+            // let thread reach the CountDownLatch
+            Thread.sleep(10);
+            // now importOrLoad should have create a lock which this load call does not like
+            instance2.load(ghLoc);
+            assertTrue(false);
+        } catch (RuntimeException ex)
+        {
+            assertNotNull(ex);
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("To avoid reading partial data"));
+        } finally
+        {
+            latch.countDown();
+            instance2.close();
+        }
+
+        // make sure the import process wasn't interrupted and no other error happened
+        thread.join();
+        if (ar.get() != null)
+            assertNull(ar.get().getMessage(), ar.get());
+        instance1.close();
     }
 
     @Test
