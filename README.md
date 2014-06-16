@@ -1,6 +1,6 @@
 # GraphHopper Route Planner
 
-[![Build Status](https://secure.travis-ci.org/graphhopper/graphhopper.png?branch=master)](http://travis-ci.org/graphhopper/graphhopper)
+[![Build Status](https://secure.travis-ci.org/graphhopper/graphhopper.png?branch=master)](http://travis-ci.org/graphhopper/graphhopper) [![Bountysource](https://www.bountysource.com/badge/tracker?tracker_id=90869)](https://www.bountysource.com/trackers/90869-graphhopper?utm_source=90869&utm_medium=shield&utm_campaign=TRACKER_BADGE)
 
 GraphHopper is a fast and memory efficient Java road routing engine released under Apache License 2.0.
 It is tuned towards road networks with OpenStreetMap data but can be useful for public transport problems as well.
