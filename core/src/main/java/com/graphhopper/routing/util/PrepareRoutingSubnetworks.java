@@ -43,6 +43,7 @@ public class PrepareRoutingSubnetworks
     private final GraphStorage g;
     private final EdgeFilter edgeFilter;
     private int minNetworkSize = 200;
+    private int minCarNetworkSize = 50;
     private int subNetworks = -1;
     private final AtomicInteger maxEdgesPerNode = new AtomicInteger(0);
 
@@ -62,13 +63,23 @@ public class PrepareRoutingSubnetworks
         this.minNetworkSize = minNetworkSize;
         return this;
     }
+    public PrepareRoutingSubnetworks setMinCarNetworkSize( int minCarNetworkSize )
+    {
+        this.minCarNetworkSize = minCarNetworkSize;
+        return this;
+    }
 
     public void doWork()
     {
         int del = removeZeroDegreeNodes();
+        int deadnet = 0;
+        if (this.minCarNetworkSize > 0)
+            deadnet = removeOneWayDeadEndNetworks(this.minCarNetworkSize);
+
         Map<Integer, Integer> map = findSubnetworks();
         keepLargeNetworks(map);
         logger.info("optimize to remove subnetworks (" + map.size() + "), zero-degree-nodes (" + del + "), "
+                + "dead-end-oneway-nodes (" + deadnet + "), "
                 + "maxEdges/node (" + maxEdgesPerNode.get() + ")");
         g.optimize();
         subNetworks = map.size();
@@ -208,5 +219,49 @@ public class PrepareRoutingSubnetworks
             }
         }
         return removed;
+    }
+
+    /**
+     * Remove one-way nodes that drives to dead-end
+     * <p/>
+     * @return removed nodes
+     */
+    int removeOneWayDeadEndNetworks(final int minSize)
+    {
+        int removed = 0;
+        int locs = g.getNodes();
+
+        FlagEncoder encoder = g.getEncodingManager().getEncoder("car");
+
+        EdgeExplorer inExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false));
+        EdgeExplorer outExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
+        for (int start = 0; start < locs; start++)
+        {
+            if (g.isNodeRemoved(start))
+                continue;
+
+            if ((subNodeCount(inExplorer, start, minSize) < minSize) ||
+                (subNodeCount(outExplorer, start, minSize) < minSize))
+            {
+                removed++;
+                g.markNodeRemoved(start);
+            }
+        }
+        return removed;
+    }
+    private int subNodeCount(final EdgeExplorer explorer, final int start, final int stopNodeCount)
+    {
+        final AtomicInteger integ = new AtomicInteger(0);
+        
+        new XFirstSearch()
+        {
+            @Override
+            protected final boolean goFurther( int nodeId )
+            {
+                return integ.incrementAndGet() < stopNodeCount;
+            }
+        }.start(explorer, start, false);
+        
+        return integ.get();
     }
 }
