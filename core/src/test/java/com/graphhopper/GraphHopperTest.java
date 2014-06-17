@@ -450,9 +450,12 @@ public class GraphHopperTest
     public void testVia()
     {
         instance = new GraphHopper().setInMemory(true).
-                setEncodingManager(new EncodingManager("CAR")).
-                setGraphHopperLocation(ghLoc).
-                setOSMFile(testOsm3);
+                init(
+                new CmdArgs().
+                put("prepare.minNetworkSize", "1").
+                put("osmreader.acceptWay", "CAR").
+                put("osmreader.osm", testOsm3)).
+                setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
 
         // A -> B -> C

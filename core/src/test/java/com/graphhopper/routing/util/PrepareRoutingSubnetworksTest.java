@@ -17,16 +17,17 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMWay;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.GHUtility;
 import java.util.Arrays;
 import java.util.Map;
+import static javax.swing.text.html.HTML.Tag.I;
 import org.junit.*;
 import static org.junit.Assert.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -147,5 +148,52 @@ public class PrepareRoutingSubnetworksTest
         instance.doWork();
         g.optimize();
         assertEquals(7, g.getNodes());
+    }
+
+    GraphStorage createDeadEndUnvisitedNetworkGraph( EncodingManager em )
+    {
+        GraphStorage g = createGraph(em);
+        // 0 <-> 1 <-> 2 <-> 3 <-> 4 <- 5 <-> 6
+        g.edge(0, 1, 1, true);
+        g.edge(1, 2, 1, true);
+        g.edge(2, 3, 1, true);
+        g.edge(3, 4, 1, true);
+        g.edge(5, 4, 1, false);
+        g.edge(5, 6, 1, true);
+
+        // 7 -> 8 <-> 9 <-> 10
+        g.edge(7, 8, 1, false);
+        g.edge(8, 9, 1, true);
+        g.edge(9, 10, 1, true);
+        return g;
+    }
+
+    @Test
+    public void testRemoveDeadEndUnvisitedNetworksOneWay()
+    {
+        GraphStorage g = createDeadEndUnvisitedNetworkGraph(em);
+        Logger logger = LoggerFactory.getLogger(getClass());
+        FlagEncoder encoder = new EncodingManager("CAR").getSingle();
+
+        EdgeExplorer explorer = g.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
+        int removed = PrepareRoutingSubnetworks.removeDeadEndUnvisitedNetworks(g, explorer, 3, logger);
+        assertEquals(2, removed);
+
+        g.optimize();
+        assertEquals(9, g.getNodes());
+    }
+
+    @Test
+    public void testRemoveDeadEndUnvisitedNetworks()
+    {
+        GraphStorage g = createDeadEndUnvisitedNetworkGraph(em);
+        Logger logger = LoggerFactory.getLogger(getClass());
+        FlagEncoder encoder = new EncodingManager("CAR").getSingle();
+
+        int removed = PrepareRoutingSubnetworks.removeDeadEndUnvisitedNetworks(g, encoder, 3, logger);
+        assertEquals(3, removed);
+
+        g.optimize();
+        assertEquals(8, g.getNodes());
     }
 }
