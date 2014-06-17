@@ -29,8 +29,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -137,7 +135,7 @@ public class GraphHopperTest
                 {
                     latch.await();
                 } catch (InterruptedException ex)
-                {                   
+                {
                 }
                 return super.importData();
             }
@@ -168,7 +166,7 @@ public class GraphHopperTest
         try
         {
             // let thread reach the CountDownLatch
-            Thread.sleep(10);
+            Thread.sleep(30);
             // now importOrLoad should have create a lock which this load call does not like
             instance2.load(ghLoc);
             assertTrue(false);
@@ -178,12 +176,12 @@ public class GraphHopperTest
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("To avoid reading partial data"));
         } finally
         {
-            latch.countDown();
             instance2.close();
+            latch.countDown();
+            // make sure the import process wasn't interrupted and no other error happened
+            thread.join();
         }
 
-        // make sure the import process wasn't interrupted and no other error happened
-        thread.join();
         if (ar.get() != null)
             assertNull(ar.get().getMessage(), ar.get());
         instance1.close();
