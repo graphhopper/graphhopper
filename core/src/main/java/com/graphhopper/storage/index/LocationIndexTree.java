@@ -28,6 +28,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
@@ -598,8 +599,84 @@ public class LocationIndexTree implements LocationIndex
     {
         return BitUtil.BIG.reverse(key, keyAlgo.getBits());
     }
+    
+    
+    protected TIntHashSet findNetworkEntries( double queryLat, double queryLon)
+    {
+        TIntHashSet resultEntries = new TIntHashSet(); 
+        TIntHashSet foundEntries = new TIntHashSet();
 
-    protected TIntHashSet findNetworkEntries( double queryLat, double queryLon )
+        int maxiteration = 32;
+        for (int iteration = 0; iteration < maxiteration; iteration++)
+        {
+
+            // find entries in border of searchbox
+            for (int yreg = -iteration; yreg <= iteration; yreg++)
+            {
+                double subqueryLat = queryLat + yreg * deltaLat;
+                double subqueryLonA = queryLon - iteration * deltaLon;
+                double subqueryLonB = queryLon + iteration * deltaLon;
+                foundEntries.addAll(findNetworkEntriesSingleRegion(subqueryLat, subqueryLonA));
+                foundEntries.addAll(findNetworkEntriesSingleRegion(subqueryLat, subqueryLonB));
+
+            }
+            for (int xreg = -iteration + 1; xreg <= iteration - 1; xreg++)
+            {
+                double subqueryLon = queryLon + xreg * deltaLon;
+                double subqueryLatA = queryLat - iteration * deltaLat;
+                double subqueryLatB = queryLat + iteration * deltaLat;
+                foundEntries.addAll(findNetworkEntriesSingleRegion(subqueryLatA, subqueryLon));
+                foundEntries.addAll(findNetworkEntriesSingleRegion(subqueryLatB, subqueryLon));
+            }
+
+          // filter entries, to get only those which are located in a circle
+            if (iteration > 0) // filter only, when scope was already expanded
+            {  
+                double mindelta = (deltaLat < deltaLon) ? deltaLat : deltaLon;
+                double radius = mindelta * (iteration + 0.5);
+                resultEntries = circleFilter(foundEntries, radius, queryLat, queryLon);
+            } else {
+                resultEntries = foundEntries;
+            }
+
+            // Good if something was found. Else repeat whole proces with wider search area. 
+            if (resultEntries.size() > 0)
+            {
+                break;
+            }
+        }
+        return resultEntries;
+    }
+
+    protected TIntHashSet circleFilter( TIntHashSet input, double radius, double queryLat, double queryLon )
+    {
+        TIntHashSet output = new TIntHashSet();
+          //double mindelta = (deltaLat < deltaLon) ? deltaLat : deltaLon;
+        //double radius = mindelta * (iteration + 0.5);
+
+        TIntIterator itr = input.iterator();
+        while (itr.hasNext())
+        {
+            int element = itr.next();
+            double eLat = nodeAccess.getLat(element);
+            double eLon = nodeAccess.getLon(element);
+            if (insideCircle(eLat - queryLat, eLon - queryLon, radius))
+            {
+                output.add(element);
+            }
+        }
+        return output;
+    }
+
+    /**
+     * Quick test if coordinate x|y is inside a circle with certain radius (inclusive border)
+     */
+    private boolean insideCircle( double x, double y, double radius )
+    {
+        return (x * x + y * y) <= (radius * radius);
+    }
+
+    protected TIntHashSet findNetworkEntriesSingleRegion( double queryLat, double queryLon )
     {
         TIntHashSet storedNetworkEntryIds = new TIntHashSet();
         if (regionSearch)

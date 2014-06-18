@@ -305,6 +305,51 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
             }
         }).getClosestNode());
     }
+    
+    @Test
+    public void testCircleFilter()
+    {
+        Graph graph = createGraph(encodingManager);
+        NodeAccess na = graph.getNodeAccess();
+        // inside
+        na.setNode(0, 20.0, 10.0);  // center
+        na.setNode(1, 10.0, 10.0);
+        na.setNode(2, 20.0, -5.0);
+        na.setNode(3, 30.0, 20.0);
+
+        // border
+        na.setNode(4, 0.0, 10.0);
+
+        // outside
+        na.setNode(5, 0.0, 0.0);
+        na.setNode(6, 20.0, -15.0);
+        na.setNode(7, 40.0, 0.0);
+        na.setNode(8, 40.0, 30.0);
+
+        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+
+        TIntHashSet in = new TIntHashSet();
+        in.add(0);
+        in.add(1);
+        in.add(2);
+        in.add(3);
+        in.add(4);
+        in.add(5);
+        in.add(6);
+        in.add(7);
+        in.add(8);
+
+        TIntHashSet out = index.circleFilter(in, 20.0, 20.0, 10.0);
+        assertTrue(out.contains(0));
+        assertTrue(out.contains(1));
+        assertTrue(out.contains(2));
+        assertTrue(out.contains(3));
+        assertTrue(out.contains(4));
+        assertFalse(out.contains(5));
+        assertFalse(out.contains(6));
+        assertFalse(out.contains(7));
+        assertFalse(out.contains(8));
+    }
 
     // see testgraph2.jpg
     Graph createTestGraph2()
@@ -400,5 +445,5 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         graph.edge(27, 33, 10, true);
         graph.edge(28, 34, 10, true);
         return graph;
-    }
+    }   
 }
