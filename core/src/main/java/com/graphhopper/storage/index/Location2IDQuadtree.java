@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
  * <p/>
  * @author Peter Karich
  */
-public class Location2IDQuadtree implements LocationIndex
+class Location2IDQuadtree implements LocationIndex
 {
     private final static int MAGIC_INT = Integer.MAX_VALUE / 12306;
     private final Logger logger = LoggerFactory.getLogger(getClass());

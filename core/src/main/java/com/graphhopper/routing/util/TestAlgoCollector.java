@@ -192,9 +192,9 @@ public class TestAlgoCollector
         public List<QueryResult> getList( LocationIndex idx, EdgeFilter edgeFilter )
         {
             List<QueryResult> qr = new ArrayList<QueryResult>();
-            for (AssumptionPerPath or : assumptions)
+            for (AssumptionPerPath p : assumptions)
             {
-                qr.add(idx.findClosest(or.lat, or.lon, edgeFilter));
+                qr.add(idx.findClosest(p.lat, p.lon, edgeFilter));
             }
             return qr;
         }

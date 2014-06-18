@@ -119,7 +119,6 @@ public class QueryResult
      */
     public boolean isValid()
     {
-        // Location2IDQuadtree does not support edges
         return closestNode >= 0;
     }
 

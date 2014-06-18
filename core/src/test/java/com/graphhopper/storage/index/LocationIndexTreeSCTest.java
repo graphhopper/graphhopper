@@ -151,7 +151,7 @@ public class LocationIndexTreeSCTest extends LocationIndexTreeTest
         index.setResolution(100000);
         index.prepareIndex();
         // very close to 2, but should match the edge 0--1
-        TIntHashSet set = index.findNetworkEntries(0.51, 0.2);
+        TIntHashSet set = index.findNetworkEntries(0.51, 0.2, index.maxRegionSearch);
         TIntSet expectedSet = new TIntHashSet();
         expectedSet.add(1);
         expectedSet.add(2);

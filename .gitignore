@@ -28,3 +28,4 @@ core/TODO*.txt
 srtmprovider/
 core/docs/
 .*#
+cgiarprovider/
