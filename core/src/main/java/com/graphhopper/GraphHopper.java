@@ -991,8 +991,11 @@ public class GraphHopper implements GraphHopperAPI
         int remainingSubnetworks = preparation.findSubnetworks().size();
         logger.info("edges: " + graph.getAllEdges().getMaxId() + ", nodes " + n + ", there were " + preparation.getSubNetworks()
                 + " subnetworks. removed them => " + (prev - n) + " less nodes. Remaining subnetworks:" + remainingSubnetworks);
+        
+        //FixOneWayDeadEnds.fixAllOneWayDeadEnds(graph, getEncodingManager().getSingle(), 3l);
+        //RemoveSmallSubnetworks();
     }
-
+    
     protected void flush()
     {
         logger.info("flushing graph " + graph.toString() + ", details:" + graph.toDetailsString() + ", " + Helper.getMemInfo() + ")");

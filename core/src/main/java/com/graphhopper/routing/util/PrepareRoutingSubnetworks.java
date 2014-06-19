@@ -20,10 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.XFirstSearch;
+import com.graphhopper.util.*;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -43,7 +40,7 @@ public class PrepareRoutingSubnetworks
     private final GraphStorage g;
     private final EdgeFilter edgeFilter;
     private int minNetworkSize = 200;
-    private int minCarNetworkSize = 50;
+    private int minCarNetworkSize = 0;
     private int subNetworks = -1;
     private final AtomicInteger maxEdgesPerNode = new AtomicInteger(0);
 
@@ -74,12 +71,20 @@ public class PrepareRoutingSubnetworks
         int del = removeZeroDegreeNodes();
         int deadnet = 0;
         if (this.minCarNetworkSize > 0)
+        {
+            StopWatch sw = new StopWatch().start();
             deadnet = removeOneWayDeadEndNetworks(this.minCarNetworkSize);
-
+            logger.info("removeOneWayDeadEndNetworks: " + sw.stop().getSeconds() + "s");
+        }
+        
         Map<Integer, Integer> map = findSubnetworks();
         keepLargeNetworks(map);
+
+        int unvisited = RemoveUnvisited(g, g.getEncodingManager().getEncoder("car"), findSubnetworks());
+
         logger.info("optimize to remove subnetworks (" + map.size() + "), zero-degree-nodes (" + del + "), "
                 + "dead-end-oneway-nodes (" + deadnet + "), "
+                + "unvisited (" + unvisited + "), "
                 + "maxEdges/node (" + maxEdgesPerNode.get() + ")");
         g.optimize();
         subNetworks = map.size();
@@ -220,35 +225,149 @@ public class PrepareRoutingSubnetworks
         }
         return removed;
     }
+    
+    int removeOneWayDeadEndNetworks(final int minSize)
+    {
+        int removed = 0;
 
+        FlagEncoder encoder = g.getEncodingManager().getEncoder("car");
+
+        EdgeExplorer inExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false));
+        EdgeExplorer outExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
+        
+        AllEdgesIterator edgeIterator = g.getAllEdges();
+       
+        while(edgeIterator.next())
+        {
+            if ((edgeIterator.getEdge() % 100000) == 100000)
+                logger.info("removeOneWayDeadEndNetworks " + edgeIterator.getEdge());
+
+            boolean forward = encoder.isBool(edgeIterator.getFlags(), encoder.K_FORWARD);
+            boolean backward = encoder.isBool(edgeIterator.getFlags(), encoder.K_BACKWARD);
+            
+            if (forward && !backward)
+            {
+                int node = edgeIterator.getAdjNode();
+                if (g.isNodeRemoved(node))
+                    continue;
+
+                if (subNodeCount(inExplorer, node, minSize) < minSize)
+                {
+                    removed += removeOneWay(inExplorer, node);
+                }
+            }
+            else if (!forward && backward)
+            {
+                int node = edgeIterator.getBaseNode();
+
+                if (g.isNodeRemoved(node))
+                    continue;
+
+                if (subNodeCount(outExplorer, node, minSize) < minSize)
+                {
+                    removed += removeOneWay(outExplorer, node);
+                }
+            }
+        }
+        return removed;
+    }
+    
+    private int removeOneWay(final EdgeExplorer explorer, final int start)
+    {
+        final long flagEncoderDirectionMask = 3l;
+        final AtomicInteger integ = new AtomicInteger(0);
+        
+        new XFirstSearch()
+        {
+            protected boolean checkAdjacent( EdgeIteratorState edge )
+            {
+                long oldFlags=edge.getFlags();
+                long newFlags=oldFlags & (~flagEncoderDirectionMask);
+                edge.setFlags(newFlags);
+                integ.incrementAndGet();
+                return true;
+            }
+        }.start(explorer, start, false);
+        
+        return integ.get();
+    }
+    
     /**
      * Remove one-way nodes that drives to dead-end
      * <p/>
      * @return removed nodes
      */
-    int removeOneWayDeadEndNetworks(final int minSize)
+    /*
+    int removeOneWayDeadEndNetworks2(final int minSize)
     {
         int removed = 0;
         int locs = g.getNodes();
 
         FlagEncoder encoder = g.getEncodingManager().getEncoder("car");
 
+        HashSet<Integer> visitedInNodes = new HashSet<Integer>();
+        HashSet<Integer> visitedOutNodes = new HashSet<Integer>();
+
+        EdgeExplorer explorer = g.createEdgeExplorer(new DefaultEdgeFilter(encoder));
         EdgeExplorer inExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false));
         EdgeExplorer outExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
         for (int start = 0; start < locs; start++)
         {
+            if ((start+1 % 100000) == 100000)
+            {
+                logger.info("removeOneWayDeadEndNetworks " + start + "/" + locs);
+            }
+            
             if (g.isNodeRemoved(start))
                 continue;
-
-            if ((subNodeCount(inExplorer, start, minSize) < minSize) ||
-                (subNodeCount(outExplorer, start, minSize) < minSize))
+            
+            EdgeIterator edgeIterator = explorer.setBaseNode(start);
+            
+            while (edgeIterator.next())
             {
-                removed++;
-                g.markNodeRemoved(start);
+                boolean forward = encoder.isBool(edgeIterator.getFlags(), encoder.K_FORWARD);
+                boolean backward = encoder.isBool(edgeIterator.getFlags(), encoder.K_BACKWARD);
+
+                if (forward && !backward)
+                {
+                    int node = edgeIterator.getAdjNode();
+                    if (g.isNodeRemoved(node))
+                        continue;
+
+                    if (visitedInNodes.contains(node))
+                        continue;
+
+                    visitedInNodes.add(node);
+
+                    if (subNodeCount(inExplorer, node, minSize) < minSize)
+                    {
+                        removed++;
+                        g.markNodeRemoved(node);
+                    }
+                }
+                else if (!forward && backward)
+                {
+                    int node = edgeIterator.getBaseNode();
+
+                    if (g.isNodeRemoved(node))
+                        continue;
+
+                    if (visitedOutNodes.contains(node))
+                        continue;
+                    
+                    visitedOutNodes.add(node);
+
+                    if (subNodeCount(outExplorer, node, minSize) < minSize)
+                    {
+                        removed++;
+                        g.markNodeRemoved(node);
+                    }
+                }
             }
         }
         return removed;
     }
+    */
     private int subNodeCount(final EdgeExplorer explorer, final int start, final int stopNodeCount)
     {
         final AtomicInteger integ = new AtomicInteger(0);
@@ -263,5 +382,48 @@ public class PrepareRoutingSubnetworks
         }.start(explorer, start, false);
         
         return integ.get();
+    }
+
+    private static int RemoveUnvisited(GraphStorage g, FlagEncoder encoder, Map<Integer, Integer> map)
+    {
+        int removed = 0;
+        EdgeExplorer inExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false));
+        EdgeExplorer outExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
+
+        removed += RemoveUnvisited(g, inExplorer, map);
+        removed += RemoveUnvisited(g, outExplorer, map);
+        
+        return removed;
+    }
+    
+    private static int RemoveUnvisited(GraphStorage g, final EdgeExplorer explorer, final Map<Integer, Integer> map)
+    {
+        int removed = 0;
+        final HashSet<Integer> visitedNodes = new HashSet<Integer>();
+        
+        for (Entry<Integer, Integer> e : map.entrySet())
+        {
+            int mapStart = e.getKey();
+            new XFirstSearch()
+            {
+                @Override
+                protected final boolean goFurther( int nodeId )
+                {
+                    visitedNodes.add(nodeId);
+                    return true;
+                }
+            }.start(explorer, mapStart, false);
+        }
+
+        int locs = g.getNodes();
+        for (int start = 0; start < locs; start++)
+        {
+            if (!visitedNodes.contains(start))
+            {
+                removed++;
+                g.markNodeRemoved(start);
+            }
+        }
+        return removed;
     }
 }
