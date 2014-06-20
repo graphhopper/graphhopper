@@ -219,7 +219,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     /**
      * Swapping directions means swapping bits which are dependent on the direction of an edge like
-     * the access bits. But also direction dependent speed values should be swapped too.
+     * the access bits. But also direction dependent speed values should be swapped too. Keep in
+     * mind that this method is performance critical!
      */
     public long reverseFlags( long flags )
     {
@@ -544,12 +545,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     {
         return Collections.emptyList();
     }
-    
+
     protected boolean isFerry( long internalFlags )
     {
         return (internalFlags & ferryBit) != 0;
     }
-    
+
     protected boolean isAccept( long internalFlags )
     {
         return (internalFlags & acceptBit) != 0;

@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.DistanceCalc3D;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
 import static com.graphhopper.util.Helper.*;
@@ -110,7 +109,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
 
     @Override
     public long reverseFlags( long flags )
-    {
+    {        
         // swap access
         flags = super.reverseFlags(flags);
 

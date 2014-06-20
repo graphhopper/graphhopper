@@ -349,9 +349,11 @@ public class EncodingManager
      */
     public long reverseFlags( long flags )
     {
-        for (AbstractFlagEncoder encoder : edgeEncoders)
+        // performance critical
+        int len = edgeEncoders.size();
+        for (int i = 0; i < len; i++)
         {
-            flags = encoder.reverseFlags(flags);
+            flags = edgeEncoders.get(i).reverseFlags(flags);
         }
         return flags;
     }
