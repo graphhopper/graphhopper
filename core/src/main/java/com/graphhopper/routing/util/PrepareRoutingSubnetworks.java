@@ -74,7 +74,7 @@ public class PrepareRoutingSubnetworks
 
         int unvisitedDeadEnds = 0;
         if (this.encodingManager.getVehicleCount() == 1)
-            unvisitedDeadEnds = RemoveDeadEndUnvisitedNetworks(g, this.encodingManager.getSingle(), minNetworkSize, logger);
+            unvisitedDeadEnds = removeDeadEndUnvisitedNetworks(g, this.encodingManager.getSingle(), minNetworkSize, logger);
 
         logger.info("optimize to remove subnetworks (" + map.size() + "), zero-degree-nodes (" + del + "), "
                 + "unvisited-dead-end-nodes(" + unvisitedDeadEnds + "), "
@@ -238,19 +238,19 @@ public class PrepareRoutingSubnetworks
      * <p/>
      * @return removed nodes;
      */
-    public static int RemoveDeadEndUnvisitedNetworks(final GraphStorage g, final FlagEncoder encoder, final int minNetworkSize, final Logger logger)
+    public static int removeDeadEndUnvisitedNetworks(final GraphStorage g, final FlagEncoder encoder, final int minNetworkSize, final Logger logger)
     {
         int removed = 0;
 
         StopWatch sw = new StopWatch().start();
-        logger.info("RemoveDeadEndUnvisitedNetworks: searching forward");
-        removed += RemoveDeadEndUnvisitedNetworks(g, g.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false)), minNetworkSize, logger);
-        logger.info("RemoveDeadEndUnvisitedNetworks: forward search completed in " + sw.stop().getSeconds() + "s");
+        logger.info("removeDeadEndUnvisitedNetworks: searching forward");
+        removed += removeDeadEndUnvisitedNetworks(g, g.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false)), minNetworkSize, logger);
+        logger.info("removeDeadEndUnvisitedNetworks: forward search completed in " + sw.stop().getSeconds() + "s");
         
         sw.start();
-        logger.info("RemoveDeadEndUnvisitedNetworks: searching backward");
-        removed += RemoveDeadEndUnvisitedNetworks(g, g.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true)), minNetworkSize, logger);
-        logger.info("RemoveDeadEndUnvisitedNetworks: backward search completed in " + sw.stop().getSeconds() + "s");
+        logger.info("removeDeadEndUnvisitedNetworks: searching backward");
+        removed += removeDeadEndUnvisitedNetworks(g, g.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true)), minNetworkSize, logger);
+        logger.info("removeDeadEndUnvisitedNetworks: backward search completed in " + sw.stop().getSeconds() + "s");
 
         return removed;
     }
@@ -270,7 +270,7 @@ public class PrepareRoutingSubnetworks
         return sortedByValues;
     }
     
-    private static int RemoveDeadEndUnvisitedNetworks(final GraphStorage g, final EdgeExplorer explorer, final int minNetworkSize, final Logger logger)
+    public static int removeDeadEndUnvisitedNetworks(final GraphStorage g, final EdgeExplorer explorer, final int minNetworkSize, final Logger logger)
     {
         final AtomicInteger removed = new AtomicInteger(0);
         
