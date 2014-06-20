@@ -46,9 +46,6 @@ public class NativeFSLockFactory implements LockFactory
     @Override
     public void setLockDir( File lockDir )
     {
-        if (!lockDir.isDirectory())
-            throw new IllegalArgumentException("lockDir has to be a directory");
-
         this.lockDir = lockDir;
     }
 
@@ -104,6 +101,9 @@ public class NativeFSLockFactory implements LockFactory
                 if (!lockDir.mkdirs())
                     throw new RuntimeException("Directory " + lockDir + " does not exist and cannot created to place lock file there: " + lockFile);
             }
+
+            if (!lockDir.isDirectory())
+                throw new IllegalArgumentException("lockDir has to be a directory: " + lockDir);
 
             try
             {
