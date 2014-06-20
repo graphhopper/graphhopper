@@ -125,7 +125,8 @@ public class GraphHopperTest
     @Test
     public void testDoNotAllowWritingAndLoadingAtTheSameTime() throws Exception
     {
-        final CountDownLatch latch = new CountDownLatch(1);
+        final CountDownLatch latch1 = new CountDownLatch(1);
+        final CountDownLatch latch2 = new CountDownLatch(1);
         final GraphHopper instance1 = new GraphHopper()
         {
             @Override
@@ -133,7 +134,8 @@ public class GraphHopperTest
             {
                 try
                 {
-                    latch.await();
+                    latch2.countDown();
+                    latch1.await();
                 } catch (InterruptedException ex)
                 {
                 }
@@ -166,7 +168,7 @@ public class GraphHopperTest
         try
         {
             // let thread reach the CountDownLatch
-            Thread.sleep(30);
+            latch2.await();
             // now importOrLoad should have create a lock which this load call does not like
             instance2.load(ghLoc);
             assertTrue(false);
@@ -177,7 +179,7 @@ public class GraphHopperTest
         } finally
         {
             instance2.close();
-            latch.countDown();
+            latch1.countDown();
             // make sure the import process wasn't interrupted and no other error happened
             thread.join();
         }
