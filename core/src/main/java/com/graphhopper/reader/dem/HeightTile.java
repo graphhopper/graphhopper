@@ -37,17 +37,30 @@ public class HeightTile
     private final int minLat;
     private final int minLon;
     private final int width;
+    private final int degree;
     private final double lowerBound;
     private final double higherBound;
 
-    public HeightTile( int minLat, int minLon, int width, double precision )
+    public HeightTile( int minLat, int minLon, int width, double precision, int degree )
     {
         this.minLat = minLat;
         this.minLon = minLon;
         this.width = width;
 
         this.lowerBound = -1 / precision;
-        this.higherBound = 1 + 1 / precision;
+        this.higherBound = degree + 1 / precision;
+
+        this.degree = degree;
+    }
+
+    public void setSeaLevel( boolean b )
+    {
+        heights.setHeader(0, b ? 1 : 0);
+    }
+
+    public boolean isSeaLevel()
+    {
+        return heights.getHeader(0) == 1;
     }
 
     void setHeights( DataAccess da )
@@ -66,8 +79,8 @@ public class HeightTile
 
         // first row in the file is the northernmost one
         // http://gis.stackexchange.com/a/43756/9006
-        int lonSimilar = (int) Math.round(width * deltaLon);
-        int latSimilar = width - (int) Math.round(width * deltaLat);
+        int lonSimilar = (int) Math.round(width / degree * deltaLon);
+        int latSimilar = width - (int) Math.round(width / degree * deltaLat);
         return heights.getShort(2 * (latSimilar * width + lonSimilar));
     }
 
@@ -85,7 +98,7 @@ public class HeightTile
         for (int i = 0; i < len; i++)
         {
             int lonSimilar = i % width;
-            // no need for width - x as coordinate system for Graphics is already this way
+            // no need for width - y as coordinate system for Graphics is already this way
             int latSimilar = i / width;
             int green = Math.abs(heights.getShort(i * 2));
             int red = 0;

@@ -23,10 +23,11 @@ import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.util.Downloader;
-import gnu.trove.map.hash.TIntObjectHashMap;
 import java.awt.image.Raster;
 import java.io.*;
 import java.net.SocketTimeoutException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import org.apache.xmlgraphics.image.codec.tiff.TIFFDecodeParam;
@@ -55,7 +56,7 @@ public class CGIARProvider implements ElevationProvider
     private static final int WIDTH = 6000;
     private Downloader downloader = new Downloader("GraphHopper CGIARReader").setTimeout(10000);
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final TIntObjectHashMap<HeightTile> cacheData = new TIntObjectHashMap<HeightTile>();
+    private final Map<String, HeightTile> cacheData = new HashMap<String, HeightTile>();
     private File cacheDir = new File("/tmp/cgiar");
     // String baseUrl = "http://srtm.csi.cgiar.org/SRT-ZIP/SRTM_V41/SRTM_Data_GeoTiff";
     private String baseUrl = "http://droppr.org/srtm/v4.1/6_5x5_TIFs";
@@ -63,6 +64,7 @@ public class CGIARProvider implements ElevationProvider
     private DAType daType = DAType.MMAP;
     private final double precision = 1e7;
     private final double invPrecision = 1 / precision;
+    private final int degree = 5;
 
     public void setDownloader( Downloader downloader )
     {
@@ -73,7 +75,7 @@ public class CGIARProvider implements ElevationProvider
     public ElevationProvider setCacheDir( File cacheDir )
     {
         if (cacheDir.exists() && !cacheDir.isDirectory())
-            throw new IllegalStateException("Cache path has to be a directory");
+            throw new IllegalArgumentException("Cache path has to be a directory");
 
         this.cacheDir = cacheDir;
         return this;
@@ -82,8 +84,8 @@ public class CGIARProvider implements ElevationProvider
     @Override
     public ElevationProvider setBaseURL( String baseUrl )
     {
-        if (baseUrl.isEmpty())
-            return this;
+        if (baseUrl == null || baseUrl.isEmpty())
+            throw new IllegalArgumentException("baseUrl cannot be empty");
 
         this.baseUrl = baseUrl;
         return this;
@@ -99,19 +101,14 @@ public class CGIARProvider implements ElevationProvider
         return this;
     }
 
-    // use int key instead of string for lower memory usage
-    private int calcIntKey( double lat, double lon )
-    {
-        // we could use LinearKeyAlgo but this is simpler as we only need integer precision:
-        return (down(lat, 5) + 90) * 1000 + down(lon, 5) + 180;
-    }
-
-    int down( double val, int scale )
+    int down( double val )
     {
         int intVal = (int) val;
-        if (val >= 0 || intVal - val < invPrecision)
-            return intVal / scale;
-        return (intVal - 1) / scale;
+        if (!(val >= 0 || intVal - val < invPrecision))
+            intVal = intVal - degree;
+
+        // 'rounding' to closest 5
+        return (intVal / degree) * degree;
     }
 
     @Override
@@ -119,107 +116,112 @@ public class CGIARProvider implements ElevationProvider
     {
         lat = (int) (lat * precision) / precision;
         lon = (int) (lon * precision) / precision;
-        int intKey = calcIntKey(lat, lon);
-        HeightTile demProvider = cacheData.get(intKey);
+        String name = getFileName(lat, lon);
+        HeightTile demProvider = cacheData.get(name);
         if (demProvider == null)
         {
             if (!cacheDir.exists())
                 cacheDir.mkdirs();
 
-            int minLat = down(lat, 1);
-            int minLon = down(lon, 1);
-            demProvider = new HeightTile(minLat, minLon, WIDTH, precision);
-            cacheData.put(intKey, demProvider);
-            DataAccess heights = getDirectory().find("dem" + intKey);
-            // short == 2 bytes
-            heights.create(2 * WIDTH * WIDTH);
+            int minLat = down(lat);
+            int minLon = down(lon);
+            demProvider = new HeightTile(minLat, minLon, WIDTH, precision, degree);
+            cacheData.put(name, demProvider);
+            DataAccess heights = getDirectory().find(name + ".gh");
             demProvider.setHeights(heights);
-
-            String name = getFileName(lat, lon);
-            String tifName = name + ".tif";
-            String zippedURL = baseUrl + "/" + name + ".zip";
-            File file = new File(cacheDir, new File(zippedURL).getName());
-
-            // get zip file if not already in cacheDir - unzip later and in-memory only!
-            if (!file.exists())
+            if (!heights.loadExisting())
             {
+                // short == 2 bytes
+                heights.create(2 * WIDTH * WIDTH);
+
+                String tifName = name + ".tif";
+                String zippedURL = baseUrl + "/" + name + ".zip";
+                File file = new File(cacheDir, new File(zippedURL).getName());
+
+                // get zip file if not already in cacheDir - unzip later and in-memory only!
+                if (!file.exists())
+                {
+                    try
+                    {
+                        for (int i = 0; i < 3; i++)
+                        {
+                            try
+                            {
+                                downloader.downloadFile(zippedURL, file.getAbsolutePath());
+                                break;
+                            } catch (SocketTimeoutException ex)
+                            {
+                                // just try again after a little nap
+                                Thread.sleep(2000);
+                                continue;
+                            } catch (FileNotFoundException ex)
+                            {
+                                demProvider.setSeaLevel(true);
+                                return 0;
+                            }
+                        }
+                    } catch (Exception ex)
+                    {
+                        throw new RuntimeException(ex);
+                    }
+                }
+
+                logger.info("start decoding");
+
+                // decode tiff data
+                Raster raster;
                 try
                 {
-                    for (int i = 0; i < 3; i++)
+                    InputStream is = new FileInputStream(file);
+                    ZipInputStream zis = new ZipInputStream(is);
+                    // find tif file in zip
+                    ZipEntry entry = zis.getNextEntry();
+                    while (entry != null && !entry.getName().equals(tifName))
                     {
-                        try
-                        {
-                            downloader.downloadFile(zippedURL, file.getAbsolutePath());
-                            break;
-                        } catch (SocketTimeoutException ex)
-                        {
-                            // just try again after a little nap
-                            Thread.sleep(2000);
-                            continue;
-                        } catch (FileNotFoundException ex)
-                        {
-                            // TODO is at seaLevel
-                            continue;
-                        }
+                        entry = zis.getNextEntry();
                     }
-                } catch (Exception ex)
-                {
-                    throw new RuntimeException(ex);
-                }
-            }
 
-            logger.info("start decoding");
-
-            // decode tiff data
-            Raster raster;
-            try
-            {
-                InputStream is = new FileInputStream(file);
-                ZipInputStream zis = new ZipInputStream(is);
-                // find tif file in zip
-                ZipEntry entry = zis.getNextEntry();
-                while (entry != null && !entry.getName().equals(tifName))
+                    SeekableStream ss = SeekableStream.wrapInputStream(zis, true);
+                    TIFFImageDecoder imageDecoder = new TIFFImageDecoder(ss, new TIFFDecodeParam());
+                    raster = imageDecoder.decodeAsRaster();
+                    ss.close();
+                } catch (Exception e)
                 {
-                    entry = zis.getNextEntry();
+                    throw new RuntimeException("Can't decode " + tifName, e);
                 }
 
-                SeekableStream ss = SeekableStream.wrapInputStream(zis, true);
-                TIFFImageDecoder imageDecoder = new TIFFImageDecoder(ss, new TIFFDecodeParam());
-                raster = imageDecoder.decodeAsRaster();
-                ss.close();
-            } catch (Exception e)
-            {
-                throw new RuntimeException("Can't decode " + tifName, e);
-            }
-
-            logger.info("start converting to our format");
-            // store in our own format, TODO use faster setBytes method?
-            final int height = raster.getHeight();
-            final int width = raster.getWidth();
-            final float[] rasterSample = new float[1];
-            int x = 0, y = 0;
-            try
-            {
-                for (; x < width; x++)
+                logger.info("start converting to our format");
+                // store in our own format, TODO use faster setBytes method?
+                final int height = raster.getHeight();
+                final int width = raster.getWidth();
+                int x = 0, y = 0;
+                try
                 {
                     for (y = 0; y < height; y++)
                     {
-                        float[] sample = raster.getPixel(x, y, rasterSample);
-                        short val = (short) sample[0];
+                        for (x = 0; x < width; x++)
+                        {
+                            short val = (short) raster.getPixel(x, y, (int[]) null)[0];
+                            if (val < -1000 || val > 10000)
+                                val = Short.MIN_VALUE;
 
-                        if (val < -1000 || val > 10000)
-                            val = Short.MIN_VALUE;
-
-                        heights.setShort(2 * (y * WIDTH + x), val);
+                            heights.setShort(2 * (y * WIDTH + x), val);
+                        }
                     }
+                    heights.flush();
+                    logger.info("end converting to our format");
+                    demProvider.toImage(name + ".png");
+
+                    // TODO remove tifName and zip?
+                } catch (Exception ex)
+                {
+                    throw new RuntimeException("Problem at x:" + x + ", y:" + y, ex);
                 }
-                logger.info("end converting to our format");
-                // demProvider.toImage(name + ".png");
-            } catch (Exception ex)
-            {
-                throw new RuntimeException("Problem at index " + x + ", " + y, ex);
-            }
+            } // loadExisting
         }
+
+        if (demProvider.isSeaLevel())
+            return 0;
 
         short val = demProvider.getHeight(lat, lon);
         if (val == Short.MIN_VALUE)
@@ -229,8 +231,8 @@ public class CGIARProvider implements ElevationProvider
 
     protected String getFileName( double lat, double lon )
     {
-        int lonVal = (int) (lon / 5) + 37;
-        int latVal = 12 - (int) (lat / 5);
+        int lonVal = (int) (lon / degree) + 37;
+        int latVal = 12 - (int) (lat / degree);
         return String.format("srtm_%02d_%02d", lonVal, latVal);
     }
 
@@ -266,5 +268,12 @@ public class CGIARProvider implements ElevationProvider
         System.out.println(provider.getEle(49.949784, 11.57517));
         // 457.0
         System.out.println(provider.getEle(49.968668, 11.575127));
+        
+        //
+        System.out.println(provider.getEle(47.468668, 14.575127));
+        
+        System.out.println(provider.getEle(46.468668, 12.575127));
+        
+        System.out.println(provider.getEle(48.468668, 9.575127));
     }
 }
