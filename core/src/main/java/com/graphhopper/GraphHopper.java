@@ -19,6 +19,7 @@ package com.graphhopper;
 
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.OSMReader;
+import com.graphhopper.reader.dem.CGIARProvider;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.Path;
@@ -527,12 +528,12 @@ public class GraphHopper implements GraphHopperAPI
         ElevationProvider tmpProvider = ElevationProvider.NOOP;
         if (eleProviderStr.equalsIgnoreCase("srtm"))
             tmpProvider = new SRTMProvider();
-        // later:
-//        else if(eleProviderStr.startsWith("cgiar:"))        
-//            eleProvider = new CGIARProvider().setCacheDir(new File());        
+        else if (eleProviderStr.equalsIgnoreCase("cgiar"))
+            eleProvider = new CGIARProvider();
 
         tmpProvider.setCacheDir(new File(cacheDirStr));
-        tmpProvider.setBaseURL(baseURL);
+        if (!baseURL.isEmpty())
+            tmpProvider.setBaseURL(baseURL);
         tmpProvider.setInMemory(elevationDAType.isInMemory());
         setElevationProvider(tmpProvider);
 

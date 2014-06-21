@@ -166,7 +166,7 @@ public class CGIARProvider implements ElevationProvider
                     }
                 }
 
-                logger.info("start decoding");
+                // logger.info("start decoding");
 
                 // decode tiff data
                 Raster raster;
@@ -190,7 +190,7 @@ public class CGIARProvider implements ElevationProvider
                     throw new RuntimeException("Can't decode " + tifName, e);
                 }
 
-                logger.info("start converting to our format");
+                // logger.info("start converting to our format");
                 // store in our own format, TODO use faster setBytes method?
                 final int height = raster.getHeight();
                 final int width = raster.getWidth();
@@ -209,8 +209,8 @@ public class CGIARProvider implements ElevationProvider
                         }
                     }
                     heights.flush();
-                    logger.info("end converting to our format");
-                    demProvider.toImage(name + ".png");
+                    // logger.info("end converting to our format");
+                    // demProvider.toImage(name + ".png");
 
                     // TODO remove tifName and zip?
                 } catch (Exception ex)

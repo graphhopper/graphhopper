@@ -272,7 +272,7 @@ public class SRTMProvider implements ElevationProvider
                     }
                     heights.flush();
 
-                    demProvider.toImage("x" + file.getName() + ".png");
+                    // demProvider.toImage("x" + file.getName() + ".png");
 
                     // TODO remove hgt and zip?
                 } catch (Exception ex)
