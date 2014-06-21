@@ -776,13 +776,12 @@ function routeLatLng(request, doQuery) {
             if (request.vehicle.toUpperCase() === "FOOT") {
                 addToGoogle = "&dirflg=w";
                 addToBing = "&mode=W";
-            } else if ((request.vehicle.toUpperCase() === "BIKE") ||
-                    (request.vehicle.toUpperCase() === "RACINGBIKE") ||
+            } else if ((request.vehicle.toUpperCase().indexOf("BIKE") >= 0) ||
                     (request.vehicle.toUpperCase() === "MTB")) {
                 addToGoogle = "&dirflg=b";
                 // ? addToBing = "&mode=B";
             }
-            googleLink.attr("href", "http://maps.google.com/?q=from:" + from + "+to:" + to + addToGoogle);
+            googleLink.attr("href", "http://maps.google.com/?q=saddr=" + from + "&daddr=" + to + addToGoogle);
             hiddenDiv.append(googleLink);
             var bingLink = $("<a>Bing</a> ");
             bingLink.attr("href", "http://www.bing.com/maps/default.aspx?rtp=adr." + from + "~adr." + to + addToBing);
