@@ -66,6 +66,13 @@
             <scope>runtime</scope>
         </dependency>
         
+        <!-- for using CGIAR: elevation data importing via tif files-->
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>xmlgraphics-commons</artifactId>
+            <version>1.5</version>
+        </dependency>
+        
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>

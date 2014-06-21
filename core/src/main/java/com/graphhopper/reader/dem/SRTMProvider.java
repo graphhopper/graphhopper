@@ -43,7 +43,12 @@ public class SRTMProvider implements ElevationProvider
 {
     public static void main( String[] args ) throws IOException
     {
-        new SRTMProvider().getEle(55, -161);
+        SRTMProvider provider = new SRTMProvider();
+        System.out.println(provider.getEle(47.468668, 14.575127));
+        
+        System.out.println(provider.getEle(46.468668, 12.575127));
+        
+        System.out.println(provider.getEle(48.468668, 9.575127));
     }
 
     private static final BitUtil BIT_UTIL = BitUtil.BIG;
@@ -123,7 +128,7 @@ public class SRTMProvider implements ElevationProvider
     public ElevationProvider setCacheDir( File cacheDir )
     {
         if (cacheDir.exists() && !cacheDir.isDirectory())
-            throw new IllegalStateException("Cache path has to be a directory");
+            throw new IllegalArgumentException("Cache path has to be a directory");
 
         this.cacheDir = cacheDir;
         return this;
@@ -132,8 +137,8 @@ public class SRTMProvider implements ElevationProvider
     @Override
     public ElevationProvider setBaseURL( String baseUrl )
     {
-        if (baseUrl.isEmpty())
-            return this;
+        if (baseUrl == null || baseUrl.isEmpty())
+            throw new IllegalArgumentException("baseUrl cannot be empty");
 
         this.baseUrl = baseUrl;
         return this;
@@ -207,68 +212,74 @@ public class SRTMProvider implements ElevationProvider
 
             int minLat = down(lat);
             int minLon = down(lon);
-            demProvider = new HeightTile(minLat, minLon, WIDTH, precision);
+            demProvider = new HeightTile(minLat, minLon, WIDTH, precision, 1);
             cacheData.put(intKey, demProvider);
-            try
+            DataAccess heights = getDirectory().find("dem" + intKey);
+            demProvider.setHeights(heights);
+            if (!heights.loadExisting())
             {
-                String zippedURL = baseUrl + "/" + fileDetails + "hgt.zip";
-                File file = new File(cacheDir, new File(zippedURL).getName());
-                InputStream is;
-                // get zip file if not already in cacheDir - unzip later and in-memory only!
-                if (!file.exists())
+                byte[] bytes = new byte[2 * WIDTH * WIDTH];
+                heights.create(bytes.length);
+                try
                 {
-                    for (int i = 0; i < 3; i++)
+                    String zippedURL = baseUrl + "/" + fileDetails + "hgt.zip";
+                    File file = new File(cacheDir, new File(zippedURL).getName());
+                    InputStream is;
+                    // get zip file if not already in cacheDir - unzip later and in-memory only!
+                    if (!file.exists())
                     {
-                        try
+                        for (int i = 0; i < 3; i++)
                         {
-                            downloader.downloadFile(zippedURL, file.getAbsolutePath());
-                            break;
-                        } catch (SocketTimeoutException ex)
-                        {
-                            // just try again after a little nap
-                            Thread.sleep(2000);
-                            continue;
-                        } catch (FileNotFoundException ex)
-                        {
-                            // now try different URL (with point!), necessary if mirror is used
-                            zippedURL = baseUrl + "/" + fileDetails + ".hgt.zip";
-                            continue;
+                            try
+                            {
+                                downloader.downloadFile(zippedURL, file.getAbsolutePath());
+                                break;
+                            } catch (SocketTimeoutException ex)
+                            {
+                                // just try again after a little nap
+                                Thread.sleep(2000);
+                                continue;
+                            } catch (FileNotFoundException ex)
+                            {
+                                // now try different URL (with point!), necessary if mirror is used
+                                zippedURL = baseUrl + "/" + fileDetails + ".hgt.zip";
+                                continue;
+                            }
                         }
                     }
-                }
 
-                is = new FileInputStream(file);
-                ZipInputStream zis = new ZipInputStream(is);
-                zis.getNextEntry();
-                BufferedInputStream buff = new BufferedInputStream(zis);
-                byte[] bytes = new byte[2 * WIDTH * WIDTH];
-                DataAccess heights = getDirectory().find("dem" + intKey);
-                heights.create(bytes.length);
-
-                demProvider.setHeights(heights);
-                int len;
-                while ((len = buff.read(bytes)) > 0)
-                {
-                    for (int bytePos = 0; bytePos < len; bytePos += 2)
+                    is = new FileInputStream(file);
+                    ZipInputStream zis = new ZipInputStream(is);
+                    zis.getNextEntry();
+                    BufferedInputStream buff = new BufferedInputStream(zis);
+                    int len;
+                    while ((len = buff.read(bytes)) > 0)
                     {
-                        short val = BIT_UTIL.toShort(bytes, bytePos);
-                        if (val < -1000 || val > 10000)
+                        for (int bytePos = 0; bytePos < len; bytePos += 2)
                         {
-                            // TODO fill unassigned gaps with neighbor values -> flood fill algorithm !
-                            // -> calculate mean with an associated weight of how long the distance to the neighbor is
+                            short val = BIT_UTIL.toShort(bytes, bytePos);
+                            if (val < -1000 || val > 12000)
+                            {
+                                // TODO fill unassigned gaps with neighbor values -> flood fill algorithm !
+                                // -> calculate mean with an associated weight of how long the distance to the neighbor is
 //                            throw new IllegalStateException("Invalid height value " + val
 //                                    + ", y:" + bytePos / WIDTH + ", x:" + (WIDTH - bytePos % WIDTH));
-                            val = Short.MIN_VALUE;
-                        }
+                                val = Short.MIN_VALUE;
+                            }
 
-                        heights.setShort(bytePos, val);
+                            heights.setShort(bytePos, val);
+                        }
                     }
+                    heights.flush();
+
+                    demProvider.toImage("x" + file.getName() + ".png");
+
+                    // TODO remove hgt and zip?
+                } catch (Exception ex)
+                {
+                    throw new RuntimeException(ex);
                 }
-                // demProvider.toImage(file.getName() + ".png");
-            } catch (Exception ex)
-            {
-                throw new RuntimeException(ex);
-            }
+            } // loadExisting
         }
 
         short val = demProvider.getHeight(lat, lon);
@@ -298,7 +309,7 @@ public class SRTMProvider implements ElevationProvider
         if (dir != null)
             return dir;
 
-        logger.info("SRTM Elevation Provider, from: " + baseUrl + ", to: " + cacheDir + ", as: " + daType);
+        logger.info(this.toString() + " Elevation Provider, from: " + baseUrl + ", to: " + cacheDir + ", as: " + daType);
         return dir = new GHDirectory(cacheDir.getAbsolutePath(), daType);
     }
 }
