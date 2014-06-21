@@ -55,6 +55,10 @@
                     <groupId>org.openstreetmap.osmosis</groupId>
                     <artifactId>osmosis-osm-binary</artifactId>                    
                 </exclusion>
+                <exclusion>
+                    <groupId>org.apache.xmlgraphics</groupId>
+                    <artifactId>xmlgraphics-commons</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>        
           
