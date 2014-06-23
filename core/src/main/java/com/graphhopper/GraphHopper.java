@@ -529,12 +529,12 @@ public class GraphHopper implements GraphHopperAPI
         if (eleProviderStr.equalsIgnoreCase("srtm"))
             tmpProvider = new SRTMProvider();
         else if (eleProviderStr.equalsIgnoreCase("cgiar"))
-            eleProvider = new CGIARProvider();
+            tmpProvider = new CGIARProvider();
 
         tmpProvider.setCacheDir(new File(cacheDirStr));
         if (!baseURL.isEmpty())
             tmpProvider.setBaseURL(baseURL);
-        tmpProvider.setInMemory(elevationDAType.isInMemory());
+        tmpProvider.setDAType(elevationDAType);
         setElevationProvider(tmpProvider);
 
         // index

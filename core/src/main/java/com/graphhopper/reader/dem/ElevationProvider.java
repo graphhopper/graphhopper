@@ -18,6 +18,7 @@
  */
 package com.graphhopper.reader.dem;
 
+import com.graphhopper.storage.DAType;
 import java.io.File;
 
 /**
@@ -45,7 +46,7 @@ public interface ElevationProvider
     /**
      * Set to true if you have a small area and need high speed access.
      */
-    ElevationProvider setInMemory( boolean b );
+    ElevationProvider setDAType( DAType daType );
 
     /**
      * Release resources.
@@ -73,7 +74,7 @@ public interface ElevationProvider
         }
 
         @Override
-        public ElevationProvider setInMemory( boolean b )
+        public ElevationProvider setDAType( DAType daType )
         {
             return this;
         }

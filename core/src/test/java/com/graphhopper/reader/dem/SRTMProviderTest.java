@@ -18,6 +18,7 @@
  */
 package com.graphhopper.reader.dem;
 
+import com.graphhopper.storage.DAType;
 import java.io.File;
 import java.io.IOException;
 import org.junit.After;
@@ -94,7 +95,7 @@ public class SRTMProviderTest
     public void testGetHeightMMap() throws IOException
     {
         instance.setCacheDir(new File("./files/"));
-        instance.setInMemory(false);
+        instance.setDAType(DAType.MMAP);
         assertEquals(160, instance.getEle(55.8943144, -3), 1e-1);
     }
 }

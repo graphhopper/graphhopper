@@ -145,12 +145,9 @@ public class SRTMProvider implements ElevationProvider
     }
 
     @Override
-    public ElevationProvider setInMemory( boolean inMem )
+    public ElevationProvider setDAType( DAType daType )
     {
-        if (inMem)
-            daType = DAType.RAM;
-        else
-            daType = DAType.MMAP;
+        this.daType = daType;        
         return this;
     }
 
