@@ -46,8 +46,9 @@ public class SimpleFSLockFactory implements LockFactory
     }
 
     @Override
-    public Lock create( String fileName )
+    public synchronized Lock create( String fileName, boolean writeAccess )
     {
+        // TODO no read access-only support
         if (lockDir == null)
             throw new RuntimeException("Set lockDir before creating locks");
 
@@ -55,7 +56,7 @@ public class SimpleFSLockFactory implements LockFactory
     }
 
     @Override
-    public void forceRemove( String fileName )
+    public synchronized void forceRemove( String fileName, boolean writeAccess )
     {
         if (lockDir.exists())
         {
@@ -80,7 +81,7 @@ public class SimpleFSLockFactory implements LockFactory
         }
 
         @Override
-        public boolean obtain()
+        public synchronized boolean tryLock()
         {
             // make sure directory exists, do it on-the-fly (not possible when setLockDir is called)
             if (!lockDir.exists())
@@ -104,15 +105,15 @@ public class SimpleFSLockFactory implements LockFactory
         }
 
         @Override
-        public boolean isLocked()
+        public synchronized boolean isLocked()
         {
             return lockFile.exists();
         }
 
         @Override
-        public void release()
+        public synchronized void release()
         {
-            if (lockFile.exists() && !lockFile.delete())
+            if (isLocked() && !lockFile.delete())
                 throw new RuntimeException("Cannot release lock file: " + lockFile);
         }
 
@@ -122,7 +123,8 @@ public class SimpleFSLockFactory implements LockFactory
             return name;
         }
 
-        public IOException getFailedReason()
+        @Override
+        public synchronized Exception getObtainFailedReason()
         {
             return failedReason;
         }

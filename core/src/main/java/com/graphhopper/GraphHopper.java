@@ -73,7 +73,8 @@ public class GraphHopper implements GraphHopperAPI
     boolean removeZipped = true;
     private boolean elevation = false;
     private LockFactory lockFactory = new NativeFSLockFactory();
-    private final String fileLockName = "write.lock";
+    private final String fileLockName = "gh.lock";
+    private boolean allowWrites = true;
     // for routing
     private boolean simplifyRequest = true;
     // for index
@@ -441,6 +442,21 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
+    /**
+     * Specifies if it is allowed for GraphHopper to write. E.g. for read only filesystems it is not
+     * possible to create a lock file and so we can avoid write locks.
+     */
+    public GraphHopper setAllowWrites( boolean allowWrites )
+    {
+        this.allowWrites = allowWrites;
+        return this;
+    }
+
+    public boolean isAllowWrites()
+    {
+        return allowWrites;
+    }
+
     public TranslationMap getTranslationMap()
     {
         return trMap;
@@ -583,9 +599,9 @@ public class GraphHopper implements GraphHopperAPI
             if (graph.getDirectory().getDefaultType().isStoring())
             {
                 lockFactory.setLockDir(new File(graphHopperLocation));
-                lock = lockFactory.create(fileLockName);
-                if (!lock.obtain())
-                    throw new RuntimeException("To avoid multiple writers we need to obtain a lock but it failed. In " + graphHopperLocation);
+                lock = lockFactory.create(fileLockName, true);
+                if (!lock.tryLock())
+                    throw new RuntimeException("To avoid multiple writers we need to obtain a write lock but it failed. In " + graphHopperLocation, lock.getObtainFailedReason());
             }
 
             try
@@ -610,6 +626,7 @@ public class GraphHopper implements GraphHopperAPI
 
     protected DataReader importData() throws IOException
     {
+        ensureWriteAccess();
         if (graph == null)
             throw new IllegalStateException("Load graph before importing OSM data");
 
@@ -702,12 +719,14 @@ public class GraphHopper implements GraphHopperAPI
         Lock lock = null;
         try
         {
-            if (graph.getDirectory().getDefaultType().isStoring())
+            // create locks only if writes are allowed, if they are not allowed a lock cannot be created 
+            // (e.g. on a read only filesystem locks would fail)
+            if (graph.getDirectory().getDefaultType().isStoring() && isAllowWrites())
             {
                 lockFactory.setLockDir(new File(ghLocation));
-                lock = lockFactory.create(fileLockName);
-                if (!lock.obtain())
-                    throw new RuntimeException("To avoid reading partial data we need to obtain the lock but it failed. In " + ghLocation + ", ");
+                lock = lockFactory.create(fileLockName, false);
+                if (!lock.tryLock())
+                    throw new RuntimeException("To avoid reading partial data we need to obtain the read lock but it failed. In " + ghLocation, lock.getObtainFailedReason());
             }
 
             if (!graph.loadExisting())
@@ -922,7 +941,10 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         if (!tmpIndex.loadExisting())
+        {
+            ensureWriteAccess();
             tmpIndex.prepareIndex();
+        }
 
         return tmpIndex;
     }
@@ -965,6 +987,7 @@ public class GraphHopper implements GraphHopperAPI
         boolean tmpPrepare = doPrepare && prepare != null;
         if (tmpPrepare)
         {
+            ensureWriteAccess();
             if (prepare instanceof PrepareContractionHierarchies && encodingManager.getVehicleCount() > 1)
                 throw new IllegalArgumentException("Contraction hierarchies preparation "
                         + "requires (at the moment) only one vehicle. But was:" + encodingManager);
@@ -998,7 +1021,8 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Releases all associated resources like memory or files.
+     * Releases all associated resources like memory or files. But it does not remove them. To
+     * remove the files created in graphhopperLocation you have to call clean().
      */
     public void close()
     {
@@ -1007,6 +1031,34 @@ public class GraphHopper implements GraphHopperAPI
 
         if (locationIndex != null)
             locationIndex.close();
+
+        try
+        {
+            lockFactory.forceRemove(fileLockName, true);
+        } catch (Exception ex)
+        {
+            // silently fail
+        }
+    }
+
+    /**
+     * Removes the on-disc routing files. Call only after calling close or before importOrLoad or
+     * load
+     */
+    public void clean()
+    {
+        if (getGraphHopperLocation().isEmpty())
+            throw new IllegalStateException("Cannot clean GraphHopper without specified graphHopperLocation");
+
+        File folder = new File(getGraphHopperLocation());
+        Helper.removeDir(folder);
+    }
+
+    // make sure this is identical to buildDate used in pom.xml
+    // <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZ</maven.build.timestamp.format>
+    private String formatDateTime( Date date )
+    {
+        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(date);
     }
 
     protected void ensureNotLoaded()
@@ -1015,10 +1067,9 @@ public class GraphHopper implements GraphHopperAPI
             throw new IllegalStateException("No configuration changes are possible after loading the graph");
     }
 
-    // make sure this is identical to buildDate used in pom.xml
-    // <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZ</maven.build.timestamp.format>
-    private String formatDateTime( Date date )
+    protected void ensureWriteAccess()
     {
-        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(date);
+        if (!allowWrites)
+            throw new IllegalStateException("Writes are not allowed!");
     }
 }

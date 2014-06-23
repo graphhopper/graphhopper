@@ -27,9 +27,11 @@ public interface Lock
 {
     String getName();
 
-    boolean obtain();
+    boolean tryLock();
 
     boolean isLocked();
 
     void release();
+    
+    Exception getObtainFailedReason();
 }

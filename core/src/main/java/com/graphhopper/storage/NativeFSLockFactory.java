@@ -50,20 +50,20 @@ public class NativeFSLockFactory implements LockFactory
     }
 
     @Override
-    public Lock create( String fileName )
+    public synchronized Lock create( String fileName, boolean writeAccess )
     {
         if (lockDir == null)
-            throw new RuntimeException("Set lockDir before creating locks");
+            throw new RuntimeException("Set lockDir before creating " + (writeAccess ? "write" : "read") + " locks");
 
-        return new NativeLock(lockDir, fileName);
+        return new NativeLock(lockDir, fileName, writeAccess);
     }
 
     @Override
-    public void forceRemove( String fileName )
+    public synchronized void forceRemove( String fileName, boolean writeAccess )
     {
         if (lockDir.exists())
         {
-            create(fileName).release();
+            create(fileName, writeAccess).release();
             File lockFile = new File(lockDir, fileName);
             if (!lockFile.delete())
                 throw new RuntimeException("Cannot delete " + lockFile);
@@ -79,17 +79,20 @@ public class NativeFSLockFactory implements LockFactory
         private final String name;
         private final File lockDir;
         private final File lockFile;
+        private final boolean writeLock;
+
         private Exception failedReason;
 
-        public NativeLock( File lockDir, String fileName )
+        public NativeLock( File lockDir, String fileName, boolean writeLock )
         {
             this.name = fileName;
             this.lockDir = lockDir;
             this.lockFile = new File(lockDir, fileName);
+            this.writeLock = writeLock;
         }
 
         @Override
-        public synchronized boolean obtain()
+        public synchronized boolean tryLock()
         {
             // already locked
             if (lockExists())
@@ -107,6 +110,8 @@ public class NativeFSLockFactory implements LockFactory
 
             try
             {
+                failedReason = null;
+                // we need write access even for read locks - in order to create the lock file!
                 tmpRaFile = new RandomAccessFile(lockFile, "rw");
             } catch (IOException ex)
             {
@@ -119,8 +124,8 @@ public class NativeFSLockFactory implements LockFactory
                 tmpChannel = tmpRaFile.getChannel();
                 try
                 {
-                    tmpLock = tmpChannel.tryLock();
-                    // OverlappingFileLockException is not IOException!
+                    tmpLock = tmpChannel.tryLock(0, Long.MAX_VALUE, !writeLock);
+                    // OverlappingFileLockException is not an IOException!
                 } catch (Exception ex)
                 {
                     failedReason = ex;
@@ -159,8 +164,8 @@ public class NativeFSLockFactory implements LockFactory
 
             try
             {
-                boolean obtained = obtain();
-                if (!obtained)
+                boolean obtained = tryLock();
+                if (obtained)
                     release();
                 return !obtained;
             } catch (Exception ex)
@@ -176,6 +181,7 @@ public class NativeFSLockFactory implements LockFactory
             {
                 try
                 {
+                    failedReason = null;
                     tmpLock.release();
                 } catch (Exception ex)
                 {
@@ -214,7 +220,8 @@ public class NativeFSLockFactory implements LockFactory
             return name;
         }
 
-        public Exception getFailedReason()
+        @Override
+        public Exception getObtainFailedReason()
         {
             return failedReason;
         }
@@ -224,5 +231,23 @@ public class NativeFSLockFactory implements LockFactory
         {
             return lockFile.toString();
         }
+    }
+
+    public static void main( String[] args ) throws IOException
+    {
+        // trying FileLock mechanics in different processes
+        File file = new File("tmp.lock");
+
+        file.createNewFile();
+        FileChannel channel = new RandomAccessFile(file, "r").getChannel();
+        
+        boolean shared = true;
+        FileLock lock1 = channel.tryLock(0, Long.MAX_VALUE, shared);
+
+        System.out.println("locked " + lock1);
+        System.in.read();
+
+        System.out.println("release " + lock1);
+        lock1.release();
     }
 }

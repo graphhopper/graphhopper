@@ -18,56 +18,53 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.Helper;
-import java.io.File;
-import org.junit.After;
+import java.nio.channels.OverlappingFileLockException;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.junit.Before;
 
 /**
  *
  * @author Peter Karich
  */
-public class NativeFSLockFactoryTest
+public class NativeFSLockFactoryTest extends AbstractLockFactoryTester
 {
-    private final File lockDir = new File("./target/lockingtest/");
-
-    @Before
-    public void setUp()
+    @Override
+    protected LockFactory createLockFactory()
     {
-        lockDir.mkdirs();
-    }
-
-    @After
-    public void tearDown()
-    {
-        Helper.removeDir(lockDir);
+        return new NativeFSLockFactory(lockDir);
     }
 
     @Test
-    public void testObtain()
+    public void testMultiReadObtain()
     {
-        LockFactory instance = new NativeFSLockFactory();
+        LockFactory instance = createLockFactory();
         instance.setLockDir(lockDir);
-        Lock lock = instance.create("test");
-        assertTrue(lock.obtain());
-        assertTrue(lock.isLocked());
-        assertFalse(lock.obtain());
-        assertTrue(lock.isLocked());
-        lock.release();
-        assertFalse(lock.isLocked());
-    }
+        Lock writeLock1 = instance.create("test", true);
+        assertTrue(writeLock1.tryLock());
 
-    @Test
-    public void testForceDelete()
-    {
-        LockFactory instance = new NativeFSLockFactory();
-        instance.setLockDir(lockDir);
-        Lock lock = instance.create("testlock");
-        assertTrue(lock.obtain());
-        assertTrue(lock.isLocked());
-        instance.forceRemove(lock.getName());
-        assertFalse(lock.isLocked());
+        // BUT disallow more than one write lock!
+        Lock lock2 = instance.create("test", false);
+        assertFalse(lock2.tryLock());
+
+        writeLock1.release();
+
+        assertTrue(lock2.tryLock());
+
+        // http://stackoverflow.com/q/24367887/194609
+        // we cannot test 'allow multiple read locks' as multiple reads are only allowed for different processes        
+        // Lock lock3 = instance.create("test", false);
+        // assertFalse(lock3.tryLock());
+        // lock3.release();
+        // still the lock should be valid
+        assertTrue(lock2.isLocked());
+
+        // disallow write lock if currently reading
+        Lock writeLock4 = instance.create("test", true);
+        assertFalse(writeLock4.tryLock());
+        assertEquals(OverlappingFileLockException.class, writeLock4.getObtainFailedReason().getClass());
+        writeLock4.release();
+
+        assertTrue(lock2.isLocked());
+        lock2.release();
     }
 }

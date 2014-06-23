@@ -18,56 +18,15 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.Helper;
-import java.io.File;
-import org.junit.After;
-import org.junit.Test;
-import static org.junit.Assert.*;
-import org.junit.Before;
-
 /**
  *
  * @author Peter Karich
  */
-public class SimpleFSLockFactoryTest
+public class SimpleFSLockFactoryTest extends AbstractLockFactoryTester
 {
-    private final File lockDir = new File("./target/lockingtest/");
-
-    @Before
-    public void setUp()
+    @Override
+    protected LockFactory createLockFactory()
     {
-        lockDir.mkdirs();
-    }
-
-    @After
-    public void tearDown()
-    {
-        Helper.removeDir(lockDir);
-    }
-
-    @Test
-    public void testObtain()
-    {
-        LockFactory instance = new SimpleFSLockFactory();
-        instance.setLockDir(lockDir);
-        Lock lock = instance.create("test");
-        assertTrue(lock.obtain());
-        assertTrue(lock.isLocked());
-        assertFalse(lock.obtain());
-        assertTrue(lock.isLocked());
-        lock.release();
-        assertFalse(lock.isLocked());
-    }
-
-    @Test
-    public void testForceDelete()
-    {
-        LockFactory instance = new SimpleFSLockFactory();
-        instance.setLockDir(lockDir);
-        Lock lock = instance.create("testlock");
-        assertTrue(lock.obtain());
-        assertTrue(lock.isLocked());
-        instance.forceRemove(lock.getName());
-        assertFalse(lock.isLocked());
+        return new SimpleFSLockFactory(lockDir);
     }
 }

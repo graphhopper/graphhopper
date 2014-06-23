@@ -27,7 +27,15 @@ public interface LockFactory
 {
     void setLockDir( File lockDir );
 
-    Lock create( String fileName );
+    /**
+     * This creates a file for write or read locks depending on the specified writeAccess property.
+     * Important note: even for read locks we need write access to the underlying filesystem in
+     * order to avoid writes from other processes.
+     */
+    Lock create( String fileName, boolean writeAccess );
 
-    void forceRemove( String fileName );
+    /**
+     * Removes the specified lock.
+     */
+    void forceRemove( String fileName, boolean writeAccess );
 }
