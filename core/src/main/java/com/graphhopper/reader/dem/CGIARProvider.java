@@ -23,6 +23,7 @@ import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.util.Downloader;
+import com.graphhopper.util.Helper;
 import java.awt.image.Raster;
 import java.io.*;
 import java.net.SocketTimeoutException;
@@ -94,7 +95,7 @@ public class CGIARProvider implements ElevationProvider
     @Override
     public ElevationProvider setDAType( DAType daType )
     {
-        this.daType = daType;        
+        this.daType = daType;
         return this;
     }
 
@@ -164,9 +165,9 @@ public class CGIARProvider implements ElevationProvider
                 }
 
                 // logger.info("start decoding");
-
                 // decode tiff data
                 Raster raster;
+                SeekableStream ss = null;
                 try
                 {
                     InputStream is = new FileInputStream(file);
@@ -178,13 +179,16 @@ public class CGIARProvider implements ElevationProvider
                         entry = zis.getNextEntry();
                     }
 
-                    SeekableStream ss = SeekableStream.wrapInputStream(zis, true);
+                    ss = SeekableStream.wrapInputStream(zis, true);
                     TIFFImageDecoder imageDecoder = new TIFFImageDecoder(ss, new TIFFDecodeParam());
                     raster = imageDecoder.decodeAsRaster();
-                    ss.close();
                 } catch (Exception e)
                 {
                     throw new RuntimeException("Can't decode " + tifName, e);
+                } finally
+                {
+                    if (ss != null)
+                        Helper.close(ss);
                 }
 
                 // logger.info("start converting to our format");
@@ -265,12 +269,12 @@ public class CGIARProvider implements ElevationProvider
         System.out.println(provider.getEle(49.949784, 11.57517));
         // 457.0
         System.out.println(provider.getEle(49.968668, 11.575127));
-        
+
         //
         System.out.println(provider.getEle(47.468668, 14.575127));
-        
+
         System.out.println(provider.getEle(46.468668, 12.575127));
-        
+
         System.out.println(provider.getEle(48.468668, 9.575127));
     }
 }
