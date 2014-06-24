@@ -161,7 +161,7 @@ public class CGIARProvider implements ElevationProvider
                                 // just try again after a little nap
                                 Thread.sleep(2000);
                                 continue;
-                            } catch (FileNotFoundException ex)
+                            } catch (IOException ex)
                             {
                                 demProvider.setSeaLevel(true);
                                 return 0;
