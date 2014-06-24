@@ -164,6 +164,7 @@ public class CGIARProvider implements ElevationProvider
                             } catch (IOException ex)
                             {
                                 demProvider.setSeaLevel(true);
+                                heights.flush();
                                 return 0;
                             }
                         }
