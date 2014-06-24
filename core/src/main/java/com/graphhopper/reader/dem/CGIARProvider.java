@@ -101,12 +101,12 @@ public class CGIARProvider implements ElevationProvider
 
     int down( double val )
     {
-        int intVal = (int) val;
+        // 'rounding' to closest 5
+        int intVal = (int) (val / degree) * degree;
         if (!(val >= 0 || intVal - val < invPrecision))
             intVal = intVal - degree;
 
-        // 'rounding' to closest 5
-        return (intVal / degree) * degree;
+        return intVal;
     }
 
     @Override
@@ -271,10 +271,6 @@ public class CGIARProvider implements ElevationProvider
         System.out.println(provider.getEle(49.968668, 11.575127));
 
         //
-        System.out.println(provider.getEle(47.468668, 14.575127));
-
-        System.out.println(provider.getEle(46.468668, 12.575127));
-
-        System.out.println(provider.getEle(48.468668, 9.575127));
+        System.out.println(provider.getEle(52.1943832, 0.1363176));
     }
 }
