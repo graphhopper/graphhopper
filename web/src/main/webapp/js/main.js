@@ -5,7 +5,7 @@
  */
 var tmpArgs = parseUrlWithHisto();
 var host = tmpArgs["host"];
-//var host = "http://graphhopper.com/api/1";
+// var host = "http://graphhopper.com/api/1";
 if (!host) {
     if (location.port === '') {
         host = location.protocol + '//' + location.hostname;
@@ -24,7 +24,6 @@ var nominatim_reverse = "http://nominatim.openstreetmap.org/reverse";
 var routingLayer;
 var map;
 var browserTitle = "GraphHopper Maps - Driving Directions";
-var firstClickToRoute;
 var defaultTranslationMap = null;
 var enTranslationMap = null;
 var routeSegmentPopup = null;
@@ -258,7 +257,29 @@ function initMap() {
 
     // default
     map = L.map('map', {
-        layers: [lyrk]
+        layers: [lyrk],
+        contextmenu: true,
+        contextmenuWidth: 140,
+        contextmenuItems: [{
+                text: 'Set as start',
+                callback: setStartCoord
+            }, {
+                text: 'Set as end',
+                callback: setEndCoord
+            }, {
+                separator: true,
+                index: 1
+            }, {
+                text: 'Show coordinates',
+                callback: function(e) {
+                    alert(e.latlng.lat + "," + e.latlng.lng);
+                }
+            }, {
+                text: 'Center map here',
+                callback: function(e) {
+                    map.panTo(e.latlng);
+                }
+            }]
     });
 
     var baseMaps = {
@@ -272,20 +293,15 @@ function initMap() {
         "OpenStreetMap": osm,
         "OpenStreetMap.de": osmde
     };
-
-    //    var overlays = {
-    //        "MapQuest Hybrid": mapquest
-    //    };
-
-    // no layers for small browser windows
-    if ($(window).width() > 400) {
-        L.control.layers(baseMaps/*, overlays*/).addTo(map);
-    }
+    
+    L.control.layers(baseMaps/*, overlays*/).addTo(map);
 
     L.control.scale().addTo(map);
 
     map.fitBounds(new L.LatLngBounds(new L.LatLng(bounds.minLat, bounds.minLon),
             new L.LatLng(bounds.maxLat, bounds.maxLon)));
+    if(isProduction())
+        map.setView(new L.LatLng(0, 0), 2);
 
     map.attributionControl.setPrefix('');
 
@@ -314,28 +330,26 @@ function initMap() {
 
     routingLayer = L.geoJson().addTo(map);
     routingLayer.options = {style: {color: "#00cc33", "weight": 5, "opacity": 0.6}};
+}
 
-    firstClickToRoute = true;
-    function onMapClick(e) {
-        var latlng = e.latlng;
-        latlng.lng = makeValidLng(latlng.lng);
-        if (firstClickToRoute) {
-            // set start point
-            routingLayer.clearLayers();
-            firstClickToRoute = false;
-            ghRequest.from.setCoord(latlng.lat, latlng.lng);
-            resolveFrom();
-        } else {
-            // set end point
-            ghRequest.to.setCoord(latlng.lat, latlng.lng);
-            resolveTo();
-            // do not wait for resolving
-            routeLatLng(ghRequest);
-            firstClickToRoute = true;
-        }
+function setStartCoord(e) {
+    ghRequest.from.setCoord(e.latlng.lat, e.latlng.lng);
+    resolveFrom();
+    routeIfAllResolved();
+}
+
+function setEndCoord(e) {
+    ghRequest.to.setCoord(e.latlng.lat, e.latlng.lng);
+    resolveTo();
+    routeIfAllResolved();
+}
+
+function routeIfAllResolved() {
+    if (ghRequest.from.isResolved() && ghRequest.to.isResolved()) {
+        routeLatLng(ghRequest);
+        return true;
     }
-
-    map.on('click', onMapClick);
+    return false;
 }
 
 function makeValidLng(lon) {
@@ -762,13 +776,12 @@ function routeLatLng(request, doQuery) {
             if (request.vehicle.toUpperCase() === "FOOT") {
                 addToGoogle = "&dirflg=w";
                 addToBing = "&mode=W";
-            } else if ((request.vehicle.toUpperCase() === "BIKE") ||
-                    (request.vehicle.toUpperCase() === "RACINGBIKE") ||
+            } else if ((request.vehicle.toUpperCase().indexOf("BIKE") >= 0) ||
                     (request.vehicle.toUpperCase() === "MTB")) {
                 addToGoogle = "&dirflg=b";
                 // ? addToBing = "&mode=B";
             }
-            googleLink.attr("href", "http://maps.google.com/?q=from:" + from + "+to:" + to + addToGoogle);
+            googleLink.attr("href", "http://maps.google.com/?q=saddr=" + from + "&daddr=" + to + addToGoogle);
             hiddenDiv.append(googleLink);
             var bingLink = $("<a>Bing</a> ");
             bingLink.attr("href", "http://www.bing.com/maps/default.aspx?rtp=adr." + from + "~adr." + to + addToBing);
@@ -1090,9 +1103,7 @@ function setAutoCompleteList(fromOrTo) {
             req.setCoord(point.lat, point.lng);
 
             req.input = suggestion.value;
-            if (ghRequest.from.isResolved() && ghRequest.to.isResolved())
-                routeLatLng(ghRequest);
-            else
+            if (!routeIfAllResolved())
                 focus(req, 15, isFrom);
 
             myAutoDiv.autocomplete().enable();
@@ -1100,13 +1111,15 @@ function setAutoCompleteList(fromOrTo) {
     };
 
     myAutoDiv.autocomplete(options);
-    $("#" + fromOrTo + "Input").focusout(function() {
-        myAutoDiv.autocomplete().disable();
-        myAutoDiv.autocomplete().hide();
-    });
-    $("#" + fromOrTo + "Input").focusin(function() {
-        myAutoDiv.autocomplete().enable();
-    });
+
+    // with the following more stable code we cannot click on suggestions anylonger
+//    $("#" + fromOrTo + "Input").focusout(function() {
+//        myAutoDiv.autocomplete().disable();
+//        myAutoDiv.autocomplete().hide();
+//    });
+//    $("#" + fromOrTo + "Input").focusin(function() {
+//        myAutoDiv.autocomplete().enable();
+//    });
 }
 
 function dataToHtml(data, query) {

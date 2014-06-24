@@ -91,7 +91,8 @@
                     <!--
                     <compilerArgument>-Xlint:unchecked</compilerArgument>
                     -->
-                    
+                    <compilerArgument>-XDignore.symbol.file</compilerArgument>
+                    <fork>true</fork>
                     <source>1.6</source>
                     <target>1.6</target>
                 </configuration>
@@ -115,6 +116,7 @@
                     <execution>
                         <goals>
                             <goal>integration-test</goal>
+                            <goal>verify</goal>
                         </goals>
                     </execution>
                 </executions>

@@ -69,9 +69,46 @@ public interface FlagEncoder
      */
     long setProperties( double speed, boolean forward, boolean backward );
 
-    boolean isForward( long flags );
+    /*
+     * Simple rules for every subclass which introduces a new key. It has to use the prefix K_ and
+     * uses a minimum value which is two magnitudes higher than in the super class. 
+     * Currently this means starting from 100, and subclasses of this class start from 10000 and so on.
+     */
+    /**
+     * Reports wether the edge is available in forward direction for a certain vehicle
+     */
+    static final int K_FORWARD = 0;
+    /**
+     * Reports wether the edge is available in backward direction for a certain vehicle
+     */
+    static final int K_BACKWARD = 1;
+    /**
+     * Reports wether this edge is part of a roundabout.
+     */
+    static final int K_ROUNDABOUT = 2;
 
-    boolean isBackward( long flags );
+    /**
+     * Returns arbitrary boolean value identified by the specified key.
+     */
+    boolean isBool( long flags, int key );
+
+    long setBool( long flags, int key, boolean value );
+
+    /**
+     * Returns arbitrary long value identified by the specified key. E.g. can be used to return the
+     * way or surface type of an edge
+     */
+    long getLong( long flags, int key );
+
+    long setLong( long flags, int key, long value );
+
+    /**
+     * Returns arbitrary long value identified by the specified key. E.g. can be used to return the
+     * maximum width or height allowed for an edge.
+     */
+    double getDouble( long flags, int key );
+
+    long setDouble( long flags, int key, double value );
 
     /**
      * @return additional cost or warning information for an instruction like ferry or road charges.

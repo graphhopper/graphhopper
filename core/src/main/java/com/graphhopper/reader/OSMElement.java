@@ -21,6 +21,7 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -167,7 +168,7 @@ public abstract class OSMElement
      * Check a number of tags in the given order for the any of the given values. Used to parse
      * hierarchical access restrictions
      */
-    public boolean hasTag( String[] keyList, Set<String> values )
+    public boolean hasTag( List<String> keyList, Set<String> values )
     {
         for (String key : keyList)
         {

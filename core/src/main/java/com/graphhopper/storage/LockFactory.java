@@ -16,28 +16,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.storage;
 
-import com.graphhopper.util.EdgeIteratorState;
+import java.io.File;
 
 /**
- * Special weighting for bike, uses the experimental API of encoder.getPriority(EdgeIteratorState)
- * <p>
  * @author Peter Karich
  */
-public class PriorityWeighting extends FastestWeighting
+public interface LockFactory
 {
-    public PriorityWeighting( FlagEncoder encoder )
-    {
-        super(encoder);
-    }
+    void setLockDir( File lockDir );
 
-    @Override
-    public double calcWeight( EdgeIteratorState edge, boolean reverse )
-    {
-        double weight = super.calcWeight(edge, reverse);
-        if (Double.isInfinite(weight))
-            return Double.POSITIVE_INFINITY;
-        return weight / (0.5 + encoder.getDouble(edge.getFlags(), BikeCommonFlagEncoder.K_PRIORITY));
-    }
+    /**
+     * This creates a file for write or read locks depending on the specified writeAccess property.
+     * Important note: even for read locks we need write access to the underlying filesystem in
+     * order to avoid writes from other processes.
+     */
+    Lock create( String fileName, boolean writeAccess );
+
+    /**
+     * Removes the specified lock.
+     */
+    void forceRemove( String fileName, boolean writeAccess );
 }

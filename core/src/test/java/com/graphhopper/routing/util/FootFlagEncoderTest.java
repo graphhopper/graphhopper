@@ -20,15 +20,10 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.GHUtility;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.junit.Test;
-
 import static org.junit.Assert.*;
 
 /**
@@ -51,7 +46,7 @@ public class FootFlagEncoderTest
     public void testBasics()
     {
         long fl = footEncoder.flagsDefault(true, true);
-        assertEquals(FootFlagEncoder.MEAN, footEncoder.getSpeed(fl), 1e-1);
+        assertEquals(FootFlagEncoder.MEAN_SPEED, footEncoder.getSpeed(fl), 1e-1);
 
         long fl1 = footEncoder.flagsDefault(true, false);
         long fl2 = footEncoder.reverseFlags(fl1);
@@ -64,12 +59,12 @@ public class FootFlagEncoderTest
         FlagEncoder carEncoder = encodingManager.getEncoder("CAR");
         long fl = footEncoder.setProperties(10, true, true) | carEncoder.setProperties(100, true, false);
         assertEquals(10, footEncoder.getSpeed(fl), 1e-1);
-        assertTrue(footEncoder.isForward(fl));
-        assertTrue(footEncoder.isBackward(fl));
+        assertTrue(footEncoder.isBool(fl, FlagEncoder.K_FORWARD));
+        assertTrue(footEncoder.isBool(fl, FlagEncoder.K_BACKWARD));
 
         assertEquals(100, carEncoder.getSpeed(fl), 1e-1);
-        assertTrue(carEncoder.isForward(fl));
-        assertFalse(carEncoder.isBackward(fl));
+        assertTrue(carEncoder.isBool(fl, FlagEncoder.K_FORWARD));
+        assertFalse(carEncoder.isBool(fl, FlagEncoder.K_BACKWARD));
 
         assertEquals(0, carEncoder.getSpeed(footEncoder.setProperties(10, true, true)), 1e-1);
     }
@@ -176,12 +171,12 @@ public class FootFlagEncoderTest
         way.setTag("highway", "track");
         way.setTag("sac_scale", "hiking");
         long flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
-        assertEquals(FootFlagEncoder.MEAN, footEncoder.getSpeed(flags), 1e-1);
+        assertEquals(FootFlagEncoder.MEAN_SPEED, footEncoder.getSpeed(flags), 1e-1);
 
         way.setTag("highway", "track");
         way.setTag("sac_scale", "mountain_hiking");
         flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
-        assertEquals(FootFlagEncoder.SLOW, footEncoder.getSpeed(flags), 1e-1);
+        assertEquals(FootFlagEncoder.SLOW_SPEED, footEncoder.getSpeed(flags), 1e-1);
     }
 
     @Test

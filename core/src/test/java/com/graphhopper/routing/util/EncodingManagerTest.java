@@ -143,7 +143,8 @@ public class EncodingManagerTest
         long allow = defaultBike.acceptBit | lessRelationCodes.acceptBit;
         long flags = manager.handleWayTags(osmWay, allow, relFlags);
 
-        assertTrue(defaultBike.getPriority(flags) > lessRelationCodes.getPriority(flags));
+        assertTrue(defaultBike.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY) > 
+                lessRelationCodes.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY));
     }
 
     @Test
@@ -168,7 +169,8 @@ public class EncodingManagerTest
 
         // bike: uninfluenced speed for grade but via network => VERY_NICE                
         // mtb: uninfluenced speed only PREFER
-        assertTrue(bikeEncoder.getPriority(flags) > mtbEncoder.getPriority(flags));
+        assertTrue(bikeEncoder.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY) 
+                > mtbEncoder.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY));
     }
 
     public void testFullBitMask()
@@ -180,68 +182,6 @@ public class EncodingManagerTest
 
         AbstractFlagEncoder foot = (AbstractFlagEncoder) manager.getEncoder("FOOT");
         assertTrue(bitUtil.toBitString(foot.getNodeBitMask()).endsWith("00011111110000000"));
-    }
-
-    @Test
-    public void testApplyNodeTags()
-    {
-        CarFlagEncoder car = new CarFlagEncoder();
-        CarFlagEncoder car2 = new CarFlagEncoder(7, 1)
-        {
-            protected EncodedValue nodeEncoder;
-
-            @Override
-            public int defineNodeBits( int index, int shift )
-            {
-                shift = super.defineNodeBits(index, shift);
-                nodeEncoder = new EncodedValue("nodeEnc", shift, 2, 1, 0, 3);
-                return shift + 2;
-            }
-
-            @Override
-            public long handleNodeTags( OSMNode node )
-            {
-                String tmp = node.getTag("test");
-                // return negative value to indicate that this is not a barrier
-                if (tmp == null)
-                    return -nodeEncoder.setValue(0, 1);
-                return -nodeEncoder.setValue(0, 2);
-            }
-
-            @Override
-            public long applyNodeFlags( long wayFlags, long nodeFlags )
-            {
-                double speed = speedEncoder.getDoubleValue(wayFlags);
-                double speedDecrease = nodeEncoder.getValue(nodeFlags);
-                return setSpeed(wayFlags, speed - speedDecrease);
-            }
-        };
-        EncodingManager manager = new EncodingManager(car, car2);
-
-        OSMNode node = new OSMNode(1, Double.NaN, Double.NaN);
-        OSMWay way = new OSMWay(2);
-        way.setTag("highway", "secondary");
-
-        long wayFlags = manager.handleWayTags(way, manager.acceptWay(way), 0);
-        long nodeFlags = manager.handleNodeTags(node);
-        wayFlags = manager.applyNodeFlags(wayFlags, -nodeFlags);
-        assertEquals(60, car.getSpeed(wayFlags), 1e-1);
-        assertEquals(59, car2.getSpeed(wayFlags), 1e-1);
-
-        node.setTag("test", "something");
-        wayFlags = manager.handleWayTags(way, manager.acceptWay(way), 0);
-        nodeFlags = manager.handleNodeTags(node);
-        wayFlags = manager.applyNodeFlags(wayFlags, -nodeFlags);
-        assertEquals(58, car2.getSpeed(wayFlags), 1e-1);
-        assertEquals(60, car.getSpeed(wayFlags), 1e-1);
-
-        way.setTag("maxspeed", "130");
-        wayFlags = manager.handleWayTags(way, manager.acceptWay(way), 0);
-        assertEquals(car.getMaxSpeed(), car2.getSpeed(wayFlags), 1e-1);
-        nodeFlags = manager.handleNodeTags(node);
-        wayFlags = manager.applyNodeFlags(wayFlags, -nodeFlags);
-        assertEquals(98, car2.getSpeed(wayFlags), 1e-1);
-        assertEquals(100, car.getSpeed(wayFlags), 1e-1);
     }
 
     /**

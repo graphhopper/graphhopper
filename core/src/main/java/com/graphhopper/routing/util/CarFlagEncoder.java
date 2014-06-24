@@ -30,6 +30,7 @@ import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.Helper;
+import java.util.*;
 
 /**
  * Defines bit layout for cars. (speed, access, ferries, ...)
@@ -59,10 +60,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     protected CarFlagEncoder( int speedBits, double speedFactor )
     {
         super(speedBits, speedFactor);
-        restrictions = new String[]
-        {
-            "motorcar", "motor_vehicle", "vehicle", "access"
-        };
+        restrictions = new ArrayList<String>(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
         restrictedValues.add("private");
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -214,11 +212,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     @Override
     public long handleWayTags( OSMWay way, long allowed, long relationCode )
     {
-        if ((allowed & acceptBit) == 0)
+        if (!isAccept(allowed))
             return 0;
 
         long encoded;
-        if ((allowed & ferryBit) == 0)
+        if (!isFerry(allowed))
         {
             // get assumed speed from highway type
             double speed = getSpeed(way);
@@ -233,7 +231,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
             encoded = setSpeed(0, speed);
 
-            if (way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))
+            boolean isRoundabout = way.hasTag("junction", "roundabout");
+            if (isRoundabout)
+                encoded = setBool(encoded, K_ROUNDABOUT, true);
+
+            if (way.hasTag("oneway", oneways) || isRoundabout)
             {
                 if (way.hasTag("oneway", "-1"))
                     encoded |= backwardBit;

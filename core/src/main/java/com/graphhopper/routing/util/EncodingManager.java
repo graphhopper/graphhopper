@@ -235,7 +235,7 @@ public class EncodingManager
                 return encoder;
         }
         if (throwExc)
-            throw new IllegalArgumentException("Encoder for " + name + " not found.");
+            throw new IllegalArgumentException("Encoder for " + name + " not found. Existing: " + toDetailsString());
         return null;
     }
 
@@ -321,10 +321,10 @@ public class EncodingManager
     public FlagEncoder getSingle()
     {
         if (getVehicleCount() > 1)
-            throw new IllegalStateException("multiple encoders are active. cannot return one:" + toString());
+            throw new IllegalStateException("Multiple encoders are active. cannot return one:" + toString());
 
         if (getVehicleCount() == 0)
-            throw new IllegalStateException("no encoder is active!");
+            throw new IllegalStateException("No encoder is active!");
 
         return edgeEncoders.get(0);
     }
@@ -344,9 +344,11 @@ public class EncodingManager
      */
     public long reverseFlags( long flags )
     {
-        for (AbstractFlagEncoder encoder : edgeEncoders)
+        // performance critical
+        int len = edgeEncoders.size();
+        for (int i = 0; i < len; i++)
         {
-            flags = encoder.reverseFlags(flags);
+            flags = edgeEncoders.get(i).reverseFlags(flags);
         }
         return flags;
     }
@@ -385,20 +387,6 @@ public class EncodingManager
         for (AbstractFlagEncoder encoder : edgeEncoders)
         {
             flags |= encoder.handleNodeTags(node);
-        }
-
-        return flags;
-    }
-
-    /**
-     * When parsing the ways we have the node flags as long variable encoded in analyzeNode.
-     */
-    public long applyNodeFlags( long wayFlags, long nodeFlags )
-    {
-        long flags = 0;
-        for (AbstractFlagEncoder encoder : edgeEncoders)
-        {
-            flags |= encoder.applyNodeFlags(wayFlags & encoder.getWayBitMask(), nodeFlags);
         }
 
         return flags;

@@ -76,6 +76,9 @@ public class GraphHopper implements GraphHopperAPI
     private boolean sortGraph = false;
     boolean removeZipped = true;
     private boolean elevation = false;
+    private LockFactory lockFactory = new NativeFSLockFactory();
+    private final String fileLockName = "gh.lock";
+    private boolean allowWrites = true;
     // for routing
     private boolean simplifyRequest = true;
     // for index
@@ -443,6 +446,21 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
+    /**
+     * Specifies if it is allowed for GraphHopper to write. E.g. for read only filesystems it is not
+     * possible to create a lock file and so we can avoid write locks.
+     */
+    public GraphHopper setAllowWrites( boolean allowWrites )
+    {
+        this.allowWrites = allowWrites;
+        return this;
+    }
+
+    public boolean isAllowWrites()
+    {
+        return allowWrites;
+    }
+
     public TranslationMap getTranslationMap()
     {
         return trMap;
@@ -499,6 +517,27 @@ public class GraphHopper implements GraphHopperAPI
         sortGraph = args.getBool("graph.doSort", sortGraph);
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
         turnCosts = args.getBool("graph.turnCosts", turnCosts);
+        if (args.get("graph.locktype", "native").equals("simple"))
+            lockFactory = new SimpleFSLockFactory();
+        else
+            lockFactory = new NativeFSLockFactory();
+
+        // elevation
+        String eleProviderStr = args.get("graph.elevation.provider", "noop").toLowerCase();
+        String cacheDirStr = args.get("graph.elevation.cachedir", "");
+        String baseURL = args.get("graph.elevation.baseurl", "");
+        DAType elevationDAType = DAType.fromString(args.get("graph.elevation.dataaccess", "MMAP"));
+        ElevationProvider tmpProvider = ElevationProvider.NOOP;
+        if (eleProviderStr.equalsIgnoreCase("srtm"))
+            tmpProvider = new SRTMProvider();
+        // later:
+//        else if(eleProviderStr.startsWith("cgiar:"))        
+//            eleProvider = new CGIARProvider().setCacheDir(new File());        
+
+        tmpProvider.setCacheDir(new File(cacheDirStr));
+        tmpProvider.setBaseURL(baseURL);
+        tmpProvider.setInMemory(elevationDAType.isInMemory());
+        setElevationProvider(tmpProvider);
 
         // optimizable prepare
         minNetworkSize = args.getInt("prepare.minNetworkSize", minNetworkSize);
@@ -522,23 +561,6 @@ public class GraphHopper implements GraphHopperAPI
         encodingManager = new EncodingManager(flagEncoders, bytesForFlags);
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
-
-        // elevation
-        String eleProviderStr = args.get("graph.elevation.provider", "noop").toLowerCase();
-        String cacheDirStr = args.get("graph.elevation.cachedir", "");
-        String baseURL = args.get("graph.elevation.baseurl", "");
-        DAType elevationDAType = DAType.fromString(args.get("graph.elevation.dataaccess", "MMAP"));
-        ElevationProvider tmpProvider = ElevationProvider.NOOP;
-        if (eleProviderStr.equalsIgnoreCase("srtm"))
-            tmpProvider = new SRTMProvider();
-        // later:
-//        else if(eleProviderStr.startsWith("cgiar:"))        
-//            eleProvider = new CGIARProvider().setCacheDir(new File());        
-
-        tmpProvider.setCacheDir(new File(cacheDirStr));
-        tmpProvider.setBaseURL(baseURL);
-        tmpProvider.setInMemory(elevationDAType.isInMemory());
-        setElevationProvider(tmpProvider);
 
         // index
         preciseIndexResolution = args.getInt("index.highResolution", preciseIndexResolution);
@@ -575,23 +597,40 @@ public class GraphHopper implements GraphHopperAPI
     private GraphHopper process( String graphHopperLocation )
     {
         setGraphHopperLocation(graphHopperLocation);
+        Lock lock = null;
         try
         {
-            importData();
-            graph.getProperties().put("osmreader.import.date", formatDateTime(new Date()));
-        } catch (IOException ex)
+            if (graph.getDirectory().getDefaultType().isStoring())
+            {
+                lockFactory.setLockDir(new File(graphHopperLocation));
+                lock = lockFactory.create(fileLockName, true);
+                if (!lock.tryLock())
+                    throw new RuntimeException("To avoid multiple writers we need to obtain a write lock but it failed. In " + graphHopperLocation, lock.getObtainFailedReason());
+            }
+
+            try
+            {
+                importData();
+                graph.getProperties().put("osmreader.import.date", formatDateTime(new Date()));
+            } catch (IOException ex)
+            {
+                throw new RuntimeException("Cannot parse OSM file " + getOSMFile(), ex);
+            }
+            cleanUp();
+            optimize();
+            postProcessing();
+            flush();
+        } finally
         {
-            throw new RuntimeException("Cannot parse OSM file " + getOSMFile(), ex);
+            if (lock != null)
+                lock.release();
         }
-        cleanUp();
-        optimize();
-        postProcessing();
-        flush();
         return this;
     }
 
     protected DataReader importData() throws IOException
     {
+        ensureWriteAccess();
         if (graph == null)
             throw new IllegalStateException("Load graph before importing OSM data");
 
@@ -680,12 +719,31 @@ public class GraphHopper implements GraphHopperAPI
             graph = new GraphHopperStorage(dir, encodingManager, hasElevation());
 
         graph.setSegmentSize(defaultSegmentSize);
-        if (!graph.loadExisting())
-            return false;
 
-        postProcessing();
-        fullyLoaded = true;
-        return true;
+        Lock lock = null;
+        try
+        {
+            // create locks only if writes are allowed, if they are not allowed a lock cannot be created 
+            // (e.g. on a read only filesystem locks would fail)
+            if (graph.getDirectory().getDefaultType().isStoring() && isAllowWrites())
+            {
+                lockFactory.setLockDir(new File(ghLocation));
+                lock = lockFactory.create(fileLockName, false);
+                if (!lock.tryLock())
+                    throw new RuntimeException("To avoid reading partial data we need to obtain the read lock but it failed. In " + ghLocation, lock.getObtainFailedReason());
+            }
+
+            if (!graph.loadExisting())
+                return false;
+
+            postProcessing();
+            fullyLoaded = true;
+            return true;
+        } finally
+        {
+            if (lock != null)
+                lock.release();
+        }
     }
 
     /**
@@ -887,7 +945,10 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         if (!tmpIndex.loadExisting())
+        {
+            ensureWriteAccess();
             tmpIndex.prepareIndex();
+        }
 
         return tmpIndex;
     }
@@ -930,6 +991,7 @@ public class GraphHopper implements GraphHopperAPI
         boolean tmpPrepare = doPrepare && prepare != null;
         if (tmpPrepare)
         {
+            ensureWriteAccess();
             if (prepare instanceof PrepareContractionHierarchies && encodingManager.getVehicleCount() > 1)
                 throw new IllegalArgumentException("Contraction hierarchies preparation "
                         + "requires (at the moment) only one vehicle. But was:" + encodingManager);
@@ -963,7 +1025,8 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Releases all associated resources like memory or files.
+     * Releases all associated resources like memory or files. But it does not remove them. To
+     * remove the files created in graphhopperLocation you have to call clean().
      */
     public void close()
     {
@@ -972,6 +1035,34 @@ public class GraphHopper implements GraphHopperAPI
 
         if (locationIndex != null)
             locationIndex.close();
+
+        try
+        {
+            lockFactory.forceRemove(fileLockName, true);
+        } catch (Exception ex)
+        {
+            // silently fail
+        }
+    }
+
+    /**
+     * Removes the on-disc routing files. Call only after calling close or before importOrLoad or
+     * load
+     */
+    public void clean()
+    {
+        if (getGraphHopperLocation().isEmpty())
+            throw new IllegalStateException("Cannot clean GraphHopper without specified graphHopperLocation");
+
+        File folder = new File(getGraphHopperLocation());
+        Helper.removeDir(folder);
+    }
+
+    // make sure this is identical to buildDate used in pom.xml
+    // <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZ</maven.build.timestamp.format>
+    private String formatDateTime( Date date )
+    {
+        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(date);
     }
 
     protected void ensureNotLoaded()
@@ -980,10 +1071,9 @@ public class GraphHopper implements GraphHopperAPI
             throw new IllegalStateException("No configuration changes are possible after loading the graph");
     }
 
-    // make sure this is identical to buildDate used in pom.xml
-    // <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZ</maven.build.timestamp.format>
-    private String formatDateTime( Date date )
+    protected void ensureWriteAccess()
     {
-        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(date);
+        if (!allowWrites)
+            throw new IllegalStateException("Writes are not allowed!");
     }
 }

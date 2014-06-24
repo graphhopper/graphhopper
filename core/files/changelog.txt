@@ -1,3 +1,9 @@
+0.4.0
+    with the introduction of lock protection mechanism (see #112) GraphHopper needs always write access, see also #217
+    new GraphHopper.clean method to remove the directory via Java API
+    FlagEncoder: replaced isFoward and isBackward with more generic isBool(flags, FlagEncoder.FORWARD|BACKWARD)
+        restrictions type was: String[], is: List<String>
+
 0.3.0
     introduced prefer bits, now bike uses more bits and 3 bike encoder do not fit into 32 bit anymore, will be fixed later
     moved Translation argument into Path.calcInstruction for more fine grained control, instructions are now uncached and GHRequest: new locale parameter

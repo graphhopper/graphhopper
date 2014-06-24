@@ -329,7 +329,7 @@ public abstract class AbstractBikeFlagEncoderTester
         OSMWay osmWay = new OSMWay(1);
         osmWay.setTag("highway", "cycleway");
         long encoded = encoder.handleWayTags(osmWay, encoder.acceptBit, 0);
-        assertEquals((double) VERY_NICE.getValue() / BEST.getValue(), encoder.getPriority(encoded), 1e-3);
+        assertEquals((double) VERY_NICE.getValue() / BEST.getValue(), encoder.getDouble(encoded, BikeCommonFlagEncoder.K_PRIORITY), 1e-3);
     }
 
     @Test
@@ -339,5 +339,15 @@ public abstract class AbstractBikeFlagEncoderTester
         osmWay.setTag("highway", "motorway");
         osmWay.setTag("bicycle", "yes");
         assertPriority(REACH_DEST.getValue(), osmWay);
+    }
+
+    @Test
+    public void testPriority()
+    {
+        long flags = encoder.setLong(0L, BikeCommonFlagEncoder.K_PRIORITY_LONG, BikeCommonFlagEncoder.PriorityCode.BEST.getValue());
+        assertEquals(1, encoder.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY), 1e-3);
+
+        flags = encoder.setLong(0L, BikeCommonFlagEncoder.K_PRIORITY_LONG, BikeCommonFlagEncoder.PriorityCode.AVOID_IF_POSSIBLE.getValue());
+        assertEquals(3d / 7d, encoder.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY), 1e-3);
     }
 }

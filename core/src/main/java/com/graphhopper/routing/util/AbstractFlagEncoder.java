@@ -30,7 +30,7 @@ import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.util.*;
-import java.util.Collections;
+import java.util.*;
 
 /**
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
@@ -52,6 +52,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected long forwardBit = 0;
     protected long backwardBit = 0;
     protected long directionBitMask = 0;
+    protected long roundaboutBit = 0;
     protected EncodedDoubleValue speedEncoder;
     // bit to signal that way is accepted
     protected long acceptBit = 0;
@@ -68,9 +69,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected EdgeExplorer edgeOutExplorer;
     protected EdgeExplorer edgeInExplorer;
 
-    /* restriction definitions */
-    protected String[] restrictions;
-    protected HashSet<String> intendedValues = new HashSet<String>();
+    /* restriction definitions where order is important */
+    protected List<String> restrictions = new ArrayList<String>(5);
+    protected HashSet<String> intendedValues = new HashSet<String>(5);
     protected HashSet<String> restrictedValues = new HashSet<String>(5);
     protected HashSet<String> ferries = new HashSet<String>(5);
     protected HashSet<String> oneways = new HashSet<String>(5);
@@ -123,14 +124,16 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         forwardBit = 1 << shift;
         backwardBit = 2 << shift;
         directionBitMask = 3 << shift;
+        shift += 2;
+        roundaboutBit = 1 << shift;
+        shift++;
 
         // define internal flags for parsing
         index *= 2;
         acceptBit = 1 << index;
         ferryBit = 2 << index;
 
-        // forward and backward bit:
-        return shift + 2;
+        return shift;
     }
 
     /**
@@ -208,26 +211,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         return 0;
     }
 
-    /**
-     * This method is called after determining the node flags and way flags.
-     */
-    public long applyNodeFlags( long wayFlags, long nodeFlags )
-    {
-        return nodeFlags | wayFlags;
-    }
-
-    @Override
-    public boolean isForward( long flags )
-    {
-        return (flags & forwardBit) != 0;
-    }
-
-    @Override
-    public boolean isBackward( long flags )
-    {
-        return (flags & backwardBit) != 0;
-    }
-
     @Override
     public InstructionAnnotation getAnnotation( long flags, Translation tr )
     {
@@ -236,7 +219,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     /**
      * Swapping directions means swapping bits which are dependent on the direction of an edge like
-     * the access bits. But also direction dependent speed values should be swapped too.
+     * the access bits. But also direction dependent speed values should be swapped too. Keep in
+     * mind that this method is performance critical!
      */
     public long reverseFlags( long flags )
     {
@@ -259,7 +243,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     @Override
     public long setAccess( long flags, boolean forward, boolean backward )
     {
-        return flags | (forward ? forwardBit : 0) | (backward ? backwardBit : 0);
+        return setBool(setBool(flags, K_BACKWARD, backward), K_FORWARD, forward);
     }
 
     @Override
@@ -560,5 +544,71 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
     {
         return Collections.emptyList();
+    }
+
+    protected boolean isFerry( long internalFlags )
+    {
+        return (internalFlags & ferryBit) != 0;
+    }
+
+    protected boolean isAccept( long internalFlags )
+    {
+        return (internalFlags & acceptBit) != 0;
+    }
+
+    @Override
+    public long setBool( long flags, int key, boolean value )
+    {
+        switch (key)
+        {
+            case K_FORWARD:
+                return value ? flags | forwardBit : flags & ~forwardBit;
+            case K_BACKWARD:
+                return value ? flags | backwardBit : flags & ~backwardBit;
+            case K_ROUNDABOUT:
+                return value ? flags | roundaboutBit : flags & ~roundaboutBit;
+            default:
+                throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
+        }
+    }
+
+    @Override
+    public boolean isBool( long flags, int key )
+    {
+        switch (key)
+        {
+            case K_FORWARD:
+                return (flags & forwardBit) != 0;
+            case K_BACKWARD:
+                return (flags & backwardBit) != 0;
+            case K_ROUNDABOUT:
+                return (flags & roundaboutBit) != 0;
+            default:
+                throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
+        }
+    }
+
+    @Override
+    public long setLong( long flags, int key, long value )
+    {
+        throw new UnsupportedOperationException("Unknown key " + key + " for long value.");
+    }
+
+    @Override
+    public long getLong( long flags, int key )
+    {
+        throw new UnsupportedOperationException("Unknown key " + key + " for long value.");
+    }
+
+    @Override
+    public long setDouble( long flags, int key, double value )
+    {
+        throw new UnsupportedOperationException("Unknown key " + key + " for double value.");
+    }
+
+    @Override
+    public double getDouble( long flags, int key )
+    {
+        throw new UnsupportedOperationException("Unknown key " + key + " for double value.");
     }
 }

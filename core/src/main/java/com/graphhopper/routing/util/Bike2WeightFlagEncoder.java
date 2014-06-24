@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.DistanceCalc3D;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
 import static com.graphhopper.util.Helper.*;
@@ -32,7 +31,6 @@ import static com.graphhopper.util.Helper.*;
  */
 public class Bike2WeightFlagEncoder extends BikeFlagEncoder
 {
-    private final DistanceCalc3D distCalc = new DistanceCalc3D();
     private EncodedDoubleValue reverseSpeed;
 
     @Override
@@ -111,7 +109,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
 
     @Override
     public long reverseFlags( long flags )
-    {
+    {        
         // swap access
         flags = super.reverseFlags(flags);
 
@@ -186,7 +184,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
             double fwdDecline = decDist2DSum > 1 ? decEleSum / decDist2DSum : 0;
             double restDist2D = fullDist2D - incDist2DSum - decDist2DSum;
             double maxSpeed = getHighwaySpeed("cycleway");
-            if (isForward(flags))
+            if (isBool(flags, K_FORWARD))
             {
                 // use weighted mean so that longer incline infuences speed more than shorter
                 double speed = getSpeed(flags);
@@ -198,7 +196,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
                 flags = this.setSpeed(flags, keepIn(speed, PUSHING_SECTION_SPEED / 2, maxSpeed));
             }
 
-            if (isBackward(flags))
+            if (isBool(flags, K_BACKWARD))
             {
                 double speedReverse = getReverseSpeed(flags);
                 double bwFaster = 1 + 2 * keepIn(fwdIncline, 0, 0.2);

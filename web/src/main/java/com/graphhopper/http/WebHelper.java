@@ -94,6 +94,9 @@ public class WebHelper
     // https://developers.google.com/maps/documentation/utilities/polylinealgorithm?hl=de
     public static String encodePolyline( PointList poly )
     {
+        if (poly.isEmpty())
+            return "";
+        
         return encodePolyline(poly, poly.is3D());
     }
 

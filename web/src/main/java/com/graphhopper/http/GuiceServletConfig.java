@@ -24,7 +24,7 @@ import com.google.inject.servlet.GuiceServletContextListener;
 import com.graphhopper.util.CmdArgs;
 
 /**
- * Replacement of web.xml
+ * Replacement of web.xml used only for container deployment. Preferred method is to use GHServer.
  * <p/>
  * http://code.google.com/p/google-guice/wiki/ServletModule
  * <p/>
@@ -32,6 +32,19 @@ import com.graphhopper.util.CmdArgs;
  */
 public class GuiceServletConfig extends GuiceServletContextListener
 {
+    private final CmdArgs args;
+
+    public GuiceServletConfig()
+    {
+        try
+        {
+            args = CmdArgs.readFromConfig("config.properties", "graphhopper.config");
+        } catch (Exception ex)
+        {
+            throw new RuntimeException(ex);
+        }
+    }
+
     @Override
     protected Injector getInjector()
     {
@@ -40,11 +53,11 @@ public class GuiceServletConfig extends GuiceServletContextListener
 
     protected Module createDefaultModule()
     {
-        return new DefaultModule(new CmdArgs());
+        return new DefaultModule(args);
     }
 
     protected Module createServletModule()
     {
-        return new GHServletModule();
+        return new GHServletModule(args);
     }
 }
