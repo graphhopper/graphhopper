@@ -127,7 +127,16 @@ public class CGIARProvider implements ElevationProvider
             cacheData.put(name, demProvider);
             DataAccess heights = getDirectory().find(name + ".gh");
             demProvider.setHeights(heights);
-            if (!heights.loadExisting())
+            boolean loadExisting = false;
+            try
+            {
+                loadExisting = heights.loadExisting();
+            } catch (Exception ex)
+            {
+                logger.warn("cannot load " + name + ", error:" + ex.getMessage());
+            }
+
+            if (!loadExisting)
             {
                 // short == 2 bytes
                 heights.create(2 * WIDTH * WIDTH);
@@ -232,9 +241,15 @@ public class CGIARProvider implements ElevationProvider
 
     protected String getFileName( double lat, double lon )
     {
-        int lonVal = (int) (lon / degree) + 37;
-        int latVal = 12 - (int) (lat / degree);
-        return String.format("srtm_%02d_%02d", lonVal, latVal);
+        lon = 1 + (180 + lon) / degree;
+        int lonInt = (int) lon;
+        lat = 1 + (60 - lat) / degree;
+        int latInt = (int) lat;
+
+        if (Math.abs(latInt - lat) < invPrecision)
+            latInt--;
+
+        return String.format("srtm_%02d_%02d", lonInt, latInt);
     }
 
     @Override
@@ -270,7 +285,10 @@ public class CGIARProvider implements ElevationProvider
         // 457.0
         System.out.println(provider.getEle(49.968668, 11.575127));
 
-        //
-        System.out.println(provider.getEle(52.1943832, 0.1363176));
+        // 3130
+        System.out.println(provider.getEle(-22.532854, -65.110474));
+
+        // 130                
+        System.out.println(provider.getEle(38.065392, -87.099609));
     }
 }
