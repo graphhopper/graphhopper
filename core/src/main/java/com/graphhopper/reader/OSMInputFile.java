@@ -183,27 +183,31 @@ public class OSMInputFile implements Sink, Closeable
         {
             if (event == XMLStreamConstants.START_ELEMENT)
             {
-                String name = parser.getLocalName();
-                long id = 0;
-                switch (name.charAt(0))
+                String idStr = parser.getAttributeValue(null, "id");
+                if (idStr != null)
                 {
-                    case 'n':
-                        // note vs. node
-                        if ("node".equals(name))
-                        {
-                            id = Long.parseLong(parser.getAttributeValue(null, "id"));
-                            return OSMNode.create(id, parser);
-                        }
-                        break;
-
-                    case 'w':
+                    String name = parser.getLocalName();
+                    long id = 0;
+                    switch (name.charAt(0))
                     {
-                        id = Long.parseLong(parser.getAttributeValue(null, "id"));
-                        return OSMWay.create(id, parser);
+                        case 'n':
+                            // note vs. node
+                            if ("node".equals(name))
+                            {
+                                id = Long.parseLong(idStr);
+                                return OSMNode.create(id, parser);
+                            }
+                            break;
+
+                        case 'w':
+                        {
+                            id = Long.parseLong(idStr);
+                            return OSMWay.create(id, parser);
+                        }
+                        case 'r':
+                            id = Long.parseLong(idStr);
+                            return OSMRelation.create(id, parser);
                     }
-                    case 'r':
-                        id = Long.parseLong(parser.getAttributeValue(null, "id"));
-                        return OSMRelation.create(id, parser);
                 }
             }
             event = parser.next();
