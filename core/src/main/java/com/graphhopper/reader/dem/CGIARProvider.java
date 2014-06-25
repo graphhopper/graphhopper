@@ -63,7 +63,7 @@ public class CGIARProvider implements ElevationProvider
     private String baseUrl = "http://droppr.org/srtm/v4.1/6_5x5_TIFs";
     private Directory dir;
     private DAType daType = DAType.MMAP;
-    private final double precision = 1e7;
+    final double precision = 1e7;
     private final double invPrecision = 1 / precision;
     private final int degree = 5;
 
@@ -99,16 +99,6 @@ public class CGIARProvider implements ElevationProvider
         return this;
     }
 
-    int down( double val )
-    {
-        // 'rounding' to closest 5
-        int intVal = (int) (val / degree) * degree;
-        if (!(val >= 0 || intVal - val < invPrecision))
-            intVal = intVal - degree;
-
-        return intVal;
-    }
-
     @Override
     public double getEle( double lat, double lon )
     {
@@ -123,7 +113,8 @@ public class CGIARProvider implements ElevationProvider
 
             int minLat = down(lat);
             int minLon = down(lon);
-            demProvider = new HeightTile(minLat, minLon, WIDTH, precision, degree);
+            // less restrictive against boundary checking
+            demProvider = new HeightTile(minLat, minLon, WIDTH, degree * precision, degree);
             cacheData.put(name, demProvider);
             DataAccess heights = getDirectory().find(name + ".gh");
             demProvider.setHeights(heights);
@@ -240,6 +231,16 @@ public class CGIARProvider implements ElevationProvider
         return val;
     }
 
+    int down( double val )
+    {
+        // 'rounding' to closest 5
+        int intVal = (int) (val / degree) * degree;
+        if (!(val >= 0 || intVal - val < invPrecision))
+            intVal = intVal - degree;
+
+        return intVal;
+    }
+
     protected String getFileName( double lat, double lon )
     {
         lon = 1 + (180 + lon) / degree;
@@ -247,7 +248,7 @@ public class CGIARProvider implements ElevationProvider
         lat = 1 + (60 - lat) / degree;
         int latInt = (int) lat;
 
-        if (Math.abs(latInt - lat) < invPrecision)
+        if (Math.abs(latInt - lat) < invPrecision / degree)
             latInt--;
 
         return String.format("srtm_%02d_%02d", lonInt, latInt);
@@ -291,5 +292,11 @@ public class CGIARProvider implements ElevationProvider
 
         // 130                
         System.out.println(provider.getEle(38.065392, -87.099609));
+
+        // 1125
+        System.out.println(provider.getEle(40, -105.2277023));
+        System.out.println(provider.getEle(39.99999999, -105.2277023));
+        System.out.println(provider.getEle(39.9999999, -105.2277023));
+        System.out.println(provider.getEle(39.999999, -105.2277023));
     }
 }

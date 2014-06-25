@@ -47,10 +47,10 @@ public class CGIARProviderTest
         CGIARProvider instance = new CGIARProvider();
         assertEquals("srtm_36_02", instance.getFileName(52, -0.1));
         assertEquals("srtm_35_02", instance.getFileName(50, -10));
-        
+
         assertEquals("srtm_36_23", instance.getFileName(-52, -0.1));
         assertEquals("srtm_35_22", instance.getFileName(-50, -10));
-        
+
         assertEquals("srtm_39_03", instance.getFileName(49.9, 11.5));
         assertEquals("srtm_34_08", instance.getFileName(20, -11));
         assertEquals("srtm_34_08", instance.getFileName(20, -14));
