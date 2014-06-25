@@ -102,6 +102,10 @@ public class CGIARProvider implements ElevationProvider
     @Override
     public double getEle( double lat, double lon )
     {
+        // no data we can avoid the trouble
+        if (lat > 60 || lat < -60)
+            return 0;
+
         lat = (int) (lat * precision) / precision;
         lon = (int) (lon * precision) / precision;
         String name = getFileName(lat, lon);
