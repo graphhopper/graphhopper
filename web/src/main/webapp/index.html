@@ -15,14 +15,19 @@
         <script type="text/javascript" src="js/Leaflet.Elevation-0.0.2.min.js"></script>        
 
         <link rel="stylesheet" href="css/leaflet.contextmenu.css" />
+        <link rel="stylesheet" href="css/leaflet.loading.css" />
+        <link rel="stylesheet" href="css/ui-lightness/jquery-ui-1.10.4.css" />
         <script async="yes" type="text/javascript" src="js/leaflet.contextmenu.js"></script>
-        
+        <script async="yes" type="text/javascript" src="js/leaflet.loading.js"></script>
         <script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>        
+        <script type="text/javascript" src="js/jquery-ui-1.10.4.min.js"></script>
         <!--
         <script type="text/javascript" src="http://code.jquery.com/jquery-2.1.0.min.js"></script>        
         -->
         <script type="text/javascript" src="js/jquery.history.js"></script>
-        <!--        <script type="text/javascript" src="js/jquery.autocomplete.min.js"></script>-->
+        <!--
+        <script type="text/javascript" src="js/jquery.autocomplete.min.js"></script>
+        -->
         <script type="text/javascript" src="js/jquery.autocomplete.js"></script>        
         <script type="text/javascript" src="js/ghrequest.js?v=0.4.1"></script>        
         <script type="text/javascript" src="js/main.js?v=0.4.1"></script>
@@ -32,7 +37,7 @@
         <div id="input">
             <div id="input_header">
                 <div id="header_img">
-                    <a class="no_link" href="http://graphhopper.com">
+                    <a class="no_link" href="http://graphhopper.com" target="_blank">
                         <img alt="GraphHopper" src="./img/header.png"/>                    
                     </a>
                 </div>
@@ -43,23 +48,7 @@
                 </div>
                 <form id="locationform">
                     <div id="locationpoints">
-                        <div id="fromDiv">
-                            <img id="fromIndicator" class="hidden" src="img/indicator.gif"/>
-                            <img id="fromFlag" src="img/marker-small-green.png"/>
-                            <input id="fromInput" type="text" placeholder="From"/>
-                            <div class="clear"> </div>
-                            <div id="fromResolveFound"></div>
-                            <div id="fromResolveError"></div>
-                        </div>
-                        <div class="clear"> </div>
-                        <div id="toDiv">
-                            <img id="toIndicator" class="hidden" src="img/indicator.gif"/>
-                            <img id="toFlag" src="img/marker-small-red.png"/>                    
-                            <input id="toInput" type="text" placeholder="To"/>
-                            <div class="clear"> </div>
-                            <div id="toResolveFound"></div>
-                            <div id="toResolveError"></div>
-                        </div>
+                        <div id="x_pointAdd" class="pointAdd">+</div>
                     </div>
                     <div class="clear"> </div>                
                     <input id="searchButton" type="submit" value="Search">                
@@ -72,6 +61,17 @@
             <div id="info" class="small_text">
             </div>
             <div id="error" class="error">
+            </div>
+            <div id="pointTemplate" class="hidden">
+                <div id="{id}_Div" class="pointDiv">
+                    <img id="{id}_Indicator" class="hidden pointIndicator" src="img/loading.gif"/>
+                    <img id="{id}_Flag" class="pointFlag" src="img/marker-small-green.png"/>
+                    <input id="{id}_Input" class="pointInput" type="search" placeholder=""/>
+                    <div class="pointDelete">x</div>
+                    <div class="clear"> </div>
+                    <div id="{id}_ResolveFound" class="pointResolveFound"></div>
+                    <div id="{id}_ResolveError" class="pointResolveError"></div>
+                </div>
             </div>
         </div>        
 
