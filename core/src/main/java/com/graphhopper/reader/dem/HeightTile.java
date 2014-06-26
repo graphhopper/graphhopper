@@ -80,7 +80,13 @@ public class HeightTile
         // first row in the file is the northernmost one
         // http://gis.stackexchange.com/a/43756/9006
         int lonSimilar = (int) Math.round(width / degree * deltaLon);
-        int latSimilar = width - (int) Math.round(width / degree * deltaLat);
+        // different fallback methods for lat and lon as we have different rounding (lon -> positive, lat -> negative)
+        if (lonSimilar >= width)
+            lonSimilar = width - 1;
+        int latSimilar = width - 1 - (int) Math.round(width / degree * deltaLat);
+        if (latSimilar < 0)
+            latSimilar = 0;
+
         return heights.getShort(2 * (latSimilar * width + lonSimilar));
     }
 
@@ -101,15 +107,21 @@ public class HeightTile
             // no need for width - y as coordinate system for Graphics is already this way
             int latSimilar = i / width;
             int green = Math.abs(heights.getShort(i * 2));
-            int red = 0;
-            while (green > 255)
+            if (green == 0)
             {
-                green = green / 10;
-                red += 50;
+                g.setColor(new Color(255, 0, 0, 255));
+            } else
+            {
+                int red = 0;
+                while (green > 255)
+                {
+                    green = green / 10;
+                    red += 50;
+                }
+                if (red > 255)
+                    red = 255;
+                g.setColor(new Color(red, green, 122, 255));
             }
-            if (red > 255)
-                red = 255;
-            g.setColor(new Color(red, green, 122, 255));
             g.drawLine(lonSimilar, latSimilar, lonSimilar, latSimilar);
         }
         g.dispose();

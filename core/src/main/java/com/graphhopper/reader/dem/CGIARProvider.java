@@ -133,9 +133,6 @@ public class CGIARProvider implements ElevationProvider
 
             if (!loadExisting)
             {
-                // short == 2 bytes
-                heights.create(2 * WIDTH * WIDTH);
-
                 String tifName = name + ".tif";
                 String zippedURL = baseUrl + "/" + name + ".zip";
                 File file = new File(cacheDir, new File(zippedURL).getName());
@@ -169,6 +166,9 @@ public class CGIARProvider implements ElevationProvider
                     }
                 }
 
+                // short == 2 bytes
+                heights.create(2 * WIDTH * WIDTH);
+
                 // logger.info("start decoding");
                 // decode tiff data
                 Raster raster;
@@ -196,8 +196,7 @@ public class CGIARProvider implements ElevationProvider
                         Helper.close(ss);
                 }
 
-                // logger.info("start converting to our format");
-                // store in our own format, TODO use faster setBytes method?
+                // logger.info("start converting to our format");           
                 final int height = raster.getHeight();
                 final int width = raster.getWidth();
                 int x = 0, y = 0;
@@ -215,8 +214,6 @@ public class CGIARProvider implements ElevationProvider
                         }
                     }
                     heights.flush();
-                    // logger.info("end converting to our format");
-                    // demProvider.toImage(name + ".png");
 
                     // TODO remove tifName and zip?
                 } catch (Exception ex)
@@ -286,18 +283,18 @@ public class CGIARProvider implements ElevationProvider
     public static void main( String[] args )
     {
         CGIARProvider provider = new CGIARProvider();
-        // 340.0
+        // 337.0
         System.out.println(provider.getEle(49.949784, 11.57517));
-        // 457.0
+        // 456.0
         System.out.println(provider.getEle(49.968668, 11.575127));
 
-        // 3130
+        // 3134
         System.out.println(provider.getEle(-22.532854, -65.110474));
 
-        // 130                
+        // 123               
         System.out.println(provider.getEle(38.065392, -87.099609));
 
-        // 1125
+        // 1617
         System.out.println(provider.getEle(40, -105.2277023));
         System.out.println(provider.getEle(39.99999999, -105.2277023));
         System.out.println(provider.getEle(39.9999999, -105.2277023));

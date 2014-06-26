@@ -32,9 +32,7 @@ import org.slf4j.LoggerFactory;
  */
 public class RAMDataAccess extends AbstractDataAccess
 {
-
     private byte[][] segments = new byte[0][];
-    private boolean closed = false;
     private boolean store;
 
     RAMDataAccess( String name, String location, boolean store, ByteOrder order )

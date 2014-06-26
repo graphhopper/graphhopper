@@ -45,9 +45,9 @@ public class SRTMProvider implements ElevationProvider
     {
         SRTMProvider provider = new SRTMProvider();
         System.out.println(provider.getEle(47.468668, 14.575127));
-        
+
         System.out.println(provider.getEle(46.468668, 12.575127));
-        
+
         System.out.println(provider.getEle(48.468668, 9.575127));
     }
 
@@ -147,7 +147,7 @@ public class SRTMProvider implements ElevationProvider
     @Override
     public ElevationProvider setDAType( DAType daType )
     {
-        this.daType = daType;        
+        this.daType = daType;
         return this;
     }
 
@@ -270,7 +270,6 @@ public class SRTMProvider implements ElevationProvider
                     heights.flush();
 
                     // demProvider.toImage("x" + file.getName() + ".png");
-
                     // TODO remove hgt and zip?
                 } catch (Exception ex)
                 {
