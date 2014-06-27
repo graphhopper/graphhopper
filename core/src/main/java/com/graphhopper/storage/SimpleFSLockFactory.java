@@ -91,7 +91,7 @@ public class SimpleFSLockFactory implements LockFactory
 
             // this test can only be performed after the dir has created!
             if (!lockDir.isDirectory())
-                throw new IllegalArgumentException("lockDir has to be a directory");
+                throw new IllegalArgumentException("lockDir has to be a directory: " + lockDir);
 
             try
             {

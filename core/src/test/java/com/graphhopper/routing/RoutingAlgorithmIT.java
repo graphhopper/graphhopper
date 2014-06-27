@@ -254,7 +254,7 @@ public class RoutingAlgorithmIT
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
-                list, "CAR,BIKE,RACINGBIKE", false, "RACINGBIKE", "fastest", false);
+                list, "CAR,RACINGBIKE", false, "RACINGBIKE", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -271,7 +271,7 @@ public class RoutingAlgorithmIT
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
         runAlgo(testCollector, "files/krems.osm.gz", "target/krems-gh",
-                list, "CAR,BIKE,MTB", false, "BIKE", "fastest", false);
+                list, "CAR,BIKE", false, "BIKE", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -288,7 +288,7 @@ public class RoutingAlgorithmIT
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
         runAlgo(testCollector, "files/krems.osm.gz", "target/krems-gh",
-                list, "CAR,BIKE,MTB", false, "MTB", "fastest", false);
+                list, "CAR,MTB", false, "MTB", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
