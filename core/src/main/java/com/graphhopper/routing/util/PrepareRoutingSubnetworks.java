@@ -44,6 +44,7 @@ public class PrepareRoutingSubnetworks
     private final GraphStorage g;
     private final EdgeFilter edgeFilter;
     private int minNetworkSize = 200;
+    private int minOnewayNetworkSize = 0;
     private int subNetworks = -1;
     private final AtomicInteger maxEdgesPerNode = new AtomicInteger(0);
     private final EncodingManager encodingManager;
@@ -65,6 +66,11 @@ public class PrepareRoutingSubnetworks
         this.minNetworkSize = minNetworkSize;
         return this;
     }
+    public PrepareRoutingSubnetworks setMinOnewayNetworkSize( int minOnewayNetworkSize )
+    {
+        this.minOnewayNetworkSize = minOnewayNetworkSize;
+        return this;
+    }
 
     public void doWork()
     {
@@ -73,8 +79,8 @@ public class PrepareRoutingSubnetworks
         keepLargeNetworks(map);
 
         int unvisitedDeadEnds = 0;
-        if (this.encodingManager.getVehicleCount() == 1)
-            unvisitedDeadEnds = removeDeadEndUnvisitedNetworks(g, this.encodingManager.getSingle(), minNetworkSize, logger);
+        if ((this.minOnewayNetworkSize > 0) && (this.encodingManager.getVehicleCount() == 1))
+            unvisitedDeadEnds = removeDeadEndUnvisitedNetworks(g, this.encodingManager.getSingle(), this.minOnewayNetworkSize, logger);
 
         logger.info("optimize to remove subnetworks (" + map.size() + "), zero-degree-nodes (" + del + "), "
                 + "unvisited-dead-end-nodes(" + unvisitedDeadEnds + "), "
@@ -234,22 +240,22 @@ public class PrepareRoutingSubnetworks
      * For example, small areas like parkings are sometimes connected to the whole network through one-way road
      * This is clearly an error - but is causes the routing to fail when point get connected to this small area
      * This routines removed all these points from the graph
-     * The algotithm is to through the graph, build the network map and for each small map remove the network
+     * The algorithm is to through the graph, build the network map and for each small map remove the network
      * <p/>
      * @return removed nodes;
      */
-    public static int removeDeadEndUnvisitedNetworks(final GraphStorage g, final FlagEncoder encoder, final int minNetworkSize, final Logger logger)
+    public static int removeDeadEndUnvisitedNetworks(final GraphStorage g, final FlagEncoder encoder, final int minOnewayNetworkSize, final Logger logger)
     {
         int removed = 0;
 
         StopWatch sw = new StopWatch().start();
         logger.info("removeDeadEndUnvisitedNetworks: searching forward");
-        removed += removeDeadEndUnvisitedNetworks(g, g.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false)), minNetworkSize, logger);
+        removed += removeDeadEndUnvisitedNetworks(g, g.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false)), minOnewayNetworkSize, logger);
         logger.info("removeDeadEndUnvisitedNetworks: forward search completed in " + sw.stop().getSeconds() + "s");
         
         sw.start();
         logger.info("removeDeadEndUnvisitedNetworks: searching backward");
-        removed += removeDeadEndUnvisitedNetworks(g, g.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true)), minNetworkSize, logger);
+        removed += removeDeadEndUnvisitedNetworks(g, g.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true)), minOnewayNetworkSize, logger);
         logger.info("removeDeadEndUnvisitedNetworks: backward search completed in " + sw.stop().getSeconds() + "s");
 
         return removed;
@@ -270,7 +276,7 @@ public class PrepareRoutingSubnetworks
         return sortedByValues;
     }
     
-    public static int removeDeadEndUnvisitedNetworks(final GraphStorage g, final EdgeExplorer explorer, final int minNetworkSize, final Logger logger)
+    public static int removeDeadEndUnvisitedNetworks(final GraphStorage g, final EdgeExplorer explorer, final int minOnewayNetworkSize, final Logger logger)
     {
         final AtomicInteger removed = new AtomicInteger(0);
         
@@ -288,12 +294,12 @@ public class PrepareRoutingSubnetworks
             int mapStart = e.getKey();
             int subnetSize = e.getValue();
             
-            final boolean removeNetwork = (!first) && (subnetSize < minNetworkSize);
+            final boolean removeNetwork = (!first) && (subnetSize < minOnewayNetworkSize);
             if (first)
                 first = false;
             
             if (removeNetwork)
-                logger.info("Removing dead-end network: " + subnetSize  + " nodes starting from nodeid=" + mapStart);
+                logger.debug("Removing dead-end network: " + subnetSize  + " nodes starting from nodeid=" + mapStart);
 
             new XFirstSearch()
             {

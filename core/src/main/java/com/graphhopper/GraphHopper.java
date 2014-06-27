@@ -82,6 +82,7 @@ public class GraphHopper implements GraphHopperAPI
     private boolean searchRegion = true;
     // for prepare
     private int minNetworkSize = 200;
+    private int minOnewayNetworkSize = 0;
     // for CH prepare
     private AlgorithmPreparation prepare;
     private boolean doPrepare = true;
@@ -521,6 +522,7 @@ public class GraphHopper implements GraphHopperAPI
 
         // optimizable prepare
         minNetworkSize = args.getInt("prepare.minNetworkSize", minNetworkSize);
+        minOnewayNetworkSize = args.getInt("prepare.minOnewayNetworkSize", minOnewayNetworkSize);
 
         // prepare CH
         doPrepare = args.getBool("prepare.doPrepare", doPrepare);
@@ -981,6 +983,7 @@ public class GraphHopper implements GraphHopperAPI
         int prev = graph.getNodes();
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(graph, encodingManager);
         preparation.setMinNetworkSize(minNetworkSize);
+        preparation.setMinOnewayNetworkSize(this.minOnewayNetworkSize);
         logger.info("start finding subnetworks, " + Helper.getMemInfo());
         preparation.doWork();
         int n = graph.getNodes();
