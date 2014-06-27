@@ -156,8 +156,9 @@ public class CGIARProvider implements ElevationProvider
                             } catch (IOException ex)
                             {
                                 demProvider.setSeaLevel(true);
-                                heights.create(10);
-                                heights.flush();
+                                // use small size on disc and in-memory
+                                heights.setSegmentSize(100).create(10).
+                                        flush();
                                 return 0;
                             }
                         }
@@ -299,6 +300,10 @@ public class CGIARProvider implements ElevationProvider
         System.out.println(provider.getEle(40, -105.2277023));
         System.out.println(provider.getEle(39.99999999, -105.2277023));
         System.out.println(provider.getEle(39.9999999, -105.2277023));
+        // 1619
         System.out.println(provider.getEle(39.999999, -105.2277023));
+
+        // 0
+        System.out.println(provider.getEle(29.840644, -42.890625));
     }
 }
