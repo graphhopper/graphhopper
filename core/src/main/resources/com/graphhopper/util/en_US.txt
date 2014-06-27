@@ -23,6 +23,7 @@ web.mtb=Mountainbike
 web.car=Car
 web.foot=Foot
 web.staticlink=static link
+web.viaHint=via
 finish=Finish!
 hourAbbr=h
 dayAbbr=d

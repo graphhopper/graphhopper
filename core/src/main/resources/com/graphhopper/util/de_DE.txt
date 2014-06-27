@@ -23,6 +23,7 @@ web.mtb=Mountainbike
 web.car=Auto
 web.foot=Zu Fuß
 web.staticlink=Link
+web.viaHint=über
 finish=Ziel erreicht!
 hourAbbr=h
 dayAbbr=d

@@ -23,6 +23,7 @@ web.mtb=VTT
 web.car=Voiture
 web.foot=À pied
 web.staticlink=
+web.viaHint=
 finish=Fini!
 hourAbbr=h
 dayAbbr=j

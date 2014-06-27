@@ -92,6 +92,9 @@ body {
 .left {
     float: left;
 }
+.right {
+    float: right;
+}
 #routeDetails {
     padding: 20px;
     font-size: 12px;
@@ -154,6 +157,8 @@ body {
     color: #00cc33;
 }
 #exportLink {
+    padding-left: 5px;
+    padding-top: 2px;
     float: left;
 }
 
@@ -244,10 +249,12 @@ td img.pic {
 }
 .pointDelete {
     float: left;
+    margin-top:5px;
     margin-left: 5px;
     display: none;
     font-weight:normal;
     color: #000;
+    font-size: 10px;
 }
 .pointAdd { 
     margin-left: 7px;

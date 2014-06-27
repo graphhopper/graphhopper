@@ -23,6 +23,7 @@ web.mtb=Планинско колело
 web.car=Автомобил
 web.foot=Пеш
 web.staticlink=
+web.viaHint=
 finish=Крайна цел!
 hourAbbr=ч
 dayAbbr=д

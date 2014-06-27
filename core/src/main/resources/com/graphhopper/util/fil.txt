@@ -23,6 +23,7 @@ web.mtb=MountainBike
 web.car=kotse
 web.foot=lumakad
 web.staticlink=
+web.viaHint=
 finish=Tapusin!
 hourAbbr=h
 dayAbbr=d
