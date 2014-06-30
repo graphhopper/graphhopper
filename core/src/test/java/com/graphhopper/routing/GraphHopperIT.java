@@ -140,31 +140,35 @@ public class GraphHopperIT
                         + "(43.731371359483255,7.421123216028286,66.0), (43.731485725897976,7.42117332118392,45.0), "
                         + "(43.731575132867135,7.420868778695214,52.0), (43.73160605277731,7.420824820268709,52.0), "
                         + "(43.7316401391843,7.420850152243305,52.0), (43.731674039326776,7.421050014072285,45.0)"));
+
+        assertEquals(66, il.createGPXList().get(0).getElevation(), 1e-2);
+        assertEquals(66, il.createGPXList().get(1).getElevation(), 1e-2);
+        assertEquals(45, il.createGPXList().get(10).getElevation(), 1e-2);
     }
 
     @Test
     public void testKremsCyclewayInstructionsWithWayTypeInfo()
     {
-        String osmFile = "files/krems.osm.gz";
-        String graphFile = "target/graph-krems";
-        String vehicle = "BIKE";
-        String importVehicles = "CAR,BIKE";
-        String weightCalcStr = "fastest";
+        String tmpOsmFile = "files/krems.osm.gz";
+        String tmpGraphFile = "target/graph-krems";
+        String tmpVehicle = "BIKE";
+        String tmpImportVehicles = "CAR,BIKE";
+        String tmpWeightCalcStr = "fastest";
 
         try
         {
             // make sure we are using fresh graphhopper files with correct vehicle
-            Helper.removeDir(new File(graphFile));
+            Helper.removeDir(new File(tmpGraphFile));
             GraphHopper hopper = new GraphHopper().
                     setInMemory(true).
-                    setOSMFile(osmFile).
+                    setOSMFile(tmpOsmFile).
                     disableCHShortcuts().
-                    setGraphHopperLocation(graphFile).
-                    setEncodingManager(new EncodingManager(importVehicles)).
+                    setGraphHopperLocation(tmpGraphFile).
+                    setEncodingManager(new EncodingManager(tmpImportVehicles)).
                     importOrLoad();
 
             GHResponse rsp = hopper.route(new GHRequest(48.410987, 15.599492, 48.383419, 15.659294).
-                    setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
+                    setAlgorithm("astar").setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
 
             assertEquals(6932.24, rsp.getDistance(), .1);
             assertEquals(110, rsp.getPoints().getSize());
@@ -193,10 +197,10 @@ public class GraphHopperIT
 
         } catch (Exception ex)
         {
-            throw new RuntimeException("cannot handle osm file " + osmFile, ex);
+            throw new RuntimeException("cannot handle osm file " + tmpOsmFile, ex);
         } finally
         {
-            Helper.removeDir(new File(graphFile));
+            Helper.removeDir(new File(tmpGraphFile));
         }
     }
 

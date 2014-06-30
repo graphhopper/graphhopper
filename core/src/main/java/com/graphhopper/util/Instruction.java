@@ -140,7 +140,7 @@ public class Instruction
         double ele = Double.NaN;
         boolean is3D = points.is3D();
         if (is3D)
-            ele = points.getLongitude(0);
+            ele = points.getElevation(0);
 
         for (int i = 0; i < len; i++)
         {
