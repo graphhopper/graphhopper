@@ -173,12 +173,15 @@ public class RoutingAlgorithmIT
     @Test
     public void testMonacoFoot3D()
     {
-        // same number of points as testMonaceFoot results but longer distance due to elevation difference
+        // most routes have same number of points as testMonaceFoot results but longer distance due to elevation difference
         List<OneRun> list = createMonacoFoot();
-        list.get(0).setDistance(1, 1634);
-        list.get(1).setDistance(1, 3610);
-        list.get(2).setDistance(1, 2182);
-        list.get(3).setDistance(1, 1498);
+        list.get(0).setDistance(1, 1627);
+        list.get(2).setDistance(1, 2258);
+        list.get(3).setDistance(1, 1482);
+        
+        // or slightly longer tour with less nodes: list.get(1).setDistance(1, 3610);
+        list.get(1).setDistance(1, 3595);
+        list.get(1).setLocs(1, 149);               
 
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
                 list, "FOOT", true, "FOOT", "shortest", true);
@@ -190,21 +193,21 @@ public class RoutingAlgorithmIT
     {
         List<OneRun> list = new ArrayList<OneRun>();
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km
-        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 1740, 88));
+        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2032, 94));
         // 2.
-        list.add(new OneRun(43.728499, 7.417907, 43.74958, 7.436566, 4492, 230));
+        list.add(new OneRun(43.728499, 7.417907, 43.74958, 7.436566, 3659, 167));
         // 3.
-        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2782, 152));
+        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2776, 167));
         // 4.
-        list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1609, 85));
+        list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1544, 84));
 
         // try reverse direction
         // 1.
-        list.add(new OneRun(43.727687, 7.418737, 43.730864, 7.420771, 1928, 93));
-        list.add(new OneRun(43.74958, 7.436566, 43.728499, 7.417907, 4073, 172));
-        list.add(new OneRun(43.739213, 7.427806, 43.728677, 7.41016, 3043, 157));
+        list.add(new OneRun(43.727687, 7.418737, 43.730864, 7.420771, 1682, 95));
+        list.add(new OneRun(43.74958, 7.436566, 43.728499, 7.417907, 4056, 179));
+        list.add(new OneRun(43.739213, 7.427806, 43.728677, 7.41016, 2840, 153));
         // 4. avoid tunnel(s)!
-        list.add(new OneRun(43.739662, 7.424355, 43.733802, 7.413433, 1586, 80));
+        list.add(new OneRun(43.739662, 7.424355, 43.733802, 7.413433, 1753, 100));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
                 list, "BIKE2", true, "BIKE2", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -378,7 +381,7 @@ public class RoutingAlgorithmIT
     {
         List<OneRun> list = new ArrayList<OneRun>();
         // choose cycleway (Dreschenauer Straße)
-        list.add(new OneRun(49.987132, 11.510496, 50.018839, 11.505024, 3989, 106));
+        list.add(new OneRun(49.987132, 11.510496, 50.018839, 11.505024, 3985, 106));
 
         runAlgo(testCollector, "files/neudrossenfeld.osm.pbf", "target/neudrossenfeld-gh",
                 list, "bike", true, "bike", "fastest-bike", true);

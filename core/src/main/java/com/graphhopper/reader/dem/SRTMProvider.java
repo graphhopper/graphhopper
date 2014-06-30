@@ -43,7 +43,21 @@ public class SRTMProvider implements ElevationProvider
 {
     public static void main( String[] args ) throws IOException
     {
-        new SRTMProvider().getEle(55, -161);
+        SRTMProvider provider = new SRTMProvider();
+        // 1046
+        System.out.println(provider.getEle(47.468668, 14.575127));
+        // 1113
+        System.out.println(provider.getEle(47.467753, 14.573911));
+
+        // 1946
+        System.out.println(provider.getEle(46.468835, 12.578777));
+
+        // 845
+        System.out.println(provider.getEle(48.469123, 9.576393));
+
+        // 1113 vs new: 
+        provider.setCalcMean(true);
+        System.out.println(provider.getEle(47.467753, 14.573911));
     }
 
     private static final BitUtil BIT_UTIL = BitUtil.BIG;
@@ -60,11 +74,18 @@ public class SRTMProvider implements ElevationProvider
     private final double invPrecision = 1 / precision;
     // mirror: base = "http://mirror.ufs.ac.za/datasets/SRTM3/"
     private String baseUrl = "http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/";
+    private boolean calcMean = false;
 
     public SRTMProvider()
     {
         // move to explicit calls?
         init();
+    }
+
+    @Override
+    public void setCalcMean( boolean calcMean )
+    {
+        this.calcMean = calcMean;
     }
 
     /**
@@ -123,7 +144,7 @@ public class SRTMProvider implements ElevationProvider
     public ElevationProvider setCacheDir( File cacheDir )
     {
         if (cacheDir.exists() && !cacheDir.isDirectory())
-            throw new IllegalStateException("Cache path has to be a directory");
+            throw new IllegalArgumentException("Cache path has to be a directory");
 
         this.cacheDir = cacheDir;
         return this;
@@ -132,20 +153,17 @@ public class SRTMProvider implements ElevationProvider
     @Override
     public ElevationProvider setBaseURL( String baseUrl )
     {
-        if (baseUrl.isEmpty())
-            return this;
+        if (baseUrl == null || baseUrl.isEmpty())
+            throw new IllegalArgumentException("baseUrl cannot be empty");
 
         this.baseUrl = baseUrl;
         return this;
     }
 
     @Override
-    public ElevationProvider setInMemory( boolean inMem )
+    public ElevationProvider setDAType( DAType daType )
     {
-        if (inMem)
-            daType = DAType.RAM;
-        else
-            daType = DAType.MMAP;
+        this.daType = daType;
         return this;
     }
 
@@ -207,74 +225,71 @@ public class SRTMProvider implements ElevationProvider
 
             int minLat = down(lat);
             int minLon = down(lon);
-            demProvider = new HeightTile(minLat, minLon, WIDTH, precision);
+            demProvider = new HeightTile(minLat, minLon, WIDTH, precision, 1);
+            demProvider.setCalcMean(calcMean);
             cacheData.put(intKey, demProvider);
-            try
+            DataAccess heights = getDirectory().find("dem" + intKey);
+            demProvider.setHeights(heights);
+            if (!heights.loadExisting())
             {
-                String zippedURL = baseUrl + "/" + fileDetails + "hgt.zip";
-                File file = new File(cacheDir, new File(zippedURL).getName());
-                InputStream is;
-                // get zip file if not already in cacheDir - unzip later and in-memory only!
-                if (!file.exists())
-                {
-                    for (int i = 0; i < 3; i++)
-                    {
-                        try
-                        {
-                            downloader.downloadFile(zippedURL, file.getAbsolutePath());
-                            break;
-                        } catch (SocketTimeoutException ex)
-                        {
-                            // just try again after a little nap
-                            Thread.sleep(2000);
-                            continue;
-                        } catch (FileNotFoundException ex)
-                        {
-                            // now try different URL (with point!), necessary if mirror is used
-                            zippedURL = baseUrl + "/" + fileDetails + ".hgt.zip";
-                            continue;
-                        }
-                    }
-                }
-
-                is = new FileInputStream(file);
-                ZipInputStream zis = new ZipInputStream(is);
-                zis.getNextEntry();
-                BufferedInputStream buff = new BufferedInputStream(zis);
                 byte[] bytes = new byte[2 * WIDTH * WIDTH];
-                DataAccess heights = getDirectory().find("dem" + intKey);
                 heights.create(bytes.length);
-
-                demProvider.setHeights(heights);
-                int len;
-                while ((len = buff.read(bytes)) > 0)
+                try
                 {
-                    for (int bytePos = 0; bytePos < len; bytePos += 2)
+                    String zippedURL = baseUrl + "/" + fileDetails + "hgt.zip";
+                    File file = new File(cacheDir, new File(zippedURL).getName());
+                    InputStream is;
+                    // get zip file if not already in cacheDir - unzip later and in-memory only!
+                    if (!file.exists())
                     {
-                        short val = BIT_UTIL.toShort(bytes, bytePos);
-                        if (val < -1000 || val > 10000)
+                        for (int i = 0; i < 3; i++)
                         {
-                            // TODO fill unassigned gaps with neighbor values -> flood fill algorithm !
-                            // -> calculate mean with an associated weight of how long the distance to the neighbor is
-//                            throw new IllegalStateException("Invalid height value " + val
-//                                    + ", y:" + bytePos / WIDTH + ", x:" + (WIDTH - bytePos % WIDTH));
-                            val = Short.MIN_VALUE;
+                            try
+                            {
+                                downloader.downloadFile(zippedURL, file.getAbsolutePath());
+                                break;
+                            } catch (SocketTimeoutException ex)
+                            {
+                                // just try again after a little nap
+                                Thread.sleep(2000);
+                                continue;
+                            } catch (FileNotFoundException ex)
+                            {
+                                // now try different URL (with point!), necessary if mirror is used
+                                zippedURL = baseUrl + "/" + fileDetails + ".hgt.zip";
+                                continue;
+                            }
                         }
-
-                        heights.setShort(bytePos, val);
                     }
+
+                    is = new FileInputStream(file);
+                    ZipInputStream zis = new ZipInputStream(is);
+                    zis.getNextEntry();
+                    BufferedInputStream buff = new BufferedInputStream(zis);
+                    int len;
+                    while ((len = buff.read(bytes)) > 0)
+                    {
+                        for (int bytePos = 0; bytePos < len; bytePos += 2)
+                        {
+                            short val = BIT_UTIL.toShort(bytes, bytePos);
+                            if (val < -1000 || val > 12000)
+                                val = Short.MIN_VALUE;
+
+                            heights.setShort(bytePos, val);
+                        }
+                    }
+                    heights.flush();
+
+                    // demProvider.toImage("x" + file.getName() + ".png");
+                    // TODO remove hgt and zip?
+                } catch (Exception ex)
+                {
+                    throw new RuntimeException(ex);
                 }
-                // demProvider.toImage(file.getName() + ".png");
-            } catch (Exception ex)
-            {
-                throw new RuntimeException(ex);
-            }
+            } // loadExisting
         }
 
-        short val = demProvider.getHeight(lat, lon);
-        if (val == Short.MIN_VALUE)
-            return Double.NaN;
-        return val;
+        return demProvider.getHeight(lat, lon);
     }
 
     @Override
@@ -298,7 +313,7 @@ public class SRTMProvider implements ElevationProvider
         if (dir != null)
             return dir;
 
-        logger.info("SRTM Elevation Provider, from: " + baseUrl + ", to: " + cacheDir + ", as: " + daType);
+        logger.info(this.toString() + " Elevation Provider, from: " + baseUrl + ", to: " + cacheDir + ", as: " + daType);
         return dir = new GHDirectory(cacheDir.getAbsolutePath(), daType);
     }
 }

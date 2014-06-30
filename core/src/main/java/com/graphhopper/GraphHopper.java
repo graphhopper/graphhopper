@@ -19,6 +19,7 @@ package com.graphhopper;
 
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.OSMReader;
+import com.graphhopper.reader.dem.CGIARProvider;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.Path;
@@ -518,21 +519,23 @@ public class GraphHopper implements GraphHopperAPI
         else
             lockFactory = new NativeFSLockFactory();
 
-        // elevation
+         // elevation
         String eleProviderStr = args.get("graph.elevation.provider", "noop").toLowerCase();
+        boolean eleCalcMean = args.getBool("graph.elevation.calcmean", false);
         String cacheDirStr = args.get("graph.elevation.cachedir", "");
         String baseURL = args.get("graph.elevation.baseurl", "");
         DAType elevationDAType = DAType.fromString(args.get("graph.elevation.dataaccess", "MMAP"));
         ElevationProvider tmpProvider = ElevationProvider.NOOP;
         if (eleProviderStr.equalsIgnoreCase("srtm"))
             tmpProvider = new SRTMProvider();
-        // later:
-//        else if(eleProviderStr.startsWith("cgiar:"))        
-//            eleProvider = new CGIARProvider().setCacheDir(new File());        
+        else if (eleProviderStr.equalsIgnoreCase("cgiar"))
+            tmpProvider = new CGIARProvider();
 
+        tmpProvider.setCalcMean(eleCalcMean);
         tmpProvider.setCacheDir(new File(cacheDirStr));
-        tmpProvider.setBaseURL(baseURL);
-        tmpProvider.setInMemory(elevationDAType.isInMemory());
+        if (!baseURL.isEmpty())
+            tmpProvider.setBaseURL(baseURL);
+        tmpProvider.setDAType(elevationDAType);
         setElevationProvider(tmpProvider);
 
         // optimizable prepare

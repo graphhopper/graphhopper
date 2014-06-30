@@ -18,6 +18,7 @@
  */
 package com.graphhopper.reader.dem;
 
+import com.graphhopper.storage.DAType;
 import java.io.File;
 
 /**
@@ -32,20 +33,26 @@ public interface ElevationProvider
 
     /**
      * Specifies the service URL where to download the elevation data. An empty string should set it
-     * to the default URL.
+     * to the default URL. Default is a provider-dependent URL which should work out of the box.
      */
     ElevationProvider setBaseURL( String baseURL );
 
     /**
      * Specifies the directory where to temporarily store the elevation data after fetched from base
-     * URL.
+     * URL. Default is a custom provider-dependent subdirectory in '/tmp'
      */
     ElevationProvider setCacheDir( File cacheDir );
 
     /**
-     * Set to true if you have a small area and need high speed access.
+     * Set to true if you have a small area and need high speed access. Default is DAType.MMAP
      */
-    ElevationProvider setInMemory( boolean b );
+    ElevationProvider setDAType( DAType daType );
+
+    /**
+     * Configuration option to include surrounding elevation points when fetching the elevation. Has
+     * only an effect if called before the first getEle call. Turned off by default.
+     */
+    void setCalcMean( boolean calcMean );
 
     /**
      * Release resources.
@@ -73,13 +80,18 @@ public interface ElevationProvider
         }
 
         @Override
-        public ElevationProvider setInMemory( boolean b )
+        public ElevationProvider setDAType( DAType daType )
         {
             return this;
         }
 
         @Override
         public void release()
+        {
+        }
+
+        @Override
+        public void setCalcMean( boolean eleCalcMean )
         {
         }
     };
