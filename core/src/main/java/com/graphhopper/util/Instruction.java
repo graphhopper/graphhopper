@@ -232,7 +232,7 @@ public class Instruction
             throw new IllegalStateException("Instruction must contain at least one point " + toString());
     }
 
-    String getTurnDescription( Translation tr )
+    public String getTurnDescription( Translation tr )
     {
         String str;
         String n = getName();
