@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMWay;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.EdgeExplorer;
@@ -147,5 +145,52 @@ public class PrepareRoutingSubnetworksTest
         instance.doWork();
         g.optimize();
         assertEquals(7, g.getNodes());
+    }
+
+    GraphStorage createDeadEndUnvisitedNetworkGraph( EncodingManager em )
+    {
+        GraphStorage g = createGraph(em);
+        // 0 <-> 1 <-> 2 <-> 3 <-> 4 <- 5 <-> 6
+        g.edge(0, 1, 1, true);
+        g.edge(1, 2, 1, true);
+        g.edge(2, 3, 1, true);
+        g.edge(3, 4, 1, true);
+        g.edge(5, 4, 1, false);
+        g.edge(5, 6, 1, true);
+
+        // 7 -> 8 <-> 9 <-> 10
+        g.edge(7, 8, 1, false);
+        g.edge(8, 9, 1, true);
+        g.edge(9, 10, 1, true);
+        return g;
+    }
+
+    @Test
+    public void testRemoveDeadEndUnvisitedNetworksOneWay()
+    {
+        GraphStorage g = createDeadEndUnvisitedNetworkGraph(em);
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em).setMinOnewayNetworkSize(3);
+        FlagEncoder encoder = em.getSingle();
+        EdgeExplorer explorer = g.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
+        int removed = instance.removeDeadEndUnvisitedNetworks(explorer);
+        assertEquals(2, removed);
+
+        g.optimize();
+        assertEquals(9, g.getNodes());
+    }
+
+    @Test
+    public void testRemoveDeadEndUnvisitedNetworks()
+    {
+        GraphStorage g = createDeadEndUnvisitedNetworkGraph(em);
+        assertEquals(11, g.getNodes());
+
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em).setMinOnewayNetworkSize(3);
+        int removed = instance.removeDeadEndUnvisitedNetworks(em.getSingle());
+
+        assertEquals(3, removed);
+
+        g.optimize();
+        assertEquals(8, g.getNodes());
     }
 }
