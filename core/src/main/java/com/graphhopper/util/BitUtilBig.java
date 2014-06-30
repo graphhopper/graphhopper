@@ -134,7 +134,7 @@ public class BitUtilBig extends BitUtil
      */
     final long reversePart( long v, int maxBits )
     {
-        long rest = v & (~((1 << maxBits) - 1));
+        long rest = v & (~((1L << maxBits) - 1));
         return rest | reverse(v, maxBits);
     }
 

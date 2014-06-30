@@ -201,7 +201,7 @@ public class LocationIndexTree implements LocationIndex
 
     private long getBitmask( int shift )
     {
-        long bm = (1 << shift) - 1;
+        long bm = (1L << shift) - 1;
         if (bm <= 0)
         {
             throw new IllegalStateException("invalid bitmask:" + bm);

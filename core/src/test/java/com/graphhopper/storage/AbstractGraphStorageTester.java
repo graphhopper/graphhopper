@@ -1049,10 +1049,12 @@ public abstract class AbstractGraphStorageTester
         edge = graph.edge(2, 3);
         edge.setFlags(list.get(1).setProperties(44.123, true, false));
         assertEquals(44.123, list.get(1).getSpeed(edge.getFlags()), 1e-3);
+        
         flags = GHUtility.getEdge(graph, 3, 2).getFlags();
         assertEquals(44.123, list.get(1).getSpeed(flags), 1e-3);
-        assertTrue(list.get(1).isBool(flags, FlagEncoder.K_FORWARD));
-        assertFalse(list.get(1).isBool(flags, FlagEncoder.K_BACKWARD));
+        assertEquals(44.123, list.get(1).getReverseSpeed(flags), 1e-3);
+        assertFalse(list.get(1).isBool(flags, FlagEncoder.K_FORWARD));
+        assertTrue(list.get(1).isBool(flags, FlagEncoder.K_BACKWARD));
     }
 
     @Test

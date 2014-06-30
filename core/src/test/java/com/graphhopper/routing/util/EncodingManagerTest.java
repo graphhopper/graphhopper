@@ -27,7 +27,6 @@ import java.util.Collections;
 
 import org.junit.Test;
 
-import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation;
@@ -143,8 +142,8 @@ public class EncodingManagerTest
         long allow = defaultBike.acceptBit | lessRelationCodes.acceptBit;
         long flags = manager.handleWayTags(osmWay, allow, relFlags);
 
-        assertTrue(defaultBike.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY) > 
-                lessRelationCodes.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY));
+        assertTrue(defaultBike.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY)
+                > lessRelationCodes.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY));
     }
 
     @Test
@@ -169,7 +168,7 @@ public class EncodingManagerTest
 
         // bike: uninfluenced speed for grade but via network => VERY_NICE                
         // mtb: uninfluenced speed only PREFER
-        assertTrue(bikeEncoder.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY) 
+        assertTrue(bikeEncoder.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY)
                 > mtbEncoder.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY));
     }
 
@@ -273,5 +272,32 @@ public class EncodingManagerTest
     {
         assertEquals("B8, B12", EncodingManager.fixWayName("B8;B12"));
         assertEquals("B8, B12", EncodingManager.fixWayName("B8; B12"));
+    }
+
+    @Test
+    public void testCompatibilityBug()
+    {
+        EncodingManager manager2 = new EncodingManager("bike2", 8);
+        OSMWay osmWay = new OSMWay(1);
+        osmWay.setTag("highway", "footway");
+        osmWay.setTag("name", "test");
+
+        BikeFlagEncoder singleBikeEnc = (BikeFlagEncoder) manager2.getSingle();
+        long flags = manager2.handleWayTags(osmWay, singleBikeEnc.acceptBit, 0);
+        double singleSpeed = singleBikeEnc.getSpeed(flags);
+        assertEquals(4, singleSpeed, 1e-3);
+        assertEquals(singleSpeed, singleBikeEnc.getReverseSpeed(flags), 1e-3);
+
+        EncodingManager manager = new EncodingManager("bike2,bike,foot", 8);
+        FootFlagEncoder foot = (FootFlagEncoder) manager.getEncoder("foot");
+        BikeFlagEncoder bike = (BikeFlagEncoder) manager.getEncoder("bike2");
+
+        long acceptBits = foot.acceptBit | bike.acceptBit;
+        flags = manager.handleWayTags(osmWay, acceptBits, 0);
+        assertEquals(singleSpeed, bike.getSpeed(flags), 1e-2);
+        assertEquals(singleSpeed, bike.getReverseSpeed(flags), 1e-2);
+
+        assertEquals(5, foot.getSpeed(flags), 1e-2);
+        assertEquals(5, foot.getReverseSpeed(flags), 1e-2);
     }
 }

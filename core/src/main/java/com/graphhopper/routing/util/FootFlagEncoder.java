@@ -37,7 +37,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     static final int SLOW_SPEED = 2;
     static final int MEAN_SPEED = 5;
     static final int FERRY_SPEED = 10;
-    private int safeWayBit = 0;
+    private long safeWayBit = 0;
     protected HashSet<String> sidewalks = new HashSet<String>();
     private final Set<String> safeHighwayTags = new HashSet<String>();
     private final Set<String> allowedHighwayTags = new HashSet<String>();
@@ -108,7 +108,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, MEAN_SPEED, FERRY_SPEED);
         shift += speedBits;
 
-        safeWayBit = 1 << shift++;
+        safeWayBit = 1L << shift++;
         return shift;
     }
 

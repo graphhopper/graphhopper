@@ -19,7 +19,6 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
-import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;

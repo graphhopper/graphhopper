@@ -37,7 +37,7 @@ import java.util.*;
 public class BikeCommonFlagEncoder extends AbstractFlagEncoder
 {
     protected static final int PUSHING_SECTION_SPEED = 4;
-    private int unpavedBit = 0;
+    private long unpavedBit = 0;
     // Pushing section heighways are parts where you need to get off your bike and push it (German: Schiebestrecke)
     protected final HashSet<String> pushingSections = new HashSet<String>();
     protected final HashSet<String> oppositeLanes = new HashSet<String>();
@@ -199,7 +199,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, highwaySpeed.get("cycleway"), 30);
         shift += speedEncoder.getBits();
 
-        unpavedBit = 1 << shift++;
+        unpavedBit = 1L << shift++;
         // 2 bits
         wayTypeEncoder = new EncodedValue("WayType", shift, 2, 1, 0, 3, true);
         shift += wayTypeEncoder.getBits();

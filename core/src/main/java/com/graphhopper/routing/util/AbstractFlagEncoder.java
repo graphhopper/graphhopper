@@ -121,17 +121,17 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             throw new IllegalStateException("You must not register a FlagEncoder (" + toString() + ") twice!");
 
         // define the first 2 speedBits in flags for routing
-        forwardBit = 1 << shift;
-        backwardBit = 2 << shift;
-        directionBitMask = 3 << shift;
+        forwardBit = 1L << shift;
+        backwardBit = 2L << shift;
+        directionBitMask = 3L << shift;
         shift += 2;
-        roundaboutBit = 1 << shift;
+        roundaboutBit = 1L << shift;
         shift++;
 
         // define internal flags for parsing
         index *= 2;
-        acceptBit = 1 << index;
-        ferryBit = 2 << index;
+        acceptBit = 1L << index;
+        ferryBit = 2L << index;
 
         return shift;
     }
