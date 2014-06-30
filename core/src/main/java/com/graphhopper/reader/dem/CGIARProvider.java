@@ -66,6 +66,13 @@ public class CGIARProvider implements ElevationProvider
     final double precision = 1e7;
     private final double invPrecision = 1 / precision;
     private final int degree = 5;
+    private boolean calcMean = false;
+
+    @Override
+    public void setCalcMean( boolean eleCalcMean )
+    {
+        calcMean = eleCalcMean;
+    }
 
     public void setDownloader( Downloader downloader )
     {
@@ -119,6 +126,8 @@ public class CGIARProvider implements ElevationProvider
             int minLon = down(lon);
             // less restrictive against boundary checking
             demProvider = new HeightTile(minLat, minLon, WIDTH, degree * precision, degree);
+            demProvider.setCalcMean(calcMean);
+
             cacheData.put(name, demProvider);
             DataAccess heights = getDirectory().find(name + ".gh");
             demProvider.setHeights(heights);
@@ -287,20 +296,22 @@ public class CGIARProvider implements ElevationProvider
         CGIARProvider provider = new CGIARProvider();
         // 337.0
         System.out.println(provider.getEle(49.949784, 11.57517));
-        // 456.0
+        // 453.0
         System.out.println(provider.getEle(49.968668, 11.575127));
+        // 447.0
+        System.out.println(provider.getEle(49.968682, 11.574842));
 
-        // 3134
+        // 3131
         System.out.println(provider.getEle(-22.532854, -65.110474));
 
         // 123               
         System.out.println(provider.getEle(38.065392, -87.099609));
 
-        // 1617
+        // 1615
         System.out.println(provider.getEle(40, -105.2277023));
         System.out.println(provider.getEle(39.99999999, -105.2277023));
         System.out.println(provider.getEle(39.9999999, -105.2277023));
-        // 1619
+        // 1617
         System.out.println(provider.getEle(39.999999, -105.2277023));
 
         // 0

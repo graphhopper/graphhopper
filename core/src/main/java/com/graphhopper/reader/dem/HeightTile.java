@@ -40,6 +40,7 @@ public class HeightTile
     private final int degree;
     private final double lowerBound;
     private final double higherBound;
+    private boolean calcMean;
 
     public HeightTile( int minLat, int minLon, int width, double precision, int degree )
     {
@@ -53,9 +54,16 @@ public class HeightTile
         this.degree = degree;
     }
 
-    public void setSeaLevel( boolean b )
+    public HeightTile setCalcMean( boolean b )
+    {
+        this.calcMean = b;
+        return this;
+    }
+
+    public HeightTile setSeaLevel( boolean b )
     {
         heights.setHeader(0, b ? 1 : 0);
+        return this;
     }
 
     public boolean isSeaLevel()
@@ -79,15 +87,47 @@ public class HeightTile
 
         // first row in the file is the northernmost one
         // http://gis.stackexchange.com/a/43756/9006
-        int lonSimilar = (int) Math.round(width / degree * deltaLon);
+        int lonSimilar = (int) (width / degree * deltaLon);
         // different fallback methods for lat and lon as we have different rounding (lon -> positive, lat -> negative)
         if (lonSimilar >= width)
             lonSimilar = width - 1;
-        int latSimilar = width - 1 - (int) Math.round(width / degree * deltaLat);
+        int latSimilar = width - 1 - (int) (width / degree * deltaLat);
         if (latSimilar < 0)
             latSimilar = 0;
 
-        return heights.getShort(2 * (latSimilar * width + lonSimilar));
+        // always keep in mind factor 2 because of short value
+        int daPointer = 2 * (latSimilar * width + lonSimilar);
+        int value = heights.getShort(daPointer);
+        int counter = 1;
+
+        if (calcMean)
+        {
+            if (lonSimilar > 0)
+            {
+                value += heights.getShort(daPointer - 2);
+                counter++;
+            }
+
+            if (lonSimilar < width - 1)
+            {
+                value += heights.getShort(daPointer + 2);
+                counter++;
+            }
+
+            if (latSimilar > 0)
+            {
+                value += heights.getShort(daPointer - 2 * width);
+                counter++;
+            }
+
+            if (latSimilar < width - 1)
+            {
+                value += heights.getShort(daPointer + 2 * width);
+                counter++;
+            }
+        }
+
+        return (short) (value / counter);
     }
 
     public void toImage( String imageFile ) throws IOException

@@ -44,11 +44,20 @@ public class SRTMProvider implements ElevationProvider
     public static void main( String[] args ) throws IOException
     {
         SRTMProvider provider = new SRTMProvider();
+        // 1046
         System.out.println(provider.getEle(47.468668, 14.575127));
+        // 1113
+        System.out.println(provider.getEle(47.467753, 14.573911));        
 
-        System.out.println(provider.getEle(46.468668, 12.575127));
+        // 1946
+        System.out.println(provider.getEle(46.468835, 12.578777));
 
-        System.out.println(provider.getEle(48.468668, 9.575127));
+        // 845
+        System.out.println(provider.getEle(48.469123, 9.576393));
+        
+        // 1113 vs new: 
+        provider.setCalcMean(true);
+        System.out.println(provider.getEle(47.467753, 14.573911));
     }
 
     private static final BitUtil BIT_UTIL = BitUtil.BIG;
@@ -65,11 +74,18 @@ public class SRTMProvider implements ElevationProvider
     private final double invPrecision = 1 / precision;
     // mirror: base = "http://mirror.ufs.ac.za/datasets/SRTM3/"
     private String baseUrl = "http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/";
+    private boolean calcMean = false;
 
     public SRTMProvider()
     {
         // move to explicit calls?
         init();
+    }
+
+    @Override
+    public void setCalcMean( boolean calcMean )
+    {
+        this.calcMean = calcMean;
     }
 
     /**
@@ -210,6 +226,7 @@ public class SRTMProvider implements ElevationProvider
             int minLat = down(lat);
             int minLon = down(lon);
             demProvider = new HeightTile(minLat, minLon, WIDTH, precision, 1);
+            demProvider.setCalcMean(calcMean);
             cacheData.put(intKey, demProvider);
             DataAccess heights = getDirectory().find("dem" + intKey);
             demProvider.setHeights(heights);
