@@ -927,6 +927,10 @@ public class GraphHopperStorage implements GraphStorage
             throw new AssertionError("This graph does not support an additional edge field.");
     }
 
+    long tmpCounter = 0;
+    long tmpByteCounter = 0;
+    long tmpEntryCounter = 0;
+
     private void setWayGeometry( PointList pillarNodes, long edgePointer, boolean reverse )
     {
         if (pillarNodes != null && !pillarNodes.isEmpty())
@@ -973,6 +977,13 @@ public class GraphHopperStorage implements GraphStorage
             // .. and the used number of bytes (not required but easier for reading)
             wayGeometry.setInt(geoPointer + 4, byteLen);
             wayGeometry.setBytes(geoPointer + 8, bytes, byteLen);
+            tmpEntryCounter += count;
+            tmpByteCounter += byteLen;
+            tmpCounter++;
+            if (tmpCounter % 100000 == 0)
+                System.out.println(tmpCounter 
+                        + " entries:" + (float) tmpEntryCounter / tmpCounter
+                        + " bytes:" + (float) tmpByteCounter / tmpCounter);
         } else
         {
             edges.setInt(edgePointer + E_GEO, 0);
