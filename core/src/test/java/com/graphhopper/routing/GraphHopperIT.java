@@ -71,7 +71,7 @@ public class GraphHopperIT
         GHResponse rsp = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
 
-        assertEquals(3437.6, rsp.getDistance(), .1);
+        assertEquals(3437.4, rsp.getDistance(), .1);
         assertEquals(89, rsp.getPoints().getSize());
 
         InstructionList il = rsp.getInstructions();
@@ -130,6 +130,11 @@ public class GraphHopperIT
         assertEquals(10, il.size());
         assertTrue(il.get(0).getPoints().is3D());
 
+        List<GPXEntry> gpxList = il.createGPXList();
+        assertEquals(62, gpxList.get(0).getElevation(), 1e-2);
+        assertEquals(66, gpxList.get(1).getElevation(), 1e-2);
+        assertEquals(52, gpxList.get(10).getElevation(), 1e-2);
+
         String str = rsp.getPoints().toString();
         assertTrue(str,
                 str.startsWith("(43.73068455771767,7.421283689825812,62.0), (43.73067957305937,7.421382123709815,66.0), "
@@ -140,10 +145,6 @@ public class GraphHopperIT
                         + "(43.731371359483255,7.421123216028286,52.0), (43.731485725897976,7.42117332118392,52.0), "
                         + "(43.731575132867135,7.420868778695214,52.0), (43.73160605277731,7.420824820268709,52.0), "
                         + "(43.7316401391843,7.420850152243305,52.0), (43.731674039326776,7.421050014072285,52.0)"));
-        
-        assertEquals(62, il.createGPXList().get(0).getElevation(), 1e-2);
-        assertEquals(66, il.createGPXList().get(1).getElevation(), 1e-2);
-        assertEquals(52, il.createGPXList().get(10).getElevation(), 1e-2);
     }
 
     @Test
@@ -221,7 +222,7 @@ public class GraphHopperIT
                 addPoint(new GHPoint(43.727687, 7.418737)).
                 setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
 
-        assertEquals(6875.1, rsp.getDistance(), .1);
+        assertEquals(6874.7, rsp.getDistance(), .1);
         assertEquals(179, rsp.getPoints().getSize());
 
         InstructionList il = rsp.getInstructions();

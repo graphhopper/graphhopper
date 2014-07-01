@@ -958,21 +958,21 @@ public class GraphHopperStorage implements GraphStorage
                     deltaStorage.writeLong(ele);
                 }
 
-            deltaStorage.trimToSize();
+            int byteLen = deltaStorage.getSize();
             byte[] bytes = deltaStorage.getBytes();
-            int ints = bytes.length / 4;
-            if (ints % 4 != 0)
+            int ints = byteLen / 4;
+            if (byteLen % 4 != 0)
                 ints++;
             int geoIntRef = nextGeoRef(ints + 2);
             edges.setInt(edgePointer + E_GEO, geoIntRef);
             long geoPointer = (long) geoIntRef * 4;
-            ensureGeometry(geoPointer, bytes.length + 2 * 4);
+            ensureGeometry(geoPointer, byteLen + 2 * 4);
 
             // write length of array 
             wayGeometry.setInt(geoPointer + 0, count);
             // .. and the used number of bytes (not required but easier for reading)
-            wayGeometry.setInt(geoPointer + 4, bytes.length);
-            wayGeometry.setBytes(geoPointer + 8, bytes, bytes.length);
+            wayGeometry.setInt(geoPointer + 4, byteLen);
+            wayGeometry.setBytes(geoPointer + 8, bytes, byteLen);
         } else
         {
             edges.setInt(edgePointer + E_GEO, 0);
@@ -988,9 +988,9 @@ public class GraphHopperStorage implements GraphStorage
         {
             geoRef *= 4;
             count = wayGeometry.getInt(geoRef + 0);
-            int byteSize = wayGeometry.getInt(geoRef + 4);
-            byte[] bytes = new byte[byteSize];
-            wayGeometry.getBytes(geoRef + 8, bytes, bytes.length);
+            int byteLen = wayGeometry.getInt(geoRef + 4);
+            byte[] bytes = new byte[byteLen];
+            wayGeometry.getBytes(geoRef + 8, bytes, byteLen);
             storage = new VDeltaStorage(bytes);
         } else if (mode == 0)
             return PointList.EMPTY;

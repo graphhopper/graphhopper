@@ -110,6 +110,11 @@ public class VDeltaStorage
         return res;
     }
 
+    public int getSize()
+    {
+        return pointer;
+    }
+
     public void trimToSize()
     {
         if (bytes.length > pointer)
