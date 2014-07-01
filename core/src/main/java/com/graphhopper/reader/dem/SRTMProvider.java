@@ -230,7 +230,16 @@ public class SRTMProvider implements ElevationProvider
             cacheData.put(intKey, demProvider);
             DataAccess heights = getDirectory().find("dem" + intKey);
             demProvider.setHeights(heights);
-            if (!heights.loadExisting())
+            boolean loadExisting = false;
+            try
+            {
+                loadExisting = heights.loadExisting();
+            } catch (Exception ex)
+            {
+                logger.warn("cannot load dem" + intKey + ", error:" + ex.getMessage());
+            }
+
+            if (!loadExisting)
             {
                 byte[] bytes = new byte[2 * WIDTH * WIDTH];
                 heights.create(bytes.length);
