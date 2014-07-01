@@ -119,7 +119,7 @@ public class DouglasPeucker
                 }
             }
         }
-        points.trimToSize(points.getSize() - removed);
+        points._setSize(points.getSize() - removed);
     }
 
     // keep the points of fromIndex and lastIndex

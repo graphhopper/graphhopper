@@ -36,8 +36,8 @@ public class PointList implements PointAccess
     private double[] latitudes;
     private double[] longitudes;
     private double[] elevations;
-    protected int size = 0;
-    protected boolean is3D;
+    private int size = 0;
+    private boolean is3D;
 
     public PointList()
     {
@@ -79,7 +79,42 @@ public class PointList implements PointAccess
         set(nodeId, lat, lon, ele);
     }
 
-    public void set( int index, double lat, double lon, double ele )
+    /**
+     * Raw access to without range checks. Call to _setSize necessary.
+     */
+    public final void _setLat( int index, double lat )
+    {
+        latitudes[index] = lat;
+    }
+
+    /**
+     * Raw access to without range checks. Call to _setSize necessary.
+     */
+    public final void _setLon( int index, double lon )
+    {
+        longitudes[index] = lon;
+    }
+
+    /**
+     * Raw access to without range checks. Call to _setSize necessary.
+     */
+    public final void _setEle( int index, double ele )
+    {
+        elevations[index] = ele;
+    }
+
+    /**
+     * Raw access to without increasing the underlying data container, do so in the constructor.
+     */
+    public final void _setSize( int newSize )
+    {
+        if (size > latitudes.length)
+            throw new IllegalArgumentException("new size is bigger than underlying data containers");
+
+        size = newSize;
+    }
+
+    public final void set( int index, double lat, double lon, double ele )
     {
         if (index >= size)
             throw new ArrayIndexOutOfBoundsException("index has to be smaller than size " + size);
@@ -93,13 +128,13 @@ public class PointList implements PointAccess
     }
 
     private void incCap( int newSize )
-    {
+    {        
         if (newSize < latitudes.length)
             return;
 
         int cap = newSize * 2;
-        if (cap < 15)
-            cap = 15;
+        if (cap < 12)
+            cap = 12;
         latitudes = Arrays.copyOf(latitudes, cap);
         longitudes = Arrays.copyOf(longitudes, cap);
         if (is3D)
@@ -247,14 +282,6 @@ public class PointList implements PointAccess
     public void clear()
     {
         size = 0;
-    }
-
-    public void trimToSize( int newSize )
-    {
-        if (newSize > size)
-            throw new IllegalArgumentException("new size needs be smaller than old size");
-
-        size = newSize;
     }
 
     @Override
@@ -437,12 +464,6 @@ public class PointList implements PointAccess
     public static PointList EMPTY = new PointList(0, true)
     {
         @Override
-        public void set( int index, double lat, double lon, double ele )
-        {
-            throw new RuntimeException("cannot change EMPTY PointList");
-        }
-
-        @Override
         public void add( double lat, double lon, double ele )
         {
             throw new RuntimeException("cannot change EMPTY PointList");
@@ -468,12 +489,6 @@ public class PointList implements PointAccess
 
         @Override
         public void clear()
-        {
-            throw new RuntimeException("cannot change EMPTY PointList");
-        }
-
-        @Override
-        public void trimToSize( int newSize )
         {
             throw new RuntimeException("cannot change EMPTY PointList");
         }

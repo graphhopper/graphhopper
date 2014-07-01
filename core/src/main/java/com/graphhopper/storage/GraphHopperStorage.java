@@ -935,35 +935,44 @@ public class GraphHopperStorage implements GraphStorage
                 throw new IllegalArgumentException("Cannot use pointlist which is " + pillarNodes.getDimension()
                         + "D for graph which is " + nodeAccess.getDimension() + "D");
 
-            int len = pillarNodes.getSize();
+            int count = pillarNodes.getSize();
             int dim = nodeAccess.getDimension();
-            int tmpRef = nextGeoRef(len * dim);
-            edges.setInt(edgePointer + E_GEO, tmpRef);
-            long geoRef = (long) tmpRef * 4;
-            byte[] bytes = new byte[len * dim * 4 + 4];
-            ensureGeometry(geoRef, bytes.length);
-            bitUtil.fromInt(bytes, len, 0);
+            VDeltaStorage deltaStorage = new VDeltaStorage(dim * count);
             if (reverse)
                 pillarNodes.reverse();
 
-            int tmpOffset = 4;
-            boolean is3D = nodeAccess.is3D();
-            for (int i = 0; i < len; i++)
+            for (int i = 0; i < count; i++)
             {
-                double lat = pillarNodes.getLatitude(i);
-                bitUtil.fromInt(bytes, Helper.degreeToInt(lat), tmpOffset);
-                tmpOffset += 4;
-                bitUtil.fromInt(bytes, Helper.degreeToInt(pillarNodes.getLongitude(i)), tmpOffset);
-                tmpOffset += 4;
-
-                if (is3D)
-                {
-                    bitUtil.fromInt(bytes, Helper.eleToInt(pillarNodes.getElevation(i)), tmpOffset);
-                    tmpOffset += 4;
-                }
+                deltaStorage.writeDouble(pillarNodes.getLatitude(i));
             }
 
-            wayGeometry.setBytes(geoRef, bytes, bytes.length);
+            for (int i = 0; i < count; i++)
+            {
+                deltaStorage.writeDouble(pillarNodes.getLongitude(i));
+            }
+
+            if (nodeAccess.is3D())
+                for (int i = 0; i < count; i++)
+                {
+                    int ele = Helper.eleToInt(pillarNodes.getElevation(i));
+                    deltaStorage.writeLong(ele);
+                }
+
+            deltaStorage.trimToSize();
+            byte[] bytes = deltaStorage.getBytes();
+            int ints = bytes.length / 4;
+            if (ints % 4 != 0)
+                ints++;
+            int geoIntRef = nextGeoRef(ints + 2);
+            edges.setInt(edgePointer + E_GEO, geoIntRef);
+            long geoPointer = (long) geoIntRef * 4;
+            ensureGeometry(geoPointer, bytes.length + 2 * 4);
+
+            // write length of array 
+            wayGeometry.setInt(geoPointer + 0, count);
+            // .. and the used number of bytes (not required but easier for reading)
+            wayGeometry.setInt(geoPointer + 4, bytes.length);
+            wayGeometry.setBytes(geoPointer + 8, bytes, bytes.length);
         } else
         {
             edges.setInt(edgePointer + E_GEO, 0);
@@ -974,46 +983,55 @@ public class GraphHopperStorage implements GraphStorage
     {
         long geoRef = edges.getInt(edgePointer + E_GEO);
         int count = 0;
-        byte[] bytes = null;
+        VDeltaStorage storage = null;
         if (geoRef > 0)
         {
             geoRef *= 4;
-            count = wayGeometry.getInt(geoRef);
-            wayGeometry.getInt(geoRef);
-
-            geoRef += 4;
-            bytes = new byte[count * nodeAccess.getDimension() * 4];
-            wayGeometry.getBytes(geoRef, bytes, bytes.length);
+            count = wayGeometry.getInt(geoRef + 0);
+            int byteSize = wayGeometry.getInt(geoRef + 4);
+            byte[] bytes = new byte[byteSize];
+            wayGeometry.getBytes(geoRef + 8, bytes, bytes.length);
+            storage = new VDeltaStorage(bytes);
         } else if (mode == 0)
             return PointList.EMPTY;
 
         PointList pillarNodes = new PointList(count + mode, nodeAccess.is3D());
+        int offset = 0;
         if (reverse)
         {
             if ((mode & 2) != 0)
+            {
                 pillarNodes.add(nodeAccess, adjNode);
+                offset++;
+            }
         } else
         {
             if ((mode & 1) != 0)
+            {
                 pillarNodes.add(nodeAccess, baseNode);
-        }
-
-        int index = 0;
-        for (int i = 0; i < count; i++)
-        {
-            double lat = Helper.intToDegree(bitUtil.toInt(bytes, index));
-            index += 4;
-            double lon = Helper.intToDegree(bitUtil.toInt(bytes, index));
-            index += 4;
-            if (nodeAccess.is3D())
-            {
-                pillarNodes.add(lat, lon, Helper.intToEle(bitUtil.toInt(bytes, index)));
-                index += 4;
-            } else
-            {
-                pillarNodes.add(lat, lon);
+                offset++;
             }
         }
+
+        count += offset;
+
+        for (int i = offset; i < count; i++)
+        {
+            pillarNodes._setLat(i, storage.readDouble());
+        }
+
+        for (int i = offset; i < count; i++)
+        {
+            pillarNodes._setLon(i, storage.readDouble());
+        }
+
+        if (nodeAccess.is3D())
+            for (int i = offset; i < count; i++)
+            {
+                pillarNodes._setEle(i, Helper.intToEle((int) storage.readLong()));
+            }
+
+        pillarNodes._setSize(count);
 
         if (reverse)
         {
@@ -1535,7 +1553,7 @@ public class GraphHopperStorage implements GraphStorage
     {
         return nodes.isClosed();
     }
-    
+
     public ExtendedStorage getExtendedStorage()
     {
         return extStorage;
