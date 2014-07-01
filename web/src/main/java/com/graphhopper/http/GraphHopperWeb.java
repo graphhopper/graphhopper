@@ -47,6 +47,8 @@ public class GraphHopperWeb implements GraphHopperAPI
     private boolean pointsEncoded = true;
     private Downloader downloader = new Downloader("GraphHopperWeb");
     private boolean instructions = true;
+    private String key = "";
+    private boolean withElevation = false;
     private final TranslationMap trMap = new TranslationMap().doImport();
 
     public GraphHopperWeb()
@@ -80,6 +82,18 @@ public class GraphHopperWeb implements GraphHopperAPI
         return this;
     }
 
+    public GraphHopperWeb setElevation( boolean withElevation )
+    {
+        this.withElevation = withElevation;
+        return this;
+    }
+
+    public GraphHopperWeb setKey( String key )
+    {
+        this.key = key;
+        return this;
+    }
+
     @Override
     public GHResponse route( GHRequest request )
     {
@@ -92,9 +106,7 @@ public class GraphHopperWeb implements GraphHopperAPI
             {
                 places += "point=" + p.lat + "," + p.lon + "&";
             }
-            
-            boolean withElevation = false;
-            
+
             String url = serviceUrl
                     + "?"
                     + places
@@ -104,18 +116,21 @@ public class GraphHopperWeb implements GraphHopperAPI
                     + "&algo=" + request.getAlgorithm()
                     + "&locale=" + request.getLocale().toString()
                     + "&elevation=" + withElevation;
-            
+            if (!key.isEmpty())
+                url += "&key=" + key;
+
             String str = downloader.downloadAsString(url);
             JSONObject json = new JSONObject(str);
             took = json.getJSONObject("info").getDouble("took");
             JSONArray paths = json.getJSONArray("paths");
-            JSONObject firstPath = paths.getJSONObject(0);            
+            JSONObject firstPath = paths.getJSONObject(0);
             double distance = firstPath.getDouble("distance");
             int time = firstPath.getInt("time");
             PointList pointList;
             if (pointsEncoded)
             {
-                pointList = WebHelper.decodePolyline(firstPath.getString("points"), 100, withElevation);
+                String pointStr = firstPath.getString("points");
+                pointList = WebHelper.decodePolyline(pointStr, 100, withElevation);
             } else
             {
                 JSONArray coords = firstPath.getJSONObject("points").getJSONArray("coordinates");
@@ -135,7 +150,7 @@ public class GraphHopperWeb implements GraphHopperAPI
             if (instructions)
             {
                 JSONArray instrArr = firstPath.getJSONArray("instructions");
-                
+
                 InstructionList il = new InstructionList(trMap.getWithFallBack(request.getLocale()));
                 for (int instrIndex = 0; instrIndex < instrArr.length(); instrIndex++)
                 {
