@@ -147,41 +147,53 @@ public class MiniGraphUI
 //                plotPath(path, g2, 1);
                 g2.setColor(Color.black);
 
-                EdgeExplorer explorer = graph.createEdgeExplorer(EdgeFilter.ALL_EDGES);
-                for (int nodeIndex = 0; nodeIndex < locs; nodeIndex++)
+                int emptyCount = 0, fullCount = 0;
+                AllEdgesIterator iter = graph.getAllEdges();
+                while (iter.next())
                 {
                     if (fastPaint && rand.nextInt(30) > 1)
                         continue;
-                    double lat = na.getLatitude(nodeIndex);
-                    double lon = na.getLongitude(nodeIndex);
+
+                    int baseNode = iter.getBaseNode();
+                    double lat = na.getLatitude(baseNode);
+                    double lon = na.getLongitude(baseNode);
 
                     // mg.plotText(g2, lat, lon, "" + nodeIndex);
                     if (lat < b.minLat || lat > b.maxLat || lon < b.minLon || lon > b.maxLon)
                         continue;
 
-                    EdgeIterator iter = explorer.setBaseNode(nodeIndex);
-                    while (iter.next())
+                    int adjNode = iter.getAdjNode();
+                    int sum = baseNode + adjNode;
+                    if (fastPaint)
                     {
-                        int nodeId = iter.getAdjNode();
-                        int sum = nodeIndex + nodeId;
-                        if (fastPaint)
-                        {
-                            if (bitset.contains(sum))
-                                continue;
+                        if (bitset.contains(sum))
+                            continue;
 
-                            bitset.add(sum);
-                        }
-                        double lat2 = na.getLatitude(nodeId);
-                        double lon2 = na.getLongitude(nodeId);
-
-                        // mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, iter.getName());
-                        mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, "s:" + (int) encoder.getSpeed(iter.getFlags()));
-                        g2.setColor(Color.BLACK);                        
-
-                        mg.plotEdge(g2, lat, lon, lat2, lon2);
-                        g2.setColor(Color.BLACK);
+                        bitset.add(sum);
                     }
+                    
+                    double lat2 = na.getLatitude(adjNode);
+                    double lon2 = na.getLongitude(adjNode);
+
+                    // mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, iter.getName());
+//                        mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, "s:" + (int) encoder.getSpeed(iter.getFlags()));
+//                        g2.setColor(Color.BLACK);
+                    if (iter.fetchWayGeometry(0).isEmpty())
+                    {
+                        g2.setColor(Color.RED);
+                        emptyCount++;
+                    } else
+                    {
+                        g2.setColor(Color.BLACK);
+                        fullCount++;
+                    }
+
+                    mg.plotEdge(g2, lat, lon, lat2, lon2);
+                    g2.setColor(Color.BLACK);
                 }
+                System.out.println("emptyCount:" + emptyCount);
+                System.out.println("fullCount:" + fullCount);
+                System.out.println("edges:" + graph.getAllEdges().getMaxId());
             }
         });
 

@@ -942,6 +942,8 @@ public class GraphHopperStorage implements GraphStorage
             int count = pillarNodes.getSize();
             int dim = nodeAccess.getDimension();
             VDeltaStorage deltaStorage = new VDeltaStorage(dim * count);
+            deltaStorage.writeLong(count);
+            
             if (reverse)
                 pillarNodes.reverse();
 
@@ -967,21 +969,17 @@ public class GraphHopperStorage implements GraphStorage
             int ints = byteLen / 4;
             if (byteLen % 4 != 0)
                 ints++;
-            int geoIntRef = nextGeoRef(ints + 2);
+            int geoIntRef = nextGeoRef(ints);
             edges.setInt(edgePointer + E_GEO, geoIntRef);
             long geoPointer = (long) geoIntRef * 4;
-            ensureGeometry(geoPointer, byteLen + 2 * 4);
+            ensureGeometry(geoPointer, byteLen);
 
-            // write length of array 
-            wayGeometry.setInt(geoPointer + 0, count);
-            // .. and the used number of bytes (not required but easier for reading)
-            wayGeometry.setInt(geoPointer + 4, byteLen);
-            wayGeometry.setBytes(geoPointer + 8, bytes, byteLen);
+            wayGeometry.setBytes(geoPointer, bytes, byteLen);
             tmpEntryCounter += count;
             tmpByteCounter += byteLen;
             tmpCounter++;
-            if (tmpCounter % 100000 == 0)
-                System.out.println(tmpCounter 
+            if (tmpCounter % 10000 == 0)
+                System.out.println(tmpCounter
                         + " entries:" + (float) tmpEntryCounter / tmpCounter
                         + " bytes:" + (float) tmpByteCounter / tmpCounter);
         } else
@@ -998,11 +996,19 @@ public class GraphHopperStorage implements GraphStorage
         if (geoRef > 0)
         {
             geoRef *= 4;
-            count = wayGeometry.getInt(geoRef + 0);
-            int byteLen = wayGeometry.getInt(geoRef + 4);
-            byte[] bytes = new byte[byteLen];
-            wayGeometry.getBytes(geoRef + 8, bytes, byteLen);
+            
+            // first read to get count
+            byte[] bytes = new byte[4];
+            wayGeometry.getBytes(geoRef, bytes, 4);
             storage = new VDeltaStorage(bytes);
+            count = (int) storage.readLong();
+            
+            int byteLen = count * 6 * nodeAccess.getDimension();            
+            bytes = new byte[byteLen];
+            wayGeometry.getBytes(geoRef, bytes, byteLen);            
+            storage = new VDeltaStorage(bytes);
+            // skip long
+            storage.readLong();
         } else if (mode == 0)
             return PointList.EMPTY;
 
