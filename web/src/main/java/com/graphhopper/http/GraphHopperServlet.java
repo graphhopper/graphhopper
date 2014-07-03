@@ -25,14 +25,23 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.*;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import static javax.servlet.http.HttpServletResponse.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * Servlet to use GraphHopper in a remote application (mobile or browser). Attention: If type is
@@ -118,7 +127,7 @@ public class GraphHopperServlet extends GHBaseServlet
             writeJson(req, res, rsp, took);
     }
 
-    private void writeGPX( HttpServletRequest req, HttpServletResponse res, GHResponse rsp )
+    private void writeGPX( HttpServletRequest req, HttpServletResponse res, GHResponse rsp ) throws Exception
     {
         boolean includeElevation = getBooleanParam(req, "elevation", false);
         res.setCharacterEncoding("UTF-8");
@@ -127,7 +136,40 @@ public class GraphHopperServlet extends GHBaseServlet
         res.setHeader("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
         String timeZone = getParam(req, "timezone", "GMT");
         long time = getLongParam(req, "millis", System.currentTimeMillis());
-        writeResponse(res, rsp.getInstructions().createGPX(trackName, time, timeZone, includeElevation));
+        if (rsp.hasErrors())
+            writeResponse(res, errorsToXML(rsp.getErrors()));
+        else
+            writeResponse(res, rsp.getInstructions().createGPX(trackName, time, timeZone, includeElevation));
+    }
+
+    String errorsToXML( List<Throwable> list ) throws Exception
+    {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document doc = builder.newDocument();
+        Element gpxElement = doc.createElement("gpx");
+        gpxElement.setAttribute("creator", "GraphHopper");
+        gpxElement.setAttribute("version", "1.1");
+        doc.appendChild(gpxElement);
+
+        Element mdElement = doc.createElement("metadata");
+        gpxElement.appendChild(mdElement);
+
+        Element errorsElement = doc.createElement("extensions");
+        mdElement.appendChild(errorsElement);
+
+        for (Throwable t : list)
+        {
+            Element error = doc.createElement("error");
+            errorsElement.appendChild(error);
+            error.setAttribute("message", t.getMessage());
+            error.setAttribute("details", t.getClass().getName());
+        }
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory.newTransformer();
+        StringWriter writer = new StringWriter();
+        transformer.transform(new DOMSource(doc), new StreamResult(writer));
+        return writer.toString();
     }
 
     private void writeJson( HttpServletRequest req, HttpServletResponse res,
@@ -173,7 +215,7 @@ public class GraphHopperServlet extends GHBaseServlet
                 if (points.getSize() >= 2)
                     jsonPath.put("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
 
-                jsonPath.put("points", createPoints(points, pointsEncoded, includeElevation));                
+                jsonPath.put("points", createPoints(points, pointsEncoded, includeElevation));
 
                 if (enableInstructions)
                 {
