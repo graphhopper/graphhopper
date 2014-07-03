@@ -65,19 +65,16 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest
     }
         
     @Test
-    public void testSteps()
+    public void testUnchangedForStepsBridgeAndTunnel()
     {
         Bike2WeightFlagEncoder instance = new Bike2WeightFlagEncoder();
         Graph graph = initExampleGraph(instance);
         EdgeIteratorState edge = GHUtility.getEdge(graph, 0, 1);
+        long oldFlags = edge.getFlags();
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "steps");
         instance.applyWayTags(way, edge);
 
-        long flags = edge.getFlags();
-        // steps speed for both directions although upwards is probably harder
-        double stepSpeed = Bike2WeightFlagEncoder.PUSHING_SECTION_SPEED / 2;
-        assertEquals(stepSpeed, instance.getSpeed(flags), 1e-1);
-        assertEquals(stepSpeed, instance.getReverseSpeed(flags), 1e-1);
+        assertEquals(oldFlags, edge.getFlags());
     }
 }

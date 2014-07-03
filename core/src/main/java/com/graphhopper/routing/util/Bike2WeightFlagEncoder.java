@@ -109,7 +109,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
 
     @Override
     public long reverseFlags( long flags )
-    {        
+    {
         // swap access
         flags = super.reverseFlags(flags);
 
@@ -128,15 +128,15 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
 
         long flags = edge.getFlags();
 
-        // Decrease the speed for ele increase (incline), and decrease the speed for ele decrease (decline). The speed-decrease 
-        // has to be bigger (compared to the speed-increase) for the same elevation difference to simulate loosing energy and avoiding hills.
-        // For the reverse speed this has to be the opposite but again keeping in mind that up+down difference.
-        if (way.hasTag("highway", "steps"))
+        if (way.hasTag("tunnel", "yes") || way.hasTag("bridge", "yes") || way.hasTag("highway", "steps"))
         {
-            double speed = getHighwaySpeed("steps");
-            flags = setReverseSpeed(setSpeed(flags, speed), speed);
+            // do not change speed
+            // note: although tunnel can have a difference in elevation it is very unlikely that the elevation data is correct for a tunnel
         } else
         {
+            // Decrease the speed for ele increase (incline), and decrease the speed for ele decrease (decline). The speed-decrease 
+            // has to be bigger (compared to the speed-increase) for the same elevation difference to simulate loosing energy and avoiding hills.
+            // For the reverse speed this has to be the opposite but again keeping in mind that up+down difference.
             double incEleSum = 0, incDist2DSum = 0;
             double decEleSum = 0, decDist2DSum = 0;
             // double prevLat = pl.getLatitude(0), prevLon = pl.getLongitude(0);
