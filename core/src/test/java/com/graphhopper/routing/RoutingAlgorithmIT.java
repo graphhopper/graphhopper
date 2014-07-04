@@ -193,9 +193,9 @@ public class RoutingAlgorithmIT
     {
         List<OneRun> list = new ArrayList<OneRun>();
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km
-        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2032, 94));
+        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2020, 101));
         // 2.
-        list.add(new OneRun(43.728499, 7.417907, 43.74958, 7.436566, 3659, 167));
+        list.add(new OneRun(43.728499, 7.417907, 43.74958, 7.436566, 3753, 182));
         // 3.
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2776, 167));
         // 4.
@@ -205,9 +205,9 @@ public class RoutingAlgorithmIT
         // 1.
         list.add(new OneRun(43.727687, 7.418737, 43.730864, 7.420771, 1682, 95));
         list.add(new OneRun(43.74958, 7.436566, 43.728499, 7.417907, 4056, 179));
-        list.add(new OneRun(43.739213, 7.427806, 43.728677, 7.41016, 2840, 153));
+        list.add(new OneRun(43.739213, 7.427806, 43.728677, 7.41016, 3217, 172));
         // 4. avoid tunnel(s)!
-        list.add(new OneRun(43.739662, 7.424355, 43.733802, 7.413433, 1753, 100));
+        list.add(new OneRun(43.739662, 7.424355, 43.733802, 7.413433, 2333, 125));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
                 list, "BIKE2", true, "BIKE2", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
