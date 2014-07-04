@@ -28,6 +28,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TIntProcedure;
@@ -599,17 +600,96 @@ public class LocationIndexTree implements LocationIndex
     {
         return BitUtil.BIG.reverse(key, keyAlgo.getBits());
     }
-    
-    
-    protected TIntHashSet findNetworkEntries( double queryLat, double queryLon)
-    {
-        TIntHashSet resultEntries = new TIntHashSet(); 
-        TIntHashSet foundEntries = new TIntHashSet();
 
+    /**
+     * calculate the distance to the nearest tile border for a given lat/lon coordinate in the
+     * context of a spatial key tile.
+     * <p>
+     */
+    double calculateRMin( double lat, double lon )
+    {
+        return calculateRMin(lat, lon, 0);
+    }
+
+    /**
+     * calculate distance to the nearest area border, where area is rectangular region with
+     * dimension 2*paddingtiles+1 and where the centertile contains the given lat/lon coordinate
+     */
+    double calculateRMin( double lat, double lon, int paddingtiles )
+    {
+        GHPoint query = new GHPoint(lat, lon);
+        long key = keyAlgo.encode(query);
+        GHPoint center = new GHPoint();
+        keyAlgo.decode(key, center);
+
+        // deltaLat and deltaLon comes from the LocationIndex:
+        double minLat = center.lat - deltaLat / 2 - (paddingtiles * deltaLat);
+        double maxLat = center.lat + deltaLat / 2 + (paddingtiles * deltaLat);
+        double minLon = center.lon - deltaLon / 2 - (paddingtiles * deltaLon);
+        double maxLon = center.lon + deltaLon / 2 + (paddingtiles * deltaLon);
+        
+        double dSouthernLat = query.lat - minLat;
+        double dNorthernLat = maxLat - query.lat;
+        double dWesternLon = query.lon - minLon;
+        double dEasternLon = maxLon - query.lon;
+
+        // convert degree deltas into a radius in meter
+        double dMinLat, dMinLon;
+        if (dSouthernLat < dNorthernLat)
+        {
+            dMinLat = distCalc.calcDist(query.lat, query.lon, minLat, query.lon);
+        } else
+        {
+            dMinLat = distCalc.calcDist(query.lat, query.lon, maxLat, query.lon);
+        }
+
+        if (dWesternLon < dEasternLon)
+        {
+            dMinLon = distCalc.calcDist(query.lat, query.lon, query.lat, minLon);
+        } else
+        {
+            dMinLon = distCalc.calcDist(query.lat, query.lon, query.lat, maxLon);
+        }
+
+        double rMin = Math.min(dMinLat, dMinLon);
+        return rMin;
+    }
+
+    /**
+     * Provide info about tilesize for testing / visualization
+     */
+    public double getDeltaLat()
+    {
+        return deltaLat;
+    }
+
+    public double getDeltaLon()
+    {
+        return deltaLon;
+    }
+    
+
+    public GHPoint getCenter( double lat, double lon )
+    {
+        GHPoint query = new GHPoint(lat, lon);
+        long key = keyAlgo.encode(query);
+        GHPoint center = new GHPoint();
+        keyAlgo.decode(key, center);
+        return center;
+    }
+
+    protected TIntHashSet findNetworkEntries( double queryLat, double queryLon )
+    {
+        TIntHashSet foundEntries = new TIntHashSet();
         int maxiteration = 32;
+
+        if (!regionSearch)
+        {
+            maxiteration = 1;
+        }
+
         for (int iteration = 0; iteration < maxiteration; iteration++)
         {
-
             // find entries in border of searchbox
             for (int yreg = -iteration; yreg <= iteration; yreg++)
             {
@@ -617,9 +697,12 @@ public class LocationIndexTree implements LocationIndex
                 double subqueryLonA = queryLon - iteration * deltaLon;
                 double subqueryLonB = queryLon + iteration * deltaLon;
                 foundEntries.addAll(findNetworkEntriesSingleRegion(subqueryLat, subqueryLonA));
-                foundEntries.addAll(findNetworkEntriesSingleRegion(subqueryLat, subqueryLonB));
-
+                if (iteration > 0)
+                {
+                    foundEntries.addAll(findNetworkEntriesSingleRegion(subqueryLat, subqueryLonB));
+                }
             }
+
             for (int xreg = -iteration + 1; xreg <= iteration - 1; xreg++)
             {
                 double subqueryLon = queryLon + xreg * deltaLon;
@@ -629,75 +712,47 @@ public class LocationIndexTree implements LocationIndex
                 foundEntries.addAll(findNetworkEntriesSingleRegion(subqueryLatB, subqueryLon));
             }
 
-          // filter entries, to get only those which are located in a circle
-            if (iteration > 0) // filter only, when scope was already expanded
-            {  
-                double mindelta = (deltaLat < deltaLon) ? deltaLat : deltaLon;
-                double radius = mindelta * (iteration + 0.5);
-                resultEntries = circleFilter(foundEntries, radius, queryLat, queryLon);
-            } else {
-                resultEntries = foundEntries;
-            }
-
-            // Good if something was found. Else repeat whole proces with wider search area. 
-            if (resultEntries.size() > 0)
+            // Check if something was found already...
+            if (foundEntries.size() > 0)
             {
-                break;
+                double rMin = calculateRMin(queryLat, queryLon, iteration);
+                double minDistance = getMinDistance(queryLat, queryLon, foundEntries);
+
+                if (minDistance < rMin)
+                {   // resultEntries contains a nearest node for sure
+                    break;
+                } //else {
+                // we are not finished yet: an undetected nearer node may sit in a neighbour tile
+                // now calculate how far we have to look outside to find any hidden nearest nodes
+                // and repeat whole process with wider search area until this distance is covered 
             }
         }
-        return resultEntries;
+        return foundEntries;
     }
 
-    protected TIntHashSet circleFilter( TIntHashSet input, double radius, double queryLat, double queryLon )
+    protected double getMinDistance( double queryLat, double queryLon, TIntHashSet pointset )
     {
-        TIntHashSet output = new TIntHashSet();
-          //double mindelta = (deltaLat < deltaLon) ? deltaLat : deltaLon;
-        //double radius = mindelta * (iteration + 0.5);
-
-        TIntIterator itr = input.iterator();
+        double min = Double.MAX_VALUE;
+        TIntIterator itr = pointset.iterator();
         while (itr.hasNext())
         {
             int element = itr.next();
-            double eLat = nodeAccess.getLat(element);
-            double eLon = nodeAccess.getLon(element);
-            if (insideCircle(eLat - queryLat, eLon - queryLon, radius))
+            double elementLat = nodeAccess.getLat(element);
+            double elementLon = nodeAccess.getLon(element);
+            double dist = distCalc.calcDist(queryLat, queryLon, elementLat, elementLon);
+            if (min < dist)
             {
-                output.add(element);
+                min = dist;
             }
         }
-        return output;
-    }
-
-    /**
-     * Quick test if coordinate x|y is inside a circle with certain radius (inclusive border)
-     */
-    private boolean insideCircle( double x, double y, double radius )
-    {
-        return (x * x + y * y) <= (radius * radius);
+        return min;
     }
 
     protected TIntHashSet findNetworkEntriesSingleRegion( double queryLat, double queryLon )
     {
         TIntHashSet storedNetworkEntryIds = new TIntHashSet();
-        if (regionSearch)
-        {
-            // search all rasters around minResolutionInMeter as we did not fill empty entries
-            double maxLat = queryLat + 1.5 * deltaLat;
-            double maxLon = queryLon + 1.5 * deltaLon;
-            for (double tmpLat = queryLat - deltaLat; tmpLat < maxLat; tmpLat += deltaLat)
-            {
-                for (double tmpLon = queryLon - deltaLon; tmpLon < maxLon; tmpLon += deltaLon)
-                {
-                    long keyPart = createReverseKey(tmpLat, tmpLon);
-                    // System.out.println(BitUtilLittle.toBitString(key, keyAlgo.bits()));
-                    fillIDs(keyPart, START_POINTER, storedNetworkEntryIds, 0);
-                }
-            }
-        } else
-        {
-            long keyPart = createReverseKey(queryLat, queryLon);
-            fillIDs(keyPart, START_POINTER, storedNetworkEntryIds, 0);
-        }
+        long keyPart = createReverseKey(queryLat, queryLon);
+        fillIDs(keyPart, START_POINTER, storedNetworkEntryIds, 0);
         return storedNetworkEntryIds;
     }
 

@@ -23,9 +23,7 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Test;
@@ -305,51 +303,6 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
             }
         }).getClosestNode());
     }
-    
-    @Test
-    public void testCircleFilter()
-    {
-        Graph graph = createGraph(encodingManager);
-        NodeAccess na = graph.getNodeAccess();
-        // inside
-        na.setNode(0, 20.0, 10.0);  // center
-        na.setNode(1, 10.0, 10.0);
-        na.setNode(2, 20.0, -5.0);
-        na.setNode(3, 30.0, 20.0);
-
-        // border
-        na.setNode(4, 0.0, 10.0);
-
-        // outside
-        na.setNode(5, 0.0, 0.0);
-        na.setNode(6, 20.0, -15.0);
-        na.setNode(7, 40.0, 0.0);
-        na.setNode(8, 40.0, 30.0);
-
-        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
-
-        TIntHashSet in = new TIntHashSet();
-        in.add(0);
-        in.add(1);
-        in.add(2);
-        in.add(3);
-        in.add(4);
-        in.add(5);
-        in.add(6);
-        in.add(7);
-        in.add(8);
-
-        TIntHashSet out = index.circleFilter(in, 20.0, 20.0, 10.0);
-        assertTrue(out.contains(0));
-        assertTrue(out.contains(1));
-        assertTrue(out.contains(2));
-        assertTrue(out.contains(3));
-        assertTrue(out.contains(4));
-        assertFalse(out.contains(5));
-        assertFalse(out.contains(6));
-        assertFalse(out.contains(7));
-        assertFalse(out.contains(8));
-    }
 
     // see testgraph2.jpg
     Graph createTestGraph2()
@@ -445,5 +398,37 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         graph.edge(27, 33, 10, true);
         graph.edge(28, 34, 10, true);
         return graph;
-    }   
+    }
+
+    @Test
+    public void testRMin()
+    {
+        Graph graph = createTestGraph();
+        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        index.setMinResolutionInMeter(50000).prepareAlgo();
+        LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
+        index.dataAccess.create(10);
+        inMemIndex.store(inMemIndex.root, LocationIndexTree.START_POINTER);
+        index.setSearchRegion(false);
+        TIntHashSet set = new TIntHashSet();
+        set.add(0);
+
+        //query: 0.05 | -0.3
+        DistanceCalc distCalc = new DistancePlaneProjection();
+
+        double rmin = index.calculateRMin(0.05, -0.3);
+        double check = distCalc.calcDist(0.05, Math.abs(graph.getNodeAccess().getLon(2)) - index.getDeltaLon(), -0.3, -0.3);
+
+        assertTrue((rmin - check) < 0.0001);
+
+        double rmin2 = index.calculateRMin(0.05, -0.3, 1);
+        double check2 = distCalc.calcDist(0.05, Math.abs(graph.getNodeAccess().getLat(0)), -0.3, -0.3);
+
+        assertTrue((rmin2 - check2) < 0.0001);
+
+        /*GraphVisualizer gv = new GraphVisualizer(graph, index.getDeltaLat(), index.getDeltaLon(), index.getCenter(0, 0).lat, index.getCenter(0, 0).lon);
+         try {
+         Thread.sleep(4000);
+         } catch(InterruptedException ie) {}*/
+    }
 }
