@@ -15,7 +15,7 @@ class BlockingWeighting implements Weighting
     private final double maxSpeed;
     private Set<Integer> forbiddenEdges;
 
-    public FastestWeighting( FlagEncoder encoder, Set<Integer> forbiddenEdges)
+    public BlockingWeighting( FlagEncoder encoder, Set<Integer> forbiddenEdges)
     {
         this.encoder = encoder;
         this.maxSpeed = encoder.getMaxSpeed();
