@@ -21,11 +21,13 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.GHUtility;
+
+import gnu.trove.list.array.TIntArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import org.junit.*;
 import static org.junit.Assert.*;
-
 /**
  *
  * @author Peter Karich
@@ -162,21 +164,31 @@ public class PrepareRoutingSubnetworksTest
         g.edge(7, 8, 1, false);
         g.edge(8, 9, 1, true);
         g.edge(9, 10, 1, true);
+
         return g;
     }
 
-    @Test
-    public void testRemoveDeadEndUnvisitedNetworksOneWay()
+    GraphStorage createTarjanTestGraph()
     {
-        GraphStorage g = createDeadEndUnvisitedNetworkGraph(em);
-        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em).setMinOnewayNetworkSize(3);
-        FlagEncoder encoder = em.getSingle();
-        EdgeExplorer explorer = g.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
-        int removed = instance.removeDeadEndUnvisitedNetworks(explorer);
-        assertEquals(2, removed);
+        GraphStorage g = createGraph(em);
 
-        g.optimize();
-        assertEquals(9, g.getNodes());
+        g.edge(1, 2, 1, false);
+        g.edge(2, 3, 1, false);
+        g.edge(3, 1, 1, false);
+
+        g.edge(4, 2, 1, false);
+        g.edge(4, 3, 1, false);
+        g.edge(4, 5, 1, true);
+        g.edge(5, 6, 1, false);
+
+        g.edge(6, 3, 1, false);
+        g.edge(6, 7, 1, true);
+
+        g.edge(8, 5, 1, false);
+        g.edge(8, 7, 1, false);
+        g.edge(8, 8, 1, false);
+
+        return g;
     }
 
     @Test
@@ -193,4 +205,39 @@ public class PrepareRoutingSubnetworksTest
         g.optimize();
         assertEquals(8, g.getNodes());
     }
+
+    @Test
+    public void testTarjan()
+    {
+        GraphStorage g = createSubnetworkTestGraph();
+
+        // Requires a single vehicle type, otherwise we throw.
+        final FlagEncoder flagEncoder = em.getSingle();
+        final EdgeFilter filter = new DefaultEdgeFilter(flagEncoder, false, true);
+
+        TarjansStronglyConnectedComponentsAlgorithm tarjan = new TarjansStronglyConnectedComponentsAlgorithm(g, filter);
+
+        List<TIntArrayList> components = tarjan.findComponents();
+
+        assertEquals(4, components.size());
+        assertEquals(new TIntArrayList(new int[]{ 13, 5, 3, 7, 0 }), components.get(0));
+        assertEquals(new TIntArrayList(new int[]{ 2, 4, 12, 11, 8, 1 }), components.get(1));
+        assertEquals(new TIntArrayList(new int[] {10, 14, 6}), components.get(2));
+        assertEquals(new TIntArrayList(new int[] {9}), components.get(3));
+    }
+
+    // Previous two-pass implementation failed on 1 -> 2 -> 0
+    @Test
+    public void testNodeOrderingRegression() {
+        // 1 -> 2 -> 0
+        GraphStorage g = createGraph(em);
+        g.edge(1, 2, 1, false);
+        g.edge(2, 0, 1, false);
+
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em).setMinOnewayNetworkSize(2);
+        int removed = instance.removeDeadEndUnvisitedNetworks(em.getSingle());
+        
+        assertEquals(3, removed);
+    }
+
 }
