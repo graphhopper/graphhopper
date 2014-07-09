@@ -84,8 +84,13 @@ public class CGIARProvider implements ElevationProvider
     {
         if (cacheDir.exists() && !cacheDir.isDirectory())
             throw new IllegalArgumentException("Cache path has to be a directory");
-
-        this.cacheDir = cacheDir;
+        try
+        {
+            this.cacheDir = cacheDir.getCanonicalFile();
+        } catch (IOException ex)
+        {
+            throw new RuntimeException(ex);
+        }
         return this;
     }
 
