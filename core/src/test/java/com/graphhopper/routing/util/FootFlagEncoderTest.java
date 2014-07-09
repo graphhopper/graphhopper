@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -199,5 +200,42 @@ public class FootFlagEncoderTest
 
         assertFalse(footEncoder.isTurnRestricted(flags_r20));
         assertFalse(footEncoder.isTurnRestricted(flags_20));
+    }
+
+    @Test
+    public void testBarrierAccess()
+    {
+        // by default allow access through the gate for bike & foot!
+        OSMNode node = new OSMNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        // no barrier!
+        assertTrue(footEncoder.handleNodeTags(node) == 0);
+
+        node = new OSMNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        node.setTag("access", "yes");
+        // no barrier!
+        assertTrue(footEncoder.handleNodeTags(node) == 0);
+
+        node = new OSMNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        node.setTag("access", "no");
+        // barrier!
+        assertTrue(footEncoder.handleNodeTags(node) > 0);
+
+        node.setTag("bicycle", "yes");
+        // no barrier!?
+        // assertTrue(footEncoder.handleNodeTags(node) == 0);
+
+        node = new OSMNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        node.setTag("access", "no");
+        node.setTag("foot", "yes");
+        // no barrier!
+        assertTrue(footEncoder.handleNodeTags(node) == 0);
+        
+        node.setTag("locked", "yes");
+        // barrier!
+        assertTrue(footEncoder.handleNodeTags(node) > 0);
     }
 }

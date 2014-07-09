@@ -68,9 +68,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         sidewalks.add("left");
         sidewalks.add("right");
 
+        blockByDefault = false;
         potentialBarriers.add("gate");
-        //potentialBarriers.add( "lift_gate" );   you can always pass them on foot
-        potentialBarriers.add("swing_gate");
 
         acceptedRailways.add("station");
         acceptedRailways.add("platform");
@@ -172,7 +171,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         String sacScale = way.getTag("sac_scale");
         if (sacScale != null)
         {
-            if (!"hiking".equals(sacScale) && !"mountain_hiking".equals(sacScale))
+            if (!"hiking".equals(sacScale) && !"mountain_hiking".equals(sacScale)
+                    && !"demanding_mountain_hiking".equals(sacScale) /*&& !"alpine_hiking".equals(sacScale)*/)
                 // other scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
                 return 0;
         }

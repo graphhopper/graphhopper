@@ -76,8 +76,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected HashSet<String> ferries = new HashSet<String>(5);
     protected HashSet<String> oneways = new HashSet<String>(5);
     protected HashSet<String> acceptedRailways = new HashSet<String>(5);
+    // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected HashSet<String> absoluteBarriers = new HashSet<String>(5);
     protected HashSet<String> potentialBarriers = new HashSet<String>(5);
+    // should potential barriers block when no access limits are given?
+    protected boolean blockByDefault = true;
     protected int speedBits;
     protected double speedFactor;
 
@@ -198,14 +201,33 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      */
     public long handleNodeTags( OSMNode node )
     {
-        // movable barriers block if they are not marked as passable
-        if (node.hasTag("barrier", potentialBarriers)
-                && !node.hasTag(restrictions, intendedValues)
-                && !node.hasTag("locked", "no"))
+        // absolute barriers always block
+        if (node.hasTag("barrier", absoluteBarriers))
             return directionBitMask;
 
+        // movable barriers block if they are not marked as passable
+        if (node.hasTag("barrier", potentialBarriers))
+        {
+            boolean locked = false;
+            if (node.hasTag("locked", "yes"))
+                locked = true;
+
+            for (String res : restrictions)
+            {
+                if (!locked && node.hasTag(res, intendedValues))
+                    return 0;
+                
+                if (node.hasTag(res, restrictedValues))
+                    return directionBitMask;
+            }
+
+            if (blockByDefault)
+                return directionBitMask;
+        }
+
         if ((node.hasTag("highway", "ford")
-                || node.hasTag("ford")) && !node.hasTag(restrictions, intendedValues))
+                || node.hasTag("ford"))
+                && !node.hasTag(restrictions, intendedValues))
             return directionBitMask;
 
         return 0;

@@ -23,7 +23,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation;
@@ -251,16 +250,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         }
 
         return encoded;
-    }
-
-    @Override
-    public long handleNodeTags( OSMNode node )
-    {
-        // absolute barriers always block
-        if (node.hasTag("barrier", absoluteBarriers))
-            return directionBitMask;
-
-        return super.handleNodeTags(node);
     }
 
     public String getWayInfo( OSMWay way )

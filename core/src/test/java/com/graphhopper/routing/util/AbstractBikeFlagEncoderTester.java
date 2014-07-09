@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.*;
 import com.graphhopper.util.Translation;
@@ -349,5 +350,46 @@ public abstract class AbstractBikeFlagEncoderTester
 
         flags = encoder.setLong(0L, BikeCommonFlagEncoder.K_PRIORITY_LONG, BikeCommonFlagEncoder.PriorityCode.AVOID_IF_POSSIBLE.getValue());
         assertEquals(3d / 7d, encoder.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY), 1e-3);
+    }
+
+    @Test
+    public void testBarrierAccess()
+    {
+        // by default allow access through the gate for bike & foot!
+        OSMNode node = new OSMNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        // no barrier!
+        assertTrue(encoder.handleNodeTags(node) == 0);
+
+        node.setTag("bicycle", "yes");
+        // no barrier!
+        assertTrue(encoder.handleNodeTags(node) == 0);
+
+        node = new OSMNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        node.setTag("access", "no");
+        // barrier!
+        assertTrue(encoder.handleNodeTags(node) > 0);
+        
+        node = new OSMNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        node.setTag("access", "yes");
+        node.setTag("bicycle", "no");
+        // barrier!
+        assertTrue(encoder.handleNodeTags(node) > 0);
+        
+        node = new OSMNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        node.setTag("access", "no");
+        node.setTag("foot", "yes");
+        // barrier!
+        assertTrue(encoder.handleNodeTags(node) > 0);
+
+        node = new OSMNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        node.setTag("access", "no");
+        node.setTag("bicycle", "yes");
+        // no barrier!
+        assertTrue(encoder.handleNodeTags(node) == 0);
     }
 }

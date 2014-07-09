@@ -305,6 +305,16 @@ public class CarFlagEncoderTest
         node.setTag("motorcar", "yes");
         // no barrier!
         assertTrue(encoder.handleNodeTags(node) == 0);
+
+        node = new OSMNode(1, -1, -1);
+        node.setTag("barrier", "bollard");
+        // barrier!
+        assertTrue(encoder.handleNodeTags(node) > 0);
+        
+        // ignore other access tags for absolute barriers!
+        node.setTag("motorcar", "yes");
+        // still barrier!
+        assertTrue(encoder.handleNodeTags(node) > 0);
     }
 
     @Test

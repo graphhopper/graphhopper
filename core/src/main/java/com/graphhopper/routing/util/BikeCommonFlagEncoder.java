@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.OSMRelation;
 import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.*;
@@ -80,12 +79,11 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         oppositeLanes.add("opposite_lane");
         oppositeLanes.add("opposite_track");
 
-        // With a bike one usually can pass all those barriers:
-        // potentialBarriers.add("gate");
+        blockByDefault = false;
+        potentialBarriers.add("gate");
         // potentialBarriers.add("lift_gate");
-        // potentialBarriers.add("swing_gate");
-        // potentialBarriers.add("cycle_barrier");
-        // potentialBarriers.add("block");
+        potentialBarriers.add("swing_gate");
+
         absoluteBarriers.add("kissing_gate");
         absoluteBarriers.add("stile");
         absoluteBarriers.add("turnstile");
@@ -259,6 +257,13 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
+        String sacScale = way.getTag("sac_scale");
+        if (sacScale != null)
+        {
+            // other scales are nearly impossible by bike, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
+            if (!"hiking".equals(sacScale) && !"mountain_hiking".equals(sacScale))
+                return 0;
+        }
         return acceptBit;
     }
 
@@ -324,16 +329,6 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                 return maxSpeed * 0.9;
         }
         return speed;
-    }
-
-    @Override
-    public long handleNodeTags( OSMNode node )
-    {
-        // absolute barriers always block
-        if (node.hasTag("barrier", absoluteBarriers))
-            return directionBitMask;
-
-        return super.handleNodeTags(node);
     }
 
     int getSpeed( OSMWay way )
