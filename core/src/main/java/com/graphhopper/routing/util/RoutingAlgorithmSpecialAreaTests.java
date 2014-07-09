@@ -81,7 +81,7 @@ public class RoutingAlgorithmSpecialAreaTests
 
         for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
         {
-            AlgorithmPreparation prepare = entry.getKey();            
+            AlgorithmPreparation prepare = entry.getKey();
             int failed = testCollector.errors.size();
 
             OneRun or = new OneRun(50.0314, 10.5105, 50.0303, 10.5070, 571, 22);
@@ -116,14 +116,13 @@ public class RoutingAlgorithmSpecialAreaTests
     public static Collection<Entry<AlgorithmPreparation, LocationIndex>> createAlgos( Graph g,
             LocationIndex idx, FlagEncoder encoder, boolean withCh, Weighting weighting, EncodingManager manager )
     {
-        // List<Entry<AlgorithmPreparation, LocationIndex>> prepare = new ArrayList<Entry<AlgorithmPreparation, LocationIndex>>();
         List<Entry<AlgorithmPreparation, LocationIndex>> prepare = new ArrayList<Entry<AlgorithmPreparation, LocationIndex>>();
-//        prepare.add(new ME(createAlgoPrepare(g, "astar", encoder, weighting), idx));
+        prepare.add(new ME(createAlgoPrepare(g, "astar", encoder, weighting), idx));
 //        // prepare.add(new ME(createAlgoPrepare(g, "dijkstraOneToMany", encoder, weighting), idx));
-//        prepare.add(new ME(createAlgoPrepare(g, "astarbi", encoder, weighting), idx));
-//        prepare.add(new ME(createAlgoPrepare(g, "dijkstraNativebi", encoder, weighting), idx));
+        prepare.add(new ME(createAlgoPrepare(g, "astarbi", encoder, weighting), idx));
+        prepare.add(new ME(createAlgoPrepare(g, "dijkstraNativebi", encoder, weighting), idx));
         prepare.add(new ME(createAlgoPrepare(g, "dijkstrabi", encoder, weighting), idx));
-//        prepare.add(new ME(createAlgoPrepare(g, "dijkstra", encoder, weighting), idx));
+        prepare.add(new ME(createAlgoPrepare(g, "dijkstra", encoder, weighting), idx));
 
         if (withCh)
         {
