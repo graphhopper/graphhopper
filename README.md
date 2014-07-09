@@ -5,6 +5,11 @@
 GraphHopper is a fast and memory efficient Java road routing engine released under Apache License 2.0.
 It is tuned towards road networks with OpenStreetMap data but can be useful for public transport problems as well.
 
+Try it
+--------------
+
+See GraphHopper in action via [GraphHopper Maps](http://graphhopper.com/maps)!
+
 
 Get Started & Contribute
 ---------------
@@ -17,7 +22,7 @@ or sign up to the [mailing list](http://graphhopper.com/#developers).
 **Please only email me directly if you need consultancy** or can't explain your problem in the public.
 
 There are subprojects to make GraphHopper working on [Android](https://github.com/graphhopper/graphhopper/blob/master/docs/android/index.md) or 
-as a [web application](https://github.com/graphhopper/graphhopper/tree/master/web). Have a look into our [live application](http://graphhopper.com/maps)
+as a [web application](https://github.com/graphhopper/graphhopper/tree/master/web).
 
 
 Features
