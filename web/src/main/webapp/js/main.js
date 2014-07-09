@@ -116,9 +116,7 @@ $(document).ready(function(e) {
 
                 if (json.features) {
                     ghRequest.features = json.features;
-                    if (isProduction())
-                        delete json.features['bike']
-
+                    
                     var vehicles = Object.keys(json.features);
                     if (vehicles.length > 0)
                         ghRequest.initVehicle(vehicles[0]);
