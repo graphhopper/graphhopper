@@ -4,14 +4,12 @@
  * to the URL or overwrite the 'host' variable.
  */
 var tmpArgs = parseUrlWithHisto();
-var host = tmpArgs["host"];
-// var host = "http://graphhopper.com/api/1";
-if (!host) {
-    if (location.port === '') {
-        host = location.protocol + '//' + location.hostname;
-    } else {
-        host = location.protocol + '//' + location.hostname + ":" + location.port;
-    }
+var host;
+
+if (location.port === '') {
+    host = location.protocol + '//' + location.hostname;
+} else {
+    host = location.protocol + '//' + location.hostname + ":" + location.port;
 }
 
 var ghRequest = new GHRequest(host);
@@ -116,7 +114,7 @@ $(document).ready(function(e) {
 
                 if (json.features) {
                     ghRequest.features = json.features;
-                    
+
                     var vehicles = Object.keys(json.features);
                     if (vehicles.length > 0)
                         ghRequest.initVehicle(vehicles[0]);
@@ -291,14 +289,14 @@ function initMap() {
         "OpenStreetMap": osm,
         "OpenStreetMap.de": osmde
     };
-    
+
     L.control.layers(baseMaps/*, overlays*/).addTo(map);
 
     L.control.scale().addTo(map);
 
     map.fitBounds(new L.LatLngBounds(new L.LatLng(bounds.minLat, bounds.minLon),
             new L.LatLng(bounds.maxLat, bounds.maxLon)));
-    if(isProduction())
+    if (isProduction())
         map.setView(new L.LatLng(0, 0), 2);
 
     map.attributionControl.setPrefix('');
