@@ -67,11 +67,22 @@ public class CGIARProvider implements ElevationProvider
     private final double invPrecision = 1 / precision;
     private final int degree = 5;
     private boolean calcMean = false;
+    private boolean autoRemoveTemporary = true;
 
     @Override
     public void setCalcMean( boolean eleCalcMean )
     {
         calcMean = eleCalcMean;
+    }
+
+    /**
+     * Creating temporary files can take a long time as we need to unpack tiff as well as to fill
+     * our DataAccess object, so this option can be used to disable the default clear mechanism via
+     * specifying 'false'.
+     */
+    public void setAutoRemoveTemporaryFiles( boolean autoRemoveTemporary )
+    {
+        this.autoRemoveTemporary = autoRemoveTemporary;
     }
 
     public void setDownloader( Downloader downloader )
@@ -274,7 +285,7 @@ public class CGIARProvider implements ElevationProvider
         cacheData.clear();
 
         // for memory mapped type we create temporary unpacked files which should be removed
-        if (dir != null)
+        if (autoRemoveTemporary && dir != null)
             dir.clear();
     }
 
