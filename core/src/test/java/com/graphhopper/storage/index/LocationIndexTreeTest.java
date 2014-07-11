@@ -23,9 +23,7 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Test;
@@ -400,5 +398,37 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         graph.edge(27, 33, 10, true);
         graph.edge(28, 34, 10, true);
         return graph;
+    }
+
+    @Test
+    public void testRMin()
+    {
+        Graph graph = createTestGraph();
+        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        index.setMinResolutionInMeter(50000).prepareAlgo();
+        LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
+        index.dataAccess.create(10);
+        inMemIndex.store(inMemIndex.root, LocationIndexTree.START_POINTER);
+        index.setSearchRegion(false);
+        TIntHashSet set = new TIntHashSet();
+        set.add(0);
+
+        //query: 0.05 | -0.3
+        DistanceCalc distCalc = new DistancePlaneProjection();
+
+        double rmin = index.calculateRMin(0.05, -0.3);
+        double check = distCalc.calcDist(0.05, Math.abs(graph.getNodeAccess().getLon(2)) - index.getDeltaLon(), -0.3, -0.3);
+
+        assertTrue((rmin - check) < 0.0001);
+
+        double rmin2 = index.calculateRMin(0.05, -0.3, 1);
+        double check2 = distCalc.calcDist(0.05, Math.abs(graph.getNodeAccess().getLat(0)), -0.3, -0.3);
+
+        assertTrue((rmin2 - check2) < 0.0001);
+
+        /*GraphVisualizer gv = new GraphVisualizer(graph, index.getDeltaLat(), index.getDeltaLon(), index.getCenter(0, 0).lat, index.getCenter(0, 0).lon);
+         try {
+         Thread.sleep(4000);
+         } catch(InterruptedException ie) {}*/
     }
 }
