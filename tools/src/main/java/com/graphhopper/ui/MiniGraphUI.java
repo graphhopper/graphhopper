@@ -80,7 +80,7 @@ public class MiniGraphUI
         this.na = graph.getNodeAccess();
         prepare = hopper.getPreparation();
         encoder = hopper.getEncodingManager().getSingle();
-        weighting = new PriorityWeighting(encoder);
+        weighting = hopper.createWeighting("fastest", encoder); //new PriorityWeighting(encoder);
         if (prepare == null)
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, "dijkstrabi", encoder, weighting);
 
@@ -179,7 +179,6 @@ public class MiniGraphUI
                         // mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, iter.getName());
                         //mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, "s:" + (int) encoder.getSpeed(iter.getFlags()));
                         //g2.setColor(Color.BLACK);                        
-
                         mg.plotEdge(g2, lat, lon, lat2, lon2);
                         g2.setColor(Color.BLACK);
                     }
@@ -205,35 +204,34 @@ public class MiniGraphUI
                 StopWatch sw = new StopWatch().start();
                 logger.info("start searching from:" + fromRes + " to:" + toRes + " " + weighting);
 
-                GHPoint qp = fromRes.getQueryPoint();
-                TIntHashSet set = index.findNetworkEntries(qp.lat, qp.lon, 1);
-                TIntIterator nodeIter = set.iterator();
-                DistanceCalc distCalc = new DistancePlaneProjection();
-                System.out.println("set:" + set.size());
-                while (nodeIter.hasNext())
+//                GHPoint qp = fromRes.getQueryPoint();
+//                TIntHashSet set = index.findNetworkEntries(qp.lat, qp.lon, 1);
+//                TIntIterator nodeIter = set.iterator();
+//                DistanceCalc distCalc = new DistancePlaneProjection();
+//                System.out.println("set:" + set.size());
+//                while (nodeIter.hasNext())
+//                {
+//                    int nodeId = nodeIter.next();
+//                    double lat = graph.getNodeAccess().getLat(nodeId);
+//                    double lon = graph.getNodeAccess().getLon(nodeId);
+//                    int dist = (int) Math.round(distCalc.calcDist(qp.lat, qp.lon, lat, lon));
+//                    mg.plotText(g2, lat, lon, nodeId + ": " + dist);
+//                    mg.plotNode(g2, nodeId, Color.red);
+//                }
+                path = algo.calcPath(fromRes, toRes);
+                sw.stop();
+
+                // if directed edges
+                if (!path.isFound())
                 {
-                    int nodeId = nodeIter.next();
-                    double lat = graph.getNodeAccess().getLat(nodeId);
-                    double lon = graph.getNodeAccess().getLon(nodeId);
-                    int dist = (int) Math.round(distCalc.calcDist(qp.lat, qp.lon, lat, lon));
-                    mg.plotText(g2, lat, lon, nodeId + ": " + dist);
-                    mg.plotNode(g2, nodeId, Color.red);
+                    logger.warn("path not found! direction not valid?");
+                    return;
                 }
 
-//                path = algo.calcPath(fromRes, toRes);
-//                sw.stop();
-//
-//                // if directed edges
-//                if (!path.isFound())
-//                {
-//                    logger.warn("path not found! direction not valid?");
-//                    return;
-//                }
-//
-//                logger.info("found path in " + sw.getSeconds() + "s with nodes:"
-//                        + path.calcNodes().size() + ", millis: " + path.getMillis() + ", " + path);
-//                g2.setColor(Color.BLUE.brighter().brighter());
-//                plotPath(path, g2, 1);
+                logger.info("found path in " + sw.getSeconds() + "s with nodes:"
+                        + path.calcNodes().size() + ", millis: " + path.getMillis() + ", " + path);
+                g2.setColor(Color.BLUE.brighter().brighter());
+                plotPath(path, g2, 1);
             }
         });
 
@@ -277,7 +275,7 @@ public class MiniGraphUI
 
         double prevLat = Double.NaN;
         double prevLon = Double.NaN;
-        boolean plotNodes = true;
+        boolean plotNodes = false;
         TIntList nodes = tmpPath.calcNodes();
         if (plotNodes)
         {
