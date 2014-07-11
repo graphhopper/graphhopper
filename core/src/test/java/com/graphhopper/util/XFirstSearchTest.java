@@ -20,6 +20,8 @@ package com.graphhopper.util;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.Graph;
+import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,6 +35,7 @@ public class XFirstSearchTest
 {
     int counter;
     TIntHashSet set = new TIntHashSet();
+    TIntList list = new TIntArrayList();
 
     @Before
     public void setup()
@@ -51,6 +54,7 @@ public class XFirstSearchTest
                 counter++;
                 assertTrue("v " + v + " is already contained in set. iteration:" + counter, !set.contains(v));
                 set.add(v);
+                list.add(v);
                 return super.goFurther(v);
             }
         };
@@ -73,5 +77,35 @@ public class XFirstSearchTest
 
         assertTrue(counter > 0);
         assertEquals(g.getNodes(), counter);
+        assertEquals("{0, 5, 3, 2, 1, 10, 8, 7, 6, 9, 4}", list.toString());
+    }
+
+    @Test
+    public void testDFS()
+    {
+        XFirstSearch bfs = new XFirstSearch()
+        {
+            @Override
+            public boolean goFurther( int v )
+            {
+                counter++;
+                assertTrue("v " + v + " is already contained in set. iteration:" + counter, !set.contains(v));
+                set.add(v);
+                list.add(v);
+                return super.goFurther(v);
+            }
+        };
+
+        Graph g = new GraphBuilder(new EncodingManager("CAR")).create();
+        g.edge(1, 2, 1, false);
+        g.edge(1, 3, 1, false);
+        g.edge(1, 4, 1, false);
+        g.edge(2, 3, 1, false);
+        g.edge(4, 3, 1, false);
+
+        bfs.start(g.createEdgeExplorer(), 1, true);
+
+        assertTrue(counter > 0);
+        assertEquals("{1, 2, 3, 4}", list.toString());
     }
 }

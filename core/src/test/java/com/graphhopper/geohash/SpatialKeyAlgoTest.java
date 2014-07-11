@@ -233,4 +233,19 @@ public class SpatialKeyAlgoTest
         algo.decode(1, coord);
         assertEquals(1, algo.encode(coord));
     }
+    
+    @Test
+    public void testEdgeCases() {
+        double minLon = -1, maxLon = 1.6;
+        double minLat = -1, maxLat = 0.5;
+        int parts = 4;
+        int bits = (int) (Math.log(parts * parts) / Math.log(2));
+        final KeyAlgo keyAlgo = new SpatialKeyAlgo(bits).setBounds(minLon, maxLon, minLat, maxLat);
+        // lat border 0.125
+        assertEquals(11, keyAlgo.encode(0.125, -0.2));
+        assertEquals(9, keyAlgo.encode(0.124, -0.2));
+        // lon border -0.35
+        assertEquals(11, keyAlgo.encode(0.2, -0.35));
+        assertEquals(10, keyAlgo.encode(0.2, -0.351));
+    }
 }

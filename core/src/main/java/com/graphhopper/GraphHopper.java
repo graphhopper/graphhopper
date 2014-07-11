@@ -80,8 +80,8 @@ public class GraphHopper implements GraphHopperAPI
     private boolean simplifyRequest = true;
     // for index
     private LocationIndex locationIndex;
-    private int preciseIndexResolution = 500;
-    private boolean searchRegion = true;
+    private int preciseIndexResolution = 300;
+    private int maxRegionSearch = 4;
     // for prepare
     private int minNetworkSize = 200;
     private int minOnewayNetworkSize = 0;
@@ -565,6 +565,7 @@ public class GraphHopper implements GraphHopperAPI
 
         // index
         preciseIndexResolution = args.getInt("index.highResolution", preciseIndexResolution);
+        maxRegionSearch = args.getInt("index.maxRegionSearch", maxRegionSearch);
         return this;
     }
 
@@ -926,24 +927,15 @@ public class GraphHopper implements GraphHopperAPI
     protected LocationIndex createLocationIndex( Directory dir )
     {
         LocationIndex tmpIndex;
-        if (preciseIndexResolution > 0)
+        if (graph instanceof LevelGraph)
         {
-            LocationIndexTree tmpNIndex;
-            if (graph instanceof LevelGraph)
-            {
-                tmpNIndex = new LocationIndexTreeSC((LevelGraph) graph, dir);
-            } else
-            {
-                tmpNIndex = new LocationIndexTree(graph, dir);
-            }
-            tmpNIndex.setResolution(preciseIndexResolution);
-            tmpNIndex.setSearchRegion(searchRegion);
-            tmpIndex = tmpNIndex;
+            tmpIndex = new LocationIndexTreeSC((LevelGraph) graph, dir);
         } else
         {
-            tmpIndex = new Location2IDQuadtree(graph, dir);
-            tmpIndex.setResolution(Helper.calcIndexSize(graph.getBounds()));
+            tmpIndex = new LocationIndexTree(graph, dir);
         }
+        tmpIndex.setResolution(preciseIndexResolution);
+        ((LocationIndexTree) tmpIndex).setMaxRegionSearch(maxRegionSearch);
 
         if (!tmpIndex.loadExisting())
         {
@@ -974,7 +966,7 @@ public class GraphHopper implements GraphHopperAPI
         logger.info("finished optimize (" + Helper.getMemInfo() + ")");
 
         // Later: move this into the GraphStorage.optimize method
-        // Or: Doing it after preparation to optimize shortcuts too. But not possible yet https://github.com/graphhopper/graphhopper/issues/12
+        // Or: Doing it after preparation to optimize shortcuts too. But not possible yet #12
         if (sortGraph)
         {
             if (graph instanceof LevelGraph && isPrepared())

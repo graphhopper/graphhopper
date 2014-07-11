@@ -25,11 +25,14 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.GHPoint;
+import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.TIntList;
+import gnu.trove.set.hash.TIntHashSet;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Random;
@@ -48,7 +51,6 @@ import org.slf4j.LoggerFactory;
  */
 public class MiniGraphUI
 {
-
     public static void main( String[] strs ) throws Exception
     {
         CmdArgs args = CmdArgs.read(strs);
@@ -61,7 +63,7 @@ public class MiniGraphUI
     private AlgorithmPreparation prepare;
     private final Graph graph;
     private final NodeAccess na;
-    private LocationIndex index;
+    private LocationIndexTree index;
     private String latLon = "";
     private GraphicsWrapper mg;
     private JPanel infoPanel;
@@ -87,7 +89,7 @@ public class MiniGraphUI
 
         // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
-        this.index = hopper.getLocationIndex();
+        this.index = (LocationIndexTree) hopper.getLocationIndex();
 //        this.algo = new DebugDijkstraBidirection(graph, mg);
         // this.algo = new DijkstraBidirection(graph);
 //        this.algo = new DebugAStar(graph, mg);
@@ -175,8 +177,8 @@ public class MiniGraphUI
                         double lon2 = na.getLongitude(nodeId);
 
                         // mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, iter.getName());
-                        mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, "s:" + (int) encoder.getSpeed(iter.getFlags()));
-                        g2.setColor(Color.BLACK);                        
+                        //mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, "s:" + (int) encoder.getSpeed(iter.getFlags()));
+                        //g2.setColor(Color.BLACK);                        
 
                         mg.plotEdge(g2, lat, lon, lat2, lon2);
                         g2.setColor(Color.BLACK);
@@ -202,22 +204,36 @@ public class MiniGraphUI
 
                 StopWatch sw = new StopWatch().start();
                 logger.info("start searching from:" + fromRes + " to:" + toRes + " " + weighting);
-                path = algo.calcPath(fromRes, toRes);
-//                mg.plotNode(g2, dijkstraFromId, Color.red);
-//                mg.plotNode(g2, dijkstraToId, Color.BLUE);
-                sw.stop();
 
-                // if directed edges
-                if (!path.isFound())
+                GHPoint qp = fromRes.getQueryPoint();
+                TIntHashSet set = index.findNetworkEntries(qp.lat, qp.lon, 1);
+                TIntIterator nodeIter = set.iterator();
+                DistanceCalc distCalc = new DistancePlaneProjection();
+                System.out.println("set:" + set.size());
+                while (nodeIter.hasNext())
                 {
-                    logger.warn("path not found! direction not valid?");
-                    return;
+                    int nodeId = nodeIter.next();
+                    double lat = graph.getNodeAccess().getLat(nodeId);
+                    double lon = graph.getNodeAccess().getLon(nodeId);
+                    int dist = (int) Math.round(distCalc.calcDist(qp.lat, qp.lon, lat, lon));
+                    mg.plotText(g2, lat, lon, nodeId + ": " + dist);
+                    mg.plotNode(g2, nodeId, Color.red);
                 }
 
-                logger.info("found path in " + sw.getSeconds() + "s with nodes:"
-                        + path.calcNodes().size() + ", millis: " + path.getMillis() + ", " + path);
-                g2.setColor(Color.BLUE.brighter().brighter());
-                plotPath(path, g2, 1);
+//                path = algo.calcPath(fromRes, toRes);
+//                sw.stop();
+//
+//                // if directed edges
+//                if (!path.isFound())
+//                {
+//                    logger.warn("path not found! direction not valid?");
+//                    return;
+//                }
+//
+//                logger.info("found path in " + sw.getSeconds() + "s with nodes:"
+//                        + path.calcNodes().size() + ", millis: " + path.getMillis() + ", " + path);
+//                g2.setColor(Color.BLUE.brighter().brighter());
+//                plotPath(path, g2, 1);
             }
         });
 

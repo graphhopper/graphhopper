@@ -28,6 +28,8 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.GHPoint;
+import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
@@ -36,9 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This implementation implements an n-tree to get node ids from GPS location. This replaces
- * Location2IDQuadtree except for cases when you only need rough precision or when you need better
- * support for out-of-bounds queries.
+ * This implementation implements an n-tree to get the closest node or edge from GPS coordinates.
  * <p/>
  * All leafs are at the same depth, otherwise it is quite complicated to calculate the bresenham
  * line for different resolutions, especially if a leaf node could be split into a tree-node and
@@ -60,14 +60,14 @@ public class LocationIndexTree implements LocationIndex
     // convert spatial key to index for subentry of current depth
     private long[] bitmasks;
     protected SpatialKeyAlgo keyAlgo;
-    private int minResolutionInMeter = 500;
+    private int minResolutionInMeter = 300;
     private double deltaLat;
     private double deltaLon;
     private int initSizeLeafEntries = 4;
     private boolean initialized = false;
     // do not start with 0 as a positive value means leaf and a negative means "entry with subentries"
     static final int START_POINTER = 1;
-    private boolean regionSearch = true;
+    int maxRegionSearch = 4;
     /**
      * If normed distance is smaller than this value the node or edge is 'identical' and the
      * algorithm can stop search.
@@ -98,11 +98,20 @@ public class LocationIndexTree implements LocationIndex
     }
 
     /**
-     * Searches also neighbouring quadtree entries to increase map matching precision.
+     * Searches also neighbouring tiles until the maximum distance from the query point is reached
+     * (minResolutionInMeter*regionAround). Set to 1 for to force avoiding a fall back, good if you
+     * have strict performance and lookup-quality requirements. Default is 4.
      */
-    public LocationIndexTree setSearchRegion( boolean regionAround )
+    public LocationIndexTree setMaxRegionSearch( int numTiles )
     {
-        this.regionSearch = regionAround;
+        if (numTiles < 1)
+            throw new IllegalArgumentException("Region of location index must be at least 1 but was " + numTiles);
+
+        // see #232
+        if (numTiles % 2 == 1)
+            numTiles++;
+
+        this.maxRegionSearch = numTiles;
         return this;
     }
 
@@ -558,7 +567,7 @@ public class LocationIndexTree implements LocationIndex
     }
 
     // fillIDs according to how they are stored
-    void fillIDs( long keyPart, int intIndex, TIntHashSet set, int depth )
+    final void fillIDs( long keyPart, int intIndex, TIntHashSet set, int depth )
     {
         long pointer = (long) intIndex << 2;
         if (depth == entries.length)
@@ -599,39 +608,170 @@ public class LocationIndexTree implements LocationIndex
         return BitUtil.BIG.reverse(key, keyAlgo.getBits());
     }
 
-    protected TIntHashSet findNetworkEntries( double queryLat, double queryLon )
+    /**
+     * calculate the distance to the nearest tile border for a given lat/lon coordinate in the
+     * context of a spatial key tile.
+     * <p>
+     */
+    final double calculateRMin( double lat, double lon )
     {
-        TIntHashSet storedNetworkEntryIds = new TIntHashSet();
-        if (regionSearch)
+        return calculateRMin(lat, lon, 0);
+    }
+
+    /**
+     * Calculates the distance to the nearest tile border, where the tile border is the rectangular
+     * region with dimension 2*paddingTiles + 1 and where the center tile contains the given lat/lon
+     * coordinate
+     */
+    final double calculateRMin( double lat, double lon, int paddingTiles )
+    {
+        GHPoint query = new GHPoint(lat, lon);
+        long key = keyAlgo.encode(query);
+        GHPoint center = new GHPoint();
+        keyAlgo.decode(key, center);
+
+        // deltaLat and deltaLon comes from the LocationIndex:
+        double minLat = center.lat - (0.5 + paddingTiles) * deltaLat;
+        double maxLat = center.lat + (0.5 + paddingTiles) * deltaLat;
+        double minLon = center.lon - (0.5 + paddingTiles) * deltaLon;
+        double maxLon = center.lon + (0.5 + paddingTiles) * deltaLon;
+
+        double dSouthernLat = query.lat - minLat;
+        double dNorthernLat = maxLat - query.lat;
+        double dWesternLon = query.lon - minLon;
+        double dEasternLon = maxLon - query.lon;
+
+        // convert degree deltas into a radius in meter
+        double dMinLat, dMinLon;
+        if (dSouthernLat < dNorthernLat)
         {
-            // search all rasters around minResolutionInMeter as we did not fill empty entries
-            double maxLat = queryLat + 1.5 * deltaLat;
-            double maxLon = queryLon + 1.5 * deltaLon;
-            for (double tmpLat = queryLat - deltaLat; tmpLat < maxLat; tmpLat += deltaLat)
-            {
-                for (double tmpLon = queryLon - deltaLon; tmpLon < maxLon; tmpLon += deltaLon)
-                {
-                    long keyPart = createReverseKey(tmpLat, tmpLon);
-                    // System.out.println(BitUtilLittle.toBitString(key, keyAlgo.bits()));
-                    fillIDs(keyPart, START_POINTER, storedNetworkEntryIds, 0);
-                }
-            }
+            dMinLat = distCalc.calcDist(query.lat, query.lon, minLat, query.lon);
         } else
         {
-            long keyPart = createReverseKey(queryLat, queryLon);
-            fillIDs(keyPart, START_POINTER, storedNetworkEntryIds, 0);
+            dMinLat = distCalc.calcDist(query.lat, query.lon, maxLat, query.lon);
         }
-        return storedNetworkEntryIds;
+
+        if (dWesternLon < dEasternLon)
+        {
+            dMinLon = distCalc.calcDist(query.lat, query.lon, query.lat, minLon);
+        } else
+        {
+            dMinLon = distCalc.calcDist(query.lat, query.lon, query.lat, maxLon);
+        }
+
+        double rMin = Math.min(dMinLat, dMinLon);
+        return rMin;
+    }
+
+    /**
+     * Provide info about tilesize for testing / visualization
+     */
+    double getDeltaLat()
+    {
+        return deltaLat;
+    }
+
+    double getDeltaLon()
+    {
+        return deltaLon;
+    }
+
+    GHPoint getCenter( double lat, double lon )
+    {
+        GHPoint query = new GHPoint(lat, lon);
+        long key = keyAlgo.encode(query);
+        GHPoint center = new GHPoint();
+        keyAlgo.decode(key, center);
+        return center;
+    }
+
+    /**
+     * This method collects the node indices from the quad tree data structure in a certain order
+     * which makes sure not too many nodes are collected as well as no nodes will be missing. See
+     * discussion at issue #221.
+     */
+    public final TIntHashSet findNetworkEntries( double queryLat, double queryLon, int maxIteration )
+    {
+        TIntHashSet foundEntries = new TIntHashSet();
+
+        for (int iteration = 0; iteration < maxIteration; iteration++)
+        {
+            // find entries in border of searchbox
+            for (int yreg = -iteration; yreg <= iteration; yreg++)
+            {
+                double subqueryLat = queryLat + yreg * deltaLat;
+                double subqueryLonA = queryLon - iteration * deltaLon;
+                double subqueryLonB = queryLon + iteration * deltaLon;
+                findNetworkEntriesSingleRegion(foundEntries, subqueryLat, subqueryLonA);
+
+                // minor optimization for iteration == 0
+                if (iteration > 0)
+                {
+                    findNetworkEntriesSingleRegion(foundEntries, subqueryLat, subqueryLonB);
+                }
+            }
+
+            for (int xreg = -iteration + 1; xreg <= iteration - 1; xreg++)
+            {
+                double subqueryLon = queryLon + xreg * deltaLon;
+                double subqueryLatA = queryLat - iteration * deltaLat;
+                double subqueryLatB = queryLat + iteration * deltaLat;
+                findNetworkEntriesSingleRegion(foundEntries, subqueryLatA, subqueryLon);
+                findNetworkEntriesSingleRegion(foundEntries, subqueryLatB, subqueryLon);
+            }
+
+            // see #232
+            if (iteration % 2 == 1)
+            {
+                // Check if something was found already...
+                if (foundEntries.size() > 0)
+                {
+                    double rMin = calculateRMin(queryLat, queryLon, iteration);
+                    double minDistance = calcMinDistance(queryLat, queryLon, foundEntries);
+
+                    if (minDistance < rMin)
+                    {   // resultEntries contains a nearest node for sure
+                        break;
+                    } // else: continue an undetected nearer node may sit in a neighbouring tile.
+                    // Now calculate how far we have to look outside to find any hidden nearest nodes
+                    // and repeat whole process with wider search area until this distance is covered.
+                }
+            }
+        }
+        return foundEntries;
+    }
+
+    final double calcMinDistance( double queryLat, double queryLon, TIntHashSet pointset )
+    {
+        double min = Double.MAX_VALUE;
+        TIntIterator itr = pointset.iterator();
+        while (itr.hasNext())
+        {
+            int node = itr.next();
+            double lat = nodeAccess.getLat(node);
+            double lon = nodeAccess.getLon(node);
+            double dist = distCalc.calcDist(queryLat, queryLon, lat, lon);
+            if (dist < min)
+            {
+                min = dist;
+            }
+        }
+        return min;
+    }
+
+    final void findNetworkEntriesSingleRegion( TIntHashSet storedNetworkEntryIds, double queryLat, double queryLon )
+    {
+        long keyPart = createReverseKey(queryLat, queryLon);
+        fillIDs(keyPart, START_POINTER, storedNetworkEntryIds, 0);
     }
 
     @Override
-    public QueryResult findClosest( final double queryLat, final double queryLon,
-            final EdgeFilter edgeFilter )
+    public QueryResult findClosest( final double queryLat, final double queryLon, final EdgeFilter edgeFilter )
     {
         if (isClosed())
             throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
 
-        final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon);
+        final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon, maxRegionSearch);
         final QueryResult closestMatch = new QueryResult(queryLat, queryLon);
         if (storedNetworkEntryIds.isEmpty())
             return closestMatch;
