@@ -276,7 +276,15 @@ public class CGIARProvider implements ElevationProvider
         if (Math.abs(latInt - lat) < invPrecision / degree)
             latInt--;
 
-        return String.format("srtm_%02d_%02d", lonInt, latInt);
+        // replace String.format as it seems to be slow
+        // String.format("srtm_%02d_%02d", lonInt, latInt);
+        String str = "srtm_";
+        str += lonInt < 10 ? "0" : "";
+        str += lonInt;
+        str += latInt < 10 ? "_0" : "_";
+        str += latInt;
+
+        return str;
     }
 
     @Override
