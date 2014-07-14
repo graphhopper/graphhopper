@@ -314,20 +314,21 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * @return if import of turn restrictions is enabled
+     * @return if import of turn costs (and thus also restrictions) is enabled
      */
-    public boolean isEnableTurnRestrictions()
+    public boolean hasTurnCosts()
     {
         return turnCosts;
     }
 
     /**
-     * This method specifies if the import should include turn restrictions if available
+     * This method specifies if the import should include turn costs (and thus also restrictions) if
+     * available
      */
-    public GraphHopper setEnableTurnRestrictions( boolean b )
+    public GraphHopper setTurnCosts( boolean enable )
     {
         ensureNotLoaded();
-        turnCosts = b;
+        turnCosts = enable;
         return this;
     }
 
@@ -514,12 +515,12 @@ public class GraphHopper implements GraphHopperAPI
 
         sortGraph = args.getBool("graph.doSort", sortGraph);
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
-        turnCosts = args.getBool("graph.turnCosts", turnCosts);
+        setTurnCosts(args.getBool("graph.turnCosts", turnCosts));
         if (args.get("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
         else
             lockFactory = new NativeFSLockFactory();
-
+        
         // elevation
         String eleProviderStr = args.get("graph.elevation.provider", "noop").toLowerCase();
         boolean eleCalcMean = args.getBool("graph.elevation.calcmean", false);
