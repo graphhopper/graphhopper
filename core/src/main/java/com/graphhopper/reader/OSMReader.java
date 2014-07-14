@@ -105,8 +105,8 @@ public class OSMReader implements DataReader
     private TLongLongHashMap osmNodeIdToNodeFlagsMap;
     private TLongLongHashMap osmWayIdToRouteWeightMap;
     // stores osm way ids used by relations to identify which edge ids needs to be mapped later
-    private TLongHashSet osmIdStoreRequiredSet = new TLongHashSet();
-    private TIntLongMap edgeIdToOsmIdMap;
+    private TLongHashSet osmWayIdSet = new TLongHashSet();
+    private TIntLongMap edgeIdToOsmWayIdMap;
     private final TLongList barrierNodeIds = new TLongArrayList();
     protected PillarInfo pillarInfo;
     private final DistanceCalc distCalc = new DistanceCalcEarth();
@@ -223,22 +223,25 @@ public class OSMReader implements DataReader
         OSMTurnRelation turnRelation = createTurnRelation(relation);
         if (turnRelation != null)
         {
-            getOsmIdStoreRequiredSet().add(((OSMTurnRelation) turnRelation).getOsmIdFrom());
-            getOsmIdStoreRequiredSet().add(((OSMTurnRelation) turnRelation).getOsmIdTo());
+            getOsmWayIdSet().add(turnRelation.getOsmIdFrom());
+            getOsmWayIdSet().add(turnRelation.getOsmIdTo());
         }
     }
 
-    private TLongSet getOsmIdStoreRequiredSet()
+    /**
+     * @return all required osmWayIds to process e.g. relations.
+     */
+    private TLongSet getOsmWayIdSet()
     {
-        return osmIdStoreRequiredSet;
+        return osmWayIdSet;
     }
 
-    private TIntLongMap getEdgeIdToOsmidMap()
+    private TIntLongMap getEdgeIdToOsmWayIdMap()
     {
-        if (edgeIdToOsmIdMap == null)
-            edgeIdToOsmIdMap = new TIntLongHashMap(getOsmIdStoreRequiredSet().size());
+        if (edgeIdToOsmWayIdMap == null)
+            edgeIdToOsmWayIdMap = new TIntLongHashMap(getOsmWayIdSet().size());
 
-        return edgeIdToOsmIdMap;
+        return edgeIdToOsmWayIdMap;
     }
 
     /**
@@ -447,16 +450,20 @@ public class OSMReader implements DataReader
                     Collection<TurnCostTableEntry> entries = encodingManager.analyzeTurnRelation(turnRelation, this);
                     for (TurnCostTableEntry entry : entries)
                     {
-                        ((TurnCostStorage) extendedStorage).setTurnCosts(entry.nodeVia, entry.edgeFrom, entry.edgeTo, (int) entry.flags);
+                        ((TurnCostStorage) extendedStorage).setTurnCosts(entry.nodeViaNode, entry.edgeFrom, entry.edgeTo, (int) entry.flags);
                     }
                 }
             }
         }
     }
 
+    /**
+     * @return OSM way ID from specified edgeId. Only previously stored OSM-way-IDs are returned in
+     * order to reduce memory overhead.
+     */
     public long getOsmIdOfInternalEdge( int edgeId )
     {
-        return getEdgeIdToOsmidMap().get(edgeId);
+        return getEdgeIdToOsmWayIdMap().get(edgeId);
     }
 
     public int getInternalNodeIdOfOsmNode( long nodeOsmId )
@@ -745,15 +752,18 @@ public class OSMReader implements DataReader
 
             iter.setWayGeometry(pillarNodes);
         }
-        storeOSMWayID(iter.getEdge(), wayOsmId);
+        storeOsmWayID(iter.getEdge(), wayOsmId);
         return iter;
     }
 
-    private void storeOSMWayID( int edgeId, long osmWayID )
+    /**
+     * Stores only osmWayIds which are required for relations
+     */
+    private void storeOsmWayID( int edgeId, long osmWayId )
     {
-        if (getOsmIdStoreRequiredSet().contains(osmWayID))
+        if (getOsmWayIdSet().contains(osmWayId))
         {
-            getEdgeIdToOsmidMap().put(edgeId, osmWayID);
+            getEdgeIdToOsmWayIdMap().put(edgeId, osmWayId);
         }
     }
 
@@ -794,8 +804,8 @@ public class OSMReader implements DataReader
         osmNodeIdToInternalNodeMap = null;
         osmNodeIdToNodeFlagsMap = null;
         osmWayIdToRouteWeightMap = null;
-        osmIdStoreRequiredSet = null;
-        edgeIdToOsmIdMap = null;
+        osmWayIdSet = null;
+        edgeIdToOsmWayIdMap = null;
     }
 
     /**
@@ -847,7 +857,7 @@ public class OSMReader implements DataReader
      */
     OSMTurnRelation createTurnRelation( OSMRelation relation )
     {
-        OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType((String) relation.getTag("restriction"));
+        OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType(relation.getTag("restriction"));
         if (type != OSMTurnRelation.Type.UNSUPPORTED)
         {
             long fromWayID = -1;
