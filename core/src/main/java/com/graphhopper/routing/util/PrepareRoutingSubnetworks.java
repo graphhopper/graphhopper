@@ -27,8 +27,11 @@ import com.graphhopper.util.XFirstSearch;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import gnu.trove.list.array.TIntArrayList;
 
 /**
  * Removes nodes which are not part of the largest network. Ie. mostly nodes with no edges at all
@@ -146,7 +149,7 @@ public class PrepareRoutingSubnetworks
     }
 
     /**
-     * Deletes all but the larges subnetworks.
+     * Deletes all but the largest subnetworks.
      */
     void keepLargeNetworks( Map<Integer, Integer> map )
     {
@@ -231,86 +234,29 @@ public class PrepareRoutingSubnetworks
 
     /**
      * Clean small networks that will be never be visited by this explorer See #86 For example,
-     * small areas like parkings are sometimes connected to the whole network through one-way road
+     * small areas like parking lots are sometimes connected to the whole network through a one-way road.
      * This is clearly an error - but is causes the routing to fail when point get connected to this
-     * small area This routines removed all these points from the graph The algorithm is to through
-     * the graph, build the network map and for each small map remove the network
+     * small area. This routines removed all these points from the graph.
      * <p/>
-     * @return removed nodes;
+     * @return number of removed nodes;
      */
     public int removeDeadEndUnvisitedNetworks( final FlagEncoder encoder )
     {
+        // Partition g into strongly connected components using Tarjan's Algorithm.
+        final EdgeFilter filter = new DefaultEdgeFilter(encoder, false, true);
+        List<TIntArrayList> components = new TarjansStronglyConnectedComponentsAlgorithm(g, filter).findComponents();
+
+        // remove components less than minimum size
         int removed = 0;
-        removed += removeDeadEndUnvisitedNetworks(g.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false)));
-        removed += removeDeadEndUnvisitedNetworks(g.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true)));
-        return removed;
-    }
+        for (TIntArrayList component : components) {
 
-    private static <K, V extends Comparable<V>> Map<K, V> sortByValues( final Map<K, V> map )
-    {
-        Comparator<K> valueComparator = new Comparator<K>()
-        {
-            @Override
-            public int compare( K k1, K k2 )
-            {
-                int compare = map.get(k2).compareTo(map.get(k1));
-                if (compare == 0)
-                    return 1;
-                else
-                    return compare;
+            if (component.size() < minOnewayNetworkSize) {
+                for (int i = 0; i < component.size(); i++) {
+                    g.markNodeRemoved(component.get(i));
+                    removed ++;
+                }
             }
-        };
-        Map<K, V> sortedByValues = new TreeMap<K, V>(valueComparator);
-        sortedByValues.putAll(map);
-        return sortedByValues;
-    }
-
-    public int removeDeadEndUnvisitedNetworks( final EdgeExplorer explorer )
-    {
-        final AtomicInteger removed = new AtomicInteger(0);
-
-        // Find subnetworks according to this explorer
-        // Sort the map by largest networks first
-        Map<Integer, Integer> map = sortByValues(findSubnetworks(explorer));
-        if (map.size() < 2)
-            return 0;
-
-        //  big networks will populate bs first so these nodes won't be deleted
-        final GHBitSetImpl bs = new GHBitSetImpl(g.getNodes());
-        boolean first = true;
-        for (Entry<Integer, Integer> e : map.entrySet())
-        {
-            int mapStart = e.getKey();
-            int subnetSize = e.getValue();
-            final boolean removeNetwork = !first && (subnetSize < minOnewayNetworkSize);
-            if (first)
-                first = false;
-
-            if (removeNetwork)
-                logger.debug("Removing dead-end network: " + subnetSize + " nodes starting from nodeid=" + mapStart);
-
-            new XFirstSearch()
-            {
-                @Override
-                protected GHBitSet createBitSet()
-                {
-                    return bs;
-                }
-
-                @Override
-                protected final boolean goFurther( int nodeId )
-                {
-                    if (removeNetwork)
-                    {
-                        // This remaining node is member of a small disconnected network
-                        g.markNodeRemoved(nodeId);
-                        removed.incrementAndGet();
-                    }
-                    return super.goFurther(nodeId);
-                }
-            }.start(explorer, mapStart, false);
         }
-
-        return removed.get();
+        return removed;
     }
 }
