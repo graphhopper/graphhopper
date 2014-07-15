@@ -193,9 +193,9 @@ public class RoutingAlgorithmIT
     {
         List<OneRun> list = new ArrayList<OneRun>();
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km
-        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2020, 101));
+        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2710, 118));
         // 2.
-        list.add(new OneRun(43.728499, 7.417907, 43.74958, 7.436566, 3753, 182));
+        list.add(new OneRun(43.728499, 7.417907, 43.74958, 7.436566, 3777, 194));
         // 3.
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2776, 167));
         // 4.
@@ -203,11 +203,11 @@ public class RoutingAlgorithmIT
 
         // try reverse direction
         // 1.
-        list.add(new OneRun(43.727687, 7.418737, 43.730864, 7.420771, 1682, 95));
-        list.add(new OneRun(43.74958, 7.436566, 43.728499, 7.417907, 4056, 179));
-        list.add(new OneRun(43.739213, 7.427806, 43.728677, 7.41016, 3217, 172));
+        list.add(new OneRun(43.727687, 7.418737, 43.730864, 7.420771, 2599, 115));
+        list.add(new OneRun(43.74958, 7.436566, 43.728499, 7.417907, 4199, 165));
+        list.add(new OneRun(43.739213, 7.427806, 43.728677, 7.41016, 3261, 177));
         // 4. avoid tunnel(s)!
-        list.add(new OneRun(43.739662, 7.424355, 43.733802, 7.413433, 2333, 125));
+        list.add(new OneRun(43.739662, 7.424355, 43.733802, 7.413433, 2452, 112));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
                 list, "BIKE2", true, "BIKE2", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -231,8 +231,8 @@ public class RoutingAlgorithmIT
     {
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2322, 110));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3588, 170));
-        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2323, 122));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3613, 178));
+        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2331, 121));
         // hard to select between secondard and primary (both are AVOID for mtb)
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1459, 88));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
@@ -248,9 +248,9 @@ public class RoutingAlgorithmIT
     public void testMonacoRacingBike()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2597, 118));
+        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2594, 111));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3588, 170));
-        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2323, 122));
+        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2572, 135));
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1490, 84));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
                 list, "RACINGBIKE", true, "RACINGBIKE", "fastest", false);
@@ -266,7 +266,7 @@ public class RoutingAlgorithmIT
     {
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(48.409523, 15.602394, 48.375466, 15.72916, 12491, 159));
-        list.add(new OneRun(48.410061, 15.63951, 48.411386, 15.604899, 3091, 92));
+        list.add(new OneRun(48.410061, 15.63951, 48.411386, 15.604899, 3113, 87));
         list.add(new OneRun(48.412294, 15.62007, 48.398306, 15.609667, 3965, 94));
 
         runAlgo(testCollector, "files/krems.osm.gz", "target/krems-gh",
@@ -372,7 +372,7 @@ public class RoutingAlgorithmIT
         // choose Unterloher Weg and the following residential + cycleway
         list.add(new OneRun(50.004333, 11.600254, 50.044449, 11.543434, 6931, 184));
         runAlgo(testCollector, "files/harsdorf.osm.pbf", "target/harsdorf-gh",
-                list, "bike", true, "bike", "fastest-bike", false);
+                list, "bike", true, "bike", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -384,10 +384,10 @@ public class RoutingAlgorithmIT
         list.add(new OneRun(49.987132, 11.510496, 50.018839, 11.505024, 3985, 106));
 
         runAlgo(testCollector, "files/neudrossenfeld.osm.pbf", "target/neudrossenfeld-gh",
-                list, "bike", true, "bike", "fastest-bike", true);
+                list, "bike", true, "bike", "fastest", true);
 
         runAlgo(testCollector, "files/neudrossenfeld.osm.pbf", "target/neudrossenfeld2-gh",
-                list, "bike2", true, "bike2", "fastest-bike", true);
+                list, "bike2", true, "bike2", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -413,13 +413,9 @@ public class RoutingAlgorithmIT
 
             hopper.importOrLoad();
 
-            FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-            Weighting weighting = new ShortestWeighting();
-            if ("fastest".equalsIgnoreCase(weightCalcStr))
-                weighting = new FastestWeighting(encoder);
-            if ("fastest-bike".equalsIgnoreCase(weightCalcStr))
-                weighting = new PriorityWeighting((BikeCommonFlagEncoder) encoder);
-
+            FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);            
+            Weighting weighting = hopper.createWeighting(weightCalcStr, encoder);
+            
             Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
                     createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, ch, weighting, hopper.getEncodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
