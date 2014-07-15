@@ -789,21 +789,27 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * @param weighting specify e.g. fastest or shortest (or empty for default)
-     * @param encoder
+     * @param encoder the FlagEncoder (to specify the vehicle)
      * @return the weighting to be used for route calculation
      */
-    public Weighting createWeighting( String weighting, FlagEncoder encoder )
+    public Weighting createWeighting( String weightingStr, FlagEncoder encoder )
     {
         // ignore case
-        weighting = weighting.toLowerCase();
-        if ("fastest".equals(weighting))
+        Weighting weighting;
+        weightingStr = weightingStr.toLowerCase();
+        if ("fastest".equals(weightingStr))
         {
             if (encoder instanceof BikeCommonFlagEncoder)
-                return new PriorityWeighting((BikeCommonFlagEncoder) encoder);
+                weighting = new PriorityWeighting((BikeCommonFlagEncoder) encoder);
             else
-                return new FastestWeighting(encoder);
-        }
-        return new ShortestWeighting();
+                weighting = new FastestWeighting(encoder);
+        } else
+            weighting = new ShortestWeighting();
+
+        if (hasTurnCosts())
+            weighting = new TurnWeighting(weighting, encoder);
+
+        return weighting;
     }
 
     @Override

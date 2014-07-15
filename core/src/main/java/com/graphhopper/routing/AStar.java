@@ -17,14 +17,20 @@
  */
 package com.graphhopper.routing;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+
+import java.util.PriorityQueue;
+
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.*;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import java.util.PriorityQueue;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.DistancePlaneProjection;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
 
 /**
  * This class implements the A* algorithm according to
@@ -79,7 +85,10 @@ public class AStar extends AbstractRoutingAlgorithm
         toLon = nodeAccess.getLongitude(to);
         to1 = to;
         currEdge = createEdgeEntry(from, 0);
-        fromMap.put(from, currEdge);
+        if (isTraversalNodeBased())
+        {
+            fromMap.put(from, currEdge);
+        }
         return runAlgo();
     }
 
@@ -97,25 +106,26 @@ public class AStar extends AbstractRoutingAlgorithm
             EdgeIterator iter = explorer.setBaseNode(currVertex);
             while (iter.next())
             {
-                if (!accept(iter))
-                    continue;
-                if (currEdge.edge == iter.getEdge())
+                if (!accept(iter, currEdge.edge))
                     continue;
 
-                int adjNode = iter.getAdjNode();
-                double alreadyVisitedWeight = weighting.calcWeight(iter, false) + currEdge.weightToCompare;
-                AStarEdge nEdge = fromMap.get(adjNode);
+                int neighborNode = iter.getAdjNode();
+                int iterationKey = createIdentifier(iter, false);
+                double alreadyVisitedWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weightToCompare;
+
+                AStarEdge nEdge = fromMap.get(iterationKey);
                 if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight)
                 {
-                    tmpLat = nodeAccess.getLatitude(adjNode);
-                    tmpLon = nodeAccess.getLongitude(adjNode);
+                    tmpLat = nodeAccess.getLatitude(neighborNode);
+                    tmpLon = nodeAccess.getLongitude(neighborNode);
                     currWeightToGoal = dist.calcDist(toLat, toLon, tmpLat, tmpLon);
                     currWeightToGoal = weighting.getMinWeight(currWeightToGoal);
                     distEstimation = alreadyVisitedWeight + currWeightToGoal;
                     if (nEdge == null)
                     {
-                        nEdge = new AStarEdge(iter.getEdge(), adjNode, distEstimation, alreadyVisitedWeight);
-                        fromMap.put(adjNode, nEdge);
+
+                        nEdge = new AStarEdge(iter.getEdge(), neighborNode, distEstimation, alreadyVisitedWeight);
+                        fromMap.put(iterationKey, nEdge);
                     } else
                     {
                         prioQueueOpenSet.remove(nEdge);
@@ -125,7 +135,8 @@ public class AStar extends AbstractRoutingAlgorithm
                     }
                     nEdge.parent = currEdge;
                     prioQueueOpenSet.add(nEdge);
-                    updateBestPath(nEdge, adjNode);
+
+                    updateBestPath(nEdge, iterationKey);
                 }
             }
 
@@ -182,5 +193,12 @@ public class AStar extends AbstractRoutingAlgorithm
     public String getName()
     {
         return "astar";
+    }
+
+    @Override
+    boolean isTraversalModeSupported( TRAVERSAL_MODE aTraversalMode )
+    {
+        return aTraversalMode == TRAVERSAL_MODE.NODE_BASED || // 
+                aTraversalMode == TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE;
     }
 }

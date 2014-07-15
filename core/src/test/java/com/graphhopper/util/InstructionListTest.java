@@ -17,18 +17,20 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.reader.OSMWay;
-import com.graphhopper.routing.Dijkstra;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.ShortestWeighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.NodeAccess;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+
+import com.graphhopper.reader.OSMWay;
+import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.ShortestWeighting;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.NodeAccess;
 import java.util.*;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -98,7 +100,7 @@ public class InstructionListTest
         assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Continue onto 4-7",
                 "Turn left onto 7-8", "Continue onto 8-9", "Turn right", "Finish!"),
                 tmpList);
-        
+
         List<String> distStrings = wayList.createDistances(true);
         assertEquals(Arrays.asList("6.21 mi", "6.21 mi", "6.21 mi", "6.21 mi", "12.43 mi", "6.21 mi", "0 ft"),
                 distStrings);
@@ -128,8 +130,9 @@ public class InstructionListTest
         compare(Arrays.asList(asL(1.2d, 1.0d), asL(1.2d, 1.1), asL(1.1d, 1.1), asL(1.0, 1.1),
                 asL(1.0, 1.2), asL(1.1, 1.3), asL(1.1, 1.4)),
                 wayList.createStartPoints());
-
-        p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestWeighting()).calcPath(6, 2);
+        
+        FlagEncoder carEncoder = carManager.getEncoder("CAR");
+        p = new Dijkstra(g, carEncoder, new ShortestWeighting()).calcPath(6, 2);
         assertEquals(42000, p.getDistance(), 1e-2);
         assertEquals(Helper.createTList(6, 7, 8, 5, 2), p.calcNodes());
 

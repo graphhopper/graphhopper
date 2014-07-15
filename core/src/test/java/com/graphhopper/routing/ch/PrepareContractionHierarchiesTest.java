@@ -38,9 +38,9 @@ import org.junit.Test;
  */
 public class PrepareContractionHierarchiesTest
 {
-    private final Weighting weighting = new ShortestWeighting();
     private final EncodingManager encodingManager = new EncodingManager("CAR");
     private final CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
+    private final Weighting weighting = new ShortestWeighting();
 
     LevelGraph createGraph()
     {
@@ -334,23 +334,24 @@ public class PrepareContractionHierarchiesTest
 
         int tmp = iterTmp1.getEdge();
         EdgeSkipIterState sc1 = g.shortcut(0, 2);
-        sc1.setWeight(w.calcWeight(iterTmp1, false) + w.calcWeight(iter2, false)).setDistance(2 * dist).setFlags(oneDirFlags);
+        int x = EdgeIterator.NO_EDGE;
+        sc1.setWeight(w.calcWeight(iterTmp1, false, x) + w.calcWeight(iter2, false, x)).setDistance(2 * dist).setFlags(oneDirFlags);
         sc1.setSkippedEdges(tmp, iter2.getEdge());
         tmp = sc1.getEdge();
         EdgeSkipIterState sc2 = g.shortcut(0, 3);
-        sc2.setWeight(w.calcWeight(sc1, false) + w.calcWeight(iter3, false)).setDistance(3 * dist).setFlags(oneDirFlags);
+        sc2.setWeight(w.calcWeight(sc1, false, x) + w.calcWeight(iter3, false, x)).setDistance(3 * dist).setFlags(oneDirFlags);
         sc2.setSkippedEdges(tmp, iter3.getEdge());
         tmp = sc2.getEdge();
         sc1 = g.shortcut(0, 4);
-        sc1.setWeight(w.calcWeight(sc2, false) + w.calcWeight(iter4, false)).setDistance(4).setFlags(oneDirFlags);
+        sc1.setWeight(w.calcWeight(sc2, false, x) + w.calcWeight(iter4, false, x)).setDistance(4).setFlags(oneDirFlags);
         sc1.setSkippedEdges(tmp, iter4.getEdge());
         tmp = sc1.getEdge();
         sc2 = g.shortcut(0, 5);
-        sc2.setWeight(w.calcWeight(sc1, false) + w.calcWeight(iter5, false)).setDistance(5).setFlags(oneDirFlags);
+        sc2.setWeight(w.calcWeight(sc1, false, x) + w.calcWeight(iter5, false, x)).setDistance(5).setFlags(oneDirFlags);
         sc2.setSkippedEdges(tmp, iter5.getEdge());
         tmp = sc2.getEdge();
         sc1 = g.shortcut(0, 6);
-        sc1.setWeight(w.calcWeight(sc2, false) + w.calcWeight(iter6, false)).setDistance(6).setFlags(oneDirFlags);
+        sc1.setWeight(w.calcWeight(sc2, false, x) + w.calcWeight(iter6, false, x)).setDistance(6).setFlags(oneDirFlags);
         sc1.setSkippedEdges(tmp, iter6.getEdge());
         g.setLevel(0, 10);
         g.setLevel(6, 9);

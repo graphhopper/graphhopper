@@ -27,6 +27,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +36,11 @@ import java.util.List;
  */
 public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
 {
+    /**
+     * For turn costs we need two directions per edge
+     */
+    public static int HIGHEST_BIT_ONE = 0x80000000;
+
     private EdgeFilter additionalEdgeFilter;
     protected Graph graph;
     protected NodeAccess nodeAccess;
@@ -42,6 +48,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     protected EdgeExplorer outEdgeExplorer;
     protected final Weighting weighting;
     protected final FlagEncoder flagEncoder;
+    private TRAVERSAL_MODE traversalMode = TRAVERSAL_MODE.NODE_BASED;
     private boolean alreadyRun;
 
     /**
@@ -54,6 +61,79 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         this.weighting = weighting;
         this.flagEncoder = encoder;
         setGraph(graph);
+    }
+
+    /**
+     * Sets the mode of traversal.<br>
+     * use {@link TRAVERSAL_MODE#NODE_BASED} for node-based behavior (default), consideration of
+     * turn restrictions might lead to wrong paths<br>
+     * use {@link TRAVERSAL_MODE#EDGE_BASED_DIRECTION_SENSITIVE} for edge-based behavior considering
+     * the directions of edges in order to complete of support turn restrictions and complex P-turns
+     * in the resulting path<br><br>
+     * Be careful: the implementing routing algorithm might not be able to support one of those
+     * traversal modes
+     * <p>
+     * @param traversalMode
+     */
+    public void setTraversalMode( TRAVERSAL_MODE traversalMode )
+    {
+        if (!isTraversalModeSupported(traversalMode))
+            throw new IllegalArgumentException("Traversal mode " + traversalMode + " is not supported by " + getName());
+
+        this.traversalMode = traversalMode;
+    }
+
+    /**
+     * Determines which traversal modes are supported by the routing algorithm. By default, only
+     * node based behavior is supported. The routing algorithm needs to override this method in
+     * order to define its supported traversal behavior.
+     * <p>
+     * @return if the specified traversal mode is supported
+     */
+    boolean isTraversalModeSupported( TRAVERSAL_MODE aTraversalMode )
+    {
+        if (aTraversalMode == TRAVERSAL_MODE.NODE_BASED)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns the identifier to access the map of the shortest weight tree according to the
+     * traversal mode. E.g. returning the adjacent node id in node-based behavior whilst returning
+     * the edge id in edge-based behavior
+     * <p>
+     * @param iter the current {@link EdgeIterator}
+     * @param reverse <code>true</code>, if traversal in backward direction (bidirectional path
+     * searches)
+     * @return the identifier to access the shortest weight tree
+     */
+    protected int createIdentifier( EdgeIterator iter, boolean reverse )
+    {
+        if (traversalMode == TRAVERSAL_MODE.NODE_BASED)
+            return iter.getAdjNode();
+
+        else if (traversalMode == TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE)
+        {
+            int baseNode = iter.getBaseNode(), adjNode = iter.getAdjNode();
+            if (!reverse && baseNode > adjNode || reverse && baseNode < adjNode)
+                return iter.getEdge() | HIGHEST_BIT_ONE;
+
+            return iter.getEdge();
+        }
+
+        throw new IllegalStateException("Traversal mode " + traversalMode + " is not valid");
+    }
+
+    protected boolean isTraversalNodeBased()
+    {
+        return traversalMode == TRAVERSAL_MODE.NODE_BASED;
+    }
+
+    protected boolean isTraversalEdgeBased()
+    {
+        return traversalMode == TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE;
     }
 
     /**
@@ -92,9 +172,9 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         return this;
     }
 
-    protected boolean accept( EdgeIterator iter )
+    protected boolean accept( EdgeIterator iter, int prevOrNextEdgeId )
     {
-        return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
+        return iter.getEdge() != prevOrNextEdgeId && (additionalEdgeFilter == null || additionalEdgeFilter.accept(iter));
     }
 
     protected void updateBestPath( EdgeEntry shortestDE, int currLoc )

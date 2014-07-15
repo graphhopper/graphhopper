@@ -177,7 +177,7 @@ public class TurnCostStorage implements ExtendedStorage
     /**
      * @return turn flags of the specified node and edge properties.
      */
-    public int getTurnCosts( int node, int edgeFrom, int edgeTo )
+    public int getTurnCostsFlags( int node, int edgeFrom, int edgeTo )
     {
         if (edgeFrom != EdgeIterator.NO_EDGE && edgeTo != EdgeIterator.NO_EDGE)
         {

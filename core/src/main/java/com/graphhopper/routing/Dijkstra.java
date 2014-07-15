@@ -17,15 +17,17 @@
  */
 package com.graphhopper.routing;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+
+import java.util.PriorityQueue;
+
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import java.util.PriorityQueue;
 
 /**
  * Implements a single source shortest path algorithm
@@ -59,7 +61,10 @@ public class Dijkstra extends AbstractRoutingAlgorithm
         checkAlreadyRun();
         this.to = to;
         currEdge = createEdgeEntry(from, 0);
-        fromMap.put(from, currEdge);
+        if (isTraversalNodeBased())
+        {            
+            fromMap.put(from, currEdge);
+        }
         return runAlgo();
     }
 
@@ -76,21 +81,18 @@ public class Dijkstra extends AbstractRoutingAlgorithm
             EdgeIterator iter = explorer.setBaseNode(startNode);
             while (iter.next())
             {
-                if (!accept(iter))
-                    continue;
-                // minor speed up
-                if (currEdge.edge == iter.getEdge())
+                if (!accept(iter, currEdge.edge))
                     continue;
 
-                int adjNode = iter.getAdjNode();
-                double tmpWeight = weighting.calcWeight(iter, false) + currEdge.weight;
+                int iterationKey = createIdentifier(iter, false);
+                double tmpWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight;
 
-                EdgeEntry nEdge = fromMap.get(adjNode);
+                EdgeEntry nEdge = fromMap.get(iterationKey);
                 if (nEdge == null)
                 {
-                    nEdge = new EdgeEntry(iter.getEdge(), adjNode, tmpWeight);
+                    nEdge = new EdgeEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight);
                     nEdge.parent = currEdge;
-                    fromMap.put(adjNode, nEdge);
+                    fromMap.put(iterationKey, nEdge);
                     fromHeap.add(nEdge);
                 } else if (nEdge.weight > tmpWeight)
                 {
@@ -101,7 +103,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
                     fromHeap.add(nEdge);
                 }
 
-                updateBestPath(nEdge, startNode);
+                updateBestPath(nEdge, iterationKey);
             }
 
             if (fromHeap.isEmpty())
@@ -138,5 +140,12 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     public int getVisitedNodes()
     {
         return visitedNodes;
+    }
+
+    @Override
+    boolean isTraversalModeSupported( TRAVERSAL_MODE aTraversalMode )
+    {
+        return aTraversalMode == TRAVERSAL_MODE.NODE_BASED || // 
+                aTraversalMode == TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE;
     }
 }

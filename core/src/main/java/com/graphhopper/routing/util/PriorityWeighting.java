@@ -33,11 +33,11 @@ public class PriorityWeighting extends FastestWeighting
     }
 
     @Override
-    public double calcWeight( EdgeIteratorState edge, boolean reverse )
+    public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId )
     {
-        double weight = super.calcWeight(edge, reverse);
+        double weight = super.calcWeight(edgeState, reverse, prevOrNextEdgeId);
         if (Double.isInfinite(weight))
             return Double.POSITIVE_INFINITY;
-        return weight / (0.5 + encoder.getDouble(edge.getFlags(), BikeCommonFlagEncoder.K_PRIORITY));
+        return weight / (0.5 + encoder.getDouble(edgeState.getFlags(), BikeCommonFlagEncoder.K_PRIORITY));
     }
 }

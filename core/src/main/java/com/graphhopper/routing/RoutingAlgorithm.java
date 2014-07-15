@@ -28,6 +28,19 @@ import com.graphhopper.util.NotThreadSafe;
 @NotThreadSafe
 public interface RoutingAlgorithm
 {
+    enum TRAVERSAL_MODE
+    {
+        /**
+         * Nodes are traversed
+         */
+        NODE_BASED,
+        /**
+         * Edges are traversed whilst considering its direction which is required to support complex
+         * P-turns
+         */
+        EDGE_BASED_DIRECTION_SENSITIVE
+    }
+
     /**
      * Calculates the best path between the specified nodes.
      * <p/>
