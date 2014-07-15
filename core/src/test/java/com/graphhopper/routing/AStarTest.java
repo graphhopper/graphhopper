@@ -17,6 +17,14 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.RoutingAlgorithm.TRAVERSAL_MODE;
+import java.util.Arrays;
+import java.util.Collection;
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
@@ -26,8 +34,29 @@ import com.graphhopper.storage.Graph;
 /**
  * @author Peter Karich
  */
+@RunWith(Parameterized.class)
 public class AStarTest extends AbstractRoutingAlgorithmTester
 {
+    /**
+     * Runs the same test with each of the supported traversal modes
+     */
+    @Parameters
+    public static Collection<Object[]> configs()
+    {
+        return Arrays.asList(new Object[][]
+        {
+            { TRAVERSAL_MODE.NODE_BASED },
+            { TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE }
+        });
+    }
+
+    private final TRAVERSAL_MODE traversalMode;
+
+    public AStarTest( TRAVERSAL_MODE traversalMode )
+    {
+        this.traversalMode = traversalMode;
+    }
+
     @Override
     public AlgorithmPreparation prepareGraph( Graph g, final FlagEncoder encoder, final Weighting w )
     {
@@ -36,7 +65,9 @@ public class AStarTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new AStar(_graph, encoder, w);
+                AStar astar = new AStar(_graph, encoder, w);
+                astar.setTraversalMode(traversalMode);
+                return astar;
             }
         }.setGraph(g);
     }

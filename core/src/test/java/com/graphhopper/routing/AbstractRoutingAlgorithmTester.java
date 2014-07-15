@@ -623,6 +623,7 @@ public abstract class AbstractRoutingAlgorithmTester
     @Test
     public void testTwoWeightsPerEdge2()
     {
+        // other direction should be different!
         Graph graph = initEleGraph(createGraph(true));
         Path p = prepareGraph(graph, carEncoder, new ShortestWeighting()).createAlgo().calcPath(0, 10);
         // GHUtility.printEdgeInfo(graph, carEncoder);
@@ -636,10 +637,10 @@ public abstract class AbstractRoutingAlgorithmTester
             }
 
             @Override
-            public double calcWeight( EdgeIteratorState edge, boolean reverse )
+            public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId)
             {
-                int adj = edge.getAdjNode();
-                int base = edge.getBaseNode();
+                int adj = edgeState.getAdjNode();
+                int base = edgeState.getBaseNode();
                 if (reverse)
                 {
                     int tmp = base;
@@ -649,13 +650,13 @@ public abstract class AbstractRoutingAlgorithmTester
 
                 // a 'hill' at node 6
                 if (adj == 6)
-                    return 3 * edge.getDistance();
+                    return 3 * edgeState.getDistance();
                 else if (base == 6)
-                    return edge.getDistance() * 0.9;
+                    return edgeState.getDistance() * 0.9;
                 else if (adj == 4)
-                    return 2 * edge.getDistance();
+                    return 2 * edgeState.getDistance();
 
-                return edge.getDistance() * 0.8;
+                return edgeState.getDistance() * 0.8;
             }
         };
 

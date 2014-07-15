@@ -493,7 +493,7 @@ public class GraphHopper implements GraphHopperAPI
             lockFactory = new SimpleFSLockFactory();
         else
             lockFactory = new NativeFSLockFactory();
-        
+
         int bytesForFlags = args.getInt("graph.bytesForFlags", 4);
         String flagEncoders = args.get("graph.flagEncoders", "CAR");
         encodingManager = new EncodingManager(flagEncoders, bytesForFlags);
@@ -774,19 +774,28 @@ public class GraphHopper implements GraphHopperAPI
     {
         String weighting = (String) weightingParameters.get("weighting");
         weighting = weighting == null ? "" : weighting;
+
+        Weighting result;
+
         if ("shortest".equalsIgnoreCase(weighting))
         {
-            return new ShortestWeighting();
+            result = new ShortestWeighting();
         } else if ("fastest".equalsIgnoreCase(weighting) || weighting.isEmpty())
         {
             if (encoder instanceof BikeCommonFlagEncoder)
-                return new PriorityWeighting(encoder);
+                result = new PriorityWeighting(encoder);
             else
-                return new FastestWeighting(encoder);
+                result = new FastestWeighting(encoder);
         } else
         {
             throw new UnsupportedOperationException("weighting " + weighting + " not supported");
         }
+
+        if (hasTurnCosts())
+        {
+            result = new TurnWeighting(result, encoder);
+        }
+        return result;
     }
 
     @Override

@@ -96,7 +96,8 @@ public class GraphHopperStorage implements GraphStorage
         this(dir, encodingManager, withElevation, new ExtendedStorage.NoExtendedStorage());
     }
 
-    public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation, ExtendedStorage extendedStorage )
+    public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation, 
+            ExtendedStorage extendedStorage )
     {
         // here encoding manager can be null e.g. if we want to load existing graph
         this.encodingManager = encodingManager;
@@ -1551,6 +1552,7 @@ public class GraphHopperStorage implements GraphStorage
         return nodes.isClosed();
     }
 
+    @Override
     public ExtendedStorage getExtendedStorage()
     {
         return extStorage;

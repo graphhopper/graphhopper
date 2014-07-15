@@ -118,6 +118,17 @@ public class RoutingAlgorithmIT
     }
 
     @Test
+    public void testMoscowTurnCosts()
+    {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
+
+        runAlgo(testCollector, "files/moscow.osm.gz", "target/graph-moscow", list, "CAR", true, true, "CAR", "fastest", false);
+
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
     public void testMonacoFastest()
     {
         List<OneRun> list = createMonacoCar();
@@ -390,7 +401,19 @@ public class RoutingAlgorithmIT
 
     void runAlgo( TestAlgoCollector testCollector, String osmFile,
             String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
-            boolean ch, String vehicle, String weightCalcStr, boolean is3D )
+            boolean testAlsoCH, String vehicle, String weightCalcStr, boolean is3D )
+    {
+        runAlgo(testCollector, osmFile, graphFile, forEveryAlgo, importVehicles, testAlsoCH,
+                false, vehicle, weightCalcStr, is3D);
+    }
+
+    /**
+     * @param testAlsoCH if true also the CH algorithms will be tested which needs preparation and
+     * takes a bit longer
+     */
+    void runAlgo( TestAlgoCollector testCollector, String osmFile,
+            String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
+            boolean testAlsoCH, boolean turnCosts, String vehicle, String weightCalcStr, boolean is3D )
     {
         AlgorithmPreparation tmpPrepare = null;
         OneRun tmpOneRun = null;
@@ -404,7 +427,8 @@ public class RoutingAlgorithmIT
                     setOSMFile(osmFile).
                     setCHEnable(false).
                     setGraphHopperLocation(graphFile).
-                    setEncodingManager(new EncodingManager(importVehicles));
+                    setEncodingManager(new EncodingManager(importVehicles)).
+                    setTurnCosts(turnCosts);
             if (is3D)
                 hopper.setElevationProvider(new SRTMProvider().setCacheDir(new File("./files")));
 
@@ -414,7 +438,7 @@ public class RoutingAlgorithmIT
             Weighting weighting = hopper.createWeighting(Weighting.Params.create(weightCalcStr), encoder);
 
             Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
-                    createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, ch, weighting, hopper.getEncodingManager());
+                    createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, testAlsoCH, weighting, hopper.getEncodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
             for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
             {

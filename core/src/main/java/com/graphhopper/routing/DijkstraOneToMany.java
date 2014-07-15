@@ -162,14 +162,12 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             EdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
             while (iter.next())
             {
-                if (!accept(iter))
-                    continue;
                 int adjNode = iter.getAdjNode();
-                // minor speed up
-                if (edgeIds[adjNode] == iter.getEdge())
-                    continue;
+                int prevEdgeId = edgeIds[adjNode];
+                if (!accept(iter, prevEdgeId))
+                    continue;                                
 
-                double tmpWeight = weighting.calcWeight(iter, false) + weights[currNode];
+                double tmpWeight = weighting.calcWeight(iter, false, prevEdgeId) + weights[currNode];
                 if (weights[adjNode] == Double.MAX_VALUE)
                 {
                     parents[adjNode] = currNode;
@@ -218,6 +216,13 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     public int getVisitedNodes()
     {
         return visitedNodes;
+    }
+
+    @Override
+    boolean isTraversalModeSupported( TRAVERSAL_MODE aTraversalMode )
+    {
+        return aTraversalMode == TRAVERSAL_MODE.NODE_BASED || // 
+                aTraversalMode == TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE;
     }
 
     @Override

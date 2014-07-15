@@ -26,7 +26,7 @@ import com.graphhopper.util.Translation;
  * <p/>
  * @author Peter Karich
  */
-public interface FlagEncoder
+public interface FlagEncoder extends TurnCostEncoder
 {
     /**
      * @return the maximum speed in km/h

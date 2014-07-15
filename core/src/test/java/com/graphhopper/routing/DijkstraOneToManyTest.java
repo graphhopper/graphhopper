@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.RoutingAlgorithm.TRAVERSAL_MODE;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -26,15 +27,40 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import java.util.Arrays;
+import java.util.Collection;
 import static org.junit.Assert.*;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 /**
  *
  * @author Peter Karich
  */
+@RunWith(Parameterized.class)
 public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
 {
+    /**
+     * Runs the same test with each of the supported traversal modes
+     */
+    @Parameterized.Parameters
+    public static Collection<Object[]> configs()
+    {
+        return Arrays.asList(new Object[][]
+        {
+            { TRAVERSAL_MODE.NODE_BASED },
+            { TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE }
+        });
+    }
+
+    private final TRAVERSAL_MODE traversalMode;
+
+    public DijkstraOneToManyTest( TRAVERSAL_MODE traversalMode )
+    {
+        this.traversalMode = traversalMode;
+    }
+    
     @Override
     public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final Weighting w )
     {
@@ -43,7 +69,9 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new DijkstraOneToMany(_graph, encoder, w);
+                DijkstraOneToMany dijkstra = new DijkstraOneToMany(_graph, encoder, w);
+                dijkstra.setTraversalMode(traversalMode);
+                return dijkstra;
             }
         }.setGraph(defaultGraph);
     }

@@ -589,7 +589,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 continue;
 
             double v_u_dist = incomingEdges.getDistance();
-            double v_u_weight = prepareWeighting.calcWeight(incomingEdges, true);
+            double v_u_weight = prepareWeighting.calcWeight(incomingEdges, true, EdgeIterator.NO_EDGE);
             int skippedEdge1 = incomingEdges.getEdge();
             int incomingEdgeOrigCount = getOrigEdgeCount(skippedEdge1);
             // collect outgoing nodes (goal-nodes) only once
@@ -607,7 +607,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 // Limit weight as ferries or forbidden edges can increase local search too much.
                 // If we decrease the correct weight we only explore less and introduce more shortcuts.
                 // I.e. no change to accuracy is made.
-                double existingDirectWeight = v_u_weight + prepareWeighting.calcWeight(outgoingEdges, false);
+                double existingDirectWeight = v_u_weight + prepareWeighting.calcWeight(outgoingEdges, false, incomingEdges.getEdge());
                 if (Double.isNaN(existingDirectWeight))
                     throw new IllegalStateException("Weighting should never return NaN values"
                             + ", in:" + getCoords(incomingEdges, g) + ", out:" + getCoords(outgoingEdges, g)
@@ -663,7 +663,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 if (iter.isShortcut() && iter.getAdjNode() == sc.to
                         && PrepareEncoder.canBeOverwritten(iter.getFlags(), sc.flags))
                 {
-                    if (sc.weight >= prepareWeighting.calcWeight(iter, false))
+                    if (sc.weight >= prepareWeighting.calcWeight(iter, false, EdgeIterator.NO_EDGE))
                         continue NEXT_SC;
 
                     if (iter.getEdge() == sc.skippedEdge1 || iter.getEdge() == sc.skippedEdge2)
@@ -960,5 +960,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
             return str + to + ", weight:" + weight + " (" + skippedEdge1 + "," + skippedEdge2 + ")";
         }
+    }
+
+    @Override
+    public String toString()
+    {
+        return "PREPARE|CH|dijkstrabi";
     }
 }

@@ -17,6 +17,14 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.RoutingAlgorithm.TRAVERSAL_MODE;
+import java.util.Arrays;
+import java.util.Collection;
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
@@ -27,8 +35,29 @@ import com.graphhopper.storage.Graph;
  *
  * @author Peter Karich
  */
+@RunWith(Parameterized.class)
 public class DijkstraTest extends AbstractRoutingAlgorithmTester
 {
+    /**
+     * Runs the same test with each of the supported traversal modes
+     */
+    @Parameters
+    public static Collection<Object[]> configs()
+    {
+        return Arrays.asList(new Object[][]
+        {
+            { TRAVERSAL_MODE.NODE_BASED },
+            { TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE }
+        });
+    }
+
+    private TRAVERSAL_MODE traversalMode;
+
+    public DijkstraTest( TRAVERSAL_MODE traversalMode )
+    {
+        this.traversalMode = traversalMode;
+    }
+
     @Override
     public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final Weighting weighting )
     {
@@ -37,7 +66,9 @@ public class DijkstraTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new Dijkstra(_graph, encoder, weighting);
+                Dijkstra dijkstra = new Dijkstra(_graph, encoder, weighting);
+                dijkstra.setTraversalMode(traversalMode);
+                return dijkstra;
             }
         }.setGraph(defaultGraph);
     }
