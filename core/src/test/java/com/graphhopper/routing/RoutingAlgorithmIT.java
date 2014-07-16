@@ -441,7 +441,7 @@ public class RoutingAlgorithmIT
             Weighting weighting = hopper.createWeighting(weightCalcStr, encoder);
 
             Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
-                    createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, testAlsoCH, weighting, hopper.getEncodingManager());
+                    createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, testAlsoCH, turnCosts, weighting, hopper.getEncodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
             for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
             {
@@ -457,10 +457,10 @@ public class RoutingAlgorithmIT
         } catch (Exception ex)
         {
             if (tmpPrepare == null)
-                throw new RuntimeException("cannot handle file " + osmFile, ex);
+                throw new RuntimeException("cannot handle file " + osmFile + ", " + ex.getMessage(), ex);
 
             throw new RuntimeException("cannot handle " + tmpPrepare.toString() + ", for " + tmpOneRun
-                    + ", file " + osmFile, ex);
+                    + ", file " + osmFile + ", " + ex.getMessage(), ex);
         } finally
         {
             // Helper.removeDir(new File(graphFile));
@@ -481,7 +481,7 @@ public class RoutingAlgorithmIT
         String bigFile = "10000EWD.txt.gz";
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
         Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
-                createAlgos(graph, null, encoder, false, new ShortestWeighting(), eManager);
+                createAlgos(graph, null, encoder, false, false, new ShortestWeighting(), eManager);
         for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
         {
             AlgorithmPreparation prepare = entry.getKey();
@@ -542,8 +542,8 @@ public class RoutingAlgorithmIT
             {
                 RoutingAlgorithm[] algos = new RoutingAlgorithm[]
                 {
-                    new AStar(g, carEncoder, weighting),
-                    new DijkstraBidirectionRef(g, carEncoder, weighting)
+                    new AStar(g, carEncoder, weighting, false),
+                    new DijkstraBidirectionRef(g, carEncoder, weighting, false)
                 };
                 for (final RoutingAlgorithm algo : algos)
                 {

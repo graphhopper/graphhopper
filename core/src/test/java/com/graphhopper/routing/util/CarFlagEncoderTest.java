@@ -310,7 +310,7 @@ public class CarFlagEncoderTest
         node.setTag("barrier", "bollard");
         // barrier!
         assertTrue(encoder.handleNodeTags(node) > 0);
-        
+
         // ignore other access tags for absolute barriers!
         node.setTag("motorcar", "yes");
         // still barrier!
@@ -320,65 +320,64 @@ public class CarFlagEncoderTest
     @Test
     public void testTurnFlagEncoding_noCosts()
     {
-        encoder.defineTurnBits(0, 0, 0);
+        FlagEncoder tmpEnc = new CarFlagEncoder(8, 5, 0);
+        EncodingManager em = new EncodingManager(tmpEnc);
 
-        long flags_r0 = encoder.getTurnFlags(true, 0);
-        long flags_0 = encoder.getTurnFlags(false, 0);
+        long flags_r0 = tmpEnc.getTurnFlags(true, 0);
+        long flags_0 = tmpEnc.getTurnFlags(false, 0);
 
-        long flags_r20 = encoder.getTurnFlags(true, 20);
-        long flags_20 = encoder.getTurnFlags(false, 20);
+        long flags_r20 = tmpEnc.getTurnFlags(true, 0);
+        long flags_20 = tmpEnc.getTurnFlags(false, 20);
 
-        assertEquals(0, encoder.getTurnCosts(flags_r0));
-        assertEquals(0, encoder.getTurnCosts(flags_0));
+        assertEquals(0, tmpEnc.getTurnCosts(flags_r0), 1e-1);
+        assertEquals(0, tmpEnc.getTurnCosts(flags_0), 1e-1);
 
-        assertEquals(0, encoder.getTurnCosts(flags_r20));
-        assertEquals(0, encoder.getTurnCosts(flags_20));
+        assertEquals(0, tmpEnc.getTurnCosts(flags_r20), 1e-1);
+        assertEquals(0, tmpEnc.getTurnCosts(flags_20), 1e-1);
 
-        assertTrue(encoder.isTurnRestricted(flags_r0));
-        assertFalse(encoder.isTurnRestricted(flags_0));
+        assertFalse(tmpEnc.isTurnRestricted(flags_r0));
+        assertFalse(tmpEnc.isTurnRestricted(flags_0));
 
-        assertTrue(encoder.isTurnRestricted(flags_r20));
-        assertFalse(encoder.isTurnRestricted(flags_20));
+        assertFalse(tmpEnc.isTurnRestricted(flags_r20));
+        assertFalse(tmpEnc.isTurnRestricted(flags_20));
     }
 
     @Test
     public void testTurnFlagEncoding_withCosts()
     {
-        //arbitrary shift, 7 turn cost bits: [0,127]
-        encoder.defineTurnBits(0, 2, 7);
+        FlagEncoder tmpEncoder = new CarFlagEncoder(8, 5, 127);
+        EncodingManager em = new EncodingManager(tmpEncoder);
 
-        long flags_r0 = encoder.getTurnFlags(true, 0);
-        long flags_0 = encoder.getTurnFlags(false, 0);
+        long flags_r0 = tmpEncoder.getTurnFlags(true, 0);
+        long flags_0 = tmpEncoder.getTurnFlags(false, 0);
+        assertTrue(Double.isInfinite(tmpEncoder.getTurnCosts(flags_r0)));
+        assertEquals(0, tmpEncoder.getTurnCosts(flags_0), 1e-1);
+        assertTrue(tmpEncoder.isTurnRestricted(flags_r0));
+        assertFalse(tmpEncoder.isTurnRestricted(flags_0));
 
-        long flags_r20 = encoder.getTurnFlags(true, 20);
-        long flags_20 = encoder.getTurnFlags(false, 20);
+        long flags_r20 = tmpEncoder.getTurnFlags(true, 0);
+        long flags_20 = tmpEncoder.getTurnFlags(false, 20);
+        assertTrue(Double.isInfinite(tmpEncoder.getTurnCosts(flags_r20)));
+        assertEquals(20, tmpEncoder.getTurnCosts(flags_20), 1e-1);
+        assertTrue(tmpEncoder.isTurnRestricted(flags_r20));
+        assertFalse(tmpEncoder.isTurnRestricted(flags_20));
 
-        long flags_r220 = encoder.getTurnFlags(true, 220);
-        long flags_220 = encoder.getTurnFlags(false, 220);
-
-        assertEquals(0, encoder.getTurnCosts(flags_r0));
-        assertEquals(0, encoder.getTurnCosts(flags_0));
-
-        assertEquals(20, encoder.getTurnCosts(flags_r20));
-        assertEquals(20, encoder.getTurnCosts(flags_20));
-
-        assertEquals(127, encoder.getTurnCosts(flags_r220)); // max costs is 2^7-1 = 127
-        assertEquals(127, encoder.getTurnCosts(flags_220));
-
-        assertTrue(encoder.isTurnRestricted(flags_r0));
-        assertFalse(encoder.isTurnRestricted(flags_0));
-
-        assertTrue(encoder.isTurnRestricted(flags_r20));
-        assertFalse(encoder.isTurnRestricted(flags_20));
-
-        assertTrue(encoder.isTurnRestricted(flags_r220));
-        assertFalse(encoder.isTurnRestricted(flags_220));
+        long flags_r220 = tmpEncoder.getTurnFlags(true, 0);
+        try
+        {
+            tmpEncoder.getTurnFlags(false, 220);
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+        }
+        assertTrue(Double.isInfinite(tmpEncoder.getTurnCosts(flags_r220)));
+        assertTrue(tmpEncoder.isTurnRestricted(flags_r220));
     }
 
     @Test
     public void testMaxValue()
     {
-        CarFlagEncoder instance = new CarFlagEncoder(8, 0.5);
+        CarFlagEncoder instance = new CarFlagEncoder(8, 0.5, 0);
         EncodingManager em = new EncodingManager(instance);
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "motorway_link");
@@ -394,7 +393,7 @@ public class CarFlagEncoderTest
     @Test
     public void testRegisterOnlyOnceAllowed()
     {
-        CarFlagEncoder instance = new CarFlagEncoder(8, 0.5);
+        CarFlagEncoder instance = new CarFlagEncoder(8, 0.5, 0);
         EncodingManager em = new EncodingManager(instance);
         try
         {

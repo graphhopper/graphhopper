@@ -1355,6 +1355,7 @@ public class GraphHopperStorage implements GraphStorage
         checkInit();
         if (edges.loadExisting())
         {
+            // edges loaded properly so the other storages have to load or the file is corrupt.
             if (!nodes.loadExisting())
                 throw new IllegalStateException("cannot load nodes. corrupt file or directory? " + dir);
 

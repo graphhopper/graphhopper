@@ -56,9 +56,9 @@ public class DijkstraBidirection extends AbstractBidirAlgo
     private EdgeWrapper parentRefTo;
     private PathBidir nativeBestPath;
 
-    public DijkstraBidirection( Graph graph, FlagEncoder encoder, Weighting weighting )
+    public DijkstraBidirection( Graph graph, FlagEncoder encoder, Weighting weighting, boolean edgeBased )
     {
-        super(graph, encoder, weighting);
+        super(graph, encoder, weighting, edgeBased);
         initCollections(1000);
     }
 

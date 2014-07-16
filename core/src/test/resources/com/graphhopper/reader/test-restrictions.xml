@@ -167,7 +167,7 @@
         <tag k="restriction" v="only_straight_on"/>
         <tag k="type" v="restriction"/>
     </relation>
-    
+        
     <relation id="1002">
         <member type="way" ref="34" role="from"/>
         <member type="way" ref="38" role="to"/>

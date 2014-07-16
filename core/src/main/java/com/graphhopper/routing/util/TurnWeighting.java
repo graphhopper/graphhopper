@@ -28,31 +28,24 @@ import com.graphhopper.util.EdgeIteratorState;
 public class TurnWeighting implements Weighting
 {
     /**
-     * Storage, which contains the turn flags
-     */
-    protected TurnCostStorage turnCostStorage;
-
-    /**
      * Encoder, which decodes the turn flags
      */
-    protected TurnCostEncoder turnCostEncoder;
-    protected Weighting superWeighting;
-
-    public TurnWeighting( Weighting superWeighting, TurnCostEncoder encoder )
-    {
-        this.turnCostEncoder = encoder;
-        if (turnCostEncoder == null)
-            throw new AssertionError("No encoder set to calculate turn weight");
-    }
+    private final TurnCostEncoder turnCostEncoder;
+    private final TurnCostStorage turnCostStorage;
+    private final Weighting superWeighting;
 
     /**
-     * Initializes the weighting by injecting the turn cost storage
-     * <p>
      * @param turnCostStorage the turn cost storage to be used
      */
-    public void initTurnWeighting( TurnCostStorage turnCostStorage )
+    public TurnWeighting( Weighting superWeighting, TurnCostEncoder encoder, TurnCostStorage tcs )
     {
-        this.turnCostStorage = turnCostStorage;
+        this.turnCostEncoder = encoder;
+        this.superWeighting = superWeighting;
+        this.turnCostStorage = tcs;
+        if (encoder == null)
+            throw new IllegalArgumentException("No encoder set to calculate turn weight");
+        if (tcs == null)
+            throw new RuntimeException("No storage set to calculate turn weight");
     }
 
     @Override
@@ -64,26 +57,20 @@ public class TurnWeighting implements Weighting
     @Override
     public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId )
     {
-        if (turnCostStorage == null)
-            throw new RuntimeException("No storage set to calculate turn weight");
 
-        // TODO
-        // if (edgeFrom==edgeTo){
-        // // prevent U turn in A* bidirectional EDGE_BASED
-        // return Double.MAX_VALUE;
-        // }
         double weight = superWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+        // if prevOrNextEdgeId == -1 return weight
         if (reverse)
-            return weight * calcTurnWeight(edgeState.getEdge(), edgeState.getBaseNode(), prevOrNextEdgeId);
+            return weight + calcTurnWeight(edgeState.getEdge(), edgeState.getBaseNode(), prevOrNextEdgeId);
         else
-            return weight * calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), edgeState.getEdge());
+            return weight + calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), edgeState.getEdge());
     }
 
-    protected double calcTurnWeight( int edgeTo, int nodeVia, int edgeFrom )
+    protected double calcTurnWeight( int edgeFrom, int nodeVia, int edgeTo )
     {
-        int turnFlags = turnCostStorage.getTurnCostsFlags(nodeVia, edgeFrom, edgeTo);
+        long turnFlags = turnCostStorage.getTurnCostsFlags(nodeVia, edgeFrom, edgeTo);
         if (turnCostEncoder.isTurnRestricted(turnFlags))
-            return Double.MAX_VALUE;
+            return Double.POSITIVE_INFINITY;
 
         return turnCostEncoder.getTurnCosts(turnFlags);
     }

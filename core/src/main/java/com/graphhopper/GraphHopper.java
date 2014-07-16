@@ -520,7 +520,7 @@ public class GraphHopper implements GraphHopperAPI
             lockFactory = new SimpleFSLockFactory();
         else
             lockFactory = new NativeFSLockFactory();
-        
+
         // elevation
         String eleProviderStr = args.get("graph.elevation.provider", "noop").toLowerCase();
         boolean eleCalcMean = args.getBool("graph.elevation.calcmean", false);
@@ -777,7 +777,7 @@ public class GraphHopper implements GraphHopperAPI
     {
         FlagEncoder encoder = encodingManager.getSingle();
         PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder,
-                createWeighting(chWeighting, encoder));
+                createWeighting(chWeighting, encoder), turnCosts);
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                 setLazyUpdates(lazyUpdates).
                 setNeighborUpdates(neighborUpdates).
@@ -807,7 +807,9 @@ public class GraphHopper implements GraphHopperAPI
             weighting = new ShortestWeighting();
 
         if (hasTurnCosts())
-            weighting = new TurnWeighting(weighting, encoder);
+        {
+            weighting = new TurnWeighting(weighting, encoder, (TurnCostStorage) graph.getExtendedStorage());
+        }
 
         return weighting;
     }
@@ -910,7 +912,7 @@ public class GraphHopper implements GraphHopperAPI
             } else
             {
                 Weighting weighting = createWeighting(request.getWeighting(), encoder);
-                prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, algoStr, encoder, weighting);
+                prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, algoStr, encoder, weighting, turnCosts);
                 algo = prepare.createAlgo();
             }
 

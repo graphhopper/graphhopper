@@ -43,9 +43,9 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     private int to = -1;
     private EdgeEntry currEdge;
 
-    public Dijkstra( Graph g, FlagEncoder encoder, Weighting weighting )
+    public Dijkstra( Graph g, FlagEncoder encoder, Weighting weighting, boolean edgeBased )
     {
-        super(g, encoder, weighting);
+        super(g, encoder, weighting, edgeBased);
         initCollections(1000);
     }
 
@@ -61,7 +61,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
         checkAlreadyRun();
         this.to = to;
         currEdge = createEdgeEntry(from, 0);
-        if (isTraversalNodeBased())
+        if (!isEdgeBased())
         {            
             fromMap.put(from, currEdge);
         }
@@ -140,12 +140,5 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     public int getVisitedNodes()
     {
         return visitedNodes;
-    }
-
-    @Override
-    boolean isTraversalModeSupported( TRAVERSAL_MODE aTraversalMode )
-    {
-        return aTraversalMode == TRAVERSAL_MODE.NODE_BASED || // 
-                aTraversalMode == TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE;
     }
 }

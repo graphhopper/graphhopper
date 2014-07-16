@@ -47,9 +47,9 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     private int endNode;
     private int currNode, fromNode, to;
 
-    public DijkstraOneToMany( Graph graph, FlagEncoder encoder, Weighting weighting )
+    public DijkstraOneToMany( Graph graph, FlagEncoder encoder, Weighting weighting, boolean edgeBased )
     {
-        super(graph, encoder, weighting);
+        super(graph, encoder, weighting, edgeBased);
 
         parents = new int[graph.getNodes()];
         Arrays.fill(parents, -1);
@@ -212,14 +212,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     {
         return visitedNodes;
     }
-
-    @Override
-    boolean isTraversalModeSupported( TRAVERSAL_MODE aTraversalMode )
-    {
-        return aTraversalMode == TRAVERSAL_MODE.NODE_BASED || // 
-                aTraversalMode == TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE;
-    }
-
+    
     @Override
     public String getName()
     {

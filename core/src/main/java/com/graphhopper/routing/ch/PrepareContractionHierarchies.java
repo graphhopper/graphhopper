@@ -54,6 +54,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final PreparationWeighting prepareWeighting;
     private final FlagEncoder prepareFlagEncoder;
+    private final boolean edgeBased;
     private EdgeSkipExplorer vehicleInExplorer;
     private EdgeSkipExplorer vehicleOutExplorer;
     private EdgeSkipExplorer vehicleAllExplorer;
@@ -82,9 +83,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private double nodesContractedPercentage = 100;
     private double logMessagesPercentage = 20;
 
-    public PrepareContractionHierarchies( FlagEncoder encoder, Weighting weighting )
+    public PrepareContractionHierarchies( FlagEncoder encoder, Weighting weighting, boolean edgeBased )
     {
-        prepareFlagEncoder = encoder;
+        this.edgeBased = edgeBased;
+        this.prepareFlagEncoder = encoder;
         long scFwdDir = encoder.setAccess(0, true, false);
 
         // shortcuts store weight in flags where we assume bit 1 and 2 are used for access restriction
@@ -728,7 +730,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         //   but we need additional priorities array to keep old value which is necessary for update method
         sortedNodes = new GHTreeMapComposed();
         oldPriorities = new int[g.getNodes()];
-        algo = new DijkstraOneToMany(g, prepareFlagEncoder, prepareWeighting);
+        algo = new DijkstraOneToMany(g, prepareFlagEncoder, prepareWeighting, edgeBased);
         return this;
     }
 
@@ -782,7 +784,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     {
         checkGraph();
         // do not change weight within DijkstraBidirectionRef => so use ShortestWeighting
-        DijkstraBidirectionRef dijkstrabi = new DijkstraBidirectionRef(g, prepareFlagEncoder, prepareWeighting)
+        DijkstraBidirectionRef dijkstrabi = new DijkstraBidirectionRef(g, prepareFlagEncoder, prepareWeighting, edgeBased)
         {
             @Override
             protected void initCollections( int nodes )
@@ -831,7 +833,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     public AStarBidirection createAStar()
     {
         checkGraph();
-        AStarBidirection astar = new AStarBidirection(g, prepareFlagEncoder, prepareWeighting)
+        AStarBidirection astar = new AStarBidirection(g, prepareFlagEncoder, prepareWeighting, edgeBased)
         {
             @Override
             protected void initCollections( int nodes )

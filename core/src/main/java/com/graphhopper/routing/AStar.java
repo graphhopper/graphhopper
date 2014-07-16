@@ -51,9 +51,9 @@ public class AStar extends AbstractRoutingAlgorithm
     private double toLat;
     private double toLon;
 
-    public AStar( Graph g, FlagEncoder encoder, Weighting weighting )
+    public AStar( Graph g, FlagEncoder encoder, Weighting weighting, boolean edgeBased )
     {
-        super(g, encoder, weighting);
+        super(g, encoder, weighting, edgeBased);
         initCollections(1000);
         setApproximation(true);
     }
@@ -85,7 +85,7 @@ public class AStar extends AbstractRoutingAlgorithm
         toLon = nodeAccess.getLongitude(to);
         to1 = to;
         currEdge = createEdgeEntry(from, 0);
-        if (isTraversalNodeBased())
+        if (!isEdgeBased())
         {
             fromMap.put(from, currEdge);
         }
@@ -193,12 +193,5 @@ public class AStar extends AbstractRoutingAlgorithm
     public String getName()
     {
         return "astar";
-    }
-
-    @Override
-    boolean isTraversalModeSupported( TRAVERSAL_MODE aTraversalMode )
-    {
-        return aTraversalMode == TRAVERSAL_MODE.NODE_BASED || // 
-                aTraversalMode == TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE;
     }
 }

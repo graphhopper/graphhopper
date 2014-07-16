@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.RoutingAlgorithm.TRAVERSAL_MODE;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -49,16 +48,16 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     {
         return Arrays.asList(new Object[][]
         {
-            { TRAVERSAL_MODE.NODE_BASED },
-            { TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE }
+            { true },
+            { false }
         });
     }
 
-    private final TRAVERSAL_MODE traversalMode;
+    private final boolean edgeBased;
 
-    public DijkstraOneToManyTest( TRAVERSAL_MODE traversalMode )
+    public DijkstraOneToManyTest( boolean eb )
     {
-        this.traversalMode = traversalMode;
+        this.edgeBased = eb;
     }
     
     @Override
@@ -69,9 +68,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                DijkstraOneToMany dijkstra = new DijkstraOneToMany(_graph, encoder, w);
-                dijkstra.setTraversalMode(traversalMode);
-                return dijkstra;
+                return new DijkstraOneToMany(_graph, encoder, w, edgeBased);                
             }
         }.setGraph(defaultGraph);
     }

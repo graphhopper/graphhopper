@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.RoutingAlgorithm.TRAVERSAL_MODE;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -44,17 +43,17 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
     @Parameters
     public static Collection<Object[]> configs() {
             return Arrays.asList(new Object[][] {
-                    { TRAVERSAL_MODE.NODE_BASED },
-                    { TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE }
+                    { true },
+                    { false }
             });
     }
 
 
-    private final TRAVERSAL_MODE traversalMode;
+    private final boolean edgeBased;
     
-    public AStarBidirectionTest(TRAVERSAL_MODE traversalMode)
+    public AStarBidirectionTest(boolean eb)
     {
-        this.traversalMode = traversalMode;
+        this.edgeBased = eb;
     }
     
     @Override
@@ -65,9 +64,7 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                AStarBidirection astarbi = new AStarBidirection(_graph, encoder, w);
-                astarbi.setTraversalMode(traversalMode);
-                return astarbi;
+                return new AStarBidirection(_graph, encoder, w, edgeBased);
             }
         }.setGraph(g);
     }
@@ -75,7 +72,7 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
     @Override
     public void testViaEdges_FromEqualsTo()
     {
-        if (traversalMode == TRAVERSAL_MODE.NODE_BASED)
+        if (!edgeBased)
         {
             super.testViaEdges_FromEqualsTo();
         }
@@ -98,7 +95,7 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
     @Override
     public void testViaEdges_SpecialCases()
     {
-        if (traversalMode == TRAVERSAL_MODE.NODE_BASED)
+        if (!edgeBased)
         {
             super.testViaEdges_SpecialCases();
         }
@@ -110,7 +107,7 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
     public void testCalcIfEmptyWay()
     {
 
-        if (traversalMode == TRAVERSAL_MODE.NODE_BASED)
+        if (!edgeBased)
         {
             super.testCalcIfEmptyWay();
         }

@@ -115,7 +115,7 @@ public class GHUtility
         }
         return list;
     }
-    
+
     public static List<Integer> getEdgeIds( EdgeIterator iter )
     {
         List<Integer> list = new ArrayList<Integer>();

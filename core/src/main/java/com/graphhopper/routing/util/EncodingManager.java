@@ -65,15 +65,13 @@ public class EncodingManager
     }
 
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<AbstractFlagEncoder>();
-    private int edgeEncoderNextBit = 0;
 
     private int nextWayBit = 0;
     private int nextNodeBit = 0;
     private int nextRelBit = 0;
     private int nextTurnBit = 0;
-    private final int bytesForFlags;
-    private final int maxTurnFlagsBits;
-    private final int maxTurnCost;
+    private final int bitsForEdgeFlags;
+    private final int bitsForTurnFlags = 8 * 4;
     private boolean enableInstructions = true;
 
     /**
@@ -90,12 +88,8 @@ public class EncodingManager
 
     public EncodingManager( String flagEncodersStr, int bytesForFlags )
     {
-        this(flagEncodersStr, bytesForFlags, 0);
-    }
-
-    public EncodingManager( String flagEncodersStr, int bytesForFlags, int maxTurnCost )
-    {
-        this(Arrays.asList(readFromEncoderString(defaultEdgeFlagEncoders, flagEncodersStr).toArray(new FlagEncoder[0])), bytesForFlags, maxTurnCost);
+        this(Arrays.asList(readFromEncoderString(defaultEdgeFlagEncoders, flagEncodersStr).
+                toArray(new FlagEncoder[0])), bytesForFlags);
     }
 
     /**
@@ -115,18 +109,15 @@ public class EncodingManager
      */
     public EncodingManager( List<? extends FlagEncoder> flagEncoders )
     {
-        // we don't need turn costs yet, but only restrictions => maxTurnCost = 0
-        this(flagEncoders, 4, 0);
+        this(flagEncoders, 4);
     }
 
-    public EncodingManager( List<? extends FlagEncoder> flagEncoders, int bytesForFlags, int maxTurnCost )
+    public EncodingManager( List<? extends FlagEncoder> flagEncoders, int bytesForFlags )
     {
         if (bytesForFlags != 4 && bytesForFlags != 8)
             throw new IllegalStateException("For 'flags' currently only 4 or 8 bytes supported");
 
-        this.maxTurnCost = maxTurnCost;
-        this.bytesForFlags = bytesForFlags * 8;
-        this.maxTurnFlagsBits = bytesForFlags * 8;
+        this.bitsForEdgeFlags = bytesForFlags * 8;
 
         Collections.sort(flagEncoders, new Comparator<FlagEncoder>()
         {
@@ -144,10 +135,11 @@ public class EncodingManager
 
     public int getBytesForFlags()
     {
-        return bytesForFlags / 8;
+        return bitsForEdgeFlags / 8;
     }
 
-    private static List<FlagEncoder> readFromEncoderString( Map<String, String> defaultEncoders, String encoderList )
+    private static List<FlagEncoder> readFromEncoderString( Map<String, String> defaultEncoders,
+            String encoderList )
     {
         String[] entries = encoderList.split(",");
         List<FlagEncoder> resultEncoders = new ArrayList<FlagEncoder>();
@@ -174,7 +166,8 @@ public class EncodingManager
             {
                 @SuppressWarnings("unchecked")
                 Class<FlagEncoder> cls = (Class<FlagEncoder>) Class.forName(className);
-                resultEncoders.add((FlagEncoder) cls.getDeclaredConstructor().newInstance());
+                FlagEncoder fe = (FlagEncoder) cls.getDeclaredConstructor().newInstance();
+                resultEncoders.add(fe);
             } catch (Exception e)
             {
                 throw new IllegalArgumentException("Cannot instantiate class " + className, e);
@@ -189,33 +182,30 @@ public class EncodingManager
     private void registerEncoder( AbstractFlagEncoder encoder )
     {
         int encoderCount = edgeEncoders.size();
-        int usedBits = encoder.defineNodeBits(encoderCount, edgeEncoderNextBit);
-        if (usedBits > bytesForFlags)
-            throw new IllegalArgumentException(String.format(ERR, bytesForFlags, "node"));
+        int usedBits = encoder.defineNodeBits(encoderCount, nextNodeBit);
+        if (usedBits > bitsForEdgeFlags)
+            throw new IllegalArgumentException(String.format(ERR, bitsForEdgeFlags, "node"));
         encoder.setNodeBitMask(usedBits - nextNodeBit, nextNodeBit);
         nextNodeBit = usedBits;
 
         usedBits = encoder.defineWayBits(encoderCount, nextWayBit);
-        if (usedBits > bytesForFlags)
-            throw new IllegalArgumentException(String.format(ERR, bytesForFlags, "way") + WAY_ERR);
+        if (usedBits > bitsForEdgeFlags)
+            throw new IllegalArgumentException(String.format(ERR, bitsForEdgeFlags, "way") + WAY_ERR);
         encoder.setWayBitMask(usedBits - nextWayBit, nextWayBit);
         nextWayBit = usedBits;
 
         usedBits = encoder.defineRelationBits(encoderCount, nextRelBit);
-        if (usedBits > bytesForFlags)
-            throw new IllegalArgumentException(String.format(ERR, bytesForFlags, "relation"));
+        if (usedBits > bitsForEdgeFlags)
+            throw new IllegalArgumentException(String.format(ERR, bitsForEdgeFlags, "relation"));
         encoder.setRelBitMask(usedBits - nextRelBit, nextRelBit);
         nextRelBit = usedBits;
 
-        edgeEncoderNextBit = usedBits;
-
         // turn flag bits are independent from edge encoder bits
-        usedBits = encoder.defineTurnBits(encoderCount, nextTurnBit, determineRequiredBits(maxTurnCost));
-        if (usedBits > maxTurnFlagsBits)
-            throw new IllegalArgumentException(String.format(ERR, bytesForFlags, "turn"));
+        usedBits = encoder.defineTurnBits(encoderCount, nextTurnBit);
+        if (usedBits > bitsForTurnFlags)
+            throw new IllegalArgumentException(String.format(ERR, bitsForEdgeFlags, "turn"));
         nextTurnBit = usedBits;
 
-        //everything okay, add encoder
         edgeEncoders.add(encoder);
     }
 

@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * @author Peter Karich
  */
 public class Helper
-{    
+{
     private static final DistanceCalc dce = new DistanceCalcEarth();
     private static final Logger logger = LoggerFactory.getLogger(Helper.class);
     public static Charset UTF_CS = Charset.forName("UTF-8");
@@ -72,6 +72,15 @@ public class Helper
     static String packageToPath( Package pkg )
     {
         return pkg.getName().replaceAll("\\.", File.separator);
+    }
+
+    public static int countBitValue( int maxTurnCosts )
+    {
+        double val = Math.log(maxTurnCosts) / Math.log(2);
+        int intVal = (int) val;
+        if (val == intVal)
+            return intVal;
+        return intVal + 1;
     }
 
     private Helper()
@@ -435,7 +444,7 @@ public class Helper
     {
         return Math.round(value * 1e6) / 1e6;
     }
-    
+
     public static final double round4( double value )
     {
         return Math.round(value * 1e4) / 1e4;

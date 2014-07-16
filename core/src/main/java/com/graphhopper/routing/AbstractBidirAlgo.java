@@ -45,9 +45,9 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
 
     abstract boolean fillEdgesTo();
 
-    public AbstractBidirAlgo( Graph graph, FlagEncoder encoder, Weighting weighting )
+    public AbstractBidirAlgo( Graph graph, FlagEncoder encoder, Weighting weighting, boolean edgeBased )
     {
-        super(graph, encoder, weighting);
+        super(graph, encoder, weighting, edgeBased);
     }
 
     @Override
