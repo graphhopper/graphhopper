@@ -68,7 +68,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     @Override
     public PrepareContractionHierarchies prepareGraph( Graph g, FlagEncoder encoder, Weighting w )
     {
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(encoder, w).setGraph(g);
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(encoder, w, false).setGraph(g);
         // hack: prepare matrixgraph only once
         if (g != preparedMatrixGraph)
             ch.doWork();
@@ -114,7 +114,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         g2.setLevel(7, 6);
         g2.setLevel(0, 7);
 
-        Path p = new PrepareContractionHierarchies(encoder, new ShortestWeighting()).
+        Path p = new PrepareContractionHierarchies(encoder, new ShortestWeighting(), false).
                 setGraph(g2).createAlgo().calcPath(0, 7);
 
         assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());

@@ -751,7 +751,7 @@ public class GraphHopper implements GraphHopperAPI
     {
         FlagEncoder encoder = encodingManager.getSingle();
         PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder,
-                createWeighting(Weighting.Params.create(chWeighting), encoder));
+                createWeighting(Weighting.Params.create(chWeighting), encoder), turnCosts);
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                 setLazyUpdates(lazyUpdates).
                 setNeighborUpdates(neighborUpdates).
@@ -793,7 +793,7 @@ public class GraphHopper implements GraphHopperAPI
 
         if (hasTurnCosts())
         {
-            result = new TurnWeighting(result, encoder);
+            result = new TurnWeighting(result, encoder, (TurnCostStorage) graph.getExtendedStorage());
         }
         return result;
     }
@@ -896,7 +896,7 @@ public class GraphHopper implements GraphHopperAPI
             } else
             {
                 Weighting weighting = createWeighting(request.getHints(), encoder);
-                prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, algoStr, encoder, weighting);
+                prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, algoStr, encoder, weighting, turnCosts);
                 algo = prepare.createAlgo();
             }
 

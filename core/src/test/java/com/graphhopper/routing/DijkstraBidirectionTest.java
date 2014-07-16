@@ -33,7 +33,7 @@ public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new DijkstraBidirection(_graph, encoder, w);
+                return new DijkstraBidirection(_graph, encoder, w, false);
             }
         }.setGraph(defaultGraph);
     }

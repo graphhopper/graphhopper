@@ -75,9 +75,9 @@ public class AStarBidirection extends AbstractBidirAlgo
     private GHPoint toCoord;
     protected PathBidirRef bestPath;
 
-    public AStarBidirection( Graph graph, FlagEncoder encoder, Weighting weighting )
+    public AStarBidirection( Graph graph, FlagEncoder encoder, Weighting weighting, boolean edgeBased )
     {
-        super(graph, encoder, weighting);
+        super(graph, encoder, weighting, edgeBased);
         int nodes = Math.max(20, graph.getNodes());
         initCollections(nodes);
 
@@ -130,7 +130,7 @@ public class AStarBidirection extends AbstractBidirAlgo
     public void initFrom( int from, double dist )
     {
         currFrom = createEdgeEntry(from, dist);
-        if (isTraversalNodeBased())
+        if (!isEdgeBased())
         {
             bestWeightMapFrom.put(from, currFrom);
         }
@@ -147,7 +147,7 @@ public class AStarBidirection extends AbstractBidirAlgo
     public void initTo( int to, double dist )
     {
         currTo = createEdgeEntry(to, dist);
-        if (isTraversalNodeBased())
+        if (!isEdgeBased())
         {
             bestWeightMapTo.put(to, currTo);
         }
@@ -272,7 +272,7 @@ public class AStarBidirection extends AbstractBidirAlgo
             return;
 
         boolean reverse = bestWeightMapFrom == bestWeightMapOther;
-        if (isTraversalEdgeBased())
+        if (isEdgeBased())
         {
             // prevents the path to contain the edge at the meeting point twice in edge-based traversal
             if (entryOther.edge == shortestDE.edge)
@@ -311,12 +311,5 @@ public class AStarBidirection extends AbstractBidirAlgo
     public String getName()
     {
         return "astarbi";
-    }
-
-    @Override
-    boolean isTraversalModeSupported( TRAVERSAL_MODE aTraversalMode )
-    {
-        return aTraversalMode == TRAVERSAL_MODE.NODE_BASED ||// 
-                aTraversalMode == TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE;
     }
 }

@@ -27,8 +27,14 @@ import com.graphhopper.reader.OSMWay;
  */
 public class BikeFlagEncoder extends BikeCommonFlagEncoder
 {
-    BikeFlagEncoder()
+    public BikeFlagEncoder()
     {
+        this(4, 2, 0);
+    }
+
+    public BikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
+    {
+        super(speedBits, speedFactor, maxTurnCosts);
         addPushingSection("path");
         addPushingSection("footway");
         addPushingSection("pedestrian");

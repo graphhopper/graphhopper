@@ -239,7 +239,7 @@ public class OSMReader implements DataReader
     private TIntLongMap getEdgeIdToOsmWayIdMap()
     {
         if (edgeIdToOsmWayIdMap == null)
-            edgeIdToOsmWayIdMap = new TIntLongHashMap(getOsmWayIdSet().size());
+            edgeIdToOsmWayIdMap = new TIntLongHashMap(getOsmWayIdSet().size(), 0.5f, -1, -1);
 
         return edgeIdToOsmWayIdMap;
     }
@@ -318,7 +318,7 @@ public class OSMReader implements DataReader
             // logger.info("storage nodes:" + storage.nodes() + " vs. graph nodes:" + storage.getGraph().nodes());
         } catch (Exception ex)
         {
-            throw new RuntimeException("Couldn't process file " + osmFile, ex);
+            throw new RuntimeException("Couldn't process file " + osmFile + ", error: " + ex.getMessage(), ex);
         } finally
         {
             Helper.close(in);
@@ -447,10 +447,11 @@ public class OSMReader implements DataReader
                 ExtendedStorage extendedStorage = graphStorage.getExtendedStorage();
                 if (extendedStorage instanceof TurnCostStorage)
                 {
+                    TurnCostStorage tcs = (TurnCostStorage) extendedStorage;
                     Collection<TurnCostTableEntry> entries = encodingManager.analyzeTurnRelation(turnRelation, this);
                     for (TurnCostTableEntry entry : entries)
                     {
-                        ((TurnCostStorage) extendedStorage).setTurnCosts(entry.nodeViaNode, entry.edgeFrom, entry.edgeTo, (int) entry.flags);
+                        tcs.addTurnInfo(entry.nodeViaNode, entry.edgeFrom, entry.edgeTo, entry.flags);
                     }
                 }
             }

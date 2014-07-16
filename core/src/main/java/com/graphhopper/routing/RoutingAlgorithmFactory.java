@@ -26,39 +26,44 @@ import com.graphhopper.storage.Graph;
  */
 public class RoutingAlgorithmFactory
 {
-    private String algoStr;
-    private boolean approx;
+    private final String algoStr;
+    private final boolean approx;
+    private final boolean edgeBased;
 
     /**
      * @param algo possible values are astar (A* algorithm), astarbi (bidirectional A*) dijkstra
      * (Dijkstra), dijkstrabi and dijkstraNativebi (a bit faster bidirectional Dijkstra).
      */
-    public RoutingAlgorithmFactory( String algo, boolean approx )
+    public RoutingAlgorithmFactory( String algo, boolean approx, boolean edgeBased )
     {
         this.algoStr = algo;
         this.approx = approx;
+        this.edgeBased = edgeBased;
     }
 
     public RoutingAlgorithm createAlgo( Graph g, FlagEncoder encoder, Weighting weighting )
     {
+        AbstractRoutingAlgorithm algo;
         if ("dijkstrabi".equalsIgnoreCase(algoStr))
         {
-            return new DijkstraBidirectionRef(g, encoder, weighting);
+            algo = new DijkstraBidirectionRef(g, encoder, weighting, edgeBased);
         } else if ("dijkstraNativebi".equalsIgnoreCase(algoStr))
         {
-            return new DijkstraBidirection(g, encoder, weighting);
+            algo = new DijkstraBidirection(g, encoder, weighting, edgeBased);
         } else if ("dijkstra".equalsIgnoreCase(algoStr))
         {
-            return new Dijkstra(g, encoder, weighting);
+            algo = new Dijkstra(g, encoder, weighting, edgeBased);
         } else if ("astarbi".equalsIgnoreCase(algoStr))
         {
-            return new AStarBidirection(g, encoder, weighting).setApproximation(approx);
+            algo = new AStarBidirection(g, encoder, weighting, edgeBased).setApproximation(approx);
         } else if ("dijkstraOneToMany".equalsIgnoreCase(algoStr))
         {
-            return new DijkstraOneToMany(g, encoder, weighting);
+            algo = new DijkstraOneToMany(g, encoder, weighting, edgeBased);
         } else
         {
-            return new AStar(g, encoder, weighting);
+            algo = new AStar(g, encoder, weighting, edgeBased);
         }
+        
+        return algo;
     }
 }

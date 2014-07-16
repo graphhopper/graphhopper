@@ -49,9 +49,9 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     protected PathBidirRef bestPath;
     private boolean updateBestPath = true;
 
-    public DijkstraBidirectionRef( Graph graph, FlagEncoder encoder, Weighting weighting )
+    public DijkstraBidirectionRef( Graph graph, FlagEncoder encoder, Weighting weighting, boolean edgeBased )
     {
-        super(graph, encoder, weighting);
+        super(graph, encoder, weighting, edgeBased);
         initCollections(1000);
     }
 
@@ -68,7 +68,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     public void initFrom( int from, double dist )
     {
         currFrom = createEdgeEntry(from, dist);
-        if (isTraversalNodeBased())
+        if (!isEdgeBased())
         {
             bestWeightMapFrom.put(from, currFrom);
         }
@@ -84,7 +84,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     public void initTo( int to, double dist )
     {
         currTo = createEdgeEntry(to, dist);
-        if (isTraversalNodeBased())
+        if (!isEdgeBased())
         {
             bestWeightMapTo.put(to, currTo);
         }
@@ -196,7 +196,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
             return;
 
         boolean reverse = bestWeightMapFrom == bestWeightMapOther;
-        if (isTraversalEdgeBased())
+        if (isEdgeBased())
         {
             // prevents the path to contain the edge at the meeting point twice in edge-based traversal
             if (entryOther.edge == shortestEE.edge)
@@ -278,12 +278,5 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     void setBestPath( PathBidirRef bestPath )
     {
         this.bestPath = bestPath;
-    }
-
-    @Override
-    boolean isTraversalModeSupported( TRAVERSAL_MODE aTraversalMode )
-    {
-        return aTraversalMode == TRAVERSAL_MODE.NODE_BASED || // 
-                aTraversalMode == TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE;
     }
 }

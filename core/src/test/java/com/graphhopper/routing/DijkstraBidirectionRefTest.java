@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.RoutingAlgorithm.TRAVERSAL_MODE;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -46,16 +45,16 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
     {
         return Arrays.asList(new Object[][]
         {
-            { TRAVERSAL_MODE.NODE_BASED },
-            { TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE }
+            { true },
+            { false }
         });
     }
 
-    private final TRAVERSAL_MODE traversalMode;
+    private final boolean edgeBased;
 
-    public DijkstraBidirectionRefTest( TRAVERSAL_MODE traversalMode )
+    public DijkstraBidirectionRefTest( boolean eb )
     {
-        this.traversalMode = traversalMode;
+        this.edgeBased = eb;
     }
 
     @Override
@@ -66,9 +65,7 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                DijkstraBidirectionRef dijkstrabi = new DijkstraBidirectionRef(_graph, encoder, w);
-                dijkstrabi.setTraversalMode(traversalMode);
-                return dijkstrabi;
+                return new DijkstraBidirectionRef(_graph, encoder, w, edgeBased);
             }
         }.setGraph(defaultGraph);
     }
@@ -77,7 +74,7 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
     @Override
     public void testViaEdges_FromEqualsTo()
     {
-        if (traversalMode == TRAVERSAL_MODE.NODE_BASED)
+        if (!edgeBased)
         {
             super.testViaEdges_FromEqualsTo();
         }
@@ -100,7 +97,7 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
     @Override
     public void testViaEdges_SpecialCases()
     {
-        if (traversalMode == TRAVERSAL_MODE.NODE_BASED)
+        if (!edgeBased)
         {
             super.testViaEdges_SpecialCases();
         }
@@ -112,7 +109,7 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
     public void testCalcIfEmptyWay()
     {
 
-        if (traversalMode == TRAVERSAL_MODE.NODE_BASED)
+        if (!edgeBased)
         {
             super.testCalcIfEmptyWay();
         }

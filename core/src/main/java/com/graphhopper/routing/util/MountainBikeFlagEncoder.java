@@ -31,7 +31,7 @@ import java.util.TreeMap;
  */
 public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
 {
-    MountainBikeFlagEncoder()
+    public MountainBikeFlagEncoder()
     {
         setTrackTypeSpeed("grade1", 18); // paved
         setTrackTypeSpeed("grade2", 16); // now unpaved ...

@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.RoutingAlgorithm.TRAVERSAL_MODE;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -46,16 +45,16 @@ public class DijkstraTest extends AbstractRoutingAlgorithmTester
     {
         return Arrays.asList(new Object[][]
         {
-            { TRAVERSAL_MODE.NODE_BASED },
-            { TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE }
+            { true },
+            { false }
         });
     }
 
-    private TRAVERSAL_MODE traversalMode;
+    private boolean edgeBased;
 
-    public DijkstraTest( TRAVERSAL_MODE traversalMode )
+    public DijkstraTest( boolean eb )
     {
-        this.traversalMode = traversalMode;
+        this.edgeBased = eb;
     }
 
     @Override
@@ -66,9 +65,7 @@ public class DijkstraTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                Dijkstra dijkstra = new Dijkstra(_graph, encoder, weighting);
-                dijkstra.setTraversalMode(traversalMode);
-                return dijkstra;
+                return new Dijkstra(_graph, encoder, weighting, edgeBased);
             }
         }.setGraph(defaultGraph);
     }

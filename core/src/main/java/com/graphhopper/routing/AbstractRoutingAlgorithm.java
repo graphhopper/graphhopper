@@ -48,55 +48,22 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     protected EdgeExplorer outEdgeExplorer;
     protected final Weighting weighting;
     protected final FlagEncoder flagEncoder;
-    private TRAVERSAL_MODE traversalMode = TRAVERSAL_MODE.NODE_BASED;
+    private final boolean edgeBased;
     private boolean alreadyRun;
 
     /**
      * @param graph specifies the graph where this algorithm will run on
      * @param encoder sets the used vehicle (bike, car, foot)
      * @param weighting set the used weight calculation (e.g. fastest, shortest).
+     * @param edgeBased if true edges are traversed whilst considering its direction which is
+     * required to support turn costs and restrictions
      */
-    public AbstractRoutingAlgorithm( Graph graph, FlagEncoder encoder, Weighting weighting )
+    public AbstractRoutingAlgorithm( Graph graph, FlagEncoder encoder, Weighting weighting, boolean edgeBased )
     {
         this.weighting = weighting;
         this.flagEncoder = encoder;
+        this.edgeBased = edgeBased;
         setGraph(graph);
-    }
-
-    /**
-     * Sets the mode of traversal.<br>
-     * use {@link TRAVERSAL_MODE#NODE_BASED} for node-based behavior (default), consideration of
-     * turn restrictions might lead to wrong paths<br>
-     * use {@link TRAVERSAL_MODE#EDGE_BASED_DIRECTION_SENSITIVE} for edge-based behavior considering
-     * the directions of edges in order to complete of support turn restrictions and complex P-turns
-     * in the resulting path<br><br>
-     * Be careful: the implementing routing algorithm might not be able to support one of those
-     * traversal modes
-     * <p>
-     * @param traversalMode
-     */
-    public void setTraversalMode( TRAVERSAL_MODE traversalMode )
-    {
-        if (!isTraversalModeSupported(traversalMode))
-            throw new IllegalArgumentException("Traversal mode " + traversalMode + " is not supported by " + getName());
-
-        this.traversalMode = traversalMode;
-    }
-
-    /**
-     * Determines which traversal modes are supported by the routing algorithm. By default, only
-     * node based behavior is supported. The routing algorithm needs to override this method in
-     * order to define its supported traversal behavior.
-     * <p>
-     * @return if the specified traversal mode is supported
-     */
-    boolean isTraversalModeSupported( TRAVERSAL_MODE aTraversalMode )
-    {
-        if (aTraversalMode == TRAVERSAL_MODE.NODE_BASED)
-        {
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -111,10 +78,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
      */
     protected int createIdentifier( EdgeIterator iter, boolean reverse )
     {
-        if (traversalMode == TRAVERSAL_MODE.NODE_BASED)
-            return iter.getAdjNode();
-
-        else if (traversalMode == TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE)
+        if (edgeBased)
         {
             int baseNode = iter.getBaseNode(), adjNode = iter.getAdjNode();
             if (!reverse && baseNode > adjNode || reverse && baseNode < adjNode)
@@ -123,17 +87,12 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
             return iter.getEdge();
         }
 
-        throw new IllegalStateException("Traversal mode " + traversalMode + " is not valid");
+        return iter.getAdjNode();
     }
 
-    protected boolean isTraversalNodeBased()
+    protected boolean isEdgeBased()
     {
-        return traversalMode == TRAVERSAL_MODE.NODE_BASED;
-    }
-
-    protected boolean isTraversalEdgeBased()
-    {
-        return traversalMode == TRAVERSAL_MODE.EDGE_BASED_DIRECTION_SENSITIVE;
+        return edgeBased;
     }
 
     /**
@@ -174,7 +133,10 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
 
     protected boolean accept( EdgeIterator iter, int prevOrNextEdgeId )
     {
-        return iter.getEdge() != prevOrNextEdgeId && (additionalEdgeFilter == null || additionalEdgeFilter.accept(iter));
+        if (!edgeBased && iter.getEdge() == prevOrNextEdgeId)
+            return false;
+
+        return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
     }
 
     protected void updateBestPath( EdgeEntry shortestDE, int currLoc )

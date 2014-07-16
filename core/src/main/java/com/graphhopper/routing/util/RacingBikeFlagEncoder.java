@@ -29,7 +29,7 @@ import java.util.TreeMap;
  */
 public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
 {
-    RacingBikeFlagEncoder()
+    public RacingBikeFlagEncoder()
     {
         preferHighwayTags.add("road");
         preferHighwayTags.add("secondary");

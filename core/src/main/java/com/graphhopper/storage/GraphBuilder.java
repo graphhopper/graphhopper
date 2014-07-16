@@ -32,6 +32,7 @@ public class GraphBuilder
     private boolean store;
     private boolean level;
     private boolean elevation;
+    private boolean turnCosts;
     private long byteCapacity = 100;
 
     public GraphBuilder( EncodingManager encodingManager )
@@ -71,6 +72,12 @@ public class GraphBuilder
     public GraphBuilder setExpectedSize( byte cap )
     {
         this.byteCapacity = cap;
+        return this;
+    }
+
+    public GraphBuilder setTurnCosts( boolean turnCosts )
+    {
+        this.turnCosts = turnCosts;
         return this;
     }
 
@@ -115,7 +122,12 @@ public class GraphBuilder
         if (level)
             graph = new LevelGraphStorage(dir, encodingManager, elevation);
         else
-            graph = new GraphHopperStorage(dir, encodingManager, elevation);
+        {
+            if (turnCosts)
+                graph = new GraphHopperStorage(dir, encodingManager, elevation, new TurnCostStorage());
+            else
+                graph = new GraphHopperStorage(dir, encodingManager, elevation);
+        }
 
         return graph;
     }

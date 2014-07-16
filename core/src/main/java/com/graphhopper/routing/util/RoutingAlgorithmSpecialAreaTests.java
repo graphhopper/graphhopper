@@ -77,7 +77,7 @@ public class RoutingAlgorithmSpecialAreaTests
         CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
         boolean ch = true;
         Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = createAlgos(unterfrankenGraph, idx,
-                carEncoder, ch, new ShortestWeighting(), encodingManager);
+                carEncoder, ch, false, new ShortestWeighting(), encodingManager);
         EdgeFilter ef = new DefaultEdgeFilter(carEncoder);
 
         for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
@@ -115,21 +115,21 @@ public class RoutingAlgorithmSpecialAreaTests
     }
 
     public static Collection<Entry<AlgorithmPreparation, LocationIndex>> createAlgos( Graph g,
-            LocationIndex idx, FlagEncoder encoder, boolean withCh, Weighting weighting, EncodingManager manager )
+            LocationIndex idx, FlagEncoder encoder, boolean withCh, boolean edgeBased, Weighting weighting, EncodingManager manager )
     {
         List<Entry<AlgorithmPreparation, LocationIndex>> prepare = new ArrayList<Entry<AlgorithmPreparation, LocationIndex>>();
-        prepare.add(new ME(createAlgoPrepare(g, "astar", encoder, weighting), idx));
-        // prepare.add(new ME(createAlgoPrepare(g, "dijkstraOneToMany", encoder, weighting), idx));
-        prepare.add(new ME(createAlgoPrepare(g, "astarbi", encoder, weighting), idx));
-        prepare.add(new ME(createAlgoPrepare(g, "dijkstraNativebi", encoder, weighting), idx));
-        prepare.add(new ME(createAlgoPrepare(g, "dijkstrabi", encoder, weighting), idx));
-        prepare.add(new ME(createAlgoPrepare(g, "dijkstra", encoder, weighting), idx));
+        prepare.add(new ME(createAlgoPrepare(g, "astar", encoder, weighting, edgeBased), idx));
+        // prepare.add(new ME(createAlgoPrepare(g, "dijkstraOneToMany", encoder, weighting, edgeBased), idx));
+        prepare.add(new ME(createAlgoPrepare(g, "astarbi", encoder, weighting, edgeBased), idx));
+        prepare.add(new ME(createAlgoPrepare(g, "dijkstraNativebi", encoder, weighting, edgeBased), idx));
+        prepare.add(new ME(createAlgoPrepare(g, "dijkstrabi", encoder, weighting, edgeBased), idx));
+        prepare.add(new ME(createAlgoPrepare(g, "dijkstra", encoder, weighting, edgeBased), idx));
 
         if (withCh)
         {
             LevelGraph graphCH = (LevelGraph) ((GraphStorage) g).copyTo(new GraphBuilder(manager).
                     set3D(g.getNodeAccess().is3D()).levelGraphCreate());
-            PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(encoder, weighting).
+            PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(encoder, weighting, edgeBased).
                     setGraph(graphCH);
             prepareCH.doWork();
             LocationIndex idxCH = new LocationIndexTreeSC(graphCH, new RAMDirectory()).prepareIndex();
