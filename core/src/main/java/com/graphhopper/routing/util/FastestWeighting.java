@@ -20,19 +20,25 @@ package com.graphhopper.routing.util;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
- * Calculates the fastest route with the specified vehicle (VehicleEncoder).
+ * Calculates the fastest route with the specified vehicle (VehicleEncoder). Calculates the weight
+ * in seconds.
  * <p/>
  * @author Peter Karich
  */
 public class FastestWeighting implements Weighting
 {
+    /**
+     * Converting to seconds is not necessary but makes adding other penalities easier (e.g. turn
+     * costs or traffic light costs etc)
+     */
+    protected final static double SPEED_CONV = 3.6;
     protected final FlagEncoder encoder;
     private final double maxSpeed;
 
     public FastestWeighting( FlagEncoder encoder )
     {
         this.encoder = encoder;
-        maxSpeed = encoder.getMaxSpeed();
+        maxSpeed = encoder.getMaxSpeed() * SPEED_CONV;
     }
 
     @Override
@@ -47,7 +53,7 @@ public class FastestWeighting implements Weighting
         double speed = reverse ? encoder.getReverseSpeed(edge.getFlags()) : encoder.getSpeed(edge.getFlags());
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
-        return edge.getDistance() / speed;
+        return edge.getDistance() / (speed * SPEED_CONV);
     }
 
     @Override

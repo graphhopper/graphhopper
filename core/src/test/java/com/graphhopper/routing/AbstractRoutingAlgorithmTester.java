@@ -617,7 +617,7 @@ public abstract class AbstractRoutingAlgorithmTester
 //        assertEquals(Helper.createTList(13, 0, 1, 2, 11, 7, 10, 12), p.calcNodes());
         assertEquals(85124371, p.getMillis());
         assertEquals(425622, p.getDistance(), 1);
-        assertEquals(23646, p.getWeight(), 1);
+        assertEquals(6568, p.getWeight(), 1);
     }
 
     @Test
