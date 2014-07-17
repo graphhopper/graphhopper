@@ -102,7 +102,7 @@ public class Measurement
         if (!hopper.load(graphLocation))
             throw new IllegalStateException("Cannot load existing levelgraph at " + graphLocation);
 
-        GraphStorage g = (GraphStorage) hopper.getGraph();
+        GraphStorage g = hopper.getGraph();
         if ("true".equals(g.getProperties().get("prepare.done")))
             throw new IllegalStateException("Graph has to be unprepared but wasn't!");
 
@@ -121,7 +121,11 @@ public class Measurement
 
             System.gc();
 
-            // route via CH. do preparation before                        
+            // route via CH. do preparation before
+            //
+            // TODO minor bug if we do not remove location index then occasionally we will get 
+            //      IllegalArgumentException: Cannot find point lat,lon
+            //      because as pickNode will be wrong while indexing as level is always 0 for pre-initialized graph
             hopper.setCHShortcuts("fastest");
             hopper.doPostProcessing();
             printTimeOfRouteQuery(hopper, count, "routingCH", vehicleStr);
