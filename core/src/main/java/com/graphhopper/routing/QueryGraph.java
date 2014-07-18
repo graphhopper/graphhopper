@@ -55,7 +55,7 @@ public class QueryGraph implements Graph
     private List<QueryResult> queryResults;
     /**
      * Virtual edges are created between existing graph and new virtual tower nodes. For every
-     * virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap
+     * virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
      */
     private List<EdgeIteratorState> virtualEdges;
     private final static int VE_BASE = 0, VE_BASE_REV = 1, VE_ADJ = 2, VE_ADJ_REV = 3;
@@ -242,9 +242,9 @@ public class QueryGraph implements Graph
         int virtEdgeId = virtualEdges.size() + mainEdges;
 
         // edges between base and snapped point
-        VirtualEdgeIState baseEdge = new VirtualEdgeIState(virtEdgeId + VE_BASE, prevNodeId, nodeId,
+        VirtualEdgeIState baseEdge = new VirtualEdgeIState(virtEdgeId, prevNodeId, nodeId,
                 baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints);
-        VirtualEdgeIState baseReverseEdge = new VirtualEdgeIState(virtEdgeId + VE_BASE_REV, nodeId, prevNodeId,
+        VirtualEdgeIState baseReverseEdge = new VirtualEdgeIState(virtEdgeId, nodeId, prevNodeId,
                 baseDistance, reverseFlags, closestEdge.getName(), baseReversePoints);
 
         virtualEdges.add(baseEdge);
