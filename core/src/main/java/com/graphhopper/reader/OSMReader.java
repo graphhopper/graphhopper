@@ -881,7 +881,7 @@ public class OSMReader implements DataReader
                     viaNodeID = member.ref();
                 }
             }
-            if (type != OSMTurnRelation.Type.UNSUPPORTED && fromWayID >= 0 && toWayID >= 0 && viaNodeID >= 0)
+            if (fromWayID >= 0 && toWayID >= 0 && viaNodeID >= 0)
             {
                 return new OSMTurnRelation(fromWayID, viaNodeID, toWayID, type);
             }

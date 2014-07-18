@@ -71,7 +71,7 @@ public class EdgeBasedRoutingAlgorithmTest
 
     protected GraphStorage createGraph( EncodingManager em )
     {
-        return new GraphBuilder(em).setTurnCosts(true).create();
+        return new GraphBuilder(em).create();
     }
 
     // 0---1
@@ -79,7 +79,7 @@ public class EdgeBasedRoutingAlgorithmTest
     // 2--3--4
     // |  |  |
     // 5--6--7
-    private void initGraph( Graph g )
+    public static void initGraph( Graph g )
     {
         g.edge(0, 1, 3, true);
         g.edge(0, 2, 1, true);

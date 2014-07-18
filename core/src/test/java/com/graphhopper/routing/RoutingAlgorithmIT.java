@@ -116,7 +116,7 @@ public class RoutingAlgorithmIT
         // http://localhost:8989/?point=55.819066%2C37.596374&point=55.818898%2C37.59661
         list.add(new OneRun(55.819066, 37.596374, 55.818898, 37.59661, 1114, 23));
         runAlgo(testCollector, "files/moscow.osm.gz", "target/moscow-gh",
-                list, "CAR|turnCosts=true", true, "CAR", "fastest", false);
+                list, "CAR", true, "CAR", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -125,10 +125,14 @@ public class RoutingAlgorithmIT
     {
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
-
-        boolean testAlsoCH = true, turnCosts = true, is3D = false;
+        
+        // TODO #163
+        // list.add(new OneRun(55.813159,37.593884, 55.811278,37.594217, 1000, 12));
+        
+        // TODO include CH
+        boolean testAlsoCH = false, is3D = false;
         runAlgo(testCollector, "files/moscow.osm.gz", "target/graph-moscow",
-                list, "CAR", testAlsoCH, turnCosts, "CAR", "fastest", is3D);
+                list, "CAR|turnCosts=true", testAlsoCH, "CAR", "fastest", is3D);
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
@@ -403,22 +407,14 @@ public class RoutingAlgorithmIT
                 list, "bike2", true, "bike2", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
-
-    void runAlgo( TestAlgoCollector testCollector, String osmFile,
-            String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
-            boolean testAlsoCH, String vehicle, String weightCalcStr, boolean is3D )
-    {
-        runAlgo(testCollector, osmFile, graphFile, forEveryAlgo, importVehicles, testAlsoCH,
-                false, vehicle, weightCalcStr, is3D);
-    }
-
+    
     /**
      * @param testAlsoCH if true also the CH algorithms will be tested which needs preparation and
      * takes a bit longer
      */
     void runAlgo( TestAlgoCollector testCollector, String osmFile,
             String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
-            boolean testAlsoCH, boolean turnCosts, String vehicle, String weightCalcStr, boolean is3D )
+            boolean testAlsoCH, String vehicle, String weightCalcStr, boolean is3D )
     {
         AlgorithmPreparation tmpPrepare = null;
         OneRun tmpOneRun = null;
@@ -438,6 +434,7 @@ public class RoutingAlgorithmIT
 
             hopper.importOrLoad();
 
+            boolean turnCosts = importVehicles.toLowerCase().contains("turncosts=true");
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             Weighting weighting = hopper.createWeighting(weightCalcStr, encoder);
 

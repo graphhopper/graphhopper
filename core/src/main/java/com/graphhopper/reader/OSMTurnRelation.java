@@ -2,9 +2,7 @@ package com.graphhopper.reader;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import com.graphhopper.routing.util.TurnCostEncoder;
 import com.graphhopper.util.EdgeExplorer;
@@ -79,7 +77,6 @@ public class OSMTurnRelation
     public Collection<TurnCostTableEntry> getRestrictionAsEntries( TurnCostEncoder encoder,
             EdgeExplorer edgeOutExplorer, EdgeExplorer edgeInExplorer, OSMReader osmReader )
     {
-        final Set<TurnCostTableEntry> entries = new HashSet<TurnCostTableEntry>();
         int viaNodeId = osmReader.getInternalNodeIdOfOsmNode(this.viaOsmNodeId);
 
         try
@@ -102,40 +99,38 @@ public class OSMTurnRelation
                 }
             }
 
+            if (edgeIdFrom == EdgeIterator.NO_EDGE)
+                return Collections.emptyList();
+
+            final Collection<TurnCostTableEntry> entries = new ArrayList<TurnCostTableEntry>();
             // get all outgoing edges of the via node 
             iter = edgeOutExplorer.setBaseNode(viaNodeId);
-            if (edgeIdFrom != EdgeIterator.NO_EDGE)
+            // for TYPE_ONLY_* we add ALL restrictions (from, via, * ) EXCEPT the given turn
+            // for TYPE_NO_*   we add ONE restriction  (from, via, to)
+            while (iter.next())
             {
-                // if we have a restriction of TYPE_ONLY_* we add restriction to any turn possibility (from, via, * ) except the given turn
-                // if we have a restriction of TYPE_NO_* we add restriction only to the given turn (from, via, to)
-                while (iter.next())
+                int edgeId = iter.getEdge();
+                long wayId = osmReader.getOsmIdOfInternalEdge(edgeId);                
+                if (edgeId != edgeIdFrom
+                        && (this.restriction == Type.ONLY && wayId != this.toOsmWayId
+                        || (this.restriction == Type.NOT && wayId == this.toOsmWayId && wayId >= 0)))
                 {
-                    int edgeId = iter.getEdge();
-                    long wayId = osmReader.getOsmIdOfInternalEdge(edgeId);
-                    if (wayId < 0)
-                        continue;
-                    
-                    if (edgeId != edgeIdFrom
-                            && (this.restriction == Type.ONLY && wayId != this.toOsmWayId
-                            || (this.restriction == Type.NOT && wayId == this.toOsmWayId)))
-                    {
-                        final TurnCostTableEntry entry = new TurnCostTableEntry();
-                        entry.nodeViaNode = viaNodeId;
-                        entry.edgeFrom = edgeIdFrom;
-                        entry.edgeTo = iter.getEdge();
-                        entry.flags = encoder.getTurnFlags(true, 0);
-                        entries.add(entry);
+                    final TurnCostTableEntry entry = new TurnCostTableEntry();
+                    entry.nodeViaNode = viaNodeId;
+                    entry.edgeFrom = edgeIdFrom;
+                    entry.edgeTo = iter.getEdge();
+                    entry.flags = encoder.getTurnFlags(true, 0);
+                    entries.add(entry);
 
-                        if (this.restriction == Type.NOT)
-                            break;
-                    }
+                    if (this.restriction == Type.NOT)
+                        break;
                 }
             }
+            return entries;
         } catch (Exception e)
         {
             throw new IllegalStateException("Could not built turn table entry for relation of node with osmId:" + this.viaOsmNodeId, e);
         }
-        return entries;
     }
 
     @Override
@@ -143,7 +138,7 @@ public class OSMTurnRelation
     {
         return "*-(" + fromOsmWayId + ")->" + viaOsmNodeId + "-(" + toOsmWayId + ")->*";
     }
-    
+
     /**
      * Helper class to processing purposes only
      */
@@ -151,7 +146,7 @@ public class OSMTurnRelation
     {
         public int edgeFrom;
         public int nodeViaNode;
-        public int edgeTo;        
+        public int edgeTo;
         public long flags;
 
         /**
