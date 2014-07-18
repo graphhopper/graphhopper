@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
@@ -353,11 +355,11 @@ public class QueryGraphTest
         assertTrue(qr.getClosestNode() > 1);
         assertEquals(2, GHUtility.count(ee.setBaseNode(qr.getClosestNode())));
         EdgeIterator iter = ee.setBaseNode(qr.getClosestNode());
-        iter.next();        
+        iter.next();
         assertTrue(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
         assertFalse(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
 
-        iter.next();        
+        iter.next();
         assertFalse(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
         assertTrue(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
     }
@@ -412,5 +414,68 @@ public class QueryGraphTest
         tmp.setSnappedPosition(pos);
         tmp.calcSnappedPoint(new DistanceCalcEarth());
         return tmp;
+    }
+
+    @Test
+    public void testIterationBug_163()
+    {
+        EdgeFilter outEdgeFilter = new DefaultEdgeFilter(encodingManager.getEncoder("CAR"), false, true);
+        EdgeFilter inEdgeFilter = new DefaultEdgeFilter(encodingManager.getEncoder("CAR"), true, false);
+        EdgeExplorer inExplorer = g.createEdgeExplorer(inEdgeFilter);
+        EdgeExplorer outExplorer = g.createEdgeExplorer(outEdgeFilter);
+
+        int nodeA = 0;
+        int nodeB = 1;
+
+        /* init test graph: one directional edge going from A to B, via virtual nodes C and D
+         * 
+         *   (C)-(D)
+         *  /       \
+         * A         B
+         */
+        g.getNodeAccess().setNode(nodeA, 1, 0);
+        g.getNodeAccess().setNode(nodeB, 1, 10);
+        g.edge(nodeA, nodeB, 10, false).setWayGeometry(Helper.createPointList(1.5, 3, 1.5, 7));
+
+        // assert the behavior for classic edgeIterator        
+        assertEdgeIdsStayingEqual(inExplorer, outExplorer, nodeA, nodeB);
+
+        // setup query results
+        EdgeIterator it = outExplorer.setBaseNode(0);
+        it.next();
+        QueryResult res1 = createLocationResult(1.5, 3, it, 0, QueryResult.Position.EDGE);
+        QueryResult res2 = createLocationResult(1.5, 7, it, 0, QueryResult.Position.EDGE);
+
+        QueryGraph q = new QueryGraph(g);
+        q.lookup(Arrays.asList(res1, res2));
+        int nodeC = res1.getClosestNode();
+        int nodeD = res2.getClosestNode();
+
+        inExplorer = q.createEdgeExplorer(inEdgeFilter);
+        outExplorer = q.createEdgeExplorer(outEdgeFilter);
+
+        // assert the same behavior for queryGraph
+        assertEdgeIdsStayingEqual(inExplorer, outExplorer, nodeA, nodeC);
+        assertEdgeIdsStayingEqual(inExplorer, outExplorer, nodeC, nodeD);
+        assertEdgeIdsStayingEqual(inExplorer, outExplorer, nodeD, nodeB);
+    }
+
+    private void assertEdgeIdsStayingEqual( EdgeExplorer inExplorer, EdgeExplorer outExplorer, int startNode, int endNode )
+    {
+        EdgeIterator it = outExplorer.setBaseNode(startNode);
+        it.next();
+        assertEquals(startNode, it.getBaseNode());
+        assertEquals(endNode, it.getAdjNode());
+        // we expect the edge id to be the same when exploring in backward direction
+        int expectedEdgeId = it.getEdge();
+        assertFalse(it.next());
+
+        // backward iteration, edge id should remain the same!!
+        it = inExplorer.setBaseNode(endNode);
+        it.next();
+        assertEquals(endNode, it.getBaseNode());
+        assertEquals(startNode, it.getAdjNode());
+        assertEquals("The edge id is not the same,", expectedEdgeId, it.getEdge());
+        assertFalse(it.next());
     }
 }

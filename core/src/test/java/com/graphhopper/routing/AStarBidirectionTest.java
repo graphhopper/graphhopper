@@ -41,21 +41,26 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
      * Runs the same test with each of the supported traversal modes
      */
     @Parameters
-    public static Collection<Object[]> configs() {
-            return Arrays.asList(new Object[][] {
-                    { true },
-                    { false }
-            });
+    public static Collection<Object[]> configs()
+    {
+        return Arrays.asList(new Object[][]
+        {
+            {
+                true
+            }, 
+            {
+                false
+            }
+        });
     }
 
-
     private final boolean edgeBased;
-    
-    public AStarBidirectionTest(boolean eb)
+
+    public AStarBidirectionTest( boolean eb )
     {
         this.edgeBased = eb;
     }
-    
+
     @Override
     public AlgorithmPreparation prepareGraph( Graph g, final FlagEncoder encoder, final Weighting w )
     {
@@ -68,40 +73,6 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
             }
         }.setGraph(g);
     }
-    
-    @Override
-    public void testViaEdges_FromEqualsTo()
-    {
-        if (!edgeBased)
-        {
-            super.testViaEdges_FromEqualsTo();
-        }
-
-        /* FIXME 
-         * 
-         * Test still fails due to a potential bug in QueryGraph? 
-         * Consider an edge A-->B with two points C and D along this edge. If a route from C and D has to be generated, virtual nodes and 
-         * edges will be created and connected with A and B. E.g. the virtual edge C-D will be created twice: C->D with edge ID x, and D->C with edge ID y. 
-         * However, the behavior of the common EdgeIterator differs from VirtualEdgeIterator. If all outgoing edges for node C are requested, the result 
-         * includes the edge C->D (x) with base node C and adjacent node D. On backward direction, when requesting incoming edges, the common 
-         * EdgeIterator returns C->D (x) as well, but with base node D and adjacent node C, since we traverse in opposite direction and which is totally 
-         * correct behavior. However, VirtualEdgeIterator does not. It returns C->D (x) with base node C and adjacent node D for both back and forward direction, 
-         * which is my eyes faulty.     
-         * 
-         * This problem occurs only in bidirectional edge-based algorithms, since they consider edge-ids AND the direction of edges with the help of their base and adjacent nodes.
-         */
-    }
-
-    @Override
-    public void testViaEdges_SpecialCases()
-    {
-        if (!edgeBased)
-        {
-            super.testViaEdges_SpecialCases();
-        }
-
-        //FIXME seems to be the same problem as mentioned above
-    }
 
     @Override
     public void testCalcIfEmptyWay()
@@ -113,5 +84,5 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
         }
 
         //FIXME not sure if this test succeed if the problem mentioned above has been fixed
-    };
+    }
 }
