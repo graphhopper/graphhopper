@@ -9,6 +9,8 @@
     moving the boolean parameter of GraphHopper.setInMemory into a separate method setStoreOnFlush
     renaming of GraphHopper.setCHShortcuts to setCHWeighting, as well as the property prepare.chShortcuts to prepare.chWeighting
     jsonp is disabled by default. You need to enable it in the config.properties, see the config-example.properties
+    no reflection done in EncodingManager which improves portability and makes configuration of encoders
+    removed dijkstraNativebi as no performance advantage but maintenance disadvantage and similar to oneToManyDijkstra
     osmreader.bytesForFlags changed to graph.bytesForFlags
     to provide context for turn costs we needed to add prevEdgeId into Weighting.calcWeight
     with the introduction of lock protection mechanism (see #112) GraphHopper needs always write access, see also #217

@@ -121,7 +121,6 @@ public class RoutingAlgorithmSpecialAreaTests
         prepare.add(new ME(createAlgoPrepare(g, "astar", encoder, weighting, edgeBased), idx));
         // prepare.add(new ME(createAlgoPrepare(g, "dijkstraOneToMany", encoder, weighting, edgeBased), idx));
         prepare.add(new ME(createAlgoPrepare(g, "astarbi", encoder, weighting, edgeBased), idx));
-        prepare.add(new ME(createAlgoPrepare(g, "dijkstraNativebi", encoder, weighting, edgeBased), idx));
         prepare.add(new ME(createAlgoPrepare(g, "dijkstrabi", encoder, weighting, edgeBased), idx));
         prepare.add(new ME(createAlgoPrepare(g, "dijkstra", encoder, weighting, edgeBased), idx));
 

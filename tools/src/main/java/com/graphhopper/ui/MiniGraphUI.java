@@ -82,7 +82,7 @@ public class MiniGraphUI
         encoder = hopper.getEncodingManager().getSingle();
         weighting = hopper.createWeighting(Weighting.Params.create("fastest"), encoder);
         if (prepare == null)
-            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, "dijkstrabi", encoder, weighting, hopper.hasTurnCosts());
+            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, "dijkstrabi", encoder, weighting, encoder.supportsTurnCosts());
 
         logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algo:" + prepare.createAlgo().getName());
         mg = new GraphicsWrapper(graph);
