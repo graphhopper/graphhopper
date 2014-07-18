@@ -786,7 +786,12 @@ public class GraphHopper implements GraphHopperAPI
             weighting = new ShortestWeighting();
 
         if (encoder.supportsTurnCosts())
+        {
+            if (!(graph.getExtendedStorage() instanceof TurnCostStorage))
+                throw new IllegalStateException("If you intent to use an encoder with turn cost support you need to properly set it up in EncodingManager before");
+
             weighting = new TurnWeighting(weighting, encoder, (TurnCostStorage) graph.getExtendedStorage());
+        }
 
         return weighting;
     }
