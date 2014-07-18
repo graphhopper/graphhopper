@@ -126,16 +126,23 @@ public class AStarBidirection extends AbstractBidirAlgo
     public void initFrom( int from, double dist )
     {
         currFrom = createEdgeEntry(from, dist);
+        fromCoord = new GHPoint(nodeAccess.getLatitude(from), nodeAccess.getLongitude(from));
+        prioQueueOpenSetFrom.add(currFrom);        
         if (!isEdgeBased())
         {
             bestWeightMapFrom.put(from, currFrom);
-        }
-        prioQueueOpenSetFrom.add(currFrom);
-        fromCoord = new GHPoint(nodeAccess.getLatitude(from), nodeAccess.getLongitude(from));
-        if (currTo != null)
+            if (currTo != null)
+            {
+                bestWeightMapOther = bestWeightMapTo;
+                updateBestPath(GHUtility.getEdge(graph, from, currTo.adjNode), currTo, from);
+            }
+        } else
         {
-            bestWeightMapOther = bestWeightMapTo;
-            updateBestPath(GHUtility.getEdge(graph, from, currTo.adjNode), currTo, from);
+            if (currTo != null && currTo.adjNode == from)
+            {
+                finishedFrom = true;
+                finishedTo = true;
+            }
         }
     }
 
@@ -143,16 +150,23 @@ public class AStarBidirection extends AbstractBidirAlgo
     public void initTo( int to, double dist )
     {
         currTo = createEdgeEntry(to, dist);
+        toCoord = new GHPoint(nodeAccess.getLatitude(to), nodeAccess.getLongitude(to));
+        prioQueueOpenSetTo.add(currTo);
         if (!isEdgeBased())
         {
             bestWeightMapTo.put(to, currTo);
-        }
-        prioQueueOpenSetTo.add(currTo);
-        toCoord = new GHPoint(nodeAccess.getLatitude(to), nodeAccess.getLongitude(to));
-        if (currFrom != null)
+            if (currFrom != null)
+            {
+                bestWeightMapOther = bestWeightMapFrom;
+                updateBestPath(GHUtility.getEdge(graph, currFrom.adjNode, to), currFrom, to);
+            }
+        } else
         {
-            bestWeightMapOther = bestWeightMapFrom;
-            updateBestPath(GHUtility.getEdge(graph, currFrom.adjNode, to), currFrom, to);
+            if (currFrom != null && currFrom.adjNode == to)
+            {
+                finishedFrom = true;
+                finishedTo = true;
+            }
         }
     }
 

@@ -195,7 +195,7 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         Graph graph = createTestGraph();
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 0);
-        assertEquals(p.toString(), 0, p.calcNodes().size());
+        assertEquals(p.calcNodes().toString(), 0, p.calcNodes().size());
         assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
     }
 
@@ -637,7 +637,7 @@ public abstract class AbstractRoutingAlgorithmTester
             }
 
             @Override
-            public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId)
+            public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId )
             {
                 int adj = edgeState.getAdjNode();
                 int base = edgeState.getBaseNode();

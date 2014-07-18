@@ -47,7 +47,7 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
         {
             {
                 true
-            },
+            }, 
             {
                 false
             }
@@ -72,17 +72,5 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
                 return new DijkstraBidirectionRef(_graph, encoder, w, edgeBased);
             }
         }.setGraph(defaultGraph);
-    }
-
-    @Override
-    public void testCalcIfEmptyWay()
-    {
-
-        if (!edgeBased)
-        {
-            super.testCalcIfEmptyWay();
-        }
-
-        //FIXME not sure if this test succeed if the problem mentioned above has been fixed
     }
 }
