@@ -17,12 +17,10 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMReader;
 import java.util.HashSet;
 import java.util.Set;
 
 import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMWay;
 import java.util.*;
 
@@ -49,6 +47,12 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     public FootFlagEncoder()
     {
         this(4, 1);
+    }
+
+    public FootFlagEncoder( String propertiesStr )
+    {
+        this((int) parseLong(propertiesStr, "speedBits", 4),
+                parseDouble(propertiesStr, "speedFactor", 1));
     }
 
     public FootFlagEncoder( int speedBits, double speedFactor )

@@ -96,7 +96,7 @@ public class GraphHopperStorage implements GraphStorage
         this(dir, encodingManager, withElevation, new ExtendedStorage.NoExtendedStorage());
     }
 
-    public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation, 
+    public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation,
             ExtendedStorage extendedStorage )
     {
         // here encoding manager can be null e.g. if we want to load existing graph
@@ -793,14 +793,6 @@ public class GraphHopperStorage implements GraphStorage
                             + ", " + edgePointer + ", " + edgeId);
 
                 foundNext = filter == null || filter.accept(this);
-//
-//                if(foundNext && nextEdge != EdgeIterator.NO_EDGE && extStorage instanceof TurnCostStorage){
-//                    int turncosts = ((TurnCostStorage) extStorage).getTurnCosts(baseNode, edgeId, nextEdge);
-//                    if(turncosts == Integer.MAX_VALUE){
-//                        foundNext = false;
-//                    }
-//                }
-
                 if (foundNext)
                     break;
             }

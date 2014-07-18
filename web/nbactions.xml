@@ -61,5 +61,4 @@
             <exec.executable>java</exec.executable>
         </properties>
     </action>
-    
 </actions>

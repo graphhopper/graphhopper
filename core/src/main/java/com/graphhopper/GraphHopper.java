@@ -302,25 +302,6 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * @return if import of turn costs (and thus also restrictions) is enabled
-     */
-    public boolean hasTurnCosts()
-    {
-        return turnCosts;
-    }
-
-    /**
-     * This method specifies if the import should include turn costs (and thus also restrictions) if
-     * available
-     */
-    public GraphHopper setTurnCosts( boolean enable )
-    {
-        ensureNotLoaded();
-        turnCosts = enable;
-        return this;
-    }
-
-    /**
      * This method specifies if the import should include way names to be able to return
      * instructions for a route.
      */
@@ -488,13 +469,12 @@ public class GraphHopper implements GraphHopperAPI
 
         sortGraph = args.getBool("graph.doSort", sortGraph);
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
-        setTurnCosts(args.getBool("graph.turnCosts", turnCosts));
+        int bytesForFlags = args.getInt("graph.bytesForFlags", 4);
         if (args.get("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
         else
             lockFactory = new NativeFSLockFactory();
 
-        int bytesForFlags = args.getInt("graph.bytesForFlags", 4);
         String flagEncoders = args.get("graph.flagEncoders", "CAR");
         encodingManager = new EncodingManager(flagEncoders, bytesForFlags);
 
@@ -540,6 +520,7 @@ public class GraphHopper implements GraphHopperAPI
 
         // osm import
         wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", wayPointMaxDistance);
+
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
 
@@ -695,7 +676,7 @@ public class GraphHopper implements GraphHopperAPI
 
         if (chEnabled)
             graph = new LevelGraphStorage(dir, encodingManager, hasElevation());
-        else if (turnCosts)
+        else if (encodingManager.needsTurnCostSupport())
             graph = new GraphHopperStorage(dir, encodingManager, hasElevation(), new TurnCostStorage());
         else
             graph = new GraphHopperStorage(dir, encodingManager, hasElevation());
@@ -751,7 +732,7 @@ public class GraphHopper implements GraphHopperAPI
     {
         FlagEncoder encoder = encodingManager.getSingle();
         PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder,
-                createWeighting(Weighting.Params.create(chWeighting), encoder), turnCosts);
+                createWeighting(Weighting.Params.create(chWeighting), encoder), encodingManager.needsTurnCostSupport());
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                 setLazyUpdates(lazyUpdates).
                 setNeighborUpdates(neighborUpdates).
@@ -769,6 +750,7 @@ public class GraphHopper implements GraphHopperAPI
      * @see Weighting.Params.create
      * @param weightingParameters the request parameters
      * @param encoder the required vehicle
+     * @return the weighting to be used for route calculation
      */
     public Weighting createWeighting( Map<String, Object> weightingParameters, FlagEncoder encoder )
     {
@@ -791,7 +773,7 @@ public class GraphHopper implements GraphHopperAPI
             throw new UnsupportedOperationException("weighting " + weighting + " not supported");
         }
 
-        if (hasTurnCosts())
+        if (encoder.supportsTurnCosts())
         {
             result = new TurnWeighting(result, encoder, (TurnCostStorage) graph.getExtendedStorage());
         }
@@ -896,7 +878,7 @@ public class GraphHopper implements GraphHopperAPI
             } else
             {
                 Weighting weighting = createWeighting(request.getHints(), encoder);
-                prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, algoStr, encoder, weighting, turnCosts);
+                prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, algoStr, encoder, weighting, encoder.supportsTurnCosts());
                 algo = prepare.createAlgo();
             }
 

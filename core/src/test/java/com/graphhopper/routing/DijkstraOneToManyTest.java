@@ -48,7 +48,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     {
         return Arrays.asList(new Object[][]
         {
-            { true },
+            // TODO { true },
             { false }
         });
     }

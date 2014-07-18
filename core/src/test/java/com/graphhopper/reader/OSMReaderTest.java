@@ -131,7 +131,7 @@ public class OSMReaderTest
         @Override
         protected DataReader importData() throws IOException
         {
-            GraphStorage tmpGraph = newGraph(dir, getEncodingManager(), hasElevation(), hasTurnCosts());
+            GraphStorage tmpGraph = newGraph(dir, getEncodingManager(), hasElevation(), getEncodingManager().needsTurnCostSupport());
             setGraph(tmpGraph);
 
             DataReader osmReader = createReader(tmpGraph);
@@ -520,14 +520,12 @@ public class OSMReaderTest
     public void testTurnRestrictions()
     {
         GraphHopper hopper = new GraphHopperTest(fileTurnRestrictions, true).
-                setTurnCosts(true).
                 importOrLoad();
         GraphStorage graph = hopper.getGraph();
         assertEquals(15, graph.getNodes());
         assertTrue(graph.getExtendedStorage() instanceof TurnCostStorage);
-
         TurnCostStorage tcStorage = (TurnCostStorage) graph.getExtendedStorage();
-
+        
         int n2 = AbstractGraphStorageTester.getIdOf(graph, 52, 10);
         int n3 = AbstractGraphStorageTester.getIdOf(graph, 52, 11);
         int n4 = AbstractGraphStorageTester.getIdOf(graph, 52, 12);

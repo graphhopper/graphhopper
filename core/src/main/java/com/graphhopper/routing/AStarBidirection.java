@@ -26,11 +26,7 @@ import com.graphhopper.routing.AStar.AStarEdge;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.DistancePlaneProjection;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
 /**
@@ -139,7 +135,7 @@ public class AStarBidirection extends AbstractBidirAlgo
         if (currTo != null)
         {
             bestWeightMapOther = bestWeightMapTo;
-            updateBestPath(currTo, from);
+            updateBestPath(GHUtility.getEdge(graph, from, currTo.adjNode), currTo, from);
         }
     }
 
@@ -156,7 +152,7 @@ public class AStarBidirection extends AbstractBidirAlgo
         if (currFrom != null)
         {
             bestWeightMapOther = bestWeightMapFrom;
-            updateBestPath(currFrom, to);
+            updateBestPath(GHUtility.getEdge(graph, currFrom.adjNode, to), currFrom, to);
         }
     }
 
@@ -237,74 +233,61 @@ public class AStarBidirection extends AbstractBidirAlgo
             // then we could avoid the approximation as we already know the exact complete path!
             double alreadyVisitedWeight = weighting.calcWeight(iter, reverse, currEdge.edge) + currEdge.weightToCompare;
 
-            AStarEdge de = shortestWeightMap.get(iterationKey);
-            if (de == null || de.weightToCompare > alreadyVisitedWeight)
+            AStarEdge aee = shortestWeightMap.get(iterationKey);
+            if (aee == null || aee.weightToCompare > alreadyVisitedWeight)
             {
                 double tmpLat = nodeAccess.getLatitude(neighborNode);
                 double tmpLon = nodeAccess.getLongitude(neighborNode);
                 double currWeightToGoal = dist.calcDist(goal.lat, goal.lon, tmpLat, tmpLon);
                 currWeightToGoal = weighting.getMinWeight(currWeightToGoal);
                 double estimationFullDist = alreadyVisitedWeight + currWeightToGoal;
-                if (de == null)
+                if (aee == null)
                 {
-                    de = new AStarEdge(iter.getEdge(), neighborNode, estimationFullDist, alreadyVisitedWeight);
-                    shortestWeightMap.put(iterationKey, de);
+                    aee = new AStarEdge(iter.getEdge(), neighborNode, estimationFullDist, alreadyVisitedWeight);
+                    shortestWeightMap.put(iterationKey, aee);
+                } else if (aee.weight > estimationFullDist)
+                {
+                    prioQueueOpenSet.remove(aee);
+                    aee.edge = iter.getEdge();
+                    aee.weight = estimationFullDist;
+                    aee.weightToCompare = alreadyVisitedWeight;
                 } else
-                {
-                    prioQueueOpenSet.remove(de);
-                    de.edge = iter.getEdge();
-                    de.weight = estimationFullDist;
-                    de.weightToCompare = alreadyVisitedWeight;
-                }
+                    continue;
 
-                de.parent = currEdge;
-                prioQueueOpenSet.add(de);
-                updateBestPath(de, iterationKey);
+                aee.parent = currEdge;
+                prioQueueOpenSet.add(aee);
+                updateBestPath(iter, aee, iterationKey);
             }
         }
     }
 
 //    @Override -> TODO use only weight => then a simple EdgeEntry is possible
-    public void updateBestPath( AStarEdge shortestDE, int currLoc )
+    public void updateBestPath( EdgeIteratorState edgeState, AStarEdge shortestEE, int currLoc )
     {
         AStarEdge entryOther = bestWeightMapOther.get(currLoc);
         if (entryOther == null)
             return;
 
         boolean reverse = bestWeightMapFrom == bestWeightMapOther;
+        // update μ
+        double newWeight = shortestEE.weightToCompare + entryOther.weightToCompare;
         if (isEdgeBased())
         {
-            // prevents the path to contain the edge at the meeting point twice in edge-based traversal
-            if (entryOther.edge == shortestDE.edge)
-            {
-                if (reverse)
-                {
-                    entryOther = (AStar.AStarEdge) entryOther.parent;
-                } else
-                {
-                    shortestDE = (AStar.AStarEdge) shortestDE.parent;
-                }
-            }
+            if (entryOther.edge != shortestEE.edge)
+                throw new IllegalStateException("cannot happen for edge based execution of " + getName());
+
+            // see DijkstraBidirectionRef
+            shortestEE = (AStar.AStarEdge) shortestEE.parent;
+            newWeight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
         }
-
-        // update μ
-        double newWeight = shortestDE.weightToCompare + entryOther.weightToCompare;
-
-        // TODO why necessary?
-//        if (weighting instanceof TurnWeighting)
-//        {
-//            newWeight *= weighting.calcWeight(shortestDE.edge, (reverse) ? entryOther.adjNode : shortestDE.adjNode,
-//                    entryOther.edge, reverse);
-//        }
 
         if (newWeight < bestPath.getWeight())
         {
             bestPath.setSwitchToFrom(reverse);
-            bestPath.edgeEntry = shortestDE;
+            bestPath.edgeEntry = shortestEE;
             bestPath.edgeTo = entryOther;
             bestPath.setWeight(newWeight);
         }
-
     }
 
     @Override

@@ -28,8 +28,8 @@ import gnu.trove.list.array.TIntArrayList;
 import java.util.Arrays;
 
 /**
- * A simple dijkstra tuned to perform one to many queries more efficient than DijkstraSimple. Old
- * data structures are cache between requests and potentially reused. Useful for CH preparation.
+ * A simple dijkstra tuned to perform one to many queries more efficient than Dijkstra. Old data
+ * structures are cached between requests and potentially reused. Useful for CH preparation.
  * <p/>
  * @author Peter Karich
  */
@@ -59,7 +59,11 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         edgeIds = new int[graph.getNodes()];
         Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
 
-        weights = new double[graph.getNodes()];
+        if (edgeBased)
+            weights = new double[graph.getAllEdges().getMaxId() * 2];
+        else
+            weights = new double[graph.getNodes()];
+
         Arrays.fill(weights, Double.MAX_VALUE);
 
         heap = new IntDoubleBinHeap();
@@ -104,6 +108,9 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         return p.setEndNode(endNode).extract();
     }
 
+    /**
+     * Call clear if you have a different start node and need to clear the cache.
+     */
     public DijkstraOneToMany clear()
     {
         doClear = true;
@@ -137,8 +144,11 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             changedNodes.reset();
 
             currNode = from;
-            weights[currNode] = 0;
-            changedNodes.add(currNode);
+            if (!isEdgeBased())
+            {
+                weights[currNode] = 0;
+                changedNodes.add(currNode);
+            }
         } else
         {
             // Cached! Re-use existing data structures
@@ -163,23 +173,28 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             while (iter.next())
             {
                 int adjNode = iter.getAdjNode();
+                int iterationKey = createIdentifier(iter, false);
                 int prevEdgeId = edgeIds[adjNode];
                 if (!accept(iter, prevEdgeId))
-                    continue;                                
+                    continue;
 
-                double tmpWeight = weighting.calcWeight(iter, false, prevEdgeId) + weights[currNode];
-                if (weights[adjNode] == Double.MAX_VALUE)
+                double tmpWeight = weighting.calcWeight(iter, false, prevEdgeId) + weights[/*TODO key?*/ currNode];
+                if (Double.isInfinite(tmpWeight))
+                    continue;
+
+                double w = weights[iterationKey];
+                if (w == Double.MAX_VALUE)
                 {
                     parents[adjNode] = currNode;
-                    weights[adjNode] = tmpWeight;
+                    weights[iterationKey] = tmpWeight;
                     heap.insert_(tmpWeight, adjNode);
                     changedNodes.add(adjNode);
                     edgeIds[adjNode] = iter.getEdge();
 
-                } else if (weights[adjNode] > tmpWeight)
+                } else if (w > tmpWeight)
                 {
                     parents[adjNode] = currNode;
-                    weights[adjNode] = tmpWeight;
+                    weights[iterationKey] = tmpWeight;
                     heap.update_(tmpWeight, adjNode);
                     changedNodes.add(adjNode);
                     edgeIds[adjNode] = iter.getEdge();
@@ -217,7 +232,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     {
         return visitedNodes;
     }
-    
+
     @Override
     public String getName()
     {

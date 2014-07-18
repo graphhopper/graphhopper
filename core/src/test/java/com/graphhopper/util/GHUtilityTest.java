@@ -151,4 +151,20 @@ public class GHUtilityTest
         assertEquals("01", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));
         assertFalse(iter.next());
     }
+
+    @Test
+    public void testEdgeStuff()
+    {
+        assertEquals(6, GHUtility.createEdgeKey(1, 2, 3, false));
+        assertEquals(7, GHUtility.createEdgeKey(2, 1, 3, false));
+        assertEquals(7, GHUtility.createEdgeKey(1, 2, 3, true));
+        assertEquals(6, GHUtility.createEdgeKey(2, 1, 3, true));
+
+        assertEquals(8, GHUtility.createEdgeKey(1, 2, 4, false));
+        assertEquals(9, GHUtility.createEdgeKey(2, 1, 4, false));
+
+        assertTrue(GHUtility.isSameEdgeKeys(GHUtility.createEdgeKey(1, 2, 4, false), GHUtility.createEdgeKey(1, 2, 4, false)));
+        assertTrue(GHUtility.isSameEdgeKeys(GHUtility.createEdgeKey(2, 1, 4, false), GHUtility.createEdgeKey(1, 2, 4, false)));
+        assertFalse(GHUtility.isSameEdgeKeys(GHUtility.createEdgeKey(1, 2, 4, false), GHUtility.createEdgeKey(1, 2, 5, false)));
+    }
 }

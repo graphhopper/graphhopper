@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -33,19 +34,30 @@ public class TurnWeighting implements Weighting
     private final TurnCostEncoder turnCostEncoder;
     private final TurnCostStorage turnCostStorage;
     private final Weighting superWeighting;
+    private double defaultUTurnCost = 40;
 
     /**
      * @param turnCostStorage the turn cost storage to be used
      */
-    public TurnWeighting( Weighting superWeighting, TurnCostEncoder encoder, TurnCostStorage tcs )
+    public TurnWeighting( Weighting superWeighting, TurnCostEncoder encoder, TurnCostStorage turnCostStorage )
     {
         this.turnCostEncoder = encoder;
         this.superWeighting = superWeighting;
-        this.turnCostStorage = tcs;
+        this.turnCostStorage = turnCostStorage;
         if (encoder == null)
             throw new IllegalArgumentException("No encoder set to calculate turn weight");
-        if (tcs == null)
+        if (turnCostStorage == null)
             throw new RuntimeException("No storage set to calculate turn weight");
+    }
+
+    /**
+     * Set the default cost for an u-turn in seconds. Default is 40s. Should be that high to avoid
+     * 'tricking' other turn costs or restrictions.
+     */
+    public TurnWeighting setDefaultUTurnCost( double costInSeconds )
+    {
+        this.defaultUTurnCost = costInSeconds;
+        return this;
     }
 
     @Override
@@ -57,16 +69,24 @@ public class TurnWeighting implements Weighting
     @Override
     public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId )
     {
-
         double weight = superWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
-        // if prevOrNextEdgeId == -1 return weight
+        if (prevOrNextEdgeId == EdgeIterator.NO_EDGE)
+            return weight;
+
+        int edgeId = edgeState.getEdge();
+        double turnCosts;
         if (reverse)
-            return weight + calcTurnWeight(edgeState.getEdge(), edgeState.getBaseNode(), prevOrNextEdgeId);
+            turnCosts = calcTurnWeight(edgeId, edgeState.getBaseNode(), prevOrNextEdgeId);
         else
-            return weight + calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), edgeState.getEdge());
+            turnCosts = calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), edgeId);
+
+        if (turnCosts == 0 && edgeId == prevOrNextEdgeId)
+            return weight + defaultUTurnCost;
+
+        return weight + turnCosts;
     }
 
-    protected double calcTurnWeight( int edgeFrom, int nodeVia, int edgeTo )
+    public double calcTurnWeight( int edgeFrom, int nodeVia, int edgeTo )
     {
         long turnFlags = turnCostStorage.getTurnCostsFlags(nodeVia, edgeFrom, edgeTo);
         if (turnCostEncoder.isTurnRestricted(turnFlags))

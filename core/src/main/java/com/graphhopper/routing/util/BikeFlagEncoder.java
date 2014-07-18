@@ -32,6 +32,13 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
         this(4, 2, 0);
     }
 
+    public BikeFlagEncoder( String propertiesStr )
+    {
+        this((int) parseLong(propertiesStr, "speedBits", 4),
+                parseDouble(propertiesStr, "speedFactor", 2),
+                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+    }
+
     public BikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
     {
         super(speedBits, speedFactor, maxTurnCosts);

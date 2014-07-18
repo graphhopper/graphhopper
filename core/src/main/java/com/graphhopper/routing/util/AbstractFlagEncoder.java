@@ -537,7 +537,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     @Override
     public boolean isTurnRestricted( long flag )
     {
-        if (maxTurnCosts == 0)
+        if (!supportsTurnCosts())
             return false;
 
         return turnCostEncoder.getValue(flag) == maxTurnCosts;
@@ -546,7 +546,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     @Override
     public double getTurnCosts( long flags )
     {
-        if (maxTurnCosts == 0)
+        if (!supportsTurnCosts())
             return 0;
 
         long cost = turnCostEncoder.getValue(flags);
@@ -559,7 +559,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     @Override
     public long getTurnFlags( boolean restricted, double costs )
     {
-        if (maxTurnCosts == 0)
+        if (!supportsTurnCosts())
             return 0;
 
         if (restricted)
@@ -579,18 +579,24 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             costs = maxTurnCosts;
         return turnCostEncoder.setValue(0L, (int) costs);
     }
-    
+
     public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
     {
-        if(maxTurnCosts == 0)
+        if (!supportsTurnCosts())
             return Collections.emptyList();
-        
+
         if (edgeOutExplorer == null || edgeInExplorer == null)
         {
             edgeOutExplorer = osmReader.getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(this, false, true));
             edgeInExplorer = osmReader.getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(this, true, false));
         }
         return turnRelation.getRestrictionAsEntries(this, edgeOutExplorer, edgeInExplorer, osmReader);
+    }
+
+    @Override
+    public boolean supportsTurnCosts()
+    {
+        return maxTurnCosts > 0;
     }
 
     protected boolean isFerry( long internalFlags )
@@ -657,5 +663,52 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     public double getDouble( long flags, int key )
     {
         throw new UnsupportedOperationException("Unknown key " + key + " for double value.");
+    }
+
+    protected static double parseDouble( String str, String key, double defaultD )
+    {
+        String val = getStr(str, key);
+        if (val.isEmpty())
+            return defaultD;
+        return Double.parseDouble(val);
+    }
+
+    protected static long parseLong( String str, String key, long defaultL )
+    {
+        String val = getStr(str, key);
+        if (val.isEmpty())
+            return defaultL;
+        return Long.parseLong(val);
+    }
+
+    protected static boolean parseBoolean( String str, String key, boolean defaultB )
+    {
+        String val = getStr(str, key);
+        if (val.isEmpty())
+            return defaultB;
+        return Boolean.parseBoolean(val);
+    }
+
+    protected static String getStr( String str, String key )
+    {
+        key = key.toLowerCase();
+        for (String s : str.split("\\|"))
+        {
+            s = s.trim().toLowerCase();
+            int index = s.indexOf("=");
+            if (index < 0)
+                continue;
+
+            String field = s.substring(0, index);
+            String valueStr = s.substring(index + 1);
+            if (key.equals(field))
+                return valueStr;
+        }
+        return "";
+    }
+
+    protected String getPropertiesString()
+    {
+        return "speedFactor=" + speedFactor + "|speedBits=" + speedBits + "|turnCosts=" + (maxTurnCosts > 0);
     }
 }

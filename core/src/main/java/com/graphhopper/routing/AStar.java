@@ -113,30 +113,31 @@ public class AStar extends AbstractRoutingAlgorithm
                 int iterationKey = createIdentifier(iter, false);
                 double alreadyVisitedWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weightToCompare;
 
-                AStarEdge nEdge = fromMap.get(iterationKey);
-                if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight)
+                AStarEdge ase = fromMap.get(iterationKey);
+                if (ase == null || ase.weightToCompare > alreadyVisitedWeight)
                 {
                     tmpLat = nodeAccess.getLatitude(neighborNode);
                     tmpLon = nodeAccess.getLongitude(neighborNode);
                     currWeightToGoal = dist.calcDist(toLat, toLon, tmpLat, tmpLon);
                     currWeightToGoal = weighting.getMinWeight(currWeightToGoal);
                     distEstimation = alreadyVisitedWeight + currWeightToGoal;
-                    if (nEdge == null)
+                    if (ase == null)
                     {
-
-                        nEdge = new AStarEdge(iter.getEdge(), neighborNode, distEstimation, alreadyVisitedWeight);
-                        fromMap.put(iterationKey, nEdge);
+                        ase = new AStarEdge(iter.getEdge(), neighborNode, distEstimation, alreadyVisitedWeight);
+                        fromMap.put(iterationKey, ase);
+                    } else if (ase.weight > distEstimation)
+                    {
+                        prioQueueOpenSet.remove(ase);
+                        ase.edge = iter.getEdge();
+                        ase.weight = distEstimation;
+                        ase.weightToCompare = alreadyVisitedWeight;
                     } else
-                    {
-                        prioQueueOpenSet.remove(nEdge);
-                        nEdge.edge = iter.getEdge();
-                        nEdge.weight = distEstimation;
-                        nEdge.weightToCompare = alreadyVisitedWeight;
-                    }
-                    nEdge.parent = currEdge;
-                    prioQueueOpenSet.add(nEdge);
+                        continue;
 
-                    updateBestPath(nEdge, iterationKey);
+                    ase.parent = currEdge;
+                    prioQueueOpenSet.add(ase);
+
+                    updateBestPath(iter, ase, iterationKey);
                 }
             }
 

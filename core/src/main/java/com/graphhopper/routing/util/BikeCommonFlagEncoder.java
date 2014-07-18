@@ -51,15 +51,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     private final Map<String, Integer> bikeNetworkToCode = new HashMap<String, Integer>();
     EncodedValue relationCodeEncoder;
     private EncodedValue wayTypeEncoder;
-    private EncodedValue preferWayEncoder;
-
-    /**
-     * Should be only instantied via EncodingManager
-     */
-    protected BikeCommonFlagEncoder()
-    {
-        this(4, 2, 0);
-    }
+    private EncodedValue preferWayEncoder;    
 
     protected BikeCommonFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
     {

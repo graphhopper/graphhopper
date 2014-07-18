@@ -135,7 +135,7 @@ public class RoutingAlgorithmSpecialAreaTests
             LocationIndex idxCH = new LocationIndexTreeSC(graphCH, new RAMDirectory()).prepareIndex();
             prepare.add(new ME(prepareCH, idxCH));
 
-            PrepareContractionHierarchies prepareCHAStar = new PrepareContractionHierarchies(encoder, weighting)
+            PrepareContractionHierarchies prepareCHAStar = new PrepareContractionHierarchies(encoder, weighting, edgeBased)
             {
                 @Override
                 public RoutingAlgorithm createAlgo()
