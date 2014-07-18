@@ -27,6 +27,8 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,11 +38,6 @@ import java.util.List;
  */
 public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
 {
-    /**
-     * For turn costs we need two directions per edge
-     */
-    public static int HIGHEST_BIT_ONE = 0x80000000;
-
     private EdgeFilter additionalEdgeFilter;
     protected Graph graph;
     protected NodeAccess nodeAccess;
@@ -79,13 +76,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     protected int createIdentifier( EdgeIterator iter, boolean reverse )
     {
         if (edgeBased)
-        {
-            int baseNode = iter.getBaseNode(), adjNode = iter.getAdjNode();
-            if (!reverse && baseNode > adjNode || reverse && baseNode < adjNode)
-                return iter.getEdge() | HIGHEST_BIT_ONE;
-
-            return iter.getEdge();
-        }
+            return GHUtility.createEdgeKey(iter.getAdjNode(), iter.getBaseNode(), iter.getEdge(), reverse);
 
         return iter.getAdjNode();
     }
@@ -139,7 +130,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
     }
 
-    protected void updateBestPath( EdgeEntry shortestDE, int currLoc )
+    protected void updateBestPath( EdgeIteratorState edgeState, EdgeEntry bestEdgeEntry, int key )
     {
     }
 

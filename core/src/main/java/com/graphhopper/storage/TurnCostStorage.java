@@ -118,7 +118,7 @@ public class TurnCostStorage implements ExtendedStorage
 
     private int getCostTableAdress( int index )
     {
-        if (index >= graph.getNodes() || index < 0)
+        if (index < 0)
             throw new IllegalStateException("turn cost index cannot be negative " + index);
 
         return nodeAccess.getAdditionalNodeField(index);

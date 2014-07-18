@@ -28,6 +28,8 @@ import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 
 /**
  * Calculates best path in bidirectional way.
@@ -76,7 +78,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         if (currTo != null)
         {
             bestWeightMapOther = bestWeightMapTo;
-            updateBestPath(currTo, from);
+            updateBestPath(GHUtility.getEdge(graph, from, currTo.adjNode), currTo, from);
         }
     }
 
@@ -92,7 +94,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         if (currFrom != null)
         {
             bestWeightMapOther = bestWeightMapFrom;
-            updateBestPath(currFrom, to);
+            updateBestPath(GHUtility.getEdge(graph, currFrom.adjNode, to), currFrom, to);
         }
     }
 
@@ -162,64 +164,56 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         while (iter.next())
         {
             if (!accept(iter, currEdge.edge))
-                continue;            
+                continue;
 
             int iterationKey = createIdentifier(iter, reverse);
             double tmpWeight = weighting.calcWeight(iter, reverse, currEdge.edge) + currEdge.weight;
-
-            EdgeEntry de = shortestWeightMap.get(iterationKey);
-            if (de == null)
+            if (Double.isInfinite(tmpWeight))
+                continue;
+            
+            EdgeEntry ee = shortestWeightMap.get(iterationKey);
+            if (ee == null)
             {
-                de = new EdgeEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight);
-                de.parent = currEdge;
-                shortestWeightMap.put(iterationKey, de);
-                prioQueue.add(de);
-            } else if (de.weight > tmpWeight)
+                ee = new EdgeEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight);
+                ee.parent = currEdge;
+                shortestWeightMap.put(iterationKey, ee);
+                prioQueue.add(ee);
+            } else if (ee.weight > tmpWeight)
             {
-                prioQueue.remove(de);
-                de.edge = iter.getEdge();
-                de.weight = tmpWeight;
-                de.parent = currEdge;
-                prioQueue.add(de);
-            }
+                prioQueue.remove(ee);
+                ee.edge = iter.getEdge();
+                ee.weight = tmpWeight;
+                ee.parent = currEdge;
+                prioQueue.add(ee);
+            } else
+                continue;
 
             if (updateBestPath)
-                updateBestPath(de, iterationKey);
+                updateBestPath(iter, ee, iterationKey);
         }
     }
 
     @Override
-    protected void updateBestPath( EdgeEntry shortestEE, int iterationKey )
+    protected void updateBestPath( EdgeIteratorState edgeState, EdgeEntry shortestEE, int iterationKey )
     {
         EdgeEntry entryOther = bestWeightMapOther.get(iterationKey);
         if (entryOther == null)
             return;
 
         boolean reverse = bestWeightMapFrom == bestWeightMapOther;
-        if (isEdgeBased())
-        {
-            // prevents the path to contain the edge at the meeting point twice in edge-based traversal
-            if (entryOther.edge == shortestEE.edge)
-            {
-                if (reverse)
-                {
-                    entryOther = entryOther.parent;
-                } else
-                {
-                    shortestEE = shortestEE.parent;
-                }
-            }
-        }
 
         // update μ
         double newWeight = shortestEE.weight + entryOther.weight;
+        if (isEdgeBased())
+        {
+            if (entryOther.edge != shortestEE.edge)
+                throw new IllegalStateException("cannot happen for edge based execution of " + getName());
 
-        // TODO why necessary?
-//        if (weighting instanceof TurnWeighting)
-//        {
-//            newWeight *= weighting.calcWeight(shortestEE.edge, 
-//                    (reverse) ? entryOther.adjNode : shortestEE.adjNode, entryOther.edge, reverse);
-//        }
+            // prevents the path to contain the edge at the meeting point twice and subtract the weight (excluding turn weight => no previous edge)
+            shortestEE = shortestEE.parent;
+            newWeight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
+        }
+
         if (newWeight < bestPath.getWeight())
         {
             bestPath.setSwitchToFrom(reverse);

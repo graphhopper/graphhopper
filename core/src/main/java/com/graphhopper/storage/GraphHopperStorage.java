@@ -96,7 +96,7 @@ public class GraphHopperStorage implements GraphStorage
         this(dir, encodingManager, withElevation, new ExtendedStorage.NoExtendedStorage());
     }
 
-    public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation, 
+    public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation,
             ExtendedStorage extendedStorage )
     {
         // here encoding manager can be null e.g. if we want to load existing graph
@@ -179,7 +179,7 @@ public class GraphHopperStorage implements GraphStorage
         properties.create(100);
         extStorage.create(initSize);
 
-        properties.put("osmreader.bytesForFlags", encodingManager.getBytesForFlags());
+        properties.put("graph.bytesForFlags", encodingManager.getBytesForFlags());
         properties.put("osmreader.acceptWay", encodingManager.toDetailsString());
 
         properties.put("graph.byteOrder", dir.getByteOrder());
@@ -777,14 +777,6 @@ public class GraphHopperStorage implements GraphStorage
                             + ", " + edgePointer + ", " + edgeId);
 
                 foundNext = filter == null || filter.accept(this);
-//
-//                if(foundNext && nextEdge != EdgeIterator.NO_EDGE && extStorage instanceof TurnCostStorage){
-//                    int turncosts = ((TurnCostStorage) extStorage).getTurnCosts(baseNode, edgeId, nextEdge);
-//                    if(turncosts == Integer.MAX_VALUE){
-//                        foundNext = false;
-//                    }
-//                }
-
                 if (foundNext)
                     break;
             }
@@ -1386,7 +1378,7 @@ public class GraphHopperStorage implements GraphStorage
                             + dir.getLocation());
 
                 int bytesForFlags = 4;
-                if ("8".equals(properties.get("osmreader.bytesForFlags")))
+                if ("8".equals(properties.get("graph.bytesForFlags")))
                     bytesForFlags = 8;
                 encodingManager = new EncodingManager(acceptStr, bytesForFlags);
             } else if (!acceptStr.isEmpty() && !encodingManager.toDetailsString().equalsIgnoreCase(acceptStr))
@@ -1537,7 +1529,7 @@ public class GraphHopperStorage implements GraphStorage
     {
         return nodes.isClosed();
     }
-    
+
     @Override
     public ExtendedStorage getExtendedStorage()
     {

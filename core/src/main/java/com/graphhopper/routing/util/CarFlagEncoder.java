@@ -17,16 +17,12 @@
  */
 package com.graphhopper.routing.util;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.Helper;
 import java.util.*;
@@ -54,6 +50,13 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     public CarFlagEncoder()
     {
         this(5, 5, 0);
+    }
+
+    public CarFlagEncoder( String propertiesStr )
+    {
+        this((int) parseLong(propertiesStr, "speedBits", 5),
+                parseDouble(propertiesStr, "speedFactor", 5),
+                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
     }
 
     public CarFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
@@ -283,7 +286,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             return "destinations: " + str;
         else
             return "destination: " + str;
-    }    
+    }
 
     @Override
     public String toString()

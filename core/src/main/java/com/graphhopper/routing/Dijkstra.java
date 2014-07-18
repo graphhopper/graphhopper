@@ -62,7 +62,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
         this.to = to;
         currEdge = createEdgeEntry(from, 0);
         if (!isEdgeBased())
-        {            
+        {
             fromMap.put(from, currEdge);
         }
         return runAlgo();
@@ -86,6 +86,8 @@ public class Dijkstra extends AbstractRoutingAlgorithm
 
                 int iterationKey = createIdentifier(iter, false);
                 double tmpWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight;
+                if (Double.isInfinite(tmpWeight))
+                    continue;
 
                 EdgeEntry nEdge = fromMap.get(iterationKey);
                 if (nEdge == null)
@@ -101,9 +103,10 @@ public class Dijkstra extends AbstractRoutingAlgorithm
                     nEdge.weight = tmpWeight;
                     nEdge.parent = currEdge;
                     fromHeap.add(nEdge);
-                }
+                } else
+                    continue;
 
-                updateBestPath(nEdge, iterationKey);
+                updateBestPath(iter, nEdge, iterationKey);
             }
 
             if (fromHeap.isEmpty())

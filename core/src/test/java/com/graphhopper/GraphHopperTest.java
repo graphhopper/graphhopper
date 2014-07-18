@@ -62,26 +62,26 @@ public class GraphHopperTest
     @Test
     public void testLoadOSM()
     {
-        GraphHopper closableInstance = new GraphHopper().setInMemory(true).
+        GraphHopper gh = new GraphHopper().setInMemory(true).
                 setEncodingManager(new EncodingManager("CAR")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
-        closableInstance.importOrLoad();
-        GHResponse ph = closableInstance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
+        gh.importOrLoad();
+        GHResponse ph = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertTrue(ph.isFound());
         assertEquals(3, ph.getPoints().getSize());
 
-        closableInstance.close();
-        closableInstance = new GraphHopper().setInMemory(true);
-        assertTrue(closableInstance.load(ghLoc));
-        ph = closableInstance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
+        gh.close();
+        gh = new GraphHopper().setInMemory(true);
+        assertTrue(gh.load(ghLoc));
+        ph = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertTrue(ph.isFound());
         assertEquals(3, ph.getPoints().getSize());
 
-        closableInstance.close();
+        gh.close();
         try
         {
-            ph = closableInstance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
+            ph = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
             assertTrue(false);
         } catch (Exception ex)
         {
@@ -90,7 +90,7 @@ public class GraphHopperTest
 
         try
         {
-            QueryResult qr = closableInstance.getLocationIndex().findClosest(51.2492152, 9.4317166, EdgeFilter.ALL_EDGES);
+            QueryResult qr = gh.getLocationIndex().findClosest(51.2492152, 9.4317166, EdgeFilter.ALL_EDGES);
             assertTrue(false);
         } catch (Exception ex)
         {

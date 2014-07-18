@@ -27,24 +27,46 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import static org.junit.Assert.*;
 import static com.graphhopper.util.GHUtility.*;
+import java.util.Arrays;
+import java.util.Collection;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 /**
  * @author Peter Karich
  */
+@RunWith(Parameterized.class)
 public class EdgeBasedRoutingAlgorithmTest
 {
     private final FlagEncoder carEncoder = new CarFlagEncoder(5, 5, 3);
     private final EncodingManager em = new EncodingManager(carEncoder);
 
-    public EdgeBasedRoutingAlgorithmTest()
+    @Parameters(name="{0}")
+    public static Collection<Object[]> configs()
     {
+        return Arrays.asList(new Object[][]
+        {
+            { "dijkstra" },
+            { "dijkstrabi" },
+            { "astar" },
+            { "astarbi" },
+            { "dijkstraNative" },
+            // TODO { "dijkstraOneToMany" }
+        });
+    }
+
+    private final String algoStr;
+
+    public EdgeBasedRoutingAlgorithmTest( String algo )
+    {
+        this.algoStr = algo;
     }
 
     public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final Weighting w )
     {
-        // TODO try other algorithms!
-        return NoOpAlgorithmPreparation.createAlgoPrepare(defaultGraph, "dijkstra", encoder, w, true);
+        return NoOpAlgorithmPreparation.createAlgoPrepare(defaultGraph, algoStr, encoder, w, true);
     }
 
     protected GraphStorage createGraph( EncodingManager em )
@@ -133,9 +155,12 @@ public class EdgeBasedRoutingAlgorithmTest
 
         long tflags = carEncoder.getTurnFlags(true, 0);
 
+        // force u-turn via lowering the cost for it
         EdgeIteratorState e3_6 = getEdge(g, 3, 6);
         e3_6.setDistance(0.1);
-        // force u-turn
+        getEdge(g, 3, 2).setDistance(8642);
+        getEdge(g, 1, 0).setDistance(8642);
+        
         tcs.addTurnInfo(6, getEdge(g, 7, 6).getEdge(), getEdge(g, 6, 5).getEdge(), tflags);
         tcs.addTurnInfo(3, getEdge(g, 4, 3).getEdge(), e3_6.getEdge(), tflags);
         Path p = prepareGraph(g, carEncoder, createWeighting(carEncoder, tcs)).

@@ -37,6 +37,11 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
     {
     }
 
+    public Bike2WeightFlagEncoder( String propertiesStr )
+    {
+        super(propertiesStr);
+    }
+
     public Bike2WeightFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
     {
         super(speedBits, speedFactor, maxTurnCosts);

@@ -114,7 +114,7 @@ public class OSMTurnRelation
                     long wayId = osmReader.getOsmIdOfInternalEdge(edgeId);
                     if (wayId < 0)
                         continue;
-
+                    
                     if (edgeId != edgeIdFrom
                             && (this.restriction == Type.ONLY && wayId != this.toOsmWayId
                             || (this.restriction == Type.NOT && wayId == this.toOsmWayId)))
@@ -138,14 +138,20 @@ public class OSMTurnRelation
         return entries;
     }
 
+    @Override
+    public String toString()
+    {
+        return "*-(" + fromOsmWayId + ")->" + viaOsmNodeId + "-(" + toOsmWayId + ")->*";
+    }
+    
     /**
      * Helper class to processing purposes only
      */
     public static class TurnCostTableEntry
     {
         public int edgeFrom;
-        public int edgeTo;
         public int nodeViaNode;
+        public int edgeTo;        
         public long flags;
 
         /**

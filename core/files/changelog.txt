@@ -1,4 +1,5 @@
 0.4.0
+    osmreader.bytesForFlags changed to graph.bytesForFlags
     to provide context for turn costs we needed to add prevEdgeId into Weighting.calcWeight
     with the introduction of lock protection mechanism (see #112) GraphHopper needs always write access, see also #217
     new GraphHopper.clean method to remove the directory via Java API

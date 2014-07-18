@@ -22,9 +22,7 @@ import gnu.trove.map.hash.TLongObjectHashMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMReader;
@@ -51,18 +49,6 @@ public class EncodingManager
     public static final String RACINGBIKE = "racingbike";
     public static final String MOUNTAINBIKE = "mtb";
     public static final String FOOT = "foot";
-    private static final Map<String, String> defaultEdgeFlagEncoders = new HashMap<String, String>();
-    private static final Map<String, String> defaultTurnFlagEncoders = new HashMap<String, String>();
-
-    static
-    {
-        defaultEdgeFlagEncoders.put(CAR, CarFlagEncoder.class.getName());
-        defaultEdgeFlagEncoders.put(BIKE, BikeFlagEncoder.class.getName());
-        defaultEdgeFlagEncoders.put(BIKE2, Bike2WeightFlagEncoder.class.getName());
-        defaultEdgeFlagEncoders.put(RACINGBIKE, RacingBikeFlagEncoder.class.getName());
-        defaultEdgeFlagEncoders.put(MOUNTAINBIKE, MountainBikeFlagEncoder.class.getName());
-        defaultEdgeFlagEncoders.put(FOOT, FootFlagEncoder.class.getName());
-    }
 
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<AbstractFlagEncoder>();
 
@@ -88,8 +74,7 @@ public class EncodingManager
 
     public EncodingManager( String flagEncodersStr, int bytesForFlags )
     {
-        this(Arrays.asList(readFromEncoderString(defaultEdgeFlagEncoders, flagEncodersStr).
-                toArray(new FlagEncoder[0])), bytesForFlags);
+        this(parseEncoderString(flagEncodersStr), bytesForFlags);
     }
 
     /**
@@ -124,7 +109,7 @@ public class EncodingManager
             @Override
             public int compare( FlagEncoder o1, FlagEncoder o2 )
             {
-                return o1.getClass().toString().compareTo(o2.getClass().toString());
+                return o1.toString().compareTo(o2.toString());
             }
         });
         for (FlagEncoder flagEncoder : flagEncoders)
@@ -138,40 +123,49 @@ public class EncodingManager
         return bitsForEdgeFlags / 8;
     }
 
-    private static List<FlagEncoder> readFromEncoderString( Map<String, String> defaultEncoders,
-            String encoderList )
+    static List<FlagEncoder> parseEncoderString( String encoderList )
     {
+        if (encoderList.contains(":"))
+            throw new IllegalArgumentException("EncodingManager does no longer use reflection instantiate encoders directly.");
+
         String[] entries = encoderList.split(",");
         List<FlagEncoder> resultEncoders = new ArrayList<FlagEncoder>();
 
         for (String entry : entries)
         {
-            entry = entry.trim();
+            entry = entry.trim().toLowerCase();
             if (entry.isEmpty())
                 continue;
 
-            String className = null;
-            int pos = entry.indexOf(":");
-            if (pos > 0)
-            {
-                className = entry.substring(pos + 1);
-            } else
-            {
-                className = defaultEncoders.get(entry.toLowerCase());
-                if (className == null)
-                    throw new IllegalArgumentException("Unknown encoder name " + entry);
+            String entryVal = "";
+            if(entry.contains("|")) {
+                entryVal = entry;
+                entry = entry.split("\\|")[0];                
             }
+            
+            AbstractFlagEncoder fe;
+            if (entry.equals(CAR))
+                fe = new CarFlagEncoder(entryVal);
 
-            try
-            {
-                @SuppressWarnings("unchecked")
-                Class<FlagEncoder> cls = (Class<FlagEncoder>) Class.forName(className);
-                FlagEncoder fe = (FlagEncoder) cls.getDeclaredConstructor().newInstance();
-                resultEncoders.add(fe);
-            } catch (Exception e)
-            {
-                throw new IllegalArgumentException("Cannot instantiate class " + className, e);
-            }
+            else if (entry.equals(BIKE))
+                fe = new BikeFlagEncoder(entryVal);
+
+            else if (entry.equals(BIKE2))
+                fe = new Bike2WeightFlagEncoder(entryVal);
+
+            else if (entry.equals(RACINGBIKE))
+                fe = new RacingBikeFlagEncoder(entryVal);
+
+            else if (entry.equals(MOUNTAINBIKE))
+                fe = new MountainBikeFlagEncoder(entryVal);
+
+            else if (entry.equals(FOOT))
+                fe = new FootFlagEncoder(entryVal);
+
+            else
+                throw new IllegalArgumentException("entry in encoder list not supported " + entry);
+
+            resultEncoders.add(fe);
         }
         return resultEncoders;
     }
@@ -306,8 +300,8 @@ public class EncodingManager
                 str.append(",");
 
             str.append(encoder.toString());
-            str.append(":");
-            str.append(encoder.getClass().getName());
+            str.append("|");
+            str.append(encoder.getPropertiesString());
         }
 
         return str.toString();
@@ -461,5 +455,15 @@ public class EncodingManager
         if (str == null)
             return "";
         return str.replaceAll(";[ ]*", ", ");
+    }
+
+    public boolean needsTurnCostSupport()
+    {
+        for (FlagEncoder encoder : edgeEncoders)
+        {
+            if (encoder.supportsTurnCosts())
+                return true;
+        }
+        return false;
     }
 }

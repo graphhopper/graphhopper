@@ -116,7 +116,7 @@ public class RoutingAlgorithmIT
         // http://localhost:8989/?point=55.819066%2C37.596374&point=55.818898%2C37.59661
         list.add(new OneRun(55.819066, 37.596374, 55.818898, 37.59661, 1114, 23));
         runAlgo(testCollector, "files/moscow.osm.gz", "target/moscow-gh",
-                list, "CAR", true, "CAR", "fastest", false);
+                list, "CAR|turnCosts=true", true, "CAR", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -126,7 +126,9 @@ public class RoutingAlgorithmIT
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
 
-        runAlgo(testCollector, "files/moscow.osm.gz", "target/graph-moscow", list, "CAR", true, true, "CAR", "fastest", false);
+        boolean testAlsoCH = true, turnCosts = true, is3D = false;
+        runAlgo(testCollector, "files/moscow.osm.gz", "target/graph-moscow",
+                list, "CAR", testAlsoCH, turnCosts, "CAR", "fastest", is3D);
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
@@ -430,8 +432,7 @@ public class RoutingAlgorithmIT
                     setOSMFile(osmFile).
                     disableCHShortcuts().
                     setGraphHopperLocation(graphFile).
-                    setEncodingManager(new EncodingManager(importVehicles)).
-                    setTurnCosts(turnCosts);
+                    setEncodingManager(new EncodingManager(importVehicles));                    
             if (is3D)
                 hopper.setElevationProvider(new SRTMProvider().setCacheDir(new File("./files")));
 
