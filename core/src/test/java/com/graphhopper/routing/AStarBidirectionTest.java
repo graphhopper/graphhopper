@@ -73,16 +73,4 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
             }
         }.setGraph(g);
     }
-
-    @Override
-    public void testCalcIfEmptyWay()
-    {
-
-        if (!edgeBased)
-        {
-            super.testCalcIfEmptyWay();
-        }
-
-        //FIXME not sure if this test succeed if the problem mentioned above has been fixed
-    }
 }

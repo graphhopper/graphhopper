@@ -70,15 +70,22 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     public void initFrom( int from, double dist )
     {
         currFrom = createEdgeEntry(from, dist);
+        openSetFrom.add(currFrom);
         if (!isEdgeBased())
         {
             bestWeightMapFrom.put(from, currFrom);
-        }
-        openSetFrom.add(currFrom);
-        if (currTo != null)
+            if (currTo != null)
+            {
+                bestWeightMapOther = bestWeightMapTo;
+                updateBestPath(GHUtility.getEdge(graph, from, currTo.adjNode), currTo, from);
+            }
+        } else
         {
-            bestWeightMapOther = bestWeightMapTo;
-            updateBestPath(GHUtility.getEdge(graph, from, currTo.adjNode), currTo, from);
+            if (currTo != null && currTo.adjNode == from)
+            {
+                finishedFrom = true;
+                finishedTo = true;
+            }
         }
     }
 
@@ -86,15 +93,22 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     public void initTo( int to, double dist )
     {
         currTo = createEdgeEntry(to, dist);
+        openSetTo.add(currTo);
         if (!isEdgeBased())
         {
             bestWeightMapTo.put(to, currTo);
-        }
-        openSetTo.add(currTo);
-        if (currFrom != null)
+            if (currFrom != null)
+            {
+                bestWeightMapOther = bestWeightMapFrom;
+                updateBestPath(GHUtility.getEdge(graph, currFrom.adjNode, to), currFrom, to);
+            }
+        } else
         {
-            bestWeightMapOther = bestWeightMapFrom;
-            updateBestPath(GHUtility.getEdge(graph, currFrom.adjNode, to), currFrom, to);
+            if (currFrom != null && currFrom.adjNode == to)
+            {
+                finishedFrom = true;
+                finishedTo = true;
+            }
         }
     }
 
@@ -170,7 +184,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
             double tmpWeight = weighting.calcWeight(iter, reverse, currEdge.edge) + currEdge.weight;
             if (Double.isInfinite(tmpWeight))
                 continue;
-            
+
             EdgeEntry ee = shortestWeightMap.get(iterationKey);
             if (ee == null)
             {
