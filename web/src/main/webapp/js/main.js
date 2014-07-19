@@ -6,10 +6,13 @@
 var tmpArgs = parseUrlWithHisto();
 var host;
 
-if (location.port === '') {
-    host = location.protocol + '//' + location.hostname;
-} else {
-    host = location.protocol + '//' + location.hostname + ":" + location.port;
+// check host as deployment-script can insert host here
+if (!host) {
+    if (location.port === '') {
+        host = location.protocol + '//' + location.hostname;
+    } else {
+        host = location.protocol + '//' + location.hostname + ":" + location.port;
+    }
 }
 
 var ghRequest = new GHRequest(host);
