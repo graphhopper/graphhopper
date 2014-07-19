@@ -1,7 +1,6 @@
 var host;
 
 // Deployment-scripts can insert host here.
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // We know that you love 'free', we love it too :)! And so our entire software stack is free and even Open Source!      
 // Our routing service is also free for certain applications or smaller volume. Be fair, grab an API key and support us:
