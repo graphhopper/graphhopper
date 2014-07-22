@@ -25,6 +25,7 @@ import com.graphhopper.util.EdgeIteratorState;
  * Provides methods to retrieve turn costs for a specific turn.
  * <p>
  * @author Karl Hübner
+ * @author Peter Karich
  */
 public class TurnWeighting implements Weighting
 {
@@ -88,11 +89,11 @@ public class TurnWeighting implements Weighting
 
     public double calcTurnWeight( int edgeFrom, int nodeVia, int edgeTo )
     {
-        long turnFlags = turnCostStorage.getTurnCostsFlags(nodeVia, edgeFrom, edgeTo);
+        long turnFlags = turnCostStorage.getTurnCostFlags(nodeVia, edgeFrom, edgeTo);
         if (turnCostEncoder.isTurnRestricted(turnFlags))
             return Double.POSITIVE_INFINITY;
 
-        return turnCostEncoder.getTurnCosts(turnFlags);
+        return turnCostEncoder.getTurnCost(turnFlags);
     }
 
     @Override

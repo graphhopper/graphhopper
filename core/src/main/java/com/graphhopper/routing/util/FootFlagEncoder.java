@@ -142,7 +142,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
      * @return 0
      */
     @Override
-    public double getTurnCosts( long flag )
+    public double getTurnCost( long flag )
     {
         return 0;
     }

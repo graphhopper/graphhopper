@@ -431,12 +431,13 @@ public class RoutingAlgorithmIT
 
             hopper.importOrLoad();
 
-            boolean turnCosts = importVehicles.toLowerCase().contains("turncosts=true");
+            TraversalMode tMode = importVehicles.toLowerCase().contains("turncosts=true")? 
+                    TraversalMode.EDGE_BASED_1DIR : TraversalMode.NODE_BASED;
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             Weighting weighting = hopper.createWeighting(Weighting.Params.create(weightCalcStr), encoder);
 
             Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
-                    createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, testAlsoCH, turnCosts, weighting, hopper.getEncodingManager());
+                    createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, testAlsoCH, tMode, weighting, hopper.getEncodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
             for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
             {
@@ -476,7 +477,7 @@ public class RoutingAlgorithmIT
         String bigFile = "10000EWD.txt.gz";
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
         Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
-                createAlgos(graph, null, encoder, false, false, new ShortestWeighting(), eManager);
+                createAlgos(graph, null, encoder, false, TraversalMode.NODE_BASED, new ShortestWeighting(), eManager);
         for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
         {
             AlgorithmPreparation prepare = entry.getKey();
@@ -537,8 +538,8 @@ public class RoutingAlgorithmIT
             {
                 RoutingAlgorithm[] algos = new RoutingAlgorithm[]
                 {
-                    new AStar(g, carEncoder, weighting, false),
-                    new DijkstraBidirectionRef(g, carEncoder, weighting, false)
+                    new AStar(g, carEncoder, weighting, TraversalMode.NODE_BASED),
+                    new DijkstraBidirectionRef(g, carEncoder, weighting, TraversalMode.NODE_BASED)
                 };
                 for (final RoutingAlgorithm algo : algos)
                 {

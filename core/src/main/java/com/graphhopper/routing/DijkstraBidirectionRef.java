@@ -23,6 +23,7 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
 
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
@@ -51,9 +52,9 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     protected PathBidirRef bestPath;
     private boolean updateBestPath = true;
 
-    public DijkstraBidirectionRef( Graph graph, FlagEncoder encoder, Weighting weighting, boolean edgeBased )
+    public DijkstraBidirectionRef( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
-        super(graph, encoder, weighting, edgeBased);
+        super(graph, encoder, weighting, tMode);
         initCollections(1000);
     }
 
@@ -71,7 +72,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     {
         currFrom = createEdgeEntry(from, dist);
         openSetFrom.add(currFrom);
-        if (!isEdgeBased())
+        if (!traversalMode.isEdgeBased())
         {
             bestWeightMapFrom.put(from, currFrom);
             if (currTo != null)
@@ -94,7 +95,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     {
         currTo = createEdgeEntry(to, dist);
         openSetTo.add(currTo);
-        if (!isEdgeBased())
+        if (!traversalMode.isEdgeBased())
         {
             bestWeightMapTo.put(to, currTo);
             if (currFrom != null)
@@ -180,7 +181,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
             if (!accept(iter, currEdge.edge))
                 continue;
 
-            int iterationKey = createIdentifier(iter, reverse);
+            int iterationKey = traversalMode.createIdentifier(iter, reverse);
             double tmpWeight = weighting.calcWeight(iter, reverse, currEdge.edge) + currEdge.weight;
             if (Double.isInfinite(tmpWeight))
                 continue;
@@ -208,7 +209,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     }
 
     @Override
-    protected void updateBestPath( EdgeIteratorState edgeState, EdgeEntry shortestEE, int iterationKey )
+    protected void updateBestPath( EdgeIteratorState edgeState, EdgeEntry entryCurrent, int iterationKey )
     {
         EdgeEntry entryOther = bestWeightMapOther.get(iterationKey);
         if (entryOther == null)
@@ -217,21 +218,29 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         boolean reverse = bestWeightMapFrom == bestWeightMapOther;
 
         // update μ
-        double newWeight = shortestEE.weight + entryOther.weight;
-        if (isEdgeBased())
+        double newWeight = entryCurrent.weight + entryOther.weight;
+        if (traversalMode.isEdgeBased())
         {
-            if (entryOther.edge != shortestEE.edge)
+            if (entryOther.edge != entryCurrent.edge)
                 throw new IllegalStateException("cannot happen for edge based execution of " + getName());
 
-            // prevents the path to contain the edge at the meeting point twice and subtract the weight (excluding turn weight => no previous edge)
-            shortestEE = shortestEE.parent;
-            newWeight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
+            if (entryOther.adjNode != entryCurrent.adjNode)
+            {
+                // prevents the path to contain the edge at the meeting point twice and subtract the weight (excluding turn weight => no previous edge)
+                entryCurrent = entryCurrent.parent;
+                newWeight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
+            } else
+            {
+                // we detected a u-turn at meeting point, skip if not supported
+                if (!traversalMode.hasUTurnSupport())
+                    return;
+            }
         }
 
         if (newWeight < bestPath.getWeight())
         {
             bestPath.setSwitchToFrom(reverse);
-            bestPath.setEdgeEntry(shortestEE);
+            bestPath.setEdgeEntry(entryCurrent);
             bestPath.setWeight(newWeight);
             bestPath.setEdgeEntryTo(entryOther);
         }

@@ -23,6 +23,7 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
 
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
@@ -51,9 +52,9 @@ public class AStar extends AbstractRoutingAlgorithm
     private double toLat;
     private double toLon;
 
-    public AStar( Graph g, FlagEncoder encoder, Weighting weighting, boolean edgeBased )
+    public AStar( Graph g, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
-        super(g, encoder, weighting, edgeBased);
+        super(g, encoder, weighting, tMode);
         initCollections(1000);
         setApproximation(true);
     }
@@ -85,7 +86,7 @@ public class AStar extends AbstractRoutingAlgorithm
         toLon = nodeAccess.getLongitude(to);
         to1 = to;
         currEdge = createEdgeEntry(from, 0);
-        if (!isEdgeBased())
+        if (!traversalMode.isEdgeBased())
         {
             fromMap.put(from, currEdge);
         }
@@ -110,8 +111,10 @@ public class AStar extends AbstractRoutingAlgorithm
                     continue;
 
                 int neighborNode = iter.getAdjNode();
-                int iterationKey = createIdentifier(iter, false);
+                int iterationKey = traversalMode.createIdentifier(iter, false);
                 double alreadyVisitedWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weightToCompare;
+                if (Double.isInfinite(alreadyVisitedWeight))
+                    continue;
 
                 AStarEdge ase = fromMap.get(iterationKey);
                 if (ase == null || ase.weightToCompare > alreadyVisitedWeight)

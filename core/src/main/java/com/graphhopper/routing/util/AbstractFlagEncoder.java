@@ -49,16 +49,17 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     private long nodeBitMask;
     private long wayBitMask;
     private long relBitMask;
-    protected long forwardBit = 0;
-    protected long backwardBit = 0;
-    protected long directionBitMask = 0;
-    protected long roundaboutBit = 0;
+    protected long forwardBit;
+    protected long backwardBit;
+    protected long directionBitMask;
+    protected long roundaboutBit;
     protected EncodedDoubleValue speedEncoder;
     // bit to signal that way is accepted
-    protected long acceptBit = 0;
-    protected long ferryBit = 0;
+    protected long acceptBit;
+    protected long ferryBit;
 
-    protected EncodedValue turnCostEncoder;
+    private EncodedValue turnCostEncoder;
+    private long turnRestrictionBit;
     private final int maxTurnCosts;
 
     /* processing properties (to be initialized lazy when needed) */
@@ -90,7 +91,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      */
     protected AbstractFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
     {
-        this.maxTurnCosts = maxTurnCosts;
+        this.maxTurnCosts = maxTurnCosts <= 0 ? 0 : maxTurnCosts;
         this.speedBits = speedBits;
         this.speedFactor = speedFactor;
         oneways.add("yes");
@@ -529,25 +530,52 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      */
     public int defineTurnBits( int index, int shift )
     {
+        if (maxTurnCosts == 0)
+            return shift;
+
+        // optimization for turn restrictions only 
+        else if (maxTurnCosts == 1)
+        {
+            turnRestrictionBit = 1L << shift;
+            return shift + 1;
+        }
+
         int turnBits = Helper.countBitValue(maxTurnCosts);
-        turnCostEncoder = new EncodedValue("TurnCost", shift, turnBits, 1, 0, maxTurnCosts);
+        turnCostEncoder = new EncodedValue("TurnCost", shift, turnBits, 1, 0, maxTurnCosts)
+        {
+            // override to avoid expensive Math.round
+            @Override
+            public final long getValue( long flags )
+            {
+                // find value
+                flags &= mask;
+                flags >>= shift;
+                return flags;
+            }
+        };
         return shift + turnBits;
     }
 
     @Override
-    public boolean isTurnRestricted( long flag )
+    public boolean isTurnRestricted( long flags )
     {
-        if (!supportsTurnCosts())
+        if (maxTurnCosts == 0)
             return false;
 
-        return turnCostEncoder.getValue(flag) == maxTurnCosts;
+        else if (maxTurnCosts == 1)
+            return (flags & turnRestrictionBit) != 0;
+
+        return turnCostEncoder.getValue(flags) == maxTurnCosts;
     }
 
     @Override
-    public double getTurnCosts( long flags )
+    public double getTurnCost( long flags )
     {
-        if (!supportsTurnCosts())
+        if (maxTurnCosts == 0)
             return 0;
+
+        else if (maxTurnCosts == 1)
+            return ((flags & turnRestrictionBit) == 0) ? 0 : Double.POSITIVE_INFINITY;
 
         long cost = turnCostEncoder.getValue(flags);
         if (cost == maxTurnCosts)
@@ -559,8 +587,16 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     @Override
     public long getTurnFlags( boolean restricted, double costs )
     {
-        if (!supportsTurnCosts())
+        if (maxTurnCosts == 0)
             return 0;
+
+        else if (maxTurnCosts == 1)
+        {
+            if (costs != 0)
+                throw new IllegalArgumentException("Only restrictions are supported");
+
+            return restricted ? turnRestrictionBit : 0;
+        }
 
         if (restricted)
         {

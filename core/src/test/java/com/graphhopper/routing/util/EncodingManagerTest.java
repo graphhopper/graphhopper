@@ -251,9 +251,9 @@ public class EncodingManagerTest
                 assertFalse(foot.isTurnRestricted(entry.flags));
                 assertFalse(bike.isTurnRestricted(entry.flags));
 
-                assertTrue(Double.isInfinite(car.getTurnCosts(entry.flags)));
-                assertEquals(0, foot.getTurnCosts(entry.flags), 1e-1);
-                assertEquals(0, bike.getTurnCosts(entry.flags), 1e-1);
+                assertTrue(Double.isInfinite(car.getTurnCost(entry.flags)));
+                assertEquals(0, foot.getTurnCost(entry.flags), 1e-1);
+                assertEquals(0, bike.getTurnCost(entry.flags), 1e-1);
             } else if (entry.edgeFrom == 2)
             {
                 // the 2nd entry provides turn flags for bike only
@@ -262,9 +262,9 @@ public class EncodingManagerTest
                 assertFalse(foot.isTurnRestricted(entry.flags));
                 assertFalse(bike.isTurnRestricted(entry.flags));
 
-                assertEquals(0, car.getTurnCosts(entry.flags), 1e-1);
-                assertEquals(0, foot.getTurnCosts(entry.flags), 1e-1);
-                assertEquals(10, bike.getTurnCosts(entry.flags), 1e-1);
+                assertEquals(0, car.getTurnCost(entry.flags), 1e-1);
+                assertEquals(0, foot.getTurnCost(entry.flags), 1e-1);
+                assertEquals(10, bike.getTurnCost(entry.flags), 1e-1);
             }
         }
     }
