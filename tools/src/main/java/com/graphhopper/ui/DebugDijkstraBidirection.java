@@ -19,6 +19,7 @@ package com.graphhopper.ui;
 
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
@@ -34,9 +35,9 @@ public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements 
     private GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugDijkstraBidirection( Graph graph, FlagEncoder encoder, Weighting type, boolean edgeBased, GraphicsWrapper mg )
+    public DebugDijkstraBidirection( Graph graph, FlagEncoder encoder, Weighting type, TraversalMode tMode, GraphicsWrapper mg )
     {
-        super(graph, encoder, type, edgeBased);
+        super(graph, encoder, type, tMode);
         this.mg = mg;
     }
 

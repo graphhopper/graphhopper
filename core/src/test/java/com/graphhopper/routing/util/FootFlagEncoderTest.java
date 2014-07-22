@@ -189,11 +189,11 @@ public class FootFlagEncoderTest
         long flags_r20 = footEncoder.getTurnFlags(true, 20);
         long flags_20 = footEncoder.getTurnFlags(false, 20);
 
-        assertEquals(0, footEncoder.getTurnCosts(flags_r0), 1e-1);
-        assertEquals(0, footEncoder.getTurnCosts(flags_0), 1e-1);
+        assertEquals(0, footEncoder.getTurnCost(flags_r0), 1e-1);
+        assertEquals(0, footEncoder.getTurnCost(flags_0), 1e-1);
 
-        assertEquals(0, footEncoder.getTurnCosts(flags_r20), 1e-1);
-        assertEquals(0, footEncoder.getTurnCosts(flags_20), 1e-1);
+        assertEquals(0, footEncoder.getTurnCost(flags_r20), 1e-1);
+        assertEquals(0, footEncoder.getTurnCost(flags_20), 1e-1);
 
         assertFalse(footEncoder.isTurnRestricted(flags_r0));
         assertFalse(footEncoder.isTurnRestricted(flags_0));

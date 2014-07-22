@@ -164,5 +164,10 @@ public interface ExtendedStorage
             return extStorage;
         }
 
+        @Override
+        public String toString()
+        {
+            return "NoExt";
+        }       
     }
 }

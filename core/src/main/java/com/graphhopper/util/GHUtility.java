@@ -340,14 +340,14 @@ public class GHUtility
         return g.copyTo(outGraph.create(g.getNodes()));
     }
 
-    public static int getToNode( Graph g, int edge, int endNode )
+    public static int getAdjNode( Graph g, int edge, int adjNode )
     {
         if (EdgeIterator.Edge.isValid(edge))
         {
-            EdgeIteratorState iterTo = g.getEdgeProps(edge, endNode);
+            EdgeIteratorState iterTo = g.getEdgeProps(edge, adjNode);
             return iterTo.getAdjNode();
         }
-        return endNode;
+        return adjNode;
     }
 
     public static class DisabledEdgeIterator implements EdgeSkipIterator

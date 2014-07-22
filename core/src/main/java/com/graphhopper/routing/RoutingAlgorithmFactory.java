@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 
@@ -28,17 +29,17 @@ public class RoutingAlgorithmFactory
 {
     private final String algoStr;
     private final boolean approx;
-    private final boolean edgeBased;
+    private final TraversalMode traversalMode;
 
     /**
      * @param algo possible values are astar (A* algorithm), astarbi (bidirectional A*), dijkstra
      * (Dijkstra) or dijkstrabi.
      */
-    public RoutingAlgorithmFactory( String algo, boolean approx, boolean edgeBased )
+    public RoutingAlgorithmFactory( String algo, boolean approx, TraversalMode tMode )
     {
         this.algoStr = algo;
         this.approx = approx;
-        this.edgeBased = edgeBased;
+        this.traversalMode = tMode;
     }
 
     public RoutingAlgorithm createAlgo( Graph g, FlagEncoder encoder, Weighting weighting )
@@ -46,19 +47,19 @@ public class RoutingAlgorithmFactory
         AbstractRoutingAlgorithm algo;
         if ("dijkstrabi".equalsIgnoreCase(algoStr))
         {
-            algo = new DijkstraBidirectionRef(g, encoder, weighting, edgeBased);        
+            algo = new DijkstraBidirectionRef(g, encoder, weighting, traversalMode);        
         } else if ("dijkstra".equalsIgnoreCase(algoStr))
         {
-            algo = new Dijkstra(g, encoder, weighting, edgeBased);
+            algo = new Dijkstra(g, encoder, weighting, traversalMode);
         } else if ("astarbi".equalsIgnoreCase(algoStr))
         {
-            algo = new AStarBidirection(g, encoder, weighting, edgeBased).setApproximation(approx);
+            algo = new AStarBidirection(g, encoder, weighting, traversalMode).setApproximation(approx);
         } else if ("dijkstraOneToMany".equalsIgnoreCase(algoStr))
         {
-            algo = new DijkstraOneToMany(g, encoder, weighting, edgeBased);
+            algo = new DijkstraOneToMany(g, encoder, weighting, traversalMode);
         } else
         {
-            algo = new AStar(g, encoder, weighting, edgeBased);
+            algo = new AStar(g, encoder, weighting, traversalMode);
         }
         
         return algo;

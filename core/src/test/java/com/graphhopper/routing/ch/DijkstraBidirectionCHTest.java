@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.ShortestWeighting;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
@@ -68,7 +69,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     @Override
     public PrepareContractionHierarchies prepareGraph( Graph g, FlagEncoder encoder, Weighting w )
     {
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(encoder, w, false).setGraph(g);
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(encoder, w, TraversalMode.NODE_BASED).setGraph(g);
         // hack: prepare matrixgraph only once
         if (g != preparedMatrixGraph)
             ch.doWork();
@@ -114,7 +115,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         g2.setLevel(7, 6);
         g2.setLevel(0, 7);
 
-        Path p = new PrepareContractionHierarchies(encoder, new ShortestWeighting(), false).
+        Path p = new PrepareContractionHierarchies(encoder, new ShortestWeighting(), TraversalMode.NODE_BASED).
                 setGraph(g2).createAlgo().calcPath(0, 7);
 
         assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());

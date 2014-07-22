@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,6 +79,7 @@ public class GraphHopper implements GraphHopperAPI
     private boolean allowWrites = true;
     // for routing
     private boolean simplifyRequest = true;
+    private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
@@ -105,6 +107,7 @@ public class GraphHopper implements GraphHopperAPI
     private boolean fullyLoaded = false;
     private final TranslationMap trMap = new TranslationMap().doImport();
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
+    private final AtomicLong visitedSum = new AtomicLong(0);
 
     public GraphHopper()
     {
@@ -166,6 +169,15 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setWayPointMaxDistance( double wayPointMaxDistance )
     {
         this.wayPointMaxDistance = wayPointMaxDistance;
+        return this;
+    }
+
+    /**
+     * Sets the default traversal mode used for the algorithms and preparation.
+     */
+    public GraphHopper setTraversalMode( TraversalMode traversalMode )
+    {
+        this.traversalMode = traversalMode;
         return this;
     }
 
@@ -700,7 +712,7 @@ public class GraphHopper implements GraphHopperAPI
 
         if (chEnabled)
             graph = new LevelGraphStorage(dir, encodingManager, hasElevation());
-        else if (encodingManager.needsTurnCostSupport())
+        else if (encodingManager.needsTurnCostsSupport())
             graph = new GraphHopperStorage(dir, encodingManager, hasElevation(), new TurnCostStorage());
         else
             graph = new GraphHopperStorage(dir, encodingManager, hasElevation());
@@ -756,7 +768,7 @@ public class GraphHopper implements GraphHopperAPI
     {
         FlagEncoder encoder = encodingManager.getSingle();
         PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder,
-                createWeighting(chWeighting, encoder), encodingManager.needsTurnCostSupport());
+                createWeighting(chWeighting, encoder), traversalMode);
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                 setLazyUpdates(lazyUpdates).
                 setNeighborUpdates(neighborUpdates).
@@ -894,7 +906,7 @@ public class GraphHopper implements GraphHopperAPI
             } else
             {
                 Weighting weighting = createWeighting(request.getWeighting(), encoder);
-                prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, algoStr, encoder, weighting, encoder.supportsTurnCosts());
+                prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, algoStr, encoder, weighting, traversalMode);
                 algo = prepare.createAlgo();
             }
 
@@ -907,6 +919,7 @@ public class GraphHopper implements GraphHopperAPI
 
             paths.add(path);
             debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
+            visitedSum.addAndGet(algo.getVisitedNodes());
             fromRes = toRes;
         }
 
@@ -1065,5 +1078,14 @@ public class GraphHopper implements GraphHopperAPI
     {
         if (!allowWrites)
             throw new IllegalStateException("Writes are not allowed!");
+    }
+
+    /**
+     * Returns the current sum of the visited nodes while routing. Mainly for statistic and
+     * debugging purposes.
+     */
+    public long getVisitedSum()
+    {
+        return visitedSum.get();
     }
 }

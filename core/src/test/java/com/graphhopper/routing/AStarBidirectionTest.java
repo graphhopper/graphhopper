@@ -27,6 +27,7 @@ import org.junit.runners.Parameterized.Parameters;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 
@@ -45,20 +46,18 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
     {
         return Arrays.asList(new Object[][]
         {
-            {
-                true
-            }, 
-            {
-                false
-            }
+            { TraversalMode.NODE_BASED },
+            { TraversalMode.EDGE_BASED_1DIR },
+            { TraversalMode.EDGE_BASED_2DIR },
+            { TraversalMode.EDGE_BASED_2DIR_UTURN }
         });
     }
 
-    private final boolean edgeBased;
+    private final TraversalMode traversalMode;
 
-    public AStarBidirectionTest( boolean eb )
+    public AStarBidirectionTest( TraversalMode tMode )
     {
-        this.edgeBased = eb;
+        this.traversalMode = tMode;
     }
 
     @Override
@@ -69,7 +68,7 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new AStarBidirection(_graph, encoder, w, edgeBased);
+                return new AStarBidirection(_graph, encoder, w, traversalMode);
             }
         }.setGraph(g);
     }

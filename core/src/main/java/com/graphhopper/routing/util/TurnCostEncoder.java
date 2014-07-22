@@ -33,7 +33,7 @@ public interface TurnCostEncoder
      * @return the costs encoded in the specified flag, if restricted it will be
      * Double.POSITIVE_INFINITY
      */
-    double getTurnCosts( long flags );
+    double getTurnCost( long flags );
 
     /**
      * @param restricted true if restricted turn, equivalent to specifying of costs
@@ -58,7 +58,7 @@ public interface TurnCostEncoder
         }
 
         @Override
-        public double getTurnCosts( long flags )
+        public double getTurnCost( long flags )
         {
             return 0;
         }
@@ -68,7 +68,5 @@ public interface TurnCostEncoder
         {
             return 0;
         }
-
     }
-
 }

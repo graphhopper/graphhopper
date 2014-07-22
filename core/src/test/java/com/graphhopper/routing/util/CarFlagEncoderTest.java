@@ -329,11 +329,11 @@ public class CarFlagEncoderTest
         long flags_r20 = tmpEnc.getTurnFlags(true, 0);
         long flags_20 = tmpEnc.getTurnFlags(false, 20);
 
-        assertEquals(0, tmpEnc.getTurnCosts(flags_r0), 1e-1);
-        assertEquals(0, tmpEnc.getTurnCosts(flags_0), 1e-1);
+        assertEquals(0, tmpEnc.getTurnCost(flags_r0), 1e-1);
+        assertEquals(0, tmpEnc.getTurnCost(flags_0), 1e-1);
 
-        assertEquals(0, tmpEnc.getTurnCosts(flags_r20), 1e-1);
-        assertEquals(0, tmpEnc.getTurnCosts(flags_20), 1e-1);
+        assertEquals(0, tmpEnc.getTurnCost(flags_r20), 1e-1);
+        assertEquals(0, tmpEnc.getTurnCost(flags_20), 1e-1);
 
         assertFalse(tmpEnc.isTurnRestricted(flags_r0));
         assertFalse(tmpEnc.isTurnRestricted(flags_0));
@@ -350,15 +350,15 @@ public class CarFlagEncoderTest
 
         long flags_r0 = tmpEncoder.getTurnFlags(true, 0);
         long flags_0 = tmpEncoder.getTurnFlags(false, 0);
-        assertTrue(Double.isInfinite(tmpEncoder.getTurnCosts(flags_r0)));
-        assertEquals(0, tmpEncoder.getTurnCosts(flags_0), 1e-1);
+        assertTrue(Double.isInfinite(tmpEncoder.getTurnCost(flags_r0)));
+        assertEquals(0, tmpEncoder.getTurnCost(flags_0), 1e-1);
         assertTrue(tmpEncoder.isTurnRestricted(flags_r0));
         assertFalse(tmpEncoder.isTurnRestricted(flags_0));
 
         long flags_r20 = tmpEncoder.getTurnFlags(true, 0);
         long flags_20 = tmpEncoder.getTurnFlags(false, 20);
-        assertTrue(Double.isInfinite(tmpEncoder.getTurnCosts(flags_r20)));
-        assertEquals(20, tmpEncoder.getTurnCosts(flags_20), 1e-1);
+        assertTrue(Double.isInfinite(tmpEncoder.getTurnCost(flags_r20)));
+        assertEquals(20, tmpEncoder.getTurnCost(flags_20), 1e-1);
         assertTrue(tmpEncoder.isTurnRestricted(flags_r20));
         assertFalse(tmpEncoder.isTurnRestricted(flags_20));
 
@@ -370,7 +370,7 @@ public class CarFlagEncoderTest
         } catch (Exception ex)
         {
         }
-        assertTrue(Double.isInfinite(tmpEncoder.getTurnCosts(flags_r220)));
+        assertTrue(Double.isInfinite(tmpEncoder.getTurnCost(flags_r220)));
         assertTrue(tmpEncoder.isTurnRestricted(flags_r220));
     }
 

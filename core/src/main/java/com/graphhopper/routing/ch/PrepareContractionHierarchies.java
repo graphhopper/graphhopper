@@ -54,7 +54,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final PreparationWeighting prepareWeighting;
     private final FlagEncoder prepareFlagEncoder;
-    private final boolean edgeBased;
+    private final TraversalMode traversalMode;
     private EdgeSkipExplorer vehicleInExplorer;
     private EdgeSkipExplorer vehicleOutExplorer;
     private EdgeSkipExplorer vehicleAllExplorer;
@@ -83,9 +83,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private double nodesContractedPercentage = 100;
     private double logMessagesPercentage = 20;
 
-    public PrepareContractionHierarchies( FlagEncoder encoder, Weighting weighting, boolean edgeBased )
+    public PrepareContractionHierarchies( FlagEncoder encoder, Weighting weighting, TraversalMode traversalMode )
     {
-        this.edgeBased = edgeBased;
+        this.traversalMode = traversalMode;
         this.prepareFlagEncoder = encoder;
         long scFwdDir = encoder.setAccess(0, true, false);
 
@@ -730,7 +730,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         //   but we need additional priorities array to keep old value which is necessary for update method
         sortedNodes = new GHTreeMapComposed();
         oldPriorities = new int[g.getNodes()];
-        algo = new DijkstraOneToMany(g, prepareFlagEncoder, prepareWeighting, edgeBased);
+        algo = new DijkstraOneToMany(g, prepareFlagEncoder, prepareWeighting, traversalMode);
         return this;
     }
 
@@ -784,7 +784,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     {
         checkGraph();
         // do not change weight within DijkstraBidirectionRef => so use ShortestWeighting
-        DijkstraBidirectionRef dijkstrabi = new DijkstraBidirectionRef(g, prepareFlagEncoder, prepareWeighting, edgeBased)
+        DijkstraBidirectionRef dijkstrabi = new DijkstraBidirectionRef(g, prepareFlagEncoder, prepareWeighting, traversalMode)
         {
             @Override
             protected void initCollections( int nodes )
@@ -833,7 +833,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     public AStarBidirection createAStar()
     {
         checkGraph();
-        AStarBidirection astar = new AStarBidirection(g, prepareFlagEncoder, prepareWeighting, edgeBased)
+        AStarBidirection astar = new AStarBidirection(g, prepareFlagEncoder, prepareWeighting, traversalMode)
         {
             @Override
             protected void initCollections( int nodes )

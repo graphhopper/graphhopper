@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.*;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -24,10 +25,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
-import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 
 /**
@@ -45,16 +42,18 @@ public class DijkstraTest extends AbstractRoutingAlgorithmTester
     {
         return Arrays.asList(new Object[][]
         {
-            { true },
-            { false }
+            { TraversalMode.NODE_BASED },
+            { TraversalMode.EDGE_BASED_1DIR },
+            { TraversalMode.EDGE_BASED_2DIR },
+            { TraversalMode.EDGE_BASED_2DIR_UTURN }
         });
     }
 
-    private boolean edgeBased;
+    private TraversalMode traversalMode;
 
-    public DijkstraTest( boolean eb )
+    public DijkstraTest( TraversalMode tMode )
     {
-        this.edgeBased = eb;
+        this.traversalMode = tMode;
     }
 
     @Override
@@ -65,7 +64,7 @@ public class DijkstraTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new Dijkstra(_graph, encoder, weighting, edgeBased);
+                return new Dijkstra(_graph, encoder, weighting, traversalMode);
             }
         }.setGraph(defaultGraph);
     }

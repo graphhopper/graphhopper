@@ -262,11 +262,11 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         long flags_r20 = encoder.getTurnFlags(true, 20);
         long flags_20 = encoder.getTurnFlags(false, 20);
 
-        assertEquals(0, encoder.getTurnCosts(flags_r0), .1);
-        assertEquals(0, encoder.getTurnCosts(flags_0), .1);
+        assertEquals(0, encoder.getTurnCost(flags_r0), .1);
+        assertEquals(0, encoder.getTurnCost(flags_0), .1);
 
-        assertEquals(0, encoder.getTurnCosts(flags_r20), .1);
-        assertEquals(0, encoder.getTurnCosts(flags_20), .1);
+        assertEquals(0, encoder.getTurnCost(flags_r20), .1);
+        assertEquals(0, encoder.getTurnCost(flags_20), .1);
 
         assertFalse(encoder.isTurnRestricted(flags_r0));
         assertFalse(encoder.isTurnRestricted(flags_0));
@@ -283,15 +283,15 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 
         long flags_r0 = encoder.getTurnFlags(true, 0);
         long flags_0 = encoder.getTurnFlags(false, 0);
-        assertTrue(Double.isInfinite(encoder.getTurnCosts(flags_r0)));
-        assertEquals(0, encoder.getTurnCosts(flags_0), .1);
+        assertTrue(Double.isInfinite(encoder.getTurnCost(flags_r0)));
+        assertEquals(0, encoder.getTurnCost(flags_0), .1);
         assertTrue(encoder.isTurnRestricted(flags_r0));
         assertFalse(encoder.isTurnRestricted(flags_0));
 
         long flags_r20 = encoder.getTurnFlags(true, 0);
         long flags_20 = encoder.getTurnFlags(false, 20);
-        assertTrue(Double.isInfinite(encoder.getTurnCosts(flags_r20)));
-        assertEquals(20, encoder.getTurnCosts(flags_20), .1);
+        assertTrue(Double.isInfinite(encoder.getTurnCost(flags_r20)));
+        assertEquals(20, encoder.getTurnCost(flags_20), .1);
         assertTrue(encoder.isTurnRestricted(flags_r20));
         assertFalse(encoder.isTurnRestricted(flags_20));
 
@@ -304,9 +304,9 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         {
         }
         long flags_126 = encoder.getTurnFlags(false, 126);
-        assertTrue(Double.isInfinite(encoder.getTurnCosts(flags_r220)));
+        assertTrue(Double.isInfinite(encoder.getTurnCost(flags_r220)));
 
-        assertEquals(126, encoder.getTurnCosts(flags_126), .1);
+        assertEquals(126, encoder.getTurnCost(flags_126), .1);
         assertTrue(encoder.isTurnRestricted(flags_r220));
         assertFalse(encoder.isTurnRestricted(flags_126));
     }

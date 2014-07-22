@@ -457,7 +457,7 @@ public class EncodingManager
         return str.replaceAll(";[ ]*", ", ");
     }
 
-    public boolean needsTurnCostSupport()
+    public boolean needsTurnCostsSupport()
     {
         for (FlagEncoder encoder : edgeEncoders)
         {

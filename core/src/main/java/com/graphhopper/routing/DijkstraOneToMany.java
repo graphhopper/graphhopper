@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.coll.IntDoubleBinHeap;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.QueryResult;
@@ -47,9 +48,9 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     private int endNode;
     private int currNode, fromNode, to;
 
-    public DijkstraOneToMany( Graph graph, FlagEncoder encoder, Weighting weighting, boolean edgeBased )
+    public DijkstraOneToMany( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
-        super(graph, encoder, weighting, edgeBased);
+        super(graph, encoder, weighting, tMode);
 
         parents = new int[graph.getNodes()];
         Arrays.fill(parents, -1);
@@ -57,7 +58,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         edgeIds = new int[graph.getNodes()];
         Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
 
-        if (edgeBased)
+        if (tMode.isEdgeBased())
             weights = new double[graph.getAllEdges().getMaxId() * 2];
         else
             weights = new double[graph.getNodes()];
@@ -142,7 +143,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             changedNodes.reset();
 
             currNode = from;
-            if (!isEdgeBased())
+            if (!traversalMode.isEdgeBased())
             {
                 weights[currNode] = 0;
                 changedNodes.add(currNode);
@@ -168,7 +169,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             while (iter.next())
             {
                 int adjNode = iter.getAdjNode();
-                int iterationKey = createIdentifier(iter, false);
+                int iterationKey = traversalMode.createIdentifier(iter, false);
                 int prevEdgeId = edgeIds[adjNode];
                 if (!accept(iter, prevEdgeId))
                     continue;

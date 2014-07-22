@@ -1560,6 +1560,7 @@ public class GraphHopperStorage implements GraphStorage
                 + "|" + encodingManager
                 + "|" + getDirectory().getDefaultType()
                 + "|" + nodeAccess.getDimension() + "D"
+                + ((extStorage == null) ? "" : "|" + extStorage)
                 + "|" + getProperties().versionsToString();
     }
 }

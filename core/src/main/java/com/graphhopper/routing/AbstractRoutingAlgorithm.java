@@ -17,10 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -45,45 +42,21 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     protected EdgeExplorer outEdgeExplorer;
     protected final Weighting weighting;
     protected final FlagEncoder flagEncoder;
-    private final boolean edgeBased;
+    protected final TraversalMode traversalMode;
     private boolean alreadyRun;
 
     /**
      * @param graph specifies the graph where this algorithm will run on
      * @param encoder sets the used vehicle (bike, car, foot)
      * @param weighting set the used weight calculation (e.g. fastest, shortest).
-     * @param edgeBased if true edges are traversed whilst considering its direction which is
-     * required to support turn costs and restrictions
+     * @param traversalMode how the graph is traversed e.g. if via nodes or edges.
      */
-    public AbstractRoutingAlgorithm( Graph graph, FlagEncoder encoder, Weighting weighting, boolean edgeBased )
+    public AbstractRoutingAlgorithm( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode traversalMode )
     {
         this.weighting = weighting;
         this.flagEncoder = encoder;
-        this.edgeBased = edgeBased;
+        this.traversalMode = traversalMode;
         setGraph(graph);
-    }
-
-    /**
-     * Returns the identifier to access the map of the shortest weight tree according to the
-     * traversal mode. E.g. returning the adjacent node id in node-based behavior whilst returning
-     * the edge id in edge-based behavior
-     * <p>
-     * @param iter the current {@link EdgeIterator}
-     * @param reverse <code>true</code>, if traversal in backward direction (bidirectional path
-     * searches)
-     * @return the identifier to access the shortest weight tree
-     */
-    protected int createIdentifier( EdgeIterator iter, boolean reverse )
-    {
-        if (edgeBased)
-            return GHUtility.createEdgeKey(iter.getAdjNode(), iter.getBaseNode(), iter.getEdge(), reverse);
-
-        return iter.getAdjNode();
-    }
-
-    protected boolean isEdgeBased()
-    {
-        return edgeBased;
     }
 
     /**
@@ -124,7 +97,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
 
     protected boolean accept( EdgeIterator iter, int prevOrNextEdgeId )
     {
-        if (!edgeBased && iter.getEdge() == prevOrNextEdgeId)
+        if (!traversalMode.hasUTurnSupport() && iter.getEdge() == prevOrNextEdgeId)
             return false;
 
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
