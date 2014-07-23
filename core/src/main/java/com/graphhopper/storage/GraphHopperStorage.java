@@ -99,7 +99,10 @@ public class GraphHopperStorage implements GraphStorage
     public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation,
             ExtendedStorage extendedStorage )
     {
-        // here encoding manager can be null e.g. if we want to load existing graph
+        if (encodingManager == null)
+            throw new IllegalArgumentException("EncodingManager cannot be null in GraphHopperStorage since 0.4. "
+                    + "If you need to parse EncodingManager configuration from existing graph use EncodingManager.create");
+
         this.encodingManager = encodingManager;
         this.extStorage = extendedStorage;
         this.dir = dir;
@@ -1360,17 +1363,10 @@ public class GraphHopperStorage implements GraphStorage
     public boolean loadExisting()
     {
         checkInit();
-        if (edges.loadExisting())
+        if (nodes.loadExisting())
         {
-            // edges loaded properly so the other storages have to load or the file is corrupt.
-            if (!nodes.loadExisting())
-                throw new IllegalStateException("cannot load nodes. corrupt file or directory? " + dir);
-
-            if (!wayGeometry.loadExisting())
-                throw new IllegalStateException("cannot load geometry. corrupt file or directory? " + dir);
-
-            if (!nameIndex.loadExisting())
-                throw new IllegalStateException("cannot load name index. corrupt file or directory? " + dir);
+            if (!properties.loadExisting())
+                throw new IllegalStateException("Cannot load properties. Corrupt file or directory? " + dir);
 
             if (!extStorage.loadExisting())
             {
@@ -1409,6 +1405,18 @@ public class GraphHopperStorage implements GraphStorage
             String byteOrder = properties.get("graph.byteOrder");
             if (!byteOrder.equalsIgnoreCase("" + dir.getByteOrder()))
                 throw new IllegalStateException("Configured byteOrder (" + dim + ") is not equal to byteOrder of loaded graph (" + dir.getByteOrder() + ")");
+
+            if (!edges.loadExisting())
+                throw new IllegalStateException("Cannot load nodes. corrupt file or directory? " + dir);
+
+            if (!wayGeometry.loadExisting())
+                throw new IllegalStateException("Cannot load geometry. corrupt file or directory? " + dir);
+
+            if (!nameIndex.loadExisting())
+                throw new IllegalStateException("Cannot load name index. corrupt file or directory? " + dir);
+
+            if (!extStorage.loadExisting())
+                throw new IllegalStateException("Cannot load extended storage. corrupt file or directory? " + dir);
 
             // first define header indices of this storage
             initStorage();

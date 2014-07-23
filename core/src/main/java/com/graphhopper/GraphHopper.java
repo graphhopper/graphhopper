@@ -546,7 +546,8 @@ public class GraphHopper implements GraphHopperAPI
     private void printInfo()
     {
         logger.info("version " + Constants.VERSION + "|" + Constants.BUILD_DATE + " (" + Constants.getVersions() + ")");
-        logger.info("graph " + graph.toString() + ", details:" + graph.toDetailsString());
+        if (graph != null)
+            logger.info("graph " + graph.toString() + ", details:" + graph.toDetailsString());
     }
 
     /**
@@ -614,9 +615,6 @@ public class GraphHopper implements GraphHopperAPI
             throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
                     + " but also cannot import from OSM file as it wasn't specified!");
 
-        if (encodingManager == null)
-            throw new IllegalStateException("Missing encoding manager");
-
         encodingManager.setEnableInstructions(enableInstructions);
         DataReader reader = createReader(graph);
         logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
@@ -683,10 +681,13 @@ public class GraphHopper implements GraphHopperAPI
                 }
             }
         }
+
         setGraphHopperLocation(graphHopperFolder);
 
-        GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
+        if (encodingManager == null)
+            encodingManager = EncodingManager.create(ghLocation);
 
+        GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
         if (chEnabled)
             graph = new LevelGraphStorage(dir, encodingManager, hasElevation());
         else if (encodingManager.needsTurnCostsSupport())

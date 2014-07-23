@@ -28,6 +28,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.After;
 import org.junit.Test;
@@ -99,6 +100,30 @@ public class GraphHopperTest
     }
 
     @Test
+    public void testLoadOSMNoCH()
+    {
+        GraphHopper gh = new GraphHopper().setStoreOnFlush(true).
+                setCHEnable(false).
+                setEncodingManager(new EncodingManager("CAR")).
+                setGraphHopperLocation(ghLoc).
+                setOSMFile(testOsm);
+        gh.importOrLoad();
+        GHResponse ph = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
+        assertTrue(ph.isFound());
+        assertEquals(3, ph.getPoints().getSize());
+
+        gh.close();
+        gh = new GraphHopper().setStoreOnFlush(true).
+                setCHEnable(false);
+        assertTrue(gh.load(ghLoc));
+        ph = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
+        assertTrue(ph.isFound());
+        assertEquals(3, ph.getPoints().getSize());
+
+        gh.close();
+    }
+
+    @Test
     public void testAllowMultipleReadingInstances()
     {
         GraphHopper instance1 = new GraphHopper().setStoreOnFlush(true).
@@ -135,7 +160,7 @@ public class GraphHopperTest
                 try
                 {
                     latch2.countDown();
-                    latch1.await();
+                    latch1.await(3, TimeUnit.SECONDS);
                 } catch (InterruptedException ex)
                 {
                 }
@@ -168,7 +193,7 @@ public class GraphHopperTest
         try
         {
             // let thread reach the CountDownLatch
-            latch2.await();
+            latch2.await(3, TimeUnit.SECONDS);
             // now importOrLoad should have create a lock which this load call does not like
             instance2.load(ghLoc);
             assertTrue(false);
@@ -309,10 +334,12 @@ public class GraphHopperTest
     }
 
     @Test
-    public void testNoNPE_ifOnlyLoad()
+    public void testNoNPE_ifLoadNotSuccessful()
     {
         // missing import of graph
-        instance = new GraphHopper().setStoreOnFlush(true);
+        instance = new GraphHopper().
+                setStoreOnFlush(true).
+                setEncodingManager(new EncodingManager("CAR"));
         try
         {
             assertFalse(instance.load(ghLoc));
@@ -352,6 +379,7 @@ public class GraphHopperTest
         // missing OSM file to import
         instance = new GraphHopper().
                 setStoreOnFlush(true).
+                setEncodingManager(new EncodingManager("CAR")).
                 setGraphHopperLocation(ghLoc);
         try
         {
@@ -374,12 +402,13 @@ public class GraphHopperTest
             assertTrue(false);
         } catch (IllegalStateException ex)
         {
-            assertEquals("Missing encoding manager", ex.getMessage());
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Cannot load properties to fetch EncodingManager"));
         }
 
-        // Import is possible even if no storeOnFlush but missing OSM file
+        // Import is possible even if no storeOnFlush is specified BUT here we miss the OSM file
         instance = new GraphHopper().
                 setStoreOnFlush(false).
+                setEncodingManager(new EncodingManager("CAR")).
                 setGraphHopperLocation(ghLoc);
         try
         {
