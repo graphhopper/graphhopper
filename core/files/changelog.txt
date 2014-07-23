@@ -1,4 +1,5 @@
 0.4.0
+    EncodingManager cannot be null in GraphHopperStorage since 0.4. If you need to parse EncodingManager configuration from existing graph use EncodingManager.create
     no reflection done in EncodingManager which improves portability and makes configuration of encoders
     removed dijkstraNativebi as no performance advantage but maintenance disadvantage and similar to oneToManyDijkstra
     osmreader.bytesForFlags changed to graph.bytesForFlags

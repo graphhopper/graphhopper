@@ -99,7 +99,10 @@ public class GraphHopperStorage implements GraphStorage
     public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation,
             ExtendedStorage extendedStorage )
     {
-        // here encoding manager can be null e.g. if we want to load existing graph
+        if (encodingManager == null)
+            throw new IllegalArgumentException("EncodingManager cannot be null in GraphHopperStorage since 0.4. "
+                    + "If you need to parse EncodingManager configuration from existing graph use EncodingManager.create");
+
         this.encodingManager = encodingManager;
         this.extStorage = extendedStorage;
         this.dir = dir;
@@ -1345,47 +1348,16 @@ public class GraphHopperStorage implements GraphStorage
     public boolean loadExisting()
     {
         checkInit();
-        if (edges.loadExisting())
+        if (nodes.loadExisting())
         {
-            // edges loaded properly so the other storages have to load or the file is corrupt.
-            if (!nodes.loadExisting())
-                throw new IllegalStateException("cannot load nodes. corrupt file or directory? " + dir);
+            if (!properties.loadExisting())
+                throw new IllegalStateException("Cannot load properties. Corrupt file or directory? " + dir);
 
-            if (!wayGeometry.loadExisting())
-                throw new IllegalStateException("cannot load geometry. corrupt file or directory? " + dir);
-
-            if (!nameIndex.loadExisting())
-                throw new IllegalStateException("cannot load name index. corrupt file or directory? " + dir);
-
-            if (!extStorage.loadExisting())
-            {
-                throw new IllegalStateException("cannot load extended storage. corrupt file or directory? " + dir);
-            }
-
-            String acceptStr = "";
-            if (properties.loadExisting())
-            {
-                properties.checkVersions(false);
-                // check encoding for compatiblity
-                acceptStr = properties.get("osmreader.acceptWay");
-            } else
-                throw new IllegalStateException("cannot load properties. corrupt file or directory? " + dir);
-
-            if (encodingManager == null)
-            {
-                if (acceptStr.isEmpty())
-                    throw new IllegalStateException("No EncodingManager was configured. And no one was found in the graph: "
-                            + dir.getLocation());
-
-                int bytesForFlags = 4;
-                if ("8".equals(properties.get("graph.bytesForFlags")))
-                    bytesForFlags = 8;
-                encodingManager = new EncodingManager(acceptStr, bytesForFlags);
-            } else if (!acceptStr.isEmpty() && !encodingManager.toDetailsString().equalsIgnoreCase(acceptStr))
-            {
-                throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.toDetailsString()
-                        + "\nGraph: " + acceptStr + ", dir:" + dir.getLocation());
-            }
+            // check encoding for compatiblity        
+            String acceptWay = properties.get("osmreader.acceptWay");
+            if (!(acceptWay.isEmpty() || encodingManager.toDetailsString().equalsIgnoreCase(acceptWay)))
+                throw new IllegalStateException("Encoding does not match:\nGraphhopper config: "
+                        + encodingManager.toDetailsString() + "\nGraph: " + acceptWay + ", dir:" + dir.getLocation());
 
             String dim = properties.get("graph.dimension");
             if (!dim.equalsIgnoreCase("" + nodeAccess.getDimension()))
@@ -1394,6 +1366,18 @@ public class GraphHopperStorage implements GraphStorage
             String byteOrder = properties.get("graph.byteOrder");
             if (!byteOrder.equalsIgnoreCase("" + dir.getByteOrder()))
                 throw new IllegalStateException("Configured byteOrder (" + dim + ") is not equal to byteOrder of loaded graph (" + dir.getByteOrder() + ")");
+
+            if (!edges.loadExisting())
+                throw new IllegalStateException("Cannot load nodes. corrupt file or directory? " + dir);
+
+            if (!wayGeometry.loadExisting())
+                throw new IllegalStateException("Cannot load geometry. corrupt file or directory? " + dir);
+
+            if (!nameIndex.loadExisting())
+                throw new IllegalStateException("Cannot load name index. corrupt file or directory? " + dir);
+
+            if (!extStorage.loadExisting())
+                throw new IllegalStateException("Cannot load extended storage. corrupt file or directory? " + dir);
 
             // first define header indices of this storage
             initStorage();

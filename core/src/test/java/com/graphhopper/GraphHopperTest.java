@@ -28,6 +28,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.After;
 import org.junit.Test;
@@ -61,7 +62,7 @@ public class GraphHopperTest
 
     @Test
     public void testLoadOSM()
-    {
+    {        
         GraphHopper gh = new GraphHopper().setInMemory(true).
                 setEncodingManager(new EncodingManager("CAR")).
                 setGraphHopperLocation(ghLoc).
@@ -72,6 +73,8 @@ public class GraphHopperTest
         assertEquals(3, ph.getPoints().getSize());
 
         gh.close();
+     
+        // Test for Android where no EncodingManager can be specified (as it does not know the vehicles, elevation and turn properties)
         gh = new GraphHopper().setInMemory(true);
         assertTrue(gh.load(ghLoc));
         ph = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
@@ -96,6 +99,30 @@ public class GraphHopperTest
         {
             assertEquals("You need to create a new LocationIndex instance as it is already closed", ex.getMessage());
         }
+    }
+
+    @Test
+    public void testLoadOSMNoCH()
+    {
+        GraphHopper gh = new GraphHopper().setInMemory(true).
+                disableCHShortcuts().
+                setEncodingManager(new EncodingManager("CAR")).
+                setGraphHopperLocation(ghLoc).
+                setOSMFile(testOsm);
+        gh.importOrLoad();
+        GHResponse ph = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
+        assertTrue(ph.isFound());
+        assertEquals(3, ph.getPoints().getSize());
+
+        gh.close();
+        gh = new GraphHopper().setInMemory(true).
+                disableCHShortcuts();
+        assertTrue(gh.load(ghLoc));
+        ph = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
+        assertTrue(ph.isFound());
+        assertEquals(3, ph.getPoints().getSize());
+
+        gh.close();
     }
 
     @Test
@@ -135,7 +162,7 @@ public class GraphHopperTest
                 try
                 {
                     latch2.countDown();
-                    latch1.await();
+                    latch1.await(3, TimeUnit.SECONDS);
                 } catch (InterruptedException ex)
                 {
                 }
@@ -168,7 +195,7 @@ public class GraphHopperTest
         try
         {
             // let thread reach the CountDownLatch
-            latch2.await();
+            latch2.await(3, TimeUnit.SECONDS);
             // now importOrLoad should have create a lock which this load call does not like
             instance2.load(ghLoc);
             assertTrue(false);
@@ -309,10 +336,12 @@ public class GraphHopperTest
     }
 
     @Test
-    public void testNoNPE_ifOnlyLoad()
+    public void testNoNPE_ifLoadNotSuccessful()
     {
         // missing import of graph
-        instance = new GraphHopper().setInMemory(true);
+        instance = new GraphHopper().
+                setEncodingManager(new EncodingManager("CAR")).
+                setInMemory(true);
         try
         {
             assertFalse(instance.load(ghLoc));
@@ -351,6 +380,7 @@ public class GraphHopperTest
 
         // missing OSM file to import
         instance = new GraphHopper().
+                setEncodingManager(new EncodingManager("CAR")).
                 setInMemory(true).
                 setGraphHopperLocation(ghLoc);
         try
@@ -374,12 +404,13 @@ public class GraphHopperTest
             assertTrue(false);
         } catch (IllegalStateException ex)
         {
-            assertEquals("Missing encoding manager", ex.getMessage());
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Cannot load properties to fetch EncodingManager"));
         }
 
-        // Import is possible even if no storeOnFlush but missing OSM file
+        // Import is possible even if no storeOnFlush is specified BUT here we miss the OSM file
         instance = new GraphHopper().
                 setInMemory(false).
+                setEncodingManager(new EncodingManager("CAR")).
                 setGraphHopperLocation(ghLoc);
         try
         {
@@ -451,10 +482,10 @@ public class GraphHopperTest
     {
         instance = new GraphHopper().setInMemory(true).
                 init(
-                new CmdArgs().
-                put("prepare.minNetworkSize", "1").
-                put("osmreader.acceptWay", "CAR").
-                put("osmreader.osm", testOsm3)).
+                        new CmdArgs().
+                        put("prepare.minNetworkSize", "1").
+                        put("osmreader.acceptWay", "CAR").
+                        put("osmreader.osm", testOsm3)).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
 

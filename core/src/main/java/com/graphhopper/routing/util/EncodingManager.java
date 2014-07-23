@@ -30,6 +30,9 @@ import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import java.util.*;
@@ -138,11 +141,12 @@ public class EncodingManager
                 continue;
 
             String entryVal = "";
-            if(entry.contains("|")) {
+            if (entry.contains("|"))
+            {
                 entryVal = entry;
-                entry = entry.split("\\|")[0];                
+                entry = entry.split("\\|")[0];
             }
-            
+
             AbstractFlagEncoder fe;
             if (entry.equals(CAR))
                 fe = new CarFlagEncoder(entryVal);
@@ -465,5 +469,31 @@ public class EncodingManager
                 return true;
         }
         return false;
+    }
+
+    /**
+     * Create the EncodingManager from the provided GraphHopper location. Throws an
+     * IllegalStateException if it fails.
+     */
+    public static EncodingManager create( String ghLoc )
+    {
+        Directory dir = new RAMDirectory(ghLoc, true);
+        StorableProperties properties = new StorableProperties(dir);
+        if (!properties.loadExisting())
+            throw new IllegalStateException("Cannot load properties to fetch EncodingManager configuration at: "
+                    + dir.getLocation());
+
+        // check encoding for compatiblity
+        properties.checkVersions(false);
+        String acceptStr = properties.get("osmreader.acceptWay");
+
+        if (acceptStr.isEmpty())
+            throw new IllegalStateException("EncodingManager was not configured. And no one was found in the graph: "
+                    + dir.getLocation());
+
+        int bytesForFlags = 4;
+        if ("8".equals(properties.get("graph.bytesForFlags")))
+            bytesForFlags = 8;
+        return new EncodingManager(acceptStr, bytesForFlags);
     }
 }
