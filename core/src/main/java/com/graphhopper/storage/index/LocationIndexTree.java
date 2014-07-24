@@ -306,8 +306,14 @@ public class LocationIndexTree implements LocationIndex
 
         // compact & store to dataAccess
         dataAccess.create(64 * 1024);
-        int lastPointer = inMem.store(inMem.root, START_POINTER);
-        flush();
+        try
+        {
+            inMem.store(inMem.root, START_POINTER);
+            flush();
+        } catch (Exception ex)
+        {
+            throw new IllegalStateException("Problem while storing location index. " + Helper.getMemInfo(), ex);
+        }
         float entriesPerLeaf = (float) inMem.size / inMem.leafs;
         initialized = true;
         logger.info("location index created in " + sw.stop().getSeconds()
@@ -392,7 +398,6 @@ public class LocationIndexTree implements LocationIndex
                 }
             } catch (Exception ex)
             {
-//                logger.error("Problem!", ex);
                 logger.error("Problem! base:" + allIter.getBaseNode() + ", adj:" + allIter.getAdjNode()
                         + ", edge:" + allIter.getEdge(), ex);
             }
@@ -952,12 +957,12 @@ public class LocationIndexTree implements LocationIndex
 
     static class InMemLeafEntry extends SortedIntSet implements InMemEntry
     {
-        private long key;
+        // private long key;
 
         public InMemLeafEntry( int count, long key )
         {
             super(count);
-            this.key = key;
+            // this.key = key;
         }
 
         public boolean addNode( int nodeId )
@@ -974,7 +979,7 @@ public class LocationIndexTree implements LocationIndex
         @Override
         public String toString()
         {
-            return "LEAF " + key + " " + super.toString();
+            return "LEAF " + /*key +*/ " " + super.toString();
         }
 
         TIntArrayList getResults()

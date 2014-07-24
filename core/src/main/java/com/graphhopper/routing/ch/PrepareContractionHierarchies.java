@@ -316,8 +316,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
             if (counter % logSize == 0)
             {
-                // TODO necessary?
-                System.gc();
                 logger.info(Helper.nf(counter) + ", updates:" + updateCounter
                         + ", nodes: " + Helper.nf(sortedNodes.getSize())
                         + ", shortcuts:" + Helper.nf(newShortcuts)
@@ -407,7 +405,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 + ", initSize:" + initSize
                 + ", periodic:" + periodicUpdatesPercentage
                 + ", lazy:" + lastNodesLazyUpdatePercentage
-                + ", neighbor:" + neighborUpdatePercentage);
+                + ", neighbor:" + neighborUpdatePercentage                
+                + ", " + Helper.getMemInfo());
     }
 
     public void close()
