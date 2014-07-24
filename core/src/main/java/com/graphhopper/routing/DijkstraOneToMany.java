@@ -35,6 +35,8 @@ import java.util.Arrays;
  */
 public class DijkstraOneToMany extends AbstractRoutingAlgorithm
 {
+    private static final int EMPTY_PARENT = -1;
+    private static final int NOT_FOUND = -1;
     protected double[] weights;
     private final TIntArrayListWithCap changedNodes;
     private int[] parents;
@@ -52,7 +54,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         super(graph, encoder, weighting);
 
         parents = new int[graph.getNodes()];
-        Arrays.fill(parents, -1);
+        Arrays.fill(parents, EMPTY_PARENT);
 
         edgeIds = new int[graph.getNodes()];
         Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
@@ -116,7 +118,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     public int findEndNode( int from, int to )
     {
         if (weights.length < 2)
-            return -1;
+            return NOT_FOUND;
 
         this.to = to;
         if (doClear)
@@ -127,7 +129,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             {
                 int n = changedNodes.get(i);
                 weights[n] = Double.MAX_VALUE;
-                parents[n] = -1;
+                parents[n] = EMPTY_PARENT;
                 edgeIds[n] = EdgeIterator.NO_EDGE;
             }
 
@@ -141,8 +143,11 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         {
             // Cached! Re-use existing data structures
             int parentNode = parents[to];
-            if (parentNode >= 0 && weights[to] < weights[currNode] || heap.isEmpty())
+            if (parentNode != EMPTY_PARENT && weights[to] < weights[currNode])
                 return to;
+
+            if (heap.isEmpty() || visitedNodes >= limitVisitedNodes)
+                return NOT_FOUND;
 
             currNode = heap.poll_element();
         }
@@ -184,7 +189,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             }
 
             if (heap.isEmpty() || visitedNodes >= limitVisitedNodes)
-                return -1;
+                return NOT_FOUND;
 
             // calling just peek and not poll is important if the next query is cached
             currNode = heap.peek_element();

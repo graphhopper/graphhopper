@@ -98,6 +98,24 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     }
 
     @Test
+    public void testIssueXY()
+    {
+        Graph g = createGraph(false);
+        g.edge(0, 1, 1, true);
+        g.edge(1, 2, 1, true);
+        g.edge(2, 0, 1, true);
+        
+        g.edge(4, 5, 1, true);
+        g.edge(5, 6, 1, true);
+        g.edge(6, 4, 1, true);
+        
+        AlgorithmPreparation prep = prepareGraph(g);
+        DijkstraOneToMany algo = (DijkstraOneToMany) prep.createAlgo();
+        assertEquals(-1, algo.findEndNode(0, 4));
+        assertEquals(-1, algo.findEndNode(0, 4));
+    }
+
+    @Test
     public void testUseCache()
     {
         AlgorithmPreparation prep = prepareGraph(createTestGraph());
