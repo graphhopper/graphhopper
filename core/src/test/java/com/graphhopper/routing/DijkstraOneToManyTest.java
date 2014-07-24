@@ -98,7 +98,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     }
 
     @Test
-    public void testIssue182()
+    public void testIssue239()
     {
         Graph g = createGraph(false);
         g.edge(0, 1, 1, true);
