@@ -64,7 +64,7 @@ public abstract class AbstractRoutingAlgorithmTester
         Graph graph = createTestGraph();
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 7);
         assertEquals(p.toString(), 13, p.getDistance(), 1e-4);
-        assertEquals(p.toString(), 5, p.calcNodes().size());
+        assertEquals(p.toString(), Helper.createTList(0, 4, 6, 5, 7), p.calcNodes());
     }
 
     // see calc-fastest-graph.svg

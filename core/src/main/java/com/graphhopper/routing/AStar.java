@@ -111,7 +111,7 @@ public class AStar extends AbstractRoutingAlgorithm
                     continue;
 
                 int neighborNode = iter.getAdjNode();
-                int iterationKey = traversalMode.createIdentifier(iter, false);
+                int iterationKey = traversalMode.createTraversalId(iter, false);
                 double alreadyVisitedWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weightToCompare;
                 if (Double.isInfinite(alreadyVisitedWeight))
                     continue;

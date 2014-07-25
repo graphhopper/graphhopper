@@ -85,7 +85,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
                 if (!accept(iter, currEdge.edge))
                     continue;
 
-                int iterationKey = traversalMode.createIdentifier(iter, false);
+                int iterationKey = traversalMode.createTraversalId(iter, false);
                 double tmpWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight;
                 if (Double.isInfinite(tmpWeight))
                     continue;

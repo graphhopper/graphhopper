@@ -243,7 +243,7 @@ public class AStarBidirection extends AbstractBidirAlgo
                 continue;
 
             int neighborNode = iter.getAdjNode();
-            int iterationKey = traversalMode.createIdentifier(iter, reverse);
+            int iterationKey = traversalMode.createTraversalId(iter, reverse);
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
             double alreadyVisitedWeight = weighting.calcWeight(iter, reverse, currEdge.edge) + currEdge.weightToCompare;

@@ -57,7 +57,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     {
         this.traversalmode = tMode;
     }
-    
+
     @Override
     public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final Weighting w )
     {
@@ -66,7 +66,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new DijkstraOneToMany(_graph, encoder, w, traversalmode);                
+                return new DijkstraOneToMany(_graph, encoder, w, traversalmode);
             }
         }.setGraph(defaultGraph);
     }
@@ -118,6 +118,24 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
         // expand SPT
         p = algo.calcPath(0, 10);
         assertEquals(Helper.createTList(0, 1, 2, 3, 4, 10), p.calcNodes());
+    }
+
+    @Test
+    public void testIssue239()
+    {
+        Graph g = createGraph(false);
+        g.edge(0, 1, 1, true);
+        g.edge(1, 2, 1, true);
+        g.edge(2, 0, 1, true);
+
+        g.edge(4, 5, 1, true);
+        g.edge(5, 6, 1, true);
+        g.edge(6, 4, 1, true);
+
+        AlgorithmPreparation prep = prepareGraph(g);
+        DijkstraOneToMany algo = (DijkstraOneToMany) prep.createAlgo();
+        assertEquals(-1, algo.findEndNode(0, 4));
+        assertEquals(-1, algo.findEndNode(0, 4));
     }
 
     @Test

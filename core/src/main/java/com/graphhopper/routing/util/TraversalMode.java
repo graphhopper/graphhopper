@@ -53,17 +53,17 @@ public enum TraversalMode
     EDGE_BASED_2DIR_UTURN(true, 2, true);
 
     private final boolean edgeBased;
-    private final int noOfStatus;
+    private final int noOfStates;
     private final boolean uTurnSupport;
 
-    TraversalMode( boolean edgeBased, int noOfStatus, boolean uTurnSupport )
+    TraversalMode( boolean edgeBased, int noOfStates, boolean uTurnSupport )
     {
         this.edgeBased = edgeBased;
-        this.noOfStatus = noOfStatus;
+        this.noOfStates = noOfStates;
         this.uTurnSupport = uTurnSupport;
 
-        if (noOfStatus != 1 && noOfStatus != 2)
-            throw new IllegalArgumentException("Currently only statuses of 1 or 2 are allowed");
+        if (noOfStates != 1 && noOfStates != 2)
+            throw new IllegalArgumentException("Currently only 1 or 2 states allowed");
     }
 
     /**
@@ -76,11 +76,11 @@ public enum TraversalMode
      * backward searches in bidirectional algorithms.
      * @return the identifier to access the shortest path tree
      */
-    public final int createIdentifier( EdgeIteratorState iterState, boolean reverse )
+    public final int createTraversalId( EdgeIteratorState iterState, boolean reverse )
     {
         if (edgeBased)
         {
-            if (noOfStatus == 1)
+            if (noOfStates == 1)
                 return iterState.getEdge();
 
             return GHUtility.createEdgeKey(iterState.getAdjNode(), iterState.getBaseNode(), iterState.getEdge(), reverse);
@@ -89,6 +89,11 @@ public enum TraversalMode
         return iterState.getAdjNode();
     }
 
+    public int getNoOfStates()
+    {
+        return noOfStates;
+    }
+        
     public boolean isEdgeBased()
     {
         return edgeBased;
