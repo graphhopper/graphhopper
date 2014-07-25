@@ -181,7 +181,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
             if (!accept(iter, currEdge.edge))
                 continue;
 
-            int iterationKey = traversalMode.createIdentifier(iter, reverse);
+            int iterationKey = traversalMode.createTraversalId(iter, reverse);
             double tmpWeight = weighting.calcWeight(iter, reverse, currEdge.edge) + currEdge.weight;
             if (Double.isInfinite(tmpWeight))
                 continue;

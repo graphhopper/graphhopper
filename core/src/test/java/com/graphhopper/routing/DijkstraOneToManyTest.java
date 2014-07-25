@@ -57,7 +57,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     {
         this.traversalmode = tMode;
     }
-    
+
     @Override
     public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final Weighting w )
     {
@@ -66,7 +66,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new DijkstraOneToMany(_graph, encoder, w, traversalmode);                
+                return new DijkstraOneToMany(_graph, encoder, w, traversalmode);
             }
         }.setGraph(defaultGraph);
     }

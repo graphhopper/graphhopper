@@ -60,10 +60,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         edgeIds = new int[graph.getNodes()];
         Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
 
-        if (tMode.isEdgeBased())
-            weights = new double[graph.getAllEdges().getMaxId() * 2];
-        else
-            weights = new double[graph.getNodes()];
+        weights = new double[graph.getNodes()];
 
         Arrays.fill(weights, Double.MAX_VALUE);
 
@@ -173,21 +170,20 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             EdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
             while (iter.next())
             {
-                int adjNode = iter.getAdjNode();
-                int iterationKey = traversalMode.createIdentifier(iter, false);
+                int adjNode = iter.getAdjNode();                
                 int prevEdgeId = edgeIds[adjNode];
                 if (!accept(iter, prevEdgeId))
                     continue;
 
-                double tmpWeight = weighting.calcWeight(iter, false, prevEdgeId) + weights[/*TODO key?*/ currNode];
+                double tmpWeight = weighting.calcWeight(iter, false, prevEdgeId) + weights[currNode];
                 if (Double.isInfinite(tmpWeight))
                     continue;
 
-                double w = weights[iterationKey];
+                double w = weights[adjNode];
                 if (w == Double.MAX_VALUE)
                 {
                     parents[adjNode] = currNode;
-                    weights[iterationKey] = tmpWeight;
+                    weights[adjNode] = tmpWeight;
                     heap.insert_(tmpWeight, adjNode);
                     changedNodes.add(adjNode);
                     edgeIds[adjNode] = iter.getEdge();
@@ -195,7 +191,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
                 } else if (w > tmpWeight)
                 {
                     parents[adjNode] = currNode;
-                    weights[iterationKey] = tmpWeight;
+                    weights[adjNode] = tmpWeight;
                     heap.update_(tmpWeight, adjNode);
                     changedNodes.add(adjNode);
                     edgeIds[adjNode] = iter.getEdge();
