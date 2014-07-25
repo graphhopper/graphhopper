@@ -239,25 +239,20 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
      */
     public void disconnect( EdgeSkipExplorer explorer, EdgeIteratorState edgeState )
     {
-        // search edge with opposite direction        
+        // search edge with opposite direction but we need to know the previousEdge for the internalEdgeDisconnect so we cannot simply do:
         // EdgeIteratorState tmpIter = getEdgeProps(iter.getEdge(), iter.getBaseNode());
         EdgeSkipIterator tmpIter = explorer.setBaseNode(edgeState.getAdjNode());
         int tmpPrevEdge = EdgeIterator.NO_EDGE;
-        boolean found = false;
         while (tmpIter.next())
         {
-            // If we disconnect shortcuts only we could run normal algos on the graph too
-            // BUT CH queries will be 10-20% slower and preparation will be 10% slower
-            if (/*tmpIter.isShortcut() &&*/tmpIter.getEdge() == edgeState.getEdge())
+            if (tmpIter.isShortcut() && tmpIter.getEdge() == edgeState.getEdge())
             {
-                found = true;
+                internalEdgeDisconnect(edgeState.getEdge(), (long) tmpPrevEdge * edgeEntryBytes, edgeState.getAdjNode(), edgeState.getBaseNode());
                 break;
             }
 
             tmpPrevEdge = tmpIter.getEdge();
         }
-        if (found)
-            internalEdgeDisconnect(edgeState.getEdge(), (long) tmpPrevEdge * edgeEntryBytes, edgeState.getAdjNode(), edgeState.getBaseNode());
     }
 
     @Override

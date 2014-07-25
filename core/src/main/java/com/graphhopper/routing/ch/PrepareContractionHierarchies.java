@@ -67,7 +67,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private final Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
     private IgnoreNodeFilter ignoreNodeFilter;
     private DijkstraOneToMany algo;
-    private boolean removesHigher2LowerEdges = true;
     private long counter;
     private int newShortcuts;
     private long dijkstraCount;
@@ -184,18 +183,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     public void setInitialCollectionSize( int initialCollectionSize )
     {
         this.initialCollectionSize = initialCollectionSize;
-    }
-
-    /**
-     * Disconnect is very important to improve query time and preparation if enabled. It will remove
-     * the edge going from the higher level node to the currently contracted one. But the original
-     * graph is no longer available, so it is only useful for bidirectional CH algorithms. Default
-     * is true.
-     */
-    public PrepareContractionHierarchies setRemoveHigher2LowerEdges( boolean removeHigher2LowerEdges )
-    {
-        this.removesHigher2LowerEdges = removeHigher2LowerEdges;
-        return this;
     }
 
     @Override
@@ -383,8 +370,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     neighborSW.stop();
                 }
 
-                if (removesHigher2LowerEdges)
-                    lg.disconnect(vehicleAllTmpExplorer, iter);
+                lg.disconnect(vehicleAllTmpExplorer, iter);
             }
         }
 
@@ -395,7 +381,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 + ", new shortcuts: " + newShortcuts
                 + ", " + prepareWeighting
                 + ", " + prepareFlagEncoder
-                + ", removeHigher2LowerEdges:" + removesHigher2LowerEdges
                 + ", dijkstras:" + dijkstraCount
                 + ", t(dijk):" + (int) dijkstraSW.getSeconds()
                 + ", t(period):" + (int) periodSW.getSeconds()
@@ -405,7 +390,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 + ", initSize:" + initSize
                 + ", periodic:" + periodicUpdatesPercentage
                 + ", lazy:" + lastNodesLazyUpdatePercentage
-                + ", neighbor:" + neighborUpdatePercentage                
+                + ", neighbor:" + neighborUpdatePercentage
                 + ", " + Helper.getMemInfo());
     }
 
@@ -821,9 +806,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
         };
 
-        if (!removesHigher2LowerEdges)
-            dijkstrabi.setEdgeFilter(new LevelEdgeFilter(g));
-
+        dijkstrabi.setEdgeFilter(new LevelEdgeFilter(g));
         return dijkstrabi;
     }
 
@@ -871,9 +854,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
         };
 
-        if (!removesHigher2LowerEdges)
-            astar.setEdgeFilter(new LevelEdgeFilter(g));
-
+        astar.setEdgeFilter(new LevelEdgeFilter(g));
         return astar;
     }
 

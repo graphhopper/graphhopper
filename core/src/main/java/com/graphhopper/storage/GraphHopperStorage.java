@@ -769,21 +769,13 @@ public class GraphHopperStorage implements GraphStorage
                 adjNode = getOtherNode(baseNode, edgePointer);
                 reverse = baseNode > adjNode;
 
-                // position to next edge
+                // position to next edge                
                 nextEdge = edges.getInt(getLinkPosInEdgeArea(baseNode, adjNode, edgePointer));
                 if (nextEdge == edgeId)
                     throw new AssertionError("endless loop detected for " + baseNode + ", " + adjNode
                             + ", " + edgePointer + ", " + edgeId);
 
-                foundNext = filter == null || filter.accept(this);
-//
-//                if(foundNext && nextEdge != EdgeIterator.NO_EDGE && extStorage instanceof TurnCostStorage){
-//                    int turncosts = ((TurnCostStorage) extStorage).getTurnCosts(baseNode, edgeId, nextEdge);
-//                    if(turncosts == Integer.MAX_VALUE){
-//                        foundNext = false;
-//                    }
-//                }
-
+                foundNext = filter.accept(this);
                 if (foundNext)
                     break;
             }
@@ -878,7 +870,7 @@ public class GraphHopperStorage implements GraphStorage
             if (edgeId == nextEdge)
                 throw new IllegalStateException("call next before detaching");
 
-            EdgeIterable iter = iter = new EdgeIterable(filter);
+            EdgeIterable iter = new EdgeIterable(filter);
             iter.setBaseNode(baseNode);
             iter.setEdgeId(edgeId);
             iter.next();
@@ -1535,7 +1527,7 @@ public class GraphHopperStorage implements GraphStorage
     {
         return nodes.isClosed();
     }
-    
+
     public ExtendedStorage getExtendedStorage()
     {
         return extStorage;

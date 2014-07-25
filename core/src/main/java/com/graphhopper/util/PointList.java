@@ -94,7 +94,7 @@ public class PointList implements PointAccess
 
     private void incCap( int newSize )
     {
-        if (newSize < latitudes.length)
+        if (newSize <= latitudes.length)
             return;
 
         int cap = newSize * 2;
