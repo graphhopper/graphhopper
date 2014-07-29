@@ -76,6 +76,12 @@ describe("utils", function() {
         expect(false).toEqual(params.test3);
         expect(2).toEqual(params.test4);
         expect(1.1).toEqual(params.test5);
+        
+        params = parseUrl("blup?point=49.946505%2C11.571232&point=&");        
+        expect(params.point).toEqual("49.946505,11.571232");        
+        
+        params = parseUrl("blup?point=&point=49.946505%2C11.571232");
+        expect(params.point).toEqual("49.946505,11.571232");
     });
 
     it("features should work", function() {
@@ -137,5 +143,5 @@ describe("utils", function() {
         expect(new GHInput("12.44,68.44").lat).toEqual(12.44);
         expect(new GHInput("12.44,68.44").lng).toEqual(68.44);
         expect(new GHInput("london").lon).toEqual(undefined);
-    });
+    });    
 });

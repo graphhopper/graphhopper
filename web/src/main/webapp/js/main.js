@@ -162,6 +162,10 @@ function initFromParams(params, doQuery) {
             resolveCoords(params.from, params.to, doQuery);
         else
             resolveCoords(params.point[0], params.point[1], doQuery);
+    } else if (params.point) {
+        ghRequest.from = new GHInput(params.point);
+        resolve("from", ghRequest.from);
+        focus(ghRequest.from, 15, true);
     }
 }
 
@@ -917,12 +921,14 @@ function parseUrl(query) {
         var key = vars[i].substring(0, indexPos);
         var value = vars[i].substring(indexPos + 1);
         value = decodeURIComponent(value.replace(/\+/g, ' '));
-
+        if(value === "")
+            continue;
+        
         if (typeof res[key] === "undefined") {
             if (value === 'true')
                 res[key] = true;
             else if (value === 'false')
-                res[key] = false;
+                res[key] = false;            
             else {
                 var tmp = Number(value);
                 if (isNaN(tmp))
