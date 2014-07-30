@@ -63,17 +63,22 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
     }
 
     @Override
-    public final void setLevel( int index, int level )
+    public final void setLevel( int nodeIndex, int level )
     {
-        ensureNodeIndex(index);
-        nodes.setInt((long) index * nodeEntryBytes + I_LEVEL, level);
+        if (nodeIndex >= getNodes())
+            return;
+
+        nodes.setInt((long) nodeIndex * nodeEntryBytes + I_LEVEL, level);
     }
 
     @Override
-    public final int getLevel( int index )
+    public final int getLevel( int nodeIndex )
     {
-        ensureNodeIndex(index);
-        return nodes.getInt((long) index * nodeEntryBytes + I_LEVEL);
+        // automatically allocate new nodes only via creating edges or setting node properties
+        if (nodeIndex >= getNodes())
+            return 0;
+
+        return nodes.getInt((long) nodeIndex * nodeEntryBytes + I_LEVEL);
     }
 
     @Override

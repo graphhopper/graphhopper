@@ -68,7 +68,8 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
     @Test
     public void testPriosWhileDeleting()
     {
-        LevelGraphStorage g = createGraph();
+        LevelGraphStorage g = createGraph();        
+        g.getNodeAccess().ensureNode(19);
         for (int i = 0; i < 20; i++)
         {
             g.setLevel(i, i);
@@ -77,13 +78,14 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         g.optimize();
         assertEquals(9, g.getLevel(9));
         assertNotSame(10, g.getLevel(10));
-        assertEquals(19, g.getNodes());
     }
 
     @Test
     public void testPrios()
     {
         LevelGraph g = createGraph();
+        g.getNodeAccess().ensureNode(30);
+        
         assertEquals(0, g.getLevel(10));
 
         g.setLevel(10, 100);

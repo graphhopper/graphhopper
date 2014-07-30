@@ -68,6 +68,12 @@ public class PointList implements PointAccess
     }
 
     @Override
+    public void ensureNode( int nodeId )
+    {
+        incCap(nodeId + 1);
+    }
+
+    @Override
     public void setNode( int nodeId, double lat, double lon )
     {
         set(nodeId, lat, lon, Double.NaN);

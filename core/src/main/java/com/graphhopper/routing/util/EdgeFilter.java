@@ -29,12 +29,12 @@ public interface EdgeFilter
     /**
      * @return true if the current edge should be processed and false otherwise.
      */
-    boolean accept( EdgeIteratorState edgeIterState );
+    boolean accept( EdgeIteratorState edgeState );
 
     static final EdgeFilter ALL_EDGES = new EdgeFilter()
     {
         @Override
-        public final boolean accept( EdgeIteratorState edgeIterState )
+        public final boolean accept( EdgeIteratorState edgeState )
         {
             return true;
         }

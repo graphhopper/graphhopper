@@ -59,6 +59,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private EdgeSkipExplorer vehicleAllExplorer;
     private EdgeSkipExplorer vehicleAllTmpExplorer;
     private EdgeSkipExplorer calcPrioAllExplorer;
+    private LevelEdgeFilter levelFilter;
+    private int maxLevel;
     private LevelGraph g;
     // the most important nodes comes last
     private GHTreeMapComposed sortedNodes;
@@ -221,15 +223,18 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return c > 0;
     }
 
-    // TODO we can avoid node level if we store this into a temporary array and 
-    // disconnect all edges which goes from higher to lower level
-    // uninitialized nodes have a level of 0
-    // TODO we could avoid the second storage for skippedEdge as we could store that info into linkB or A if it is disconnected
     boolean prepareNodes()
     {
-        int len = g.getNodes();
+//        if (maxLevel == 0)
+//            throw new IllegalStateException("maxLevel cannot be 0");
 
-        for (int node = 0; node < len; node++)
+        int nodes = g.getNodes();
+        for (int node = 0; node < nodes; node++)
+        {
+            g.setLevel(node, maxLevel);
+        }
+        
+        for (int node = 0; node < nodes; node++)
         {
             int priority = oldPriorities[node] = calculatePriority(node);
             sortedNodes.insert(node, priority);
@@ -243,6 +248,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     void contractNodes()
     {
+//        if (maxLevel == 0)
+//            throw new IllegalStateException("maxLevel cannot be 0");
+
         meanDegree = g.getAllEdges().getMaxId() / g.getNodes();
         int level = 1;
         counter = 0;
@@ -289,7 +297,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 int len = g.getNodes();
                 for (int node = 0; node < len; node++)
                 {
-                    if (g.getLevel(node) != 0)
+                    if (g.getLevel(node) != maxLevel)
                         continue;
 
                     int priority = oldPriorities[node] = calculatePriority(node);
@@ -342,20 +350,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             level++;
 
             if (sortedNodes.getSize() < nodesToAvoidContract)
-            {
-                while (!sortedNodes.isEmpty())
-                {
-                    polledNode = sortedNodes.pollKey();
-                    g.setLevel(polledNode, level);
-                }
+                // skipped nodes are already set to maxLevel
                 break;
-            }
 
             EdgeSkipIterator iter = vehicleAllExplorer.setBaseNode(polledNode);
             while (iter.next())
             {
                 int nn = iter.getAdjNode();
-                if (g.getLevel(nn) != 0)
+                if (g.getLevel(nn) != maxLevel)
                     // already contracted no update necessary
                     continue;
 
@@ -477,8 +479,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             // and also in the graph for u->w. If existing AND identical weight => update setProperties.
             // Hint: shortcuts are always one-way due to distinct level of every node but we don't
             // know yet the levels so we need to determine the correct direction or if both directions
-            // minor improvement: if (shortcuts.containsKey(sc) 
-            // then two shortcuts with the same nodes (u<->n.adjNode) exists => check current shortcut against both
             Shortcut sc = new Shortcut(u_fromNode, w_toNode, existingDirectWeight, existingDistSum);
             if (shortcuts.containsKey(sc))
                 return;
@@ -570,7 +570,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         {
             int u_fromNode = incomingEdges.getAdjNode();
             // accept only uncontracted nodes
-            if (g.getLevel(u_fromNode) != 0)
+            if (g.getLevel(u_fromNode) != maxLevel)
                 continue;
 
             double v_u_dist = incomingEdges.getDistance();
@@ -586,7 +586,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             {
                 int w_toNode = outgoingEdges.getAdjNode();
                 // add only uncontracted nodes
-                if (g.getLevel(w_toNode) != 0 || u_fromNode == w_toNode)
+                if (g.getLevel(w_toNode) != maxLevel || u_fromNode == w_toNode)
                     continue;
 
                 // Limit weight as ferries or forbidden edges can increase local search too much.
@@ -598,7 +598,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                             + ", in:" + getCoords(incomingEdges, g) + ", out:" + getCoords(outgoingEdges, g)
                             + ", dist:" + outgoingEdges.getDistance() + ", speed:" + prepareFlagEncoder.getSpeed(outgoingEdges.getFlags()));
 
-                if (existingDirectWeight >= Double.MAX_VALUE)
+                if (Double.isInfinite(existingDirectWeight))
                     continue;
                 double existingDistSum = v_u_dist + outgoingEdges.getDistance();
                 algo.setLimitWeight(existingDirectWeight)
@@ -645,6 +645,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             EdgeSkipIterator iter = vehicleOutExplorer.setBaseNode(sc.from);
             while (iter.next())
             {
+// TODO                if (!levelFilter.accept(iter))
+//                    continue;
+
                 if (iter.isShortcut() && iter.getAdjNode() == sc.to
                         && PrepareEncoder.canBeOverwritten(iter.getFlags(), sc.flags))
                 {
@@ -702,10 +705,26 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         checkGraph();
         vehicleInExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
         vehicleOutExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
+        final EdgeFilter allFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, true);
+        final EdgeFilter accessWithLevelFilter = new LevelEdgeFilter(g)
+        {
+            @Override
+            public final boolean accept( EdgeIteratorState edgeState )
+            {
+                if (!super.accept(edgeState))
+                    return false;
+
+                return allFilter.accept(edgeState);
+            }
+        };
+
         vehicleAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, true));
         vehicleAllTmpExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, true));
-        calcPrioAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, true));
-        ignoreNodeFilter = new IgnoreNodeFilter(g);
+        calcPrioAllExplorer = g.createEdgeExplorer(accessWithLevelFilter);
+
+        levelFilter = new LevelEdgeFilter(g);
+        maxLevel = g.getNodes() + 1;
+        ignoreNodeFilter = new IgnoreNodeFilter(g, maxLevel);
         // Use an alternative to PriorityQueue as it has some advantages: 
         //   1. Gets automatically smaller if less entries are stored => less total RAM used (as Graph is increasing until the end)
         //   2. is slightly faster
@@ -724,11 +743,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     static class IgnoreNodeFilter implements EdgeFilter
     {
         int avoidNode;
+        int maxLevel;
         LevelGraph graph;
 
-        public IgnoreNodeFilter( LevelGraph g )
+        public IgnoreNodeFilter( LevelGraph g, int maxLevel )
         {
             this.graph = g;
+            this.maxLevel = maxLevel;
         }
 
         public IgnoreNodeFilter setAvoidNode( int node )
@@ -740,9 +761,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         @Override
         public final boolean accept( EdgeIteratorState iter )
         {
-            // ignore if it is skipNode or a adjNode already contracted
+            // ignore if it is skipNode or adjNode is already contracted
             int node = iter.getAdjNode();
-            return avoidNode != node && graph.getLevel(node) == 0;
+            return avoidNode != node && graph.getLevel(node) == maxLevel;
         }
     }
 
@@ -806,7 +827,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
         };
 
-        dijkstrabi.setEdgeFilter(new LevelEdgeFilter(g));
+        dijkstrabi.setEdgeFilter(levelFilter);
         return dijkstrabi;
     }
 
@@ -854,7 +875,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
         };
 
-        astar.setEdgeFilter(new LevelEdgeFilter(g));
+        astar.setEdgeFilter(levelFilter);
         return astar;
     }
 

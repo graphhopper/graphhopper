@@ -1,4 +1,6 @@
 0.4.0
+    getLevel and setLevel do no longer automatically increase node count, use getNodeAccess.ensureNode for that
+    normal algorithms are now possible on prepared graph
     with the introduction of lock protection mechanism (see #112) GraphHopper needs always write access, see also #217
     new GraphHopper.clean method to remove the directory via Java API
     FlagEncoder: replaced isFoward and isBackward with more generic isBool(flags, FlagEncoder.FORWARD|BACKWARD)

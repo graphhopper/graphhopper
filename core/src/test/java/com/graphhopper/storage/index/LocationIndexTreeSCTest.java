@@ -99,6 +99,7 @@ public class LocationIndexTreeSCTest extends LocationIndexTreeTest
     public void testSortHighLevelFirst()
     {
         final LevelGraph lg = createGraph(new RAMDirectory(), encodingManager, false);
+        lg.getNodeAccess().ensureNode(4);
         lg.setLevel(1, 10);
         lg.setLevel(2, 30);
         lg.setLevel(3, 20);
@@ -135,7 +136,7 @@ public class LocationIndexTreeSCTest extends LocationIndexTreeTest
         na.setNode(2, 0.5, 0.5);
         na.setNode(3, 0.5, 1);
         EdgeIteratorState iter1 = lg.edge(1, 0, 100, true);
-        EdgeIteratorState iter2 = lg.edge(2, 3, 100, true);
+        lg.edge(2, 3, 100, true);
 
         lg.setLevel(0, 11);
         lg.setLevel(1, 10);

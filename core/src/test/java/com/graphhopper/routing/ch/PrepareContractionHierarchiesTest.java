@@ -73,7 +73,9 @@ public class PrepareContractionHierarchiesTest
         LevelGraph g = createExampleGraph();
         double normalDist = new Dijkstra(g, carEncoder, weighting).calcPath(4, 2).getDistance();
         DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder, weighting);
-        algo.setEdgeFilter(new PrepareContractionHierarchies.IgnoreNodeFilter(g).setAvoidNode(3));
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting);
+        prepare.setGraph(g).initFromGraph().prepareNodes();
+        algo.setEdgeFilter(new PrepareContractionHierarchies.IgnoreNodeFilter(g, g.getNodes() + 1).setAvoidNode(3));
         int nodeEntry = algo.setLimitWeight(100).findEndNode(4, 2);
         assertTrue(algo.getWeight(nodeEntry) > normalDist);
 
@@ -89,7 +91,9 @@ public class PrepareContractionHierarchiesTest
         double normalDist = new Dijkstra(g, carEncoder, weighting).calcPath(4, 2).getDistance();
         assertEquals(3, normalDist, 1e-5);
         DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder, weighting);
-        algo.setEdgeFilter(new PrepareContractionHierarchies.IgnoreNodeFilter(g).setAvoidNode(3));
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting);
+        prepare.setGraph(g).initFromGraph().prepareNodes();
+        algo.setEdgeFilter(new PrepareContractionHierarchies.IgnoreNodeFilter(g, g.getNodes() + 1).setAvoidNode(3));
         int nodeEntry = algo.setLimitWeight(10).findEndNode(4, 2);
         assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
 
@@ -102,7 +106,7 @@ public class PrepareContractionHierarchiesTest
     {
         LevelGraph g = createExampleGraph();
         DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder, weighting);
-        algo.setEdgeFilter(new PrepareContractionHierarchies.IgnoreNodeFilter(g).setAvoidNode(0));
+        algo.setEdgeFilter(new PrepareContractionHierarchies.IgnoreNodeFilter(g, g.getNodes() + 1).setAvoidNode(0));
         int endNode = algo.setLimitWeight(2).findEndNode(4, 1);
         // did not reach endNode
         assertNotEquals(1, endNode);
@@ -189,6 +193,7 @@ public class PrepareContractionHierarchiesTest
 
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
         prepare.initFromGraph();
+        prepare.prepareNodes();
         // find all shortcuts if we contract node 1
         Collection<Shortcut> scs = prepare.testFindShortcuts(1);
         assertEquals(2, scs.size());
@@ -291,11 +296,7 @@ public class PrepareContractionHierarchiesTest
         EdgeIteratorState iter2_2 = g.edge(5, 6, 1, false);
         EdgeIteratorState iter3_1 = g.edge(6, 7, 1, true);
         EdgeIteratorState iter3_2 = g.edge(6, 8, 2, false);
-        g.edge(8, 4, 1, false);
-        g.setLevel(3, 3);
-        g.setLevel(5, 5);
-        g.setLevel(7, 7);
-        g.setLevel(8, 8);
+        g.edge(8, 4, 1, false);        
 
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
         EdgeSkipIterState tmp = g.shortcut(1, 4);
@@ -313,6 +314,12 @@ public class PrepareContractionHierarchiesTest
         tmp.setSkippedEdges(iter3_1.getEdge(), iter3_2.getEdge());
 
         prepare.initFromGraph();
+        prepare.prepareNodes();
+        g.setLevel(3, 3);
+        g.setLevel(5, 5);
+        g.setLevel(7, 7);
+        g.setLevel(8, 8);
+        
         // there should be two different shortcuts for both directions!
         Collection<Shortcut> sc = prepare.testFindShortcuts(4);
         assertEquals(2, sc.size());

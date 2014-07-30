@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -266,6 +267,12 @@ public class QueryGraph implements Graph
     private final NodeAccess nodeAccess = new NodeAccess()
     {
         @Override
+        public void ensureNode( int nodeId )
+        {
+            mainNodeAccess.ensureNode(nodeId);
+        }
+        
+        @Override
         public boolean is3D()
         {
             return mainNodeAccess.is3D();
@@ -506,6 +513,14 @@ public class QueryGraph implements Graph
     public AllEdgesIterator getAllEdges()
     {
         throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public int getLevel( int index )
+    {
+        if (index >= mainNodes)
+            return 0;
+
+        return ((LevelGraph) mainGraph).getLevel(index);
     }
 
     @Override
