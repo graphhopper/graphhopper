@@ -30,6 +30,7 @@ GHRequest = function(host) {
     this.do_zoom = true;
     // use jsonp here if host allows CORS
     this.dataType = "json";
+    // This key can be updated at any time. Get your own API key here: http://graphhopper.com/#enterprise
     this.key = "Cmmtvx01R56rdHcQQo7VjI6rgPgxuFLvqI8cR31u";
 };
 
