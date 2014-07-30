@@ -33,7 +33,10 @@ public class Location2IDQuadtreeTest extends AbstractLocationIndexTester
     @Override
     public LocationIndex createIndex( Graph g, int resolution )
     {
-        return new Location2IDQuadtree(g, new MMapDirectory(location + "loc2idIndex")).setResolution(resolution).prepareIndex();
+        if(resolution < 0)
+            resolution = 120;
+        return new Location2IDQuadtree(g, new MMapDirectory(location + "loc2idIndex")).
+                setResolution(resolution).prepareIndex();
     }
 
     @Test

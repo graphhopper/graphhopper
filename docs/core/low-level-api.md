@@ -69,7 +69,7 @@ graph.flush();
 GraphStorage graph = gb.load();
 
  // Load index
-Location2IDIndex index = new LocationIndexTreeSC(graph, new RAMDirectory("graphhopper-folder", true));
+LocationIndex index = new LocationIndexTree(((LevelGraph)graph).getOriginalGraph(), new RAMDirectory("graphhopper-folder", true));
 if (!index.loadExisting())
     throw new IllegalStateException("location2id index cannot be loaded!");
 

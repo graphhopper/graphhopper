@@ -40,15 +40,23 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class LocationIndexTreeSCTest extends LocationIndexTreeTest
+public class LocationIndexTreeForLevelGraphTest extends LocationIndexTreeTest
 {
     @Override
-    public LocationIndexTreeSC createIndex( Graph g, int resolution )
+    public LocationIndexTree createIndex( Graph g, int resolution )
+    {
+        if (resolution < 0)
+            resolution = 500000;
+        return (LocationIndexTree) createIndexNoPrepare(g, resolution).prepareIndex();
+    }
+
+    @Override
+    public LocationIndexTree createIndexNoPrepare( Graph g, int resolution )
     {
         Directory dir = new RAMDirectory(location);
-        LocationIndexTreeSC idx = new LocationIndexTreeSC((LevelGraph) g, dir);
-        idx.setResolution(1000000).prepareIndex();
-        return idx;
+        LocationIndexTree tmpIdx = new LocationIndexTree(((LevelGraph) g).getOriginalGraph(), dir);
+        tmpIdx.setResolution(resolution);
+        return tmpIdx;
     }
 
     @Override
@@ -148,15 +156,17 @@ public class LocationIndexTreeSCTest extends LocationIndexTreeTest
         // disconnect higher 3 from lower 2
         lg.disconnect(lg.createEdgeExplorer(), iter1);
 
-        LocationIndexTreeSC index = new LocationIndexTreeSC(lg, new RAMDirectory());
-        index.setResolution(100000);
-        index.prepareIndex();
+        LocationIndexTree index = createIndex(lg, 100000);
+
         // very close to 2, but should match the edge 0--1
         TIntHashSet set = index.findNetworkEntries(0.51, 0.2, index.maxRegionSearch);
+        assertEquals(0, index.findID(0.51, 0.2));
+        assertEquals(1, index.findID(0.1, 0.1));
+        assertEquals(2, index.findID(0.51, 0.51));
+        assertEquals(3, index.findID(0.51, 1.1));
         TIntSet expectedSet = new TIntHashSet();
-        expectedSet.add(1);
+        expectedSet.add(0);
         expectedSet.add(2);
         assertEquals(expectedSet, set);
-        assertEquals(0, index.findID(0.51, 0.2));
     }
 }

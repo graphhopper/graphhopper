@@ -6,9 +6,8 @@ In GraphHopper CH is enabled by default but can be easily disabled.
 To make CH work in GraphHopper a LevelGraphStorage instead of the normal GraphStorage 
 is necessary which allows to store shortcuts too.
 
-After a graph is prepared it cannot be used for graph exploration anymore, this is
-a limitation of the preparation and storage and is handled in issue #116.
-Due to that limitation a special location index is necessary (LocationIndexTreeSC).
+As issue #116 is fixed, a prepared graph can also be used for normal graph traversal IF you use the 
+graph from LevelGraph.getOriginalGraph().
 
 Also at the moment only one vehicle can be used if CH is enabled, see issue #111.
 

@@ -1,4 +1,5 @@
 0.4.0
+    removed LocationIndexTreeSC, use new LocationIndexTree(levelGraph.getOriginalGraph(), directory) instead
     getLevel and setLevel do no longer automatically increase node count, use getNodeAccess.ensureNode for that
     normal algorithms are now possible on prepared graph
     with the introduction of lock protection mechanism (see #112) GraphHopper needs always write access, see also #217

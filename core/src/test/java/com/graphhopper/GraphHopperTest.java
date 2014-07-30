@@ -201,7 +201,7 @@ public class GraphHopperTest
         instance.importOrLoad();
         GHResponse ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).setAlgorithm("dijkstrabi"));
         assertTrue(ph.isFound());
-        assertEquals("(51.24921503475044,9.431716451757769), (52.0,9.0), (51.199999850988384,9.39999970197677)", ph.getPoints().toString());
+        assertEquals(Helper.createPointList(51.249215, 9.431716, 52.0, 9.0, 51.2, 9.4), ph.getPoints());
         assertEquals(3, ph.getPoints().getSize());
     }
 
@@ -451,10 +451,10 @@ public class GraphHopperTest
     {
         instance = new GraphHopper().setInMemory(true).
                 init(
-                new CmdArgs().
-                put("prepare.minNetworkSize", "1").
-                put("osmreader.acceptWay", "CAR").
-                put("osmreader.osm", testOsm3)).
+                        new CmdArgs().
+                        put("prepare.minNetworkSize", "1").
+                        put("osmreader.acceptWay", "CAR").
+                        put("osmreader.osm", testOsm3)).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
 

@@ -74,7 +74,7 @@ public abstract class AbstractLocationIndexTester
         Graph g = createGraph(new EncodingManager("CAR"));
         initSimpleGraph(g);
 
-        idx = createIndex(g, 8);
+        idx = createIndex(g, -1);
         assertEquals(4, idx.findID(5, 2));
         assertEquals(3, idx.findID(1.5, 2));
         assertEquals(0, idx.findID(-1, -1));
@@ -128,7 +128,7 @@ public abstract class AbstractLocationIndexTester
         Graph g = createGraph(new EncodingManager("CAR"));
         initSimpleGraph(g);
 
-        idx = createIndex(g, 28);
+        idx = createIndex(g, -1);
         assertEquals(4, idx.findID(5, 2));
         assertEquals(3, idx.findID(1.5, 2));
         assertEquals(0, idx.findID(-1, -1));
@@ -153,7 +153,7 @@ public abstract class AbstractLocationIndexTester
         Graph g = createSampleGraph(new EncodingManager("CAR"));
         int locs = g.getNodes();
 
-        idx = createIndex(g, 120);
+        idx = createIndex(g, -1);
         // if we would use less array entries then some points gets the same key so avoid that for this test
         // e.g. for 16 we get "expected 6 but was 9" i.e 6 was overwritten by node j9 which is a bit closer to the grid center        
         // go through every point of the graph if all points are reachable
@@ -211,7 +211,7 @@ public abstract class AbstractLocationIndexTester
     public void testSinglePoints120()
     {
         Graph g = createSampleGraph(new EncodingManager("CAR"));
-        idx = createIndex(g, 120);
+        idx = createIndex(g, -1);
 
         assertEquals(1, idx.findID(1.637, 2.23));
         assertEquals(10, idx.findID(3.649, 1.375));
@@ -227,7 +227,7 @@ public abstract class AbstractLocationIndexTester
     public void testSinglePoints32()
     {
         Graph g = createSampleGraph(new EncodingManager("CAR"));
-        idx = createIndex(g, 32);
+        idx = createIndex(g, -1);
 
         // 10 or 6
         assertEquals(10, idx.findID(3.649, 1.375));
@@ -355,7 +355,7 @@ public abstract class AbstractLocationIndexTester
         final EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
         Graph g = createGraph(encodingManager);
         initSimpleGraph(g);
-        idx = createIndex(g, 32);
+        idx = createIndex(g, -1);
         assertEquals(1, idx.findID(1, -1));
 
         // now make all edges from node 1 accessible for CAR only
@@ -367,7 +367,7 @@ public abstract class AbstractLocationIndexTester
         }
         idx.close();
 
-        idx = createIndex(g, 32);
+        idx = createIndex(g, -1);
         FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
         assertEquals(2, idx.findClosest(1, -1, new DefaultEdgeFilter(footEncoder)).getClosestNode());
         Helper.close((Closeable) g);

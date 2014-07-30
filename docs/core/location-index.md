@@ -12,13 +12,13 @@ QueryResult qr = findClosest(lat, lon, EdgeFilter.ALL_EDGES );
 EdgeIteratorState edge = qr.getClosestEdge();
 ```
 
-If you don't use the GraphHopper class you have to handle every case on your own to build a location index.
-E.g. if it is a LevelGraph you need LocationIndexTreeSC otherwise LocationIndexTree:
+If you don't use the GraphHopper class you have to make sure to give the index a normal graph.
+E.g. if it is a LevelGraph you need to do:
 
 ```java
 LocationIndexTree tmpIndex;
 if (graph instanceof LevelGraph)
-   tmpIndex = new LocationIndexTreeSC((LevelGraph) graph, dir);
+   tmpIndex = new LocationIndexTree(((LevelGraph) graph).getOriginalGraph(), dir);
 else
    tmpIndex = new LocationIndexTree(graph, dir);
 

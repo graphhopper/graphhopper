@@ -21,7 +21,6 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.LocationIndexTreeSC;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
@@ -557,7 +556,7 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         LocationIndex index;
         if (graph instanceof LevelGraph)
-            index = new LocationIndexTreeSC((LevelGraph) graph, new RAMDirectory());
+            index = new LocationIndexTree(((LevelGraph) graph).getOriginalGraph(), new RAMDirectory());
         else
             index = new LocationIndexTree(graph, new RAMDirectory());
 

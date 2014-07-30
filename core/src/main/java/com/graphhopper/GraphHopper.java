@@ -934,7 +934,7 @@ public class GraphHopper implements GraphHopperAPI
         LocationIndex tmpIndex;
         if (graph instanceof LevelGraph)
         {
-            tmpIndex = new LocationIndexTreeSC((LevelGraph) graph, dir);
+            tmpIndex = new LocationIndexTree(((LevelGraph) graph).getOriginalGraph(), dir);
         } else
         {
             tmpIndex = new LocationIndexTree(graph, dir);
