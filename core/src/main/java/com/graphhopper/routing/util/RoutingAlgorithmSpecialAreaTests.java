@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.MapEntry;
+import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -134,16 +135,15 @@ public class RoutingAlgorithmSpecialAreaTests
             LocationIndex idxCH = new LocationIndexTreeSC(graphCH, new RAMDirectory()).prepareIndex();
             prepare.add(new ME(prepareCH, idxCH));
 
-            // still one failing test regardless of the approx factor
-//            PrepareContractionHierarchies prepareCHAStar = new PrepareContractionHierarchies(encoder, weighting) {
-//
-//                @Override
-//                public RoutingAlgorithm createAlgo()
-//                {
-//                    return createAStar().setApproximation(true).setApproximationFactor(0.9);
-//                }
-//            }.setGraph(graphCH);            
-//            prepare.add(new ME(prepareCHAStar, idxCH));
+            PrepareContractionHierarchies prepareCHAStar = new PrepareContractionHierarchies(encoder, weighting)
+            {
+                @Override
+                public RoutingAlgorithm createAlgo()
+                {
+                    return createAStar().setApproximation(true).setApproximationFactor(1);
+                }
+            }.setGraph(graphCH);
+            prepare.add(new ME(prepareCHAStar, idxCH));
         }
         return prepare;
     }
