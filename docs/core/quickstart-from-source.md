@@ -37,7 +37,8 @@ For more details on Android-usage have a look into this [Android site](../androi
 
 ### Library
 
-To use an unreleased snapshot version of GraphHopper you need the following snippet in your pom.xml
+Look [here](http://graphhopper.com/#community) for the maven snippet to use GraphHopper in your
+application. To use an unreleased snapshot version of GraphHopper you need the following snippet in your pom.xml
 as those versions are not in maven central:
 
 ```xml
@@ -96,7 +97,7 @@ export JAVA=java-home/bin/java
 export JAVA_OPTIONS="-server -Xconcurrentio -Xmx15000m -Xms15000m"
 ```
 
-For [World-Wide-Road-Network](https://github.com/graphhopper/graphhopper/wiki/World-Wide-Road-Network) we have a separate wiki page.
+For [World-Wide-Road-Network](./world-wide.md) we have a separate information page.
 
 Important notes:
  * none-hierarchical graphs should be limited to a certain distance otherwise you'll require lots of RAM per request! See https://github.com/graphhopper/graphhopper/issues/104
@@ -105,7 +106,8 @@ Important notes:
 ## Technical Overview
 
 To get a better understanding also take a look in the source code, especially in the unit tests and in 
-some resources we [published](http://karussell.wordpress.com/2014/01/23/graphhopper-news-article-in-java-magazine-and-fosdem-2014/). 
+some resources we [published](http://karussell.wordpress.com/2014/01/23/graphhopper-news-article-in-java-magazine-and-fosdem-2014/)
+or [here](http://graphhopper.com/public/slides/).
 
 There are mainly three parts:
 
@@ -135,7 +137,7 @@ The data layout for the DataAccess objects in GraphHopperStorage called 'nodes' 
 ![storage layout](http://karussell.files.wordpress.com/2013/08/wiki-graph.png)
 
 Some explanations:
- * One 'node row' consists of latitude,longitude (not shown) and an edgeID
+ * One 'node row' consists of latitude,longitude (not shown) and the first edgeID
  * One 'edge row' consists of two edgeIDs: nextA and nextB, then two nodeIDs nodeA and nodeB, and finally some properties like the distance and the flags.
  * One node has several edges which is implemented as a linked list. E.g. node 3 points to its first edge in the edge area at position 0 to edge 0-3 (nodeA-nodeB where nodeA is always smaller than nodeB). To get the next edge of node 3 you need nextB and this goes to edge 1-3, again node 3 is nodeB, but for the next edge 3-5 node 3 is nodeA ... and so on.
  * For you custom data import keep in mind that although the nodes 4 and 6 have no edges they still 'exist' and consume space in the current implementations of DataAccess. For OSMReader this cannot be the case as separate networks with only a small number of nodes are removed (very likely OSM bugs).
@@ -153,7 +155,37 @@ An algorithm needs a kind of path extraction: from the shortest-path-tree one ne
 (list of edges) including the distance and time. Afterwards from this list the exact point (latitude,longitude) 
 can be determined. For bidirectional algorithms this is a bit more complicated and done in PathBidirRef. 
 For [_Contraction Hierarchies_](http://ad-wiki.informatik.uni-freiburg.de/teaching/EfficientRoutePlanningSS2012)
- one needs to additionally find the shortcutted edges and process them recursivly - this is done in Path4CH.
+ we use the _LevelGraph_ which additionally holds shortcuts. While path extraction we need to identify those
+ shortcuts and get the edges recursivly, this is done in Path4CH.
+
+## 3.1 OriginalGraph
+
+In order to traverse the _LevelGraph_ like a normal _Graph_ one needs to hide the shortcuts, which
+is done automatically for you if you call graph.getOriginalGraph(). This is necessary in a 
+_LocationIndex_ and partially in the _Path_ class in order to identify how many streets leave a junction
+or similar. See #116 for more information.
+
+
+### 4. Connecting the Real World to the Graph
+
+## 4.1 LocationIndex
+
+In real world we have addresses and/or coordinates for the start and end point. 
+To get the coordinate from an address you will need a geocoding solution not part of GraphHopper,
+e.g. have a look into our [Routing Web API](http://graphhopper.com/#enterprise) for more information about this topic.
+
+To get the closest node or edge id from a coordinate we provide you with an efficient lookup concept:
+the LocationIndex. There are multiple implementations
+where the LocationIndexTree is the most precise and scalable one and used in almost all places.
+See [here](./location-index.md) for more information. See #17 and #221.
+
+
+## 4.2 QueryGraph
+
+In order to route not only from junctions (which are nodes) we introduced the _QueryGraph_ in issue #27,
+which creates virtual nodes and edges at the query coordinates. It provides a lightweight wrapper around
+the _Graph_ and is created per query so that queries do not influence each other.
+
 
 Further Links
 ---------------
