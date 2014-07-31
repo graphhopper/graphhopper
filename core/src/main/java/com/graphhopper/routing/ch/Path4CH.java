@@ -20,6 +20,7 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeSkipIterState;
 
 /**
@@ -34,7 +35,7 @@ public class Path4CH extends PathBidirRef
     {
         super(g, encoder);
     }
-
+    
     @Override
     protected final void processEdge( int tmpEdge, int endNode )
     {
@@ -58,7 +59,7 @@ public class Path4CH extends PathBidirRef
         int skippedEdge1 = mainEdgeState.getSkippedEdge1();
         int skippedEdge2 = mainEdgeState.getSkippedEdge2();
         int from = mainEdgeState.getBaseNode(), to = mainEdgeState.getAdjNode();
-        
+
         // get properties like speed of the edge in the correct direction
         if (reverse)
         {

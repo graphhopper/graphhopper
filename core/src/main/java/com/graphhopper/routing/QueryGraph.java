@@ -19,9 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -53,6 +51,7 @@ public class QueryGraph implements Graph
     private final NodeAccess mainNodeAccess;
     private final int mainNodes;
     private final int mainEdges;
+    private final Graph origGraph;
     private List<QueryResult> queryResults;
     /**
      * Virtual edges are created between existing graph and new virtual tower nodes. For every
@@ -70,6 +69,7 @@ public class QueryGraph implements Graph
     public QueryGraph( Graph graph )
     {
         mainGraph = graph;
+        origGraph = this;// TODO graph instanceof LevelGraph ? new OriginalGraph(this) : this;
         mainNodeAccess = graph.getNodeAccess();
         mainNodes = graph.getNodes();
         mainEdges = graph.getAllEdges().getMaxId();
@@ -224,6 +224,25 @@ public class QueryGraph implements Graph
         });
     }
 
+    @Override
+    public Graph getOriginalGraph()
+    {
+        // Note: if the mainGraph of this QueryGraph is a LevelGraph then ignoring the shortcuts will produce a 
+        // huge gap of edgeIds between original and virtual edge ids. The only solution would be to move virtual edges
+        // directly after normal edge ids which is ugly as we limit virtual edges to N edges and waste memory or make everything more complex.
+        return origGraph;
+    }
+
+    public boolean isVirtualEdge( int edgeId )
+    {
+        return edgeId >= mainEdges;
+    }
+
+    public boolean isVirtualNode( int nodeId )
+    {
+        return nodeId >= mainNodes;
+    }
+
     private void createEdges( GHPoint3D prevSnapped, int prevWayIndex, GHPoint3D currSnapped, int wayIndex,
             PointList fullPL, EdgeIteratorState closestEdge,
             int prevNodeId, int nodeId, long reverseFlags )
@@ -271,7 +290,7 @@ public class QueryGraph implements Graph
         {
             mainNodeAccess.ensureNode(nodeId);
         }
-        
+
         @Override
         public boolean is3D()
         {
@@ -287,7 +306,7 @@ public class QueryGraph implements Graph
         @Override
         public double getLatitude( int nodeId )
         {
-            if (nodeId >= mainNodes)
+            if (isVirtualNode(nodeId))
                 return virtualNodes.getLatitude(nodeId - mainNodes);
             return mainNodeAccess.getLatitude(nodeId);
         }
@@ -295,7 +314,7 @@ public class QueryGraph implements Graph
         @Override
         public double getLongitude( int nodeId )
         {
-            if (nodeId >= mainNodes)
+            if (isVirtualNode(nodeId))
                 return virtualNodes.getLongitude(nodeId - mainNodes);
             return mainNodeAccess.getLongitude(nodeId);
         }
@@ -303,7 +322,7 @@ public class QueryGraph implements Graph
         @Override
         public double getElevation( int nodeId )
         {
-            if (nodeId >= mainNodes)
+            if (isVirtualNode(nodeId))
                 return virtualNodes.getElevation(nodeId - mainNodes);
             return mainNodeAccess.getElevation(nodeId);
         }
@@ -311,7 +330,7 @@ public class QueryGraph implements Graph
         @Override
         public int getAdditionalNodeField( int nodeId )
         {
-            if (nodeId >= mainNodes)
+            if (isVirtualNode(nodeId))
                 return 0;
             return mainNodeAccess.getAdditionalNodeField(nodeId);
         }
@@ -362,7 +381,7 @@ public class QueryGraph implements Graph
     @Override
     public EdgeIteratorState getEdgeProps( int origEdgeId, int adjNode )
     {
-        if (origEdgeId < mainEdges)
+        if (!isVirtualEdge(origEdgeId))
             return mainGraph.getEdgeProps(origEdgeId, adjNode);
 
         int edgeId = origEdgeId - mainEdges;
@@ -416,7 +435,7 @@ public class QueryGraph implements Graph
             // replace edge list of neighboring tower nodes: a) add virtual edges only and collect tower nodes where real edges will be added in step 2.
             // base node
             int towerNode = baseRevEdge.getAdjNode();
-            if (towerNode < mainNodes)
+            if (!isVirtualNode(towerNode))
             {
                 towerNodesToChange.add(towerNode);
                 addVirtualEdges(node2EdgeMap, edgeFilter, true, towerNode, i);
@@ -424,7 +443,7 @@ public class QueryGraph implements Graph
 
             // adj node
             towerNode = adjEdge.getAdjNode();
-            if (towerNode < mainNodes)
+            if (!isVirtualNode(towerNode))
             {
                 towerNodesToChange.add(towerNode);
                 addVirtualEdges(node2EdgeMap, edgeFilter, false, towerNode, i);
@@ -479,8 +498,8 @@ public class QueryGraph implements Graph
 
     void fillVirtualEdges( TIntObjectMap<VirtualEdgeIterator> node2Edge, int towerNode, EdgeExplorer mainExpl )
     {
-        if (towerNode >= mainNodes)
-            throw new IllegalStateException("should not happen:" + towerNode + ", " + node2Edge);
+        if (isVirtualNode(towerNode))
+            throw new IllegalStateException("Node should not be virtual:" + towerNode + ", " + node2Edge);
 
         VirtualEdgeIterator vIter = node2Edge.get(towerNode);
         TIntArrayList ignoreEdges = new TIntArrayList(vIter.count() * 2);
@@ -515,12 +534,12 @@ public class QueryGraph implements Graph
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    public int getLevel( int index )
+    public int getLevel( int nodeId )
     {
-        if (index >= mainNodes)
+        if (isVirtualNode(nodeId))
             return 0;
 
-        return ((LevelGraph) mainGraph).getLevel(index);
+        return ((LevelGraph) mainGraph).getLevel(nodeId);
     }
 
     @Override
@@ -729,7 +748,6 @@ public class QueryGraph implements Graph
      */
     private static class VirtualEdgeIState implements EdgeIteratorState, EdgeSkipIterState
     {
-
         private final PointList pointList;
         private final int edgeId;
         private double distance;
@@ -875,7 +893,10 @@ public class QueryGraph implements Graph
         @Override
         public EdgeIteratorState detach( boolean reverse )
         {
-            throw new UnsupportedOperationException("Not supported.");
+            if (!reverse)
+                return this;
+            else
+                throw new UnsupportedOperationException("Not supported.");
         }
 
         @Override

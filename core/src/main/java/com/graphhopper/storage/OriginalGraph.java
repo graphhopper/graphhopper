@@ -30,14 +30,20 @@ import com.graphhopper.util.shapes.BBox;
 /**
  * @author Peter Karich
  */
-class OriginalGraph implements Graph
+public class OriginalGraph implements Graph
 {
-    private final LevelGraphStorage lg;
+    private final Graph lg;
 
-    public OriginalGraph( LevelGraphStorage lg )
+    public OriginalGraph( LevelGraph lg )
     {
         this.lg = lg;
     }
+
+    @Override
+    public Graph getOriginalGraph()
+    {
+        return this;
+    }        
 
     @Override
     public int getNodes()

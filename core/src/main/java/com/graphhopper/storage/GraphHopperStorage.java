@@ -113,6 +113,12 @@ public class GraphHopperStorage implements GraphStorage
         extendedStorage.init(this);
     }
 
+    @Override
+    public Graph getOriginalGraph()
+    {
+        return this;
+    }        
+
     void checkInit()
     {
         if (initialized)

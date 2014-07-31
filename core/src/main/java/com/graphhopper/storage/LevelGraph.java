@@ -31,12 +31,6 @@ import com.graphhopper.util.EdgeSkipIterState;
 public interface LevelGraph extends Graph
 {
     /**
-     * @return a graph which behaves like unprepared graph and e.g. the normal unidirectional
-     * Dijkstra can be executed.
-     */
-    Graph getOriginalGraph();
-
-    /**
      * This methods sets the level of the specified node.
      */
     void setLevel( int nodeId, int level );
@@ -45,6 +39,8 @@ public interface LevelGraph extends Graph
      * @return the level of the specified node.
      */
     int getLevel( int nodeId );
+
+    boolean isShortcut( int edgeId );
 
     /**
      * This method creates a shortcut between a to b which is nearly identical to creating an edge

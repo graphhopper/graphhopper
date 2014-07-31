@@ -54,7 +54,8 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
         originalGraph = new OriginalGraph(this);
     }
 
-    boolean isShortcut( int edgeId )
+    @Override
+    public boolean isShortcut( int edgeId )
     {
         return edgeId > lastEdgeIndex;
     }
