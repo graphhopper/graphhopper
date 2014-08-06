@@ -68,6 +68,12 @@ public class GHPoint3D extends GHPoint
     }
 
     @Override
+    public String toString()
+    {
+        return super.toString() + "," + ele;
+    }
+
+    @Override
     public Double[] toGeoJson()
     {
         return new Double[]

@@ -186,8 +186,9 @@ public class InstructionList implements Iterable<Instruction>
         Instruction lastI = get(size() - 1);
         if (lastI.points.size() != 1)
             throw new IllegalStateException("Last instruction must have exactly one point but was " + lastI.points.size());
-        double lastLat = lastI.getFirstLat(), lastLon = lastI.getFirstLon();
-        gpxList.add(new GPXEntry(lastLat, lastLon, timeOffset));
+        double lastLat = lastI.getFirstLat(), lastLon = lastI.getFirstLon(), 
+                lastEle = lastI.getPoints().is3D() ? lastI.getFirstEle() : Double.NaN;
+        gpxList.add(new GPXEntry(lastLat, lastLon, lastEle, timeOffset));
         return gpxList;
     }
 
