@@ -94,12 +94,13 @@ file to point to the required graphhopper folder. Increase the Xmx/Xms values of
 for world wide coverage with a hierarchical graph I do the following in bin/jetty.sh
 ```bash
 export JAVA=java-home/bin/java
-export JAVA_OPTIONS="-server -Xconcurrentio -Xmx15000m -Xms15000m"
+export JAVA_OPTIONS="-server -Xconcurrentio -Xmx17000m -Xms17000m"
 ```
 
 For [World-Wide-Road-Network](./world-wide.md) we have a separate information page.
 
 Important notes:
+ * jsonp support needs to be enabled in the config.properties
  * none-hierarchical graphs should be limited to a certain distance otherwise you'll require lots of RAM per request! See https://github.com/graphhopper/graphhopper/issues/104
  * if you have strange speed problems which could be related to low memory you can try to [entire disable swap](http://askubuntu.com/questions/103915/how-do-i-configure-swappiness). Or just try it out via `sudo swapoff -a`. Swapping out is very harmful to Java programs especially when the GC kicks in.
 
