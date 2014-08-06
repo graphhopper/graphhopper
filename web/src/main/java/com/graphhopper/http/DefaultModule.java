@@ -35,7 +35,7 @@ public class DefaultModule extends AbstractModule
 
     public DefaultModule( CmdArgs args )
     {
-        this.args = args;
+        this.args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
     }
 
     @Override
@@ -53,7 +53,9 @@ public class DefaultModule extends AbstractModule
             bind(GraphHopper.class).toInstance(hopper);
 
             long timeout = args.getLong("web.timeout", 3000);
-            bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);            
+            bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);
+            boolean jsonpAllowed = args.getBool("web.jsonpAllowed", false);
+            bind(Boolean.class).annotatedWith(Names.named("jsonpAllowed")).toInstance(jsonpAllowed);
             bind(TranslationMap.class).toInstance(hopper.getTranslationMap());
         } catch (Exception ex)
         {

@@ -1,4 +1,5 @@
 0.4.0
+    jsonp is disabled by default. You need to enable it in the config.properties, see the config-example.properties
     with the introduction of lock protection mechanism (see #112) GraphHopper needs always write access, see also #217
     new GraphHopper.clean method to remove the directory via Java API
     FlagEncoder: replaced isFoward and isBackward with more generic isBool(flags, FlagEncoder.FORWARD|BACKWARD)

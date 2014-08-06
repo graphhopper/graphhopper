@@ -226,4 +226,27 @@ public class CmdArgs
     {
         return map.toString();
     }
+
+    /**
+     * Command line configuration overwrites the ones in the config file.
+     * <p>
+     * @return a new CmdArgs object if necessary.
+     */
+    public static CmdArgs readFromConfigAndMerge( CmdArgs args, String configKey, String configSysAttr )
+    {
+        String configVal = args.get(configKey, "");
+        if (!Helper.isEmpty(configVal))
+        {
+            try
+            {
+                CmdArgs tmp = CmdArgs.readFromConfig(configVal, configSysAttr);
+                tmp.merge(args);
+                return tmp;
+            } catch (Exception ex)
+            {
+                throw new RuntimeException(ex);
+            }
+        }
+        return args;
+    }
 }

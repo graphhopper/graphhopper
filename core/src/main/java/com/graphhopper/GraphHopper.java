@@ -464,26 +464,6 @@ public class GraphHopper implements GraphHopperAPI
         return trMap;
     }
 
-    /*
-     * Command line configuration overwrites the ones in the config file
-     */
-    protected CmdArgs mergeArgsFromConfig( CmdArgs args )
-    {
-        if (!Helper.isEmpty(args.get("config", "")))
-        {
-            try
-            {
-                CmdArgs tmp = CmdArgs.readFromConfig(args.get("config", ""), "graphhopper.config");
-                tmp.merge(args);
-                return tmp;
-            } catch (Exception ex)
-            {
-                throw new RuntimeException(ex);
-            }
-        }
-        return args;
-    }
-
     /**
      * Reads configuration from a CmdArgs object. Which can be manually filled, or via main(String[]
      * args) ala CmdArgs.read(args) or via configuration file ala
@@ -491,7 +471,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper init( CmdArgs args )
     {
-        args = mergeArgsFromConfig(args);
+        args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
         String tmpOsmFile = args.get("osmreader.osm", "");
         if (!Helper.isEmpty(tmpOsmFile))
             osmFile = tmpOsmFile;
