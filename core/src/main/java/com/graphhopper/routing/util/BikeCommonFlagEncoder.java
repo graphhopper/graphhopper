@@ -65,10 +65,11 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     {
         super(speedBits, speedFactor);
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
-        restrictions = new ArrayList<String>(Arrays.asList("bicycle", "access"));
+        restrictions = new ArrayList<String>(Arrays.asList("bicycle", "access", "cycleway"));
         restrictedValues.add("private");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
+        restrictedValues.add("none");       
 
         intendedValues.add("yes");
         intendedValues.add("designated");
