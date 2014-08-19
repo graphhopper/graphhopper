@@ -18,10 +18,8 @@ if (!host) {
 var ghRequest = new GHRequest(host);
 var bounds = {};
 
-//var nominatim = "http://open.mapquestapi.com/nominatim/v1/search.php";
-//var nominatim_reverse = "http://open.mapquestapi.com/nominatim/v1/reverse.php";
-var nominatim = "http://nominatim.openstreetmap.org/search";
-var nominatim_reverse = "http://nominatim.openstreetmap.org/reverse";
+var nominatim = "https://nominatim.openstreetmap.org/search";
+var nominatim_reverse = "https://nominatim.openstreetmap.org/reverse";
 var routingLayer;
 var map;
 var browserTitle = "GraphHopper Maps - Driving Directions";
@@ -207,16 +205,15 @@ function adjustMapSize() {
 function initMap() {
     adjustMapSize();
     console.log("init map at " + JSON.stringify(bounds));
-
-    // mapquest provider
-    var osmAttr = '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    
+    var osmAttr = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
     var tp = "ls";
     if (L.Browser.retina)
         tp = "lr";
 
-    var lyrk = L.tileLayer('http://{s}.tiles.lyrk.org/' + tp + '/{z}/{x}/{y}?apikey=6e8cfef737a140e2a58c8122aaa26077', {
-        attribution: osmAttr + ', <a href="http://geodienste.lyrk.de/">Lyrk</a>',
+    var lyrk = L.tileLayer('https://tiles.lyrk.org/' + tp + '/{z}/{x}/{y}?apikey=6e8cfef737a140e2a58c8122aaa26077', {
+        attribution: osmAttr + ', <a href="https://geodienste.lyrk.de/">Lyrk</a>',
         subdomains: ['a', 'b', 'c']
     });
 
@@ -250,7 +247,7 @@ function initMap() {
         subdomains: ['topo4', 'topo', 'topo2', 'topo3']
     });
 
-    var osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: osmAttr
     });
 
@@ -764,9 +761,9 @@ function routeLatLng(request, doQuery) {
             var exportLink = $("#exportLink a");
             exportLink.attr('href', urlForHistory);
             var startOsmLink = $("<a>start</a>");
-            startOsmLink.attr("href", "http://www.openstreetmap.org/?zoom=14&mlat=" + request.from.lat + "&mlon=" + request.from.lng);
+            startOsmLink.attr("href", "https://www.openstreetmap.org/?zoom=14&mlat=" + request.from.lat + "&mlon=" + request.from.lng);
             var endOsmLink = $("<a>end</a>");
-            endOsmLink.attr("href", "http://www.openstreetmap.org/?zoom=14&mlat=" + request.to.lat + "&mlon=" + request.to.lng);
+            endOsmLink.attr("href", "https://www.openstreetmap.org/?zoom=14&mlat=" + request.to.lat + "&mlon=" + request.to.lng);
             hiddenDiv.append("<br/><span>View on OSM: </span>").append(startOsmLink).append(endOsmLink);
 
             var osrmLink = $("<a>OSRM</a>");
@@ -784,10 +781,10 @@ function routeLatLng(request, doQuery) {
                 addToGoogle = "&dirflg=b";
                 // ? addToBing = "&mode=B";
             }
-            googleLink.attr("href", "http://maps.google.com/?q=saddr=" + from + "&daddr=" + to + addToGoogle);
+            googleLink.attr("href", "https://maps.google.com/?q=saddr=" + from + "&daddr=" + to + addToGoogle);
             hiddenDiv.append(googleLink);
             var bingLink = $("<a>Bing</a> ");
-            bingLink.attr("href", "http://www.bing.com/maps/default.aspx?rtp=adr." + from + "~adr." + to + addToBing);
+            bingLink.attr("href", "https://www.bing.com/maps/default.aspx?rtp=adr." + from + "~adr." + to + addToBing);
             hiddenDiv.append(bingLink);
             $("#info").append(hiddenDiv);
         }
