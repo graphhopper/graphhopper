@@ -65,7 +65,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     {
         super(speedBits, speedFactor);
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
-        restrictions = new ArrayList<String>(Arrays.asList("bicycle", "access", "cycleway"));
+        restrictions = new ArrayList<String>(Arrays.asList("access", "bicycle", "vehicle"));
         restrictedValues.add("private");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
@@ -457,7 +457,8 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     {
         String service = way.getTag("service");
         String highway = way.getTag("highway");
-        if (way.hasTag("bicycle", "designated"))
+        if (way.hasTag("bicycle", "designated") 
+        		|| way.hasTag("bicycle", "official"))
             weightToPrioMap.put(100d, PREFER.getValue());
         if ("cycleway".equals(highway))
             weightToPrioMap.put(100d, VERY_NICE.getValue());
