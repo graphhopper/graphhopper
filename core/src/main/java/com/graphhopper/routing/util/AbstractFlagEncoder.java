@@ -81,6 +81,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected HashSet<String> potentialBarriers = new HashSet<String>(5);
     // should potential barriers block when no access limits are given?
     protected boolean blockByDefault = true;
+    protected boolean blockFords = true;
     protected int speedBits;
     protected double speedFactor;
 
@@ -225,8 +226,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                 return directionBitMask;
         }
 
-        if ((node.hasTag("highway", "ford")
-                || node.hasTag("ford"))
+        if (blockFords
+                && (node.hasTag("highway", "ford") || node.hasTag("ford"))
                 && !node.hasTag(restrictions, intendedValues))
             return directionBitMask;
 

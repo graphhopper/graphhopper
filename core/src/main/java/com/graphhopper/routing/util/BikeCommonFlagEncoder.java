@@ -246,7 +246,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // do not use fords with normal bikes, flagged fords are in included above
-        if (way.hasTag("highway", "ford") || way.hasTag("ford"))
+        if (blockFords && (way.hasTag("highway", "ford") || way.hasTag("ford")))
             return 0;
 
         // check access restrictions
