@@ -22,6 +22,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -32,8 +33,8 @@ import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.Way;
 import com.graphhopper.util.BitUtil;
-import java.util.*;
 
 /**
  *
@@ -122,7 +123,7 @@ public class EncodingManagerTest
             }
 
             @Override
-            protected int handlePriority( OSMWay way, int priorityFromRelation )
+            protected int handlePriority( Way way, int priorityFromRelation )
             {
                 return priorityFromRelation;
             }
