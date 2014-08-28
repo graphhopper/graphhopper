@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,8 +30,8 @@ import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.Way;
 import com.graphhopper.util.Helper;
-import java.util.*;
 
 /**
  * Defines bit layout for cars. (speed, access, ferries, ...)
@@ -99,7 +101,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         // autobahn
         defaultSpeedMap.put("motorway", 100);
         defaultSpeedMap.put("motorway_link", 70);
-        // bundesstraße
+        // bundesstra��e
         defaultSpeedMap.put("trunk", 70);
         defaultSpeedMap.put("trunk_link", 65);
         // linking bigger town
@@ -113,7 +115,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         defaultSpeedMap.put("tertiary_link", 40);
         defaultSpeedMap.put("unclassified", 30);
         defaultSpeedMap.put("residential", 30);
-        // spielstraße
+        // spielstra��e
         defaultSpeedMap.put("living_street", 5);
         defaultSpeedMap.put("service", 20);
         // unknown road
@@ -134,7 +136,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         return shift + speedBits;
     }
 
-    protected double getSpeed( OSMWay way )
+    protected double getSpeed( Way way )
     {
         String highwayValue = way.getTag("highway");
         Integer speed = defaultSpeedMap.get(highwayValue);
@@ -156,7 +158,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long acceptWay( OSMWay way )
+    public long acceptWay( Way way )
     {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null)
@@ -209,7 +211,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long handleWayTags( OSMWay way, long allowed, long relationCode )
+    public long handleWayTags( Way way, long allowed, long relationCode )
     {
         if (!isAccept(allowed))
             return 0;

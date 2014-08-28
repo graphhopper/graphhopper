@@ -17,9 +17,13 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMWay;
-import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.*;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.AVOID_AT_ALL_COSTS;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.PREFER;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.UNCHANGED;
+
 import java.util.TreeMap;
+
+import com.graphhopper.reader.Way;
 
 /**
  * Specifies the settings for racebikeing
@@ -104,7 +108,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
     }
 
     @Override
-    void collect( OSMWay way, TreeMap<Double, Integer> weightToPrioMap )
+    void collect( Way way, TreeMap<Double, Integer> weightToPrioMap )
     {
         super.collect(way, weightToPrioMap);
 
@@ -123,7 +127,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
     }
 
     @Override
-    boolean isPushingSection( OSMWay way )
+    boolean isPushingSection( Way way )
     {
         String highway = way.getTag("highway");
         String trackType = way.getTag("tracktype");

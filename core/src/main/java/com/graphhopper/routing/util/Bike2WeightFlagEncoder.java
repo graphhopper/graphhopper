@@ -18,11 +18,13 @@
  */
 package com.graphhopper.routing.util;
 
+import static com.graphhopper.util.Helper.keepIn;
+
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.Way;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
-import static com.graphhopper.util.Helper.*;
 
 /**
  * Stores two speed values into an edge to support avoiding too much incline
@@ -61,7 +63,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
     }
 
     @Override
-    public long handleSpeed( OSMWay way, double speed, long encoded )
+    public long handleSpeed( Way way, double speed, long encoded )
     {
         // handle oneways
         if ((way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))
@@ -120,7 +122,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
     }
 
     @Override
-    public void applyWayTags( OSMWay way, EdgeIteratorState edge )
+    public void applyWayTags( Way way, EdgeIteratorState edge )
     {
         PointList pl = edge.fetchWayGeometry(3);
         if (!pl.is3D())

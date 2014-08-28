@@ -45,14 +45,14 @@ public class OSMInputFile implements Sink, Closeable
     private XMLStreamReader parser;
     // for pbf parsing
     private boolean binary = false;
-    private final BlockingQueue<OSMElement> itemQueue;
+    private final BlockingQueue<RoutingElement> itemQueue;
     private boolean hasIncomingData;
     private int workerThreads = -1;
 
     public OSMInputFile( File file ) throws IOException
     {
         bis = decode(file);
-        itemQueue = new LinkedBlockingQueue<OSMElement>(50000);
+        itemQueue = new LinkedBlockingQueue<RoutingElement>(50000);
     }
 
     public OSMInputFile open() throws XMLStreamException
@@ -157,12 +157,12 @@ public class OSMInputFile implements Sink, Closeable
         eof = false;
     }
 
-    public OSMElement getNext() throws XMLStreamException
+    public RoutingElement getNext() throws XMLStreamException
     {
         if (eof)
             throw new IllegalStateException("EOF reached");
 
-        OSMElement item;
+        RoutingElement item;
         if (binary)
             item = getNextPBF();
         else
@@ -175,7 +175,7 @@ public class OSMInputFile implements Sink, Closeable
         return null;
     }
 
-    private OSMElement getNextXML() throws XMLStreamException
+    private RoutingElement getNextXML() throws XMLStreamException
     {
 
         int event = parser.next();
@@ -254,7 +254,7 @@ public class OSMInputFile implements Sink, Closeable
     }
 
     @Override
-    public void process( OSMElement item )
+    public void process( RoutingElement item )
     {
         try
         {
@@ -275,9 +275,9 @@ public class OSMInputFile implements Sink, Closeable
         hasIncomingData = false;
     }
 
-    private OSMElement getNextPBF()
+    private RoutingElement getNextPBF()
     {
-        OSMElement next = null;
+        RoutingElement next = null;
         while (next == null)
         {
             if (!hasIncomingData && itemQueue.isEmpty())

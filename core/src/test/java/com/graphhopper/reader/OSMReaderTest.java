@@ -574,7 +574,7 @@ public class OSMReaderTest
             }
 
             @Override
-            public long handleNodeTags( OSMNode node )
+            public long handleNodeTags( Node node )
             {
                 if (node.hasTag("test", "now"))
                     return -objectEncoder.setValue(0, 1);

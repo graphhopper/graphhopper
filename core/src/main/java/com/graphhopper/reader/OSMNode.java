@@ -26,7 +26,7 @@ import javax.xml.stream.XMLStreamReader;
  * <p/>
  * @author Nop
  */
-public class OSMNode extends OSMElement
+public class OSMNode extends OSMElement implements Node
 {
     private final double lat;
     private final double lon;

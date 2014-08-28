@@ -21,20 +21,23 @@ import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.graphhopper.reader.OSMNode;
+import com.graphhopper.reader.Node;
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.Way;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
-import java.util.*;
 
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders
@@ -247,7 +250,7 @@ public class EncodingManager
     /**
      * Determine whether an osm way is a routable way for one of its encoders.
      */
-    public long acceptWay( OSMWay way )
+    public long acceptWay( Way way )
     {
         long includeWay = 0;
         for (AbstractFlagEncoder encoder : edgeEncoders)
@@ -276,7 +279,7 @@ public class EncodingManager
      * @param relationFlags The preprocessed relation flags is used to influence the way properties.
      * @return the encoded flags
      */
-    public long handleWayTags( OSMWay way, long includeWay, long relationFlags )
+    public long handleWayTags( Way way, long includeWay, long relationFlags )
     {
         long flags = 0;
         for (AbstractFlagEncoder encoder : edgeEncoders)
@@ -386,7 +389,7 @@ public class EncodingManager
     /**
      * Analyze tags on osm node. Store node tags (barriers etc) for later usage while parsing way.
      */
-    public long handleNodeTags( OSMNode node )
+    public long handleNodeTags( Node node )
     {
         long flags = 0;
         for (AbstractFlagEncoder encoder : edgeEncoders)
@@ -439,7 +442,7 @@ public class EncodingManager
         return this;
     }
 
-    public void applyWayTags( OSMWay way, EdgeIteratorState edge )
+    public void applyWayTags( Way way, EdgeIteratorState edge )
     {
         // storing the road name does not yet depend on the flagEncoder so manage it directly
         if (enableInstructions)

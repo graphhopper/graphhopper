@@ -18,7 +18,7 @@ import com.graphhopper.util.EdgeIterator;
 public class OSMTurnRelation
 {
 
-    enum Type
+    public enum Type
     {
         UNSUPPORTED, NOT, ONLY;
 
@@ -51,7 +51,7 @@ public class OSMTurnRelation
     private long toOsm;
     private Type restriction;
 
-    OSMTurnRelation( long fromWayID, long viaNodeID, long toWayID, Type restrictionType )
+    public OSMTurnRelation( long fromWayID, long viaNodeID, long toWayID, Type restrictionType )
     {
         this.fromOsm = fromWayID;
         this.viaOsm = viaNodeID;
@@ -59,12 +59,12 @@ public class OSMTurnRelation
         this.restriction = restrictionType;
     }
 
-    long getOsmIdFrom()
+    public long getOsmIdFrom()
     {
         return fromOsm;
     }
 
-    long getOsmIdTo()
+    public long getOsmIdTo()
     {
         return toOsm;
     }

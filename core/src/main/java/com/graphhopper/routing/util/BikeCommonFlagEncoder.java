@@ -17,14 +17,28 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMWay;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.AVOID_AT_ALL_COSTS;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.AVOID_IF_POSSIBLE;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.BEST;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.PREFER;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.REACH_DEST;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.UNCHANGED;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.VERY_NICE;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
 import com.graphhopper.reader.OSMRelation;
-import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.*;
+import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.Way;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionAnnotation;
 import com.graphhopper.util.Translation;
-
-import java.util.*;
 
 /**
  * Defines bit layout of bicycles (not motorbikes) for speed, access and relations (network).
@@ -216,7 +230,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long acceptWay( OSMWay way )
+    public long acceptWay( Way way )
     {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null)
@@ -288,7 +302,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long handleWayTags( OSMWay way, long allowed, long relationFlags )
+    public long handleWayTags( Way way, long allowed, long relationFlags )
     {
         if (!isAccept(allowed))
             return 0;
@@ -319,7 +333,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         return encoded;
     }
 
-    protected double reduceToMaxSpeed( OSMWay way, double speed )
+    protected double reduceToMaxSpeed( Way way, double speed )
     {
         double maxSpeed = getMaxSpeed(way);
         // apply only if smaller maxSpeed
@@ -331,7 +345,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         return speed;
     }
 
-    int getSpeed( OSMWay way )
+    int getSpeed( Way way )
     {
         int speed = PUSHING_SECTION_SPEED;
         String s = way.getTag("surface");
@@ -434,7 +448,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
      * <p>
      * @return new priority based on priorityFromRelation and on the tags in OSMWay.
      */
-    protected int handlePriority( OSMWay way, int priorityFromRelation )
+    protected int handlePriority( Way way, int priorityFromRelation )
     {
         TreeMap<Double, Integer> weightToPrioMap = new TreeMap<Double, Integer>();
         if (priorityFromRelation == 0)
@@ -452,7 +466,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
      * @param weightToPrioMap associate a weight with every priority. This sorted map allows
      * subclasses to 'insert' more important priorities as well as overwrite determined priorities.
      */
-    void collect( OSMWay way, TreeMap<Double, Integer> weightToPrioMap )
+    void collect( Way way, TreeMap<Double, Integer> weightToPrioMap )
     {
         String service = way.getTag("service");
         String highway = way.getTag("highway");
@@ -486,7 +500,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     /**
      * Handle surface and wayType encoding
      */
-    long handleBikeRelated( OSMWay way, long encoded, boolean partOfCycleRelation )
+    long handleBikeRelated( Way way, long encoded, boolean partOfCycleRelation )
     {
         String surfaceTag = way.getTag("surface");
         String highway = way.getTag("highway");
@@ -589,12 +603,12 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         }
     }
 
-    boolean isPushingSection( OSMWay way )
+    boolean isPushingSection( Way way )
     {
         return way.hasTag("highway", pushingSections);
     }
 
-    protected long handleSpeed( OSMWay way, double speed, long encoded )
+    protected long handleSpeed( Way way, double speed, long encoded )
     {
         encoded = setSpeed(encoded, speed);
 

@@ -17,14 +17,14 @@
  */
 package com.graphhopper.reader.pbf;
 
-import com.graphhopper.reader.OSMElement;
+import com.graphhopper.reader.RoutingElement;
 
 /**
  * @author Nop
  */
 public interface Sink
 {
-    void process( OSMElement item );
+    void process( RoutingElement item );
 
     void complete();
 }

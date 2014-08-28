@@ -169,7 +169,7 @@ public class OSMReader implements DataReader
 
             long tmpWayCounter = 1;
             long tmpRelationCounter = 1;
-            OSMElement item;
+            RoutingElement item;
             while ((item = in.getNext()) != null)
             {
                 if (item.isType(OSMElement.WAY))
@@ -266,6 +266,7 @@ public class OSMReader implements DataReader
     private void writeOsm2Graph( File osmFile )
     {
         int tmp = (int) Math.max(getNodeMap().getSize() / 50, 100);
+        
         logger.info("creating graph. Found nodes (pillar+tower):" + nf(getNodeMap().getSize()) + ", " + Helper.getMemInfo());
         graphStorage.create(tmp);
         long wayStart = -1;
@@ -277,7 +278,7 @@ public class OSMReader implements DataReader
             in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
             LongIntMap nodeFilter = getNodeMap();
 
-            OSMElement item;
+            RoutingElement item;
             while ((item = in.getNext()) != null)
             {
                 switch (item.getType())

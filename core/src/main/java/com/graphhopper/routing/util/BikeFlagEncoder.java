@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.Way;
 
 /**
  * Specifies the settings for cycletouring/trekking
@@ -50,7 +50,7 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
     }
 
     @Override
-    boolean isPushingSection( OSMWay way )
+    boolean isPushingSection( Way way )
     {
         String highway = way.getTag("highway");
         String trackType = way.getTag("tracktype");

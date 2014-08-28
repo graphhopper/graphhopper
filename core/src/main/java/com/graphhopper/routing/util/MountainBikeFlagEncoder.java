@@ -17,11 +17,15 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMWay;
-import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PUSHING_SECTION_SPEED;
-import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.*;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.BEST;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.PREFER;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.UNCHANGED;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.VERY_NICE;
+
 import java.util.TreeMap;
+
+import com.graphhopper.reader.OSMRelation;
+import com.graphhopper.reader.Way;
 
 /**
  * Specifies the settings for mountain biking
@@ -118,7 +122,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
     }
 
     @Override
-    void collect( OSMWay way, TreeMap<Double, Integer> weightToPrioMap )
+    void collect( Way way, TreeMap<Double, Integer> weightToPrioMap )
     {
         super.collect(way, weightToPrioMap);
 

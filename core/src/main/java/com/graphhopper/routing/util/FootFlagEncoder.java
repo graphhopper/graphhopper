@@ -17,20 +17,20 @@
  */
 package com.graphhopper.routing.util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMWay;
-import java.util.ArrayList;
-import java.util.Arrays;
+import com.graphhopper.reader.Way;
 
 /**
  * Defines bit layout for pedestrians (speed, access, surface, ...).
  * <p>
  * @author Peter Karich
  * @author Nop
- * @author Karl Hübner
+ * @author Karl H��bner
  */
 public class FootFlagEncoder extends AbstractFlagEncoder
 {
@@ -154,7 +154,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
      * @param way
      */
     @Override
-    public long acceptWay( OSMWay way )
+    public long acceptWay( Way way )
     {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null)
@@ -215,7 +215,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long handleWayTags( OSMWay way, long allowed, long relationCode )
+    public long handleWayTags( Way way, long allowed, long relationCode )
     {
         if (!isAccept(allowed))
             return 0;

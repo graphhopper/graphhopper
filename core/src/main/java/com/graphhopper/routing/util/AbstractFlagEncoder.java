@@ -23,13 +23,16 @@ import java.util.HashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.graphhopper.reader.Node;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
+import com.graphhopper.reader.Way;
 import com.graphhopper.util.*;
+
 import java.util.*;
 
 /**
@@ -186,20 +189,20 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      * <p/>
      * @return the encoded value to indicate if this encoder allows travel or not.
      */
-    public abstract long acceptWay( OSMWay way );
+    public abstract long acceptWay( Way way );
 
     /**
      * Analyze properties of a way and create the routing flags. This method is called in the second
      * parsing step.
      */
-    public abstract long handleWayTags( OSMWay way, long allowed, long relationFlags );
+    public abstract long handleWayTags( Way way, long allowed, long relationFlags );
 
     /**
      * Parse tags on nodes. Node tags can add to speed (like traffic_signals) where the value is
      * strict negative or blocks access (like a barrier), then the value is strict positive.This
      * method is called in the second parsing step.
      */
-    public long handleNodeTags( OSMNode node )
+    public long handleNodeTags( Node node )
     {
         // absolute barriers always block
         if (node.hasTag("barrier", absoluteBarriers))
@@ -317,7 +320,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     /**
      * @return -1 if no maxspeed found
      */
-    protected double getMaxSpeed( OSMWay way )
+    protected double getMaxSpeed( Way way )
     {
         double maxSpeed = parseSpeed(way.getTag("maxspeed"));
         double fwdSpeed = parseSpeed(way.getTag("maxspeed:forward"));
@@ -457,14 +460,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      * Second parsing step. Invoked after splitting the edges. Currently used to offer a hook to
      * calculate precise speed values based on elevation data stored in the specified edge.
      */
-    public void applyWayTags( OSMWay way, EdgeIteratorState edge )
+    public void applyWayTags( Way way, EdgeIteratorState edge )
     {
     }
 
     /**
      * Special handling for ferry ways.
      */
-    protected long handleFerryTags( OSMWay way, double unknownSpeed, double shortTripsSpeed, double longTripsSpeed )
+    protected long handleFerryTags( Way way, double unknownSpeed, double shortTripsSpeed, double longTripsSpeed )
     {
         // to hours
         double durationInHours = parseDuration(way.getTag("duration")) / 60d;

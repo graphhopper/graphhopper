@@ -30,7 +30,7 @@ import java.util.Map;
  * <p/>
  * @author Nop
  */
-public class OSMWay extends OSMElement
+public class OSMWay extends OSMElement implements Way
 {
     protected final TLongList nodes = new TLongArrayList(5);
 

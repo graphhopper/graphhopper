@@ -32,7 +32,7 @@ import java.util.Set;
  * @author Nop
  * @author Peter
  */
-public abstract class OSMElement
+public abstract class OSMElement implements RoutingElement
 {
     public static final int NODE = 0;
     public static final int WAY = 1;

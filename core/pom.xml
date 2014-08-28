@@ -83,6 +83,11 @@
             <artifactId>osmosis-osm-binary</artifactId>
             <version>0.43.1</version>
         </dependency>
+        <dependency>
+            <groupId>uk.co.ordnancesurvey.api</groupId>
+            <artifactId>OSGBCoordinateConvertor</artifactId>
+            <version>1.0.3</version>
+        </dependency>
     </dependencies>
         
     <build>
