@@ -190,7 +190,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
         // do not drive street cars into fords
         boolean carsAllowed = way.hasTag(restrictions, intendedValues);
-        if (("ford".equals(highwayValue) || way.hasTag("ford")) && !carsAllowed)
+        if (blockFords && ("ford".equals(highwayValue) || way.hasTag("ford")) && !carsAllowed)
             return 0;
 
         // check access restrictions

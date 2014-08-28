@@ -191,7 +191,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // do not get our feet wet, "yes" is already included above
-        if (way.hasTag("highway", "ford") || way.hasTag("ford"))
+        if (blockFords && (way.hasTag("highway", "ford") || way.hasTag("ford")))
             return 0;
 
         if (way.hasTag("bicycle", "official"))

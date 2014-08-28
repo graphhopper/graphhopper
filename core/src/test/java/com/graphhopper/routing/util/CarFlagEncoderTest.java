@@ -413,4 +413,30 @@ public class CarFlagEncoderTest
         way.setTag("maxspeed", "90");
         assertEquals(90, encoder.getMaxSpeed(way), 1e-2);
     }
+
+    @Test
+    public void testFordAccess()
+    {
+        OSMNode node = new OSMNode(0, 0.0, 0.0);
+        node.setTag("ford", "yes");
+
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "unclassified");
+        way.setTag("ford", "yes");
+
+        // Node and way are initially blocking
+        assertTrue(encoder.blockFords);
+        assertFalse(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.handleNodeTags(node) > 0);
+
+        try {
+            // Now they are passable
+            encoder.blockFords = false;
+            assertTrue(encoder.acceptWay(way) > 0);
+            assertFalse(encoder.handleNodeTags(node) > 0);
+        } finally {
+            encoder.blockFords = true;
+        }
+    }
+
 }
