@@ -28,7 +28,7 @@ import java.util.Collections;
 
 import org.junit.Test;
 
-import com.graphhopper.reader.OSMReader;
+import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
@@ -197,7 +197,7 @@ public class EncodingManagerTest
         CarFlagEncoder car = new CarFlagEncoder()
         {
             @Override
-            public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
+            public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, DataReader osmReader )
             {
                 return Collections.singleton(turnCostEntry_car); //simulate by returning one turn cost entry directly
             }
@@ -205,7 +205,7 @@ public class EncodingManagerTest
         FootFlagEncoder foot = new FootFlagEncoder()
         {
             @Override
-            public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
+            public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, DataReader osmReader )
             {
                 return Collections.singleton(turnCostEntry_foot); //simulate by returning one turn cost entry directly
             }
@@ -213,7 +213,7 @@ public class EncodingManagerTest
         BikeFlagEncoder bike = new BikeFlagEncoder()
         {
             @Override
-            public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
+            public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, DataReader osmReader )
             {
                 return Collections.singleton(turnCostEntry_bike); //simulate by returning one turn cost entry directly
             }

@@ -77,7 +77,7 @@ public class OSMTurnRelation
      * @return a collection of node cost entries which can be added to the graph later
      */
     public Collection<TurnCostTableEntry> getRestrictionAsEntries( TurnCostEncoder encoder,
-            EdgeExplorer edgeOutExplorer, EdgeExplorer edgeInExplorer, OSMReader osmReader )
+            EdgeExplorer edgeOutExplorer, EdgeExplorer edgeInExplorer, DataReader osmReader )
     {
         final Set<TurnCostTableEntry> entries = new HashSet<TurnCostTableEntry>();
 

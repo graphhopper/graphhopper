@@ -25,7 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.graphhopper.reader.OSMReader;
+import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
@@ -288,7 +288,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
+    public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, DataReader osmReader )
     {
         if (edgeOutExplorer == null || edgeInExplorer == null)
         {

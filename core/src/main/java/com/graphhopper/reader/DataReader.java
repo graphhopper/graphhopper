@@ -20,11 +20,20 @@ package com.graphhopper.reader;
 
 import java.io.IOException;
 
+import com.graphhopper.storage.GraphStorage;
+
 /**
  * @author Peter Karich
+ * @author Stuart Adam
  */
 public interface DataReader
 {
 
     void readGraph() throws IOException;
+
+    GraphStorage getGraphStorage();
+
+	int getInternalNodeIdOfOsmNode(long viaOsm);
+
+	long getOsmIdOfInternalEdge(int edge);
 }

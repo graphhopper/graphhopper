@@ -29,12 +29,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.Node;
-import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
-import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.Way;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
@@ -411,7 +410,7 @@ public class EncodingManager
         return numberOfBits;
     }
 
-    public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
+    public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, DataReader osmReader )
     {
         TLongObjectMap<TurnCostTableEntry> entries = new TLongObjectHashMap<OSMTurnRelation.TurnCostTableEntry>();
 

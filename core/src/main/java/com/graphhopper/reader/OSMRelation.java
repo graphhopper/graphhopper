@@ -27,7 +27,7 @@ import java.util.ArrayList;
  * <p/>
  * @author Nop
  */
-public class OSMRelation extends OSMElement
+public class OSMRelation extends OSMElement implements Relation
 {
     protected final ArrayList<Member> members = new ArrayList<Member>(5);
 
@@ -126,7 +126,7 @@ public class OSMRelation extends OSMElement
     /**
      * Container class for relation members
      */
-    public static class Member
+    public static class Member implements RelationMember
     {
         public static final int NODE = 0;
         public static final int WAY = 1;
