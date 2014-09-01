@@ -30,10 +30,12 @@ import java.util.List;
 import java.util.Map;
 
 import com.graphhopper.reader.DataReader;
+import com.graphhopper.reader.ITurnCostTableEntry;
 import com.graphhopper.reader.Node;
-import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
+import com.graphhopper.reader.Relation;
+import com.graphhopper.reader.TurnRelation;
 import com.graphhopper.reader.Way;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
@@ -260,7 +262,7 @@ public class EncodingManager
         return includeWay;
     }
 
-    public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
+    public long handleRelationTags( Relation relation, long oldRelationFlags )
     {
         long flags = 0;
         for (AbstractFlagEncoder encoder : edgeEncoders)
@@ -410,21 +412,24 @@ public class EncodingManager
         return numberOfBits;
     }
 
-    public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, DataReader osmReader )
+    public Collection<ITurnCostTableEntry> analyzeTurnRelation( TurnRelation turnRelation, DataReader osmReader )
     {
-        TLongObjectMap<TurnCostTableEntry> entries = new TLongObjectHashMap<OSMTurnRelation.TurnCostTableEntry>();
+        TLongObjectMap<ITurnCostTableEntry> entries = new TLongObjectHashMap<ITurnCostTableEntry>();
 
         int encoderCount = edgeEncoders.size();
         for (int i = 0; i < encoderCount; i++)
         {
             AbstractFlagEncoder encoder = edgeEncoders.get(i);
-            for (TurnCostTableEntry entry : encoder.analyzeTurnRelation(turnRelation, osmReader))
+            for (ITurnCostTableEntry entry : encoder.analyzeTurnRelation(turnRelation, osmReader))
             {
-                TurnCostTableEntry oldEntry = entries.get(entry.getItemId());
+                ITurnCostTableEntry oldEntry = entries.get(entry.getItemId());
                 if (oldEntry != null)
                 {
                     // merging different encoders
-                    oldEntry.flags |= entry.flags;
+                	long oldFlags = oldEntry.getFlags();
+                	long flags = entry.getFlags();
+                	oldFlags |= flags;
+                	oldEntry.setFlags(oldFlags);
                 } else
                 {
                     entries.put(entry.getItemId(), entry);

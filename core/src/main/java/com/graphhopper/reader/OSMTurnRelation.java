@@ -15,7 +15,7 @@ import com.graphhopper.util.EdgeIterator;
  * <p>
  * @author Karl Hübner
  */
-public class OSMTurnRelation
+public class OSMTurnRelation implements TurnRelation
 {
 
     public enum Type
@@ -59,27 +59,32 @@ public class OSMTurnRelation
         this.restriction = restrictionType;
     }
 
-    public long getOsmIdFrom()
+    /* (non-Javadoc)
+	 * @see com.graphhopper.reader.TurnRelation#getOsmIdFrom()
+	 */
+    @Override
+	public long getOsmIdFrom()
     {
         return fromOsm;
     }
 
-    public long getOsmIdTo()
+    /* (non-Javadoc)
+	 * @see com.graphhopper.reader.TurnRelation#getOsmIdTo()
+	 */
+    @Override
+	public long getOsmIdTo()
     {
         return toOsm;
     }
 
-    /**
-     * transforms this relation into a collection of node cost entries
-     * <p>
-     * @param edgeOutExplorer an edge filter which only allows outgoing edges
-     * @param edgeInExplorer an edge filter which only allows incoming edges
-     * @return a collection of node cost entries which can be added to the graph later
-     */
-    public Collection<TurnCostTableEntry> getRestrictionAsEntries( TurnCostEncoder encoder,
+    /* (non-Javadoc)
+	 * @see com.graphhopper.reader.TurnRelation#getRestrictionAsEntries(com.graphhopper.routing.util.TurnCostEncoder, com.graphhopper.util.EdgeExplorer, com.graphhopper.util.EdgeExplorer, com.graphhopper.reader.DataReader)
+	 */
+    @Override
+	public Collection<ITurnCostTableEntry> getRestrictionAsEntries( TurnCostEncoder encoder,
             EdgeExplorer edgeOutExplorer, EdgeExplorer edgeInExplorer, DataReader osmReader )
     {
-        final Set<TurnCostTableEntry> entries = new HashSet<TurnCostTableEntry>();
+        final Set<ITurnCostTableEntry> entries = new HashSet<ITurnCostTableEntry>();
 
         int viaNodeId = osmReader.getInternalNodeIdOfOsmNode(this.viaOsm);
 
@@ -153,7 +158,7 @@ public class OSMTurnRelation
     /**
      * Helper class to processing purposes only
      */
-    public static class TurnCostTableEntry
+    public static class TurnCostTableEntry implements ITurnCostTableEntry
     {
         public int edgeFrom;
         public int edgeTo;
@@ -167,6 +172,31 @@ public class OSMTurnRelation
         {
             return ((long) edgeFrom) << 32 | ((long) edgeTo);
         }
+        
+        @Override
+		public int getEdgeFrom() {
+			return edgeFrom;
+		}
+
+		@Override
+		public int getEdgeTo() {
+			return edgeTo;
+		}
+
+		@Override
+		public int getVia() {
+			return nodeVia;
+		}
+
+		@Override
+		public long getFlags() {
+			return flags;
+		}
+
+		@Override
+		public void setFlags(long flags) {
+			this.flags = flags;
+		}
     }
 
 }

@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.graphhopper.reader.OSMRelation;
+import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.Way;
 
 /**
@@ -209,7 +209,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
+    public long handleRelationTags( Relation relation, long oldRelationFlags )
     {
         return oldRelationFlags;
     }

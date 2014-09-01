@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader.osgb;
+package com.graphhopper.reader.osgb.dpn;
 
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
@@ -25,6 +25,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import com.graphhopper.reader.Way;
+import com.graphhopper.reader.osgb.OSITNElement;
 
 import java.util.Map;
 
@@ -33,16 +34,16 @@ import java.util.Map;
  * <p/>
  * @author Nop
  */
-public class OSITNWay extends OSITNElement implements Way
+public class OsDpnWay extends OSITNElement implements Way
 {
     protected final TLongList nodes = new TLongArrayList(5);
 
     /**
      * Constructor for XML Parser
      */
-    public static OSITNWay create( long id, XMLStreamReader parser ) throws XMLStreamException
+    public static OsDpnWay create( long id, XMLStreamReader parser ) throws XMLStreamException
     {
-        OSITNWay way = new OSITNWay(id);
+        OsDpnWay way = new OsDpnWay(id);
         parser.nextTag();
         way.readTags(parser);
         way.setTag("highway", "motorway");
@@ -50,7 +51,7 @@ public class OSITNWay extends OSITNElement implements Way
         return way;
     }
 
-    public OSITNWay( long id )
+    public OsDpnWay( long id )
     {
         super(id, WAY);
     }
@@ -81,12 +82,7 @@ public class OSITNWay extends OSITNElement implements Way
 
 	@Override
 	protected void addDirectedNode(String nodeId, String grade, String orientation) {
-		System.err.println("GRADE:" + grade);
 		String idStr = nodeId.substring(5);
-		if(null!=grade) {
-			idStr = grade + idStr;
-			System.err.println("id:" + idStr);
-		}
 		long id = Long.parseLong(idStr);
 		nodes.add(id);
 	}

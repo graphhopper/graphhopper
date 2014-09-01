@@ -15,9 +15,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader.osgb;
+package com.graphhopper.reader.osgb.dpn;
 
-import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
@@ -27,6 +26,7 @@ import uk.co.ordnancesurvey.api.srs.OSGrid2LatLong;
 import uk.co.ordnancesurvey.api.srs.OutOfRangeException;
 
 import com.graphhopper.reader.Node;
+import com.graphhopper.reader.osgb.OSITNElement;
 import com.graphhopper.util.PointAccess;
 
 /**
@@ -35,26 +35,26 @@ import com.graphhopper.util.PointAccess;
  * 
  * @author Nop
  */
-public class OSITNNode extends OSITNElement implements Node {
+public class OsDpnNode extends OSITNElement implements Node {
 	private double lat;
 	private double lon;
 	private static OSGrid2LatLong coordConvertor = new OSGrid2LatLong();
 
-	public static OSITNNode create(long id, XMLStreamReader parser)
+	public static OsDpnNode create(long id, XMLStreamReader parser)
 			throws XMLStreamException {
-		 int attributeCount = parser.getAttributeCount();
-		 for (int i = 0; i < attributeCount; i++) {
-		 QName attributeName = parser.getAttributeName(i);
-		 System.err.println("QName:" + attributeName);
-		 }
-		OSITNNode node = new OSITNNode(id);
+		// int attributeCount = parser.getAttributeCount();
+		// for (int i = 0; i < attributeCount; i++) {
+		// QName attributeName = parser.getAttributeName(i);
+		// System.err.println("QName:" + attributeName);
+		// }
+		OsDpnNode node = new OsDpnNode(id);
 
 		parser.nextTag();
 		node.readTags(parser);
 		return node;
 	}
 
-	public OSITNNode(long id, PointAccess pointAccess, int accessId) {
+	public OsDpnNode(long id, PointAccess pointAccess, int accessId) {
 		super(id, NODE);
 
 		this.lat = pointAccess.getLatitude(accessId);
@@ -63,7 +63,7 @@ public class OSITNNode extends OSITNElement implements Node {
 			setTag("ele", pointAccess.getElevation(accessId));
 	}
 
-	public OSITNNode(long id) {
+	public OsDpnNode(long id) {
 		super(id, NODE);
 
 	}

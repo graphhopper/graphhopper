@@ -220,11 +220,11 @@ public class OSMReader implements DataReader
 
     private void prepareRestrictionRelation( OSMRelation relation )
     {
-        OSMTurnRelation turnRelation = createTurnRelation(relation);
+        TurnRelation turnRelation = createTurnRelation(relation);
         if (turnRelation != null)
         {
-            getOsmIdStoreRequiredSet().add(((OSMTurnRelation) turnRelation).getOsmIdFrom());
-            getOsmIdStoreRequiredSet().add(((OSMTurnRelation) turnRelation).getOsmIdTo());
+            getOsmIdStoreRequiredSet().add(((TurnRelation) turnRelation).getOsmIdFrom());
+            getOsmIdStoreRequiredSet().add(((TurnRelation) turnRelation).getOsmIdTo());
         }
     }
 
@@ -439,16 +439,16 @@ public class OSMReader implements DataReader
     {
         if (relation.hasTag("type", "restriction"))
         {
-            OSMTurnRelation turnRelation = createTurnRelation(relation);
+            TurnRelation turnRelation = createTurnRelation(relation);
             if (turnRelation != null)
             {
                 ExtendedStorage extendedStorage = ((GraphHopperStorage) graphStorage).getExtendedStorage();
                 if (extendedStorage instanceof TurnCostStorage)
                 {
-                    Collection<TurnCostTableEntry> entries = encodingManager.analyzeTurnRelation(turnRelation, this);
-                    for (TurnCostTableEntry entry : entries)
+                    Collection<ITurnCostTableEntry> entries = encodingManager.analyzeTurnRelation(turnRelation, this);
+                    for (ITurnCostTableEntry entry : entries)
                     {
-                        ((TurnCostStorage) extendedStorage).setTurnCosts(entry.nodeVia, entry.edgeFrom, entry.edgeTo, (int) entry.flags);
+                        ((TurnCostStorage) extendedStorage).setTurnCosts(entry.getVia(), entry.getEdgeFrom(), entry.getEdgeTo(), (int) entry.getFlags());
                     }
                 }
             }
@@ -846,7 +846,7 @@ public class OSMReader implements DataReader
      * <p>
      * @return the OSM turn relation, <code>null</code>, if unsupported turn relation
      */
-    OSMTurnRelation createTurnRelation( OSMRelation relation )
+    TurnRelation createTurnRelation( OSMRelation relation )
     {
         OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType((String) relation.getTag("restriction"));
         if (type != OSMTurnRelation.Type.UNSUPPORTED)
@@ -963,4 +963,5 @@ public class OSMReader implements DataReader
     {
         return graphStorage;
     }
+
 }

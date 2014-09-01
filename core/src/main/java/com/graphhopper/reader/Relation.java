@@ -9,4 +9,6 @@ import com.graphhopper.reader.OSMRelation.Member;
 
 public interface Relation extends RoutingElement {
 	ArrayList<? extends RelationMember> getMembers();
+
+	boolean isMetaRelation();
 }

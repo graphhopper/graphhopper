@@ -24,7 +24,7 @@ import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.VE
 
 import java.util.TreeMap;
 
-import com.graphhopper.reader.OSMRelation;
+import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.Way;
 
 /**
@@ -140,7 +140,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
     }
 
     @Override
-    public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
+    public long handleRelationTags( Relation relation, long oldRelationFlags )
     {
         oldRelationFlags = super.handleRelationTags(relation, oldRelationFlags);
         int code = 0;

@@ -19,6 +19,8 @@ package com.graphhopper.reader.osgb;
 
 import static com.graphhopper.util.GHUtility.count;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,149 +28,199 @@ import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-import javax.xml.stream.XMLStreamException;
-
 import org.junit.Ignore;
 import org.junit.Test;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.graphhopper.reader.osgb.OsItnReader;
+import com.graphhopper.reader.osgb.dpn.OsDpnInputFile;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.AbstractGraphStorageTester;
 import com.graphhopper.storage.ExtendedStorage;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
 
 /**
- *
+ * 
  * @author Peter Karich
+ * @author Stuart Adam
  */
-public class OsItnReaderTest extends DefaultHandler {
-    private static final InputStream COMPLEX_ITN_EXAMPLE = OsItnReader.class.getResourceAsStream("os-itn-sample.xml");
+public class OsItnReaderTest {
+	
+	private static final Logger logger = LoggerFactory
+			.getLogger(OsItnReaderTest.class);
+	private static final InputStream COMPLEX_ITN_EXAMPLE = OsItnReader.class
+			.getResourceAsStream("os-itn-sample.xml");
 	private EncodingManager encodingManager = new EncodingManager("CAR");
-    private EdgeFilter carOutEdges = new DefaultEdgeFilter(encodingManager.getEncoder("CAR"), false, true);
+	private EdgeFilter carOutEdges = new DefaultEdgeFilter(
+			encodingManager.getEncoder("CAR"), false, true);
 	private Set<String> themes = new HashSet<>();
+	private CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager
+			.getEncoder("CAR");
+
 	private boolean inTheme;
 
-    @Test
-    public void testReadSimpleCrossRoads() throws IOException
-    {
-    	boolean turnRestrictionsImport=false;
-		boolean is3D=false;
-		String directory = "/tmp";
-		GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager,
-                is3D, turnRestrictionsImport ? new TurnCostStorage() : new ExtendedStorage.NoExtendedStorage());
+	private double node0Lat = 50.69919585809061d;
+	private double node0Lon = -3.558952191414606d;
+
+	private double node1Lat = 50.6972183871447d;
+	private double node1Lon = -3.7004874033793294d;
+
+	private double node2Lat = 50.695067824972014d;
+	private double node2Lon = -3.8420070965997613d;
+
+	private double node3Lat = 50.652274361836156d;
+	private double node3Lon = -3.698863205562225d;
+
+	private double node4Lat = 50.74216177664155d;
+	private double node4Lon = -3.702115749998877d;
+	private EdgeExplorer carOutExplorer;
+
+	@Test
+	public void testReadSimpleCrossRoads() throws IOException {
+		boolean turnRestrictionsImport = false;
+		boolean is3D = false;
+		GraphHopperStorage graph = configureStorage(turnRestrictionsImport,
+				is3D);
+
+		File file = new File(
+				"./src/test/resources/com/graphhopper/reader/os-itn-simple-crossroad.xml");
+		readGraphFile(graph, file);
+		assertEquals(5, graph.getNodes());
+		checkNodeNetwork(graph);
+	}
+
+	@Test
+	public void testReadSimpleCrossRoadsWithTurnRestriction()
+			throws IOException {
+		boolean turnRestrictionsImport = true;
+		boolean is3D = false;
+		GraphHopperStorage graph = configureStorage(turnRestrictionsImport,
+				is3D);
+
+		File file = new File(
+				"./src/test/resources/com/graphhopper/reader/os-itn-simple-restricted-crossroad.xml");
+		readGraphFile(graph, file);
+		assertEquals(5, graph.getNodes());
+		checkNodeNetwork(graph);
+		
+		carOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, false, true));
         
-        OsItnReader osItnReader = new OsItnReader(graph);
-        File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-simple-crossroad.xml");
-        osItnReader.setOSMFile(file);
-        osItnReader.setEncodingManager(new EncodingManager("CAR,FOOT"));
-        osItnReader.readGraph();
-        assertEquals(5, graph.getNodes());
-        EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
-        assertEquals(4, count(explorer.setBaseNode(0)));
-        assertEquals(1, count(explorer.setBaseNode(1)));
-        assertEquals(1, count(explorer.setBaseNode(2)));
-        assertEquals(1, count(explorer.setBaseNode(3)));
-        assertEquals(1, count(explorer.setBaseNode(4)));
-    }
-    
-    @Test
-    public void testReadSimpleCrossRoadsWithTurnRestriction() throws IOException
-    {
-    	boolean turnRestrictionsImport=false;
-		boolean is3D=false;
+		int n0 = AbstractGraphStorageTester.getIdOf(graph, node0Lat, node0Lon);
+		int n1 = AbstractGraphStorageTester.getIdOf(graph, node1Lat, node1Lon);
+		int n2 = AbstractGraphStorageTester.getIdOf(graph, node2Lat, node2Lon);
+		int n3 = AbstractGraphStorageTester.getIdOf(graph, node3Lat, node3Lon);
+		int n4 = AbstractGraphStorageTester.getIdOf(graph, node4Lat, node4Lon);
+
+		int edge0_1 = getEdge(n1, n0);
+		int edge1_2 = getEdge(n1, n2);
+		int edge1_3 = getEdge(n1, n3);
+		int edge1_4 = getEdge(n1, n4);
+		
+		TurnCostStorage tcStorage = (TurnCostStorage) ((GraphHopperStorage)graph).getExtendedStorage();
+		
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge0_1, edge1_2)));
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge1_2, edge0_1)));
+		
+		assertTrue(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge0_1, edge1_3)));
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge1_3, edge0_1)));
+		
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge0_1, edge1_4)));
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge1_4, edge0_1)));
+		
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge1_2, edge1_3)));
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge1_3, edge1_2)));
+		
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge1_2, edge1_4)));
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge1_4, edge1_2)));
+		
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge1_3, edge1_4)));
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge1_4, edge1_3)));
+		
+	}
+	
+	@Test
+	@Ignore
+	public void testReadSimpleBridge()
+			throws IOException {
+		boolean turnRestrictionsImport = true;
+		boolean is3D = false;
+		GraphHopperStorage graph = configureStorage(turnRestrictionsImport,
+				is3D);
+
+		File file = new File(
+				"./src/test/resources/com/graphhopper/reader/os-itn-simple-bridge.xml");
+		readGraphFile(graph, file);
+		assertEquals(6, graph.getNodes());
+		checkBridgeNodeNetwork(graph);
+	}
+
+	private void readGraphFile(GraphHopperStorage graph, File file)
+			throws IOException {
+		OsItnReader osItnReader = new OsItnReader(graph);
+		osItnReader.setOSMFile(file);
+		osItnReader.setEncodingManager(new EncodingManager("CAR,FOOT"));
+		osItnReader.readGraph();
+	}
+
+	private GraphHopperStorage configureStorage(boolean turnRestrictionsImport,
+			boolean is3D) {
 		String directory = "/tmp";
-		GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager,
-                is3D, turnRestrictionsImport ? new TurnCostStorage() : new ExtendedStorage.NoExtendedStorage());
-        
-        OsItnReader osItnReader = new OsItnReader(graph);
-        File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-simple-restricted-crossroad.xml");
-        osItnReader.setOSMFile(file);
-        osItnReader.setEncodingManager(new EncodingManager("CAR,FOOT"));
-        osItnReader.readGraph();
-        assertEquals(5, graph.getNodes());
-        EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
-        assertEquals(4, count(explorer.setBaseNode(0)));
-        assertEquals(1, count(explorer.setBaseNode(1)));
-        assertEquals(1, count(explorer.setBaseNode(2)));
-        assertEquals(1, count(explorer.setBaseNode(3)));
-        assertEquals(1, count(explorer.setBaseNode(4)));
-    }
-    
-    @Test
-    @Ignore ("don't actually know the details on this route yet as it is a real life example file")
-    public void testReadSample() throws IOException
-    {
-    	boolean turnRestrictionsImport=false;
-		boolean is3D=false;
-		String directory = "/tmp";
-		GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager,
-                is3D, turnRestrictionsImport ? new TurnCostStorage() : new ExtendedStorage.NoExtendedStorage());
-        
-        OsItnReader osItnReader = new OsItnReader(graph);
-        File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-sample.xml");
-        osItnReader.setOSMFile(file);
-        osItnReader.setEncodingManager(new EncodingManager("CAR,FOOT"));
-        osItnReader.readGraph();
-        assertEquals(5, graph.getNodes());
-        EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
-        assertEquals(4, count(explorer.setBaseNode(0)));
-        assertEquals(1, count(explorer.setBaseNode(1)));
-        assertEquals(1, count(explorer.setBaseNode(2)));
-        assertEquals(1, count(explorer.setBaseNode(3)));
-        assertEquals(1, count(explorer.setBaseNode(4)));
-    }
-    
-    
-    @Test 
-    @Ignore
-    public void testXMLThemes() throws XMLStreamException, ParserConfigurationException, SAXException, IOException {
-    	SAXParser newSAXParser = SAXParserFactory.newInstance().newSAXParser();
-    	newSAXParser.parse(COMPLEX_ITN_EXAMPLE, this);
-    	for (String theme : themes) {
-			System.out.println("THEME:" + theme);
+		ExtendedStorage extendedStorage = turnRestrictionsImport ? new TurnCostStorage()
+				: new ExtendedStorage.NoExtendedStorage();
+		GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(
+				directory, false), encodingManager, is3D, extendedStorage);
+		return graph;
+	}
+
+	private int getEdge(int from, int to) {
+		EdgeIterator iter = carOutExplorer.setBaseNode(from);
+		while (iter.next()) {
+			if (iter.getAdjNode() == to) {
+				return iter.getEdge();
+			}
 		}
-    }
-    
-    
-    @Override
-    public void startElement(String uri, String localName, String qName,
-    		Attributes attributes) throws SAXException {
-    	int length = attributes.getLength();
-//    	for (int i = 0; i < length; i++) {
-//			String attrib = attributes.getValue(i);
-//			System.out.println("ATTRIBUTE:" + attrib);
-//		}
-    	if("osgb:theme".equals(qName)) {
-    		
-    		inTheme = true;
-    	}
-    }
-    
-    @Override
-    public void endElement(String uri, String localName, String qName) throws SAXException {
-    	if("osgb:theme".equals(qName)) {
-    		inTheme = false;
-    	}
-    	
-    }
-    
-    
-    @Override
-    public void characters(char[] ch, int start, int length)
-    		throws SAXException {
-    	if(inTheme) {
-    		String nodeData = new String(ch, start, length);
-    		themes.add(nodeData);
-    	}
-    }
+		return EdgeIterator.NO_EDGE;
+	}
+
+	private void checkNodeNetwork(GraphHopperStorage graph) {
+		EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
+		assertEquals(4, count(explorer.setBaseNode(0)));
+		assertEquals(1, count(explorer.setBaseNode(1)));
+		assertEquals(1, count(explorer.setBaseNode(2)));
+		assertEquals(1, count(explorer.setBaseNode(3)));
+		assertEquals(1, count(explorer.setBaseNode(4)));
+	}
+	
+	private void checkBridgeNodeNetwork(GraphHopperStorage graph) {
+		EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
+		assertEquals(4, count(explorer.setBaseNode(0)));
+		assertEquals(1, count(explorer.setBaseNode(1)));
+		assertEquals(1, count(explorer.setBaseNode(2)));
+		assertEquals(1, count(explorer.setBaseNode(3)));
+		assertEquals(1, count(explorer.setBaseNode(4)));
+	}
+
+	
+	@Test
+	public void testReadSample() throws IOException {
+		boolean turnRestrictionsImport = false;
+		boolean is3D = false;
+		GraphHopperStorage graph = configureStorage(turnRestrictionsImport,
+				is3D);
+
+		OsItnReader osItnReader = new OsItnReader(graph);
+		File file = new File(
+				"./src/test/resources/com/graphhopper/reader/os-itn-sample.xml");
+		osItnReader.setOSMFile(file);
+		osItnReader.setEncodingManager(new EncodingManager("CAR,FOOT"));
+		osItnReader.readGraph();
+		assertEquals(760, graph.getNodes());
+	}
 }

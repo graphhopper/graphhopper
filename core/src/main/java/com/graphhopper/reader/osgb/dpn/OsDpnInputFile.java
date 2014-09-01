@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader.osgb;
+package com.graphhopper.reader.osgb.dpn;
 
 import java.io.BufferedInputStream;
 import java.io.Closeable;
@@ -31,7 +31,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
 
-import javax.xml.namespace.QName;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -40,9 +39,7 @@ import javax.xml.stream.XMLStreamReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.RoutingElement;
-import com.graphhopper.reader.pbf.PbfReader;
 import com.graphhopper.reader.pbf.Sink;
 
 /**
@@ -51,7 +48,7 @@ import com.graphhopper.reader.pbf.Sink;
  * 
  * @author Nop
  */
-public class OsItnInputFile implements Sink, Closeable {
+public class OsDpnInputFile implements Sink, Closeable {
 	private boolean eof;
 	private InputStream bis;
 	// for xml parsing
@@ -62,14 +59,14 @@ public class OsItnInputFile implements Sink, Closeable {
 	private boolean hasIncomingData;
 	private int workerThreads = -1;
 	private static final Logger logger = LoggerFactory
-			.getLogger(OsItnInputFile.class);
+			.getLogger(OsDpnInputFile.class);
 
-	public OsItnInputFile(File file) throws IOException {
+	public OsDpnInputFile(File file) throws IOException {
 		bis = decode(file);
 		itemQueue = new LinkedBlockingQueue<RoutingElement>(50000);
 	}
 
-	public OsItnInputFile open() throws XMLStreamException {
+	public OsDpnInputFile open() throws XMLStreamException {
 		if (binary) {
 			// openPBFReader(bis);
 		} else {
@@ -81,7 +78,7 @@ public class OsItnInputFile implements Sink, Closeable {
 	/**
 	 * Currently on for pbf format. Default is number of cores.
 	 */
-	public OsItnInputFile setWorkerThreads(int num) {
+	public OsDpnInputFile setWorkerThreads(int num) {
 		workerThreads = num;
 		return this;
 	}
@@ -173,43 +170,27 @@ public class OsItnInputFile implements Sink, Closeable {
 		return null;
 	}
 
-	private OSITNElement getNextXML() throws XMLStreamException {
+	private RoutingElement getNextXML() throws XMLStreamException {
 
 		int event = parser.next();
 		while (event != XMLStreamConstants.END_DOCUMENT) {
 			if (event == XMLStreamConstants.START_ELEMENT) {
-				int attributeCount = parser.getAttributeCount();
-				for (int i = 0; i < attributeCount; i++) {
-					QName array_element = parser.getAttributeName(i);
-					// System.err.println("QNAME" + array_element);
-				}
-
-				String idStr = parser.getAttributeValue(null, "fid");
+				String idStr = parser.getAttributeValue("gml", "id");
 				if (idStr != null) {
 					String name = parser.getLocalName();
 					idStr = idStr.substring(4);
 					long id = Long.parseLong(idStr);
 
-					// TODO switch cases roadInformationMember
-					//
 					logger.info(":" + name + ":");
 					switch (name) {
-					case "RoadNode": {
-						return OSITNNode.create(id, parser);
+					case "RouteNode": {
+						return OsDpnNode.create(id, parser);
 					}
-					case "RoadLink": {
-						return OSITNWay.create(id, parser);
+					case "RouteLink": {
+						return OsDpnWay.create(id, parser);
 					}
-					case "RoadRouteInformation": {
-						return OSITNRelation.create(id, parser);
-					}
-
-					case "Road": {
-						// return OSITNRelation.create(id, parser);
-					}
-					case "RoadLinkInformation": {
-					}
-					case "RoadNodeInformation": {
+					case "Route": {
+						//TODO grouped features
 					}
 					default: {
 						

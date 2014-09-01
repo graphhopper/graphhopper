@@ -15,9 +15,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader.osgb;
+package com.graphhopper.reader.osgb.dpn;
 
-import javax.xml.namespace.QName;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -27,12 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import com.graphhopper.reader.RoutingElement;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 /**
  * Base class for all OSM objects
  * <p/>
@@ -40,7 +39,7 @@ import java.util.Set;
  * @author Nop
  * @author Peter
  */
-public abstract class OSITNElement implements RoutingElement {
+public abstract class OsDpnElement implements RoutingElement {
 	public static final int NODE = 0;
 	public static final int WAY = 1;
 	public static final int RELATION = 2;
@@ -49,9 +48,9 @@ public abstract class OSITNElement implements RoutingElement {
 	private final Map<String, Object> properties = new HashMap<String, Object>(
 			5);
 	private static final Logger logger = LoggerFactory
-			.getLogger(OSITNElement.class);
+			.getLogger(OsDpnElement.class);
 
-	protected OSITNElement(long id, int type) {
+	protected OsDpnElement(long id, int type) {
 		this.id = id;
 		this.type = type;
 	}
@@ -133,17 +132,13 @@ public abstract class OSITNElement implements RoutingElement {
 
 	private int handleDirectedNode(XMLStreamReader parser) throws XMLStreamException {
 		String orientation = parser.getAttributeValue(null, "orientation");
-		String grade = parser.getAttributeValue(null, "gradeSeparation");
-		
 		String nodeId = parser.getAttributeValue("http://www.w3.org/1999/xlink", "href");
-		addDirectedNode(nodeId, grade, orientation);
+		addDirectedNode(nodeId, orientation);
 		return parser.next();
 	}
 
 	private int handleTag(String key, XMLStreamReader parser) throws XMLStreamException {
-		String elementText = parser.getElementText();
-		logger.info("KEY:" + key  + " - VALUE:" + elementText);
-		properties.put(key, elementText);
+		properties.put(key, parser.getElementText());
 		return parser.getEventType();
 	}
 
@@ -162,7 +157,7 @@ public abstract class OSITNElement implements RoutingElement {
 
 	protected abstract void parseCoords(String coordinates);
 	
-	protected abstract void addDirectedNode(String nodeId, String orientation, String orientation2);
+	protected abstract void addDirectedNode(String nodeId, String orientation);
 	
 	protected abstract void addDirectedLink(String nodeId, String orientation);
 	
@@ -171,8 +166,7 @@ public abstract class OSITNElement implements RoutingElement {
 	private boolean exitElement(XMLStreamReader parser) {
 		switch(parser.getLocalName()) {
 		case "RoadNode" : 
-		case "RoadLink" :	
-		case "RoadRouteInformation": return true; 
+		case "RoadLink" :	return true;
 		}
 		return false;
 	}

@@ -27,10 +27,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.graphhopper.reader.DataReader;
+import com.graphhopper.reader.ITurnCostTableEntry;
 import com.graphhopper.reader.Node;
 import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
+import com.graphhopper.reader.Relation;
+import com.graphhopper.reader.TurnRelation;
 import com.graphhopper.reader.Way;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.DistanceCalcEarth;
@@ -187,7 +189,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      * In the pre-parsing step this method will be called to determine the useful relation tags.
      * <p/>
      */
-    public abstract long handleRelationTags( OSMRelation relation, long oldRelationFlags );
+    public abstract long handleRelationTags( Relation relation, long oldRelationFlags );
 
     /**
      * Decide whether a way is routable for a given mode of travel. This skips some ways before
@@ -572,7 +574,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         return encode;
     }
 
-    public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, DataReader osmReader )
+    public Collection<ITurnCostTableEntry> analyzeTurnRelation( TurnRelation turnRelation, DataReader osmReader )
     {
         return Collections.emptyList();
     }

@@ -26,10 +26,10 @@ import java.util.Map;
 import java.util.Set;
 
 import com.graphhopper.reader.DataReader;
-import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
+import com.graphhopper.reader.ITurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.Relation;
+import com.graphhopper.reader.TurnRelation;
 import com.graphhopper.reader.Way;
 import com.graphhopper.util.Helper;
 
@@ -205,7 +205,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
+    public long handleRelationTags( Relation relation, long oldRelationFlags )
     {
         return oldRelationFlags;
     }
@@ -288,7 +288,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, DataReader osmReader )
+    public Collection<ITurnCostTableEntry> analyzeTurnRelation( TurnRelation turnRelation, DataReader osmReader )
     {
         if (edgeOutExplorer == null || edgeInExplorer == null)
         {

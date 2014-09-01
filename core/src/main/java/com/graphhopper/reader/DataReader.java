@@ -36,4 +36,5 @@ public interface DataReader
 	int getInternalNodeIdOfOsmNode(long viaOsm);
 
 	long getOsmIdOfInternalEdge(int edge);
+
 }

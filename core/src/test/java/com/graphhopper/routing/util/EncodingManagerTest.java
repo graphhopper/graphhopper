@@ -29,10 +29,12 @@ import java.util.Collections;
 import org.junit.Test;
 
 import com.graphhopper.reader.DataReader;
+import com.graphhopper.reader.ITurnCostTableEntry;
 import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.Relation;
+import com.graphhopper.reader.TurnRelation;
 import com.graphhopper.reader.Way;
 import com.graphhopper.util.BitUtil;
 
@@ -115,7 +117,7 @@ public class EncodingManagerTest
             }
 
             @Override
-            public long handleRelationTags( OSMRelation relation, long oldRelFlags )
+            public long handleRelationTags( Relation relation, long oldRelFlags )
             {
                 if (relation.hasTag("route", "bicycle"))
                     return relationCodeEncoder.setValue(0, 2);
@@ -197,25 +199,25 @@ public class EncodingManagerTest
         CarFlagEncoder car = new CarFlagEncoder()
         {
             @Override
-            public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, DataReader osmReader )
+            public Collection<ITurnCostTableEntry> analyzeTurnRelation( TurnRelation turnRelation, DataReader osmReader )
             {
-                return Collections.singleton(turnCostEntry_car); //simulate by returning one turn cost entry directly
+                return Collections.singleton((ITurnCostTableEntry)turnCostEntry_car); //simulate by returning one turn cost entry directly
             }
         };
         FootFlagEncoder foot = new FootFlagEncoder()
         {
             @Override
-            public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, DataReader osmReader )
+            public Collection<ITurnCostTableEntry> analyzeTurnRelation( TurnRelation turnRelation, DataReader osmReader )
             {
-                return Collections.singleton(turnCostEntry_foot); //simulate by returning one turn cost entry directly
+                return Collections.singleton((ITurnCostTableEntry)turnCostEntry_foot); //simulate by returning one turn cost entry directly
             }
         };
         BikeFlagEncoder bike = new BikeFlagEncoder()
         {
             @Override
-            public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, DataReader osmReader )
+            public Collection<ITurnCostTableEntry> analyzeTurnRelation( TurnRelation turnRelation, DataReader osmReader )
             {
-                return Collections.singleton(turnCostEntry_bike); //simulate by returning one turn cost entry directly
+                return Collections.singleton((ITurnCostTableEntry)turnCostEntry_bike); //simulate by returning one turn cost entry directly
             }
         };
 
@@ -236,34 +238,35 @@ public class EncodingManagerTest
         long assertFlag2 = turnCostEntry_bike.flags;
 
         // RUN: analyze = combine flags of all encoders
-        Collection<TurnCostTableEntry> entries = manager.analyzeTurnRelation(null, null);
+        Collection<ITurnCostTableEntry> entries = manager.analyzeTurnRelation(null, null);
 
         assertEquals(2, entries.size()); //we expect two different turnCost entries
 
-        for (TurnCostTableEntry entry : entries)
+        for (ITurnCostTableEntry entry : entries)
         {
-            if (entry.edgeFrom == 1)
+            int edgeFrom = entry.getEdgeFrom();
+			if (edgeFrom == 1)
             {
                 // the first entry provides turn flags for car and foot only 
-                assertEquals(assertFlag1, entry.flags);
-                assertTrue(car.isTurnRestricted(entry.flags));
-                assertFalse(foot.isTurnRestricted(entry.flags));
-                assertFalse(bike.isTurnRestricted(entry.flags));
+                assertEquals(assertFlag1, entry.getFlags());
+                assertTrue(car.isTurnRestricted(entry.getFlags()));
+                assertFalse(foot.isTurnRestricted(entry.getFlags()));
+                assertFalse(bike.isTurnRestricted(entry.getFlags()));
 
-                assertEquals(20, car.getTurnCosts(entry.flags));
-                assertEquals(0, foot.getTurnCosts(entry.flags));
-                assertEquals(0, bike.getTurnCosts(entry.flags));
-            } else if (entry.edgeFrom == 2)
+                assertEquals(20, car.getTurnCosts(entry.getFlags()));
+                assertEquals(0, foot.getTurnCosts(entry.getFlags()));
+                assertEquals(0, bike.getTurnCosts(entry.getFlags()));
+            } else if (edgeFrom == 2)
             {
                 // the 2nd entry provides turn flags for bike only
-                assertEquals(assertFlag2, entry.flags);
-                assertFalse(car.isTurnRestricted(entry.flags));
-                assertFalse(foot.isTurnRestricted(entry.flags));
-                assertFalse(bike.isTurnRestricted(entry.flags));
+                assertEquals(assertFlag2, entry.getFlags());
+                assertFalse(car.isTurnRestricted(entry.getFlags()));
+                assertFalse(foot.isTurnRestricted(entry.getFlags()));
+                assertFalse(bike.isTurnRestricted(entry.getFlags()));
 
-                assertEquals(0, car.getTurnCosts(entry.flags));
-                assertEquals(0, foot.getTurnCosts(entry.flags));
-                assertEquals(10, bike.getTurnCosts(entry.flags));
+                assertEquals(0, car.getTurnCosts(entry.getFlags()));
+                assertEquals(0, foot.getTurnCosts(entry.getFlags()));
+                assertEquals(10, bike.getTurnCosts(entry.getFlags()));
             }
         }
     }

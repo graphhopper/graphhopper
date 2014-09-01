@@ -33,8 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.Way;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionAnnotation;
@@ -282,7 +281,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
+    public long handleRelationTags( Relation relation, long oldRelationFlags )
     {
         int code = 0;
         if (relation.hasTag("route", "bicycle"))

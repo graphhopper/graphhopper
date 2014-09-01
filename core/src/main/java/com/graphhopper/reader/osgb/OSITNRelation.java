@@ -17,185 +17,173 @@
  */
 package com.graphhopper.reader.osgb;
 
-import javax.xml.stream.XMLStreamConstants;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import java.util.ArrayList;
+import com.graphhopper.reader.OSMRelation;
+import com.graphhopper.reader.OSMTurnRelation;
+import com.graphhopper.reader.OSMTurnRelation.Type;
+import com.graphhopper.reader.Relation;
+import com.graphhopper.reader.RelationMember;
 
 /**
  * Represents an OSM Relation
  * <p/>
+ * 
  * @author Nop
  */
-public class OSITNRelation extends OSITNElement
-{
+public class OSITNRelation extends OSITNElement implements Relation {
 
+	private static final List<String> notInstructions;
+	private static final List<String> onlyInstructions;
 	protected final ArrayList<ITNMember> members = new ArrayList<ITNMember>(5);
+	private Type relationType;
 
-    public static OSITNRelation create( long id, XMLStreamReader parser ) throws XMLStreamException
-    {
-        OSITNRelation rel = new OSITNRelation(id);
+	static {
+		notInstructions = new ArrayList<>();
+		onlyInstructions = new ArrayList<>();
 
-        parser.nextTag();
-        rel.readMembers(parser);
-        rel.readTags(parser);
-        return rel;
-    }
+		notInstructions.add("No Turn");
+	}
 
-    public OSITNRelation( long id )
-    {
-        super(id, RELATION);
-    }
+	public static OSITNRelation create(long id, XMLStreamReader parser)
+			throws XMLStreamException {
+		OSITNRelation rel = new OSITNRelation(id);
 
-    protected void readMembers( XMLStreamReader parser ) throws XMLStreamException
-    {
-        int event = parser.getEventType();
-        while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equalsIgnoreCase("member"))
-        {
-            if (event == XMLStreamConstants.START_ELEMENT)
-            {
-                // read member
-                members.add(new ITNMember(parser));
-            }
+		parser.nextTag();
+		rel.readTags(parser);
+		return rel;
+	}
 
-            event = parser.nextTag();
-        }
-    }
+	public OSITNRelation(long id) {
+		super(id, RELATION);
+	}
 
-    @Override
-    public String toString()
-    {
-        return "Relation (" + getId() + ", " + members.size() + " members)";
-    }
+	@Override
+	public String toString() {
+		return "Relation (" + getId() + ", " + members.size() + " members)";
+	}
 
-    public ArrayList<ITNMember> getMembers()
-    {
-        return members;
-    }
+	public ArrayList<ITNMember> getMembers() {
+		return members;
+	}
 
-    public boolean isMetaRelation()
-    {
-        for (ITNMember member : members)
-        {
-            if (member.type() == RELATION)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
+	public boolean isMetaRelation() {
+		for (ITNMember member : members) {
+			if (member.type() == RELATION) {
+				return true;
+			}
+		}
+		return false;
+	}
 
-    public boolean isMixedRelation()
-    {
-        boolean hasRel = false;
-        boolean hasOther = false;
+	public boolean isMixedRelation() {
+		boolean hasRel = false;
+		boolean hasOther = false;
 
-        for (ITNMember member : members)
-        {
-            if (member.type() == RELATION)
-            {
-                hasRel = true;
-            } else
-            {
-                hasOther = true;
-            }
+		for (ITNMember member : members) {
+			if (member.type() == RELATION) {
+				hasRel = true;
+			} else {
+				hasOther = true;
+			}
 
-            if (hasRel && hasOther)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
+			if (hasRel && hasOther) {
+				return true;
+			}
+		}
+		return false;
+	}
 
-    public void removeRelations()
-    {
-        for (int i = members.size() - 1; i >= 0; i--)
-        {
-            if (members.get(i).type() == RELATION)
-            {
-                members.remove(i);
-            }
-        }
-    }
+	public void removeRelations() {
+		for (int i = members.size() - 1; i >= 0; i--) {
+			if (members.get(i).type() == RELATION) {
+				members.remove(i);
+			}
+		}
+	}
 
-    public void add( ITNMember member )
-    {
-        members.add(member);
-    }
+	public void add(ITNMember member) {
+		members.add(member);
+	}
 
-    /**
-     * Container class for relation members
-     */
-    public static class ITNMember
-    {
-        public static final int NODE = 0;
-        public static final int WAY = 1;
-        public static final int RELATION = 2;
-        private static final String typeDecode = "nwr";
-        private int type;
-        private long ref;
-        private String role;
+	/**
+	 * Container class for relation members
+	 */
+	public static class ITNMember implements RelationMember {
+		public static final int NODE = 0;
+		public static final int WAY = 1;
+		public static final int RELATION = 2;
+		private static final String typeDecode = "nwr";
+		private int type;
+		private long ref;
+		private String role;
 
-        public ITNMember( XMLStreamReader parser )
-        {
-            String typeName = parser.getAttributeValue(null, "type");
-            type = typeDecode.indexOf(typeName.charAt(0));
-            ref = Long.parseLong(parser.getAttributeValue(null, "ref"));
-            role = parser.getAttributeValue(null, "role");
-        }
+		public ITNMember(XMLStreamReader parser) {
+			String typeName = parser.getAttributeValue(null, "type");
+			type = typeDecode.indexOf(typeName.charAt(0));
+			ref = Long.parseLong(parser.getAttributeValue(null, "ref"));
+			role = parser.getAttributeValue(null, "role");
+		}
 
-        public ITNMember( ITNMember input )
-        {
-            type = input.type;
-            ref = input.ref;
-            role = input.role;
-        }
+		public ITNMember(ITNMember input) {
+			type = input.type;
+			ref = input.ref;
+			role = input.role;
+		}
 
-        public ITNMember( int type, long ref, String role )
-        {
-            this.type = type;
-            this.ref = ref;
-            this.role = role;
-        }
+		public ITNMember(int type, long ref, String role) {
+			this.type = type;
+			this.ref = ref;
+			this.role = role;
+		}
 
-        public String toString()
-        {
-            return "Member " + type + ":" + ref;
-        }
+		public String toString() {
+			return "Member " + type + ":" + ref;
+		}
 
-        public int type()
-        {
-            return type;
-        }
+		public int type() {
+			return type;
+		}
 
-        public String role()
-        {
-            return role;
-        }
+		public String role() {
+			return role;
+		}
 
-        public long ref()
-        {
-            return ref;
-        }
-    }
+		public long ref() {
+			return ref;
+		}
+	}
 
 	@Override
 	protected void parseCoords(String elementText) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	protected void parseNetworkMember(String elementText) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
-	protected void addDirectedNode(String nodeId, String orientation) {
+	protected void addDirectedNode(String nodeId, String grade, String orientation) {
 		// TODO Auto-generated method stub
-		
+
+	}
+
+	@Override
+	protected void addDirectedLink(String nodeId, String orientation) {
+		int size = members.size();
+		if (size < 2) {  //TODO this will break multi way information but helps me simplify multi way instruction for now
+			String idStr = nodeId.substring(5);
+			ITNMember member = new ITNMember(WAY, Long.valueOf(idStr),
+					0 == size ? "from" : "to");
+			add(member);
+		}
 	}
 }

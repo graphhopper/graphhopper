@@ -124,9 +124,14 @@ public class LocationIndexTree implements LocationIndex
         // if we assume a minimum resolution like 0.5km for a leaf-tile                
         // n^(depth/2) = toMeter(dLon) / minResolution
         BBox bounds = graph.getBounds();
-        if (graph.getNodes() == 0 || !bounds.check())
+        int nodes = graph.getNodes();
+		if (nodes == 0) {
+			throw new IllegalStateException("No Nodes");
+		}
+		if(!bounds.check()) {
             throw new IllegalStateException("Bounds of graph are invalid: " + bounds);
-
+		}
+		
         double lat = Math.min(Math.abs(bounds.maxLat), Math.abs(bounds.minLat));
         double maxDistInMeter = Math.max(
                 (bounds.maxLat - bounds.minLat) / 360 * DistanceCalcEarth.C,
