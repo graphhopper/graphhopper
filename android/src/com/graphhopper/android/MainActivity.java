@@ -70,7 +70,7 @@ public class MainActivity extends Activity
     private volatile boolean prepareInProgress = false;
     private volatile boolean shortestPathRunning = false;
     private String currentArea = "berlin";
-    private String fileListURL = "http://graphhopper.com/public/maps/0.3/";
+    private String fileListURL = "https://graphhopper.com/public/maps/0.3/";
     private String prefixURL = fileListURL;
     private String downloadURL;
     private File mapsFolder;
@@ -258,7 +258,7 @@ public class MainActivity extends Activity
             @Override
             protected void onPostExecute( List<String> nameList )
             {
-                if (hasError())
+                if (hasError() || nameList.isEmpty())
                 {
                     logUser("Are you connected to the internet? Problem while fetching remote area list: "
                             + getErrorMessage());
@@ -313,7 +313,7 @@ public class MainActivity extends Activity
             public void onClick( View v )
             {
                 Object o = spinner.getSelectedItem();
-                if (o != null && o.toString().length() > 0)
+                if (o != null && o.toString().length() > 0 && !nameToFullName.isEmpty())
                 {
                     String area = o.toString();
                     mylistener.onSelect(area, nameToFullName.get(area));
