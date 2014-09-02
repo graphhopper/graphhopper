@@ -20,80 +20,103 @@ package com.graphhopper.reader.osgb;
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
 
-import javax.xml.stream.XMLStreamConstants;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import com.graphhopper.reader.Way;
 
-import java.util.Map;
-
 /**
  * Represents an OSM Way
  * <p/>
+ * 
  * @author Nop
  */
-public class OSITNWay extends OSITNElement implements Way
-{
-    protected final TLongList nodes = new TLongArrayList(5);
+public class OSITNWay extends OSITNElement implements Way {
+	protected final TLongList nodes = new TLongArrayList(5);
+	private String[] wayCoords;
+	private long lastNode;
 
-    /**
-     * Constructor for XML Parser
-     */
-    public static OSITNWay create( long id, XMLStreamReader parser ) throws XMLStreamException
-    {
-        OSITNWay way = new OSITNWay(id);
-        parser.nextTag();
-        way.readTags(parser);
-        way.setTag("highway", "motorway");
-        System.err.println(way.toString());
-        return way;
-    }
+	/**
+	 * Constructor for XML Parser
+	 */
+	public static OSITNWay create(long id, XMLStreamReader parser)
+			throws XMLStreamException {
+		OSITNWay way = new OSITNWay(id);
+		parser.nextTag();
+		way.readTags(parser);
+		way.setTag("highway", "motorway");
+		System.err.println(way.toString());
+		return way;
+	}
 
-    public OSITNWay( long id )
-    {
-        super(id, WAY);
-    }
+	public OSITNWay(long id) {
+		super(id, WAY);
+	}
 
-    public TLongList getNodes()
-    {
-        return nodes;
-    }
-
-    @Override
-    public String toString()
-    {
-        return "Way (" + getId() + ", " + nodes.size() + " nodes)";
-    }
+	public TLongList getNodes() {
+		return nodes;
+	}
 
 	@Override
-	protected void parseCoords(String elementText) {
-		// TODO Auto-generated method stub
-		//bounding box?
-		//throw new UnsupportedOperationException();
+	public String toString() {
+		return "Way (" + getId() + ", " + nodes.size() + " nodes)";
+	}
+
+	@Override
+	protected void parseCoords(String lineDefinition) {
+		String[] lineSegments = lineDefinition.split(" ");
+		wayCoords = Arrays
+				.copyOfRange(lineSegments, 1, lineSegments.length - 1);
 	}
 
 	@Override
 	protected void parseNetworkMember(String elementText) {
 		throw new UnsupportedOperationException();
-		
 	}
 
 	@Override
-	protected void addDirectedNode(String nodeId, String grade, String orientation) {
-		System.err.println("GRADE:" + grade);
+	protected void addDirectedNode(String nodeId, String grade,
+			String orientation) {
 		String idStr = nodeId.substring(5);
-		if(null!=grade) {
+		if (null != grade) {
 			idStr = grade + idStr;
-			System.err.println("id:" + idStr);
 		}
 		long id = Long.parseLong(idStr);
-		nodes.add(id);
+
+		if (0 == nodes.size()) {
+			nodes.add(id);
+		} else {
+			for (int i = 0; i < wayCoords.length; i++) {
+				String wayCoord = wayCoords[i];
+				long idPrefix = i * 10000000000000000L;
+				long extraId = idPrefix + i;
+				nodes.add(extraId);
+			}
+			nodes.add(id);
+		}
 	}
 
 	@Override
 	protected void addDirectedLink(String nodeId, String orientation) {
 		throw new UnsupportedOperationException();
-		
+
+	}
+
+	public List<OSITNNode> evaluateWayNodes() {
+		List<OSITNNode> wayNodes = new ArrayList<>();
+
+		for (int i = 0; i < wayCoords.length; i++) {
+			String wayCoord = wayCoords[i];
+			long idPrefix = i * 10000000000000000L;
+			long id = idPrefix + i;
+			OSITNNode wayNode = new OSITNNode(id);
+			wayNode.parseCoords(wayCoord);
+			wayNodes.add(wayNode);
+		}
+		return wayNodes;
 	}
 }

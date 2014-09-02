@@ -195,10 +195,10 @@ public abstract class OSITNElement implements RoutingElement {
 		return properties;
 	}
 
-	public void setTags(Map<String, String> newTags) {
+	public void setTags(Map<String, Object> newTags) {
 		properties.clear();
 		if (newTags != null)
-			for (Entry<String, String> e : newTags.entrySet()) {
+			for (Entry<String, Object> e : newTags.entrySet()) {
 				setTag(e.getKey(), e.getValue());
 			}
 	}

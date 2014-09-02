@@ -93,7 +93,21 @@ public class OsItnReaderTest {
 				"./src/test/resources/com/graphhopper/reader/os-itn-simple-crossroad.xml");
 		readGraphFile(graph, file);
 		assertEquals(5, graph.getNodes());
-		checkNodeNetwork(graph);
+		checkSimpleNodeNetwork(graph);
+	}
+	
+	@Test
+	public void testReadSimpleMultiPointCrossRoads() throws IOException {
+		boolean turnRestrictionsImport = false;
+		boolean is3D = false;
+		GraphHopperStorage graph = configureStorage(turnRestrictionsImport,
+				is3D);
+
+		File file = new File(
+				"./src/test/resources/com/graphhopper/reader/os-itn-simple-multipoint-crossroad.xml");
+		readGraphFile(graph, file);
+		assertEquals(6, graph.getNodes());
+		checkMultiNodeNetwork(graph);
 	}
 
 	@Test
@@ -108,7 +122,7 @@ public class OsItnReaderTest {
 				"./src/test/resources/com/graphhopper/reader/os-itn-simple-restricted-crossroad.xml");
 		readGraphFile(graph, file);
 		assertEquals(5, graph.getNodes());
-		checkNodeNetwork(graph);
+		checkSimpleNodeNetwork(graph);
 		
 		carOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, false, true));
         
@@ -146,7 +160,6 @@ public class OsItnReaderTest {
 	}
 	
 	@Test
-	@Ignore
 	public void testReadSimpleBridge()
 			throws IOException {
 		boolean turnRestrictionsImport = true;
@@ -189,7 +202,7 @@ public class OsItnReaderTest {
 		return EdgeIterator.NO_EDGE;
 	}
 
-	private void checkNodeNetwork(GraphHopperStorage graph) {
+	private void checkSimpleNodeNetwork(GraphHopperStorage graph) {
 		EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
 		assertEquals(4, count(explorer.setBaseNode(0)));
 		assertEquals(1, count(explorer.setBaseNode(1)));
@@ -198,13 +211,24 @@ public class OsItnReaderTest {
 		assertEquals(1, count(explorer.setBaseNode(4)));
 	}
 	
-	private void checkBridgeNodeNetwork(GraphHopperStorage graph) {
+	private void checkMultiNodeNetwork(GraphHopperStorage graph) {
 		EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
 		assertEquals(4, count(explorer.setBaseNode(0)));
-		assertEquals(1, count(explorer.setBaseNode(1)));
+		assertEquals(2, count(explorer.setBaseNode(1)));
 		assertEquals(1, count(explorer.setBaseNode(2)));
 		assertEquals(1, count(explorer.setBaseNode(3)));
 		assertEquals(1, count(explorer.setBaseNode(4)));
+		assertEquals(1, count(explorer.setBaseNode(5)));
+	}
+	
+	private void checkBridgeNodeNetwork(GraphHopperStorage graph) {
+		EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
+		assertEquals(1, count(explorer.setBaseNode(0)));
+		assertEquals(2, count(explorer.setBaseNode(1)));
+		assertEquals(2, count(explorer.setBaseNode(2)));
+		assertEquals(2, count(explorer.setBaseNode(3)));
+		assertEquals(0, count(explorer.setBaseNode(4)));
+		assertEquals(1, count(explorer.setBaseNode(5)));
 	}
 
 	

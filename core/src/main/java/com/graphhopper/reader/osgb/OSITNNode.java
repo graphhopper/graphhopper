@@ -17,6 +17,8 @@
  */
 package com.graphhopper.reader.osgb;
 
+import java.util.Map;
+
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -62,7 +64,7 @@ public class OSITNNode extends OSITNElement implements Node {
 		if (pointAccess.is3D())
 			setTag("ele", pointAccess.getElevation(accessId));
 	}
-
+	
 	public OSITNNode(long id) {
 		super(id, NODE);
 
@@ -125,7 +127,6 @@ public class OSITNNode extends OSITNElement implements Node {
 
 	@Override
 	protected void parseCoords(String elementText) {
-		// TODO plugin OSGBCOordConverter
 		String[] split = elementText.split(",");
 
 		Double easting = Double.parseDouble(split[0]);
@@ -170,6 +171,16 @@ public class OSITNNode extends OSITNElement implements Node {
 			}
 		}
 		return wgs84Pt;
+	}
+
+	public OSITNNode gradeClone(long nodeId) {
+		System.err.println("CLONING:" + nodeId);
+		OSITNNode clone = new OSITNNode(nodeId);
+		Map<String, Object> tags = this.getTags();
+		clone.setTags(tags);
+		clone.lat = this.lat;
+		clone.lon = this.lon;
+		return clone;
 	}
 
 }

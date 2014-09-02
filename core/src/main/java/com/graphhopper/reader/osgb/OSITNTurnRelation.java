@@ -89,7 +89,7 @@ public class OSITNTurnRelation implements TurnRelation {
 	        {
 	            if (viaNodeId == OsItnReader.EMPTY)
 	            {
-	                throw new IllegalArgumentException("Unknown node osm id");
+	                throw new IllegalArgumentException("Unknown node osm id: " + this.viaOsm);
 	            }
 
 	            int edgeIdFrom = EdgeIterator.NO_EDGE;

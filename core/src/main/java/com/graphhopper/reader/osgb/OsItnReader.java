@@ -109,6 +109,8 @@ public class OsItnReader implements DataReader {
 	protected static final int TOWER_NODE = -2;
 	private static final Logger logger = LoggerFactory
 			.getLogger(OsItnReader.class);
+
+	private static final int MAX_GRADE_SEPARATION = 4;
 	private long locations;
 	private long skippedLocations;
 	private final GraphStorage graphStorage;
@@ -271,7 +273,7 @@ public class OsItnReader implements DataReader {
 
 		return edgeIdToOsmIdMap;
 	}
-	
+
 	private TLongObjectMap<ItnNodePair> getNodeEdgeMap() {
 		if (edgeIdToNodeMap == null)
 			edgeIdToNodeMap = new TLongObjectHashMap(getOsmIdStoreRequiredSet()
@@ -316,13 +318,15 @@ public class OsItnReader implements DataReader {
 					.open();
 			LongIntMap nodeFilter = getNodeMap();
 
-			counter = processOne(wayStart, relationStart, counter, in, nodeFilter);
+			counter = processOne(wayStart, relationStart, counter, in,
+					nodeFilter);
 			in = new OsItnInputFile(osmFile).setWorkerThreads(workerThreads)
 					.open();
 			counter = process(wayStart, relationStart, counter, in, nodeFilter);
 			in = new OsItnInputFile(osmFile).setWorkerThreads(workerThreads)
 					.open();
-			counter = postProcess(wayStart, relationStart, counter, in, nodeFilter);
+			counter = postProcess(wayStart, relationStart, counter, in,
+					nodeFilter);
 
 			logger.info("storage nodes:" + graphStorage.getNodes());
 		} catch (Exception ex) {
@@ -336,16 +340,20 @@ public class OsItnReader implements DataReader {
 			throw new IllegalStateException("osm must not be empty. read "
 					+ counter + " lines and " + locations + " locations");
 	}
-	
+
 	private long processOne(long wayStart, long relationStart, long counter,
 			OsItnInputFile in, LongIntMap nodeFilter) throws XMLStreamException {
 		RoutingElement item;
 		while ((item = in.getNext()) != null) {
 			switch (item.getType()) {
 			case OSMElement.NODE:
-				logger.info("NODEITEMID:" + item.getId());
-				if (nodeFilter.get(item.getId()) != -1) {
-					processNode((Node) item);
+				long id = item.getId();
+				logger.info("NODEITEMID:" + id);
+				if (nodeFilter.get(id) != -1) {
+					OSITNNode nodeItem = (OSITNNode) item;
+					processNode(nodeItem);
+					String strId = String.valueOf(id);
+					addGradeNodesIfRequired(nodeItem, strId, nodeFilter);
 				}
 				break;
 
@@ -356,6 +364,19 @@ public class OsItnReader implements DataReader {
 			}
 		}
 		return counter;
+	}
+
+	private void addGradeNodesIfRequired(OSITNNode item, String idStr,
+			LongIntMap nodeFilter) {
+		String curId;
+		for (int i = 1; i <= MAX_GRADE_SEPARATION; i++) {
+			curId = i + idStr;
+			long parseInt = Long.parseLong(curId);
+			if (nodeFilter.get(parseInt) != -1) {
+				OSITNNode gradeNode = item.gradeClone(parseInt);
+				processNode((Node) item);
+			}
+		}
 	}
 
 	private long process(long wayStart, long relationStart, long counter,
@@ -369,6 +390,11 @@ public class OsItnReader implements DataReader {
 					logger.info(nf(counter) + ", now parsing ways");
 					wayStart = counter;
 				}
+				List<OSITNNode> evaluateWayNodes = ((OSITNWay)item).evaluateWayNodes();
+				for (OSITNNode ositnNode : evaluateWayNodes) {
+					nodeFilter.put(ositnNode.getId(), TOWER_NODE);
+					processNode(ositnNode);
+				}
 				processWay((Way) item);
 				break;
 			}
@@ -379,7 +405,7 @@ public class OsItnReader implements DataReader {
 		}
 		return counter;
 	}
-	
+
 	private long postProcess(long wayStart, long relationStart, long counter,
 			OsItnInputFile in, LongIntMap nodeFilter) throws XMLStreamException {
 		RoutingElement item;
@@ -413,7 +439,6 @@ public class OsItnReader implements DataReader {
 			return;
 
 		long wayOsmId = way.getId();
-		
 
 		long includeWay = encodingManager.acceptWay(way);
 		if (includeWay == 0)
@@ -430,9 +455,11 @@ public class OsItnReader implements DataReader {
 			int first = getNodeMap().get(firstItnNode);
 			long lastItnNode = osmNodeIds.get(osmNodeIds.size() - 1);
 			int last = getNodeMap().get(lastItnNode);
-			
-			logger.info("WAYID:" + wayOsmId  + " first:" + firstItnNode + " last:" + lastItnNode);
-			getNodeEdgeMap().put(wayOsmId, new ItnNodePair(firstItnNode,lastItnNode));
+
+			logger.info("WAYID:" + wayOsmId + " first:" + firstItnNode
+					+ " last:" + lastItnNode);
+			getNodeEdgeMap().put(wayOsmId,
+					new ItnNodePair(firstItnNode, lastItnNode));
 			double firstLat = getTmpLatitude(first), firstLon = getTmpLongitude(first);
 			double lastLat = getTmpLatitude(last), lastLon = getTmpLongitude(last);
 			if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon)
@@ -519,7 +546,9 @@ public class OsItnReader implements DataReader {
 		if (relation.hasTag("type", "restriction")) {
 			OSITNTurnRelation turnRelation = createTurnRelation(relation);
 			if (turnRelation != null) {
-				logger.info("Turn from:" + turnRelation.getOsmIdFrom() + " to:" + turnRelation.getOsmIdTo() + " via:" + turnRelation.getVia());
+				logger.info("Turn from:" + turnRelation.getOsmIdFrom() + " to:"
+						+ turnRelation.getOsmIdTo() + " via:"
+						+ turnRelation.getVia());
 				ExtendedStorage extendedStorage = ((GraphHopperStorage) graphStorage)
 						.getExtendedStorage();
 				if (extendedStorage instanceof TurnCostStorage) {
@@ -527,8 +556,8 @@ public class OsItnReader implements DataReader {
 							.analyzeTurnRelation(turnRelation, this);
 					for (ITurnCostTableEntry entry : entries) {
 						((TurnCostStorage) extendedStorage).setTurnCosts(
-								entry.getVia(), entry.getEdgeFrom(), entry.getEdgeTo(),
-								(int) entry.getFlags());
+								entry.getVia(), entry.getEdgeFrom(),
+								entry.getEdgeTo(), (int) entry.getFlags());
 					}
 				}
 			}
@@ -538,7 +567,7 @@ public class OsItnReader implements DataReader {
 	public long getOsmIdOfInternalEdge(int edgeId) {
 		return getEdgeIdToOsmidMap().get(edgeId);
 	}
-	
+
 	public long getInternalIdOfOsmEdge(int edgeId) {
 		return getEdgeIdToOsmidMap().get(edgeId);
 	}
@@ -606,9 +635,11 @@ public class OsItnReader implements DataReader {
 
 	boolean addNode(Node node) {
 		int nodeType = getNodeMap().get(node.getId());
-		if (nodeType == EMPTY)
+		if (nodeType == EMPTY) {
+			System.err.println("MISSING FROM MAP:" + node.getId());
 			return false;
-
+		}
+		
 		double lat = node.getLat();
 		double lon = node.getLon();
 		double ele = getElevation(node);
@@ -829,7 +860,7 @@ public class OsItnReader implements DataReader {
 	}
 
 	private void storeOSMWayID(int edgeId, long osmWayID) {
-		logger.info("StoreOSMWayID: " + osmWayID +  " for " + edgeId);
+		logger.info("StoreOSMWayID: " + osmWayID + " for " + edgeId);
 		if (getOsmIdStoreRequiredSet().contains(osmWayID)) {
 			getEdgeIdToOsmidMap().put(edgeId, osmWayID);
 		}
@@ -948,7 +979,8 @@ public class OsItnReader implements DataReader {
 			if (type != OSMTurnRelation.Type.UNSUPPORTED && fromWayID >= 0
 					&& toWayID >= 0) {
 				long foundViaNode = findViaNode(fromWayID, toWayID);
-				OSITNTurnRelation osmTurnRelation = new OSITNTurnRelation(fromWayID, foundViaNode, toWayID, type);
+				OSITNTurnRelation osmTurnRelation = new OSITNTurnRelation(
+						fromWayID, foundViaNode, toWayID, type);
 				System.err.println(osmTurnRelation);
 				return osmTurnRelation;
 			}
@@ -1039,21 +1071,21 @@ public class OsItnReader implements DataReader {
 		TLongObjectMap<ItnNodePair> nodeEdgeMap = getNodeEdgeMap();
 		ItnNodePair itnNodePairFrom = nodeEdgeMap.get(fromOsm);
 		ItnNodePair itnNodePairTo = nodeEdgeMap.get(toOsm);
-		
-		if(null!= itnNodePairFrom  && null!= itnNodePairTo) {
-		if(itnNodePairFrom.last == itnNodePairTo.first)  {
-			return itnNodePairFrom.last;
-		}
-		if(itnNodePairFrom.first == itnNodePairTo.first)  {
-			return itnNodePairFrom.first;
-		}
-		if(itnNodePairFrom.first == itnNodePairTo.last)  {
-			return itnNodePairFrom.first;
-		}
-		if(itnNodePairFrom.last == itnNodePairTo.last)  {
-			return itnNodePairFrom.last;
-		}
-		throw new IllegalArgumentException("No Matching Edges");
+
+		if (null != itnNodePairFrom && null != itnNodePairTo) {
+			if (itnNodePairFrom.last == itnNodePairTo.first) {
+				return itnNodePairFrom.last;
+			}
+			if (itnNodePairFrom.first == itnNodePairTo.first) {
+				return itnNodePairFrom.first;
+			}
+			if (itnNodePairFrom.first == itnNodePairTo.last) {
+				return itnNodePairFrom.first;
+			}
+			if (itnNodePairFrom.last == itnNodePairTo.last) {
+				return itnNodePairFrom.last;
+			}
+			throw new IllegalArgumentException("No Matching Edges");
 		}
 		return -1;
 	}
