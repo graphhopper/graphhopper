@@ -169,7 +169,9 @@ public class MainActivity extends Activity
     protected void onDestroy()
     {
         super.onDestroy();
-        hopper.close();
+        if(hopper != null)
+            hopper.close();
+        
         hopper = null;
         // necessary?
         System.gc();
