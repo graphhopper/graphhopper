@@ -60,22 +60,20 @@ as those versions are not in maven central:
 
 ### Java, Routing Server Usage
 
-We provide Java client code [here](https://github.com/graphhopper/graphhopper/blob/d70b63660ac5200b03c38ba3406b8f93976628a6/web/src/main/java/com/graphhopper/http/WebHelper.java#L43)
+The Web API documentation is [here](../web). 
+We provide Java client code [here](https://github.com/graphhopper/graphhopper/blob/d70b63660ac5200b03c38ba3406b8f93976628a6/web/src/main/java/com/graphhopper/http/GraphHopperWeb.java#L43)
 to query the routing server.
 
-The routing API (json,jsonp) is optimized regarding several aspects:
+The routing API (json,jsonp,gpx) is optimized regarding several aspects:
  * It tries to return a smallish data set (encoded polyline, gzip filter)
- * It enables cross-site scripting on the server- and client-site (jQuery, header setting)
- * To make things simple it uses the GeoCoder called Nominatim to get the name for a latitude+longitude point or vice versa.
- * Where it utilizes the jquery Deferred object to chain ajax requests and avoids browser UI blocking when resolving locations in parallel.
+ * It enables cross-site scripting on the server- and client-site
+ * The JavaScript client utilizes the jquery Deferred object to chain ajax requests and avoids browser UI blocking when resolving locations in parallel.
 
 #### Routing Service Deployment
 
 For simplicity you could just start jetty from maven and schedule it as background job: 
 `export GH_FOREGROUND=false && export JETTY_PORT=11111 && ./graphhopper.sh web europe_germany_berlin.pbf`. 
 Then the service will be accessible on port 11111.
-
-The Web API documentation is [here](../web)
 
 For production usage you can install the latest jetty (8 or 9) as a service but we prefer to have it bundled as a 
 simple jar. Tomcat should work too. To create a war file do `mvn clean war:war` and copy it from the target/ 
@@ -91,19 +89,21 @@ For [World-Wide-Road-Network](./world-wide.md) we have a separate information pa
 
 Important notes:
  * jsonp support needs to be enabled in the config.properties
- * none-hierarchical graphs should be limited to a certain distance otherwise you'll require lots of RAM per request! See https://github.com/graphhopper/graphhopper/issues/104
+ * none-hierarchical graphs should be limited to a certain distance otherwise you'll require lots of RAM per request! See [#104](https://github.com/graphhopper/graphhopper/issues/104)
  * if you have strange speed problems which could be related to low memory you can try to [entire disable swap](http://askubuntu.com/questions/103915/how-do-i-configure-swappiness). Or just try it out via `sudo swapoff -a`. Swapping out is very harmful to Java programs especially when the GC kicks in.
 
 ### JavaScript Usage
 
-For an example of how to use graphhopper in a web application see the [web subfolder](https://github.com/graphhopper/graphhopper/tree/master/web)
+For an example of how to use graphhopper in a web application see the 
+[web subfolder](https://github.com/graphhopper/graphhopper/tree/master/web)
 
-The routing server can be queried from [JavaScript](https://github.com/graphhopper/graphhopper/blob/d70b63660ac5200b03c38ba3406b8f93976628a6/web/src/main/webapp/js/ghrequest.js#L139)
-as well. You can see this at our [GraphHopper Maps](https://graphhopper.com/maps/).
+The routing server can be queried from [JavaScript](https://github.com/graphhopper/graphhopper/blob/d70b63660ac5200b03c38ba3406b8f93976628a6/web/src/main/webapp/js/ghrequest.js)
+as well. You can see this in action at [GraphHopper Maps](https://graphhopper.com/maps/).
 
-If you need offline routing in the browser like for smaller areas or hybrid routing solution.
-This is highly experimental but they are still nice to see and possible via TeaVM. 
-Have a look into this [blog post](http://karussell.wordpress.com/2014/05/04/graphhopper-in-the-browser-teavm-makes-offline-routing-via-openstreetmap-possible-in-javascript/) containing an example.
+If you need **offline** routing in the browser like for smaller areas or hybrid routing solution
+then there is a highly experimental version of GraphHopper using TeaVM. 
+Have a look into this [blog post](http://karussell.wordpress.com/2014/05/04/graphhopper-in-the-browser-teavm-makes-offline-routing-via-openstreetmap-possible-in-javascript/) 
+for a demo and more information.
 
 ### Android Usage
  

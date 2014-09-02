@@ -1,3 +1,5 @@
+## Technical Overview of GraphHopper
+
 To get a better understanding also take a look in the source code, especially in the unit tests and in 
 some resources we [published](http://karussell.wordpress.com/2014/01/23/graphhopper-news-article-in-java-magazine-and-fosdem-2014/)
 or [here](http://graphhopper.com/public/slides/).
@@ -11,7 +13,8 @@ or use the graphhopper.sh script which utilizes the config.properties where you 
 read CAR, FOOT etc or all at once. You'll have to make sure that you allocate enough memory for your 
 specific graph (E.g. ~1GB for Germany) e.g. `export JAVA_OPTS="-Xmx1g"`. The import process is fast e.g. 
 complete germany takes about 10 minutes on my oldish laptop. Additionally it will take time if you choose 
-osmreader.chShortcuts=fastest in the config.properties which will dramatically improve query time.
+osmreader.chShortcuts=fastest in the config.properties which will dramatically improve query time
+but requires more RAM on import.
 
 ### 2. The Graph
 
@@ -52,6 +55,8 @@ For [_Contraction Hierarchies_](http://ad-wiki.informatik.uni-freiburg.de/teachi
  shortcuts and get the edges recursivly, this is done in Path4CH.
 
 ## 3.1 OriginalGraph
+
+See issue [#116](https://github.com/graphhopper/graphhopper/issues/116) for the progress of this feature.
 
 In order to traverse the _LevelGraph_ like a normal _Graph_ one needs to hide the shortcuts, which
 is done automatically for you if you call graph.getOriginalGraph(). This is necessary in a 
