@@ -125,6 +125,11 @@ public class GraphHopperWeb implements GraphHopperAPI
 
             String str = downloader.downloadAsString(url);
             JSONObject json = new JSONObject(str);
+
+            if (json.getJSONObject("info").has("errors")) {
+                throw new RuntimeException(json.getJSONObject("info").getJSONArray("errors").toString());
+            }
+
             took = json.getJSONObject("info").getDouble("took");
             JSONArray paths = json.getJSONArray("paths");
             JSONObject firstPath = paths.getJSONObject(0);
@@ -180,11 +185,9 @@ public class GraphHopperWeb implements GraphHopperAPI
                 res.setInstructions(il);
             }
             return res.setPoints(pointList).setDistance(distance).setMillis(time);
-        } catch (Exception ex)
-        {
-            throw new RuntimeException("Problem while fetching path " + request.getPoints(), ex);
-        } finally
-        {
+        } catch (Exception ex) {
+            throw new RuntimeException("Problem while fetching path " + request.getPoints() + ": " + ex.getMessage(), ex);
+        } finally {
             logger.debug("Full request took:" + sw.stop().getSeconds() + ", API took:" + took);
         }
     }
