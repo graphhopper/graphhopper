@@ -115,8 +115,11 @@ public class GraphHopperWeb implements GraphHopperAPI
                     + "&min_path_precision=" + request.getHint("douglas.minprecision", 1)
                     + "&algo=" + request.getAlgorithm()
                     + "&locale=" + request.getLocale().toString()
-                    + "&vehicle=" + request.getVehicle()
                     + "&elevation=" + withElevation;
+
+            if(!request.getVehicle().isEmpty())
+                url += "&vehicle=" + request.getVehicle();
+
             if (!key.isEmpty())
                 url += "&key=" + key;
 
