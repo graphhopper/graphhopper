@@ -116,6 +116,10 @@ public class GraphHopperWeb implements GraphHopperAPI
                     + "&algo=" + request.getAlgorithm()
                     + "&locale=" + request.getLocale().toString()
                     + "&elevation=" + withElevation;
+
+            if(!request.getVehicle().isEmpty())
+                url += "&vehicle=" + request.getVehicle();
+
             if (!key.isEmpty())
                 url += "&key=" + key;
 
