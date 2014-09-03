@@ -172,7 +172,8 @@ public abstract class OSITNElement implements RoutingElement {
 		switch(parser.getLocalName()) {
 		case "RoadNode" : 
 		case "RoadLink" :	
-		case "RoadRouteInformation": return true; 
+		case "RoadRouteInformation": 
+		case "Road" :	return true; 
 		}
 		return false;
 	}

@@ -209,6 +209,16 @@ public class OsItnReaderTest {
 		assertEquals(1, count(explorer.setBaseNode(2)));
 		assertEquals(1, count(explorer.setBaseNode(3)));
 		assertEquals(1, count(explorer.setBaseNode(4)));
+		
+		EdgeIterator iter = explorer.setBaseNode(0);
+        assertTrue(iter.next());
+        assertEquals("OTHER ROAD", iter.getName());
+        iter.next();
+        assertEquals("OTHER ROAD", iter.getName());
+        iter.next();
+        assertEquals("BONHAY ROAD", iter.getName());
+        iter.next();
+        assertEquals("BONHAY ROAD", iter.getName());
 	}
 	
 	private void checkMultiNodeNetwork(GraphHopperStorage graph) {

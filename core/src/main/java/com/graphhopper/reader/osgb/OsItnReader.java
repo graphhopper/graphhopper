@@ -154,6 +154,8 @@ public class OsItnReader implements DataReader {
 
 	private TLongObjectMap<ItnNodePair> edgeIdToNodeMap;
 
+	private TLongObjectMap<String> edgeNameMap;
+
 	public OsItnReader(GraphStorage storage) {
 		this.graphStorage = storage;
 		this.nodeAccess = graphStorage.getNodeAccess();
@@ -234,6 +236,10 @@ public class OsItnReader implements DataReader {
 
 					if (relation.hasTag("type", "restriction"))
 						prepareRestrictionRelation(relation);
+					
+					if (relation.hasTag("name"))
+						prepareNameRelation(relation);
+
 
 					if (++tmpRelationCounter % 50000 == 0) {
 						logger.info(nf(tmpRelationCounter)
@@ -260,6 +266,16 @@ public class OsItnReader implements DataReader {
 					((OSITNTurnRelation) turnRelation).getOsmIdTo());
 		}
 	}
+	
+	private void prepareNameRelation(Relation relation) {
+		String name = relation.getTag("name");
+		TLongObjectMap<String> edgeIdToNameMap = getEdgeNameMap();
+		ArrayList<? extends RelationMember> members = relation.getMembers();
+		for (RelationMember relationMember : members) {
+			long wayId = relationMember.ref();
+			edgeIdToNameMap.put(wayId, name);
+		}
+	}
 
 	private TLongSet getOsmIdStoreRequiredSet() {
 		return osmIdStoreRequiredSet;
@@ -280,6 +296,14 @@ public class OsItnReader implements DataReader {
 					.size());
 
 		return edgeIdToNodeMap;
+	}
+	
+	private TLongObjectMap<String> getEdgeNameMap() {
+		if (edgeNameMap == null)
+			edgeNameMap = new TLongObjectHashMap(getOsmIdStoreRequiredSet()
+					.size());
+
+		return edgeNameMap;
 	}
 
 	/**
@@ -445,7 +469,10 @@ public class OsItnReader implements DataReader {
 			return;
 
 		long relationFlags = getRelFlagsMap().get(way.getId());
-
+		String wayName = getWayName(way.getId());
+		if(null!=wayName) {
+			way.setTag("name", wayName);
+		}
 		// TODO move this after we have created the edge and know the
 		// coordinates => encodingManager.applyWayTags
 		// estimate length of the track e.g. for ferry speed calculation
@@ -540,6 +567,10 @@ public class OsItnReader implements DataReader {
 		for (EdgeIteratorState edge : createdEdges) {
 			encodingManager.applyWayTags(way, edge);
 		}
+	}
+
+	private String getWayName(long id) {
+		return getEdgeNameMap().remove(id);
 	}
 
 	public void processRelation(Relation relation) throws XMLStreamException {

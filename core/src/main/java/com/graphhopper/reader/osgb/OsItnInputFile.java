@@ -205,7 +205,7 @@ public class OsItnInputFile implements Sink, Closeable {
 					}
 
 					case "Road": {
-						// return OSITNRelation.create(id, parser);
+						return OsItnMetaData.create(id, parser);
 					}
 					case "RoadLinkInformation": {
 					}
