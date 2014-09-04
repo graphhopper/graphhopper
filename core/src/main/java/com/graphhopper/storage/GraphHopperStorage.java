@@ -839,14 +839,14 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
-        public final EdgeIteratorState setWayGeometry( PointList pillarNodes )
+        public EdgeIteratorState setWayGeometry( PointList pillarNodes )
         {
             GraphHopperStorage.this.setWayGeometry(pillarNodes, edgePointer, reverse);
             return this;
         }
 
         @Override
-        public final PointList fetchWayGeometry( int mode )
+        public PointList fetchWayGeometry( int mode )
         {
             return GraphHopperStorage.this.fetchWayGeometry(edgePointer, reverse, mode, getBaseNode(), getAdjNode());
         }
@@ -1535,7 +1535,7 @@ public class GraphHopperStorage implements GraphStorage
     {
         return nodes.isClosed();
     }
-    
+
     public ExtendedStorage getExtendedStorage()
     {
         return extStorage;
