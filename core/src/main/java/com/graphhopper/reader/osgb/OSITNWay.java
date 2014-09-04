@@ -97,14 +97,18 @@ public class OSITNWay extends OSITNElement implements Way {
 		if (0 == nodes.size()) {
 			nodes.add(id);
 		} else {
-			for (int i = 1; i <= wayCoords.length; i++) {
-				long idPrefix = i * WAY_NODE_PREFIX_MOD;
-				long extraId = idPrefix + getId();
-				nodes.add(extraId);
-			}
+			addWayNodes();
 			nodes.add(id);
 		}
 		logger.info(toString());
+	}
+
+	private void addWayNodes() {
+		for (int i = 1; i <= wayCoords.length; i++) {
+			long idPrefix = i * WAY_NODE_PREFIX_MOD;
+			long extraId = idPrefix + getId();
+			nodes.add(extraId);
+		}
 	}
 
 	@Override
