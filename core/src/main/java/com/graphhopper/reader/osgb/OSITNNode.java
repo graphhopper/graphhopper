@@ -19,9 +19,11 @@ package com.graphhopper.reader.osgb;
 
 import java.util.Map;
 
-import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import uk.co.ordnancesurvey.api.srs.GeodeticPoint;
 import uk.co.ordnancesurvey.api.srs.MapPoint;
@@ -41,14 +43,12 @@ public class OSITNNode extends OSITNElement implements Node {
 	private double lat;
 	private double lon;
 	private static OSGrid2LatLong coordConvertor = new OSGrid2LatLong();
+	private static final Logger logger = LoggerFactory
+			.getLogger(OSITNNode.class);
+	private boolean[] clones = {false,false,false,false};
 
 	public static OSITNNode create(long id, XMLStreamReader parser)
 			throws XMLStreamException {
-		 int attributeCount = parser.getAttributeCount();
-		 for (int i = 0; i < attributeCount; i++) {
-		 QName attributeName = parser.getAttributeName(i);
-		 System.err.println("QName:" + attributeName);
-		 }
 		OSITNNode node = new OSITNNode(id);
 
 		parser.nextTag();
@@ -134,7 +134,7 @@ public class OSITNNode extends OSITNElement implements Node {
 		GeodeticPoint wgs84 = toWGS84(easting, northing);
 		lat = wgs84.getLatAngle();
 		lon = wgs84.getLongAngle();
-		System.err.println(toString());
+		logger.info(toString());
 	}
 
 	@Override
@@ -174,7 +174,7 @@ public class OSITNNode extends OSITNElement implements Node {
 	}
 
 	public OSITNNode gradeClone(long nodeId) {
-		System.err.println("CLONING:" + nodeId);
+		logger.warn("CLONING:" + nodeId);
 		OSITNNode clone = new OSITNNode(nodeId);
 		Map<String, Object> tags = this.getTags();
 		clone.setTags(tags);

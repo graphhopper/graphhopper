@@ -170,7 +170,7 @@ public class OsItnReaderTest {
 		File file = new File(
 				"./src/test/resources/com/graphhopper/reader/os-itn-simple-bridge.xml");
 		readGraphFile(graph, file);
-		assertEquals(6, graph.getNodes());
+		assertEquals(7, graph.getNodes());
 		checkBridgeNodeNetwork(graph);
 	}
 
@@ -219,6 +219,7 @@ public class OsItnReaderTest {
         assertEquals("BONHAY ROAD", iter.getName());
         iter.next();
         assertEquals("BONHAY ROAD", iter.getName());
+        assertFalse(iter.next());
 	}
 	
 	private void checkMultiNodeNetwork(GraphHopperStorage graph) {
@@ -233,12 +234,13 @@ public class OsItnReaderTest {
 	
 	private void checkBridgeNodeNetwork(GraphHopperStorage graph) {
 		EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
-		assertEquals(1, count(explorer.setBaseNode(0)));
+		assertEquals(2, count(explorer.setBaseNode(0)));
 		assertEquals(2, count(explorer.setBaseNode(1)));
 		assertEquals(2, count(explorer.setBaseNode(2)));
 		assertEquals(2, count(explorer.setBaseNode(3)));
-		assertEquals(0, count(explorer.setBaseNode(4)));
+		assertEquals(2, count(explorer.setBaseNode(4)));
 		assertEquals(1, count(explorer.setBaseNode(5)));
+		assertEquals(1, count(explorer.setBaseNode(6)));
 	}
 
 	

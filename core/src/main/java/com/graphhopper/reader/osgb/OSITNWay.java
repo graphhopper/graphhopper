@@ -27,6 +27,9 @@ import java.util.List;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.graphhopper.reader.Way;
 
 /**
@@ -36,9 +39,12 @@ import com.graphhopper.reader.Way;
  * @author Nop
  */
 public class OSITNWay extends OSITNElement implements Way {
+	private static final long WAY_NODE_PREFIX_MOD = 100000000000000000L;
 	protected final TLongList nodes = new TLongArrayList(5);
 	private String[] wayCoords;
 	private long lastNode;
+	private static final Logger logger = LoggerFactory
+			.getLogger(OSITNWay.class);
 
 	/**
 	 * Constructor for XML Parser
@@ -49,7 +55,7 @@ public class OSITNWay extends OSITNElement implements Way {
 		parser.nextTag();
 		way.readTags(parser);
 		way.setTag("highway", "motorway");
-		System.err.println(way.toString());
+		logger.info(way.toString());
 		return way;
 	}
 
@@ -70,7 +76,8 @@ public class OSITNWay extends OSITNElement implements Way {
 	protected void parseCoords(String lineDefinition) {
 		String[] lineSegments = lineDefinition.split(" ");
 		wayCoords = Arrays
-				.copyOfRange(lineSegments, 1, lineSegments.length - 1);
+				.copyOfRange(lineSegments, 1, lineSegments.length -1);
+		logger.info(toString() + " "  + ((wayCoords.length == 0)?"0":wayCoords[0]));
 	}
 
 	@Override
@@ -90,14 +97,14 @@ public class OSITNWay extends OSITNElement implements Way {
 		if (0 == nodes.size()) {
 			nodes.add(id);
 		} else {
-			for (int i = 0; i < wayCoords.length; i++) {
-				String wayCoord = wayCoords[i];
-				long idPrefix = i * 10000000000000000L;
-				long extraId = idPrefix + i;
+			for (int i = 1; i <= wayCoords.length; i++) {
+				long idPrefix = i * WAY_NODE_PREFIX_MOD;
+				long extraId = idPrefix + getId();
 				nodes.add(extraId);
 			}
 			nodes.add(id);
 		}
+		logger.info(toString());
 	}
 
 	@Override
@@ -111,8 +118,8 @@ public class OSITNWay extends OSITNElement implements Way {
 
 		for (int i = 0; i < wayCoords.length; i++) {
 			String wayCoord = wayCoords[i];
-			long idPrefix = i * 10000000000000000L;
-			long id = idPrefix + i;
+			long idPrefix = (i+1) * WAY_NODE_PREFIX_MOD;
+			long id = idPrefix + getId();
 			OSITNNode wayNode = new OSITNNode(id);
 			wayNode.parseCoords(wayCoord);
 			wayNodes.add(wayNode);

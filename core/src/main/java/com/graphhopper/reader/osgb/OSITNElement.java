@@ -87,7 +87,6 @@ public abstract class OSITNElement implements RoutingElement {
 					break;
 				}
 				case "instruction" : {
-					System.err.println("INSTRUCTION:");
 					setTag("type", "restriction");
 					event = handleTag("restriction",parser);
 					break;
@@ -108,13 +107,6 @@ public abstract class OSITNElement implements RoutingElement {
 //					System.err.println("QNAME:" + attributeName);
 //				}
 				
-				// read tag
-				// String key = parser.getAttributeValue(null, "k");
-				// String value = parser.getAttributeValue(null, "v");
-				// // ignore tags with empty values
-				// if (value != null && value.length() > 0)
-				// setTag(key, value);
-
 			}
 			else {
 				logger.info("EVENT:" + event);
