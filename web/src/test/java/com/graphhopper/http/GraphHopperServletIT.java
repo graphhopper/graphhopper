@@ -118,6 +118,14 @@ public class GraphHopperServletIT extends BaseServletTester
         assertTrue("Wrong Exception found: " + ex.getClass().getName()
                 + ", IllegalArgumentException expected.", ex instanceof IllegalArgumentException);
 
+        // IllegalArgumentException (Vehicle not supported)
+        rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setVehicle("SPACE-SHUTTLE"));
+        assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
+
+        ex = rsp.getErrors().get(0);
+        assertTrue("Wrong Exception found: " + ex.getClass().getName()
+                + ", IllegalArgumentException expected.", ex instanceof IllegalArgumentException);
+
         // UnsupportedOperationException
         // RuntimeException
         // Exception
