@@ -25,9 +25,8 @@ import java.util.Map.Entry;
  * A class which manages the translations in-memory. Translations are managed here:
  * https://docs.google.com/spreadsheet/ccc?key=0AmukcXek0JP6dGM4R1VTV2d3TkRSUFVQakhVeVBQRHc#gid=0
  * <p/>
- * and can be easily converted to a language file via: ./core/files/update_translations.sh
- * GraphHopper.csv
- * <p/>
+ * See here for more information: ./docs/core/translations.md
+ * <p>
  * @author Peter Karich
  */
 public class TranslationMap
