@@ -23,6 +23,7 @@ web.mtb=Ποδήλατο βουνού
 web.car=Αυτοκίνητο
 web.foot=Πεζός
 web.staticlink=στατική διεύθυνση
+via=μέσω
 finish=Τέρμα!
 hourAbbr=h
 dayAbbr=d

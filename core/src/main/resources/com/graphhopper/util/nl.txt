@@ -23,6 +23,7 @@ web.mtb=mountainbike
 web.car=auto
 web.foot=te voet
 web.staticlink=
+via=
 finish=bestemming bereikt!
 hourAbbr=h
 dayAbbr=d

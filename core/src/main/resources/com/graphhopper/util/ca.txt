@@ -23,6 +23,7 @@ web.mtb=Bicicleta de montanya
 web.car=Cotxe
 web.foot=A peu
 web.staticlink=
+via=
 finish=Has arribat !!
 hourAbbr=h
 dayAbbr=d

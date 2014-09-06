@@ -23,6 +23,7 @@ web.mtb=マウンテンバイク
 web.car=車
 web.foot=徒歩
 web.staticlink=
+via=
 finish=目標達成
 hourAbbr=時間
 dayAbbr=日

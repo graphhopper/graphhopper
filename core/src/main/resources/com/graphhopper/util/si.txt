@@ -23,6 +23,7 @@ web.mtb=gorsko kolo
 web.car=Avto
 web.foot=Peš
 web.staticlink=
+via=
 finish=Konec!
 hourAbbr=h
 dayAbbr=d

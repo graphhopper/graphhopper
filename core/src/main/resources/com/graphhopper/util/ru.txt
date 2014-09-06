@@ -23,6 +23,7 @@ web.mtb=
 web.car=Автомобиль
 web.foot=Пешком
 web.staticlink=
+via=
 finish=Целевая достигнуто
 hourAbbr=h
 dayAbbr=d

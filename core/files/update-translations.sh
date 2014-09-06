@@ -6,9 +6,9 @@ destination=src/main/resources/com/graphhopper/util/
 translations="en_US SKIP de_DE ro pt_PT pt_BR bg es ru ja fr si tr nl it fil gl el uk ca"
 file=$1
 
-# TODO we need tsv but Google throws Internal Error when doing (works for csv):
-#wget -O $file "https://docs.google.com/spreadsheet/ccc?key=0AmukcXek0JP6dGM4R1VTV2d3TkRSUFVQakhVeVBQRHc&pli=1&output=tsv"
-#so you need to manually grab it
+# You can execute the following
+# curl "https://docs.google.com/spreadsheet/pub?key=0AmukcXek0JP6dGM4R1VTV2d3TkRSUFVQakhVeVBQRHc&single=true&gid=0&output=txt" > tmp.tsv
+# ./files/update-translations.sh tmp.tsv && rm tmp.tsv
 
 INDEX=1
 for tr in $translations; do

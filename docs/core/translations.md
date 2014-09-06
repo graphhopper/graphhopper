@@ -22,10 +22,10 @@ and add a column for your language. Revisit it regularly to update or add new it
 We'll regularly update GraphHopper with new translations or fixes. To speed this process up or just
 try if the changes work you can do the following:
 
- * Make GraphHopper working on your computer - see [here](./quickstart-from-source.md)
- * Download the document as 'tab-separated values'
- * Add your new language to the script: core/files/update-translations.sh
- * Execute ./core/files/update-translations.sh GraphHopper.tsv
+ * Make GraphHopper working on your computer, where you need to git clone the repository - see [here](./quickstart-from-source.md) for more information.
+ * If you created a new language then add it to the script: core/files/update-translations.sh
+ * Do `cd graphhopper/core; curl "https://docs.google.com/spreadsheet/pub?key=0AmukcXek0JP6dGM4R1VTV2d3TkRSUFVQakhVeVBQRHc&single=true&gid=0&output=txt" > tmp.tsv`
+ * Then `./files/update-translations.sh tmp.tsv && rm tmp.tsv`
  * 'git diff' and 'git status' should show your changes
  * Make sure 'mvn clean test' works without a problem. 
  * You can start a simple GraphHopper instance via './graphhopper.sh web europe_germany_berlin.pbf' and go to localhost:8989
