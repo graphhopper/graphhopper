@@ -19,17 +19,17 @@ and add a column for your language. Revisit it regularly to update or add new it
 
 ## Integrate into GraphHopper
 
-We'll regularly update GraphHopper with new translations or fixes. To speed this process up or just
-try if the changes work you can do the following:
+We'll regularly update GraphHopper with new translations or fixes so no need to do this work for you. But if you still
+want to try your changes or want to speed up the integration you can do the following:
 
  * Make GraphHopper working on your computer, where you need to git clone the repository - see [here](./quickstart-from-source.md) for more information.
- * If you created a new language then add it to the script: core/files/update-translations.sh
+ * If you created a new language then add it in lexicographical order to TranslationMap.LOCALES (core/src/main/java/com/graphhopper/util) and to the script: core/files/update-translations.sh
  * Do `cd graphhopper/core; curl "https://docs.google.com/spreadsheet/pub?key=0AmukcXek0JP6dGM4R1VTV2d3TkRSUFVQakhVeVBQRHc&single=true&gid=0&output=txt" > tmp.tsv`
  * Then `./files/update-translations.sh tmp.tsv && rm tmp.tsv`
- * 'git diff' and 'git status' should show your changes
- * Make sure 'mvn clean test' works without a problem. 
- * You can start a simple GraphHopper instance via './graphhopper.sh web europe_germany_berlin.pbf' and go to localhost:8989
- * Now please read the [contributing guide](https://github.com/graphhopper/graphhopper/blob/master/CONTRIBUTING.md) to submit your changes
+ * Now you can see your changes via `git diff`. Make sure that is the only one with `git status`
+ * Now execute `mvn clean test` to see if you did not miss arguments in your translation (see point 2 in the questions above)
+ * You can start a simple GraphHopper instance via './graphhopper.sh web europe_germany_berlin.pbf' and go to localhost:8989 append e.g. &locale=de if your translation does not show up automatically
+ * Read the [contributing guide](https://github.com/graphhopper/graphhopper/blob/master/CONTRIBUTING.md) to submit your changes
 
 ## License Agreement
 
