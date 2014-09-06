@@ -10,6 +10,7 @@ Developers
  * [Quickstart](./core/quickstart-from-source.md) for developers with git checkout and IDE setup etc
    * [Android](./android/index.md)
    * [Windows](./core/windows-setup.md)
+ * [Translations](./docs/translations.md)
  * [Slides from FOSDEM 2014](http://graphhopper.com/public/slides/)
  * [World-Wide-Road-Network](./core/world-wide.md)
  * [Changelog](https://github.com/graphhopper/graphhopper/blob/master/core/files/changelog.txt)
