@@ -51,19 +51,11 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     private final Map<String, Integer> bikeNetworkToCode = new HashMap<String, Integer>();
     EncodedValue relationCodeEncoder;
     private EncodedValue wayTypeEncoder;
-    private EncodedValue preferWayEncoder;
+    private EncodedValue preferWayEncoder;    
 
-    /**
-     * Should be only instantied via EncodingManager
-     */
-    protected BikeCommonFlagEncoder()
+    protected BikeCommonFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
     {
-        this(4, 2);
-    }
-
-    protected BikeCommonFlagEncoder( int speedBits, double speedFactor )
-    {
-        super(speedBits, speedFactor);
+        super(speedBits, speedFactor, maxTurnCosts);
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
         restrictions = new ArrayList<String>(Arrays.asList("bicycle", "access"));
         restrictedValues.add("private");

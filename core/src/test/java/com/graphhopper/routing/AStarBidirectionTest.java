@@ -17,9 +17,17 @@
  */
 package com.graphhopper.routing;
 
+import java.util.Arrays;
+import java.util.Collection;
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 
@@ -27,8 +35,31 @@ import com.graphhopper.storage.Graph;
  *
  * @author Peter Karich
  */
+@RunWith(Parameterized.class)
 public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
 {
+    /**
+     * Runs the same test with each of the supported traversal modes
+     */
+    @Parameters
+    public static Collection<Object[]> configs()
+    {
+        return Arrays.asList(new Object[][]
+        {
+            { TraversalMode.NODE_BASED },
+            { TraversalMode.EDGE_BASED_1DIR },
+            { TraversalMode.EDGE_BASED_2DIR },
+            { TraversalMode.EDGE_BASED_2DIR_UTURN }
+        });
+    }
+
+    private final TraversalMode traversalMode;
+
+    public AStarBidirectionTest( TraversalMode tMode )
+    {
+        this.traversalMode = tMode;
+    }
+
     @Override
     public AlgorithmPreparation prepareGraph( Graph g, final FlagEncoder encoder, final Weighting w )
     {
@@ -37,7 +68,7 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new AStarBidirection(_graph, encoder, w);
+                return new AStarBidirection(_graph, encoder, w, traversalMode);
             }
         }.setGraph(g);
     }

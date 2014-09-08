@@ -115,7 +115,12 @@ public class GraphBuilder
         if (level)
             graph = new LevelGraphStorage(dir, encodingManager, elevation);
         else
-            graph = new GraphHopperStorage(dir, encodingManager, elevation);
+        {
+            if (encodingManager.needsTurnCostsSupport())
+                graph = new GraphHopperStorage(dir, encodingManager, elevation, new TurnCostStorage());
+            else
+                graph = new GraphHopperStorage(dir, encodingManager, elevation);
+        }
 
         return graph;
     }

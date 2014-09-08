@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,6 +79,7 @@ public class GraphHopper implements GraphHopperAPI
     private boolean allowWrites = true;
     // for routing
     private boolean simplifyRequest = true;
+    private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
@@ -100,12 +102,12 @@ public class GraphHopper implements GraphHopperAPI
     private double wayPointMaxDistance = 1;
     private int workerThreads = -1;
     private int defaultSegmentSize = -1;
-    private boolean turnCosts = false;
     private boolean enableInstructions = true;
     private boolean calcPoints = true;
     private boolean fullyLoaded = false;
     private final TranslationMap trMap = new TranslationMap().doImport();
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
+    private final AtomicLong visitedSum = new AtomicLong(0);
 
     public GraphHopper()
     {
@@ -167,6 +169,15 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setWayPointMaxDistance( double wayPointMaxDistance )
     {
         this.wayPointMaxDistance = wayPointMaxDistance;
+        return this;
+    }
+
+    /**
+     * Sets the default traversal mode used for the algorithms and preparation.
+     */
+    public GraphHopper setTraversalMode( TraversalMode traversalMode )
+    {
+        this.traversalMode = traversalMode;
         return this;
     }
 
@@ -310,24 +321,6 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setElevation( boolean includeElevation )
     {
         this.elevation = includeElevation;
-        return this;
-    }
-
-    /**
-     * @return if import of turn restrictions is enabled
-     */
-    public boolean isEnableTurnRestrictions()
-    {
-        return turnCosts;
-    }
-
-    /**
-     * This method specifies if the import should include turn restrictions if available
-     */
-    public GraphHopper setEnableTurnRestrictions( boolean b )
-    {
-        ensureNotLoaded();
-        turnCosts = b;
         return this;
     }
 
@@ -494,7 +487,7 @@ public class GraphHopper implements GraphHopperAPI
 
         sortGraph = args.getBool("graph.doSort", sortGraph);
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
-        turnCosts = args.getBool("graph.turnCosts", turnCosts);
+        int bytesForFlags = args.getInt("graph.bytesForFlags", 4);
         if (args.get("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
         else
@@ -543,7 +536,6 @@ public class GraphHopper implements GraphHopperAPI
         // osm import
         wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", wayPointMaxDistance);
         String flagEncoders = args.get("osmreader.acceptWay", "CAR");
-        int bytesForFlags = args.getInt("osmreader.bytesForFlags", 4);
         encodingManager = new EncodingManager(flagEncoders, bytesForFlags);
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
@@ -557,7 +549,8 @@ public class GraphHopper implements GraphHopperAPI
     private void printInfo()
     {
         logger.info("version " + Constants.VERSION + "|" + Constants.BUILD_DATE + " (" + Constants.getVersions() + ")");
-        logger.info("graph " + graph.toString() + ", details:" + graph.toDetailsString());
+        if (graph != null)
+            logger.info("graph " + graph.toString() + ", details:" + graph.toDetailsString());
     }
 
     /**
@@ -625,9 +618,6 @@ public class GraphHopper implements GraphHopperAPI
             throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
                     + " but also cannot import from OSM file as it wasn't specified!");
 
-        if (encodingManager == null)
-            throw new IllegalStateException("Missing encoding manager");
-
         encodingManager.setEnableInstructions(enableInstructions);
         DataReader reader = createReader(graph);
         logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
@@ -694,13 +684,16 @@ public class GraphHopper implements GraphHopperAPI
                 }
             }
         }
+
         setGraphHopperLocation(graphHopperFolder);
 
-        GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
+        if (encodingManager == null)
+            encodingManager = EncodingManager.create(ghLocation);
 
+        GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
         if (chEnabled)
             graph = new LevelGraphStorage(dir, encodingManager, hasElevation());
-        else if (turnCosts)
+        else if (encodingManager.needsTurnCostsSupport())
             graph = new GraphHopperStorage(dir, encodingManager, hasElevation(), new TurnCostStorage());
         else
             graph = new GraphHopperStorage(dir, encodingManager, hasElevation());
@@ -756,7 +749,7 @@ public class GraphHopper implements GraphHopperAPI
     {
         FlagEncoder encoder = encodingManager.getSingle();
         PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder,
-                createWeighting(chWeighting, encoder));
+                createWeighting(chWeighting, encoder), traversalMode);
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                 setLazyUpdates(lazyUpdates).
                 setNeighborUpdates(neighborUpdates).
@@ -767,22 +760,33 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * @param weighting specify e.g. fastest or shortest (or empty for default)
-     * @param encoder
+     * @param weightingStr specify e.g. fastest or shortest (or empty for default)
+     * @param encoder the FlagEncoder (to specify the vehicle)
      * @return the weighting to be used for route calculation
      */
-    public Weighting createWeighting( String weighting, FlagEncoder encoder )
+    public Weighting createWeighting( String weightingStr, FlagEncoder encoder )
     {
         // ignore case
-        weighting = weighting.toLowerCase();
-        if ("fastest".equals(weighting))
+        Weighting weighting;
+        weightingStr = weightingStr.toLowerCase();
+        if ("fastest".equals(weightingStr))
         {
             if (encoder instanceof BikeCommonFlagEncoder)
-                return new PriorityWeighting((BikeCommonFlagEncoder) encoder);
+                weighting = new PriorityWeighting((BikeCommonFlagEncoder) encoder);
             else
-                return new FastestWeighting(encoder);
+                weighting = new FastestWeighting(encoder);
+        } else
+            weighting = new ShortestWeighting();
+
+        if (encoder.supportsTurnCosts())
+        {
+            if (!(graph.getExtendedStorage() instanceof TurnCostStorage))
+                throw new IllegalStateException("If you intent to use an encoder with turn cost support you need to properly set it up in EncodingManager before");
+
+            weighting = new TurnWeighting(weighting, encoder, (TurnCostStorage) graph.getExtendedStorage());
         }
-        return new ShortestWeighting();
+
+        return weighting;
     }
 
     @Override
@@ -883,7 +887,7 @@ public class GraphHopper implements GraphHopperAPI
             } else
             {
                 Weighting weighting = createWeighting(request.getWeighting(), encoder);
-                prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, algoStr, encoder, weighting);
+                prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, algoStr, encoder, weighting, traversalMode);
                 algo = prepare.createAlgo();
             }
 
@@ -896,6 +900,7 @@ public class GraphHopper implements GraphHopperAPI
 
             paths.add(path);
             debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
+            visitedSum.addAndGet(algo.getVisitedNodes());
             fromRes = toRes;
         }
 
@@ -1054,5 +1059,14 @@ public class GraphHopper implements GraphHopperAPI
     {
         if (!allowWrites)
             throw new IllegalStateException("Writes are not allowed!");
+    }
+
+    /**
+     * Returns the current sum of the visited nodes while routing. Mainly for statistic and
+     * debugging purposes.
+     */
+    public long getVisitedSum()
+    {
+        return visitedSum.get();
     }
 }

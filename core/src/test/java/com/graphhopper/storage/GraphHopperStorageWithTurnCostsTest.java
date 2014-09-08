@@ -65,9 +65,9 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
         graph.edge(9, 11, 200, true);
         graph.edge(1, 2, 120, false);
 
-        turnCostStorage.setTurnCosts(0, iter1.getEdge(), iter2.getEdge(), 1337);
-        turnCostStorage.setTurnCosts(0, iter2.getEdge(), iter1.getEdge(), 666);
-        turnCostStorage.setTurnCosts(1, iter1.getEdge(), iter2.getEdge(), 815);
+        turnCostStorage.addTurnInfo(0, iter1.getEdge(), iter2.getEdge(), 1337);
+        turnCostStorage.addTurnInfo(0, iter2.getEdge(), iter1.getEdge(), 666);
+        turnCostStorage.addTurnInfo(1, iter1.getEdge(), iter2.getEdge(), 815);
 
         iter1.setName("named street1");
         iter2.setName("named street2");
@@ -85,10 +85,10 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
         assertEquals("named street1", graph.getEdgeProps(iter1.getEdge(), iter1.getAdjNode()).getName());
         assertEquals("named street2", graph.getEdgeProps(iter2.getEdge(), iter2.getAdjNode()).getName());
 
-        assertEquals(1337, turnCostStorage.getTurnCosts(0, iter1.getEdge(), iter2.getEdge()));
-        assertEquals(666, turnCostStorage.getTurnCosts(0, iter2.getEdge(), iter1.getEdge()));
-        assertEquals(815, turnCostStorage.getTurnCosts(1, iter1.getEdge(), iter2.getEdge()));
-        assertEquals(0, turnCostStorage.getTurnCosts(3, iter1.getEdge(), iter2.getEdge()));
+        assertEquals(1337, turnCostStorage.getTurnCostFlags(0, iter1.getEdge(), iter2.getEdge()));
+        assertEquals(666, turnCostStorage.getTurnCostFlags(0, iter2.getEdge(), iter1.getEdge()));
+        assertEquals(815, turnCostStorage.getTurnCostFlags(1, iter1.getEdge(), iter2.getEdge()));
+        assertEquals(0, turnCostStorage.getTurnCostFlags(3, iter1.getEdge(), iter2.getEdge()));
 
         graph.edge(3, 4, 123, true).setWayGeometry(Helper.createPointList(4.4, 5.5, 6.6, 7.7));
         checkGraph(graph);

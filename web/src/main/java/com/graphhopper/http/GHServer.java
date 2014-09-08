@@ -89,7 +89,7 @@ public class GHServer
         connector0.setPort(httpPort);
         if (!host.isEmpty())
             connector0.setHost(host);
-        
+
         server.addConnector(connector0);
 
         HandlerList handlers = new HandlerList();
@@ -121,6 +121,9 @@ public class GHServer
 
     public void stop()
     {
+        if (server == null)
+            return;
+
         try
         {
             server.stop();

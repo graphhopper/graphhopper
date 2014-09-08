@@ -17,16 +17,16 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,17 +42,20 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     protected EdgeExplorer outEdgeExplorer;
     protected final Weighting weighting;
     protected final FlagEncoder flagEncoder;
+    protected final TraversalMode traversalMode;
     private boolean alreadyRun;
 
     /**
      * @param graph specifies the graph where this algorithm will run on
      * @param encoder sets the used vehicle (bike, car, foot)
      * @param weighting set the used weight calculation (e.g. fastest, shortest).
+     * @param traversalMode how the graph is traversed e.g. if via nodes or edges.
      */
-    public AbstractRoutingAlgorithm( Graph graph, FlagEncoder encoder, Weighting weighting )
+    public AbstractRoutingAlgorithm( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode traversalMode )
     {
         this.weighting = weighting;
         this.flagEncoder = encoder;
+        this.traversalMode = traversalMode;
         setGraph(graph);
     }
 
@@ -92,12 +95,15 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         return this;
     }
 
-    protected boolean accept( EdgeIterator iter )
+    protected boolean accept( EdgeIterator iter, int prevOrNextEdgeId )
     {
+        if (!traversalMode.hasUTurnSupport() && iter.getEdge() == prevOrNextEdgeId)
+            return false;
+
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
     }
 
-    protected void updateBestPath( EdgeEntry shortestDE, int currLoc )
+    protected void updateBestPath( EdgeIteratorState edgeState, EdgeEntry bestEdgeEntry, int key )
     {
     }
 
