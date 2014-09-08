@@ -31,9 +31,9 @@ import java.util.Map.Entry;
  */
 public class TranslationMap
 {
-    // use 'en_US' as reference
+    // ISO codes (639-1), use 'en_US' as reference
     private static final List<String> LOCALES = Arrays.asList("bg", "ca", "de_DE", "el", "en_US", "es", "fil",
-            "fr", "gl", "it", "ja", "nl", "pt_BR", "pt_PT", "ro", "ru", "si", "tr", "uk");
+            "fr", "gl", "he", "it", "ja", "nl", "pt_BR", "pt_PT", "ro", "ru", "si", "sv_SE", "tr", "uk");
     private final Map<String, Translation> translations = new HashMap<String, Translation>();
 
     /**
@@ -84,6 +84,15 @@ public class TranslationMap
         translations.put(locale.toString(), tr);
         if (!locale.getCountry().isEmpty() && !translations.containsKey(tr.getLanguage()))
             translations.put(tr.getLanguage(), tr);
+
+        // Map old Java 'standard' to latest, Java is a bit ugly here: http://stackoverflow.com/q/13974169/194609
+        // Hebrew
+        if ("iw".equals(locale.getLanguage()))
+            translations.put("he", tr);
+
+        // Indonesia
+        if ("in".equals(locale.getLanguage()))
+            translations.put("id", tr);
     }
 
     /**
@@ -250,40 +259,4 @@ public class TranslationMap
     {
         return translations.toString();
     }
-
-    // unused
-    private static final Translation NO_TRANSLATE = new Translation()
-    {
-
-        @Override
-        public String tr( String key, Object... params )
-        {
-            if (key.equals("turn_onto") || key.equals("turn"))
-                key = "";
-
-            for (Object p : params)
-            {
-                key += " " + p.toString();
-            }
-            return key.trim();
-        }
-
-        @Override
-        public Map<String, String> asMap()
-        {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public Locale getLocale()
-        {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public String getLanguage()
-        {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-    };
 }
