@@ -56,7 +56,7 @@ public class RoutingAlgorithmFactory
             algo = new AStarBidirection(g, encoder, weighting, traversalMode).setApproximation(approx);
         } else if ("dijkstraOneToMany".equalsIgnoreCase(algoStr))
         {
-            algo = new DijkstraOneToMany(g, encoder, weighting, traversalMode);
+            algo = new DijkstraOneToManyRef(g, encoder, weighting, traversalMode);
         } else
         {
             algo = new AStar(g, encoder, weighting, traversalMode);

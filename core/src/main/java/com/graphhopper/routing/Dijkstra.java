@@ -41,8 +41,8 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     private TIntObjectMap<EdgeEntry> fromMap;
     private PriorityQueue<EdgeEntry> fromHeap;
     private int visitedNodes;
-    private int to = -1;
-    private EdgeEntry currEdge;
+    protected int to = -1;
+    protected EdgeEntry currEdge;
 
     public Dijkstra( Graph g, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
@@ -69,16 +69,15 @@ public class Dijkstra extends AbstractRoutingAlgorithm
         return runAlgo();
     }
 
-    private Path runAlgo()
+    protected Path runAlgo()
     {
         EdgeExplorer explorer = outEdgeExplorer;
         while (true)
         {
             visitedNodes++;
-            if (finished())
-                break;
 
             int startNode = currEdge.adjNode;
+            
             EdgeIterator iter = explorer.setBaseNode(startNode);
             while (iter.next())
             {
@@ -89,7 +88,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
                 double tmpWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight;
                 if (Double.isInfinite(tmpWeight))
                     continue;
-
+                
                 EdgeEntry nEdge = fromMap.get(iterationKey);
                 if (nEdge == null)
                 {
@@ -97,6 +96,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
                     nEdge.parent = currEdge;
                     fromMap.put(iterationKey, nEdge);
                     fromHeap.add(nEdge);
+                    
                 } else if (nEdge.weight > tmpWeight)
                 {
                     fromHeap.remove(nEdge);
@@ -109,9 +109,16 @@ public class Dijkstra extends AbstractRoutingAlgorithm
 
                 updateBestPath(iter, nEdge, iterationKey);
             }
-
+            visited(currEdge);
+            
+            if (finished())
+                break;
+            
             if (fromHeap.isEmpty())
+            {
+            	currEdge=null;
                 return createEmptyPath();
+            }
 
             currEdge = fromHeap.poll();
             if (currEdge == null)
@@ -120,7 +127,11 @@ public class Dijkstra extends AbstractRoutingAlgorithm
         return extractPath();
     }
 
-    @Override
+    protected void visited(EdgeEntry edgeEntry) {
+    }
+
+	
+	@Override
     protected boolean finished()
     {
         return currEdge.adjNode == to;
@@ -131,9 +142,15 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     {
         if (currEdge == null || !finished())
             return createEmptyPath();
-        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setEdgeEntry(currEdge).extract();
+        return extractPath(currEdge);
+    }
+  
+    protected Path extractPath(EdgeEntry edgeEntry)
+    {
+        return new Path(graph, flagEncoder).setWeight(edgeEntry.weight).setEdgeEntry(edgeEntry).extract();
     }
 
+    
     @Override
     public String getName()
     {
@@ -144,5 +161,13 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     public int getVisitedNodes()
     {
         return visitedNodes;
+    }
+
+	public void clear() {
+		initCollections(1000);
+		to=-1;
+		visitedNodes=0;
+		currEdge=null;
+	    
     }
 }

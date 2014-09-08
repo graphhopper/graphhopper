@@ -17,12 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
-import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIteratorState;
@@ -42,7 +37,7 @@ import org.junit.runners.Parameterized;
  * @author Peter Karich
  */
 @RunWith(Parameterized.class)
-public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
+public class DijkstraOneToManyRefTest extends DijkstraOneToManyTest
 {
     /**
      * Runs the same test with each of the supported traversal modes
@@ -53,17 +48,16 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
         return Arrays.asList(new Object[][]
         {
             { TraversalMode.NODE_BASED },
-//            TODO { TraversalMode.EDGE_BASED_1DIR },
-//            TODO { TraversalMode.EDGE_BASED_2DIR },
-//            TODO { TraversalMode.EDGE_BASED_2DIR_UTURN }
+            { TraversalMode.EDGE_BASED_1DIR },
+            { TraversalMode.EDGE_BASED_2DIR },
+            { TraversalMode.EDGE_BASED_2DIR_UTURN }
         });
     }
 
-    final TraversalMode traversalmode;
-
-    public DijkstraOneToManyTest( TraversalMode tMode )
+    
+    public DijkstraOneToManyRefTest( TraversalMode tMode )
     {
-        this.traversalmode = tMode;
+        super(tMode);
     }
 
     @Override
@@ -74,61 +68,14 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new DijkstraOneToMany(_graph, encoder, w, traversalmode);
+                return new DijkstraOneToManyRef(_graph, encoder, w, traversalmode);
             }
         }.setGraph(defaultGraph);
     }
-
-    @Override
-    public void testViaEdges_BiGraph()
-    {
-        // calcPath with QueryResult not supported
-    }
-
-    @Override
-    public void testViaEdges_SpecialCases()
-    {
-        // calcPath with QueryResult not supported
-    }
-
-    @Override
-    public void testViaEdges_FromEqualsTo()
-    {
-        // calcPath with QueryResult not supported
-    }
-
-    @Override
-    public void testViaEdges_WithCoordinates()
-    {
-        // calcPath with QueryResult not supported
-    }
-
-    @Override
-    public void testQueryGraphAndFastest()
-    {
-        // calcPath with QueryResult not supported
-    }
-
-    @Override
-    public void testTwoWeightsPerEdge2()
-    {
-        // calcPath with QueryResult not supported
-    }
-
-    @Test
-    public void testIssue182()
-    {
-        AlgorithmPreparation prep = prepareGraph(initGraph(createGraph(false)));
-        RoutingAlgorithm algo = prep.createAlgo();
-        Path p = algo.calcPath(0, 8);
-        assertEquals(Helper.createTList(0, 7, 8), p.calcNodes());
-
-        // expand SPT
-        p = algo.calcPath(0, 10);
-        assertEquals(Helper.createTList(0, 1, 2, 3, 4, 10), p.calcNodes());
-    }
-
     
+    
+    
+    @Override
     @Test
     public void testIssue239()
     {
@@ -142,28 +89,12 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
         g.edge(6, 4, 1, true);
 
         AlgorithmPreparation prep = prepareGraph(g);
-        DijkstraOneToMany algo = (DijkstraOneToMany) prep.createAlgo();
-        assertEquals(-1, algo.findEndNode(0, 4));
-        assertEquals(-1, algo.findEndNode(0, 4));
+        DijkstraOneToManyRef algo = (DijkstraOneToManyRef) prep.createAlgo();
+        assertFalse(algo.calcPath(0, 4).isFound());
+        assertFalse(algo.calcPath(0, 4).isFound());
     }
-
-    @Test
-    public void testUseCache()
-    {
-        AlgorithmPreparation prep = prepareGraph(createTestGraph());
-        RoutingAlgorithm algo = prep.createAlgo();
-        Path p = algo.calcPath(0, 4);
-        assertEquals(Helper.createTList(0, 4), p.calcNodes());
-
-        // expand SPT
-        p = algo.calcPath(0, 7);
-        assertEquals(Helper.createTList(0, 4, 6, 5, 7), p.calcNodes());
-
-        // use SPT
-        p = algo.calcPath(0, 2);
-        assertEquals(Helper.createTList(0, 1, 2), p.calcNodes());
-    }
-
+    
+    @Override
     @Test
     public void testDifferentEdgeFilter()
     {
@@ -175,7 +106,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
         g.edge(5, 6, 10, true);
 
         AlgorithmPreparation prep = prepareGraph(g);
-        DijkstraOneToMany algo = (DijkstraOneToMany) prep.createAlgo();
+        DijkstraOneToManyRef algo = (DijkstraOneToManyRef) prep.createAlgo();
         algo.setEdgeFilter(new EdgeFilter()
         {
             @Override
@@ -201,21 +132,5 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
         assertEquals(Helper.createTList(4, 5, 6), p.calcNodes());
     }
 
-    private Graph initGraph( Graph g )
-    {
-        // 0-1-2-3-4
-        // |       /
-        // 7-10----
-        // \-8
-        g.edge(0, 1, 1, true);
-        g.edge(1, 2, 1, true);
-        g.edge(2, 3, 1, true);
-        g.edge(3, 4, 1, true);
-        g.edge(4, 10, 1, true);
-
-        g.edge(0, 7, 1, true);
-        g.edge(7, 8, 1, true);
-        g.edge(7, 10, 10, true);
-        return g;
-    }
+  
 }
