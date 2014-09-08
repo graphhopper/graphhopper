@@ -14,7 +14,6 @@ import gnu.trove.set.hash.TLongHashSet;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -100,7 +99,18 @@ import com.graphhopper.util.shapes.GHPoint;
  */
 
 public class OsItnReader implements DataReader {
-	private InputStream is;
+
+	public class ProcessVisitor {
+		public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException {
+		}
+	}
+
+	public class ProcessData {
+		long wayStart = -1;
+		long relationStart = -1;
+		long counter = 1;
+
+	}
 
 	protected static final int EMPTY = -1;
 	// pillar node is >= 3
@@ -198,62 +208,88 @@ public class OsItnReader implements DataReader {
 	 * This allows a more compact graph data structure.
 	 */
 	void preProcess(File osmFile) {
-		OsItnInputFile in = null;
 		try {
-			in = new OsItnInputFile(osmFile).setWorkerThreads(workerThreads)
-					.open();
-
-			long tmpWayCounter = 1;
-			long tmpRelationCounter = 1;
-			RoutingElement item;
-			while ((item = in.getNext()) != null) {
-				logger.info("OsItnReader.preProcess( " + item.getType()
-						+ " )");
-				if (item.isType(OSMElement.WAY)) {
-					final Way way = (Way) item;
-					boolean valid = filterWay(way);
-					if (valid) {
-						TLongList wayNodes = way.getNodes();
-						int s = wayNodes.size();
-						for (int index = 0; index < s; index++) {
-							prepareHighwayNode(wayNodes.get(index));
-						}
-
-						if (++tmpWayCounter % 500000 == 0) {
-							logger.info(nf(tmpWayCounter)
-									+ " (preprocess), osmIdMap:"
-									+ nf(getNodeMap().getSize()) + " ("
-									+ getNodeMap().getMemoryUsage() + "MB) "
-									+ Helper.getMemInfo());
-						}
-					} 
-				}
-				if (item.isType(OSMElement.RELATION)) {
-					final Relation relation = (Relation) item;
-					if (!relation.isMetaRelation()
-							&& relation.hasTag("type", "route"))
-						prepareWaysWithRelationInfo(relation);
-
-					if (relation.hasTag("type", "restriction")) 
-						prepareRestrictionRelation(relation);
-					
-					if (relation.hasTag("name"))
-						prepareNameRelation(relation);
-
-
-					if (++tmpRelationCounter % 50000 == 0) {
-						logger.info(nf(tmpRelationCounter)
-								+ " (preprocess), osmWayMap:"
-								+ nf(getRelFlagsMap().size()) + " "
-								+ Helper.getMemInfo());
-					}
-
-				}
-			}
+			preProcessDirOrFile(osmFile);
 		} catch (Exception ex) {
 			throw new RuntimeException("Problem while parsing file", ex);
+		}
+	}
+
+	private void preProcessDirOrFile(File osmFile) throws XMLStreamException,
+			IOException {
+		if (osmFile.isDirectory()) {
+			String absolutePath = osmFile.getAbsolutePath();
+			String[] list = osmFile.list();
+			for (String file : list) {
+				File nextFile = new File(absolutePath + File.separator + file);
+				preProcessDirOrFile(nextFile);
+			}
+		} else {
+			preProcessSingleFile(osmFile);
+		}
+	}
+
+	private void preProcessSingleFile(File osmFile) throws XMLStreamException,
+			IOException {
+		OsItnInputFile in = null;
+		try {
+			logger.error("preprocess:" + osmFile.getName());
+			in = new OsItnInputFile(osmFile).setWorkerThreads(workerThreads)
+					.open();
+			preProcessSingleFile(in);
 		} finally {
 			Helper.close(in);
+		}
+	}
+
+	private void preProcessSingleFile(OsItnInputFile in)
+			throws XMLStreamException {
+		long tmpWayCounter = 1;
+		long tmpRelationCounter = 1;
+		RoutingElement item;
+		while ((item = in.getNext()) != null) {
+			logger.info("OsItnReader.preProcess( " + item.getType() + " )");
+			if (item.isType(OSMElement.WAY)) {
+				final Way way = (Way) item;
+				boolean valid = filterWay(way);
+				if (valid) {
+					TLongList wayNodes = way.getNodes();
+					int s = wayNodes.size();
+					for (int index = 0; index < s; index++) {
+						prepareHighwayNode(wayNodes.get(index));
+					}
+
+					if (++tmpWayCounter % 500000 == 0) {
+						logger.info(nf(tmpWayCounter)
+								+ " (preprocess), osmIdMap:"
+								+ nf(getNodeMap().getSize()) + " ("
+								+ getNodeMap().getMemoryUsage() + "MB) "
+								+ Helper.getMemInfo());
+					}
+				}
+			}
+			if (item.isType(OSMElement.RELATION)) {
+				final Relation relation = (Relation) item;
+				logger.warn("RELATION TYPE:" + item.getTag("type") + " meta?"
+						+ relation.isMetaRelation());
+				if (!relation.isMetaRelation()
+						&& relation.hasTag("type", "route"))
+					prepareWaysWithRelationInfo(relation);
+
+				if (relation.hasTag("type", "restriction"))
+					prepareRestrictionRelation(relation);
+
+				if (relation.hasTag("name"))
+					prepareNameRelation(relation);
+
+				if (++tmpRelationCounter % 50000 == 0) {
+					logger.info(nf(tmpRelationCounter)
+							+ " (preprocess), osmWayMap:"
+							+ nf(getRelFlagsMap().size()) + " "
+							+ Helper.getMemInfo());
+				}
+
+			}
 		}
 	}
 
@@ -266,7 +302,7 @@ public class OsItnReader implements DataReader {
 					((OSITNTurnRelation) turnRelation).getOsmIdTo());
 		}
 	}
-	
+
 	private void prepareNameRelation(Relation relation) {
 		String name = relation.getTag("name");
 		TLongObjectMap<String> edgeIdToNameMap = getEdgeNameMap();
@@ -297,7 +333,7 @@ public class OsItnReader implements DataReader {
 
 		return edgeIdToNodeMap;
 	}
-	
+
 	private TLongObjectMap<String> getEdgeNameMap() {
 		if (edgeNameMap == null)
 			edgeNameMap = new TLongObjectHashMap(getOsmIdStoreRequiredSet()
@@ -330,44 +366,79 @@ public class OsItnReader implements DataReader {
 	 */
 	private void writeOsm2Graph(File osmFile) {
 		int tmp = (int) Math.max(getNodeMap().getSize() / 50, 100);
-		logger.info("creating graph. Found nodes (pillar+tower):"
+		logger.error("creating graph. Found nodes (pillar+tower):"
 				+ nf(getNodeMap().getSize()) + ", " + Helper.getMemInfo());
 		graphStorage.create(tmp);
-		long wayStart = -1;
-		long relationStart = -1;
-		long counter = 1;
-		OsItnInputFile in = null;
+
+		ProcessData processData = new ProcessData();
 		try {
-			in = new OsItnInputFile(osmFile).setWorkerThreads(workerThreads)
-					.open();
-			LongIntMap nodeFilter = getNodeMap();
-
-			counter = processOne(wayStart, relationStart, counter, in,
-					nodeFilter);
-			in = new OsItnInputFile(osmFile).setWorkerThreads(workerThreads)
-					.open();
-			counter = process(wayStart, relationStart, counter, in, nodeFilter);
-			in = new OsItnInputFile(osmFile).setWorkerThreads(workerThreads)
-					.open();
-			counter = postProcess(wayStart, relationStart, counter, in,
-					nodeFilter);
-
-			logger.info("storage nodes:" + graphStorage.getNodes());
+			ProcessVisitor processVisitor = new ProcessVisitor() {
+				@Override
+				public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException {
+					processStageOne(processData, in);
+				}
+			};
+			logger.error("PROCESS NODES");
+			writeOsm2GraphFromDirOrFile(osmFile, processData, processVisitor );
+			processVisitor = new ProcessVisitor() {
+				@Override
+				public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException {
+					processStageTwo(processData, in);
+				}
+			};
+			logger.error("PROCESS WAY");
+			writeOsm2GraphFromDirOrFile(osmFile, processData, processVisitor );
+			processVisitor = new ProcessVisitor() {
+				@Override
+				public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException {
+					processStageThree(processData, in);
+				}
+			};
+			logger.error("PROCESS RELATION");
+			writeOsm2GraphFromDirOrFile(osmFile, processData, processVisitor);
+			
 		} catch (Exception ex) {
 			throw new RuntimeException("Couldn't process file " + osmFile, ex);
-		} finally {
-			Helper.close(in);
 		}
 
 		finishedReading();
 		if (graphStorage.getNodes() == 0)
 			throw new IllegalStateException("osm must not be empty. read "
-					+ counter + " lines and " + locations + " locations");
+					+ processData.counter + " lines and " + locations
+					+ " locations");
 	}
 
-	private long processOne(long wayStart, long relationStart, long counter,
-			OsItnInputFile in, LongIntMap nodeFilter) throws XMLStreamException {
+	private void writeOsm2GraphFromDirOrFile(File osmFile, ProcessData processData, ProcessVisitor processVisitor) throws XMLStreamException, IOException {
+		if (osmFile.isDirectory()) {
+			String absolutePath = osmFile.getAbsolutePath();
+			String[] list = osmFile.list();
+			for (String file : list) {
+				File nextFile = new File(absolutePath + File.separator + file);
+				writeOsm2GraphFromDirOrFile(nextFile, processData, processVisitor);
+			}
+		} else {
+			writeOsm2GraphFromSingleFile(osmFile, processData, processVisitor);
+		}
+	}
+
+	private void writeOsm2GraphFromSingleFile(File osmFile, ProcessData processData, ProcessVisitor processVisitor) throws XMLStreamException, IOException {
+		OsItnInputFile in=null;
+		try {
+			logger.error("PROCESS: "  + osmFile.getName());
+			in = new OsItnInputFile(osmFile).setWorkerThreads(workerThreads)
+					.open();
+			processVisitor.process(processData, in);
+			logger.info("storage nodes:" + graphStorage.getNodes());
+		} finally {
+			Helper.close(in);
+		}
+		
+	}
+
+	private void processStageOne(ProcessData processData, OsItnInputFile in)
+			throws XMLStreamException {
 		RoutingElement item;
+		LongIntMap nodeFilter = getNodeMap();
 		while ((item = in.getNext()) != null) {
 			switch (item.getType()) {
 			case OSMElement.NODE:
@@ -376,19 +447,72 @@ public class OsItnReader implements DataReader {
 				if (nodeFilter.get(id) != -1) {
 					OSITNNode nodeItem = (OSITNNode) item;
 					processNode(nodeItem);
-					
+
 					String strId = String.valueOf(id);
 					addGradeNodesIfRequired(nodeItem, strId, nodeFilter);
 				}
 				break;
 
 			}
-			if (++counter % 5000000 == 0) {
-				logger.info(nf(counter) + ", locs:" + nf(locations) + " ("
-						+ skippedLocations + ") " + Helper.getMemInfo());
+			if (++processData.counter % 5000000 == 0) {
+				logger.info(nf(processData.counter) + ", locs:" + nf(locations)
+						+ " (" + skippedLocations + ") " + Helper.getMemInfo());
 			}
 		}
-		return counter;
+	}
+
+	private void processStageTwo(ProcessData processData, OsItnInputFile in)
+			throws XMLStreamException {
+		RoutingElement item;
+		LongIntMap nodeFilter = getNodeMap();
+		while ((item = in.getNext()) != null) {
+			switch (item.getType()) {
+			case OSMElement.WAY:
+				logger.info("WAY:" + item.getId() + ":" + processData.wayStart);
+				if (processData.wayStart < 0) {
+					logger.info(nf(processData.counter) + ", now parsing ways");
+					processData.wayStart = processData.counter;
+				}
+				prepareWaysNodes(item, nodeFilter);
+				processWay((Way) item);
+				((OSITNWay)item).clearWayNodes();
+				break;
+			}
+			if (++processData.counter % 5000000 == 0) {
+				logger.info(nf(processData.counter) + ", locs:" + nf(locations)
+						+ " (" + skippedLocations + ") " + Helper.getMemInfo());
+			}
+		}
+	}
+
+	private void prepareWaysNodes(RoutingElement item, LongIntMap nodeFilter) {
+		List<OSITNNode> evaluateWayNodes = ((OSITNWay) item)
+				.evaluateWayNodes();
+		for (OSITNNode ositnNode : evaluateWayNodes) {
+			nodeFilter.put(ositnNode.getId(), TOWER_NODE);
+			processNode(ositnNode);
+		}
+	}
+
+	private void processStageThree(ProcessData processData, OsItnInputFile in)
+			throws XMLStreamException {
+		RoutingElement item;
+		while ((item = in.getNext()) != null) {
+			switch (item.getType()) {
+			case OSMElement.RELATION:
+				if (processData.relationStart < 0) {
+					logger.info(nf(processData.counter)
+							+ ", now parsing relations");
+					processData.relationStart = processData.counter;
+				}
+				processRelation((Relation) item);
+				break;
+			}
+			if (++processData.counter % 5000000 == 0) {
+				logger.info(nf(processData.counter) + ", locs:" + nf(locations)
+						+ " (" + skippedLocations + ") " + Helper.getMemInfo());
+			}
+		}
 	}
 
 	private void addGradeNodesIfRequired(OSITNNode item, String idStr,
@@ -402,54 +526,6 @@ public class OsItnReader implements DataReader {
 				processNode((Node) gradeNode);
 			}
 		}
-	}
-
-	private long process(long wayStart, long relationStart, long counter,
-			OsItnInputFile in, LongIntMap nodeFilter) throws XMLStreamException {
-		RoutingElement item;
-		while ((item = in.getNext()) != null) {
-			switch (item.getType()) {
-			case OSMElement.WAY:
-				logger.info("WAY:" + item.getId() + ":" + wayStart);
-				if (wayStart < 0) {
-					logger.info(nf(counter) + ", now parsing ways");
-					wayStart = counter;
-				}
-				List<OSITNNode> evaluateWayNodes = ((OSITNWay)item).evaluateWayNodes();
-				for (OSITNNode ositnNode : evaluateWayNodes) {
-					nodeFilter.put(ositnNode.getId(), TOWER_NODE);
-					processNode(ositnNode);
-				}
-				processWay((Way) item);
-				break;
-			}
-			if (++counter % 5000000 == 0) {
-				logger.info(nf(counter) + ", locs:" + nf(locations) + " ("
-						+ skippedLocations + ") " + Helper.getMemInfo());
-			}
-		}
-		return counter;
-	}
-
-	private long postProcess(long wayStart, long relationStart, long counter,
-			OsItnInputFile in, LongIntMap nodeFilter) throws XMLStreamException {
-		RoutingElement item;
-		while ((item = in.getNext()) != null) {
-			switch (item.getType()) {
-			case OSMElement.RELATION:
-				if (relationStart < 0) {
-					logger.info(nf(counter) + ", now parsing relations");
-					relationStart = counter;
-				}
-				processRelation((Relation) item);
-				break;
-			}
-			if (++counter % 5000000 == 0) {
-				logger.info(nf(counter) + ", locs:" + nf(locations) + " ("
-						+ skippedLocations + ") " + Helper.getMemInfo());
-			}
-		}
-		return counter;
 	}
 
 	/**
@@ -470,10 +546,11 @@ public class OsItnReader implements DataReader {
 			return;
 
 		long relationFlags = getRelFlagsMap().get(way.getId());
+		logger.info("RELFLAGS:" + way.getId() + ":" + relationFlags);
 		String wayName = getWayName(way.getId());
-		if(null!=wayName) {
+		if (null != wayName) {
 			String curName = way.getTag("name");
-			if(null!=curName && curName.length() > 0) {
+			if (null != curName && curName.length() > 0) {
 				wayName += " (" + curName + ")";
 			}
 			logger.warn("Applying Name:" + wayName);
@@ -509,7 +586,7 @@ public class OsItnReader implements DataReader {
 				relationFlags);
 		if (wayFlags == 0)
 			return;
-
+		logger.warn("Adding Relation to WAYS:" + wayFlags);
 		List<EdgeIteratorState> createdEdges = new ArrayList<EdgeIteratorState>();
 		// look for barriers along the way
 		final int size = osmNodeIds.size();
@@ -537,21 +614,26 @@ public class OsItnReader implements DataReader {
 								- lastBarrier + 1);
 						transfer[transfer.length - 1] = newNodeId;
 						TLongList partIds = new TLongArrayList(transfer);
-						Collection<EdgeIteratorState> newWays = addOSMWay(partIds, wayFlags,
-								wayOsmId);
-						logger.warn("Way adds edges:" + wayOsmId + newWays.size() );
+						Collection<EdgeIteratorState> newWays = addOSMWay(
+								partIds, wayFlags, wayOsmId);
+						logger.warn("Way adds edges:" + wayOsmId
+								+ newWays.size());
 						createdEdges.addAll(newWays);
 
 						// create zero length edge for barrier
-						Collection<EdgeIteratorState> newBarriers = addBarrierEdge(newNodeId, nodeId,
-								wayFlags, nodeFlags, wayOsmId);
-						logger.warn("Way adds barrier edges:" + wayOsmId + newBarriers.size() );
+						Collection<EdgeIteratorState> newBarriers = addBarrierEdge(
+								newNodeId, nodeId, wayFlags, nodeFlags,
+								wayOsmId);
+						logger.warn("Way adds barrier edges:" + wayOsmId
+								+ newBarriers.size());
 						createdEdges.addAll(newBarriers);
 					} else {
 						// run edge from real first node to shadow node
-						Collection<EdgeIteratorState> newBarriers = addBarrierEdge(nodeId, newNodeId,
-								wayFlags, nodeFlags, wayOsmId);
-						logger.warn("Way adds barrier edges:" + wayOsmId + newBarriers.size() );
+						Collection<EdgeIteratorState> newBarriers = addBarrierEdge(
+								nodeId, newNodeId, wayFlags, nodeFlags,
+								wayOsmId);
+						logger.warn("Way adds barrier edges:" + wayOsmId
+								+ newBarriers.size());
 						createdEdges.addAll(newBarriers);
 
 						// exchange first node for created barrier node
@@ -569,14 +651,16 @@ public class OsItnReader implements DataReader {
 				long transfer[] = osmNodeIds.toArray(lastBarrier, size
 						- lastBarrier);
 				TLongList partNodeIds = new TLongArrayList(transfer);
-				Collection<EdgeIteratorState> newEdges = addOSMWay(partNodeIds, wayFlags, wayOsmId);
-				logger.warn("Way adds edges:" + wayOsmId + newEdges.size() );
+				Collection<EdgeIteratorState> newEdges = addOSMWay(partNodeIds,
+						wayFlags, wayOsmId);
+				logger.warn("Way adds edges:" + wayOsmId + newEdges.size());
 				createdEdges.addAll(newEdges);
 			}
 		} else {
 			// no barriers - simply add the whole way
-			Collection<EdgeIteratorState> newEdges = addOSMWay(way.getNodes(), wayFlags, wayOsmId);
-			logger.warn("Way adds edges:" + wayOsmId + ":" + newEdges.size() );
+			Collection<EdgeIteratorState> newEdges = addOSMWay(way.getNodes(),
+					wayFlags, wayOsmId);
+			logger.warn("Way adds edges:" + wayOsmId + ":" + newEdges.size());
 			createdEdges.addAll(newEdges);
 		}
 
@@ -686,7 +770,7 @@ public class OsItnReader implements DataReader {
 			logger.warn("MISSING FROM MAP:" + node.getId());
 			return false;
 		}
-		
+		logger.warn("Adding Node:" + node.getId() + " as " + nodeType);
 		double lat = node.getLat();
 		double lon = node.getLon();
 		double ele = getElevation(node);
@@ -706,7 +790,10 @@ public class OsItnReader implements DataReader {
 
 	void prepareWaysWithRelationInfo(Relation relation) {
 		// is there at least one tag interesting for the registed encoders?
-		if (encodingManager.handleRelationTags(relation, 0) == 0)
+		long handleRelationTags = encodingManager.handleRelationTags(relation,
+				0);
+		logger.warn("PREPARE ONE WAY:" + handleRelationTags);
+		if (handleRelationTags == 0)
 			return;
 
 		int size = relation.getMembers().size();
@@ -714,16 +801,19 @@ public class OsItnReader implements DataReader {
 			RelationMember member = relation.getMembers().get(index);
 			if (member.type() != OSMRelation.Member.WAY)
 				continue;
-
 			long osmId = member.ref();
+			logger.warn("Adding WAY RELATION TO " + osmId);
 			long oldRelationFlags = getRelFlagsMap().get(osmId);
 
 			// Check if our new relation data is better comparated to the the
 			// last one
 			long newRelationFlags = encodingManager.handleRelationTags(
 					relation, oldRelationFlags);
-			if (oldRelationFlags != newRelationFlags)
+			logger.warn("APPLYING relation:" + oldRelationFlags + ":"
+					+ newRelationFlags);
+			if (oldRelationFlags != newRelationFlags) {
 				getRelFlagsMap().put(osmId, newRelationFlags);
+			}
 		}
 	}
 
@@ -731,11 +821,13 @@ public class OsItnReader implements DataReader {
 		int tmpIndex = getNodeMap().get(osmId);
 		if (tmpIndex == EMPTY) {
 			// osmId is used exactly once
-			logger.info("OsItnReader.prepareHighwayNode(EMPTY->PILLAR):" + osmId);
+			logger.info("OsItnReader.prepareHighwayNode(EMPTY->PILLAR):"
+					+ osmId);
 			getNodeMap().put(osmId, PILLAR_NODE);
 		} else if (tmpIndex > EMPTY) {
 			// mark node as tower node as it occured at least twice times
-			logger.info("OsItnReader.prepareHighwayNode(PILLAR->TOWER):" + osmId);
+			logger.info("OsItnReader.prepareHighwayNode(PILLAR->TOWER):"
+					+ osmId);
 			getNodeMap().put(osmId, TOWER_NODE);
 		} else {
 			// tmpIndex is already negative (already tower node)

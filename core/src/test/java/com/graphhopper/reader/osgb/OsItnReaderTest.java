@@ -38,6 +38,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.AbstractGraphStorageTester;
 import com.graphhopper.storage.ExtendedStorage;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -57,14 +58,12 @@ public class OsItnReaderTest {
 			.getLogger(OsItnReaderTest.class);
 	private static final InputStream COMPLEX_ITN_EXAMPLE = OsItnReader.class
 			.getResourceAsStream("os-itn-sample.xml");
-	private EncodingManager encodingManager = new EncodingManager("CAR");
-	private EdgeFilter carOutEdges = new DefaultEdgeFilter(
-			encodingManager.getEncoder("CAR"), false, true);
-	private Set<String> themes = new HashSet<>();
+	private EncodingManager encodingManager = new EncodingManager("car:com.graphhopper.routing.util.osgb.RelationCarFlagEncoder");
 	private CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager
 			.getEncoder("CAR");
+	private EdgeFilter carOutEdges = new DefaultEdgeFilter(
+			carEncoder, false, true);
 
-	private boolean inTheme;
 
 	private double node0Lat = 50.69919585809061d;
 	private double node0Lon = -3.558952191414606d;
@@ -81,6 +80,7 @@ public class OsItnReaderTest {
 	private double node4Lat = 50.74216177664155d;
 	private double node4Lon = -3.702115749998877d;
 	private EdgeExplorer carOutExplorer;
+	private EdgeExplorer carAllExplorer;
 
 	@Test
 	public void testReadSimpleCrossRoads() throws IOException {
@@ -123,6 +123,7 @@ public class OsItnReaderTest {
 		readGraphFile(graph, file);
 		assertEquals(5, graph.getNodes());
 		checkSimpleNodeNetwork(graph);
+		
 		
 		carOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, false, true));
         
@@ -173,12 +174,48 @@ public class OsItnReaderTest {
 		assertEquals(7, graph.getNodes());
 		checkBridgeNodeNetwork(graph);
 	}
+	
+	@Test
+	public void testReadSimpleOneWay()
+			throws IOException {
+		boolean turnRestrictionsImport = true;
+		boolean is3D = false;
+		GraphHopperStorage graph = configureStorage(turnRestrictionsImport,
+				is3D);
+
+		File file = new File(
+				"./src/test/resources/com/graphhopper/reader/os-itn-simple-oneway.xml");
+		readGraphFile(graph, file);
+		
+		assertEquals(5, graph.getNodes());
+		checkSimpleNodeNetwork(graph);
+		checkOneWay(graph);
+	}
+
+	private void checkOneWay(GraphHopperStorage graph) {
+		System.err.println(carEncoder.getClass());
+		carAllExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, true));
+		EdgeIterator iter = carAllExplorer.setBaseNode(0);
+        assertTrue(iter.next());
+		evaluateRouting(iter, 4, true, true, false);
+        evaluateRouting(iter, 3, true, true, false);
+        evaluateRouting(iter, 2, true, true, false);
+        evaluateRouting(iter, 1, true, true, true);
+	}
+
+	private void evaluateRouting(EdgeIterator iter, int node, boolean forward,
+			boolean backward, boolean finished) {
+		assertEquals(node, iter.getAdjNode());
+        assertEquals(forward, carEncoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
+        assertEquals(backward, carEncoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
+        assertEquals(!finished, iter.next());
+	}
 
 	private void readGraphFile(GraphHopperStorage graph, File file)
 			throws IOException {
 		OsItnReader osItnReader = new OsItnReader(graph);
 		osItnReader.setOSMFile(file);
-		osItnReader.setEncodingManager(new EncodingManager("CAR,FOOT"));
+		osItnReader.setEncodingManager(encodingManager);
 		osItnReader.readGraph();
 	}
 

@@ -130,4 +130,8 @@ public class OSITNWay extends OSITNElement implements Way {
 		}
 		return wayNodes;
 	}
+
+	public void clearWayNodes() {
+		wayCoords = null;
+	}
 }

@@ -23,6 +23,9 @@ import java.util.List;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.Type;
@@ -41,6 +44,8 @@ public class OSITNRelation extends OSITNElement implements Relation {
 	private static final List<String> onlyInstructions;
 	protected final ArrayList<ITNMember> members = new ArrayList<ITNMember>(5);
 	private Type relationType;
+	private static final Logger logger = LoggerFactory
+			.getLogger(OSITNRelation.class);
 
 	static {
 		notInstructions = new ArrayList<>();
@@ -171,15 +176,23 @@ public class OSITNRelation extends OSITNElement implements Relation {
 	}
 
 	@Override
-	protected void addDirectedNode(String nodeId, String grade, String orientation) {
+	protected void addDirectedNode(String nodeId, String grade,
+			String orientation) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	protected void addDirectedLink(String nodeId, String orientation) {
+		logger.warn("ADDING REALTION LINK:" + nodeId);
 		int size = members.size();
-		if (size < 2) {  //TODO this will break multi way information but helps me simplify multi way instruction for now
+		if (size > 1) {
+			ITNMember itnMember = members.get(members.size() - 1);
+			if ("to".equals(itnMember.role)) {
+				itnMember.role = "via";
+			}
+		}
+		if (size < 2 || hasTag("type", "oneway")) {
 			String idStr = nodeId.substring(5);
 			ITNMember member = new ITNMember(WAY, Long.valueOf(idStr),
 					0 == size ? "from" : "to");

@@ -87,8 +87,7 @@ public abstract class OSITNElement implements RoutingElement {
 					break;
 				}
 				case "instruction" : {
-					setTag("type", "restriction");
-					event = handleTag("restriction",parser);
+					event = handleRouteInformation(parser);
 					break;
 				}
 				case "roadName" : {
@@ -114,6 +113,23 @@ public abstract class OSITNElement implements RoutingElement {
 			}
 			}
 		}
+	}
+
+	private int handleRouteInformation(XMLStreamReader parser)
+			throws XMLStreamException {
+		String elementText = parser.getElementText();
+		int event;
+		if("One Way".equals(elementText)) {
+			setTag("type", "route");
+			setTag("oneway", "true");
+			logger.warn("CREATING ONE WAY");
+		}
+		else {
+			setTag("type", "restriction");
+			setTag("restriction",elementText);
+		}
+		event = parser.getEventType();
+		return event;
 	}
 
 	private int handleDirectedLink(XMLStreamReader parser) throws XMLStreamException {

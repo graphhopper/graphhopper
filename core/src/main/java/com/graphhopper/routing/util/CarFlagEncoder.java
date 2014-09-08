@@ -213,6 +213,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     @Override
     public long handleWayTags( Way way, long allowed, long relationCode )
     {
+//    	logger.info("Handle WAY" +way.getId() + ":" + allowed + ":" + relationCode);
         if (!isAccept(allowed))
             return 0;
 
@@ -238,6 +239,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
             if (way.hasTag("oneway", oneways) || isRoundabout)
             {
+//            	System.err.println("ONE WAY:" + way.getTag("oneway"));
                 if (way.hasTag("oneway", "-1"))
                     encoded |= backwardBit;
                 else

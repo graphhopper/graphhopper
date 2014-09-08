@@ -178,20 +178,12 @@ public class OsItnInputFile implements Sink, Closeable {
 		int event = parser.next();
 		while (event != XMLStreamConstants.END_DOCUMENT) {
 			if (event == XMLStreamConstants.START_ELEMENT) {
-				int attributeCount = parser.getAttributeCount();
-				for (int i = 0; i < attributeCount; i++) {
-					QName array_element = parser.getAttributeName(i);
-					// System.err.println("QNAME" + array_element);
-				}
-
 				String idStr = parser.getAttributeValue(null, "fid");
 				if (idStr != null) {
 					String name = parser.getLocalName();
 					idStr = idStr.substring(4);
 					long id = Long.parseLong(idStr);
 
-					// TODO switch cases roadInformationMember
-					//
 					logger.info(":" + name + ":");
 					switch (name) {
 					case "RoadNode": {
