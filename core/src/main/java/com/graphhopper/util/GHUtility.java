@@ -115,7 +115,7 @@ public class GHUtility
         }
         return list;
     }
-    
+
     public static List<Integer> getEdgeIds( EdgeIterator iter )
     {
         List<Integer> list = new ArrayList<Integer>();
@@ -340,14 +340,14 @@ public class GHUtility
         return g.copyTo(outGraph.create(g.getNodes()));
     }
 
-    public static int getToNode( Graph g, int edge, int endNode )
+    public static int getAdjNode( Graph g, int edge, int adjNode )
     {
         if (EdgeIterator.Edge.isValid(edge))
         {
-            EdgeIteratorState iterTo = g.getEdgeProps(edge, endNode);
+            EdgeIteratorState iterTo = g.getEdgeProps(edge, adjNode);
             return iterTo.getAdjNode();
         }
-        return endNode;
+        return adjNode;
     }
 
     public static class DisabledEdgeIterator implements EdgeSkipIterator
@@ -498,5 +498,26 @@ public class GHUtility
                 return iter;
         }
         return null;
+    }
+
+    /**
+     * Creates unique positive number for specified edgeId taking into account the direction defined
+     * by nodeA, nodeB and reverse.
+     */
+    public static int createEdgeKey( int nodeA, int nodeB, int edgeId, boolean reverse )
+    {
+        edgeId = edgeId << 1;
+        if (reverse)
+            return (nodeA > nodeB) ? edgeId : edgeId + 1;
+        return (nodeA > nodeB) ? edgeId + 1 : edgeId;
+    }
+
+    /**
+     * Returns if the specified edgeKeys (created by createEdgeKey) are identical regardless of the
+     * direction.
+     */
+    public static boolean isSameEdgeKeys( int edgeKey1, int edgeKey2 )
+    {
+        return edgeKey1 / 2 == edgeKey2 / 2;
     }
 }

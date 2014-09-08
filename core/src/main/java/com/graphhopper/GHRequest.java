@@ -98,9 +98,8 @@ public class GHRequest
     }
 
     /**
-     * Possible values: astar (A* algorithm, default), astarbi (bidirectional A*) dijkstra
-     * (Dijkstra), dijkstrabi and dijkstraNativebi (a bit faster bidirectional Dijkstra). Or specify
-     * empty to use default.
+     * Possible values: astar (A* algorithm, default), astarbi (bidirectional A*), dijkstra
+     * (Dijkstra) or dijkstrabi. Or specify empty to use default.
      */
     public GHRequest setAlgorithm( String algo )
     {

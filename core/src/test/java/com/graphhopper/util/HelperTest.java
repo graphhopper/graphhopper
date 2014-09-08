@@ -43,6 +43,13 @@ public class HelperTest
     }
 
     @Test
+    public void testCountBitValue() throws Exception
+    {
+        assertEquals(2, Helper.countBitValue(4));
+        assertEquals(5, Helper.countBitValue(20));
+    }
+
+    @Test
     public void testUnzip() throws Exception
     {
         String to = "./target/tmp/test";

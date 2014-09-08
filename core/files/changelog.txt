@@ -1,4 +1,9 @@
 0.4.0
+    EncodingManager cannot be null in GraphHopperStorage since 0.4. If you need to parse EncodingManager configuration from existing graph use EncodingManager.create
+    no reflection done in EncodingManager which improves portability and makes configuration of encoders
+    removed dijkstraNativebi as no performance advantage but maintenance disadvantage and similar to oneToManyDijkstra
+    osmreader.bytesForFlags changed to graph.bytesForFlags
+    to provide context for turn costs we needed to add prevEdgeId into Weighting.calcWeight
     jsonp is disabled by default. You need to enable it in the config.properties, see the config-example.properties
     with the introduction of lock protection mechanism (see #112) GraphHopper needs always write access, see also #217
     new GraphHopper.clean method to remove the directory via Java API

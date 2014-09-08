@@ -96,9 +96,13 @@ public class GraphHopperStorage implements GraphStorage
         this(dir, encodingManager, withElevation, new ExtendedStorage.NoExtendedStorage());
     }
 
-    public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation, ExtendedStorage extendedStorage )
+    public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation,
+            ExtendedStorage extendedStorage )
     {
-        // here encoding manager can be null e.g. if we want to load existing graph
+        if (encodingManager == null)
+            throw new IllegalArgumentException("EncodingManager cannot be null in GraphHopperStorage since 0.4. "
+                    + "If you need to parse EncodingManager configuration from existing graph use EncodingManager.create");
+
         this.encodingManager = encodingManager;
         this.extStorage = extendedStorage;
         this.dir = dir;
@@ -178,7 +182,7 @@ public class GraphHopperStorage implements GraphStorage
         properties.create(100);
         extStorage.create(initSize);
 
-        properties.put("osmreader.bytesForFlags", encodingManager.getBytesForFlags());
+        properties.put("graph.bytesForFlags", encodingManager.getBytesForFlags());
         properties.put("osmreader.acceptWay", encodingManager.toDetailsString());
 
         properties.put("graph.byteOrder", dir.getByteOrder());
@@ -776,14 +780,6 @@ public class GraphHopperStorage implements GraphStorage
                             + ", " + edgePointer + ", " + edgeId);
 
                 foundNext = filter == null || filter.accept(this);
-//
-//                if(foundNext && nextEdge != EdgeIterator.NO_EDGE && extStorage instanceof TurnCostStorage){
-//                    int turncosts = ((TurnCostStorage) extStorage).getTurnCosts(baseNode, edgeId, nextEdge);
-//                    if(turncosts == Integer.MAX_VALUE){
-//                        foundNext = false;
-//                    }
-//                }
-
                 if (foundNext)
                     break;
             }
@@ -1536,6 +1532,7 @@ public class GraphHopperStorage implements GraphStorage
         return nodes.isClosed();
     }
 
+    @Override
     public ExtendedStorage getExtendedStorage()
     {
         return extStorage;
@@ -1565,6 +1562,7 @@ public class GraphHopperStorage implements GraphStorage
                 + "|" + encodingManager
                 + "|" + getDirectory().getDefaultType()
                 + "|" + nodeAccess.getDimension() + "D"
+                + ((extStorage == null) ? "" : "|" + extStorage)
                 + "|" + getProperties().versionsToString();
     }
 }

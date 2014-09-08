@@ -69,7 +69,7 @@ public class EncodedDoubleValue extends EncodedValue
 
     public double getDoubleValue( long flags )
     {
-        // find value        
+        // find value
         flags &= mask;
         flags >>= shift;
         return flags * factor;

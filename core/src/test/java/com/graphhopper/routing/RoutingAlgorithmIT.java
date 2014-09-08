@@ -121,6 +121,23 @@ public class RoutingAlgorithmIT
     }
 
     @Test
+    public void testMoscowTurnCosts()
+    {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
+        
+        // TODO #163
+        // list.add(new OneRun(55.813159,37.593884, 55.811278,37.594217, 1000, 12));
+        
+        // TODO include CH
+        boolean testAlsoCH = false, is3D = false;
+        runAlgo(testCollector, "files/moscow.osm.gz", "target/graph-moscow",
+                list, "CAR|turnCosts=true", testAlsoCH, "CAR", "fastest", is3D);
+
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
     public void testMonacoFastest()
     {
         List<OneRun> list = createMonacoCar();
@@ -178,10 +195,10 @@ public class RoutingAlgorithmIT
         list.get(0).setDistance(1, 1627);
         list.get(2).setDistance(1, 2258);
         list.get(3).setDistance(1, 1482);
-        
+
         // or slightly longer tour with less nodes: list.get(1).setDistance(1, 3610);
         list.get(1).setDistance(1, 3595);
-        list.get(1).setLocs(1, 149);               
+        list.get(1).setLocs(1, 149);
 
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
                 list, "FOOT", true, "FOOT", "shortest", true);
@@ -390,10 +407,14 @@ public class RoutingAlgorithmIT
                 list, "bike2", true, "bike2", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
-
+    
+    /**
+     * @param testAlsoCH if true also the CH algorithms will be tested which needs preparation and
+     * takes a bit longer
+     */
     void runAlgo( TestAlgoCollector testCollector, String osmFile,
             String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
-            boolean ch, String vehicle, String weightCalcStr, boolean is3D )
+            boolean testAlsoCH, String vehicle, String weightCalcStr, boolean is3D )
     {
         AlgorithmPreparation tmpPrepare = null;
         OneRun tmpOneRun = null;
@@ -407,17 +428,19 @@ public class RoutingAlgorithmIT
                     setOSMFile(osmFile).
                     disableCHShortcuts().
                     setGraphHopperLocation(graphFile).
-                    setEncodingManager(new EncodingManager(importVehicles));
+                    setEncodingManager(new EncodingManager(importVehicles));                    
             if (is3D)
                 hopper.setElevationProvider(new SRTMProvider().setCacheDir(new File("./files")));
 
             hopper.importOrLoad();
 
-            FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);            
+            TraversalMode tMode = importVehicles.toLowerCase().contains("turncosts=true")? 
+                    TraversalMode.EDGE_BASED_1DIR : TraversalMode.NODE_BASED;
+            FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             Weighting weighting = hopper.createWeighting(weightCalcStr, encoder);
-            
+
             Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
-                    createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, ch, weighting, hopper.getEncodingManager());
+                    createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, testAlsoCH, tMode, weighting, hopper.getEncodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
             for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
             {
@@ -433,10 +456,10 @@ public class RoutingAlgorithmIT
         } catch (Exception ex)
         {
             if (tmpPrepare == null)
-                throw new RuntimeException("cannot handle file " + osmFile, ex);
+                throw new RuntimeException("cannot handle file " + osmFile + ", " + ex.getMessage(), ex);
 
             throw new RuntimeException("cannot handle " + tmpPrepare.toString() + ", for " + tmpOneRun
-                    + ", file " + osmFile, ex);
+                    + ", file " + osmFile + ", " + ex.getMessage(), ex);
         } finally
         {
             // Helper.removeDir(new File(graphFile));
@@ -457,7 +480,7 @@ public class RoutingAlgorithmIT
         String bigFile = "10000EWD.txt.gz";
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
         Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
-                createAlgos(graph, null, encoder, false, new ShortestWeighting(), eManager);
+                createAlgos(graph, null, encoder, false, TraversalMode.NODE_BASED, new ShortestWeighting(), eManager);
         for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
         {
             AlgorithmPreparation prepare = entry.getKey();
@@ -518,8 +541,8 @@ public class RoutingAlgorithmIT
             {
                 RoutingAlgorithm[] algos = new RoutingAlgorithm[]
                 {
-                    new AStar(g, carEncoder, weighting),
-                    new DijkstraBidirectionRef(g, carEncoder, weighting)
+                    new AStar(g, carEncoder, weighting, TraversalMode.NODE_BASED),
+                    new DijkstraBidirectionRef(g, carEncoder, weighting, TraversalMode.NODE_BASED)
                 };
                 for (final RoutingAlgorithm algo : algos)
                 {

@@ -33,6 +33,20 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
 {
     private EncodedDoubleValue reverseSpeed;
 
+    public Bike2WeightFlagEncoder()
+    {
+    }
+
+    public Bike2WeightFlagEncoder( String propertiesStr )
+    {
+        super(propertiesStr);
+    }
+
+    public Bike2WeightFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
+    {
+        super(speedBits, speedFactor, maxTurnCosts);
+    }
+
     @Override
     public int defineWayBits( int index, int shift )
     {

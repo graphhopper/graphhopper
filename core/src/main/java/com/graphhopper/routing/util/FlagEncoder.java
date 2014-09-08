@@ -26,7 +26,7 @@ import com.graphhopper.util.Translation;
  * <p/>
  * @author Peter Karich
  */
-public interface FlagEncoder
+public interface FlagEncoder extends TurnCostEncoder
 {
     /**
      * @return the maximum speed in km/h
@@ -114,4 +114,10 @@ public interface FlagEncoder
      * @return additional cost or warning information for an instruction like ferry or road charges.
      */
     InstructionAnnotation getAnnotation( long flags, Translation tr );
+
+    /**
+     * @return true if turn restrictions or costs are supported by this encoder and the necessary
+     * space in the graph has to be reserved.
+     */
+    boolean supportsTurnCosts();
 }

@@ -19,9 +19,11 @@ package com.graphhopper.ui;
 
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.EdgeIteratorState;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
@@ -33,9 +35,9 @@ public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements 
     private GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugDijkstraBidirection( Graph graph, FlagEncoder encoder, Weighting type, GraphicsWrapper mg )
+    public DebugDijkstraBidirection( Graph graph, FlagEncoder encoder, Weighting type, TraversalMode tMode, GraphicsWrapper mg )
     {
-        super(graph, encoder, type);
+        super(graph, encoder, type, tMode);
         this.mg = mg;
     }
 
@@ -46,13 +48,13 @@ public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements 
     }
 
     @Override
-    public void updateBestPath( EdgeEntry shortestDE, int currLoc )
+    public void updateBestPath( EdgeIteratorState es, EdgeEntry bestEE, int currLoc )
     {
         if (g2 != null)
         {
             mg.plotNode(g2, currLoc, Color.BLUE);
         }
         // System.out.println("new node:" + currLoc);
-        super.updateBestPath(shortestDE, currLoc);
+        super.updateBestPath(es, bestEE, currLoc);
     }
 }

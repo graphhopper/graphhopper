@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 
@@ -26,39 +27,44 @@ import com.graphhopper.storage.Graph;
  */
 public class RoutingAlgorithmFactory
 {
-    private String algoStr;
-    private boolean approx;
+    private final String algoStr;
+    private final boolean approx;
+    private final TraversalMode traversalMode;
 
     /**
-     * @param algo possible values are astar (A* algorithm), astarbi (bidirectional A*) dijkstra
-     * (Dijkstra), dijkstrabi and dijkstraNativebi (a bit faster bidirectional Dijkstra).
+     * @param algo possible values are astar (A* algorithm), astarbi (bidirectional A*), dijkstra
+     * (Dijkstra) or dijkstrabi.
      */
-    public RoutingAlgorithmFactory( String algo, boolean approx )
+    public RoutingAlgorithmFactory( String algo, boolean approx, TraversalMode tMode )
     {
         this.algoStr = algo;
         this.approx = approx;
+        this.traversalMode = tMode;
     }
 
     public RoutingAlgorithm createAlgo( Graph g, FlagEncoder encoder, Weighting weighting )
     {
+        AbstractRoutingAlgorithm algo;
         if ("dijkstrabi".equalsIgnoreCase(algoStr))
         {
-            return new DijkstraBidirectionRef(g, encoder, weighting);
-        } else if ("dijkstraNativebi".equalsIgnoreCase(algoStr))
-        {
-            return new DijkstraBidirection(g, encoder, weighting);
+            algo = new DijkstraBidirectionRef(g, encoder, weighting, traversalMode);        
         } else if ("dijkstra".equalsIgnoreCase(algoStr))
         {
-            return new Dijkstra(g, encoder, weighting);
+            algo = new Dijkstra(g, encoder, weighting, traversalMode);
         } else if ("astarbi".equalsIgnoreCase(algoStr))
         {
-            return new AStarBidirection(g, encoder, weighting).setApproximation(approx);
+            algo = new AStarBidirection(g, encoder, weighting, traversalMode).setApproximation(approx);
         } else if ("dijkstraOneToMany".equalsIgnoreCase(algoStr))
         {
-            return new DijkstraOneToMany(g, encoder, weighting);
+            algo = new DijkstraOneToMany(g, encoder, weighting, traversalMode);
+        } else if ("dijkstraOneToManyRef".equalsIgnoreCase(algoStr))
+        {
+            algo = new DijkstraOneToManyRef(g, encoder, weighting, traversalMode);
         } else
         {
-            return new AStar(g, encoder, weighting);
+            algo = new AStar(g, encoder, weighting, traversalMode);
         }
+        
+        return algo;
     }
 }

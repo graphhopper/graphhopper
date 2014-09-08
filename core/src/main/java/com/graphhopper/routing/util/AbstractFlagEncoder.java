@@ -49,21 +49,18 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     private long nodeBitMask;
     private long wayBitMask;
     private long relBitMask;
-    protected long forwardBit = 0;
-    protected long backwardBit = 0;
-    protected long directionBitMask = 0;
-    protected long roundaboutBit = 0;
+    protected long forwardBit;
+    protected long backwardBit;
+    protected long directionBitMask;
+    protected long roundaboutBit;
     protected EncodedDoubleValue speedEncoder;
     // bit to signal that way is accepted
-    protected long acceptBit = 0;
-    protected long ferryBit = 0;
+    protected long acceptBit;
+    protected long ferryBit;
 
-    /* Turn Cost Flag Encoder fields */
-    protected int maxCostsBits;
-    protected long costsMask;
-
-    protected long restrictionBit;
-    protected long costShift;
+    private EncodedValue turnCostEncoder;
+    private long turnRestrictionBit;
+    private final int maxTurnCosts;
 
     /* processing properties (to be initialized lazy when needed) */
     protected EdgeExplorer edgeOutExplorer;
@@ -85,8 +82,16 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected int speedBits;
     protected double speedFactor;
 
-    public AbstractFlagEncoder( int speedBits, double speedFactor )
+    /**
+     * @param speedBits specify the number of bits used for speed
+     * @param speedFactor specify the factor to multiple the stored value (can be used to increase
+     * or decrease accuracy of speed value)
+     * @param maxTurnCosts specify the maximum value used for turn costs, if this value is reached a
+     * turn is forbidden and results in costs of positive infinity.
+     */
+    protected AbstractFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
     {
+        this.maxTurnCosts = maxTurnCosts <= 0 ? 0 : maxTurnCosts;
         this.speedBits = speedBits;
         this.speedFactor = speedFactor;
         oneways.add("yes");
@@ -151,30 +156,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     /**
-     * Defines the bits reserved for storing turn restriction and turn cost
-     * <p>
-     * @param shift bit offset for the first bit used by this encoder
-     * @param numberCostsBits number of bits reserved for storing costs (range of values: [0,
-     * 2^numberCostBits - 1] seconds )
-     * @return incremented shift value pointing behind the last used bit
-     */
-    public int defineTurnBits( int index, int shift, int numberCostsBits )
-    {
-        this.maxCostsBits = numberCostsBits;
-
-        int mask = 0;
-        for (int i = 0; i < this.maxCostsBits; i++)
-        {
-            mask |= (1 << i);
-        }
-        this.costsMask = mask;
-
-        restrictionBit = 1 << shift;
-        costShift = shift + 1;
-        return shift + maxCostsBits + 1;
-    }
-
-    /**
      * Analyze the properties of a relation and create the routing flags for the second read step.
      * In the pre-parsing step this method will be called to determine the useful relation tags.
      * <p/>
@@ -217,7 +198,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             {
                 if (!locked && node.hasTag(res, intendedValues))
                     return 0;
-                
+
                 if (node.hasTag(res, restrictedValues))
                     return directionBitMask;
             }
@@ -535,38 +516,117 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         return nodeBitMask;
     }
 
-    @Override
-    public boolean isTurnRestricted( long flag )
+    /**
+     * Defines the bits reserved for storing turn restriction and turn cost
+     * <p>
+     * @param shift bit offset for the first bit used by this encoder
+     * @return incremented shift value pointing behind the last used bit
+     */
+    public int defineTurnBits( int index, int shift )
     {
-        return (flag & restrictionBit) != 0;
-    }
+        if (maxTurnCosts == 0)
+            return shift;
 
-    @Override
-    public int getTurnCosts( long flag )
-    {
-        long result = (flag >> costShift) & costsMask;
-        if (result >= Math.pow(2, maxCostsBits) || result < 0)
+        // optimization for turn restrictions only 
+        else if (maxTurnCosts == 1)
         {
-            throw new IllegalStateException("Wrong encoding of turn costs");
+            turnRestrictionBit = 1L << shift;
+            return shift + 1;
         }
-        return Long.valueOf(result).intValue();
+
+        int turnBits = Helper.countBitValue(maxTurnCosts);
+        turnCostEncoder = new EncodedValue("TurnCost", shift, turnBits, 1, 0, maxTurnCosts)
+        {
+            // override to avoid expensive Math.round
+            @Override
+            public final long getValue( long flags )
+            {
+                // find value
+                flags &= mask;
+                flags >>= shift;
+                return flags;
+            }
+        };
+        return shift + turnBits;
     }
 
     @Override
-    public long getTurnFlags( boolean restricted, int costs )
+    public boolean isTurnRestricted( long flags )
     {
-        costs = Math.min(costs, (int) (Math.pow(2, maxCostsBits) - 1));
-        long encode = costs << costShift;
+        if (maxTurnCosts == 0)
+            return false;
+
+        else if (maxTurnCosts == 1)
+            return (flags & turnRestrictionBit) != 0;
+
+        return turnCostEncoder.getValue(flags) == maxTurnCosts;
+    }
+
+    @Override
+    public double getTurnCost( long flags )
+    {
+        if (maxTurnCosts == 0)
+            return 0;
+
+        else if (maxTurnCosts == 1)
+            return ((flags & turnRestrictionBit) == 0) ? 0 : Double.POSITIVE_INFINITY;
+
+        long cost = turnCostEncoder.getValue(flags);
+        if (cost == maxTurnCosts)
+            return Double.POSITIVE_INFINITY;
+
+        return cost;
+    }
+
+    @Override
+    public long getTurnFlags( boolean restricted, double costs )
+    {
+        if (maxTurnCosts == 0)
+            return 0;
+
+        else if (maxTurnCosts == 1)
+        {
+            if (costs != 0)
+                throw new IllegalArgumentException("Only restrictions are supported");
+
+            return restricted ? turnRestrictionBit : 0;
+        }
+
         if (restricted)
         {
-            encode |= restrictionBit;
+            if (costs != 0 || Double.isInfinite(costs))
+                throw new IllegalArgumentException("Restricted turn can only have infinite costs (or use 0)");
+        } else
+        {
+            if (costs >= maxTurnCosts)
+                throw new IllegalArgumentException("Cost is too high. Or specifiy restricted == true");
         }
-        return encode;
+
+        if (costs < 0)
+            throw new IllegalArgumentException("Turn costs cannot be negative");
+
+        if (costs >= maxTurnCosts || restricted)
+            costs = maxTurnCosts;
+        return turnCostEncoder.setValue(0L, (int) costs);
     }
 
     public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
     {
-        return Collections.emptyList();
+        if (!supportsTurnCosts())
+            return Collections.emptyList();
+
+        if (edgeOutExplorer == null || edgeInExplorer == null)
+        {
+            edgeOutExplorer = osmReader.getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(this, false, true));
+            edgeInExplorer = osmReader.getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(this, true, false));
+        }
+        return turnRelation.getRestrictionAsEntries(this, edgeOutExplorer, edgeInExplorer, osmReader);
+    }
+
+    @Override
+    public boolean supportsTurnCosts()
+    {
+        return maxTurnCosts > 0;
     }
 
     protected boolean isFerry( long internalFlags )
@@ -633,5 +693,52 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     public double getDouble( long flags, int key )
     {
         throw new UnsupportedOperationException("Unknown key " + key + " for double value.");
+    }
+
+    protected static double parseDouble( String str, String key, double defaultD )
+    {
+        String val = getStr(str, key);
+        if (val.isEmpty())
+            return defaultD;
+        return Double.parseDouble(val);
+    }
+
+    protected static long parseLong( String str, String key, long defaultL )
+    {
+        String val = getStr(str, key);
+        if (val.isEmpty())
+            return defaultL;
+        return Long.parseLong(val);
+    }
+
+    protected static boolean parseBoolean( String str, String key, boolean defaultB )
+    {
+        String val = getStr(str, key);
+        if (val.isEmpty())
+            return defaultB;
+        return Boolean.parseBoolean(val);
+    }
+
+    protected static String getStr( String str, String key )
+    {
+        key = key.toLowerCase();
+        for (String s : str.split("\\|"))
+        {
+            s = s.trim().toLowerCase();
+            int index = s.indexOf("=");
+            if (index < 0)
+                continue;
+
+            String field = s.substring(0, index);
+            String valueStr = s.substring(index + 1);
+            if (key.equals(field))
+                return valueStr;
+        }
+        return "";
+    }
+
+    protected String getPropertiesString()
+    {
+        return "speedFactor=" + speedFactor + "|speedBits=" + speedBits + "|turnCosts=" + (maxTurnCosts > 0);
     }
 }

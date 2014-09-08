@@ -18,14 +18,44 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
 import com.graphhopper.storage.Graph;
 
 /**
  *
  * @author Peter Karich
  */
+@RunWith(Parameterized.class)
 public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
 {
+    /**
+     * Runs the same test with each of the supported traversal modes
+     */
+    @Parameters
+    public static Collection<Object[]> configs()
+    {
+        return Arrays.asList(new Object[][]
+        {
+            { TraversalMode.NODE_BASED },
+            { TraversalMode.EDGE_BASED_1DIR },
+            { TraversalMode.EDGE_BASED_2DIR },
+            { TraversalMode.EDGE_BASED_2DIR_UTURN }
+        });
+    }
+
+    private final TraversalMode traversalMode;
+
+    public DijkstraBidirectionRefTest( TraversalMode tMode )
+    {
+        this.traversalMode = tMode;
+    }
+
     @Override
     public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final Weighting w )
     {
@@ -34,7 +64,7 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new DijkstraBidirectionRef(_graph, encoder, w);
+                return new DijkstraBidirectionRef(_graph, encoder, w, traversalMode);
             }
         }.setGraph(defaultGraph);
     }
