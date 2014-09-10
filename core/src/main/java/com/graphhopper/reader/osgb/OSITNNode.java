@@ -126,9 +126,18 @@ public class OSITNNode extends OSITNElement implements Node {
 	}
 
 	@Override
-	protected void parseCoords(String elementText) {
-		String[] split = elementText.split(",");
+	public void parseCoords(String elementText) {
+		String elementSeparator = ",";
+		parseCoordinateString(elementText, elementSeparator);
+	}
 
+	public void parseCoordinateString(String elementText,
+			String elementSeparator) {
+		String[] split = elementText.split(elementSeparator);
+
+		if(3==split.length) {
+			setTag("ele", split[2]);
+		}
 		Double easting = Double.parseDouble(split[0]);
 		Double northing = Double.parseDouble(split[1]);
 		GeodeticPoint wgs84 = toWGS84(easting, northing);
@@ -181,6 +190,11 @@ public class OSITNNode extends OSITNElement implements Node {
 		clone.lat = this.lat;
 		clone.lon = this.lon;
 		return clone;
+	}
+
+	@Override
+	protected void parseCoords(int dimensions, String lineDefinition) {
+		throw new UnsupportedOperationException();
 	}
 
 }

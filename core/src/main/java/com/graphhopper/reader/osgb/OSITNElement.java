@@ -17,7 +17,12 @@
  */
 package com.graphhopper.reader.osgb;
 
-import javax.xml.namespace.QName;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -26,12 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.graphhopper.reader.RoutingElement;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Base class for all OSM objects
@@ -74,10 +73,20 @@ public abstract class OSITNElement implements RoutingElement {
 						event = handleCoordinates(parser);
 						break;
 					}
+				case "posList": {
+					event = handleMultiDimensionCoords(parser);
+					break;
+				}
+				case "pos": {
+					event = handleThreeDimensionalCoords(parser);
+					break;
+				}
 				case "networkMember" : {
 					event = handleNetworkMember(parser);
 					break;
 				}
+				case "startNode" :
+				case "endNode" :	
 				case "directedNode" : {
 					event = handleDirectedNode(parser);
 					break;
@@ -90,6 +99,9 @@ public abstract class OSITNElement implements RoutingElement {
 					event = handleRouteInformation(parser);
 					break;
 				}
+				case "roadNumber" :
+				case "name" :
+				case "alternativeName" :	
 				case "roadName" : {
 					event = handleTag("name", parser);
 					break;
@@ -167,8 +179,29 @@ public abstract class OSITNElement implements RoutingElement {
 		parseCoords(elementText);
 		return parser.getEventType();
 	}
+	
+	private int handleMultiDimensionCoords(XMLStreamReader parser)
+			throws XMLStreamException {
+		String dimensionality = parser.getAttributeValue(null, "srsDimension");
+		logger.info("Dimensions:" + dimensionality);
+		String elementText = parser.getElementText();
+		parseCoords(Integer.valueOf(dimensionality), elementText);
+		return parser.getEventType();
+	}
+	
+	private int handleThreeDimensionalCoords(XMLStreamReader parser)
+			throws XMLStreamException {
+		String elementText = parser.getElementText();
+		parseCoordinateString(elementText, " ");
+		return parser.getEventType();
+	}
+	
+	protected abstract void parseCoordinateString(String elementText,
+			String elementSeparator);
 
 	protected abstract void parseCoords(String coordinates);
+	
+	protected abstract void parseCoords(int dimensions, String lineDefinition);
 	
 	protected abstract void addDirectedNode(String nodeId, String orientation, String orientation2);
 	
@@ -181,7 +214,9 @@ public abstract class OSITNElement implements RoutingElement {
 		case "RoadNode" : 
 		case "RoadLink" :	
 		case "RoadRouteInformation": 
-		case "Road" :	return true; 
+		case "Road" :
+		case "RouteLink" :
+		case "RouteNode" :return true; 
 		}
 		return false;
 	}

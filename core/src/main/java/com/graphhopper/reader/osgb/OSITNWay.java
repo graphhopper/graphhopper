@@ -41,8 +41,7 @@ import com.graphhopper.reader.Way;
 public class OSITNWay extends OSITNElement implements Way {
 	private static final long WAY_NODE_PREFIX_MOD = 100000000000000000L;
 	protected final TLongList nodes = new TLongArrayList(5);
-	private String[] wayCoords;
-	private long lastNode;
+	protected String[] wayCoords;
 	private static final Logger logger = LoggerFactory
 			.getLogger(OSITNWay.class);
 
@@ -80,6 +79,35 @@ public class OSITNWay extends OSITNElement implements Way {
 		logger.info(toString() + " "  + ((wayCoords.length == 0)?"0":wayCoords[0]));
 	}
 
+	
+	@Override
+	protected void parseCoords(int dimensions, String lineDefinition) {
+		String[] lineSegments = lineDefinition.split(" ");
+		wayCoords = new String[lineSegments.length/dimensions];
+		StringBuilder curString = null;
+		for (int i = 0; i < lineSegments.length; i++) {
+			String string = lineSegments[i];
+			switch (i % dimensions) {
+			case 0: {
+				int coordNumber = i/dimensions;
+				if(coordNumber >0) {
+					wayCoords[coordNumber-1] = curString.toString();
+				}
+				curString = new StringBuilder();
+				curString.append(string);
+				break;
+			}
+					
+			case 1:	
+			case 2: {
+				curString.append(',');
+				curString.append(string); 
+			}
+			}
+		}
+		wayCoords[wayCoords.length-1] = curString.toString();
+		logger.info(toString() + " "  + ((wayCoords.length == 0)?"0":wayCoords[0]));
+	}
 	@Override
 	protected void parseNetworkMember(String elementText) {
 		throw new UnsupportedOperationException();
@@ -103,7 +131,7 @@ public class OSITNWay extends OSITNElement implements Way {
 		logger.info(toString());
 	}
 
-	private void addWayNodes() {
+	protected void addWayNodes() {
 		for (int i = 1; i <= wayCoords.length; i++) {
 			long idPrefix = i * WAY_NODE_PREFIX_MOD;
 			long extraId = idPrefix + getId();
@@ -133,5 +161,12 @@ public class OSITNWay extends OSITNElement implements Way {
 
 	public void clearWayNodes() {
 		wayCoords = null;
+	}
+
+	@Override
+	protected void parseCoordinateString(String elementText,
+			String elementSeparator) {
+		throw new UnsupportedOperationException();
+		
 	}
 }

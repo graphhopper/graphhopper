@@ -165,20 +165,18 @@ public class OSITNRelation extends OSITNElement implements Relation {
 
 	@Override
 	protected void parseCoords(String elementText) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	protected void parseNetworkMember(String elementText) {
-		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
 
 	}
 
 	@Override
 	protected void addDirectedNode(String nodeId, String grade,
 			String orientation) {
-		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
 
 	}
 
@@ -198,5 +196,18 @@ public class OSITNRelation extends OSITNElement implements Relation {
 					0 == size ? "from" : "to");
 			add(member);
 		}
+	}
+
+	@Override
+	protected void parseCoordinateString(String elementText,
+			String elementSeparator) {
+		throw new UnsupportedOperationException();
+		
+	}
+
+	@Override
+	protected void parseCoords(int dimensions, String lineDefinition) {
+		throw new UnsupportedOperationException();
+		
 	}
 }

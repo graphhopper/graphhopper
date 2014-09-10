@@ -25,13 +25,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.math.BigDecimal;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
 
-import javax.xml.namespace.QName;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -40,16 +39,15 @@ import javax.xml.stream.XMLStreamReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.RoutingElement;
-import com.graphhopper.reader.pbf.PbfReader;
+import com.graphhopper.reader.osgb.dpn.OsDpnWay;
 import com.graphhopper.reader.pbf.Sink;
 
 /**
  * A readable OS ITN file.
  * <p/>
  * 
- * @author Nop
+ * @author Stuart Adam
  */
 public class OsItnInputFile implements Sink, Closeable {
 	private boolean eof;
@@ -63,8 +61,10 @@ public class OsItnInputFile implements Sink, Closeable {
 	private int workerThreads = -1;
 	private static final Logger logger = LoggerFactory
 			.getLogger(OsItnInputFile.class);
+	private String name;
 
 	public OsItnInputFile(File file) throws IOException {
+		name = file.getAbsolutePath();
 		bis = decode(file);
 		itemQueue = new LinkedBlockingQueue<RoutingElement>(50000);
 	}
@@ -121,10 +121,13 @@ public class OsItnInputFile implements Sink, Closeable {
 			zip.getNextEntry();
 
 			return zip;
-		} else if (name.endsWith(".osm") || name.endsWith(".xml")) {
+		} else if (name.endsWith(".gml") || name.endsWith(".xml")) {
 			ips.reset();
 			return ips;
-		} else if (name.endsWith(".bz2") || name.endsWith(".bzip2")) {
+		} else if (header[0] == 60  && header[1] == 63  && header[3] == 120  && header[4] == 109 && header[5] == 108) {
+			ips.reset();
+			return ips;
+		}else if (name.endsWith(".bz2") || name.endsWith(".bzip2")) {
 			String clName = "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream";
 			try {
 				Class clazz = Class.forName(clName);
@@ -145,12 +148,14 @@ public class OsItnInputFile implements Sink, Closeable {
 	private void openXMLStream(InputStream in) throws XMLStreamException {
 		XMLInputFactory factory = XMLInputFactory.newInstance();
 		parser = factory.createXMLStreamReader(bis, "UTF-8");
-
-		int event = parser.next();
+		int event;
+		do {
+			event = parser.next();
+		} while(event == XMLStreamConstants.COMMENT);
+		
 		if (event != XMLStreamConstants.START_ELEMENT
 				|| !parser.getLocalName().equalsIgnoreCase("FeatureCollection")) {
-			throw new IllegalArgumentException(
-					"File is not a valid OS ITN stream");
+			throw new IllegalArgumentException(String.format("File %s not a valid OS ITN stream", name));
 		}
 
 		eof = false;
@@ -161,10 +166,7 @@ public class OsItnInputFile implements Sink, Closeable {
 			throw new IllegalStateException("EOF reached");
 
 		RoutingElement item;
-		if (binary)
-			item = getNextPBF();
-		else
-			item = getNextXML();
+		item = getNextXML();
 
 		if (item != null)
 			return item;
@@ -179,18 +181,32 @@ public class OsItnInputFile implements Sink, Closeable {
 		while (event != XMLStreamConstants.END_DOCUMENT) {
 			if (event == XMLStreamConstants.START_ELEMENT) {
 				String idStr = parser.getAttributeValue(null, "fid");
+				if(null==idStr) {
+					idStr = parser.getAttributeValue("http://www.opengis.net/gml/3.2", "id");
+				}
 				if (idStr != null) {
 					String name = parser.getLocalName();
 					idStr = idStr.substring(4);
-					long id = Long.parseLong(idStr);
-
-					logger.info(":" + name + ":");
+					logger.info(idStr + ":" + name + ":");
+					
+					long id;
+					try {
+						id= Long.parseLong(idStr);
+					} catch(NumberFormatException nfe) {
+						BigDecimal bd = new  BigDecimal(idStr);
+						id = bd.longValue();
+					}
+					logger.info(id + ":" + name + ":");
 					switch (name) {
-					case "RoadNode": {
+					case "RoadNode": 
+					case "RouteNode": {
 						return OSITNNode.create(id, parser);
 					}
-					case "RoadLink": {
+					case "RoadLink" : {
 						return OSITNWay.create(id, parser);
+					}
+					case "RouteLink": {
+						return OsDpnWay.create(id, parser);
 					}
 					case "RoadRouteInformation": {
 						return OSITNRelation.create(id, parser);
@@ -230,24 +246,8 @@ public class OsItnInputFile implements Sink, Closeable {
 		} finally {
 			eof = true;
 			bis.close();
-			// if exception happend on OSMInputFile-thread we need to shutdown
-			// the pbf handling
-			if (pbfReaderThread != null && pbfReaderThread.isAlive())
-				pbfReaderThread.interrupt();
 		}
 	}
-
-	Thread pbfReaderThread;
-
-	// private void openPBFReader(InputStream stream) {
-	// hasIncomingData = true;
-	// if (workerThreads <= 0)
-	// workerThreads = 2;
-	//
-	// PbfReader reader = new PbfReader(stream, this, workerThreads);
-	// pbfReaderThread = new Thread(reader, "PBF Reader");
-	// pbfReaderThread.start();
-	// }
 
 	@Override
 	public void process(RoutingElement item) {
@@ -265,26 +265,5 @@ public class OsItnInputFile implements Sink, Closeable {
 	@Override
 	public void complete() {
 		hasIncomingData = false;
-	}
-
-	private RoutingElement getNextPBF() {
-		RoutingElement next = null;
-		while (next == null) {
-			if (!hasIncomingData && itemQueue.isEmpty()) {
-				// we are done, stop polling
-				eof = true;
-				break;
-			}
-
-			try {
-				// we cannot use "itemQueue.take()" as it blocks and
-				// hasIncomingData can change
-				next = itemQueue.poll(10, TimeUnit.MILLISECONDS);
-			} catch (InterruptedException ex) {
-				eof = true;
-				break;
-			}
-		}
-		return next;
 	}
 }

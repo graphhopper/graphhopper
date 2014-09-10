@@ -160,7 +160,6 @@ public class OsItnMetaData extends OSITNElement implements Relation {
 
 	@Override
 	protected void parseCoords(String elementText) {
-		// TODO Auto-generated method stub
 
 	}
 
@@ -174,12 +173,25 @@ public class OsItnMetaData extends OSITNElement implements Relation {
 	@Override
 	protected void addDirectedNode(String nodeId, String grade,
 			String orientation) {
-		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
 
 	}
 
 	@Override
 	protected void addDirectedLink(String nodeId, String orientation) {
+		
+	}
+
+	@Override
+	protected void parseCoordinateString(String elementText,
+			String elementSeparator) {
+		throw new UnsupportedOperationException();
+		
+	}
+
+	@Override
+	protected void parseCoords(int dimensions, String lineDefinition) {
+		throw new UnsupportedOperationException();
 		
 	}
 }
