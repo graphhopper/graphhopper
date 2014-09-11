@@ -27,6 +27,7 @@ var defaultTranslationMap = null;
 var enTranslationMap = null;
 var routeSegmentPopup = null;
 var elevationControl = null;
+var activeLayer = 'Lyrk';
 
 var iconFrom = L.icon({
     iconUrl: './img/marker-icon-green.png',
@@ -125,7 +126,7 @@ $(document).ready(function(e) {
                     }
                 }
 
-                initMap();
+                initMap(urlParams.layer);
 
                 // execute query
                 initFromParams(urlParams, true);
@@ -202,7 +203,7 @@ function adjustMapSize() {
     $("#info").css("max-height", height - $("#input_header").height() - 35);
 }
 
-function initMap() {
+function initMap(selectLayer) {
     adjustMapSize();
     console.log("init map at " + JSON.stringify(bounds));
 
@@ -228,7 +229,7 @@ function initMap() {
     });
 
     var openMapsSurfer = L.tileLayer('http://openmapsurfer.uni-hd.de/tiles/roads/x={x}&y={y}&z={z}', {
-        attribution: osmAttr + ', <a href="http://129.206.74.245/contact.html">GIScience Heidelberg</a>'
+        attribution: osmAttr + ', <a href="http://openmapsurfer.uni-hd.de/contact.html">GIScience Heidelberg</a>'
     });
 
     var thunderTransport = L.tileLayer('http://{s}.tile.thunderforest.com/transport/{z}/{x}/{y}.png', {
@@ -259,9 +260,26 @@ function initMap() {
         attribution: osmAttr
     });
 
+    var baseMaps = {
+        "Lyrk": lyrk,
+        "MapQuest": mapquest,
+        "MapQuest Aerial": mapquestAerial,
+        "OpenMapsSurfer": openMapsSurfer,
+        "TF Transport": thunderTransport,
+        "TF Cycle": thunderCycle,
+        "TF Outdoors": thunderOutdoors,
+        "WanderReitKarte": wrk,
+        "OpenStreetMap": osm,
+        "OpenStreetMap.de": osmde
+    };
+
+    var defaultLayer = baseMaps[selectLayer];
+    if (!defaultLayer)
+        defaultLayer = lyrk;
+
     // default
     map = L.map('map', {
-        layers: [lyrk],
+        layers: [defaultLayer],
         contextmenu: true,
         contextmenuWidth: 140,
         contextmenuItems: [{
@@ -286,20 +304,12 @@ function initMap() {
             }]
     });
 
-    var baseMaps = {
-        "Lyrk": lyrk,
-        "MapQuest": mapquest,
-        "MapQuest Aerial": mapquestAerial,
-        "OpenMapsSurfer": openMapsSurfer,
-        "TF Transport": thunderTransport,
-        "TF Cycle": thunderCycle,
-        "TF Outdoors": thunderOutdoors,
-        "WanderReitKarte": wrk,
-        "OpenStreetMap": osm,
-        "OpenStreetMap.de": osmde
-    };
-
     L.control.layers(baseMaps/*, overlays*/).addTo(map);
+
+    map.on('baselayerchange', function(a) {
+        if (a.name)
+            activeLayer = a.name;
+    });
 
     L.control.scale().addTo(map);
 
@@ -619,7 +629,7 @@ function routeLatLng(request, doQuery) {
     var doZoom = request.do_zoom;
     request.do_zoom = true;
 
-    var urlForHistory = request.createFullURL();
+    var urlForHistory = request.createFullURL() + "&layer=" + activeLayer;
     // not enabled e.g. if no cookies allowed (?)
     // if disabled we have to do the query and cannot rely on the statechange history event    
     if (!doQuery && History.enabled) {
