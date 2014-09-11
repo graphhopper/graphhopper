@@ -205,7 +205,7 @@ function adjustMapSize() {
 function initMap() {
     adjustMapSize();
     console.log("init map at " + JSON.stringify(bounds));
-    
+
     var osmAttr = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
     var tp = "ls";
@@ -225,6 +225,10 @@ function initMap() {
     var mapquestAerial = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.png', {
         attribution: osmAttr + ', <a href="http://open.mapquest.co.uk">MapQuest</a>',
         subdomains: ['otile1', 'otile2', 'otile3', 'otile4']
+    });
+
+    var openMapsSurfer = L.tileLayer('http://openmapsurfer.uni-hd.de/tiles/roads/x={x}&y={y}&z={z}', {
+        attribution: osmAttr + ', <a href="http://129.206.74.245/contact.html">GIScience Heidelberg</a>'
     });
 
     var thunderTransport = L.tileLayer('http://{s}.tile.thunderforest.com/transport/{z}/{x}/{y}.png', {
@@ -286,6 +290,7 @@ function initMap() {
         "Lyrk": lyrk,
         "MapQuest": mapquest,
         "MapQuest Aerial": mapquestAerial,
+        "OpenMapsSurfer": openMapsSurfer,
         "TF Transport": thunderTransport,
         "TF Cycle": thunderCycle,
         "TF Outdoors": thunderOutdoors,
@@ -918,14 +923,14 @@ function parseUrl(query) {
         var key = vars[i].substring(0, indexPos);
         var value = vars[i].substring(indexPos + 1);
         value = decodeURIComponent(value.replace(/\+/g, ' '));
-        if(value === "")
+        if (value === "")
             continue;
-        
+
         if (typeof res[key] === "undefined") {
             if (value === 'true')
                 res[key] = true;
             else if (value === 'false')
-                res[key] = false;            
+                res[key] = false;
             else {
                 var tmp = Number(value);
                 if (isNaN(tmp))
