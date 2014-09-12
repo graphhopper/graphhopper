@@ -189,7 +189,7 @@ public class OsItnReaderTest {
 		readGraphFile(graph, file);
 		
 		assertEquals(5, graph.getNodes());
-		checkSimpleNodeNetwork(graph);
+		checkSimpleOneWayNetwork(graph);
 		checkOneWay(graph);
 	}
 
@@ -198,7 +198,7 @@ public class OsItnReaderTest {
 		carAllExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, true));
 		EdgeIterator iter = carAllExplorer.setBaseNode(0);
         assertTrue(iter.next());
-		evaluateRouting(iter, 4, true, true, false);
+		evaluateRouting(iter, 4, true, false, false);
         evaluateRouting(iter, 3, true, true, false);
         evaluateRouting(iter, 2, true, true, false);
         evaluateRouting(iter, 1, true, true, true);
@@ -247,6 +247,26 @@ public class OsItnReaderTest {
 		assertEquals(1, count(explorer.setBaseNode(2)));
 		assertEquals(1, count(explorer.setBaseNode(3)));
 		assertEquals(1, count(explorer.setBaseNode(4)));
+		
+		EdgeIterator iter = explorer.setBaseNode(0);
+        assertTrue(iter.next());
+        assertEquals("OTHER ROAD", iter.getName());
+        iter.next();
+        assertEquals("OTHER ROAD", iter.getName());
+        iter.next();
+        assertEquals("BONHAY ROAD", iter.getName());
+        iter.next();
+        assertEquals("BONHAY ROAD", iter.getName());
+        assertFalse(iter.next());
+	}
+	
+	private void checkSimpleOneWayNetwork(GraphHopperStorage graph) {
+		EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
+		assertEquals(4, count(explorer.setBaseNode(0)));
+		assertEquals(1, count(explorer.setBaseNode(1)));
+		assertEquals(1, count(explorer.setBaseNode(2)));
+		assertEquals(1, count(explorer.setBaseNode(3)));
+		assertEquals(0, count(explorer.setBaseNode(4)));
 		
 		EdgeIterator iter = explorer.setBaseNode(0);
         assertTrue(iter.next());

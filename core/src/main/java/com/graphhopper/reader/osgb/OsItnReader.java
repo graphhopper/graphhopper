@@ -4,9 +4,11 @@ import static com.graphhopper.util.Helper.nf;
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.TIntLongMap;
+import gnu.trove.map.TLongByteMap;
 import gnu.trove.map.TLongLongMap;
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TIntLongHashMap;
+import gnu.trove.map.hash.TLongByteHashMap;
 import gnu.trove.map.hash.TLongLongHashMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.set.TLongSet;
@@ -166,6 +168,7 @@ public class OsItnReader implements DataReader {
 
 	private TLongObjectMap<String> edgeNameMap;
 	private TLongObjectMap<String> edgeRoadTypeMap;
+	private TLongObjectMap<String> edgeRoadDirectionMap;
 
 	public OsItnReader(GraphStorage storage) {
 		this.graphStorage = storage;
@@ -285,6 +288,10 @@ public class OsItnReader implements DataReader {
 				
 				if (relation.hasTag("highway"))
 					prepareRoadTypeRelation(relation);
+				
+				if(relation.hasTag("oneway")) {
+					prepareRoadDirectionRelation(relation);
+				}
 
 				if (++tmpRelationCounter % 50000 == 0) {
 					logger.info(nf(tmpRelationCounter)
@@ -338,6 +345,18 @@ public class OsItnReader implements DataReader {
 			edgeIdToRoadTypeMap.put(wayId, highway);
 		}
 	}
+	
+	private void prepareRoadDirectionRelation(Relation relation) {
+		String highway = relation.getTag("oneway");
+		System.err.println("Rel oneway:" + highway);
+		TLongObjectMap<String> edgeIdToRoadDirectionMap = getEdgeRoadDirectionMap();
+		ArrayList<? extends RelationMember> members = relation.getMembers();
+		for (RelationMember relationMember : members) {
+			long wayId = relationMember.ref();
+			System.err.println("MEMBERS:" + wayId);
+			edgeIdToRoadDirectionMap.put(wayId, highway);
+		}
+	}
 
 	private TLongSet getOsmIdStoreRequiredSet() {
 		return osmIdStoreRequiredSet;
@@ -374,6 +393,14 @@ public class OsItnReader implements DataReader {
 					.size());
 
 		return edgeRoadTypeMap;
+	}
+	
+	private TLongObjectMap<String> getEdgeRoadDirectionMap() {
+		if (edgeRoadDirectionMap == null)
+			edgeRoadDirectionMap = new TLongObjectHashMap<String>(getOsmIdStoreRequiredSet()
+					.size());
+
+		return edgeRoadDirectionMap;
 	}
 	
 	/**
@@ -590,6 +617,11 @@ public class OsItnReader implements DataReader {
 		if (null != wayType && !way.hasTag("highway")) {
 			way.setTag("highway", wayType);
 		}
+		
+		String wayDirection = getWayRoadDirection(way.getId());
+		if (null != wayDirection && !way.hasTag("oneway")) {
+			way.setTag("oneway", wayDirection);
+		}
 		// TODO move this after we have created the edge and know the
 		// coordinates => encodingManager.applyWayTags
 		// estimate length of the track e.g. for ferry speed calculation
@@ -709,6 +741,10 @@ public class OsItnReader implements DataReader {
 	
 	private String getWayRoadType(long id) {
 		return getEdgeRoadTypeMap().remove(id);
+	}
+	
+	private String getWayRoadDirection(long id) {
+		return getEdgeRoadDirectionMap().remove(id);
 	}
 
 	public void processRelation(Relation relation) throws XMLStreamException {
