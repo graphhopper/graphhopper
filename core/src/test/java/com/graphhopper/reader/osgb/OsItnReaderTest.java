@@ -39,6 +39,7 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.RelationCarFlagEncoder;
 import com.graphhopper.storage.AbstractGraphStorageTester;
 import com.graphhopper.storage.ExtendedStorage;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -58,8 +59,8 @@ public class OsItnReaderTest {
 			.getLogger(OsItnReaderTest.class);
 	private static final InputStream COMPLEX_ITN_EXAMPLE = OsItnReader.class
 			.getResourceAsStream("os-itn-sample.xml");
-	private EncodingManager encodingManager = new EncodingManager("car:com.graphhopper.routing.util.osgb.RelationCarFlagEncoder");
-	private CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager
+	private EncodingManager encodingManager = new EncodingManager("car:com.graphhopper.routing.util.RelationCarFlagEncoder");
+	private RelationCarFlagEncoder carEncoder = (RelationCarFlagEncoder) encodingManager
 			.getEncoder("CAR");
 	private EdgeFilter carOutEdges = new DefaultEdgeFilter(
 			carEncoder, false, true);
@@ -267,6 +268,23 @@ public class OsItnReaderTest {
 		assertEquals(1, count(explorer.setBaseNode(3)));
 		assertEquals(1, count(explorer.setBaseNode(4)));
 		assertEquals(1, count(explorer.setBaseNode(5)));
+		
+		EdgeIterator iter = explorer.setBaseNode(0);
+        assertTrue(iter.next());
+        assertEquals("OTHER ROAD (A337)", iter.getName());
+        assertEquals(55, carEncoder.getSpeed(iter.getFlags()), 1e-1);
+        iter.next();
+        assertEquals("OTHER ROAD (A337)", iter.getName());
+        assertEquals(55, carEncoder.getSpeed(iter.getFlags()), 1e-1);
+        iter.next();
+        assertEquals("BONHAY ROAD (A337)", iter.getName());
+        assertEquals(55, carEncoder.getSpeed(iter.getFlags()), 1e-1);
+        iter.next();
+        assertEquals("BONHAY ROAD (A337)", iter.getName());
+        long flags = iter.getFlags();
+        System.err.println("FLAGS:" + flags);
+        assertEquals(100, carEncoder.getSpeed(flags), 1e-1);
+        assertFalse(iter.next());
 	}
 	
 	private void checkBridgeNodeNetwork(GraphHopperStorage graph) {
