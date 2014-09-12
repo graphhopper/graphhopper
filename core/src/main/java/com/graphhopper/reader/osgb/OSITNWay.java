@@ -53,7 +53,6 @@ public class OSITNWay extends OSITNElement implements Way {
 		OSITNWay way = new OSITNWay(id);
 		parser.nextTag();
 		way.readTags(parser);
-		way.setTag("highway", "motorway");
 		logger.info(way.toString());
 		return way;
 	}

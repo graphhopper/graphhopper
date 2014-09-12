@@ -32,12 +32,7 @@ public class OSITNTurnRelation implements TurnRelation {
 
 	static {
 		tags.put("No Turn", Type.NOT);
-		tags.put("no_right_turn", Type.NOT);
-		tags.put("no_straight_on", Type.NOT);
-		tags.put("no_u_turn", Type.NOT);
-		tags.put("only_right_turn", Type.ONLY);
-		tags.put("only_left_turn", Type.ONLY);
-		tags.put("only_straight_on", Type.ONLY);
+		tags.put("Mandatory Turn", Type.ONLY);
 	}
 
 	public static Type getRestrictionType(String tag) {

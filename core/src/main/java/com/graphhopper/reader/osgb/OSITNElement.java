@@ -61,114 +61,140 @@ public abstract class OSITNElement implements RoutingElement {
 
 	protected void readTags(XMLStreamReader parser) throws XMLStreamException {
 		int event = parser.getEventType();
-		while (event != XMLStreamConstants.END_DOCUMENT  && (event != XMLStreamConstants.END_ELEMENT || !exitElement(parser))) {
+		while (event != XMLStreamConstants.END_DOCUMENT
+				&& (event != XMLStreamConstants.END_ELEMENT || !exitElement(parser))) {
 			if (event == XMLStreamConstants.CHARACTERS) {
 				event = parser.next();
 			} else {
-				
-			if (event == XMLStreamConstants.START_ELEMENT) {
-				logger.info("LOCALNAME:"+parser.getLocalName());
-				switch (parser.getLocalName()) {
-				case "coordinates": {
+
+				if (event == XMLStreamConstants.START_ELEMENT) {
+					logger.info("LOCALNAME:" + parser.getLocalName());
+					switch (parser.getLocalName()) {
+					case "coordinates": {
 						event = handleCoordinates(parser);
 						break;
 					}
-				case "posList": {
-					event = handleMultiDimensionCoords(parser);
-					break;
-				}
-				case "pos": {
-					event = handleThreeDimensionalCoords(parser);
-					break;
-				}
-				case "networkMember" : {
-					event = handleNetworkMember(parser);
-					break;
-				}
-				case "startNode" :
-				case "endNode" :	
-				case "directedNode" : {
-					event = handleDirectedNode(parser);
-					break;
-				}
-				case "directedLink" : {
-					event = handleDirectedLink(parser);
-					break;
-				}
-				case "instruction" : {
-					event = handleRouteInformation(parser);
-					break;
-				}
-				case "roadNumber" :
-				case "name" :
-				case "alternativeName" :	
-				case "roadName" : {
-					event = handleTag("name", parser);
-					break;
-				}
-				default : {
+					case "posList": {
+						event = handleMultiDimensionCoords(parser);
+						break;
+					}
+					case "pos": {
+						event = handleThreeDimensionalCoords(parser);
+						break;
+					}
+					case "networkMember": {
+						event = handleNetworkMember(parser);
+						break;
+					}
+					case "startNode":
+					case "endNode":
+					case "directedNode": {
+						event = handleDirectedNode(parser);
+						break;
+					}
+					case "directedLink": {
+						event = handleDirectedLink(parser);
+						break;
+					}
+					case "instruction": {
+						event = handleRouteInformation(parser);
+						break;
+					}
+					case "descriptiveTerm":
+					case "descriptiveGroup": {
+						event = handleDescriptiveGroup(parser);
+						break;
+					}
+					case "roadNumber":
+					case "name":
+					case "alternativeName":
+					case "roadName": {
+						event = handleTag("name", parser);
+						break;
+					}
+					default: {
 						event = parser.next();
 					}
+					}
+
+				} else {
+					logger.info("EVENT:" + event);
+					event = parser.next();
 				}
-				
-				
-//				int attributeCount = parser.getAttributeCount();
-//				for (int i = 0; i < attributeCount; i++) {
-//					QName attributeName = parser.getAttributeName(i);
-//					System.err.println("QNAME:" + attributeName);
-//				}
-				
-			}
-			else {
-				logger.info("EVENT:" + event);
-				event = parser.next();
-			}
 			}
 		}
+	}
+
+	private int handleDescriptiveGroup(XMLStreamReader parser)
+			throws XMLStreamException {
+		String roadType = resolveHighway(parser.getElementText());
+		System.err.println(this.getClass() + ".handleDescriptiveGroup(" + roadType
+				+ ")");
+		if (null != roadType) {
+			setTag("type", "route");
+			setTag("highway", roadType);
+		}
+		return parser.getEventType();
+	}
+
+	private String resolveHighway(String elementText) {
+		logger.info("OSITNElement.resolveHighway( " + elementText + ")");
+		switch (elementText) {
+		case "A Road":
+		case "motorway":	
+			return elementText;
+		}
+		return null;
 	}
 
 	private int handleRouteInformation(XMLStreamReader parser)
 			throws XMLStreamException {
 		String elementText = parser.getElementText();
 		int event;
-		if("One Way".equals(elementText)) {
+		if ("One Way".equals(elementText)) {
 			setTag("type", "route");
 			setTag("oneway", "true");
 			logger.warn("CREATING ONE WAY");
-		}
-		else {
+		} else {
 			setTag("type", "restriction");
-			setTag("restriction",elementText);
+			setTag("restriction", elementText);
 		}
 		event = parser.getEventType();
 		return event;
 	}
 
-	private int handleDirectedLink(XMLStreamReader parser) throws XMLStreamException {
+	private int handleDirectedLink(XMLStreamReader parser)
+			throws XMLStreamException {
 		String orientation = parser.getAttributeValue(null, "orientation");
-		String nodeId = parser.getAttributeValue("http://www.w3.org/1999/xlink", "href");
+		String nodeId = parser.getAttributeValue(
+				"http://www.w3.org/1999/xlink", "href");
 		addDirectedLink(nodeId, orientation);
 		return parser.next();
 	}
 
-	private int handleDirectedNode(XMLStreamReader parser) throws XMLStreamException {
+	private int handleDirectedNode(XMLStreamReader parser)
+			throws XMLStreamException {
 		String orientation = parser.getAttributeValue(null, "orientation");
 		String grade = parser.getAttributeValue(null, "gradeSeparation");
-		
-		String nodeId = parser.getAttributeValue("http://www.w3.org/1999/xlink", "href");
+
+		String nodeId = parser.getAttributeValue(
+				"http://www.w3.org/1999/xlink", "href");
 		addDirectedNode(nodeId, grade, orientation);
 		return parser.next();
 	}
 
-	private int handleTag(String key, XMLStreamReader parser) throws XMLStreamException {
+	private int handleTag(String key, XMLStreamReader parser)
+			throws XMLStreamException {
 		String elementText = parser.getElementText();
-		logger.info("KEY:" + key  + " - VALUE:" + elementText);
+		logger.info("KEY:" + key + " - VALUE:" + elementText);
 		properties.put(key, elementText);
 		return parser.getEventType();
 	}
 
-	private int handleNetworkMember(XMLStreamReader parser) throws XMLStreamException {
-		String elementText = parser.getAttributeValue("http://www.w3.org/1999/xlink", "href");
+	private int handleNetworkMember(XMLStreamReader parser)
+			throws XMLStreamException {
+		String elementText = parser.getAttributeValue(
+				"http://www.w3.org/1999/xlink", "href");
 		parseNetworkMember(elementText);
 		return parser.next();
 	}
@@ -179,7 +205,7 @@ public abstract class OSITNElement implements RoutingElement {
 		parseCoords(elementText);
 		return parser.getEventType();
 	}
-	
+
 	private int handleMultiDimensionCoords(XMLStreamReader parser)
 			throws XMLStreamException {
 		String dimensionality = parser.getAttributeValue(null, "srsDimension");
@@ -188,35 +214,37 @@ public abstract class OSITNElement implements RoutingElement {
 		parseCoords(Integer.valueOf(dimensionality), elementText);
 		return parser.getEventType();
 	}
-	
+
 	private int handleThreeDimensionalCoords(XMLStreamReader parser)
 			throws XMLStreamException {
 		String elementText = parser.getElementText();
 		parseCoordinateString(elementText, " ");
 		return parser.getEventType();
 	}
-	
+
 	protected abstract void parseCoordinateString(String elementText,
 			String elementSeparator);
 
 	protected abstract void parseCoords(String coordinates);
-	
+
 	protected abstract void parseCoords(int dimensions, String lineDefinition);
-	
-	protected abstract void addDirectedNode(String nodeId, String orientation, String orientation2);
-	
+
+	protected abstract void addDirectedNode(String nodeId, String orientation,
+			String orientation2);
+
 	protected abstract void addDirectedLink(String nodeId, String orientation);
-	
+
 	protected abstract void parseNetworkMember(String elementText);
 
 	private boolean exitElement(XMLStreamReader parser) {
-		switch(parser.getLocalName()) {
-		case "RoadNode" : 
-		case "RoadLink" :	
-		case "RoadRouteInformation": 
-		case "Road" :
-		case "RouteLink" :
-		case "RouteNode" :return true; 
+		switch (parser.getLocalName()) {
+		case "RoadNode":
+		case "RoadLink":
+		case "RoadRouteInformation":
+		case "Road":
+		case "RouteLink":
+		case "RouteNode":
+			return true;
 		}
 		return false;
 	}

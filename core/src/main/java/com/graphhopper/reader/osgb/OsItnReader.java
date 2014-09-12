@@ -165,6 +165,7 @@ public class OsItnReader implements DataReader {
 	private TLongObjectMap<ItnNodePair> edgeIdToNodeMap;
 
 	private TLongObjectMap<String> edgeNameMap;
+	private TLongObjectMap<String> edgeRoadTypeMap;
 
 	public OsItnReader(GraphStorage storage) {
 		this.graphStorage = storage;
@@ -270,7 +271,7 @@ public class OsItnReader implements DataReader {
 			}
 			if (item.isType(OSMElement.RELATION)) {
 				final Relation relation = (Relation) item;
-				logger.warn("RELATION TYPE:" + item.getTag("type") + " meta?"
+				logger.warn("RELATION :" + item.getClass() +" TYPE:" + item.getTag("type") + " meta?"
 						+ relation.isMetaRelation());
 				if (!relation.isMetaRelation()
 						&& relation.hasTag("type", "route"))
@@ -281,6 +282,9 @@ public class OsItnReader implements DataReader {
 
 				if (relation.hasTag("name"))
 					prepareNameRelation(relation);
+				
+				if (relation.hasTag("highway"))
+					prepareRoadTypeRelation(relation);
 
 				if (++tmpRelationCounter % 50000 == 0) {
 					logger.info(nf(tmpRelationCounter)
@@ -305,11 +309,33 @@ public class OsItnReader implements DataReader {
 
 	private void prepareNameRelation(Relation relation) {
 		String name = relation.getTag("name");
+		System.err.println("Rel Name:" + name);
 		TLongObjectMap<String> edgeIdToNameMap = getEdgeNameMap();
 		ArrayList<? extends RelationMember> members = relation.getMembers();
 		for (RelationMember relationMember : members) {
 			long wayId = relationMember.ref();
-			edgeIdToNameMap.put(wayId, name);
+			String namePrefix = getWayName(wayId);
+			System.err.println("ADDING:" + wayId);
+			if(null!=namePrefix  && !namePrefix.contains(name)) {
+				namePrefix = namePrefix + " (" + name +")";
+				System.err.println("NAME:" + namePrefix);
+				edgeIdToNameMap.put(wayId, namePrefix);
+			} else {
+				edgeIdToNameMap.put(wayId, name);
+			}
+		}
+		System.err.println("Rel Name:" + name);
+	}
+	
+	private void prepareRoadTypeRelation(Relation relation) {
+		String highway = relation.getTag("highway");
+		System.err.println("Rel highway:" + highway);
+		TLongObjectMap<String> edgeIdToRoadTypeMap = getEdgeRoadTypeMap();
+		ArrayList<? extends RelationMember> members = relation.getMembers();
+		for (RelationMember relationMember : members) {
+			long wayId = relationMember.ref();
+			System.err.println("MEMBERS:" + wayId);
+			edgeIdToRoadTypeMap.put(wayId, highway);
 		}
 	}
 
@@ -341,7 +367,15 @@ public class OsItnReader implements DataReader {
 
 		return edgeNameMap;
 	}
+	
+	private TLongObjectMap<String> getEdgeRoadTypeMap() {
+		if (edgeRoadTypeMap == null)
+			edgeRoadTypeMap = new TLongObjectHashMap(getOsmIdStoreRequiredSet()
+					.size());
 
+		return edgeRoadTypeMap;
+	}
+	
 	/**
 	 * Filter ways but do not analyze properties wayNodes will be filled with
 	 * participating node ids.
@@ -549,12 +583,12 @@ public class OsItnReader implements DataReader {
 		logger.info("RELFLAGS:" + way.getId() + ":" + relationFlags);
 		String wayName = getWayName(way.getId());
 		if (null != wayName) {
-			String curName = way.getTag("name");
-			if (null != curName && curName.length() > 0) {
-				wayName += " (" + curName + ")";
-			}
-			logger.warn("Applying Name:" + wayName);
+			System.err.println("SETTING WAY NAME:" + wayName);
 			way.setTag("name", wayName);
+		}
+		String wayType = getWayRoadType(way.getId());
+		if (null != wayType && !way.hasTag("highway")) {
+			way.setTag("highway", wayType);
 		}
 		// TODO move this after we have created the edge and know the
 		// coordinates => encodingManager.applyWayTags
@@ -671,6 +705,10 @@ public class OsItnReader implements DataReader {
 
 	private String getWayName(long id) {
 		return getEdgeNameMap().remove(id);
+	}
+	
+	private String getWayRoadType(long id) {
+		return getEdgeRoadTypeMap().remove(id);
 	}
 
 	public void processRelation(Relation relation) throws XMLStreamException {
@@ -793,8 +831,9 @@ public class OsItnReader implements DataReader {
 		long handleRelationTags = encodingManager.handleRelationTags(relation,
 				0);
 		logger.warn("PREPARE ONE WAY:" + handleRelationTags);
-		if (handleRelationTags == 0)
+		if (handleRelationTags == 0) {
 			return;
+		}	
 
 		int size = relation.getMembers().size();
 		for (int index = 0; index < size; index++) {
@@ -985,7 +1024,7 @@ public class OsItnReader implements DataReader {
 			zeroCounter++;
 			towerNodeDistance = 0.0001;
 		}
-
+		logger.info("Add edge flags:" + flags);
 		EdgeIteratorState iter = graphStorage.edge(fromIndex, toIndex)
 				.setDistance(towerNodeDistance).setFlags(flags);
 		if (nodes > 2) {
