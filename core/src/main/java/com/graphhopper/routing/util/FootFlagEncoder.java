@@ -172,7 +172,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         if (sacScale != null)
         {
             if (!"hiking".equals(sacScale) && !"mountain_hiking".equals(sacScale)
-                    && !"demanding_mountain_hiking".equals(sacScale) /*&& !"alpine_hiking".equals(sacScale)*/)
+                    && !"demanding_mountain_hiking".equals(sacScale) && !"alpine_hiking".equals(sacScale))
                 // other scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
                 return 0;
         }
