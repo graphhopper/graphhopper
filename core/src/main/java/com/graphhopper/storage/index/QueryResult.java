@@ -25,17 +25,13 @@ import com.graphhopper.util.shapes.GHPoint3D;
 
 /**
  * Result of LocationIndex lookup.
- * <p/>
- * <
- * pre> X=query coordinates S=snapped coordinates: "snapping" real coords to road N=tower or pillar
+ * <pre> X=query coordinates S=snapped coordinates: "snapping" real coords to road N=tower or pillar
  * node T=closest tower node XS=distance
- * <p/>
  * X
  * |
  * T--S----N
- * <p/>
  * </pre>
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class QueryResult
