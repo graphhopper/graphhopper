@@ -25,6 +25,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.shapes.BBox;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -69,6 +70,8 @@ public class Measurement
 
         public void doPostProcessing()
         {
+            // re-create index to avoid bug as pickNode in locationIndex.prepare could be wrong while indexing if level is not taken into account and assumed to be 0 for pre-initialized graph
+            setLocationIndex(createLocationIndex(new RAMDirectory()));
             StopWatch sw = new StopWatch().start();
             int edges = getGraph().getAllEdges().getMaxId();
             initCHPrepare();
@@ -121,11 +124,7 @@ public class Measurement
 
             System.gc();
 
-            // route via CH. do preparation before
-            //
-            // TODO minor bug if we do not remove location index then occasionally we will get 
-            //      IllegalArgumentException: Cannot find point lat,lon
-            //      because as pickNode will be wrong while indexing as level is always 0 for pre-initialized graph
+            // route via CH. do preparation before                        
             hopper.setCHShortcuts("fastest");
             hopper.doPostProcessing();
             printTimeOfRouteQuery(hopper, count, "routingCH", vehicleStr);

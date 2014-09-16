@@ -416,6 +416,11 @@ public class GraphHopper implements GraphHopperAPI
         this.graph = graph;
     }
 
+    protected void setLocationIndex( LocationIndex locationIndex )
+    {
+        this.locationIndex = locationIndex;
+    }
+
     /**
      * The location index created from the graph.
      * <p>
@@ -935,6 +940,7 @@ public class GraphHopper implements GraphHopperAPI
      * Initializes the location index. Currently this has to be done after the ch-preparation!
      * Because - to improve performance - certain edges won't be available in a ch-graph and the
      * index needs to know this and selects the correct nodes which still see the correct neighbors.
+     * See #116
      */
     protected void initLocationIndex()
     {
