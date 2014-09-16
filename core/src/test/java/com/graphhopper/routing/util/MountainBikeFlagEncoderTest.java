@@ -83,6 +83,23 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     }
 
     @Test
+    @Override
+    public void testSacScale()
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "service");
+        way.setTag("sac_scale", "hiking");
+        // allow
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.setTag("sac_scale", "alpine_hiking");
+        assertTrue(encoder.acceptWay(way) > 0);
+        
+        way.setTag("sac_scale", "demanding_alpine_hiking");
+        assertTrue(encoder.acceptWay(way) == 0);
+    }
+
+    @Test
     public void testHandleWayTags()
     {
         OSMWay way = new OSMWay(1);
