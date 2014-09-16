@@ -401,7 +401,7 @@ public class RoutingAlgorithmIT
         {
             Helper.removeDir(new File(graphFile));
             GraphHopper hopper = new GraphHopper().
-                    setInMemory(true).
+                    setStoreOnFlush(true).
                     // avoid that path.getDistance is too different to path.getPoint.calcDistance
                     setWayPointMaxDistance(0).
                     setOSMFile(osmFile).
@@ -493,7 +493,7 @@ public class RoutingAlgorithmIT
         Helper.removeDir(new File(graphFile));
         final EncodingManager encodingManager = new EncodingManager("CAR");
         GraphHopper hopper = new GraphHopper().
-                setInMemory(true).
+                setStoreOnFlush(true).
                 setEncodingManager(encodingManager).
                 disableCHShortcuts().
                 setWayPointMaxDistance(0).

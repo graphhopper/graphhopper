@@ -95,7 +95,7 @@ public class OSMReaderTest
     {
         public GraphHopperTest( String osmFile )
         {
-            setInMemory(false);
+            setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
             setEncodingManager(new EncodingManager("CAR,FOOT"));

@@ -50,7 +50,7 @@ public class GraphHopperAPITest
         graph.edge(4, 3, 40, true);
 
         GraphHopper instance = new GraphHopper().
-                setInMemory(false).
+                setStoreOnFlush(false).
                 setEncodingManager(encodingManager).
                 disableCHShortcuts().
                 loadGraph(graph);
@@ -79,7 +79,7 @@ public class GraphHopperAPITest
         graph.edge(2, 3, 10, true);
         
         GraphHopper instance = new GraphHopper().
-                setInMemory(false).
+                setStoreOnFlush(false).
                 setEncodingManager(encodingManager).
                 disableCHShortcuts().
                 loadGraph(graph);
@@ -93,7 +93,7 @@ public class GraphHopperAPITest
     public void testNoLoad()
     {
         GraphHopper instance = new GraphHopper().
-                setInMemory(false).
+                setStoreOnFlush(false).
                 setEncodingManager(encodingManager).
                 disableCHShortcuts();
         try

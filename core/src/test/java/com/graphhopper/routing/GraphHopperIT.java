@@ -61,7 +61,7 @@ public class GraphHopperIT
     public void testMonacoWithInstructions() throws Exception
     {
         GraphHopper hopper = new GraphHopper().
-                setInMemory(true).
+                setStoreOnFlush(true).
                 setOSMFile(osmFile).
                 disableCHShortcuts().
                 setGraphHopperLocation(graphFile).
@@ -110,7 +110,7 @@ public class GraphHopperIT
     public void testSRTMWithInstructions() throws Exception
     {
         GraphHopper hopper = new GraphHopper().
-                setInMemory(true).
+                setStoreOnFlush(true).
                 setOSMFile(osmFile).
                 disableCHShortcuts().
                 setGraphHopperLocation(graphFile).
@@ -170,7 +170,7 @@ public class GraphHopperIT
             // make sure we are using fresh graphhopper files with correct vehicle
             Helper.removeDir(new File(tmpGraphFile));
             GraphHopper hopper = new GraphHopper().
-                    setInMemory(true).
+                    setStoreOnFlush(true).
                     setOSMFile(tmpOsmFile).
                     disableCHShortcuts().
                     setGraphHopperLocation(tmpGraphFile).
@@ -218,7 +218,7 @@ public class GraphHopperIT
     public void testMonacoVia()
     {
         GraphHopper hopper = new GraphHopper().
-                setInMemory(true).
+                setStoreOnFlush(true).
                 setOSMFile(osmFile).
                 disableCHShortcuts().
                 setGraphHopperLocation(graphFile).

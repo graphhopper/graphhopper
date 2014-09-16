@@ -176,9 +176,8 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper forServer()
     {
         // simplify to reduce network IO
-        setSimplifyRequest(true);
-        setPreciseIndexResolution(500);
-        return setInMemory(true);
+        setSimplifyResponse(true);
+        return setInMemory();
     }
 
     /**
@@ -187,9 +186,8 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper forDesktop()
     {
-        setSimplifyRequest(false);
-        setPreciseIndexResolution(500);
-        return setInMemory(true);
+        setSimplifyResponse(false);
+        return setInMemory();
     }
 
     /**
@@ -198,8 +196,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper forMobile()
     {
-        setSimplifyRequest(false);
-        setPreciseIndexResolution(500);
+        setSimplifyResponse(false);
         return setMemoryMapped();
     }
 
@@ -216,20 +213,29 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * This method call results in an in-memory graph. Specify storeOnFlush to true if you want that
-     * existing data will be loaded FROM disc and all in-memory data will be flushed TO disc after
-     * flush is called e.g. while OSM import.
+     * This method call results in an in-memory graph.
+     */
+    public GraphHopper setInMemory()
+    {
+        ensureNotLoaded();
+        dataAccessType = DAType.RAM_STORE;
+        return this;
+    }
+
+    /**
+     * Only valid option for in-memory graph and if you e.g. want to disable store on flush for unit
+     * tests. Specify storeOnFlush to true if you want that existing data will be loaded FROM disc
+     * and all in-memory data will be flushed TO disc after flush is called e.g. while OSM import.
      * <p>
      * @param storeOnFlush true by default
      */
-    public GraphHopper setInMemory( boolean storeOnFlush )
+    public GraphHopper setStoreOnFlush( boolean storeOnFlush )
     {
         ensureNotLoaded();
         if (storeOnFlush)
             dataAccessType = DAType.RAM_STORE;
         else
             dataAccessType = DAType.RAM;
-
         return this;
     }
 
@@ -268,10 +274,9 @@ public class GraphHopper implements GraphHopperAPI
      * @param weighting can be "fastest", "shortest" or your own weight-calculation type.
      * @see #disableCHShortcuts()
      */
-    public GraphHopper setCHShortcuts( String weighting )
+    public GraphHopper setCHWeighting( String weighting )
     {
         ensureNotLoaded();
-        chEnabled = true;
         chWeighting = weighting;
         return this;
     }
@@ -355,7 +360,7 @@ public class GraphHopper implements GraphHopperAPI
      * This method specifies if the returned path should be simplified or not, via douglas-peucker
      * or similar algorithm.
      */
-    private GraphHopper setSimplifyRequest( boolean doSimplify )
+    private GraphHopper setSimplifyResponse( boolean doSimplify )
     {
         this.simplifyRequest = doSimplify;
         return this;
@@ -538,7 +543,7 @@ public class GraphHopper implements GraphHopperAPI
         String chShortcuts = args.get("prepare.chShortcuts", "fastest");
         chEnabled = "true".equals(chShortcuts) || "fastest".equals(chShortcuts) || "shortest".equals(chShortcuts);
         if (chEnabled)
-            setCHShortcuts(chShortcuts);
+            setCHWeighting(chShortcuts);
 
         periodicUpdates = args.getInt("prepare.updates.periodic", periodicUpdates);
         lazyUpdates = args.getInt("prepare.updates.lazy", lazyUpdates);

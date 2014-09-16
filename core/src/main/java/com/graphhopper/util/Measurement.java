@@ -125,7 +125,7 @@ public class Measurement
             System.gc();
 
             // route via CH. do preparation before                        
-            hopper.setCHShortcuts("fastest");
+            hopper.setCHWeighting("fastest");
             hopper.doPostProcessing();
             printTimeOfRouteQuery(hopper, count, "routingCH", vehicleStr);
             logger.info("store into " + propLocation);

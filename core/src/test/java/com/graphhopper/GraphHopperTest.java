@@ -62,7 +62,7 @@ public class GraphHopperTest
     @Test
     public void testLoadOSM()
     {
-        GraphHopper closableInstance = new GraphHopper().setInMemory(true).
+        GraphHopper closableInstance = new GraphHopper().setStoreOnFlush(true).
                 setEncodingManager(new EncodingManager("CAR")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
@@ -72,7 +72,7 @@ public class GraphHopperTest
         assertEquals(3, ph.getPoints().getSize());
 
         closableInstance.close();
-        closableInstance = new GraphHopper().setInMemory(true);
+        closableInstance = new GraphHopper().setStoreOnFlush(true);
         assertTrue(closableInstance.load(ghLoc));
         ph = closableInstance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertTrue(ph.isFound());
@@ -101,18 +101,18 @@ public class GraphHopperTest
     @Test
     public void testAllowMultipleReadingInstances()
     {
-        GraphHopper instance1 = new GraphHopper().setInMemory(true).
+        GraphHopper instance1 = new GraphHopper().setStoreOnFlush(true).
                 setEncodingManager(new EncodingManager("CAR")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         instance1.importOrLoad();
 
-        GraphHopper instance2 = new GraphHopper().setInMemory(true).
+        GraphHopper instance2 = new GraphHopper().setStoreOnFlush(true).
                 setEncodingManager(new EncodingManager("CAR")).
                 setOSMFile(testOsm);
         instance2.load(ghLoc);
 
-        GraphHopper instance3 = new GraphHopper().setInMemory(true).
+        GraphHopper instance3 = new GraphHopper().setStoreOnFlush(true).
                 setEncodingManager(new EncodingManager("CAR")).
                 setOSMFile(testOsm);
         instance3.load(ghLoc);
@@ -141,7 +141,7 @@ public class GraphHopperTest
                 }
                 return super.importData();
             }
-        }.setInMemory(true).
+        }.setStoreOnFlush(true).
                 setEncodingManager(new EncodingManager("CAR")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
@@ -162,7 +162,7 @@ public class GraphHopperTest
         };
         thread.start();
 
-        GraphHopper instance2 = new GraphHopper().setInMemory(true).
+        GraphHopper instance2 = new GraphHopper().setStoreOnFlush(true).
                 setEncodingManager(new EncodingManager("CAR")).
                 setOSMFile(testOsm);
         try
@@ -193,9 +193,8 @@ public class GraphHopperTest
     public void testPrepare()
     {
         instance = new GraphHopper().
-                setInMemory(false).
-                setEncodingManager(new EncodingManager("CAR")).
-                setCHShortcuts("shortest").
+                setStoreOnFlush(false).
+                setEncodingManager(new EncodingManager("CAR")).setCHWeighting("shortest").
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         instance.importOrLoad();
@@ -208,7 +207,7 @@ public class GraphHopperTest
     @Test
     public void testSortedGraph_noCH()
     {
-        instance = new GraphHopper().setInMemory(false).
+        instance = new GraphHopper().setStoreOnFlush(false).
                 setSortGraph(true).
                 setEncodingManager(new EncodingManager("CAR")).
                 disableCHShortcuts().
@@ -227,7 +226,7 @@ public class GraphHopperTest
     public void testFootAndCar()
     {
         // now all ways are imported
-        instance = new GraphHopper().setInMemory(false).
+        instance = new GraphHopper().setStoreOnFlush(false).
                 setEncodingManager(new EncodingManager("CAR,FOOT")).
                 disableCHShortcuts().
                 setGraphHopperLocation(ghLoc).
@@ -312,7 +311,7 @@ public class GraphHopperTest
     public void testNoNPE_ifOnlyLoad()
     {
         // missing import of graph
-        instance = new GraphHopper().setInMemory(true);
+        instance = new GraphHopper().setStoreOnFlush(true);
         try
         {
             assertFalse(instance.load(ghLoc));
@@ -351,7 +350,7 @@ public class GraphHopperTest
 
         // missing OSM file to import
         instance = new GraphHopper().
-                setInMemory(true).
+                setStoreOnFlush(true).
                 setGraphHopperLocation(ghLoc);
         try
         {
@@ -365,7 +364,7 @@ public class GraphHopperTest
 
         // missing encoding manager          
         instance = new GraphHopper().
-                setInMemory(true).
+                setStoreOnFlush(true).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
         try
@@ -379,7 +378,7 @@ public class GraphHopperTest
 
         // Import is possible even if no storeOnFlush but missing OSM file
         instance = new GraphHopper().
-                setInMemory(false).
+                setStoreOnFlush(false).
                 setGraphHopperLocation(ghLoc);
         try
         {
@@ -396,7 +395,7 @@ public class GraphHopperTest
     public void testFootOnly()
     {
         // now only footable ways are imported => no A D C and B D E => the other both ways have pillar nodes!
-        instance = new GraphHopper().setInMemory(false).
+        instance = new GraphHopper().setStoreOnFlush(false).
                 setEncodingManager(new EncodingManager("FOOT")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
@@ -414,8 +413,7 @@ public class GraphHopperTest
     @Test
     public void testPrepareOnly()
     {
-        instance = new GraphHopper().setInMemory(true).
-                setCHShortcuts("shortest").
+        instance = new GraphHopper().setStoreOnFlush(true).setCHWeighting("shortest").
                 setEncodingManager(new EncodingManager("FOOT")).
                 setDoPrepare(false).
                 setGraphHopperLocation(ghLoc).
@@ -423,8 +421,7 @@ public class GraphHopperTest
         instance.importOrLoad();
         instance.close();
 
-        instance = new GraphHopper().setInMemory(true).
-                setCHShortcuts("shortest").
+        instance = new GraphHopper().setStoreOnFlush(true).setCHWeighting("shortest").
                 setGraphHopperLocation(ghLoc).setOSMFile(testOsm3);
 
         // wrong encoding manager
@@ -439,8 +436,7 @@ public class GraphHopperTest
         }
 
         // use the encoding manager from the graph
-        instance = new GraphHopper().setInMemory(true).
-                setCHShortcuts("shortest").
+        instance = new GraphHopper().setStoreOnFlush(true).setCHWeighting("shortest").
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
         instance.load(ghLoc);
@@ -449,7 +445,7 @@ public class GraphHopperTest
     @Test
     public void testVia()
     {
-        instance = new GraphHopper().setInMemory(true).
+        instance = new GraphHopper().setStoreOnFlush(true).
                 init(
                 new CmdArgs().
                 put("prepare.minNetworkSize", "1").
