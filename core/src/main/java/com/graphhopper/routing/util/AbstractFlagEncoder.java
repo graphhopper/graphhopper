@@ -100,6 +100,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         acceptedRailways.add("tram");
         acceptedRailways.add("abandoned");
         acceptedRailways.add("disused");
+        
+        // http://wiki.openstreetmap.org/wiki/Demolished_Railway
+        acceptedRailways.add("dismantled");
+        acceptedRailways.add("razed");
+        acceptedRailways.add("historic");
+        acceptedRailways.add("obliterated");
     }
 
     /**
@@ -217,7 +223,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             {
                 if (!locked && node.hasTag(res, intendedValues))
                     return 0;
-                
+
                 if (node.hasTag(res, restrictedValues))
                     return directionBitMask;
             }
