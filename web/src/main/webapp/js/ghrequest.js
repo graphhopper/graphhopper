@@ -25,10 +25,9 @@ GHRequest = function (host) {
     this.locale = "en";
     this.do_zoom = true;
     // use jsonp here if host allows CORS
-    this.dataType = "jsonp";
-    // This key can be updated at any time. Get your own API key here: http://graphhopper.com/#enterprise
-    // TODO revert to Cmmtvx01R56rdHcQQo7VjI6rgPgxuFLvqI8cR31u
-    this.key = "Jh2qaFuiVnLhxKw91n1HnofCiTiYE6HLahuUgmCu";
+    this.dataType = "json";
+    // This key can be updated at any time. Get your own API key here: http://graphhopper.com/#enterprise    
+    this.key = "Cmmtvx01R56rdHcQQo7VjI6rgPgxuFLvqI8cR31u";
 
     // register events
     this.route.addListener('route.add', function (evt) {
