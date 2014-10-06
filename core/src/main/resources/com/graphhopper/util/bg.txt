@@ -12,6 +12,7 @@ turn=завий %1$s
 turn_onto=завий %1$s по %2$s
 web.searchButton=Търсене
 web.fromHint=От
+web.viaHint=през
 web.toHint=До
 web.moreButton=още
 web.gpxExportButton=GPX експорт

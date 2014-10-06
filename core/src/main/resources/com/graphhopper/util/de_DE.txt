@@ -12,6 +12,7 @@ turn=%1$s abbiegen
 turn_onto=%1$s abbiegen auf %2$s
 web.searchButton=Suche
 web.fromHint=Von
+web.viaHint=Über
 web.toHint=Nach
 web.moreButton=mehr
 web.gpxExportButton=GPX export

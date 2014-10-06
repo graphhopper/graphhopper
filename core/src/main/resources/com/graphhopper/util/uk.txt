@@ -12,6 +12,7 @@ turn=поверніть %1$s
 turn_onto=поверніть %1$s на „%2$s“
 web.searchButton=Пошук
 web.fromHint=Від
+web.viaHint=через
 web.toHint=До
 web.moreButton=ще
 web.gpxExportButton=Експорт в GPX

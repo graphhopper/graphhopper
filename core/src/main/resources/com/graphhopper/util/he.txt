@@ -12,6 +12,7 @@ turn=נא לפנות %1$s
 turn_onto=נא לפנות %1$s לתוך %2$s
 web.searchButton=חיפוש
 web.fromHint=מוצא
+web.viaHint=דרך
 web.toHint=יעד
 web.moreButton=עוד
 web.gpxExportButton=ייצוא GPX

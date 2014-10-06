@@ -12,6 +12,7 @@ turn=gire %1$s
 turn_onto=gire %1$s por %2$s
 web.searchButton=Buscar
 web.fromHint=Desde
+web.viaHint=
 web.toHint=hasta
 web.moreButton=más
 web.gpxExportButton=

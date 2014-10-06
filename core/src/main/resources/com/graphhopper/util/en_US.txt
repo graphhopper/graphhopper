@@ -12,6 +12,7 @@ turn=turn %1$s
 turn_onto=turn %1$s onto %2$s
 web.searchButton=Search
 web.fromHint=From
+web.viaHint=Via
 web.toHint=To
 web.moreButton=more
 web.gpxExportButton=GPX export

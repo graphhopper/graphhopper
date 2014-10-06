@@ -12,6 +12,7 @@ turn=pagliko %1$s
 turn_onto=lumiko %1$s papunta sa %2$s
 web.searchButton=Paghahanap
 web.fromHint=mula sa 
+web.viaHint=
 web.toHint=upang sa
 web.moreButton=mas
 web.gpxExportButton=GPX Export

@@ -12,6 +12,7 @@ turn=Поверните %1$s
 turn_onto=Поверните %1$s на %2$s
 web.searchButton=Поиск
 web.fromHint=От
+web.viaHint=
 web.toHint=До
 web.moreButton=еще
 web.gpxExportButton=

@@ -233,7 +233,7 @@ function checkInput() {
     // properly unbind previously click handlers
     $("#locationpoints .pointDelete").off();
 
-    console.log("#### new checkInput #### ");
+    // console.log("#### new checkInput #### ");
     for (var i = 0; i < len; i++) {
         var div = $('#locationpoints > div.pointDiv').eq(i);
         console.log(div.length + ", index:" + i + ", len:" + len);

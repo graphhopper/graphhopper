@@ -12,6 +12,7 @@ turn=zavite %1$s
 turn_onto=zavite %1$s na %2$s
 web.searchButton=Išči
 web.fromHint=Od 
+web.viaHint=
 web.toHint=Do
 web.moreButton=več
 web.gpxExportButton=izvozi GPX

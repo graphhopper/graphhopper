@@ -12,6 +12,7 @@ turn=%1$sに曲がる
 turn_onto=%1$sに曲がって%2$sに入る
 web.searchButton=検索
 web.fromHint=出発地点
+web.viaHint=
 web.toHint=目的地点
 web.moreButton=詳細
 web.gpxExportButton=GPX形式でエクスポート
