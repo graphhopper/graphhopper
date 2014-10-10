@@ -294,7 +294,8 @@ function adjustMapSize() {
     var height = $(window).height();
     mapDiv.width(width).height(height);
     $("#input").height(height);
-    $("#info").css("max-height", height - $("#input_header").height() - 35);
+    // reduce info size depending on how heigh the input_header is and reserve space for footer
+    $("#info").css("max-height", height - $("#input_header").height() - 58);
 }
 
 function initMap(selectLayer) {
@@ -1047,7 +1048,7 @@ function routeLatLng(request, doQuery) {
 
             hiddenDiv.append("<span>" + infoStr + "</span>");
 
-            var exportLink = $("#exportLink a");
+            var exportLink = $("#export-link a");
             exportLink.attr('href', urlForHistory);
             var startOsmLink = $("<a>start</a>");
             startOsmLink.attr("href", "https://www.openstreetmap.org/?zoom=14&mlat=" + request.from.lat + "&mlon=" + request.from.lng);

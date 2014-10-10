@@ -50,15 +50,24 @@
                     <div class="clear"> </div>                
                     <input id="searchButton" type="submit" value="Search">                
                 </form>      
-                <div id="exportLink" title="Static Link" class="left"><a href="/maps"><img src='img/link.png'></a></div>
+                <div id="export-link" title="Static Link" class="left"><a href="/maps"><img src='img/link.png'></a></div>
                 <div id="gpxExportButton" title="GPX Download"><a href=""><img alt="gpx" src='img/gpx.png'></a></div>
-                <div id="hosting">Powered by <a href='https://graphhopper.com/#enterprise'>GraphHopper API</a></div>            
+                <div id="hosting">Powered by <a href='https://graphhopper.com/#enterprise'>GraphHopper API</a></div>                
             </div>
             <div class="clear"> </div>
             <div id="info" class="small_text">
             </div>
             <div id="error" class="error">
             </div>
+
+            <div id="footer">
+                <div id="link_line">
+                    <a class="footer-link" href='https://graphhopper.com/#contact'>Contact</a>
+                    <a class="footer-link" href='https://graphhopper.com/terms.html'>Terms</a>
+                    <a class="footer-link" href='https://graphhopper.com/privacy.html'>Privacy</a>
+                </div>
+            </div>  
+
             <div id="pointTemplate" class="hidden">
                 <div id="{id}_Div" class="pointDiv">
                     <img id="{id}_Indicator" class="hidden pointIndicator" src="img/loading.gif"/>
@@ -69,8 +78,8 @@
                     <div id="{id}_ResolveFound" class="pointResolveFound"></div>
                     <div id="{id}_ResolveError" class="pointResolveError"></div>
                 </div>
-            </div>
-        </div>        
+            </div>   
+        </div>
 
         <div id="map">
         </div>
@@ -81,7 +90,7 @@
                 var _paq = _paq || [];
                 _paq.push(['trackPageView']);
                 _paq.push(['enableLinkTracking']);
-                (function() {
+                (function () {
                     var u = (("https:" == document.location.protocol) ? "https" : "http") + "://graphhopper.com/piwik/";
                     _paq.push(['setTrackerUrl', u + 'piwik.php']);
                     _paq.push(['setSiteId', 1]);
