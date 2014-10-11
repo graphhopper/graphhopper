@@ -209,8 +209,7 @@ public class GraphHopperTest
     {
         instance = new GraphHopper().setStoreOnFlush(false).
                 setSortGraph(true).
-                setEncodingManager(new EncodingManager("CAR")).
-                disableCHShortcuts().
+                setEncodingManager(new EncodingManager("CAR")).disableCH().
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         instance.importOrLoad();
@@ -227,8 +226,7 @@ public class GraphHopperTest
     {
         // now all ways are imported
         instance = new GraphHopper().setStoreOnFlush(false).
-                setEncodingManager(new EncodingManager("CAR,FOOT")).
-                disableCHShortcuts().
+                setEncodingManager(new EncodingManager("CAR,FOOT")).disableCH().
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
         instance.importOrLoad();
@@ -273,7 +271,7 @@ public class GraphHopperTest
                 new CmdArgs().
                 put("osmreader.dataaccess", "RAM").
                 put("osmreader.acceptWay", "FOOT,CAR").
-                put("prepare.chShortcuts", "no").
+                put("prepare.chWeighting", "no").
                 put("osmreader.osm", testOsm3)).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
@@ -284,7 +282,7 @@ public class GraphHopperTest
                 new CmdArgs().
                 put("osmreader.dataaccess", "RAM").
                 put("osmreader.acceptWay", "FOOT").
-                put("prepare.chShortcuts", "no").
+                put("prepare.chWeighting", "no").
                 put("osmreader.osm", testOsm3)).
                 setOSMFile(testOsm3);
         try
@@ -300,7 +298,7 @@ public class GraphHopperTest
                 new CmdArgs().
                 put("osmreader.dataaccess", "RAM").
                 put("osmreader.acceptWay", "CAR,FOOT").
-                put("prepare.chShortcuts", "no").
+                put("prepare.chWeighting", "no").
                 put("osmreader.osm", testOsm3)).
                 setOSMFile(testOsm3);
         assertTrue(instance.load(ghLoc));

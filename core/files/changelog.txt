@@ -1,6 +1,7 @@
-0.4.0
+0.4.0    
+    renamed GraphHopper.disableCHShortcuts to disableCH
     moving the boolean parameter of GraphHopper.setInMemory into a separate method setStoreOnFlush
-    renaming of GraphHopper.setCHShortcuts to setCHWeighting
+    renaming of GraphHopper.setCHShortcuts to setCHWeighting, as well as the property prepare.chShortcuts to prepare.chWeighting
     jsonp is disabled by default. You need to enable it in the config.properties, see the config-example.properties
     with the introduction of lock protection mechanism (see #112) GraphHopper needs always write access, see also #217
     new GraphHopper.clean method to remove the directory via Java API

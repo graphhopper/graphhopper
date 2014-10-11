@@ -404,8 +404,7 @@ public class RoutingAlgorithmIT
                     setStoreOnFlush(true).
                     // avoid that path.getDistance is too different to path.getPoint.calcDistance
                     setWayPointMaxDistance(0).
-                    setOSMFile(osmFile).
-                    disableCHShortcuts().
+                    setOSMFile(osmFile).disableCH().
                     setGraphHopperLocation(graphFile).
                     setEncodingManager(new EncodingManager(importVehicles));
             if (is3D)
@@ -494,8 +493,7 @@ public class RoutingAlgorithmIT
         final EncodingManager encodingManager = new EncodingManager("CAR");
         GraphHopper hopper = new GraphHopper().
                 setStoreOnFlush(true).
-                setEncodingManager(encodingManager).
-                disableCHShortcuts().
+                setEncodingManager(encodingManager).disableCH().
                 setWayPointMaxDistance(0).
                 setOSMFile("files/monaco.osm.gz").setGraphHopperLocation(graphFile).
                 importOrLoad();

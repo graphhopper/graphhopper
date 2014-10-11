@@ -272,7 +272,7 @@ public class GraphHopper implements GraphHopperAPI
      * Enables the use of contraction hierarchies to reduce query times. Enabled by default.
      * <p/>
      * @param weighting can be "fastest", "shortest" or your own weight-calculation type.
-     * @see #disableCHShortcuts()
+     * @see #disableCH()
      */
     public GraphHopper setCHWeighting( String weighting )
     {
@@ -289,7 +289,7 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Disables contraction hierarchies. Enabled by default.
      */
-    public GraphHopper disableCHShortcuts()
+    public GraphHopper disableCH()
     {
         ensureNotLoaded();
         chEnabled = false;
@@ -540,10 +540,10 @@ public class GraphHopper implements GraphHopperAPI
 
         // prepare CH
         doPrepare = args.getBool("prepare.doPrepare", doPrepare);
-        String chShortcuts = args.get("prepare.chShortcuts", "fastest");
-        chEnabled = "true".equals(chShortcuts) || "fastest".equals(chShortcuts) || "shortest".equals(chShortcuts);
+        String tmpCHWeighting = args.get("prepare.chWeighting", "fastest");
+        chEnabled = "fastest".equals(tmpCHWeighting) || "shortest".equals(tmpCHWeighting);
         if (chEnabled)
-            setCHWeighting(chShortcuts);
+            setCHWeighting(tmpCHWeighting);
 
         periodicUpdates = args.getInt("prepare.updates.periodic", periodicUpdates);
         lazyUpdates = args.getInt("prepare.updates.lazy", lazyUpdates);
@@ -878,7 +878,7 @@ public class GraphHopper implements GraphHopperAPI
             {
                 if (prepare == null)
                     throw new IllegalStateException("Preparation object is null. CH-preparation wasn't done or did you "
-                            + "forgot to call disableCHShortcuts()?");
+                            + "forgot to call disableCH()?");
 
                 if (algoStr.equals("dijkstrabi"))
                     algo = prepare.createAlgo();

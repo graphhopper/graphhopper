@@ -119,7 +119,7 @@ public class Measurement
 
             // Route via dijkstrabi. Normal routing takes a lot of time => smaller query number than CH
             // => values are not really comparable to routingCH as e.g. the mean distance etc is different            
-            hopper.disableCHShortcuts();
+            hopper.disableCH();
             printTimeOfRouteQuery(hopper, count / 20, "routing", vehicleStr);
 
             System.gc();

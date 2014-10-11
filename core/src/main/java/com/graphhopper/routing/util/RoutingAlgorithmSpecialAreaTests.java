@@ -68,8 +68,8 @@ public class RoutingAlgorithmSpecialAreaTests
     {
         if (unterfrankenGraph instanceof LevelGraph)
         {
-            throw new IllegalStateException("run testAlgos only with a none-LevelGraph. Use prepare.chShortcuts=false "
-                    + "Or use prepare.chShortcuts=shortest and avoid the preparation");
+            throw new IllegalStateException("run testAlgos only with a none-LevelGraph. Use prepare.chWeighting=no "
+                    + "Or use prepare.chWeighting=shortest and avoid the preparation");
         }
 
         TestAlgoCollector testCollector = new TestAlgoCollector("testAlgos");
