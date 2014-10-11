@@ -70,7 +70,7 @@ public class MainActivity extends Activity
     private volatile boolean prepareInProgress = false;
     private volatile boolean shortestPathRunning = false;
     private String currentArea = "berlin";
-    private String fileListURL = "https://graphhopper.com/public/maps/0.3/";
+    private String fileListURL = "https://graphhopper.com/public/maps/0.4/";
     private String prefixURL = fileListURL;
     private String downloadURL;
     private File mapsFolder;
@@ -169,9 +169,9 @@ public class MainActivity extends Activity
     protected void onDestroy()
     {
         super.onDestroy();
-        if(hopper != null)
+        if (hopper != null)
             hopper.close();
-        
+
         hopper = null;
         // necessary?
         System.gc();
@@ -356,7 +356,9 @@ public class MainActivity extends Activity
                 String localFolder = Helper.pruneFileEnd(AndroidHelper.getFileName(downloadURL));
                 localFolder = new File(mapsFolder, localFolder + "-gh").getAbsolutePath();
                 log("downloading & unzipping " + downloadURL + " to " + localFolder);
-                new Downloader("GraphHopper Android").downloadAndUnzip(downloadURL, localFolder,
+                Downloader downloader = new Downloader("GraphHopper Android");
+                downloader.setTimeout(30000);
+                downloader.downloadAndUnzip(downloadURL, localFolder,
                         new ProgressListener()
                         {
                             @Override
