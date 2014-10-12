@@ -99,7 +99,7 @@ public class OSMReaderTest
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
             setEncodingManager(new EncodingManager("CAR,FOOT"));
-            disableCH();
+            setCHEnable(false);
 
             carEncoder = (CarFlagEncoder) getEncodingManager().getEncoder("CAR");
             footEncoder = (FootFlagEncoder) getEncodingManager().getEncoder("FOOT");

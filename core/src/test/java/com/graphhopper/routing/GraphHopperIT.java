@@ -62,7 +62,8 @@ public class GraphHopperIT
     {
         GraphHopper hopper = new GraphHopper().
                 setStoreOnFlush(true).
-                setOSMFile(osmFile).disableCH().
+                setOSMFile(osmFile).
+                setCHEnable(false).
                 setGraphHopperLocation(graphFile).
                 setEncodingManager(new EncodingManager(importVehicles)).
                 importOrLoad();
@@ -110,7 +111,8 @@ public class GraphHopperIT
     {
         GraphHopper hopper = new GraphHopper().
                 setStoreOnFlush(true).
-                setOSMFile(osmFile).disableCH().
+                setOSMFile(osmFile).
+                setCHEnable(false).
                 setGraphHopperLocation(graphFile).
                 setEncodingManager(new EncodingManager(importVehicles));
 
@@ -169,7 +171,8 @@ public class GraphHopperIT
             Helper.removeDir(new File(tmpGraphFile));
             GraphHopper hopper = new GraphHopper().
                     setStoreOnFlush(true).
-                    setOSMFile(tmpOsmFile).disableCH().
+                    setOSMFile(tmpOsmFile).
+                    setCHEnable(false).
                     setGraphHopperLocation(tmpGraphFile).
                     setEncodingManager(new EncodingManager(tmpImportVehicles)).
                     importOrLoad();
@@ -216,7 +219,8 @@ public class GraphHopperIT
     {
         GraphHopper hopper = new GraphHopper().
                 setStoreOnFlush(true).
-                setOSMFile(osmFile).disableCH().
+                setOSMFile(osmFile).
+                setCHEnable(false).
                 setGraphHopperLocation(graphFile).
                 setEncodingManager(new EncodingManager(importVehicles)).
                 importOrLoad();

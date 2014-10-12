@@ -119,13 +119,13 @@ public class Measurement
 
             // Route via dijkstrabi. Normal routing takes a lot of time => smaller query number than CH
             // => values are not really comparable to routingCH as e.g. the mean distance etc is different            
-            hopper.disableCH();
+            hopper.setCHEnable(false);
             printTimeOfRouteQuery(hopper, count / 20, "routing", vehicleStr);
 
             System.gc();
 
             // route via CH. do preparation before                        
-            hopper.setCHWeighting("fastest");
+            hopper.setCHEnable(true);
             hopper.doPostProcessing();
             printTimeOfRouteQuery(hopper, count, "routingCH", vehicleStr);
             logger.info("store into " + propLocation);

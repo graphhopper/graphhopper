@@ -272,7 +272,7 @@ public class GraphHopper implements GraphHopperAPI
      * Enables the use of contraction hierarchies to reduce query times. Enabled by default.
      * <p/>
      * @param weighting can be "fastest", "shortest" or your own weight-calculation type.
-     * @see #disableCH()
+     * @see #setCHEnable(boolean)
      */
     public GraphHopper setCHWeighting( String weighting )
     {
@@ -287,12 +287,12 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Disables contraction hierarchies. Enabled by default.
+     * Enables or disables contraction hierarchies. Enabled by default.
      */
-    public GraphHopper disableCH()
+    public GraphHopper setCHEnable(boolean enable)
     {
         ensureNotLoaded();
-        chEnabled = false;
+        chEnabled = enable;
         return this;
     }
 
@@ -875,10 +875,10 @@ public class GraphHopper implements GraphHopperAPI
             String algoStr = request.getAlgorithm().isEmpty() ? "dijkstrabi" : request.getAlgorithm();
             RoutingAlgorithm algo = null;
             if (chEnabled)
-            {
+            {                
                 if (prepare == null)
                     throw new IllegalStateException("Preparation object is null. CH-preparation wasn't done or did you "
-                            + "forgot to call disableCH()?");
+                            + "forget to call setCHEnable(false)?");
 
                 if (algoStr.equals("dijkstrabi"))
                     algo = prepare.createAlgo();

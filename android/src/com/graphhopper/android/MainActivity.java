@@ -425,8 +425,7 @@ public class MainActivity extends Activity
         {
             protected Path saveDoInBackground( Void... v ) throws Exception
             {
-                GraphHopper tmpHopp = new GraphHopper().forMobile();
-                tmpHopp.setCHWeighting("fastest");
+                GraphHopper tmpHopp = new GraphHopper().forMobile();                
                 tmpHopp.load(new File(mapsFolder, currentArea).getAbsolutePath());
                 log("found graph " + tmpHopp.getGraph().toString() + ", nodes:" + tmpHopp.getGraph().getNodes());
                 hopper = tmpHopp;
