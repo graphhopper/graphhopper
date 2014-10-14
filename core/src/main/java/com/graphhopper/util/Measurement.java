@@ -70,12 +70,12 @@ public class Measurement
 
         public void doPostProcessing()
         {
-            // re-create index to avoid bug as pickNode in locationIndex.prepare could be wrong while indexing if level is not taken into account and assumed to be 0 for pre-initialized graph
-            setLocationIndex(createLocationIndex(new RAMDirectory()));
+            // re-create index to avoid bug as pickNode in locationIndex.prepare could be wrong while indexing if level is not taken into account and assumed to be 0 for pre-initialized graph            
             StopWatch sw = new StopWatch().start();
             int edges = getGraph().getAllEdges().getMaxId();
             initCHPrepare();
             super.prepare();
+            setLocationIndex(createLocationIndex(new RAMDirectory()));
             put("prepare.time", sw.stop().getTime());
             put("prepare.shortcuts", getGraph().getAllEdges().getMaxId() - edges);
         }
