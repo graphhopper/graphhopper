@@ -31,7 +31,7 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class XFirstSearchTest
+public class BreadthFirstSearchTest
 {
     int counter;
     TIntHashSet set = new TIntHashSet();
@@ -46,7 +46,7 @@ public class XFirstSearchTest
     @Test
     public void testBFS()
     {
-        XFirstSearch bfs = new XFirstSearch()
+        BreadthFirstSearch bfs = new BreadthFirstSearch()
         {
             @Override
             public boolean goFurther( int v )
@@ -73,17 +73,17 @@ public class XFirstSearchTest
         g.edge(9, 10, 8, true);
         g.edge(5, 10, 1, true);
 
-        bfs.start(g.createEdgeExplorer(), 0, false);
+        bfs.start(g.createEdgeExplorer(), 0);
 
         assertTrue(counter > 0);
         assertEquals(g.getNodes(), counter);
         assertEquals("{0, 5, 3, 2, 1, 10, 8, 7, 6, 9, 4}", list.toString());
     }
-
+    
     @Test
-    public void testDFS()
+    public void testBFS2()
     {
-        XFirstSearch bfs = new XFirstSearch()
+        BreadthFirstSearch bfs = new BreadthFirstSearch()
         {
             @Override
             public boolean goFurther( int v )
@@ -98,14 +98,17 @@ public class XFirstSearchTest
 
         Graph g = new GraphBuilder(new EncodingManager("CAR")).create();
         g.edge(1, 2, 1, false);
-        g.edge(1, 3, 1, false);
-        g.edge(1, 4, 1, false);
         g.edge(2, 3, 1, false);
-        g.edge(4, 3, 1, false);
+        g.edge(3, 4, 1, false);
+        g.edge(1, 5, 1, false);
+        g.edge(5, 6, 1, false);
+        g.edge(6, 4, 1, false);
 
-        bfs.start(g.createEdgeExplorer(), 1, true);
+        bfs.start(g.createEdgeExplorer(), 1);
 
         assertTrue(counter > 0);
-        assertEquals("{1, 2, 3, 4}", list.toString());
+        assertEquals("{1, 5, 2, 6, 3, 4}", list.toString());
     }
+
+    
 }

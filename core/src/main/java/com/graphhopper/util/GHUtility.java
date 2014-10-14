@@ -78,7 +78,7 @@ public class GHUtility
         }
 
 //        for (int i = 0; i < nodes; i++) {
-//            new XFirstSearch().start(g, i, false);
+//            new BreadthFirstSearch().start(g, i);
 //        }
         return problems;
     }
@@ -146,7 +146,7 @@ public class GHUtility
 
     public static void printInfo( final Graph g, int startNode, final int counts, final EdgeFilter filter )
     {
-        new XFirstSearch()
+        new BreadthFirstSearch()
         {
             int counter = 0;
 
@@ -160,7 +160,7 @@ public class GHUtility
                 }
                 return true;
             }
-        }.start(g.createEdgeExplorer(), startNode, false);
+        }.start(g.createEdgeExplorer(), startNode);
     }
 
     public static String getNodeInfo( LevelGraph g, int nodeId, EdgeFilter filter )
@@ -219,7 +219,7 @@ public class GHUtility
         for (int startNode = 0; startNode >= 0 && startNode < nodes;
                 startNode = bitset.nextClear(startNode + 1))
         {
-            new XFirstSearch()
+            new BreadthFirstSearch()
             {
                 @Override
                 protected GHBitSet createBitSet()
@@ -234,7 +234,7 @@ public class GHUtility
                     ref.val++;
                     return super.goFurther(nodeId);
                 }
-            }.start(explorer, startNode, false);
+            }.start(explorer, startNode);
         }
         return createSortedGraph(g, sortedGraph, list);
     }
