@@ -241,6 +241,10 @@ public class GraphHopperStorage implements GraphStorage
         return bounds;
     }
 
+    /**
+     * Check if byte capacity of DataAcess nodes object is sufficient to include node index, else
+     * extend byte capacity
+     */
     final void ensureNodeIndex( int nodeIndex )
     {
         if (!initialized)
@@ -251,13 +255,15 @@ public class GraphHopperStorage implements GraphStorage
 
         long oldNodes = nodeCount;
         nodeCount = nodeIndex + 1;
-        if (!nodes.incCapacity((long) nodeCount * nodeEntryBytes))
-            return;
+        boolean capacityIncreased = nodes.incCapacity((long) nodeCount * nodeEntryBytes);
+        if (capacityIncreased)
+        {
+            long newBytesCapacity = nodes.getCapacity();
+            initNodeRefs(oldNodes * nodeEntryBytes, newBytesCapacity);
+            if (removedNodes != null)
+                getRemovedNodes().ensureCapacity((int) (newBytesCapacity / nodeEntryBytes));
+        }
 
-        long newBytesCapacity = nodes.getCapacity();
-        initNodeRefs(oldNodes * nodeEntryBytes, newBytesCapacity);
-        if (removedNodes != null)
-            getRemovedNodes().ensureCapacity((int) (newBytesCapacity / nodeEntryBytes));
     }
 
     /**
@@ -293,7 +299,11 @@ public class GraphHopperStorage implements GraphStorage
     {
         return edge(a, b).setDistance(distance).setFlags(encodingManager.flagsDefault(true, bothDirection));
     }
-
+    
+    /**
+     * Create edge between nodes a and b
+     * @return EdgeIteratorState of newly created edge
+     */
     @Override
     public EdgeIteratorState edge( int a, int b )
     {
@@ -319,17 +329,17 @@ public class GraphHopperStorage implements GraphStorage
     }
 
     /**
-     * @return edgeIdPointer which is edgeId * edgeEntrySize
+     * Write new edge between nodes fromNodeId, and toNodeId both to nodes index and edges index
      */
     int internalEdgeAdd( int fromNodeId, int toNodeId )
     {
-        int newOrExistingEdge = nextEdge();
-        writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
-        connectNewEdge(fromNodeId, newOrExistingEdge);
+        int newEdgeId = nextEdge();
+        writeEdge(newEdgeId, fromNodeId, toNodeId, EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
+        connectNewEdge(fromNodeId, newEdgeId);
         if (fromNodeId != toNodeId)
-            connectNewEdge(toNodeId, newOrExistingEdge);
+            connectNewEdge(toNodeId, newEdgeId);
 
-        return newOrExistingEdge;
+        return newEdgeId;
     }
 
     // for test only
@@ -337,7 +347,11 @@ public class GraphHopperStorage implements GraphStorage
     {
         edgeCount = cnt;
     }
-
+    
+    /**
+     * Determine next free edgeId and ensure byte capacity to store edge
+     * @return next free edgeId
+     */
     private int nextEdge()
     {
         int nextEdge = edgeCount;
