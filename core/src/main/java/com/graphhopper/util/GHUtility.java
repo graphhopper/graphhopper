@@ -28,6 +28,7 @@ import com.graphhopper.storage.*;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A helper class to avoid cluttering the Graph interface with all the common methods. Most of the
@@ -214,12 +215,12 @@ public class GHUtility
         int nodes = g.getNodes();
         list.fill(0, nodes, -1);
         final GHBitSetImpl bitset = new GHBitSetImpl(nodes);
-        final IntRef ref = new IntRef(0);
+        final AtomicInteger ref = new AtomicInteger(-1);
         EdgeExplorer explorer = g.createEdgeExplorer();
         for (int startNode = 0; startNode >= 0 && startNode < nodes;
                 startNode = bitset.nextClear(startNode + 1))
         {
-            new BreadthFirstSearch()
+            new DepthFirstSearch()
             {
                 @Override
                 protected GHBitSet createBitSet()
@@ -230,8 +231,7 @@ public class GHUtility
                 @Override
                 protected boolean goFurther( int nodeId )
                 {
-                    list.set(nodeId, ref.val);
-                    ref.val++;
+                    list.set(nodeId, ref.incrementAndGet());                    
                     return super.goFurther(nodeId);
                 }
             }.start(explorer, startNode);
