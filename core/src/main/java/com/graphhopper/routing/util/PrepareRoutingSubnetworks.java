@@ -20,10 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.XFirstSearch;
+import com.graphhopper.util.*;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -113,7 +110,7 @@ public class PrepareRoutingSubnetworks
             if (g.isNodeRemoved(start) || bs.contains(start))
                 continue;
 
-            new XFirstSearch()
+            new BreadthFirstSearch()
             {
                 int tmpCounter = 0;
 
@@ -141,7 +138,7 @@ public class PrepareRoutingSubnetworks
                     return true;
                 }
 
-            }.start(explorer, start, false);
+            }.start(explorer, start);
             map.put(start, integ.get());
             integ.set(0);
         }
@@ -193,7 +190,7 @@ public class PrepareRoutingSubnetworks
             return;
         }
         EdgeExplorer explorer = g.createEdgeExplorer(edgeFilter);
-        new XFirstSearch()
+        new DepthFirstSearch()
         {
             @Override
             protected GHBitSet createBitSet()
@@ -207,7 +204,7 @@ public class PrepareRoutingSubnetworks
                 g.markNodeRemoved(nodeId);
                 return super.goFurther(nodeId);
             }
-        }.start(explorer, start, true);
+        }.start(explorer, start);
     }
 
     /**

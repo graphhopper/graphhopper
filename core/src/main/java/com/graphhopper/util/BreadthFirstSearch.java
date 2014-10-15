@@ -21,26 +21,38 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 
 /**
- * This abstract class defines commonalities for BFS and DFS
+ * Implementattion of breadth first search (BFS)
  * <p/>
- * @author Jan Sölter
+ * @author Peter Karich
  */
-public abstract class XFirstSearch
+public class BreadthFirstSearch extends XFirstSearch
 {
-        protected GHBitSet createBitSet()
+
+    @Override
+    public void start( EdgeExplorer explorer, int startNode)
     {
-        return new GHBitSetImpl();
+        SimpleIntDeque fifo = new SimpleIntDeque();
+        GHBitSet visited = createBitSet();
+        visited.add(startNode);
+        fifo.push(startNode);
+        int current;
+        while (!fifo.isEmpty())
+        {
+            current = fifo.pop();
+            if (goFurther(current))
+            {
+                EdgeIterator iter = explorer.setBaseNode(current);
+                while (iter.next())
+                {
+                    int connectedId = iter.getAdjNode();
+                    if (checkAdjacent(iter) && !visited.contains(connectedId))
+                    {
+                        visited.add(connectedId);
+                        fifo.push(connectedId);
+                    }
+                }
+            }
+        }
     }
 
-    public abstract void start( EdgeExplorer explorer, int startNode);
-
-    protected boolean goFurther( int nodeId )
-    {
-        return true;
-    }
-
-    protected boolean checkAdjacent( EdgeIteratorState edge )
-    {
-        return true;
-    }
 }
