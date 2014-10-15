@@ -993,7 +993,6 @@ public class GraphHopperStorage implements GraphStorage
         {
             geoRef *= 4;
             count = wayGeometry.getInt(geoRef);
-            wayGeometry.getInt(geoRef);
 
             geoRef += 4;
             bytes = new byte[count * nodeAccess.getDimension() * 4];
