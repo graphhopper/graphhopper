@@ -967,10 +967,10 @@ public class GraphHopper implements GraphHopperAPI
         {
             if (graph instanceof LevelGraph && isPrepared())
                 throw new IllegalArgumentException("Sorting prepared LevelGraph is not possible yet. See #12");
-
-            logger.info("sorting ... (" + Helper.getMemInfo() + ")");
+            
             GraphStorage newGraph = GHUtility.newStorage(graph);
             GHUtility.sortDFS(graph, newGraph);
+            logger.info("graph sorted (" + Helper.getMemInfo() + ")");
             graph = newGraph;
         }
     }
