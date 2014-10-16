@@ -32,11 +32,8 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
 import static org.junit.Assert.*;
@@ -178,10 +175,10 @@ public class RoutingAlgorithmIT
         list.get(0).setDistance(1, 1627);
         list.get(2).setDistance(1, 2258);
         list.get(3).setDistance(1, 1482);
-        
+
         // or slightly longer tour with less nodes: list.get(1).setDistance(1, 3610);
         list.get(1).setDistance(1, 3595);
-        list.get(1).setLocs(1, 149);               
+        list.get(1).setLocs(1, 149);
 
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
                 list, "FOOT", true, "FOOT", "shortest", true);
@@ -413,9 +410,9 @@ public class RoutingAlgorithmIT
 
             hopper.importOrLoad();
 
-            FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);            
-            Weighting weighting = hopper.createWeighting(weightCalcStr, encoder);
-            
+            FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
+            Weighting weighting = hopper.createWeighting(Weighting.Params.create(weightCalcStr), encoder);
+
             Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
                     createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, ch, weighting, hopper.getEncodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);

@@ -18,6 +18,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.util.EdgeIteratorState;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * Specifies how the best route is calculated. E.g. the fastest or shortest route.
@@ -41,4 +43,12 @@ public interface Weighting
      * +Infinity. Make sure your method does not return NaN which can e.g. occur for 0/0.
      */
     double calcWeight( EdgeIteratorState edge, boolean reverse );
+
+    public static class Params
+    {
+        public static Map<String, Object> create( String weighting )
+        {
+            return Collections.singletonMap("weighting", (Object) weighting);
+        }
+    }
 }

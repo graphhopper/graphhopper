@@ -34,11 +34,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -289,7 +285,7 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Enables or disables contraction hierarchies. Enabled by default.
      */
-    public GraphHopper setCHEnable(boolean enable)
+    public GraphHopper setCHEnable( boolean enable )
     {
         ensureNotLoaded();
         chEnabled = enable;
@@ -766,7 +762,7 @@ public class GraphHopper implements GraphHopperAPI
     {
         FlagEncoder encoder = encodingManager.getSingle();
         PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder,
-                createWeighting(chWeighting, encoder));
+                createWeighting(Weighting.Params.create(chWeighting), encoder));
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                 setLazyUpdates(lazyUpdates).
                 setNeighborUpdates(neighborUpdates).
@@ -777,18 +773,21 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * @param weighting specify e.g. fastest or shortest (or empty for default)
-     * @param encoder
-     * @return the weighting to be used for route calculation
+     * Based on the weightingParameters and the specified vehicle a Weighting instance can be
+     * created. Note that all URL parameters are available in the weightingParameters as String if
+     * you use the GraphHopper Web module.
+     * <p>
+     * @see Weighting.Params.create
+     * @param weightingParameters the request parameters
+     * @param encoder the required vehicle
      */
-    public Weighting createWeighting( String weighting, FlagEncoder encoder )
+    public Weighting createWeighting( Map<String, Object> weightingParameters, FlagEncoder encoder )
     {
-        // ignore case
-        weighting = weighting.toLowerCase();
-        if ("fastest".equals(weighting))
+        String weighting = (String) weightingParameters.get("weighting");
+        if ("fastest".equalsIgnoreCase(weighting))
         {
             if (encoder instanceof BikeCommonFlagEncoder)
-                return new PriorityWeighting((BikeCommonFlagEncoder) encoder);
+                return new PriorityWeighting(encoder);
             else
                 return new FastestWeighting(encoder);
         }
@@ -875,7 +874,7 @@ public class GraphHopper implements GraphHopperAPI
             String algoStr = request.getAlgorithm().isEmpty() ? "dijkstrabi" : request.getAlgorithm();
             RoutingAlgorithm algo = null;
             if (chEnabled)
-            {                
+            {
                 if (prepare == null)
                     throw new IllegalStateException("Preparation object is null. CH-preparation wasn't done or did you "
                             + "forget to call setCHEnable(false)?");
@@ -892,7 +891,7 @@ public class GraphHopper implements GraphHopperAPI
                 }
             } else
             {
-                Weighting weighting = createWeighting(request.getWeighting(), encoder);
+                Weighting weighting = createWeighting(request.getHints(), encoder);
                 prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, algoStr, encoder, weighting);
                 algo = prepare.createAlgo();
             }
@@ -967,7 +966,7 @@ public class GraphHopper implements GraphHopperAPI
         {
             if (graph instanceof LevelGraph && isPrepared())
                 throw new IllegalArgumentException("Sorting prepared LevelGraph is not possible yet. See #12");
-            
+
             GraphStorage newGraph = GHUtility.newStorage(graph);
             GHUtility.sortDFS(graph, newGraph);
             logger.info("graph sorted (" + Helper.getMemInfo() + ")");

@@ -27,6 +27,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.Map.Entry;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -96,14 +97,18 @@ public class GraphHopperServlet extends GHBaseServlet
         } else
         {
             FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
-            ghRsp = hopper.route(new GHRequest(infoPoints).
-                    setVehicle(algoVehicle.toString()).
+            GHRequest request = new GHRequest(infoPoints);
+
+            initHints(request, req.getParameterMap());
+            request.setVehicle(algoVehicle.toString()).
                     setWeighting(weighting).
                     setAlgorithm(algoStr).
                     setLocale(localeStr).
                     putHint("calcPoints", calcPoints).
                     putHint("instructions", enableInstructions).
-                    putHint("douglas.minprecision", minPathPrecision));
+                    putHint("douglas.minprecision", minPathPrecision);
+
+            ghRsp = hopper.route(request);
         }
 
         float took = sw.stop().getSeconds();
@@ -126,7 +131,7 @@ public class GraphHopperServlet extends GHBaseServlet
             writeJson(req, res, new JSONObject(createJson(req, ghRsp, took)));
     }
 
-    protected String createGPXString( HttpServletRequest req, HttpServletResponse res, GHResponse rsp ) 
+    protected String createGPXString( HttpServletRequest req, HttpServletResponse res, GHResponse rsp )
             throws Exception
     {
         boolean includeElevation = getBooleanParam(req, "elevation", false);
@@ -157,7 +162,7 @@ public class GraphHopperServlet extends GHBaseServlet
 
         Element errorsElement = doc.createElement("extensions");
         mdElement.appendChild(errorsElement);
-        
+
         for (Throwable t : list)
         {
             Element error = doc.createElement("error");
@@ -254,5 +259,14 @@ public class GraphHopperServlet extends GHBaseServlet
         }
 
         return infoPoints;
+    }
+
+    private void initHints( GHRequest request, Map<String, String[]> parameterMap )
+    {
+        for (Entry<String, String[]> e : parameterMap.entrySet())
+        {
+            if (e.getValue().length == 1)
+                request.putHint(e.getKey(), e.getValue()[0]);
+        }
     }
 }
