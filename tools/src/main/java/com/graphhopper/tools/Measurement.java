@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util;
+package com.graphhopper.tools;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
@@ -26,6 +26,13 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.MiniPerfTest;
+import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -109,7 +116,7 @@ public class Measurement
         if ("true".equals(g.getProperties().get("prepare.done")))
             throw new IllegalStateException("Graph has to be unprepared but wasn't!");
 
-        String vehicleStr = args.get("osmreader.acceptWay");
+        String vehicleStr = args.get("osmreader.acceptWay", "");
         StopWatch sw = new StopWatch().start();
         try
         {

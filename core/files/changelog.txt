@@ -1,4 +1,6 @@
 0.4.0    
+    moved method GraphHopper.main into tools module and class com.graphhopper.tools.Import, see #250
+    refactored GraphHopper.createWeighting to accept more than one configuration option, see #237
     refactored GraphHopper.disableCHShortcuts to setCHEnable(boolean)
     moving the boolean parameter of GraphHopper.setInMemory into a separate method setStoreOnFlush
     renaming of GraphHopper.setCHShortcuts to setCHWeighting, as well as the property prepare.chShortcuts to prepare.chWeighting

@@ -47,20 +47,6 @@ import org.slf4j.LoggerFactory;
  */
 public class GraphHopper implements GraphHopperAPI
 {
-    public static void main( String[] strs ) throws Exception
-    {
-        CmdArgs args = CmdArgs.read(strs);
-        GraphHopper hopper = new GraphHopper().init(args);
-        hopper.importOrLoad();
-        if (args.getBool("graph.testIT", false))
-        {
-            // important: use osmreader.wayPointMaxDistance=0
-            RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(hopper);
-            tests.start();
-        }
-        hopper.close();
-    }
-
     private final Logger logger = LoggerFactory.getLogger(getClass());
     // for graph:
     private GraphStorage graph;
@@ -572,7 +558,7 @@ public class GraphHopper implements GraphHopperAPI
      * disc which is usually a lot faster.
      */
     public GraphHopper importOrLoad()
-    {
+    {        
         if (!load(ghLocation))
         {
             printInfo();
