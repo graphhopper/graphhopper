@@ -209,6 +209,7 @@ public class GraphHopperServlet extends GHBaseServlet
             jsonInfo.put("took", Math.round(took * 1000));
             Map<String, Object> jsonPath = new HashMap<String, Object>();
             jsonPath.put("distance", Helper.round(rsp.getDistance(), 3));
+            jsonPath.put("weight", Helper.round6(rsp.getDistance()));
             jsonPath.put("time", rsp.getMillis());
 
             if (calcPoints)
