@@ -186,6 +186,7 @@ public class GraphHopperServlet extends GHBaseServlet
         Map<String, Object> json = new HashMap<String, Object>();
         Map<String, Object> jsonInfo = new HashMap<String, Object>();
         json.put("info", jsonInfo);
+        jsonInfo.put("copyrights", Arrays.asList("GraphHopper", "OpenStreetMap contributors"));
 
         if (rsp.hasErrors())
         {
