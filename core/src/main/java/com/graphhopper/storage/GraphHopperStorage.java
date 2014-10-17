@@ -178,8 +178,8 @@ public class GraphHopperStorage implements GraphStorage
         properties.create(100);
         extStorage.create(initSize);
 
-        properties.put("osmreader.bytesForFlags", encodingManager.getBytesForFlags());
-        properties.put("osmreader.acceptWay", encodingManager.toDetailsString());
+        properties.put("graph.bytesForFlags", encodingManager.getBytesForFlags());
+        properties.put("graph.flagEncoders", encodingManager.toDetailsString());
 
         properties.put("graph.byteOrder", dir.getByteOrder());
         properties.put("graph.dimension", nodeAccess.getDimension());
@@ -299,9 +299,10 @@ public class GraphHopperStorage implements GraphStorage
     {
         return edge(a, b).setDistance(distance).setFlags(encodingManager.flagsDefault(true, bothDirection));
     }
-    
+
     /**
      * Create edge between nodes a and b
+     * <p>
      * @return EdgeIteratorState of newly created edge
      */
     @Override
@@ -347,9 +348,10 @@ public class GraphHopperStorage implements GraphStorage
     {
         edgeCount = cnt;
     }
-    
+
     /**
      * Determine next free edgeId and ensure byte capacity to store edge
+     * <p>
      * @return next free edgeId
      */
     private int nextEdge()
@@ -1386,7 +1388,7 @@ public class GraphHopperStorage implements GraphStorage
             {
                 properties.checkVersions(false);
                 // check encoding for compatiblity
-                acceptStr = properties.get("osmreader.acceptWay");
+                acceptStr = properties.get("graph.flagEncoders");
             } else
                 throw new IllegalStateException("cannot load properties. corrupt file or directory? " + dir);
 
@@ -1397,7 +1399,7 @@ public class GraphHopperStorage implements GraphStorage
                             + dir.getLocation());
 
                 int bytesForFlags = 4;
-                if ("8".equals(properties.get("osmreader.bytesForFlags")))
+                if ("8".equals(properties.get("graph.bytesForFlags")))
                     bytesForFlags = 8;
                 encodingManager = new EncodingManager(acceptStr, bytesForFlags);
             } else if (!acceptStr.isEmpty() && !encodingManager.toDetailsString().equalsIgnoreCase(acceptStr))

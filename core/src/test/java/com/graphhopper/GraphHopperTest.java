@@ -272,10 +272,10 @@ public class GraphHopperTest
     {
         instance = new GraphHopper().init(
                 new CmdArgs().
+                put("osmreader.osm", testOsm3).
                 put("osmreader.dataaccess", "RAM").
-                put("osmreader.acceptWay", "FOOT,CAR").
-                put("prepare.chWeighting", "no").
-                put("osmreader.osm", testOsm3)).
+                put("graph.flagEncoders", "FOOT,CAR").
+                put("prepare.chWeighting", "no")).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
         assertEquals(5, instance.getGraph().getNodes());
@@ -283,10 +283,10 @@ public class GraphHopperTest
 
         instance = new GraphHopper().init(
                 new CmdArgs().
+                put("osmreader.osm", testOsm3).
                 put("osmreader.dataaccess", "RAM").
-                put("osmreader.acceptWay", "FOOT").
-                put("prepare.chWeighting", "no").
-                put("osmreader.osm", testOsm3)).
+                put("graph.flagEncoders", "FOOT").
+                put("prepare.chWeighting", "no")).
                 setOSMFile(testOsm3);
         try
         {
@@ -299,10 +299,10 @@ public class GraphHopperTest
         // different order should be ok
         instance = new GraphHopper().init(
                 new CmdArgs().
+                put("osmreader.osm", testOsm3).
                 put("osmreader.dataaccess", "RAM").
-                put("osmreader.acceptWay", "CAR,FOOT").
                 put("prepare.chWeighting", "no").
-                put("osmreader.osm", testOsm3)).
+                put("graph.flagEncoders", "CAR,FOOT")).
                 setOSMFile(testOsm3);
         assertTrue(instance.load(ghLoc));
         assertEquals(5, instance.getGraph().getNodes());
@@ -451,11 +451,10 @@ public class GraphHopperTest
     public void testVia()
     {
         instance = new GraphHopper().setStoreOnFlush(true).
-                init(
-                new CmdArgs().
-                put("prepare.minNetworkSize", "1").
-                put("osmreader.acceptWay", "CAR").
-                put("osmreader.osm", testOsm3)).
+                init(new CmdArgs().
+                        put("osmreader.osm", testOsm3).
+                        put("prepare.minNetworkSize", "1").
+                        put("graph.flagEncoders", "CAR")).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
 

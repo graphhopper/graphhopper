@@ -50,6 +50,8 @@ public class GraphHopper implements GraphHopperAPI
     private final Logger logger = LoggerFactory.getLogger(getClass());
     // for graph:
     private GraphStorage graph;
+    private EncodingManager encodingManager;
+    private int defaultSegmentSize = -1;
     private String ghLocation = "";
     private DAType dataAccessType = DAType.RAM_STORE;
     private boolean sortGraph = false;
@@ -58,6 +60,9 @@ public class GraphHopper implements GraphHopperAPI
     private LockFactory lockFactory = new NativeFSLockFactory();
     private final String fileLockName = "gh.lock";
     private boolean allowWrites = true;
+    private boolean turnCosts = false;
+    private boolean enableInstructions = true;
+    private boolean fullyLoaded = false;    
     // for routing
     private boolean simplifyRequest = true;
     // for index
@@ -78,14 +83,10 @@ public class GraphHopper implements GraphHopperAPI
     private double logMessages = -1;
     // for OSM import
     private String osmFile;
-    private EncodingManager encodingManager;
     private double wayPointMaxDistance = 1;
     private int workerThreads = -1;
-    private int defaultSegmentSize = -1;
-    private boolean turnCosts = false;
-    private boolean enableInstructions = true;
     private boolean calcPoints = true;
-    private boolean fullyLoaded = false;
+    // utils    
     private final TranslationMap trMap = new TranslationMap().doImport();
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
 
@@ -491,6 +492,9 @@ public class GraphHopper implements GraphHopperAPI
             lockFactory = new SimpleFSLockFactory();
         else
             lockFactory = new NativeFSLockFactory();
+        int bytesForFlags = args.getInt("graph.bytesForFlags", 4);
+        String flagEncoders = args.get("graph.flagEncoders", "CAR");
+        encodingManager = new EncodingManager(flagEncoders, bytesForFlags);
 
         // elevation
         String eleProviderStr = args.get("graph.elevation.provider", "noop").toLowerCase();
@@ -534,9 +538,6 @@ public class GraphHopper implements GraphHopperAPI
 
         // osm import
         wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", wayPointMaxDistance);
-        String flagEncoders = args.get("osmreader.acceptWay", "CAR");
-        int bytesForFlags = args.getInt("osmreader.bytesForFlags", 4);
-        encodingManager = new EncodingManager(flagEncoders, bytesForFlags);
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
 
