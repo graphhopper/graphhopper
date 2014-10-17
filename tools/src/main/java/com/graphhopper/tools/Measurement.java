@@ -116,7 +116,7 @@ public class Measurement
         if ("true".equals(g.getProperties().get("prepare.done")))
             throw new IllegalStateException("Graph has to be unprepared but wasn't!");
 
-        String vehicleStr = args.get("osmreader.flagEncoders", "");
+        String vehicleStr = args.get("graph.flagEncoders", "");
         StopWatch sw = new StopWatch().start();
         try
         {
