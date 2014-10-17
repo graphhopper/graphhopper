@@ -1,4 +1,5 @@
 0.4.0    
+    default weighting is now fastest, fixing #261
     moved method GraphHopper.main into tools module and class com.graphhopper.tools.Import, see #250
     refactored GraphHopper.createWeighting to accept more than one configuration option, see #237
     refactored GraphHopper.disableCHShortcuts to setCHEnable(boolean)

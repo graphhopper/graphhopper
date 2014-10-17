@@ -558,7 +558,7 @@ public class GraphHopper implements GraphHopperAPI
      * disc which is usually a lot faster.
      */
     public GraphHopper importOrLoad()
-    {        
+    {
         if (!load(ghLocation))
         {
             printInfo();
@@ -770,14 +770,20 @@ public class GraphHopper implements GraphHopperAPI
     public Weighting createWeighting( Map<String, Object> weightingParameters, FlagEncoder encoder )
     {
         String weighting = (String) weightingParameters.get("weighting");
-        if ("fastest".equalsIgnoreCase(weighting))
+        weighting = weighting == null ? "" : weighting;
+        if ("shortest".equalsIgnoreCase(weighting))
+        {
+            return new ShortestWeighting();
+        } else if ("fastest".equalsIgnoreCase(weighting) || weighting.isEmpty())
         {
             if (encoder instanceof BikeCommonFlagEncoder)
                 return new PriorityWeighting(encoder);
             else
                 return new FastestWeighting(encoder);
+        } else
+        {
+            throw new UnsupportedOperationException("weighting " + weighting + " not supported");
         }
-        return new ShortestWeighting();
     }
 
     @Override
