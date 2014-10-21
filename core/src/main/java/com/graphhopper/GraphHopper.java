@@ -62,7 +62,7 @@ public class GraphHopper implements GraphHopperAPI
     private boolean allowWrites = true;
     private boolean turnCosts = false;
     private boolean enableInstructions = true;
-    private boolean fullyLoaded = false;    
+    private boolean fullyLoaded = false;
     // for routing
     private boolean simplifyRequest = true;
     // for index
@@ -977,7 +977,7 @@ public class GraphHopper implements GraphHopperAPI
                 throw new IllegalArgumentException("Contraction hierarchies preparation "
                         + "requires (at the moment) only one vehicle. But was:" + encodingManager);
 
-            logger.info("calling prepare.doWork ... (" + Helper.getMemInfo() + ")");
+            logger.info("calling prepare.doWork for " + encodingManager.toString() + " ... (" + Helper.getMemInfo() + ")");
             prepare.doWork();
             graph.getProperties().put("prepare.date", formatDateTime(new Date()));
         }
