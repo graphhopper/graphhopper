@@ -222,8 +222,8 @@ public class Path
                     + "Reverse:" + revert + ", fwd:" + encoder.isBool(flags, FlagEncoder.K_FORWARD) + ", bwd:" + encoder.isBool(flags, FlagEncoder.K_BACKWARD));
 
         double speed = revert ? encoder.getReverseSpeed(flags) : encoder.getSpeed(flags);
-        if (Double.isInfinite(speed) || Double.isNaN(speed))
-            throw new IllegalStateException("Invalid speed stored in edge!");
+        if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
+            throw new IllegalStateException("Invalid speed stored in edge! " + speed);
 
         return (long) (distance * 3600 / speed);
     }
@@ -465,7 +465,7 @@ public class Path
                 else
                 {
                     int beforeLast = wayGeo.getSize() - 2;
-                    prevOrientation = ac.calcOrientation(wayGeo.getLatitude(beforeLast), wayGeo.getLongitude(beforeLast), 
+                    prevOrientation = ac.calcOrientation(wayGeo.getLatitude(beforeLast), wayGeo.getLongitude(beforeLast),
                             adjLat, adjLon);
                 }
 

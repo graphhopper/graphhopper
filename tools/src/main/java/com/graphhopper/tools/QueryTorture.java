@@ -15,8 +15,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util;
+package com.graphhopper.tools;
 
+import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.Downloader;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 import java.io.*;
 import java.util.ArrayList;
@@ -60,9 +66,9 @@ public class QueryTorture
 
     public void start( CmdArgs read )
     {
-        String logfile = read.get("logfile");
+        String logfile = read.get("logfile", "");
         int workers = read.getInt("workers", 1);
-        baseUrl = read.get("baseurl");
+        baseUrl = read.get("baseurl", "");
         maxQueries = read.getInt("maxqueries", 1000);
         timeout = read.getInt("timeout", 3000);
         if (Helper.isEmpty(baseUrl))

@@ -37,7 +37,6 @@ public class GHRequest
     private List<GHPoint> points;
     private final Map<String, Object> hints = new HashMap<String, Object>(5);
     private String vehicle = "";
-    private String weighting = "";
     private boolean possibleToAdd = false;
     private Locale locale = Locale.US;
 
@@ -136,13 +135,15 @@ public class GHRequest
     public GHRequest setWeighting( String w )
     {
         if (w != null)
-            this.weighting = w;
+        {
+            putHint("weighting", w);
+        }
         return this;
     }
 
     public String getWeighting()
     {
-        return weighting;
+        return getHint("weighting", "");
     }
 
     /**
@@ -162,10 +163,7 @@ public class GHRequest
 
     public GHRequest putHint( String key, Object value )
     {
-        Object old = hints.put(key, value);
-        if (old != null)
-            throw new RuntimeException("Key is already associated with " + old + ", your value:" + value);
-
+        hints.put(key, value);
         return this;
     }
 
@@ -200,5 +198,10 @@ public class GHRequest
                 res += "; " + point.toString();
         }
         return res + "(" + algo + ")";
+    }
+
+    public Map<String, Object> getHints()
+    {
+        return hints;
     }
 }

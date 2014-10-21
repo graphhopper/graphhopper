@@ -32,10 +32,33 @@ public class DefaultModule extends AbstractModule
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final CmdArgs args;
+    private GraphHopper graphHopper;
 
     public DefaultModule( CmdArgs args )
     {
-        this.args = args;
+        this.args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
+    }
+
+    public GraphHopper getGraphHopper()
+    {
+        if (graphHopper == null)
+            throw new IllegalStateException("createGraphHopper not called");
+
+        return graphHopper;
+    }
+
+    /**
+     * @return an initialized GraphHopper instance
+     */
+    protected GraphHopper createGraphHopper( CmdArgs args )
+    {
+        graphHopper = new GraphHopper().forServer().init(args);
+        graphHopper.importOrLoad();
+        logger.info("loaded graph at:" + graphHopper.getGraphHopperLocation()
+                + ", source:" + graphHopper.getOSMFile()
+                + ", acceptWay:" + graphHopper.getEncodingManager()
+                + ", class:" + graphHopper.getGraph().getClass().getSimpleName());
+        return graphHopper;
     }
 
     @Override
@@ -43,18 +66,14 @@ public class DefaultModule extends AbstractModule
     {
         try
         {
-            GraphHopper hopper = new GraphHopper().forServer().init(args);
-            hopper.importOrLoad();
-            logger.info("loaded graph at:" + hopper.getGraphHopperLocation()
-                    + ", source:" + hopper.getOSMFile()
-                    + ", acceptWay:" + hopper.getEncodingManager()
-                    + ", class:" + hopper.getGraph().getClass().getSimpleName());
-
-            bind(GraphHopper.class).toInstance(hopper);
+            graphHopper = createGraphHopper(args);
+            bind(GraphHopper.class).toInstance(graphHopper);
+            bind(TranslationMap.class).toInstance(graphHopper.getTranslationMap());
 
             long timeout = args.getLong("web.timeout", 3000);
-            bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);            
-            bind(TranslationMap.class).toInstance(hopper.getTranslationMap());
+            bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);
+            boolean jsonpAllowed = args.getBool("web.jsonpAllowed", false);
+            bind(Boolean.class).annotatedWith(Names.named("jsonpAllowed")).toInstance(jsonpAllowed);
         } catch (Exception ex)
         {
             throw new IllegalStateException("Couldn't load graph", ex);

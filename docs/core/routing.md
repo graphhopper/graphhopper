@@ -12,7 +12,10 @@ hopper.setEncodingManager(new EncodingManager("car"));
 // of course this is dependent on the area you import
 hopper.importOrLoad();
 
-GHRequest req = new GHRequest(latFrom, lonFrom, latTo, lonTo).setVehicle("car");
+// simple configuration of the request object, see the GraphHopperServlet classs for more possibilities.
+GHRequest req = new GHRequest(latFrom, lonFrom, latTo, lonTo).
+    setWeighting("fastest").
+    setVehicle("car");
 GHResponse rsp = hopper.route(req);
 
 // first check for errors

@@ -92,4 +92,42 @@ public class GraphHopperServletIT extends BaseServletTester
         assertTrue("distance wasn't correct:" + rsp.getDistance(), rsp.getDistance() > 9000);
         assertTrue("distance wasn't correct:" + rsp.getDistance(), rsp.getDistance() < 9500);
     }
+
+    @Test
+    public void testGraphHopperWebRealExceptions()
+    {
+        GHResponse rsp;
+        Throwable ex;
+
+        GraphHopperAPI hopper = new GraphHopperWeb();
+        assertTrue(hopper.load(getTestAPIUrl()));
+
+        // IllegalStateException (Wrong Request)
+        rsp = hopper.route(new GHRequest());
+        assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
+
+        ex = rsp.getErrors().get(0);
+        assertTrue("Wrong Exception found: " + ex.getClass().getName()
+            + ", IllegalStateException expected.", ex instanceof IllegalStateException);
+
+        // IllegalArgumentException (Wrong Points)
+        rsp = hopper.route(new GHRequest(0.0, 0.0, 0.0, 0.0));
+        assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
+
+        ex = rsp.getErrors().get(0);
+        assertTrue("Wrong Exception found: " + ex.getClass().getName()
+                + ", IllegalArgumentException expected.", ex instanceof IllegalArgumentException);
+
+        // IllegalArgumentException (Vehicle not supported)
+        rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setVehicle("SPACE-SHUTTLE"));
+        assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
+
+        ex = rsp.getErrors().get(0);
+        assertTrue("Wrong Exception found: " + ex.getClass().getName()
+                + ", IllegalArgumentException expected.", ex instanceof IllegalArgumentException);
+
+        // UnsupportedOperationException
+        // RuntimeException
+        // Exception
+    }
 }

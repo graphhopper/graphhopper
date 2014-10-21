@@ -27,6 +27,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.Map.Entry;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -38,7 +39,6 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -87,47 +87,52 @@ public class GraphHopperServlet extends GHBaseServlet
         String localeStr = getParam(req, "locale", "en");
 
         StopWatch sw = new StopWatch().start();
-        GHResponse rsp;
+        GHResponse ghRsp;
         if (!hopper.getEncodingManager().supports(vehicleStr))
         {
-            rsp = new GHResponse().addError(new IllegalArgumentException("Vehicle not supported: " + vehicleStr));
+            ghRsp = new GHResponse().addError(new IllegalArgumentException("Vehicle not supported: " + vehicleStr));
         } else if (elevation && !hopper.hasElevation())
         {
-            rsp = new GHResponse().addError(new IllegalArgumentException("Elevation not supported!"));
+            ghRsp = new GHResponse().addError(new IllegalArgumentException("Elevation not supported!"));
         } else
         {
             FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
-            rsp = hopper.route(new GHRequest(infoPoints).
-                    setVehicle(algoVehicle.toString()).
+            GHRequest request = new GHRequest(infoPoints);
+
+            initHints(request, req.getParameterMap());
+            request.setVehicle(algoVehicle.toString()).
                     setWeighting(weighting).
                     setAlgorithm(algoStr).
                     setLocale(localeStr).
                     putHint("calcPoints", calcPoints).
                     putHint("instructions", enableInstructions).
-                    putHint("douglas.minprecision", minPathPrecision));
+                    putHint("douglas.minprecision", minPathPrecision);
+
+            ghRsp = hopper.route(request);
         }
 
         float took = sw.stop().getSeconds();
         String infoStr = req.getRemoteAddr() + " " + req.getLocale() + " " + req.getHeader("User-Agent");
-        PointList points = rsp.getPoints();
+        PointList points = ghRsp.getPoints();
         String logStr = req.getQueryString() + " " + infoStr + " " + infoPoints
-                + ", distance: " + rsp.getDistance() + ", time:" + Math.round(rsp.getMillis() / 60000f)
+                + ", distance: " + ghRsp.getDistance() + ", time:" + Math.round(ghRsp.getMillis() / 60000f)
                 + "min, points:" + points.getSize() + ", took:" + took
-                + ", debug - " + rsp.getDebugInfo() + ", " + algoStr + ", "
+                + ", debug - " + ghRsp.getDebugInfo() + ", " + algoStr + ", "
                 + weighting + ", " + vehicleStr;
 
-        if (rsp.hasErrors())
-            logger.error(logStr + ", errors:" + rsp.getErrors());
+        if (ghRsp.hasErrors())
+            logger.error(logStr + ", errors:" + ghRsp.getErrors());
         else
             logger.info(logStr);
 
         if (writeGPX)
-            writeGPX(req, res, rsp);
+            writeResponse(res, createGPXString(req, res, ghRsp));
         else
-            writeJson(req, res, rsp, took);
+            writeJson(req, res, new JSONObject(createJson(req, ghRsp, took)));
     }
 
-    private void writeGPX( HttpServletRequest req, HttpServletResponse res, GHResponse rsp ) throws Exception
+    protected String createGPXString( HttpServletRequest req, HttpServletResponse res, GHResponse rsp )
+            throws Exception
     {
         boolean includeElevation = getBooleanParam(req, "elevation", false);
         res.setCharacterEncoding("UTF-8");
@@ -137,9 +142,9 @@ public class GraphHopperServlet extends GHBaseServlet
         String timeZone = getParam(req, "timezone", "GMT");
         long time = getLongParam(req, "millis", System.currentTimeMillis());
         if (rsp.hasErrors())
-            writeResponse(res, errorsToXML(rsp.getErrors()));
+            return errorsToXML(rsp.getErrors());
         else
-            writeResponse(res, rsp.getInstructions().createGPX(trackName, time, timeZone, includeElevation));
+            return rsp.getInstructions().createGPX(trackName, time, timeZone, includeElevation);
     }
 
     String errorsToXML( List<Throwable> list ) throws Exception
@@ -172,16 +177,16 @@ public class GraphHopperServlet extends GHBaseServlet
         return writer.toString();
     }
 
-    private void writeJson( HttpServletRequest req, HttpServletResponse res,
-            GHResponse rsp, float took ) throws JSONException, IOException
+    protected Map<String, Object> createJson( HttpServletRequest req, GHResponse rsp, float took )
     {
         boolean enableInstructions = getBooleanParam(req, "instructions", true);
         boolean pointsEncoded = getBooleanParam(req, "points_encoded", true);
         boolean calcPoints = getBooleanParam(req, "calc_points", true);
         boolean includeElevation = getBooleanParam(req, "elevation", false);
-        JSONObject json = new JSONObject();
-        JSONObject jsonInfo = new JSONObject();
+        Map<String, Object> json = new HashMap<String, Object>();
+        Map<String, Object> jsonInfo = new HashMap<String, Object>();
         json.put("info", jsonInfo);
+        jsonInfo.put("copyrights", Arrays.asList("GraphHopper", "OpenStreetMap contributors"));
 
         if (rsp.hasErrors())
         {
@@ -203,8 +208,9 @@ public class GraphHopperServlet extends GHBaseServlet
         } else
         {
             jsonInfo.put("took", Math.round(took * 1000));
-            JSONObject jsonPath = new JSONObject();
+            Map<String, Object> jsonPath = new HashMap<String, Object>();
             jsonPath.put("distance", Helper.round(rsp.getDistance(), 3));
+            jsonPath.put("weight", Helper.round6(rsp.getDistance()));
             jsonPath.put("time", rsp.getMillis());
 
             if (calcPoints)
@@ -225,16 +231,15 @@ public class GraphHopperServlet extends GHBaseServlet
             }
             json.put("paths", Collections.singletonList(jsonPath));
         }
-
-        writeJson(req, res, json);
+        return json;
     }
 
-    Object createPoints( PointList points, boolean pointsEncoded, boolean includeElevation ) throws JSONException
+    protected Object createPoints( PointList points, boolean pointsEncoded, boolean includeElevation )
     {
         if (pointsEncoded)
             return WebHelper.encodePolyline(points, includeElevation);
 
-        JSONObject jsonPoints = new JSONObject();
+        Map<String, Object> jsonPoints = new HashMap<String, Object>();
         jsonPoints.put("type", "LineString");
         jsonPoints.put("coordinates", points.toGeoJson(includeElevation));
         return jsonPoints;
@@ -244,9 +249,8 @@ public class GraphHopperServlet extends GHBaseServlet
     {
         String[] pointsAsStr = getParams(req, "point");
         final List<GHPoint> infoPoints = new ArrayList<GHPoint>(pointsAsStr.length);
-        for (int pointNo = 0; pointNo < pointsAsStr.length; pointNo++)
+        for (String str : pointsAsStr)
         {
-            final String str = pointsAsStr[pointNo];
             String[] fromStrs = str.split(",");
             if (fromStrs.length == 2)
             {
@@ -257,5 +261,14 @@ public class GraphHopperServlet extends GHBaseServlet
         }
 
         return infoPoints;
+    }
+
+    private void initHints( GHRequest request, Map<String, String[]> parameterMap )
+    {
+        for (Entry<String, String[]> e : parameterMap.entrySet())
+        {
+            if (e.getValue().length == 1)
+                request.putHint(e.getKey(), e.getValue()[0]);
+        }
     }
 }

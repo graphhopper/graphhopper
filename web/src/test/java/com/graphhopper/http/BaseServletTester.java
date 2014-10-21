@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 public class BaseServletTester
 {
     private static GHServer server;
-    protected static Logger logger = LoggerFactory.getLogger(GraphHopperServletIT.class);
+    protected static Logger logger = LoggerFactory.getLogger(BaseServletTester.class);
     protected static int port;
     protected Injector injector;
 
@@ -117,5 +117,5 @@ public class BaseServletTester
         String url = getTestAPIUrl() + "?" + resQuery;
         Downloader downloader = new Downloader("web integration tester");
         return new JSONObject(downloader.downloadAsString(url));
-    }
+    }    
 }

@@ -183,7 +183,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         if (sacScale != null)
         {
             if (!"hiking".equals(sacScale) && !"mountain_hiking".equals(sacScale)
-                    && !"demanding_mountain_hiking".equals(sacScale) /*&& !"alpine_hiking".equals(sacScale)*/)
+                    && !"demanding_mountain_hiking".equals(sacScale) && !"alpine_hiking".equals(sacScale))
                 // other scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
                 return 0;
         }
@@ -202,7 +202,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // do not get our feet wet, "yes" is already included above
-        if (way.hasTag("highway", "ford") || way.hasTag("ford"))
+        if (blockFords && (way.hasTag("highway", "ford") || way.hasTag("ford")))
             return 0;
 
         if (way.hasTag("bicycle", "official"))

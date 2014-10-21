@@ -80,7 +80,7 @@ public class MiniGraphUI
         this.na = graph.getNodeAccess();
         prepare = hopper.getPreparation();
         encoder = hopper.getEncodingManager().getSingle();
-        weighting = hopper.createWeighting("fastest", encoder); //new PriorityWeighting(encoder);
+        weighting = hopper.createWeighting(Weighting.Params.create("fastest"), encoder);
         if (prepare == null)
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, "dijkstrabi", encoder, weighting, TraversalMode.NODE_BASED);
 

@@ -101,9 +101,11 @@ public class OSMReaderTest
 
         public GraphHopperTest( String osmFile, boolean turnCosts )
         {
-            setInMemory(false);
+            setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
+            setEncodingManager(new EncodingManager("CAR,FOOT"));
+            setCHEnable(false);
 
             if (turnCosts)
             {
@@ -116,7 +118,6 @@ public class OSMReaderTest
             }
 
             footEncoder = new FootFlagEncoder();
-            disableCHShortcuts();
 
             setEncodingManager(new EncodingManager(footEncoder, carEncoder, bikeEncoder));
         }

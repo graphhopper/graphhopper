@@ -238,7 +238,13 @@ public class CarFlagEncoderTest
         way.setTag("railway", "abandoned");
         assertTrue(encoder.acceptWay(way) == 0);
 
+        // on disallowed highway, railway is allowed, sometimes incorrectly mapped
         way.setTag("highway", "track");
+        assertTrue(encoder.acceptWay(way) > 0);        
+        
+        // this is fully okay as sometimes old rails are on the road
+        way.setTag("highway", "primary");
+        way.setTag("railway", "historic");
         assertTrue(encoder.acceptWay(way) > 0);
 
         way.setTag("motorcar", "no");
@@ -248,7 +254,7 @@ public class CarFlagEncoderTest
         way.setTag("highway", "secondary");
         way.setTag("railway", "tram");
         // but allow tram to be on the same way
-        assertNotSame(0, encoder.acceptWay(way));
+        assertTrue(encoder.acceptWay(way) > 0);
 
         way = new OSMWay(1);
         way.setTag("route", "shuttle_train");
@@ -257,7 +263,7 @@ public class CarFlagEncoderTest
         way.setTag("duration", "35");
         way.setTag("estimated_distance", 50000);
         // accept
-        assertNotSame(0, encoder.acceptWay(way));
+        assertTrue(encoder.acceptWay(way) > 0);
         // calculate speed from estimated_distance and duration
         assertEquals(60, encoder.getSpeed(encoder.handleFerryTags(way, 20, 30, 40)), 1e-1);
     }
@@ -412,4 +418,30 @@ public class CarFlagEncoderTest
         way.setTag("maxspeed", "90");
         assertEquals(90, encoder.getMaxSpeed(way), 1e-2);
     }
+
+    @Test
+    public void testFordAccess()
+    {
+        OSMNode node = new OSMNode(0, 0.0, 0.0);
+        node.setTag("ford", "yes");
+
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "unclassified");
+        way.setTag("ford", "yes");
+
+        // Node and way are initially blocking
+        assertTrue(encoder.blockFords);
+        assertFalse(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.handleNodeTags(node) > 0);
+
+        try {
+            // Now they are passable
+            encoder.blockFords = false;
+            assertTrue(encoder.acceptWay(way) > 0);
+            assertFalse(encoder.handleNodeTags(node) > 0);
+        } finally {
+            encoder.blockFords = true;
+        }
+    }
+
 }

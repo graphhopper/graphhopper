@@ -15,6 +15,7 @@
  * NopMap, massive improvements regarding OSM, parsing and encoding, route relations
  * ocampana, initial implementation for instructions
  * ratrun, route relations, GPX information and bike handling
+ * rodneyodonnell, improved dead end removal
  * rodo, more descriptions
 
 # Translations

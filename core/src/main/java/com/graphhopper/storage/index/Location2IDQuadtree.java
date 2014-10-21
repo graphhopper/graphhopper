@@ -28,7 +28,7 @@ import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.XFirstSearch;
+import com.graphhopper.util.BreadthFirstSearch;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.Arrays;
@@ -350,7 +350,7 @@ class Location2IDQuadtree implements LocationIndex
         res.setClosestNode(id);
         res.setQueryDistance(distCalc.calcNormalizedDist(queryLat, queryLon, mainLat, mainLon));
         goFurtherHook(id);
-        new XFirstSearch()
+        new BreadthFirstSearch()
         {
             @Override
             protected GHBitSet createBitSet()
@@ -377,7 +377,7 @@ class Location2IDQuadtree implements LocationIndex
 
                 return currNormedDist < maxRasterWidth2InMeterNormed;
             }
-        }.start(graph.createEdgeExplorer(), id, false);
+        }.start(graph.createEdgeExplorer(), id);
 
         // denormalize distance
         res.setQueryDistance(distCalc.calcDenormalizedDist(res.getQueryDistance()));

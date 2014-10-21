@@ -68,8 +68,8 @@ public class GHUtilityTest
         NodeAccess na = newG.getNodeAccess();
         assertEquals(0, na.getLatitude(0), 1e-4); // 0
         assertEquals(2.5, na.getLatitude(1), 1e-4); // 1
-        assertEquals(4.6, na.getLatitude(2), 1e-4); // 8
-        assertEquals(4.5, na.getLatitude(3), 1e-4); // 2                
+        assertEquals(4.5, na.getLatitude(2), 1e-4); // 2
+        assertEquals(4.6, na.getLatitude(3), 1e-4); // 8                
         assertEquals(3.0, na.getLatitude(4), 1e-4); // 3
         assertEquals(5.0, na.getLatitude(5), 1e-4); // 7
         assertEquals(4.2, na.getLatitude(6), 1e-4); // 5
@@ -85,8 +85,8 @@ public class GHUtilityTest
         NodeAccess na = newG.getNodeAccess();
         assertEquals(0, na.getLatitude(0), 1e-4); // 0
         assertEquals(2.5, na.getLatitude(1), 1e-4); // 1
-        assertEquals(4.6, na.getLatitude(2), 1e-4); // 8
-        assertEquals(4.5, na.getLatitude(3), 1e-4); // 2        
+        assertEquals(4.5, na.getLatitude(2), 1e-4); // 2
+        assertEquals(4.6, na.getLatitude(3), 1e-4); // 8        
     }
 
     @Test

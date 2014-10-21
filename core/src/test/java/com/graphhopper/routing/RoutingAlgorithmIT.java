@@ -32,11 +32,8 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
 import static org.junit.Assert.*;
@@ -422,11 +419,11 @@ public class RoutingAlgorithmIT
         {
             Helper.removeDir(new File(graphFile));
             GraphHopper hopper = new GraphHopper().
-                    setInMemory(true).
+                    setStoreOnFlush(true).
                     // avoid that path.getDistance is too different to path.getPoint.calcDistance
                     setWayPointMaxDistance(0).
                     setOSMFile(osmFile).
-                    disableCHShortcuts().
+                    setCHEnable(false).
                     setGraphHopperLocation(graphFile).
                     setEncodingManager(new EncodingManager(importVehicles));                    
             if (is3D)
@@ -437,7 +434,7 @@ public class RoutingAlgorithmIT
             TraversalMode tMode = importVehicles.toLowerCase().contains("turncosts=true")? 
                     TraversalMode.EDGE_BASED_1DIR : TraversalMode.NODE_BASED;
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-            Weighting weighting = hopper.createWeighting(weightCalcStr, encoder);
+            Weighting weighting = hopper.createWeighting(Weighting.Params.create(weightCalcStr), encoder);
 
             Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
                     createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, testAlsoCH, tMode, weighting, hopper.getEncodingManager());
@@ -516,9 +513,9 @@ public class RoutingAlgorithmIT
         Helper.removeDir(new File(graphFile));
         final EncodingManager encodingManager = new EncodingManager("CAR");
         GraphHopper hopper = new GraphHopper().
-                setInMemory(true).
+                setStoreOnFlush(true).
                 setEncodingManager(encodingManager).
-                disableCHShortcuts().
+                setCHEnable(false).
                 setWayPointMaxDistance(0).
                 setOSMFile("files/monaco.osm.gz").setGraphHopperLocation(graphFile).
                 importOrLoad();

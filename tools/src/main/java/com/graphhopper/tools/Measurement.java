@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util;
+package com.graphhopper.tools;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
@@ -25,6 +25,14 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.MiniPerfTest;
+import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -69,10 +77,12 @@ public class Measurement
 
         public void doPostProcessing()
         {
+            // re-create index to avoid bug as pickNode in locationIndex.prepare could be wrong while indexing if level is not taken into account and assumed to be 0 for pre-initialized graph            
             StopWatch sw = new StopWatch().start();
             int edges = getGraph().getAllEdges().getMaxId();
             initCHPrepare();
             super.prepare();
+            setLocationIndex(createLocationIndex(new RAMDirectory()));
             put("prepare.time", sw.stop().getTime());
             put("prepare.shortcuts", getGraph().getAllEdges().getMaxId() - edges);
         }
@@ -102,11 +112,11 @@ public class Measurement
         if (!hopper.load(graphLocation))
             throw new IllegalStateException("Cannot load existing levelgraph at " + graphLocation);
 
-        GraphStorage g = (GraphStorage) hopper.getGraph();
+        GraphStorage g = hopper.getGraph();
         if ("true".equals(g.getProperties().get("prepare.done")))
             throw new IllegalStateException("Graph has to be unprepared but wasn't!");
 
-        String vehicleStr = args.get("osmreader.acceptWay");
+        String vehicleStr = args.get("graph.flagEncoders", "");
         StopWatch sw = new StopWatch().start();
         try
         {
@@ -116,13 +126,13 @@ public class Measurement
 
             // Route via dijkstrabi. Normal routing takes a lot of time => smaller query number than CH
             // => values are not really comparable to routingCH as e.g. the mean distance etc is different            
-            hopper.disableCHShortcuts();
+            hopper.setCHEnable(false);
             printTimeOfRouteQuery(hopper, count / 20, "routing", vehicleStr);
 
             System.gc();
 
             // route via CH. do preparation before                        
-            hopper.setCHShortcuts("fastest");
+            hopper.setCHEnable(true);
             hopper.doPostProcessing();
             printTimeOfRouteQuery(hopper, count, "routingCH", vehicleStr);
             logger.info("store into " + propLocation);
