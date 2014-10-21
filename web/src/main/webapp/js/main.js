@@ -1,7 +1,12 @@
 var host;
 
 // Deployment-scripts can insert host here.
-// Sponsor alert: also see http://graphhopper.com/#enterprise for your own API key
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// We know that you love 'free', we love it too :)! And so our entire software stack is free and even Open Source!      
+// Our routing service is also free for certain applications or smaller volume. Be fair, grab an API key and support us:
+// http://graphhopper.com/#enterprise Misuse of API keys that you don't own is prohibited and you'll be blocked.                    
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 if (!host) {
     if (location.port === '') {
         host = location.protocol + '//' + location.hostname;
@@ -229,7 +234,7 @@ function checkInput() {
     if ($('#locationpoints > div.pointDiv').length > len) {
         $('#locationpoints > div.pointDiv:gt(' + (len - 1) + ')').remove();
     }
-    
+
     // properly unbind previously click handlers
     $("#locationpoints .pointDelete").off();
 
