@@ -164,10 +164,7 @@ public class GHRequest
 
     public GHRequest putHint( String key, Object value )
     {
-        Object old = hints.put(key, value);
-        if (old != null)
-            throw new RuntimeException("Key is already associated with " + old + ", your value:" + value);
-
+        hints.put(key, value);
         return this;
     }
 
