@@ -301,7 +301,7 @@ public class GraphHopperTest
                 new CmdArgs().
                 put("osmreader.osm", testOsm3).
                 put("osmreader.dataaccess", "RAM").
-                put("graph.flagEncoders", "FOOT,CAR").
+                put("osmreader.acceptWay", "FOOT,CAR").
                 put("prepare.chWeighting", "no")).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
@@ -312,7 +312,7 @@ public class GraphHopperTest
                 new CmdArgs().
                 put("osmreader.osm", testOsm3).
                 put("osmreader.dataaccess", "RAM").
-                put("graph.flagEncoders", "FOOT").
+                put("osmreader.acceptWay", "FOOT").
                 put("prepare.chWeighting", "no")).
                 setOSMFile(testOsm3);
         try
@@ -329,7 +329,7 @@ public class GraphHopperTest
                 put("osmreader.osm", testOsm3).
                 put("osmreader.dataaccess", "RAM").
                 put("prepare.chWeighting", "no").
-                put("graph.flagEncoders", "CAR,FOOT")).
+                put("osmreader.acceptWay", "CAR,FOOT")).
                 setOSMFile(testOsm3);
         assertTrue(instance.load(ghLoc));
         assertEquals(5, instance.getGraph().getNodes());
