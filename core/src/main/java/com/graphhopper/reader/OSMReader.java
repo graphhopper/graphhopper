@@ -185,7 +185,7 @@ public class OSMReader implements DataReader
                             prepareHighwayNode(wayNodes.get(index));
                         }
 
-                        if (++tmpWayCounter % 500000 == 0)
+                        if (++tmpWayCounter % 5000000 == 0)
                         {
                             logger.info(nf(tmpWayCounter) + " (preprocess), osmIdMap:" + nf(getNodeMap().getSize()) + " ("
                                     + getNodeMap().getMemoryUsage() + "MB) " + Helper.getMemInfo());
@@ -306,7 +306,7 @@ public class OSMReader implements DataReader
                         processRelation((OSMRelation) item);
                         break;
                 }
-                if (++counter % 5000000 == 0)
+                if (++counter % 100000000 == 0)
                 {
                     logger.info(nf(counter) + ", locs:" + nf(locations) + " (" + skippedLocations + ") " + Helper.getMemInfo());
                 }
