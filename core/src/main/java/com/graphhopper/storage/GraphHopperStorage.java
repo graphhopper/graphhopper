@@ -1365,14 +1365,6 @@ public class GraphHopperStorage implements GraphStorage
         checkInit();
         if (nodes.loadExisting())
         {
-            if (!properties.loadExisting())
-                throw new IllegalStateException("Cannot load properties. Corrupt file or directory? " + dir);
-
-            if (!extStorage.loadExisting())
-            {
-                throw new IllegalStateException("cannot load extended storage. corrupt file or directory? " + dir);
-            }
-
             String acceptStr = "";
             if (properties.loadExisting())
             {

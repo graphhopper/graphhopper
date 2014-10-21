@@ -73,7 +73,8 @@ public class GraphHopperTest
         assertEquals(3, ph.getPoints().getSize());
 
         closableInstance.close();
-        closableInstance = new GraphHopper().setStoreOnFlush(true);
+        closableInstance = new GraphHopper().setStoreOnFlush(true).
+                setEncodingManager(new EncodingManager("CAR"));
         assertTrue(closableInstance.load(ghLoc));
         ph = closableInstance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertTrue(ph.isFound());
@@ -114,7 +115,8 @@ public class GraphHopperTest
 
         gh.close();
         gh = new GraphHopper().setStoreOnFlush(true).
-                setCHEnable(false);
+                setCHEnable(false).
+                setEncodingManager(new EncodingManager("CAR"));
         assertTrue(gh.load(ghLoc));
         ph = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertTrue(ph.isFound());
@@ -470,6 +472,7 @@ public class GraphHopperTest
 
         // use the encoding manager from the graph
         instance = new GraphHopper().setStoreOnFlush(true).
+                setEncodingManager(new EncodingManager("FOOT")).
                 setCHWeighting("shortest").
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
