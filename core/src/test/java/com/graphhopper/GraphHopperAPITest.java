@@ -50,9 +50,9 @@ public class GraphHopperAPITest
         graph.edge(4, 3, 40, true);
 
         GraphHopper instance = new GraphHopper().
-                setInMemory(false).
+                setStoreOnFlush(false).
                 setEncodingManager(encodingManager).
-                disableCHShortcuts().
+                setCHEnable(false).
                 loadGraph(graph);
         GHResponse ph = instance.route(new GHRequest(42, 10.4, 42, 10));
         assertTrue(ph.isFound());
@@ -79,9 +79,9 @@ public class GraphHopperAPITest
         graph.edge(2, 3, 10, true);
         
         GraphHopper instance = new GraphHopper().
-                setInMemory(false).
+                setStoreOnFlush(false).
                 setEncodingManager(encodingManager).
-                disableCHShortcuts().
+                setCHEnable(false).
                 loadGraph(graph);
         GHResponse ph = instance.route(new GHRequest(42, 10, 42, 10.4));
         assertFalse(ph.isFound());
@@ -93,9 +93,9 @@ public class GraphHopperAPITest
     public void testNoLoad()
     {
         GraphHopper instance = new GraphHopper().
-                setInMemory(false).
+                setStoreOnFlush(false).
                 setEncodingManager(encodingManager).
-                disableCHShortcuts();
+                setCHEnable(false);
         try
         {
             instance.route(new GHRequest(42, 10.4, 42, 10));

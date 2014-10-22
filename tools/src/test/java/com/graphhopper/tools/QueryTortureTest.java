@@ -15,9 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util;
+package com.graphhopper.tools;
 
-import com.graphhopper.util.QueryTorture.Query;
+import com.graphhopper.tools.QueryTorture.Query;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

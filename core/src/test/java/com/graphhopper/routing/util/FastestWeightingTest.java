@@ -34,7 +34,7 @@ public class FastestWeightingTest
     {
         FastestWeighting instance = new FastestWeighting(encoder);
         long flags = encoder.setProperties(encoder.getMaxSpeed(), true, true);
-        assertEquals(instance.getMinWeight(10), instance.calcWeight(createEdge(10, flags), false), 1e-8);
+        assertEquals(instance.getMinWeight(10), instance.calcWeight(createEdge(10, flags), false, EdgeIterator.NO_EDGE), 1e-8);
     }
 
     @Test
@@ -42,10 +42,10 @@ public class FastestWeightingTest
     {
         FastestWeighting instance = new FastestWeighting(encoder);
 
-        assertEquals(1.0 / 0, instance.calcWeight(createEdge(10, encoder.setProperties(0, true, true)), false), 1e-8);
+        assertEquals(1.0 / 0, instance.calcWeight(createEdge(10, encoder.setProperties(0, true, true)), false, EdgeIterator.NO_EDGE), 1e-8);
 
         // 0 / 0 returns NaN but calcWeight should not return NaN!
-        assertEquals(1.0 / 0, instance.calcWeight(createEdge(0, encoder.setProperties(0, true, true)), false), 1e-8);
+        assertEquals(1.0 / 0, instance.calcWeight(createEdge(0, encoder.setProperties(0, true, true)), false, EdgeIterator.NO_EDGE), 1e-8);
     }
 
     EdgeIterator createEdge( final double distance, final long flags )

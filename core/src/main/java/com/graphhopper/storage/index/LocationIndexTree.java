@@ -817,7 +817,7 @@ public class LocationIndexTree implements LocationIndex
                         }
                         return false;
                     }
-                }.start(explorer, networkEntryNodeId, false);
+                }.start(explorer, networkEntryNodeId);
                 return true;
             }
         });
@@ -835,7 +835,7 @@ public class LocationIndexTree implements LocationIndex
     /**
      * Make it possible to collect nearby location also for other purposes.
      */
-    protected abstract class XFirstSearchCheck extends XFirstSearch
+    protected abstract class XFirstSearchCheck extends BreadthFirstSearch
     {
         boolean goFurther = true;
         double currNormedDist;

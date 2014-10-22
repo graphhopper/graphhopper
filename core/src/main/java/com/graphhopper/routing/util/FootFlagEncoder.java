@@ -45,14 +45,20 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     /**
      * Should be only instantiated via EncodingManager
      */
-    protected FootFlagEncoder()
+    public FootFlagEncoder()
     {
         this(4, 1);
     }
 
-    protected FootFlagEncoder( int speedBits, double speedFactor )
+    public FootFlagEncoder( String propertiesStr )
     {
-        super(speedBits, speedFactor);
+        this((int) parseLong(propertiesStr, "speedBits", 4),
+                parseDouble(propertiesStr, "speedFactor", 1));
+    }
+
+    public FootFlagEncoder( int speedBits, double speedFactor )
+    {
+        super(speedBits, speedFactor, 0);
         restrictions = new ArrayList<String>(Arrays.asList("foot", "access"));
         restrictedValues.add("private");
         restrictedValues.add("no");
@@ -115,7 +121,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
      * Foot flag encoder does not provide any turn cost / restrictions
      */
     @Override
-    public int defineTurnBits( int index, int shift, int numberCostsBits )
+    public int defineTurnBits( int index, int shift )
     {
         return shift;
     }
@@ -137,7 +143,13 @@ public class FootFlagEncoder extends AbstractFlagEncoder
      * @return 0
      */
     @Override
-    public int getTurnCosts( long flag )
+    public double getTurnCost( long flag )
+    {
+        return 0;
+    }
+
+    @Override
+    public long getTurnFlags( boolean restricted, double costs )
     {
         return 0;
     }
@@ -172,7 +184,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         if (sacScale != null)
         {
             if (!"hiking".equals(sacScale) && !"mountain_hiking".equals(sacScale)
-                    && !"demanding_mountain_hiking".equals(sacScale) /*&& !"alpine_hiking".equals(sacScale)*/)
+                    && !"demanding_mountain_hiking".equals(sacScale) && !"alpine_hiking".equals(sacScale))
                 // other scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
                 return 0;
         }

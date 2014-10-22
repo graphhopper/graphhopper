@@ -14,8 +14,8 @@ body {
 
 #input {
     float: left;                
-    padding-left: 10px; 
-    padding-right: 15px; 
+    margin-left: 10px; 
+    /*padding-right: 15px; */
 }
 
 #info {
@@ -31,17 +31,17 @@ body {
 #input, #instructions {
     width: 280px;
 }
-#fromInput, #toInput {
-    width: 250px;
-    float: right;
+.pointInput {
+    width: 235px;
+    float: left;
 }
 
-#fromResolveFound a, #toResolveFound a {
+.pointResolveFound a {
     background-color: white;
     padding-left: 4px;
     padding-right: 3px;    
 }
-#fromResolveFound, #toResolveFound {
+.pointResolveFound {
     overflow: hidden;
     max-height: 24px;
     font-size: 10px;
@@ -52,10 +52,12 @@ body {
     margin-right: 2px;    
 }
 
-#fromResolveError, #toResolveError {
-    float: right;
+.pointResolveError {
+    float: left;
     font-size: 12px;
     padding-bottom: 4px;
+    width: 100%;
+    text-align: right;
 }
 
 .boxSizingBorder {
@@ -66,7 +68,7 @@ body {
 .warn {
     color: orange;
 }
-.error, #fromResolveError, #toResolveError {
+.error, .pointResolveError {
     color: red;
 }
 #moreattribution a {
@@ -79,15 +81,22 @@ body {
 }
 #locationpoints {
     padding-bottom: 10px;
+    float: left;
 }
-#fromDiv img, #toDiv img {
-    margin-top: 6px;
+.pointDiv { 
+    margin: 6px 0;
+}
+.pointDiv > img {
+    margin-top: 4px;
     padding-left: 3px;
     padding-right: 3px;
     float: left;
 }
 .left {
     float: left;
+}
+.right {
+    float: right;
 }
 #routeDetails {
     padding: 20px;
@@ -131,6 +140,10 @@ body {
     float: right;
     margin-bottom: 5px;
 }
+
+#searchButton:hover { 
+    cursor: pointer; 
+}
 .clear {
     clear: both;
 }
@@ -142,12 +155,27 @@ body {
     /* color: #666666; */
     font-size: smaller;
     opacity: 0.8;
+    width: 200px;
 }
-#hosting a {
+
+#footer {
+    position: fixed;
+    bottom: 5px;
+    left: 45px;
+}
+
+#hosting a, .footer-link {
     text-decoration: none;
     color: #00cc33;
 }
-#exportLink {
+.footer-link {    
+    padding-right: 12px;    
+    font-size: 12px;    
+}
+
+#export-link {
+    padding-left: 3px;
+    padding-top: 3px;
     float: left;
 }
 
@@ -207,8 +235,15 @@ td img.pic {
     background-image: linear-gradient(to bottom, #9f9f9f, #e7e7e7);    
 }
 
-.complete-1, .complete-2 { border: 1px solid #999; background: #FFF; overflow: auto; }
-.complete-1 strong, .complete-2 strong { font-weight: normal; color: #04B431; }
+.autocomplete {
+    border: 1px solid #999; 
+    background: #FFF; 
+    overflow: auto; 
+}
+.autocomplete strong { 
+    font-weight: normal;
+    color: #04B431; 
+}
 .autocomplete-suggestion { 
     padding: 5px 5px; 
     white-space: nowrap; 
@@ -217,7 +252,8 @@ td img.pic {
     background-image: linear-gradient(to bottom, white, #e7e7e7);
 }
 .autocomplete-selected { 
-    padding: 5px 5px; background: #e7e7e7; 
+    padding: 5px 5px; 
+    background: #e7e7e7; 
     background-image: linear-gradient(to bottom, #9f9f9f, #e7e7e7);
 }
 .light { font-weight: lighter; color: #9f9f9f; font-size: smaller }
@@ -227,6 +263,20 @@ td img.pic {
 .nameseg { /*border-top: #dadada dashed thin;*/ }
 .cityseg { float: left; font-size: 10px; }
 .moreseg { float: right; font-size: 9px; }
+
+.pointFlag {
+    width: 16px;
+    height: 16px;
+}
+.pointFlag:hover { cursor: n-resize; }
+.pointAdd {
+    padding-left: 3px;
+}
+.pointDelete {
+    float: left;    
+    padding-left: 2px;
+}
+.pointDelete:hover, .pointAdd:hover { cursor: pointer; }
 
 #expandDetails {
     color: gray;

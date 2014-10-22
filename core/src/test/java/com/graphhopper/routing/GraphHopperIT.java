@@ -61,9 +61,9 @@ public class GraphHopperIT
     public void testMonacoWithInstructions() throws Exception
     {
         GraphHopper hopper = new GraphHopper().
-                setInMemory(true).
+                setStoreOnFlush(true).
                 setOSMFile(osmFile).
-                disableCHShortcuts().
+                setCHEnable(false).
                 setGraphHopperLocation(graphFile).
                 setEncodingManager(new EncodingManager(importVehicles)).
                 importOrLoad();
@@ -110,9 +110,9 @@ public class GraphHopperIT
     public void testSRTMWithInstructions() throws Exception
     {
         GraphHopper hopper = new GraphHopper().
-                setInMemory(true).
+                setStoreOnFlush(true).
                 setOSMFile(osmFile).
-                disableCHShortcuts().
+                setCHEnable(false).
                 setGraphHopperLocation(graphFile).
                 setEncodingManager(new EncodingManager(importVehicles));
 
@@ -170,9 +170,9 @@ public class GraphHopperIT
             // make sure we are using fresh graphhopper files with correct vehicle
             Helper.removeDir(new File(tmpGraphFile));
             GraphHopper hopper = new GraphHopper().
-                    setInMemory(true).
+                    setStoreOnFlush(true).
                     setOSMFile(tmpOsmFile).
-                    disableCHShortcuts().
+                    setCHEnable(false).
                     setGraphHopperLocation(tmpGraphFile).
                     setEncodingManager(new EncodingManager(tmpImportVehicles)).
                     importOrLoad();
@@ -218,9 +218,9 @@ public class GraphHopperIT
     public void testMonacoVia()
     {
         GraphHopper hopper = new GraphHopper().
-                setInMemory(true).
+                setStoreOnFlush(true).
                 setOSMFile(osmFile).
-                disableCHShortcuts().
+                setCHEnable(false).
                 setGraphHopperLocation(graphFile).
                 setEncodingManager(new EncodingManager(importVehicles)).
                 importOrLoad();

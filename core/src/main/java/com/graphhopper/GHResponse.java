@@ -30,6 +30,7 @@ public class GHResponse extends GHBaseResponse<GHResponse>
 {
     private PointList list = PointList.EMPTY;
     private double distance;
+    private double weight;
     private long time;
     private InstructionList instructions = InstructionList.EMPTY;
     private boolean found;
@@ -83,6 +84,22 @@ public class GHResponse extends GHBaseResponse<GHResponse>
     public long getMillis()
     {
         return time;
+    }
+
+    public GHResponse setRouteWeight( double weight )
+    {
+        this.weight = weight;
+        return this;
+    }
+
+    /**
+     * This method returns a double value which is better than the time for comparison of routes but
+     * only if you know what you are doing, e.g. only to compare routes gained with the same query
+     * parameters like vehicle.
+     */
+    public double getRouteWeight()
+    {
+        return weight;
     }
 
     public GHResponse setFound( boolean found )

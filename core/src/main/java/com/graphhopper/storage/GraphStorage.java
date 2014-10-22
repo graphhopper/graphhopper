@@ -45,4 +45,9 @@ public interface GraphStorage extends Graph, Storable<GraphStorage>
      * Performs optimization routines like deletion or node rearrangements.
      */
     void optimize();
+    
+    /**
+     * @return the extended storage, e.g. TurnCostStorage to store turn costs
+     */
+    ExtendedStorage getExtendedStorage();
 }

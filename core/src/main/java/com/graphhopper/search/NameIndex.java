@@ -21,7 +21,6 @@ import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Storable;
 import com.graphhopper.util.Helper;
-import java.io.UnsupportedEncodingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -18,41 +18,40 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.TurnCostIterator;
 
 /**
  * Holds turn cost tables for each node. The additional field of a node will be used to point
  * towards the first entry within a node cost table to identify turn restrictions, or later, turn
- * costs.
+ * getCosts.
  * <p>
- * @author karl.huebner
+ * @author Karl Hübner
  */
 public class TurnCostStorage implements ExtendedStorage
 {
-
     /* pointer for no cost entry */
-    protected final int NO_COST_ENTRY = -1;
+    private final int NO_TURN_ENTRY = -1;
+    private final long EMPTY_FLAGS = 0L;
 
     /*
-     * items in turn cost tables: edge from, edge to, costs, pointer to next
+     * items in turn cost tables: edge from, edge to, getCosts, pointer to next
      * cost entry of same node
      */
-    protected final int TC_FROM, TC_TO, TC_COSTS, TC_NEXT;
+    private final int TC_FROM, TC_TO, TC_FLAGS, TC_NEXT;
 
-    protected DataAccess turnCosts;
-    protected int turnCostsEntryIndex = -4;
-    protected int turnCostsEntryBytes;
-    protected int turnCostsCount;
+    private DataAccess turnCosts;
+    private int turnCostsEntryIndex = -4;
+    private int turnCostsEntryBytes;
+    private int turnCostsCount;
 
     private GraphStorage graph;
     private NodeAccess nodeAccess;
 
     public TurnCostStorage()
     {
-        TC_FROM = nextTurnCostsEntryIndex();
-        TC_TO = nextTurnCostsEntryIndex();
-        TC_COSTS = nextTurnCostsEntryIndex();
-        TC_NEXT = nextTurnCostsEntryIndex();
+        TC_FROM = nextTurnCostEntryIndex();
+        TC_TO = nextTurnCostEntryIndex();
+        TC_FLAGS = nextTurnCostEntryIndex();
+        TC_NEXT = nextTurnCostEntryIndex();
         turnCostsEntryBytes = turnCostsEntryIndex + 4;
         turnCostsCount = 0;
     }
@@ -68,7 +67,7 @@ public class TurnCostStorage implements ExtendedStorage
         this.turnCosts = this.graph.getDirectory().find("turnCosts");
     }
 
-    protected final int nextTurnCostsEntryIndex()
+    private int nextTurnCostEntryIndex()
     {
         turnCostsEntryIndex += 4;
         return turnCostsEntryIndex;
@@ -106,46 +105,35 @@ public class TurnCostStorage implements ExtendedStorage
         return turnCosts.getCapacity();
     }
 
-    public int entries()
-    {
-        return turnCostsCount;
-    }
-
     @Override
     public boolean loadExisting()
     {
         if (!turnCosts.loadExisting())
-            throw new IllegalStateException("cannot load node costs. corrupt file or directory? " + graph.getDirectory());
+            return false;
 
         turnCostsEntryBytes = turnCosts.getHeader(0);
         turnCostsCount = turnCosts.getHeader(4);
         return true;
     }
 
-    private int getCostTableAdress( int index )
+    /**
+     * This method adds a new entry which is a turn restriction or cost information via the
+     * turnFlags.
+     */
+    public void addTurnInfo( int nodeIndex, int from, int to, long turnFlags )
     {
-        if (index >= graph.getNodes() || index < 0)
-            return NO_COST_ENTRY;
-
-        return nodeAccess.getAdditionalNodeField(index);
-    }
-
-    public void setTurnCosts( int nodeIndex, int from, int to, int flags )
-    {
-        if (flags == 0)
-        {
-            //no need to store turn costs
+        // no need to store turn information
+        if (turnFlags == EMPTY_FLAGS)
             return;
-        }
 
         // append
         int newEntryIndex = turnCostsCount;
         turnCostsCount++;
-        ensureTurnCostsIndex(newEntryIndex);
+        ensureTurnCostIndex(newEntryIndex);
 
         // determine if we already have an cost entry for this node
-        int previousEntryIndex = getCostTableAdress(nodeIndex);
-        if (previousEntryIndex == NO_COST_ENTRY)
+        int previousEntryIndex = nodeAccess.getAdditionalNodeField(nodeIndex);
+        if (previousEntryIndex == NO_TURN_ENTRY)
         {
             // set cost-pointer to this new cost entry
             nodeAccess.setAdditionalNodeField(nodeIndex, newEntryIndex);
@@ -153,7 +141,7 @@ public class TurnCostStorage implements ExtendedStorage
         {
             int i = 0;
             int tmp = previousEntryIndex;
-            while ((tmp = turnCosts.getInt((long) tmp * turnCostsEntryBytes + TC_NEXT)) != NO_COST_ENTRY)
+            while ((tmp = turnCosts.getInt((long) tmp * turnCostsEntryBytes + TC_NEXT)) != NO_TURN_ENTRY)
             {
                 previousEntryIndex = tmp;
                 // search for the last added cost entry
@@ -169,30 +157,52 @@ public class TurnCostStorage implements ExtendedStorage
         long costsBase = (long) newEntryIndex * turnCostsEntryBytes;
         turnCosts.setInt(costsBase + TC_FROM, from);
         turnCosts.setInt(costsBase + TC_TO, to);
-        turnCosts.setInt(costsBase + TC_COSTS, flags);
-        // next-pointer is NO_COST_ENTRY
-        turnCosts.setInt(costsBase + TC_NEXT, NO_COST_ENTRY);
+        turnCosts.setInt(costsBase + TC_FLAGS, (int) turnFlags);
+        // next-pointer is NO_TURN_ENTRY
+        turnCosts.setInt(costsBase + TC_NEXT, NO_TURN_ENTRY);
     }
 
-    public int getTurnCosts( int node, int edgeFrom, int edgeTo )
+    /**
+     * @return turn flags of the specified node and edge properties.
+     */
+    public long getTurnCostFlags( int node, int edgeFrom, int edgeTo )
     {
-        if (edgeFrom != EdgeIterator.NO_EDGE && edgeTo != EdgeIterator.NO_EDGE)
+        if (edgeFrom == EdgeIterator.NO_EDGE || edgeTo == EdgeIterator.NO_EDGE)
+            throw new IllegalArgumentException("from and to edge cannot be NO_EDGE");
+        if (node < 0)
+            throw new IllegalArgumentException("via node cannot be negative");
+
+        return nextCostFlags(node, edgeFrom, edgeTo);
+    }
+
+    private long nextCostFlags( int node, int edgeFrom, int edgeTo )
+    {
+        int turnCostIndex = nodeAccess.getAdditionalNodeField(node);
+        int i = 0;
+        for (; i < 1000; i++)
         {
-            TurnCostIterator tc = createTurnCostIterable(node, edgeFrom, edgeTo);
-            if (tc.next())
-            {
-                return tc.costs();
+            if (turnCostIndex == NO_TURN_ENTRY)
+                break;
+            long turnCostPtr = (long) turnCostIndex * turnCostsEntryBytes;            
+            if (edgeFrom == turnCosts.getInt(turnCostPtr + TC_FROM))
+            {                
+                if (edgeTo == turnCosts.getInt(turnCostPtr + TC_TO))
+                    return turnCosts.getInt(turnCostPtr + TC_FLAGS);
             }
+
+            int nextTurnCostIndex = turnCosts.getInt(turnCostPtr + TC_NEXT);
+            if (nextTurnCostIndex == turnCostIndex)
+                throw new IllegalStateException("something went wrong: next entry would be the same");
+
+            turnCostIndex = nextTurnCostIndex;
         }
-        return 0;
+        // so many turn restrictions on one node? here is something wrong
+        if (i > 1000)
+            throw new IllegalStateException("something went wrong: there seems to be no end of the turn cost-list!?");
+        return EMPTY_FLAGS;
     }
 
-    public TurnCostIterator createTurnCostIterable( int node, int edgeFrom, int edgeTo )
-    {
-        return new TurnCostIteratable(node, edgeFrom, edgeTo);
-    }
-
-    void ensureTurnCostsIndex( int nodeIndex )
+    private void ensureTurnCostIndex( int nodeIndex )
     {
         long deltaCap = ((long) nodeIndex + 4) * turnCostsEntryBytes - turnCosts.getCapacity();
         if (deltaCap <= 0)
@@ -218,7 +228,7 @@ public class TurnCostStorage implements ExtendedStorage
     @Override
     public int getDefaultNodeFieldValue()
     {
-        return NO_COST_ENTRY;
+        return NO_TURN_ENTRY;
     }
 
     @Override
@@ -230,7 +240,6 @@ public class TurnCostStorage implements ExtendedStorage
     @Override
     public ExtendedStorage copyTo( ExtendedStorage clonedStorage )
     {
-
         if (!(clonedStorage instanceof TurnCostStorage))
         {
             throw new IllegalStateException("the extended storage to clone must be the same");
@@ -244,76 +253,9 @@ public class TurnCostStorage implements ExtendedStorage
         return clonedStorage;
     }
 
-    public class TurnCostIteratable implements TurnCostIterator
+    @Override
+    public String toString()
     {
-
-        int nodeVia;
-        int edgeFrom;
-        int edgeTo;
-        int iteratorEdgeFrom;
-        int iteratorEdgeTo;
-        int turnCostIndex;
-        long turnCostPtr;
-
-        public TurnCostIteratable( int node, int edgeFrom, int edgeTo )
-        {
-            this.nodeVia = node;
-            this.iteratorEdgeFrom = edgeFrom;
-            this.iteratorEdgeTo = edgeTo;
-            this.edgeFrom = EdgeIterator.NO_EDGE;
-            this.edgeTo = EdgeIterator.NO_EDGE;
-            this.turnCostIndex = getCostTableAdress(nodeVia);
-            this.turnCostPtr = -1L;
-        }
-
-        @Override
-        public boolean next()
-        {
-            int i = 0;
-            boolean found = false;
-            for (; i < 1000; i++)
-            {
-                if (turnCostIndex == NO_COST_ENTRY)
-                    break;
-                turnCostPtr = (long) turnCostIndex * turnCostsEntryBytes;
-                edgeFrom = turnCosts.getInt(turnCostPtr + TC_FROM);
-                edgeTo = turnCosts.getInt(turnCostPtr + TC_TO);
-
-                int nextTurnCostIndex = turnCosts.getInt(turnCostPtr + TC_NEXT);
-                if (nextTurnCostIndex == turnCostIndex)
-                {
-                    throw new IllegalStateException("something went wrong: next entry would be the same");
-                }
-                turnCostIndex = nextTurnCostIndex;
-
-                if (edgeFrom != EdgeIterator.NO_EDGE && edgeTo != EdgeIterator.NO_EDGE && //
-                        (iteratorEdgeFrom == TurnCostIterator.ANY_EDGE || edgeFrom == iteratorEdgeFrom) && //
-                        (iteratorEdgeTo == TurnCostIterator.ANY_EDGE || edgeTo == iteratorEdgeTo))
-                {
-                    found = true;
-                    break;
-                }
-            }
-            // so many turn restrictions on one node? here is something wrong
-            if (i > 1000)
-                throw new IllegalStateException("something went wrong: no end of turn cost-list found");
-            return found;
-        }
-
-        public int edgeFrom()
-        {
-            return edgeFrom;
-        }
-
-        public int edgeTo()
-        {
-            return edgeTo;
-        }
-
-        public int costs()
-        {
-            return turnCosts.getInt(turnCostPtr + TC_COSTS);
-        }
+        return "turnCost";
     }
-
 }

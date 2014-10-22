@@ -17,24 +17,47 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
-import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import java.util.Arrays;
+import java.util.Collection;
 import static org.junit.Assert.*;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 /**
  *
  * @author Peter Karich
  */
+@RunWith(Parameterized.class)
 public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
 {
+    /**
+     * Runs the same test with each of the supported traversal modes
+     */
+    @Parameterized.Parameters
+    public static Collection<Object[]> configs()
+    {
+        return Arrays.asList(new Object[][]
+        {
+            { TraversalMode.NODE_BASED },
+//            TODO { TraversalMode.EDGE_BASED_1DIR },
+//            TODO { TraversalMode.EDGE_BASED_2DIR },
+//            TODO { TraversalMode.EDGE_BASED_2DIR_UTURN }
+        });
+    }
+
+    private final TraversalMode traversalmode;
+
+    public DijkstraOneToManyTest( TraversalMode tMode )
+    {
+        this.traversalmode = tMode;
+    }
+
     @Override
     public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final Weighting w )
     {
@@ -43,7 +66,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new DijkstraOneToMany(_graph, encoder, w);
+                return new DijkstraOneToMany(_graph, encoder, w, traversalmode);
             }
         }.setGraph(defaultGraph);
     }
@@ -104,11 +127,11 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
         g.edge(0, 1, 1, true);
         g.edge(1, 2, 1, true);
         g.edge(2, 0, 1, true);
-        
+
         g.edge(4, 5, 1, true);
         g.edge(5, 6, 1, true);
         g.edge(6, 4, 1, true);
-        
+
         AlgorithmPreparation prep = prepareGraph(g);
         DijkstraOneToMany algo = (DijkstraOneToMany) prep.createAlgo();
         assertEquals(-1, algo.findEndNode(0, 4));

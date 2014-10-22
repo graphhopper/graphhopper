@@ -69,6 +69,17 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     }
 
     @Test
+    @Override
+    public void testSacScale()
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "service");
+        way.setTag("sac_scale", "hiking");
+        // disallow
+        assertEquals(0, encoder.acceptWay(way));
+    }
+
+    @Test
     public void testGetSpeed()
     {
         long result = encoder.setProperties(10, true, true);
@@ -92,10 +103,10 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     public void testHandleWayTagsInfluencedByRelation()
     {
         OSMWay osmWay = new OSMWay(1);
-        osmWay.setTag("highway", "track");        
+        osmWay.setTag("highway", "track");
         assertEquals(PUSHING_SECTION_SPEED / 2, getSpeedFromFlags(osmWay), 1e-1);
         assertEquals("get off the bike, unpaved", getWayTypeFromFlags(osmWay, 0));
-        
+
         // relation code is PREFER
         long allowed = encoder.acceptBit;
         OSMRelation osmRel = new OSMRelation(1);

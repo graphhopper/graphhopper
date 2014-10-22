@@ -303,6 +303,19 @@ public abstract class AbstractBikeFlagEncoderTester
     }
 
     @Test
+    public void testSacScale()
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "service");
+        way.setTag("sac_scale", "hiking");
+        // allow
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.setTag("sac_scale", "alpine_hiking");
+        assertTrue(encoder.acceptWay(way) == 0);
+    }
+
+    @Test
     public void testReduceToMaxSpeed()
     {
         OSMWay way = new OSMWay(12);
@@ -370,14 +383,14 @@ public abstract class AbstractBikeFlagEncoderTester
         node.setTag("access", "no");
         // barrier!
         assertTrue(encoder.handleNodeTags(node) > 0);
-        
+
         node = new OSMNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "yes");
         node.setTag("bicycle", "no");
         // barrier!
         assertTrue(encoder.handleNodeTags(node) > 0);
-        
+
         node = new OSMNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "no");

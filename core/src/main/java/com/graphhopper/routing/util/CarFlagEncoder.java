@@ -27,6 +27,7 @@ import java.util.Set;
 
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.ITurnCostTableEntry;
+import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.TurnRelation;
@@ -53,14 +54,21 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     /**
      * Should be only instantied via EncodingManager
      */
-    protected CarFlagEncoder()
+    public CarFlagEncoder()
     {
-        this(5, 5);
+        this(5, 5, 0);
     }
 
-    protected CarFlagEncoder( int speedBits, double speedFactor )
+    public CarFlagEncoder( String propertiesStr )
     {
-        super(speedBits, speedFactor);
+        this((int) parseLong(propertiesStr, "speedBits", 5),
+                parseDouble(propertiesStr, "speedFactor", 5),
+                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+    }
+
+    public CarFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
+    {
+        super(speedBits, speedFactor, maxTurnCosts);
         restrictions = new ArrayList<String>(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
         restrictedValues.add("private");
         restrictedValues.add("agricultural");
@@ -132,7 +140,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     }
 
     /**
-     * Define the place of speedBits in the flags variable for car.
+     * Define the place of the speedBits in the edge flags for car.
      */
     @Override
     public int defineWayBits( int index, int shift )

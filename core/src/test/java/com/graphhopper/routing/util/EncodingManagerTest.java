@@ -196,12 +196,13 @@ public class EncodingManagerTest
         final TurnCostTableEntry turnCostEntry_foot = new TurnCostTableEntry();
         final TurnCostTableEntry turnCostEntry_bike = new TurnCostTableEntry();
 
-        CarFlagEncoder car = new CarFlagEncoder()
+        CarFlagEncoder car = new CarFlagEncoder(5, 5, 24)
         {
             @Override
             public Collection<ITurnCostTableEntry> analyzeTurnRelation( TurnRelation turnRelation, DataReader osmReader )
             {
-                return Collections.singleton((ITurnCostTableEntry)turnCostEntry_car); //simulate by returning one turn cost entry directly
+                // simulate by returning one turn cost entry directly
+                return Collections.singleton((ITurnCostTableEntry)turnCostEntry_car);
             }
         };
         FootFlagEncoder foot = new FootFlagEncoder()
@@ -209,19 +210,20 @@ public class EncodingManagerTest
             @Override
             public Collection<ITurnCostTableEntry> analyzeTurnRelation( TurnRelation turnRelation, DataReader osmReader )
             {
-                return Collections.singleton((ITurnCostTableEntry)turnCostEntry_foot); //simulate by returning one turn cost entry directly
+                return Collections.singleton((ITurnCostTableEntry)turnCostEntry_foot);
             }
         };
-        BikeFlagEncoder bike = new BikeFlagEncoder()
+
+        BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24)
         {
             @Override
             public Collection<ITurnCostTableEntry> analyzeTurnRelation( TurnRelation turnRelation, DataReader osmReader )
             {
-                return Collections.singleton((ITurnCostTableEntry)turnCostEntry_bike); //simulate by returning one turn cost entry directly
+                return Collections.singleton((ITurnCostTableEntry)turnCostEntry_bike);
             }
         };
 
-        EncodingManager manager = new EncodingManager(Arrays.asList(bike, foot, car), 4, 127);
+        EncodingManager manager = new EncodingManager(Arrays.asList(bike, foot, car), 4);
 
         // turn cost entries for car and foot are for the same relations (same viaNode, edgeFrom and edgeTo), turn cost entry for bike is for another relation (different viaNode) 
         turnCostEntry_car.edgeFrom = 1;
@@ -229,7 +231,7 @@ public class EncodingManagerTest
         turnCostEntry_bike.edgeFrom = 2;
 
         // calculating arbitrary flags using the encoders
-        turnCostEntry_car.flags = car.getTurnFlags(true, 20);
+        turnCostEntry_car.flags = car.getTurnFlags(true, 0);
         turnCostEntry_foot.flags = foot.getTurnFlags(true, 0);
         turnCostEntry_bike.flags = bike.getTurnFlags(false, 10);
 
@@ -253,9 +255,9 @@ public class EncodingManagerTest
                 assertFalse(foot.isTurnRestricted(entry.getFlags()));
                 assertFalse(bike.isTurnRestricted(entry.getFlags()));
 
-                assertEquals(20, car.getTurnCosts(entry.getFlags()));
-                assertEquals(0, foot.getTurnCosts(entry.getFlags()));
-                assertEquals(0, bike.getTurnCosts(entry.getFlags()));
+                assertTrue(Double.isInfinite(car.getTurnCost(entry.getFlags())));
+                assertEquals(0, foot.getTurnCost(entry.getFlags()), 1e-1);
+                assertEquals(0, bike.getTurnCost(entry.getFlags()), 1e-1);
             } else if (edgeFrom == 2)
             {
                 // the 2nd entry provides turn flags for bike only
@@ -264,9 +266,9 @@ public class EncodingManagerTest
                 assertFalse(foot.isTurnRestricted(entry.getFlags()));
                 assertFalse(bike.isTurnRestricted(entry.getFlags()));
 
-                assertEquals(0, car.getTurnCosts(entry.getFlags()));
-                assertEquals(0, foot.getTurnCosts(entry.getFlags()));
-                assertEquals(10, bike.getTurnCosts(entry.getFlags()));
+                assertEquals(0, car.getTurnCost(entry.getFlags()), 1e-1);
+                assertEquals(0, foot.getTurnCost(entry.getFlags()), 1e-1);
+                assertEquals(10, bike.getTurnCost(entry.getFlags()), 1e-1);
             }
         }
     }

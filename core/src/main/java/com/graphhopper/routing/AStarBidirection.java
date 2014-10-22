@@ -17,19 +17,18 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.AStar.AStarEdge;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.Weighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.DistancePlaneProjection;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
+
 import java.util.PriorityQueue;
+
+import com.graphhopper.routing.AStar.AStarEdge;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * This class implements a bidirectional A* algorithm. It is interesting to note that a
@@ -73,9 +72,9 @@ public class AStarBidirection extends AbstractBidirAlgo
     private GHPoint toCoord;
     protected PathBidirRef bestPath;
 
-    public AStarBidirection( Graph graph, FlagEncoder encoder, Weighting weighting )
+    public AStarBidirection( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
-        super(graph, encoder, weighting);
+        super(graph, encoder, weighting, tMode);
         int nodes = Math.max(20, graph.getNodes());
         initCollections(nodes);
 
@@ -128,13 +127,23 @@ public class AStarBidirection extends AbstractBidirAlgo
     public void initFrom( int from, double dist )
     {
         currFrom = createEdgeEntry(from, dist);
-        bestWeightMapFrom.put(from, currFrom);
-        prioQueueOpenSetFrom.add(currFrom);
         fromCoord = new GHPoint(nodeAccess.getLatitude(from), nodeAccess.getLongitude(from));
-        if (currTo != null)
+        prioQueueOpenSetFrom.add(currFrom);
+        if (!traversalMode.isEdgeBased())
         {
-            bestWeightMapOther = bestWeightMapTo;
-            updateShortest(currTo, from);
+            bestWeightMapFrom.put(from, currFrom);
+            if (currTo != null)
+            {
+                bestWeightMapOther = bestWeightMapTo;
+                updateBestPath(GHUtility.getEdge(graph, from, currTo.adjNode), currTo, from);
+            }
+        } else
+        {
+            if (currTo != null && currTo.adjNode == from)
+            {
+                finishedFrom = true;
+                finishedTo = true;
+            }
         }
     }
 
@@ -142,13 +151,23 @@ public class AStarBidirection extends AbstractBidirAlgo
     public void initTo( int to, double dist )
     {
         currTo = createEdgeEntry(to, dist);
-        bestWeightMapTo.put(to, currTo);
-        prioQueueOpenSetTo.add(currTo);
         toCoord = new GHPoint(nodeAccess.getLatitude(to), nodeAccess.getLongitude(to));
-        if (currFrom != null)
+        prioQueueOpenSetTo.add(currTo);
+        if (!traversalMode.isEdgeBased())
         {
-            bestWeightMapOther = bestWeightMapFrom;
-            updateShortest(currFrom, to);
+            bestWeightMapTo.put(to, currTo);
+            if (currFrom != null)
+            {
+                bestWeightMapOther = bestWeightMapFrom;
+                updateBestPath(GHUtility.getEdge(graph, currFrom.adjNode, to), currFrom, to);
+            }
+        } else
+        {
+            if (currFrom != null && currFrom.adjNode == to)
+            {
+                finishedFrom = true;
+                finishedTo = true;
+            }
         }
     }
 
@@ -220,57 +239,79 @@ public class AStarBidirection extends AbstractBidirAlgo
         EdgeIterator iter = explorer.setBaseNode(currNode);
         while (iter.next())
         {
-            if (!accept(iter))
-                continue;
-            if (currEdge.edge == iter.getEdge())
+            if (!accept(iter, currEdge.edge))
                 continue;
 
-            int adjNode = iter.getAdjNode();
+            int neighborNode = iter.getAdjNode();
+            int iterationKey = traversalMode.createTraversalId(iter, reverse);
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
-            double alreadyVisitedWeight = weighting.calcWeight(iter, reverse) + currEdge.weightToCompare;
-            AStarEdge de = shortestWeightMap.get(adjNode);
-            if (de == null || de.weightToCompare > alreadyVisitedWeight)
+            double alreadyVisitedWeight = weighting.calcWeight(iter, reverse, currEdge.edge) + currEdge.weightToCompare;
+            if (Double.isInfinite(alreadyVisitedWeight))
+                    continue;
+            
+            AStarEdge aee = shortestWeightMap.get(iterationKey);
+            if (aee == null || aee.weightToCompare > alreadyVisitedWeight)
             {
-                double tmpLat = nodeAccess.getLatitude(adjNode);
-                double tmpLon = nodeAccess.getLongitude(adjNode);
+                double tmpLat = nodeAccess.getLatitude(neighborNode);
+                double tmpLon = nodeAccess.getLongitude(neighborNode);
                 double currWeightToGoal = dist.calcDist(goal.lat, goal.lon, tmpLat, tmpLon);
                 currWeightToGoal = weighting.getMinWeight(currWeightToGoal);
                 double estimationFullDist = alreadyVisitedWeight + currWeightToGoal;
-                if (de == null)
+                if (aee == null)
                 {
-                    de = new AStarEdge(iter.getEdge(), adjNode, estimationFullDist, alreadyVisitedWeight);
-                    shortestWeightMap.put(adjNode, de);
+                    aee = new AStarEdge(iter.getEdge(), neighborNode, estimationFullDist, alreadyVisitedWeight);
+                    shortestWeightMap.put(iterationKey, aee);
+                } else if (aee.weight > estimationFullDist)
+                {
+                    prioQueueOpenSet.remove(aee);
+                    aee.edge = iter.getEdge();
+                    aee.weight = estimationFullDist;
+                    aee.weightToCompare = alreadyVisitedWeight;
                 } else
-                {
-                    prioQueueOpenSet.remove(de);
-                    de.edge = iter.getEdge();
-                    de.weight = estimationFullDist;
-                    de.weightToCompare = alreadyVisitedWeight;
-                }
+                    continue;
 
-                de.parent = currEdge;
-                prioQueueOpenSet.add(de);
-                updateShortest(de, adjNode);
+                aee.parent = currEdge;
+                prioQueueOpenSet.add(aee);
+                updateBestPath(iter, aee, iterationKey);
             }
         }
     }
 
 //    @Override -> TODO use only weight => then a simple EdgeEntry is possible
-    public void updateShortest( AStarEdge shortestDE, int currLoc )
+    public void updateBestPath( EdgeIteratorState edgeState, AStarEdge entryCurrent, int currLoc )
     {
         AStarEdge entryOther = bestWeightMapOther.get(currLoc);
         if (entryOther == null)
             return;
 
+        boolean reverse = bestWeightMapFrom == bestWeightMapOther;
         // update μ
-        double newShortest = shortestDE.weightToCompare + entryOther.weightToCompare;
-        if (newShortest < bestPath.getWeight())
+        double newWeight = entryCurrent.weightToCompare + entryOther.weightToCompare;
+        if (traversalMode.isEdgeBased())
         {
-            bestPath.setSwitchToFrom(bestWeightMapFrom == bestWeightMapOther);
-            bestPath.edgeEntry = shortestDE;
+            if (entryOther.edge != entryCurrent.edge)
+                throw new IllegalStateException("cannot happen for edge based execution of " + getName());
+
+            // see DijkstraBidirectionRef
+            if (entryOther.adjNode != entryCurrent.adjNode)
+            {
+                entryCurrent = (AStar.AStarEdge) entryCurrent.parent;
+                newWeight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
+            } else
+            {
+                // we detected a u-turn at meeting point, skip if not supported
+                if (!traversalMode.hasUTurnSupport())
+                    return;
+            }
+        }
+
+        if (newWeight < bestPath.getWeight())
+        {
+            bestPath.setSwitchToFrom(reverse);
+            bestPath.edgeEntry = entryCurrent;
             bestPath.edgeTo = entryOther;
-            bestPath.setWeight(newShortest);
+            bestPath.setWeight(newWeight);
         }
     }
 

@@ -64,19 +64,11 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     private final Map<String, Integer> bikeNetworkToCode = new HashMap<String, Integer>();
     EncodedValue relationCodeEncoder;
     private EncodedValue wayTypeEncoder;
-    private EncodedValue preferWayEncoder;
+    private EncodedValue preferWayEncoder;    
 
-    /**
-     * Should be only instantied via EncodingManager
-     */
-    protected BikeCommonFlagEncoder()
+    protected BikeCommonFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
     {
-        this(4, 2);
-    }
-
-    protected BikeCommonFlagEncoder( int speedBits, double speedFactor )
-    {
-        super(speedBits, speedFactor);
+        super(speedBits, speedFactor, maxTurnCosts);
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
         restrictions = new ArrayList<String>(Arrays.asList("bicycle", "access"));
         restrictedValues.add("private");
@@ -272,12 +264,17 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
 
         String sacScale = way.getTag("sac_scale");
         if (sacScale != null)
-        {
-            // other scales are nearly impossible by bike, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
-            if (!"hiking".equals(sacScale) && !"mountain_hiking".equals(sacScale))
+        {            
+            if (!allowedSacScale(sacScale))
                 return 0;
         }
         return acceptBit;
+    }
+
+    boolean allowedSacScale( String sacScale )
+    {
+        // other scales are nearly impossible by bike, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
+        return "hiking".equals(sacScale) || "mountain_hiking".equals(sacScale);
     }
 
     @Override

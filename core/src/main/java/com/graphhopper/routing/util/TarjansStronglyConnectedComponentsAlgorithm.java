@@ -14,7 +14,7 @@ import java.util.Stack;
  * Implementation of Tarjan's algorithm using an explicit stack.
  * (The traditional recursive approach runs into stack overflow pretty quickly.)
  *
- * Used for finding strongly strongly connected components to detect dead-ends.
+ * Used for finding strongly connected components to detect dead-ends.
  *
  * http://en.wikipedia.org/wiki/Tarjan's_strongly_connected_components_algorithm
  */
