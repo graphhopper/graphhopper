@@ -183,7 +183,7 @@ public class GraphHopperStorage implements GraphStorage
         extStorage.create(initSize);
 
         properties.put("graph.bytesForFlags", encodingManager.getBytesForFlags());
-        properties.put("osmreader.acceptWay", encodingManager.toDetailsString());
+        properties.put("graph.flagEncoders", encodingManager.toDetailsString());
 
         properties.put("graph.byteOrder", dir.getByteOrder());
         properties.put("graph.dimension", nodeAccess.getDimension());
@@ -1370,7 +1370,7 @@ public class GraphHopperStorage implements GraphStorage
             {
                 properties.checkVersions(false);
                 // check encoding for compatiblity
-                acceptStr = properties.get("osmreader.acceptWay");
+                acceptStr = properties.get("graph.flagEncoders");
             } else
                 throw new IllegalStateException("cannot load properties. corrupt file or directory? " + dir);
 

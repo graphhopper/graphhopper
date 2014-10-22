@@ -485,7 +485,7 @@ public class EncodingManager
 
         // check encoding for compatiblity
         properties.checkVersions(false);
-        String acceptStr = properties.get("osmreader.acceptWay");
+        String acceptStr = properties.get("graph.flagEncoders");
 
         if (acceptStr.isEmpty())
             throw new IllegalStateException("EncodingManager was not configured. And no one was found in the graph: "

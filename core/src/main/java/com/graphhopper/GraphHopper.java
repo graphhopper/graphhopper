@@ -530,7 +530,7 @@ public class GraphHopper implements GraphHopperAPI
 
         // osm import
         wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", wayPointMaxDistance);
-        String flagEncoders = args.get("osmreader.acceptWay", "CAR");
+        String flagEncoders = args.get("graph.flagEncoders", "CAR");
         encodingManager = new EncodingManager(flagEncoders, bytesForFlags);
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
