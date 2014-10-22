@@ -54,6 +54,7 @@ import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -108,9 +109,9 @@ public class MiniItnGraphUI
         this.na = graph.getNodeAccess();
         prepare = hopper.getPreparation();
         encoder = hopper.getEncodingManager().getSingle();
-        weighting = hopper.createWeighting("fastest", encoder); //new PriorityWeighting(encoder);
+        weighting = hopper.createWeighting(Weighting.Params.create("fastest"), encoder);
         if (prepare == null)
-            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, "dijkstrabi", encoder, weighting);
+            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, "dijkstrabi", encoder, weighting, TraversalMode.NODE_BASED);
 
         logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algo:" + prepare.createAlgo().getName());
         mg = new GraphicsWrapper(graph);
