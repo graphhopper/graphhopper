@@ -122,6 +122,13 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         defaultSpeedMap.put("road", 20);
         // forestry stuff
         defaultSpeedMap.put("track", 15);
+        
+        defaultSpeedMap.put("Motorway", 100);
+        defaultSpeedMap.put("A Road", 55);
+        defaultSpeedMap.put("B Road", 35);
+        defaultSpeedMap.put("Minor Road", 35);
+        defaultSpeedMap.put("Local Street", 35);
+        defaultSpeedMap.put("Alley", 35);
     }
 
     /**

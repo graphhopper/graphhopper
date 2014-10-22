@@ -23,8 +23,6 @@ import java.util.List;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMTurnRelation.Type;
 import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.RelationMember;
@@ -46,7 +44,8 @@ public class OsItnMetaData extends OSITNElement implements Relation {
 		notInstructions = new ArrayList<>();
 		onlyInstructions = new ArrayList<>();
 
-		notInstructions.add("No Turn");
+//		notInstructions.add("No Turn");
+//		onlyInstructions.add("Mandatory Turn");
 	}
 
 	public static OsItnMetaData create(long id, XMLStreamReader parser)

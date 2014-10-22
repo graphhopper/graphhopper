@@ -11,6 +11,7 @@ import gnu.trove.map.hash.TIntLongHashMap;
 import gnu.trove.map.hash.TLongByteHashMap;
 import gnu.trove.map.hash.TLongLongHashMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
+import gnu.trove.procedure.TLongProcedure;
 import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TLongHashSet;
 
@@ -103,7 +104,8 @@ import com.graphhopper.util.shapes.GHPoint;
 public class OsItnReader implements DataReader {
 
 	public class ProcessVisitor {
-		public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException {
+		public void process(ProcessData processData, OsItnInputFile in)
+				throws XMLStreamException {
 		}
 	}
 
@@ -274,7 +276,8 @@ public class OsItnReader implements DataReader {
 			}
 			if (item.isType(OSMElement.RELATION)) {
 				final Relation relation = (Relation) item;
-				logger.warn("RELATION :" + item.getClass() +" TYPE:" + item.getTag("type") + " meta?"
+				logger.warn("RELATION :" + item.getClass() + " TYPE:"
+						+ item.getTag("type") + " meta?"
 						+ relation.isMetaRelation());
 				if (!relation.isMetaRelation()
 						&& relation.hasTag("type", "route"))
@@ -285,11 +288,11 @@ public class OsItnReader implements DataReader {
 
 				if (relation.hasTag("name"))
 					prepareNameRelation(relation);
-				
+
 				if (relation.hasTag("highway"))
 					prepareRoadTypeRelation(relation);
-				
-				if(relation.hasTag("oneway")) {
+
+				if (relation.hasTag("oneway")) {
 					prepareRoadDirectionRelation(relation);
 				}
 
@@ -316,44 +319,44 @@ public class OsItnReader implements DataReader {
 
 	private void prepareNameRelation(Relation relation) {
 		String name = relation.getTag("name");
-		System.err.println("Rel Name:" + name);
+		// System.err.println("Rel Name:" + name);
 		TLongObjectMap<String> edgeIdToNameMap = getEdgeNameMap();
 		ArrayList<? extends RelationMember> members = relation.getMembers();
 		for (RelationMember relationMember : members) {
 			long wayId = relationMember.ref();
 			String namePrefix = getWayName(wayId);
-			System.err.println("ADDING:" + wayId);
-			if(null!=namePrefix  && !namePrefix.contains(name)) {
-				namePrefix = namePrefix + " (" + name +")";
-				System.err.println("NAME:" + namePrefix);
+			// System.err.println("ADDING:" + wayId);
+			if (null != namePrefix && !namePrefix.contains(name)) {
+				namePrefix = namePrefix + " (" + name + ")";
+				// System.err.println("NAME:" + namePrefix);
 				edgeIdToNameMap.put(wayId, namePrefix);
 			} else {
 				edgeIdToNameMap.put(wayId, name);
 			}
 		}
-		System.err.println("Rel Name:" + name);
+		// System.err.println("Rel Name:" + name);
 	}
-	
+
 	private void prepareRoadTypeRelation(Relation relation) {
 		String highway = relation.getTag("highway");
-		System.err.println("Rel highway:" + highway);
+		// System.err.println("Rel highway:" + highway);
 		TLongObjectMap<String> edgeIdToRoadTypeMap = getEdgeRoadTypeMap();
 		ArrayList<? extends RelationMember> members = relation.getMembers();
 		for (RelationMember relationMember : members) {
 			long wayId = relationMember.ref();
-			System.err.println("MEMBERS:" + wayId);
+			// System.err.println("MEMBERS:" + wayId);
 			edgeIdToRoadTypeMap.put(wayId, highway);
 		}
 	}
-	
+
 	private void prepareRoadDirectionRelation(Relation relation) {
 		String highway = relation.getTag("oneway");
-		System.err.println("Rel oneway:" + highway);
+		// System.err.println("Rel oneway:" + highway);
 		TLongObjectMap<String> edgeIdToRoadDirectionMap = getEdgeRoadDirectionMap();
 		ArrayList<? extends RelationMember> members = relation.getMembers();
 		for (RelationMember relationMember : members) {
 			long wayId = relationMember.ref();
-			System.err.println("MEMBERS:" + wayId);
+			// System.err.println("MEMBERS:" + wayId);
 			edgeIdToRoadDirectionMap.put(wayId, highway);
 		}
 	}
@@ -386,7 +389,7 @@ public class OsItnReader implements DataReader {
 
 		return edgeNameMap;
 	}
-	
+
 	private TLongObjectMap<String> getEdgeRoadTypeMap() {
 		if (edgeRoadTypeMap == null)
 			edgeRoadTypeMap = new TLongObjectHashMap(getOsmIdStoreRequiredSet()
@@ -394,15 +397,15 @@ public class OsItnReader implements DataReader {
 
 		return edgeRoadTypeMap;
 	}
-	
+
 	private TLongObjectMap<String> getEdgeRoadDirectionMap() {
 		if (edgeRoadDirectionMap == null)
-			edgeRoadDirectionMap = new TLongObjectHashMap<String>(getOsmIdStoreRequiredSet()
-					.size());
+			edgeRoadDirectionMap = new TLongObjectHashMap<String>(
+					getOsmIdStoreRequiredSet().size());
 
 		return edgeRoadDirectionMap;
 	}
-	
+
 	/**
 	 * Filter ways but do not analyze properties wayNodes will be filled with
 	 * participating node ids.
@@ -435,29 +438,32 @@ public class OsItnReader implements DataReader {
 		try {
 			ProcessVisitor processVisitor = new ProcessVisitor() {
 				@Override
-				public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException {
+				public void process(ProcessData processData, OsItnInputFile in)
+						throws XMLStreamException {
 					processStageOne(processData, in);
 				}
 			};
 			logger.error("PROCESS NODES");
-			writeOsm2GraphFromDirOrFile(osmFile, processData, processVisitor );
+			writeOsm2GraphFromDirOrFile(osmFile, processData, processVisitor);
 			processVisitor = new ProcessVisitor() {
 				@Override
-				public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException {
+				public void process(ProcessData processData, OsItnInputFile in)
+						throws XMLStreamException {
 					processStageTwo(processData, in);
 				}
 			};
 			logger.error("PROCESS WAY");
-			writeOsm2GraphFromDirOrFile(osmFile, processData, processVisitor );
+			writeOsm2GraphFromDirOrFile(osmFile, processData, processVisitor);
 			processVisitor = new ProcessVisitor() {
 				@Override
-				public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException {
+				public void process(ProcessData processData, OsItnInputFile in)
+						throws XMLStreamException {
 					processStageThree(processData, in);
 				}
 			};
 			logger.error("PROCESS RELATION");
 			writeOsm2GraphFromDirOrFile(osmFile, processData, processVisitor);
-			
+
 		} catch (Exception ex) {
 			throw new RuntimeException("Couldn't process file " + osmFile, ex);
 		}
@@ -469,23 +475,28 @@ public class OsItnReader implements DataReader {
 					+ " locations");
 	}
 
-	private void writeOsm2GraphFromDirOrFile(File osmFile, ProcessData processData, ProcessVisitor processVisitor) throws XMLStreamException, IOException {
+	private void writeOsm2GraphFromDirOrFile(File osmFile,
+			ProcessData processData, ProcessVisitor processVisitor)
+			throws XMLStreamException, IOException {
 		if (osmFile.isDirectory()) {
 			String absolutePath = osmFile.getAbsolutePath();
 			String[] list = osmFile.list();
 			for (String file : list) {
 				File nextFile = new File(absolutePath + File.separator + file);
-				writeOsm2GraphFromDirOrFile(nextFile, processData, processVisitor);
+				writeOsm2GraphFromDirOrFile(nextFile, processData,
+						processVisitor);
 			}
 		} else {
 			writeOsm2GraphFromSingleFile(osmFile, processData, processVisitor);
 		}
 	}
 
-	private void writeOsm2GraphFromSingleFile(File osmFile, ProcessData processData, ProcessVisitor processVisitor) throws XMLStreamException, IOException {
-		OsItnInputFile in=null;
+	private void writeOsm2GraphFromSingleFile(File osmFile,
+			ProcessData processData, ProcessVisitor processVisitor)
+			throws XMLStreamException, IOException {
+		OsItnInputFile in = null;
 		try {
-			logger.error("PROCESS: "  + osmFile.getName());
+			logger.error("PROCESS: " + osmFile.getName());
 			in = new OsItnInputFile(osmFile).setWorkerThreads(workerThreads)
 					.open();
 			processVisitor.process(processData, in);
@@ -493,7 +504,7 @@ public class OsItnReader implements DataReader {
 		} finally {
 			Helper.close(in);
 		}
-		
+
 	}
 
 	private void processStageOne(ProcessData processData, OsItnInputFile in)
@@ -534,9 +545,12 @@ public class OsItnReader implements DataReader {
 					logger.info(nf(processData.counter) + ", now parsing ways");
 					processData.wayStart = processData.counter;
 				}
+				if (!item.hasTag("highway")) {
+					item.setTag("highway", "motorway");
+				}
 				prepareWaysNodes(item, nodeFilter);
 				processWay((Way) item);
-				((OSITNWay)item).clearWayNodes();
+				((OSITNWay) item).clearWayNodes();
 				break;
 			}
 			if (++processData.counter % 5000000 == 0) {
@@ -547,8 +561,7 @@ public class OsItnReader implements DataReader {
 	}
 
 	private void prepareWaysNodes(RoutingElement item, LongIntMap nodeFilter) {
-		List<OSITNNode> evaluateWayNodes = ((OSITNWay) item)
-				.evaluateWayNodes();
+		List<OSITNNode> evaluateWayNodes = ((OSITNWay) item).evaluateWayNodes();
 		for (OSITNNode ositnNode : evaluateWayNodes) {
 			nodeFilter.put(ositnNode.getId(), TOWER_NODE);
 			processNode(ositnNode);
@@ -610,14 +623,14 @@ public class OsItnReader implements DataReader {
 		logger.info("RELFLAGS:" + way.getId() + ":" + relationFlags);
 		String wayName = getWayName(way.getId());
 		if (null != wayName) {
-			System.err.println("SETTING WAY NAME:" + wayName);
+			// System.err.println("SETTING WAY NAME:" + wayName);
 			way.setTag("name", wayName);
 		}
 		String wayType = getWayRoadType(way.getId());
 		if (null != wayType && !way.hasTag("highway")) {
 			way.setTag("highway", wayType);
 		}
-		
+
 		String wayDirection = getWayRoadDirection(way.getId());
 		if (null != wayDirection && !way.hasTag("oneway")) {
 			way.setTag("oneway", wayDirection);
@@ -738,11 +751,11 @@ public class OsItnReader implements DataReader {
 	private String getWayName(long id) {
 		return getEdgeNameMap().remove(id);
 	}
-	
+
 	private String getWayRoadType(long id) {
 		return getEdgeRoadTypeMap().remove(id);
 	}
-	
+
 	private String getWayRoadDirection(long id) {
 		return getEdgeRoadDirectionMap().remove(id);
 	}
@@ -869,7 +882,7 @@ public class OsItnReader implements DataReader {
 		logger.warn("PREPARE ONE WAY:" + handleRelationTags);
 		if (handleRelationTags == 0) {
 			return;
-		}	
+		}
 
 		int size = relation.getMembers().size();
 		for (int index = 0; index < size; index++) {
@@ -1193,9 +1206,11 @@ public class OsItnReader implements DataReader {
 			if (type != OSMTurnRelation.Type.UNSUPPORTED && fromWayID >= 0
 					&& toWayID >= 0) {
 				long foundViaNode = findViaNode(fromWayID, toWayID);
-				OSITNTurnRelation osmTurnRelation = new OSITNTurnRelation(
-						fromWayID, foundViaNode, toWayID, type);
-				return osmTurnRelation;
+				if (-1 < foundViaNode) {
+					OSITNTurnRelation osmTurnRelation = new OSITNTurnRelation(
+							fromWayID, foundViaNode, toWayID, type);
+					return osmTurnRelation;
+				}
 			}
 		}
 		return null;
@@ -1298,7 +1313,18 @@ public class OsItnReader implements DataReader {
 			if (itnNodePairFrom.last == itnNodePairTo.last) {
 				return itnNodePairFrom.last;
 			}
-			throw new IllegalArgumentException("No Matching Edges");
+			TLongProcedure outputMap = new TLongProcedure() {
+
+				@Override
+				public boolean execute(long arg0) {
+					System.err.println(arg0);
+					return true;
+				}
+			};
+			nodeEdgeMap.forEachKey(outputMap);
+			logger.error("No Matching Edges for " + fromOsm + ":" + toOsm);
+			// throw new IllegalArgumentException("No Matching Edges for " +
+			// fromOsm + ":" + toOsm);
 		}
 		return -1;
 	}

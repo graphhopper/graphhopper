@@ -128,8 +128,8 @@ public abstract class OSITNElement implements RoutingElement {
 	private int handleDescriptiveGroup(XMLStreamReader parser)
 			throws XMLStreamException {
 		String roadType = resolveHighway(parser.getElementText());
-		System.err.println(this.getClass() + ".handleDescriptiveGroup(" + roadType
-				+ ")");
+//		System.err.println(this.getClass() + ".handleDescriptiveGroup(" + roadType
+//				+ ")");
 		if (null != roadType) {
 			setTag("type", "route");
 			setTag("highway", roadType);
@@ -141,7 +141,10 @@ public abstract class OSITNElement implements RoutingElement {
 		logger.info("OSITNElement.resolveHighway( " + elementText + ")");
 		switch (elementText) {
 		case "A Road":
-		case "motorway":	
+		case "Motorway":
+		case "B Road":
+		case "Minor Road":
+		case "Local Street":	
 			return elementText;
 		}
 		return null;
@@ -152,9 +155,8 @@ public abstract class OSITNElement implements RoutingElement {
 		String elementText = parser.getElementText();
 		int event;
 		if ("One Way".equals(elementText)) {
-			setTag("type", "route");
+			setTag("type", "oneway");
 			setTag("oneway", "true");
-			logger.warn("CREATING ONE WAY");
 		} else {
 			setTag("type", "restriction");
 			setTag("restriction", elementText);
@@ -168,6 +170,9 @@ public abstract class OSITNElement implements RoutingElement {
 		String orientation = parser.getAttributeValue(null, "orientation");
 		String nodeId = parser.getAttributeValue(
 				"http://www.w3.org/1999/xlink", "href");
+		if(hasTag("oneway", "true")  && orientation.equals("+")) {
+			setTag("oneway", "false");
+		}
 		addDirectedLink(nodeId, orientation);
 		return parser.next();
 	}
@@ -292,6 +297,9 @@ public abstract class OSITNElement implements RoutingElement {
 	}
 
 	public void setTag(String name, Object value) {
+//		if(name.equals("highway")) {
+//			System.err.println("HIGHWAY:" + value);
+//		}
 		properties.put(name, value);
 	}
 

@@ -29,8 +29,6 @@ import org.slf4j.LoggerFactory;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.ITurnCostTableEntry;
 import com.graphhopper.reader.Node;
-import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.TurnRelation;
 import com.graphhopper.reader.Way;
