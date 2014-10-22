@@ -52,7 +52,7 @@ public class GraphHopper implements GraphHopperAPI
     private final Logger logger = LoggerFactory.getLogger(getClass());
     // for graph:
     private GraphStorage graph;
-    private EncodingManager encodingManager;
+    protected EncodingManager encodingManager;
     private int defaultSegmentSize = -1;
     private String ghLocation = "";
     private DAType dataAccessType = DAType.RAM_STORE;
@@ -85,9 +85,9 @@ public class GraphHopper implements GraphHopperAPI
     private int neighborUpdates = -1;
     private double logMessages = -1;
     // for OSM import
-    private String osmFile;
-    private double wayPointMaxDistance = 1;
-    private int workerThreads = -1;
+    protected String osmFile;
+    protected double wayPointMaxDistance = 1;
+    protected int workerThreads = -1;
     private boolean calcPoints = true;
     // utils    
     private final TranslationMap trMap = new TranslationMap().doImport();
