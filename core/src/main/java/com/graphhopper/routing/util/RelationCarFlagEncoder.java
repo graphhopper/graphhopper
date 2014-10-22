@@ -10,15 +10,15 @@ public class RelationCarFlagEncoder extends CarFlagEncoder {
 
 	private EncodedValue relationCodeEncoder;
 
-	protected RelationCarFlagEncoder()
+	public RelationCarFlagEncoder()
 	    {
-	        this(5, 5);
+	        this(5, 5,0);
 	    }
 
 	
 	
-	protected RelationCarFlagEncoder(int speedBits, double speedFactor )    {
-        super(speedBits, speedFactor);
+	public RelationCarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts)    {
+        super(speedBits, speedFactor, maxTurnCosts);
         restrictions = new ArrayList<String>(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
         restrictedValues.add("private");
         restrictedValues.add("agricultural");

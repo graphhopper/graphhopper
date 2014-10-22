@@ -773,7 +773,7 @@ public class OsItnReader implements DataReader {
 					Collection<ITurnCostTableEntry> entries = encodingManager
 							.analyzeTurnRelation(turnRelation, this);
 					for (ITurnCostTableEntry entry : entries) {
-						((TurnCostStorage) extendedStorage).setTurnCosts(
+						((TurnCostStorage) extendedStorage).addTurnInfo(
 								entry.getVia(), entry.getEdgeFrom(),
 								entry.getEdgeTo(), (int) entry.getFlags());
 					}

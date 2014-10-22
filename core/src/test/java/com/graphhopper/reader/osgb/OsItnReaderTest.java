@@ -25,20 +25,18 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
-import java.util.Set;
 
-import org.junit.Ignore;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.graphhopper.reader.osgb.dpn.OsDpnInputFile;
-import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.util.RelationCarFlagEncoder;
 import com.graphhopper.storage.AbstractGraphStorageTester;
 import com.graphhopper.storage.ExtendedStorage;
@@ -59,11 +57,11 @@ public class OsItnReaderTest {
 			.getLogger(OsItnReaderTest.class);
 	private static final InputStream COMPLEX_ITN_EXAMPLE = OsItnReader.class
 			.getResourceAsStream("os-itn-sample.xml");
-	private EncodingManager encodingManager = new EncodingManager("car:com.graphhopper.routing.util.RelationCarFlagEncoder");
-	private RelationCarFlagEncoder carEncoder = (RelationCarFlagEncoder) encodingManager
-			.getEncoder("CAR");
-	private EdgeFilter carOutEdges = new DefaultEdgeFilter(
-			carEncoder, false, true);
+	private EncodingManager encodingManager;// = new EncodingManager("CAR");//"car:com.graphhopper.routing.util.RelationCarFlagEncoder");
+	private RelationCarFlagEncoder carEncoder;// = (RelationCarFlagEncoder) encodingManager
+			//.getEncoder("CAR");
+	private EdgeFilter carOutEdges;// = new DefaultEdgeFilter(
+			//carEncoder, false, true);
 
 
 	private double node0Lat = 50.69919585809061d;
@@ -80,8 +78,29 @@ public class OsItnReaderTest {
 
 	private double node4Lat = 50.74216177664155d;
 	private double node4Lon = -3.702115749998877d;
+	private boolean turnCosts = true;
 	private EdgeExplorer carOutExplorer;
 	private EdgeExplorer carAllExplorer;
+	private BikeFlagEncoder bikeEncoder;
+	private FootFlagEncoder footEncoder;
+	
+	@Before
+	public void initEncoding() {
+		if (turnCosts)
+        {
+            carEncoder = new RelationCarFlagEncoder(5, 5, 3);
+            bikeEncoder = new BikeFlagEncoder(4, 2, 3);
+        } else
+        {
+            carEncoder = new RelationCarFlagEncoder();
+            bikeEncoder = new BikeFlagEncoder();
+        }
+
+        footEncoder = new FootFlagEncoder();
+        carOutEdges = new DefaultEdgeFilter(carEncoder, false, true);
+        encodingManager = new EncodingManager(footEncoder, carEncoder, bikeEncoder);
+    
+	}
 
 	@Test
 	public void testReadSimpleCrossRoads() throws IOException {
@@ -141,23 +160,23 @@ public class OsItnReaderTest {
 		
 		TurnCostStorage tcStorage = (TurnCostStorage) ((GraphHopperStorage)graph).getExtendedStorage();
 		
-		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge0_1, edge1_2)));
-		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge1_2, edge0_1)));
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n1, edge0_1, edge1_2)));
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n1, edge1_2, edge0_1)));
 		
-		assertTrue(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge0_1, edge1_3)));
-		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge1_3, edge0_1)));
+		assertTrue(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n1, edge0_1, edge1_3)));
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n1, edge1_3, edge0_1)));
 		
-		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge0_1, edge1_4)));
-		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge1_4, edge0_1)));
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n1, edge0_1, edge1_4)));
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n1, edge1_4, edge0_1)));
 		
-		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge1_2, edge1_3)));
-		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge1_3, edge1_2)));
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n1, edge1_2, edge1_3)));
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n1, edge1_3, edge1_2)));
 		
-		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge1_2, edge1_4)));
-		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge1_4, edge1_2)));
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n1, edge1_2, edge1_4)));
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n1, edge1_4, edge1_2)));
 		
-		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge1_3, edge1_4)));
-		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n1, edge1_4, edge1_3)));
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n1, edge1_3, edge1_4)));
+		assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n1, edge1_4, edge1_3)));
 		
 	}
 	
