@@ -36,7 +36,7 @@ public class ItnGraphHopper extends GraphHopper {
 
 	protected OsItnReader initOSMReader(OsItnReader reader) {
 		if (osmFile == null)
-			throw new IllegalArgumentException("No OSM file specified");
+			throw new IllegalArgumentException("No ITN file specified");
 		forDesktop();
 		logger.info("start creating graph from " + osmFile);
 		File osmTmpFile = new File(osmFile);

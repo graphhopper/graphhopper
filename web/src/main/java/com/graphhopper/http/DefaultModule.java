@@ -17,13 +17,15 @@
  */
 package com.graphhopper.http;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.ItnGraphHopper;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.TranslationMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Peter Karich
@@ -52,7 +54,7 @@ public class DefaultModule extends AbstractModule
      */
     protected GraphHopper createGraphHopper( CmdArgs args )
     {
-        graphHopper = new GraphHopper().forServer().init(args);
+        graphHopper = new ItnGraphHopper().forServer().init(args);
         graphHopper.importOrLoad();
         logger.info("loaded graph at:" + graphHopper.getGraphHopperLocation()
                 + ", source:" + graphHopper.getOSMFile()

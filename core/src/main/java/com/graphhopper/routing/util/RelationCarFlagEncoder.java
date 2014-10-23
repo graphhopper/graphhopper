@@ -12,7 +12,7 @@ public class RelationCarFlagEncoder extends CarFlagEncoder {
 
 	public RelationCarFlagEncoder()
 	    {
-	        this(5, 5,0);
+	        this(5, 5, 0);
 	    }
 
 	

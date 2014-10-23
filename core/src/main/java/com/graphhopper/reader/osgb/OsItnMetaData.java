@@ -41,8 +41,8 @@ public class OsItnMetaData extends OSITNElement implements Relation {
 	private Type relationType;
 
 	static {
-		notInstructions = new ArrayList<>();
-		onlyInstructions = new ArrayList<>();
+		notInstructions = new ArrayList<String>();
+		onlyInstructions = new ArrayList<String>();
 
 //		notInstructions.add("No Turn");
 //		onlyInstructions.add("Mandatory Turn");

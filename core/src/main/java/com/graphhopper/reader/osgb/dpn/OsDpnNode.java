@@ -172,4 +172,16 @@ public class OsDpnNode extends OSITNElement implements Node {
 		return wgs84Pt;
 	}
 
+	@Override
+	protected void parseCoordinateString(String elementText,
+			String elementSeparator) {
+		throw new UnsupportedOperationException();
+		
+	}
+
+	@Override
+	protected void parseCoords(int dimensions, String lineDefinition) {
+		throw new UnsupportedOperationException();
+	}
+
 }

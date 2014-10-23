@@ -48,8 +48,8 @@ public class OSITNRelation extends OSITNElement implements Relation {
 			.getLogger(OSITNRelation.class);
 
 	static {
-		notInstructions = new ArrayList<>();
-		onlyInstructions = new ArrayList<>();
+		notInstructions = new ArrayList<String>();
+		onlyInstructions = new ArrayList<String>();
 
 		notInstructions.add("No Turn");
 	}

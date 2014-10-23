@@ -128,7 +128,7 @@ public class OsDpnWay extends OSITNWay implements Way {
 	}
 
 	public List<OSITNNode> evaluateWayNodes() {
-		List<OSITNNode> wayNodes = new ArrayList<>();
+		List<OSITNNode> wayNodes = new ArrayList<OSITNNode>();
 
 		for (int i = 0; i < wayCoords.length; i++) {
 			String wayCoord = wayCoords[i];
