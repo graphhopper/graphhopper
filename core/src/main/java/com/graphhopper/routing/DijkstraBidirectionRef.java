@@ -181,17 +181,17 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
             if (!accept(iter, currEdge.edge))
                 continue;
 
-            int iterationKey = traversalMode.createTraversalId(iter, reverse);
+            int traversalId = traversalMode.createTraversalId(iter, reverse);
             double tmpWeight = weighting.calcWeight(iter, reverse, currEdge.edge) + currEdge.weight;
             if (Double.isInfinite(tmpWeight))
                 continue;
 
-            EdgeEntry ee = shortestWeightMap.get(iterationKey);
+            EdgeEntry ee = shortestWeightMap.get(traversalId);
             if (ee == null)
             {
                 ee = new EdgeEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight);
                 ee.parent = currEdge;
-                shortestWeightMap.put(iterationKey, ee);
+                shortestWeightMap.put(traversalId, ee);
                 prioQueue.add(ee);
             } else if (ee.weight > tmpWeight)
             {
@@ -204,14 +204,14 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
                 continue;
 
             if (updateBestPath)
-                updateBestPath(iter, ee, iterationKey);
+                updateBestPath(iter, ee, traversalId);
         }
     }
 
     @Override
-    protected void updateBestPath( EdgeIteratorState edgeState, EdgeEntry entryCurrent, int iterationKey )
+    protected void updateBestPath( EdgeIteratorState edgeState, EdgeEntry entryCurrent, int traversalId )
     {
-        EdgeEntry entryOther = bestWeightMapOther.get(iterationKey);
+        EdgeEntry entryOther = bestWeightMapOther.get(traversalId);
         if (entryOther == null)
             return;
 

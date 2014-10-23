@@ -37,7 +37,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +61,6 @@ public class GraphHopper implements GraphHopperAPI
     private LockFactory lockFactory = new NativeFSLockFactory();
     private final String fileLockName = "gh.lock";
     private boolean allowWrites = true;
-    private boolean turnCosts = false;
     private boolean enableInstructions = true;
     private boolean fullyLoaded = false;
     // for routing
@@ -164,6 +162,11 @@ public class GraphHopper implements GraphHopperAPI
     {
         this.traversalMode = traversalMode;
         return this;
+    }
+
+    public TraversalMode getTraversalMode()
+    {
+        return traversalMode;
     }
 
     /**
