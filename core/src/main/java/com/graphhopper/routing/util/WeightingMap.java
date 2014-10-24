@@ -15,61 +15,47 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper;
+package com.graphhopper.routing.util;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.graphhopper.util.PMap;
 
 /**
- * GraphHopper its base response class.
- * <p/>
+ *
  * @author Peter Karich
  */
-public class GHBaseResponse<T>
+public class WeightingMap extends PMap
 {
-    private String debugInfo = "";
-    private final List<Throwable> errors = new ArrayList<Throwable>(4);
-
-    public GHBaseResponse()
+    public WeightingMap()
     {
-    }
-
-    public String getDebugInfo()
-    {
-        return debugInfo;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T setDebugInfo( String debugInfo )
-    {
-        if (debugInfo != null)
-            this.debugInfo = debugInfo;
-        return (T) this;
     }
 
     /**
-     * @return true if one or more error found
+     * Convenient constructor if only one parameter is provided
+     * <p>
+     * @param weighting
      */
-    public boolean hasErrors()
+    public WeightingMap( String weighting )
     {
-        return !errors.isEmpty();
-    }
-
-    public List<Throwable> getErrors()
-    {
-        return errors;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T addError( Throwable error )
-    {
-        errors.add(error);
-        return (T) this;
+        super(5);
+        setWeighting(weighting);
     }
 
     @Override
-    public String toString()
+    public WeightingMap put( String key, Object str )
     {
-        return errors.toString();
+        super.put(key, str);
+        return this;
+    }
+
+    public WeightingMap setWeighting( String w )
+    {
+        if (w != null)
+            super.put("weighting", w);
+        return this;
+    }
+
+    public String getWeighting()
+    {
+        return super.get("weighting", "");
     }
 }

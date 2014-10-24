@@ -747,7 +747,7 @@ public class GraphHopper implements GraphHopperAPI
     {
         FlagEncoder encoder = encodingManager.getSingle();
         PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder,
-                createWeighting(Weighting.Params.create(chWeighting), encoder), traversalMode);
+                createWeighting(new WeightingMap(chWeighting), encoder), traversalMode);
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                 setLazyUpdates(lazyUpdates).
                 setNeighborUpdates(neighborUpdates).
@@ -763,15 +763,13 @@ public class GraphHopper implements GraphHopperAPI
      * you use the GraphHopper Web module.
      * <p>
      * @see Weighting.Params.create
-     * @param weightingParameters the request parameters
+     * @param wMap all parameters influencing the weighting. E.g. URL parameters coming via GHRequest
      * @param encoder the required vehicle
      * @return the weighting to be used for route calculation
      */
-    public Weighting createWeighting( Map<String, Object> weightingParameters, FlagEncoder encoder )
+    public Weighting createWeighting( WeightingMap wMap, FlagEncoder encoder )
     {
-        String weighting = (String) weightingParameters.get("weighting");
-        weighting = weighting == null ? "" : weighting;
-
+        String weighting = wMap.getWeighting();
         Weighting result;
 
         if ("shortest".equalsIgnoreCase(weighting))
@@ -809,10 +807,10 @@ public class GraphHopper implements GraphHopperAPI
         if (response.hasErrors())
             return response;
 
-        enableInstructions = request.getHint("instructions", enableInstructions);
-        calcPoints = request.getHint("calcPoints", calcPoints);
-        simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
-        double minPathPrecision = request.getHint("douglas.minprecision", 1d);
+        enableInstructions = request.getHints().getBool("instructions", enableInstructions);
+        calcPoints = request.getHints().getBool("calcPoints", calcPoints);
+        simplifyRequest = request.getHints().getBool("simplifyRequest", simplifyRequest);
+        double minPathPrecision = request.getHints().getDouble("douglas.minprecision", 1d);
         Locale locale = request.getLocale();
         DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(minPathPrecision);
 

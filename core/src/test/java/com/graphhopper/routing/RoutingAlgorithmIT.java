@@ -434,7 +434,7 @@ public class RoutingAlgorithmIT
             TraversalMode tMode = importVehicles.toLowerCase().contains("turncosts=true")? 
                     TraversalMode.EDGE_BASED_1DIR : TraversalMode.NODE_BASED;
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-            Weighting weighting = hopper.createWeighting(Weighting.Params.create(weightCalcStr), encoder);
+            Weighting weighting = hopper.createWeighting(new WeightingMap(weightCalcStr), encoder);
 
             Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
                     createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, testAlsoCH, tMode, weighting, hopper.getEncodingManager());
