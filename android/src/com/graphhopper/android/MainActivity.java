@@ -425,7 +425,7 @@ public class MainActivity extends Activity
         {
             protected Path saveDoInBackground( Void... v ) throws Exception
             {
-                GraphHopper tmpHopp = new GraphHopper().forMobile();                
+                GraphHopper tmpHopp = new GraphHopper().forMobile();
                 tmpHopp.load(new File(mapsFolder, currentArea).getAbsolutePath());
                 log("found graph " + tmpHopp.getGraph().toString() + ", nodes:" + tmpHopp.getGraph().getNodes());
                 hopper = tmpHopp;
@@ -498,9 +498,10 @@ public class MainActivity extends Activity
             {
                 StopWatch sw = new StopWatch().start();
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
-                        setAlgorithm("dijkstrabi").
-                        putHint("instructions", false).
-                        putHint("douglas.minprecision", 1);
+                        setAlgorithm("dijkstrabi");
+                req.getHints().
+                        put("instructions", "false").
+                        put("douglas.minprecision", "1");
                 GHResponse resp = hopper.route(req);
                 time = sw.stop().getSeconds();
                 return resp;

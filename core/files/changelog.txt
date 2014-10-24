@@ -1,5 +1,5 @@
 0.4.0
-    CmdArgs is now a Map<String, String> instead Map<Object, Object>. The value will be parsed up on every getXY call
+    CmdArgs is now a Map<String, String> instead Map<String, Object>. The value will be parsed up on every getXY call
     removed GHRequest.getHint, instead use the provided methods in GHRequest.getHints().getXY and GHRequest.getHints().put
     graph incompatibility as properties cannot be loaded => version increase necessary
         renamed osmreader.bytesForFlags to graph.bytesForFlags
