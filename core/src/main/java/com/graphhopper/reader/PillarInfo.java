@@ -76,7 +76,7 @@ public class PillarInfo implements PointAccess
     private void _setNode( int id, double lat, double lon, double ele )
     {
         long tmp = (long) id * rowSizeInBytes;
-        da.incCapacity(tmp + rowSizeInBytes);
+        da.ensureCapacity(tmp + rowSizeInBytes);
         da.setInt(tmp + LAT, Helper.degreeToInt(lat));
         da.setInt(tmp + LON, Helper.degreeToInt(lon));
 

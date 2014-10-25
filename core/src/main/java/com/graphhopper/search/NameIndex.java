@@ -77,7 +77,7 @@ public class NameIndex implements Storable<NameIndex>
         }
         byte[] bytes = getBytes(name);
         int oldPointer = bytePointer;
-        names.incCapacity(bytePointer + 1 + bytes.length);
+        names.ensureCapacity(bytePointer + 1 + bytes.length);
         byte[] sizeBytes = new byte[]
         {
             (byte) bytes.length

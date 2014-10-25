@@ -204,11 +204,7 @@ public class TurnCostStorage implements ExtendedStorage
 
     private void ensureTurnCostIndex( int nodeIndex )
     {
-        long bytesRequired = ((long) nodeIndex + 4) * turnCostsEntryBytes;
-        if (bytesRequired > turnCosts.getCapacity())
-        {
-            turnCosts.incCapacity(bytesRequired);
-        }
+        turnCosts.ensureCapacity(((long) nodeIndex + 4) * turnCostsEntryBytes);
     }
 
     @Override
