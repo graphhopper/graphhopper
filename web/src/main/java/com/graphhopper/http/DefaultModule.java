@@ -73,6 +73,9 @@ public class DefaultModule extends AbstractModule
             long timeout = args.getLong("web.timeout", 3000);
             bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);
             boolean jsonpAllowed = args.getBool("web.jsonpAllowed", false);
+            if (!jsonpAllowed)
+                logger.info("jsonp disabled");
+
             bind(Boolean.class).annotatedWith(Names.named("jsonpAllowed")).toInstance(jsonpAllowed);
         } catch (Exception ex)
         {
