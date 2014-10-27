@@ -110,7 +110,7 @@ fid='GDS-58096-1'>
 <osgb:reasonForChange>Modified</osgb:reasonForChange>
 </osgb:changeHistory>
 <osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
-<osgb:descriptiveTerm>Motorway</osgb:descriptiveTerm>
+<osgb:descriptiveTerm>A Road</osgb:descriptiveTerm>
 <osgb:natureOfRoad>Single Carriageway</osgb:natureOfRoad>
 <osgb:length>538.90</osgb:length>
 <osgb:polyline>

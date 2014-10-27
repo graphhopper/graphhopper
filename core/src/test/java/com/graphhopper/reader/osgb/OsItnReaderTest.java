@@ -321,8 +321,7 @@ public class OsItnReaderTest {
         iter.next();
         assertEquals("BONHAY ROAD (A337)", iter.getName());
         long flags = iter.getFlags();
-        System.err.println("FLAGS:" + flags);
-        assertEquals(100, carEncoder.getSpeed(flags), 1e-1);
+        assertEquals(55.0, carEncoder.getSpeed(flags), 1e-1);
         assertFalse(iter.next());
 	}
 	
