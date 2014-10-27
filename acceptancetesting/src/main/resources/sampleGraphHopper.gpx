@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1" creator="Graphhopper" version="1.1">
+  <metadata>
+    <link href="http://graphhopper.com">
+      <text>GraphHopper GPX</text>
+    </link>
+    <time>2014-10-23T13:05:22+00:00</time>
+  </metadata>
+  <trk>
+    <name>GraphHopper Track</name>
+    <trkseg>
+      <trkpt lat="50.927146" lon="-1.416787">
+        <time>2014-10-23T13:05:22+00:00</time>
+      </trkpt>
+      <trkpt lat="50.927268" lon="-1.416835">
+        <time>2014-10-23T13:05:24+00:00</time>
+      </trkpt>
+      <trkpt lat="50.927223" lon="-1.416526">
+        <time>2014-10-23T13:05:26+00:00</time>
+      </trkpt>
+      <trkpt lat="50.927225" lon="-1.416111">
+        <time>2014-10-23T13:05:29+00:00</time>
+      </trkpt>
+      <trkpt lat="50.927279" lon="-1.415871">
+        <time>2014-10-23T13:05:30+00:00</time>
+      </trkpt>
+      <trkpt lat="50.927896" lon="-1.416189">
+        <time>2014-10-23T13:05:36+00:00</time>
+      </trkpt>
+      <trkpt lat="50.928899" lon="-1.416613">
+        <time>2014-10-23T13:05:45+00:00</time>
+      </trkpt>
+      <trkpt lat="50.929853" lon="-1.416974">
+        <time>2014-10-23T13:05:54+00:00</time>
+      </trkpt>
+      <trkpt lat="50.930819" lon="-1.417399">
+        <time>2014-10-23T13:06:03+00:00</time>
+      </trkpt>
+      <trkpt lat="50.931621" lon="-1.417665">
+        <time>2014-10-23T13:06:10+00:00</time>
+      </trkpt>
+      <trkpt lat="50.933803" lon="-1.418499">
+        <time>2014-10-23T13:06:30+00:00</time>
+      </trkpt>
+      <trkpt lat="50.933837" lon="-1.418461">
+        <time>2014-10-23T13:06:30+00:00</time>
+      </trkpt>
+      <trkpt lat="50.933895" lon="-1.41822">
+        <time>2014-10-23T13:06:32+00:00</time>
+      </trkpt>
+      <trkpt lat="50.934011" lon="-1.41759">
+        <time>2014-10-23T13:06:35+00:00</time>
+      </trkpt>
+      <trkpt lat="50.934065" lon="-1.416825">
+        <time>2014-10-23T13:06:40+00:00</time>
+      </trkpt>
+      <trkpt lat="50.934117" lon="-1.415395">
+        <time>2014-10-23T13:06:48+00:00</time>
+      </trkpt>
+      <trkpt lat="50.934146" lon="-1.415117">
+        <time>2014-10-23T13:06:49+00:00</time>
+      </trkpt>
+      <trkpt lat="50.934253" lon="-1.414445">
+        <time>2014-10-23T13:06:53+00:00</time>
+      </trkpt>
+      <trkpt lat="50.934403" lon="-1.413719">
+        <time>2014-10-23T13:06:57+00:00</time>
+      </trkpt>
+      <trkpt lat="50.934719" lon="-1.412761">
+        <time>2014-10-23T13:07:04+00:00</time>
+      </trkpt>
+      <trkpt lat="50.934812" lon="-1.412055">
+        <time>2014-10-23T13:07:08+00:00</time>
+      </trkpt>
+      <trkpt lat="50.934954" lon="-1.411563">
+        <time>2014-10-23T13:07:11+00:00</time>
+      </trkpt>
+      <trkpt lat="50.935079" lon="-1.410944">
+        <time>2014-10-23T13:07:14+00:00</time>
+      </trkpt>
+      <trkpt lat="50.93571" lon="-1.407174">
+        <time>2014-10-23T13:07:36+00:00</time>
+      </trkpt>
+      <trkpt lat="50.935832" lon="-1.406616">
+        <time>2014-10-23T13:07:39+00:00</time>
+      </trkpt>
+      <trkpt lat="50.935873" lon="-1.406445">
+        <time>2014-10-23T13:07:40+00:00</time>
+      </trkpt>
+      <trkpt lat="50.935436" lon="-1.406395">
+        <time>2014-10-23T13:07:43+00:00</time>
+      </trkpt>
+      <trkpt lat="50.934575" lon="-1.40632">
+        <time>2014-10-23T13:07:49+00:00</time>
+      </trkpt>
+      <trkpt lat="50.933643" lon="-1.405104">
+        <time>2014-10-23T13:08:00+00:00</time>
+      </trkpt>
+      <trkpt lat="50.933372" lon="-1.404614">
+        <time>2014-10-23T13:08:03+00:00</time>
+      </trkpt>
+      <trkpt lat="50.932678" lon="-1.403007">
+        <time>2014-10-23T13:08:14+00:00</time>
+      </trkpt>
+      <trkpt lat="50.932361" lon="-1.402458">
+        <time>2014-10-23T13:08:18+00:00</time>
+      </trkpt>
+      <trkpt lat="50.932265" lon="-1.402333">
+        <time>2014-10-23T13:08:19+00:00</time>
+      </trkpt>
+      <trkpt lat="50.931683" lon="-1.401649">
+        <time>2014-10-23T13:08:26+00:00</time>
+      </trkpt>
+      <trkpt lat="50.931565" lon="-1.401479">
+        <time>2014-10-23T13:08:27+00:00</time>
+      </trkpt>
+      <trkpt lat="50.931316" lon="-1.400988">
+        <time>2014-10-23T13:08:31+00:00</time>
+      </trkpt>
+      <trkpt lat="50.93118" lon="-1.400641">
+        <time>2014-10-23T13:08:33+00:00</time>
+      </trkpt>
+      <trkpt lat="50.930983" lon="-1.39999">
+        <time>2014-10-23T13:08:37+00:00</time>
+      </trkpt>
+      <trkpt lat="50.93083" lon="-1.399305">
+        <time>2014-10-23T13:08:41+00:00</time>
+      </trkpt>
+      <trkpt lat="50.930507" lon="-1.398262">
+        <time>2014-10-23T13:08:48+00:00</time>
+      </trkpt>
+      <trkpt lat="50.930251" lon="-1.397252">
+        <time>2014-10-23T13:08:54+00:00</time>
+      </trkpt>
+      <trkpt lat="50.929976" lon="-1.396395">
+        <time>2014-10-23T13:08:59+00:00</time>
+      </trkpt>
+      <trkpt lat="50.929777" lon="-1.39584">
+        <time>2014-10-23T13:09:03+00:00</time>
+      </trkpt>
+      <trkpt lat="50.929696" lon="-1.395684">
+        <time>2014-10-23T13:09:04+00:00</time>
+      </trkpt>
+      <trkpt lat="50.929391" lon="-1.395248">
+        <time>2014-10-23T13:09:08+00:00</time>
+      </trkpt>
+      <trkpt lat="50.929312" lon="-1.395093">
+        <time>2014-10-23T13:09:09+00:00</time>
+      </trkpt>
+      <trkpt lat="50.929263" lon="-1.394867">
+        <time>2014-10-23T13:09:10+00:00</time>
+      </trkpt>
+      <trkpt lat="50.929207" lon="-1.394789">
+        <time>2014-10-23T13:09:11+00:00</time>
+      </trkpt>
+      <trkpt lat="50.928925" lon="-1.394212">
+        <time>2014-10-23T13:09:15+00:00</time>
+      </trkpt>
+      <trkpt lat="50.928468" lon="-1.393419">
+        <time>2014-10-23T13:09:21+00:00</time>
+      </trkpt>
+      <trkpt lat="50.928015" lon="-1.392844">
+        <time>2014-10-23T13:09:26+00:00</time>
+      </trkpt>
+      <trkpt lat="50.927724" lon="-1.392377">
+        <time>2014-10-23T13:09:30+00:00</time>
+      </trkpt>
+      <trkpt lat="50.927256" lon="-1.39142">
+        <time>2014-10-23T13:09:36+00:00</time>
+      </trkpt>
+      <trkpt lat="50.927019" lon="-1.39099">
+        <time>2014-10-23T13:09:40+00:00</time>
+      </trkpt>
+      <trkpt lat="50.92695" lon="-1.390858">
+        <time>2014-10-23T13:09:41+00:00</time>
+      </trkpt>
+      <trkpt lat="50.926805" lon="-1.391222">
+        <time>2014-10-23T13:09:43+00:00</time>
+      </trkpt>
+      <trkpt lat="50.926686" lon="-1.391433">
+        <time>2014-10-23T13:09:45+00:00</time>
+      </trkpt>
+      <trkpt lat="50.926607" lon="-1.391368">
+        <time>2014-10-23T13:09:46+00:00</time>
+      </trkpt>
+      <trkpt lat="50.926298" lon="-1.390965">
+        <time>2014-10-23T13:09:51+00:00</time>
+      </trkpt>
+      <trkpt lat="50.926298" lon="-1.390965">
+        <time>2014-10-23T13:09:51+00:00</time>
+      </trkpt>
+    </trkseg>
+  </trk>
+  <rte>
+    <rtept lat="50.927146" lon="-1.416787">
+      <extensions>
+        <distance>13.974</distance>
+        <time>2515</time>
+        <direction>N</direction>
+        <azimuth>339</azimuth>
+      </extensions>
+    </rtept>
+    <rtept lat="50.927268" lon="-1.416835">
+      <desc>turn sharp right onto Bellemoor Road</desc>
+      <extensions>
+        <distance>69.241</distance>
+        <time>5539</time>
+        <direction>E</direction>
+        <azimuth>98</azimuth>
+      </extensions>
+    </rtept>
+    <rtept lat="50.927279" lon="-1.415871">
+      <desc>turn sharp left onto Hill Lane, C502</desc>
+      <extensions name = "3rd extensions">
+        <distance>753.449</distance>
+        <time>60273</time>
+        <direction>NW</direction>
+        <azimuth>333</azimuth>
+      </extensions>
+    </rtept>
+    <rtept lat="50.933837" lon="-1.418461">
+      <desc>turn slight right onto Burgess Road, A35</desc>
+      <extensions>
+        <distance>877.714</distance>
+        <time>70214</time>
+        <direction>E</direction>
+        <azimuth>77</azimuth>
+      </extensions>
+    </rtept>
+    <rtept lat="50.935873" lon="-1.406445">
+      <desc>turn right onto The Avenue, A33</desc>
+      <extensions>
+        <distance>144.585</distance>
+        <time>8673</time>
+        <direction>S</direction>
+        <azimuth>174</azimuth>
+      </extensions>
+    </rtept>
+    <rtept lat="50.934575" lon="-1.40632">
+      <desc>turn left onto Highfield Avenue, A3035</desc>
+      <extensions>
+        <distance>382.347</distance>
+        <time>30248</time>
+        <direction>SE</direction>
+        <azimuth>128</azimuth>
+      </extensions>
+    </rtept>
+    <rtept lat="50.932265" lon="-1.402333">
+      <desc>continue onto Highfield Lane, A3035</desc>
+      <extensions>
+        <distance>1015.846</distance>
+        <time>81259</time>
+        <direction>SE</direction>
+        <azimuth>130</azimuth>
+      </extensions>
+    </rtept>
+    <rtept lat="50.92695" lon="-1.390858">
+      <desc>turn sharp right onto Portswood Road, C502</desc>
+      <extensions>
+        <distance>49.997</distance>
+        <time>3999</time>
+        <direction>W</direction>
+        <azimuth>248</azimuth>
+      </extensions>
+    </rtept>
+    <rtept lat="50.926686" lon="-1.391433">
+      <desc>turn left onto St Denys Road</desc>
+      <extensions>
+        <distance>54.368</distance>
+        <time>6524</time>
+        <direction>SE</direction>
+        <azimuth>141</azimuth>
+      </extensions>
+    </rtept>
+    <rtept lat="50.926298" lon="-1.390965">
+      <extensions>
+        <distance>0.0</distance>
+        <time>0</time>
+        <direction/>
+        <azimuth/>
+      </extensions>
+    </rtept>
+  </rte>
+</gpx>
+
