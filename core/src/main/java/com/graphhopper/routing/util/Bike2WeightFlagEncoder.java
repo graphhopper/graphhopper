@@ -35,6 +35,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
 
     public Bike2WeightFlagEncoder()
     {
+        super();
     }
 
     public Bike2WeightFlagEncoder( String propertiesStr )
