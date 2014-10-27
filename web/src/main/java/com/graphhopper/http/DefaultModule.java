@@ -52,13 +52,13 @@ public class DefaultModule extends AbstractModule
      */
     protected GraphHopper createGraphHopper( CmdArgs args )
     {
-        graphHopper = new GraphHopper().forServer().init(args);
-        graphHopper.importOrLoad();
-        logger.info("loaded graph at:" + graphHopper.getGraphHopperLocation()
-                + ", source:" + graphHopper.getOSMFile()
-                + ", acceptWay:" + graphHopper.getEncodingManager()
-                + ", class:" + graphHopper.getGraph().getClass().getSimpleName());
-        return graphHopper;
+        GraphHopper tmp = new GraphHopper().forServer().init(args);
+        tmp.importOrLoad();
+        logger.info("loaded graph at:" + tmp.getGraphHopperLocation()
+                + ", source:" + tmp.getOSMFile()
+                + ", acceptWay:" + tmp.getEncodingManager()
+                + ", class:" + tmp.getGraph().getClass().getSimpleName());
+        return tmp;
     }
 
     @Override

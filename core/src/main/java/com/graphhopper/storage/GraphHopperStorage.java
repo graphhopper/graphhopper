@@ -567,7 +567,8 @@ public class GraphHopperStorage implements GraphStorage
         @Override
         public EdgeIteratorState setFlags( long flags )
         {
-            throw new UnsupportedOperationException("Not supported yet.");
+            GraphHopperStorage.this.setFlags(edgePointer, reverse, flags);
+            return this;
         }
 
         @Override

@@ -663,7 +663,7 @@ public class GraphHopper implements GraphHopperAPI
         } else if (graphHopperFolder.endsWith(".osm") || graphHopperFolder.endsWith(".xml"))
         {
             throw new IllegalArgumentException("To import an osm file you need to use importOrLoad");
-        } else if (graphHopperFolder.indexOf(".") < 0)
+        } else if (!graphHopperFolder.contains("."))
         {
             if (new File(graphHopperFolder + "-gh").exists())
                 graphHopperFolder += "-gh";
