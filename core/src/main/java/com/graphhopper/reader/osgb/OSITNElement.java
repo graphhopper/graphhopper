@@ -187,7 +187,7 @@ public abstract class OSITNElement implements RoutingElement {
 		int event;
 		if ("One Way".equals(elementText)) {
 			setTag("type", "oneway");
-			setTag("oneway", "true");
+			setTag("oneway", "-1");
 		} else {
 			setTag("type", "restriction");
 			setTag("restriction", elementText);
@@ -201,8 +201,8 @@ public abstract class OSITNElement implements RoutingElement {
 		String orientation = parser.getAttributeValue(null, "orientation");
 		String nodeId = parser.getAttributeValue(
 				"http://www.w3.org/1999/xlink", "href");
-		if (hasTag("oneway", "true") && orientation.equals("+")) {
-			setTag("oneway", "-1");
+		if (hasTag("oneway", "-1") && orientation.equals("+")) {
+			setTag("oneway", "true");
 		}
 		addDirectedLink(nodeId, orientation);
 		return parser.next();
