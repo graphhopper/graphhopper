@@ -137,6 +137,34 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         defaultSpeedMap.put("Minor Road", 35);
         defaultSpeedMap.put("Local Street", 35);
         defaultSpeedMap.put("Alley", 35);
+        defaultSpeedMap.put("A Road-Single Carriageway", 55);
+        defaultSpeedMap.put("B Road", 35);
+        defaultSpeedMap.put("Minor Road", 35);
+        defaultSpeedMap.put("Local Street", 35);
+        defaultSpeedMap.put("Alley", 35);
+        defaultSpeedMap.put("Motorway", 100);
+        defaultSpeedMap.put("A Road", 55);
+        defaultSpeedMap.put("B Road", 35);
+        defaultSpeedMap.put("Minor Road", 35);
+        defaultSpeedMap.put("Local Street", 35);
+        defaultSpeedMap.put("Alley", 35);
+        defaultSpeedMap.put("A Road-Dual Carriageway", 55);
+        defaultSpeedMap.put("B Road", 35);
+        defaultSpeedMap.put("Minor Road", 35);
+        defaultSpeedMap.put("Local Street", 35);
+        defaultSpeedMap.put("Alley", 35);
+        defaultSpeedMap.put("Motorway-Slip Road", 100);
+        defaultSpeedMap.put("A Road-Slip Road", 55);
+        defaultSpeedMap.put("B Road", 35);
+        defaultSpeedMap.put("Minor Road", 35);
+        defaultSpeedMap.put("Local Street", 35);
+        defaultSpeedMap.put("Alley", 35);
+        defaultSpeedMap.put("Motorway-Roundabout", 100);
+        defaultSpeedMap.put("A Road-Roundabout", 55);
+        defaultSpeedMap.put("B Road-Roundabout", 35);
+        defaultSpeedMap.put("Minor Road-Roundabout", 35);
+        defaultSpeedMap.put("Local Street-Roundabout", 35);
+    
     }
 
     /**

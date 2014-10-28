@@ -209,15 +209,32 @@ public class OsItnReaderTest {
 		
 		assertEquals(5, graph.getNodes());
 		checkSimpleOneWayNetwork(graph);
-		checkOneWay(graph);
+		checkOneWay(graph, true);
+	}
+	
+	@Test
+	public void testReadSimpleOppositeDirectionOneWay()
+			throws IOException {
+		boolean turnRestrictionsImport = true;
+		boolean is3D = false;
+		GraphHopperStorage graph = configureStorage(turnRestrictionsImport,
+				is3D);
+
+		File file = new File(
+				"./src/test/resources/com/graphhopper/reader/os-itn-simple-oneway-2.xml");
+		readGraphFile(graph, file);
+		
+		assertEquals(5, graph.getNodes());
+//		checkSimpleOneWayNetwork(graph);
+		checkOneWay(graph, false);
 	}
 
-	private void checkOneWay(GraphHopperStorage graph) {
+	private void checkOneWay(GraphHopperStorage graph, boolean direction) {
 		System.err.println(carEncoder.getClass());
 		carAllExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, true));
 		EdgeIterator iter = carAllExplorer.setBaseNode(0);
         assertTrue(iter.next());
-		evaluateRouting(iter, 4, true, false, false);
+		evaluateRouting(iter, 4, direction?true:false, direction?false:true, false);
         evaluateRouting(iter, 3, true, true, false);
         evaluateRouting(iter, 2, true, true, false);
         evaluateRouting(iter, 1, true, true, true);
