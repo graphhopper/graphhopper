@@ -1,4 +1,4 @@
-package uk.co.ordinancesurvey.routing;
+package uk.co.ordnancesurvey.routing;
 
 import cucumber.api.java.After;
 import cucumber.api.java.Before;
