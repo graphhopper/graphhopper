@@ -32,6 +32,7 @@ public class GraphHopperHooks {
     public void closeBrowser()
     {
     	graphUiUtil.logout();
+    	System.out.println("closed");
     }
 	
 
