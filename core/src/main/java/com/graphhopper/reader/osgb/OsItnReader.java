@@ -764,6 +764,11 @@ public class OsItnReader implements DataReader {
 		if (relation.hasTag("type", "restriction")) {
 			OSITNTurnRelation turnRelation = createTurnRelation(relation);
 			if (turnRelation != null) {
+				long fromId = ((OSITNTurnRelation) turnRelation).getOsmIdFrom();
+				long toId = ((OSITNTurnRelation) turnRelation).getOsmIdTo();
+				// These were not originally added here. This could be used to clean up getEdgeIdToOsmidMap() as it will now contain all edgeIdToOsmId mappings
+				getOsmIdStoreRequiredSet().add(fromId);
+				getOsmIdStoreRequiredSet().add(toId);
 				logger.info("Turn from:" + turnRelation.getOsmIdFrom() + " to:"
 						+ turnRelation.getOsmIdTo() + " via:"
 						+ turnRelation.getVia());
@@ -1086,11 +1091,16 @@ public class OsItnReader implements DataReader {
 		return iter;
 	}
 
+    /**
+     * FROM OSMReader: Stores only osmWayIds which are required for relations
+     * This copy stores all mappings because getOsmIdStoreRequiredSet() isn't populated until processStage3 and this call is made in processStage2 so we would not have any entries
+     */
 	private void storeOSMWayID(int edgeId, long osmWayID) {
 		logger.info("StoreOSMWayID: " + osmWayID + " for " + edgeId);
-		if (getOsmIdStoreRequiredSet().contains(osmWayID)) {
+		// getOsmIdStoreRequiredSet() isn't populated until processStage3 and this call is made in processStage2 so we should not check
+//		if (getOsmIdStoreRequiredSet().contains(osmWayID)) {
 			getEdgeIdToOsmidMap().put(edgeId, osmWayID);
-		}
+//		}
 	}
 
 	/**
