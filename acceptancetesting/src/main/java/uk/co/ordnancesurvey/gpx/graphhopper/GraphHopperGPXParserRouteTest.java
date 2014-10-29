@@ -2,7 +2,6 @@ package uk.co.ordnancesurvey.gpx.graphhopper;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,7 +33,6 @@ public class GraphHopperGPXParserRouteTest {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(GraphHopperGPXParserRouteTest.class);
 
-	private FileOutputStream gpxFileOutputStream;
 	private GPXParser gpxParser;
 	private GPX gpx;
 	private final Map<String, String> customHeaders = new HashMap<>();
@@ -124,8 +122,7 @@ public class GraphHopperGPXParserRouteTest {
 		return httpClient.execute(httpget);
 	}
 
-	public String parseRoute(String bbox, String routeType,
-			String vehicle) {
+	public String parseRoute(String bbox, String routeType, String vehicle) {
 		LOG.debug("Here we are");
 		// Set up the URL
 		String xmlResponse = "";
@@ -162,12 +159,13 @@ public class GraphHopperGPXParserRouteTest {
 					.toString());
 			xmlResponse = IOUtils.toString(httpResponse.getEntity()
 					.getContent(), "UTF-8");
+
 		} catch (IOException e) {
 			LOG.info("Exception raised whilst attempting to call graphhopper server "
 					+ e.getMessage());
 		}
-		
-		if (xmlResponse !=  null && xmlResponse.length() > 0) {
+
+		if (xmlResponse != null && xmlResponse.length() > 0) {
 			parseGPXFromString(xmlResponse);
 		}
 
@@ -227,17 +225,18 @@ public class GraphHopperGPXParserRouteTest {
 	}
 
 	public boolean routeContainsTurn(String turnDescription, Route aRoute) {
-
+		System.out.println(aRoute);
 		boolean routeContainsTurn = false;
 
 		for (Waypoint aWaypointInaRoute : aRoute.getRoutePoints()) {
 
 			if (aWaypointInaRoute.getDescription() != null
-					&& aWaypointInaRoute.getDescription().equals(
-							turnDescription)) {
+					&& aWaypointInaRoute.getDescription().toUpperCase()
+							.equals(turnDescription)) {
 				routeContainsTurn = true;
-				LOG.info("WayPoint " + aWaypointInaRoute + " contains turn"
-						+ turnDescription);
+
+				LOG.info("WayPoint " + aWaypointInaRoute
+						+ " contains route instruction" + turnDescription);
 				break;
 			}
 		}
