@@ -17,10 +17,14 @@
  */
 package com.graphhopper.storage;
 
+/**
+ * @author Adrian Batzill, Agata Grzybek
+ */
 public interface ExtendedStorageAccess
 {
     /**
      * Write to the node's extended storage
+     * <p>
      * @param storageName the storage identifier to which you want to write
      * @param nodeId the node
      * @param value the value to write
@@ -33,8 +37,8 @@ public interface ExtendedStorageAccess
     int readFromExtendedNodeStorage( String storageName, int nodeId );
 
     /**
-     * Writes to the edge's extended storage. You may also use the EdgeIteratorState's setAdditionalField
-     * method for conveniece, so you don't have to provide an edge ID
+     * Writes to the edge's extended storage. You may also use the EdgeIteratorState's
+     * setAdditionalField method for conveniece, so you don't have to provide an edge ID
      */
     void writeToExtendedEdgeStorage( String storageName, int edgeId, int value );
 
