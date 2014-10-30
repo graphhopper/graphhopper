@@ -1,12 +1,14 @@
-package uk.co.ordinancesurvey.routing;
+package uk.co.ordnancesurvey.routing;
 
-import static uk.co.ordinancesurvey.routing.GraphHopperComponentIdentification.FROM_ROUTE;
-import static uk.co.ordinancesurvey.routing.GraphHopperComponentIdentification.INSTRUCTIONS;
-import static uk.co.ordinancesurvey.routing.GraphHopperComponentIdentification.ROUTE_SEARCH;
-import static uk.co.ordinancesurvey.routing.GraphHopperComponentIdentification.ROUTE_TYPE_BIKE;
-import static uk.co.ordinancesurvey.routing.GraphHopperComponentIdentification.ROUTE_TYPE_CAR;
-import static uk.co.ordinancesurvey.routing.GraphHopperComponentIdentification.ROUTE_TYPE_WALK;
-import static uk.co.ordinancesurvey.routing.GraphHopperComponentIdentification.TO_ROUTE;
+
+
+import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.FROM_ROUTE;
+import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.INSTRUCTIONS;
+import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ROUTE_SEARCH;
+import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ROUTE_TYPE_BIKE;
+import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ROUTE_TYPE_CAR;
+import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ROUTE_TYPE_WALK;
+import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.TO_ROUTE;
 
 import java.util.HashSet;
 
