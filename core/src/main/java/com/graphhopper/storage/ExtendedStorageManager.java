@@ -275,8 +275,24 @@ public class ExtendedStorageManager implements ExtendedStorage
         }
 
         properties.put(USE, "true");
-        properties.put(NODE_STORAGES, String.join(",", storageIndicesNodes.keySet()));
-        properties.put(EDGE_STORAGES, String.join(",", storageIndicesEdges.keySet()));
+        properties.put(NODE_STORAGES, createNodeIndicesString(storageIndicesNodes.keySet()));
+        properties.put(EDGE_STORAGES, createNodeIndicesString(storageIndicesEdges.keySet()));
+    }
+
+    public String createNodeIndicesString( Set<String> keySet )
+    {
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        for (String s : keySet)
+        {
+            if (!first)
+            {
+                sb.append(",");
+            }
+            sb.append(s);
+            first = false;
+        }
+        return sb.toString();
     }
 
     @Override
