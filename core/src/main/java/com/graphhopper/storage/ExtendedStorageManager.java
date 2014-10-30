@@ -17,8 +17,7 @@
  */
 package com.graphhopper.storage;
 
-import java.util.HashMap;
-import java.util.TreeMap;
+import java.util.*;
 
 public class ExtendedStorageManager implements ExtendedStorage
 {
@@ -77,6 +76,10 @@ public class ExtendedStorageManager implements ExtendedStorage
         ExtendedStorageManager manager = (ExtendedStorageManager) providedStorage;
         String[] nodeIdentifiers = nodeStorages.split(",");
         String[] edgeIdentifiers = edgeStorages.split(",");
+        Arrays.sort(nodeIdentifiers);
+        Arrays.sort(edgeIdentifiers);
+        manager.refNodeEntryBytes = nodeIdentifiers.length * 4;
+        manager.refEdgeEntryBytes = edgeIdentifiers.length * 4;
         for (int i = 0; i < nodeIdentifiers.length; ++i)
         {
             if (manager.storageIndicesNodes.containsKey(nodeIdentifiers[i]))
@@ -222,7 +225,7 @@ public class ExtendedStorageManager implements ExtendedStorage
         long extIndex = storageIndicesEdges.get(storageName);
         long byteOffset = edgeId * refEdgeEntryBytes + extIndex * 4;
 
-        nodeExtStorageRefs.setInt(byteOffset, value);
+        edgeExtStorageRefs.setInt(byteOffset, value);
         return edgeId;
     }
 
@@ -255,7 +258,7 @@ public class ExtendedStorageManager implements ExtendedStorage
         {
             extStorage.flush(properties);
         }
-        
+
         properties.put(USE, "true");
         properties.put(NODE_STORAGES, String.join(",", storageIndicesNodes.keySet()));
         properties.put(EDGE_STORAGES, String.join(",", storageIndicesEdges.keySet()));
