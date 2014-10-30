@@ -231,7 +231,7 @@ public class GHUtility
                 @Override
                 protected boolean goFurther( int nodeId )
                 {
-                    list.set(nodeId, ref.incrementAndGet());                    
+                    list.set(nodeId, ref.incrementAndGet());
                     return super.goFurther(nodeId);
                 }
             }.start(explorer, startNode);
@@ -455,13 +455,13 @@ public class GHUtility
         }
 
         @Override
-        public int getAdditionalField(String identifier)
+        public int getAdditionalField( String identifier )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public EdgeIteratorState setAdditionalField(String identifier, int value )
+        public EdgeIteratorState setAdditionalField( String identifier, int value )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }

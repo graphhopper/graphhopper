@@ -84,7 +84,7 @@ public interface EdgeIteratorState
     int getAdditionalField( String storageIdentifier );
 
     /**
-     * edge
+     * Updates the additional field value for this edge
      */
     EdgeIteratorState setAdditionalField( String storageIdentifier, int value );
 

@@ -88,7 +88,7 @@ public class GraphHopperStorage implements GraphStorage
     private final StorableProperties properties;
     private final BitUtil bitUtil;
     private boolean flagsSizeIsLong;
-    ExtendedStorage extStorage;
+    final ExtendedStorage extStorage;
     private final NodeAccess nodeAccess;
     private final GHExtendedStorageAccess extendedStorageAccess;
 
@@ -1461,7 +1461,7 @@ public class GraphHopperStorage implements GraphStorage
             loadNodesHeader();
             loadEdgesHeader();
             loadWayGeometryHeader();
-            
+
             return true;
         }
         return false;

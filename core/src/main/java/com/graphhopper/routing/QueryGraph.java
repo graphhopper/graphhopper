@@ -902,13 +902,13 @@ public class QueryGraph implements Graph
         @Override
         public void setReferenceToExtendedStorage( int value )
         {
-            throw new UnsupportedOperationException("Not supported yet.");
+            throw new UnsupportedOperationException("Not supported.");
         }
 
         @Override
         public int getReferenceToExtendedStorage()
         {
-            throw new UnsupportedOperationException("Not supported yet.");
+            throw new UnsupportedOperationException("Not supported.");
         }
     }
 }

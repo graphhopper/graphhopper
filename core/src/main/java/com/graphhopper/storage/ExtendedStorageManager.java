@@ -26,7 +26,7 @@ import java.util.*;
  * will check the properties file to check if it is used and if it is, it will restore its state
  * with the help of the properties file
  * <p>
- * @author Adrian Batzill, Agata
+ * @author Adrian Batzill
  */
 public class ExtendedStorageManager implements ExtendedStorage
 {

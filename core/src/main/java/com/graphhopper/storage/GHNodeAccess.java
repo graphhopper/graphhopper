@@ -120,7 +120,7 @@ class GHNodeAccess implements NodeAccess
     /**
      * @deprecated use graph.getExtendedStorageAccess() instead
      */
-    @Deprecated 
+    @Deprecated
     @Override
     public final void setAdditionalNodeField( String storageIdentifier, int index, int additionalValue )
     {
@@ -133,7 +133,7 @@ class GHNodeAccess implements NodeAccess
         }
     }
 
-     /**
+    /**
      * @deprecated use graph.getExtendedStorageAccess() instead
      */
     @Deprecated
