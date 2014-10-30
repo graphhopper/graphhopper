@@ -117,25 +117,31 @@ class GHNodeAccess implements NodeAccess
         return getLongitude(nodeId);
     }
 
+    /**
+     * @deprecated use graph.getExtendedStorageAccess() instead
+     */
+    @Deprecated 
     @Override
-    public final void setAdditionalNodeField( int index, int additionalValue )
+    public final void setAdditionalNodeField( String storageIdentifier, int index, int additionalValue )
     {
         if (that.extStorage.isRequireNodeField() && that.N_ADDITIONAL >= 0)
         {
-            that.ensureNodeIndex(index);
-            long tmp = (long) index * that.nodeEntryBytes;
-            that.nodes.setInt(tmp + that.N_ADDITIONAL, additionalValue);
+            that.getExtendedStorageAccess().writeToExtendedNodeStorage(storageIdentifier, index, additionalValue);
         } else
         {
             throw new AssertionError("This graph does not provide an additional node field");
         }
     }
 
+     /**
+     * @deprecated use graph.getExtendedStorageAccess() instead
+     */
+    @Deprecated
     @Override
-    public final int getAdditionalNodeField( int index )
+    public final int getAdditionalNodeField( String storageIdentifier, int index )
     {
         if (that.extStorage.isRequireNodeField() && that.N_ADDITIONAL >= 0)
-            return that.nodes.getInt((long) index * that.nodeEntryBytes + that.N_ADDITIONAL);
+            return that.getExtendedStorageAccess().readFromExtendedNodeStorage(storageIdentifier, index);
         else
             throw new AssertionError("This graph does not provide an additional node field");
     }

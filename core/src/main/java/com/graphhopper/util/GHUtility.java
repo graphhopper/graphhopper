@@ -455,13 +455,13 @@ public class GHUtility
         }
 
         @Override
-        public int getAdditionalField()
+        public int getAdditionalField(String identifier)
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public EdgeIteratorState setAdditionalField( int value )
+        public EdgeIteratorState setAdditionalField(String identifier, int value )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -480,6 +480,18 @@ public class GHUtility
 
         @Override
         public EdgeSkipIterState setWeight( double weight )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public void setReferenceToExtendedStorage( int value )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public int getReferenceToExtendedStorage()
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }

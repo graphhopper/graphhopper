@@ -88,8 +88,9 @@ public class GraphHopperStorage implements GraphStorage
     private final StorableProperties properties;
     private final BitUtil bitUtil;
     private boolean flagsSizeIsLong;
-    final ExtendedStorage extStorage;
+    ExtendedStorage extStorage;
     private final NodeAccess nodeAccess;
+    private final GHExtendedStorageAccess extendedStorageAccess;
 
     public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation )
     {
@@ -114,6 +115,7 @@ public class GraphHopperStorage implements GraphStorage
         this.properties = new StorableProperties(dir);
         this.bounds = BBox.INVERSE.clone();
         this.nodeAccess = new GHNodeAccess(this, withElevation);
+        this.extendedStorageAccess = new GHExtendedStorageAccess(this);
         extendedStorage.init(this);
     }
 
@@ -208,6 +210,12 @@ public class GraphHopperStorage implements GraphStorage
         return nodeAccess;
     }
 
+    @Override
+    public ExtendedStorageAccess getExtendedStorageAccess()
+    {
+        return extendedStorageAccess;
+    }
+
     /**
      * Translates double distance to integer in order to save it in a DataAccess object
      */
@@ -267,7 +275,6 @@ public class GraphHopperStorage implements GraphStorage
             if (removedNodes != null)
                 getRemovedNodes().ensureCapacity((int) (newBytesCapacity / nodeEntryBytes));
         }
-
     }
 
     /**
@@ -319,7 +326,7 @@ public class GraphHopperStorage implements GraphStorage
         iter.setEdgeId(edge);
         if (extStorage.isRequireEdgeField())
         {
-            iter.setAdditionalField(extStorage.getDefaultEdgeFieldValue());
+            iter.setReferenceToExtendedStorage(extStorage.getDefaultEdgeFieldValue());
         }
         iter.next();
         return iter;
@@ -552,16 +559,30 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
-        public int getAdditionalField()
+        @Deprecated
+        public int getAdditionalField( String storageIdentifier )
         {
             return edges.getInt(edgePointer + E_ADDITIONAL);
         }
 
         @Override
-        public EdgeIteratorState setAdditionalField( int value )
+        @Deprecated
+        public EdgeIteratorState setAdditionalField( String storageIdentifier, int value )
         {
             GraphHopperStorage.this.setAdditionalEdgeField(edgePointer, value);
             return this;
+        }
+
+        @Override
+        public void setReferenceToExtendedStorage( int value )
+        {
+            edges.setInt((long) edgePointer + E_ADDITIONAL, value);
+        }
+
+        @Override
+        public int getReferenceToExtendedStorage()
+        {
+            return edges.getInt((long) edgePointer + E_ADDITIONAL);
         }
 
         @Override
@@ -839,16 +860,30 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
-        public int getAdditionalField()
+        @Deprecated
+        public int getAdditionalField( String extStorageIdentifier )
         {
-            return edges.getInt(edgePointer + E_ADDITIONAL);
+            return extendedStorageAccess.readFromExtendedEdgeStorage(extStorageIdentifier, edgeId);
         }
 
         @Override
-        public EdgeIteratorState setAdditionalField( int value )
+        @Deprecated
+        public EdgeIteratorState setAdditionalField( String storageIdentifier, int value )
         {
-            GraphHopperStorage.this.setAdditionalEdgeField(edgePointer, value);
+            extendedStorageAccess.writeToExtendedEdgeStorage(storageIdentifier, edgeId, value);
             return null;
+        }
+
+        @Override
+        public void setReferenceToExtendedStorage( int value )
+        {
+            edges.setInt((long) edgeId * edgeEntryBytes + E_ADDITIONAL, value);
+        }
+
+        @Override
+        public int getReferenceToExtendedStorage()
+        {
+            return edges.getInt((long) edgeId * edgeEntryBytes + E_ADDITIONAL);
         }
 
         @Override
@@ -928,7 +963,7 @@ public class GraphHopperStorage implements GraphStorage
                 setWayGeometry(from.fetchWayGeometry(0));
 
         if (E_ADDITIONAL >= 0)
-            to.setAdditionalField(from.getAdditionalField());
+            to.setReferenceToExtendedStorage(from.getReferenceToExtendedStorage());
         return to;
     }
 
@@ -1415,6 +1450,7 @@ public class GraphHopperStorage implements GraphStorage
             if (!nameIndex.loadExisting())
                 throw new IllegalStateException("Cannot load name index. corrupt file or directory? " + dir);
 
+            ExtendedStorageManager.loadStorageIndicesFromDisk(properties, extStorage);
             if (!extStorage.loadExisting())
                 throw new IllegalStateException("Cannot load extended storage. corrupt file or directory? " + dir);
 
@@ -1425,6 +1461,7 @@ public class GraphHopperStorage implements GraphStorage
             loadNodesHeader();
             loadEdgesHeader();
             loadWayGeometryHeader();
+            
             return true;
         }
         return false;
@@ -1528,12 +1565,12 @@ public class GraphHopperStorage implements GraphStorage
         setEdgesHeader();
         setWayGeometryHeader();
 
-        properties.flush();
         wayGeometry.flush();
         nameIndex.flush();
         edges.flush();
         nodes.flush();
-        extStorage.flush();
+        extStorage.flush(properties);
+        properties.flush();
     }
 
     @Override
@@ -1554,8 +1591,12 @@ public class GraphHopperStorage implements GraphStorage
     }
 
     @Override
-    public ExtendedStorage getExtendedStorage()
+    public ExtendedStorage getExtendedStorage( String storageIdentifier )
     {
+        if (extStorage instanceof ExtendedStorageManager)
+        {
+            return ((ExtendedStorageManager) extStorage).getExtendedStorage(storageIdentifier);
+        }
         return extStorage;
     }
 

@@ -302,11 +302,11 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public int getAdditionalNodeField( int nodeId )
+        public int getAdditionalNodeField( String identifier, int nodeId )
         {
             if (nodeId >= mainNodes)
                 return 0;
-            return mainNodeAccess.getAdditionalNodeField(nodeId);
+            return mainNodeAccess.getAdditionalNodeField(identifier, nodeId);
         }
 
         @Override
@@ -322,7 +322,7 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public void setAdditionalNodeField( int nodeId, int additionalValue )
+        public void setAdditionalNodeField( String identifier, int nodeId, int additionalValue )
         {
             throw new UnsupportedOperationException("Not supported yet.");
         }
@@ -653,15 +653,15 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public int getAdditionalField()
+        public int getAdditionalField( String storageIdentifier )
         {
-            return edges.get(current).getAdditionalField();
+            return edges.get(current).getAdditionalField(storageIdentifier);
         }
 
         @Override
-        public EdgeIteratorState setAdditionalField( int value )
+        public EdgeIteratorState setAdditionalField( String storageIdentifier, int value )
         {
-            return edges.get(current).setAdditionalField(value);
+            return edges.get(current).setAdditionalField(storageIdentifier, value);
         }
 
         @Override
@@ -706,6 +706,18 @@ public class QueryGraph implements Graph
         public void setSkippedEdges( int edge1, int edge2 )
         {
             throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public void setReferenceToExtendedStorage( int value )
+        {
+            edges.get(current).setReferenceToExtendedStorage(value);
+        }
+
+        @Override
+        public int getReferenceToExtendedStorage()
+        {
+            return edges.get(current).getReferenceToExtendedStorage();
         }
     }
 
@@ -834,7 +846,7 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public int getAdditionalField()
+        public int getAdditionalField( String identifier )
         {
             throw new UnsupportedOperationException("Not supported.");
         }
@@ -864,7 +876,7 @@ public class QueryGraph implements Graph
         }
 
         @Override
-        public EdgeIteratorState setAdditionalField( int value )
+        public EdgeIteratorState setAdditionalField( String identifier, int value )
         {
             throw new UnsupportedOperationException("Not supported.");
         }
@@ -885,6 +897,18 @@ public class QueryGraph implements Graph
         public double getWeight()
         {
             throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public void setReferenceToExtendedStorage( int value )
+        {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public int getReferenceToExtendedStorage()
+        {
+            throw new UnsupportedOperationException("Not supported yet.");
         }
     }
 }

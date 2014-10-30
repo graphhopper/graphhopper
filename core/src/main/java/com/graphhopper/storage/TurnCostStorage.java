@@ -28,6 +28,8 @@ import com.graphhopper.util.EdgeIterator;
  */
 public class TurnCostStorage implements ExtendedStorage
 {
+    public static String IDENTIFIER = "turncosts";
+
     /* pointer for no cost entry */
     private final int NO_TURN_ENTRY = -1;
     private final long EMPTY_FLAGS = 0L;
@@ -45,6 +47,7 @@ public class TurnCostStorage implements ExtendedStorage
 
     private GraphStorage graph;
     private NodeAccess nodeAccess;
+    private ExtendedStorageAccess extStorageAccess;
 
     public TurnCostStorage()
     {
@@ -64,7 +67,8 @@ public class TurnCostStorage implements ExtendedStorage
 
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
-        this.turnCosts = this.graph.getDirectory().find("turnCosts");
+        this.extStorageAccess = graph.getExtendedStorageAccess();
+        this.turnCosts = this.graph.getDirectory().find(IDENTIFIER);
     }
 
     private int nextTurnCostEntryIndex()
@@ -86,7 +90,7 @@ public class TurnCostStorage implements ExtendedStorage
     }
 
     @Override
-    public void flush()
+    public void flush( StorableProperties properties )
     {
         turnCosts.setHeader(0, turnCostsEntryBytes);
         turnCosts.setHeader(1 * 4, turnCostsCount);
@@ -132,11 +136,11 @@ public class TurnCostStorage implements ExtendedStorage
         ensureTurnCostIndex(newEntryIndex);
 
         // determine if we already have an cost entry for this node
-        int previousEntryIndex = nodeAccess.getAdditionalNodeField(nodeIndex);
+        int previousEntryIndex = extStorageAccess.readFromExtendedNodeStorage(IDENTIFIER, nodeIndex);
         if (previousEntryIndex == NO_TURN_ENTRY)
         {
             // set cost-pointer to this new cost entry
-            nodeAccess.setAdditionalNodeField(nodeIndex, newEntryIndex);
+            extStorageAccess.writeToExtendedNodeStorage(IDENTIFIER, nodeIndex, newEntryIndex);
         } else
         {
             int i = 0;
@@ -177,15 +181,15 @@ public class TurnCostStorage implements ExtendedStorage
 
     private long nextCostFlags( int node, int edgeFrom, int edgeTo )
     {
-        int turnCostIndex = nodeAccess.getAdditionalNodeField(node);
+        int turnCostIndex = extStorageAccess.readFromExtendedNodeStorage(IDENTIFIER, node);
         int i = 0;
         for (; i < 1000; i++)
         {
             if (turnCostIndex == NO_TURN_ENTRY)
                 break;
-            long turnCostPtr = (long) turnCostIndex * turnCostsEntryBytes;            
+            long turnCostPtr = (long) turnCostIndex * turnCostsEntryBytes;
             if (edgeFrom == turnCosts.getInt(turnCostPtr + TC_FROM))
-            {                
+            {
                 if (edgeTo == turnCosts.getInt(turnCostPtr + TC_TO))
                     return turnCosts.getInt(turnCostPtr + TC_FLAGS);
             }
