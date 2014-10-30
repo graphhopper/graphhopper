@@ -26,6 +26,7 @@ public class GHExtendedStorageAccess implements ExtendedStorageAccess
         this.graph = graph;
     }
 
+    @Override
     public void writeToExtendedNodeStorage( String storageName, int nodeId, int value )
     {
         if (graph.extStorage instanceof ExtendedStorageManager)
@@ -43,6 +44,7 @@ public class GHExtendedStorageAccess implements ExtendedStorageAccess
         }
     }
 
+    @Override
     public int readFromExtendedNodeStorage( String storageName, int nodeId )
     {
         int refIndex = graph.nodes.getInt((long) nodeId * graph.nodeEntryBytes + graph.N_ADDITIONAL);

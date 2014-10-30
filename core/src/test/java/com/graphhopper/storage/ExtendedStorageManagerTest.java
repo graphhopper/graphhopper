@@ -24,13 +24,11 @@ import org.junit.Test;
 
 class DummyExtendedStorage implements ExtendedStorage
 {
-    private String filename;
-    private boolean requiresNode;
-    private boolean requiresEdge;
+    private final boolean requiresNode;
+    private final boolean requiresEdge;
 
-    public DummyExtendedStorage( String filename, boolean requiresNode, boolean requiresEdge )
+    public DummyExtendedStorage( boolean requiresNode, boolean requiresEdge )
     {
-        this.filename = filename;
         this.requiresNode = requiresNode;
         this.requiresEdge = requiresEdge;
     }
@@ -112,7 +110,7 @@ public class ExtendedStorageManagerTest
         TreeMap extStorages = new TreeMap();
         for (int i = 0; i < numStorages; ++i)
         {
-            extStorages.put(String.valueOf(i), new DummyExtendedStorage(String.valueOf(i), true, true));
+            extStorages.put(String.valueOf(i), new DummyExtendedStorage(true, true));
         }
         manager = new ExtendedStorageManager(extStorages);
         GraphStorage graph = new GraphHopperStorage(dir, new EncodingManager("CAR"), false, manager);
@@ -244,7 +242,7 @@ public class ExtendedStorageManagerTest
 
         // test access with only loading "0"
         TreeMap extStorages = new TreeMap();
-        extStorages.put("0", new DummyExtendedStorage("0", true, true));
+        extStorages.put("0", new DummyExtendedStorage(true, true));
         manager = new ExtendedStorageManager(extStorages);
 
         dir = new RAMDirectory(defaultGraphLoc, true);
@@ -261,7 +259,7 @@ public class ExtendedStorageManagerTest
 
         // test access with only loading "1"
         extStorages = new TreeMap();
-        extStorages.put("1", new DummyExtendedStorage("1", true, true));
+        extStorages.put("1", new DummyExtendedStorage(true, true));
         manager = new ExtendedStorageManager(extStorages);
 
         dir = new RAMDirectory(defaultGraphLoc, true);
@@ -274,6 +272,5 @@ public class ExtendedStorageManagerTest
 
         assertEquals(7, access.readFromExtendedEdgeStorage("1", 0));
         assertEquals(8, access.readFromExtendedEdgeStorage("1", 1));
-
     }
 }

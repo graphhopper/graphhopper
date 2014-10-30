@@ -79,17 +79,13 @@ public interface EdgeIteratorState
     EdgeIteratorState setFlags( long flags );
 
     /**
-     * @deprecated use ExtendedStorageAccess instead
      * @return the additional field value for this edge
      */
-    @Deprecated
     int getAdditionalField( String storageIdentifier );
 
     /**
-     * @deprecated use ExtendedStorageAccess instead Updates the additional field value for this
      * edge
      */
-    @Deprecated
     EdgeIteratorState setAdditionalField( String storageIdentifier, int value );
 
     public void setReferenceToExtendedStorage( int value );

@@ -19,24 +19,39 @@ package com.graphhopper.storage;
 
 import java.util.*;
 
+/**
+ * ExtendedStorageManager is an ExtendedStorage by itself and can manage multiple sub-storages. For
+ * each ExtendedStorage that is passed to the constructor during graph creation, space will be
+ * created to hold references for this extended storage. When reading a graph from disk, the manager
+ * will check the properties file to check if it is used and if it is, it will restore its state
+ * with the help of the properties file
+ * <p>
+ * @author Adrian Batzill, Agata
+ */
 public class ExtendedStorageManager implements ExtendedStorage
 {
-    private final static String USE="extendedStorageManager.use";
-    private final static String NODE_STORAGES="extendedStorageManager.nodeStorages";
-    private final static String EDGE_STORAGES="extendedStorageManager.edgeStorages";
-    
+    private final static String USE = "extendedStorageManager.use";
+    private final static String NODE_STORAGES = "extendedStorageManager.nodeStorages";
+    private final static String EDGE_STORAGES = "extendedStorageManager.edgeStorages";
+
     private Directory storageDirectory;
     private DataAccess nodeExtStorageRefs;
     private DataAccess edgeExtStorageRefs;
-    private TreeMap<String, ExtendedStorage> extStorages;
-    private HashMap<String, Integer> storageIndicesNodes = new HashMap<String, Integer>();
-    private HashMap<String, Integer> storageIndicesEdges = new HashMap<String, Integer>();
+    private final TreeMap<String, ExtendedStorage> extStorages;
+    private final HashMap<String, Integer> storageIndicesNodes = new HashMap<String, Integer>();
+    private final HashMap<String, Integer> storageIndicesEdges = new HashMap<String, Integer>();
 
     private int refNodeEntryBytes = -1;
     private int refEdgeEntryBytes = -1;
 
     public final static int NO_REFERENCE = -1;
 
+    /**
+     * @param extStorages A TreeMap with maps some arbitrary key to an ExtendedStorage. The key will
+     * later be used to identify the storage. A TreeMap is required, as the file-layout of the
+     * ExtendedStorageManager DataAccess objects will be sorted by the key-string of the
+     * sub-storages
+     */
     public ExtendedStorageManager( TreeMap<String, ExtendedStorage> extStorages )
     {
         this.extStorages = extStorages;
@@ -243,7 +258,7 @@ public class ExtendedStorageManager implements ExtendedStorage
     }
 
     @Override
-    public void flush(StorableProperties properties)
+    public void flush( StorableProperties properties )
     {
         if (isRequireNodeField())
         {
