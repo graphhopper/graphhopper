@@ -14,6 +14,7 @@ import cucumber.api.java.en.Then;
 
 public class GraphHopperHooks {
 	GraphHopperUIUtil graphUiUtil=new GraphHopperUIUtil();
+	
 	String instruction;
 	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI$")
 		public void getRoute(String pointA,String pointB,String routeType)
@@ -30,6 +31,15 @@ public class GraphHopperHooks {
 		graphUiUtil.verifyInstructionThroughUI(routeStepNumber,Instruction);
 		graphUiUtil.verifyInstructionThroughService(Instruction);
 	}
+	
+	
+	@Then("^I shhould be able to verify the \"([^\"]*)\" waypoint \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" on the route map$")
+	public void I_shhould_be_able_to_verify_the_on_the_route_map(String wayPointIndex,String wayPoint_Coordinates,String wayPointDescription,String azimuth, String direction, String time, String distance) {
+	    
+		graphUiUtil.verifyWayPointonRouteMap(wayPointIndex,wayPoint_Coordinates,wayPointDescription, azimuth, direction, time, distance);
+		
+	}
+
 
   @After({"@Routing"})
     public void closeBrowser()

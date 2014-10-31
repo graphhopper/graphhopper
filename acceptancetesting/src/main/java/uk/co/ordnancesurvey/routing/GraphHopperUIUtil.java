@@ -1,7 +1,7 @@
 package uk.co.ordnancesurvey.routing;
 
 
-
+import static uk.co.ordnancesurvey.webtests.base.ComponentValueSource.INNER_HTML;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.FROM_ROUTE;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.INSTRUCTIONS;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ROUTE_SEARCH;
@@ -9,14 +9,22 @@ import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.RO
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ROUTE_TYPE_CAR;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ROUTE_TYPE_WALK;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.TO_ROUTE;
+import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.WAYPOINT_ONMAP;
 
 import java.util.HashSet;
+import java.util.List;
 
 import org.alternativevision.gpx.beans.Route;
+import org.alternativevision.gpx.beans.Waypoint;
 import org.junit.Assert;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.thoughtworks.selenium.webdriven.commands.GetBodyText;
+
+import uk.co.ordnancesurvey.gpx.extensions.ExtensionConstants;
 import uk.co.ordnancesurvey.gpx.graphhopper.GraphHopperGPXParserRouteTest;
 import uk.co.ordnancesurvey.webtests.IntegrationTestProperties;
 import uk.co.ordnancesurvey.webtests.multiplatform.MultiplatformTest;
@@ -90,6 +98,7 @@ public class GraphHopperUIUtil extends MultiplatformTest{
 	public void getRouteFromService(String pointA, String pointB,
 			String routeType) {
 		gpxServiceResponse=GPHService.parseRoute(pointA+","+pointB, "gpx", routeType);
+	LOG.info(gpxServiceResponse);
 			
 	}
 
@@ -101,7 +110,31 @@ public class GraphHopperUIUtil extends MultiplatformTest{
 	
 
 	}
-	
+
+	public void verifyWayPointonRouteMap(String wayPointIndex,
+		String wayPoint_Coordinates, String wayPointDescription ,String azimuth,String direction,String time,String distance) {
+		 final List<WebElement> WAY_POINTS = driver.findElements(By.xpath("//*[@id='instructions']/tbody/tr[*]/td[2]"));
+		 WAY_POINTS.get(Integer.parseInt(wayPointIndex)-1).click();
+		 
+	checkComponentValue(WAYPOINT_ONMAP, wayPointDescription);
+	Waypoint wp=buildWayPoint( wayPoint_Coordinates, wayPointDescription,azimuth,direction,time,distance);
+		
+	Assert.assertTrue(GPHService.isWayPointOnGPXRoutes(wp));	
+	}
+	private Waypoint buildWayPoint(String wayPoint_Coordinates,String wayPointDescription,String azimuth,String direction,String time,String distance) {
+		
+		Waypoint wp = new Waypoint();
+		String waypoint[]=wayPoint_Coordinates.split(",");
+		wp.setLatitude(new Double(waypoint[0]));
+		wp.setLongitude(new Double(waypoint[1]));
+		wp.setDescription(wayPointDescription);
+		wp.addExtensionData(ExtensionConstants.AZIMUTH, azimuth);
+		wp.addExtensionData(ExtensionConstants.DIRECTION,direction);
+		wp.addExtensionData(ExtensionConstants.TIME, time);
+		wp.addExtensionData(ExtensionConstants.DISTANCE, distance);
+		
+		return wp;
+	}
 	
 
 }
