@@ -60,7 +60,7 @@
                     <!-- for standalone usage -->
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
+                    </descriptorRefs>l
                 </configuration>
             </plugin>
         </plugins>

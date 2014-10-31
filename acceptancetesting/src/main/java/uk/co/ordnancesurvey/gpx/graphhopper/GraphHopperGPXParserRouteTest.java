@@ -255,4 +255,20 @@ public class GraphHopperGPXParserRouteTest {
 
 		return doSendAndGetResponse(serviceUrl);
 	}
+
+	public boolean isWayPointOnGPXRoutes(Waypoint wp) {
+
+		boolean isWayPointOnRoute = false;
+
+		for (Route route : getRoutes()) {
+			isWayPointOnRoute = isWayPointOnRoute(wp, route);
+
+			if (isWayPointOnRoute(wp, route)) {
+				break;
+			}
+
+		}
+		return isWayPointOnRoute;
+	}
+
 }
