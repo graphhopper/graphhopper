@@ -7,6 +7,12 @@
 	<name>GraphHopper Acceptance Testing</name>
 	<packaging>jar</packaging>
 
+	<parent>
+		<groupId>com.graphhopper</groupId>
+		<artifactId>graphhopper-parent</artifactId>
+		<version>0.4-SNAPSHOT</version>
+	</parent>
+
 	<repositories>
 		<repository>
 			<id>corporate</id>
@@ -54,7 +60,7 @@
 			<artifactId>commons-io</artifactId>
 			<version>2.4</version>
 		</dependency>
-				<dependency>
+		<dependency>
 			<groupId>info.cukes</groupId>
 			<artifactId>cucumber-picocontainer</artifactId>
 			<version>1.1.4</version>
@@ -74,7 +80,7 @@
 			<artifactId>SimpleSelenium</artifactId>
 			<version>0.0.21-SNAPSHOT</version>
 		</dependency>
- 	</dependencies>
+	</dependencies>
 
 	<dependencyManagement>
 		<dependencies>
