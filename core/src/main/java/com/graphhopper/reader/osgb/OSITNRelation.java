@@ -42,16 +42,17 @@ public class OSITNRelation extends OSITNElement implements Relation {
 
 	private static final List<String> notInstructions;
 	private static final List<String> onlyInstructions;
-	protected final ArrayList<ITNMember> members = new ArrayList<ITNMember>(5);
+	protected final ArrayList<ITNRelationMember> members = new ArrayList<ITNRelationMember>(5);
 	private Type relationType;
 	private static final Logger logger = LoggerFactory
 			.getLogger(OSITNRelation.class);
 
+	private String coordinates;
 	static {
 		notInstructions = new ArrayList<String>();
 		onlyInstructions = new ArrayList<String>();
 
-		notInstructions.add("No Turn");
+		notInstructions.add("No Entry");
 	}
 
 	public static OSITNRelation create(long id, XMLStreamReader parser)
@@ -72,12 +73,12 @@ public class OSITNRelation extends OSITNElement implements Relation {
 		return "Relation (" + getId() + ", " + members.size() + " members)";
 	}
 
-	public ArrayList<ITNMember> getMembers() {
+	public ArrayList<ITNRelationMember> getMembers() {
 		return members;
 	}
 
 	public boolean isMetaRelation() {
-		for (ITNMember member : members) {
+		for (ITNRelationMember member : members) {
 			if (member.type() == RELATION) {
 				return true;
 			}
@@ -89,7 +90,7 @@ public class OSITNRelation extends OSITNElement implements Relation {
 		boolean hasRel = false;
 		boolean hasOther = false;
 
-		for (ITNMember member : members) {
+		for (ITNRelationMember member : members) {
 			if (member.type() == RELATION) {
 				hasRel = true;
 			} else {
@@ -111,14 +112,14 @@ public class OSITNRelation extends OSITNElement implements Relation {
 		}
 	}
 
-	public void add(ITNMember member) {
+	public void add(ITNRelationMember member) {
 		members.add(member);
 	}
 
 	/**
 	 * Container class for relation members
 	 */
-	public static class ITNMember implements RelationMember {
+	public static class ITNRelationMember implements RelationMember {
 		public static final int NODE = 0;
 		public static final int WAY = 1;
 		public static final int RELATION = 2;
@@ -127,20 +128,20 @@ public class OSITNRelation extends OSITNElement implements Relation {
 		private long ref;
 		private String role;
 
-		public ITNMember(XMLStreamReader parser) {
+		public ITNRelationMember(XMLStreamReader parser) {
 			String typeName = parser.getAttributeValue(null, "type");
 			type = typeDecode.indexOf(typeName.charAt(0));
 			ref = Long.parseLong(parser.getAttributeValue(null, "ref"));
 			role = parser.getAttributeValue(null, "role");
 		}
 
-		public ITNMember(ITNMember input) {
+		public ITNRelationMember(ITNRelationMember input) {
 			type = input.type;
 			ref = input.ref;
 			role = input.role;
 		}
 
-		public ITNMember(int type, long ref, String role) {
+		public ITNRelationMember(int type, long ref, String role) {
 			this.type = type;
 			this.ref = ref;
 			this.role = role;
@@ -165,9 +166,14 @@ public class OSITNRelation extends OSITNElement implements Relation {
 
 	@Override
 	protected void parseCoords(String elementText) {
+	    this.coordinates = elementText;
 	}
 
-	@Override
+	public String getCoordinates() {
+            return coordinates;
+        }
+
+    @Override
 	protected void parseNetworkMember(String elementText) {
 		throw new UnsupportedOperationException();
 
@@ -185,14 +191,14 @@ public class OSITNRelation extends OSITNElement implements Relation {
 		logger.warn("ADDING REALTION LINK:" + nodeId);
 		int size = members.size();
 		if (size > 1) {
-			ITNMember itnMember = members.get(members.size() - 1);
+			ITNRelationMember itnMember = members.get(members.size() - 1);
 			if ("to".equals(itnMember.role)) {
 				itnMember.role = "via";
 			}
 		}
 		if (size < 2 || hasTag("type", "oneway")) {
 			String idStr = nodeId.substring(5);
-			ITNMember member = new ITNMember(WAY, Long.valueOf(idStr),
+			ITNRelationMember member = new ITNRelationMember(WAY, Long.valueOf(idStr),
 					0 == size ? "from" : "to");
 			add(member);
 		}

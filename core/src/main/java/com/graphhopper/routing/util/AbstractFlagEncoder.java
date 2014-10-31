@@ -197,6 +197,17 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      */
     public long handleNodeTags( Node node )
     {
+        // Set the directionBitMask to forward or backward if the one way tag is set on the node
+//        if (node.hasTag("oneway", oneways))
+//        {
+//            if (node.hasTag("oneway", "-1")) {
+//                directionBitMask = 0l;
+//            }
+//            else {
+//                directionBitMask = 1l;
+//            }
+//        } 
+
         // absolute barriers always block
         if (node.hasTag("barrier", absoluteBarriers))
             return directionBitMask;
