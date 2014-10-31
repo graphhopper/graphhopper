@@ -1,13 +1,9 @@
 package uk.co.ordnancesurvey.routing;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import uk.co.ordnancesurvey.webtests.IntegrationTestProperties;
-import cucumber.api.DataTable;
 import cucumber.api.java.After;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
