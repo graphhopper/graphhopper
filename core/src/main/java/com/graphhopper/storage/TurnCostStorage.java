@@ -204,12 +204,7 @@ public class TurnCostStorage implements ExtendedStorage
 
     private void ensureTurnCostIndex( int nodeIndex )
     {
-        long deltaCap = ((long) nodeIndex + 4) * turnCostsEntryBytes - turnCosts.getCapacity();
-        if (deltaCap <= 0)
-        {
-            return;
-        }
-        turnCosts.incCapacity(deltaCap);
+        turnCosts.ensureCapacity(((long) nodeIndex + 4) * turnCostsEntryBytes);
     }
 
     @Override

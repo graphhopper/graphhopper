@@ -17,15 +17,15 @@
  */
 package com.graphhopper.storage;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
-
-import org.junit.Test;
+import java.util.Random;
 
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  *
@@ -92,5 +92,46 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
 
         graph.edge(3, 4, 123, true).setWayGeometry(Helper.createPointList(4.4, 5.5, 6.6, 7.7));
         checkGraph(graph);
+    }
+
+    @Test
+    public void testEnsureCapacity() throws IOException {
+        graph = newGraph(new MMapDirectory(defaultGraphLoc), false);
+        graph.setSegmentSize(128);
+        graph.create(100); // 100 is the minimum size
+
+        // assert that turnCostStorage can hold 104 turn cost entries at the beginning
+        assertEquals(104, turnCostStorage.getCapacity() / 16);
+
+        Random r = new Random();
+
+        NodeAccess na = graph.getNodeAccess();
+        for (int i = 0; i < 100; i++) {
+            double randomLat = 90 * r.nextDouble();
+            double randomLon = 180 * r.nextDouble();
+
+            na.setNode(i, randomLat, randomLon);
+        }
+
+        // Make node 50 the 'center' node
+        for (int nodeId = 51; nodeId < 100; nodeId++) {
+            graph.edge(50, nodeId, r.nextDouble(), true);
+        }
+        for (int nodeId = 0; nodeId < 50; nodeId++) {
+            graph.edge(nodeId, 50, r.nextDouble(), true);
+        }
+
+        // add 100 turn cost entries around node 50
+        for (int edgeId = 0; edgeId < 50; edgeId++) {
+            turnCostStorage.addTurnInfo(50, edgeId, edgeId + 50, 1337);
+            turnCostStorage.addTurnInfo(50, edgeId + 50, edgeId, 1337);
+        }
+
+        turnCostStorage.addTurnInfo(50, 0, 1, 1337);
+        assertEquals(104, turnCostStorage.getCapacity() / 16); // we are still good here
+
+        turnCostStorage.addTurnInfo(50, 0, 2, 1337);
+        // A new segment should be added, which will support 128 / 16 = 8 more entries.
+        assertEquals(112, turnCostStorage.getCapacity() / 16);
     }
 }

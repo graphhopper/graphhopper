@@ -766,7 +766,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private void setOrigEdgeCount( int index, int value )
     {
         long tmp = (long) index * 4;
-        originalEdges.incCapacity(tmp + 4);
+        originalEdges.ensureCapacity(tmp + 4);
         originalEdges.setInt(tmp, value);
     }
 
@@ -774,7 +774,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     {
         // TODO possible memory usage improvement: avoid storing the value 1 for normal edges (does not change)!
         long tmp = (long) index * 4;
-        originalEdges.incCapacity(tmp + 4);
+        originalEdges.ensureCapacity(tmp + 4);
         return originalEdges.getInt(tmp);
     }
 

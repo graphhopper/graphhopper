@@ -525,7 +525,7 @@ public class LocationIndexTree implements LocationIndex
                 size += len;
                 intIndex++;
                 leafs++;
-                dataAccess.incCapacity((long) (intIndex + len + 1) * 4);
+                dataAccess.ensureCapacity((long)(intIndex + len + 1) * 4);
                 if (len == 1)
                 {
                     // less disc space for single entries
@@ -550,7 +550,7 @@ public class LocationIndexTree implements LocationIndex
                     {
                         continue;
                     }
-                    dataAccess.incCapacity((long) (intIndex + 1) * 4);
+                    dataAccess.ensureCapacity((long)(intIndex + 1) * 4);
                     int beforeIntIndex = intIndex;
                     intIndex = store(subEntry, beforeIntIndex);
                     if (intIndex == beforeIntIndex)

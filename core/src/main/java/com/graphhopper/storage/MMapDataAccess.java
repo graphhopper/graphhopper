@@ -81,7 +81,7 @@ public class MMapDataAccess extends AbstractDataAccess
         initRandomAccessFile();
         bytes = Math.max(10 * 4, bytes);
         setSegmentSize(segmentSizeInBytes);
-        incCapacity(bytes);
+        ensureCapacity(bytes);
         return this;
     }
 
@@ -97,7 +97,7 @@ public class MMapDataAccess extends AbstractDataAccess
     }
 
     @Override
-    public boolean incCapacity( long bytes )
+    public boolean ensureCapacity(long bytes)
     {
         return mapIt(HEADER_OFFSET, bytes, true);
     }

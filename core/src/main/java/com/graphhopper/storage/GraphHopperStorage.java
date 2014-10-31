@@ -24,9 +24,16 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.search.NameIndex;
-import com.graphhopper.util.*;
-import static com.graphhopper.util.Helper.nf;
+import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
+
+import static com.graphhopper.util.Helper.nf;
 
 /**
  * The main implementation which handles nodes and edges file format. It can be used with different
@@ -259,7 +266,7 @@ public class GraphHopperStorage implements GraphStorage
 
         long oldNodes = nodeCount;
         nodeCount = nodeIndex + 1;
-        boolean capacityIncreased = nodes.incCapacity((long) nodeCount * nodeEntryBytes);
+        boolean capacityIncreased = nodes.ensureCapacity((long)nodeCount * nodeEntryBytes);
         if (capacityIncreased)
         {
             long newBytesCapacity = nodes.getCapacity();
@@ -290,12 +297,12 @@ public class GraphHopperStorage implements GraphStorage
 
     private void ensureEdgeIndex( int edgeIndex )
     {
-        edges.incCapacity(((long) edgeIndex + 1) * edgeEntryBytes);
+        edges.ensureCapacity(((long)edgeIndex + 1) * edgeEntryBytes);
     }
 
     private void ensureGeometry( long bytePos, int byteLength )
     {
-        wayGeometry.incCapacity(bytePos + byteLength);
+        wayGeometry.ensureCapacity(bytePos + byteLength);
     }
 
     @Override
