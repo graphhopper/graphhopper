@@ -13,6 +13,7 @@ import org.alternativevision.gpx.GPXParser;
 import org.alternativevision.gpx.beans.GPX;
 import org.alternativevision.gpx.beans.Route;
 import org.alternativevision.gpx.beans.Track;
+import org.alternativevision.gpx.beans.TrackPoint;
 import org.alternativevision.gpx.beans.Waypoint;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.ClientProtocolException;
@@ -175,6 +176,10 @@ public class GraphHopperGPXParserRouteTest {
 	public HashSet<Route> getRoutes() {
 		return gpx.getRoutes();
 	}
+	
+	public HashSet<Track> getTracks() {
+		return gpx.getTracks();
+	}
 
 	public long getTotalRouteTime() {
 
@@ -211,7 +216,7 @@ public class GraphHopperGPXParserRouteTest {
 	public boolean isWayPointOnRoute(Waypoint aWayPoint, Route aRoute) {
 
 		boolean isWayPointOnRoute = false;
-
+		System.out.println(aRoute.getRoutePoints());
 		for (Waypoint aWaypointInaRoute : aRoute.getRoutePoints()) {
 			if (new RouteWayPoint(aWaypointInaRoute).equals(new RouteWayPoint(
 					aWayPoint))) {
@@ -223,6 +228,26 @@ public class GraphHopperGPXParserRouteTest {
 
 		return isWayPointOnRoute;
 	}
+	
+	public boolean isWayPointOnTrack(Waypoint aWayPoint, Track aTrack) {
+
+		boolean isWayPointOnTrack = false;
+		System.out.println(aTrack.getTrackPoints());
+		for (Waypoint aWaypointInaTrack : aTrack.getTrackPoints()) {
+			if (new RouteWayPoint(aWaypointInaTrack).equals(new RouteWayPoint(
+					aWayPoint))) {
+				
+				isWayPointOnTrack = true;
+				LOG.info("WayPoint " + aWayPoint + " Found In a Track" + aTrack);
+				break;
+			}
+			
+			
+		}
+
+		return isWayPointOnTrack;
+	}
+
 
 	public boolean routeContainsTurn(String turnDescription, Route aRoute) {
 		System.out.println(aRoute);
@@ -270,5 +295,9 @@ public class GraphHopperGPXParserRouteTest {
 		}
 		return isWayPointOnRoute;
 	}
+
+
+		
+
 
 }

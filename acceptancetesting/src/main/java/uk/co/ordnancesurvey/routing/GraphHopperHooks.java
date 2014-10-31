@@ -1,5 +1,7 @@
 package uk.co.ordnancesurvey.routing;
 
+import java.text.ParseException;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -39,7 +41,7 @@ public class GraphHopperHooks {
 			String wayPointDescription, String azimuth, String direction,
 			String time, String distance) {
 
-		graphUiUtil.verifyWayPointonRouteMap(wayPointIndex,
+		graphUiUtil.isWayPointonRouteMap(wayPointIndex,
 				wayPoint_Coordinates, wayPointDescription, azimuth, direction,
 				time, distance);
 
@@ -47,11 +49,28 @@ public class GraphHopperHooks {
 
 	@Then("^I should be able to verify the waypoints on the route map:")
 	public void I_should_be_able_to_verify_the_waypoints_on_the_route_map(
-			List<Map> list) {
+			List<Map> wayPointList) {
 
-		graphUiUtil.verifyWayPointonRouteMap(list);
+		graphUiUtil.isWayPointonRouteMap(wayPointList);
 
 	}
+
+	@Then("^The total route time should be not more than \"([^\"]*)\"$")
+	public void The_total_route_time_should_be_not_more_than(String totalRouteTime)
+			 {
+	graphUiUtil.verifyTotalRouteTime(totalRouteTime);
+		
+	}
+	
+	
+	@Then("^I should be able to verify the trackPoints on the route map:")
+	public void I_should_be_able_to_verify_the_trackpoints_on_the_route_map(
+			List<Map> trackPointsList) throws ParseException {
+
+		graphUiUtil.isTrackPointonRouteMap(trackPointsList);
+
+	}
+
 
 	@After({ "@Routing" })
 	public void closeBrowser() {
