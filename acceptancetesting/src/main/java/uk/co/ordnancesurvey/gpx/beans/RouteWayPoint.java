@@ -32,7 +32,15 @@ public class RouteWayPoint {
 				
 				Object thisValue = m.invoke(waypoint);
 				Object thatValue = m.invoke(routeWayPoint.waypoint);
-				isEqual = Objects.equals(thisValue, thatValue);
+				if (thisValue instanceof String) {
+					String thisValueAsString = (String) thisValue;
+					String thatValueAsString=(String)thatValue;
+					isEqual = thisValueAsString.equalsIgnoreCase(( thatValueAsString));
+					
+				} else {
+					isEqual = Objects.equals(thisValue, thatValue);
+				}
+			
 				if (!isEqual) {
 					break;
 				}

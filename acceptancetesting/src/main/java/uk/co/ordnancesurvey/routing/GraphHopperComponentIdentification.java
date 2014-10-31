@@ -2,6 +2,11 @@ package uk.co.ordnancesurvey.routing;
 
 import static uk.co.ordnancesurvey.webtests.base.ComponentValueSource.INNER_HTML;
 
+import java.util.List;
+
+import org.openqa.selenium.WebElement;
+
+import uk.co.ordnancesurvey.webtests.base.ComponentByXPATH;
 import uk.co.ordnancesurvey.webtests.base.ComponentID;
 import uk.co.ordnancesurvey.webtests.base.ComponentIdentification;
 import uk.co.ordnancesurvey.webtests.base.ComponentIdentifier;
@@ -17,7 +22,6 @@ public class GraphHopperComponentIdentification implements
 	public static final  ComponentIdentifier ROUTE_TYPE_BIKE = new ComponentID("bike");
 	public static final  ComponentIdentifier ROUTE_TYPE_WALK = new ComponentID("foot");
 	public static final  ComponentIdentifier ROUTE_SEARCH = new ComponentID("searchButton");
-	//ComponentIdentifier firstRouteStep = new ComponentByXPATH(
-		//	"//*[@id='instructions']/tbody/tr[1]/td[2]", INNER_HTML);
+	public static final  ComponentIdentifier WAYPOINT_ONMAP = new ComponentByXPATH("//*[@class='leaflet-popup-content']", INNER_HTML);
 	public static final  GridFinder INSTRUCTIONS=new ComponentTableById("instructions", INNER_HTML);
 }
