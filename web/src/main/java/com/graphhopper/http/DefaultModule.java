@@ -56,7 +56,7 @@ public class DefaultModule extends AbstractModule
         tmp.importOrLoad();
         logger.info("loaded graph at:" + tmp.getGraphHopperLocation()
                 + ", source:" + tmp.getOSMFile()
-                + ", acceptWay:" + tmp.getEncodingManager()
+                + ", flagEncoders:" + tmp.getEncodingManager()
                 + ", class:" + tmp.getGraph().getClass().getSimpleName());
         return tmp;
     }

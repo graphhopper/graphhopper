@@ -111,10 +111,10 @@ public class GraphHopper implements GraphHopperAPI
      * Specify which vehicles can be read by this GraphHopper instance. An encoding manager defines
      * how data from every vehicle is written (und read) into edges of the graph.
      */
-    public GraphHopper setEncodingManager( EncodingManager acceptWay )
+    public GraphHopper setEncodingManager( EncodingManager em )
     {
         ensureNotLoaded();
-        this.encodingManager = acceptWay;
+        this.encodingManager = em;
         return this;
     }
 

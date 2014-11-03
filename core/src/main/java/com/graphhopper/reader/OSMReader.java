@@ -918,9 +918,9 @@ public class OSMReader implements DataReader
     /**
      * Specify the type of the path calculation (car, bike, ...).
      */
-    public OSMReader setEncodingManager( EncodingManager acceptWay )
+    public OSMReader setEncodingManager( EncodingManager em )
     {
-        this.encodingManager = acceptWay;
+        this.encodingManager = em;
         return this;
     }
 
