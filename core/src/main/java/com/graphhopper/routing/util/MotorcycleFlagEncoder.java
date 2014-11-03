@@ -303,10 +303,10 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         String highway = way.getTag("highway", "");
         if (avoidSet.contains(highway))
         {
-            return PriorityCode.REACH_DEST.getValue();
+            return PriorityCode.AVOID_AT_ALL_COSTS.getValue();
         } else if (preferSet.contains(highway))
         {
-            return PriorityCode.PREFER.getValue();
+            return PriorityCode.VERY_NICE.getValue();
         }
         return PriorityCode.UNCHANGED.getValue();
     }
