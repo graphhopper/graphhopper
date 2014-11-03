@@ -17,6 +17,13 @@
         <artifactId>graphhopper-parent</artifactId>    	
         <version>0.4-SNAPSHOT</version>
     </parent>
+    
+    <repositories>
+    <repository>
+      <id>my-internal-site</id>
+      <url>http://lv515:8081/nexus/content/groups/public/</url>
+    </repository>
+  	</repositories>
         
     <properties>  
         <netbeans.hint.license>apache20</netbeans.hint.license>        
@@ -74,7 +81,7 @@
         <dependency>
             <groupId>uk.co.ordnancesurvey.api</groupId>
             <artifactId>OSGBCoordinateConvertor</artifactId>
-            <version>1.0.4</version>
+            <version>1.0.5</version>
         </dependency>
     </dependencies>
         
