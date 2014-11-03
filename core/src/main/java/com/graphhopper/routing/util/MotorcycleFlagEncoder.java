@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.BitUtil;
 import static com.graphhopper.routing.util.PriorityCode.*;
+import java.util.HashSet;
 
 /**
  * Defines bit layout for motorbikes
@@ -30,6 +31,8 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
 {
     private EncodedDoubleValue reverseSpeedEncoder;
     private EncodedValue preferWayEncoder;
+    private final HashSet<String> avoidSet = new HashSet<String>();
+    private final HashSet<String> preferSet = new HashSet<String>();
 
     public MotorcycleFlagEncoder( String propertiesStr )
     {
@@ -54,9 +57,16 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         trackTypeSpeedMap.put("grade4", 5); // ... some hard or compressed materials
         trackTypeSpeedMap.put("grade5", 5); // ... no hard materials. soil/sand/grass
 
+        avoidSet.add("motorway");
+        avoidSet.add("trunk");
+        avoidSet.add("motorroad");
+        preferSet.add("primary");
+        preferSet.add("secondary");
+
         // autobahn
         defaultSpeedMap.put("motorway", 100);
         defaultSpeedMap.put("motorway_link", 70);
+        defaultSpeedMap.put("motorroad", 90);
         // bundesstraße
         defaultSpeedMap.put("trunk", 80);
         defaultSpeedMap.put("trunk_link", 75);
@@ -291,11 +301,12 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     private int calcPriority( OSMWay way, long relationFlags )
     {
         String highway = way.getTag("highway", "");
-        if (highway.startsWith("motorway")
-                || highway.startsWith("trunk")
-                || highway.startsWith("motorroad"))
+        if (avoidSet.contains(highway))
         {
             return PriorityCode.REACH_DEST.getValue();
+        } else if (preferSet.contains(highway))
+        {
+            return PriorityCode.PREFER.getValue();
         }
         return PriorityCode.UNCHANGED.getValue();
     }
