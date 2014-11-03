@@ -40,7 +40,7 @@ Feature: Verify a route from A to B
       | 50.902674,-1.404169 | 55.861284,-4.24996 | car       |
 
   @Routing
-  Scenario Outline: Verify  waypoints on a Route from Southampton to Glasgow
+  Scenario Outline: Verify  waypoints on a Route from Hounslow to Burnham and the total route time estimate
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then The total route time should be not more than "<totalRouteTime>"
 
@@ -48,7 +48,7 @@ Feature: Verify a route from A to B
       | pointA             | pointB              | routetype | totalRouteTime |
       | 51.475161,-0.39591 | 51.536292,-0.656802 | car       | 22             |
 
-  @Current
+  @Routing
   Scenario Outline: Verify  waypoints on a Route from Southampton to Glasgow
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the trackPoints on the route map:
@@ -58,3 +58,5 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA              | pointB              | routetype |
       | 50.911645,-1.411389 | 50.913965,-1.401229 | car       |
+      
+      

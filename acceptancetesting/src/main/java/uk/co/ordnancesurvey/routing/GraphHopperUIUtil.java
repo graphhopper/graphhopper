@@ -7,11 +7,10 @@ import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.RO
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ROUTE_TYPE_BIKE;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ROUTE_TYPE_CAR;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ROUTE_TYPE_WALK;
+import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.TOTAL_ROUTE_TIME;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.TO_ROUTE;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.WAYPOINT_ONMAP;
-import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.TOTAL_ROUTE_TIME;
 
-import java.sql.Time;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -19,21 +18,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.RegEx;
-
 import org.alternativevision.gpx.beans.Route;
-import org.alternativevision.gpx.beans.TrackPoint;
 import org.alternativevision.gpx.beans.Waypoint;
 import org.junit.Assert;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cucumber.deps.com.thoughtworks.xstream.converters.basic.DateConverter;
 import uk.co.ordnancesurvey.gpx.extensions.ExtensionConstants;
 import uk.co.ordnancesurvey.gpx.graphhopper.GraphHopperGPXParserRouteTest;
 import uk.co.ordnancesurvey.webtests.IntegrationTestProperties;
+import uk.co.ordnancesurvey.webtests.base.Messages;
 import uk.co.ordnancesurvey.webtests.multiplatform.MultiplatformTest;
 import uk.co.ordnancesurvey.webtests.platforms.BrowserPlatformOptions;
 
@@ -43,23 +42,38 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 	private String routeStepNumber;
 	String testOn = IntegrationTestProperties.getTestProperty("testON");
 	GraphHopperGPXParserRouteTest GPHService = new GraphHopperGPXParserRouteTest();
+
+	JavascriptExecutor js = (JavascriptExecutor) driver;
+	WebElement we;
+
 	private static final Logger LOG = LoggerFactory
 			.getLogger(GraphHopperUIUtil.class);
 
 	public GraphHopperUIUtil() {
 		super(BrowserPlatformOptions.getEnabledOptionsArrayList().get(0)[0]);
-		init();
+		try {
+			init();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
-	private void init() {
+	private void init() throws InterruptedException {
 		baseUrl = IntegrationTestProperties
 				.getTestProperty("graphHopperWebUrl");
 		if (null == baseUrl) {
 			baseUrl = "http://os-graphhopper.elasticbeanstalk.com/";
 		}
 
-		if (!testOn.equalsIgnoreCase("SERVICE"))
+		if (!testOn.equalsIgnoreCase("SERVICE")) {
 			initialiseWebDriver();
+			Thread.sleep(2000);
+
+			panLeftonMap();
+			panRighttonElement();
+
+		}
 
 	}
 
@@ -124,31 +138,42 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 						routeInstruction.iterator().next()));
 
 	}
-	
-	
 
+	public void panLeftonMap() {
 
+		clickElement(FROM_ROUTE);
 
+		Actions action = new Actions(driver);
+		action.sendKeys(driver.findElement(By.xpath("//*[@id='map']")),
+				Keys.ARROW_RIGHT).build().perform();
 
-	private Waypoint buildWayPoint(String waypointco, String time) throws ParseException {
-		
-	Waypoint wp = new Waypoint();
-	String waypoint[] = waypointco.split(",");
-	wp.setLatitude(new Double(waypoint[0]));
-	wp.setLongitude(new Double(waypoint[1]));
-	
-	SimpleDateFormat t =new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
-	Date date=t.parse(time);
-	wp.setTime(date);
-	return wp;
 	}
-	
 
-	
-	
-	
-	
-		public void isWayPointonRouteMap(String wayPointIndex,
+	public void panRighttonElement() {
+
+		Actions action = new Actions(driver);
+
+		clickElement(FROM_ROUTE);
+
+		action.sendKeys(driver.findElement(By.xpath("//*[@id='map']")),
+				Keys.ARROW_RIGHT).build().perform();
+	}
+
+	private Waypoint buildWayPoint(String waypointco, String time)
+			throws ParseException {
+
+		Waypoint wp = new Waypoint();
+		String waypoint[] = waypointco.split(",");
+		wp.setLatitude(new Double(waypoint[0]));
+		wp.setLongitude(new Double(waypoint[1]));
+
+		SimpleDateFormat t = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+		Date date = t.parse(time);
+		wp.setTime(date);
+		return wp;
+	}
+
+	public void isWayPointonRouteMap(String wayPointIndex,
 			String wayPoint_Coordinates, String wayPointDescription,
 			String azimuth, String direction, String time, String distance) {
 		final List<WebElement> WAY_POINTS;
@@ -167,7 +192,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 			wp = buildWayPoint(wayPoint_Coordinates, wayPointDescription,
 					azimuth, direction, time, distance);
 			Assert.assertTrue(GPHService.isWayPointOnGPXRoutes(wp));
-			
+
 			break;
 
 		default:
@@ -193,7 +218,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		String waypoint[] = wayPoint_Coordinates.split(",");
 		wp.setLatitude(new Double(waypoint[0]));
 		wp.setLongitude(new Double(waypoint[1]));
-		
+
 		wp.setDescription(wayPointDescription);
 		wp.addExtensionData(ExtensionConstants.AZIMUTH, azimuth);
 		wp.addExtensionData(ExtensionConstants.DIRECTION, direction);
@@ -268,27 +293,22 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		}
 
 	}
-	
-	
 
-
-	public void isTrackPointonRouteMap(List<Map> trackPointsList) throws ParseException {
-		
-		
+	public void isTrackPointonRouteMap(List<Map> trackPointsList)
+			throws ParseException {
 
 		for (int i = 0; i < trackPointsList.size(); i++) {
-			
-			String waypointco = (String) trackPointsList.get(i).get("trackPointco");
-			String time=(String) trackPointsList.get(i).get("time");
-					
-			Waypoint trackPoint = buildWayPoint(waypointco,time);
-			assertTrue(GPHService.isWayPointOnTrack(trackPoint, GPHService.getTracks().iterator().next()));
-			
+
+			String waypointco = (String) trackPointsList.get(i).get(
+					"trackPointco");
+			String time = (String) trackPointsList.get(i).get("time");
+
+			Waypoint trackPoint = buildWayPoint(waypointco, time);
+			assertTrue(GPHService.isWayPointOnTrack(trackPoint, GPHService
+					.getTracks().iterator().next()));
+
 		}
-		
-		
+
 	}
-
-
 
 }

@@ -20,4 +20,6 @@ public class GraphHopperComponentIdentification implements
 	public static final  ComponentIdentifier WAYPOINT_ONMAP = new ComponentByXPATH("//*[@class='leaflet-popup-content']", INNER_HTML);
 	public static final  GridFinder INSTRUCTIONS=new ComponentTableById("instructions", INNER_HTML);
 	public static final  ComponentIdentifier TOTAL_ROUTE_TIME =new ComponentByXPATH("//*[@id='info']/div[1]",INNER_HTML);
+	public static final ComponentIdentifier  MAP=new ComponentByXPATH("//*[@id='map']");
+	
 }
