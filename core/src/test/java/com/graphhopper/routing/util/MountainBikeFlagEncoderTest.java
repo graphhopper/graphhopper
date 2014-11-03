@@ -19,8 +19,8 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
-import com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode;
-import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.*;
+import com.graphhopper.routing.util.PriorityCode;
+import static com.graphhopper.routing.util.PriorityCode.*;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

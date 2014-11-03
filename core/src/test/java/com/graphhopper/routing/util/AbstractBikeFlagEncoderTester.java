@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
-import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.*;
+import static com.graphhopper.routing.util.PriorityCode.*;
 import com.graphhopper.util.Translation;
 import static com.graphhopper.util.TranslationMapTest.SINGLETON;
 import java.util.Locale;
@@ -320,7 +320,7 @@ public abstract class AbstractBikeFlagEncoderTester
     {
         OSMWay way = new OSMWay(12);
         way.setTag("maxspeed", "90");
-        assertEquals(12, encoder.reduceToMaxSpeed(way, 12), 1e-2);
+        assertEquals(12, encoder.applyMaxSpeed(way, 12, false), 1e-2);
     }
 
     @Test
@@ -328,12 +328,12 @@ public abstract class AbstractBikeFlagEncoderTester
     {
         OSMWay osmWay = new OSMWay(1);
         osmWay.setTag("highway", "tertiary");
-        assertEquals(30, encoder.getSpeed(encoder.setSpeed(0, encoder.reduceToMaxSpeed(osmWay, 49))), 1e-1);
+        assertEquals(30, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(osmWay, 49, false))), 1e-1);
         assertPriority(PREFER.getValue(), osmWay);
 
         osmWay.setTag("highway", "tertiary");
         osmWay.setTag("maxspeed", "90");
-        assertEquals(20, encoder.getSpeed(encoder.setSpeed(0, encoder.reduceToMaxSpeed(osmWay, 20))), 1e-1);
+        assertEquals(20, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(osmWay, 20, false))), 1e-1);
         assertPriority(REACH_DEST.getValue(), osmWay);
     }
 
@@ -343,7 +343,7 @@ public abstract class AbstractBikeFlagEncoderTester
         OSMWay osmWay = new OSMWay(1);
         osmWay.setTag("highway", "cycleway");
         long encoded = encoder.handleWayTags(osmWay, encoder.acceptBit, 0);
-        assertEquals((double) VERY_NICE.getValue() / BEST.getValue(), encoder.getDouble(encoded, BikeCommonFlagEncoder.K_PRIORITY), 1e-3);
+        assertEquals((double) VERY_NICE.getValue() / BEST.getValue(), encoder.getDouble(encoded, PriorityWeighting.KEY), 1e-3);
     }
 
     @Test
@@ -358,11 +358,11 @@ public abstract class AbstractBikeFlagEncoderTester
     @Test
     public void testPriority()
     {
-        long flags = encoder.setLong(0L, BikeCommonFlagEncoder.K_PRIORITY_LONG, BikeCommonFlagEncoder.PriorityCode.BEST.getValue());
-        assertEquals(1, encoder.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY), 1e-3);
+        long flags = encoder.setLong(0L, PriorityWeighting.KEY, PriorityCode.BEST.getValue());
+        assertEquals(1, encoder.getDouble(flags, PriorityWeighting.KEY), 1e-3);
 
-        flags = encoder.setLong(0L, BikeCommonFlagEncoder.K_PRIORITY_LONG, BikeCommonFlagEncoder.PriorityCode.AVOID_IF_POSSIBLE.getValue());
-        assertEquals(3d / 7d, encoder.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY), 1e-3);
+        flags = encoder.setLong(0L, PriorityWeighting.KEY, PriorityCode.AVOID_IF_POSSIBLE.getValue());
+        assertEquals(3d / 7d, encoder.getDouble(flags, PriorityWeighting.KEY), 1e-3);
     }
 
     @Test

@@ -142,8 +142,8 @@ public class EncodingManagerTest
         long allow = defaultBike.acceptBit | lessRelationCodes.acceptBit;
         long flags = manager.handleWayTags(osmWay, allow, relFlags);
 
-        assertTrue(defaultBike.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY)
-                > lessRelationCodes.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY));
+        assertTrue(defaultBike.getDouble(flags, PriorityWeighting.KEY)
+                > lessRelationCodes.getDouble(flags, PriorityWeighting.KEY));
     }
 
     @Test
@@ -168,8 +168,8 @@ public class EncodingManagerTest
 
         // bike: uninfluenced speed for grade but via network => VERY_NICE                
         // mtb: uninfluenced speed only PREFER
-        assertTrue(bikeEncoder.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY)
-                > mtbEncoder.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY));
+        assertTrue(bikeEncoder.getDouble(flags, PriorityWeighting.KEY)
+                > mtbEncoder.getDouble(flags, PriorityWeighting.KEY));
     }
 
     public void testFullBitMask()
