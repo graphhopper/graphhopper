@@ -1,7 +1,6 @@
 package uk.co.ordnancesurvey.routing;
 
 import java.text.ParseException;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -35,7 +34,7 @@ public class GraphHopperHooks {
 
 	}
 
-	@Then("^I shhould be able to verify the \"([^\"]*)\" waypoint \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" on the route map$")
+	@Then("^I should be able to verify the \"([^\"]*)\" waypoint \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" on the route map$")
 	public void I_should_be_able_to_verify_the_waypoint_on_the_route_map(
 			String wayPointIndex, String wayPoint_Coordinates,
 			String wayPointDescription, String azimuth, String direction,
@@ -56,7 +55,7 @@ public class GraphHopperHooks {
 	}
 
 	@Then("^The total route time should be not more than \"([^\"]*)\"$")
-	public void The_total_route_time_should_be_not_more_than(String totalRouteTime)
+	public void The_total_route_time_should_be_not_more_than(String totalRouteTime) throws ParseException
 			 {
 	graphUiUtil.verifyTotalRouteTime(totalRouteTime);
 		

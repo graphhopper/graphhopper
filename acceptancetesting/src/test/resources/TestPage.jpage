@@ -1,0 +1,8 @@
+SimpleDateFormat time=new SimpleDateFormat("HH'h'mm'min'");
+time.setTimeZone(TimeZone.getTimeZone("GMT"));
+Date d=new Date();
+
+d=time.parse("2h30min");
+
+
+

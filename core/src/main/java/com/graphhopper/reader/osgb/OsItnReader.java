@@ -1,8 +1,11 @@
 package com.graphhopper.reader.osgb;
 
 import static com.graphhopper.util.Helper.nf;
+import gnu.trove.impl.hash.TDoubleLongHash;
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
+import gnu.trove.map.TDoubleLongMap;
+import gnu.trove.map.TDoubleObjectMap;
 import gnu.trove.map.TIntLongMap;
 import gnu.trove.map.TLongLongMap;
 import gnu.trove.map.TLongObjectMap;
@@ -169,6 +172,9 @@ public class OsItnReader implements DataReader {
     private TLongObjectMap<String> edgeRoadTypeMap;
     private TLongObjectMap<String> edgeRoadDirectionMap;
     private TObjectLongHashMap<String> edgeIdCoordsToNodeFlagsMap;
+
+    // private TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>>
+    // edgeIdToXToYToNodeFlagsMap;
 
     public OsItnReader(GraphStorage storage) {
         this.graphStorage = storage;
@@ -423,6 +429,16 @@ public class OsItnReader implements DataReader {
         return edgeIdCoordsToNodeFlagsMap;
     }
 
+    // private TLongObjectMap<TObjectLongHashMap<String>>
+    // getEdgeIdMapToCoordsToNodeFlagsMap() {
+    // if (edgeIdMapToCoordsToNodeFlagsMap == null)
+    // edgeIdMapToCoordsToNodeFlagsMap = new
+    // TLongObjectMap();//<TObjectLongHashMap<String>><TObjectLongHashMap<String>>();
+    //
+    // return edgeIdMapToCoordsToNodeFlagsMap;
+    // }
+    // //TLongObjectMap<TObjectLongHashMap<String>>
+    // edgeIdMapToCoordsToNodeFlagsMap
     /**
      * Filter ways but do not analyze properties wayNodes will be filled with
      * participating node ids.
@@ -550,7 +566,11 @@ public class OsItnReader implements DataReader {
                 if (!item.hasTag("highway")) {
                     item.setTag("highway", "motorway");
                 }
-                List<OSITNNode> wayNodes = prepareWaysNodes(item, nodeFilter); // Way nodes will only contain
+                List<OSITNNode> wayNodes = prepareWaysNodes(item, nodeFilter); // Way
+                                                                               // nodes
+                                                                               // will
+                                                                               // only
+                                                                               // contain
                 processWay((Way) item, wayNodes);
                 ((OSITNWay) item).clearWayNodes();
                 break;
@@ -662,91 +682,144 @@ public class OsItnReader implements DataReader {
         if (wayFlags == 0)
             return;
         logger.warn("Adding Relation to WAYS:" + wayFlags);
-        {
-            List<EdgeIteratorState> createdEdges = new ArrayList<EdgeIteratorState>();
-            // look for barriers along the way
-            final int size = osmNodeIds.size();
-            int lastBarrier = -1;
-            for (int i = 0; i < size; i++) {
-                long nodeId = osmNodeIds.get(i);
+        // Process No Entry and then Barriers, and finally add the remaining way
+        processNoEntry(way, wayNodes, osmNodeIds, wayFlags, wayOsmId);
+
+    }
+
+    /**
+     * This method processes the list of NodeIds and checks if any noews have a
+     * NoEntry Tag. If it does then it adds a shadow node and an extra way as a
+     * OneWay. Once it has run out of NoEntry nodes to process it passes the
+     * remainder on to processBarriers to check for barriers and construct the
+     * remaining way
+     * 
+     * @param way
+     * @param wayNodes
+     * @param osmNodeIds
+     * @param wayFlags
+     * @param wayOsmId
+     * @return
+     */
+    private List<EdgeIteratorState> processNoEntry(Way way, List<OSITNNode> wayNodes, TLongList osmNodeIds, long wayFlags, long wayOsmId) {
+        List<EdgeIteratorState> createdEdges = new ArrayList<EdgeIteratorState>();
+        // No Entry processing
+        final int size = osmNodeIds.size();
+        int lastNoEntry = -1;
+        List<EdgeIteratorState> noEntryCreatedEdges = new ArrayList<EdgeIteratorState>();
+        boolean modifiedWithNoEntry = false;
+        for (int i = 1, j = 0; j < wayNodes.size(); i++, j++) {
+            OSITNNode ositnNode = wayNodes.get(j);
+            if (ositnNode.hasTag(OSITNElement.TAG_KEY_NOENTRY_ORIENTATION)) {
+                modifiedWithNoEntry = true;
+                long nodeId = ositnNode.getId();
                 long nodeFlags = getNodeFlagsMap().get(nodeId);
-                // barrier was spotted and way is otherwise passable for that
-                // mode
-                // of travel
-                if (nodeFlags > 0) {
-                    if ((nodeFlags & wayFlags) > 0) {
-                        // remove barrier to avoid duplicates
-                        getNodeFlagsMap().put(nodeId, 0);
 
-                        // create shadow node copy for zero length edge
-                        OSMNode newNode = addBarrierNode(nodeId);
-                        long newNodeId = newNode.getId();
-                        if (i > 0) {
-                            // start at beginning of array if there was no
-                            // previous
-                            // barrier
-                            if (lastBarrier < 0)
-                                lastBarrier = 0;
+                // create shadow node copy for zero length edge
+                OSMNode newNode = addBarrierNode(nodeId);
+                long newNodeId = newNode.getId();
+                // Always > 0 as we start at index 1
+                if (i > 0) {
+                    // start at beginning of array if there was no previous
+                    // barrier. This was only set to -1 so if we never get here
+                    // we know it will still be -1 below
+                    if (lastNoEntry < 0)
+                        lastNoEntry = 0;
+                    // add way up to barrier shadow node
+                    long transfer[] = osmNodeIds.toArray(lastNoEntry, i - lastNoEntry + 1);
+                    transfer[transfer.length - 1] = newNodeId;
+                    TLongList partIds = new TLongArrayList(transfer);
+                    Collection<EdgeIteratorState> newWays = addOSMWay(partIds, wayFlags, wayOsmId);
+                    logger.warn("Way adds edges:" + wayOsmId + " " + newWays.size());
+                    noEntryCreatedEdges.addAll(newWays);
 
-                            // add way up to barrier shadow node
-                            long transfer[] = osmNodeIds.toArray(lastBarrier, i - lastBarrier + 1);
-                            transfer[transfer.length - 1] = newNodeId;
-                            TLongList partIds = new TLongArrayList(transfer);
-                            Collection<EdgeIteratorState> newWays = addOSMWay(partIds, wayFlags, wayOsmId);
-                            logger.warn("Way adds edges:" + wayOsmId + newWays.size());
-                            createdEdges.addAll(newWays);
+                    // create zero length edge for barrier to the next node
+                    Collection<EdgeIteratorState> newBarriers = addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId);
+                    logger.warn("Way adds barrier edges:" + wayOsmId + " " + newBarriers.size());
+                    noEntryCreatedEdges.addAll(newBarriers);
 
-                            // create zero length edge for barrier
-                            Collection<EdgeIteratorState> newBarriers = addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId);
-                            logger.warn("Way adds barrier edges:" + wayOsmId + newBarriers.size());
-                            createdEdges.addAll(newBarriers);
-                        } else {
-                            // run edge from real first node to shadow node
-                            Collection<EdgeIteratorState> newBarriers = addBarrierEdge(nodeId, newNodeId, wayFlags, nodeFlags, wayOsmId);
-                            logger.warn("Way adds barrier edges:" + wayOsmId + newBarriers.size());
-                            createdEdges.addAll(newBarriers);
-
-                            // exchange first node for created barrier node
-                            osmNodeIds.set(0, newNodeId);
-                        }
-
-                        // remember barrier for processing the way behind it
-                        lastBarrier = i;
+                    TLongObjectMap<String> edgeIdToRoadDirectionMap = getEdgeRoadDirectionMap();
+                    for (EdgeIteratorState edgeIteratorState : newBarriers) {
+                        String orientation = ositnNode.getTag(OSITNElement.TAG_KEY_ONEWAY_ORIENTATION);
+                        edgeIdToRoadDirectionMap.put(edgeIteratorState.getEdge(), orientation);
                     }
+                } else {
+                    // TODO Currently this code is never called. I believe that
+                    // when the no entry is placed on either
+                    // TODO end of way we will have issues
+                    // run edge from real first node to shadow node
+                    Collection<EdgeIteratorState> newBarriers = addBarrierEdge(nodeId, newNodeId, wayFlags, nodeFlags, wayOsmId);
+                    logger.warn("Way adds barrier edges:" + wayOsmId + newBarriers.size());
+                    noEntryCreatedEdges.addAll(newBarriers);
+                    // exchange first node for created barrier node
+                    osmNodeIds.set(0, newNodeId);
                 }
-            }
+                // remember barrier for processing the way behind it
+                lastNoEntry = j;
 
-            // just add remainder of way to graph if barrier was not the last
-            // node
-            if (lastBarrier >= 0) {
-                if (lastBarrier < size - 1) {
-                    long transfer[] = osmNodeIds.toArray(lastBarrier, size - lastBarrier);
-                    TLongList partNodeIds = new TLongArrayList(transfer);
-                    Collection<EdgeIteratorState> newEdges = addOSMWay(partNodeIds, wayFlags, wayOsmId);
-                    logger.warn("Way adds edges:" + wayOsmId + newEdges.size());
-                    createdEdges.addAll(newEdges);
-                }
-            } else {
-                // no barriers - simply add the whole way
-                Collection<EdgeIteratorState> newEdges = addOSMWay(way.getNodes(), wayFlags, wayOsmId);
-                logger.warn("Way adds edges:" + wayOsmId + ":" + newEdges.size());
-                createdEdges.addAll(newEdges);
             }
-            for (EdgeIteratorState edge : createdEdges) {
+        }
+        // just add remainder of way to graph if barrier was not the last node
+        TLongList nodeIdsToCreateWaysFor = null;
+        if (lastNoEntry >= 0) {
+            lastNoEntry++;
+            if (lastNoEntry < size - 1) {
+                long transfer[] = osmNodeIds.toArray(lastNoEntry, size - lastNoEntry);
+                nodeIdsToCreateWaysFor = new TLongArrayList(transfer);
+            }
+        } else {
+            // no barriers - simply add the whole way
+            nodeIdsToCreateWaysFor = osmNodeIds;
+        }
+
+        if (nodeIdsToCreateWaysFor != null) {
+            // Now process Barriers for the remaining route. This will create
+            // the remaining ways for after the end of the barriers
+            processBarriers(way, nodeIdsToCreateWaysFor, wayFlags, wayOsmId);
+        }
+        // TODO Can we move this code out into processWay?
+        if (modifiedWithNoEntry) {
+            for (EdgeIteratorState edge : noEntryCreatedEdges) {
                 encodingManager.applyWayTags(way, edge);
             }
-
         }
-        // No Entry processing
-        {
-            int lastNoEntry = -1;
-            final int size = osmNodeIds.size();
-            List<EdgeIteratorState> createdEdges = new ArrayList<EdgeIteratorState>();
-            for (int i = 1, j = 0; j < wayNodes.size(); i++, j++) {
-                OSITNNode ositnNode = wayNodes.get(j);
-                if (ositnNode.hasTag(OSITNElement.TAG_KEY_NOENTRY_ORIENTATION)) {
-                    long nodeId = ositnNode.getId();
-                    long nodeFlags = getNodeFlagsMap().get(nodeId);
+        return createdEdges;
+    }
+
+    /**
+     * This method taks the supplied list of osmNodeIds and checks for barriers.
+     * If it find them it adds a shadow node with zero length at the same
+     * location and adds ways such that they are connected. The remaining way
+     * once it has processed all barriers is just created as a series of ways
+     * between the remaining nodes
+     * 
+     * @param way
+     *            Not really used much. Could be refactored so this parameter is
+     *            not required.
+     * @param osmNodeIds
+     *            Ids of the nodes to check for barriers
+     * @param wayFlags
+     * @param wayOsmId
+     * @return
+     */
+    private List<EdgeIteratorState> processBarriers(Way way, TLongList osmNodeIds, long wayFlags, long wayOsmId) {
+        List<EdgeIteratorState> createdEdges = new ArrayList<EdgeIteratorState>();
+        // look for barriers along the way
+        final int size = osmNodeIds.size();
+        int lastBarrier = -1;
+        for (int i = 0; i < size; i++) {
+            long nodeId = osmNodeIds.get(i);
+            // This will return the same flags for ALL points along a road link.
+            // Is this correct? This means that if a link has 50 points and one
+            // is a barrier, they will all be barriers???
+            long nodeFlags = getNodeFlagsMap().get(nodeId);
+            // barrier was spotted and way is otherwise passable for that
+            // mode
+            // of travel
+            if (nodeFlags > 0) {
+                if ((nodeFlags & wayFlags) > 0) {
+                    // remove barrier to avoid duplicates
+                    getNodeFlagsMap().put(nodeId, 0);
 
                     // create shadow node copy for zero length edge
                     OSMNode newNode = addBarrierNode(nodeId);
@@ -755,11 +828,11 @@ public class OsItnReader implements DataReader {
                         // start at beginning of array if there was no
                         // previous
                         // barrier
-                        if (lastNoEntry < 0)
-                            lastNoEntry = 0;
+                        if (lastBarrier < 0)
+                            lastBarrier = 0;
 
                         // add way up to barrier shadow node
-                        long transfer[] = osmNodeIds.toArray(lastNoEntry, i - lastNoEntry + 1);
+                        long transfer[] = osmNodeIds.toArray(lastBarrier, i - lastBarrier + 1);
                         transfer[transfer.length - 1] = newNodeId;
                         TLongList partIds = new TLongArrayList(transfer);
                         Collection<EdgeIteratorState> newWays = addOSMWay(partIds, wayFlags, wayOsmId);
@@ -770,49 +843,47 @@ public class OsItnReader implements DataReader {
                         Collection<EdgeIteratorState> newBarriers = addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId);
                         logger.warn("Way adds barrier edges:" + wayOsmId + newBarriers.size());
                         createdEdges.addAll(newBarriers);
-                        
-                            TLongObjectMap<String> edgeIdToRoadDirectionMap = getEdgeRoadDirectionMap();
-                            for (EdgeIteratorState edgeIteratorState : newBarriers) {
-                                String orientation = ositnNode.getTag(OSITNElement.TAG_KEY_ONEWAY_ORIENTATION);
-                                edgeIdToRoadDirectionMap.put(edgeIteratorState.getEdge(), orientation);
-                            }
-//                        createdBarriers.addAll(newBarriers);
                     } else {
                         // run edge from real first node to shadow node
                         Collection<EdgeIteratorState> newBarriers = addBarrierEdge(nodeId, newNodeId, wayFlags, nodeFlags, wayOsmId);
                         logger.warn("Way adds barrier edges:" + wayOsmId + newBarriers.size());
                         createdEdges.addAll(newBarriers);
-//                        createdBarriers.addAll(newBarriers);
 
                         // exchange first node for created barrier node
                         osmNodeIds.set(0, newNodeId);
                     }
 
                     // remember barrier for processing the way behind it
-                    lastNoEntry = i;
+                    lastBarrier = i;
                 }
             }
-            // just add remainder of way to graph if no entry was not the last node
-            if (lastNoEntry >= 0) {
-                if (lastNoEntry < (size - 1)) {
-                    long transfer[] = osmNodeIds.toArray(lastNoEntry, size - lastNoEntry);
-                    TLongList partNodeIds = new TLongArrayList(transfer);
-                    Collection<EdgeIteratorState> newEdges = addOSMWay(partNodeIds, wayFlags, wayOsmId);
-                    logger.warn("Way adds edges:" + wayOsmId + newEdges.size());
-                    createdEdges.addAll(newEdges);
-                }
-            } else {
-                // no barriers - simply add the whole way
-                Collection<EdgeIteratorState> newEdges = addOSMWay(way.getNodes(), wayFlags, wayOsmId);
-                logger.warn("Way adds edges:" + wayOsmId + ":" + newEdges.size());
-                createdEdges.addAll(newEdges);
-            }
-
-            for (EdgeIteratorState edge : createdEdges) {
-                encodingManager.applyWayTags(way, edge);
-            }
-
         }
+
+        // just add remainder of way to graph if barrier was not the last
+        // node
+        TLongList nodeIdsToCreateWaysFor = null;
+        if (lastBarrier >= 0) {
+            if (lastBarrier < size - 1) {
+                long transfer[] = osmNodeIds.toArray(lastBarrier, size - lastBarrier);
+                nodeIdsToCreateWaysFor = new TLongArrayList(transfer);
+            }
+        } else {
+            // no barriers - simply add the whole way
+            nodeIdsToCreateWaysFor = osmNodeIds;
+        }
+
+        if (nodeIdsToCreateWaysFor != null) {
+
+            // Here we need to process no entries
+            Collection<EdgeIteratorState> newEdges = addOSMWay(nodeIdsToCreateWaysFor, wayFlags, wayOsmId);
+            logger.warn("Way adds edges:" + wayOsmId + ":" + newEdges.size());
+            createdEdges.addAll(newEdges);
+        }
+        // TODO Can we move this code out into processWay?
+        for (EdgeIteratorState edge : createdEdges) {
+            encodingManager.applyWayTags(way, edge);
+        }
+        return createdEdges;
     }
 
     private String getWayName(long id) {
@@ -1185,7 +1256,7 @@ public class OsItnReader implements DataReader {
         printInfo("way");
         pillarInfo.clear();
         eleProvider.release();
-        osmNodeIdToInternalNodeMap = null;
+        // osmNodeIdToInternalNodeMap = null;
         osmNodeIdToNodeFlagsMap = null;
         osmWayIdToRouteWeightMap = null;
         osmIdStoreRequiredSet = null;
@@ -1372,3 +1443,4 @@ public class OsItnReader implements DataReader {
         return -1;
     }
 }
+

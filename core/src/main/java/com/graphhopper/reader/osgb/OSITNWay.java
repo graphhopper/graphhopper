@@ -142,11 +142,14 @@ public class OSITNWay extends OSITNElement implements Way {
     }
 
     /**
-     * Look for coords and directed link id in our new map. if it exists then set the barriers tag to "noentry" barrier flag as defined in CarFlagEncoder absoluteBarriers.add("noentry");
+     * Look for coords and directed link id in our new map. if it exists then
+     * set the barriers tag to "noentry" barrier flag as defined in
+     * CarFlagEncoder absoluteBarriers.add("noentry");
      * edgeIdCoordsToNodeFlagsMap = new TObjectLongHashMap<String>()
+     * 
      * @return
      */
-    public List<OSITNNode> evaluateWayNodes( TObjectLongHashMap<String> edgeIdCoordsToNodeFlagsMap) {
+    public List<OSITNNode> evaluateWayNodes(TObjectLongHashMap<String> edgeIdCoordsToNodeFlagsMap) {
         List<OSITNNode> wayNodes = new ArrayList<OSITNNode>();
 
         for (int i = 0; i < wayCoords.length; i++) {
@@ -155,29 +158,29 @@ public class OSITNWay extends OSITNElement implements Way {
             long id = idPrefix + getId();
             OSITNNode wayNode = new OSITNNode(id);
             wayNode.parseCoords(wayCoord);
-            
-            // Here we need to check the ItnReader edgeIdCoordsToNodeFlagsMap for this id-coord pair
-            String key = getId()+"-"+wayCoord;
+
+            // Here we need to check the ItnReader edgeIdCoordsToNodeFlagsMap
+            // for this id-coord pair
+            String key = getId() + "-" + wayCoord;
             if (edgeIdCoordsToNodeFlagsMap.containsKey(key)) {
                 long direction = edgeIdCoordsToNodeFlagsMap.get(key);
                 wayNode.setTag(TAG_KEY_NOENTRY_ORIENTATION, "true");
-                if (direction >0l) {
+                if (direction > 0l) {
                     wayNode.setTag(TAG_KEY_ONEWAY_ORIENTATION, "true");
-                }
-                else {
+                } else {
                     wayNode.setTag(TAG_KEY_ONEWAY_ORIENTATION, "-1");
                 }
             }
-            logger.info("Node " + getId()+ " coords: " + wayCoord + " tags: ");
+            logger.info("Node " + getId() + " coords: " + wayCoord + " tags: ");
             for (String tagKey : wayNode.getTags().keySet()) {
-                logger.info("\t " + tagKey+ " : " + wayNode.getTag(tagKey));
+                logger.info("\t " + tagKey + " : " + wayNode.getTag(tagKey));
             }
-            
+
             wayNodes.add(wayNode);
         }
         return wayNodes;
     }
-    
+
     public void clearWayNodes() {
         wayCoords = null;
     }
