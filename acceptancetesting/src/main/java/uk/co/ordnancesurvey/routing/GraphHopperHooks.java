@@ -34,7 +34,7 @@ public class GraphHopperHooks {
 
 	}
 
-	@Then("^I shhould be able to verify the \"([^\"]*)\" waypoint \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" on the route map$")
+	@Then("^I should be able to verify the \"([^\"]*)\" waypoint \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" on the route map$")
 	public void I_should_be_able_to_verify_the_waypoint_on_the_route_map(
 			String wayPointIndex, String wayPoint_Coordinates,
 			String wayPointDescription, String azimuth, String direction,
