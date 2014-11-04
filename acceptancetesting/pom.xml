@@ -7,6 +7,12 @@
 	<name>GraphHopper Acceptance Testing</name>
 	<packaging>jar</packaging>
 
+	<parent>
+		<groupId>com.graphhopper</groupId>
+		<artifactId>graphhopper-parent</artifactId>
+		<version>0.4-SNAPSHOT</version>
+	</parent>
+
 	<repositories>
 		<repository>
 			<id>corporate</id>
@@ -24,6 +30,28 @@
 					<source>1.7</source>
 					<target>1.7</target>
 				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>2.16</version>
+				<configuration>
+					<argLine>-Xms256m -Xmx2048m</argLine>
+					<includes>
+						<include>**/*Runner.class</include>
+					</includes>
+					<testFailureIgnore>true</testFailureIgnore>
+				</configuration>
+				<executions>
+					<execution>
+						<id>integration-test-run</id>
+						<phase>integration-test</phase>
+						<goals>
+							<goal>integration-test</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
@@ -44,6 +72,21 @@
 			<artifactId>log4j</artifactId>
 			<version>1.2.17</version>
 			<type>jar</type>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.3.5</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.4</version>
+		</dependency>
+		<dependency>
+			<groupId>info.cukes</groupId>
+			<artifactId>cucumber-picocontainer</artifactId>
+			<version>1.1.4</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
