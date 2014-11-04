@@ -40,13 +40,35 @@ Feature: Verify a route from A to B
       | 50.902674,-1.404169 | 55.861284,-4.24996 | car       |
 
   @Routing
+  Scenario Outline: Verify  waypoints on a Route from London to Birmingham
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                       | azimuth | direction | time    | distance  |
+      | 1             | 51.507229,-0.127581 | Continue onto CHARING CROSS (A4)   | 261     | W         | 4168    | 63.781    |
+      | 8             | 51.515281,-0.141988 | turn left onto A40 (OXFORD STREET) | 275     | W         | 77416   | 1183.058  |
+      | 25            | 51.560754,-0.488952 | continue onto M40                  | 274     | W         | 568909  | 15806.233 |
+      | 52            | 52.073616,-1.3127   | continue onto M40                  | 285     | W         | 1712591 | 47581.879 |
+
+    Examples: 
+      | pointA              | pointB              | routetype |
+      | 51.507229,-0.127581 | 52.481875,-1.898743 | car       |
+
+@Routing
+  Scenario Outline: Verify  waypoints on a Route from London to Birmingham and the total route time estimate
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then The total route time should be not more than "<totalRouteTime>"
+
+    Examples: 
+      | pointA              | pointB              | routetype | totalRouteTime |
+      | 51.507229,-0.127581 | 52.481875,-1.898743 | car       | 02h44min       |
+@Routing
   Scenario Outline: Verify  waypoints on a Route from Hounslow to Burnham and the total route time estimate
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then The total route time should be not more than "<totalRouteTime>"
 
     Examples: 
       | pointA             | pointB              | routetype | totalRouteTime |
-      | 51.475161,-0.39591 | 51.536292,-0.656802 | car       | 22             |
+      | 51.475161,-0.39591 | 51.536292,-0.656802 | car       | 0h22min             |
 
   @Routing
   Scenario Outline: Verify  waypoints on a Route from Southampton to Glasgow
@@ -54,9 +76,8 @@ Feature: Verify a route from A to B
     Then I should be able to verify the trackPoints on the route map:
       | trackPointco       | time                      |
       | 50.911647,-1.41134 | 2014-10-31T19:17:22+00:00 |
-     | 50.910471,-1.41042 |2014-10-31T19:17:38+00:00|
+      | 50.910471,-1.41042 | 2014-10-31T19:17:38+00:00 |
+
     Examples: 
       | pointA              | pointB              | routetype |
       | 50.911645,-1.411389 | 50.913965,-1.401229 | car       |
-      
-      
