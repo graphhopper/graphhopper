@@ -252,9 +252,9 @@ public class GraphHopperGPXParserRouteTest {
 	public boolean routeContainsTurn(String turnDescription, Route aRoute) {
 		System.out.println(aRoute);
 		boolean routeContainsTurn = false;
+		turnDescription = turnDescription.toUpperCase();
 
 		for (Waypoint aWaypointInaRoute : aRoute.getRoutePoints()) {
-
 			if (aWaypointInaRoute.getDescription() != null
 					&& aWaypointInaRoute.getDescription().toUpperCase()
 							.equals(turnDescription)) {
