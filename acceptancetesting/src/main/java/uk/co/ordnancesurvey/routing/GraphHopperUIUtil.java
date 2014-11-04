@@ -1,4 +1,4 @@
-package uk.ordnancesurvey.routing;
+package uk.co.ordnancesurvey.routing;
 
 import static org.junit.Assert.assertTrue;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.FROM_ROUTE;

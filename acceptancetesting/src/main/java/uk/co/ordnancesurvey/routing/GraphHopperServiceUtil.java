@@ -1,4 +1,4 @@
-	package uk.ordnancesurvey.routing;
+	package uk.co.ordnancesurvey.routing;
 	import java.util.HashSet;
 
 	import org.alternativevision.gpx.beans.Route;

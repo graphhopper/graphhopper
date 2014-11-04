@@ -1,4 +1,4 @@
-package uk.ordnancesurvey.routing;
+package uk.co.ordnancesurvey.routing;
 
 import static uk.co.ordnancesurvey.webtests.base.ComponentValueSource.INNER_HTML;
 import uk.co.ordnancesurvey.webtests.base.ComponentByXPATH;

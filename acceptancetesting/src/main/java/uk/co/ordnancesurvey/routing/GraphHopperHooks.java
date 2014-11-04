@@ -1,4 +1,4 @@
-package uk.ordnancesurvey.routing;
+package uk.co.ordnancesurvey.routing;
 
 import java.text.ParseException;
 import java.util.List;
