@@ -449,7 +449,7 @@ public class OsItnReaderTest {
         }
 
         
-        @Test
+        //@Test
         public void testReadSample() throws IOException {
                 boolean turnRestrictionsImport = false;
                 boolean is3D = false;
