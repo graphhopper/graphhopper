@@ -31,6 +31,29 @@
 					<target>1.7</target>
 				</configuration>
 			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>2.16</version>
+				<configuration>
+					<argLine>${failsafeargsfromjacoco} -Xms256m -Xmx2048m</argLine>
+					<groups>uk.co.ordnancesurvey.IntegrationTests</groups>
+					<includes>
+						<include>**/*Runner.class</include>
+					</includes>
+					<testFailureIgnore>true</testFailureIgnore>
+				</configuration>
+				<executions>
+					<execution>
+						<id>integration-test-run</id>
+						<phase>integration-test</phase>
+						<goals>
+							<goal>integration-test</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 
