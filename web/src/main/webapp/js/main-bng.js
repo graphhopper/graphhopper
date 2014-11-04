@@ -311,7 +311,7 @@ var matrixIdsBNG = new Array(22);
 for (var i= 0; i<22; i++) {
 matrixIdsBNG[i]= {
 identifier : "EPSG:27700:" + i,
-topLeftCorner : new L.LatLng(98988, 1225538 )
+topLeftCorner : new L.LatLng(-7, 60)
 };
 }
 return matrixIdsBNG;
@@ -417,16 +417,25 @@ var matrix = getOsMatrix();
     var defaultLayer = baseMaps[selectLayer];
     if (!defaultLayer)
         defaultLayer = osZoom;
+    var trans =  new L.Transformation(1,0,1,-60);
     
-    var bbox = [0, 0, 98988, 1225538];
+    var crs = new L.Proj.CRS("EPSG:27700",
+    		"+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +datum=OSGB36 +units=m +no_defs",
+    		{
+    		resolutions: [
+    		              896, 448, 224, 112, 56, 28, 14, 7, 3.5, 1.75, 0.875, 0.4375, 0.21875, 0.109375
+    		],
+    		transformation: trans,
+    		origin: [-7, 60 ] //103532.114906, 1178448.902511 //7482.508468, 16769.337546
+    		});
+    		
+    		
+//    var map = new L.Map('map', {
+//    		crs: crs,
+//    		continuousWorld: true,
+//    		worldCopyJump: false
+//    		});
     
-      var crs = new L.Proj.CRS( 'EPSG:27700',
- '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000' + '+ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +datum=OSGB36 +units=m +no_defs',
- {
- resolutions: [
- 896.0, 448.0, 224.0, 112.0, 56.0, 28.0, 14.0, 7.0, 3.5, 1.75, 0.875, 0.4375, 0.21875, 0.109375
- ]
- });
 
     // default
     map = L.map('map', {
@@ -455,11 +464,10 @@ var matrix = getOsMatrix();
             }],
         zoomControl: false,
         loadingControl: false,
-        continuousWorld: true,
+        continuousWorld: false,
         worldCopyJump: false,
         minZoom: 0,
-        tms: false, 
-        origin: [0,0]
+        tms: true, 
     });
 
 
