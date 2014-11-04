@@ -253,9 +253,10 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		formatter.setTimeZone(TimeZone.getTimeZone("GMT"));
 		Date eTime, aTime;
 
-		String actualTime;
+		String actualTime="0h00min";
 		String expectedTime = totalRouteTime.trim().replaceAll(" ", "");
 		eTime = formatter.parse(expectedTime);
+		aTime=formatter.parse(actualTime);
 
 		switch (testOn.toUpperCase()) {
 		case "WEB":
@@ -275,32 +276,30 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 					aTime.getTime() <= eTime.getTime());
 
 			break;
-		/*
-		 * case "SERVICE": actualTime = GPHService.getTotalRouteTime() / (60 *
-		 * 1000); expectedTime = Long.parseLong(totalRouteTime);
-		 * LOG.info("The total route time expected is " + expectedTime +
-		 * " and actual is " + actualTime);
-		 * assertTrue("The total route time expected " + expectedTime +
-		 * " is not matchin with actual " + actualTime, actualTime <=
-		 * expectedTime);
-		 * 
-		 * break;
-		 * 
-		 * default: actualTime = GPHService.getTotalRouteTime() / (60 * 1000);
-		 * expectedTime = Long.parseLong(totalRouteTime);
-		 * assertTrue("The total route time expected" + expectedTime +
-		 * " is not matchin with actual " + actualTime, actualTime <=
-		 * expectedTime); pattern = "((?<=\\D)(?=\\d)|(?<=\\d)(?=\\D))";
-		 * actualTime = Long.parseLong(getValue(TOTAL_ROUTE_TIME).split(
-		 * "take ")[1].split(pattern)[0]);
-		 * LOG.info("The total route time expected is " + expectedTime +
-		 * " and actual is " + actualTime);
-		 * assertTrue("The total route time expected" + expectedTime +
-		 * " is not matchin with actual " + actualTime, actualTime <=
-		 * expectedTime);
-		 */
 
-		// break;
+		case "SERVICE":
+			aTime.setTime(GPHService.getTotalRouteTime());
+			LOG.info("The total route time expected is " + eTime.getTime()
+					+ " and actual is " + aTime.getTime());
+			assertTrue("The total route time expected " + eTime.getTime()
+					+ " is not matchin with actual " + aTime.getTime(),
+					aTime.getTime() <= eTime.getTime());
+			break;
+
+		default:
+			actualTime = getValue(TOTAL_ROUTE_TIME).split("take ")[1].trim()
+			.replaceAll(" ", "");
+	if (!actualTime.contains("h")) {
+		actualTime = "00h" + actualTime;
+	}
+	aTime = formatter.parse(actualTime);
+
+	LOG.info("The total route time expected is " + eTime.getTime()
+			+ " Milliseconds and actual is " + aTime.getTime()
+			+ " Milliseconds");
+	assertTrue("The total route time expected " + eTime.getTime()
+			+ " is not matchin with actual " + aTime.getTime(),
+			aTime.getTime() <= eTime.getTime());
 		}
 
 	}

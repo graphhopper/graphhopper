@@ -3,6 +3,7 @@ Feature: Verify a route from A to B
     I want to get a route from location A to location B using the routing service
     And route should be the fastest route and contain the waypoints,restrictions,time and other instructions
 
+  @Routing
   Scenario Outline: Verify  waypoints on a Route
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -13,12 +14,13 @@ Feature: Verify a route from A to B
       | pointA                                 | pointB                                 | routetype |
       | 51.471546541834144,-0.3618621826171875 | 51.45914115860512,-0.96679687499999995 | car       |
 
+  @Routing
   Scenario Outline: Verify  waypoints on a Route from Hounslow to Reading
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                        | azimuth | direction | time    | distance  |
       | 1             | 51.472112,-0.361993 | Continue onto ELLINGTON ROAD        | 278     | W         | 10696   | 130.188   |
-      | 9             | 51.491777,-0.411    | Turn slight left onto M4            | 303     | NW        | 1298148 | 36068.275 |
+      | 10            | 51.488668,-0.394307 | Continue onto M4                    | 284     | W         | 1319825 | 36669.681 |
       | 14            | 51.437599,-0.900107 | Continue onto WOKINGHAM ROAD (A329) | 293     | NW        | 24980   | 381.74    |
 
     Examples: 
@@ -44,7 +46,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                       | azimuth | direction | time    | distance  |
-      | 1             | 51.507229,-0.127581 | Continue onto CHARING CROSS (A4)   | 261     | W         | 4168    | 63.781    |
+      | 1             | 51.507229,-0.127581 | Continue onto CHARING CROSS (A4)   | 261     | W         | 4167    | 63.781    |
       | 8             | 51.515281,-0.141988 | turn left onto A40 (OXFORD STREET) | 275     | W         | 77416   | 1183.058  |
       | 25            | 51.560754,-0.488952 | continue onto M40                  | 274     | W         | 568909  | 15806.233 |
       | 52            | 52.073616,-1.3127   | continue onto M40                  | 285     | W         | 1712591 | 47581.879 |
@@ -53,7 +55,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 51.507229,-0.127581 | 52.481875,-1.898743 | car       |
 
-@Routing
+  @Routing
   Scenario Outline: Verify  waypoints on a Route from London to Birmingham and the total route time estimate
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then The total route time should be not more than "<totalRouteTime>"
@@ -61,14 +63,15 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA              | pointB              | routetype | totalRouteTime |
       | 51.507229,-0.127581 | 52.481875,-1.898743 | car       | 02h44min       |
-@Routing
+
+  @Routing
   Scenario Outline: Verify  waypoints on a Route from Hounslow to Burnham and the total route time estimate
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then The total route time should be not more than "<totalRouteTime>"
 
     Examples: 
       | pointA             | pointB              | routetype | totalRouteTime |
-      | 51.475161,-0.39591 | 51.536292,-0.656802 | car       | 0h22min             |
+      | 51.475161,-0.39591 | 51.536292,-0.656802 | car       | 0h22min        |
 
   @Routing
   Scenario Outline: Verify  waypoints on a Route from Southampton to Glasgow

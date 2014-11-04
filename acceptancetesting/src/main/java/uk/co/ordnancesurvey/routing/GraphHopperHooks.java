@@ -56,7 +56,7 @@ public class GraphHopperHooks {
 	}
 
 	@Then("^The total route time should be not more than \"([^\"]*)\"$")
-	public void The_total_route_time_should_be_not_more_than(String totalRouteTime)
+	public void The_total_route_time_should_be_not_more_than(String totalRouteTime) throws ParseException
 			 {
 	graphUiUtil.verifyTotalRouteTime(totalRouteTime);
 		
