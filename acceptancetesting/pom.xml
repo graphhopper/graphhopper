@@ -37,7 +37,7 @@
 				<artifactId>maven-failsafe-plugin</artifactId>
 				<version>2.16</version>
 				<configuration>
-					<argLine>${failsafeargsfromjacoco} -Xms256m -Xmx2048m</argLine>
+					<argLine>-Xms256m -Xmx2048m</argLine>
 					<groups>uk.co.ordnancesurvey.IntegrationTests</groups>
 					<includes>
 						<include>**/*Runner.class</include>
