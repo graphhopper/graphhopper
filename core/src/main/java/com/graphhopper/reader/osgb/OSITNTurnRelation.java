@@ -96,7 +96,7 @@ public class OSITNTurnRelation implements TurnRelation {
 	            {
 					int edge = iter.getEdge();
 					long osmIdOfInternalEdge = osmReader.getOsmIdOfInternalEdge(edge);
-					logger.info("Got Edge Info: " +osmIdOfInternalEdge + " for: " + edge + " comparing to " + fromOsm );
+					logger.info("Got Edge Info: " +osmIdOfInternalEdge + " for: " + edge );
 	                if (osmIdOfInternalEdge == this.fromOsm)
 	                {
 	                    edgeIdFrom = edge;
