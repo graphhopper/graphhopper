@@ -25,31 +25,14 @@ public class RouteWayPoint {
 		boolean isEqual = false;
 		Field[] fields = waypoint.getClass().getDeclaredFields();
 		for (Field f : fields) {
-			
-	
-			if(!f.getName().equalsIgnoreCase("time"))
-			{
-				
-			
-			
 			try {
 				String first = f.getName().substring(0, 1);
 				String getter = "get" + f.getName().replaceFirst(first, first.toUpperCase());
 				Method m = waypoint.getClass().getMethod(getter,new Class[] {});
 				
-
-				
 				Object thisValue = m.invoke(waypoint);
 				Object thatValue = m.invoke(routeWayPoint.waypoint);
-				if (thisValue instanceof String) {
-					String thisValueAsString = (String) thisValue;
-					String thatValueAsString=(String)thatValue;
-					isEqual = thisValueAsString.equalsIgnoreCase(( thatValueAsString));
-					
-				} else {
-					isEqual = Objects.equals(thisValue, thatValue);
-				}
-			
+				isEqual = Objects.equals(thisValue, thatValue);
 				if (!isEqual) {
 					break;
 				}
@@ -67,11 +50,9 @@ public class RouteWayPoint {
 				e.printStackTrace();
 			}
 		}
-		}
+
 		if (isEqual) {
-			System.out.println(routeWayPoint.waypoint.getExtensionData());
-			if (null!=routeWayPoint.waypoint.getExtensionData())
-			{for (String anExtensionDataKey : waypoint.getExtensionData()
+			for (String anExtensionDataKey : waypoint.getExtensionData()
 					.keySet()) {
 				isEqual = Objects.equals(waypoint
 						.getExtensionData(anExtensionDataKey),
@@ -81,7 +62,6 @@ public class RouteWayPoint {
 					break;
 				}
 			}
-		}
 		}
 
 		return isEqual;
