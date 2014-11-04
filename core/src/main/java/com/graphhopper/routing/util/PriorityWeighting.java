@@ -21,7 +21,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
- * Special weighting for bike, uses the experimental API of encoder.getPriority(EdgeIteratorState)
+ * Special weighting for (motor)bike
  * <p>
  * @author Peter Karich
  */
