@@ -70,8 +70,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 			initialiseWebDriver();
 			Thread.sleep(2000);
 
-			panLeftonMap();
-			panRighttonElement();
+			panRighttonMap();
 
 		}
 
@@ -149,7 +148,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 	}
 
-	public void panRighttonElement() {
+	public void panRighttonMap() {
 
 		Actions action = new Actions(driver);
 
