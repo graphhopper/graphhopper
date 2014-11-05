@@ -12,14 +12,12 @@
     renaming of GraphHopper.setCHShortcuts to setCHWeighting, as well as the property prepare.chShortcuts to prepare.chWeighting
     jsonp is disabled by default. You need to enable it in the config.properties, see the config-example.properties
     EncodingManager cannot be null in GraphHopperStorage since 0.4. If you need to parse EncodingManager configuration from existing graph use EncodingManager.create
-    no reflection done in EncodingManager which improves portability and makes configuration of encoders
+    no reflection done in EncodingManager which improves portability and makes configuration of encoders possible before adding to manager
     removed dijkstraNativebi as no performance advantage but maintenance disadvantage and similar to oneToManyDijkstra
-    osmreader.bytesForFlags changed to graph.bytesForFlags
-    to provide context for turn costs we needed to add prevEdgeId into Weighting.calcWeight
+    to provide context for turn costs we needed to add prevEdgeId into Weighting.calcWeight, see new documentation
     with the introduction of lock protection mechanism (see #112) GraphHopper needs always write access, see also #217
-    new GraphHopper.clean method to remove the directory via Java API
+    new GraphHopper.clean method to remove the graph directory via Java API
     FlagEncoder: replaced isFoward and isBackward with more generic isBool(flags, FlagEncoder.FORWARD|BACKWARD)
-        restrictions type was: String[], is: List<String>
 
 0.3.0
     introduced prefer bits, now bike uses more bits and 3 bike encoder do not fit into 32 bit anymore, will be fixed later

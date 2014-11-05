@@ -58,7 +58,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     public FootFlagEncoder( int speedBits, double speedFactor )
     {
         super(speedBits, speedFactor, 0);
-        restrictions = new ArrayList<String>(Arrays.asList("foot", "access"));
+        restrictions.addAll(Arrays.asList("foot", "access"));
         restrictedValues.add("private");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
@@ -73,7 +73,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         sidewalks.add("left");
         sidewalks.add("right");
 
-        blockByDefault = false;
+        setBlockByDefault(false);
         potentialBarriers.add("gate");
 
         acceptedRailways.add("station");
@@ -202,7 +202,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // do not get our feet wet, "yes" is already included above
-        if (blockFords && (way.hasTag("highway", "ford") || way.hasTag("ford")))
+        if (isBlockFords() && (way.hasTag("highway", "ford") || way.hasTag("ford")))
             return 0;
 
         if (way.hasTag("bicycle", "official"))
