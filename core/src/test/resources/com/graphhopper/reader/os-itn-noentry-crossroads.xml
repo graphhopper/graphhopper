@@ -254,7 +254,7 @@
 	</osgb:networkMember>
 
 	<!-- Write test for this -->
-	<osgb:roadInformationMember>
+ 	<osgb:roadInformationMember>
 		<osgb:RoadRouteInformation fid='osgb4000000025219970'>
 			<osgb:version>2</osgb:version>
 			<osgb:versionDate>2005-09-13</osgb:versionDate>
