@@ -214,4 +214,5 @@ public class OSITNWay extends OSITNElement implements Way {
         throw new UnsupportedOperationException();
 
     }
+
 }
