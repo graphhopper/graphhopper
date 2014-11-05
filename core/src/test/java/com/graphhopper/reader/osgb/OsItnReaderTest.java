@@ -140,15 +140,6 @@ public class OsItnReaderTest {
         logger.info("Node 7 " + count(explorer.setBaseNode(7)));
         logger.info("Node 8 " + count(explorer.setBaseNode(8)));
         
-        assertEquals(4, count(explorer.setBaseNode(0)));
-        assertEquals(2, count(explorer.setBaseNode(1)));
-        assertEquals(2, count(explorer.setBaseNode(2)));
-        assertEquals(2, count(explorer.setBaseNode(3)));
-        assertEquals(1, count(explorer.setBaseNode(4)));
-        assertEquals(2, count(explorer.setBaseNode(5)));
-        assertEquals(1, count(explorer.setBaseNode(6)));
-        assertEquals(1, count(explorer.setBaseNode(7)));
-        assertEquals(1, count(explorer.setBaseNode(8)));
         
 //        carAllExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, true));
 
@@ -181,6 +172,15 @@ public class OsItnReaderTest {
             logger.info("6 Adj node is " + iter.getAdjNode());            
         }
         
+        assertEquals(4, count(explorer.setBaseNode(0)));
+        assertEquals(2, count(explorer.setBaseNode(1)));
+        assertEquals(2, count(explorer.setBaseNode(2)));
+        assertEquals(2, count(explorer.setBaseNode(3)));
+        assertEquals(1, count(explorer.setBaseNode(4)));
+        assertEquals(2, count(explorer.setBaseNode(5)));
+        assertEquals(1, count(explorer.setBaseNode(6)));
+        assertEquals(1, count(explorer.setBaseNode(7)));
+        assertEquals(1, count(explorer.setBaseNode(8)));
         // Assert that this is true
         iter = explorer.setBaseNode(0);
         assertTrue(iter.next());
