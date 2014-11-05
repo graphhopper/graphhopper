@@ -649,13 +649,13 @@ public class OsItnReaderTest {
 		assertEquals(1, count(explorer.setBaseNode(2)));
 			
 		// Assert that when the explorer is positioned on node 3 it can only travel 1 edge 
-		assertEquals(2, count(explorer.setBaseNode(3)));
+		assertEquals(1, count(explorer.setBaseNode(3)));
 		
-		// Assert that when the explorer is positioned on node 1 it can only travel 1 edge 
+		// Assert that when the explorer is positioned on node 4 it can only travel 1 edge 
 		assertEquals(1, count(explorer.setBaseNode(4)));
 				
 		carAllExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, true));
-		// Given node zero can I go anywhere from it?
+		// Starting at node zero I should be able to travel back and forth to four nodes?
 		iter = carAllExplorer.setBaseNode(0);
 		assertTrue(iter.next());
 		evaluateRouting(iter, 6, true, true, false);
@@ -663,28 +663,44 @@ public class OsItnReaderTest {
 		evaluateRouting(iter, 4, true, true, false);
 		evaluateRouting(iter, 1, true, true, true);
 
-		//
+		// Starting at node 1
 		iter = carAllExplorer.setBaseNode(1);
 		assertTrue(iter.next());
+		// I should be able to get to node 0 forwards and backwards and have not exhausted all the edges
 		evaluateRouting(iter, 0, true, true, false);
-		evaluateRouting(iter, 3, true, true, true);
+		// I should be able to get to node 3 forwards but not back and have exhausted all the edges
+		evaluateRouting(iter, 3, true, false, true);
 		
+		// Starting at node 2
 		iter = carAllExplorer.setBaseNode(2);
 		assertTrue(iter.next());
+		// I should be able to travel to node 3 forth and back and exhausted all the edges
 		evaluateRouting(iter, 3, true, true, true);
 
+		// Starting at node 3
 		iter = carAllExplorer.setBaseNode(3);
 		assertTrue(iter.next());
-		evaluateRouting(iter, 1, true, true, false);
+		// I should not be able to travel to node 1 in a forward direction but in backward direction
+		evaluateRouting(iter, 1, false, true, false);
+		// I should be able to travel to node 2 in both a forward direction and backward direction and have exhausted all the edges
 		evaluateRouting(iter, 2, true, true, true);
 		
+		// Starting at node 4
 		iter = carAllExplorer.setBaseNode(4);
 		assertTrue(iter.next());
+		// I should be able to travel to node 0 back and forth and have exhausted all the edges
 		evaluateRouting(iter, 0, true, true, true);
 		
-		// Given Node 6 and able to travel forward and  backwards I should reach the end when I move to the next node
+		// Given Node 5 
 		iter = carAllExplorer.setBaseNode(5);
 		assertTrue(iter.next());
+		// I should be able to travel to node 0 back and forth and have exhausted all the edges
+		evaluateRouting(iter, 0, true, true, true);
+		
+		// Given Node 6 
+		iter = carAllExplorer.setBaseNode(6);
+		assertTrue(iter.next());
+		// I should be able to travel to node 0 back and forth and have exhausted all the edges
 		evaluateRouting(iter, 0, true, true, true);
 	}
 }
