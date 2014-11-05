@@ -38,7 +38,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     /**
      * Reports wether this edge is unpaved.
      */
-    public static final int K_UNPAVED = 100;    
+    public static final int K_UNPAVED = 100;
     protected static final int PUSHING_SECTION_SPEED = 4;
     private long unpavedBit = 0;
     // Pushing section heighways are parts where you need to get off your bike and push it (German: Schiebestrecke)
@@ -450,7 +450,8 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         if ("cycleway".equals(highway))
             weightToPrioMap.put(100d, VERY_NICE.getValue());
 
-        if (preferHighwayTags.contains(highway))
+        double maxSpeed = getMaxSpeed(way);
+        if (preferHighwayTags.contains(highway) || maxSpeed > 0 && maxSpeed <= 30)
         {
             weightToPrioMap.put(40d, PREFER.getValue());
             if (way.hasTag("tunnel", intendedValues))
@@ -460,7 +461,6 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         if (pushingSections.contains(highway) || "parking_aisle".equals(service))
             weightToPrioMap.put(50d, AVOID_IF_POSSIBLE.getValue());
 
-        double maxSpeed = getMaxSpeed(way);
         if (avoidHighwayTags.contains(highway) || maxSpeed > 80)
         {
             weightToPrioMap.put(50d, REACH_DEST.getValue());
