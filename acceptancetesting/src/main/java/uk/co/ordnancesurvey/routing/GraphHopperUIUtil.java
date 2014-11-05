@@ -241,6 +241,26 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		}
 
 	}
+	
+	
+	public void isWayPointNotonRouteMap(List<Map> waypointList) {
+
+		for (int i = 0; i < waypointList.size(); i++) {
+			String wayPointIndex = (String) waypointList.get(i).get(
+					"wayPointIndex");
+			String waypointco = (String) waypointList.get(i).get("waypointco");
+			String waypointdesc = (String) waypointList.get(i).get(
+					"waypointdesc");
+			String azimuth = (String) waypointList.get(i).get("azimuth");
+			String direction = (String) waypointList.get(i).get("direction");
+			String time = (String) waypointList.get(i).get("time");
+			String distance = (String) waypointList.get(i).get("distance");
+			
+						isWayPointonRouteMap(wayPointIndex, waypointco, waypointdesc,
+					azimuth, direction, time, distance);
+		}
+
+	}
 
 	public void verifyTotalRouteTime(String totalRouteTime)
 			throws ParseException {
@@ -312,9 +332,28 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 			Waypoint trackPoint = buildWayPoint(waypointco, time);
 			assertTrue(GPHService.isWayPointOnTrack(trackPoint, GPHService
 					.getTracks().iterator().next()));
-
+			
 		}
 
 	}
+	
+	
+	public void isTrackPointNotonRouteMap(List<Map> trackPointsList)
+			throws ParseException {
+
+		for (int i = 0; i < trackPointsList.size(); i++) {
+
+			String waypointco = (String) trackPointsList.get(i).get(
+					"trackPointco");
+			String time = (String) trackPointsList.get(i).get("time");
+
+			Waypoint trackPoint = buildWayPoint(waypointco, time);
+			assertTrue(!GPHService.isWayPointOnTrack(trackPoint, GPHService
+					.getTracks().iterator().next()));
+			
+		}
+
+	}
+	
 
 }
