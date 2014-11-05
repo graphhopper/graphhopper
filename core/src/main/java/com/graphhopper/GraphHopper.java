@@ -33,10 +33,12 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +51,8 @@ import org.slf4j.LoggerFactory;
  */
 public class GraphHopper implements GraphHopperAPI
 {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final String READER_UNAVAILABLE = "DataReader class %s not available check your setting for reader.implementation.";
+	private final Logger logger = LoggerFactory.getLogger(getClass());
     // for graph:
     private GraphStorage graph;
     protected EncodingManager encodingManager;
@@ -93,6 +96,7 @@ public class GraphHopper implements GraphHopperAPI
     private final TranslationMap trMap = new TranslationMap().doImport();
     protected ElevationProvider eleProvider = ElevationProvider.NOOP;
     private final AtomicLong visitedSum = new AtomicLong(0);
+	private String dataReader;
 
     public GraphHopper()
     {
@@ -463,6 +467,8 @@ public class GraphHopper implements GraphHopperAPI
         String tmpOsmFile = args.get("osmreader.osm", "");
         if (!Helper.isEmpty(tmpOsmFile))
             osmFile = tmpOsmFile;
+        
+        dataReader = args.get("reader.implementation", "com.graphhopper.reader.OSMReader");
 
         String graphHopperFolder = args.get("graph.location", "");
         if (Helper.isEmpty(graphHopperFolder) && Helper.isEmpty(ghLocation))
@@ -622,10 +628,19 @@ public class GraphHopper implements GraphHopperAPI
 
     protected DataReader createReader( GraphStorage tmpGraph )
     {
-        return initOSMReader(new OSMReader(tmpGraph));
+    	DataReader reader;
+		try {
+			Class readerImpl;
+			readerImpl = Class.forName(dataReader);
+			Constructor constructor = readerImpl.getDeclaredConstructor(GraphStorage.class);
+			reader = (DataReader) constructor.newInstance(tmpGraph);
+		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			throw new IllegalStateException(READER_UNAVAILABLE.format(dataReader));
+		}
+        return initReader(reader);
     }
 
-    protected OSMReader initOSMReader( OSMReader reader )
+    protected DataReader initReader(DataReader reader )
     {
         if (osmFile == null)
             throw new IllegalArgumentException("No OSM file specified");

@@ -18,8 +18,11 @@
  */
 package com.graphhopper.reader;
 
+import java.io.File;
 import java.io.IOException;
 
+import com.graphhopper.reader.dem.ElevationProvider;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphStorage;
 
 /**
@@ -36,5 +39,15 @@ public interface DataReader
 	int getInternalNodeIdOfOsmNode(long viaOsm);
 
 	long getOsmIdOfInternalEdge(int edge);
+
+	DataReader setOSMFile(File srcFile);
+
+	DataReader setElevationProvider(ElevationProvider eleProvider);
+
+	DataReader setWorkerThreads(int workerThreads);
+
+	DataReader setEncodingManager(EncodingManager encodingManager);
+
+	DataReader setWayPointMaxDistance(double wayPointMaxDistance);
 
 }

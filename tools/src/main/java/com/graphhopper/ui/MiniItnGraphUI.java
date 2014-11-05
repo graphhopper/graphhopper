@@ -45,7 +45,6 @@ import uk.co.ordnancesurvey.api.srs.MapPoint;
 import uk.co.ordnancesurvey.api.srs.OutOfRangeException;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.ItnGraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.Path;
@@ -81,7 +80,8 @@ public class MiniItnGraphUI
     public static void main( String[] strs ) throws Exception
     {
         CmdArgs args = CmdArgs.read(strs);
-        GraphHopper hopper = new ItnGraphHopper().init(args).importOrLoad();
+        args.put("reader.implementation", "com.graphhopper.reader.osgb.OsItnReader");
+        GraphHopper hopper = new GraphHopper().init(args).importOrLoad();
         boolean debug = args.getBool("minigraphui.debug", false);
         new MiniItnGraphUI(hopper, debug).visualize();
     }
