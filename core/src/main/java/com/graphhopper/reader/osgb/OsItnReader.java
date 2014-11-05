@@ -753,12 +753,18 @@ public class OsItnReader implements DataReader {
                     Collection<EdgeIteratorState> newBarriers = addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId);
                     logger.warn("Way adds barrier edges:" + wayOsmId + " " + newBarriers.size());
                     noEntryCreatedEdges.addAll(newBarriers);
-
+                    // I think this is done too late
                     TLongObjectMap<String> edgeIdToRoadDirectionMap = getEdgeRoadDirectionMap();
                     for (EdgeIteratorState edgeIteratorState : newBarriers) {
                         String orientation = ositnNode.getTag(OSITNElement.TAG_KEY_ONEWAY_ORIENTATION);
                         edgeIdToRoadDirectionMap.put(edgeIteratorState.getEdge(), orientation);
+                        // Set the direction on the whole way (for now)
+                        way.setTag(OSITNElement.TAG_KEY_ONEWAY_ORIENTATION, orientation);
                     }
+//                    String wayDirection = getWayRoadDirection(way.getId());
+//                    if (null != wayDirection && !way.hasTag(OSITNElement.TAG_KEY_ONEWAY_ORIENTATION)) {
+//                        way.setTag(OSITNElement.TAG_KEY_ONEWAY_ORIENTATION, wayDirection);
+//                    }
                 } else {
                     // TODO Currently this code is never called. I believe that
                     // when the no entry is placed on either
