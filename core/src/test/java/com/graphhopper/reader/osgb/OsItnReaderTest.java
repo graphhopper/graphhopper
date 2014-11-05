@@ -658,24 +658,33 @@ public class OsItnReaderTest {
 		// Given node zero can I go anywhere from it?
 		iter = carAllExplorer.setBaseNode(0);
 		assertTrue(iter.next());
+		evaluateRouting(iter, 6, true, true, false);
+		evaluateRouting(iter, 5, true, true, false);
+		evaluateRouting(iter, 4, true, true, false);
+		evaluateRouting(iter, 1, true, true, true);
 
 		//
 		iter = carAllExplorer.setBaseNode(1);
+		assertTrue(iter.next());
+		evaluateRouting(iter, 0, true, true, false);
+		evaluateRouting(iter, 3, true, true, true);
+		
+		iter = carAllExplorer.setBaseNode(2);
+		assertTrue(iter.next());
+		evaluateRouting(iter, 3, true, true, true);
+
+		iter = carAllExplorer.setBaseNode(3);
+		assertTrue(iter.next());
 		evaluateRouting(iter, 1, true, true, false);
+		evaluateRouting(iter, 2, true, true, true);
 		
-		iter = carAllExplorer.setBaseNode(0);
-		evaluateRouting(iter, 2, true, true, false);
-		
-		iter = carAllExplorer.setBaseNode(0);
-		evaluateRouting(iter, 3, true, true, false);
-		
-		iter = carAllExplorer.setBaseNode(0);
-		evaluateRouting(iter, 4, true, true, false);
-		
-		iter = carAllExplorer.setBaseNode(0); 
-		evaluateRouting(iter, 5, true, true, false);
+		iter = carAllExplorer.setBaseNode(4);
+		assertTrue(iter.next());
+		evaluateRouting(iter, 0, true, true, true);
 		
 		// Given Node 6 and able to travel forward and  backwards I should reach the end when I move to the next node
-		evaluateRouting(iter, 6, true, true, false);
+		iter = carAllExplorer.setBaseNode(5);
+		assertTrue(iter.next());
+		evaluateRouting(iter, 0, true, true, true);
 	}
 }
