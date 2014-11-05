@@ -353,12 +353,13 @@ public class OsItnReaderTest {
         assertEquals(!finished, iter.next());
 	}
 
-	private void readGraphFile(GraphHopperStorage graph, File file)
+	private OsItnReader readGraphFile(GraphHopperStorage graph, File file)
 			throws IOException {
 		OsItnReader osItnReader = new OsItnReader(graph);
 		osItnReader.setOSMFile(file);
 		osItnReader.setEncodingManager(encodingManager);
 		osItnReader.readGraph();
+		return osItnReader;
 	}
 
 	private GraphHopperStorage configureStorage(boolean turnRestrictionsImport,
