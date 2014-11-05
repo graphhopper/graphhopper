@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>uk.co.ordnancesurvey.graphhopper</groupId>
-	<artifactId>acceptancetesting</artifactId>
+	<artifactId>graphhopper-acceptancetesting</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>GraphHopper Acceptance Testing</name>
 	<packaging>jar</packaging>
@@ -89,20 +89,29 @@
 			<version>1.1.4</version>
 		</dependency>
 		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>1.7.5</version>
+			<groupId>info.cukes</groupId>
+			<artifactId>cucumber-junit</artifactId>
+			<version>1.1.4</version>
 		</dependency>
 		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-log4j12</artifactId>
-			<version>1.7.5</version>
+			<groupId>org.seleniumhq.selenium</groupId>
+			<artifactId>selenium-java</artifactId>
+			<version>2.43.1</version>
 		</dependency>
 		<dependency>
-			<groupId>com.graphhopper</groupId>
-			<artifactId>graphhopper</artifactId>
-			<version>0.4-SNAPSHOT</version>
+			<groupId>uk.co.ordnancesurvey</groupId>
+			<artifactId>SimpleSelenium</artifactId>
+			<version>0.0.21-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>xml-apis</groupId>
+				<artifactId>xml-apis</artifactId>
+				<version>1.4.01</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 </project>

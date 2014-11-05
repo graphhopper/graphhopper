@@ -103,13 +103,13 @@ public class OsItnReaderTest {
 	}
 
     @Test
-    public void testReadSimpleItnNoEntry() throws IOException {
+    public void testReadItnNoEntryMultipointCrossroad() throws IOException {
         boolean turnRestrictionsImport = true;
         boolean is3D = false;
         GraphHopperStorage graph = configureStorage(turnRestrictionsImport, is3D);
 
-        File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-no-entry-crossroad.xml");
-//        File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-simple-crossroad.xml");
+        File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-no-entry-multipoint-crossroad.xml");
+//        File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-noentry-crossroads.xml");
 //        File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-noentry.xml");
         OsItnReader osItnReader = readGraphFile(graph, file);
 
@@ -139,6 +139,16 @@ public class OsItnReaderTest {
         logger.info("Node 6 " + count(explorer.setBaseNode(6)));
         logger.info("Node 7 " + count(explorer.setBaseNode(7)));
         logger.info("Node 8 " + count(explorer.setBaseNode(8)));
+        
+        assertEquals(4, count(explorer.setBaseNode(0)));
+        assertEquals(2, count(explorer.setBaseNode(1)));
+        assertEquals(2, count(explorer.setBaseNode(2)));
+        assertEquals(2, count(explorer.setBaseNode(3)));
+        assertEquals(1, count(explorer.setBaseNode(4)));
+        assertEquals(2, count(explorer.setBaseNode(5)));
+        assertEquals(1, count(explorer.setBaseNode(6)));
+        assertEquals(1, count(explorer.setBaseNode(7)));
+        assertEquals(1, count(explorer.setBaseNode(8)));
         
 //        carAllExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, true));
 
@@ -170,6 +180,57 @@ public class OsItnReaderTest {
         while (iter.next()) {
             logger.info("6 Adj node is " + iter.getAdjNode());            
         }
+        
+        // Assert that this is true
+        iter = explorer.setBaseNode(0);
+        assertTrue(iter.next());
+        assertEquals(8, iter.getAdjNode());
+        assertTrue(iter.next());
+        assertEquals(7, iter.getAdjNode());
+        assertTrue(iter.next());
+        assertEquals(6, iter.getAdjNode());
+        assertTrue(iter.next());
+        assertEquals(3, iter.getAdjNode());
+        assertFalse(iter.next());
+
+        iter = explorer.setBaseNode(1);
+        assertTrue(iter.next());
+        assertEquals(5, iter.getAdjNode());
+        assertTrue(iter.next());
+        assertEquals(4, iter.getAdjNode());
+        assertFalse(iter.next());
+        
+        iter = explorer.setBaseNode(2);
+        assertTrue(iter.next());
+        assertEquals(3, iter.getAdjNode());
+        assertTrue(iter.next());
+        assertEquals(5, iter.getAdjNode());
+        assertFalse(iter.next());
+        
+        iter = explorer.setBaseNode(3);
+        assertTrue(iter.next());
+        assertEquals(0, iter.getAdjNode());
+        assertTrue(iter.next());
+        assertEquals(2, iter.getAdjNode());
+        assertFalse(iter.next());
+        
+        iter = explorer.setBaseNode(4);
+        assertTrue(iter.next());
+        assertEquals(1, iter.getAdjNode());
+        assertFalse(iter.next());
+        
+        iter = explorer.setBaseNode(5);
+        assertTrue(iter.next());
+        assertEquals(2, iter.getAdjNode());
+        assertTrue(iter.next());
+        assertEquals(1, iter.getAdjNode());
+        assertFalse(iter.next());
+        
+        iter = explorer.setBaseNode(6);
+        assertTrue(iter.next());
+        assertEquals(0, iter.getAdjNode());
+        assertFalse(iter.next());
+        
 //        assertTrue(iter.next());
 //        logger.info("0 Adj node is " + iter.getAdjNode());
 //        assertTrue(iter.next());
@@ -449,7 +510,7 @@ public class OsItnReaderTest {
 	}
 
 	
-	@Test
+	//@Test
 	public void testReadSample() throws IOException {
 		boolean turnRestrictionsImport = false;
 		boolean is3D = false;
