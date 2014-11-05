@@ -46,7 +46,7 @@ public class OSITNRelation extends OSITNElement implements Relation {
 	private Type relationType;
 	private static final Logger logger = LoggerFactory
 			.getLogger(OSITNRelation.class);
-
+	String coords
 	static {
 		notInstructions = new ArrayList<String>();
 		onlyInstructions = new ArrayList<String>();
@@ -165,9 +165,15 @@ public class OSITNRelation extends OSITNElement implements Relation {
 
 	@Override
 	protected void parseCoords(String elementText) {
+	    this.coords = elementText;
 	}
+	
 
-	@Override
+	public String getCoordinates() {
+        return coords;
+    }
+
+    @Override
 	protected void parseNetworkMember(String elementText) {
 		throw new UnsupportedOperationException();
 
