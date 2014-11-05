@@ -17,13 +17,15 @@
  */
 package com.graphhopper.http;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.ItnGraphHopper;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.TranslationMap;
 
@@ -51,10 +53,22 @@ public class DefaultModule extends AbstractModule
 
     /**
      * @return an initialized GraphHopper instance
+     * @throws ClassNotFoundException 
+     * @throws SecurityException 
+     * @throws NoSuchMethodException 
+     * @throws InvocationTargetException 
+     * @throws IllegalArgumentException 
+     * @throws IllegalAccessException 
+     * @throws InstantiationException 
      */
-    protected GraphHopper createGraphHopper( CmdArgs args )
+    protected GraphHopper createGraphHopper( CmdArgs args ) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
-        graphHopper = new ItnGraphHopper().forServer().init(args);
+    	String className = args.get("hopper.implementation", "com.graphhopper.GraphHopper");
+    	Class hopperImpl = Class.forName(className);
+		Constructor constructor = hopperImpl.getDeclaredConstructor();
+    	
+        graphHopper = (GraphHopper) constructor.newInstance();
+		graphHopper = graphHopper.forServer().init(args);
         graphHopper.importOrLoad();
         logger.info("loaded graph at:" + graphHopper.getGraphHopperLocation()
                 + ", source:" + graphHopper.getOSMFile()
