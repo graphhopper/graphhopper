@@ -46,7 +46,7 @@ public class OSITNRelation extends OSITNElement implements Relation {
 	private Type relationType;
 	private static final Logger logger = LoggerFactory
 			.getLogger(OSITNRelation.class);
-	String coords
+	private String coords;
 	static {
 		notInstructions = new ArrayList<String>();
 		onlyInstructions = new ArrayList<String>();
