@@ -69,9 +69,6 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		if (!testOn.equalsIgnoreCase("SERVICE")) {
 			initialiseWebDriver();
 			Thread.sleep(2000);
-
-			panRighttonMap();
-
 		}
 
 	}

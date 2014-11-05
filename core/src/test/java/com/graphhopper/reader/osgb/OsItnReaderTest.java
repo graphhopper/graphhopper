@@ -268,6 +268,66 @@ public class OsItnReaderTest {
         // above - I will also write the code later on Friday.
 //        checkOneWay(graph, true);
     }
+
+    @Test
+    public void testReadItnNoEntryMultipointCrossroad_start() throws IOException {
+        boolean turnRestrictionsImport = true;
+        boolean is3D = false;
+        GraphHopperStorage graph = configureStorage(turnRestrictionsImport, is3D);
+
+        File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-no-entry-multipoint-crossroad-start.xml");
+        OsItnReader osItnReader = readGraphFile(graph, file);
+
+        logger.info("We have " + graph.getNodes() + " nodes");
+        
+        logger.info("80 " + osItnReader.getNodeMap().get(4000000025277880l));
+        logger.info("81 " + osItnReader.getNodeMap().get(4000000025277881l));
+        logger.info("82 " + osItnReader.getNodeMap().get(4000000025277882l));
+        logger.info("83 " + osItnReader.getNodeMap().get(4000000025277883l));
+        logger.info("84 " + osItnReader.getNodeMap().get(4000000025277884l));
+        logger.info("85 " + osItnReader.getNodeMap().get(4000000025277885l));
+        logger.info("86 " + osItnReader.getNodeMap().get(4000000025277886l));
+                
+        EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
+        logger.info("Node 0 " + count(explorer.setBaseNode(0)));
+        logger.info("Node 1 " + count(explorer.setBaseNode(1)));
+        logger.info("Node 2 " + count(explorer.setBaseNode(2)));
+        logger.info("Node 3 " + count(explorer.setBaseNode(3)));
+        logger.info("Node 4 " + count(explorer.setBaseNode(4)));
+        logger.info("Node 5 " + count(explorer.setBaseNode(5)));
+        logger.info("Node 6 " + count(explorer.setBaseNode(6)));
+        logger.info("Node 7 " + count(explorer.setBaseNode(7)));
+        logger.info("Node 8 " + count(explorer.setBaseNode(8)));
+        
+        EdgeIterator iter = explorer.setBaseNode(0);
+        while (iter.next()) {
+            logger.info("0 Adj node is " + iter.getAdjNode());            
+        }
+        iter = explorer.setBaseNode(1);
+        while (iter.next()) {
+            logger.info("1 Adj node is " + iter.getAdjNode());            
+        }
+        iter = explorer.setBaseNode(2);
+        while (iter.next()) {
+            logger.info("2 Adj node is " + iter.getAdjNode());            
+        }
+        iter = explorer.setBaseNode(3);
+        while (iter.next()) {
+            logger.info("3 Adj node is " + iter.getAdjNode());            
+        }
+        iter = explorer.setBaseNode(4);
+        while (iter.next()) {
+            logger.info("4 Adj node is " + iter.getAdjNode());            
+        }
+        iter = explorer.setBaseNode(5);
+        while (iter.next()) {
+            logger.info("5 Adj node is " + iter.getAdjNode());            
+        }
+        iter = explorer.setBaseNode(6);
+        while (iter.next()) {
+            logger.info("6 Adj node is " + iter.getAdjNode());            
+        }
+    }
 	@Test
 	public void testReadSimpleCrossRoads() throws IOException {
 		boolean turnRestrictionsImport = false;

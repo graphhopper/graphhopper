@@ -13,6 +13,7 @@ import org.alternativevision.gpx.GPXParser;
 import org.alternativevision.gpx.beans.GPX;
 import org.alternativevision.gpx.beans.Route;
 import org.alternativevision.gpx.beans.Track;
+import org.alternativevision.gpx.beans.TrackPoint;
 import org.alternativevision.gpx.beans.Waypoint;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.ClientProtocolException;
@@ -27,7 +28,6 @@ import uk.co.ordnancesurvey.gpx.extensions.RoutePointAzimuthParser;
 import uk.co.ordnancesurvey.gpx.extensions.RoutePointDirectionParser;
 import uk.co.ordnancesurvey.gpx.extensions.RoutePointDistanceParser;
 import uk.co.ordnancesurvey.gpx.extensions.RoutePointTimeParser;
-
 
 public class GraphHopperGPXParserRouteTest {
 
@@ -58,6 +58,7 @@ public class GraphHopperGPXParserRouteTest {
 	public GraphHopperGPXParserRouteTest() {
 		init();
 	}
+
 
 	private void parseGPXFromString(String gpxString) {
 		if (gpxString != null && gpxString.length() > 0) {
@@ -252,9 +253,9 @@ public class GraphHopperGPXParserRouteTest {
 	public boolean routeContainsTurn(String turnDescription, Route aRoute) {
 		System.out.println(aRoute);
 		boolean routeContainsTurn = false;
+		turnDescription = turnDescription.toUpperCase();
 
 		for (Waypoint aWaypointInaRoute : aRoute.getRoutePoints()) {
-
 			if (aWaypointInaRoute.getDescription() != null
 					&& aWaypointInaRoute.getDescription().toUpperCase()
 							.equals(turnDescription)) {
