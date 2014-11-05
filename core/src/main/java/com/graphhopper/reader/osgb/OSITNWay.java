@@ -19,6 +19,10 @@ package com.graphhopper.reader.osgb;
 
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
+import gnu.trove.map.TDoubleLongMap;
+import gnu.trove.map.TDoubleObjectMap;
+import gnu.trove.map.TLongObjectMap;
+import gnu.trove.map.hash.TObjectLongHashMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,133 +43,176 @@ import com.graphhopper.reader.Way;
  * @author Nop
  */
 public class OSITNWay extends OSITNElement implements Way {
-	private static final long WAY_NODE_PREFIX_MOD = 100000000000000000L;
-	protected final TLongList nodes = new TLongArrayList(5);
-	protected String[] wayCoords;
-	private static final Logger logger = LoggerFactory
-			.getLogger(OSITNWay.class);
+    private static final long WAY_NODE_PREFIX_MOD = 100000000000000000L;
+    protected final TLongList nodes = new TLongArrayList(5);
+    protected String[] wayCoords;
+    private static final Logger logger = LoggerFactory.getLogger(OSITNWay.class);
 
-	/**
-	 * Constructor for XML Parser
-	 */
-	public static OSITNWay create(long id, XMLStreamReader parser)
-			throws XMLStreamException {
-		OSITNWay way = new OSITNWay(id);
-		parser.nextTag();
-		way.readTags(parser);
-		logger.info(way.toString());
-		return way;
-	}
+    /**
+     * Constructor for XML Parser
+     */
+    public static OSITNWay create(long id, XMLStreamReader parser) throws XMLStreamException {
+        OSITNWay way = new OSITNWay(id);
+        parser.nextTag();
+        way.readTags(parser);
+        logger.info(way.toString());
+        return way;
+    }
 
-	public OSITNWay(long id) {
-		super(id, WAY);
-	}
+    public OSITNWay(long id) {
+        super(id, WAY);
+    }
 
-	public TLongList getNodes() {
-		return nodes;
-	}
+    public TLongList getNodes() {
+        return nodes;
+    }
 
-	@Override
-	public String toString() {
-		return "Way (" + getId() + ", " + nodes.size() + " nodes)";
-	}
+    @Override
+    public String toString() {
+        return "Way (" + getId() + ", " + nodes.size() + " nodes)";
+    }
 
-	@Override
-	protected void parseCoords(String lineDefinition) {
-		String[] lineSegments = lineDefinition.split(" ");
-		wayCoords = Arrays
-				.copyOfRange(lineSegments, 1, lineSegments.length -1);
-		logger.info(toString() + " "  + ((wayCoords.length == 0)?"0":wayCoords[0]));
-	}
+    @Override
+    protected void parseCoords(String lineDefinition) {
+        String[] lineSegments = lineDefinition.split(" ");
+        wayCoords = Arrays.copyOfRange(lineSegments, 1, lineSegments.length - 1);
+        logger.info(toString() + " " + ((wayCoords.length == 0) ? "0" : wayCoords[0]));
+    }
 
-	
-	@Override
-	protected void parseCoords(int dimensions, String lineDefinition) {
-		String[] lineSegments = lineDefinition.split(" ");
-		wayCoords = new String[lineSegments.length/dimensions];
-		StringBuilder curString = null;
-		for (int i = 0; i < lineSegments.length; i++) {
-			String string = lineSegments[i];
-			switch (i % dimensions) {
-			case 0: {
-				int coordNumber = i/dimensions;
-				if(coordNumber >0) {
-					wayCoords[coordNumber-1] = curString.toString();
-				}
-				curString = new StringBuilder();
-				curString.append(string);
-				break;
-			}
-					
-			case 1:	
-			case 2: {
-				curString.append(',');
-				curString.append(string); 
-			}
-			}
-		}
-		wayCoords[wayCoords.length-1] = curString.toString();
-		logger.info(toString() + " "  + ((wayCoords.length == 0)?"0":wayCoords[0]));
-	}
-	@Override
-	protected void parseNetworkMember(String elementText) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    protected void parseCoords(int dimensions, String lineDefinition) {
+        String[] lineSegments = lineDefinition.split(" ");
+        wayCoords = new String[lineSegments.length / dimensions];
+        StringBuilder curString = null;
+        for (int i = 0; i < lineSegments.length; i++) {
+            String string = lineSegments[i];
+            switch (i % dimensions) {
+            case 0: {
+                int coordNumber = i / dimensions;
+                if (coordNumber > 0) {
+                    wayCoords[coordNumber - 1] = curString.toString();
+                }
+                curString = new StringBuilder();
+                curString.append(string);
+                break;
+            }
 
-	@Override
-	protected void addDirectedNode(String nodeId, String grade,
-			String orientation) {
-		String idStr = nodeId.substring(5);
-		if (null != grade) {
-			idStr = grade + idStr;
-		}
-		long id = Long.parseLong(idStr);
+            case 1:
+            case 2: {
+                curString.append(',');
+                curString.append(string);
+            }
+            }
+        }
+        wayCoords[wayCoords.length - 1] = curString.toString();
+        logger.info(toString() + " " + ((wayCoords.length == 0) ? "0" : wayCoords[0]));
+    }
 
-		if (0 == nodes.size()) {
-			nodes.add(id);
-		} else {
-			addWayNodes();
-			nodes.add(id);
-		}
-		logger.info(toString());
-	}
+    @Override
+    protected void parseNetworkMember(String elementText) {
+        throw new UnsupportedOperationException();
+    }
 
-	protected void addWayNodes() {
-		for (int i = 1; i <= wayCoords.length; i++) {
-			long idPrefix = i * WAY_NODE_PREFIX_MOD;
-			long extraId = idPrefix + getId();
-			nodes.add(extraId);
-		}
-	}
+    @Override
+    protected void addDirectedNode(String nodeId, String grade, String orientation) {
+        String idStr = nodeId.substring(5);
+        if (null != grade) {
+            idStr = grade + idStr;
+        }
+        long id = Long.parseLong(idStr);
 
-	@Override
-	protected void addDirectedLink(String nodeId, String orientation) {
-		throw new UnsupportedOperationException();
+        if (0 == nodes.size()) {
+            nodes.add(id);
+        } else {
+            addWayNodes();
+            nodes.add(id);
+        }
+        logger.info(toString());
+    }
 
-	}
+    protected void addWayNodes() {
+        for (int i = 1; i <= wayCoords.length; i++) {
+            long idPrefix = i * WAY_NODE_PREFIX_MOD;
+            long extraId = idPrefix + getId();
+            nodes.add(extraId);
+        }
+    }
 
-	public List<OSITNNode> evaluateWayNodes() {
-		List<OSITNNode> wayNodes = new ArrayList<OSITNNode>();
+    @Override
+    protected void addDirectedLink(String nodeId, String orientation) {
+        throw new UnsupportedOperationException();
 
-		for (int i = 0; i < wayCoords.length; i++) {
-			String wayCoord = wayCoords[i];
-			long idPrefix = (i+1) * WAY_NODE_PREFIX_MOD;
-			long id = idPrefix + getId();
-			OSITNNode wayNode = new OSITNNode(id);
-			wayNode.parseCoords(wayCoord);
-			wayNodes.add(wayNode);
-		}
-		return wayNodes;
-	}
+    }
 
-	public void clearWayNodes() {
-		wayCoords = null;
-	}
+    /**
+     * Look for coords and directed link id in our new map. if it exists then
+     * set the barriers tag to "noentry" barrier flag as defined in
+     * CarFlagEncoder absoluteBarriers.add("noentry");
+     * edgeIdCoordsToNodeFlagsMap = new TObjectLongHashMap<String>()
+     * 
+     * @return
+     */
+    public List<OSITNNode> evaluateWayNodes(TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>> edgeIdToXToYToNodeFlagsMap) {
+        List<OSITNNode> wayNodes = new ArrayList<OSITNNode>();
 
-	@Override
-	protected void parseCoordinateString(String elementText,
-			String elementSeparator) {
-		throw new UnsupportedOperationException();
-		
-	}
+        for (int i = 0; i < wayCoords.length; i++) {
+            String wayCoord = wayCoords[i];
+
+            long idPrefix = (i + 1) * WAY_NODE_PREFIX_MOD;
+            long id = idPrefix + getId();
+            OSITNNode wayNode = new OSITNNode(id);
+            wayNode.parseCoords(wayCoord);
+
+            // Here we need to check the ItnReader edgeIdCoordsToNodeFlagsMap
+            // for this id-coord pair
+            long key = getId();
+            TDoubleObjectMap<TDoubleLongMap> xToYToNodeFlagsMap = edgeIdToXToYToNodeFlagsMap.get(key);
+            if (xToYToNodeFlagsMap != null) {
+                String[] coordParts = wayCoord.split(",");
+                double xCoord = Double.parseDouble(coordParts[0]);
+                double yCoord = Double.parseDouble(coordParts[1]);
+                TDoubleLongMap yToNodeFlagsMap = xToYToNodeFlagsMap.get(xCoord);
+                if (yToNodeFlagsMap != null) {
+                    if (yToNodeFlagsMap.containsKey(yCoord)) {
+                        long direction = yToNodeFlagsMap.remove(yCoord);
+                        // Tidy Up so we reduce memory usage as the ingestion
+                        // progresses
+                        if (yToNodeFlagsMap.size() == 0) {
+                            // Remove empty yCoord map from xCoord Map
+                            xToYToNodeFlagsMap.remove(xCoord);
+                            if (xToYToNodeFlagsMap.size() == 0) {
+                                // We have no more x coords for this key so this
+                                // way has been handled
+                                edgeIdToXToYToNodeFlagsMap.remove(key);
+                            }
+                        }
+                        wayNode.setTag(TAG_KEY_NOENTRY_ORIENTATION, "true");
+                        if (direction > 0l) {
+                            wayNode.setTag(TAG_KEY_ONEWAY_ORIENTATION, "true");
+                        } else {
+                            wayNode.setTag(TAG_KEY_ONEWAY_ORIENTATION, "-1");
+                        }
+                    }
+                }
+            }
+            logger.info("Node " + getId() + " coords: " + wayCoord + " tags: ");
+            for (String tagKey : wayNode.getTags().keySet()) {
+                logger.info("\t " + tagKey + " : " + wayNode.getTag(tagKey));
+            }
+
+            wayNodes.add(wayNode);
+        }
+        return wayNodes;
+    }
+
+    public void clearWayNodes() {
+        wayCoords = null;
+    }
+
+    @Override
+    protected void parseCoordinateString(String elementText, String elementSeparator) {
+        throw new UnsupportedOperationException();
+
+    }
+
 }
