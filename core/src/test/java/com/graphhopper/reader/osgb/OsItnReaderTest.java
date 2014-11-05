@@ -464,4 +464,97 @@ public class OsItnReaderTest {
 		osItnReader.readGraph();
 		assertEquals(760, graph.getNodes());
 	}
+	
+	@Test
+	public void testReadNoEntry() throws IOException {
+		boolean turnRestrictionsImport = true;
+		boolean is3D = false;
+		GraphHopperStorage graph = configureStorage(turnRestrictionsImport,is3D);
+
+		File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-noentry-crossroads.xml");
+		readGraphFile(graph, file);
+		
+		// ******************* START OF Print ***************************************
+		EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
+		
+        logger.info("Node 0 " + count(explorer.setBaseNode(0)));
+        logger.info("Node 1 " + count(explorer.setBaseNode(1)));
+        logger.info("Node 2 " + count(explorer.setBaseNode(2)));
+        logger.info("Node 3 " + count(explorer.setBaseNode(3)));
+        logger.info("Node 4 " + count(explorer.setBaseNode(4)));
+        logger.info("Node 5 " + count(explorer.setBaseNode(5)));
+        logger.info("Node 6 " + count(explorer.setBaseNode(6)));
+        
+        EdgeIterator iter = explorer.setBaseNode(0);
+        while (iter.next()) {
+            logger.info("0 Adj node is " + iter.getAdjNode());            
+        }
+        iter = explorer.setBaseNode(1);
+        while (iter.next()) {
+            logger.info("1 Adj node is " + iter.getAdjNode());            
+        }
+        iter = explorer.setBaseNode(2);
+        while (iter.next()) {
+            logger.info("2 Adj node is " + iter.getAdjNode());            
+        }
+        iter = explorer.setBaseNode(3);
+        while (iter.next()) {
+            logger.info("3 Adj node is " + iter.getAdjNode());            
+        }
+        iter = explorer.setBaseNode(4);
+        while (iter.next()) {
+            logger.info("4 Adj node is " + iter.getAdjNode());            
+        }
+        iter = explorer.setBaseNode(5);
+        while (iter.next()) {
+            logger.info("5 Adj node is " + iter.getAdjNode());            
+        }
+        iter = explorer.setBaseNode(6);
+        while (iter.next()) {
+            logger.info("6 Adj node is " + iter.getAdjNode());            
+        }
+        // ***********************************************************************
+
+		// Assert that our graph has 7 nodes
+		assertEquals(7, graph.getNodes());
+		
+		// Assert that there are four links/roads/edges that can be seen from the base node;
+		assertEquals(4, count(explorer.setBaseNode(0)));
+
+		// Assert that when the explorer is on node 1 it can only travel one edge
+		assertEquals(2, count(explorer.setBaseNode(1))); // This should see only one
+		
+		// Assert that when the explorer is positioned on base 2 it can only travel one edge
+		assertEquals(1, count(explorer.setBaseNode(2)));
+			
+		// Assert that when the explorer is positioned on node 3 it can only travel 1 edge 
+		assertEquals(2, count(explorer.setBaseNode(3)));
+		
+		// Assert that when the explorer is positioned on node 1 it can only travel 1 edge 
+		assertEquals(1, count(explorer.setBaseNode(4)));
+				
+		carAllExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, true));
+		// Given node zero can I go anywhere from it?
+		iter = carAllExplorer.setBaseNode(0);
+		assertTrue(iter.next());
+
+		//
+		iter = carAllExplorer.setBaseNode(1);
+		evaluateRouting(iter, 1, true, true, false);
+		
+		iter = carAllExplorer.setBaseNode(0);
+		evaluateRouting(iter, 2, true, true, false);
+		
+		iter = carAllExplorer.setBaseNode(0);
+		evaluateRouting(iter, 3, true, true, false);
+		
+		iter = carAllExplorer.setBaseNode(0);
+		evaluateRouting(iter, 4, true, true, false);
+		
+		iter = carAllExplorer.setBaseNode(0); 
+		evaluateRouting(iter, 5, true, true, false);
+		
+		// Given Node 6 and able to travel forward and  backwards I should reach the end when I move to the next node
+		evaluateRouting(iter, 6, true, true, false);
+	}
 }
