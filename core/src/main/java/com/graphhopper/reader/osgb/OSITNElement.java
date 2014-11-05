@@ -38,6 +38,7 @@ import com.graphhopper.reader.RoutingElement;
  * 
  * @author Nop
  * @author Peter
+ * @author phopkins
  */
 public abstract class OSITNElement implements RoutingElement {
     public static final int NODE = 0;
