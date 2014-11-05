@@ -103,12 +103,12 @@ public class OsItnReaderTest {
 	}
 
     @Test
-    public void testReadSimpleItnNoEntry() throws IOException {
+    public void testReadItnNoEntryMultipointCrossroad() throws IOException {
         boolean turnRestrictionsImport = true;
         boolean is3D = false;
         GraphHopperStorage graph = configureStorage(turnRestrictionsImport, is3D);
 
-        File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-no-entry-crossroad.xml");
+        File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-no-entry-multipoint-crossroad.xml");
 //        File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-noentry-crossroads.xml");
 //        File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-noentry.xml");
         OsItnReader osItnReader = readGraphFile(graph, file);
@@ -510,7 +510,7 @@ public class OsItnReaderTest {
 	}
 
 	
-	@Test
+	//@Test
 	public void testReadSample() throws IOException {
 		boolean turnRestrictionsImport = false;
 		boolean is3D = false;
