@@ -40,20 +40,9 @@ import com.graphhopper.reader.RoutingElement;
  * @author Peter
  */
 public abstract class OSITNElement implements RoutingElement {
-    public static final int NODE = 0;
-    public static final int WAY = 1;
-    public static final int RELATION = 2;
-    public static final int LINK_INFORMATION = 3;
-
-    public static final String TAG_KEY_TYPE = "type";
-    public static final String TAG_KEY_ONEWAY_ORIENTATION = "oneway";
-    public static final String TAG_KEY_NOENTRY_ORIENTATION = "noentry";
-    public static final String TAG_KEY_RESTRICTION = "restriction";
-
-    public static final String TAG_VALUE_TYPE_ONEWAY = "oneway";
-    public static final String TAG_VALUE_TYPE_NOENTRY = "noentry";
-    public static final String TAG_VALUE_TYPE_RESTRICTION = "restriction";
-
+	public static final int NODE = 0;
+	public static final int WAY = 1;
+	public static final int RELATION = 2;
 	private final int type;
 	private final long id;
 	private final Map<String, Object> properties = new HashMap<String, Object>(
@@ -192,55 +181,32 @@ public abstract class OSITNElement implements RoutingElement {
 		return null;
 	}
 
-    /**
-     * Process <code><osgb:instruction>One Way</osgb:instruction></code>
-     * instructions. It is either "One Way", "No Entry" or a turn restriction
-     * type
-     * 
-     * @param parser
-     * @return
-     * @throws XMLStreamException
-     */
-    private int handleRouteInformation(XMLStreamReader parser) throws XMLStreamException {
-        String elementText = parser.getElementText();
-        int event;
-        if ("One Way".equals(elementText)) {
-            setTag(TAG_KEY_TYPE, TAG_VALUE_TYPE_ONEWAY);
-            setTag(TAG_KEY_ONEWAY_ORIENTATION, "-1");
-        } else if ("No Entry".equals(elementText)) {
-            // We are processing a No Entry RoadRouteInformation element. Set the type to noentry
-            setTag(TAG_KEY_TYPE, TAG_VALUE_TYPE_NOENTRY);
-            // Default the orientation to -1. This could be changed when we process the directedLink element later
-           setTag(TAG_KEY_NOENTRY_ORIENTATION, "-1");
-            // We might need this?
-            setTag(TAG_KEY_RESTRICTION, elementText);
-        } else {
-            setTag(TAG_KEY_TYPE, TAG_VALUE_TYPE_RESTRICTION);
-            setTag(TAG_KEY_RESTRICTION, elementText);
-        }
-        event = parser.getEventType();
-        return event;
-    }
+	private int handleRouteInformation(XMLStreamReader parser)
+			throws XMLStreamException {
+		String elementText = parser.getElementText();
+		int event;
+		if ("One Way".equals(elementText)) {
+			setTag("type", "oneway");
+			setTag("oneway", "-1");
+		} else {
+			setTag("type", "restriction");
+			setTag("restriction", elementText);
+		}
+		event = parser.getEventType();
+		return event;
+	}
 
-    /**
-     * process parsing of directedLink data. If this is a "oneway" OR "noentry" we will change the -1 to true if the orientation on the link it "+"
-     * @param parser
-     * @return
-     * @throws XMLStreamException
-     */
-    private int handleDirectedLink(XMLStreamReader parser) throws XMLStreamException {
-        String orientation = parser.getAttributeValue(null, "orientation");
-        String nodeId = parser.getAttributeValue("http://www.w3.org/1999/xlink", "href");
-        if (hasTag(TAG_KEY_ONEWAY_ORIENTATION, "-1") && orientation.equals("+")) {
-            setTag(TAG_KEY_ONEWAY_ORIENTATION, "true");
-       }
-        if (hasTag(TAG_KEY_NOENTRY_ORIENTATION, "-1") && orientation.equals("+")) {
-           setTag(TAG_KEY_NOENTRY_ORIENTATION, "true");
-        }
-        addDirectedLink(nodeId, orientation);
-        return parser.next();
-    }
-
+	private int handleDirectedLink(XMLStreamReader parser)
+			throws XMLStreamException {
+		String orientation = parser.getAttributeValue(null, "orientation");
+		String nodeId = parser.getAttributeValue(
+				"http://www.w3.org/1999/xlink", "href");
+		if (hasTag("oneway", "-1") && orientation.equals("+")) {
+			setTag("oneway", "true");
+		}
+		addDirectedLink(nodeId, orientation);
+		return parser.next();
+	}
 
 	private int handleDirectedNode(XMLStreamReader parser)
 			throws XMLStreamException {

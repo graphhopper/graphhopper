@@ -46,13 +46,11 @@ public class OSITNRelation extends OSITNElement implements Relation {
 	private Type relationType;
 	private static final Logger logger = LoggerFactory
 			.getLogger(OSITNRelation.class);
-       private String coordinates;
 
 	static {
 		notInstructions = new ArrayList<String>();
 		onlyInstructions = new ArrayList<String>();
 
-	        notInstructions.add("No Entry");
 		notInstructions.add("No Turn");
 	}
 
@@ -165,14 +163,9 @@ public class OSITNRelation extends OSITNElement implements Relation {
 		}
 	}
 
-        @Override
-        protected void parseCoords(String elementText) {
-           this.coordinates = elementText;
-        }
- 
-       public String getCoordinates() {
-            return coordinates;
-        }
+	@Override
+	protected void parseCoords(String elementText) {
+	}
 
 	@Override
 	protected void parseNetworkMember(String elementText) {
