@@ -122,10 +122,9 @@ public class RoutingAlgorithmIT
     {
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
-        
+
         // TODO #163
         // list.add(new OneRun(55.813159,37.593884, 55.811278,37.594217, 1000, 12));
-        
         // TODO include CH
         boolean testAlsoCH = false, is3D = false;
         runAlgo(testCollector, "files/moscow.osm.gz", "target/graph-moscow",
@@ -199,6 +198,19 @@ public class RoutingAlgorithmIT
 
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
                 list, "FOOT", true, "FOOT", "shortest", true);
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testNorthBayreuthFootFastestAnd3D()
+    {
+        List<OneRun> list = new ArrayList<OneRun>();
+        // prefer hiking route 'Teufelsloch Unterwaiz' and 'Rotmain-Wanderweg'        
+        list.add(new OneRun(49.974972, 11.515657, 49.991022, 11.512299, 2365, 66));
+        // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach'
+        list.add(new OneRun(49.986111, 11.550407, 50.023182, 11.555386, 5165, 133));
+        runAlgo(testCollector, "files/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
+                list, "FOOT", true, "FOOT", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -385,7 +397,7 @@ public class RoutingAlgorithmIT
         List<OneRun> list = new ArrayList<OneRun>();
         // choose Unterloher Weg and the following residential + cycleway
         list.add(new OneRun(50.004333, 11.600254, 50.044449, 11.543434, 6931, 184));
-        runAlgo(testCollector, "files/harsdorf.osm.pbf", "target/harsdorf-gh",
+        runAlgo(testCollector, "files/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
                 list, "bike", true, "bike", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
@@ -397,14 +409,14 @@ public class RoutingAlgorithmIT
         // choose cycleway (Dreschenauer Straße)
         list.add(new OneRun(49.987132, 11.510496, 50.018839, 11.505024, 3985, 106));
 
-        runAlgo(testCollector, "files/neudrossenfeld.osm.pbf", "target/neudrossenfeld-gh",
+        runAlgo(testCollector, "files/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
                 list, "bike", true, "bike", "fastest", true);
 
-        runAlgo(testCollector, "files/neudrossenfeld.osm.pbf", "target/neudrossenfeld2-gh",
+        runAlgo(testCollector, "files/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
                 list, "bike2", true, "bike2", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
-    
+
     /**
      * @param testAlsoCH if true also the CH algorithms will be tested which needs preparation and
      * takes a bit longer
@@ -425,14 +437,14 @@ public class RoutingAlgorithmIT
                     setOSMFile(osmFile).
                     setCHEnable(false).
                     setGraphHopperLocation(graphFile).
-                    setEncodingManager(new EncodingManager(importVehicles));                    
+                    setEncodingManager(new EncodingManager(importVehicles));
             if (is3D)
                 hopper.setElevationProvider(new SRTMProvider().setCacheDir(new File("./files")));
 
             hopper.importOrLoad();
 
-            TraversalMode tMode = importVehicles.toLowerCase().contains("turncosts=true")? 
-                    TraversalMode.EDGE_BASED_1DIR : TraversalMode.NODE_BASED;
+            TraversalMode tMode = importVehicles.toLowerCase().contains("turncosts=true")
+                    ? TraversalMode.EDGE_BASED_1DIR : TraversalMode.NODE_BASED;
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             Weighting weighting = hopper.createWeighting(new WeightingMap(weightCalcStr), encoder);
 

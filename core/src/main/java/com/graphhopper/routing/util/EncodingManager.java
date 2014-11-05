@@ -166,7 +166,7 @@ public class EncodingManager
 
             else if (entry.equals(FOOT))
                 fe = new FootFlagEncoder(entryVal);
-            
+
             else if (entry.equals(MOTORCYCLE))
                 fe = new MotorcycleFlagEncoder(entryVal);
 
@@ -469,7 +469,7 @@ public class EncodingManager
     {
         for (FlagEncoder encoder : edgeEncoders)
         {
-            if (encoder.supportsTurnCosts())
+            if (encoder.supports(TurnWeighting.class))
                 return true;
         }
         return false;

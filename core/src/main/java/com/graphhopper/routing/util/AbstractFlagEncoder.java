@@ -635,7 +635,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
     {
-        if (!supportsTurnCosts())
+        if (!supports(TurnWeighting.class))
             return Collections.emptyList();
 
         if (edgeOutExplorer == null || edgeInExplorer == null)
@@ -644,12 +644,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             edgeInExplorer = osmReader.getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(this, true, false));
         }
         return turnRelation.getRestrictionAsEntries(this, edgeOutExplorer, edgeInExplorer, osmReader);
-    }
-
-    @Override
-    public boolean supportsTurnCosts()
-    {
-        return maxTurnCosts > 0;
     }
 
     protected boolean isFerry( long internalFlags )
@@ -778,5 +772,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected String getPropertiesString()
     {
         return "speedFactor=" + speedFactor + "|speedBits=" + speedBits + "|turnCosts=" + (maxTurnCosts > 0);
+    }
+
+    @Override
+    public boolean supports( Class<?> feature )
+    {
+        if (TurnWeighting.class.isAssignableFrom(feature))
+            return maxTurnCosts > 0;
+
+        return false;
     }
 }

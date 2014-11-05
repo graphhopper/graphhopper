@@ -777,7 +777,7 @@ public class GraphHopper implements GraphHopperAPI
             result = new ShortestWeighting();
         } else if ("fastest".equalsIgnoreCase(weighting) || weighting.isEmpty())
         {
-            if (encoder instanceof BikeCommonFlagEncoder || encoder instanceof MotorcycleFlagEncoder)
+            if (encoder.supports(PriorityWeighting.class))
                 result = new PriorityWeighting(encoder);
             else
                 result = new FastestWeighting(encoder);
@@ -786,7 +786,7 @@ public class GraphHopper implements GraphHopperAPI
             throw new UnsupportedOperationException("weighting " + weighting + " not supported");
         }
 
-        if (encoder.supportsTurnCosts())
+        if (encoder.supports(TurnWeighting.class))
         {
             result = new TurnWeighting(result, encoder, (TurnCostStorage) graph.getExtendedStorage());
         }

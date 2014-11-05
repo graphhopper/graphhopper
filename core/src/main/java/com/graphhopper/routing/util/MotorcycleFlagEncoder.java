@@ -312,6 +312,15 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     }
 
     @Override
+    public boolean supports( Class<?> feature )
+    {
+        if (super.supports(feature))
+            return true;
+
+        return PriorityWeighting.class.isAssignableFrom(feature);
+    }
+
+    @Override
     public String toString()
     {
         return "motorcycle";

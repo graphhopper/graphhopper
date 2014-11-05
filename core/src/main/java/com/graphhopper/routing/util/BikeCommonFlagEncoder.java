@@ -51,9 +51,9 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     private final Map<String, Integer> surfaceSpeed = new HashMap<String, Integer>();
     private final Set<String> roadValues = new HashSet<String>();
     private final Map<String, Integer> highwaySpeed = new HashMap<String, Integer>();
-    //Convert network tag of bicycle routes into a way route code stored in the wayMAP
+    // convert network tag of bicycle routes into a way route code
     private final Map<String, Integer> bikeNetworkToCode = new HashMap<String, Integer>();
-    EncodedValue relationCodeEncoder;
+    protected EncodedValue relationCodeEncoder;
     private EncodedValue wayTypeEncoder;
     private EncodedValue preferWayEncoder;
 
@@ -646,5 +646,14 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     void addPushingSection( String highway )
     {
         pushingSections.add(highway);
+    }
+
+    @Override
+    public boolean supports( Class<?> feature )
+    {
+        if (super.supports(feature))
+            return true;
+
+        return PriorityWeighting.class.isAssignableFrom(feature);
     }
 }
