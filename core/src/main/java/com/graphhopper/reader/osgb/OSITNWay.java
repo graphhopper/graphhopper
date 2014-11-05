@@ -19,6 +19,9 @@ package com.graphhopper.reader.osgb;
 
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
+import gnu.trove.map.TDoubleLongMap;
+import gnu.trove.map.TDoubleObjectMap;
+import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TObjectLongHashMap;
 
 import java.util.ArrayList;
@@ -149,11 +152,12 @@ public class OSITNWay extends OSITNElement implements Way {
      * 
      * @return
      */
-    public List<OSITNNode> evaluateWayNodes(TObjectLongHashMap<String> edgeIdCoordsToNodeFlagsMap) {
+    public List<OSITNNode> evaluateWayNodes(TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>> edgeIdToXToYToNodeFlagsMap) {
         List<OSITNNode> wayNodes = new ArrayList<OSITNNode>();
 
         for (int i = 0; i < wayCoords.length; i++) {
             String wayCoord = wayCoords[i];
+
             long idPrefix = (i + 1) * WAY_NODE_PREFIX_MOD;
             long id = idPrefix + getId();
             OSITNNode wayNode = new OSITNNode(id);
@@ -161,14 +165,34 @@ public class OSITNWay extends OSITNElement implements Way {
 
             // Here we need to check the ItnReader edgeIdCoordsToNodeFlagsMap
             // for this id-coord pair
-            String key = getId() + "-" + wayCoord;
-            if (edgeIdCoordsToNodeFlagsMap.containsKey(key)) {
-                long direction = edgeIdCoordsToNodeFlagsMap.get(key);
-                wayNode.setTag(TAG_KEY_NOENTRY_ORIENTATION, "true");
-                if (direction > 0l) {
-                    wayNode.setTag(TAG_KEY_ONEWAY_ORIENTATION, "true");
-                } else {
-                    wayNode.setTag(TAG_KEY_ONEWAY_ORIENTATION, "-1");
+            long key = getId();
+            TDoubleObjectMap<TDoubleLongMap> xToYToNodeFlagsMap = edgeIdToXToYToNodeFlagsMap.get(key);
+            if (xToYToNodeFlagsMap != null) {
+                String[] coordParts = wayCoord.split(",");
+                double xCoord = Double.parseDouble(coordParts[0]);
+                double yCoord = Double.parseDouble(coordParts[1]);
+                TDoubleLongMap yToNodeFlagsMap = xToYToNodeFlagsMap.get(xCoord);
+                if (yToNodeFlagsMap != null) {
+                    if (yToNodeFlagsMap.containsKey(yCoord)) {
+                        long direction = yToNodeFlagsMap.remove(yCoord);
+                        // Tidy Up so we reduce memory usage as the ingestion
+                        // progresses
+                        if (yToNodeFlagsMap.size() == 0) {
+                            // Remove empty yCoord map from xCoord Map
+                            xToYToNodeFlagsMap.remove(xCoord);
+                            if (xToYToNodeFlagsMap.size() == 0) {
+                                // We have no more x coords for this key so this
+                                // way has been handled
+                                edgeIdToXToYToNodeFlagsMap.remove(key);
+                            }
+                        }
+                        wayNode.setTag(TAG_KEY_NOENTRY_ORIENTATION, "true");
+                        if (direction > 0l) {
+                            wayNode.setTag(TAG_KEY_ONEWAY_ORIENTATION, "true");
+                        } else {
+                            wayNode.setTag(TAG_KEY_ONEWAY_ORIENTATION, "-1");
+                        }
+                    }
                 }
             }
             logger.info("Node " + getId() + " coords: " + wayCoord + " tags: ");

@@ -9,6 +9,8 @@ import gnu.trove.map.TDoubleObjectMap;
 import gnu.trove.map.TIntLongMap;
 import gnu.trove.map.TLongLongMap;
 import gnu.trove.map.TLongObjectMap;
+import gnu.trove.map.hash.TDoubleLongHashMap;
+import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.TIntLongHashMap;
 import gnu.trove.map.hash.TLongLongHashMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
@@ -171,10 +173,9 @@ public class OsItnReader implements DataReader {
     private TLongObjectMap<String> edgeNameMap;
     private TLongObjectMap<String> edgeRoadTypeMap;
     private TLongObjectMap<String> edgeRoadDirectionMap;
-    private TObjectLongHashMap<String> edgeIdCoordsToNodeFlagsMap;
+    // private TObjectLongHashMap<String> edgeIdCoordsToNodeFlagsMap;
 
-    // private TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>>
-    // edgeIdToXToYToNodeFlagsMap;
+    private TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>> edgeIdToXToYToNodeFlagsMap;
 
     public OsItnReader(GraphStorage storage) {
         this.graphStorage = storage;
@@ -368,7 +369,8 @@ public class OsItnReader implements DataReader {
         if ("-1".equals(orientationIndicator)) {
             flags = 0l; // (-) orientation
         }
-        TObjectLongHashMap<String> edgeIdCoordsToNodeFlagsMap = getEdgeIdCoordsToNodeFlagsMap();
+//        TObjectLongHashMap<String> edgeIdCoordsToNodeFlagsMap = getEdgeIdCoordsToNodeFlagsMap();
+        TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>> edgeIdToXToYToNodeFlagsMap = getEdgeIdToXToYToNodeFlagsMap();
 
         ArrayList<? extends RelationMember> members = relation.getMembers();
         // There will be only one which is the directedLink that this No Entry
@@ -376,9 +378,23 @@ public class OsItnReader implements DataReader {
         for (RelationMember relationMember : members) {
             long wayId = relationMember.ref();
             String coords = ((OSITNRelation) relation).getCoordinates();
-            String key = wayId + "-" + coords;
-            logger.info("edgeIdCoordsToNodeFlagsMap put: " + key + " : " + flags);
-            edgeIdCoordsToNodeFlagsMap.put(key, flags);
+            String[] coordParts = coords.split(",");
+            double xCoord = Double.parseDouble(coordParts[0]);
+            double yCoord = Double.parseDouble(coordParts[1]);
+            TDoubleObjectMap<TDoubleLongMap> xCoordMap = edgeIdToXToYToNodeFlagsMap.get(wayId);
+            if (xCoordMap==null) {
+                xCoordMap = new TDoubleObjectHashMap<TDoubleLongMap>();
+                edgeIdToXToYToNodeFlagsMap.put(wayId, xCoordMap);
+            }
+            TDoubleLongMap yCoordMap = xCoordMap.get(xCoord);
+            if (yCoordMap==null) {
+                yCoordMap = new TDoubleLongHashMap();
+                xCoordMap.put(xCoord, yCoordMap);
+            }
+            // now put the flag in there
+            logger.info("edgeIdCoordsToNodeFlagsMap put: " + wayId + "  " + xCoord +" "+ yCoord + " : " + flags);
+            
+            yCoordMap.put(yCoord, flags);
         }
     }
 
@@ -396,21 +412,21 @@ public class OsItnReader implements DataReader {
 
     private TLongObjectMap<ItnNodePair> getNodeEdgeMap() {
         if (edgeIdToNodeMap == null)
-            edgeIdToNodeMap = new TLongObjectHashMap(getOsmIdStoreRequiredSet().size());
+            edgeIdToNodeMap = new TLongObjectHashMap<ItnNodePair>(getOsmIdStoreRequiredSet().size());
 
         return edgeIdToNodeMap;
     }
 
     private TLongObjectMap<String> getEdgeNameMap() {
         if (edgeNameMap == null)
-            edgeNameMap = new TLongObjectHashMap(getOsmIdStoreRequiredSet().size());
+            edgeNameMap = new TLongObjectHashMap<String>(getOsmIdStoreRequiredSet().size());
 
         return edgeNameMap;
     }
 
     private TLongObjectMap<String> getEdgeRoadTypeMap() {
         if (edgeRoadTypeMap == null)
-            edgeRoadTypeMap = new TLongObjectHashMap(getOsmIdStoreRequiredSet().size());
+            edgeRoadTypeMap = new TLongObjectHashMap<String>(getOsmIdStoreRequiredSet().size());
 
         return edgeRoadTypeMap;
     }
@@ -422,22 +438,22 @@ public class OsItnReader implements DataReader {
         return edgeRoadDirectionMap;
     }
 
-    private TObjectLongHashMap<String> getEdgeIdCoordsToNodeFlagsMap() {
-        if (edgeIdCoordsToNodeFlagsMap == null)
-            edgeIdCoordsToNodeFlagsMap = new TObjectLongHashMap<String>();
+    // private TObjectLongHashMap<String> getEdgeIdCoordsToNodeFlagsMap() {
+    // if (edgeIdCoordsToNodeFlagsMap == null)
+    // edgeIdCoordsToNodeFlagsMap = new TObjectLongHashMap<String>();
+    //
+    // return edgeIdCoordsToNodeFlagsMap;
+    // }
+    // TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>>
+    // edgeIdToXToYToNodeFlagsMap;
+    private TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>> getEdgeIdToXToYToNodeFlagsMap() {
+        if (edgeIdToXToYToNodeFlagsMap == null)
+            edgeIdToXToYToNodeFlagsMap = new TLongObjectHashMap<TDoubleObjectMap<TDoubleLongMap>>();
 
-        return edgeIdCoordsToNodeFlagsMap;
+        return edgeIdToXToYToNodeFlagsMap;
     }
 
-    // private TLongObjectMap<TObjectLongHashMap<String>>
-    // getEdgeIdMapToCoordsToNodeFlagsMap() {
-    // if (edgeIdMapToCoordsToNodeFlagsMap == null)
-    // edgeIdMapToCoordsToNodeFlagsMap = new
-    // TLongObjectMap();//<TObjectLongHashMap<String>><TObjectLongHashMap<String>>();
-    //
-    // return edgeIdMapToCoordsToNodeFlagsMap;
-    // }
-    // //TLongObjectMap<TObjectLongHashMap<String>>
+    // TLongObjectMap<TObjectLongHashMap<String>>
     // edgeIdMapToCoordsToNodeFlagsMap
     /**
      * Filter ways but do not analyze properties wayNodes will be filled with
@@ -582,7 +598,7 @@ public class OsItnReader implements DataReader {
     }
 
     private List<OSITNNode> prepareWaysNodes(RoutingElement item, LongIntMap nodeFilter) {
-        List<OSITNNode> evaluateWayNodes = ((OSITNWay) item).evaluateWayNodes(getEdgeIdCoordsToNodeFlagsMap());
+        List<OSITNNode> evaluateWayNodes = ((OSITNWay) item).evaluateWayNodes(getEdgeIdToXToYToNodeFlagsMap());
         for (OSITNNode ositnNode : evaluateWayNodes) {
             nodeFilter.put(ositnNode.getId(), TOWER_NODE);
             processNode(ositnNode);
@@ -1443,4 +1459,3 @@ public class OsItnReader implements DataReader {
         return -1;
     }
 }
-
