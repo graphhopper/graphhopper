@@ -54,6 +54,7 @@ public class GraphHopperHooks {
 
 	}
 
+	
 	@Then("^The total route time should be not more than \"([^\"]*)\"$")
 	public void The_total_route_time_should_be_not_more_than(String totalRouteTime) throws ParseException
 			 {
@@ -70,6 +71,15 @@ public class GraphHopperHooks {
 
 	}
 
+	
+	
+	@Then("^I should be able to verify the trackPoints not on the route map:")
+	public void I_should_be_able_to_verify_the_trackpoints_not_on_the_route_map(
+			List<Map> trackPointsList) throws ParseException {
+
+		graphUiUtil.isTrackPointNotonRouteMap(trackPointsList);
+
+	}
 
 	@After({ "@Routing" })
 	public void closeBrowser() {

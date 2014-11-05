@@ -71,7 +71,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA             | pointB              | routetype | totalRouteTime |
-      | 51.475161,-0.39591 | 51.536292,-0.656802 | car       | 0h22min        |
+      | 51.475161,-0.39591 | 51.536292,-0.656802 | car       | 0h30min        |
 
   @Routing
   Scenario Outline: Verify  waypoints on a Route from Southampton to Glasgow
@@ -84,3 +84,20 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA              | pointB              | routetype |
       | 50.911645,-1.411389 | 50.913965,-1.401229 | car       |
+      
+      
+      
+      @Routing
+  Scenario Outline: Verify  oneway Restrictions on a Route (Burmingham Route with one way restriction)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the trackPoints not on the route map:
+      | trackPointco       | time                      |
+      | 52.446899,-1.929721| 2014-10-31T19:17:22+00:00 |
+     
+
+    Examples: 
+      | pointA             | pointB              | routetype | 
+      | 52.446823,-1.929077 | 52.446604,-1.930043 | car       | 
+     
+
+      
