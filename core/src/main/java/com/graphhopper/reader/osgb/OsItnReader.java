@@ -582,11 +582,8 @@ public class OsItnReader implements DataReader {
                 if (!item.hasTag("highway")) {
                     item.setTag("highway", "motorway");
                 }
-                List<OSITNNode> wayNodes = prepareWaysNodes(item, nodeFilter); // Way
-                                                                               // nodes
-                                                                               // will
-                                                                               // only
-                                                                               // contain
+                // wayNodes will only contain the mid nodes and not the start or end nodes. 
+                List<OSITNNode> wayNodes = prepareWaysNodes(item, nodeFilter); 
                 processWay((Way) item, wayNodes);
                 ((OSITNWay) item).clearWayNodes();
                 break;
@@ -655,7 +652,7 @@ public class OsItnReader implements DataReader {
             return;
 
         long relationFlags = getRelFlagsMap().get(way.getId());
-        logger.info("RELFLAGS:" + way.getId() + ":" + relationFlags);
+        logger.info("RELFLAGS:" + way.getId() + " : " + relationFlags);
         String wayName = getWayName(way.getId());
         if (null != wayName) {
             // System.err.println("SETTING WAY NAME:" + wayName);
@@ -667,12 +664,10 @@ public class OsItnReader implements DataReader {
         }
 
         String wayDirection = getWayRoadDirection(way.getId());
-        // TODO Do we need to set both directions for oneway AND noentry?
+        // If the way is ONEWAY then set the direction
         if (null != wayDirection && !way.hasTag(OSITNElement.TAG_KEY_ONEWAY_ORIENTATION)) {
             way.setTag(OSITNElement.TAG_KEY_ONEWAY_ORIENTATION, wayDirection);
-        } else if (null != wayDirection && !way.hasTag(OSITNElement.TAG_KEY_NOENTRY_ORIENTATION)) {
-            way.setTag(OSITNElement.TAG_KEY_NOENTRY_ORIENTATION, wayDirection);
-        }
+        } 
         // TODO move this after we have created the edge and know the
         // coordinates => encodingManager.applyWayTags
         // estimate length of the track e.g. for ferry speed calculation
@@ -753,18 +748,15 @@ public class OsItnReader implements DataReader {
                     Collection<EdgeIteratorState> newBarriers = addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId);
                     logger.warn("Way adds barrier edges:" + wayOsmId + " " + newBarriers.size());
                     noEntryCreatedEdges.addAll(newBarriers);
-                    // I think this is done too late
-                    TLongObjectMap<String> edgeIdToRoadDirectionMap = getEdgeRoadDirectionMap();
+                    // Update the orientation of our little one way
                     for (EdgeIteratorState edgeIteratorState : newBarriers) {
                         String orientation = ositnNode.getTag(OSITNElement.TAG_KEY_ONEWAY_ORIENTATION);
-                        edgeIdToRoadDirectionMap.put(edgeIteratorState.getEdge(), orientation);
-                        // Set the direction on the whole way (for now)
-                        way.setTag(OSITNElement.TAG_KEY_ONEWAY_ORIENTATION, orientation);
+                        boolean forwards = orientation.equals("true");
+                        
+                        long flags = encodingManager.flagsDefault(forwards, !forwards);
+                        // Set the flags on our new edge.
+                        edgeIteratorState.setFlags(flags);
                     }
-//                    String wayDirection = getWayRoadDirection(way.getId());
-//                    if (null != wayDirection && !way.hasTag(OSITNElement.TAG_KEY_ONEWAY_ORIENTATION)) {
-//                        way.setTag(OSITNElement.TAG_KEY_ONEWAY_ORIENTATION, wayDirection);
-//                    }
                 } else {
                     // TODO Currently this code is never called. I believe that
                     // when the no entry is placed on either
