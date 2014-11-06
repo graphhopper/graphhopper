@@ -174,7 +174,7 @@ public class OsItnReaderTest {
         
         assertEquals(4, count(explorer.setBaseNode(0)));
         assertEquals(2, count(explorer.setBaseNode(1)));
-        assertEquals(2, count(explorer.setBaseNode(2)));
+        assertEquals(1, count(explorer.setBaseNode(2)));
         assertEquals(2, count(explorer.setBaseNode(3)));
         assertEquals(1, count(explorer.setBaseNode(4)));
         assertEquals(2, count(explorer.setBaseNode(5)));
@@ -203,8 +203,6 @@ public class OsItnReaderTest {
         iter = explorer.setBaseNode(2);
         assertTrue(iter.next());
         assertEquals(3, iter.getAdjNode());
-        assertTrue(iter.next());
-        assertEquals(5, iter.getAdjNode());
         assertFalse(iter.next());
         
         iter = explorer.setBaseNode(3);
@@ -326,6 +324,14 @@ public class OsItnReaderTest {
         iter = explorer.setBaseNode(6);
         while (iter.next()) {
             logger.info("6 Adj node is " + iter.getAdjNode());            
+        }
+        iter = explorer.setBaseNode(7);
+        while (iter.next()) {
+            logger.info("7 Adj node is " + iter.getAdjNode());            
+        }
+        iter = explorer.setBaseNode(8);
+        while (iter.next()) {
+            logger.info("8 Adj node is " + iter.getAdjNode());            
         }
     }
 	@Test
