@@ -587,12 +587,131 @@ public class OsItnReaderTest {
 	}
 	
 	@Test
-	public void testReadNoEntry() throws IOException {
+	public void testReadNoEntryOneDirection() throws IOException {
+		boolean turnRestrictionsImport = true;
+		boolean is3D = false;
+		GraphHopperStorage graph = configureStorage(turnRestrictionsImport,is3D);
+		
+		File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-noentry-onedirection.xml");
+		readGraphFile(graph, file);
+		
+		// ******************* START OF Print ***************************************
+		EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
+		
+		logger.info("Node 0 " + count(explorer.setBaseNode(0)));
+		logger.info("Node 1 " + count(explorer.setBaseNode(1)));
+		logger.info("Node 2 " + count(explorer.setBaseNode(2)));
+		logger.info("Node 3 " + count(explorer.setBaseNode(3)));
+		logger.info("Node 4 " + count(explorer.setBaseNode(4)));
+		logger.info("Node 5 " + count(explorer.setBaseNode(5)));
+		logger.info("Node 6 " + count(explorer.setBaseNode(6)));
+		
+		EdgeIterator iter = explorer.setBaseNode(0);
+		while (iter.next()) {
+			logger.info("0 Adj node is " + iter.getAdjNode());            
+		}
+		iter = explorer.setBaseNode(1);
+		while (iter.next()) {
+			logger.info("1 Adj node is " + iter.getAdjNode());            
+		}
+		iter = explorer.setBaseNode(2);
+		while (iter.next()) {
+			logger.info("2 Adj node is " + iter.getAdjNode());            
+		}
+		iter = explorer.setBaseNode(3);
+		while (iter.next()) {
+			logger.info("3 Adj node is " + iter.getAdjNode());            
+		}
+		iter = explorer.setBaseNode(4);
+		while (iter.next()) {
+			logger.info("4 Adj node is " + iter.getAdjNode());            
+		}
+		iter = explorer.setBaseNode(5);
+		while (iter.next()) {
+			logger.info("5 Adj node is " + iter.getAdjNode());            
+		}
+		iter = explorer.setBaseNode(6);
+		while (iter.next()) {
+			logger.info("6 Adj node is " + iter.getAdjNode());            
+		}
+		// ***********************************************************************
+		
+		// Assert that our graph has 7 nodes
+		assertEquals(7, graph.getNodes());
+		
+		// Assert that there are four links/roads/edges that can be seen from the base node;
+		assertEquals(4, count(explorer.setBaseNode(0)));
+		
+		// Assert that when the explorer is on node 1 it can travel two edges
+		assertEquals(2, count(explorer.setBaseNode(1))); // This should see only one
+		
+		// Assert that when the explorer is positioned on base 2 it can only travel one edge
+		assertEquals(1, count(explorer.setBaseNode(2)));
+		
+		// Assert that when the explorer is positioned on node 3 it can only travel 1 edge 
+		assertEquals(1, count(explorer.setBaseNode(3)));
+		
+		// Assert that when the explorer is positioned on node 4 it can only travel 1 edge 
+		assertEquals(1, count(explorer.setBaseNode(4)));
+		
+		carAllExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, true));
+		// Starting at node zero I should be able to travel back and forth to four nodes?
+		iter = carAllExplorer.setBaseNode(0);
+		assertTrue(iter.next());
+		evaluateRouting(iter, 6, true, true, false);
+		evaluateRouting(iter, 5, true, true, false);
+		evaluateRouting(iter, 4, true, true, false);
+		evaluateRouting(iter, 1, true, true, true);
+		
+		// Starting at node 1
+		iter = carAllExplorer.setBaseNode(1);
+		assertTrue(iter.next());
+		// I should be able to get to node 0 in a forward and backward direction and have not exhausted all the edges
+		evaluateRouting(iter, 0, true, true, false);
+		// I should be able to get to node 3 in a forward direction but not backward and have exhausted all the edges
+		evaluateRouting(iter, 3, true, false, true);
+		
+		// Starting at node 2
+		iter = carAllExplorer.setBaseNode(2);
+		assertTrue(iter.next());
+		// I should be able to travel to node 3 forth and back and exhausted all the edges
+		evaluateRouting(iter, 3, true, true, true);
+		
+		// Starting at node 3
+		iter = carAllExplorer.setBaseNode(3);
+		assertTrue(iter.next());
+		// I should not be able to travel to node 1 in a forward direction but in backward direction
+		evaluateRouting(iter, 1, false, true, false);
+		// I should be able to travel to node 2 in both a forward direction and backward direction and have exhausted all the edges
+		evaluateRouting(iter, 2, true, true, true);
+		
+		// Starting at node 4
+		iter = carAllExplorer.setBaseNode(4);
+		assertTrue(iter.next());
+		// I should be able to travel to node 0 back and forth and have exhausted all the edges
+		evaluateRouting(iter, 0, true, true, true);
+		
+		// Given Node 5 
+		iter = carAllExplorer.setBaseNode(5);
+		assertTrue(iter.next());
+		// I should be able to travel to node 0 back and forth and have exhausted all the edges
+		evaluateRouting(iter, 0, true, true, true);
+		
+		// Given Node 6
+		iter = carAllExplorer.setBaseNode(6);
+		assertTrue(iter.next());
+		// I should be able to travel to node 0 back and forth and have exhausted all the edges
+		evaluateRouting(iter, 0, true, true, true);
+	}
+	
+	@Test
+	public void testReadNoEntryOppositeDirection() throws IOException {
+		
 		boolean turnRestrictionsImport = true;
 		boolean is3D = false;
 		GraphHopperStorage graph = configureStorage(turnRestrictionsImport,is3D);
 
-		File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-noentry-crossroads.xml");
+		File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-noentry-oppositedirection.xml");
 		readGraphFile(graph, file);
 		
 		// ******************* START OF Print ***************************************
@@ -643,13 +762,13 @@ public class OsItnReaderTest {
 		assertEquals(4, count(explorer.setBaseNode(0)));
 
 		// Assert that when the explorer is on node 1 it can only travel one edge
-		assertEquals(2, count(explorer.setBaseNode(1))); // This should see only one
+		assertEquals(1, count(explorer.setBaseNode(1))); 
 		
 		// Assert that when the explorer is positioned on base 2 it can only travel one edge
 		assertEquals(1, count(explorer.setBaseNode(2)));
 			
 		// Assert that when the explorer is positioned on node 3 it can only travel 1 edge 
-		assertEquals(1, count(explorer.setBaseNode(3)));
+		assertEquals(2, count(explorer.setBaseNode(3)));
 		
 		// Assert that when the explorer is positioned on node 4 it can only travel 1 edge 
 		assertEquals(1, count(explorer.setBaseNode(4)));
@@ -668,8 +787,8 @@ public class OsItnReaderTest {
 		assertTrue(iter.next());
 		// I should be able to get to node 0 forwards and backwards and have not exhausted all the edges
 		evaluateRouting(iter, 0, true, true, false);
-		// I should be able to get to node 3 forwards but not back and have exhausted all the edges
-		evaluateRouting(iter, 3, true, false, true);
+		// I should be able to get back to node 1 but not forward onto node 3 as the way linking to node 3 is a one way and should have have exhausted all the edges
+		evaluateRouting(iter, 3, false, true, true);
 		
 		// Starting at node 2
 		iter = carAllExplorer.setBaseNode(2);
@@ -680,8 +799,8 @@ public class OsItnReaderTest {
 		// Starting at node 3
 		iter = carAllExplorer.setBaseNode(3);
 		assertTrue(iter.next());
-		// I should not be able to travel to node 1 in a forward direction but in backward direction
-		evaluateRouting(iter, 1, false, true, false);
+		// I should be able to travel to node 1 in a forward direction but not be able to come back in a backward direction to node 3
+		evaluateRouting(iter, 1, true, false, false);
 		// I should be able to travel to node 2 in both a forward direction and backward direction and have exhausted all the edges
 		evaluateRouting(iter, 2, true, true, true);
 		
