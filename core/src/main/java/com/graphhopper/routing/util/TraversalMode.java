@@ -35,35 +35,35 @@ public enum TraversalMode
     /**
      * The simplest traversal mode but without turn restrictions or cost support.
      */
-    NODE_BASED(false, 1, false, "NODE_BASED"),
+    NODE_BASED(false, 1, false),
     /**
+     * Strictly not recommended as it could lead to 'route not found' for bidirectional algorithms.
      * An edged-based traversal mode with basic turn restriction and cost support, including the
      * most scenarios. But without certain turn restrictions and without u-turns. As fast as node
      * based.
      */
-    EDGE_BASED_1DIR(true, 1, false, "EDGE_BASED_1DIR"),
+    EDGE_BASED_1DIR(true, 1, false),
     /**
      * The bidirectional edged-based traversal mode with turn restriction and cost support. Without
      * u-turn support. 2 times slower than node based.
      */
-    EDGE_BASED_2DIR(true, 2, false, "EDGE_BASED_2DIR"),
+    EDGE_BASED_2DIR(true, 2, false),
     /**
-     * The most feature rich edged-based traversal mode with turn restriction and cost support,
-     * including u-turns. 4 times slower than node based.
+     * Not recommended as it leads to strange routes that outsmart the turn costs. The most feature
+     * rich edged-based traversal mode with turn restriction and cost support, including u-turns. 4
+     * times slower than node based.
      */
-    EDGE_BASED_2DIR_UTURN(true, 2, true, "EDGE_BASED_2DIR_UTURN");
+    EDGE_BASED_2DIR_UTURN(true, 2, true);
 
     private final boolean edgeBased;
     private final int noOfStates;
     private final boolean uTurnSupport;
-    private final String name;
 
-    TraversalMode( boolean edgeBased, int noOfStates, boolean uTurnSupport, String name )
+    TraversalMode( boolean edgeBased, int noOfStates, boolean uTurnSupport )
     {
         this.edgeBased = edgeBased;
         this.noOfStates = noOfStates;
         this.uTurnSupport = uTurnSupport;
-        this.name = name;
 
         if (noOfStates != 1 && noOfStates != 2)
             throw new IllegalArgumentException("Currently only 1 or 2 states allowed");
