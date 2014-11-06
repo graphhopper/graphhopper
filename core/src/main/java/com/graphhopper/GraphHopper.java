@@ -534,6 +534,8 @@ public class GraphHopper implements GraphHopperAPI
         // osm import
         wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", wayPointMaxDistance);
         String flagEncoders = args.get("graph.flagEncoders", "CAR");
+        if (flagEncoders.toLowerCase().contains("turncosts=true"))
+            traversalMode = TraversalMode.EDGE_BASED_2DIR;
         encodingManager = new EncodingManager(flagEncoders, bytesForFlags);
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
@@ -763,7 +765,8 @@ public class GraphHopper implements GraphHopperAPI
      * you use the GraphHopper Web module.
      * <p>
      * @see Weighting.Params.create
-     * @param wMap all parameters influencing the weighting. E.g. URL parameters coming via GHRequest
+     * @param wMap all parameters influencing the weighting. E.g. URL parameters coming via
+     * GHRequest
      * @param encoder the required vehicle
      * @return the weighting to be used for route calculation
      */
@@ -836,6 +839,17 @@ public class GraphHopper implements GraphHopperAPI
             return Collections.emptyList();
         }
 
+        TraversalMode tMode;
+        String tModeStr = request.getHints().get("traversal_mode", traversalMode.toString());
+        try
+        {
+            tMode = TraversalMode.fromString(tModeStr);
+        } catch (Exception ex)
+        {
+            rsp.addError(ex);
+            return Collections.emptyList();
+        }
+
         List<GHPoint> points = request.getPoints();
         if (points.size() < 2)
         {
@@ -891,7 +905,7 @@ public class GraphHopper implements GraphHopperAPI
             } else
             {
                 Weighting weighting = createWeighting(request.getHints(), encoder);
-                prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, algoStr, encoder, weighting, traversalMode);
+                prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, algoStr, encoder, weighting, tMode);
                 algo = prepare.createAlgo();
             }
 
