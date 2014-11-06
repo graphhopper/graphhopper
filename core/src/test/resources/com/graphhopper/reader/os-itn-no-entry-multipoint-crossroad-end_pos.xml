@@ -236,8 +236,8 @@
 			<osgb:environmentQualifier>
 				<osgb:instruction>No Entry</osgb:instruction>
 			</osgb:environmentQualifier>
-			<osgb:directedLink orientation='-' xlink:href='#osgb4000000025288017' />
-			<osgb:distanceFromStart>538.90</osgb:distanceFromStart>
+			<osgb:directedLink orientation='+' xlink:href='#osgb4000000025288017' />
+			<osgb:distanceFromStart>0.0</osgb:distanceFromStart>
 			<osgb:point>
 				<gml:Point srsName='osgb:BNG'>
 					<gml:coordinates>280000.000,90000.000</gml:coordinates>
