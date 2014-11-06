@@ -1383,12 +1383,6 @@ public class GraphHopperStorage implements GraphStorage
                 // check encoding for compatiblity
                 acceptStr = properties.get("graph.flagEncoders");
 
-                // remove when 0.4 released
-                acceptStr = acceptStr.replace("car:com.graphhopper.routing.util.CarFlagEncoder", "car|speedFactor=5.0|speedBits=5|turnCosts=false");
-                acceptStr = acceptStr.replace("foot:com.graphhopper.routing.util.FootFlagEncoder", "foot|speedFactor=1.0|speedBits=4|turnCosts=false");
-                acceptStr = acceptStr.replace("bike:com.graphhopper.routing.util.BikeFlagEncoder", "bike|speedFactor=2.0|speedBits=4|turnCosts=false");
-                acceptStr = acceptStr.replace("bike2:com.graphhopper.routing.util.Bike2WeightFlagEncoder", "bike2|speedFactor=2.0|speedBits=4|turnCosts=false");
-
             } else
                 throw new IllegalStateException("cannot load properties. corrupt file or directory? " + dir);
 
