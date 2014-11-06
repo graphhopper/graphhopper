@@ -96,7 +96,7 @@ public class GraphHopper implements GraphHopperAPI
     private final TranslationMap trMap = new TranslationMap().doImport();
     protected ElevationProvider eleProvider = ElevationProvider.NOOP;
     private final AtomicLong visitedSum = new AtomicLong(0);
-	private String dataReader;
+	private String dataReader = "com.graphhopper.reader.OSMReader";
 
     public GraphHopper()
     {
@@ -468,7 +468,7 @@ public class GraphHopper implements GraphHopperAPI
         if (!Helper.isEmpty(tmpOsmFile))
             osmFile = tmpOsmFile;
         
-        dataReader = args.get("reader.implementation", "com.graphhopper.reader.OSMReader");
+        dataReader = args.get("reader.implementation", dataReader);
 
         String graphHopperFolder = args.get("graph.location", "");
         if (Helper.isEmpty(graphHopperFolder) && Helper.isEmpty(ghLocation))
