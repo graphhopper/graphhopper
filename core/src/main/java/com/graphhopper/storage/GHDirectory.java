@@ -150,7 +150,7 @@ public class GHDirectory implements Directory
             removeDA(da, da.getName(), false);
         }
         if (mmapDA != null)
-            mmapDA.cleanHack();
+            Helper.cleanHack();
         map.clear();
     }
 

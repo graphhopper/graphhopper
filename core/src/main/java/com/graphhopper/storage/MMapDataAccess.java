@@ -135,7 +135,7 @@ public class MMapDataAccess extends AbstractDataAccess
             {
                 newSegments = segmentsToMap;
                 clean(0, segments.size());
-                cleanHack();
+                Helper.cleanHack();
                 segments.clear();
             } else
             {
@@ -183,7 +183,7 @@ public class MMapDataAccess extends AbstractDataAccess
             {
                 ioex = tmpex;
                 trial++;
-                cleanHack();
+                Helper.cleanHack();
                 try
                 {
                     // mini sleep to let JVM do unmapping
@@ -293,13 +293,7 @@ public class MMapDataAccess extends AbstractDataAccess
         segments.clear();
         Helper.close(raFile);
         if (forceClean)
-            cleanHack();
-    }
-
-    void cleanHack()
-    {
-        // trying to force the release of the mapped ByteBuffer
-        System.gc();
+            Helper.cleanHack();
     }
 
     @Override
@@ -427,7 +421,7 @@ public class MMapDataAccess extends AbstractDataAccess
         }
 
         clean(remainingSegNo, segments.size());
-        cleanHack();
+        Helper.cleanHack();
         segments = new ArrayList<ByteBuffer>(segments.subList(0, remainingSegNo));
 
         try
@@ -454,7 +448,7 @@ public class MMapDataAccess extends AbstractDataAccess
 
         Helper.cleanMappedByteBuffer(segment);
         segments.set(segNumber, null);
-        cleanHack();
+        Helper.cleanHack();
         return true;
     }
 
