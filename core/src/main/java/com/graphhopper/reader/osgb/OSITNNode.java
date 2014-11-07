@@ -25,10 +25,8 @@ import javax.xml.stream.XMLStreamReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.co.ordnancesurvey.api.srs.GeodeticPoint;
-import uk.co.ordnancesurvey.api.srs.MapPoint;
-import uk.co.ordnancesurvey.api.srs.OSGrid2LatLong;
-import uk.co.ordnancesurvey.api.srs.OutOfRangeException;
+import uk.co.ordnancesurvey.api.srs.CoordConverter;
+import uk.co.ordnancesurvey.api.srs.LatLong;
 
 import com.graphhopper.reader.Node;
 import com.graphhopper.util.PointAccess;
@@ -42,7 +40,6 @@ import com.graphhopper.util.PointAccess;
 public class OSITNNode extends OSITNElement implements Node {
 	private double lat;
 	private double lon;
-	private static OSGrid2LatLong coordConvertor = new OSGrid2LatLong();
 	private static final Logger logger = LoggerFactory
 			.getLogger(OSITNNode.class);
 	private boolean[] clones = {false,false,false,false};
@@ -140,7 +137,7 @@ public class OSITNNode extends OSITNElement implements Node {
 		}
 		Double easting = Double.parseDouble(split[0]);
 		Double northing = Double.parseDouble(split[1]);
-		GeodeticPoint wgs84 = toWGS84(easting, northing);
+		LatLong wgs84 = CoordConverter.toWGS84(easting, northing);
 		lat = wgs84.getLatAngle();
 		lon = wgs84.getLongAngle();
 		logger.info(toString());
@@ -163,25 +160,6 @@ public class OSITNNode extends OSITNElement implements Node {
 				"Nodes should not have directed links");
 	}
 	
-	private static GeodeticPoint toWGS84(double easting, double northing) {
-		MapPoint osgb36Pt = new MapPoint(easting, northing);
-		GeodeticPoint wgs84Pt = null;
-		try {
-			wgs84Pt = coordConvertor.transformHiRes(osgb36Pt);
-		} catch (OutOfRangeException ore) {
-			//REALLY? 
-			//TODO should this be where the lowres route goes?
-		}
-		if (null==wgs84Pt) {
-			try {
-				wgs84Pt = coordConvertor.transformLoRes(osgb36Pt);
-			} catch(OutOfRangeException ore) {
-				
-			}
-		}
-		return wgs84Pt;
-	}
-
 	public OSITNNode gradeClone(long nodeId) {
 		logger.warn("CLONING:" + nodeId);
 		OSITNNode clone = new OSITNNode(nodeId);
