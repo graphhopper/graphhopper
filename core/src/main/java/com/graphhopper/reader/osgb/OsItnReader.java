@@ -831,54 +831,64 @@ public class OsItnReader implements DataReader {
         TLongList nodeIdsToCreateWaysFor = null;
         String endDirection = checkForNoEntryDirection(wayOsmId, way.getEndCoord());
         if (endDirection != null) {
-            // First thing to do is add ways up to the last node
-            {
-                if (lastNoEntry < 0)
-                    lastNoEntry = 0;
-                long transfer[] = osmNodeIds.toArray(lastNoEntry, size - lastNoEntry - 1);
-                nodeIdsToCreateWaysFor = new TLongArrayList(transfer);
-                Collection<EdgeIteratorState> newEdges = addOSMWay(nodeIdsToCreateWaysFor, wayFlags, wayOsmId);
-                logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newEdges.size());
-                createdEdges.addAll(newEdges);
-            }
-
-            // We are processing all the way to the end of the line so don't
-            // process down to barriers.
-            // This is going to obscure barrier behaviour I believe.
-            processedEntireWay = true;
             // Get the last node id
-            long nodeId = osmNodeIds.get(osmNodeIds.size() - 1); 
-            long nodeFlags = getNodeFlagsMap().get(nodeId);
-            // create shadow node copy for zero length edge
-            OSMNode newNode = addBarrierNode(nodeId);
-            long newNodeId = newNode.getId();
-            // add way up to barrier shadow node
-            long transfer[] = osmNodeIds.toArray(osmNodeIds.size() - 2, 2); // From
-                                                                            // 0
-                                                                            // for
-                                                                            // length
-                                                                            // 2
-            transfer[transfer.length - 1] = newNodeId;
-            TLongList partIds = new TLongArrayList(transfer);
-            Collection<EdgeIteratorState> newWays = addOSMWay(partIds, wayFlags, wayOsmId);
-            logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
-            noEntryCreatedEdges.addAll(newWays);
+            long nodeId = osmNodeIds.get(osmNodeIds.size() - 1);
+            // Check if there is a graphIndex for this node. Not sure why there
+            // wouldn't be one
+            int graphIndex = getNodeMap().get(nodeId);
+            if (graphIndex != EMPTY) {
+                // First thing to do is add ways up to the last node
+                {
+                    if (lastNoEntry < 0)
+                        lastNoEntry = 0;
+                    long transfer[] = osmNodeIds.toArray(lastNoEntry, size - lastNoEntry - 1);
+                    nodeIdsToCreateWaysFor = new TLongArrayList(transfer);
+                    Collection<EdgeIteratorState> newEdges = addOSMWay(nodeIdsToCreateWaysFor, wayFlags, wayOsmId);
+                    logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newEdges.size());
+                    createdEdges.addAll(newEdges);
+                }
 
-            // create zero length edge for barrier to the next node
-            Collection<EdgeIteratorState> newBarriers = addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId);
-            logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
-            noEntryCreatedEdges.addAll(newBarriers);
-            // Update the orientation of our little one way
-            for (EdgeIteratorState edgeIteratorState : newBarriers) {
-                boolean forwards = endDirection.equals("true");
+                // We are processing all the way to the end of the line so don't
+                // process down to barriers.
+                // This is going to obscure barrier behaviour I believe.
+                processedEntireWay = true;
+                long nodeFlags = getNodeFlagsMap().get(nodeId);
+                // create shadow node copy for zero length edge
+                OSMNode newNode = addBarrierNode(nodeId);
+                long newNodeId = newNode.getId();
+                // add way up to barrier shadow node
+                long transfer[] = osmNodeIds.toArray(osmNodeIds.size() - 2, 2); // From
+                                                                                // 0
+                                                                                // for
+                                                                                // length
+                                                                                // 2
+                transfer[transfer.length - 1] = newNodeId;
+                TLongList partIds = new TLongArrayList(transfer);
+                Collection<EdgeIteratorState> newWays = addOSMWay(partIds, wayFlags, wayOsmId);
+                logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
+                noEntryCreatedEdges.addAll(newWays);
 
-                long flags = encodingManager.flagsDefault(forwards, !forwards);
-                // Set the flags on our new edge.
-                edgeIteratorState.setFlags(flags);
+                // create zero length edge for barrier to the next node
+                Collection<EdgeIteratorState> newBarriers = addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId);
+                logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
+                noEntryCreatedEdges.addAll(newBarriers);
+                // Update the orientation of our little one way
+                for (EdgeIteratorState edgeIteratorState : newBarriers) {
+                    boolean forwards = endDirection.equals("true");
+
+                    long flags = encodingManager.flagsDefault(forwards, !forwards);
+                    // Set the flags on our new edge.
+                    edgeIteratorState.setFlags(flags);
+                }
+            }
+            else {
+                // TODO Figure out why there are some end nodes that don't have internal node ids
+                logger.error("MISSING NODE: osmNodeIdToInternalNodeMap returned -1 for nodeId " + nodeId);
             }
         }
 
-        // If we have processed a No Entry on the last node we have processed the whole way do don't go down to barriers
+        // If we have processed a No Entry on the last node we have processed
+        // the whole way do don't go down to barriers
         if (!processedEntireWay) {
             // just add remainder of way to graph if barrier was not the last
             // node
@@ -892,13 +902,14 @@ public class OsItnReader implements DataReader {
                 nodeIdsToCreateWaysFor = osmNodeIds;
             }
             if (nodeIdsToCreateWaysFor != null) {
-                // Now process Barriers for the remaining route. This will create
+                // Now process Barriers for the remaining route. This will
+                // create
                 // the remaining ways for after the end of the barriers
                 processBarriers(way, nodeIdsToCreateWaysFor, wayFlags, wayOsmId);
             }
         }
         // TODO Can we move this code out into processWay?
-        if (modifiedWithNoEntry||processedEntireWay) {
+        if (modifiedWithNoEntry || processedEntireWay) {
             for (EdgeIteratorState edge : noEntryCreatedEdges) {
                 encodingManager.applyWayTags(way, edge);
             }
@@ -1426,14 +1437,18 @@ public class OsItnReader implements DataReader {
      * Create a copy of the barrier node
      */
     private OSMNode addBarrierNode(long nodeId) {
-        OSMNode newNode;
+        OSMNode newNode = null;
         int graphIndex = getNodeMap().get(nodeId);
         if (graphIndex < TOWER_NODE) {
             graphIndex = -graphIndex - 3;
             newNode = new OSMNode(createNewNodeId(), nodeAccess, graphIndex);
         } else {
             graphIndex = graphIndex - 3;
-            newNode = new OSMNode(createNewNodeId(), pillarInfo, graphIndex);
+            try {
+                newNode = new OSMNode(createNewNodeId(), pillarInfo, graphIndex);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                e.printStackTrace();
+            }
         }
 
         final long id = newNode.getId();
