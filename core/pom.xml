@@ -70,7 +70,7 @@
 		<dependency>
 			<groupId>uk.co.ordnancesurvey.api</groupId>
 			<artifactId>OSGBCoordinateConvertor</artifactId>
-			<version>1.0.3</version>
+			<version>1.0.5</version>
 		</dependency>
 		<dependency>
 			<groupId>org.geotools</groupId>
