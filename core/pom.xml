@@ -90,7 +90,7 @@
 		<dependency>
 			<groupId>javax.measure</groupId>
 			<artifactId>jsr-275</artifactId>
-			<version>1.0-beta-2</version>
+			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
