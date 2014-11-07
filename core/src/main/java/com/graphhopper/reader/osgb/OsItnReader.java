@@ -760,7 +760,7 @@ public class OsItnReader implements DataReader {
             logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
             noEntryCreatedEdges.addAll(newBarriers);
             // Update the orientation of our little one way
-            for (EdgeIteratorState edgeIteratorState : newBarriers) {
+            for (EdgeIteratorState edgeIteratorState : newWays) {
                 boolean forwards = startDirection.equals("true");
 
                 long flags = encodingManager.flagsDefault(forwards, !forwards);
