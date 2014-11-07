@@ -119,7 +119,7 @@
 			<osgb:length>538.90</osgb:length>
 			<osgb:polyline>
 				<gml:LineString srsName="osgb:BNG">
-					<gml:coordinates>290000.000,90000.000 291378.000,92741.500 291378.000,92751.500 291378.000,92761.500 280000.000,90000.000</gml:coordinates>
+					<gml:coordinates>290000.000,90000.000 291378.000,92741.500 291378.000,92751.500 291378.000,92761.500 280000.000,90000.000 </gml:coordinates>
 				</gml:LineString>
 			</osgb:polyline>
 			<osgb:directedNode orientation="-" xlink:href="#osgb4000000025277880" />

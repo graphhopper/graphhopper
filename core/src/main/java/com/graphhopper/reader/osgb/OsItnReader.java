@@ -148,6 +148,7 @@ public class OsItnReader implements DataReader {
     // tower node is <= -3
     protected static final int TOWER_NODE = -2;
     private static final Logger logger = LoggerFactory.getLogger(OsItnReader.class);
+    private static final Logger errors_logger = LoggerFactory.getLogger("ingestionerrors");
 
     private static final int MAX_GRADE_SEPARATION = 4;
     private long locations;
@@ -733,6 +734,7 @@ public class OsItnReader implements DataReader {
      * @return
      */
     private List<EdgeIteratorState> processNoEntry(OSITNWay way, List<OSITNNode> wayNodes, TLongList osmNodeIds, long wayFlags, long wayOsmId) {
+        errors_logger.error("processNoEntry");
         List<EdgeIteratorState> createdEdges = new ArrayList<EdgeIteratorState>();
         int lastNoEntry = -1;
         List<EdgeIteratorState> noEntryCreatedEdges = new ArrayList<EdgeIteratorState>();
@@ -875,7 +877,6 @@ public class OsItnReader implements DataReader {
                 // Update the orientation of our little one way
                 for (EdgeIteratorState edgeIteratorState : newBarriers) {
                     boolean forwards = endDirection.equals("true");
-
                     long flags = encodingManager.flagsDefault(forwards, !forwards);
                     // Set the flags on our new edge.
                     edgeIteratorState.setFlags(flags);
@@ -883,7 +884,7 @@ public class OsItnReader implements DataReader {
             }
             else {
                 // TODO Figure out why there are some end nodes that don't have internal node ids
-                logger.error("MISSING NODE: osmNodeIdToInternalNodeMap returned -1 for nodeId " + nodeId);
+                errors_logger.error("MISSING NODE: osmNodeIdToInternalNodeMap returned -1 for nodeId " + nodeId);
             }
         }
 
@@ -917,6 +918,12 @@ public class OsItnReader implements DataReader {
         return createdEdges;
     }
 
+    /**
+     * 
+     * @param wayId
+     * @param wayCoord
+     * @return "true" for (+), "-1" for (-), null for not set
+     */
     private String checkForNoEntryDirection(long wayId, String wayCoord) {
         // Look for direction flags in edgeIdToXToYToNodeFlagsMap for the wayId,
         // x, y combination
@@ -943,8 +950,10 @@ public class OsItnReader implements DataReader {
                     }
                     // wayNode.setTag(TAG_KEY_NOENTRY_ORIENTATION, "true");
                     if (direction > 0l) {
+                        // (+)
                         return "true";
                     } else {
+                        // (-)
                         return "-1";
                     }
                 }
