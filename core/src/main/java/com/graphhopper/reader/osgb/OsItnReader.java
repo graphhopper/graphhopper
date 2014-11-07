@@ -158,6 +158,12 @@ public class OsItnReader implements DataReader {
     private EncodingManager encodingManager = null;
     private int workerThreads = -1;
     protected long zeroCounter = 0;
+    
+    private long successfulStartNoEntries=0;
+    private long successfulEndNoEntries=0;
+    private long failedStartNoEntries=0;
+    private long failedEndNoEntries=0;
+    
     // Using the correct Map<Long, Integer> is hard. We need a memory efficient
     // and fast solution for big data sets!
     //
@@ -292,7 +298,9 @@ public class OsItnReader implements DataReader {
             }
             if (item.isType(OSMElement.RELATION)) {
                 final Relation relation = (Relation) item;
-                logger.warn("RELATION :" + item.getClass() + " TYPE:" + item.getTag(OSITNElement.TAG_KEY_TYPE) + " meta?" + relation.isMetaRelation());
+                // logger.warn("RELATION :" + item.getClass() + " TYPE:" +
+                // item.getTag(OSITNElement.TAG_KEY_TYPE) + " meta?" +
+                // relation.isMetaRelation());
                 if (!relation.isMetaRelation() && relation.hasTag(OSITNElement.TAG_KEY_TYPE, "route"))
                     prepareWaysWithRelationInfo(relation);
 
@@ -504,6 +512,7 @@ public class OsItnReader implements DataReader {
             ProcessVisitor processVisitor = new ProcessVisitor() {
                 @Override
                 public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException {
+                    logger.error("PROCESS STAGE 1");
                     processStageOne(processData, in);
                 }
             };
@@ -512,6 +521,7 @@ public class OsItnReader implements DataReader {
             processVisitor = new ProcessVisitor() {
                 @Override
                 public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException {
+                    logger.error("PROCESS STAGE 2");
                     processStageTwo(processData, in);
                 }
             };
@@ -520,6 +530,7 @@ public class OsItnReader implements DataReader {
             processVisitor = new ProcessVisitor() {
                 @Override
                 public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException {
+                    logger.error("PROCESS STAGE 3");
                     processStageThree(processData, in);
                 }
             };
@@ -734,7 +745,6 @@ public class OsItnReader implements DataReader {
      * @return
      */
     private List<EdgeIteratorState> processNoEntry(OSITNWay way, List<OSITNNode> wayNodes, TLongList osmNodeIds, long wayFlags, long wayOsmId) {
-        errors_logger.error("processNoEntry");
         List<EdgeIteratorState> createdEdges = new ArrayList<EdgeIteratorState>();
         int lastNoEntry = -1;
         List<EdgeIteratorState> noEntryCreatedEdges = new ArrayList<EdgeIteratorState>();
@@ -746,28 +756,39 @@ public class OsItnReader implements DataReader {
             lastNoEntry = 1; // This will set the index used for way nodes
             // create shadow node copy for zero length edge
             long nodeId = osmNodeIds.get(1); // Get the second node id
-            long nodeFlags = getNodeFlagsMap().get(nodeId);
-            OSMNode newNode = addBarrierNode(nodeId);
-            long newNodeId = newNode.getId();
-            // add way up to barrier shadow node
-            long transfer[] = osmNodeIds.toArray(0, 2); // From 0 for length 2
-            transfer[transfer.length - 1] = newNodeId;
-            TLongList partIds = new TLongArrayList(transfer);
-            Collection<EdgeIteratorState> newWays = addOSMWay(partIds, wayFlags, wayOsmId);
-            logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
-            noEntryCreatedEdges.addAll(newWays);
 
-            // create zero length edge for barrier to the next node
-            Collection<EdgeIteratorState> newBarriers = addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId);
-            logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
-            noEntryCreatedEdges.addAll(newBarriers);
-            // Update the orientation of our little one way
-            for (EdgeIteratorState edgeIteratorState : newWays) {
-                boolean forwards = startDirection.equals("true");
+            int graphIndex = getNodeMap().get(nodeId);
+            if (graphIndex != EMPTY) {
 
-                long flags = encodingManager.flagsDefault(forwards, !forwards);
-                // Set the flags on our new edge.
-                edgeIteratorState.setFlags(flags);
+                long nodeFlags = getNodeFlagsMap().get(nodeId);
+                OSMNode newNode = addBarrierNode(nodeId);
+                long newNodeId = newNode.getId();
+                // add way up to barrier shadow node
+                long transfer[] = osmNodeIds.toArray(0, 2); // From 0 for length
+                                                            // 2
+                transfer[transfer.length - 1] = newNodeId;
+                TLongList partIds = new TLongArrayList(transfer);
+                Collection<EdgeIteratorState> newWays = addOSMWay(partIds, wayFlags, wayOsmId);
+                logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
+                noEntryCreatedEdges.addAll(newWays);
+
+                // create zero length edge for barrier to the next node
+                Collection<EdgeIteratorState> newBarriers = addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId);
+                logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
+                noEntryCreatedEdges.addAll(newBarriers);
+                // Update the orientation of our little one way
+                for (EdgeIteratorState edgeIteratorState : newWays) {
+                    boolean forwards = startDirection.equals("true");
+
+                    long flags = encodingManager.flagsDefault(forwards, !forwards);
+                    // Set the flags on our new edge.
+                    edgeIteratorState.setFlags(flags);
+                }
+                successfulStartNoEntries++;
+            }
+            else {
+                failedStartNoEntries++;
+                errors_logger.error("MISSING NODE: osmNodeIdToInternalNodeMap returned -1 for nodeId " + nodeId + " for START Node " + osmNodeIds.toString() + " ("+successfulStartNoEntries+" succeeded, " + failedStartNoEntries + " failed)");
             }
         }
         // Process Way Nodes
@@ -881,10 +902,12 @@ public class OsItnReader implements DataReader {
                     // Set the flags on our new edge.
                     edgeIteratorState.setFlags(flags);
                 }
-            }
-            else {
-                // TODO Figure out why there are some end nodes that don't have internal node ids
-                errors_logger.error("MISSING NODE: osmNodeIdToInternalNodeMap returned -1 for nodeId " + nodeId);
+                successfulEndNoEntries++;
+            } else {
+                failedEndNoEntries++;
+                // TODO Figure out why there are some end nodes that don't have
+                // internal node ids
+                errors_logger.error("MISSING NODE: osmNodeIdToInternalNodeMap returned -1 for nodeId " + nodeId + " for END Node " + osmNodeIds.toString() + " ("+successfulEndNoEntries+" succeeded, " + failedEndNoEntries + " failed)");
             }
         }
 
@@ -1206,7 +1229,7 @@ public class OsItnReader implements DataReader {
     void prepareWaysWithRelationInfo(Relation relation) {
         // is there at least one tag interesting for the registed encoders?
         long handleRelationTags = encodingManager.handleRelationTags(relation, 0);
-        logger.warn(PREPARE_ONE_WAY_FORMAT, handleRelationTags);
+        // logger.warn(PREPARE_ONE_WAY_FORMAT, handleRelationTags);
         if (handleRelationTags == 0) {
             return;
         }
@@ -1217,13 +1240,14 @@ public class OsItnReader implements DataReader {
             if (member.type() != OSMRelation.Member.WAY)
                 continue;
             long osmId = member.ref();
-            logger.warn(ADDING_WAY_RELATION_TO_FORMAT, osmId);
+            // logger.warn(ADDING_WAY_RELATION_TO_FORMAT, osmId);
             long oldRelationFlags = getRelFlagsMap().get(osmId);
 
             // Check if our new relation data is better comparated to the the
             // last one
             long newRelationFlags = encodingManager.handleRelationTags(relation, oldRelationFlags);
-            logger.warn(APPLYING_RELATION_FORMAT, oldRelationFlags, newRelationFlags);
+            // logger.warn(APPLYING_RELATION_FORMAT, oldRelationFlags,
+            // newRelationFlags);
             if (oldRelationFlags != newRelationFlags) {
                 getRelFlagsMap().put(osmId, newRelationFlags);
             }
