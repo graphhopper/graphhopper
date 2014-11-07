@@ -27,29 +27,35 @@ public class DAType
     /**
      * The DA object is hold entirely in-memory. Loading and flushing is a no-op. See RAMDataAccess.
      */
-    public static final DAType RAM = new DAType(MemRef.HEAP, false, false);
+    public static final DAType RAM = new DAType(MemRef.HEAP, false, false, true, false);
     /**
      * Optimized RAM DA type for integer access. The set and getBytes methods cannot be used.
      */
-    public static final DAType RAM_INT = new DAType(MemRef.HEAP, false, true);
+    public static final DAType RAM_INT = new DAType(MemRef.HEAP, false, true, true, false);
     /**
      * The DA object is hold entirely in-memory. It will read load disc and flush to it if they
      * equivalent methods are called. See RAMDataAccess.
      */
-    public static final DAType RAM_STORE = new DAType(MemRef.HEAP, true, false);
+    public static final DAType RAM_STORE = new DAType(MemRef.HEAP, true, false, true, false);
     /**
      * Optimized RAM_STORE DA type for integer access. The set and getBytes methods cannot be used.
      */
-    public static final DAType RAM_INT_STORE = new DAType(MemRef.HEAP, true, true);
+    public static final DAType RAM_INT_STORE = new DAType(MemRef.HEAP, true, true, true, false);
     /**
      * Memory mapped DA object. See MMapDataAccess. To make it read and write thread-safe you need
      * to use 'new DAType(MMAP, true)'
      */
-    public static final DAType MMAP = new DAType(MemRef.MMAP, true, false);
+    public static final DAType MMAP = new DAType(MemRef.MMAP, true, false, true, false);
+
+    /**
+     * Read-only memory mapped DA object. To avoid write access useful for reading on mobile or
+     * embedded data stores.
+     */
+    public static final DAType MMAP_RO = new DAType(MemRef.MMAP, true, false, false, false);
     /**
      * Experimental API. Do not use yet.
      */
-    public static final DAType UNSAFE_STORE = new DAType(MemRef.UNSAFE, true, false);
+    public static final DAType UNSAFE_STORE = new DAType(MemRef.UNSAFE, true, false, true, false);
 
     public enum MemRef
     {
@@ -60,27 +66,24 @@ public class DAType
     private final boolean storing;
     private final boolean integ;
     private final boolean synched;
+    private final boolean allowWrites;
 
     public DAType( DAType type, boolean synched )
     {
-        this(type.getMemRef(), type.isStoring(), type.isInteg(), synched);
+        this(type.getMemRef(), type.isStoring(), type.isInteg(), type.isAllowWrites(), synched);
         if (!synched)
             throw new IllegalStateException("constructor can only be used with synched=true");
         if (type.isSynched())
             throw new IllegalStateException("something went wrong as DataAccess object is already synched!?");
     }
 
-    public DAType( MemRef memRef, boolean storing, boolean integ, boolean synched )
+    public DAType( MemRef memRef, boolean storing, boolean integ, boolean allowWrites, boolean synched )
     {
         this.memRef = memRef;
         this.storing = storing;
         this.integ = integ;
+        this.allowWrites = allowWrites;
         this.synched = synched;
-    }
-
-    public DAType( MemRef memRef, boolean store, boolean integ )
-    {
-        this(memRef, store, integ, false);
     }
 
     /**
@@ -89,6 +92,11 @@ public class DAType
     MemRef getMemRef()
     {
         return memRef;
+    }
+
+    public boolean isAllowWrites()
+    {
+        return allowWrites;
     }
 
     /**

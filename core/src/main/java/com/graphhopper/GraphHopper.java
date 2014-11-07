@@ -690,6 +690,9 @@ public class GraphHopper implements GraphHopperAPI
         if (encodingManager == null)
             encodingManager = EncodingManager.create(ghLocation);
 
+        if (!allowWrites && dataAccessType.isMMap())
+            dataAccessType = DAType.MMAP_RO;
+
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
         if (chEnabled)
             graph = new LevelGraphStorage(dir, encodingManager, hasElevation());
