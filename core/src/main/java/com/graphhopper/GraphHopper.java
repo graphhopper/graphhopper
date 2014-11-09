@@ -64,7 +64,7 @@ public class GraphHopper implements GraphHopperAPI
     private boolean enableInstructions = true;
     private boolean fullyLoaded = false;
     // for routing
-    private boolean simplifyRequest = true;
+    private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     // for index
     private LocationIndex locationIndex;
@@ -84,7 +84,7 @@ public class GraphHopper implements GraphHopperAPI
     private double logMessages = -1;
     // for OSM import
     private String osmFile;
-    private double wayPointMaxDistance = 1;
+    private double osmReaderWayPointMaxDistance = 1;
     private int workerThreads = -1;
     private boolean calcPoints = true;
     // utils    
@@ -146,12 +146,16 @@ public class GraphHopper implements GraphHopperAPI
      */
     protected double getWayPointMaxDistance()
     {
-        return wayPointMaxDistance;
+        return osmReaderWayPointMaxDistance;
     }
 
+    /**
+     * This parameter specifies how to reduce points via douglas peucker while OSM import. Higher
+     * value means more details, unit is meter. Default is 1. Disable via 0.
+     */
     public GraphHopper setWayPointMaxDistance( double wayPointMaxDistance )
     {
-        this.wayPointMaxDistance = wayPointMaxDistance;
+        this.osmReaderWayPointMaxDistance = wayPointMaxDistance;
         return this;
     }
 
@@ -343,7 +347,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     private GraphHopper setSimplifyResponse( boolean doSimplify )
     {
-        this.simplifyRequest = doSimplify;
+        this.simplifyResponse = doSimplify;
         return this;
     }
 
@@ -532,7 +536,7 @@ public class GraphHopper implements GraphHopperAPI
         logMessages = args.getDouble("prepare.logmessages", logMessages);
 
         // osm import
-        wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", wayPointMaxDistance);
+        osmReaderWayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", osmReaderWayPointMaxDistance);
         String flagEncoders = args.get("graph.flagEncoders", "CAR");
         if (flagEncoders.toLowerCase().contains("turncosts=true"))
             traversalMode = TraversalMode.EDGE_BASED_2DIR;
@@ -641,7 +645,7 @@ public class GraphHopper implements GraphHopperAPI
                 setElevationProvider(eleProvider).
                 setWorkerThreads(workerThreads).
                 setEncodingManager(encodingManager).
-                setWayPointMaxDistance(wayPointMaxDistance);
+                setWayPointMaxDistance(osmReaderWayPointMaxDistance);
     }
 
     /**
@@ -815,16 +819,15 @@ public class GraphHopper implements GraphHopperAPI
 
         enableInstructions = request.getHints().getBool("instructions", enableInstructions);
         calcPoints = request.getHints().getBool("calcPoints", calcPoints);
-        simplifyRequest = request.getHints().getBool("simplifyRequest", simplifyRequest);
-        double minPathPrecision = request.getHints().getDouble("douglas.minprecision", 1d);
+        double wayPointMaxDistance = request.getHints().getDouble("wayPointMaxDistance", 1d);
         Locale locale = request.getLocale();
-        DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(minPathPrecision);
+        DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
 
         new PathMerger().
                 setCalcPoints(calcPoints).
                 setDouglasPeucker(peucker).
                 setEnableInstructions(enableInstructions).
-                setSimplifyRequest(simplifyRequest && minPathPrecision > 0).
+                setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0).
                 doWork(response, paths, trMap.getWithFallBack(locale));
         return response;
     }

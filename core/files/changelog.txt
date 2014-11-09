@@ -1,4 +1,6 @@
 0.4.0
+    renamed less often used URL parameter 'min_path_precision' to way_point_max_distance which makes it identical to the setWayPointMaxDistance method used for simplification at OSMImport
+    removed douglas.minprecision from Java API ghRequest.hints => use wayPointMaxDistance instead
     encoder.supportTurnCost is replaced by encoder.supports(TurnWeighting.class)
     CmdArgs is now a Map<String, String> instead Map<String, Object>. The value will be parsed up on every getXY call
     removed GHRequest.getHint, instead use the provided methods in GHRequest.getHints().getXY and GHRequest.getHints().put

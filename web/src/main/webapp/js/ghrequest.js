@@ -10,7 +10,7 @@ window.log = function () {
 };
 
 GHRequest = function (host) {
-    this.min_path_precision = 1;
+    this.way_point_max_distance = 1;
     this.host = host;
     this.route = new GHroute(new GHInput(), new GHInput());
     this.from = this.route.first();
@@ -416,8 +416,8 @@ GHRequest.prototype.createPath = function (url) {
     // dijkstra, dijkstrabi, astar, astarbi
     if (this.algorithm && this.algorithm !== "dijkstrabi")
         url += "&algorithm=" + this.algorithm;
-    if (this.min_path_precision !== 1)
-        url += "&min_path_precision=" + this.min_path_precision;
+    if (this.way_point_max_distance !== 1)
+        url += "&way_point_max_distance=" + this.way_point_max_distance;
     if (!this.instructions)
         url += "&instructions=false";
     if (!this.points_encoded)

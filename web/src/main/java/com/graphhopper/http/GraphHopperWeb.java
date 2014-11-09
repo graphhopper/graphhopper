@@ -112,7 +112,7 @@ public class GraphHopperWeb implements GraphHopperAPI
                     + places
                     + "&type=json"
                     + "&points_encoded=" + pointsEncoded
-                    + "&min_path_precision=" + request.getHints().getDouble("douglas.minprecision", 1)
+                    + "&way_point_max_distance=" + request.getHints().getDouble("wayPointMaxDistance", 1)
                     + "&algo=" + request.getAlgorithm()
                     + "&locale=" + request.getLocale().toString()
                     + "&elevation=" + withElevation;

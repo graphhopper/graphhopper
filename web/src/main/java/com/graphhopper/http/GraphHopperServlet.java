@@ -77,7 +77,7 @@ public class GraphHopperServlet extends GHBaseServlet
         List<GHPoint> infoPoints = getPoints(req);
 
         // we can reduce the path length based on the maximum differences to the original coordinates
-        double minPathPrecision = getDoubleParam(req, "min_path_precision", 1d);
+        double minPathPrecision = getDoubleParam(req, "way_point_max_distance", 1d);
         boolean writeGPX = "gpx".equalsIgnoreCase(getParam(req, "type", "json"));
         boolean enableInstructions = writeGPX || getBooleanParam(req, "instructions", true);
         boolean calcPoints = getBooleanParam(req, "calc_points", true);
@@ -108,7 +108,7 @@ public class GraphHopperServlet extends GHBaseServlet
                     getHints().
                     put("calcPoints", calcPoints).
                     put("instructions", enableInstructions).
-                    put("douglas.minprecision", minPathPrecision);
+                    put("wayPointMaxDistance", minPathPrecision);
 
             ghRsp = hopper.route(request);
         }

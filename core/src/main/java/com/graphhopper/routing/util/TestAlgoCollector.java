@@ -58,7 +58,7 @@ public class TestAlgoCollector
         }
         PathMerger pathMerger = new PathMerger().
                 setCalcPoints(true).
-                setSimplifyRequest(false).
+                setSimplifyResponse(false).
                 setEnableInstructions(true);
         GHResponse rsp = new GHResponse();
         pathMerger.doWork(rsp, viaPaths, trMap.getWithFallBack(Locale.US));

@@ -500,8 +500,7 @@ public class MainActivity extends Activity
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
                         setAlgorithm("dijkstrabi");
                 req.getHints().
-                        put("instructions", "false").
-                        put("douglas.minprecision", "1");
+                        put("instructions", "false");
                 GHResponse resp = hopper.route(req);
                 time = sw.stop().getSeconds();
                 return resp;
