@@ -105,7 +105,16 @@ import com.graphhopper.util.shapes.GHPoint;
 
 public class OsItnReader implements DataReader {
 
-    private static final String NO_MATCHING_EDGES_FOR_FORMAT = "No Matching Edges for {} : {}";
+    private static final String TURN_FROM_TO_VIA_FORMAT = "Turn from:{} to:{} via:{}";
+	private static final String PRINT_INFO_FORMAT = "finished {}  processing. nodes:{}, osmIdMap.size:{}, osmIdMap:{}MB, nodeFlagsMap.size:{}, relFlagsMap.size:{} {}";
+	private static final String OS_ITN_READER_PREPARE_HIGHWAY_NODE_PILLAR_TOWER_FORMAT = "OsItnReader.prepareHighwayNode(PILLAR->TOWER):{}";
+	private static final String OS_ITN_READER_PREPARE_HIGHWAY_NODE_EMPTY_PILLAR_FORMAT = "OsItnReader.prepareHighwayNode(EMPTY->PILLAR):{}";
+	private static final String ADDING_NODE_AS_FORMAT = "Adding Node:{} as {}";
+	private static final String NOW_PARSING_RELATIONS_FORMAT = "{}, now parsing relations";
+	private static final String NOW_PARSING_WAYS_FORMAT = "{}, now parsing ways";
+	private static final String PROCESSING_LOCS_FORMAT = "{}, locs: {} ({}) {}";
+	private static final String PREPROCESS_OSM_ID_MAP_MB_FORMAT = "{} (preprocess), osmIdMap: {}  ({}MB) {}";
+	private static final String NO_MATCHING_EDGES_FOR_FORMAT = "No Matching Edges for {} : {}";
     private static final String RELATIONMEMBERREF_FORMAT = "RELATIONMEMBERREF: {}";
     private static final String CONVERTING_PILLAR_TO_PILLAR_FORMAT = "Converting Pillar {} to pillar? {}";
     private static final String STORE_OSM_WAY_ID_FOR_FORMAT = "StoreOSMWayID: {} for {}";
@@ -292,7 +301,7 @@ public class OsItnReader implements DataReader {
                     }
 
                     if (++tmpWayCounter % 500000 == 0) {
-                        logger.info(nf(tmpWayCounter) + " (preprocess), osmIdMap:" + nf(getNodeMap().getSize()) + " (" + getNodeMap().getMemoryUsage() + "MB) " + Helper.getMemInfo());
+                        logger.info(PREPROCESS_OSM_ID_MAP_MB_FORMAT, nf(tmpWayCounter), nf(getNodeMap().getSize()), getNodeMap().getMemoryUsage(), Helper.getMemInfo());
                     }
                 }
             }
@@ -591,7 +600,7 @@ public class OsItnReader implements DataReader {
 
             }
             if (++processData.counter % 5000000 == 0) {
-                logger.info(nf(processData.counter) + ", locs:" + nf(locations) + " (" + skippedLocations + ") " + Helper.getMemInfo());
+                logger.info(PROCESSING_LOCS_FORMAT, nf(processData.counter), nf(locations), skippedLocations, Helper.getMemInfo());
             }
         }
     }
@@ -605,7 +614,7 @@ public class OsItnReader implements DataReader {
                 OSITNWay way = (OSITNWay) item;
                 logger.info(WAY_FORMAT, way.getId(), processData.wayStart);
                 if (processData.wayStart < 0) {
-                    logger.info(nf(processData.counter) + ", now parsing ways");
+                    logger.info(NOW_PARSING_WAYS_FORMAT, nf(processData.counter));
                     processData.wayStart = processData.counter;
                 }
                 if (!way.hasTag("highway")) {
@@ -619,7 +628,7 @@ public class OsItnReader implements DataReader {
                 break;
             }
             if (++processData.counter % 5000000 == 0) {
-                logger.info(nf(processData.counter) + ", locs:" + nf(locations) + " (" + skippedLocations + ") " + Helper.getMemInfo());
+            	logger.info(PROCESSING_LOCS_FORMAT, nf(processData.counter), nf(locations), skippedLocations, Helper.getMemInfo());
             }
         }
     }
@@ -640,14 +649,14 @@ public class OsItnReader implements DataReader {
             switch (item.getType()) {
             case OSMElement.RELATION:
                 if (processData.relationStart < 0) {
-                    logger.info(nf(processData.counter) + ", now parsing relations");
+                    logger.info(NOW_PARSING_RELATIONS_FORMAT, nf(processData.counter));
                     processData.relationStart = processData.counter;
                 }
                 processRelation((Relation) item);
                 break;
             }
             if (++processData.counter % 5000000 == 0) {
-                logger.info(nf(processData.counter) + ", locs:" + nf(locations) + " (" + skippedLocations + ") " + Helper.getMemInfo());
+            	logger.info(PROCESSING_LOCS_FORMAT, nf(processData.counter), nf(locations), skippedLocations, Helper.getMemInfo());
             }
         }
     }
@@ -1115,7 +1124,7 @@ public class OsItnReader implements DataReader {
                 getOsmIdStoreRequiredSet().add(fromId);
                 getOsmIdStoreRequiredSet().add(toId);
 
-                logger.info("Turn from:" + turnRelation.getOsmIdFrom() + " to:" + turnRelation.getOsmIdTo() + " via:" + turnRelation.getVia());
+                logger.info(TURN_FROM_TO_VIA_FORMAT, turnRelation.getOsmIdFrom(), turnRelation.getOsmIdTo(), turnRelation.getVia());
                 ExtendedStorage extendedStorage = ((GraphHopperStorage) graphStorage).getExtendedStorage();
                 if (extendedStorage instanceof TurnCostStorage) {
                     Collection<ITurnCostTableEntry> entries = encodingManager.analyzeTurnRelation(turnRelation, this);
@@ -1208,7 +1217,7 @@ public class OsItnReader implements DataReader {
             logger.warn(MISSING_FROM_MAP_FORMAT, node.getId());
             return false;
         }
-        logger.warn("Adding Node:" + node.getId() + " as " + nodeType);
+        logger.warn(ADDING_NODE_AS_FORMAT, node.getId(), nodeType);
         double lat = node.getLat();
         double lon = node.getLon();
         double ele = getElevation(node);
@@ -1258,11 +1267,11 @@ public class OsItnReader implements DataReader {
         int tmpIndex = getNodeMap().get(osmId);
         if (tmpIndex == EMPTY) {
             // osmId is used exactly once
-            logger.info("OsItnReader.prepareHighwayNode(EMPTY->PILLAR):" + osmId);
+            logger.info(OS_ITN_READER_PREPARE_HIGHWAY_NODE_EMPTY_PILLAR_FORMAT, osmId);
             getNodeMap().put(osmId, PILLAR_NODE);
         } else if (tmpIndex > EMPTY) {
             // mark node as tower node as it occured at least twice times
-            logger.info("OsItnReader.prepareHighwayNode(PILLAR->TOWER):" + osmId);
+            logger.info(OS_ITN_READER_PREPARE_HIGHWAY_NODE_PILLAR_TOWER_FORMAT, osmId);
             getNodeMap().put(osmId, TOWER_NODE);
         } else {
             // tmpIndex is already negative (already tower node)
@@ -1603,7 +1612,7 @@ public class OsItnReader implements DataReader {
     }
 
     private void printInfo(String str) {
-        LoggerFactory.getLogger(getClass()).info("finished " + str + " processing." + " nodes: " + graphStorage.getNodes() + ", osmIdMap.size:" + getNodeMap().getSize() + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB" + ", nodeFlagsMap.size:" + getNodeFlagsMap().size() + ", relFlagsMap.size:" + getRelFlagsMap().size() + " " + Helper.getMemInfo());
+        logger.info(PRINT_INFO_FORMAT, str, graphStorage.getNodes(), getNodeMap().getSize(), getNodeMap().getMemoryUsage(), getNodeFlagsMap().size(), getRelFlagsMap().size(), Helper.getMemInfo());
     }
 
     @Override
