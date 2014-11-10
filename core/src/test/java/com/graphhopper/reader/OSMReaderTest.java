@@ -125,7 +125,7 @@ public class OSMReaderTest
         @Override
         protected DataReader createReader( GraphStorage tmpGraph )
         {
-            return initOSMReader(new OSMReader(tmpGraph));
+            return initReader(new OSMReader(tmpGraph));
         }
 
         @Override
@@ -662,7 +662,7 @@ public class OSMReaderTest
             @Override
             protected DataReader createReader( GraphStorage tmpGraph )
             {
-                return initOSMReader(new OSMReader(tmpGraph)
+                return initReader(new OSMReader(tmpGraph)
                 {
                     @Override
                     protected double getElevation( OSMNode node )

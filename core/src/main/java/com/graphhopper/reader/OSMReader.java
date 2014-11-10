@@ -950,7 +950,7 @@ public class OSMReader implements DataReader
         return this;
     }
 
-    public OSMReader setOSMFile( File osmFile )
+    public DataReader setOSMFile( File osmFile )
     {
         this.osmFile = osmFile;
         return this;

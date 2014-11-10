@@ -267,7 +267,7 @@
 			<osgb:environmentQualifier>
 				<osgb:instruction>No Entry</osgb:instruction>
 			</osgb:environmentQualifier>
-			<osgb:directedLink orientation='-'
+			<osgb:directedLink orientation='+'
 				xlink:href='#osgb4000000025288017' />
 			<osgb:distanceFromStart>150.78</osgb:distanceFromStart>
 			<osgb:point>

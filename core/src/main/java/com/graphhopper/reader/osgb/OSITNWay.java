@@ -46,6 +46,8 @@ public class OSITNWay extends OSITNElement implements Way {
     private static final long WAY_NODE_PREFIX_MOD = 100000000000000000L;
     protected final TLongList nodes = new TLongArrayList(5);
     protected String[] wayCoords;
+    protected String startCoord;
+    protected String endCoord;
     private static final Logger logger = LoggerFactory.getLogger(OSITNWay.class);
 
     /**
@@ -76,6 +78,8 @@ public class OSITNWay extends OSITNElement implements Way {
     protected void parseCoords(String lineDefinition) {
         String[] lineSegments = lineDefinition.split(" ");
         wayCoords = Arrays.copyOfRange(lineSegments, 1, lineSegments.length - 1);
+        startCoord = lineSegments[0];
+        endCoord = lineSegments[lineSegments.length-1];
         logger.info(toString() + " " + ((wayCoords.length == 0) ? "0" : wayCoords[0]));
     }
 
@@ -145,11 +149,10 @@ public class OSITNWay extends OSITNElement implements Way {
     }
 
     /**
-     * Look for coords and directed link id in our new map. if it exists then
-     * set the barriers tag to "noentry" barrier flag as defined in
-     * CarFlagEncoder absoluteBarriers.add("noentry");
-     * edgeIdCoordsToNodeFlagsMap = new TObjectLongHashMap<String>()
-     * 
+     * Creates a new OSITNNode for each wayCoord. This also Looks for direction flags in edgeIdToXToYToNodeFlagsMap for the wayId, x, y combination. If it exists then
+     * set the node tag TAG_KEY_NOENTRY_ORIENTATION to true and the TAG_KEY_ONEWAY_ORIENTATION node tag to -1 for one direction and true for the other.
+     *
+     * @param edgeIdToXToYToNodeFlagsMap
      * @return
      */
     public List<OSITNNode> evaluateWayNodes(TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>> edgeIdToXToYToNodeFlagsMap) {
@@ -163,38 +166,6 @@ public class OSITNWay extends OSITNElement implements Way {
             OSITNNode wayNode = new OSITNNode(id);
             wayNode.parseCoords(wayCoord);
 
-            // Here we need to check the ItnReader edgeIdCoordsToNodeFlagsMap
-            // for this id-coord pair
-            long key = getId();
-            TDoubleObjectMap<TDoubleLongMap> xToYToNodeFlagsMap = edgeIdToXToYToNodeFlagsMap.get(key);
-            if (xToYToNodeFlagsMap != null) {
-                String[] coordParts = wayCoord.split(",");
-                double xCoord = Double.parseDouble(coordParts[0]);
-                double yCoord = Double.parseDouble(coordParts[1]);
-                TDoubleLongMap yToNodeFlagsMap = xToYToNodeFlagsMap.get(xCoord);
-                if (yToNodeFlagsMap != null) {
-                    if (yToNodeFlagsMap.containsKey(yCoord)) {
-                        long direction = yToNodeFlagsMap.remove(yCoord);
-                        // Tidy Up so we reduce memory usage as the ingestion
-                        // progresses
-                        if (yToNodeFlagsMap.size() == 0) {
-                            // Remove empty yCoord map from xCoord Map
-                            xToYToNodeFlagsMap.remove(xCoord);
-                            if (xToYToNodeFlagsMap.size() == 0) {
-                                // We have no more x coords for this key so this
-                                // way has been handled
-                                edgeIdToXToYToNodeFlagsMap.remove(key);
-                            }
-                        }
-                        wayNode.setTag(TAG_KEY_NOENTRY_ORIENTATION, "true");
-                        if (direction > 0l) {
-                            wayNode.setTag(TAG_KEY_ONEWAY_ORIENTATION, "true");
-                        } else {
-                            wayNode.setTag(TAG_KEY_ONEWAY_ORIENTATION, "-1");
-                        }
-                    }
-                }
-            }
             logger.info("Node " + getId() + " coords: " + wayCoord + " tags: ");
             for (String tagKey : wayNode.getTags().keySet()) {
                 logger.info("\t " + tagKey + " : " + wayNode.getTag(tagKey));
@@ -205,8 +176,25 @@ public class OSITNWay extends OSITNElement implements Way {
         return wayNodes;
     }
 
-    public void clearWayNodes() {
+    /**
+     * Memory management method. Once a way is processed the stored string coordinates are no longer required so set them to null so they can be garbage collected
+     */
+    public void clearStoredCoords() {
         wayCoords = null;
+        startCoord = null;
+        endCoord = null;
+    }
+
+    public String[] getWayCoords() {
+        return wayCoords;
+    }
+
+    public String getStartCoord() {
+        return startCoord;
+    }
+
+    public String getEndCoord() {
+        return endCoord;
     }
 
     @Override

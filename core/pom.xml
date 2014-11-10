@@ -1,166 +1,182 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.graphhopper</groupId>
-    <artifactId>graphhopper</artifactId>
-    <name>GraphHopper</name>
-    <version>0.4-SNAPSHOT</version>
-    <packaging>jar</packaging> 
-    <description>
+	<groupId>com.graphhopper</groupId>
+	<artifactId>graphhopper</artifactId>
+	<name>GraphHopper</name>
+	<version>0.4-SNAPSHOT</version>
+	<packaging>jar</packaging>
+	<description>
         GraphHopper is a fast and memory efficient Java road routing engine 
         working seamlessly with OpenStreetMap data.
     </description>
-    <parent>
-        <groupId>com.graphhopper</groupId>
-        <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.4-SNAPSHOT</version>
-    </parent>
-    
-    <repositories>
-    <repository>
-      <id>my-internal-site</id>
-      <url>http://lv515:8081/nexus/content/groups/public/</url>
-    </repository>
-  	</repositories>
-        
-    <properties>  
-        <netbeans.hint.license>apache20</netbeans.hint.license>        
-        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZ</maven.build.timestamp.format>        
-        <builddate>${maven.build.timestamp}</builddate>        
+	<parent>
+		<groupId>com.graphhopper</groupId>
+		<artifactId>graphhopper-parent</artifactId>
+		<version>0.4-SNAPSHOT</version>
+	</parent>
+	<properties>
+		<netbeans.hint.license>apache20</netbeans.hint.license>
+		<maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZ</maven.build.timestamp.format>
+		<builddate>${maven.build.timestamp}</builddate>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <geotools.version>12.0.1</geotools.version>
     </properties>
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-            <comments>A business-friendly OSS license</comments>
-        </license>
-    </licenses> 
-    <dependencies>
-        
-        <!-- Trove is LGPL and slightly big (~3MB) -->
-        <dependency>
-            <groupId>net.sf.trove4j</groupId>
-            <artifactId>trove4j</artifactId>
-            <version>3.0.3</version>
-        </dependency>        
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-        <!-- more recent and nicer but bigger
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.0.13</version>
-            <scope>test</scope>
-        </dependency>
-        -->
-        
-        
-        <!-- for using CGIAR: elevation data importing via tif files-->
-        <dependency>
-            <groupId>org.apache.xmlgraphics</groupId>
-            <artifactId>xmlgraphics-commons</artifactId>
-            <version>1.5</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>2.6.0</version>
-        </dependency>        
-        <dependency>
-            <groupId>org.openstreetmap.osmosis</groupId>
-            <artifactId>osmosis-osm-binary</artifactId>
-            <version>0.43.1</version>
-        </dependency>
-        <dependency>
-            <groupId>uk.co.ordnancesurvey.api</groupId>
-            <artifactId>OSGBCoordinateConvertor</artifactId>
-            <version>1.0.5</version>
-        </dependency>
-    </dependencies>
-        
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-assembly-plugin</artifactId>
-                    <version>2.4.1</version>
-                    <configuration>                     
-                        <!-- for usage on android -->
-                        <descriptors>
-                            <descriptor>src/main/assembly/android.xml</descriptor>
-                        </descriptors>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-site-plugin</artifactId>
-                    <version>3.4</version>
-                    <configuration>
-                        <reportPlugins>
-                            <plugin>
-                                <!-- either call mvn compile site or mvn findbugs:gui -->
-                                <groupId>org.codehaus.mojo</groupId>
-                                <artifactId>findbugs-maven-plugin</artifactId>
-                                <version>2.5.2</version>
-                                <configuration>
-                                    <!-- <xmlOutput>true</xmlOutput> -->
-                                    <!-- Optional directory to put FindBugs xdoc xml report -->
-                                    <xmlOutputDirectory>target/site</xmlOutputDirectory>
-                                    <threshold>Normal</threshold>
-                                    <effort>Default</effort>
-                                    <!--
-                                    <threshold>High|Normal|Low|Exp|Ignore</threshold>
-                                    <effort>Min|Default|Max</effort>
-                                    -->
-                                </configuration>
-                            </plugin>
-                        </reportPlugins>
-                    </configuration>
-                </plugin>
-                
-                <!-- create jar with test classes to be reused in other projects -->                
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <version>2.4</version>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>test-jar</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-                
-            </plugins>
-        </pluginManagement>
-        
-        <!-- make version available at runtime via version file -->
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-                <includes>
-                    <include>**/version</include>
-                    <include>**/builddate</include>
-                </includes>
-            </resource>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>false</filtering>
-                <excludes>
-                    <exclude>**/version</exclude>
-                    <exclude>**/builddate</exclude>
-                </excludes>
-            </resource>
-        </resources>
-    </build>
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+			<comments>A business-friendly OSS license</comments>
+		</license>
+	</licenses>
+	<dependencies>
+
+		<!-- Trove is LGPL and slightly big (~3MB) -->
+		<dependency>
+			<groupId>net.sf.trove4j</groupId>
+			<artifactId>trove4j</artifactId>
+			<version>3.0.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>${slf4j.version}</version>
+		</dependency>
+		<!-- more recent and nicer but bigger <dependency> <groupId>ch.qos.logback</groupId> 
+			<artifactId>logback-classic</artifactId> <version>1.0.13</version> <scope>test</scope> 
+			</dependency> -->
+
+
+		<!-- for using CGIAR: elevation data importing via tif files -->
+		<dependency>
+			<groupId>org.apache.xmlgraphics</groupId>
+			<artifactId>xmlgraphics-commons</artifactId>
+			<version>1.5</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.protobuf</groupId>
+			<artifactId>protobuf-java</artifactId>
+			<version>2.6.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.openstreetmap.osmosis</groupId>
+			<artifactId>osmosis-osm-binary</artifactId>
+			<version>0.43.1</version>
+		</dependency>
+<!--		<dependency>
+			<groupId>uk.co.ordnancesurvey.api</groupId>
+			<artifactId>OSGBCoordinateConvertor</artifactId>
+			<version>1.0.5</version>
+		</dependency>-->
+		<dependency>
+			<groupId>org.geotools</groupId>
+			<artifactId>gt-metadata</artifactId>
+			<version>${geotools.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.geotools</groupId>
+			<artifactId>gt-opengis</artifactId>
+			<version>${geotools.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.geotools</groupId>
+			<artifactId>gt-referencing</artifactId>
+			<version>${geotools.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.measure</groupId>
+			<artifactId>jsr-275</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>java3d</groupId>
+			<artifactId>vecmath</artifactId>
+			<version>1.3.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.geotools</groupId>
+			<artifactId>gt-epsg-wkt</artifactId>
+			<version>${geotools.version}</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-assembly-plugin</artifactId>
+					<version>2.4.1</version>
+					<configuration>
+						<!-- for usage on android -->
+						<descriptors>
+							<descriptor>src/main/assembly/android.xml</descriptor>
+						</descriptors>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-site-plugin</artifactId>
+					<version>3.4</version>
+					<configuration>
+						<reportPlugins>
+							<plugin>
+								<!-- either call mvn compile site or mvn findbugs:gui -->
+								<groupId>org.codehaus.mojo</groupId>
+								<artifactId>findbugs-maven-plugin</artifactId>
+								<version>2.5.2</version>
+								<configuration>
+									<!-- <xmlOutput>true</xmlOutput> -->
+									<!-- Optional directory to put FindBugs xdoc xml report -->
+									<xmlOutputDirectory>target/site</xmlOutputDirectory>
+									<threshold>Normal</threshold>
+									<effort>Default</effort>
+									<!-- <threshold>High|Normal|Low|Exp|Ignore</threshold> <effort>Min|Default|Max</effort> -->
+								</configuration>
+							</plugin>
+						</reportPlugins>
+					</configuration>
+				</plugin>
+
+				<!-- create jar with test classes to be reused in other projects -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>2.4</version>
+					<executions>
+						<execution>
+							<goals>
+								<goal>test-jar</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+
+			</plugins>
+		</pluginManagement>
+
+		<!-- make version available at runtime via version file -->
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+				<includes>
+					<include>**/version</include>
+					<include>**/builddate</include>
+				</includes>
+			</resource>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>false</filtering>
+				<excludes>
+					<exclude>**/version</exclude>
+					<exclude>**/builddate</exclude>
+				</excludes>
+			</resource>
+		</resources>
+	</build>
 </project>

@@ -6,16 +6,33 @@
             <param name="ConversionPattern" value="%d [%t] %-5p %c - %m%n"/>
         </layout>
     </appender>
+    <appender name="errors" class="org.apache.log4j.FileAppender">
+    	<param name="file" value="ingestionerrors.log" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d [%t] %-5p %c - %m%n"/>
+        </layout>
+    </appender>
+     
     <appender name="ASYNC" class="org.apache.log4j.AsyncAppender">
         <param name="BufferSize" value="500"/>
         <appender-ref ref="stdout"/>
+    </appender>    
+     
+    <appender name="ASYNC_ERRORS" class="org.apache.log4j.AsyncAppender">
+        <param name="BufferSize" value="500"/>
+        <appender-ref ref="errors"/>
     </appender>    
     <logger name="com.graphhopper" additivity="false">
         <level value="warn" />
         <appender-ref ref="ASYNC" />
     </logger>
+    <logger name="ingestionerrors" additivity="false">
+        <level value="error" />
+        <appender-ref ref="ASYNC_ERRORS" />
+    </logger>
     <root>
         <priority value="warn"></priority>
         <appender-ref ref="ASYNC"/>
+        <appender-ref ref="ASYNC_ERRORS"/>
     </root>
 </log4j:configuration>
