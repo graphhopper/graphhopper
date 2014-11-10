@@ -188,7 +188,7 @@ public class OSITNRelation extends OSITNElement implements Relation {
 
 	@Override
 	protected void addDirectedLink(String nodeId, String orientation) {
-		logger.warn("ADDING REALTION LINK:" + nodeId);
+		if (logger.isDebugEnabled()) logger.debug("ADDING REALTION LINK:" + nodeId);
 		int size = members.size();
 		if (size > 1) {
 			ITNMember itnMember = members.get(members.size() - 1);
