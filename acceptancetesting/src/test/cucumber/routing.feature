@@ -3,7 +3,7 @@ Feature: Verify a route from A to B
     I want to get a route from location A to location B using the routing service
     And route should be the fastest route and contain the waypoints,restrictions,time and other instructions
 
-@Routing
+  @Routing   
   Scenario Outline: Verify  waypoints on a Route
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -14,7 +14,7 @@ Feature: Verify a route from A to B
       | pointA                                 | pointB                                 | routetype |
       | 51.471546541834144,-0.3618621826171875 | 51.45914115860512,-0.96679687499999995 | car       |
 
- @Routing
+  @Routing
   Scenario Outline: Verify  waypoints on a Route from Hounslow to Reading
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -55,16 +55,16 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 51.507229,-0.127581 | 52.481875,-1.898743 | car       |
 
-@Routing
+  @Routing
   Scenario Outline: Verify  waypoints on a Route from London to Birmingham and the total route time estimate
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then The total route time should be not more than "<totalRouteTime>"
 
     Examples: 
       | pointA              | pointB              | routetype | totalRouteTime |
-      | 51.507229,-0.127581 | 52.481875,-1.898743 | car       | 02h44min       |
+      | 51.507229,-0.127581 | 52.481875,-1.898743 | car       | 03h00min       |
 
-@Routing
+  @Routing
   Scenario Outline: Verify  waypoints on a Route from Hounslow to Burnham and the total route time estimate
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then The total route time should be not more than "<totalRouteTime>"
@@ -84,20 +84,17 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA              | pointB              | routetype |
       | 50.911645,-1.411389 | 50.913965,-1.401229 | car       |
-      
-      
-      
-      @Routing
+
+  @Routing
   Scenario Outline: Verify  oneway Restrictions on a Route (Burmingham Route with one way restriction)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the trackPoints not on the route map:
-      | trackPointco       | time                      |
-      | 52.446899,-1.929721| 2014-10-31T19:17:22+00:00 |
-     
+      | trackPointco        | time                      |
+      | 52.446899,-1.929721 | 2014-10-31T19:17:22+00:00 |
 
     Examples: 
-      | pointA             | pointB              | routetype | 
-      | 52.446823,-1.929077 | 52.446604,-1.930043 | car       | 
-     
+      | pointA              | pointB              | routetype |
+      | 52.446823,-1.929077 | 52.446604,-1.930043 | car       |
 
+      
       

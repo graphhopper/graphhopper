@@ -1,6 +1,7 @@
 package uk.co.ordnancesurvey.routing;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.FROM_ROUTE;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.INSTRUCTIONS;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ROUTE_SEARCH;
@@ -10,7 +11,12 @@ import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.RO
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.TOTAL_ROUTE_TIME;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.TO_ROUTE;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.WAYPOINT_ONMAP;
+import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ZOOM_IN;
+import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ZOOM_OUT;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -18,6 +24,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+
+import javax.imageio.ImageIO;
 
 import org.alternativevision.gpx.beans.Route;
 import org.alternativevision.gpx.beans.Waypoint;
@@ -33,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import uk.co.ordnancesurvey.gpx.extensions.ExtensionConstants;
 import uk.co.ordnancesurvey.gpx.graphhopper.GraphHopperGPXParserRouteTest;
 import uk.co.ordnancesurvey.webtests.IntegrationTestProperties;
+import uk.co.ordnancesurvey.webtests.base.ImageComparison;
 import uk.co.ordnancesurvey.webtests.multiplatform.MultiplatformTest;
 import uk.co.ordnancesurvey.webtests.platforms.BrowserPlatformOptions;
 
@@ -45,6 +54,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 	JavascriptExecutor js = (JavascriptExecutor) driver;
 	WebElement we;
+	private BufferedImage actualMap;
 
 	private static final Logger LOG = LoggerFactory
 			.getLogger(GraphHopperUIUtil.class);
@@ -68,7 +78,6 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 		if (!testOn.equalsIgnoreCase("SERVICE")) {
 			initialiseWebDriver();
-			Thread.sleep(2000);
 		}
 
 	}
@@ -132,6 +141,44 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 				"The Route instruction is not found in the gpx response",
 				GPHService.routeContainsTurn(stepInstruction.toUpperCase(),
 						routeInstruction.iterator().next()));
+
+	}
+
+	public void panonMap(String direction) throws InterruptedException {
+
+		clickElement(FROM_ROUTE);
+
+		Actions action = new Actions(driver);
+
+		switch (direction.replaceAll(" ", "").toUpperCase()) {
+		case "RIGHT":
+			action.sendKeys(driver.findElement(By.xpath("//*[@id='map']")),
+					Keys.ARROW_RIGHT).build().perform();
+			Thread.sleep(1000);
+
+			break;
+		case "LEFT":
+			action.sendKeys(driver.findElement(By.xpath("//*[@id='map']")),
+					Keys.ARROW_LEFT).build().perform();
+			Thread.sleep(1000);
+
+			break;
+		case "UP":
+			action.sendKeys(driver.findElement(By.xpath("//*[@id='map']")),
+					Keys.ARROW_UP).build().perform();
+			Thread.sleep(1000);
+
+			break;
+		case "DOWN":
+			action.sendKeys(driver.findElement(By.xpath("//*[@id='map']")),
+					Keys.ARROW_DOWN).build().perform();
+			Thread.sleep(1000);
+
+			break;
+
+		default:
+			break;
+		}
 
 	}
 
@@ -241,8 +288,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		}
 
 	}
-	
-	
+
 	public void isWayPointNotonRouteMap(List<Map> waypointList) {
 
 		for (int i = 0; i < waypointList.size(); i++) {
@@ -255,8 +301,8 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 			String direction = (String) waypointList.get(i).get("direction");
 			String time = (String) waypointList.get(i).get("time");
 			String distance = (String) waypointList.get(i).get("distance");
-			
-						isWayPointonRouteMap(wayPointIndex, waypointco, waypointdesc,
+
+			isWayPointonRouteMap(wayPointIndex, waypointco, waypointdesc,
 					azimuth, direction, time, distance);
 		}
 
@@ -269,10 +315,10 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		formatter.setTimeZone(TimeZone.getTimeZone("GMT"));
 		Date eTime, aTime;
 
-		String actualTime="0h00min";
+		String actualTime = "0h00min";
 		String expectedTime = totalRouteTime.trim().replaceAll(" ", "");
 		eTime = formatter.parse(expectedTime);
-		aTime=formatter.parse(actualTime);
+		aTime = formatter.parse(actualTime);
 
 		switch (testOn.toUpperCase()) {
 		case "WEB":
@@ -304,18 +350,18 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 		default:
 			actualTime = getValue(TOTAL_ROUTE_TIME).split("take ")[1].trim()
-			.replaceAll(" ", "");
-	if (!actualTime.contains("h")) {
-		actualTime = "00h" + actualTime;
-	}
-	aTime = formatter.parse(actualTime);
+					.replaceAll(" ", "");
+			if (!actualTime.contains("h")) {
+				actualTime = "00h" + actualTime;
+			}
+			aTime = formatter.parse(actualTime);
 
-	LOG.info("The total route time expected is " + eTime.getTime()
-			+ " Milliseconds and actual is " + aTime.getTime()
-			+ " Milliseconds");
-	assertTrue("The total route time expected " + eTime.getTime()
-			+ " is not matchin with actual " + aTime.getTime(),
-			aTime.getTime() <= eTime.getTime());
+			LOG.info("The total route time expected is " + eTime.getTime()
+					+ " Milliseconds and actual is " + aTime.getTime()
+					+ " Milliseconds");
+			assertTrue("The total route time expected " + eTime.getTime()
+					+ " is not matchin with actual " + aTime.getTime(),
+					aTime.getTime() <= eTime.getTime());
 		}
 
 	}
@@ -332,12 +378,11 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 			Waypoint trackPoint = buildWayPoint(waypointco, time);
 			assertTrue(GPHService.isWayPointOnTrack(trackPoint, GPHService
 					.getTracks().iterator().next()));
-			
+
 		}
 
 	}
-	
-	
+
 	public void isTrackPointNotonRouteMap(List<Map> trackPointsList)
 			throws ParseException {
 
@@ -350,10 +395,46 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 			Waypoint trackPoint = buildWayPoint(waypointco, time);
 			assertTrue(!GPHService.isWayPointOnTrack(trackPoint, GPHService
 					.getTracks().iterator().next()));
-			
+
 		}
 
 	}
-	
 
+	public void takescreen(String testID) throws IOException {
+
+		File file = new File(testID + "_screenshot.png");
+
+		File screenshot = takeScreenShot();
+		actualMap = ImageIO.read(screenshot);
+		ImageIO.write(actualMap, "png", file);
+
+	}
+
+	public void compareMapImage(String expectedMap, String testID)
+			throws IOException {
+		takescreen(testID);
+		
+		File file = new File(expectedMap);
+		BufferedImage expactedImage = ImageIO.read(file);
+		ImageComparison img = new ImageComparison(expactedImage, actualMap);
+		img.compare();
+		if (!img.match()) {
+			String failPath = expectedMap + ".fail-" + testID + ".png";
+			String comparePath = expectedMap + ".actual-" + testID + ".png";
+			ImageIO.write(img.getChangeIndicator(), "png", new File(failPath));
+			ImageIO.write(actualMap, "png", new File(comparePath));
+			fail("Image comparison failed see " + failPath + " for details");
+		}
+
+	}
+
+	public void zoomIn() throws InterruptedException {
+		clickElement(ZOOM_IN);
+		Thread.sleep(1000);
+	}
+
+	public void zoomOut() throws InterruptedException {
+		clickElement(ZOOM_OUT);
+		Thread.sleep(1000);
+	}
 }

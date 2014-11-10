@@ -21,5 +21,7 @@ public class GraphHopperComponentIdentification implements
 	public static final  GridFinder INSTRUCTIONS=new ComponentTableById("instructions", INNER_HTML);
 	public static final  ComponentIdentifier TOTAL_ROUTE_TIME =new ComponentByXPATH("//*[@id='info']/div[1]",INNER_HTML);
 	public static final ComponentIdentifier  MAP=new ComponentByXPATH("//*[@id='map']");
-	
+	public static final ComponentIdentifier  ZOOM_OUT=new ComponentByXPATH("//*[@title='Zoom out']");
+	public static final ComponentIdentifier  ZOOM_IN=new ComponentByXPATH("//*[@title='Zoom in']");
+
 }
