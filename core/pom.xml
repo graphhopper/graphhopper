@@ -67,11 +67,11 @@
 			<artifactId>osmosis-osm-binary</artifactId>
 			<version>0.43.1</version>
 		</dependency>
-<!--		<dependency>
+		<dependency>
 			<groupId>uk.co.ordnancesurvey.api</groupId>
 			<artifactId>OSGBCoordinateConvertor</artifactId>
 			<version>1.0.5</version>
-		</dependency>-->
+		</dependency>
 		<dependency>
 			<groupId>org.geotools</groupId>
 			<artifactId>gt-metadata</artifactId>
