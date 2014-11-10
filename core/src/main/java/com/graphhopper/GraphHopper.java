@@ -798,7 +798,7 @@ public class GraphHopper implements GraphHopperAPI
 
         if (encoder.supports(TurnWeighting.class))
         {
-            result = new TurnWeighting(result, encoder, (TurnCostStorage) graph.getExtendedStorage());
+            result = new TurnWeighting(result, encoder, (TurnCostStorage) graph.getExtendedStorage(TurnCostStorage.IDENTIFIER));
         }
         return result;
     }

@@ -156,15 +156,15 @@ public class LocationIndexTreeSC extends LocationIndexTree
             }
 
             @Override
-            public int getAdditionalField()
+            public int getAdditionalField( String identifier )
             {
-                return tmpIter.getAdditionalField();
+                return tmpIter.getAdditionalField(identifier);
             }
 
             @Override
-            public EdgeIteratorState setAdditionalField( int value )
+            public EdgeIteratorState setAdditionalField( String identifier, int value )
             {
-                return tmpIter.setAdditionalField(value);
+                return tmpIter.setAdditionalField(identifier, value);
             }
 
             @Override
@@ -177,6 +177,18 @@ public class LocationIndexTreeSC extends LocationIndexTree
             public EdgeIteratorState detach( boolean reverse )
             {
                 return tmpIter.detach(reverse);
+            }
+
+            @Override
+            public void setReferenceToExtendedStorage( int value )
+            {
+                tmpIter.setReferenceToExtendedStorage(value);
+            }
+
+            @Override
+            public int getReferenceToExtendedStorage()
+            {
+                return tmpIter.getReferenceToExtendedStorage();
             }
         };
     }

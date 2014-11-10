@@ -66,7 +66,7 @@ public interface ExtendedStorage
     /**
      * flushes all additional data storages
      */
-    void flush();
+    void flush( StorableProperties properties );
 
     /**
      * closes all additional data storages
@@ -140,7 +140,7 @@ public interface ExtendedStorage
         }
 
         @Override
-        public void flush()
+        public void flush( StorableProperties properties )
         {
             // noop
         }
@@ -168,6 +168,6 @@ public interface ExtendedStorage
         public String toString()
         {
             return "NoExt";
-        }       
+        }
     }
 }

@@ -81,12 +81,16 @@ public interface EdgeIteratorState
     /**
      * @return the additional field value for this edge
      */
-    int getAdditionalField();
+    int getAdditionalField( String storageIdentifier );
 
     /**
      * Updates the additional field value for this edge
      */
-    EdgeIteratorState setAdditionalField( int value );
+    EdgeIteratorState setAdditionalField( String storageIdentifier, int value );
+
+    public void setReferenceToExtendedStorage( int value );
+
+    public int getReferenceToExtendedStorage();
 
     String getName();
 

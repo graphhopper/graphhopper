@@ -141,7 +141,7 @@ public class EdgeBasedRoutingAlgorithmTest
     {
         GraphStorage g = createGraph(createEncodingManager(true));
         initGraph(g);
-        TurnCostStorage tcs = (TurnCostStorage) g.getExtendedStorage();
+        TurnCostStorage tcs = (TurnCostStorage) g.getExtendedStorage(TurnCostStorage.IDENTIFIER);
         initTurnRestrictions(g, tcs, carEncoder);
         Path p = prepareGraph(g, carEncoder, createWeighting(carEncoder, tcs), TraversalMode.EDGE_BASED_2DIR).
                 createAlgo().calcPath(5, 1);
@@ -162,7 +162,7 @@ public class EdgeBasedRoutingAlgorithmTest
     {
         GraphStorage g = createGraph(createEncodingManager(true));
         initGraph(g);
-        TurnCostStorage tcs = (TurnCostStorage) g.getExtendedStorage();
+        TurnCostStorage tcs = (TurnCostStorage) g.getExtendedStorage(TurnCostStorage.IDENTIFIER);
 
         long tflags = carEncoder.getTurnFlags(true, 0);
 
@@ -192,7 +192,7 @@ public class EdgeBasedRoutingAlgorithmTest
     {
         GraphStorage g = createGraph(createEncodingManager(false));
         initGraph(g);
-        TurnCostStorage tcs = (TurnCostStorage) g.getExtendedStorage();
+        TurnCostStorage tcs = (TurnCostStorage) g.getExtendedStorage(TurnCostStorage.IDENTIFIER);
         Path p = prepareGraph(g, carEncoder, createWeighting(carEncoder, tcs), TraversalMode.EDGE_BASED_1DIR).
                 createAlgo().calcPath(5, 1);
 

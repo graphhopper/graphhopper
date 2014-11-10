@@ -30,17 +30,21 @@ import com.graphhopper.util.PointAccess;
 public interface NodeAccess extends PointAccess
 {
     /**
+     * @deprecated use graph.getExtendedStorageAccess() instead
      * @return the additional value at the specified node index
      * @throws AssertionError if, and only if, the extendedStorage does not require an additional
      * node field
      */
-    int getAdditionalNodeField( int nodeId );
+    @Deprecated
+    int getAdditionalNodeField( String storageIdentifier, int nodeId );
 
     /**
-     * Sets the additional value at the specified node index
+     * @deprecated use graph.getExtendedStorageAccess() instead Sets the additional value at the
+     * specified node index
      * <p>
      * @throws AssertionError if, and only if, the extendedStorage does not require an additional
      * node field
      */
-    void setAdditionalNodeField( int nodeId, int additionalValue );
+    @Deprecated
+    void setAdditionalNodeField( String storageIdentifier, int nodeId, int additionalValue );
 }

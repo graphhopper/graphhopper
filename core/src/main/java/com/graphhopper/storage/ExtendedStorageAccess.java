@@ -17,39 +17,33 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.EncodingManager;
-
-public interface GraphStorage extends Graph, Storable<GraphStorage>
+/**
+ * @author Adrian Batzill, Agata Grzybek
+ */
+public interface ExtendedStorageAccess
 {
-    Directory getDirectory();
-
-    EncodingManager getEncodingManager();
-
-    void setSegmentSize( int bytes );
-
-    String toDetailsString();
-
-    StorableProperties getProperties();
+    /**
+     * Write to the node's extended storage
+     * <p>
+     * @param storageName the storage identifier to which you want to write
+     * @param nodeId the node
+     * @param value the value to write
+     */
+    void writeToExtendedNodeStorage( String storageName, int nodeId, int value );
 
     /**
-     * Schedule the deletion of the specified node until an optimize() call happens
+     * Reads previously written values from the node's extended storage
      */
-    void markNodeRemoved( int index );
+    int readFromExtendedNodeStorage( String storageName, int nodeId );
 
     /**
-     * Checks if the specified node is marked as removed.
+     * Writes to the edge's extended storage. You may also use the EdgeIteratorState's
+     * setAdditionalField method for conveniece, so you don't have to provide an edge ID
      */
-    boolean isNodeRemoved( int index );
+    void writeToExtendedEdgeStorage( String storageName, int edgeId, int value );
 
     /**
-     * Performs optimization routines like deletion or node rearrangements.
+     * Reads previously written values from the edge's extended storage
      */
-    void optimize();
-
-    /**
-     * @return the extended storage, e.g. TurnCostStorage to store turn costs
-     */
-    ExtendedStorage getExtendedStorage( String storageIdentifier );
-
-    ExtendedStorageAccess getExtendedStorageAccess();
+    int readFromExtendedEdgeStorage( String storageName, int edgeId );
 }
