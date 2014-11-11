@@ -17,9 +17,9 @@
  */
 package com.graphhopper.reader;
 
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
+//import javax.xml.stream.XMLStreamConstants;
+//import javax.xml.stream.XMLStreamException;
+//import javax.xml.stream.XMLStreamReader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +52,7 @@ public abstract class OSMElement
         return id;
     }
 
-    protected void readTags( XMLStreamReader parser ) throws XMLStreamException
+    /*protected void readTags( XMLStreamReader parser ) throws XMLStreamException
     {
         int event = parser.getEventType();
         while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equals("tag"))
@@ -69,7 +69,7 @@ public abstract class OSMElement
 
             event = parser.nextTag();
         }
-    }
+    }*/
 
     protected String tagsToString()
     {

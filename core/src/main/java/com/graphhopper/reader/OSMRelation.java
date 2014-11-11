@@ -17,9 +17,9 @@
  */
 package com.graphhopper.reader;
 
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
+//import javax.xml.stream.XMLStreamConstants;
+//import javax.xml.stream.XMLStreamException;
+//import javax.xml.stream.XMLStreamReader;
 import java.util.ArrayList;
 
 /**
@@ -31,7 +31,7 @@ public class OSMRelation extends OSMElement
 {
     protected final ArrayList<Member> members = new ArrayList<Member>(5);
 
-    public static OSMRelation create( long id, XMLStreamReader parser ) throws XMLStreamException
+    /*public static OSMRelation create( long id, XMLStreamReader parser ) throws XMLStreamException
     {
         OSMRelation rel = new OSMRelation(id);
 
@@ -39,14 +39,14 @@ public class OSMRelation extends OSMElement
         rel.readMembers(parser);
         rel.readTags(parser);
         return rel;
-    }
+    }*/
 
     public OSMRelation( long id )
     {
         super(id, RELATION);
     }
 
-    protected void readMembers( XMLStreamReader parser ) throws XMLStreamException
+    /*protected void readMembers( XMLStreamReader parser ) throws XMLStreamException
     {
         int event = parser.getEventType();
         while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equalsIgnoreCase("member"))
@@ -59,7 +59,7 @@ public class OSMRelation extends OSMElement
 
             event = parser.nextTag();
         }
-    }
+    }*/
 
     @Override
     public String toString()
@@ -136,13 +136,13 @@ public class OSMRelation extends OSMElement
         private final long ref;
         private final String role;
 
-        public Member( XMLStreamReader parser )
+        /*public Member( XMLStreamReader parser )
         {
             String typeName = parser.getAttributeValue(null, "type");
             type = typeDecode.indexOf(typeName.charAt(0));
             ref = Long.parseLong(parser.getAttributeValue(null, "ref"));
             role = parser.getAttributeValue(null, "role");
-        }
+        }*/
 
         public Member( Member input )
         {

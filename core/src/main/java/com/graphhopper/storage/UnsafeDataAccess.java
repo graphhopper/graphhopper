@@ -40,31 +40,13 @@ import java.nio.ByteOrder;
 @NotThreadSafe
 public class UnsafeDataAccess extends AbstractDataAccess
 {
-    @SuppressWarnings("all")
-    static final sun.misc.Unsafe UNSAFE;
-
-    static
-    {
-        try
-        {
-            // On Android getting Unsafe fails as the field is named THE_ONE but Android has no memory allocation methods so it won't work nevertheless.
-            // On Android we need JNI+malloc https://github.com/libgdx/libgdx/blob/5945211a88570ced7eafce95c68f6f1f7124cd23/gdx/src/com/badlogic/gdx/utils/BufferUtils.java#L287
-            @SuppressWarnings("all")
-            Field field = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
-            field.setAccessible(true);
-            UNSAFE = (sun.misc.Unsafe) field.get(null);
-        } catch (Exception e)
-        {
-            throw new AssertionError(e);
-        }
-    }
 
     private long address;
-    private long capacity;    
+    private long capacity; 
 
     UnsafeDataAccess( String name, String location, ByteOrder order )
     {
-        super(name, location, order);
+		super(name, location, order);
     }
 
     @Override
@@ -98,15 +80,15 @@ public class UnsafeDataAccess extends AbstractDataAccess
 
         try
         {
-            address = UNSAFE.reallocateMemory(address, capacity);
+//             address = UNSAFE.reallocateMemory(address, capacity);
         } catch (OutOfMemoryError err)
         {
             throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Old capacity: "
                     + oldCap + ", new bytes:" + todoBytes + ", segmentSizeIntsPower:" + segmentSizePower);
         }
 
-        if (clearNewMem)
-            UNSAFE.setMemory(address + oldCap, capacity - oldCap, (byte) 0);
+//         if (clearNewMem)
+//             UNSAFE.setMemory(address + oldCap, capacity - oldCap, (byte) 0);
         return true;
     }
 
@@ -203,31 +185,31 @@ public class UnsafeDataAccess extends AbstractDataAccess
     public void close()
     {
         super.close();
-        UNSAFE.freeMemory(address);
+//         UNSAFE.freeMemory(address);
     }
 
     @Override
     public final void setInt( long bytePos, int value )
     {
-        UNSAFE.putInt(address + bytePos, value);
+//         UNSAFE.putInt(address + bytePos, value);
     }
 
     @Override
     public final int getInt( long bytePos )
     {
-        return UNSAFE.getInt(address + bytePos);
+        return 0;
     }
 
     @Override
     public short getShort( long bytePos )
     {
-        return UNSAFE.getShort(address + bytePos);
+        return 0;
     }
 
     @Override
     public void setShort( long bytePos, short value )
     {
-        UNSAFE.putShort(address + bytePos, value);
+//         UNSAFE.putShort(address + bytePos, value);
     }
 
     @Override
@@ -235,7 +217,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
     {
         for (int offset = 0; offset < length; offset++)
         {
-            UNSAFE.putByte(address + bytePos + offset, values[offset]);
+//             UNSAFE.putByte(address + bytePos + offset, values[offset]);
         }
     }
 
@@ -245,7 +227,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
         assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;
         for (int offset = 0; offset < length; offset++)
         {
-            values[offset] = UNSAFE.getByte(address + bytePos + offset);
+//             values[offset] = UNSAFE.getByte(address + bytePos + offset);
         }
     }
 

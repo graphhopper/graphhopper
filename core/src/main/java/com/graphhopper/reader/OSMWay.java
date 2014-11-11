@@ -20,9 +20,9 @@ package com.graphhopper.reader;
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
 
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
+//import javax.xml.stream.XMLStreamConstants;
+//import javax.xml.stream.XMLStreamException;
+//import javax.xml.stream.XMLStreamReader;
 import java.util.Map;
 
 /**
@@ -37,21 +37,21 @@ public class OSMWay extends OSMElement
     /**
      * Constructor for XML Parser
      */
-    public static OSMWay create( long id, XMLStreamReader parser ) throws XMLStreamException
+    /*public static OSMWay create( long id, XMLStreamReader parser ) throws XMLStreamException
     {
         OSMWay way = new OSMWay(id);
         parser.nextTag();
         way.readNodes(parser);
         way.readTags(parser);
         return way;
-    }
+    }*/
 
     public OSMWay( long id )
     {
         super(id, WAY);
     }
 
-    protected void readNodes( XMLStreamReader parser ) throws XMLStreamException
+    /*protected void readNodes( XMLStreamReader parser ) throws XMLStreamException
     {
         int event = parser.getEventType();
         while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equals("nd"))
@@ -65,7 +65,7 @@ public class OSMWay extends OSMElement
 
             event = parser.nextTag();
         }
-    }
+    }*/
 
     public TLongList getNodes()
     {

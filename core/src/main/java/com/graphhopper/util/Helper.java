@@ -23,7 +23,7 @@ import gnu.trove.list.array.TIntArrayList;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
+// import java.nio.MappedByteBuffer;
 import java.nio.charset.Charset;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
@@ -35,6 +35,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Copy of original 'Helper.java' omitting calls to totalMemory(),
+ * freeMemory() and usage of MappedByteBuffer so j2objc is able
+ * to translate the class.
+ *
  * Several utility classes which are compatible with Java6 on Android.
  * <p/>
  * @see Helper7 for none-Android compatible methods.
@@ -200,17 +204,20 @@ public class Helper
 
     public static long getTotalMB()
     {
-        return Runtime.getRuntime().totalMemory() / MB;
+        return 0;
+//        return Runtime.getRuntime().totalMemory() / MB;
     }
 
     public static long getUsedMB()
     {
-        return (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / MB;
+        return 0;
+//        return (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / MB;
     }
 
     public static String getMemInfo()
     {
-        return "totalMB:" + getTotalMB() + ", usedMB:" + getUsedMB();
+        return "n/a";
+//        return "totalMB:" + getTotalMB() + ", usedMB:" + getUsedMB();
     }
 
     public static int getSizeOfObjectRef( int factor )
@@ -251,7 +258,7 @@ public class Helper
     /**
      * Determines if the specified ByteBuffer is one which maps to a file!
      */
-    public static boolean isFileMapped( ByteBuffer bb )
+    /*public static boolean isFileMapped( ByteBuffer bb )
     {
         if (bb instanceof MappedByteBuffer)
         {
@@ -264,7 +271,7 @@ public class Helper
             }
         }
         return false;
-    }
+    }*/
 
     public static int calcIndexSize( BBox graphBounds )
     {
@@ -411,7 +418,6 @@ public class Helper
      */
     public static void cleanHack()
     {
-        System.gc();
     }
 
     public static String nf( long no )

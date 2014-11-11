@@ -19,13 +19,13 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.storage.DataAccess;
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.image.BufferedImage;
+// import java.awt.Color;
+// import java.awt.Graphics;
+// import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.imageio.ImageIO;
+// import javax.imageio.ImageIO;
 
 /**
  * One rectangle of height data from Shuttle Radar Topography Mission.
@@ -133,10 +133,10 @@ public class HeightTile
 
     public void toImage( String imageFile ) throws IOException
     {
-        ImageIO.write(makeARGB(), "PNG", new File(imageFile));
+//         ImageIO.write(makeARGB(), "PNG", new File(imageFile));
     }
 
-    protected BufferedImage makeARGB()
+    /*protected BufferedImage makeARGB()
     {
         int height = width;
         BufferedImage argbImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -175,7 +175,7 @@ public class HeightTile
         BufferedImage tmpImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB_PRE);
         tmpImage.setRGB(0, 0, width, height, pixels, 0, width);
         return tmpImage;
-    }
+    }*/
 
     @Override
     public String toString()

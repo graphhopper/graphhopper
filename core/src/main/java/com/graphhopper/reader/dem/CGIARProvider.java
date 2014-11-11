@@ -24,16 +24,16 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
-import java.awt.image.Raster;
+// import java.awt.image.Raster;
 import java.io.*;
 import java.net.SocketTimeoutException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import org.apache.xmlgraphics.image.codec.tiff.TIFFDecodeParam;
-import org.apache.xmlgraphics.image.codec.tiff.TIFFImageDecoder;
-import org.apache.xmlgraphics.image.codec.util.SeekableStream;
+// import org.apache.xmlgraphics.image.codec.tiff.TIFFDecodeParam;
+// import org.apache.xmlgraphics.image.codec.tiff.TIFFImageDecoder;
+// import org.apache.xmlgraphics.image.codec.util.SeekableStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -125,7 +125,8 @@ public class CGIARProvider implements ElevationProvider
     @Override
     public double getEle( double lat, double lon )
     {
-        // no data we can avoid the trouble
+    	throw new UnsupportedOperationException("Not available on iOS");
+        /*// no data we can avoid the trouble
         if (lat > 60 || lat < -60)
             return 0;
 
@@ -253,7 +254,7 @@ public class CGIARProvider implements ElevationProvider
         if (demProvider.isSeaLevel())
             return 0;
 
-        return demProvider.getHeight(lat, lon);
+        return demProvider.getHeight(lat, lon);*/
     }
 
     int down( double val )

@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import javax.xml.stream.XMLStreamException;
+//import javax.xml.stream.XMLStreamException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -162,60 +162,7 @@ public class OSMReader implements DataReader
      */
     void preProcess( File osmFile )
     {
-        OSMInputFile in = null;
-        try
-        {
-            in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
-
-            long tmpWayCounter = 1;
-            long tmpRelationCounter = 1;
-            OSMElement item;
-            while ((item = in.getNext()) != null)
-            {
-                if (item.isType(OSMElement.WAY))
-                {
-                    final OSMWay way = (OSMWay) item;
-                    boolean valid = filterWay(way);
-                    if (valid)
-                    {
-                        TLongList wayNodes = way.getNodes();
-                        int s = wayNodes.size();
-                        for (int index = 0; index < s; index++)
-                        {
-                            prepareHighwayNode(wayNodes.get(index));
-                        }
-
-                        if (++tmpWayCounter % 5000000 == 0)
-                        {
-                            logger.info(nf(tmpWayCounter) + " (preprocess), osmIdMap:" + nf(getNodeMap().getSize()) + " ("
-                                    + getNodeMap().getMemoryUsage() + "MB) " + Helper.getMemInfo());
-                        }
-                    }
-                }
-                if (item.isType(OSMElement.RELATION))
-                {
-                    final OSMRelation relation = (OSMRelation) item;
-                    if (!relation.isMetaRelation() && relation.hasTag("type", "route"))
-                        prepareWaysWithRelationInfo(relation);
-
-                    if (relation.hasTag("type", "restriction"))
-                        prepareRestrictionRelation(relation);
-
-                    if (++tmpRelationCounter % 50000 == 0)
-                    {
-                        logger.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:" + nf(getRelFlagsMap().size())
-                                + " " + Helper.getMemInfo());
-                    }
-
-                }
-            }
-        } catch (Exception ex)
-        {
-            throw new RuntimeException("Problem while parsing file", ex);
-        } finally
-        {
-            Helper.close(in);
-        }
+        
     }
 
     private void prepareRestrictionRelation( OSMRelation relation )
@@ -268,65 +215,7 @@ public class OSMReader implements DataReader
      */
     private void writeOsm2Graph( File osmFile )
     {
-        int tmp = (int) Math.max(getNodeMap().getSize() / 50, 100);
-        logger.info("creating graph. Found nodes (pillar+tower):" + nf(getNodeMap().getSize()) + ", " + Helper.getMemInfo());
-        graphStorage.create(tmp);
-        long wayStart = -1;
-        long relationStart = -1;
-        long counter = 1;
-        OSMInputFile in = null;
-        try
-        {
-            in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
-            LongIntMap nodeFilter = getNodeMap();
-
-            OSMElement item;
-            while ((item = in.getNext()) != null)
-            {
-                switch (item.getType())
-                {
-                    case OSMElement.NODE:
-                        if (nodeFilter.get(item.getId()) != -1)
-                        {
-                            processNode((OSMNode) item);
-                        }
-                        break;
-
-                    case OSMElement.WAY:
-                        if (wayStart < 0)
-                        {
-                            logger.info(nf(counter) + ", now parsing ways");
-                            wayStart = counter;
-                        }
-                        processWay((OSMWay) item);
-                        break;
-                    case OSMElement.RELATION:
-                        if (relationStart < 0)
-                        {
-                            logger.info(nf(counter) + ", now parsing relations");
-                            relationStart = counter;
-                        }
-                        processRelation((OSMRelation) item);
-                        break;
-                }
-                if (++counter % 100000000 == 0)
-                {
-                    logger.info(nf(counter) + ", locs:" + nf(locations) + " (" + skippedLocations + ") " + Helper.getMemInfo());
-                }
-            }
-
-            // logger.info("storage nodes:" + storage.nodes() + " vs. graph nodes:" + storage.getGraph().nodes());
-        } catch (Exception ex)
-        {
-            throw new RuntimeException("Couldn't process file " + osmFile + ", error: " + ex.getMessage(), ex);
-        } finally
-        {
-            Helper.close(in);
-        }
-
-        finishedReading();
-        if (graphStorage.getNodes() == 0)
-            throw new IllegalStateException("osm must not be empty. read " + counter + " lines and " + locations + " locations");
+        
     }
 
     /**
@@ -437,7 +326,7 @@ public class OSMReader implements DataReader
         }
     }
 
-    public void processRelation( OSMRelation relation ) throws XMLStreamException
+    /*public void processRelation( OSMRelation relation ) throws XMLStreamException
     {
         if (relation.hasTag("type", "restriction"))
         {
@@ -456,7 +345,7 @@ public class OSMReader implements DataReader
                 }
             }
         }
-    }
+    }*/
 
     /**
      * @return OSM way ID from specified edgeId. Only previously stored OSM-way-IDs are returned in
@@ -918,9 +807,9 @@ public class OSMReader implements DataReader
     /**
      * Specify the type of the path calculation (car, bike, ...).
      */
-    public OSMReader setEncodingManager( EncodingManager em )
+    public OSMReader setEncodingManager( EncodingManager acceptWay )
     {
-        this.encodingManager = em;
+        this.encodingManager = acceptWay;
         return this;
     }
 
