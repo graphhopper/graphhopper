@@ -164,7 +164,14 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         defaultSpeedMap.put("B Road-Roundabout", 35);
         defaultSpeedMap.put("Minor Road-Roundabout", 35);
         defaultSpeedMap.put("Local Street-Roundabout", 35);
-    
+        
+        // Should we be including these in car flags?
+        defaultSpeedMap.put("Pedestrianised Street", 0);
+        defaultSpeedMap.put("Private Road - Restricted Access", 35);
+        defaultSpeedMap.put("Private Road - Publicly Accessible", 35);
+        defaultSpeedMap.put("Alley", 0);
+        
+        
     }
 
     /**

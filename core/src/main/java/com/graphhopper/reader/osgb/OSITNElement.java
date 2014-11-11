@@ -176,6 +176,12 @@ public abstract class OSITNElement implements RoutingElement {
                 case "Motorway":
                 case "B Road":
                 case "Minor Road":
+                // Should we be handling these for Car routes?
+                case "Pedestrianised Street":
+                case "Private Road - Restricted Access":
+                case "Private Road - Publicly Accessible":
+                case "Alley":
+
                 case "Local Street":
                         return elementText;
                 }

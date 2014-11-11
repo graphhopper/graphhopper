@@ -85,7 +85,7 @@ public class OSITNWay extends OSITNElement implements Way {
 
     @Override
     protected void parseCoords(int dimensions, String lineDefinition) {
-        String[] lineSegments = lineDefinition.split(" ");
+        String[] lineSegments = lineDefinition.trim().split(" ");
         wayCoords = new String[lineSegments.length / dimensions];
         StringBuilder curString = null;
         for (int i = 0; i < lineSegments.length; i++) {

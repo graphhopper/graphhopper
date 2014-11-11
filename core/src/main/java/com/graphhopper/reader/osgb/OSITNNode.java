@@ -140,7 +140,7 @@ public class OSITNNode extends OSITNElement implements Node {
 		LatLong wgs84 = CoordConverter.toWGS84(easting, northing);
 		lat = wgs84.getLatAngle();
 		lon = wgs84.getLongAngle();
-		logger.info(toString());
+		if (logger.isDebugEnabled()) logger.debug(toString());
 	}
 
 	@Override
@@ -161,7 +161,6 @@ public class OSITNNode extends OSITNElement implements Node {
 	}
 	
 	public OSITNNode gradeClone(long nodeId) {
-		logger.warn("CLONING:" + nodeId);
 		OSITNNode clone = new OSITNNode(nodeId);
 		Map<String, Object> tags = this.getTags();
 		clone.setTags(tags);

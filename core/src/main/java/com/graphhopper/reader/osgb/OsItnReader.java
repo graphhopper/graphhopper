@@ -721,7 +721,7 @@ public class OsItnReader implements DataReader {
         long wayFlags = encodingManager.handleWayTags(way, includeWay, relationFlags);
         if (wayFlags == 0)
             return;
-        logger.warn(ADDING_RELATION_TO_WAYS_FORMAT, wayFlags);
+//        logger.warn(ADDING_RELATION_TO_WAYS_FORMAT, wayFlags);
         // Process No Entry and then Barriers, and finally add the remaining way
         processNoEntry(way, wayNodes, osmNodeIds, wayFlags, wayOsmId);
 
@@ -769,12 +769,12 @@ public class OsItnReader implements DataReader {
                 transfer[transfer.length - 1] = newNodeId;
                 TLongList partIds = new TLongArrayList(transfer);
                 Collection<EdgeIteratorState> newWays = addOSMWay(partIds, wayFlags, wayOsmId);
-                logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
+                //logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
                 noEntryCreatedEdges.addAll(newWays);
 
                 // create zero length edge for barrier to the next node
                 Collection<EdgeIteratorState> newBarriers = addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId);
-                logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
+//                logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
                 noEntryCreatedEdges.addAll(newBarriers);
                 // Update the orientation of our little one way
                 for (EdgeIteratorState edgeIteratorState : newWays) {
@@ -788,7 +788,7 @@ public class OsItnReader implements DataReader {
             }
             else {
                 failedStartNoEntries++;
-                errors_logger.error("MISSING NODE: osmNodeIdToInternalNodeMap returned -1 for nodeId " + nodeId + " for START Node " + osmNodeIds.toString() + " ("+successfulStartNoEntries+" succeeded, " + failedStartNoEntries + " failed)");
+                errors_logger.error("MISSING NODE: osmNodeIdToInternalNodeMap returned -1 for nodeId " + nodeId + " on way " + way.getId() + " for START Node " + osmNodeIds.toString() + " ("+successfulStartNoEntries+" succeeded, " + failedStartNoEntries + " failed)");
             }
         }
         // Process Way Nodes
@@ -818,12 +818,12 @@ public class OsItnReader implements DataReader {
                     transfer[transfer.length - 1] = newNodeId;
                     TLongList partIds = new TLongArrayList(transfer);
                     Collection<EdgeIteratorState> newWays = addOSMWay(partIds, wayFlags, wayOsmId);
-                    logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
+//                    logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
                     noEntryCreatedEdges.addAll(newWays);
 
                     // create zero length edge for barrier to the next node
                     Collection<EdgeIteratorState> newBarriers = addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId);
-                    logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
+//                    logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
                     noEntryCreatedEdges.addAll(newBarriers);
                     // Update the orientation of our little one way
                     for (EdgeIteratorState edgeIteratorState : newBarriers) {
@@ -839,7 +839,7 @@ public class OsItnReader implements DataReader {
                     // TODO end of way we will have issues
                     // run edge from real first node to shadow node
                     Collection<EdgeIteratorState> newBarriers = addBarrierEdge(nodeId, newNodeId, wayFlags, nodeFlags, wayOsmId);
-                    logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
+//                    logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
                     noEntryCreatedEdges.addAll(newBarriers);
                     // exchange first node for created barrier node
                     osmNodeIds.set(0, newNodeId);
@@ -867,7 +867,7 @@ public class OsItnReader implements DataReader {
                     long transfer[] = osmNodeIds.toArray(lastNoEntry, size - lastNoEntry - 1);
                     nodeIdsToCreateWaysFor = new TLongArrayList(transfer);
                     Collection<EdgeIteratorState> newEdges = addOSMWay(nodeIdsToCreateWaysFor, wayFlags, wayOsmId);
-                    logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newEdges.size());
+//                    logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newEdges.size());
                     createdEdges.addAll(newEdges);
                 }
 
@@ -888,12 +888,12 @@ public class OsItnReader implements DataReader {
                 transfer[transfer.length - 1] = newNodeId;
                 TLongList partIds = new TLongArrayList(transfer);
                 Collection<EdgeIteratorState> newWays = addOSMWay(partIds, wayFlags, wayOsmId);
-                logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
+//                logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
                 noEntryCreatedEdges.addAll(newWays);
 
                 // create zero length edge for barrier to the next node
                 Collection<EdgeIteratorState> newBarriers = addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId);
-                logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
+//                logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
                 noEntryCreatedEdges.addAll(newBarriers);
                 // Update the orientation of our little one way
                 for (EdgeIteratorState edgeIteratorState : newBarriers) {
@@ -907,7 +907,7 @@ public class OsItnReader implements DataReader {
                 failedEndNoEntries++;
                 // TODO Figure out why there are some end nodes that don't have
                 // internal node ids
-                errors_logger.error("MISSING NODE: osmNodeIdToInternalNodeMap returned -1 for nodeId " + nodeId + " for END Node " + osmNodeIds.toString() + " ("+successfulEndNoEntries+" succeeded, " + failedEndNoEntries + " failed)");
+                errors_logger.error("MISSING NODE: osmNodeIdToInternalNodeMap returned -1 for nodeId " + nodeId + " on way " + way.getId() + " for END Node " + osmNodeIds.toString() + " ("+successfulEndNoEntries+" succeeded, " + failedEndNoEntries + " failed)");
             }
         }
 
@@ -1035,17 +1035,17 @@ public class OsItnReader implements DataReader {
                         transfer[transfer.length - 1] = newNodeId;
                         TLongList partIds = new TLongArrayList(transfer);
                         Collection<EdgeIteratorState> newWays = addOSMWay(partIds, wayFlags, wayOsmId);
-                        logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
+//                        logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
                         createdEdges.addAll(newWays);
 
                         // create zero length edge for barrier
                         Collection<EdgeIteratorState> newBarriers = addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId);
-                        logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
+//                        logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
                         createdEdges.addAll(newBarriers);
                     } else {
                         // run edge from real first node to shadow node
                         Collection<EdgeIteratorState> newBarriers = addBarrierEdge(nodeId, newNodeId, wayFlags, nodeFlags, wayOsmId);
-                        logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
+//                        logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
                         createdEdges.addAll(newBarriers);
 
                         // exchange first node for created barrier node
@@ -1075,7 +1075,7 @@ public class OsItnReader implements DataReader {
 
             // Here we need to process no entries
             Collection<EdgeIteratorState> newEdges = addOSMWay(nodeIdsToCreateWaysFor, wayFlags, wayOsmId);
-            logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newEdges.size());
+//            logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newEdges.size());
             createdEdges.addAll(newEdges);
         }
         // TODO Can we move this code out into processWay?
@@ -1205,10 +1205,9 @@ public class OsItnReader implements DataReader {
     boolean addNode(Node node) {
         int nodeType = getNodeMap().get(node.getId());
         if (nodeType == EMPTY) {
-            logger.warn(MISSING_FROM_MAP_FORMAT, node.getId());
+//            logger.warn(MISSING_FROM_MAP_FORMAT, node.getId());
             return false;
         }
-        logger.warn("Adding Node:" + node.getId() + " as " + nodeType);
         double lat = node.getLat();
         double lon = node.getLon();
         double ele = getElevation(node);
@@ -1637,7 +1636,6 @@ public class OsItnReader implements DataReader {
 
                 @Override
                 public boolean execute(long arg0) {
-                    System.err.println(arg0);
                     return true;
                 }
             };
