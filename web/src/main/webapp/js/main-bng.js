@@ -65,7 +65,7 @@ $(document).ready(function (e) {
     if (History.enabled) {
         History.Adapter.bind(window, 'statechange', function () {
             // No need for workaround?
-            // Chrome and Safari always emit a popstate event on page load, but Firefox doesn���������t
+            // Chrome and Safari always emit a popstate event on page load, but Firefox doesnt
             // https://github.com/defunkt/jquery-pjax/issues/143#issuecomment-6194330
 
             var state = History.getState();
@@ -302,21 +302,6 @@ function adjustMapSize() {
     $("#info").css("max-height", height - $("#input_header").height() - 58);
 }
 
-function getOsMatrix () {
-/**
-* the matrixIdsBNG represents the projection
-* for in the OS WMTS for BNG coordinates.
-*/
-var matrixIdsBNG = new Array(22);
-for (var i= 0; i<22; i++) {
-matrixIdsBNG[i]= {
-identifier : "EPSG:27700:" + i,
-topLeftCorner : new L.LatLng(98988, 1225538 )
-};
-}
-return matrixIdsBNG;
-}
-
 function initMap(selectLayer) {
     adjustMapSize();
     log("init map at " + JSON.stringify(bounds));
@@ -340,17 +325,20 @@ var layerOSZoom = "Zoom Map Auto";
 
 // The WMTS URL 
 var url = "http://gwccluster2-env.elasticbeanstalk.com/service/wmts";
-var matrix = getOsMatrix();
-   var osZoom = new L.TileLayer.WMTS( url ,
-                               {
-                                   layer: layerOSZoom,
-                                   tilematrixSet: "EPSG:27700",
-                                   format: "image/png",
-                                   matrixIds: matrix, 
-                                   attribution: "Ordnance Survey"
-                               }
-                              );
-
+//var matrix = getOsMatrix();
+//   var osZoom = new L.TileLayer.WMTS( url ,
+//                               {
+//                                   layer: layerOSZoom,
+//                                   tilematrixSet: "EPSG:27700",
+//                                   format: "image/png",
+//                                   matrixIds: matrix, 
+//                                   attribution: "Ordnance Survey"
+//                               }
+//                              );
+   var osZoom = new L.TileLayer(url + '?height=256&width=256&tilematrixSet=EPSG%3A27700&version=1.0.0&style=&layer=Zoom%20Map%20Auto&SERVICE=WMTS&REQUEST=GetTile&format=image/png&TileMatrix=EPSG:27700:{z}&TileRow={y}&TileCol={x}',{
+       tileSize: 256,
+       continuousWorld: true
+ });
 
     var lyrk = L.tileLayer('https://tiles.lyrk.org/' + tp + '/{z}/{x}/{y}?apikey=6e8cfef737a140e2a58c8122aaa26077', {
         attribution: osmAttr + ', <a href="https://geodienste.lyrk.de/">Lyrk</a>',
@@ -401,31 +389,19 @@ var matrix = getOsMatrix();
     });
 
     var baseMaps = {
-    	"OS": osZoom,
-        "Lyrk": lyrk,
-        "MapQuest": mapquest,
-        "MapQuest Aerial": mapquestAerial,
-        "OpenMapsSurfer": openMapsSurfer,
-        "TF Transport": thunderTransport,
-        "TF Cycle": thunderCycle,
-        "TF Outdoors": thunderOutdoors,
-        "WanderReitKarte": wrk,
-        "OpenStreetMap": osm,
-        "OpenStreetMap.de": osmde
+    	"OS": osZoom
     };
 
     var defaultLayer = baseMaps[selectLayer];
     if (!defaultLayer)
         defaultLayer = osZoom;
     
-    var bbox = [0, 0, 98988, 1225538];
-    
       var crs = new L.Proj.CRS( 'EPSG:27700',
- '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000' + '+ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +datum=OSGB36 +units=m +no_defs',
+ '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +datum=OSGB36 +units=m +no_defs',
  {
- resolutions: [
- 896.0, 448.0, 224.0, 112.0, 56.0, 28.0, 14.0, 7.0, 3.5, 1.75, 0.875, 0.4375, 0.21875, 0.109375
- ]
+    	 // transformation: new L.Transformation(1, 100000, -1, -100000),
+    	origin: [0.0, 1230274.6842643516+21478.101754938878+92242],
+		resolutions: [ 896.0, 448.0, 224.0, 112.0, 56.0, 28.0, 14.0, 7.0, 3.5, 1.75, 0.875, 0.4375, 0.21875, 0.109375 ]
  });
 
     // default
@@ -454,12 +430,7 @@ var matrix = getOsMatrix();
                 state: [1, 2, 3]
             }],
         zoomControl: false,
-        loadingControl: false,
-        continuousWorld: true,
-        worldCopyJump: false,
-        minZoom: 0,
-        tms: false, 
-        origin: [0,0]
+        loadingControl: false
     });
 
 
