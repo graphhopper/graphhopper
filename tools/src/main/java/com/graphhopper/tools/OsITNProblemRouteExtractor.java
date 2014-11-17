@@ -223,16 +223,16 @@ public class OsITNProblemRouteExtractor {
 			BufferedReader bir = new BufferedReader(new InputStreamReader(bis));
 			while (bir.ready()) {
 				String line = bir.readLine();
+				
 				if (output) {
 					System.out.println(line);
 					if (isEndBlock(line)) {
 						output = false;
 					}
 				}
-				if (!output && line.contains("fid=osgb")) {
-					String idStr = line.substring(line.indexOf("fid=osgb") + 9,
+				if (!output && line.contains("fid='osgb")) {
+					String idStr = line.substring(line.indexOf("fid='osgb") + 9,
 							line.lastIndexOf('\''));
-					System.err.println("ID:" + idStr);
 					long checkFid = Long.parseLong(idStr);
 					if (fidList.contains(checkFid)) {
 						output = true;
