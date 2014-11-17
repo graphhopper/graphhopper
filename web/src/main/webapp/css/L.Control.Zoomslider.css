@@ -1,0 +1,105 @@
+/** Slider **/
+.leaflet-control-zoomslider-wrap {
+	padding-top: 5px;
+	padding-bottom: 5px;
+	background-color: #fff;
+	border-bottom: 1px solid #ccc;
+}
+.leaflet-control-zoomslider-body {
+	width: 2px;
+	border: solid #fff;
+	border-width: 0px 9px 0px 9px;
+	background-color: black;
+	margin: 0 auto;
+}
+.leaflet-control-zoomslider-knob {
+	position: relative;
+	width: 12px;
+	height: 4px;
+	background-color: #efefef;
+	-webkit-border-radius: 2px;
+	border-radius: 2px;
+	border: 1px solid #000;
+	margin-left: -6px;
+}
+.leaflet-control-zoomslider-body:hover {
+	cursor: pointer;
+}
+.leaflet-control-zoomslider-knob:hover {
+	cursor: default;
+	cursor: -webkit-grab;
+	cursor:    -moz-grab;
+}
+
+.leaflet-dragging .leaflet-control-zoomslider,
+.leaflet-dragging .leaflet-control-zoomslider-wrap,
+.leaflet-dragging .leaflet-control-zoomslider-body,
+.leaflet-dragging .leaflet-control-zoomslider a,
+.leaflet-dragging .leaflet-control-zoomslider a.leaflet-control-zoomslider-disabled,
+.leaflet-dragging .leaflet-control-zoomslider-knob:hover  {
+	cursor: move;
+	cursor: -webkit-grabbing;
+	cursor:    -moz-grabbing;
+}
+
+/** Leaflet Zoom Styles **/
+.leaflet-container .leaflet-control-zoomslider {
+	margin-left: 10px;
+	margin-top: 10px;
+}
+.leaflet-control-zoomslider a {
+	width: 26px;
+	height: 26px;
+	text-align: center;
+	text-decoration: none;
+	color: black;
+	display: block;
+}
+.leaflet-control-zoomslider a:hover {
+	background-color: #f4f4f4;
+}
+.leaflet-control-zoomslider-in {
+	font: bold 18px 'Lucida Console', Monaco, monospace;
+}
+.leaflet-control-zoomslider-in:after{
+	content:"+"
+}
+.leaflet-control-zoomslider-out {
+	font: bold 22px 'Lucida Console', Monaco, monospace;
+}
+.leaflet-control-zoomslider-out:after{
+	content:"-"
+}
+.leaflet-control-zoomslider a.leaflet-control-zoomslider-disabled {
+	cursor: default;
+	color: #bbb;
+}
+
+/* Touch */
+.leaflet-touch .leaflet-control-zoomslider-body {
+	background-position: 10px 0px;
+}
+.leaflet-touch .leaflet-control-zoomslider-knob {
+	width: 16px;
+	margin-left: -7px;
+}
+.leaflet-touch .leaflet-control-zoomslider a {
+	width: 30px;
+	line-height: 30px;
+}
+.leaflet-touch .leaflet-control-zoomslider a:hover {
+	width: 30px;
+	line-height: 30px;
+}
+.leaflet-touch .leaflet-control-zoomslider-in {
+	font-size: 24px;
+	line-height: 29px;
+}
+.leaflet-touch .leaflet-control-zoomslider-out {
+	font-size: 28px;
+	line-height: 30px;
+}
+.leaflet-touch .leaflet-control-zoomslider {
+	box-shadow: none;
+	border: 4px solid rgba(0,0,0,0.3);
+}
