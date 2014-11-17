@@ -325,20 +325,42 @@ var layerOSZoom = "Zoom Map Auto";
 
 // The WMTS URL 
 var url = "http://gwccluster2-env.elasticbeanstalk.com/service/wmts";
-//var matrix = getOsMatrix();
-//   var osZoom = new L.TileLayer.WMTS( url ,
-//                               {
-//                                   layer: layerOSZoom,
-//                                   tilematrixSet: "EPSG:27700",
-//                                   format: "image/png",
-//                                   matrixIds: matrix, 
-//                                   attribution: "Ordnance Survey"
-//                               }
-//                              );
-   var osZoom = new L.TileLayer(url + '?height=256&width=256&tilematrixSet=EPSG%3A27700&version=1.0.0&style=&layer=Zoom%20Map%20Auto&SERVICE=WMTS&REQUEST=GetTile&format=image/png&TileMatrix=EPSG:27700:{z}&TileRow={y}&TileCol={x}',{
+
+
+function getTopLeftCorners() {
+	/**
+	 * the matrixIdsBNG represents the projection
+	 * for in the OS WMTS for BNG coordinates.
+	 */
+	var topLeftCorners = new Array(14);
+	var i=0;
+	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1347584.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1347584.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1347584.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1344000.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1344000.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1344000.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1344000.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1344000.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1344000.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1344000.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1344000.0, 0.0);		
+	return topLeftCorners;
+}
+
+// The WMTS URL 
+var url = "http://gwccluster2-env.elasticbeanstalk.com/service/wmts";
+
+
+
+    var osZoom = new L.TileLayer(url + '?height=256&width=256&tilematrixSet=EPSG%3A27700&version=1.0.0&style=&layer=Zoom%20Map%20Auto&SERVICE=WMTS&REQUEST=GetTile&format=image/png&TileMatrix=EPSG:27700:{z}&TileRow={y}&TileCol={x}',{
        tileSize: 256,
-       continuousWorld: true
- });
+       continuousWorld: true,
+       attribution: '&copy; <a href="http://www.ordnancesurvey.co.uk/">Ordnance Survey</a> '
+    });
 
     var lyrk = L.tileLayer('https://tiles.lyrk.org/' + tp + '/{z}/{x}/{y}?apikey=6e8cfef737a140e2a58c8122aaa26077', {
         attribution: osmAttr + ', <a href="https://geodienste.lyrk.de/">Lyrk</a>',
@@ -395,14 +417,14 @@ var url = "http://gwccluster2-env.elasticbeanstalk.com/service/wmts";
     var defaultLayer = baseMaps[selectLayer];
     if (!defaultLayer)
         defaultLayer = osZoom;
-    
-      var crs = new L.Proj.CRS( 'EPSG:27700',
- '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +datum=OSGB36 +units=m +no_defs',
- {
-    	 // transformation: new L.Transformation(1, 100000, -1, -100000),
-    	origin: [0.0, 1230274.6842643516+21478.101754938878+92242],
-		resolutions: [ 896.0, 448.0, 224.0, 112.0, 56.0, 28.0, 14.0, 7.0, 3.5, 1.75, 0.875, 0.4375, 0.21875, 0.109375 ]
- });
+	var epsg27700 = "+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.999601 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.060,0.1502,0.2470,0.8421,-20.4894 +datum=OSGB36 +units=m +no_defs";    
+    var crs = new L.Proj.WMTSCRS(
+    		'EPSG:27700',
+    		epsg27700,
+    		{
+    			topLeftCorners: getTopLeftCorners(),
+    			resolutions : [ 896.0, 448.0, 224.0, 112.0, 56.0, 28.0, 14.0, 7.0, 3.5, 1.75, 0.875, 0.4375, 0.21875, 0.109375 ]
+    		});
 
     // default
     map = L.map('map', {
@@ -432,6 +454,7 @@ var url = "http://gwccluster2-env.elasticbeanstalk.com/service/wmts";
         zoomControl: false,
         loadingControl: false
     });
+   map.zoomsliderControl._knob.setSteps(14);
 
 
     var _startItem = {
@@ -456,10 +479,10 @@ var url = "http://gwccluster2-env.elasticbeanstalk.com/service/wmts";
     menuIntermediate = map.contextmenu.insertItem(_intItem, _intItem.index);
     menuEnd = map.contextmenu.insertItem(_endItem, _endItem.index);
 
-    var zoomControl = new L.Control.Zoom({position: 'topleft'}).addTo(map);
+//    var zoomControl = new L.Control.Zoom({position: 'topleft'}).addTo(map);
 
     new L.Control.loading({
-        zoomControl: zoomControl
+//        zoomControl: zoomControl
     }).addTo(map);
 
     map.contextmenu.addSet({

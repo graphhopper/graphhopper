@@ -1,0 +1,16 @@
+/* IE6-7 specific hacks */
+.leaflet-control-zoomslider-wrap {
+	*width: 26px;
+}
+/* Fix IE6-divs having a too large min height  */
+.leaflet-control-zoomslider-knob {
+	*overflow: hidden;
+}
+
+/* Support for element:after { content: 'text' }  */
+.leaflet-control-zoomslider-in {
+	*zoom: expression( this.runtimeStyle['zoom'] = '1', this.innerHTML = '+');
+}
+.leaflet-control-zoomslider-out {
+	*zoom: expression( this.runtimeStyle['zoom'] = '1', this.innerHTML = '-');
+}
