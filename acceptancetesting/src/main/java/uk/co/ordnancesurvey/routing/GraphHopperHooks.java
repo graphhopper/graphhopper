@@ -5,11 +5,6 @@ import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.jetty.util.log.Log;
-
-import com.thoughtworks.selenium.webdriven.commands.WaitForPageToLoad;
-
-import javassist.CtField.Initializer;
 import uk.co.ordnancesurvey.webtests.IntegrationTestProperties;
 import cucumber.api.java.After;
 import cucumber.api.java.en.Given;
@@ -85,8 +80,10 @@ public class GraphHopperHooks {
 
 	@Given("^I open the mapping appliaction$")
 	public void I_open_the_mapping_application()  {
+		
+		
 		System.out.println("Application Launching..");
-
+		
 		
 	
 	}
@@ -103,7 +100,8 @@ public class GraphHopperHooks {
 		for (int i = 0; i <panningIndex; i++) {
 			graphUiUtil.panonMap(direction);
 		}
-		
+
+		Thread.sleep(500);
 
 	}
 	
@@ -116,6 +114,7 @@ public class GraphHopperHooks {
 			graphUiUtil.zoomIn();
 		
 		}
+		Thread.sleep(2000);
 
 
 	}
@@ -136,10 +135,13 @@ public class GraphHopperHooks {
 			graphUiUtil.zoomOut();
 		
 		}
+		
+		
+		
+
 
 
 	}
-	
 	
 	
 
