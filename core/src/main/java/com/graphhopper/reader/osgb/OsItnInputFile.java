@@ -70,12 +70,12 @@ public class OsItnInputFile implements Sink, Closeable {
 	}
 
 	public OsItnInputFile open() throws XMLStreamException {
-		if (binary) {
-			// openPBFReader(bis);
-		} else {
-			openXMLStream(bis);
-		}
+		openXMLStream(bis);
 		return this;
+	}
+	
+	public InputStream getInputStream() {
+		return bis;
 	}
 
 	/**
@@ -124,10 +124,11 @@ public class OsItnInputFile implements Sink, Closeable {
 		} else if (name.endsWith(".gml") || name.endsWith(".xml")) {
 			ips.reset();
 			return ips;
-		} else if (header[0] == 60  && header[1] == 63  && header[3] == 120  && header[4] == 109 && header[5] == 108) {
+		} else if (header[0] == 60 && header[1] == 63 && header[3] == 120
+				&& header[4] == 109 && header[5] == 108) {
 			ips.reset();
 			return ips;
-		}else if (name.endsWith(".bz2") || name.endsWith(".bzip2")) {
+		} else if (name.endsWith(".bz2") || name.endsWith(".bzip2")) {
 			String clName = "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream";
 			try {
 				Class clazz = Class.forName(clName);
@@ -151,11 +152,12 @@ public class OsItnInputFile implements Sink, Closeable {
 		int event;
 		do {
 			event = parser.next();
-		} while(event == XMLStreamConstants.COMMENT);
-		
+		} while (event == XMLStreamConstants.COMMENT);
+
 		if (event != XMLStreamConstants.START_ELEMENT
 				|| !parser.getLocalName().equalsIgnoreCase("FeatureCollection")) {
-			throw new IllegalArgumentException(String.format("File %s not a valid OS ITN stream", name));
+			throw new IllegalArgumentException(String.format(
+					"File %s not a valid OS ITN stream", name));
 		}
 
 		eof = false;
@@ -181,28 +183,29 @@ public class OsItnInputFile implements Sink, Closeable {
 		while (event != XMLStreamConstants.END_DOCUMENT) {
 			if (event == XMLStreamConstants.START_ELEMENT) {
 				String idStr = parser.getAttributeValue(null, "fid");
-				if(null==idStr) {
-					idStr = parser.getAttributeValue("http://www.opengis.net/gml/3.2", "id");
+				if (null == idStr) {
+					idStr = parser.getAttributeValue(
+							"http://www.opengis.net/gml/3.2", "id");
 				}
 				if (idStr != null) {
 					String name = parser.getLocalName();
 					idStr = idStr.substring(4);
 					logger.info(idStr + ":" + name + ":");
-					
+
 					long id;
 					try {
-						id= Long.parseLong(idStr);
-					} catch(NumberFormatException nfe) {
-						BigDecimal bd = new  BigDecimal(idStr);
+						id = Long.parseLong(idStr);
+					} catch (NumberFormatException nfe) {
+						BigDecimal bd = new BigDecimal(idStr);
 						id = bd.longValue();
 					}
 					logger.info(id + ":" + name + ":");
 					switch (name) {
-					case "RoadNode": 
+					case "RoadNode":
 					case "RouteNode": {
 						return OSITNNode.create(id, parser);
 					}
-					case "RoadLink" : {
+					case "RoadLink": {
 						return OSITNWay.create(id, parser);
 					}
 					case "RouteLink": {
@@ -220,7 +223,7 @@ public class OsItnInputFile implements Sink, Closeable {
 					case "RoadNodeInformation": {
 					}
 					default: {
-						
+
 					}
 
 					}
