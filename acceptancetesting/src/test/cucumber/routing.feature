@@ -3,7 +3,7 @@ Feature: Verify a route from A to B
     I want to get a route from location A to location B using the routing service
     And route should be the fastest route and contain the waypoints,restrictions,time and other instructions
 
-  @Routing   
+  @Routing
   Scenario Outline: Verify  waypoints on a Route
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -96,5 +96,35 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 52.446823,-1.929077 | 52.446604,-1.930043 | car       |
 
+  @Routing
+  Scenario Outline: Verify  oneway Restrictions on a Route (Exeter)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the trackPoints not on the route map:
+      | trackPointco       |
+      | 50.71958,-3.534089 |
+
+    Examples: 
+      | pointA              | pointB             | routetype |
+      | 50.720492,-3.535221 | 50.718641,-3.53476 | car       |
+
+  @Routing
+  Scenario Outline: Verify  Turn Restrictions  on a Route (Exeter)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the trackPoints not on the route map:
+      | trackPointco        |
+      | 50.721201,-3.532498 |
+
+    Examples: 
+      | pointA             | pointB             | routetype |
+      | 50.72148,-3.532485 | 50.721888,-3.53182 | car       |
       
-      
+       @Routing
+  Scenario Outline: Verify  No Turn Restrictions  on a Route (Birmingham WSPIP-77)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the trackPoints not on the route map:
+      | trackPointco        |
+      | 52.446779,-1.929385 |
+
+    Examples: 
+      | pointA             | pointB             | routetype |
+      | 52.446564,-1.930268  | 52.446744,-1.929469| car       |
