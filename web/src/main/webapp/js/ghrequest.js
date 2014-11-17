@@ -30,7 +30,7 @@ GHRequest = function (host) {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // We know that you love 'free', we love it too :)! And so our entire software stack is free and even Open Source!      
     // Our routing service is also free for certain applications or smaller volume. Be fair, grab an API key and support us:
-    // http://graphhopper.com/#enterprise Misuse of API keys that you don't own is prohibited and you'll be blocked.                    
+    // https://graphhopper.com/#directions-api Misuse of API keys that you don't own is prohibited and you'll be blocked.                    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     this.key = "Cmmtvx01R56rdHcQQo7VjI6rgPgxuFLvqI8cR31u";
 
