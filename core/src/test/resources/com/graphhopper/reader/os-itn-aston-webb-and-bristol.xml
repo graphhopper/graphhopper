@@ -1,0 +1,190 @@
+<?xml version='1.0' encoding='UTF-8'?><osgb:FeatureCollection xmlns:osgb='http://www.ordnancesurvey.co.uk/xml/namespaces/osgb' xmlns:gml='http://www.opengis.net/gml' xmlns:xlink='http://www.w3.org/1999/xlink' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='http://www.ordnancesurvey.co.uk/xml/namespaces/osgb http://www.ordnancesurvey.co.uk/xml/schema/v7/OSDNFFeatures.xsd' fid='GDS-58096-1'><gml:description>Ordnance Survey, (c) Crown Copyright. All rights reserved, 2009-07-30</gml:description><gml:boundedBy><gml:null>unknown</gml:null></gml:boundedBy><osgb:queryTime>2009-07-30T02:01:07</osgb:queryTime><osgb:queryExtent><osgb:Rectangle srsName='osgb:BNG'><gml:coordinates>291000.000,92000.000 293000.000,94000.000</gml:coordinates></osgb:Rectangle></osgb:queryExtent>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb5000005100782113'>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb5000005100782054'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb5000005100782121'>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='-' xlink:href='#osgb5000005100782063'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb5000005100782134'>
+<osgb:environmentQualifier>
+<osgb:instruction>Mandatory Turn</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb5000005100782054'/>
+<osgb:directedLink orientation='-' xlink:href='#osgb5000005100782070'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb5000005100782142'>
+<osgb:environmentQualifier>
+<osgb:instruction>No Turn</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb5000005100782079'/>
+<osgb:directedLink orientation='-' xlink:href='#osgb5000005100782063'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb5000005100782144'>
+<osgb:environmentQualifier>
+<osgb:instruction>No Turn</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='-' xlink:href='#osgb5000005100782081'/>
+<osgb:directedLink orientation='+' xlink:href='#osgb5000005100782054'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb5000005100782047'>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Single Carriageway</osgb:natureOfRoad>
+<osgb:length>28.27</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>404864.088,283189.567 404863.935,283194.443 404873.289,283215.878 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb5000005100781624'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb5000005100781645'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000000124437420'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb5000005100781599'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb5000005100781562'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb5000005100782052'>
+<osgb:descriptiveTerm>A Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Single Carriageway</osgb:natureOfRoad>
+<osgb:length>18.55</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>404913.468,283213.308 404913.969,283213.349 404917.320,283213.779 404920.651,283214.342 404923.957,283215.040 404927.232,283215.870 404931.567,283217.189 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb5000005100781643'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb5000005100781646'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb5000005100781563'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb5000005100782054'>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Slip Road</osgb:natureOfRoad>
+<osgb:length>39.80</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>404852.328,283184.789 404852.979,283185.822 404853.587,283186.880 404854.151,283187.962 404854.671,283189.067 404854.717,283189.175 404855.146,283190.191 404855.576,283191.334 404855.959,283192.493 404856.296,283193.666 404856.586,283194.852 404856.828,283196.049 404857.021,283197.254 404857.166,283198.466 404857.260,283199.683 404857.307,283201.040 404857.295,283202.260 404857.232,283203.479 404857.118,283204.694 404856.955,283205.903 404856.744,283207.104 404856.483,283208.297 404856.176,283209.478 404855.822,283210.646 404855.421,283211.799 404854.975,283212.936 404854.485,283214.054 404853.951,283215.151 404853.373,283216.226 404852.753,283217.277 404852.488,283217.687 404852.091,283218.302 404851.388,283219.299 404850.644,283220.267 404849.457,283221.656 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb5000005100781623'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb5000005100781630'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb5000005100781538'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000000124437420'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb5000005100781600'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb5000005100782063'>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Slip Road</osgb:natureOfRoad>
+<osgb:length>43.25</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>404875.000,283194.000 404896.089,283202.542 404902.164,283205.468 404909.359,283210.458 404913.468,283213.308 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000019063607'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb5000005100781643'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb5000005100781563'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb5000005100781586'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000000124437423'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb5000005100782066'>
+<osgb:descriptiveTerm>A Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Single Carriageway</osgb:natureOfRoad>
+<osgb:length>24.55</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>404849.457,283221.656 404852.900,283220.561 404859.519,283218.747 404866.206,283217.200 404872.949,283215.922 404873.289,283215.878 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb5000005100781630'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb5000005100781645'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb5000005100781538'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb5000005100781562'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb5000005100782070'>
+<osgb:descriptiveTerm>A Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Single Carriageway</osgb:natureOfRoad>
+<osgb:length>325.66</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>404526.734,283251.865 404534.740,283252.124 404569.011,283251.294 404592.713,283249.173 404628.744,283243.800 404657.993,283237.848 404685.765,283231.456 404696.297,283229.636 404706.893,283228.241 404717.537,283227.272 404735.800,283226.607 404746.486,283226.801 404762.823,283227.930 404781.999,283229.252 404790.883,283229.469 404799.768,283229.328 404811.535,283228.591 404820.368,283227.621 404829.155,283226.297 404844.648,283223.004 404846.360,283222.640 404849.457,283221.656 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb5000005120032791'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb5000005100781630'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb5000005100781538'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb5000005120032766'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb5000005100782079'>
+<osgb:descriptiveTerm>A Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Single Carriageway</osgb:natureOfRoad>
+<osgb:length>40.36</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>404873.289,283215.878 404885.683,283214.264 404892.528,283213.773 404892.800,283213.764 404896.152,283213.339 404899.518,283213.050 404902.893,283212.897 404906.272,283212.880 404908.481,283212.957 404909.648,283212.998 404913.468,283213.308 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb5000005100781645'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb5000005100781643'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb5000005100781563'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb5000005100781612'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb5000005100781562'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb5000005100781630'>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>404849.457,283221.656</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb5000005100781538'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb5000005100781643'>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>404913.468,283213.308</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb5000005100781563'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb5000005100781645'>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>404873.289,283215.878</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb5000005100781562'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:boundedBy><gml:Box srsName='osgb:BNG'><gml:coordinates>290822.000,91912.000 293199.000,94222.000</gml:coordinates></gml:Box></osgb:boundedBy></osgb:FeatureCollection>
