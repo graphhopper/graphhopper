@@ -27,7 +27,6 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -45,7 +44,8 @@ import org.alternativevision.gpx.beans.Track;
 import org.alternativevision.gpx.beans.Waypoint;
 import org.alternativevision.gpx.extensions.IExtensionParser;
 import org.alternativevision.gpx.types.FixType;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -92,7 +92,8 @@ public class GPXParser {
 		extensionParsers.remove(parser);
 	}
 	
-	private Logger logger = Logger.getLogger(this.getClass().getName()); 
+	private static final Logger logger = LoggerFactory
+			.getLogger(GPXParser.class);
 	
 	/**
 	 * Parses a stream containing GPX data
