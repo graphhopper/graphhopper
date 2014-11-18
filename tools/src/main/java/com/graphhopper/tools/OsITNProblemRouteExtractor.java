@@ -221,6 +221,7 @@ public class OsITNProblemRouteExtractor {
 			boolean output = false;
 
 			BufferedReader bir = new BufferedReader(new InputStreamReader(bis));
+			String lastLine = "";
 			while (bir.ready()) {
 				String line = bir.readLine();
 				
@@ -236,26 +237,24 @@ public class OsITNProblemRouteExtractor {
 					long checkFid = Long.parseLong(idStr);
 					if (fidList.contains(checkFid)) {
 						output = true;
+						System.out.println(lastLine);
 						System.out.println(line);
 					}
-				} 
+				}
+				lastLine = line;
 			}
 		}
 
 		private boolean isEndBlock(String curLine) {
 			boolean endBlock = false;
 			switch (curLine) {
-			case "</osgb:RoadNode>":
-			case "</osgb:RouteNode>":
-			case "</osgb:RoadLink>":
-			case "</osgb:RouteLink>":
-			case "</osgb:RoadRouteInformation>":
-			case "</osgb:Road>":
-			case "</osgb:RoadLinkInformation>":
-			case "</osgb:RoadNodeInformation>": {
-				endBlock = true;
-				break;
-			}
+			case "</osgb:networkMember>":
+			case "</osgb:roadInformationMember>":
+			case "</osgb:roadMember>":	
+				{
+					endBlock = true;
+					break;
+				}
 			}
 			return endBlock;
 		}
@@ -306,7 +305,29 @@ public class OsITNProblemRouteExtractor {
 			fullWayList.forEach(wayOutput);
 		}
 		
+		System.out.println("<?xml version='1.0' encoding='UTF-8'?>"
+				+ "<osgb:FeatureCollection "
+				+ "xmlns:osgb='http://www.ordnancesurvey.co.uk/xml/namespaces/osgb' "
+				+ "xmlns:gml='http://www.opengis.net/gml' "
+				+ "xmlns:xlink='http://www.w3.org/1999/xlink' "
+				+ "xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
+				+ "xsi:schemaLocation='http://www.ordnancesurvey.co.uk/xml/namespaces/osgb http://www.ordnancesurvey.co.uk/xml/schema/v7/OSDNFFeatures.xsd' "
+				+ "fid='GDS-58096-1'>"
+				+ "<gml:description>Ordnance Survey, (c) Crown Copyright. All rights reserved, 2009-07-30</gml:description>"
+				+ "<gml:boundedBy><gml:null>unknown</gml:null></gml:boundedBy>"
+				+ "<osgb:queryTime>2009-07-30T02:01:07</osgb:queryTime>"
+				+ "<osgb:queryExtent>"
+				+ "<osgb:Rectangle srsName='osgb:BNG'>"
+				+ "<gml:coordinates>291000.000,92000.000 293000.000,94000.000</gml:coordinates>"
+				+ "</osgb:Rectangle>"
+				+ "</osgb:queryExtent>");
 		processDirOrFile(itnFile, extractProcessor);
+		System.out.println("<osgb:boundedBy>"
+				+ "<gml:Box srsName='osgb:BNG'>"
+				+ "<gml:coordinates>290822.000,91912.000 293199.000,94222.000</gml:coordinates>"
+				+ "</gml:Box>"
+				+ "</osgb:boundedBy>"
+				+ "</osgb:FeatureCollection>");
 	}
 
 	private void prepareOutputMethods() {
