@@ -5,12 +5,15 @@ import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.procedure.TLongProcedure;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -226,9 +229,10 @@ public class OsITNProblemRouteExtractor {
 				String line = bir.readLine();
 				
 				if (output) {
-					System.out.println(line);
+					outputWriter.println(line);
 					if (isEndBlock(line)) {
 						output = false;
+						outputWriter.flush();
 					}
 				}
 				if (!output && line.contains("fid='osgb")) {
@@ -237,8 +241,8 @@ public class OsITNProblemRouteExtractor {
 					long checkFid = Long.parseLong(idStr);
 					if (fidList.contains(checkFid)) {
 						output = true;
-						System.out.println(lastLine);
-						System.out.println(line);
+						outputWriter.println(lastLine);
+						outputWriter.println(line);
 					}
 				}
 				lastLine = line;
@@ -267,15 +271,17 @@ public class OsITNProblemRouteExtractor {
 	private TLongProcedure wayOutput;
 	private TLongArrayList relationList;
 	private TLongProcedure relOutput;
+	private PrintWriter outputWriter;
 
 	public static void main(String[] strs) throws Exception {
 		CmdArgs args = CmdArgs.read(strs);
 		String fileOrDirName = args.get("osmreader.osm", null);
 		String namedRoad = args.get("roadName", null);
 		String namedLinkRoad = args.get("linkRoadName", null);
+		String outputFileName = args.get("itnoutput", "os-itn-" + namedRoad.replaceAll(" ", "-").toLowerCase() + (null!=namedLinkRoad?"-" + namedLinkRoad.replaceAll(" ", "-").toLowerCase():"") + ".xml");
 		OsITNProblemRouteExtractor extractor = new OsITNProblemRouteExtractor(
 				fileOrDirName, namedRoad, namedLinkRoad);
-		extractor.process();
+		extractor.process(outputFileName);
 	}
 
 	public OsITNProblemRouteExtractor(String fileOrDirName, String namedRoad,
@@ -285,7 +291,7 @@ public class OsITNProblemRouteExtractor {
 		workingLinkRoad = namedLinkRoad;
 	}
 
-	private void process() throws TransformerException, ParserConfigurationException, SAXException, XPathExpressionException, XMLStreamException, IOException {
+	private void process(String outputFileName) throws TransformerException, ParserConfigurationException, SAXException, XPathExpressionException, XMLStreamException, IOException {
 		prepareOutputMethods();
 
 		File itnFile = new File(workingStore);
@@ -305,7 +311,9 @@ public class OsITNProblemRouteExtractor {
 			fullWayList.forEach(wayOutput);
 		}
 		
-		System.out.println("<?xml version='1.0' encoding='UTF-8'?>"
+		outputWriter = new PrintWriter(outputFileName);
+	
+		outputWriter.println("<?xml version='1.0' encoding='UTF-8'?>"
 				+ "<osgb:FeatureCollection "
 				+ "xmlns:osgb='http://www.ordnancesurvey.co.uk/xml/namespaces/osgb' "
 				+ "xmlns:gml='http://www.opengis.net/gml' "
@@ -321,13 +329,16 @@ public class OsITNProblemRouteExtractor {
 				+ "<gml:coordinates>291000.000,92000.000 293000.000,94000.000</gml:coordinates>"
 				+ "</osgb:Rectangle>"
 				+ "</osgb:queryExtent>");
+		outputWriter.flush();
 		processDirOrFile(itnFile, extractProcessor);
-		System.out.println("<osgb:boundedBy>"
+		outputWriter.println("<osgb:boundedBy>"
 				+ "<gml:Box srsName='osgb:BNG'>"
 				+ "<gml:coordinates>290822.000,91912.000 293199.000,94222.000</gml:coordinates>"
 				+ "</gml:Box>"
 				+ "</osgb:boundedBy>"
 				+ "</osgb:FeatureCollection>");
+		outputWriter.flush();
+		outputWriter.close();
 	}
 
 	private void prepareOutputMethods() {
