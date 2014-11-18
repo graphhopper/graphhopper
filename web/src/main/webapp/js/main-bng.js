@@ -452,9 +452,10 @@ var url = "http://gwccluster2-env.elasticbeanstalk.com/service/wmts";
                 state: [1, 2, 3]
             }],
         zoomControl: false,
-        loadingControl: false
+        loadingControl: false,
+        maxZoom: 13,
+        minZoom: 0
     });
-   map.zoomsliderControl._knob.setSteps(14);
 
 
     var _startItem = {
@@ -478,12 +479,6 @@ var url = "http://gwccluster2-env.elasticbeanstalk.com/service/wmts";
     menuStart = map.contextmenu.insertItem(_startItem, _startItem.index);
     menuIntermediate = map.contextmenu.insertItem(_intItem, _intItem.index);
     menuEnd = map.contextmenu.insertItem(_endItem, _endItem.index);
-
-//    var zoomControl = new L.Control.Zoom({position: 'topleft'}).addTo(map);
-
-    new L.Control.loading({
-//        zoomControl: zoomControl
-    }).addTo(map);
 
     map.contextmenu.addSet({
         name: 'markers',
