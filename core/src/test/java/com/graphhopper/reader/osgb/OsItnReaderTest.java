@@ -1240,20 +1240,6 @@ public class OsItnReaderTest {
     }
 
     @Test
-    public void testReadJustSample() throws IOException {
-        boolean turnRestrictionsImport = false;
-        boolean is3D = false;
-        GraphHopperStorage graph = configureStorage(turnRestrictionsImport, is3D);
-
-        OsItnReader osItnReader = new OsItnReader(graph);
-        File file = new File("./src/test/resources/com/graphhopper/reader/sample.xml");
-        osItnReader.setOSMFile(file);
-        osItnReader.setEncodingManager(new EncodingManager("CAR"));
-        osItnReader.readGraph();
-        // assertEquals(, graph.getNodes());
-    }
-
-    @Test
     public void testRegex() {
         String s1 = "123,123 123,123";
         String s2 = " 123,123 123,123";

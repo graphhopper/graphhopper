@@ -37,6 +37,9 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.opengis.geometry.MismatchedDimensionException;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.operation.TransformException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -86,7 +89,7 @@ public class OsITNProblemRouteExtractor {
 	private abstract class ProcessVisitor<T> {
 		abstract void processVisitor(T element) throws XMLStreamException,
 				IOException, ParserConfigurationException, SAXException,
-				TransformerConfigurationException, TransformerException, XPathExpressionException;
+				TransformerConfigurationException, TransformerException, XPathExpressionException, MismatchedDimensionException, FactoryException, TransformException;
 	}
 
 	private abstract class ProcessFileVisitor<T> extends ProcessVisitor<File> {
@@ -103,7 +106,7 @@ public class OsITNProblemRouteExtractor {
 		void processVisitor(File file) throws XMLStreamException, IOException,
 				TransformerConfigurationException,
 				ParserConfigurationException, SAXException,
-				TransformerException, XPathExpressionException {
+				TransformerException, XPathExpressionException, MismatchedDimensionException, FactoryException, TransformException {
 			OsItnInputFile in = null;
 			try {
 				in = new OsItnInputFile(file).setWorkerThreads(1).open();
@@ -291,7 +294,7 @@ public class OsITNProblemRouteExtractor {
 		workingLinkRoad = namedLinkRoad;
 	}
 
-	private void process(String outputFileName) throws TransformerException, ParserConfigurationException, SAXException, XPathExpressionException, XMLStreamException, IOException {
+	private void process(String outputFileName) throws TransformerException, ParserConfigurationException, SAXException, XPathExpressionException, XMLStreamException, IOException, MismatchedDimensionException, FactoryException, TransformException {
 		prepareOutputMethods();
 
 		File itnFile = new File(workingStore);
@@ -421,7 +424,7 @@ public class OsITNProblemRouteExtractor {
 	private void processDirOrFile(File osmFile,
 			ProcessVisitor<File> processVisitor) throws XMLStreamException,
 			IOException, TransformerConfigurationException,
-			ParserConfigurationException, SAXException, TransformerException, XPathExpressionException {
+			ParserConfigurationException, SAXException, TransformerException, XPathExpressionException, MismatchedDimensionException, FactoryException, TransformException {
 		if (osmFile.isDirectory()) {
 			String absolutePath = osmFile.getAbsolutePath();
 			String[] list = osmFile.list();
@@ -437,7 +440,7 @@ public class OsITNProblemRouteExtractor {
 	private void processSingleFile(File osmFile,
 			ProcessVisitor<File> processVisitor) throws XMLStreamException,
 			IOException, TransformerConfigurationException,
-			ParserConfigurationException, SAXException, TransformerException, XPathExpressionException {
+			ParserConfigurationException, SAXException, TransformerException, XPathExpressionException, MismatchedDimensionException, FactoryException, TransformException {
 		processVisitor.processVisitor(osmFile);
 	}
 

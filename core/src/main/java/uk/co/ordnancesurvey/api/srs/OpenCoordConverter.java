@@ -35,5 +35,4 @@ public class OpenCoordConverter {
 		transform.transform(srcPos, targetPos);
 		return new GeoToolsLatLong(targetPos);
 	}
-
 }
