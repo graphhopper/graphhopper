@@ -27,6 +27,9 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.opengis.geometry.MismatchedDimensionException;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.operation.TransformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +74,7 @@ public abstract class OSITNElement implements RoutingElement {
                 return id;
         }
 
-        protected void readTags(XMLStreamReader parser) throws XMLStreamException {
+        protected void readTags(XMLStreamReader parser) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
                 int event = parser.getEventType();
                 while (event != XMLStreamConstants.END_DOCUMENT
                                 && (event != XMLStreamConstants.END_ELEMENT || !exitElement(parser))) {
@@ -158,13 +161,17 @@ public abstract class OSITNElement implements RoutingElement {
 
         private int handleDescriptiveGroup(XMLStreamReader parser)
                         throws XMLStreamException {
-                String roadType = resolveHighway(parser.getElementText());
+                String elementText = parser.getElementText();
+				String roadType = resolveHighway(elementText);
                 // System.err.println(this.getClass() + ".handleDescriptiveGroup(" +
                 // roadType
                 // + ")");
                 if (null != roadType && !hasTag("highway")) {
                         setTag("type", "route");
                         setTag("highway", roadType);
+                }
+                if(null==roadType) {
+                	setTag("nothighway", elementText);
                 }
                 return parser.getEventType();
         }
@@ -277,7 +284,7 @@ public abstract class OSITNElement implements RoutingElement {
         }
 
         private int handleCoordinates(XMLStreamReader parser)
-                        throws XMLStreamException {
+                        throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
                 String elementText = parser.getElementText();
                 parseCoords(elementText);
                 return parser.getEventType();
@@ -293,16 +300,16 @@ public abstract class OSITNElement implements RoutingElement {
         }
 
         private int handleThreeDimensionalCoords(XMLStreamReader parser)
-                        throws XMLStreamException {
+                        throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
                 String elementText = parser.getElementText();
                 parseCoordinateString(elementText, " ");
                 return parser.getEventType();
         }
 
         protected abstract void parseCoordinateString(String elementText,
-                        String elementSeparator);
+                        String elementSeparator) throws MismatchedDimensionException, FactoryException, TransformException;
 
-        protected abstract void parseCoords(String coordinates);
+        protected abstract void parseCoords(String coordinates) throws MismatchedDimensionException, FactoryException, TransformException;
 
         protected abstract void parseCoords(int dimensions, String lineDefinition);
 

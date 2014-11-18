@@ -22,11 +22,14 @@ import java.util.Map;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.opengis.geometry.MismatchedDimensionException;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.operation.TransformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.co.ordnancesurvey.api.srs.CoordConverter;
 import uk.co.ordnancesurvey.api.srs.LatLong;
+import uk.co.ordnancesurvey.api.srs.OpenCoordConverter;
 
 import com.graphhopper.reader.Node;
 import com.graphhopper.util.PointAccess;
@@ -45,7 +48,7 @@ public class OSITNNode extends OSITNElement implements Node {
 	private boolean[] clones = {false,false,false,false};
 
 	public static OSITNNode create(long id, XMLStreamReader parser)
-			throws XMLStreamException {
+			throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
 		OSITNNode node = new OSITNNode(id);
 
 		parser.nextTag();
@@ -123,13 +126,13 @@ public class OSITNNode extends OSITNElement implements Node {
 	}
 
 	@Override
-	public void parseCoords(String elementText) {
+	public void parseCoords(String elementText) throws MismatchedDimensionException, FactoryException, TransformException {
 		String elementSeparator = ",";
 		parseCoordinateString(elementText, elementSeparator);
 	}
 
 	public void parseCoordinateString(String elementText,
-			String elementSeparator) {
+			String elementSeparator) throws MismatchedDimensionException, FactoryException, TransformException {
 		String[] split = elementText.split(elementSeparator);
 
 		if(3==split.length) {
@@ -137,7 +140,7 @@ public class OSITNNode extends OSITNElement implements Node {
 		}
 		Double easting = Double.parseDouble(split[0]);
 		Double northing = Double.parseDouble(split[1]);
-		LatLong wgs84 = CoordConverter.toWGS84(easting, northing);
+		LatLong wgs84 = OpenCoordConverter.toWGS84(easting, northing);
 		lat = wgs84.getLatAngle();
 		lon = wgs84.getLongAngle();
 		if (logger.isDebugEnabled()) logger.debug(toString());
