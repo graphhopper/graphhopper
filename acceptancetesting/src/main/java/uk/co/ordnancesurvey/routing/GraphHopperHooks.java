@@ -145,7 +145,7 @@ public class GraphHopperHooks {
 	
 	
 
-	@After({ "@Mapping" })
+	@After({ "@Mapping,@Routing" })
 	public void closeBrowser() {
 		graphUiUtil.logout();
 		System.out.println("closed");

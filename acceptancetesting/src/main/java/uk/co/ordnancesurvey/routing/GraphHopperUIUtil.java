@@ -204,7 +204,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 				Keys.ARROW_RIGHT).build().perform();
 	}
 
-	private Waypoint buildWayPoint(String waypointco, String time)
+	private Waypoint buildWayPoint(String waypointco)
 			throws ParseException {
 
 		Waypoint wp = new Waypoint();
@@ -213,8 +213,8 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		wp.setLongitude(new Double(waypoint[1]));
 
 		SimpleDateFormat t = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
-		Date date = t.parse(time);
-		wp.setTime(date);
+		//Date date = t.parse(time);
+		//wp.setTime(date);
 		return wp;
 	}
 
@@ -375,9 +375,9 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 			String waypointco = (String) trackPointsList.get(i).get(
 					"trackPointco");
-			String time = (String) trackPointsList.get(i).get("time");
+			//String time = (String) trackPointsList.get(i).get("time");
 
-			Waypoint trackPoint = buildWayPoint(waypointco, time);
+			Waypoint trackPoint = buildWayPoint(waypointco);
 			assertTrue(GPHService.isWayPointOnTrack(trackPoint, GPHService
 					.getTracks().iterator().next()));
 
@@ -392,9 +392,9 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 			String waypointco = (String) trackPointsList.get(i).get(
 					"trackPointco");
-			String time = (String) trackPointsList.get(i).get("time");
+			//String time = (String) trackPointsList.get(i).get("time");
 
-			Waypoint trackPoint = buildWayPoint(waypointco, time);
+			Waypoint trackPoint = buildWayPoint(waypointco);
 			assertTrue(!GPHService.isWayPointOnTrack(trackPoint, GPHService
 					.getTracks().iterator().next()));
 

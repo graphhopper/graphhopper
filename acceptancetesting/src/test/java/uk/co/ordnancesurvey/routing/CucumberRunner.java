@@ -11,7 +11,7 @@ import cucumber.api.junit.Cucumber;
 
 @RunWith(Cucumber.class)
 @Category(IntegrationTestProperties.class)
-@Cucumber.Options(format = { "html:target/cucumber-reports/html", "json:target/cucumber-reports/cucumber.json" }, glue="uk.co.ordnancesurvey.routing",features = "src/test/cucumber", tags = { "~@RegressionLiveDataTests","@Mapping"})
+@Cucumber.Options(format = { "html:target/cucumber-reports/html", "json:target/cucumber-reports/cucumber.json" }, glue="uk.co.ordnancesurvey.routing",features = "src/test/cucumber", tags = { "~@RegressionLiveDataTests"})
 public class CucumberRunner {
 	
     
