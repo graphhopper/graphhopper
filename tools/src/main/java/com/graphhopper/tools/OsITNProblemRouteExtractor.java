@@ -5,54 +5,40 @@ import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.procedure.TLongProcedure;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 
 import org.opengis.geometry.MismatchedDimensionException;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.operation.TransformException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.OSMElement;
 import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.RelationMember;
 import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.Way;
 import com.graphhopper.reader.osgb.OsItnInputFile;
+import com.graphhopper.reader.osgb.OsItnReader;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 
 /**
@@ -285,6 +271,13 @@ public class OsITNProblemRouteExtractor {
 		OsITNProblemRouteExtractor extractor = new OsITNProblemRouteExtractor(
 				fileOrDirName, namedRoad, namedLinkRoad);
 		extractor.process(outputFileName);
+		args.put("reader.implementation", OsItnReader.class.getName());
+		args.put("osmreader.osm", outputFileName);
+		GraphHopper hopper = new GraphHopper().init(args).importOrLoad();
+		FlagEncoder carEncoder = hopper.getEncodingManager().getEncoder("CAR");
+		EdgeFilter filter = new DefaultEdgeFilter(carEncoder, false, true);
+		
+		GHUtility.printInfo(hopper.getGraph(), 0, Integer.MIN_VALUE, filter);
 	}
 
 	public OsITNProblemRouteExtractor(String fileOrDirName, String namedRoad,
