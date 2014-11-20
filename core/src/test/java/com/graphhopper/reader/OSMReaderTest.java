@@ -525,12 +525,16 @@ public class OSMReaderTest
         assertEquals(15, graph.getNodes());
         assertTrue(graph.getExtendedStorage() instanceof TurnCostStorage);
         TurnCostStorage tcStorage = (TurnCostStorage) graph.getExtendedStorage();
-        
+
+        int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
         int n2 = AbstractGraphStorageTester.getIdOf(graph, 52, 10);
         int n3 = AbstractGraphStorageTester.getIdOf(graph, 52, 11);
         int n4 = AbstractGraphStorageTester.getIdOf(graph, 52, 12);
+        int n5 = AbstractGraphStorageTester.getIdOf(graph, 50, 12);
+        int n6 = AbstractGraphStorageTester.getIdOf(graph, 51, 11);
         int n8 = AbstractGraphStorageTester.getIdOf(graph, 54, 11);
 
+        int edge1_6 = GHUtility.getEdge(graph, n1, n6).getEdge();
         int edge2_3 = GHUtility.getEdge(graph, n2, n3).getEdge();
         int edge3_4 = GHUtility.getEdge(graph, n3, n4).getEdge();
         int edge3_8 = GHUtility.getEdge(graph, n3, n8).getEdge();
@@ -549,9 +553,9 @@ public class OSMReaderTest
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n3, edge4_3, edge3_2)));
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n3, edge8_3, edge3_2)));
 
-        int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
-        int n5 = AbstractGraphStorageTester.getIdOf(graph, 50, 12);
-        int n6 = AbstractGraphStorageTester.getIdOf(graph, 51, 11);
+        // u-turn restriction for (6-1)->(1-6) but not for (1-6)->(6-1)
+        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(n1, edge1_6, edge1_6)) > 0);
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n6, edge1_6, edge1_6)));
 
         int edge4_5 = GHUtility.getEdge(graph, n4, n5).getEdge();
         int edge5_6 = GHUtility.getEdge(graph, n5, n6).getEdge();
@@ -564,7 +568,7 @@ public class OSMReaderTest
 
         // for bike
         assertFalse(bikeEncoder.isTurnRestricted(costsFlags));
-        
+
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 40, 10);
         int n11 = AbstractGraphStorageTester.getIdOf(graph, 40, 11);
         int n14 = AbstractGraphStorageTester.getIdOf(graph, 39, 11);
@@ -577,7 +581,7 @@ public class OSMReaderTest
         costsFlags = tcStorage.getTurnCostFlags(n11, edge10_11, edge11_14);
         assertFalse(carEncoder.isTurnRestricted(costsFlags));
         assertTrue(bikeEncoder.isTurnRestricted(costsFlags));
-    }    
+    }
 
     @Test
     public void testEstimatedCenter()
