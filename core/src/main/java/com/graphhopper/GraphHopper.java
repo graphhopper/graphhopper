@@ -1050,7 +1050,7 @@ public class GraphHopper implements GraphHopperAPI
             lockFactory.forceRemove(fileLockName, true);
         } catch (Exception ex)
         {
-            // silently fail
+            // silently fail e.g. on Windows where we cannot remove an unreleased native lock
         }
     }
 

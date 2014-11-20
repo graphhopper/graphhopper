@@ -65,7 +65,7 @@ public class NativeFSLockFactory implements LockFactory
         {
             create(fileName, writeAccess).release();
             File lockFile = new File(lockDir, fileName);
-            if (!lockFile.delete())
+            if (lockFile.exists() && !lockFile.delete())
                 throw new RuntimeException("Cannot delete " + lockFile);
         }
     }
