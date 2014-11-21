@@ -10,8 +10,8 @@ import org.opengis.referencing.operation.TransformException;
 public class OpenCoordConverterTest {
 
 	private static final int ZERO_POINT = 0;
-	private static final double LAT_ANGLE = 49.76680727257757;
-	private static final double LON_ANGLE = -7.557159804822196;
+	private static final double LON_ANGLE = 49.76680727257757;
+	private static final double LAT_ANGLE = -7.557159804822196;
 
 	@Test
 	public void testToWGS84() throws MismatchedDimensionException, FactoryException, TransformException {
