@@ -31,7 +31,7 @@ import java.util.List;
 public class PathMerger
 {
     private boolean enableInstructions = true;
-    private boolean simplifyRequest = false;
+    private boolean simplifyResponse = false;
     private DouglasPeucker douglasPeucker;
     private boolean calcPoints;
 
@@ -64,7 +64,7 @@ public class PathMerger
 
                     for (Instruction i : il)
                     {
-                        if (simplifyRequest)
+                        if (simplifyResponse)
                         {
                             origPoints += i.getPoints().size();
                             douglasPeucker.simplify(i.getPoints());
@@ -88,7 +88,7 @@ public class PathMerger
                 if (fullPoints.isEmpty())
                     fullPoints = createSimilarPL(tmpPoints);
 
-                if (simplifyRequest)
+                if (simplifyResponse)
                 {
                     origPoints = tmpPoints.getSize();
                     sw = new StopWatch().start();
@@ -134,9 +134,9 @@ public class PathMerger
         return this;
     }
 
-    public PathMerger setSimplifyRequest( boolean simplifyRequest )
+    public PathMerger setSimplifyResponse( boolean simplifyRes )
     {
-        this.simplifyRequest = simplifyRequest;
+        this.simplifyResponse = simplifyRes;
         return this;
     }
 

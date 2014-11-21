@@ -407,7 +407,6 @@ public class CarFlagEncoderTest
             assertTrue(false);
         } catch (IllegalStateException ex)
         {
-
         }
     }
 
@@ -430,17 +429,17 @@ public class CarFlagEncoderTest
         way.setTag("ford", "yes");
 
         // Node and way are initially blocking
-        assertTrue(encoder.blockFords);
+        assertTrue(encoder.isBlockFords());
         assertFalse(encoder.acceptWay(way) > 0);
         assertTrue(encoder.handleNodeTags(node) > 0);
 
         try {
             // Now they are passable
-            encoder.blockFords = false;
+            encoder.setBlockFords(false);
             assertTrue(encoder.acceptWay(way) > 0);
             assertFalse(encoder.handleNodeTags(node) > 0);
         } finally {
-            encoder.blockFords = true;
+            encoder.setBlockFords(true);
         }
     }
 

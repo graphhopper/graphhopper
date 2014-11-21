@@ -114,14 +114,13 @@ public class OSMTurnRelation implements TurnRelation
             // get all outgoing edges of the via node 
             iter = edgeOutExplorer.setBaseNode(viaNodeId);
             // for TYPE_ONLY_* we add ALL restrictions (from, via, * ) EXCEPT the given turn
-            // for TYPE_NO_*   we add ONE restriction  (from, via, to)
+            // for TYPE_NOT_*  we add ONE restriction  (from, via, to)
             while (iter.next())
             {
                 int edgeId = iter.getEdge();
-                long wayId = osmReader.getOsmIdOfInternalEdge(edgeId);                
-                if (edgeId != edgeIdFrom
-                        && (this.restriction == Type.ONLY && wayId != this.toOsmWayId
-                        || (this.restriction == Type.NOT && wayId == this.toOsmWayId && wayId >= 0)))
+                long wayId = osmReader.getOsmIdOfInternalEdge(edgeId);
+                if (edgeId != edgeIdFrom && this.restriction == Type.ONLY && wayId != this.toOsmWayId
+                        || this.restriction == Type.NOT && wayId == this.toOsmWayId && wayId >= 0)
                 {
                     final TurnCostTableEntry entry = new TurnCostTableEntry();
                     entry.nodeViaNode = viaNodeId;

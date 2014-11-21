@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import java.util.Arrays;
 
 /**
  * Defines how the graph can be traversed while Dijkstra or similar RoutingAlgorithm is in progress.
@@ -36,6 +37,7 @@ public enum TraversalMode
      */
     NODE_BASED(false, 1, false),
     /**
+     * Strictly not recommended as it could lead to 'route not found' for bidirectional algorithms.
      * An edged-based traversal mode with basic turn restriction and cost support, including the
      * most scenarios. But without certain turn restrictions and without u-turns. As fast as node
      * based.
@@ -47,8 +49,9 @@ public enum TraversalMode
      */
     EDGE_BASED_2DIR(true, 2, false),
     /**
-     * The most feature rich edged-based traversal mode with turn restriction and cost support,
-     * including u-turns. 4 times slower than node based.
+     * Not recommended as it leads to strange routes that outsmart the turn costs. The most feature
+     * rich edged-based traversal mode with turn restriction and cost support, including u-turns. 4
+     * times slower than node based.
      */
     EDGE_BASED_2DIR_UTURN(true, 2, true);
 
@@ -93,7 +96,7 @@ public enum TraversalMode
     {
         return noOfStates;
     }
-        
+
     public boolean isEdgeBased()
     {
         return edgeBased;
@@ -102,5 +105,17 @@ public enum TraversalMode
     public final boolean hasUTurnSupport()
     {
         return uTurnSupport;
+    }
+
+    public static TraversalMode fromString( String name )
+    {
+        try
+        {
+            return valueOf(name.toUpperCase());
+        } catch (Exception ex)
+        {
+            throw new IllegalArgumentException("TraversalMode " + name + " not supported. "
+                    + "Supported are: " + Arrays.asList(TraversalMode.values()));
+        }
     }
 }

@@ -76,19 +76,18 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     /* restriction definitions where order is important */
     protected List<String> restrictions = new ArrayList<String>(5);
-    protected HashSet<String> intendedValues = new HashSet<String>(5);
-    protected HashSet<String> restrictedValues = new HashSet<String>(5);
-    protected HashSet<String> ferries = new HashSet<String>(5);
-    protected HashSet<String> oneways = new HashSet<String>(5);
-    protected HashSet<String> acceptedRailways = new HashSet<String>(5);
+    protected final HashSet<String> intendedValues = new HashSet<String>(5);
+    protected final HashSet<String> restrictedValues = new HashSet<String>(5);
+    protected final HashSet<String> ferries = new HashSet<String>(5);
+    protected final HashSet<String> oneways = new HashSet<String>(5);
+    protected final HashSet<String> acceptedRailways = new HashSet<String>(5);
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
-    protected HashSet<String> absoluteBarriers = new HashSet<String>(5);
-    protected HashSet<String> potentialBarriers = new HashSet<String>(5);
-    // should potential barriers block when no access limits are given?
-    protected boolean blockByDefault = true;
-    protected boolean blockFords = true;
-    protected int speedBits;
-    protected double speedFactor;
+    protected final HashSet<String> absoluteBarriers = new HashSet<String>(5);
+    protected final HashSet<String> potentialBarriers = new HashSet<String>(5);
+    private boolean blockByDefault = true;
+    private boolean blockFords = true;
+    protected final int speedBits;
+    protected final double speedFactor;
 
     /**
      * @param speedBits specify the number of bits used for speed
@@ -113,12 +112,30 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         acceptedRailways.add("tram");
         acceptedRailways.add("abandoned");
         acceptedRailways.add("disused");
-        
+
         // http://wiki.openstreetmap.org/wiki/Demolished_Railway
         acceptedRailways.add("dismantled");
         acceptedRailways.add("razed");
         acceptedRailways.add("historic");
         acceptedRailways.add("obliterated");
+    }
+
+    /**
+     * Should potential barriers block when no access limits are given?
+     */
+    public void setBlockByDefault( boolean blockByDefault )
+    {
+        this.blockByDefault = blockByDefault;
+    }
+
+    public void setBlockFords( boolean blockFords )
+    {
+        this.blockFords = blockFords;
+    }
+
+    public boolean isBlockFords()
+    {
+        return blockFords;
     }
 
     /**
@@ -626,7 +643,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     public Collection<ITurnCostTableEntry> analyzeTurnRelation( TurnRelation turnRelation, DataReader osmReader )
     {
-        if (!supportsTurnCosts())
+        if (!supports(TurnWeighting.class))
             return Collections.emptyList();
 
         if (edgeOutExplorer == null || edgeInExplorer == null)
@@ -635,12 +652,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             edgeInExplorer = osmReader.getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(this, true, false));
         }
         return turnRelation.getRestrictionAsEntries(this, edgeOutExplorer, edgeInExplorer, osmReader);
-    }
-
-    @Override
-    public boolean supportsTurnCosts()
-    {
-        return maxTurnCosts > 0;
     }
 
     protected boolean isFerry( long internalFlags )
@@ -751,8 +762,32 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         return "";
     }
 
+    /**
+     * @param force should be false if speed should be changed only if it is bigger than maxspeed.
+     */
+    protected double applyMaxSpeed(Way way, double speed, boolean force )
+    {
+        double maxSpeed = getMaxSpeed(way);
+        // apply only if smaller maxSpeed
+        if (maxSpeed >= 0)
+        {
+            if (force || maxSpeed < speed)
+                return maxSpeed * 0.9;
+        }
+        return speed;
+    }
+
     protected String getPropertiesString()
     {
         return "speedFactor=" + speedFactor + "|speedBits=" + speedBits + "|turnCosts=" + (maxTurnCosts > 0);
+    }
+
+    @Override
+    public boolean supports( Class<?> feature )
+    {
+        if (TurnWeighting.class.isAssignableFrom(feature))
+            return maxTurnCosts > 0;
+
+        return false;
     }
 }

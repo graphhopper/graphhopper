@@ -21,7 +21,8 @@ or sign up to the [mailing list](http://graphhopper.com/#developers).
 
 **Please only email me directly if you need consultancy** or can't explain your problem in the public.
 
-There are subprojects to make GraphHopper working on [Android](https://github.com/graphhopper/graphhopper/blob/master/docs/android/index.md) or 
+There are subprojects to make GraphHopper working on [Android](https://github.com/graphhopper/graphhopper/blob/master/docs/android/index.md), 
+[iOS](http://github.com/graphhopper/graphhopper-ios) or 
 as a [web application](https://github.com/graphhopper/graphhopper/tree/master/web).
 
 

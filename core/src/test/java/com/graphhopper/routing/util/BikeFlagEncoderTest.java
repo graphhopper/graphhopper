@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
-import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.*;
+import static com.graphhopper.routing.util.PriorityCode.*;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -232,13 +232,13 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         osmRel.setTag("network", "icn");
         long relFlags = encoder.handleRelationTags(osmRel, 0);
         long flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals((double) BEST.getValue() / BEST.getValue(), encoder.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY), 1e-3);
+        assertEquals((double) BEST.getValue() / BEST.getValue(), encoder.getDouble(flags, PriorityWeighting.KEY), 1e-3);
 
         // important: UNCHANGED should not get 0 priority!
         osmWay = new OSMWay(1);
         osmWay.setTag("highway", "somethingelse");
         flags = encoder.handleWayTags(osmWay, allowed, 0);
-        assertEquals((double) UNCHANGED.getValue() / BEST.getValue(), encoder.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY), 1e-3);
+        assertEquals((double) UNCHANGED.getValue() / BEST.getValue(), encoder.getDouble(flags, PriorityWeighting.KEY), 1e-3);
     }
 
     @Test

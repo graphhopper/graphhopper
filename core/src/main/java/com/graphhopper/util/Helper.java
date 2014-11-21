@@ -405,6 +405,15 @@ public class Helper
         }
     }
 
+    /**
+     * Trying to force the release of the mapped ByteBuffer. See
+     * http://stackoverflow.com/q/2972986/194609 and use only if you know what you are doing.
+     */
+    public static void cleanHack()
+    {
+        System.gc();
+    }
+
     public static String nf( long no )
     {
         // I like french localization the most: 123654 will be 123 654 instead

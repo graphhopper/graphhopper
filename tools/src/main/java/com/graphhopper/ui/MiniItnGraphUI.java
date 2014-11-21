@@ -50,6 +50,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.util.WeightingMap;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -102,7 +103,7 @@ public class MiniItnGraphUI
         this.na = graph.getNodeAccess();
         prepare = hopper.getPreparation();
         encoder = hopper.getEncodingManager().getSingle();
-        weighting = hopper.createWeighting(Weighting.Params.create("fastest"), encoder);
+        weighting = hopper.createWeighting(new WeightingMap("fastest"), encoder);
         if (prepare == null)
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, "dijkstrabi", encoder, weighting, TraversalMode.NODE_BASED);
 

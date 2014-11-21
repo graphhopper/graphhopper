@@ -17,7 +17,6 @@
  */
 package com.graphhopper.storage;
 
-import static com.graphhopper.storage.AbstractDataAccess.HEADER_OFFSET;
 import com.graphhopper.util.NotThreadSafe;
 import java.io.File;
 import java.io.IOException;
@@ -74,12 +73,12 @@ public class UnsafeDataAccess extends AbstractDataAccess
         // TODO use unsafe.pageSize() instead segmentSizeInBytes?
         // e.g. on my system pageSize is only 4096
         setSegmentSize(segmentSizeInBytes);
-        incCapacity(bytes);
+        ensureCapacity(bytes);
         return this;
     }
 
     @Override
-    public final boolean incCapacity( long bytes )
+    public final boolean ensureCapacity(long bytes)
     {
         return ensureCapacity(bytes, true);
     }

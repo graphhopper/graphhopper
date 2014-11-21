@@ -29,10 +29,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
-import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.TIntList;
-import gnu.trove.set.hash.TIntHashSet;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Random;
@@ -80,7 +77,7 @@ public class MiniGraphUI
         this.na = graph.getNodeAccess();
         prepare = hopper.getPreparation();
         encoder = hopper.getEncodingManager().getSingle();
-        weighting = hopper.createWeighting(Weighting.Params.create("fastest"), encoder);
+        weighting = hopper.createWeighting(new WeightingMap("fastest"), encoder);
         if (prepare == null)
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, "dijkstrabi", encoder, weighting, TraversalMode.NODE_BASED);
 

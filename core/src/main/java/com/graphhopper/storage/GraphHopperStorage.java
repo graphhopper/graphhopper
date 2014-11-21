@@ -24,9 +24,19 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.search.NameIndex;
-import com.graphhopper.util.*;
-import static com.graphhopper.util.Helper.nf;
+import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
+
+import static com.graphhopper.util.Helper.nf;
+import java.io.UnsupportedEncodingException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The main implementation which handles nodes and edges file format. It can be used with different
@@ -259,7 +269,7 @@ public class GraphHopperStorage implements GraphStorage
 
         long oldNodes = nodeCount;
         nodeCount = nodeIndex + 1;
-        boolean capacityIncreased = nodes.incCapacity((long) nodeCount * nodeEntryBytes);
+        boolean capacityIncreased = nodes.ensureCapacity((long) nodeCount * nodeEntryBytes);
         if (capacityIncreased)
         {
             long newBytesCapacity = nodes.getCapacity();
@@ -290,12 +300,12 @@ public class GraphHopperStorage implements GraphStorage
 
     private void ensureEdgeIndex( int edgeIndex )
     {
-        edges.incCapacity(((long) edgeIndex + 1) * edgeEntryBytes);
+        edges.ensureCapacity(((long) edgeIndex + 1) * edgeEntryBytes);
     }
 
     private void ensureGeometry( long bytePos, int byteLength )
     {
-        wayGeometry.incCapacity(bytePos + byteLength);
+        wayGeometry.ensureCapacity(bytePos + byteLength);
     }
 
     @Override
@@ -567,7 +577,8 @@ public class GraphHopperStorage implements GraphStorage
         @Override
         public EdgeIteratorState setFlags( long flags )
         {
-            throw new UnsupportedOperationException("Not supported yet.");
+            GraphHopperStorage.this.setFlags(edgePointer, reverse, flags);
+            return this;
         }
 
         @Override
@@ -1371,6 +1382,7 @@ public class GraphHopperStorage implements GraphStorage
                 properties.checkVersions(false);
                 // check encoding for compatiblity
                 acceptStr = properties.get("graph.flagEncoders");
+
             } else
                 throw new IllegalStateException("cannot load properties. corrupt file or directory? " + dir);
 
@@ -1460,7 +1472,7 @@ public class GraphHopperStorage implements GraphStorage
     protected int loadNodesHeader()
     {
         int hash = nodes.getHeader(0);
-        if (hash != getClass().getName().hashCode())
+        if (hash != stringHashCode(getClass().getName()))
             throw new IllegalStateException("Cannot load the graph when using instance of "
                     + getClass().getName() + " and location: " + dir);
 
@@ -1475,7 +1487,7 @@ public class GraphHopperStorage implements GraphStorage
 
     protected int setNodesHeader()
     {
-        nodes.setHeader(0, getClass().getName().hashCode());
+        nodes.setHeader(0, stringHashCode(getClass().getName()));
         nodes.setHeader(1 * 4, nodeEntryBytes);
         nodes.setHeader(2 * 4, nodeCount);
         nodes.setHeader(3 * 4, Helper.degreeToInt(bounds.minLon));
@@ -1566,6 +1578,18 @@ public class GraphHopperStorage implements GraphStorage
                 + "name: - (" + nameIndex.getCapacity() / Helper.MB + "), "
                 + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "), "
                 + "bounds:" + bounds;
+    }
+
+    // workaround for graphhopper-ios https://github.com/google/j2objc/issues/423
+    private int stringHashCode( String str )
+    {
+        try
+        {
+            return java.util.Arrays.hashCode(str.getBytes("UTF-8"));
+        } catch (UnsupportedEncodingException ex)
+        {
+            throw new UnsupportedOperationException(ex);
+        }
     }
 
     @Override
