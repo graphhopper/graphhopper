@@ -22,6 +22,7 @@ import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.dem.CGIARProvider;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
+import com.graphhopper.reader.osgb.OsItnReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
@@ -50,7 +51,7 @@ import org.slf4j.LoggerFactory;
  */
 public class GraphHopper implements GraphHopperAPI
 {
-    private static final String READER_UNAVAILABLE = "DataReader class %s not available check your setting for reader.implementation.";
+    private static final String READER_UNAVAILABLE = "DataReader implementation %s not available check your setting for reader.implementation.  Allowed options are OSM or OSITN";
 	private final Logger logger = LoggerFactory.getLogger(getClass());
     // for graph:
     private GraphStorage graph;
@@ -638,14 +639,15 @@ public class GraphHopper implements GraphHopperAPI
     protected DataReader createReader( GraphStorage tmpGraph )
     {
     	DataReader reader;
-		try {
-			Class readerImpl;
-			readerImpl = Class.forName(dataReader);
-			Constructor constructor = readerImpl.getDeclaredConstructor(GraphStorage.class);
-			reader = (DataReader) constructor.newInstance(tmpGraph);
-		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			throw new IllegalStateException(READER_UNAVAILABLE.format(dataReader));
-		}
+    	if ("OSM".equals(dataReader)) {
+    		reader = new OSMReader(tmpGraph);
+    	}
+    	else if ("OSITN".equals(dataReader)) {
+    		reader = new OsItnReader(tmpGraph);
+    	} else {
+    		String exceptionMessage = String.format(READER_UNAVAILABLE, dataReader);
+    		throw new IllegalArgumentException(exceptionMessage);
+    	}
         return initReader(reader);
     }
 
@@ -713,13 +715,16 @@ public class GraphHopper implements GraphHopperAPI
             dataAccessType = DAType.MMAP_RO;
 
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
-        if (chEnabled)
+        if (chEnabled) {
             graph = new LevelGraphStorage(dir, encodingManager, hasElevation());
-        else if (encodingManager.needsTurnCostsSupport())
+        }
+        else if (encodingManager.needsTurnCostsSupport()) {
             graph = new GraphHopperStorage(dir, encodingManager, hasElevation(), new TurnCostStorage());
-        else
+        }
+        else {
             graph = new GraphHopperStorage(dir, encodingManager, hasElevation());
-
+        }
+        
         graph.setSegmentSize(defaultSegmentSize);
 
         Lock lock = null;
