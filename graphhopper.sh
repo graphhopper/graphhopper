@@ -1,6 +1,6 @@
 #!/bin/bash
 
-GH_CLASS=com.graphhopper.GraphHopper
+GH_CLASS=com.graphhopper.tools.Import
 GH_HOME=$(dirname "$0")
 JAVA=$JAVA_HOME/bin/java
 if [ "x$JAVA_HOME" = "x" ]; then
@@ -96,7 +96,7 @@ function packageCoreJar {
     echo "## now building graphhopper jar: $JAR"
     echo "## using maven at $MAVEN_HOME"
     #mvn clean
-    "$MAVEN_HOME/bin/mvn" --projects core -DskipTests=true install assembly:single > /tmp/graphhopper-compile.log
+    "$MAVEN_HOME/bin/mvn" --projects core,tools -DskipTests=true install assembly:single > /tmp/graphhopper-compile.log
     returncode=$?
     if [[ $returncode != 0 ]] ; then
         echo "## compilation of core failed"
@@ -165,6 +165,8 @@ elif [ ${FILE: -4} == ".ghz" ]; then
    if [[ ! -d "$NAME-gh" ]]; then
       unzip "$FILE" -d "$NAME-gh"
    fi
+elif [ -d ${FILE} ]; then
+   OSM_FILE="$FILE"
 else
    # no known end -> no import
    OSM_FILE=
@@ -172,7 +174,7 @@ fi
 
 GRAPH=$NAME-gh
 VERSION=$(grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1)
-JAR=core/target/graphhopper-$VERSION-jar-with-dependencies.jar
+JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
 
 LINK=$(echo $NAME | tr '_' '/')
 if [ "x$FILE" == "x-" ]; then
@@ -240,12 +242,12 @@ elif [ "x$ACTION" = "ximport" ]; then
 
 elif [ "x$ACTION" = "xtest" ]; then
  "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS printVersion=true config=$CONFIG \
- 	osmreader.wayPointMaxDistance=0 graph.location="$GRAPH" osmreader.osm="$OSM_FILE" prepare.chShortcuts=false \
+ 	osmreader.wayPointMaxDistance=0 graph.location="$GRAPH" osmreader.osm="$OSM_FILE" prepare.chWeighting=false \
 	graph.testIT=true
 
 
 elif [ "x$ACTION" = "xtorture" ]; then
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.QueryTorture $3 $4 $5 $6 $7 $8 $9
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.QueryTorture $3 $4 $5 $6 $7 $8 $9
 
 
 elif [ "x$ACTION" = "xminiui" ]; then
@@ -256,7 +258,7 @@ elif [ "x$ACTION" = "xminiui" ]; then
 
 
 elif [ "x$ACTION" = "xmeasurement" ]; then
- ARGS="config=$CONFIG graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chShortcuts=fastest osmreader.acceptWay=CAR"
+ ARGS="config=$CONFIG graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chWeighting=fastest graph.flagEncoders=CAR"
  # graph.doSort=true"
  echo -e "\ncreate graph via $ARGS, $JAR"
  START=$(date +%s)
@@ -268,7 +270,7 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
     COUNT=5000
     commit_info=$(git log -n 1 --pretty=oneline)
     echo -e "\nperform measurement via jar=> $JAR and ARGS=> $ARGS"
-    "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS measurement.count=$COUNT measurement.location="$M_FILE_NAME" \
+    "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.Measurement $ARGS measurement.count=$COUNT measurement.location="$M_FILE_NAME" \
             graph.importTime=$IMPORT_TIME measurement.gitinfo="$commit_info"
  }
  
