@@ -17,6 +17,19 @@
  */
 package com.graphhopper;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.dem.CGIARProvider;
@@ -26,22 +39,46 @@ import com.graphhopper.reader.osgb.OsItnReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.*;
-import com.graphhopper.storage.index.*;
-import com.graphhopper.util.*;
+import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FastestWeighting;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
+import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
+import com.graphhopper.routing.util.PriorityWeighting;
+import com.graphhopper.routing.util.ShortestWeighting;
+import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.TurnWeighting;
+import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.util.WeightingMap;
+import com.graphhopper.storage.DAType;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.GHDirectory;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.LevelGraphStorage;
+import com.graphhopper.storage.Lock;
+import com.graphhopper.storage.LockFactory;
+import com.graphhopper.storage.NativeFSLockFactory;
+import com.graphhopper.storage.SimpleFSLockFactory;
+import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.storage.index.LocationIndexTreeSC;
+import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.DouglasPeucker;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PathMerger;
+import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.Unzipper;
 import com.graphhopper.util.shapes.GHPoint;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -95,7 +132,7 @@ public class GraphHopper implements GraphHopperAPI
     private final TranslationMap trMap = new TranslationMap().doImport();
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private final AtomicLong visitedSum = new AtomicLong(0);
-	private String dataReader = "com.graphhopper.reader.OSMReader";
+	private String dataReader = "OSM";
 
     public GraphHopper()
     {
