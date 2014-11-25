@@ -34,7 +34,7 @@ public class GHResponse
     private final List<Throwable> errors = new ArrayList<Throwable>(4);
     private PointList list = PointList.EMPTY;
     private double distance;
-    private double weight;
+    private double routeWeight;
     private long time;
     private InstructionList instructions = InstructionList.EMPTY;
     private boolean found;
@@ -45,6 +45,7 @@ public class GHResponse
 
     public String getDebugInfo()
     {
+        check("getDebugInfo");
         return debugInfo;
     }
 
@@ -53,6 +54,15 @@ public class GHResponse
         if (debugInfo != null)
             this.debugInfo = debugInfo;
         return this;
+    }
+
+    private void check( String method )
+    {
+        if (hasErrors())
+        {
+            throw new RuntimeException("You cannot call " + method + " if response contains errors. Check this with ghResponse.hasErrors(). "
+                    + "Errors are: " + getErrors());
+        }
     }
 
     /**
@@ -88,6 +98,7 @@ public class GHResponse
      */
     public PointList getPoints()
     {
+        check("getPoints");
         return list;
     }
 
@@ -105,6 +116,7 @@ public class GHResponse
      */
     public double getDistance()
     {
+        check("getDistance");
         return distance;
     }
 
@@ -124,7 +136,7 @@ public class GHResponse
 
     public GHResponse setRouteWeight( double weight )
     {
-        this.weight = weight;
+        this.routeWeight = weight;
         return this;
     }
 
@@ -135,7 +147,8 @@ public class GHResponse
      */
     public double getRouteWeight()
     {
-        return weight;
+        check("getRouteWeight");
+        return routeWeight;
     }
 
     public GHResponse setFound( boolean found )
@@ -146,6 +159,7 @@ public class GHResponse
 
     public boolean isFound()
     {
+        check("isFound");
         return found;
     }
 
@@ -154,6 +168,7 @@ public class GHResponse
      */
     public BBox calcRouteBBox( BBox _fallback )
     {
+        check("calcRouteBBox");
         BBox bounds = BBox.INVERSE.clone();
         int len = list.getSize();
         if (len == 0)
@@ -198,6 +213,7 @@ public class GHResponse
 
     public InstructionList getInstructions()
     {
+        check("getInstructions");
         return instructions;
     }
 }

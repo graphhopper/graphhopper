@@ -115,17 +115,15 @@ public class GraphHopperServlet extends GHBaseServlet
 
         float took = sw.stop().getSeconds();
         String infoStr = req.getRemoteAddr() + " " + req.getLocale() + " " + req.getHeader("User-Agent");
-        PointList points = ghRsp.getPoints();
-        String logStr = req.getQueryString() + " " + infoStr + " " + infoPoints
-                + ", distance: " + ghRsp.getDistance() + ", time:" + Math.round(ghRsp.getMillis() / 60000f)
-                + "min, points:" + points.getSize() + ", took:" + took
-                + ", debug - " + ghRsp.getDebugInfo() + ", " + algoStr + ", "
-                + weighting + ", " + vehicleStr;
+        String logStr = req.getQueryString() + " " + infoStr + " " + infoPoints + ", took:"
+                + took + ", " + algoStr + ", " + weighting + ", " + vehicleStr;
 
         if (ghRsp.hasErrors())
             logger.error(logStr + ", errors:" + ghRsp.getErrors());
         else
-            logger.info(logStr);
+            logger.info(logStr + ", distance: " + ghRsp.getDistance()
+                    + ", time:" + Math.round(ghRsp.getMillis() / 60000f)
+                    + "min, points:" + ghRsp.getPoints().getSize() + ", debug - " + ghRsp.getDebugInfo());
 
         if (writeGPX)
             writeResponse(res, createGPXString(req, res, ghRsp));
