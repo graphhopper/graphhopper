@@ -133,7 +133,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 52.446564,-1.930268 | 52.446744,-1.929469 | car       |
 
-  @Routing 
+  @Routing @KnownIssues
   Scenario Outline: Verify  one Way  Restrictions  on a Route (Exeter WSPIP-83)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints not on the route map:
