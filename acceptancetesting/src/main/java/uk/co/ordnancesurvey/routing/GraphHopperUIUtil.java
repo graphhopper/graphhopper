@@ -207,7 +207,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		return wp;
 	}
 
-	public void isWayPointonRouteMap(List<Map> waypointList) {
+	public void isWayPointonRouteMap(List<Map<String, String>> waypointList) {
 
 		for (int i = 0; i < waypointList.size(); i++) {
 			String wayPointIndex = (String) waypointList.get(i).get(
