@@ -237,9 +237,10 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 			String direction = (String) waypointList.get(i).get("direction");
 			String time = (String) waypointList.get(i).get("time");
 			String distance = (String) waypointList.get(i).get("distance");
-
-			isWayPointonRouteMap(wayPointIndex, waypointco, waypointdesc,
+			Waypoint wp=buildWayPoint( waypointco, waypointdesc,
 					azimuth, direction, time, distance);
+			assert(!GPHService.isWayPointOnGPXRoutes(wp));
+			
 		}
 
 	}
@@ -289,6 +290,9 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 					.replaceAll(" ", "");
 			if (!actualTime.contains("h")) {
 				actualTime = "00h" + actualTime;
+			}
+			if (!actualTime.contains("min")) {
+				actualTime =  actualTime+"00min";
 			}
 			aTime = formatter.parse(actualTime);
 

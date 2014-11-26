@@ -49,11 +49,18 @@ public class GraphHopperHooks {
 
 	@Then("^I should be able to verify the waypoints on the route map:")
 	public void I_should_be_able_to_verify_the_waypoints_on_the_route_map(
+			List<Map<String, String>> wayPointList) {
+		graphUiUtil.isWayPointonRouteMap(wayPointList);
+	}
+	
+	@Then("^I should be able to verify the waypoints not on the route map:")
+	public void I_should_be_able_to_verify_the_not_waypoints_on_the_route_map(
 			List<Map> wayPointList) {
 
-		graphUiUtil.isWayPointonRouteMap(wayPointList);
+		graphUiUtil.isWayPointNotonRouteMap(wayPointList);
 
 	}
+	
 
 	@Then("^The total route time should be not more than \"([^\"]*)\"$")
 	public void The_total_route_time_should_be_not_more_than(
