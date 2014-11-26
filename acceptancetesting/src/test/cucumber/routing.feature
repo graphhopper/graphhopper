@@ -58,7 +58,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 51.507229,-0.127581 | 52.481875,-1.898743 | car       |
 
-  @Routing @New
+  @Routing 
   Scenario Outline: Verify  waypoints on a Route from London to Birmingham and the total route time estimate
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then The total route time should be not more than "<totalRouteTime>"
@@ -133,7 +133,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 52.446564,-1.930268 | 52.446744,-1.929469 | car       |
 
-  @Routing @New
+  @Routing 
   Scenario Outline: Verify  one Way  Restrictions  on a Route (Exeter WSPIP-83)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints not on the route map:
