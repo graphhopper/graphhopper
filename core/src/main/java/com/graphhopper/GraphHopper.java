@@ -22,8 +22,7 @@ import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.dem.CGIARProvider;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
@@ -66,6 +65,7 @@ public class GraphHopper implements GraphHopperAPI
     // for routing
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
+    private RoutingAlgorithmFactory algoFactory;
     // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
@@ -73,8 +73,7 @@ public class GraphHopper implements GraphHopperAPI
     // for prepare
     private int minNetworkSize = 200;
     private int minOnewayNetworkSize = 0;
-    // for CH prepare
-    private AlgorithmPreparation prepare;
+    // for CH prepare    
     private boolean doPrepare = true;
     private boolean chEnabled = true;
     private String chWeighting = "fastest";
@@ -424,11 +423,6 @@ public class GraphHopper implements GraphHopperAPI
         return locationIndex;
     }
 
-    public AlgorithmPreparation getPreparation()
-    {
-        return prepare;
-    }
-
     /**
      * Sorts the graph which requires more RAM while import. See #12
      */
@@ -733,6 +727,19 @@ public class GraphHopper implements GraphHopperAPI
         }
     }
 
+    public RoutingAlgorithmFactory getAlgorithmFactory()
+    {
+        if (algoFactory == null)
+            this.algoFactory = new RoutingAlgorithmFactorySimple();
+
+        return algoFactory;
+    }
+
+    public void setAlgorithmFactory( RoutingAlgorithmFactory algoFactory )
+    {
+        this.algoFactory = algoFactory;
+    }
+
     /**
      * Sets EncodingManager, does the preparation and creates the locationIndex
      */
@@ -740,7 +747,9 @@ public class GraphHopper implements GraphHopperAPI
     {
         encodingManager = graph.getEncodingManager();
         if (chEnabled)
-            initCHPrepare();
+            algoFactory = createPrepare();
+        else
+            algoFactory = new RoutingAlgorithmFactorySimple();
 
         if (!isPrepared())
             prepare();
@@ -752,18 +761,17 @@ public class GraphHopper implements GraphHopperAPI
         return "true".equals(graph.getProperties().get("prepare.done"));
     }
 
-    protected void initCHPrepare()
+    protected RoutingAlgorithmFactory createPrepare()
     {
         FlagEncoder encoder = encodingManager.getSingle();
-        PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder,
+        PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies((LevelGraph) graph, encoder,
                 createWeighting(new WeightingMap(chWeighting), encoder), traversalMode);
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                 setLazyUpdates(lazyUpdates).
                 setNeighborUpdates(neighborUpdates).
                 setLogMessages(logMessages);
 
-        prepare = tmpPrepareCH;
-        prepare.setGraph(graph);
+        return tmpPrepareCH;
     }
 
     /**
@@ -890,30 +898,14 @@ public class GraphHopper implements GraphHopperAPI
             }
 
             sw = new StopWatch().start();
-            String algoStr = request.getAlgorithm().isEmpty() ? "dijkstrabi" : request.getAlgorithm();
-            RoutingAlgorithm algo = null;
-            if (chEnabled)
-            {
-                if (prepare == null)
-                    throw new IllegalStateException("Preparation object is null. CH-preparation wasn't done or did you "
-                            + "forget to call setCHEnable(false)?");
+            String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
+            AlgorithmOptions opts = new AlgorithmOptions().
+                    setAlgorithm(algoStr).
+                    setTraversalMode(tMode).
+                    setFlagEncoder(encoder).
+                    setWeighting(createWeighting(request.getHints(), encoder));
 
-                if (algoStr.equals("dijkstrabi"))
-                    algo = prepare.createAlgo();
-                else if (algoStr.equals("astarbi"))
-                    algo = ((PrepareContractionHierarchies) prepare).createAStar();
-                else
-                {
-                    rsp.addError(new IllegalStateException(
-                            "Only dijkstrabi and astarbi is supported for LevelGraph (using contraction hierarchies)!"));
-                    break;
-                }
-            } else
-            {
-                Weighting weighting = createWeighting(request.getHints(), encoder);
-                prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, algoStr, encoder, weighting, tMode);
-                algo = prepare.createAlgo();
-            }
+            RoutingAlgorithm algo = getAlgorithmFactory().createAlgo(graph, opts);
 
             debug += ", algoInit:" + sw.stop().getSeconds() + "s";
             sw = new StopWatch().start();
@@ -996,16 +988,16 @@ public class GraphHopper implements GraphHopperAPI
 
     protected void prepare()
     {
-        boolean tmpPrepare = doPrepare && prepare != null;
+        boolean tmpPrepare = doPrepare && algoFactory instanceof PrepareContractionHierarchies;
         if (tmpPrepare)
         {
             ensureWriteAccess();
-            if (prepare instanceof PrepareContractionHierarchies && encodingManager.getVehicleCount() > 1)
+            if (encodingManager.getVehicleCount() > 1)
                 throw new IllegalArgumentException("Contraction hierarchies preparation "
                         + "requires (at the moment) only one vehicle. But was:" + encodingManager);
 
             logger.info("calling prepare.doWork for " + encodingManager.toString() + " ... (" + Helper.getMemInfo() + ")");
-            prepare.doWork();
+            ((PrepareContractionHierarchies) algoFactory).doWork();
             graph.getProperties().put("prepare.date", formatDateTime(new Date()));
         }
         graph.getProperties().put("prepare.done", tmpPrepare);

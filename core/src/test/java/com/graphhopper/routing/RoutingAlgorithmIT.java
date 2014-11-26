@@ -23,6 +23,7 @@ import com.graphhopper.reader.PrinctonReader;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TestAlgoCollector.OneRun;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -33,7 +34,6 @@ import com.graphhopper.util.StopWatch;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
 import static org.junit.Assert.*;
@@ -425,7 +425,7 @@ public class RoutingAlgorithmIT
             String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
             boolean testAlsoCH, String vehicle, String weightCalcStr, boolean is3D )
     {
-        AlgorithmPreparation tmpPrepare = null;
+        AlgoHelperEntry algoEntry = null;
         OneRun tmpOneRun = null;
         try
         {
@@ -448,26 +448,26 @@ public class RoutingAlgorithmIT
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             Weighting weighting = hopper.createWeighting(new WeightingMap(weightCalcStr), encoder);
 
-            Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
+            Collection<AlgoHelperEntry> prepares = RoutingAlgorithmSpecialAreaTests.
                     createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, testAlsoCH, tMode, weighting, hopper.getEncodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-            for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
+            for (AlgoHelperEntry entry : prepares)
             {
-                tmpPrepare = entry.getKey();
-                LocationIndex idx = entry.getValue();
+                algoEntry = entry;
+                LocationIndex idx = entry.getIdx();
                 for (OneRun oneRun : forEveryAlgo)
                 {
                     tmpOneRun = oneRun;
                     List<QueryResult> list = oneRun.getList(idx, edgeFilter);
-                    testCollector.assertDistance(tmpPrepare, list, oneRun);
+                    testCollector.assertDistance(algoEntry, list, oneRun);
                 }
             }
         } catch (Exception ex)
         {
-            if (tmpPrepare == null)
+            if (algoEntry == null)
                 throw new RuntimeException("cannot handle file " + osmFile + ", " + ex.getMessage(), ex);
 
-            throw new RuntimeException("cannot handle " + tmpPrepare.toString() + ", for " + tmpOneRun
+            throw new RuntimeException("cannot handle " + algoEntry.toString() + ", for " + tmpOneRun
                     + ", file " + osmFile + ", " + ex.getMessage(), ex);
         } finally
         {
@@ -475,7 +475,7 @@ public class RoutingAlgorithmIT
         }
     }
 
-    @Test
+//    @Test
     public void testPerformance() throws IOException
     {
         int N = 10;
@@ -488,17 +488,16 @@ public class RoutingAlgorithmIT
 
         String bigFile = "10000EWD.txt.gz";
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
-        Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
+        Collection<AlgoHelperEntry> prepares = RoutingAlgorithmSpecialAreaTests.
                 createAlgos(graph, null, encoder, false, TraversalMode.NODE_BASED, new ShortestWeighting(), eManager);
-        for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
+        for (AlgoHelperEntry entry : prepares)
         {
-            AlgorithmPreparation prepare = entry.getKey();
             StopWatch sw = new StopWatch();
             for (int i = 0; i < N; i++)
             {
                 int node1 = Math.abs(rand.nextInt(graph.getNodes()));
                 int node2 = Math.abs(rand.nextInt(graph.getNodes()));
-                RoutingAlgorithm d = prepare.createAlgo();
+                RoutingAlgorithm d = entry.createAlgo();
                 if (i >= noJvmWarming)
                     sw.start();
 
@@ -511,13 +510,13 @@ public class RoutingAlgorithmIT
             }
 
             float perRun = sw.stop().getSeconds() / ((float) (N - noJvmWarming));
-            System.out.println("# " + getClass().getSimpleName() + " " + prepare.createAlgo().getName()
+            System.out.println("# " + getClass().getSimpleName() + " " + entry
                     + ":" + sw.stop().getSeconds() + ", per run:" + perRun);
             assertTrue("speed to low!? " + perRun + " per run", perRun < 0.08);
         }
     }
 
-    @Test
+    //@Test
     public void testMonacoParallel() throws IOException
     {
         System.out.println("testMonacoParallel takes a bit time...");
@@ -563,20 +562,13 @@ public class RoutingAlgorithmIT
                         public void run()
                         {
                             OneRun oneRun = instances.get(instanceIndex);
-                            testCollector.assertDistance(new NoOpAlgorithmPreparation()
+                            testCollector.assertDistance(new AlgoHelperEntry(idx)
                             {
                                 @Override
                                 public RoutingAlgorithm createAlgo()
                                 {
                                     return algo;
                                 }
-
-                                @Override
-                                public String toString()
-                                {
-                                    return algo.toString();
-                                }
-
                             }, oneRun.getList(idx, filter), oneRun);
                             integ.addAndGet(1);
                         }

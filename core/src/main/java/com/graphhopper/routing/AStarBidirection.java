@@ -318,6 +318,6 @@ public class AStarBidirection extends AbstractBidirAlgo
     @Override
     public String getName()
     {
-        return "astarbi";
+        return AlgorithmOptions.ASTAR_BI;
     }
 }

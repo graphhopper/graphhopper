@@ -137,7 +137,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     @Override
     public String getName()
     {
-        return "dijkstra";
+        return AlgorithmOptions.DIJKSTRA;
     }
 
     @Override

@@ -57,15 +57,15 @@ public class DijkstraTest extends AbstractRoutingAlgorithmTester
     }
 
     @Override
-    public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final Weighting weighting )
+    public RoutingAlgorithmFactory createFactory( Graph prepareGraph, AlgorithmOptions prepareOpts )
     {
-        return new NoOpAlgorithmPreparation()
+        return new RoutingAlgorithmFactory()
         {
             @Override
-            public RoutingAlgorithm createAlgo()
+            public RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts )
             {
-                return new Dijkstra(_graph, encoder, weighting, traversalMode);
+                return new Dijkstra(g, opts.getFlagEncoder(), opts.getWeighting(), traversalMode);
             }
-        }.setGraph(defaultGraph);
+        };
     }
 }

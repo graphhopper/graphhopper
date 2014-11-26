@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.GHResponse;
-import com.graphhopper.routing.Path;
+import com.graphhopper.routing.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -47,12 +47,13 @@ public class TestAlgoCollector
         this.name = name;
     }
 
-    public TestAlgoCollector assertDistance( AlgorithmPreparation prepare, List<QueryResult> queryList, OneRun oneRun )
+    public TestAlgoCollector assertDistance( AlgoHelperEntry algoEntry, List<QueryResult> queryList,
+            OneRun oneRun )
     {
         List<Path> viaPaths = new ArrayList<Path>();
         for (int i = 0; i < queryList.size() - 1; i++)
         {
-            Path path = prepare.createAlgo().calcPath(queryList.get(i), queryList.get(i + 1));
+            Path path = algoEntry.createAlgo().calcPath(queryList.get(i), queryList.get(i + 1));
             // System.out.println(path.calcInstructions().createGPX("temp", 0, "GMT"));
             viaPaths.add(path);
         }
@@ -65,7 +66,7 @@ public class TestAlgoCollector
 
         if (!rsp.isFound())
         {
-            errors.add(prepare + " returns no path! expected distance: " + rsp.getDistance()
+            errors.add(algoEntry + " returns no path! expected distance: " + rsp.getDistance()
                     + ", expected points: " + oneRun + ". " + queryList);
             return this;
         }
@@ -74,14 +75,14 @@ public class TestAlgoCollector
         double tmpDist = pointList.calcDistance(distCalc);
         if (Math.abs(rsp.getDistance() - tmpDist) > 2)
         {
-            errors.add(prepare + " path.getDistance was  " + rsp.getDistance()
+            errors.add(algoEntry + " path.getDistance was  " + rsp.getDistance()
                     + "\t pointList.calcDistance was " + tmpDist + "\t (expected points " + oneRun.getLocs()
                     + ", expected distance " + oneRun.getDistance() + ") " + queryList);
         }
 
         if (Math.abs(rsp.getDistance() - oneRun.getDistance()) > 2)
         {
-            errors.add(prepare + " returns path not matching the expected distance of " + oneRun.getDistance()
+            errors.add(algoEntry + " returns path not matching the expected distance of " + oneRun.getDistance()
                     + "\t Returned was " + rsp.getDistance() + "\t (expected points " + oneRun.getLocs()
                     + ", was " + pointList.getSize() + ") " + queryList);
         }
@@ -89,7 +90,7 @@ public class TestAlgoCollector
         // There are real world instances where A-B-C is identical to A-C (in meter precision).
         if (Math.abs(pointList.getSize() - oneRun.getLocs()) > 1)
         {
-            errors.add(prepare + " returns path not matching the expected points of " + oneRun.getLocs()
+            errors.add(algoEntry + " returns path not matching the expected points of " + oneRun.getLocs()
                     + "\t Returned was " + pointList.getSize() + "\t (expected distance " + oneRun.getDistance()
                     + ", was " + rsp.getDistance() + ") " + queryList);
         }
@@ -136,6 +137,41 @@ public class TestAlgoCollector
         } else
         {
             System.out.println("SUCCESS for " + name + "!");
+        }
+    }
+
+    public static class AlgoHelperEntry
+    {
+        private Graph g;
+        private final LocationIndex idx;
+        private AlgorithmOptions opts;
+
+        public AlgoHelperEntry( Graph g, AlgorithmOptions opts, LocationIndex idx )
+        {
+            this.g = g;
+            this.opts = opts;
+            this.idx = idx;
+        }
+
+        public AlgoHelperEntry( LocationIndex idx )
+        {
+            this.idx = idx;
+        }
+
+        public LocationIndex getIdx()
+        {
+            return idx;
+        }
+
+        public RoutingAlgorithm createAlgo()
+        {
+            return new RoutingAlgorithmFactorySimple().createAlgo(g, opts);
+        }
+
+        @Override
+        public String toString()
+        {
+            return opts.getAlgorithm();
         }
     }
 

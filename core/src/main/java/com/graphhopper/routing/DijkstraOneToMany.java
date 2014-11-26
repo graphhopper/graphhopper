@@ -81,12 +81,6 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     }
 
     @Override
-    public Path calcPath( QueryResult fromRes, QueryResult toRes )
-    {
-        throw new IllegalStateException("not supported yet");
-    }
-
-    @Override
     public Path calcPath( int from, int to )
     {
         fromNode = from;
@@ -233,7 +227,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     @Override
     public String getName()
     {
-        return "dijkstraOneToMany";
+        return AlgorithmOptions.DIJKSTRA_ONE_TO_MANY;
     }
 
     /**

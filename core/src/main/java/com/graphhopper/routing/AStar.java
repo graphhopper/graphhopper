@@ -196,6 +196,6 @@ public class AStar extends AbstractRoutingAlgorithm
     @Override
     public String getName()
     {
-        return "astar";
+        return AlgorithmOptions.ASTAR;
     }
 }

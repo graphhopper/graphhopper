@@ -249,7 +249,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     @Override
     public String getName()
     {
-        return "dijkstrabi";
+        return AlgorithmOptions.DIJKSTRA_BI;
     }
 
     TIntObjectMap<EdgeEntry> getBestFromMap()

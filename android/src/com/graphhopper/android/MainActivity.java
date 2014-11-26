@@ -50,6 +50,7 @@ import android.widget.Toast;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
@@ -498,7 +499,7 @@ public class MainActivity extends Activity
             {
                 StopWatch sw = new StopWatch().start();
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
-                        setAlgorithm("dijkstrabi");
+                        setAlgorithm(AlgorithmOptions.DIJKSTRA_BI);
                 req.getHints().
                         put("instructions", "false");
                 GHResponse resp = hopper.route(req);

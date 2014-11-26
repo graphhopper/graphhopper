@@ -56,15 +56,15 @@ public class AStarTest extends AbstractRoutingAlgorithmTester
     }
 
     @Override
-    public AlgorithmPreparation prepareGraph( Graph g, final FlagEncoder encoder, final Weighting w )
+    public RoutingAlgorithmFactory createFactory( Graph prepareGraph, AlgorithmOptions prepareOpts )
     {
-        return new NoOpAlgorithmPreparation()
+        return new RoutingAlgorithmFactory()
         {
             @Override
-            public RoutingAlgorithm createAlgo()
+            public RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts )
             {
-                return new AStar(_graph, encoder, w, traversalMode);
+                return new AStar(g, opts.getFlagEncoder(), opts.getWeighting(), traversalMode);
             }
-        }.setGraph(g);
+        };
     }
 }

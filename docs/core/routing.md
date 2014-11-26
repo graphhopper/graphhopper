@@ -60,7 +60,7 @@ hopper.setEncodingManager(new EncodingManager("car,bike"));
 
 hopper.importOrLoad();
 
-GHRequest req = new GHRequest(latFrom, lonFrom, latTo, lonTo).setVehicle("bike").setAlgorithm("astar");
+GHRequest req = new GHRequest(latFrom, lonFrom, latTo, lonTo).setVehicle("bike").setAlgorithm(AlgorithmOptions.ASTAR);
 GHResponse res = hopper.route(req);
 ```
 

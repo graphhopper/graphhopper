@@ -20,8 +20,10 @@ package com.graphhopper.ui;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
+import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -57,7 +59,7 @@ public class MiniGraphUI
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
     private Path path;
-    private AlgorithmPreparation prepare;
+    private RoutingAlgorithmFactory algoFactory;
     private final Graph graph;
     private final NodeAccess na;
     private LocationIndexTree index;
@@ -70,18 +72,18 @@ public class MiniGraphUI
     private boolean fastPaint = false;
     private final Weighting weighting;
     private final FlagEncoder encoder;
+    private AlgorithmOptions algoOpts;
 
     public MiniGraphUI( GraphHopper hopper, boolean debug )
     {
         this.graph = hopper.getGraph();
         this.na = graph.getNodeAccess();
-        prepare = hopper.getPreparation();
+        algoFactory = hopper.getAlgorithmFactory();
         encoder = hopper.getEncodingManager().getSingle();
         weighting = hopper.createWeighting(new WeightingMap("fastest"), encoder);
-        if (prepare == null)
-            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, "dijkstrabi", encoder, weighting, TraversalMode.NODE_BASED);
+        algoOpts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting);
 
-        logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algo:" + prepare.createAlgo().getName());
+        logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algoOpts:" + algoOpts);
         mg = new GraphicsWrapper(graph);
 
         // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
@@ -192,7 +194,7 @@ public class MiniGraphUI
                     return;
 
                 makeTransparent(g2);
-                RoutingAlgorithm algo = prepare.createAlgo();
+                RoutingAlgorithm algo = algoFactory.createAlgo(graph, algoOpts);
                 if (algo instanceof DebugAlgo)
                 {
                     ((DebugAlgo) algo).setGraphics2D(g2);

@@ -18,6 +18,7 @@
 package com.graphhopper;
 
 import com.graphhopper.reader.DataReader;
+import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.index.QueryResult;
@@ -226,7 +227,8 @@ public class GraphHopperTest
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         instance.importOrLoad();
-        GHResponse ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).setAlgorithm("dijkstrabi"));
+        GHResponse ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).
+                setAlgorithm(AlgorithmOptions.DIJKSTRA_BI));
         assertTrue(ph.isFound());
         assertEquals("(51.24921503475044,9.431716451757769), (52.0,9.0), (51.199999850988384,9.39999970197677)", ph.getPoints().toString());
         assertEquals(3, ph.getPoints().getSize());
@@ -242,7 +244,8 @@ public class GraphHopperTest
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         instance.importOrLoad();
-        GHResponse ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).setAlgorithm("dijkstrabi"));
+        GHResponse ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).
+                setAlgorithm(AlgorithmOptions.DIJKSTRA_BI));
         assertTrue(ph.isFound());
         assertEquals(3, ph.getPoints().getSize());
         assertEquals(new GHPoint(51.24921503475044, 9.431716451757769), ph.getPoints().toGHPoint(0));

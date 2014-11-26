@@ -25,7 +25,6 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
-
 import java.util.ArrayList;
 import java.util.List;
 

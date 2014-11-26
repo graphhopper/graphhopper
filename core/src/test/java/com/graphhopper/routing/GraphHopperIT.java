@@ -69,7 +69,7 @@ public class GraphHopperIT
                 importOrLoad();
 
         GHResponse rsp = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
-                setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
+                setAlgorithm(AlgorithmOptions.ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
 
         assertEquals(3437.6, rsp.getDistance(), .1);
         assertEquals(89, rsp.getPoints().getSize());
@@ -120,7 +120,7 @@ public class GraphHopperIT
         hopper.importOrLoad();
 
         GHResponse rsp = hopper.route(new GHRequest(43.730729, 7.421288, 43.727697, 7.419199).
-                setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
+                setAlgorithm(AlgorithmOptions.ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
 
         assertEquals(1626.8, rsp.getDistance(), .1);
         assertEquals(60, rsp.getPoints().getSize());
@@ -178,7 +178,7 @@ public class GraphHopperIT
                     importOrLoad();
 
             GHResponse rsp = hopper.route(new GHRequest(48.410987, 15.599492, 48.383419, 15.659294).
-                    setAlgorithm("astar").setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
+                    setAlgorithm(AlgorithmOptions.ASTAR).setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
 
             assertEquals(6932.24, rsp.getDistance(), .1);
             assertEquals(110, rsp.getPoints().getSize());
@@ -229,7 +229,7 @@ public class GraphHopperIT
                 addPoint(new GHPoint(43.727687, 7.418737)).
                 addPoint(new GHPoint(43.74958, 7.436566)).
                 addPoint(new GHPoint(43.727687, 7.418737)).
-                setAlgorithm("astar").setVehicle(vehicle).setWeighting(weightCalcStr));
+                setAlgorithm(AlgorithmOptions.ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
 
         assertEquals(6875.1, rsp.getDistance(), .1);
         assertEquals(179, rsp.getPoints().getSize());

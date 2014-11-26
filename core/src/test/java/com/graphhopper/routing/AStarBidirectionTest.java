@@ -24,11 +24,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 
 /**
@@ -61,15 +57,15 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
     }
 
     @Override
-    public AlgorithmPreparation prepareGraph( Graph g, final FlagEncoder encoder, final Weighting w )
+    public RoutingAlgorithmFactory createFactory( Graph prepareGraph, AlgorithmOptions prepareOpts )
     {
-        return new NoOpAlgorithmPreparation()
+        return new RoutingAlgorithmFactory()
         {
             @Override
-            public RoutingAlgorithm createAlgo()
+            public RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts )
             {
-                return new AStarBidirection(_graph, encoder, w, traversalMode);
+                return new AStarBidirection(g, opts.getFlagEncoder(), opts.getWeighting(), traversalMode);
             }
-        }.setGraph(g);
+        };
     }
 }
