@@ -772,11 +772,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     @Override
     public RoutingAlgorithm createAlgo( Graph graph, AlgorithmOptions opts )
     {
-        LevelGraph queryGraph = (LevelGraph) graph;
         AbstractBidirAlgo algo;
         if (AlgorithmOptions.ASTAR_BI.equals(opts.getAlgorithm()))
         {
-            AStarBidirection astarBi = new AStarBidirection(queryGraph, prepareFlagEncoder, prepareWeighting, traversalMode)
+            AStarBidirection astarBi = new AStarBidirection(graph, prepareFlagEncoder, prepareWeighting, traversalMode)
             {
                 @Override
                 protected void initCollections( int nodes )
@@ -821,7 +820,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             algo = astarBi;
         } else if (AlgorithmOptions.DIJKSTRA_BI.equals(opts.getAlgorithm()))
         {
-            algo = new DijkstraBidirectionRef(queryGraph, prepareFlagEncoder, prepareWeighting, traversalMode)
+            algo = new DijkstraBidirectionRef(graph, prepareFlagEncoder, prepareWeighting, traversalMode)
             {
                 @Override
                 protected void initCollections( int nodes )
@@ -866,7 +865,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         }
 
         if (!removesHigher2LowerEdges)
-            algo.setEdgeFilter(new LevelEdgeFilter(queryGraph));
+            algo.setEdgeFilter(new LevelEdgeFilter(prepareGraph));
 
         return algo;
     }

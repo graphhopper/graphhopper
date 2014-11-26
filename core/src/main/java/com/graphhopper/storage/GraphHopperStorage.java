@@ -35,8 +35,6 @@ import com.graphhopper.util.shapes.BBox;
 
 import static com.graphhopper.util.Helper.nf;
 import java.io.UnsupportedEncodingException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * The main implementation which handles nodes and edges file format. It can be used with different
