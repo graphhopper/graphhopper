@@ -108,14 +108,16 @@ public class RoutingAlgorithmSpecialAreaTests
             LocationIndex idx, final FlagEncoder encoder, boolean withCh,
             final TraversalMode tMode, final Weighting weighting, final EncodingManager manager )
     {
-        final AlgorithmOptions astarbiOpts = new AlgorithmOptions(AlgorithmOptions.ASTAR_BI, encoder, weighting, tMode);
-        astarbiOpts.getHints().put(AlgorithmOptions.ASTAR_BI + ".approximation", "true");        
         List<AlgoHelperEntry> prepare = new ArrayList<AlgoHelperEntry>();
         prepare.add(new AlgoHelperEntry(g, new AlgorithmOptions(AlgorithmOptions.ASTAR, encoder, weighting, tMode), idx));
-        // later: include dijkstraOneToMany
-        prepare.add(new AlgoHelperEntry(g, astarbiOpts, idx));
-        prepare.add(new AlgoHelperEntry(g, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting, tMode), idx));
+        // later: include dijkstraOneToMany        
         prepare.add(new AlgoHelperEntry(g, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA, encoder, weighting, tMode), idx));
+
+        final AlgorithmOptions astarbiOpts = new AlgorithmOptions(AlgorithmOptions.ASTAR_BI, encoder, weighting, tMode);
+        astarbiOpts.getHints().put(AlgorithmOptions.ASTAR_BI + ".approximation", "true");
+        final AlgorithmOptions dijkstrabiOpts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting, tMode);
+        prepare.add(new AlgoHelperEntry(g, astarbiOpts, idx));
+        prepare.add(new AlgoHelperEntry(g, dijkstrabiOpts, idx));
 
         if (withCh)
         {
@@ -124,16 +126,16 @@ public class RoutingAlgorithmSpecialAreaTests
             final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(graphCH, encoder, weighting, tMode);
             prepareCH.doWork();
             LocationIndex idxCH = new LocationIndexTreeSC(graphCH, new RAMDirectory()).prepareIndex();
-            prepare.add(new AlgoHelperEntry(idxCH)
+            prepare.add(new AlgoHelperEntry(idxCH, dijkstrabiOpts)
             {
                 @Override
                 public RoutingAlgorithm createAlgo()
                 {
-                    return prepareCH.createAlgo(graphCH, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting, tMode));
+                    return prepareCH.createAlgo(graphCH, dijkstrabiOpts);
                 }
             });
 
-            prepare.add(new AlgoHelperEntry(idxCH)
+            prepare.add(new AlgoHelperEntry(idxCH, astarbiOpts)
             {
                 @Override
                 public RoutingAlgorithm createAlgo()

@@ -562,7 +562,7 @@ public class RoutingAlgorithmIT
                         public void run()
                         {
                             OneRun oneRun = instances.get(instanceIndex);
-                            testCollector.assertDistance(new AlgoHelperEntry(idx)
+                            testCollector.assertDistance(new AlgoHelperEntry(idx, new AlgorithmOptions().setAlgorithm(algo.toString()))
                             {
                                 @Override
                                 public RoutingAlgorithm createAlgo()

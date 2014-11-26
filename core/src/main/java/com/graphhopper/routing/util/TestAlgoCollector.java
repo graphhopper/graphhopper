@@ -153,9 +153,10 @@ public class TestAlgoCollector
             this.idx = idx;
         }
 
-        public AlgoHelperEntry( LocationIndex idx )
+        public AlgoHelperEntry( LocationIndex idx, AlgorithmOptions opts )
         {
             this.idx = idx;
+            this.opts = opts;
         }
 
         public LocationIndex getIdx()
