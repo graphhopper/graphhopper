@@ -1,6 +1,5 @@
 package uk.co.ordnancesurvey.routing;
 
-import java.io.IOException;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +8,6 @@ import uk.co.ordnancesurvey.webtests.IntegrationTestProperties;
 import cucumber.api.java.After;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
-import cucumber.api.java.en.When;
 
 public class GraphHopperHooks {
 	GraphHopperUIUtil graphUiUtil = new GraphHopperUIUtil();
@@ -23,6 +21,7 @@ public class GraphHopperHooks {
 
 		switch (testON.toUpperCase()) {
 		case "WEB":
+
 			graphUiUtil.getRouteFromUI(pointA, pointB, routeType);
 			break;
 		case "SERVICE":
@@ -32,6 +31,7 @@ public class GraphHopperHooks {
 			graphUiUtil.getRouteFromService(pointA, pointB, routeType);
 			graphUiUtil.getRouteFromUI(pointA, pointB, routeType);
 			break;
+
 		}
 
 	}
@@ -54,6 +54,15 @@ public class GraphHopperHooks {
 		graphUiUtil.isWayPointonRouteMap(wayPointList);
 
 	}
+	
+	@Then("^I should be able to verify the waypoints not on the route map:")
+	public void I_should_be_able_to_verify_the_not_waypoints_on_the_route_map(
+			List<Map> wayPointList) {
+
+		graphUiUtil.isWayPointNotonRouteMap(wayPointList);
+
+	}
+	
 
 	@Then("^The total route time should be not more than \"([^\"]*)\"$")
 	public void The_total_route_time_should_be_not_more_than(
@@ -78,74 +87,7 @@ public class GraphHopperHooks {
 
 	}
 
-	@Given("^I open the mapping appliaction$")
-	public void I_open_the_mapping_application()  {
-		
-		
-		System.out.println("Application Launching..");
-		
-		
-	
-	}
-
-	@Then("^I should see appropriate map \"([^\"]*)\" loaded \"([^\"]*)\"$")
-	public void I_should_see_appropriate_map(String expectedMap, String testID)
-			throws IOException {
-		graphUiUtil.compareMapImage(expectedMap, testID);
-	}
-
-	@When("^I pan to the \"([^\"]*)\" \"([^\"]*)\" times$")
-	public void I_pan_to_the(String direction,int panningIndex) throws Throwable {
-		
-		for (int i = 0; i <panningIndex; i++) {
-			graphUiUtil.panonMap(direction);
-		}
-
-		Thread.sleep(500);
-
-	}
-	
-	@When("^I zoom into the layer \"([^\"]*)\"$")
-	public void I_zoom_into_the_layer(String zoomlayer) throws InterruptedException {
-		System.out.println("Zooming to layer "+zoomlayer);
-		
-		for (int i = 0; i < Integer.parseInt(zoomlayer); i++) {
-			
-			graphUiUtil.zoomIn();
-		
-		}
-		Thread.sleep(2000);
-
-
-	}
-	
-	
-	@When("^I zoom out the layer \"([^\"]*)\"$")
-	public void I_zoom_out_the_layer(String zoomlayer) throws InterruptedException {
-		System.out.println("Zooming to layer "+zoomlayer);
-		
-		for (int i = 0; i < 13; i++) {
-			
-			graphUiUtil.zoomIn();
-		
-		}
-		
-		for (int i = 0; i < Integer.parseInt(zoomlayer); i++) {
-			
-			graphUiUtil.zoomOut();
-		
-		}
-		
-		
-		
-
-
-
-	}
-	
-	
-
-	@After({ "@Mapping,@Routing" })
+	@After({ "@Routing" })
 	public void closeBrowser() {
 		graphUiUtil.logout();
 		System.out.println("closed");

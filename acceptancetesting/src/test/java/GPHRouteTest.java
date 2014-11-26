@@ -58,7 +58,7 @@ public class GPHRouteTest {
 		assertTrue(ghrt.isWayPointOnRoute(wayPoint,hs.iterator().next()));
 	}
 	
-	@Ignore
+	@Test
 	public void testTotalRouteTime() {
 		String path = getClass().getResource("sampleGraphHopper.gpx").getPath();
 		GraphHopperGPXParserRouteTest ghrt = GraphHopperGPXParserRouteTest.getParserForgpxFileName(path);

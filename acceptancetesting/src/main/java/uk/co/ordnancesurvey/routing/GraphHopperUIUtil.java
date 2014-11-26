@@ -11,8 +11,6 @@ import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.RO
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.TOTAL_ROUTE_TIME;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.TO_ROUTE;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.WAYPOINT_ONMAP;
-import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ZOOM_IN;
-import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ZOOM_OUT;
 
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -34,9 +32,7 @@ import org.alternativevision.gpx.beans.Waypoint;
 import org.junit.Assert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.interactions.Actions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -146,75 +142,13 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 	}
 
-	public void panonMap(String direction) throws InterruptedException {
-
-		clickElement(FROM_ROUTE);
-
-		Actions action = new Actions(driver);
-
-		switch (direction.replaceAll(" ", "").toUpperCase()) {
-		case "RIGHT":
-			action.sendKeys(driver.findElement(By.xpath("//*[@id='map']")),
-					Keys.ARROW_RIGHT).build().perform();
-			Thread.sleep(1000);
-
-			break;
-		case "LEFT":
-			action.sendKeys(driver.findElement(By.xpath("//*[@id='map']")),
-					Keys.ARROW_LEFT).build().perform();
-			Thread.sleep(1000);
-
-			break;
-		case "UP":
-			action.sendKeys(driver.findElement(By.xpath("//*[@id='map']")),
-					Keys.ARROW_UP).build().perform();
-			Thread.sleep(1000);
-
-			break;
-		case "DOWN":
-			action.sendKeys(driver.findElement(By.xpath("//*[@id='map']")),
-					Keys.ARROW_DOWN).build().perform();
-			Thread.sleep(1000);
-
-			break;
-
-		default:
-			break;
-		}
-
-	}
-
-	public void panLeftonMap() {
-
-		clickElement(FROM_ROUTE);
-
-		Actions action = new Actions(driver);
-		action.sendKeys(driver.findElement(By.xpath("//*[@id='map']")),
-				Keys.ARROW_RIGHT).build().perform();
-
-	}
-
-	public void panRighttonMap() {
-
-		Actions action = new Actions(driver);
-
-		clickElement(FROM_ROUTE);
-
-		action.sendKeys(driver.findElement(By.xpath("//*[@id='map']")),
-				Keys.ARROW_RIGHT).build().perform();
-	}
-
-	private Waypoint buildWayPoint(String waypointco)
-			throws ParseException {
+	private Waypoint buildWayPoint(String waypointco) throws ParseException {
 
 		Waypoint wp = new Waypoint();
 		String waypoint[] = waypointco.split(",");
 		wp.setLatitude(new Double(waypoint[0]));
 		wp.setLongitude(new Double(waypoint[1]));
 
-		SimpleDateFormat t = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
-		//Date date = t.parse(time);
-		//wp.setTime(date);
 		return wp;
 	}
 
@@ -303,9 +237,10 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 			String direction = (String) waypointList.get(i).get("direction");
 			String time = (String) waypointList.get(i).get("time");
 			String distance = (String) waypointList.get(i).get("distance");
-
-			isWayPointonRouteMap(wayPointIndex, waypointco, waypointdesc,
+			Waypoint wp=buildWayPoint( waypointco, waypointdesc,
 					azimuth, direction, time, distance);
+			assert(!GPHService.isWayPointOnGPXRoutes(wp));
+			
 		}
 
 	}
@@ -356,6 +291,9 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 			if (!actualTime.contains("h")) {
 				actualTime = "00h" + actualTime;
 			}
+			if (!actualTime.contains("min")) {
+				actualTime =  actualTime+"00min";
+			}
 			aTime = formatter.parse(actualTime);
 
 			LOG.info("The total route time expected is " + eTime.getTime()
@@ -375,7 +313,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 			String waypointco = (String) trackPointsList.get(i).get(
 					"trackPointco");
-			//String time = (String) trackPointsList.get(i).get("time");
+			// String time = (String) trackPointsList.get(i).get("time");
 
 			Waypoint trackPoint = buildWayPoint(waypointco);
 			assertTrue(GPHService.isWayPointOnTrack(trackPoint, GPHService
@@ -392,7 +330,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 			String waypointco = (String) trackPointsList.get(i).get(
 					"trackPointco");
-			//String time = (String) trackPointsList.get(i).get("time");
+			// String time = (String) trackPointsList.get(i).get("time");
 
 			Waypoint trackPoint = buildWayPoint(waypointco);
 			assertTrue(!GPHService.isWayPointOnTrack(trackPoint, GPHService
@@ -407,9 +345,9 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		File file = new File(testID + "_screenshot.png");
 
 		File screenshot = takeScreenShot();
-		actualMap = resize(ImageIO.read(screenshot),1000,800);
-		//actualMap = ImageIO.read(screenshot);
-		
+		actualMap = resize(ImageIO.read(screenshot), 1000, 800);
+		// actualMap = ImageIO.read(screenshot);
+
 		ImageIO.write(actualMap, "png", file);
 
 	}
@@ -417,17 +355,17 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 	public void compareMapImage(String expectedMap, String testID)
 			throws IOException {
 		takescreen(testID);
-		
+
 		File file = new File(expectedMap);
-		BufferedImage expactedImage = resize(ImageIO.read(file),1000,800);
-	//	BufferedImage expactedImage = ImageIO.read(file);
-		System.out.println(" width"+expactedImage.getWidth());
-		System.out.println(" Height"+expactedImage.getHeight());
-		System.out.println(" width"+actualMap.getWidth());
-		System.out.println(" Height"+actualMap.getHeight());
-		
+		BufferedImage expactedImage = resize(ImageIO.read(file), 1000, 800);
+		// BufferedImage expactedImage = ImageIO.read(file);
+		System.out.println(" width" + expactedImage.getWidth());
+		System.out.println(" Height" + expactedImage.getHeight());
+		System.out.println(" width" + actualMap.getWidth());
+		System.out.println(" Height" + actualMap.getHeight());
+
 		ImageComparison img = new ImageComparison(expactedImage, actualMap);
-		
+
 		img.compare();
 		if (!img.match()) {
 			String failPath = expectedMap + ".fail-" + testID + ".png";
@@ -439,33 +377,21 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		}
 
 	}
-	
+
 	public BufferedImage resize(BufferedImage img, int newW, int newH) {
-	//Getting the width and height of the given image. 
-	int w = img.getWidth();
-	  int h = img.getHeight();
-	//Creating a new image object with the new width and height and with the old image type
-	  BufferedImage dimg = new BufferedImage(newW, newH, img.getType());
-	  Graphics2D g = dimg.createGraphics();
-	  g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-	    RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-	//Creating a graphics image for the new Image.
-	  g.drawImage(img, 0, 0, newW, newH, 0, 0, w, h, null);
-	  g.dispose();
-	  return dimg;
-	 }
-
-	
-	
-	
-
-	public void zoomIn() throws InterruptedException {
-		clickElement(ZOOM_IN);
-		Thread.sleep(1000);
+		// Getting the width and height of the given image.
+		int w = img.getWidth();
+		int h = img.getHeight();
+		// Creating a new image object with the new width and height and with
+		// the old image type
+		BufferedImage dimg = new BufferedImage(newW, newH, img.getType());
+		Graphics2D g = dimg.createGraphics();
+		g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+				RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+		// Creating a graphics image for the new Image.
+		g.drawImage(img, 0, 0, newW, newH, 0, 0, w, h, null);
+		g.dispose();
+		return dimg;
 	}
 
-	public void zoomOut() throws InterruptedException {
-		clickElement(ZOOM_OUT);
-		Thread.sleep(1000);
-	}
 }
