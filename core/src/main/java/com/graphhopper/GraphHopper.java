@@ -294,6 +294,7 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setCHEnable( boolean enable )
     {
         ensureNotLoaded();
+        algoFactory = null;
         chEnabled = enable;
         return this;
     }
