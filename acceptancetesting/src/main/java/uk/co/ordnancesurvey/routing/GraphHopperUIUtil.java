@@ -228,8 +228,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 	public void isWayPointNotonRouteMap(List<Map> waypointList) {
 
 		for (int i = 0; i < waypointList.size(); i++) {
-			String wayPointIndex = (String) waypointList.get(i).get(
-					"wayPointIndex");
+
 			String waypointco = (String) waypointList.get(i).get("waypointco");
 			String waypointdesc = (String) waypointList.get(i).get(
 					"waypointdesc");
@@ -237,10 +236,10 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 			String direction = (String) waypointList.get(i).get("direction");
 			String time = (String) waypointList.get(i).get("time");
 			String distance = (String) waypointList.get(i).get("distance");
-			Waypoint wp=buildWayPoint( waypointco, waypointdesc,
-					azimuth, direction, time, distance);
-			assert(!GPHService.isWayPointOnGPXRoutes(wp));
-			
+			Waypoint wp = buildWayPoint(waypointco, waypointdesc, azimuth,
+					direction, time, distance);
+			assert (!GPHService.isWayPointOnGPXRoutes(wp));
+
 		}
 
 	}
@@ -286,13 +285,21 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 			break;
 
 		default:
+
+			aTime.setTime(GPHService.getTotalRouteTime());
+			LOG.info("The total route time expected is " + eTime.getTime()
+					+ " and actual is " + aTime.getTime());
+			assertTrue("The total route time expected " + eTime.getTime()
+					+ " is not matchin with actual " + aTime.getTime(),
+					aTime.getTime() <= eTime.getTime());
+
 			actualTime = getValue(TOTAL_ROUTE_TIME).split("take ")[1].trim()
 					.replaceAll(" ", "");
 			if (!actualTime.contains("h")) {
 				actualTime = "00h" + actualTime;
 			}
 			if (!actualTime.contains("min")) {
-				actualTime =  actualTime+"00min";
+				actualTime = actualTime + "00min";
 			}
 			aTime = formatter.parse(actualTime);
 
