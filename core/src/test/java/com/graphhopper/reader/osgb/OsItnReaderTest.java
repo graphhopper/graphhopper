@@ -64,20 +64,26 @@ public class OsItnReaderTest {
     // carEncoder, false, true);
     private EdgeFilter carInEdges;
 
-    private double node0Lat = 50.69919585809061d;
-    private double node0Lon = -3.558952191414606d;
+    //RoadNode 880
+    private double node0Lat = 50.6992070044d;
+    private double node0Lon = -3.55893724720532d;
 
-    private double node1Lat = 50.6972183871447d;
-    private double node1Lon = -3.7004874033793294d;
+    //RoadNode 881
+    private double node1Lat = 50.6972276414d;
+    private double node1Lon = -3.70047108174d;
 
-    private double node2Lat = 50.695067824972014d;
-    private double node2Lon = -3.8420070965997613d;
+    //RoadNode 882
+    private double node2Lat = 50.6950765311d;
+    private double node2Lon = -3.84198830979d;
 
-    private double node3Lat = 50.652274361836156d;
-    private double node3Lon = -3.698863205562225d;
+    //RoadNode 883
+    private double node3Lat = 50.6522837438d;
+    private double node3Lon = -3.69884731399d;
 
-    private double node4Lat = 50.74216177664155d;
-    private double node4Lon = -3.702115749998877d;
+    //RoadNode 884
+    private double node4Lat = 50.7421711523d;
+    private double node4Lon = -3.70209900111d;
+    
     private boolean turnCosts = true;
     private EdgeExplorer carOutExplorer;
     private EdgeExplorer carAllExplorer;
