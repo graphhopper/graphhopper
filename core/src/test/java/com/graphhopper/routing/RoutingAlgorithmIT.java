@@ -475,7 +475,7 @@ public class RoutingAlgorithmIT
         }
     }
 
-//    @Test
+    @Test
     public void testPerformance() throws IOException
     {
         int N = 10;
@@ -497,7 +497,7 @@ public class RoutingAlgorithmIT
             {
                 int node1 = Math.abs(rand.nextInt(graph.getNodes()));
                 int node2 = Math.abs(rand.nextInt(graph.getNodes()));
-                RoutingAlgorithm d = entry.createAlgo();
+                RoutingAlgorithm d = entry.createAlgo(graph);
                 if (i >= noJvmWarming)
                     sw.start();
 
@@ -516,7 +516,7 @@ public class RoutingAlgorithmIT
         }
     }
 
-    //@Test
+    @Test
     public void testMonacoParallel() throws IOException
     {
         System.out.println("testMonacoParallel takes a bit time...");
@@ -528,7 +528,8 @@ public class RoutingAlgorithmIT
                 setEncodingManager(encodingManager).
                 setCHEnable(false).
                 setWayPointMaxDistance(0).
-                setOSMFile("files/monaco.osm.gz").setGraphHopperLocation(graphFile).
+                setOSMFile("files/monaco.osm.gz").
+                setGraphHopperLocation(graphFile).
                 importOrLoad();
         final Graph g = hopper.getGraph();
         final LocationIndex idx = hopper.getLocationIndex();
@@ -536,23 +537,22 @@ public class RoutingAlgorithmIT
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);
         int MAX = 100;
-        FlagEncoder carEncoder = encodingManager.getEncoder("CAR");
+        final FlagEncoder carEncoder = encodingManager.getEncoder("CAR");
 
         // testing if algorithms are independent. should be. so test only two algorithms. 
         // also the preparing is too costly to be called for every thread
         int algosLength = 2;
-        Weighting weighting = new ShortestWeighting();
+        final Weighting weighting = new ShortestWeighting();
         final EdgeFilter filter = new DefaultEdgeFilter(carEncoder);
         for (int no = 0; no < MAX; no++)
         {
             for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++)
             {
-                RoutingAlgorithm[] algos = new RoutingAlgorithm[]
+                String[] algos = new String[]
                 {
-                    new AStar(g, carEncoder, weighting, TraversalMode.NODE_BASED),
-                    new DijkstraBidirectionRef(g, carEncoder, weighting, TraversalMode.NODE_BASED)
+                    "astar", "dijkstrabi"
                 };
-                for (final RoutingAlgorithm algo : algos)
+                for (final String algoStr : algos)
                 {
                     // an algorithm is not thread safe! reuse via clear() is ONLY appropriated if used from same thread!
                     final int instanceIndex = instanceNo;
@@ -562,14 +562,12 @@ public class RoutingAlgorithmIT
                         public void run()
                         {
                             OneRun oneRun = instances.get(instanceIndex);
-                            testCollector.assertDistance(new AlgoHelperEntry(idx, new AlgorithmOptions().setAlgorithm(algo.toString()))
-                            {
-                                @Override
-                                public RoutingAlgorithm createAlgo()
-                                {
-                                    return algo;
-                                }
-                            }, oneRun.getList(idx, filter), oneRun);
+                            AlgorithmOptions opts = new AlgorithmOptions().
+                                    setFlagEncoder(carEncoder).
+                                    setWeighting(weighting).
+                                    setAlgorithm(algoStr);
+                            testCollector.assertDistance(new AlgoHelperEntry(g, opts, idx),
+                                    oneRun.getList(idx, filter), oneRun);
                             integ.addAndGet(1);
                         }
                     };

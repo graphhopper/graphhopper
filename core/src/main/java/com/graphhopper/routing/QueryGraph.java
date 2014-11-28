@@ -74,6 +74,23 @@ public class QueryGraph implements Graph
         mainEdges = graph.getAllEdges().getMaxId();
     }
 
+    public Graph getOriginalGraph()
+    {
+        return mainGraph;
+    }
+
+    /**
+     * Convenient method to initialize this QueryGraph with the two specified query results.
+     */
+    public QueryGraph lookup( QueryResult fromRes, QueryResult toRes )
+    {
+        List<QueryResult> results = new ArrayList<QueryResult>(2);
+        results.add(fromRes);
+        results.add(toRes);
+        lookup(results);
+        return this;
+    }
+
     /**
      * For all specified query results calculate snapped point and set closest node and edge to a
      * virtual one if necessary. Additionally the wayIndex can change if an edge is swapped.
@@ -250,7 +267,7 @@ public class QueryGraph implements Graph
 
         PointList baseReversePoints = basePoints.clone(true);
         double baseDistance = basePoints.calcDistance(distCalc);
-        int virtEdgeId = virtualEdges.size() + mainEdges;
+        int virtEdgeId = mainEdges + virtualEdges.size();
 
         // edges between base and snapped point
         VirtualEdgeIState baseEdge = new VirtualEdgeIState(virtEdgeId, prevNodeId, nodeId,

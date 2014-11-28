@@ -1,4 +1,5 @@
 0.4.0    
+    major change of internal API: moved method "Path RoutingAlgorithm.calcPath(QueryResult,QueryResult)" to a helper method QueryGraph.lookup, call queryResult.getClosestNode for the calcPath(nodeFrom,nodeTo) method
     no cachedWays and cachedPoints in Path anymore
     Path.findInstruction was moved to InstructionList.find
     if start and end point are identical an algorithm will find the path consisting only of one node, one point and one instruction (finish instruction), but without edges

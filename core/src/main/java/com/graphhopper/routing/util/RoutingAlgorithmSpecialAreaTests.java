@@ -126,21 +126,21 @@ public class RoutingAlgorithmSpecialAreaTests
             final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(graphCH, encoder, weighting, tMode);
             prepareCH.doWork();
             LocationIndex idxCH = new LocationIndexTreeSC(graphCH, new RAMDirectory()).prepareIndex();
-            prepare.add(new AlgoHelperEntry(idxCH, dijkstrabiOpts)
+            prepare.add(new AlgoHelperEntry(graphCH, dijkstrabiOpts, idxCH)
             {
                 @Override
-                public RoutingAlgorithm createAlgo()
+                public RoutingAlgorithm createAlgo( Graph qGraph )
                 {
-                    return prepareCH.createAlgo(graphCH, dijkstrabiOpts);
+                    return prepareCH.createAlgo(qGraph, dijkstrabiOpts);
                 }
             });
 
-            prepare.add(new AlgoHelperEntry(idxCH, astarbiOpts)
+            prepare.add(new AlgoHelperEntry(graphCH, astarbiOpts, idxCH)
             {
                 @Override
-                public RoutingAlgorithm createAlgo()
+                public RoutingAlgorithm createAlgo( Graph qGraph )
                 {
-                    return prepareCH.createAlgo(graphCH, astarbiOpts);
+                    return prepareCH.createAlgo(qGraph, astarbiOpts);
                 }
             });
         }

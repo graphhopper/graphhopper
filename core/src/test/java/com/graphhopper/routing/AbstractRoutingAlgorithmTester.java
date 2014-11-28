@@ -279,7 +279,7 @@ public abstract class AbstractRoutingAlgorithmTester
     // |    8  |
     // \   /   |
     //  7-6----5
-    public static void initBiGraph( Graph graph )
+    public static Graph initBiGraph( Graph graph )
     {
         // distance will be overwritten in second step as we need to calculate it from lat,lon
         graph.edge(0, 1, 1, true);
@@ -306,6 +306,7 @@ public abstract class AbstractRoutingAlgorithmTester
         updateDistancesFor(graph, 7, 0, 0);
         updateDistancesFor(graph, 6, 0, 0.001);
         updateDistancesFor(graph, 5, 0, 0.004);
+        return graph;
     }
 
     private static final DistanceCalc distCalc = new DistanceCalcEarth();
@@ -523,7 +524,7 @@ public abstract class AbstractRoutingAlgorithmTester
         Graph graph = createGraph(false);
         initBiGraph(graph);
 
-        // 0-7 to 4-3
+        // 0-7 to 4-3        
         Path p = calcPathViaQuery(graph, 0.0009, 0, 0.001, 0.001105);
         assertEquals(p.toString(), Helper.createTList(10, 7, 6, 8, 3, 9), p.calcNodes());
         assertEquals(p.toString(), 324.11, p.getDistance(), 0.01);
@@ -608,8 +609,13 @@ public abstract class AbstractRoutingAlgorithmTester
         Weighting w = new ShortestWeighting();
         if (weighting.equalsIgnoreCase("fastest"))
             w = new FastestWeighting(carEncoder);
-        return createAlgo(graph, new AlgorithmOptions().setFlagEncoder(carEncoder).setWeighting(w)).
-                calcPath(from, to);
+
+        // correct order for CH: in factory do prepare and afterwards wrap in query graph
+        AlgorithmOptions opts = new AlgorithmOptions().setFlagEncoder(carEncoder).setWeighting(w);
+        RoutingAlgorithmFactory factory = createFactory(graph, opts);
+        QueryGraph qGraph = new QueryGraph(graph).lookup(from, to);
+        return factory.createAlgo(qGraph, opts).
+                calcPath(from.getClosestNode(), to.getClosestNode());
     }
 
     Path calcPath( Graph graph, int fromNode1, int fromNode2, int toNode1, int toNode2 )
@@ -617,7 +623,10 @@ public abstract class AbstractRoutingAlgorithmTester
         // lookup two edges: fromNode1-fromNode2 and toNode1-toNode2        
         QueryResult from = newQR(graph, fromNode1, fromNode2);
         QueryResult to = newQR(graph, toNode1, toNode2);
-        return createAlgo(graph).calcPath(from, to);
+
+        RoutingAlgorithmFactory factory = createFactory(graph, defaultOpts);
+        QueryGraph qGraph = new QueryGraph(graph).lookup(from, to);
+        return factory.createAlgo(qGraph, defaultOpts).calcPath(from.getClosestNode(), to.getClosestNode());
     }
 
     /**
@@ -705,8 +714,11 @@ public abstract class AbstractRoutingAlgorithmTester
         graph = initEleGraph(createGraph(true));
         QueryResult from = newQR(graph, 3, 0);
         QueryResult to = newQR(graph, 10, 9);
-        p = createAlgo(graph, new AlgorithmOptions().setFlagEncoder(carEncoder).setWeighting(fakeWeighting)).
-                calcPath(from, to);
+
+        AlgorithmOptions opts = new AlgorithmOptions().setFlagEncoder(carEncoder).setWeighting(fakeWeighting);
+        RoutingAlgorithmFactory factory = createFactory(graph, opts);
+        QueryGraph qGraph = new QueryGraph(graph).lookup(from, to);
+        p = factory.createAlgo(qGraph, opts).calcPath(from.getClosestNode(), to.getClosestNode());
         assertEquals(Helper.createTList(13, 0, 1, 2, 11, 7, 10, 12), p.calcNodes());
         assertEquals(37009621, p.getMillis());
         assertEquals(616827, p.getDistance(), 1);

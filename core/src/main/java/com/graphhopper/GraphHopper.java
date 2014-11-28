@@ -872,32 +872,35 @@ public class GraphHopper implements GraphHopperAPI
             return Collections.emptyList();
         }
 
+        visitedSum.set(0);
+
         FlagEncoder encoder = encodingManager.getEncoder(vehicle);
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-        GHPoint startPoint = points.get(0);
-        StopWatch sw = new StopWatch().start();
-        QueryResult fromRes = locationIndex.findClosest(startPoint.lat, startPoint.lon, edgeFilter);
-        String debug = "idLookup[0]:" + sw.stop().getSeconds() + "s";
-        sw.stop();
-        if (!fromRes.isValid())
-        {
-            rsp.addError(new IllegalArgumentException("Cannot find point 0: " + startPoint));
-            return Collections.emptyList();
-        }
 
-        List<Path> paths = new ArrayList<Path>(points.size() - 1);
-        for (int placeIndex = 1; placeIndex < points.size(); placeIndex++)
+        StopWatch sw = new StopWatch().start();
+        List<QueryResult> qResults = new ArrayList<QueryResult>(points.size());
+        for (int placeIndex = 0; placeIndex < points.size(); placeIndex++)
         {
             GHPoint point = points.get(placeIndex);
-            sw = new StopWatch().start();
-            QueryResult toRes = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
-            debug += ", [" + placeIndex + "] idLookup:" + sw.stop().getSeconds() + "s";
-            if (!toRes.isValid())
-            {
+            QueryResult res = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
+            if (!res.isValid())
                 rsp.addError(new IllegalArgumentException("Cannot find point " + placeIndex + ": " + point));
-                break;
-            }
 
+            qResults.add(res);
+        }
+
+        if (rsp.hasErrors())
+            return Collections.emptyList();
+
+        String debug = "idLookup:" + sw.stop().getSeconds() + "s";
+        QueryGraph qGraph = new QueryGraph(graph);
+        qGraph.lookup(qResults);
+
+        List<Path> paths = new ArrayList<Path>(points.size() - 1);
+        QueryResult fromQResult = qResults.get(0);
+        for (int placeIndex = 1; placeIndex < points.size(); placeIndex++)
+        {
+            QueryResult toQResult = qResults.get(placeIndex);
             sw = new StopWatch().start();
             String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
             AlgorithmOptions opts = new AlgorithmOptions().
@@ -905,20 +908,19 @@ public class GraphHopper implements GraphHopperAPI
                     setTraversalMode(tMode).
                     setFlagEncoder(encoder).
                     setWeighting(createWeighting(request.getHints(), encoder));
-
-            RoutingAlgorithm algo = getAlgorithmFactory().createAlgo(graph, opts);
-
+            RoutingAlgorithm algo = getAlgorithmFactory().createAlgo(qGraph, opts);
             debug += ", algoInit:" + sw.stop().getSeconds() + "s";
-            sw = new StopWatch().start();
 
-            Path path = algo.calcPath(fromRes, toRes);
+            sw = new StopWatch().start();
+            Path path = algo.calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode());
             if (path.getMillis() < 0)
                 throw new RuntimeException("Time was negative. Please report as bug and include:" + request);
 
             paths.add(path);
             debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
+
             visitedSum.addAndGet(algo.getVisitedNodes());
-            fromRes = toRes;
+            fromQResult = toQResult;
         }
 
         if (rsp.hasErrors())

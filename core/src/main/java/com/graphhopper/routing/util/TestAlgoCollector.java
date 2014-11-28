@@ -40,7 +40,7 @@ public class TestAlgoCollector
     private final String name;
     private final DistanceCalc distCalc = new DistanceCalcEarth();
     private final TranslationMap trMap = new TranslationMap().doImport();
-    public List<String> errors = new ArrayList<String>();
+    public final List<String> errors = new ArrayList<String>();
 
     public TestAlgoCollector( String name )
     {
@@ -51,12 +51,16 @@ public class TestAlgoCollector
             OneRun oneRun )
     {
         List<Path> viaPaths = new ArrayList<Path>();
+        QueryGraph qGraph = new QueryGraph(algoEntry.originalGraph);
+        qGraph.lookup(queryList);
         for (int i = 0; i < queryList.size() - 1; i++)
         {
-            Path path = algoEntry.createAlgo().calcPath(queryList.get(i), queryList.get(i + 1));
+            Path path = algoEntry.createAlgo(qGraph).
+                    calcPath(queryList.get(i).getClosestNode(), queryList.get(i + 1).getClosestNode());
             // System.out.println(path.calcInstructions().createGPX("temp", 0, "GMT"));
             viaPaths.add(path);
         }
+
         PathMerger pathMerger = new PathMerger().
                 setCalcPoints(true).
                 setSimplifyResponse(false).
@@ -142,21 +146,15 @@ public class TestAlgoCollector
 
     public static class AlgoHelperEntry
     {
-        private Graph g;
+        private Graph originalGraph;
         private final LocationIndex idx;
         private AlgorithmOptions opts;
 
         public AlgoHelperEntry( Graph g, AlgorithmOptions opts, LocationIndex idx )
         {
-            this.g = g;
+            this.originalGraph = g;
             this.opts = opts;
             this.idx = idx;
-        }
-
-        public AlgoHelperEntry( LocationIndex idx, AlgorithmOptions opts )
-        {
-            this.idx = idx;
-            this.opts = opts;
         }
 
         public LocationIndex getIdx()
@@ -164,9 +162,9 @@ public class TestAlgoCollector
             return idx;
         }
 
-        public RoutingAlgorithm createAlgo()
+        public RoutingAlgorithm createAlgo( Graph qGraph )
         {
-            return new RoutingAlgorithmFactorySimple().createAlgo(g, opts);
+            return new RoutingAlgorithmFactorySimple().createAlgo(qGraph, opts);
         }
 
         @Override
