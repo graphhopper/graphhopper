@@ -42,167 +42,188 @@ public class OSITNTurnRelation implements TurnRelation {
 		}
 		return (result != null) ? result : Type.UNSUPPORTED;
 	}
-	
-	 private long fromOsm;
-	    private long viaOsm;
-	    private long toOsm;
-	    private Type restriction;
 
-	    public OSITNTurnRelation( long fromWayID, long viaNodeID, long toWayID, Type restrictionType )
-	    {
-	        this.fromOsm = fromWayID;
-	        this.viaOsm = viaNodeID;
-	        this.toOsm = toWayID;
-	        this.restriction = restrictionType;
-	    }
+    private final long fromOsmWayId;
+    private final long viaOsmNodeId;
+    private final long toOsmWayId;
+    private final Type restriction;
 
-	    public long getOsmIdFrom()
-	    {
-	        return fromOsm;
-	    }
+	public OSITNTurnRelation(long fromWayID, long viaNodeID, long toWayID,
+			Type restrictionType) {
+		this.fromOsmWayId = fromWayID;
+		this.viaOsmNodeId = viaNodeID;
+		this.toOsmWayId = toWayID;
+		this.restriction = restrictionType;
+	}
 
-	    public long getOsmIdTo()
-	    {
-	        return toOsm;
-	    }
+    /* (non-Javadoc)
+	 * @see com.graphhopper.reader.TurnRelation#getOsmIdFrom()
+	 */
+    @Override
+	public long getOsmIdFrom()
+    {
+		return fromOsmWayId;
+	}
 
-	    /**
-	     * transforms this relation into a collection of node cost entries
-	     * <p>
-	     * @param edgeOutExplorer an edge filter which only allows outgoing edges
-	     * @param edgeInExplorer an edge filter which only allows incoming edges
-	     * @return a collection of node cost entries which can be added to the graph later
-	     */
-	    public Collection<ITurnCostTableEntry> getRestrictionAsEntries( TurnCostEncoder encoder,
-	            EdgeExplorer edgeOutExplorer, EdgeExplorer edgeInExplorer, DataReader osmReader )
-	    {
-	        final Set<ITurnCostTableEntry> entries = new HashSet<ITurnCostTableEntry>();
+    /* (non-Javadoc)
+	 * @see com.graphhopper.reader.TurnRelation#getOsmIdTo()
+	 */
+    @Override
+	public long getOsmIdTo()
+    {
+		return toOsmWayId;
+	}
 
-	        int viaNodeId = (int) osmReader.getInternalNodeIdOfOsmNode(this.viaOsm);
+	/**
+     * Transforms this relation into a collection of turn cost entries
+	 * <p>
+     * @param edgeOutExplorer an edge filter which only allows outgoing edges
+     * @param edgeInExplorer an edge filter which only allows incoming edges
+     * @return a collection of node cost entries which can be added to the graph later
+	 */
+	public Collection<ITurnCostTableEntry> getRestrictionAsEntries(
+			TurnCostEncoder encoder, EdgeExplorer edgeOutExplorer,
+			EdgeExplorer edgeInExplorer, DataReader osmReader) {
+		final Set<ITurnCostTableEntry> entries = new HashSet<ITurnCostTableEntry>();
 
-	        try
-	        {
-	            if (viaNodeId == OsItnReader.EMPTY)
-	            {
-	                throw new IllegalArgumentException("Unknown node osm id: " + this.viaOsm);
-	            }
+		int viaNodeId = (int) osmReader.getInternalNodeIdOfOsmNode(this.viaOsmNodeId);
 
-	            int edgeIdFrom = EdgeIterator.NO_EDGE;
-
-	            // get all incoming edges and receive the edge which is defined by fromOsm
-	            EdgeIterator iter = edgeInExplorer.setBaseNode(viaNodeId);
-
-				while (iter.next())
-	            {
-					int edge = iter.getEdge();
-					long osmIdOfInternalEdge = osmReader.getOsmIdOfInternalEdge(edge);
-					logger.info("Got Edge Info: " +osmIdOfInternalEdge + " for: " + edge );
-	                if (osmIdOfInternalEdge == this.fromOsm)
-	                {
-	                    edgeIdFrom = edge;
-	                    break;
-	                }
-	            }
-
-	            //get all outgoing edges of the via node 
-	            iter = edgeOutExplorer.setBaseNode(viaNodeId);
-	            if (edgeIdFrom != EdgeIterator.NO_EDGE)
-	            {
-	                if (this.restriction == Type.NOT)
-	                {
-	                    // if we have a restriction of TYPE_NO_* we add restriction only to
-	                    // the given turn (from, via, to)  
-	                    while (iter.next())
-	                    {
-	                    	int edge = iter.getEdge();
-	                    	long osmIdOfInternalEdge = osmReader.getOsmIdOfInternalEdge(edge);
-	                        if (edge != edgeIdFrom && osmIdOfInternalEdge == this.toOsm)
-	                        {
-	                            final TurnCostTableEntry entry = new TurnCostTableEntry();
-	                            entry.nodeVia = viaNodeId;
-	                            entry.edgeFrom = edgeIdFrom;
-	                            entry.edgeTo = edge;
-	                            entry.flags = encoder.getTurnFlags(true, 0);
-	                            entries.add(entry);
-	                        }
-	                    }
-
-	                } else if (this.restriction == Type.ONLY)
-	                {
-	                    // if we have a restriction of TYPE_ONLY_* we add restriction to
-	                    // any turn possibility (from, via, * ) except the given turn
-	                    while (iter.next())
-	                    {
-	                    	int edge = iter.getEdge();
-	    					long osmIdOfInternalEdge = osmReader.getOsmIdOfInternalEdge(edge);
-	                        if (edge != edgeIdFrom && osmIdOfInternalEdge != this.toOsm)
-	                        {
-	                            final TurnCostTableEntry entry = new TurnCostTableEntry();
-	                            entry.nodeVia = viaNodeId;
-	                            entry.edgeFrom = edgeIdFrom;
-	                            entry.edgeTo = edge;
-	                            entry.flags = encoder.getTurnFlags(true, 0);
-	                            entries.add(entry);
-	                        }
-	                    }
-	                }
-	            }
-	        } catch (Exception e)
-	        {
-	            throw new IllegalStateException("Could not built node costs table for relation of node [osmId:" + this.viaOsm + "].", e);
-	        }
-	        logger.info("TableEntries:" + entries.size());
-	        return entries;
-	    }
-
-	    /**
-	     * Helper class to processing purposes only
-	     */
-	    public static class TurnCostTableEntry implements ITurnCostTableEntry
-	    {
-	        public int edgeFrom;
-	        public int edgeTo;
-	        public int nodeVia;
-	        public long flags;
-
-	        /**
-	         * @return an unique id (edgeFrom, edgeTo) to avoid doubled entries during parsing
-	         */
-	        public long getItemId()
-	        {
-	            return ((long) edgeFrom) << 32 | ((long) edgeTo);
-	        }
-
-			@Override
-			public int getEdgeFrom() {
-				return edgeFrom;
+		try {
+			if (viaNodeId == OsItnReader.EMPTY) {
+				throw new IllegalArgumentException("Unknown node osm id: "
+						+ this.viaOsmNodeId);
 			}
 
-			@Override
-			public int getEdgeTo() {
-				return edgeTo;
+			int edgeIdFrom = EdgeIterator.NO_EDGE;
+
+			// get all incoming edges and receive the edge which is defined by
+			// fromOsm
+			EdgeIterator iter = edgeInExplorer.setBaseNode(viaNodeId);
+
+			while (iter.next()) {
+				int edge = iter.getEdge();
+				long osmIdOfInternalEdge = osmReader
+						.getOsmIdOfInternalEdge(edge);
+				logger.info("Got Edge Info: " + osmIdOfInternalEdge + " for: "
+						+ edge);
+				if (osmIdOfInternalEdge == this.fromOsmWayId) {
+					edgeIdFrom = edge;
+					break;
+				}
 			}
 
-			@Override
-			public int getVia() {
-				return nodeVia;
-			}
+			// get all outgoing edges of the via node
+			iter = edgeOutExplorer.setBaseNode(viaNodeId);
+			if (edgeIdFrom != EdgeIterator.NO_EDGE) {
+				if (this.restriction == Type.NOT) {
+					// if we have a restriction of TYPE_NO_* we add restriction
+					// only to
+					// the given turn (from, via, to)
+					while (iter.next()) {
+						int edge = iter.getEdge();
+						long osmIdOfInternalEdge = osmReader
+								.getOsmIdOfInternalEdge(edge);
+						if (edge != edgeIdFrom
+								&& osmIdOfInternalEdge == this.toOsmWayId) {
+							final TurnCostTableEntry entry = new TurnCostTableEntry();
+							entry.nodeViaNode = viaNodeId;
+							entry.edgeFrom = edgeIdFrom;
+							entry.edgeTo = edge;
+							entry.flags = encoder.getTurnFlags(true, 0);
+							entries.add(entry);
+						}
+					}
 
-			@Override
-			public long getFlags() {
-				return flags;
+				} else if (this.restriction == Type.ONLY) {
+					// if we have a restriction of TYPE_ONLY_* we add
+					// restriction to
+					// any turn possibility (from, via, * ) except the given
+					// turn
+					while (iter.next()) {
+						int edge = iter.getEdge();
+						long osmIdOfInternalEdge = osmReader
+								.getOsmIdOfInternalEdge(edge);
+						if (edge != edgeIdFrom
+								&& osmIdOfInternalEdge != this.toOsmWayId) {
+							final TurnCostTableEntry entry = new TurnCostTableEntry();
+							entry.nodeViaNode = viaNodeId;
+							entry.edgeFrom = edgeIdFrom;
+							entry.edgeTo = edge;
+							entry.flags = encoder.getTurnFlags(true, 0);
+							entries.add(entry);
+						}
+					}
+				}
 			}
+		} catch (Exception e) {
+			throw new IllegalStateException(
+					"Could not built node costs table for relation of node [osmId:"
+							+ this.viaOsmNodeId + "].", e);
+		}
+		logger.info("TableEntries:" + entries.size());
+		return entries;
+	}
 
-			@Override
-			public void setFlags(long flags) {
-				this.flags = flags;
-				
-			}
+	  @Override
+	    public String toString()
+	    {
+	        return "*-(" + fromOsmWayId + ")->" + viaOsmNodeId + "-(" + toOsmWayId + ")->*";
 	    }
+	  
+	/**
+	 * Helper class to processing purposes only
+	 */
+    public static class TurnCostTableEntry implements ITurnCostTableEntry
+    {
+		public int edgeFrom;
+		public int nodeViaNode;
+		public int edgeTo;
+		public long flags;
 
-		public long getVia() {
-			return viaOsm;
+		/**
+         * @return an unique id (edgeFrom, edgeTo) to avoid duplicate entries if multiple encoders
+         * are involved.
+		 */
+        public long getItemId()
+        {
+			return ((long) edgeFrom) << 32 | ((long) edgeTo);
 		}
 
-	
+		@Override
+		public int getEdgeFrom() {
+			return edgeFrom;
+		}
+
+		@Override
+		public int getEdgeTo() {
+			return edgeTo;
+		}
+
+		@Override
+		public int getVia() {
+			return nodeViaNode;
+		}
+
+		@Override
+		public long getFlags() {
+			return flags;
+		}
+
+		@Override
+		public void setFlags(long flags) {
+			this.flags = flags;
+
+		}
+		
+		@Override
+        public String toString()
+        {
+            return "*-(" + edgeFrom + ")->" + nodeViaNode + "-(" + edgeTo + ")->*";
+        }
+	}
+
+	public long getVia() {
+		return viaOsmNodeId;
+	}
+
 }
