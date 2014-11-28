@@ -27,5 +27,5 @@ public interface AllEdgesIterator extends EdgeIterator
     /**
      * @return the number of edges
      */
-    int getMaxId();
+    int getCount();
 }

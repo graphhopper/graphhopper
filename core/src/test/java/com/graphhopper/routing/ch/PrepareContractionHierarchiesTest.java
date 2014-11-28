@@ -110,20 +110,20 @@ public class PrepareContractionHierarchiesTest
     public void testAddShortcuts()
     {
         LevelGraph g = createExampleGraph();
-        int old = g.getAllEdges().getMaxId();
+        int old = g.getAllEdges().getCount();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g, carEncoder, weighting, tMode);
         prepare.doWork();
-        assertEquals(old + 1, g.getAllEdges().getMaxId());
+        assertEquals(old + 1, g.getAllEdges().getCount());
     }
 
     @Test
     public void testMoreComplexGraph()
     {
         LevelGraph g = initShortcutsGraph(createGraph());
-        int old = g.getAllEdges().getMaxId();
+        int old = g.getAllEdges().getCount();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g, carEncoder, weighting, tMode);
         prepare.doWork();
-        assertEquals(old + 10, g.getAllEdges().getMaxId());
+        assertEquals(old + 10, g.getAllEdges().getCount());
     }
 
     @Test
@@ -270,10 +270,10 @@ public class PrepareContractionHierarchiesTest
     {
         LevelGraph g = createGraph();
         initRoundaboutGraph(g);
-        int old = g.getAllEdges().getMaxId();
+        int old = g.getAllEdges().getCount();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g, carEncoder, weighting, tMode);
         prepare.doWork();
-        assertEquals(old + 22, g.getAllEdges().getMaxId());
+        assertEquals(old + 22, g.getAllEdges().getCount());
         RoutingAlgorithm algo = prepare.createAlgo(g, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, carEncoder, weighting, tMode));
         Path p = algo.calcPath(4, 7);
         assertEquals(Helper.createTList(4, 5, 6, 7), p.calcNodes());

@@ -250,7 +250,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     void contractNodes()
     {
-        meanDegree = prepareGraph.getAllEdges().getMaxId() / prepareGraph.getNodes();
+        meanDegree = prepareGraph.getAllEdges().getCount() / prepareGraph.getNodes();
         int level = 1;
         counter = 0;
         int initSize = sortedNodes.getSize();

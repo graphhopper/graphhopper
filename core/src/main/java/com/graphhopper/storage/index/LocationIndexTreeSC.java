@@ -71,9 +71,9 @@ public class LocationIndexTreeSC extends LocationIndexTree
         return new AllEdgesIterator()
         {
             @Override
-            public int getMaxId()
+            public int getCount()
             {
-                return tmpIter.getMaxId();
+                return tmpIter.getCount();
             }
 
             @Override

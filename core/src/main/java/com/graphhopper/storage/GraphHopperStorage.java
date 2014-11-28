@@ -509,7 +509,7 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
-        public int getMaxId()
+        public int getCount()
         {
             return edgeCount;
         }

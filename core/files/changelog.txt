@@ -1,4 +1,5 @@
 0.4.0    
+    refactoring: AllEdgesIterator.getMaxId is now named getCount
     major change of internal API: moved method "Path RoutingAlgorithm.calcPath(QueryResult,QueryResult)" to a helper method QueryGraph.lookup, call queryResult.getClosestNode for the calcPath(nodeFrom,nodeTo) method
     no cachedWays and cachedPoints in Path anymore
     Path.findInstruction was moved to InstructionList.find
