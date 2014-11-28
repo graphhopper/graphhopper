@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,7 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.GHUtility;
 
 /**
  * 
@@ -178,9 +180,10 @@ public class OsItnReaderTest {
             logger.info("6 Adj node is " + iter.getAdjNode());
         }
 
+        GHUtility.printInfo(graph, 0, 20, EdgeFilter.ALL_EDGES);
         assertEquals(4, count(explorer.setBaseNode(0)));
-        assertEquals(2, count(explorer.setBaseNode(1)));
-        assertEquals(1, count(explorer.setBaseNode(2)));
+        assertEquals(1, count(explorer.setBaseNode(1)));
+        assertEquals(2, count(explorer.setBaseNode(2)));
         assertEquals(2, count(explorer.setBaseNode(3)));
         assertEquals(1, count(explorer.setBaseNode(4)));
         assertEquals(2, count(explorer.setBaseNode(5)));
@@ -727,62 +730,28 @@ public class OsItnReaderTest {
          */
 
         assertEquals(3, count(explorer.setBaseNode(0)));
-        assertEquals(2, count(explorer.setBaseNode(1)));
+        assertEquals(1, count(explorer.setBaseNode(1)));
         assertEquals(2, count(explorer.setBaseNode(2)));
         assertEquals(2, count(explorer.setBaseNode(3)));
         assertEquals(1, count(explorer.setBaseNode(4)));
-        assertEquals(2, count(explorer.setBaseNode(5)));
+        assertEquals(1, count(explorer.setBaseNode(5)));
         assertEquals(1, count(explorer.setBaseNode(6)));
-        assertEquals(1, count(explorer.setBaseNode(7)));
-        assertEquals(1, count(explorer.setBaseNode(8)));
-        /*
-         * 2014-11-06 15:37:00,206 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - 0 Adj node is 8
-         * 2014-11-06 15:37:00,206 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - 0 Adj node is 7
-         * 2014-11-06 15:37:00,206 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - 0 Adj node is 6
-         * 2014-11-06 15:37:00,206 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - 1 Adj node is 2
-         * 2014-11-06 15:37:00,206 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - 1 Adj node is 4
-         * 2014-11-06 15:37:00,206 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - 2 Adj node is 3
-         * 2014-11-06 15:37:00,206 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - 2 Adj node is 1
-         * 2014-11-06 15:37:00,206 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - 3 Adj node is 5
-         * 2014-11-06 15:37:00,207 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - 3 Adj node is 2
-         * 2014-11-06 15:37:00,207 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - 4 Adj node is 1
-         * 2014-11-06 15:37:00,207 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - 5 Adj node is 0
-         * 2014-11-06 15:37:00,207 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - 5 Adj node is 3
-         * 2014-11-06 15:37:00,207 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - 6 Adj node is 0
-         * 2014-11-06 15:37:00,207 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - 7 Adj node is 0
-         * 2014-11-06 15:37:00,207 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - 8 Adj node is 0
-         */
+        
 
+        GHUtility.printInfo(graph, 0, 20, EdgeFilter.ALL_EDGES);
         // Assert that this is true
         iter = explorer.setBaseNode(0);
         assertTrue(iter.next());
-        assertEquals(8, iter.getAdjNode());
-        assertTrue(iter.next());
-        assertEquals(7, iter.getAdjNode());
-        assertTrue(iter.next());
         assertEquals(6, iter.getAdjNode());
+        assertTrue(iter.next());
+        assertEquals(5, iter.getAdjNode());
+        assertTrue(iter.next());
+        assertEquals(4, iter.getAdjNode());
         assertFalse(iter.next());
 
         iter = explorer.setBaseNode(1);
         assertTrue(iter.next());
         assertEquals(2, iter.getAdjNode());
-        assertTrue(iter.next());
-        assertEquals(4, iter.getAdjNode());
         assertFalse(iter.next());
 
         iter = explorer.setBaseNode(2);
@@ -794,38 +763,25 @@ public class OsItnReaderTest {
 
         iter = explorer.setBaseNode(3);
         assertTrue(iter.next());
-        assertEquals(5, iter.getAdjNode());
+        assertEquals(0, iter.getAdjNode());
         assertTrue(iter.next());
         assertEquals(2, iter.getAdjNode());
         assertFalse(iter.next());
 
         iter = explorer.setBaseNode(4);
         assertTrue(iter.next());
-        assertEquals(1, iter.getAdjNode());
+        assertEquals(0, iter.getAdjNode());
         assertFalse(iter.next());
 
         iter = explorer.setBaseNode(5);
         assertTrue(iter.next());
         assertEquals(0, iter.getAdjNode());
-        assertTrue(iter.next());
-        assertEquals(3, iter.getAdjNode());
         assertFalse(iter.next());
 
         iter = explorer.setBaseNode(6);
         assertTrue(iter.next());
         assertEquals(0, iter.getAdjNode());
         assertFalse(iter.next());
-
-        iter = explorer.setBaseNode(7);
-        assertTrue(iter.next());
-        assertEquals(0, iter.getAdjNode());
-        assertFalse(iter.next());
-
-        iter = explorer.setBaseNode(8);
-        assertTrue(iter.next());
-        assertEquals(0, iter.getAdjNode());
-        assertFalse(iter.next());
-
     }
 
     @Test
@@ -895,31 +851,14 @@ public class OsItnReaderTest {
             logger.info("8 Adj node is " + iter.getAdjNode());
         }
 
-        /*
-         * 2014-11-06 15:39:18,574 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - Node 0 4 2014-11-06
-         * 15:39:18,574 [main] INFO com.graphhopper.reader.osgb.OsItnReaderTest
-         * - Node 1 2 2014-11-06 15:39:18,574 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - Node 2 2 2014-11-06
-         * 15:39:18,574 [main] INFO com.graphhopper.reader.osgb.OsItnReaderTest
-         * - Node 3 2 2014-11-06 15:39:18,574 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - Node 4 1 2014-11-06
-         * 15:39:18,574 [main] INFO com.graphhopper.reader.osgb.OsItnReaderTest
-         * - Node 5 1 2014-11-06 15:39:18,574 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - Node 6 1 2014-11-06
-         * 15:39:18,574 [main] INFO com.graphhopper.reader.osgb.OsItnReaderTest
-         * - Node 7 1 2014-11-06 15:39:18,574 [main] INFO
-         * com.graphhopper.reader.osgb.OsItnReaderTest - Node 8 1
-         */
+        GHUtility.printInfo(graph, 0, 20, EdgeFilter.ALL_EDGES);
         assertEquals(4, count(explorer.setBaseNode(0)));
-        assertEquals(2, count(explorer.setBaseNode(1)));
+        assertEquals(1, count(explorer.setBaseNode(1)));
         assertEquals(2, count(explorer.setBaseNode(2)));
-        assertEquals(2, count(explorer.setBaseNode(3)));
+        assertEquals(1, count(explorer.setBaseNode(3)));
         assertEquals(1, count(explorer.setBaseNode(4)));
         assertEquals(1, count(explorer.setBaseNode(5)));
         assertEquals(1, count(explorer.setBaseNode(6)));
-        assertEquals(1, count(explorer.setBaseNode(7)));
-        assertEquals(1, count(explorer.setBaseNode(8)));
         /*
          * 2014-11-06 15:39:18,574 [main] INFO
          * com.graphhopper.reader.osgb.OsItnReaderTest - 0 Adj node is 8
@@ -956,20 +895,18 @@ public class OsItnReaderTest {
         // Assert that this is true
         iter = explorer.setBaseNode(0);
         assertTrue(iter.next());
-        assertEquals(8, iter.getAdjNode());
-        assertTrue(iter.next());
-        assertEquals(7, iter.getAdjNode());
-        assertTrue(iter.next());
         assertEquals(6, iter.getAdjNode());
         assertTrue(iter.next());
         assertEquals(5, iter.getAdjNode());
+        assertTrue(iter.next());
+        assertEquals(4, iter.getAdjNode());
+        assertTrue(iter.next());
+        assertEquals(3, iter.getAdjNode());
         assertFalse(iter.next());
 
         iter = explorer.setBaseNode(1);
         assertTrue(iter.next());
         assertEquals(2, iter.getAdjNode());
-        assertTrue(iter.next());
-        assertEquals(4, iter.getAdjNode());
         assertFalse(iter.next());
 
         iter = explorer.setBaseNode(2);
@@ -981,32 +918,20 @@ public class OsItnReaderTest {
 
         iter = explorer.setBaseNode(3);
         assertTrue(iter.next());
-        assertEquals(5, iter.getAdjNode());
-        assertTrue(iter.next());
         assertEquals(2, iter.getAdjNode());
         assertFalse(iter.next());
-
+        
         iter = explorer.setBaseNode(4);
         assertTrue(iter.next());
-        assertEquals(1, iter.getAdjNode());
+        assertEquals(0, iter.getAdjNode());
         assertFalse(iter.next());
 
         iter = explorer.setBaseNode(5);
         assertTrue(iter.next());
-        assertEquals(3, iter.getAdjNode());
+        assertEquals(0, iter.getAdjNode());
         assertFalse(iter.next());
 
         iter = explorer.setBaseNode(6);
-        assertTrue(iter.next());
-        assertEquals(0, iter.getAdjNode());
-        assertFalse(iter.next());
-
-        iter = explorer.setBaseNode(7);
-        assertTrue(iter.next());
-        assertEquals(0, iter.getAdjNode());
-        assertFalse(iter.next());
-
-        iter = explorer.setBaseNode(8);
         assertTrue(iter.next());
         assertEquals(0, iter.getAdjNode());
         assertFalse(iter.next());
@@ -1032,7 +957,7 @@ public class OsItnReaderTest {
 
         File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-simple-multipoint-crossroad.xml");
         readGraphFile(graph, file);
-        assertEquals(6, graph.getNodes());
+        assertEquals(5, graph.getNodes());
         checkMultiNodeNetwork(graph);
     }
 
@@ -1134,9 +1059,9 @@ public class OsItnReaderTest {
     }
 
     private void evaluateRouting(EdgeIterator iter, int node, boolean forward, boolean backward, boolean finished) {
-        assertEquals(node, iter.getAdjNode());
-        assertEquals(forward, carEncoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
-        assertEquals(backward, carEncoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
+        assertEquals("Incorrect adjacent node", node, iter.getAdjNode());
+        assertEquals("Incorrect forward instructions", forward, carEncoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
+        assertEquals("Incorrect backward instructions", backward, carEncoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
         assertEquals(!finished, iter.next());
     }
 
@@ -1197,11 +1122,10 @@ public class OsItnReaderTest {
     private void checkMultiNodeNetwork(GraphHopperStorage graph) {
         EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
         assertEquals(4, count(explorer.setBaseNode(0)));
-        assertEquals(2, count(explorer.setBaseNode(1)));
+        assertEquals(1, count(explorer.setBaseNode(1)));
         assertEquals(1, count(explorer.setBaseNode(2)));
         assertEquals(1, count(explorer.setBaseNode(3)));
         assertEquals(1, count(explorer.setBaseNode(4)));
-        assertEquals(1, count(explorer.setBaseNode(5)));
 
         EdgeIterator iter = explorer.setBaseNode(0);
         assertTrue(iter.next());
@@ -1322,6 +1246,7 @@ public class OsItnReaderTest {
         // the base node;
         assertEquals(4, count(explorer.setBaseNode(0)));
 
+        GHUtility.printInfo(graph, 0, 20, EdgeFilter.ALL_EDGES);
         // Assert that when the explorer is on node 1 it can travel two edges
         assertEquals(2, count(explorer.setBaseNode(1))); // This should see only
                                                          // one
@@ -1594,17 +1519,16 @@ public class OsItnReaderTest {
             logger.info("8 Adj node is " + iter.getAdjNode());
         }
         // ***********************************************************************
-
         // Assert that our graph has 7 nodes
-        assertEquals(9, graph.getNodes());
+        assertEquals(7, graph.getNodes());
 
         // Assert that there are four links/roads/edges that can be seen from
         // the base node;
         assertEquals(4, count(outExplorer.setBaseNode(0)));
 
-        // Assert that when the explorer is on node 1 it can only travel two
+        // Assert that when the explorer is on node 1 it cannot travel past the no entry
         // edges
-        assertEquals(2, count(outExplorer.setBaseNode(1)));
+        assertEquals(0, count(outExplorer.setBaseNode(1)));
 
         // Assert that when the explorer is positioned on base 2 it can only
         // travel two edges
@@ -1622,28 +1546,23 @@ public class OsItnReaderTest {
 
         // Assert that when the explorer is positioned on node 5 it can only
         // travel 1 edge out
-        assertEquals(2, count(outExplorer.setBaseNode(5)));
+        assertEquals(1, count(outExplorer.setBaseNode(5)));
 
         carAllExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, true));
         // Starting at node zero I should be able to travel back and forth to
         // four nodes?
         iter = carAllExplorer.setBaseNode(0);
         assertTrue(iter.next());
-        evaluateRouting(iter, 8, true, true, false);
-        evaluateRouting(iter, 7, true, true, false);
         evaluateRouting(iter, 6, true, true, false);
+        evaluateRouting(iter, 5, true, true, false);
+        evaluateRouting(iter, 4, true, true, false);
         evaluateRouting(iter, 3, true, true, true);
 
         // Starting at node 1
         iter = carAllExplorer.setBaseNode(1);
         assertTrue(iter.next());
-        // I should be able to get to node 0 forwards and backwards and have not
-        // exhausted all the edges
-        evaluateRouting(iter, 2, true, true, false);
-        // I should be able to get back to node 1 but not forward onto node 3 as
-        // the way linking to node 3 is a one way and should have have exhausted
-        // all the edges
-        evaluateRouting(iter, 5, true, true, true);
+        // I should not be able to get to node 2 but node 2 should be able to get back to 0 
+        evaluateRouting(iter, 2, false, true, true);
 
         // Starting at node 2
         iter = carAllExplorer.setBaseNode(2);
@@ -1651,7 +1570,7 @@ public class OsItnReaderTest {
         // I should be able to travel to node 3 forth and back and exhausted all
         // the edges
         evaluateRouting(iter, 3, true, true, false);
-        evaluateRouting(iter, 1, true, true, true);
+        evaluateRouting(iter, 1, true, false, true);
 
         // Starting at node 3
         iter = carAllExplorer.setBaseNode(3);
@@ -1666,19 +1585,15 @@ public class OsItnReaderTest {
         // Starting at node 4
         iter = carAllExplorer.setBaseNode(4);
         assertTrue(iter.next());
-        // I should not be able to travel to node 5 but I should be able to come
-        // back to node 4 and have exhausted all the edges
-        evaluateRouting(iter, 5, false, true, true);
+        // I should be able to travel to node 0 and back and that is all the available edges
+        evaluateRouting(iter, 0, true, true, true);
 
         // Starting at Node 5
         iter = carAllExplorer.setBaseNode(5);
         assertTrue(iter.next());
-        // I should be able to travel to node 1 back and forth and have not
+        // I should be able to travel to node 0 back and forth and have 
         // exhausted all the edges
-        evaluateRouting(iter, 1, true, true, false);
-        // I should be able to travel to node 4 forwards but not backwards and
-        // have exhausted all the edges
-        evaluateRouting(iter, 4, true, false, true);
+        evaluateRouting(iter, 0, true, true, true);
 
         // Given Node 6
         iter = carAllExplorer.setBaseNode(6);

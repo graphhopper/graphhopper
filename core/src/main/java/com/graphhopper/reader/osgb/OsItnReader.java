@@ -639,7 +639,7 @@ public class OsItnReader implements DataReader {
     private List<OSITNNode> prepareWaysNodes(RoutingElement item, LongIntMap nodeFilter) throws MismatchedDimensionException, FactoryException, TransformException {
         List<OSITNNode> evaluateWayNodes = ((OSITNWay) item).evaluateWayNodes(getEdgeIdToXToYToNodeFlagsMap());
         for (OSITNNode ositnNode : evaluateWayNodes) {
-            nodeFilter.put(ositnNode.getId(), TOWER_NODE);
+            nodeFilter.put(ositnNode.getId(), PILLAR_NODE);
             processNode(ositnNode);
         }
         logger.info(WE_HAVE_EVALUATED_WAY_NODES_FORMAT, evaluateWayNodes.size());
