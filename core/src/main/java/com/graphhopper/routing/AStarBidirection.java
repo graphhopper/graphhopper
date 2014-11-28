@@ -141,6 +141,9 @@ public class AStarBidirection extends AbstractBidirAlgo
         {
             if (currTo != null && currTo.adjNode == from)
             {
+                // special case of identical start and end
+                bestPath.edgeEntry = currFrom;
+                bestPath.edgeTo = currTo;
                 finishedFrom = true;
                 finishedTo = true;
             }
@@ -165,6 +168,9 @@ public class AStarBidirection extends AbstractBidirAlgo
         {
             if (currFrom != null && currFrom.adjNode == to)
             {
+                // special case of identical start and end
+                bestPath.edgeEntry = currFrom;
+                bestPath.edgeTo = currTo;
                 finishedFrom = true;
                 finishedTo = true;
             }

@@ -1,4 +1,7 @@
 0.4.0    
+    no cachedWays and cachedPoints in Path anymore
+    Path.findInstruction was moved to InstructionList.find
+    if start and end point are identical an algorithm will find the path consisting only of one node, one point and one instruction (finish instruction), but without edges
     astarbi has new default values for approximation (false) and approximation_factor (1.2) in RoutingAlgorithmFactorySimple
     instead of strings use the variables in AlgorithmOptions to specify an algorithm
     use RoutingAlgorithmFactorySimple instead of RoutingAlgorithmFactory, also more constistent algorithm preparation handling due to new AlgorithmOptions, therefor removed NoOpAlgorithmPreparation

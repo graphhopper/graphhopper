@@ -66,8 +66,6 @@ public class PathBidirRef extends Path
         if (edgeEntry == null || edgeTo == null)
             return this;
 
-//        int from = GHUtility.getAdjNode(graph, edgeEntry.edge, );
-//        int to = GHUtility.getAdjNode(graph, edgeTo.edge, );
         if (edgeEntry.adjNode != edgeTo.adjNode)
             throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString() + ", fromEntry:" + edgeEntry + ", toEntry:" + edgeTo);
 

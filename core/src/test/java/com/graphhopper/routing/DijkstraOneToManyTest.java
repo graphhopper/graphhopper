@@ -44,7 +44,9 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     {
         return Arrays.asList(new Object[][]
         {
-            { TraversalMode.NODE_BASED },
+            {
+                TraversalMode.NODE_BASED
+            },
 //            TODO { TraversalMode.EDGE_BASED_1DIR },
 //            TODO { TraversalMode.EDGE_BASED_2DIR },
 //            TODO { TraversalMode.EDGE_BASED_2DIR_UTURN }
@@ -109,7 +111,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
 
     @Test
     public void testIssue182()
-    {        
+    {
         RoutingAlgorithm algo = createAlgo(initGraph(createGraph(false)));
         Path p = algo.calcPath(0, 8);
         assertEquals(Helper.createTList(0, 7, 8), p.calcNodes());
@@ -145,7 +147,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
 
         // expand SPT
         p = algo.calcPath(0, 7);
-        assertEquals(Helper.createTList(0, 4, 6, 5, 7), p.calcNodes());
+        assertEquals(Helper.createTList(0, 4, 5, 7), p.calcNodes());
 
         // use SPT
         p = algo.calcPath(0, 2);

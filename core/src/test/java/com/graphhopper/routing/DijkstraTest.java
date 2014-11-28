@@ -49,7 +49,7 @@ public class DijkstraTest extends AbstractRoutingAlgorithmTester
         });
     }
 
-    private TraversalMode traversalMode;
+    private final TraversalMode traversalMode;
 
     public DijkstraTest( TraversalMode tMode )
     {

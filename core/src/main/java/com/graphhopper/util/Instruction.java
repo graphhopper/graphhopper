@@ -144,12 +144,12 @@ public class Instruction
 
         for (int i = 0; i < len; i++)
         {
+            list.add(new GPXEntry(lat, lon, ele, prevTime));
+            
             boolean last = i + 1 == len;
             double nextLat = last ? nextInstr.getFirstLat() : points.getLatitude(i + 1);
             double nextLon = last ? nextInstr.getFirstLon() : points.getLongitude(i + 1);
             double nextEle = is3D ? (last ? nextInstr.getFirstEle() : points.getElevation(i + 1)) : Double.NaN;
-
-            list.add(new GPXEntry(lat, lon, ele, prevTime));
             if (is3D)
                 prevTime = Math.round(prevTime + this.time * distanceCalc.calcDist(nextLat, nextLon, nextEle, lat, lon, ele) / distance);
             else

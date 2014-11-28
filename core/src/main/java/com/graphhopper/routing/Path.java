@@ -50,8 +50,6 @@ public class Path
     private int fromNode = -1;
     protected int endNode = -1;
     private TIntList edgeIds;
-    private PointList cachedPoints;
-    private InstructionList cachedWays;
     private double weight;
     private NodeAccess nodeAccess;
 
@@ -288,7 +286,13 @@ public class Path
     {
         final TIntArrayList nodes = new TIntArrayList(edgeIds.size() + 1);
         if (edgeIds.isEmpty())
+        {
+            if (isFound())
+            {
+                nodes.add(endNode);
+            }
             return nodes;
+        }
 
         int tmpNode = getFromNode();
         nodes.add(tmpNode);
@@ -306,19 +310,22 @@ public class Path
     /**
      * This method calculated a list of points for this path
      * <p>
-     * @return this path its geometry (cached)
+     * @return this path its geometry
      */
     public PointList calcPoints()
     {
-        if (cachedPoints != null)
-            return cachedPoints;
-
-        cachedPoints = new PointList(edgeIds.size() + 1, nodeAccess.is3D());
+        final PointList points = new PointList(edgeIds.size() + 1, nodeAccess.is3D());
         if (edgeIds.isEmpty())
-            return cachedPoints;
+        {
+            if (isFound())
+            {
+                points.add(graph.getNodeAccess(), endNode);
+            }
+            return points;
+        }
 
         int tmpNode = getFromNode();
-        cachedPoints.add(nodeAccess, tmpNode);
+        points.add(nodeAccess, tmpNode);
         forEveryEdge(new EdgeVisitor()
         {
             @Override
@@ -327,11 +334,11 @@ public class Path
                 PointList pl = eb.fetchWayGeometry(2);
                 for (int j = 0; j < pl.getSize(); j++)
                 {
-                    cachedPoints.add(pl, j);
+                    points.add(pl, j);
                 }
             }
         });
-        return cachedPoints;
+        return points;
     }
 
     /**
@@ -339,9 +346,15 @@ public class Path
      */
     public InstructionList calcInstructions( final Translation tr )
     {
-        cachedWays = new InstructionList(edgeIds.size() / 4, tr);
+        final InstructionList ways = new InstructionList(edgeIds.size() / 4, tr);
         if (edgeIds.isEmpty())
-            return cachedWays;
+        {
+            if (isFound())
+            {
+                ways.add(new FinishInstruction(nodeAccess, endNode));
+            }
+            return ways;
+        }
 
         final int tmpNode = getFromNode();
         forEveryEdge(new EdgeVisitor()
@@ -407,7 +420,7 @@ public class Path
                     annotation = encoder.getAnnotation(flags, tr);
                     prevInstruction = new Instruction(Instruction.CONTINUE_ON_STREET, name, annotation, points);
                     updatePointsAndInstruction(edge, wayGeo);
-                    cachedWays.add(prevInstruction);
+                    ways.add(prevInstruction);
                 } else
                 {
                     double tmpOrientation = ac.alignOrientation(prevOrientation, orientation);
@@ -452,7 +465,7 @@ public class Path
                         }
 
                         prevInstruction = new Instruction(sign, name, annotation, points);
-                        cachedWays.add(prevInstruction);
+                        ways.add(prevInstruction);
                     }
 
                     updatePointsAndInstruction(edge, wayGeo);
@@ -471,8 +484,7 @@ public class Path
 
                 boolean lastEdge = index == edgeIds.size() - 1;
                 if (lastEdge)
-                    cachedWays.add(new FinishInstruction(adjLat, adjLon,
-                            nodeAccess.is3D() ? nodeAccess.getElevation(adjNode) : 0));
+                    ways.add(new FinishInstruction(nodeAccess, adjNode));
             }
 
             private void updatePointsAndInstruction( EdgeIteratorState edge, PointList pl )
@@ -490,37 +502,7 @@ public class Path
             }
         });
 
-        return cachedWays;
-    }
-
-    public Instruction findInstruction( double lat, double lon )
-    {
-        DistanceCalcEarth distanceCalc = new DistanceCalcEarth();
-
-        double distanceToPath = Double.MAX_VALUE;
-
-        int nextInstrNumber = 0;
-
-        // Search the closest edge to the point
-        for (int i = 0; i < cachedWays.getSize() - 1; i++)
-        {
-            double edgeNodeLat1 = cachedWays.get(i).getPoints().getLatitude(0);
-            double edgeNodeLon1 = cachedWays.get(i).getPoints().getLongitude(0);
-            int node2NOP = cachedWays.get(i + 1).getPoints().getSize();
-            double edgeNodeLat2 = cachedWays.get(i + 1).getPoints().getLatitude(node2NOP - 1);
-            double edgeNodeLon2 = cachedWays.get(i + 1).getPoints().getLongitude(node2NOP - 1);
-
-            //Calculate the distance from the point to the edge
-            double distanceToEdge = distanceCalc.calcNormalizedEdgeDistance(lat, lon, edgeNodeLat1, edgeNodeLon1, edgeNodeLat2, edgeNodeLon2);
-
-            if (distanceToEdge < distanceToPath)
-            {
-                distanceToPath = distanceToEdge;
-                nextInstrNumber = i + 1;
-            }
-        }
-
-        return cachedWays.get(nextInstrNumber);
+        return ways;
     }
 
     @Override
@@ -539,6 +521,6 @@ public class Path
 
             str += edgeIds.get(i);
         }
-        return toString() + ", " + str;
+        return toString() + ", found:" + isFound() + ", " + str;
     }
 }

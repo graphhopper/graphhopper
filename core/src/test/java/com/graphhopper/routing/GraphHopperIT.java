@@ -265,5 +265,29 @@ public class GraphHopperIT
         assertEquals(30, (Long) resultJson.get(3).get("time") / 1000);
         assertEquals(87, (Long) resultJson.get(4).get("time") / 1000);
         assertEquals(321, (Long) resultJson.get(5).get("time") / 1000);
+
+        // special case of identical start and end point
+        rsp = hopper.route(new GHRequest().
+                addPoint(new GHPoint(43.727687, 7.418737)).
+                addPoint(new GHPoint(43.727687, 7.418737)).
+                setAlgorithm(AlgorithmOptions.ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
+        assertEquals(0, rsp.getDistance(), .1);
+        assertEquals(0, rsp.getRouteWeight(), .1);
+        assertEquals(1, rsp.getPoints().getSize());
+        assertEquals(1, rsp.getInstructions().size());
+        assertEquals("Finish!", rsp.getInstructions().createJson().get(0).get("text"));
+        assertEquals(Instruction.FINISH, rsp.getInstructions().createJson().get(0).get("sign"));
+        
+        rsp = hopper.route(new GHRequest().
+                addPoint(new GHPoint(43.727687, 7.418737)).
+                addPoint(new GHPoint(43.727687, 7.418737)).
+                addPoint(new GHPoint(43.727687, 7.418737)).
+                setAlgorithm(AlgorithmOptions.ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
+        assertEquals(0, rsp.getDistance(), .1);
+        assertEquals(0, rsp.getRouteWeight(), .1);
+        assertEquals(2, rsp.getPoints().getSize());
+        assertEquals(2, rsp.getInstructions().size());
+        assertEquals(Instruction.REACHED_VIA, rsp.getInstructions().createJson().get(0).get("sign"));
+        assertEquals(Instruction.FINISH, rsp.getInstructions().createJson().get(1).get("sign"));
     }
 }

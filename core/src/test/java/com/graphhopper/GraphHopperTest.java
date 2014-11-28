@@ -289,12 +289,12 @@ public class GraphHopperTest
         // A to E only for foot
         res = instance.route(new GHRequest(11.1, 50, 10, 51).setVehicle(EncodingManager.FOOT));
         assertTrue(res.isFound());
-        assertEquals(3, res.getPoints().size());
+        assertEquals(2, res.getPoints().size());
 
         // A D E for car
         res = instance.route(new GHRequest(11.1, 50, 10, 51).setVehicle(EncodingManager.CAR));
         assertTrue(res.isFound());
-        assertEquals(4, res.getPoints().getSize());
+        assertEquals(3, res.getPoints().getSize());
     }
 
     @Test
@@ -499,7 +499,7 @@ public class GraphHopperTest
         GHPoint third = new GHPoint(11.2, 51.9);
         GHResponse rsp12 = instance.route(new GHRequest().addPoint(first).addPoint(second));
         assertTrue("should find 1->2", rsp12.isFound());
-        assertEquals(147931.5, rsp12.getDistance(), .1);
+        assertEquals(147930.5, rsp12.getDistance(), .1);
         GHResponse rsp23 = instance.route(new GHRequest().addPoint(second).addPoint(third));
         assertTrue("should find 2->3", rsp23.isFound());
         assertEquals(176608.9, rsp23.getDistance(), .1);

@@ -25,26 +25,18 @@ import java.util.Locale;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.ShortestWeighting;
-import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.routing.util.*;
+import com.graphhopper.storage.*;
 import java.io.StringReader;
 import java.util.*;
 import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Source;
-import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 /**
@@ -154,10 +146,14 @@ public class InstructionListTest
         assertEquals(Arrays.asList("Continue onto 6-7", "Continue onto 7-8", "Turn left onto 5-8", "Continue onto 5-2", "Finish!"),
                 tmpList);
 
-        // assertEquals(Arrays.asList(0, 1, 4, 5, 6), wayList.createPointIndices());
-        // tmpList = createList(p.calcPoints(), wayList.createPointIndices());
         compare(Arrays.asList(asL(1d, 1d), asL(1d, 1.1), asL(1d, 1.2), asL(1.1, 1.2), asL(1.2, 1.2)),
                 wayList.createStartPoints());
+
+        // special case of identical start and end
+        p = new Dijkstra(g, carManager.getSingle(), new ShortestWeighting(), tMode).calcPath(0, 0);
+        wayList = p.calcInstructions(usTR);
+        assertEquals(1, wayList.size());
+        assertEquals("Finish!", wayList.get(0).getTurnDescription(usTR));
     }
 
     List<String> pick( String key, List<Map<String, Object>> instructionJson )
@@ -425,7 +421,7 @@ public class InstructionListTest
     }
 
     public void verifyGPX( String gpx )
-    {        
+    {
         SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         Schema schema = null;
         try

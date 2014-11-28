@@ -53,7 +53,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     {
         this.weighting = weighting;
         this.flagEncoder = encoder;
-        this.traversalMode = traversalMode;
+        this.traversalMode = traversalMode;        
         setGraph(graph);
     }
 
@@ -66,7 +66,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
         outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
-        inEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, true, false));
+        inEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, true, false));        
         return this;
     }
 

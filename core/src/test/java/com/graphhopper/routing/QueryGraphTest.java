@@ -313,7 +313,7 @@ public class QueryGraphTest
 
         QueryResult qr = new QueryResult(-0.0005, 0.001);
         qr.setClosestEdge(edge);
-        qr.setWayIndex(0);
+        qr.setWayIndex(1);
         qr.calcSnappedPoint(new DistanceCalc2D());
 
         QueryGraph qg = new QueryGraph(g);
@@ -380,6 +380,22 @@ public class QueryGraphTest
         assertNotNull(GHUtility.getEdge(queryGraph, 0, 4));
         assertNotNull(GHUtility.getEdge(queryGraph, 0, 3));
     }
+    
+    @Test
+    public void testAvoidDuplicateVirtualNodesIfIdentical()
+    {
+        initGraph(g);
+        
+        EdgeIteratorState iter = GHUtility.getEdge(g, 0, 2);
+        QueryResult res1 = createLocationResult(0.5, 0, iter, 0, EDGE);        
+        QueryResult res2 = createLocationResult(0.5, 0, iter, 0, EDGE);
+        QueryGraph queryGraph = new QueryGraph(g);
+        queryGraph.lookup(Arrays.asList(res1, res2));
+        assertEquals(new GHPoint(0.5, 0), res1.getSnappedPoint());
+        assertEquals(new GHPoint(0.5, 0), res2.getSnappedPoint());
+        assertEquals(3, res1.getClosestNode());
+        assertEquals(3, res2.getClosestNode());
+    }    
 
     @Test
     public void testGetEdgeProps()
@@ -441,10 +457,9 @@ public class QueryGraphTest
         assertEdgeIdsStayingEqual(inExplorer, outExplorer, nodeA, nodeB);
 
         // setup query results
-        EdgeIterator it = outExplorer.setBaseNode(0);
-        it.next();
-        QueryResult res1 = createLocationResult(1.5, 3, it, 0, QueryResult.Position.EDGE);
-        QueryResult res2 = createLocationResult(1.5, 7, it, 0, QueryResult.Position.EDGE);
+        EdgeIteratorState it = GHUtility.getEdge(g, nodeA, nodeB);        
+        QueryResult res1 = createLocationResult(1.5, 3, it, 1, QueryResult.Position.EDGE);
+        QueryResult res2 = createLocationResult(1.5, 7, it, 2, QueryResult.Position.EDGE);
 
         QueryGraph q = new QueryGraph(g);
         q.lookup(Arrays.asList(res1, res2));

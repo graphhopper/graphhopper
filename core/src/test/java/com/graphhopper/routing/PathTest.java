@@ -192,11 +192,11 @@ public class PathTest
         path.setEdgeEntry(e1);
         path.extract();
 
-        path.calcInstructions(tr);
-        Instruction nextInstr1 = path.findInstruction(0.0, 0.1);
-        Instruction nextInstr2 = path.findInstruction(5.0, 0.4);
-        Instruction nextInstr3 = path.findInstruction(9.0, 0.53);
-        Instruction nextInstr4 = path.findInstruction(7.8, 0.25);
+        InstructionList il = path.calcInstructions(tr);
+        Instruction nextInstr1 = il.find(0.0, 0.1);
+        Instruction nextInstr2 = il.find(5.0, 0.4);
+        Instruction nextInstr3 = il.find(9.0, 0.53);
+        Instruction nextInstr4 = il.find(7.8, 0.25);
 
         assertEquals(Instruction.TURN_RIGHT, nextInstr1.getSign());
         assertEquals(Instruction.TURN_LEFT, nextInstr2.getSign());

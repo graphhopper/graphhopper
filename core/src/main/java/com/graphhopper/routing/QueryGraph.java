@@ -95,8 +95,11 @@ public class QueryGraph implements Graph
         {
             // Do not create virtual node for a query result if it is directly on a tower node or not found
             EdgeIteratorState closestEdge = res.getClosestEdge();
-            if (res.getSnappedPosition() == QueryResult.Position.TOWER || closestEdge == null)
+            if (res.getSnappedPosition() == QueryResult.Position.TOWER)
                 continue;
+
+            if (closestEdge == null)
+                throw new IllegalStateException("Do not call QueryGraph.lookup with invalid QueryResult " + res);
 
             int base = closestEdge.getBaseNode();
 
@@ -181,18 +184,27 @@ public class QueryGraph implements Graph
                 long reverseFlags = closestEdge.detach(true).getFlags();
                 int prevWayIndex = 1;
                 int prevNodeId = baseNode;
-                int counter = 0;
                 int virtNodeId = virtualNodes.getSize() + mainNodes;
-                // Create base and adjacent PointLists for all virtual nodes!
+
+                // Create base and adjacent PointLists for all none-equal virtual nodes.
                 // We do so via inserting them at the correct position of fullPL and cutting the                
                 // fullPL into the right pieces.
-                for (QueryResult res : results)
+                for (int counter = 0; counter < results.size(); counter++)
                 {
+                    QueryResult res = results.get(counter);
                     if (res.getClosestEdge().getBaseNode() != baseNode)
                         throw new IllegalStateException("Base nodes have to be identical but were not: " + closestEdge + " vs " + res.getClosestEdge());
 
-                    queryResults.add(res);
                     GHPoint3D currSnapped = res.getSnappedPoint();
+
+                    // no new virtual nodes if exactly the same snapped point
+                    if (prevPoint.equals(currSnapped))
+                    {
+                        res.setClosestNode(prevNodeId);
+                        continue;
+                    }
+
+                    queryResults.add(res);
                     createEdges(prevPoint, prevWayIndex,
                             res.getSnappedPoint(), res.getWayIndex(),
                             fullPL, closestEdge, prevNodeId, virtNodeId, reverseFlags);
@@ -210,7 +222,6 @@ public class QueryGraph implements Graph
                     prevNodeId = virtNodeId;
                     prevWayIndex = res.getWayIndex() + 1;
                     prevPoint = currSnapped;
-                    counter++;
                     virtNodeId++;
                 }
 
