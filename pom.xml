@@ -51,6 +51,19 @@
         <developerConnection>scm:git:git@github.com:graphhopper/graphhopper.git</developerConnection>
         <url>git@github.com:graphhopper/graphhopper.git</url>
     </scm>
+    <distributionManagement>
+        <snapshotRepository>
+            <id>internal.snapshot.repo</id>
+            <name>Semi Official Nexus</name>
+            <url>http://lv515:8081/nexus/content/repositories/snapshots/</url>
+            <uniqueVersion>false</uniqueVersion>
+        </snapshotRepository>
+        <repository>
+            <id>internal.release.repo</id>
+            <name>Semi Official Nexus</name>
+            <url>http://lv515:8081/nexus/content/repositories/releases/</url>
+        </repository>
+    </distributionManagement>
     <developers>
         <developer>
             <id>karussell</id>
