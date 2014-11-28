@@ -11,6 +11,8 @@ import javax.xml.stream.XMLStreamException;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
+import com.graphhopper.util.shapes.GHPoint;
+
 import uk.co.ordnancesurvey.api.srs.LatLong;
 
 public class DatexStreamSpeedUpdateReaderTest {
@@ -160,7 +162,7 @@ public class DatexStreamSpeedUpdateReaderTest {
 		DatexReader reader = new DatexReader();
 		List<LatLongMetaData> readData = reader.read(datexModelStream, datexStream);
 		assertEquals(SPEED, readData.get(0).getMetaData(SPEED_TAG));
-		LatLong location = new SimpleLatLong(LATITUDE, LONGITUDE);
+		GHPoint location = new GHPoint(Double.parseDouble(LATITUDE), Double.parseDouble(LONGITUDE));
 		assertEquals(location , readData.get(0).getLocation());
 	}
 
