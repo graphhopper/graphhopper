@@ -792,7 +792,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                         return true;
 
                     // changed finish condition for CH
-                    double tmpWeight = bestPath.getWeight() * approximationFactor;
+                    double tmpWeight = bestPath.getWeight();
                     return currFrom.weight >= tmpWeight && currTo.weight >= tmpWeight;
                 }
 
@@ -815,8 +815,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     return getName() + "|" + prepareWeighting;
                 }
             };
-            astarBi.setApproximation(opts.getHints().getBool(AlgorithmOptions.ASTAR_BI + ".approximation", false));
-            astarBi.setApproximationFactor(opts.getHints().getDouble(AlgorithmOptions.ASTAR_BI + ".approximation_factor", 1));
             algo = astarBi;
         } else if (AlgorithmOptions.DIJKSTRA_BI.equals(opts.getAlgorithm()))
         {

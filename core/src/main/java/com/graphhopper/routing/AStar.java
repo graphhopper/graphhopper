@@ -25,11 +25,10 @@ import java.util.PriorityQueue;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.util.WeightApproximator;
+import com.graphhopper.routing.util.BeelineWeightApproximator;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
@@ -43,32 +42,26 @@ import com.graphhopper.util.EdgeIterator;
  */
 public class AStar extends AbstractRoutingAlgorithm
 {
-    private DistanceCalc dist;
+    private WeightApproximator weightApprox;
     private int visitedCount;
     private TIntObjectMap<AStarEdge> fromMap;
     private PriorityQueue<AStarEdge> prioQueueOpenSet;
     private AStarEdge currEdge;
     private int to1 = -1;
-    private double toLat;
-    private double toLon;
 
     public AStar( Graph g, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
         super(g, encoder, weighting, tMode);
         initCollections(1000);
-        setApproximation(true);
+        setApproximation(new BeelineWeightApproximator(nodeAccess, weighting));
     }
 
     /**
-     * @param approx if true it enables an approximative distance calculation from lat,lon values
+     * @param approx defines how distance to goal Node is approximated
      */
-    public AStar setApproximation( boolean approx )
+    public AStar setApproximation( WeightApproximator approx )
     {
-        if (approx)
-            dist = new DistancePlaneProjection();
-        else
-            dist = new DistanceCalcEarth();
-
+        weightApprox = approx;
         return this;
     }
 
@@ -82,8 +75,6 @@ public class AStar extends AbstractRoutingAlgorithm
     public Path calcPath( int from, int to )
     {
         checkAlreadyRun();
-        toLat = nodeAccess.getLatitude(to);
-        toLon = nodeAccess.getLongitude(to);
         to1 = to;
         currEdge = createEdgeEntry(from, 0);
         if (!traversalMode.isEdgeBased())
@@ -95,7 +86,7 @@ public class AStar extends AbstractRoutingAlgorithm
 
     private Path runAlgo()
     {
-        double currWeightToGoal, distEstimation, tmpLat, tmpLon;
+        double currWeightToGoal, distEstimation;
         EdgeExplorer explorer = outEdgeExplorer;
         while (true)
         {
@@ -112,17 +103,14 @@ public class AStar extends AbstractRoutingAlgorithm
 
                 int neighborNode = iter.getAdjNode();
                 int traversalId = traversalMode.createTraversalId(iter, false);
-                double alreadyVisitedWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weightToCompare;
+                double alreadyVisitedWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weightOfVisitedPath;
                 if (Double.isInfinite(alreadyVisitedWeight))
                     continue;
 
                 AStarEdge ase = fromMap.get(traversalId);
-                if (ase == null || ase.weightToCompare > alreadyVisitedWeight)
+                if (ase == null || ase.weightOfVisitedPath > alreadyVisitedWeight)
                 {
-                    tmpLat = nodeAccess.getLatitude(neighborNode);
-                    tmpLon = nodeAccess.getLongitude(neighborNode);
-                    currWeightToGoal = dist.calcDist(toLat, toLon, tmpLat, tmpLon);
-                    currWeightToGoal = weighting.getMinWeight(currWeightToGoal);
+                    currWeightToGoal = weightApprox.approximate(neighborNode, to1);
                     distEstimation = alreadyVisitedWeight + currWeightToGoal;
                     if (ase == null)
                     {
@@ -133,7 +121,7 @@ public class AStar extends AbstractRoutingAlgorithm
                         prioQueueOpenSet.remove(ase);
                         ase.edge = iter.getEdge();
                         ase.weight = distEstimation;
-                        ase.weightToCompare = alreadyVisitedWeight;
+                        ase.weightOfVisitedPath = alreadyVisitedWeight;
                     } else
                         continue;
 
@@ -183,13 +171,13 @@ public class AStar extends AbstractRoutingAlgorithm
     {
         // the variable 'weight' is used to let heap select smallest *full* distance.
         // but to compare distance we need it only from start:
-        double weightToCompare;
+        double weightOfVisitedPath;
 
-        public AStarEdge( int edgeId, int adjNode, double weightForHeap, double weightToCompare )
+        public AStarEdge( int edgeId, int adjNode, double weightForHeap, double weightOfVisitedPath )
         {
             super(edgeId, adjNode, weightForHeap);
             // round makes distance smaller => heuristic should underestimate the distance!
-            this.weightToCompare = (float) weightToCompare;
+            this.weightOfVisitedPath = (float) weightOfVisitedPath;
         }
     }
 

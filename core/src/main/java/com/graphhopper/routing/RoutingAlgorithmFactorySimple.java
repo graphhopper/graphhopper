@@ -39,9 +39,7 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
             return new Dijkstra(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
         } else if (AlgorithmOptions.ASTAR_BI.equalsIgnoreCase(algoStr))
         {
-            return new AStarBidirection(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode()).
-                    setApproximation(opts.getHints().getBool(AlgorithmOptions.ASTAR_BI + ".approximation", false)).
-                    setApproximationFactor(opts.getHints().getDouble(AlgorithmOptions.ASTAR_BI + ".approximation_factor", 1.2));
+            return new AStarBidirection(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
 
         } else if (AlgorithmOptions.DIJKSTRA_ONE_TO_MANY.equalsIgnoreCase(algoStr))
         {
@@ -53,5 +51,7 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
         {
             throw new IllegalArgumentException("Algorithm " + algoStr + " not found in " + getClass().getName());
         }
+
+        return algo;
     }
 }
