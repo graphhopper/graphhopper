@@ -112,6 +112,7 @@ public class QueryGraph implements Graph
         {
             // Do not create virtual node for a query result if it is directly on a tower node or not found
             EdgeIteratorState closestEdge = res.getClosestEdge();
+
             if (res.getSnappedPosition() == QueryResult.Position.TOWER)
                 continue;
 
@@ -242,9 +243,10 @@ public class QueryGraph implements Graph
                     virtNodeId++;
                 }
 
-                // two edges between last result and adjacent node are still missing
-                createEdges(prevPoint, prevWayIndex, fullPL.toGHPoint(fullPL.getSize() - 1), fullPL.getSize() - 2,
-                        fullPL, closestEdge, virtNodeId - 1, adjNode, reverseFlags);
+                // two edges between last result and adjacent node are still missing if not all points skipped
+                if (prevNodeId != baseNode)
+                    createEdges(prevPoint, prevWayIndex, fullPL.toGHPoint(fullPL.getSize() - 1), fullPL.getSize() - 2,
+                            fullPL, closestEdge, virtNodeId - 1, adjNode, reverseFlags);
 
                 return true;
             }
@@ -434,7 +436,9 @@ public class QueryGraph implements Graph
             int virtNode = mainNodes + i;
             node2EdgeMap.put(virtNode, virtEdgeIter);
 
-            // replace edge list of neighboring tower nodes: a) add virtual edges only and collect tower nodes where real edges will be added in step 2.
+            // replace edge list of neighboring tower nodes: 
+            // add virtual edges only and collect tower nodes where real edges will be added in step 2.
+            //
             // base node
             int towerNode = baseRevEdge.getAdjNode();
             if (towerNode < mainNodes)

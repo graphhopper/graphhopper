@@ -380,22 +380,35 @@ public class QueryGraphTest
         assertNotNull(GHUtility.getEdge(queryGraph, 0, 4));
         assertNotNull(GHUtility.getEdge(queryGraph, 0, 3));
     }
-    
+
     @Test
     public void testAvoidDuplicateVirtualNodesIfIdentical()
     {
         initGraph(g);
-        
-        EdgeIteratorState iter = GHUtility.getEdge(g, 0, 2);
-        QueryResult res1 = createLocationResult(0.5, 0, iter, 0, EDGE);        
-        QueryResult res2 = createLocationResult(0.5, 0, iter, 0, EDGE);
+
+        EdgeIteratorState edgeState = GHUtility.getEdge(g, 0, 2);
+        QueryResult res1 = createLocationResult(0.5, 0, edgeState, 0, EDGE);
+        QueryResult res2 = createLocationResult(0.5, 0, edgeState, 0, EDGE);
         QueryGraph queryGraph = new QueryGraph(g);
         queryGraph.lookup(Arrays.asList(res1, res2));
         assertEquals(new GHPoint(0.5, 0), res1.getSnappedPoint());
         assertEquals(new GHPoint(0.5, 0), res2.getSnappedPoint());
         assertEquals(3, res1.getClosestNode());
         assertEquals(3, res2.getClosestNode());
-    }    
+
+        // force skip due to **tower** node snapping in phase 2, but no virtual edges should be created for res1
+        edgeState = GHUtility.getEdge(g, 0, 1);
+        res1 = createLocationResult(1, 0, edgeState, 0, EDGE);
+        // now create virtual edges
+        edgeState = GHUtility.getEdge(g, 0, 2);
+        res2 = createLocationResult(0.5, 0, edgeState, 0, EDGE);        
+        queryGraph = new QueryGraph(g);
+        queryGraph.lookup(Arrays.asList(res1, res2));        
+        // make sure only one virtual node was created
+        assertEquals(queryGraph.getNodes(), g.getNodes() + 1);
+        EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(0);
+        assertEquals(GHUtility.asSet(1, 3), GHUtility.getNeighbors(iter));
+    }
 
     @Test
     public void testGetEdgeProps()
@@ -457,7 +470,7 @@ public class QueryGraphTest
         assertEdgeIdsStayingEqual(inExplorer, outExplorer, nodeA, nodeB);
 
         // setup query results
-        EdgeIteratorState it = GHUtility.getEdge(g, nodeA, nodeB);        
+        EdgeIteratorState it = GHUtility.getEdge(g, nodeA, nodeB);
         QueryResult res1 = createLocationResult(1.5, 3, it, 1, QueryResult.Position.EDGE);
         QueryResult res2 = createLocationResult(1.5, 7, it, 2, QueryResult.Position.EDGE);
 

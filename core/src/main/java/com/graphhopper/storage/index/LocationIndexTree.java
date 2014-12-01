@@ -525,7 +525,7 @@ public class LocationIndexTree implements LocationIndex
                 size += len;
                 intIndex++;
                 leafs++;
-                dataAccess.ensureCapacity((long)(intIndex + len + 1) * 4);
+                dataAccess.ensureCapacity((long) (intIndex + len + 1) * 4);
                 if (len == 1)
                 {
                     // less disc space for single entries
@@ -550,7 +550,7 @@ public class LocationIndexTree implements LocationIndex
                     {
                         continue;
                     }
-                    dataAccess.ensureCapacity((long)(intIndex + 1) * 4);
+                    dataAccess.ensureCapacity((long) (intIndex + 1) * 4);
                     int beforeIntIndex = intIndex;
                     intIndex = store(subEntry, beforeIntIndex);
                     if (intIndex == beforeIntIndex)
@@ -907,16 +907,19 @@ public class LocationIndexTree implements LocationIndex
                     tmpNormedDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                             tmpLat, tmpLon, wayLat, wayLon);
                     check(tmpClosestNode, tmpNormedDist, pointIndex, currEdge, pos);
-                } else if (pointIndex + 1 == len)
-                {
-                    tmpNormedDist = adjDist;
-                    pos = QueryResult.Position.TOWER;
                 } else
                 {
-                    tmpNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
-                    pos = QueryResult.Position.PILLAR;
+                    if (pointIndex + 1 == len)
+                    {
+                        tmpNormedDist = adjDist;
+                        pos = QueryResult.Position.TOWER;
+                    } else
+                    {
+                        tmpNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
+                        pos = QueryResult.Position.PILLAR;
+                    }
+                    check(tmpClosestNode, tmpNormedDist, pointIndex + 1, currEdge, pos);
                 }
-                check(tmpClosestNode, tmpNormedDist, pointIndex + 1, currEdge, pos);
 
                 if (tmpNormedDist <= equalNormedDelta)
                     return false;

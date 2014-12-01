@@ -214,21 +214,6 @@ public class DistanceCalcEarth implements DistanceCalc
         return new GHPoint(c_lat, c_lon / shrink_factor);
     }
 
-    /**
-     * This method decides case 1: if we should use distance(r to edge) where r=(lat,lon) or case 2:
-     * min(distance(r to a), distance(r to b)) where edge=(a to b)
-     * <p/>
-     * @return true for case 1
-     */
-    // case 1:
-    //   r
-    //  . 
-    // a-------b
-    //    
-    // case 2:
-    // r
-    //  .
-    //    a-------b
     @Override
     public boolean validEdgeDistance( double r_lat_deg, double r_lon_deg,
             double a_lat_deg, double a_lon_deg,
