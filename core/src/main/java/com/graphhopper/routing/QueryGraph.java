@@ -73,7 +73,7 @@ public class QueryGraph implements Graph
         mainNodes = graph.getNodes();
         mainEdges = graph.getAllEdges().getCount();
     }
-
+    
     public Graph getOriginalGraph()
     {
         return mainGraph;
@@ -203,7 +203,8 @@ public class QueryGraph implements Graph
                 int prevWayIndex = 1;
                 int prevNodeId = baseNode;
                 int virtNodeId = virtualNodes.getSize() + mainNodes;
-
+                boolean addedEdges = false;
+                
                 // Create base and adjacent PointLists for all none-equal virtual nodes.
                 // We do so via inserting them at the correct position of fullPL and cutting the                
                 // fullPL into the right pieces.
@@ -221,7 +222,7 @@ public class QueryGraph implements Graph
                         res.setClosestNode(prevNodeId);
                         continue;
                     }
-
+                    
                     queryResults.add(res);
                     createEdges(prevPoint, prevWayIndex,
                             res.getSnappedPoint(), res.getWayIndex(),
@@ -230,12 +231,13 @@ public class QueryGraph implements Graph
                     virtualNodes.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
 
                     // add edges again to set adjacent edges for newVirtNodeId
-                    if (counter > 0)
+                    if (addedEdges)
                     {
                         virtualEdges.add(virtualEdges.get(virtualEdges.size() - 2));
                         virtualEdges.add(virtualEdges.get(virtualEdges.size() - 2));
                     }
 
+                    addedEdges = true;
                     res.setClosestNode(virtNodeId);
                     prevNodeId = virtNodeId;
                     prevWayIndex = res.getWayIndex() + 1;
@@ -244,7 +246,7 @@ public class QueryGraph implements Graph
                 }
 
                 // two edges between last result and adjacent node are still missing if not all points skipped
-                if (prevNodeId != baseNode)
+                if (addedEdges)
                     createEdges(prevPoint, prevWayIndex, fullPL.toGHPoint(fullPL.getSize() - 1), fullPL.getSize() - 2,
                             fullPL, closestEdge, virtNodeId - 1, adjNode, reverseFlags);
 
