@@ -25,7 +25,6 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -103,7 +102,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
     }
 
-    protected void updateBestPath( EdgeIteratorState edgeState, EdgeEntry bestEdgeEntry, int key )
+    protected void updateBestPath( EdgeIteratorState edgeState, EdgeEntry bestEdgeEntry, int traversalId )
     {
     }
 

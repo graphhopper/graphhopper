@@ -2,16 +2,15 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-
 	<groupId>com.graphhopper</groupId>
 	<artifactId>graphhopper</artifactId>
 	<name>GraphHopper</name>
 	<version>0.4-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<description>
-        GraphHopper is a fast and memory efficient Java road routing engine 
-        working seamlessly with OpenStreetMap data.
-    </description>
+GraphHopper is a fast and memory efficient Java road routing engine
+working seamlessly with OpenStreetMap data.
+</description>
 	<parent>
 		<groupId>com.graphhopper</groupId>
 		<artifactId>graphhopper-parent</artifactId>
@@ -21,9 +20,9 @@
 		<netbeans.hint.license>apache20</netbeans.hint.license>
 		<maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZ</maven.build.timestamp.format>
 		<builddate>${maven.build.timestamp}</builddate>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <geotools.version>12.0.1</geotools.version>
-    </properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<geotools.version>12.1</geotools.version>
+	</properties>
 	<licenses>
 		<license>
 			<name>The Apache Software License, Version 2.0</name>
@@ -32,8 +31,14 @@
 			<comments>A business-friendly OSS license</comments>
 		</license>
 	</licenses>
+	<repositories>
+		<repository>
+			<id>osgeo</id>
+			<name>Open Source Geospatial Foundation Repository</name>
+			<url>http://download.osgeo.org/webdav/geotools/</url>
+		</repository>
+	</repositories>
 	<dependencies>
-
 		<!-- Trove is LGPL and slightly big (~3MB) -->
 		<dependency>
 			<groupId>net.sf.trove4j</groupId>
@@ -48,15 +53,12 @@
 		<!-- more recent and nicer but bigger <dependency> <groupId>ch.qos.logback</groupId> 
 			<artifactId>logback-classic</artifactId> <version>1.0.13</version> <scope>test</scope> 
 			</dependency> -->
-
-
 		<!-- for using CGIAR: elevation data importing via tif files -->
 		<dependency>
 			<groupId>org.apache.xmlgraphics</groupId>
 			<artifactId>xmlgraphics-commons</artifactId>
 			<version>1.5</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.google.protobuf</groupId>
 			<artifactId>protobuf-java</artifactId>
@@ -66,11 +68,6 @@
 			<groupId>org.openstreetmap.osmosis</groupId>
 			<artifactId>osmosis-osm-binary</artifactId>
 			<version>0.43.1</version>
-		</dependency>
-		<dependency>
-			<groupId>uk.co.ordnancesurvey.api</groupId>
-			<artifactId>OSGBCoordinateConvertor</artifactId>
-			<version>1.0.5</version>
 		</dependency>
 		<dependency>
 			<groupId>org.geotools</groupId>
@@ -88,9 +85,9 @@
 			<version>${geotools.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>javax.measure</groupId>
+			<groupId>net.java.dev.jsr-275</groupId>
 			<artifactId>jsr-275</artifactId>
-			<version>1.0.0</version>
+			<version>1.0-beta-2</version>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
@@ -99,11 +96,20 @@
 		</dependency>
 		<dependency>
 			<groupId>org.geotools</groupId>
-			<artifactId>gt-epsg-wkt</artifactId>
+			<artifactId>gt-epsg-hsql</artifactId>
 			<version>${geotools.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.hsqldb</groupId>
+			<artifactId>hsqldb</artifactId>
+			<version>2.3.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.neo4j</groupId>
+			<artifactId>neo4j</artifactId>
+			<version>2.1.5</version>
+		</dependency>
 	</dependencies>
-
 	<build>
 		<pluginManagement>
 			<plugins>
@@ -141,7 +147,6 @@
 						</reportPlugins>
 					</configuration>
 				</plugin>
-
 				<!-- create jar with test classes to be reused in other projects -->
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -155,10 +160,8 @@
 						</execution>
 					</executions>
 				</plugin>
-
 			</plugins>
 		</pluginManagement>
-
 		<!-- make version available at runtime via version file -->
 		<resources>
 			<resource>
@@ -180,3 +183,4 @@
 		</resources>
 	</build>
 </project>
+

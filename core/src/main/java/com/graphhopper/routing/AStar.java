@@ -111,12 +111,12 @@ public class AStar extends AbstractRoutingAlgorithm
                     continue;
 
                 int neighborNode = iter.getAdjNode();
-                int iterationKey = traversalMode.createTraversalId(iter, false);
+                int traversalId = traversalMode.createTraversalId(iter, false);
                 double alreadyVisitedWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weightToCompare;
                 if (Double.isInfinite(alreadyVisitedWeight))
                     continue;
 
-                AStarEdge ase = fromMap.get(iterationKey);
+                AStarEdge ase = fromMap.get(traversalId);
                 if (ase == null || ase.weightToCompare > alreadyVisitedWeight)
                 {
                     tmpLat = nodeAccess.getLatitude(neighborNode);
@@ -127,7 +127,7 @@ public class AStar extends AbstractRoutingAlgorithm
                     if (ase == null)
                     {
                         ase = new AStarEdge(iter.getEdge(), neighborNode, distEstimation, alreadyVisitedWeight);
-                        fromMap.put(iterationKey, ase);
+                        fromMap.put(traversalId, ase);
                     } else if (ase.weight > distEstimation)
                     {
                         prioQueueOpenSet.remove(ase);
@@ -140,7 +140,7 @@ public class AStar extends AbstractRoutingAlgorithm
                     ase.parent = currEdge;
                     prioQueueOpenSet.add(ase);
 
-                    updateBestPath(iter, ase, iterationKey);
+                    updateBestPath(iter, ase, traversalId);
                 }
             }
 

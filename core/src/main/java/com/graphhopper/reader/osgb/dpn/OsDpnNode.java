@@ -20,10 +20,12 @@ package com.graphhopper.reader.osgb.dpn;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import uk.co.ordnancesurvey.api.srs.GeodeticPoint;
-import uk.co.ordnancesurvey.api.srs.MapPoint;
-import uk.co.ordnancesurvey.api.srs.OSGrid2LatLong;
-import uk.co.ordnancesurvey.api.srs.OutOfRangeException;
+import org.opengis.geometry.MismatchedDimensionException;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.operation.TransformException;
+
+import uk.co.ordnancesurvey.api.srs.LatLong;
+import uk.co.ordnancesurvey.api.srs.OpenCoordConverter;
 
 import com.graphhopper.reader.Node;
 import com.graphhopper.reader.osgb.OSITNElement;
@@ -38,10 +40,9 @@ import com.graphhopper.util.PointAccess;
 public class OsDpnNode extends OSITNElement implements Node {
 	private double lat;
 	private double lon;
-	private static OSGrid2LatLong coordConvertor = new OSGrid2LatLong();
 
 	public static OsDpnNode create(long id, XMLStreamReader parser)
-			throws XMLStreamException {
+			throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
 		// int attributeCount = parser.getAttributeCount();
 		// for (int i = 0; i < attributeCount; i++) {
 		// QName attributeName = parser.getAttributeName(i);
@@ -124,13 +125,12 @@ public class OsDpnNode extends OSITNElement implements Node {
 	}
 
 	@Override
-	protected void parseCoords(String elementText) {
-		// TODO plugin OSGBCOordConverter
+	protected void parseCoords(String elementText) throws MismatchedDimensionException, FactoryException, TransformException {
 		String[] split = elementText.split(",");
 
 		Double easting = Double.parseDouble(split[0]);
 		Double northing = Double.parseDouble(split[1]);
-		GeodeticPoint wgs84 = toWGS84(easting, northing);
+		LatLong wgs84 = OpenCoordConverter.toWGS84(easting, northing);
 		lat = wgs84.getLatAngle();
 		lon = wgs84.getLongAngle();
 		System.err.println(toString());
@@ -151,25 +151,6 @@ public class OsDpnNode extends OSITNElement implements Node {
 	protected void addDirectedLink(String nodeId, String orientation) {
 		throw new UnsupportedOperationException(
 				"Nodes should not have directed links");
-	}
-	
-	private static GeodeticPoint toWGS84(double easting, double northing) {
-		MapPoint osgb36Pt = new MapPoint(easting, northing);
-		GeodeticPoint wgs84Pt = null;
-		try {
-			wgs84Pt = coordConvertor.transformHiRes(osgb36Pt);
-		} catch (OutOfRangeException ore) {
-			//REALLY? 
-			//TODO should this be where the lowres route goes?
-		}
-		if (null==wgs84Pt) {
-			try {
-				wgs84Pt = coordConvertor.transformLoRes(osgb36Pt);
-			} catch(OutOfRangeException ore) {
-				
-			}
-		}
-		return wgs84Pt;
 	}
 
 	@Override

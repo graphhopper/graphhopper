@@ -23,6 +23,10 @@ import java.util.List;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.opengis.geometry.MismatchedDimensionException;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.operation.TransformException;
+
 import com.graphhopper.reader.OSMTurnRelation.Type;
 import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.RelationMember;
@@ -35,21 +39,10 @@ import com.graphhopper.reader.RelationMember;
  */
 public class OsItnMetaData extends OSITNElement implements Relation {
 
-	private static final List<String> notInstructions;
-	private static final List<String> onlyInstructions;
 	protected final ArrayList<ITNMember> members = new ArrayList<ITNMember>(5);
-	private Type relationType;
-
-	static {
-		notInstructions = new ArrayList<String>();
-		onlyInstructions = new ArrayList<String>();
-
-//		notInstructions.add("No Turn");
-//		onlyInstructions.add("Mandatory Turn");
-	}
 
 	public static OsItnMetaData create(long id, XMLStreamReader parser)
-			throws XMLStreamException {
+			throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
 		OsItnMetaData rel = new OsItnMetaData(id);
 
 		parser.nextTag();
@@ -63,7 +56,7 @@ public class OsItnMetaData extends OSITNElement implements Relation {
 
 	@Override
 	public String toString() {
-		return "Relation (" + getId() + ", " + members.size() + " members)";
+		return "MetaData Relation (" + getId() + ", " + members.size() + " members)";
 	}
 
 	public ArrayList<ITNMember> getMembers() {

@@ -7,8 +7,8 @@ public class GeoToolsLatLong implements LatLong {
 	double lon;
 	
 	public GeoToolsLatLong(DirectPosition2D pos) {
-		lat = pos.y;
-		lon = pos.x;
+		lon = pos.y;
+		lat = pos.x;
 	}
 	
 	@Override

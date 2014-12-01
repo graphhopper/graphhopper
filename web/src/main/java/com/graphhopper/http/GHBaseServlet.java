@@ -17,8 +17,8 @@
  */
 package com.graphhopper.http;
 
-import com.google.inject.name.Named;
 import java.io.IOException;
+import javax.inject.Named;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -49,7 +49,7 @@ public class GHBaseServlet extends HttpServlet
             res.setContentType("application/javascript");
             if (!jsonpAllowed)
             {
-                res.sendError(SC_INTERNAL_SERVER_ERROR, "Server is not configured to allow jsonp!");
+                res.sendError(SC_BAD_REQUEST, "Server is not configured to allow jsonp!");
                 return;
             }
 

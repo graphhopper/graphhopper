@@ -186,14 +186,15 @@ public class InstructionList implements Iterable<Instruction>
         Instruction lastI = get(size() - 1);
         if (lastI.points.size() != 1)
             throw new IllegalStateException("Last instruction must have exactly one point but was " + lastI.points.size());
-        double lastLat = lastI.getFirstLat(), lastLon = lastI.getFirstLon(), 
+        double lastLat = lastI.getFirstLat(), lastLon = lastI.getFirstLon(),
                 lastEle = lastI.getPoints().is3D() ? lastI.getFirstEle() : Double.NaN;
         gpxList.add(new GPXEntry(lastLat, lastLon, lastEle, timeOffset));
         return gpxList;
     }
 
     /**
-     * Creates the standard GPX string out of the points.
+     * Creates the standard GPX string out of the points according to the schema found here:
+     * https://graphhopper.com/public/schema/gpx-1.1.xsd
      * <p/>
      * @return string to be stored as gpx file
      */
@@ -217,7 +218,9 @@ public class InstructionList implements Iterable<Instruction>
 
         formatter.setTimeZone(tz);
         String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
-                + "<gpx xmlns='http://www.topografix.com/GPX/1/1' creator='Graphhopper' version='1.1' >"
+                + "<gpx xmlns='http://www.topografix.com/GPX/1/1' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'"
+                + " xsi:schemaLocation='https://graphhopper.com/public/schema https://graphhopper.com/public/schema/gpx-1.1.xsd'"
+                + " creator='Graphhopper' version='1.1'>"
                 + "<metadata>"
                 + "<link href='http://graphhopper.com'>"
                 + "<text>GraphHopper GPX</text>"
@@ -225,6 +228,21 @@ public class InstructionList implements Iterable<Instruction>
                 + "<time>" + tzHack(formatter.format(startTimeMillis)) + "</time>"
                 + "</metadata>";
         StringBuilder track = new StringBuilder(header);
+        if (!isEmpty())
+        {
+            track.append("<rte>");
+            Instruction nextI = null;
+            for (Instruction instr : instructions)
+            {
+                if (null != nextI)
+                    createRteptBlock(track, nextI, instr);
+
+                nextI = instr;
+            }
+            createRteptBlock(track, nextI, null);
+            track.append("</rte>");
+        }
+
         track.append("<trk><name>").append(trackName).append("</name>");
 
         track.append("<trkseg>");
@@ -240,21 +258,6 @@ public class InstructionList implements Iterable<Instruction>
         }
         track.append("</trkseg>");
         track.append("</trk>");
-
-        if (!isEmpty())
-        {
-            track.append("<rte>");
-            Instruction nextI = null;
-            for (Instruction instr : instructions)
-            {
-                if (null != nextI)
-                    createRteptBlock(track, nextI, instr);
-
-                nextI = instr;
-            }
-            createRteptBlock(track, nextI, null);
-            track.append("</rte>");
-        }
 
         // TODO #147 use wpt for via points!
         track.append("</gpx>");

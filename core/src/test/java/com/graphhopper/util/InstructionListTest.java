@@ -32,9 +32,20 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.NodeAccess;
+import java.io.StringReader;
 import java.util.*;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Source;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 /**
  *
@@ -44,7 +55,7 @@ public class InstructionListTest
 {
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation usTR = trMap.getWithFallBack(Locale.US);
-    private TraversalMode tMode = TraversalMode.NODE_BASED;
+    private final TraversalMode tMode = TraversalMode.NODE_BASED;
 
     @SuppressWarnings("unchecked")
     @Test
@@ -132,7 +143,7 @@ public class InstructionListTest
         compare(Arrays.asList(asL(1.2d, 1.0d), asL(1.2d, 1.1), asL(1.1d, 1.1), asL(1.0, 1.1),
                 asL(1.0, 1.2), asL(1.1, 1.3), asL(1.1, 1.4)),
                 wayList.createStartPoints());
-        
+
         FlagEncoder carEncoder = carManager.getSingle();
         p = new Dijkstra(g, carEncoder, new ShortestWeighting(), tMode).calcPath(6, 2);
         assertEquals(42000, p.getDistance(), 1e-2);
@@ -322,6 +333,7 @@ public class InstructionListTest
         assertEquals(9.9, wayList.get(3).getFirstLon(), 1e-3);
 
         String gpxStr = wayList.createGPX("test", 0, "GMT+1");
+        verifyGPX(gpxStr);
 
         assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T01:00:00+01:00</time>"));
         assertTrue(gpxStr, gpxStr.contains("<extensions>") && gpxStr.contains("</extensions>"));
@@ -349,6 +361,7 @@ public class InstructionListTest
             }
         };
         String gpxStr = il.createGPX("test", 0, "GMT");
+        verifyGPX(gpxStr);
         assertFalse(gpxStr, gpxStr.contains("NaN"));
         assertFalse(gpxStr, gpxStr.contains("<ele>"));
 
@@ -388,6 +401,8 @@ public class InstructionListTest
         assertEquals(15000, result.get(2).getMillis());
         assertEquals(19000, result.get(3).getMillis());
         assertEquals(22000, result.get(4).getMillis());
+
+        verifyGPX(instructions.createGPX());
     }
 
     private long flagsForSpeed( EncodingManager encodingManager, int speedKmPerHour )
@@ -407,5 +422,27 @@ public class InstructionListTest
         InstructionList il = p.calcInstructions(usTR);
         assertEquals(0, il.size());
         assertEquals(0, il.createStartPoints().size());
+    }
+
+    public void verifyGPX( String gpx )
+    {        
+        SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        Schema schema = null;
+        try
+        {
+            Source schemaFile = new StreamSource(getClass().getResourceAsStream("gpx-schema.xsd"));
+            schema = schemaFactory.newSchema(schemaFile);
+        } catch (SAXException e1)
+        {
+            throw new IllegalStateException("There was a problem with the schema supplied for validation.");
+        }
+        Validator validator = schema.newValidator();
+        try
+        {
+            validator.validate(new StreamSource(new StringReader(gpx)));
+        } catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
     }
 }

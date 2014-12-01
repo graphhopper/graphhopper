@@ -25,6 +25,9 @@ import java.util.List;
 
 import javax.xml.stream.XMLStreamException;
 
+import org.opengis.geometry.MismatchedDimensionException;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.operation.TransformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -140,7 +143,7 @@ public class OsItnReader implements DataReader {
     private static final String EDGE_ID_TO_OSMIDMAP_FORMAT = "edgeIdTOOsmidmap: {}";
 
     public class ProcessVisitor {
-        public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException {
+        public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
         }
     }
 
@@ -260,7 +263,7 @@ public class OsItnReader implements DataReader {
         }
     }
 
-    private void preProcessDirOrFile(File osmFile) throws XMLStreamException, IOException {
+    private void preProcessDirOrFile(File osmFile) throws XMLStreamException, IOException, MismatchedDimensionException, FactoryException, TransformException {
         if (osmFile.isDirectory()) {
             String absolutePath = osmFile.getAbsolutePath();
             String[] list = osmFile.list();
@@ -273,7 +276,7 @@ public class OsItnReader implements DataReader {
         }
     }
 
-    private void preProcessSingleFile(File osmFile) throws XMLStreamException, IOException {
+    private void preProcessSingleFile(File osmFile) throws XMLStreamException, IOException, MismatchedDimensionException, FactoryException, TransformException {
         OsItnInputFile in = null;
         try {
             logger.error(PREPROCESS_FORMAT, osmFile.getName());
@@ -284,7 +287,7 @@ public class OsItnReader implements DataReader {
         }
     }
 
-    private void preProcessSingleFile(OsItnInputFile in) throws XMLStreamException {
+    private void preProcessSingleFile(OsItnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
         long tmpWayCounter = 1;
         long tmpRelationCounter = 1;
         RoutingElement item;
@@ -520,7 +523,7 @@ public class OsItnReader implements DataReader {
         try {
             ProcessVisitor processVisitor = new ProcessVisitor() {
                 @Override
-                public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException {
+                public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
                     logger.error("PROCESS STAGE 1");
                     processStageOne(processData, in);
                 }
@@ -529,7 +532,7 @@ public class OsItnReader implements DataReader {
             writeOsm2GraphFromDirOrFile(osmFile, processData, processVisitor);
             processVisitor = new ProcessVisitor() {
                 @Override
-                public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException {
+                public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
                     logger.error("PROCESS STAGE 2");
                     processStageTwo(processData, in);
                 }
@@ -538,7 +541,7 @@ public class OsItnReader implements DataReader {
             writeOsm2GraphFromDirOrFile(osmFile, processData, processVisitor);
             processVisitor = new ProcessVisitor() {
                 @Override
-                public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException {
+                public void process(ProcessData processData, OsItnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
                     logger.error("PROCESS STAGE 3");
                     processStageThree(processData, in);
                 }
@@ -555,7 +558,7 @@ public class OsItnReader implements DataReader {
             throw new IllegalStateException("osm must not be empty. read " + processData.counter + " lines and " + locations + " locations");
     }
 
-    private void writeOsm2GraphFromDirOrFile(File osmFile, ProcessData processData, ProcessVisitor processVisitor) throws XMLStreamException, IOException {
+    private void writeOsm2GraphFromDirOrFile(File osmFile, ProcessData processData, ProcessVisitor processVisitor) throws XMLStreamException, IOException, MismatchedDimensionException, FactoryException, TransformException {
         if (osmFile.isDirectory()) {
             String absolutePath = osmFile.getAbsolutePath();
             String[] list = osmFile.list();
@@ -568,7 +571,7 @@ public class OsItnReader implements DataReader {
         }
     }
 
-    private void writeOsm2GraphFromSingleFile(File osmFile, ProcessData processData, ProcessVisitor processVisitor) throws XMLStreamException, IOException {
+    private void writeOsm2GraphFromSingleFile(File osmFile, ProcessData processData, ProcessVisitor processVisitor) throws XMLStreamException, IOException, MismatchedDimensionException, FactoryException, TransformException {
         OsItnInputFile in = null;
         try {
             logger.error(PROCESS_FORMAT, osmFile.getName());
@@ -581,7 +584,7 @@ public class OsItnReader implements DataReader {
 
     }
 
-    private void processStageOne(ProcessData processData, OsItnInputFile in) throws XMLStreamException {
+    private void processStageOne(ProcessData processData, OsItnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
         RoutingElement item;
         LongIntMap nodeFilter = getNodeMap();
         while ((item = in.getNext()) != null) {
@@ -605,7 +608,7 @@ public class OsItnReader implements DataReader {
         }
     }
 
-    private void processStageTwo(ProcessData processData, OsItnInputFile in) throws XMLStreamException {
+    private void processStageTwo(ProcessData processData, OsItnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
         RoutingElement item;
         LongIntMap nodeFilter = getNodeMap();
         while ((item = in.getNext()) != null) {
@@ -633,17 +636,17 @@ public class OsItnReader implements DataReader {
         }
     }
 
-    private List<OSITNNode> prepareWaysNodes(RoutingElement item, LongIntMap nodeFilter) {
+    private List<OSITNNode> prepareWaysNodes(RoutingElement item, LongIntMap nodeFilter) throws MismatchedDimensionException, FactoryException, TransformException {
         List<OSITNNode> evaluateWayNodes = ((OSITNWay) item).evaluateWayNodes(getEdgeIdToXToYToNodeFlagsMap());
         for (OSITNNode ositnNode : evaluateWayNodes) {
-            nodeFilter.put(ositnNode.getId(), TOWER_NODE);
+            nodeFilter.put(ositnNode.getId(), PILLAR_NODE);
             processNode(ositnNode);
         }
         logger.info(WE_HAVE_EVALUATED_WAY_NODES_FORMAT, evaluateWayNodes.size());
         return evaluateWayNodes;
     }
 
-    private void processStageThree(ProcessData processData, OsItnInputFile in) throws XMLStreamException {
+    private void processStageThree(ProcessData processData, OsItnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
         RoutingElement item;
         while ((item = in.getNext()) != null) {
             switch (item.getType()) {

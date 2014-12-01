@@ -20,7 +20,7 @@
 			<url>http://lv515:8081/nexus/content/groups/public/</url>
 		</repository>
 	</repositories>
-
+ 
 	<build>
 		<plugins>
 			<plugin>
@@ -68,10 +68,16 @@
 			<version>4.11</version>
 		</dependency>
 		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>${slf4j.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>
 			<version>1.2.17</version>
-			<type>jar</type>
+			<scope>runtime</scope>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>

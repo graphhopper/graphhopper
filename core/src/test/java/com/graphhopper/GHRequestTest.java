@@ -31,14 +31,9 @@ public class GHRequestTest
     public void testGetHint()
     {
         GHRequest instance = new GHRequest(10, 12, 12, 10);
-        instance.putHint("something", 1);
-        assertEquals(1, (Number) instance.getHint("something", 2));
+        instance.getHints().put("something", "1");
+        assertEquals(1, instance.getHints().getInt("something", 2));
         // #173 - will throw an error: Integer cannot be cast to Double
-        assertEquals(1, instance.getHint("something", 2d), 1e1);
-        
-        instance = new GHRequest(10, 12, 12, 10);
-        instance.putHint("something", 1d);
-        assertEquals(1d, (Number) instance.getHint("something", 2));
-        assertEquals(1d, (Number) instance.getHint("something", 2d));
+        assertEquals(1, instance.getHints().getDouble("something", 2d), 1e1);
     }
 }

@@ -31,6 +31,9 @@ import java.util.List;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.opengis.geometry.MismatchedDimensionException;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.operation.TransformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,8 +55,11 @@ public class OSITNWay extends OSITNElement implements Way {
 
     /**
      * Constructor for XML Parser
+     * @throws TransformException 
+     * @throws FactoryException 
+     * @throws MismatchedDimensionException 
      */
-    public static OSITNWay create(long id, XMLStreamReader parser) throws XMLStreamException {
+    public static OSITNWay create(long id, XMLStreamReader parser) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
         OSITNWay way = new OSITNWay(id);
         parser.nextTag();
         way.readTags(parser);
@@ -154,8 +160,11 @@ public class OSITNWay extends OSITNElement implements Way {
      *
      * @param edgeIdToXToYToNodeFlagsMap
      * @return
+     * @throws TransformException 
+     * @throws FactoryException 
+     * @throws MismatchedDimensionException 
      */
-    public List<OSITNNode> evaluateWayNodes(TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>> edgeIdToXToYToNodeFlagsMap) {
+    public List<OSITNNode> evaluateWayNodes(TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>> edgeIdToXToYToNodeFlagsMap) throws MismatchedDimensionException, FactoryException, TransformException {
         List<OSITNNode> wayNodes = new ArrayList<OSITNNode>();
 
         for (int i = 0; i < wayCoords.length; i++) {

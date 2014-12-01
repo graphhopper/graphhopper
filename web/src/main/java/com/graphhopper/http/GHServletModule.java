@@ -64,5 +64,10 @@ public class GHServletModule extends ServletModule
 
         serve("/route*").with(GraphHopperServlet.class);
         bind(GraphHopperServlet.class).in(Singleton.class);
+        
+        if(args.getBool("update.enable", true)) {
+        	serve("/update*").with(UpdateServlet.class);
+        	bind(UpdateServlet.class).in(Singleton.class);
+        }
     }
 }

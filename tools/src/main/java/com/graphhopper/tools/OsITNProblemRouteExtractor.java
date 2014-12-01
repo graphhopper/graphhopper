@@ -7,46 +7,38 @@ import gnu.trove.procedure.TLongProcedure;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.StringWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
+import org.opengis.geometry.MismatchedDimensionException;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.operation.TransformException;
 import org.xml.sax.SAXException;
 
+import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.OSMElement;
 import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.RelationMember;
 import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.Way;
 import com.graphhopper.reader.osgb.OsItnInputFile;
+import com.graphhopper.reader.osgb.OsItnReader;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 
 /**
@@ -83,7 +75,7 @@ public class OsITNProblemRouteExtractor {
 	private abstract class ProcessVisitor<T> {
 		abstract void processVisitor(T element) throws XMLStreamException,
 				IOException, ParserConfigurationException, SAXException,
-				TransformerConfigurationException, TransformerException, XPathExpressionException;
+				TransformerConfigurationException, TransformerException, XPathExpressionException, MismatchedDimensionException, FactoryException, TransformException;
 	}
 
 	private abstract class ProcessFileVisitor<T> extends ProcessVisitor<File> {
@@ -100,7 +92,7 @@ public class OsITNProblemRouteExtractor {
 		void processVisitor(File file) throws XMLStreamException, IOException,
 				TransformerConfigurationException,
 				ParserConfigurationException, SAXException,
-				TransformerException, XPathExpressionException {
+				TransformerException, XPathExpressionException, MismatchedDimensionException, FactoryException, TransformException {
 			OsItnInputFile in = null;
 			try {
 				in = new OsItnInputFile(file).setWorkerThreads(1).open();
@@ -226,9 +218,10 @@ public class OsITNProblemRouteExtractor {
 				String line = bir.readLine();
 				
 				if (output) {
-					System.out.println(line);
+					outputWriter.println(line);
 					if (isEndBlock(line)) {
 						output = false;
+						outputWriter.flush();
 					}
 				}
 				if (!output && line.contains("fid='osgb")) {
@@ -237,8 +230,8 @@ public class OsITNProblemRouteExtractor {
 					long checkFid = Long.parseLong(idStr);
 					if (fidList.contains(checkFid)) {
 						output = true;
-						System.out.println(lastLine);
-						System.out.println(line);
+						outputWriter.println(lastLine);
+						outputWriter.println(line);
 					}
 				}
 				lastLine = line;
@@ -267,15 +260,24 @@ public class OsITNProblemRouteExtractor {
 	private TLongProcedure wayOutput;
 	private TLongArrayList relationList;
 	private TLongProcedure relOutput;
+	private PrintWriter outputWriter;
 
 	public static void main(String[] strs) throws Exception {
 		CmdArgs args = CmdArgs.read(strs);
 		String fileOrDirName = args.get("osmreader.osm", null);
 		String namedRoad = args.get("roadName", null);
 		String namedLinkRoad = args.get("linkRoadName", null);
+		String outputFileName = args.get("itnoutput", "os-itn-" + namedRoad.replaceAll(" ", "-").toLowerCase() + (null!=namedLinkRoad?"-" + namedLinkRoad.replaceAll(" ", "-").toLowerCase():"") + ".xml");
 		OsITNProblemRouteExtractor extractor = new OsITNProblemRouteExtractor(
 				fileOrDirName, namedRoad, namedLinkRoad);
-		extractor.process();
+		extractor.process(outputFileName);
+		args.put("reader.implementation", OsItnReader.class.getName());
+		args.put("osmreader.osm", outputFileName);
+		GraphHopper hopper = new GraphHopper().init(args).importOrLoad();
+		FlagEncoder carEncoder = hopper.getEncodingManager().getEncoder("CAR");
+		EdgeFilter filter = new DefaultEdgeFilter(carEncoder, false, true);
+		
+		GHUtility.printInfo(hopper.getGraph(), 0, Integer.MIN_VALUE, filter);
 	}
 
 	public OsITNProblemRouteExtractor(String fileOrDirName, String namedRoad,
@@ -285,7 +287,7 @@ public class OsITNProblemRouteExtractor {
 		workingLinkRoad = namedLinkRoad;
 	}
 
-	private void process() throws TransformerException, ParserConfigurationException, SAXException, XPathExpressionException, XMLStreamException, IOException {
+	private void process(String outputFileName) throws TransformerException, ParserConfigurationException, SAXException, XPathExpressionException, XMLStreamException, IOException, MismatchedDimensionException, FactoryException, TransformException {
 		prepareOutputMethods();
 
 		File itnFile = new File(workingStore);
@@ -305,7 +307,9 @@ public class OsITNProblemRouteExtractor {
 			fullWayList.forEach(wayOutput);
 		}
 		
-		System.out.println("<?xml version='1.0' encoding='UTF-8'?>"
+		outputWriter = new PrintWriter(outputFileName);
+	
+		outputWriter.println("<?xml version='1.0' encoding='UTF-8'?>"
 				+ "<osgb:FeatureCollection "
 				+ "xmlns:osgb='http://www.ordnancesurvey.co.uk/xml/namespaces/osgb' "
 				+ "xmlns:gml='http://www.opengis.net/gml' "
@@ -321,13 +325,16 @@ public class OsITNProblemRouteExtractor {
 				+ "<gml:coordinates>291000.000,92000.000 293000.000,94000.000</gml:coordinates>"
 				+ "</osgb:Rectangle>"
 				+ "</osgb:queryExtent>");
+		outputWriter.flush();
 		processDirOrFile(itnFile, extractProcessor);
-		System.out.println("<osgb:boundedBy>"
+		outputWriter.println("<osgb:boundedBy>"
 				+ "<gml:Box srsName='osgb:BNG'>"
 				+ "<gml:coordinates>290822.000,91912.000 293199.000,94222.000</gml:coordinates>"
 				+ "</gml:Box>"
 				+ "</osgb:boundedBy>"
 				+ "</osgb:FeatureCollection>");
+		outputWriter.flush();
+		outputWriter.close();
 	}
 
 	private void prepareOutputMethods() {
@@ -410,7 +417,7 @@ public class OsITNProblemRouteExtractor {
 	private void processDirOrFile(File osmFile,
 			ProcessVisitor<File> processVisitor) throws XMLStreamException,
 			IOException, TransformerConfigurationException,
-			ParserConfigurationException, SAXException, TransformerException, XPathExpressionException {
+			ParserConfigurationException, SAXException, TransformerException, XPathExpressionException, MismatchedDimensionException, FactoryException, TransformException {
 		if (osmFile.isDirectory()) {
 			String absolutePath = osmFile.getAbsolutePath();
 			String[] list = osmFile.list();
@@ -426,7 +433,7 @@ public class OsITNProblemRouteExtractor {
 	private void processSingleFile(File osmFile,
 			ProcessVisitor<File> processVisitor) throws XMLStreamException,
 			IOException, TransformerConfigurationException,
-			ParserConfigurationException, SAXException, TransformerException, XPathExpressionException {
+			ParserConfigurationException, SAXException, TransformerException, XPathExpressionException, MismatchedDimensionException, FactoryException, TransformException {
 		processVisitor.processVisitor(osmFile);
 	}
 

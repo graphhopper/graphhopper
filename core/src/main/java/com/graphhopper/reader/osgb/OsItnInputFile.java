@@ -36,6 +36,9 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.opengis.geometry.MismatchedDimensionException;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.operation.TransformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -163,7 +166,7 @@ public class OsItnInputFile implements Sink, Closeable {
 		eof = false;
 	}
 
-	public RoutingElement getNext() throws XMLStreamException {
+	public RoutingElement getNext() throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
 		if (eof)
 			throw new IllegalStateException("EOF reached");
 
@@ -177,7 +180,7 @@ public class OsItnInputFile implements Sink, Closeable {
 		return null;
 	}
 
-	private OSITNElement getNextXML() throws XMLStreamException {
+	private OSITNElement getNextXML() throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
 
 		int event = parser.next();
 		while (event != XMLStreamConstants.END_DOCUMENT) {

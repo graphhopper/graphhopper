@@ -27,6 +27,9 @@ import java.util.List;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.opengis.geometry.MismatchedDimensionException;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.operation.TransformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,9 +51,12 @@ public class OsDpnWay extends OSITNWay implements Way {
 
 	/**
 	 * Constructor for XML Parser
+	 * @throws TransformException 
+	 * @throws FactoryException 
+	 * @throws MismatchedDimensionException 
 	 */
 	public static OsDpnWay create(long id, XMLStreamReader parser)
-			throws XMLStreamException {
+			throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
 		OsDpnWay way = new OsDpnWay(id);
 		parser.nextTag();
 		way.readTags(parser);
@@ -127,7 +133,7 @@ public class OsDpnWay extends OSITNWay implements Way {
 		throw new UnsupportedOperationException();
 	}
 
-	public List<OSITNNode> evaluateWayNodes() {
+	public List<OSITNNode> evaluateWayNodes() throws MismatchedDimensionException, FactoryException, TransformException {
 		List<OSITNNode> wayNodes = new ArrayList<OSITNNode>();
 
 		for (int i = 0; i < wayCoords.length; i++) {

@@ -87,12 +87,12 @@ public class RAMDataAccess extends AbstractDataAccess
 
         // initialize transient values
         setSegmentSize(segmentSizeInBytes);
-        incCapacity(Math.max(10 * 4, bytes));
+        ensureCapacity(Math.max(10 * 4, bytes));
         return this;
     }
 
     @Override
-    public boolean incCapacity( long bytes )
+    public boolean ensureCapacity(long bytes)
     {
         if (bytes < 0)
             throw new IllegalArgumentException("new capacity has to be strictly positive");

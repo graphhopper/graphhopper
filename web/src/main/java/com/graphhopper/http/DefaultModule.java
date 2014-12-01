@@ -17,17 +17,13 @@
  */
 package com.graphhopper.http;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.TranslationMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Peter Karich
@@ -53,28 +49,16 @@ public class DefaultModule extends AbstractModule
 
     /**
      * @return an initialized GraphHopper instance
-     * @throws ClassNotFoundException 
-     * @throws SecurityException 
-     * @throws NoSuchMethodException 
-     * @throws InvocationTargetException 
-     * @throws IllegalArgumentException 
-     * @throws IllegalAccessException 
-     * @throws InstantiationException 
      */
-    protected GraphHopper createGraphHopper( CmdArgs args ) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+    protected GraphHopper createGraphHopper( CmdArgs args )
     {
-    	String className = args.get("hopper.implementation", "com.graphhopper.GraphHopper");
-    	Class hopperImpl = Class.forName(className);
-		Constructor constructor = hopperImpl.getDeclaredConstructor();
-    	
-        graphHopper = (GraphHopper) constructor.newInstance();
-		graphHopper = graphHopper.forServer().init(args);
-        graphHopper.importOrLoad();
-        logger.info("loaded graph at:" + graphHopper.getGraphHopperLocation()
-                + ", source:" + graphHopper.getOSMFile()
-                + ", acceptWay:" + graphHopper.getEncodingManager()
-                + ", class:" + graphHopper.getGraph().getClass().getSimpleName());
-        return graphHopper;
+        GraphHopper tmp = new GraphHopper().forServer().init(args);
+        tmp.importOrLoad();
+        logger.info("loaded graph at:" + tmp.getGraphHopperLocation()
+                + ", source:" + tmp.getOSMFile()
+                + ", flagEncoders:" + tmp.getEncodingManager()
+                + ", class:" + tmp.getGraph().getClass().getSimpleName());
+        return tmp;
     }
 
     @Override
@@ -89,6 +73,9 @@ public class DefaultModule extends AbstractModule
             long timeout = args.getLong("web.timeout", 3000);
             bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);
             boolean jsonpAllowed = args.getBool("web.jsonpAllowed", false);
+            if (!jsonpAllowed)
+                logger.info("jsonp disabled");
+
             bind(Boolean.class).annotatedWith(Names.named("jsonpAllowed")).toInstance(jsonpAllowed);
         } catch (Exception ex)
         {

@@ -39,11 +39,6 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.co.ordnancesurvey.api.srs.GeodeticPoint;
-import uk.co.ordnancesurvey.api.srs.LatLong2OSGrid;
-import uk.co.ordnancesurvey.api.srs.MapPoint;
-import uk.co.ordnancesurvey.api.srs.OutOfRangeException;
-
 import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
@@ -55,6 +50,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.util.WeightingMap;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -86,7 +82,6 @@ public class MiniItnGraphUI
         new MiniItnGraphUI(hopper, debug).visualize();
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
-    private LatLong2OSGrid coordConvert = new LatLong2OSGrid();
     private Path path;
     private AlgorithmPreparation prepare;
     private final Graph graph;
@@ -101,7 +96,6 @@ public class MiniItnGraphUI
     private boolean fastPaint = false;
     private final Weighting weighting;
     private final FlagEncoder encoder;
-	protected String osgb = "";
 
     public MiniItnGraphUI( GraphHopper hopper, boolean debug )
     {
@@ -109,7 +103,7 @@ public class MiniItnGraphUI
         this.na = graph.getNodeAccess();
         prepare = hopper.getPreparation();
         encoder = hopper.getEncodingManager().getSingle();
-        weighting = hopper.createWeighting(Weighting.Params.create("fastest"), encoder);
+        weighting = hopper.createWeighting(new WeightingMap("fastest"), encoder);
         if (prepare == null)
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, "dijkstrabi", encoder, weighting, TraversalMode.NODE_BASED);
 
@@ -136,8 +130,7 @@ public class MiniItnGraphUI
 
                 g.setColor(Color.BLUE);
                 g.drawString(latLon, 40, 20);
-                g.drawString(osgb,40,40);
-                g.drawString("scale:" + mg.getScaleX(), 40, 60);
+                g.drawString("scale:" + mg.getScaleX(), 40, 40);
                 int w = mainPanel.getBounds().width;
                 int h = mainPanel.getBounds().height;
                 g.drawString(mg.setBounds(0, w, 0, h).toLessPrecisionString(), 40, 80);
@@ -491,18 +484,6 @@ public class MiniItnGraphUI
         double lat = mg.getLat(e.getY());
 		double lon = mg.getLon(e.getX());
 		latLon = lat + "," + lon;
-        GeodeticPoint latLongPos = new GeodeticPoint(lon, lat);
-		try {
-			MapPoint transformHiRes = coordConvert.transformHiRes(latLongPos);
-			osgb = "E:" + transformHiRes.getX() + "   N:" + transformHiRes.getY();
-		} catch (OutOfRangeException e1) {
-			try {
-				MapPoint transformLoRes = coordConvert.transformLoRes(latLongPos);
-				osgb = "E:" + transformLoRes.getX() + "   N:" + transformLoRes.getY();
-			} catch (OutOfRangeException e2) {
-				osgb = "";
-			}
-		}
         infoPanel.repaint();
         currentPosX = e.getX();
         currentPosY = e.getY();

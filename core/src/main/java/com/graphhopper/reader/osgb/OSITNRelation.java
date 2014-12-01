@@ -23,6 +23,9 @@ import java.util.List;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.opengis.geometry.MismatchedDimensionException;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.operation.TransformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +58,7 @@ public class OSITNRelation extends OSITNElement implements Relation {
 	}
 
 	public static OSITNRelation create(long id, XMLStreamReader parser)
-			throws XMLStreamException {
+			throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
 		OSITNRelation rel = new OSITNRelation(id);
 
 		parser.nextTag();

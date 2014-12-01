@@ -17,10 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.AVOID_AT_ALL_COSTS;
-import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.PREFER;
-import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.UNCHANGED;
-
+import static com.graphhopper.routing.util.PriorityCode.*;
 import java.util.TreeMap;
 
 import com.graphhopper.reader.Way;

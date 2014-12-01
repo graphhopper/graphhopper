@@ -243,14 +243,14 @@ public class AStarBidirection extends AbstractBidirAlgo
                 continue;
 
             int neighborNode = iter.getAdjNode();
-            int iterationKey = traversalMode.createTraversalId(iter, reverse);
+            int traversalId = traversalMode.createTraversalId(iter, reverse);
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
             double alreadyVisitedWeight = weighting.calcWeight(iter, reverse, currEdge.edge) + currEdge.weightToCompare;
             if (Double.isInfinite(alreadyVisitedWeight))
                     continue;
             
-            AStarEdge aee = shortestWeightMap.get(iterationKey);
+            AStarEdge aee = shortestWeightMap.get(traversalId);
             if (aee == null || aee.weightToCompare > alreadyVisitedWeight)
             {
                 double tmpLat = nodeAccess.getLatitude(neighborNode);
@@ -261,7 +261,7 @@ public class AStarBidirection extends AbstractBidirAlgo
                 if (aee == null)
                 {
                     aee = new AStarEdge(iter.getEdge(), neighborNode, estimationFullDist, alreadyVisitedWeight);
-                    shortestWeightMap.put(iterationKey, aee);
+                    shortestWeightMap.put(traversalId, aee);
                 } else if (aee.weight > estimationFullDist)
                 {
                     prioQueueOpenSet.remove(aee);
@@ -273,7 +273,7 @@ public class AStarBidirection extends AbstractBidirAlgo
 
                 aee.parent = currEdge;
                 prioQueueOpenSet.add(aee);
-                updateBestPath(iter, aee, iterationKey);
+                updateBestPath(iter, aee, traversalId);
             }
         }
     }

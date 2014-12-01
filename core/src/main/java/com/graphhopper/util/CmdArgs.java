@@ -31,108 +31,23 @@ import java.util.Properties;
  * <p/>
  * @author Peter Karich
  */
-public class CmdArgs
+public class CmdArgs extends PMap
 {
-    private final Map<String, String> map;
 
     public CmdArgs()
     {
-        this(new LinkedHashMap<String, String>(5));
     }
 
     public CmdArgs( Map<String, String> map )
     {
-        this.map = map;
+        super(map);
     }
 
-    public CmdArgs put( String key, String str )
+    @Override
+    public CmdArgs put( String key, Object str )
     {
-        map.put(key.toLowerCase(), str);
+        super.put(key, str);
         return this;
-    }
-
-    public long getLong( String key, long _default )
-    {
-        String str = get(key);
-        if (!Helper.isEmpty(str))
-        {
-            try
-            {
-                return Long.parseLong(str);
-            } catch (Exception ex)
-            {
-            }
-        }
-        return _default;
-    }
-
-    public int getInt( String key, int _default )
-    {
-        String str = get(key);
-        if (!Helper.isEmpty(str))
-        {
-            try
-            {
-                return Integer.parseInt(str);
-            } catch (Exception ex)
-            {
-            }
-        }
-        return _default;
-    }
-
-    public boolean getBool( String key, boolean _default )
-    {
-        String str = get(key);
-        if (!Helper.isEmpty(str))
-        {
-            try
-            {
-                return Boolean.parseBoolean(str);
-            } catch (Exception ex)
-            {
-            }
-        }
-        return _default;
-    }
-
-    public double getDouble( String key, double _default )
-    {
-        String str = get(key);
-        if (!Helper.isEmpty(str))
-        {
-            try
-            {
-                return Double.parseDouble(str);
-            } catch (Exception ex)
-            {
-            }
-        }
-        return _default;
-    }
-
-    public String get( String key, String _default )
-    {
-        String str = get(key);
-        if (Helper.isEmpty(str))
-        {
-            return _default;
-        }
-        return str;
-    }
-
-    String get( String key )
-    {
-        if (Helper.isEmpty(key))
-        {
-            return "";
-        }
-        String val = map.get(key.toLowerCase());
-        if (val == null)
-        {
-            return "";
-        }
-        return val;
     }
 
     /**
@@ -196,35 +111,6 @@ public class CmdArgs
         }
 
         return new CmdArgs(map);
-    }
-
-    public CmdArgs merge( CmdArgs read )
-    {
-        return merge(read.map);
-    }
-
-    CmdArgs merge( Map<String, String> map )
-    {
-        for (Entry<String, String> e : map.entrySet())
-        {
-            if (Helper.isEmpty(e.getKey()))
-            {
-                continue;
-            }
-            this.map.put(e.getKey().toLowerCase(), e.getValue());
-        }
-        return this;
-    }
-
-    public boolean has( String key )
-    {
-        return map.containsKey(key);
-    }
-
-    @Override
-    public String toString()
-    {
-        return map.toString();
     }
 
     /**

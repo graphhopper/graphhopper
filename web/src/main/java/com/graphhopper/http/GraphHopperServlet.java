@@ -21,6 +21,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.WeightingMap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
@@ -76,7 +77,7 @@ public class GraphHopperServlet extends GHBaseServlet
         List<GHPoint> infoPoints = getPoints(req);
 
         // we can reduce the path length based on the maximum differences to the original coordinates
-        double minPathPrecision = getDoubleParam(req, "min_path_precision", 1d);
+        double minPathPrecision = getDoubleParam(req, "way_point_max_distance", 1d);
         boolean writeGPX = "gpx".equalsIgnoreCase(getParam(req, "type", "json"));
         boolean enableInstructions = writeGPX || getBooleanParam(req, "instructions", true);
         boolean calcPoints = getBooleanParam(req, "calc_points", true);
@@ -104,9 +105,10 @@ public class GraphHopperServlet extends GHBaseServlet
                     setWeighting(weighting).
                     setAlgorithm(algoStr).
                     setLocale(localeStr).
-                    putHint("calcPoints", calcPoints).
-                    putHint("instructions", enableInstructions).
-                    putHint("douglas.minprecision", minPathPrecision);
+                    getHints().
+                    put("calcPoints", calcPoints).
+                    put("instructions", enableInstructions).
+                    put("wayPointMaxDistance", minPathPrecision);
 
             ghRsp = hopper.route(request);
         }
@@ -265,10 +267,11 @@ public class GraphHopperServlet extends GHBaseServlet
 
     private void initHints( GHRequest request, Map<String, String[]> parameterMap )
     {
+        WeightingMap m = request.getHints();
         for (Entry<String, String[]> e : parameterMap.entrySet())
         {
             if (e.getValue().length == 1)
-                request.putHint(e.getKey(), e.getValue()[0]);
+                m.put(e.getKey(), e.getValue()[0]);
         }
     }
 }
