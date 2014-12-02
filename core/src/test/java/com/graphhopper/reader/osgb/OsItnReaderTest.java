@@ -181,100 +181,58 @@ public class OsItnReaderTest {
         }
 
         GHUtility.printInfo(graph, 0, 20, EdgeFilter.ALL_EDGES);
-        assertEquals(4, count(explorer.setBaseNode(0)));
-        assertEquals(1, count(explorer.setBaseNode(1)));
-        assertEquals(2, count(explorer.setBaseNode(2)));
-        assertEquals(2, count(explorer.setBaseNode(3)));
-        assertEquals(1, count(explorer.setBaseNode(4)));
-        assertEquals(2, count(explorer.setBaseNode(5)));
-        assertEquals(1, count(explorer.setBaseNode(6)));
-        assertEquals(1, count(explorer.setBaseNode(7)));
-        assertEquals(1, count(explorer.setBaseNode(8)));
+        assertEquals(4, count(explorer.setBaseNode(0))); //Central Tower
+        assertEquals(1, count(explorer.setBaseNode(1))); //Cross Road Vertex
+        assertEquals(1, count(explorer.setBaseNode(4))); //Cross Road Vertex
+        assertEquals(1, count(explorer.setBaseNode(5))); //Cross Road Vertex
+        assertEquals(1, count(explorer.setBaseNode(6))); //Cross Road Vertex
+
+        assertEquals(2, count(explorer.setBaseNode(2))); 
+        assertEquals(1, count(explorer.setBaseNode(3))); //No Entry part way down one crossroad branch
+        
         // Assert that this is true
         iter = explorer.setBaseNode(0);
         assertTrue(iter.next());
-        assertEquals(8, iter.getAdjNode());
-        assertTrue(iter.next());
-        assertEquals(7, iter.getAdjNode());
-        assertTrue(iter.next());
         assertEquals(6, iter.getAdjNode());
+        assertTrue(iter.next());
+        assertEquals(5, iter.getAdjNode());
+        assertTrue(iter.next());
+        assertEquals(4, iter.getAdjNode());
         assertTrue(iter.next());
         assertEquals(3, iter.getAdjNode());
         assertFalse(iter.next());
 
         iter = explorer.setBaseNode(1);
         assertTrue(iter.next());
-        assertEquals(5, iter.getAdjNode());
-        assertTrue(iter.next());
-        assertEquals(4, iter.getAdjNode());
+        assertEquals(2, iter.getAdjNode());
         assertFalse(iter.next());
 
         iter = explorer.setBaseNode(2);
         assertTrue(iter.next());
         assertEquals(3, iter.getAdjNode());
+        assertTrue(iter.next());
+        assertEquals(1, iter.getAdjNode());
         assertFalse(iter.next());
 
         iter = explorer.setBaseNode(3);
         assertTrue(iter.next());
         assertEquals(0, iter.getAdjNode());
-        assertTrue(iter.next());
-        assertEquals(2, iter.getAdjNode());
         assertFalse(iter.next());
 
         iter = explorer.setBaseNode(4);
         assertTrue(iter.next());
-        assertEquals(1, iter.getAdjNode());
+        assertEquals(0, iter.getAdjNode());
         assertFalse(iter.next());
 
         iter = explorer.setBaseNode(5);
         assertTrue(iter.next());
-        assertEquals(2, iter.getAdjNode());
-        assertTrue(iter.next());
-        assertEquals(1, iter.getAdjNode());
+        assertEquals(0, iter.getAdjNode());
         assertFalse(iter.next());
 
         iter = explorer.setBaseNode(6);
         assertTrue(iter.next());
         assertEquals(0, iter.getAdjNode());
         assertFalse(iter.next());
-
-        // assertTrue(iter.next());
-        // logger.info("0 Adj node is " + iter.getAdjNode());
-        // assertTrue(iter.next());
-        // logger.info("0 Adj node is " + iter.getAdjNode());
-        // assertTrue(iter.next());
-        // logger.info("0 Adj node is " + iter.getAdjNode());
-        // assertTrue(iter.next());
-        // logger.info("0 Adj node is " + iter.getAdjNode());
-
-        // iter = explorer.setBaseNode(1);
-        // assertTrue(iter.next());
-        // logger.info("0 Adj node is " + iter.getAdjNode());
-        // assertTrue(iter.next());
-        // logger.info("0 Adj node is " + iter.getAdjNode());
-        // assertTrue(iter.next());
-        // logger.info("0 Adj node is " + iter.getAdjNode());
-        // assertTrue(iter.next());
-        // logger.info("0 Adj node is " + iter.getAdjNode());
-        /*
-         * evaluateRouting(iter, 6, direction ? false : true, direction ? true :
-         * false, false); evaluateRouting(iter, 3, true, true, false);
-         * evaluateRouting(iter, 2, true, true, false); evaluateRouting(iter, 1,
-         * true, true, true);
-         * 
-         * 
-         * // EdgeIterator iter = explorer.setBaseNode(0);
-         * 
-         * assertEquals(direction ? 3 : 4, count(explorer.setBaseNode(0)));
-         * assertEquals(1, count(explorer.setBaseNode(1))); assertEquals(1,
-         * count(explorer.setBaseNode(2))); assertEquals(1,
-         * count(explorer.setBaseNode(3))); assertEquals(direction ? 1 : 0,
-         * count(explorer.setBaseNode(4)));
-         */
-        // The Method below checks that we can actually travel/go through the
-        // nodes
-        // above - I will also write the code later on Friday.
-        // checkOneWay(graph, true);
     }
 
     @Test
@@ -1120,7 +1078,7 @@ public class OsItnReaderTest {
         // the base node;
         assertEquals(4, count(explorer.setBaseNode(0)));
 
-        GHUtility.printInfo(graph, 0, 20, EdgeFilter.ALL_EDGES);
+        GHUtility.printInfo(graph, 0, 20, carOutEdges);
         // Assert that when the explorer is on node 1 it can travel two edges
         assertEquals(2, count(explorer.setBaseNode(1))); // This should see only
                                                          // one
