@@ -220,7 +220,7 @@ public class InstructionList implements Iterable<Instruction>
         String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
                 + "<gpx xmlns='http://www.topografix.com/GPX/1/1' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'"                
                 + " creator='Graphhopper' version='1.1'"
-                // This xmlns:gh acts only as ID no valid URL necessary.
+                // This xmlns:gh acts only as ID, no valid URL necessary.
                 // Use a separate namespace for custom extensions to make basecamp happy.
                 + " xmlns:gh='https://graphhopper.com/public/schema/gpx/1.1'>"
                 + "\n<metadata>"
