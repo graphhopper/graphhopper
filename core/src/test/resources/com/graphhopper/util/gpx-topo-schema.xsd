@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xsd:schema
-    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+<xsd:schema 
     xmlns="http://www.topografix.com/GPX/1/1"
+    xmlns:gh="https://graphhopper.com/public/schema/gpx/1.1"
     targetNamespace="http://www.topografix.com/GPX/1/1"    
-    elementFormDefault="qualified">
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 
     <xsd:annotation>
         <xsd:documentation>
@@ -57,7 +57,7 @@
                     </xsd:documentation>
                 </xsd:annotation>
             </xsd:element>
-            <xsd:element name="extensions"	type="extensionsType"	minOccurs="0">
+            <xsd:element name="extensions"	type="gh:extensionsType"	minOccurs="0">
                 <xsd:annotation>
                     <xsd:documentation>
                         You can add extend GPX by adding your own elements from another schema here.
@@ -148,7 +148,7 @@
                 </xsd:annotation>
             </xsd:element>
 
-            <xsd:element name="extensions"	type="extensionsType"	minOccurs="0">
+            <xsd:element name="extensions"	type="gh:extensionsType"	minOccurs="0">
                 <xsd:annotation>
                     <xsd:documentation>
                         You can add extend GPX by adding your own elements from another schema here.
@@ -297,7 +297,7 @@
                 </xsd:annotation>
             </xsd:element>
 
-            <xsd:element name="extensions"		type="extensionsType"	minOccurs="0">
+            <xsd:element name="extensions"		type="gh:extensionsType"	minOccurs="0">
                 <xsd:annotation>
                     <xsd:documentation>
                         You can add extend GPX by adding your own elements from another schema here.
@@ -379,7 +379,7 @@
                 </xsd:annotation>
             </xsd:element>
 
-            <xsd:element name="extensions"		type="extensionsType"	minOccurs="0">
+            <xsd:element name="extensions"		type="gh:extensionsType"	minOccurs="0">
                 <xsd:annotation>
                     <xsd:documentation>
                         You can add extend GPX by adding your own elements from another schema here.
@@ -454,7 +454,7 @@
                 </xsd:annotation>
             </xsd:element>
 
-            <xsd:element name="extensions"	type="extensionsType"	minOccurs="0">
+            <xsd:element name="extensions"	type="gh:extensionsType"	minOccurs="0">
                 <xsd:annotation>
                     <xsd:documentation>
                         You can add extend GPX by adding your own elements from another schema here.
@@ -472,24 +472,6 @@
         </xsd:sequence>
     </xsd:complexType>
  
-    <xsd:complexType name="extensionsType">
-        <xsd:annotation>
-            <xsd:documentation>
-                You can add extend GPX by adding your own elements from another schema here.
-            </xsd:documentation>
-        </xsd:annotation>
-        <!-- as we need separate namespace 'gh' could not get it working with proper validation :( so ignoring this for now-->
-        <xsd:sequence>
-            <xsd:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded">
-                <xsd:annotation>
-                    <xsd:documentation>
-                        You can add extend GPX by adding your own elements from another schema here.
-                    </xsd:documentation>
-                </xsd:annotation>
-            </xsd:any>
-        </xsd:sequence>
-    </xsd:complexType>
-
     <xsd:complexType name="trksegType">
         <xsd:annotation>
             <xsd:documentation>
@@ -505,7 +487,7 @@
                 </xsd:annotation>
             </xsd:element>
 
-            <xsd:element name="extensions"	type="extensionsType"	minOccurs="0">
+            <xsd:element name="extensions"	type="gh:extensionsType"	minOccurs="0">
                 <xsd:annotation>
                     <xsd:documentation>
                         You can add extend GPX by adding your own elements from another schema here.

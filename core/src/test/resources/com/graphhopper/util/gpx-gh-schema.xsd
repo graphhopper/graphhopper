@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema
+    xmlns:gh="https://graphhopper.com/public/schema/gpx/1.1"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+    <xsd:complexType name="extensionsType">
+        <xsd:annotation>
+            <xsd:documentation>
+                You can add extend GPX by adding your own elements from another schema here.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="distance" type="xsd:decimal"	minOccurs="0">                
+            </xsd:element>
+            <xsd:element name="time" type="xsd:nonNegativeInteger"	minOccurs="0">
+            </xsd:element>
+            <xsd:element name="direction" type="xsd:string"		minOccurs="0">                
+            </xsd:element>
+            <xsd:element name="azimuth"	type="xsd:string"		minOccurs="0">                
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+</xsd:schema>

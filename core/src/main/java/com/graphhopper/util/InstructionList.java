@@ -218,10 +218,12 @@ public class InstructionList implements Iterable<Instruction>
 
         formatter.setTimeZone(tz);
         String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
-                + "<gpx xmlns='http://www.topografix.com/GPX/1/1' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'"
-                + " xsi:schemaLocation='https://graphhopper.com/public/schema https://graphhopper.com/public/schema/gpx-1.1.xsd'"
-                + " creator='Graphhopper' version='1.1'>"
-                + "<metadata>"
+                + "<gpx xmlns='http://www.topografix.com/GPX/1/1' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'"                
+                + " creator='Graphhopper' version='1.1'"
+                // This xmlns:gh acts only as ID no valid URL necessary.
+                // Use a separate namespace for custom extensions to make basecamp happy.
+                + " xmlns:gh='https://graphhopper.com/public/schema/gpx/1.1'>"
+                + "\n<metadata>"
                 + "<link href='http://graphhopper.com'>"
                 + "<text>GraphHopper GPX</text>"
                 + "</link>"
@@ -230,7 +232,7 @@ public class InstructionList implements Iterable<Instruction>
         StringBuilder track = new StringBuilder(header);
         if (!isEmpty())
         {
-            track.append("<rte>");
+            track.append("\n<rte>");
             Instruction nextI = null;
             for (Instruction instr : instructions)
             {
@@ -243,7 +245,7 @@ public class InstructionList implements Iterable<Instruction>
             track.append("</rte>");
         }
 
-        track.append("<trk><name>").append(trackName).append("</name>");
+        track.append("\n<trk><name>").append(trackName).append("</name>");
 
         track.append("<trkseg>");
         for (GPXEntry entry : createGPXList())
@@ -274,23 +276,23 @@ public class InstructionList implements Iterable<Instruction>
 
     private void createRteptBlock( StringBuilder output, Instruction instruction, Instruction nextI )
     {
-        output.append("<rtept lat=\"").append(Helper.round6(instruction.getFirstLat())).
+        output.append("\n<rtept lat=\"").append(Helper.round6(instruction.getFirstLat())).
                 append("\" lon=\"").append(Helper.round6(instruction.getFirstLon())).append("\">");
 
         if (!instruction.getName().isEmpty())
             output.append("<desc>").append(instruction.getTurnDescription(tr)).append("</desc>");
 
         output.append("<extensions>");
-        output.append("<distance>").append(Helper.round(instruction.getDistance(), 3)).append("</distance>");
-        output.append("<time>").append(instruction.getTime()).append("</time>");
+        output.append("<gh:distance>").append(Helper.round(instruction.getDistance(), 1)).append("</gh:distance>");
+        output.append("<gh:time>").append(instruction.getTime()).append("</gh:time>");
 
         String direction = instruction.getDirection(nextI);
-        if (direction != null)
-            output.append("<direction>").append(direction).append("</direction>");
+        if (!direction.isEmpty())
+            output.append("<gh:direction>").append(direction).append("</gh:direction>");
 
         String azimuth = instruction.getAzimuth(nextI);
-        if (azimuth != null)
-            output.append("<azimuth>").append(azimuth).append("</azimuth>");
+        if (!azimuth.isEmpty())
+            output.append("<gh:azimuth>").append(azimuth).append("</gh:azimuth>");
 
         output.append("</extensions>");
         output.append("</rtept>");

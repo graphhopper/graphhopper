@@ -27,7 +27,8 @@ import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
-import java.io.StringReader;
+import java.io.*;
+import java.net.URL;
 import java.util.*;
 import javax.xml.XMLConstants;
 import javax.xml.transform.Source;
@@ -37,6 +38,8 @@ import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.w3c.dom.ls.LSInput;
+import org.w3c.dom.ls.LSResourceResolver;
 import org.xml.sax.SAXException;
 
 /**
@@ -334,11 +337,11 @@ public class InstructionListTest
         assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T01:00:00+01:00</time>"));
         assertTrue(gpxStr, gpxStr.contains("<extensions>") && gpxStr.contains("</extensions>"));
         assertTrue(gpxStr, gpxStr.contains("<rtept lat=\"15.1\" lon=\"10.0\">"));
-        assertTrue(gpxStr, gpxStr.contains("<distance>8000.0</distance>"));
+        assertTrue(gpxStr, gpxStr.contains("<gh:distance>8000.0</gh:distance>"));
         assertTrue(gpxStr, gpxStr.contains("<desc>turn left onto 2-3</desc>"));
 
-        assertTrue(gpxStr, gpxStr.contains("<direction>N</direction>"));
-        assertTrue(gpxStr, gpxStr.contains("<azimuth>0</azimuth>"));
+        assertTrue(gpxStr, gpxStr.contains("<gh:direction>N</gh:direction>"));
+        assertTrue(gpxStr, gpxStr.contains("<gh:azimuth>0</gh:azimuth>"));
         assertFalse(gpxStr, gpxStr.contains("NaN"));
     }
 
@@ -428,9 +431,33 @@ public class InstructionListTest
         {
             Source schemaFile = new StreamSource(getClass().getResourceAsStream("gpx-schema.xsd"));
             schema = schemaFactory.newSchema(schemaFile);
+
+//            // http://stackoverflow.com/q/1094893/194609
+//            URL topoSchemaFile = getClass().getResource("gpx-topo-schema.xsd");
+//            URL ghSchemaFile = getClass().getResource("gpx-gh-schema.xsd");
+//            
+//
+//            String PARENT_SCHEMA
+//                    = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+//                    + "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" "
+//                    + "           elementFormDefault=\"qualified\""
+//                    + "           targetNamespace=\"http://www.topografix.com/GPX/1/1\">\n"
+//                    + "<xs:import schemaLocation=\"" + ghSchemaFile.getPath() + "\"/>\n"
+//                    + "<xs:include schemaLocation=\"" + topoSchemaFile.getPath() + "\"/>\n"                    
+//                    + "</xs:schema>";
+//            schema = schemaFactory.newSchema(new StreamSource(new StringReader(PARENT_SCHEMA), "xsdTop"));            
+            
+            // other trial
+//            schemaFactory.setResourceResolver(new TestResourceResolver());
+//            Source topoSchemaFile = new StreamSource(getClass().getResourceAsStream("gpx-topo-schema.xsd"), "gpx-topo-schema.xsd");
+//            Source ghSchemaFile = new StreamSource(getClass().getResourceAsStream("gpx-gh-schema.xsd"), "gpx-gh-schema.xsd");
+//            schema = schemaFactory.newSchema(new Source[]
+//            {
+//                ghSchemaFile, topoSchemaFile
+//            });
         } catch (SAXException e1)
         {
-            throw new IllegalStateException("There was a problem with the schema supplied for validation.");
+            throw new IllegalStateException("There was a problem with the schema supplied for validation. Message:" + e1.getMessage());
         }
         Validator validator = schema.newValidator();
         try
@@ -439,6 +466,142 @@ public class InstructionListTest
         } catch (Exception e)
         {
             throw new RuntimeException(e);
+        }
+    }
+
+    static class TestResourceResolver implements LSResourceResolver
+    {
+        @Override
+        public LSInput resolveResource( String type, String namespaceURI, String publicId, String systemId, String baseURI )
+        {
+
+            InputStream resourceAsStream = this.getClass().getResourceAsStream(systemId);
+            return new LocalInputImpl(publicId, systemId, resourceAsStream);
+        }
+
+        protected class LocalInputImpl implements LSInput
+        {
+            private String publicId;
+            private String systemId;
+            private BufferedInputStream inputStream;
+
+            public LocalInputImpl( String publicId, String sysId, InputStream input )
+            {
+                this.publicId = publicId;
+                this.systemId = sysId;
+                this.inputStream = new BufferedInputStream(input);
+            }
+
+            @Override
+            public String getPublicId()
+            {
+                return publicId;
+            }
+
+            @Override
+            public void setPublicId( String publicId )
+            {
+                this.publicId = publicId;
+            }
+
+            @Override
+            public String getStringData()
+            {
+                synchronized (inputStream)
+                {
+                    try
+                    {
+                        byte[] input = new byte[inputStream.available()];
+                        inputStream.read(input);
+                        return new String(input);
+                    } catch (IOException e)
+                    {
+                        throw new IllegalStateException(e);
+                    }
+                }
+            }
+
+            @Override
+            public String getSystemId()
+            {
+                return systemId;
+            }
+
+            @Override
+            public void setSystemId( String systemId )
+            {
+                this.systemId = systemId;
+            }
+
+            public BufferedInputStream getInputStream()
+            {
+                return inputStream;
+            }
+
+            public void setInputStream( BufferedInputStream inputStream )
+            {
+                this.inputStream = inputStream;
+            }
+
+            @Override
+            public String getBaseURI()
+            {
+                return null;
+            }
+
+            @Override
+            public InputStream getByteStream()
+            {
+                return null;
+            }
+
+            @Override
+            public boolean getCertifiedText()
+            {
+                return false;
+            }
+
+            @Override
+            public Reader getCharacterStream()
+            {
+                return null;
+            }
+
+            @Override
+            public String getEncoding()
+            {
+                return null;
+            }
+
+            @Override
+            public void setBaseURI( String baseURI )
+            {
+            }
+
+            @Override
+            public void setByteStream( InputStream byteStream )
+            {
+            }
+
+            @Override
+            public void setCertifiedText( boolean certifiedText )
+            {
+            }
+
+            @Override
+            public void setCharacterStream( Reader characterStream )
+            {
+            }
+
+            @Override
+            public void setEncoding( String encoding )
+            {
+            }
+
+            @Override
+            public void setStringData( String stringData )
+            {
+            }
         }
     }
 }
