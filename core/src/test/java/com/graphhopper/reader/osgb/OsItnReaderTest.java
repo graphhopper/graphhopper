@@ -1167,6 +1167,7 @@ public class OsItnReaderTest {
         // ******************* START OF Print
         // ***************************************
         EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
+        GHUtility.printInfo(graph, 0, 20, carOutEdges);
 
         logger.info("Node 0 " + count(explorer.setBaseNode(0)));
         logger.info("Node 1 " + count(explorer.setBaseNode(1)));
@@ -1217,13 +1218,13 @@ public class OsItnReaderTest {
         // edge
         assertEquals(1, count(explorer.setBaseNode(1)));
 
-        // Assert that when the explorer is positioned on base 2 it can only
-        // travel one edge
-        assertEquals(1, count(explorer.setBaseNode(2)));
+        // Assert that when the explorer is positioned on base 2 it can 
+        // travel two edges
+        assertEquals(2, count(explorer.setBaseNode(2)));
 
         // Assert that when the explorer is positioned on node 3 it can only
         // travel 1 edge
-        assertEquals(2, count(explorer.setBaseNode(3)));
+        assertEquals(1, count(explorer.setBaseNode(3)));
 
         // Assert that when the explorer is positioned on node 4 it can only
         // travel 1 edge
@@ -1237,35 +1238,31 @@ public class OsItnReaderTest {
         evaluateRouting(iter, 6, true, true, false);
         evaluateRouting(iter, 5, true, true, false);
         evaluateRouting(iter, 4, true, true, false);
-        evaluateRouting(iter, 1, true, true, true);
+        evaluateRouting(iter, 3, true, true, true);
 
         // Starting at node 1
         iter = carAllExplorer.setBaseNode(1);
         assertTrue(iter.next());
-        // I should be able to get to node 0 forwards and backwards and have not
-        // exhausted all the edges
-        evaluateRouting(iter, 0, true, true, false);
-        // I should be able to get back to node 1 but not forward onto node 3 as
-        // the way linking to node 3 is a one way and should have have exhausted
-        // all the edges
-        evaluateRouting(iter, 3, false, true, true);
-
+        // I should be able to get to node 2 forwards and backwards and have
+        // exhausted all the edges as the way linking to node 3 is a one way 
+        // and should have have exhausted all the edges
+        evaluateRouting(iter, 2, true, true, true);
+        
         // Starting at node 2
         iter = carAllExplorer.setBaseNode(2);
         assertTrue(iter.next());
-        // I should be able to travel to node 3 forth and back and exhausted all
-        // the edges
-        evaluateRouting(iter, 3, true, true, true);
+        // I should be able to travel to node 3 forward but back is blocked by no entry
+        // I should be able to get back and forth to 1 and have exhausted edges
+        evaluateRouting(iter, 3, true, false, false);
+        evaluateRouting(iter, 1, true, true, true);
 
-        // Starting at node 3
+        //Starting at node 3
         iter = carAllExplorer.setBaseNode(3);
         assertTrue(iter.next());
-        // I should be able to travel to node 1 in a forward direction but not
-        // be able to come back in a backward direction to node 3
-        evaluateRouting(iter, 1, true, false, false);
-        // I should be able to travel to node 2 in both a forward direction and
-        // backward direction and have exhausted all the edges
-        evaluateRouting(iter, 2, true, true, true);
+        
+        // I should be able to get back to node 2 and forward onto node 0.
+        evaluateRouting(iter, 0, true, true, false);
+        evaluateRouting(iter, 2, false, true, true);
 
         // Starting at node 4
         iter = carAllExplorer.setBaseNode(4);
