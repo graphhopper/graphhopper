@@ -907,11 +907,7 @@ public class GraphHopper implements GraphHopperAPI
         weighting = createTurnWeighting(weighting, queryGraph, encoder);
 
         String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
-        AlgorithmOptions algoOpts = new AlgorithmOptions().
-                setAlgorithm(algoStr).
-                setTraversalMode(tMode).
-                setFlagEncoder(encoder).
-                setWeighting(weighting);
+        AlgorithmOptions algoOpts = AlgorithmOptions.start().algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).build();
 
         for (int placeIndex = 1; placeIndex < points.size(); placeIndex++)
         {

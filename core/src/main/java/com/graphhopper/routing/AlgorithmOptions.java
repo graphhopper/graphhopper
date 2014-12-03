@@ -23,7 +23,14 @@ import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.util.PMap;
 
 /**
- *
+ * The algorithm options. Create an immutable object via:
+ * <pre>
+ * AlgorithmOptions algoOpts = AlgorithmOptions.start().
+ *        algorithm(AlgorithmOptions.DIJKSTRA).
+ *        weighting(weighting).
+ *        build();
+ * </pre>
+ * <p>
  * @author Peter Karich
  */
 public class AlgorithmOptions
@@ -48,11 +55,15 @@ public class AlgorithmOptions
      * Bidirectional A*
      */
     public static final String ASTAR_BI = "astarbi";
-    private String algorithm;
+    private String algorithm = DIJKSTRA_BI;
     private Weighting weighting;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private FlagEncoder flagEncoder;
     private final PMap hints = new PMap(5);
+
+    private AlgorithmOptions()
+    {
+    }
 
     /**
      * Default traversal mode NODE_BASED is used.
@@ -73,27 +84,11 @@ public class AlgorithmOptions
     }
 
     /**
-     * This constructor requires to set the flagEncoder, weighting and in most cases also algorithm.
-     */
-    public AlgorithmOptions()
-    {
-    }
-
-    /**
      * @return the traversal mode, where node-based is the default.
      */
     public TraversalMode getTraversalMode()
     {
         return traversalMode;
-    }
-
-    public AlgorithmOptions setTraversalMode( TraversalMode traversalMode )
-    {
-        if (traversalMode == null)
-            throw new IllegalArgumentException("null as traversal mode is not allowed");
-
-        this.traversalMode = traversalMode;
-        return this;
     }
 
     public Weighting getWeighting()
@@ -102,37 +97,16 @@ public class AlgorithmOptions
         return weighting;
     }
 
-    public AlgorithmOptions setWeighting( Weighting weighting )
-    {
-        this.weighting = weighting;
-        return this;
-    }
-
     public String getAlgorithm()
     {
         assertNotNull(algorithm, "algorithm");
         return algorithm;
     }
 
-    /**
-     * For possible values see AlgorithmOptions.*
-     */
-    public AlgorithmOptions setAlgorithm( String algorithm )
-    {
-        this.algorithm = algorithm;
-        return this;
-    }
-
     public FlagEncoder getFlagEncoder()
     {
         assertNotNull(flagEncoder, "flagEncoder");
         return flagEncoder;
-    }
-
-    public AlgorithmOptions setFlagEncoder( FlagEncoder flagEncoder )
-    {
-        this.flagEncoder = flagEncoder;
-        return this;
     }
 
     public PMap getHints()
@@ -150,5 +124,71 @@ public class AlgorithmOptions
     public String toString()
     {
         return algorithm + ", " + weighting + ", " + flagEncoder + ", " + traversalMode;
-    }        
+    }
+
+    /**
+     * This method starts the building process for AlgorithmOptions.
+     */
+    public static Builder start()
+    {
+        return new Builder();
+    }
+
+    /**
+     * This method clones the specified AlgorithmOption object with the possibility for further
+     * changes.
+     */
+    public static Builder start( AlgorithmOptions opts )
+    {
+        Builder b = new Builder();
+        if (opts.algorithm != null)
+            b.algorithm(opts.getAlgorithm());
+        if (opts.flagEncoder != null)
+            b.flagEncoder(opts.getFlagEncoder());
+        if (opts.traversalMode != null)
+            b.traversalMode(opts.getTraversalMode());
+        if (opts.weighting != null)
+            b.weighting(opts.getWeighting());
+        return b;
+    }
+
+    public static class Builder
+    {
+        private final AlgorithmOptions opts = new AlgorithmOptions();
+
+        public Builder traversalMode( TraversalMode traversalMode )
+        {
+            if (traversalMode == null)
+                throw new IllegalArgumentException("null as traversal mode is not allowed");
+
+            this.opts.traversalMode = traversalMode;
+            return this;
+        }
+
+        public Builder weighting( Weighting weighting )
+        {
+            this.opts.weighting = weighting;
+            return this;
+        }
+
+        /**
+         * For possible values see AlgorithmOptions.*
+         */
+        public Builder algorithm( String algorithm )
+        {
+            this.opts.algorithm = algorithm;
+            return this;
+        }
+
+        public Builder flagEncoder( FlagEncoder flagEncoder )
+        {
+            this.opts.flagEncoder = flagEncoder;
+            return this;
+        }
+
+        public AlgorithmOptions build()
+        {
+            return opts;
+        }
+    }
 }

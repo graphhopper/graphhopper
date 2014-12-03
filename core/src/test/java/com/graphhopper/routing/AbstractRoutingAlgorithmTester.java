@@ -40,9 +40,7 @@ public abstract class AbstractRoutingAlgorithmTester
     protected static final EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
     protected FlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
     protected FlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
-    protected AlgorithmOptions defaultOpts = new AlgorithmOptions().
-            setFlagEncoder(carEncoder).
-            setWeighting(new ShortestWeighting());
+    protected AlgorithmOptions defaultOpts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(new ShortestWeighting()).build();
 
     protected Graph createGraph( EncodingManager em, boolean is3D )
     {
@@ -89,9 +87,8 @@ public abstract class AbstractRoutingAlgorithmTester
 
         Graph graphFastest = createGraph(false);
         initDirectedAndDiffSpeed(graphFastest);
-        Path p2 = createAlgo(graphFastest, new AlgorithmOptions().
-                setFlagEncoder(carEncoder).
-                setWeighting(new FastestWeighting(carEncoder))).
+        Path p2 = createAlgo(graphFastest, 
+                AlgorithmOptions.start().flagEncoder(carEncoder).weighting(new FastestWeighting(carEncoder)).build()).
                 calcPath(0, 3);
         assertEquals(Helper.createTList(0, 4, 6, 7, 5, 3), p2.calcNodes());
         assertEquals(p2.toString(), 1261.714, p2.getDistance(), 1e-6);
@@ -144,9 +141,7 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         Graph graphShortest = createGraph(false);
         initFootVsCar(graphShortest);
-        Path p1 = createAlgo(graphShortest, new AlgorithmOptions().
-                setFlagEncoder(footEncoder).
-                setWeighting(new ShortestWeighting())).
+        Path p1 = createAlgo(graphShortest, AlgorithmOptions.start().flagEncoder(footEncoder).weighting(new ShortestWeighting()).build()).
                 calcPath(0, 7);
         assertEquals(p1.toString(), 17000, p1.getDistance(), 1e-6);
         assertEquals(p1.toString(), 12240 * 1000, p1.getMillis());
@@ -611,7 +606,7 @@ public abstract class AbstractRoutingAlgorithmTester
             w = new FastestWeighting(carEncoder);
 
         // correct order for CH: in factory do prepare and afterwards wrap in query graph
-        AlgorithmOptions opts = new AlgorithmOptions().setFlagEncoder(carEncoder).setWeighting(w);
+        AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(w).build();
         RoutingAlgorithmFactory factory = createFactory(graph, opts);
         QueryGraph qGraph = new QueryGraph(graph).lookup(from, to);
         return factory.createAlgo(qGraph, opts).
@@ -663,8 +658,7 @@ public abstract class AbstractRoutingAlgorithmTester
 
         // for two weights per edge it happened that Path (and also the Weighting) read the wrong side 
         // of the speed and read 0 => infinity weight => overflow of millis => negative millis!
-        Path p = createAlgo(graph, new AlgorithmOptions().setFlagEncoder(encoder).
-                setWeighting(new FastestWeighting(encoder))).calcPath(0, 10);
+        Path p = createAlgo(graph, AlgorithmOptions.start().flagEncoder(encoder).weighting(new FastestWeighting(encoder)).build()).calcPath(0, 10);
 //        assertEquals(Helper.createTList(13, 0, 1, 2, 11, 7, 10, 12), p.calcNodes());
         assertEquals(85124371, p.getMillis());
         assertEquals(425622, p.getDistance(), 1);
@@ -715,7 +709,7 @@ public abstract class AbstractRoutingAlgorithmTester
         QueryResult from = newQR(graph, 3, 0);
         QueryResult to = newQR(graph, 10, 9);
 
-        AlgorithmOptions opts = new AlgorithmOptions().setFlagEncoder(carEncoder).setWeighting(fakeWeighting);
+        AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(fakeWeighting).build();
         RoutingAlgorithmFactory factory = createFactory(graph, opts);
         QueryGraph qGraph = new QueryGraph(graph).lookup(from, to);
         p = factory.createAlgo(qGraph, opts).calcPath(from.getClosestNode(), to.getClosestNode());

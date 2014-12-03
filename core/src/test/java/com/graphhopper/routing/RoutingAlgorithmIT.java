@@ -563,10 +563,7 @@ public class RoutingAlgorithmIT
                         public void run()
                         {
                             OneRun oneRun = instances.get(instanceIndex);
-                            AlgorithmOptions opts = new AlgorithmOptions().
-                                    setFlagEncoder(carEncoder).
-                                    setWeighting(weighting).
-                                    setAlgorithm(algoStr);
+                            AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(weighting).algorithm(algoStr).build();
                             testCollector.assertDistance(new AlgoHelperEntry(g, opts, idx),
                                     oneRun.getList(idx, filter), oneRun);
                             integ.addAndGet(1);

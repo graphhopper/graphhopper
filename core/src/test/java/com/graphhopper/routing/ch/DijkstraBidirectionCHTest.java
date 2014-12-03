@@ -74,8 +74,6 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     @Override
     public RoutingAlgorithmFactory createFactory( Graph g, AlgorithmOptions opts )
     {
-        // set default opts for factory.createAlgo
-        opts.setAlgorithm(AlgorithmOptions.DIJKSTRA_BI);
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies((LevelGraph) g,
                 opts.getFlagEncoder(), opts.getWeighting(), TraversalMode.NODE_BASED);
         // hack: prepare matrixGraph only once

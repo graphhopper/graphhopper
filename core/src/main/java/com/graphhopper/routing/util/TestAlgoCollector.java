@@ -57,7 +57,7 @@ public class TestAlgoCollector
         AlgorithmOptions opts = algoEntry.opts;
         FlagEncoder encoder = opts.getFlagEncoder();
         if (encoder.supports(TurnWeighting.class))
-            opts.setWeighting(new TurnWeighting(opts.getWeighting(), opts.getFlagEncoder(), (TurnCostExtension) queryGraph.getExtension()));
+            algoEntry.setAlgorithmOptions(AlgorithmOptions.start(opts).weighting(new TurnWeighting(opts.getWeighting(), opts.getFlagEncoder(), (TurnCostExtension) queryGraph.getExtension())).build());
 
         for (int i = 0; i < queryList.size() - 1; i++)
         {
@@ -161,6 +161,11 @@ public class TestAlgoCollector
             this.originalGraph = g;
             this.opts = opts;
             this.idx = idx;
+        }
+
+        public void setAlgorithmOptions( AlgorithmOptions opts )
+        {
+            this.opts = opts;
         }
 
         public LocationIndex getIdx()
