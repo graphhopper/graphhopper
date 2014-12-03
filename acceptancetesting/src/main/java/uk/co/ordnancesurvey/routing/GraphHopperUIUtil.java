@@ -86,6 +86,15 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 			driver.close();
 	}
 
+	/**
+	 	 * <p>
+	 * <p>
+	 * <p>
+	 * @param pointA
+	 * @param pointB
+	 * @param routeType 
+	 * <p> Route type can be Car, walk or Cycle.
+	 */
 	public void getRouteFromUI(String pointA, String pointB, String routeType) {
 
 		switch (routeType)
@@ -109,7 +118,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		typeIntoField(FROM_ROUTE, pointA);
 		typeIntoField(TO_ROUTE, pointB);
 		clickElement(ROUTE_SEARCH);
-		waitFor(INSTRUCTIONS);
+		waitFor(INSTRUCTIONS,10);
 
 	}
 
