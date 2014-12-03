@@ -1432,7 +1432,7 @@ public class OsItnReaderTest {
     
 
     @Test
-    public void testReadSimpleCrossRoadsWithMandatoryTurnRestriction() throws IOException {
+    public void testReadSimpleCrossRoadsWithMandatoryTurnRestrictionFrom17To19() throws IOException {
         boolean turnRestrictionsImport = true;
         boolean is3D = false;
         GraphHopperStorage graph = configureStorage(turnRestrictionsImport, is3D);
@@ -1442,8 +1442,10 @@ public class OsItnReaderTest {
         assertEquals(5, graph.getNodes());
         checkSimpleNodeNetwork(graph);
 
-        carOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, false, true));
+        DefaultEdgeFilter carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
+		carOutExplorer = graph.createEdgeExplorer(carOutFilter);
 
+        GHUtility.printInfo(graph, 0, 20, carOutFilter);
         int n80 = AbstractGraphStorageTester.getIdOf(graph, node0Lat, node0Lon);
         int n81 = AbstractGraphStorageTester.getIdOf(graph, node1Lat, node1Lon);
         int n82 = AbstractGraphStorageTester.getIdOf(graph, node2Lat, node2Lon);
@@ -1457,23 +1459,24 @@ public class OsItnReaderTest {
 
         TurnCostStorage tcStorage = (TurnCostStorage) ((GraphHopperStorage) graph).getExtendedStorage();
 
-        // Check that 19 to 20 is restricted (high cost)
-        long turnCostFlags = tcStorage.getTurnCostFlags(n81, edge19_81_83, edge20_81_84);
+        // Check that there is no restriction from 17 to 19 (our Mandatory turn)
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge17_80_81, edge19_81_83)));
+
+        // Check that 17 to 20 is restricted (high cost)
+        long turnCostFlags = tcStorage.getTurnCostFlags(n81, edge17_80_81, edge20_81_84);
         double cost = carEncoder.getTurnCost(turnCostFlags);
         assertTrue(cost > 0.0);
-
-        // Check that 19 to 18 is restricted (high cost)
-        turnCostFlags = tcStorage.getTurnCostFlags(n81, edge19_81_83, edge18_81_82);
+        
+        // Check that 17 to 18 is restricted (high cost)
+        turnCostFlags = tcStorage.getTurnCostFlags(n81, edge17_80_81, edge18_81_82);
         cost = carEncoder.getTurnCost(turnCostFlags);
         assertTrue(cost > 0.0);
 
-        // Check that there is no restriction from 19 to 17 (our Mandatory turn)
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge19_81_83, edge17_80_81)));
 
-        // Every route from 17 is not restricted
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge17_80_81, edge18_81_82)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge17_80_81, edge19_81_83)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge17_80_81, edge20_81_84)));
+        // Every route from 19 is not restricted
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge19_81_83, edge17_80_81)));
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge19_81_83, edge18_81_82)));
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge19_81_83, edge20_81_84)));
         // Every route from 18 is not restricted
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge18_81_82, edge17_80_81)));
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge18_81_82, edge19_81_83)));
@@ -1482,7 +1485,6 @@ public class OsItnReaderTest {
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge20_81_84, edge17_80_81)));
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge20_81_84, edge18_81_82)));
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge20_81_84, edge19_81_83)));
-
     }
 
 }
