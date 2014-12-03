@@ -118,7 +118,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		typeIntoField(FROM_ROUTE, pointA);
 		typeIntoField(TO_ROUTE, pointB);
 		clickElement(ROUTE_SEARCH);
-		waitFor(INSTRUCTIONS,10);
+		waitFor(INSTRUCTIONS,15);
 
 	}
 
