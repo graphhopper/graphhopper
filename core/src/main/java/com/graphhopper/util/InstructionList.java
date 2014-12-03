@@ -218,12 +218,13 @@ public class InstructionList implements Iterable<Instruction>
 
         formatter.setTimeZone(tz);
         String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
-                + "<gpx xmlns='http://www.topografix.com/GPX/1/1' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'"                
+                + "<gpx xmlns='http://www.topografix.com/GPX/1/1' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'"
                 + " creator='Graphhopper' version='1.1'"
                 // This xmlns:gh acts only as ID, no valid URL necessary.
                 // Use a separate namespace for custom extensions to make basecamp happy.
                 + " xmlns:gh='https://graphhopper.com/public/schema/gpx/1.1'>"
                 + "\n<metadata>"
+                + "<copyright author=\"OpenStreetMap contributors\"/>"
                 + "<link href='http://graphhopper.com'>"
                 + "<text>GraphHopper GPX</text>"
                 + "</link>"
@@ -252,16 +253,15 @@ public class InstructionList implements Iterable<Instruction>
         {
             track.append("\n<trkpt lat='").append(Helper.round6(entry.getLat()));
             track.append("' lon='").append(Helper.round6(entry.getLon())).append("'>");
-            track.append("<time>").append(tzHack(formatter.format(startTimeMillis + entry.getMillis()))).append("</time>");
             if (includeElevation)
                 track.append("<ele>").append(Helper.round2(entry.getEle())).append("</ele>");
-
+            track.append("<time>").append(tzHack(formatter.format(startTimeMillis + entry.getMillis()))).append("</time>");
             track.append("</trkpt>");
         }
         track.append("</trkseg>");
         track.append("</trk>");
 
-        // TODO #147 use wpt for via points!
+        // we could now use 'wpt' for via points
         track.append("</gpx>");
         return track.toString().replaceAll("\\'", "\"");
     }
