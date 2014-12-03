@@ -100,4 +100,9 @@ public interface Graph
      * @return the specified GraphStorage g
      */
     Graph copyTo( Graph g );
+
+    /**
+     * @return the graph extension like a TurnCostExtension
+     */
+    GraphExtension getExtension();
 }

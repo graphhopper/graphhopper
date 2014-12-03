@@ -39,13 +39,13 @@ import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.AbstractGraphStorageTester;
-import com.graphhopper.storage.ExtendedStorage;
+import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -89,7 +89,7 @@ public class OSMReaderTest
     GraphStorage newGraph( String directory, EncodingManager encodingManager, boolean is3D, boolean turnRestrictionsImport )
     {
         return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager,
-                is3D, turnRestrictionsImport ? new TurnCostStorage() : new ExtendedStorage.NoExtendedStorage());
+                is3D, turnRestrictionsImport ? new TurnCostExtension() : new GraphExtension.NoExtendedStorage());
     }
 
     class GraphHopperTest extends GraphHopper
@@ -523,8 +523,8 @@ public class OSMReaderTest
                 importOrLoad();
         GraphStorage graph = hopper.getGraph();
         assertEquals(15, graph.getNodes());
-        assertTrue(graph.getExtendedStorage() instanceof TurnCostStorage);
-        TurnCostStorage tcStorage = (TurnCostStorage) graph.getExtendedStorage();
+        assertTrue(graph.getExtension() instanceof TurnCostExtension);
+        TurnCostExtension tcStorage = (TurnCostExtension) graph.getExtension();
 
         int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
         int n2 = AbstractGraphStorageTester.getIdOf(graph, 52, 10);

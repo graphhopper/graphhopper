@@ -150,5 +150,5 @@ public class AlgorithmOptions
     public String toString()
     {
         return algorithm + ", " + weighting + ", " + flagEncoder + ", " + traversalMode;
-    }
+    }        
 }

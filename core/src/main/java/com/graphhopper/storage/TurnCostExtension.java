@@ -25,8 +25,9 @@ import com.graphhopper.util.EdgeIterator;
  * getCosts.
  * <p>
  * @author Karl Hübner
+ * @author Peter Karich
  */
-public class TurnCostStorage implements ExtendedStorage
+public class TurnCostExtension implements GraphExtension
 {
     /* pointer for no cost entry */
     private final int NO_TURN_ENTRY = -1;
@@ -46,7 +47,7 @@ public class TurnCostStorage implements ExtendedStorage
     private GraphStorage graph;
     private NodeAccess nodeAccess;
 
-    public TurnCostStorage()
+    public TurnCostExtension()
     {
         TC_FROM = nextTurnCostEntryIndex();
         TC_TO = nextTurnCostEntryIndex();
@@ -183,9 +184,9 @@ public class TurnCostStorage implements ExtendedStorage
         {
             if (turnCostIndex == NO_TURN_ENTRY)
                 break;
-            long turnCostPtr = (long) turnCostIndex * turnCostsEntryBytes;            
+            long turnCostPtr = (long) turnCostIndex * turnCostsEntryBytes;
             if (edgeFrom == turnCosts.getInt(turnCostPtr + TC_FROM))
-            {                
+            {
                 if (edgeTo == turnCosts.getInt(turnCostPtr + TC_TO))
                     return turnCosts.getInt(turnCostPtr + TC_FLAGS);
             }
@@ -233,14 +234,14 @@ public class TurnCostStorage implements ExtendedStorage
     }
 
     @Override
-    public ExtendedStorage copyTo( ExtendedStorage clonedStorage )
+    public GraphExtension copyTo( GraphExtension clonedStorage )
     {
-        if (!(clonedStorage instanceof TurnCostStorage))
+        if (!(clonedStorage instanceof TurnCostExtension))
         {
             throw new IllegalStateException("the extended storage to clone must be the same");
         }
 
-        TurnCostStorage clonedTC = (TurnCostStorage) clonedStorage;
+        TurnCostExtension clonedTC = (TurnCostExtension) clonedStorage;
 
         turnCosts.copyTo(clonedTC.turnCosts);
         clonedTC.turnCostsCount = turnCostsCount;

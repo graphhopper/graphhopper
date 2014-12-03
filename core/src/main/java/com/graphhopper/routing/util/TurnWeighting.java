@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -33,21 +33,21 @@ public class TurnWeighting implements Weighting
      * Encoder, which decodes the turn flags
      */
     private final TurnCostEncoder turnCostEncoder;
-    private final TurnCostStorage turnCostStorage;
+    private final TurnCostExtension turnCostExt;
     private final Weighting superWeighting;
     private double defaultUTurnCost = 40;
 
     /**
-     * @param turnCostStorage the turn cost storage to be used
+     * @param turnCostExt the turn cost storage to be used
      */
-    public TurnWeighting( Weighting superWeighting, TurnCostEncoder encoder, TurnCostStorage turnCostStorage )
+    public TurnWeighting( Weighting superWeighting, TurnCostEncoder encoder, TurnCostExtension turnCostExt )
     {
         this.turnCostEncoder = encoder;
         this.superWeighting = superWeighting;
-        this.turnCostStorage = turnCostStorage;
+        this.turnCostExt = turnCostExt;
         if (encoder == null)
             throw new IllegalArgumentException("No encoder set to calculate turn weight");
-        if (turnCostStorage == null)
+        if (turnCostExt == null)
             throw new RuntimeException("No storage set to calculate turn weight");
     }
 
@@ -89,7 +89,7 @@ public class TurnWeighting implements Weighting
 
     public double calcTurnWeight( int edgeFrom, int nodeVia, int edgeTo )
     {
-        long turnFlags = turnCostStorage.getTurnCostFlags(nodeVia, edgeFrom, edgeTo);
+        long turnFlags = turnCostExt.getTurnCostFlags(nodeVia, edgeFrom, edgeTo);
         if (turnCostEncoder.isTurnRestricted(turnFlags))
             return Double.POSITIVE_INFINITY;
 

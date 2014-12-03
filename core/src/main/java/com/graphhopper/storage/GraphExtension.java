@@ -21,7 +21,7 @@ package com.graphhopper.storage;
  * If you need custom storages, like turn cost tables, or osmid tables for your graph you implement
  * this interface and put it in any graph storage you want.
  */
-public interface ExtendedStorage
+public interface GraphExtension
 {
     /**
      * @return true, if and only if, if an additional field at the graphs node storage is required
@@ -81,13 +81,13 @@ public interface ExtendedStorage
     /**
      * creates a copy of this extended storage
      */
-    ExtendedStorage copyTo( ExtendedStorage extStorage );
+    GraphExtension copyTo( GraphExtension extStorage );
 
     /**
      * default implementation defines no additional fields or any logic. there's like nothing , like
      * the default behavior.
      */
-    public class NoExtendedStorage implements ExtendedStorage
+    public class NoExtendedStorage implements GraphExtension
     {
 
         @Override
@@ -158,7 +158,7 @@ public interface ExtendedStorage
         }
 
         @Override
-        public ExtendedStorage copyTo( ExtendedStorage extStorage )
+        public GraphExtension copyTo( GraphExtension extStorage )
         {
             // noop
             return extStorage;

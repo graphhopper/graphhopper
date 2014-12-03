@@ -444,10 +444,10 @@ public class OSMReader implements DataReader
             OSMTurnRelation turnRelation = createTurnRelation(relation);
             if (turnRelation != null)
             {
-                ExtendedStorage extendedStorage = graphStorage.getExtendedStorage();
-                if (extendedStorage instanceof TurnCostStorage)
+                GraphExtension extendedStorage = graphStorage.getExtension();
+                if (extendedStorage instanceof TurnCostExtension)
                 {
-                    TurnCostStorage tcs = (TurnCostStorage) extendedStorage;
+                    TurnCostExtension tcs = (TurnCostExtension) extendedStorage;
                     Collection<TurnCostTableEntry> entries = encodingManager.analyzeTurnRelation(turnRelation, this);
                     for (TurnCostTableEntry entry : entries)
                     {

@@ -117,7 +117,7 @@ public class GraphBuilder
         else
         {
             if (encodingManager.needsTurnCostsSupport())
-                graph = new GraphHopperStorage(dir, encodingManager, elevation, new TurnCostStorage());
+                graph = new GraphHopperStorage(dir, encodingManager, elevation, new TurnCostExtension());
             else
                 graph = new GraphHopperStorage(dir, encodingManager, elevation);
         }

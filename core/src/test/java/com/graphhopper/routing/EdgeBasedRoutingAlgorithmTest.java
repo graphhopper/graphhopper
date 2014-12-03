@@ -22,7 +22,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import static org.junit.Assert.*;
@@ -102,7 +102,7 @@ public class EdgeBasedRoutingAlgorithmTest
         g.edge(6, 7, 1, true);
     }
 
-    private void initTurnRestrictions( Graph g, TurnCostStorage tcs, TurnCostEncoder tEncoder )
+    private void initTurnRestrictions( Graph g, TurnCostExtension tcs, TurnCostEncoder tEncoder )
     {
         long tflags = tEncoder.getTurnFlags(true, 0);
 
@@ -130,7 +130,7 @@ public class EdgeBasedRoutingAlgorithmTest
         tcs.addTurnInfo(6, getEdge(g, 3, 6).getEdge(), getEdge(g, 6, 3).getEdge(), tflags);
     }
 
-    Weighting createWeighting( FlagEncoder encoder, TurnCostStorage tcs )
+    Weighting createWeighting( FlagEncoder encoder, TurnCostExtension tcs )
     {
         return new TurnWeighting(new FastestWeighting(encoder), encoder, tcs);
     }
@@ -140,7 +140,7 @@ public class EdgeBasedRoutingAlgorithmTest
     {
         GraphStorage g = createGraph(createEncodingManager(true));
         initGraph(g);
-        TurnCostStorage tcs = (TurnCostStorage) g.getExtendedStorage();
+        TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
         initTurnRestrictions(g, tcs, carEncoder);
         Path p = createAlgo(g, new AlgorithmOptions().
                 setFlagEncoder(carEncoder).
@@ -170,7 +170,7 @@ public class EdgeBasedRoutingAlgorithmTest
     {
         GraphStorage g = createGraph(createEncodingManager(true));
         initGraph(g);
-        TurnCostStorage tcs = (TurnCostStorage) g.getExtendedStorage();
+        TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
 
         long tflags = carEncoder.getTurnFlags(true, 0);
 
@@ -207,7 +207,7 @@ public class EdgeBasedRoutingAlgorithmTest
     {
         GraphStorage g = createGraph(createEncodingManager(false));
         initGraph(g);
-        TurnCostStorage tcs = (TurnCostStorage) g.getExtendedStorage();
+        TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
         Path p = createAlgo(g, new AlgorithmOptions().
                 setFlagEncoder(carEncoder).
                 setWeighting(createWeighting(carEncoder, tcs)).

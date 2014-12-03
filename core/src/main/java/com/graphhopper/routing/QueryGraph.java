@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -73,7 +74,7 @@ public class QueryGraph implements Graph
         mainNodes = graph.getNodes();
         mainEdges = graph.getAllEdges().getCount();
     }
-    
+
     public Graph getOriginalGraph()
     {
         return mainGraph;
@@ -204,7 +205,7 @@ public class QueryGraph implements Graph
                 int prevNodeId = baseNode;
                 int virtNodeId = virtualNodes.getSize() + mainNodes;
                 boolean addedEdges = false;
-                
+
                 // Create base and adjacent PointLists for all none-equal virtual nodes.
                 // We do so via inserting them at the correct position of fullPL and cutting the                
                 // fullPL into the right pieces.
@@ -222,7 +223,7 @@ public class QueryGraph implements Graph
                         res.setClosestNode(prevNodeId);
                         continue;
                     }
-                    
+
                     queryResults.add(res);
                     createEdges(prevPoint, prevWayIndex,
                             res.getSnappedPoint(), res.getWayIndex(),
@@ -563,6 +564,12 @@ public class QueryGraph implements Graph
     public Graph copyTo( Graph g )
     {
         throw exc();
+    }
+
+    @Override
+    public GraphExtension getExtension()
+    {
+        return mainGraph.getExtension();
     }
 
     private UnsupportedOperationException exc()

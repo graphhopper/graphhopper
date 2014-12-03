@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.*;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.DistanceCalc;
@@ -51,11 +52,16 @@ public class TestAlgoCollector
             OneRun oneRun )
     {
         List<Path> viaPaths = new ArrayList<Path>();
-        QueryGraph qGraph = new QueryGraph(algoEntry.originalGraph);
-        qGraph.lookup(queryList);
+        QueryGraph queryGraph = new QueryGraph(algoEntry.originalGraph);
+        queryGraph.lookup(queryList);
+        AlgorithmOptions opts = algoEntry.opts;
+        FlagEncoder encoder = opts.getFlagEncoder();
+        if (encoder.supports(TurnWeighting.class))
+            opts.setWeighting(new TurnWeighting(opts.getWeighting(), opts.getFlagEncoder(), (TurnCostExtension) queryGraph.getExtension()));
+
         for (int i = 0; i < queryList.size() - 1; i++)
         {
-            Path path = algoEntry.createAlgo(qGraph).
+            Path path = algoEntry.createAlgo(queryGraph).
                     calcPath(queryList.get(i).getClosestNode(), queryList.get(i + 1).getClosestNode());
             // System.out.println(path.calcInstructions().createGPX("temp", 0, "GMT"));
             viaPaths.add(path);

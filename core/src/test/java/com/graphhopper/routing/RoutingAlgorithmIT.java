@@ -423,7 +423,7 @@ public class RoutingAlgorithmIT
      */
     void runAlgo( TestAlgoCollector testCollector, String osmFile,
             String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
-            boolean testAlsoCH, String vehicle, String weightCalcStr, boolean is3D )
+            boolean testAlsoCH, String vehicle, String weightStr, boolean is3D )
     {
         AlgoHelperEntry algoEntry = null;
         OneRun tmpOneRun = null;
@@ -446,10 +446,11 @@ public class RoutingAlgorithmIT
             TraversalMode tMode = importVehicles.toLowerCase().contains("turncosts=true")
                     ? TraversalMode.EDGE_BASED_1DIR : TraversalMode.NODE_BASED;
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-            Weighting weighting = hopper.createWeighting(new WeightingMap(weightCalcStr), encoder);
+            Weighting weighting = hopper.createWeighting(new WeightingMap(weightStr), encoder);
 
             Collection<AlgoHelperEntry> prepares = RoutingAlgorithmSpecialAreaTests.
-                    createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, testAlsoCH, tMode, weighting, hopper.getEncodingManager());
+                    createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, testAlsoCH,
+                            tMode, weighting, hopper.getEncodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
             for (AlgoHelperEntry entry : prepares)
             {

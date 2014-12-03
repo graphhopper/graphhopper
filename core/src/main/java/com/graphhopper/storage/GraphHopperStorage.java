@@ -96,16 +96,16 @@ public class GraphHopperStorage implements GraphStorage
     private final StorableProperties properties;
     private final BitUtil bitUtil;
     private boolean flagsSizeIsLong;
-    final ExtendedStorage extStorage;
+    final GraphExtension extStorage;
     private final NodeAccess nodeAccess;
 
     public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation )
     {
-        this(dir, encodingManager, withElevation, new ExtendedStorage.NoExtendedStorage());
+        this(dir, encodingManager, withElevation, new GraphExtension.NoExtendedStorage());
     }
 
     public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation,
-            ExtendedStorage extendedStorage )
+            GraphExtension extendedStorage )
     {
         if (encodingManager == null)
             throw new IllegalArgumentException("EncodingManager cannot be null in GraphHopperStorage since 0.4. "
@@ -1556,7 +1556,7 @@ public class GraphHopperStorage implements GraphStorage
     }
 
     @Override
-    public ExtendedStorage getExtendedStorage()
+    public GraphExtension getExtension()
     {
         return extStorage;
     }

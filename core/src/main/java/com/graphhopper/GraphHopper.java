@@ -696,7 +696,7 @@ public class GraphHopper implements GraphHopperAPI
         if (chEnabled)
             graph = new LevelGraphStorage(dir, encodingManager, hasElevation());
         else if (encodingManager.needsTurnCostsSupport())
-            graph = new GraphHopperStorage(dir, encodingManager, hasElevation(), new TurnCostStorage());
+            graph = new GraphHopperStorage(dir, encodingManager, hasElevation(), new TurnCostExtension());
         else
             graph = new GraphHopperStorage(dir, encodingManager, hasElevation());
 
@@ -804,12 +804,17 @@ public class GraphHopper implements GraphHopperAPI
         {
             throw new UnsupportedOperationException("weighting " + weighting + " not supported");
         }
-
-        if (encoder.supports(TurnWeighting.class))
-        {
-            result = new TurnWeighting(result, encoder, (TurnCostStorage) graph.getExtendedStorage());
-        }
         return result;
+    }
+
+    /**
+     * Potentially wraps the specified weighting into a TurnWeighting instance.
+     */
+    public Weighting createTurnWeighting( Weighting weighting, Graph graph, FlagEncoder encoder )
+    {
+        if (encoder.supports(TurnWeighting.class))
+            return new TurnWeighting(weighting, encoder, (TurnCostExtension) graph.getExtension());
+        return weighting;
     }
 
     @Override
@@ -893,22 +898,26 @@ public class GraphHopper implements GraphHopperAPI
             return Collections.emptyList();
 
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
-        QueryGraph qGraph = new QueryGraph(graph);
-        qGraph.lookup(qResults);
+        QueryGraph queryGraph = new QueryGraph(graph);
+        queryGraph.lookup(qResults);
 
         List<Path> paths = new ArrayList<Path>(points.size() - 1);
         QueryResult fromQResult = qResults.get(0);
+        Weighting weighting = createWeighting(request.getHints(), encoder);
+        weighting = createTurnWeighting(weighting, queryGraph, encoder);
+
+        String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
+        AlgorithmOptions algoOpts = new AlgorithmOptions().
+                setAlgorithm(algoStr).
+                setTraversalMode(tMode).
+                setFlagEncoder(encoder).
+                setWeighting(weighting);
+
         for (int placeIndex = 1; placeIndex < points.size(); placeIndex++)
         {
             QueryResult toQResult = qResults.get(placeIndex);
             sw = new StopWatch().start();
-            String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
-            AlgorithmOptions opts = new AlgorithmOptions().
-                    setAlgorithm(algoStr).
-                    setTraversalMode(tMode).
-                    setFlagEncoder(encoder).
-                    setWeighting(createWeighting(request.getHints(), encoder));
-            RoutingAlgorithm algo = getAlgorithmFactory().createAlgo(qGraph, opts);
+            RoutingAlgorithm algo = getAlgorithmFactory().createAlgo(queryGraph, algoOpts);
             debug += ", algoInit:" + sw.stop().getSeconds() + "s";
 
             sw = new StopWatch().start();
