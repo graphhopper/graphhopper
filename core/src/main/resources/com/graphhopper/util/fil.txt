@@ -24,6 +24,7 @@ web.mtb=MountainBike
 web.car=kotse
 web.foot=lumakad
 web.staticlink=
+web.motorcycle=
 via=
 finish=Tapusin!
 hourAbbr=h

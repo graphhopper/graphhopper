@@ -24,6 +24,7 @@ web.mtb=Гірський велосипед
 web.car=Автомобіль
 web.foot=Пішки
 web.staticlink=статичне посилання
+web.motorcycle=
 via=через
 finish=Ви прибули до пункту призначення!
 hourAbbr= год

@@ -24,6 +24,7 @@ web.mtb=Планинско колело
 web.car=Автомобил
 web.foot=Пеш
 web.staticlink=статична връзка
+web.motorcycle=
 via=през
 finish=Крайна цел!
 hourAbbr=ч

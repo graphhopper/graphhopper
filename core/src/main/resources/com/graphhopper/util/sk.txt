@@ -24,6 +24,7 @@ web.mtb=Horský bicykel
 web.car=Automobil
 web.foot=Pešo
 web.staticlink=nemenný odkaz
+web.motorcycle=
 via=cez
 finish=Cieľ!
 hourAbbr=Horský bicykel

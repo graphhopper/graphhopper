@@ -24,6 +24,7 @@ web.mtb=Mountainbike
 web.car=mașină
 web.foot=pe jos
 web.staticlink=link
+web.motorcycle=Motocicletă
 via=prin
 finish=obiectiv atins
 hourAbbr=h

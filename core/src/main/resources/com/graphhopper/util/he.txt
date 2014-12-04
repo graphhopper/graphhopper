@@ -24,6 +24,7 @@ web.mtb=אופני הרים
 web.car=מכונית
 web.foot=רגל
 web.staticlink=קישור קבוע
+web.motorcycle=
 via=דרך
 finish=סיימת!
 hourAbbr=שע׳

@@ -24,6 +24,7 @@ web.mtb=dag bisikleti
 web.car=Otomobil
 web.foot=Yürüyerek
 web.staticlink=duragan baglanti
+web.motorcycle=
 via=araciligi ile
 finish=Bitti !
 hourAbbr=s

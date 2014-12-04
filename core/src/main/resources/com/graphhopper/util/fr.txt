@@ -24,6 +24,7 @@ web.mtb=VTT
 web.car=Voiture
 web.foot=À pied
 web.staticlink=Lien
+web.motorcycle=
 via=via
 finish=Fini!
 hourAbbr=h

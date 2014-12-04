@@ -24,6 +24,7 @@ web.mtb=Bicicleta de montanya
 web.car=Cotxe
 web.foot=A peu
 web.staticlink=Enllaç
+web.motorcycle=
 via=passant per
 finish=Has arribat !!
 hourAbbr=h

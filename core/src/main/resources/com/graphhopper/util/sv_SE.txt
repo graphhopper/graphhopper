@@ -24,6 +24,7 @@ web.mtb=Mountain bike
 web.car=Bil
 web.foot=Gång
 web.staticlink=Direktlänk
+web.motorcycle=
 via=via
 finish=Framme!
 hourAbbr= tim

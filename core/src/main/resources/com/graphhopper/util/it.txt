@@ -24,6 +24,7 @@ web.mtb=Mountainbike
 web.car=Auto
 web.foot=A piedi
 web.staticlink=permalink
+web.motorcycle=
 via=attraverso
 finish=Arrivo!
 hourAbbr=hh
