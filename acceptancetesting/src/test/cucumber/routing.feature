@@ -8,7 +8,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                 | azimuth | direction | time  | distance |
-      | 1             | 51.472114,-0.361993 | Continue onto ELLINGTON ROAD | 274     | W         | 13535 | 131.626  |
+      | 1             | 51.472114,-0.361993 | Continue onto ELLINGTON ROAD | 275     | W         | 13535 | 131.626  |
 
     Examples: 
       | pointA                                 | pointB                                 | routetype |
@@ -176,3 +176,25 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA             | pointB             | routetype |
       | 50.91525,-1.318761 | 50.92045,-1.316021 | car       |
+
+  @Routing @New
+  Scenario Outline: Verify  No Turn   (WSPIP-76:Eastley- TWYFORD ROAD )
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                       | azimuth | direction | time | distance |
+      | 3             | 50.971186,-1.350769 | turn left onto TWYFORD ROAD (A335) | 353     | N         | 5624 | 85.959   |
+
+    Examples: 
+      | pointA              | pointB              | routetype |
+      | 50.972281,-1.350942 | 50.972212,-1.351183 | car       |
+
+  @Routing @New
+  Scenario Outline: Verify  No Turn   (WSPIP-76:Eastley- Station Hill Road)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                              | azimuth | direction | time | distance |
+      | 2             | 50.969817,-1.350504 | Turn slight left onto STATION HILL (A335) | 180     | S         | 2931 | 44.808   |
+
+    Examples: 
+      | pointA              | pointB             | routetype |
+      | 50.970024,-1.350267 | 50.97008,-1.350521 | car       |
