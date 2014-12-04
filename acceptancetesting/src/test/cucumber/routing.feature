@@ -177,7 +177,7 @@ Feature: Verify a route from A to B
       | pointA             | pointB             | routetype |
       | 50.91525,-1.318761 | 50.92045,-1.316021 | car       |
 
-  @Routing @New
+  @Routing 
   Scenario Outline: Verify  No Turn   (WSPIP-76:Eastley- TWYFORD ROAD )
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -188,7 +188,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 50.972281,-1.350942 | 50.972212,-1.351183 | car       |
 
-  @Routing @New
+  @Routing 
   Scenario Outline: Verify  No Turn   (WSPIP-76:Eastley- Station Hill Road)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
