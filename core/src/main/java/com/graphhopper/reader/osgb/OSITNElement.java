@@ -203,7 +203,7 @@ public abstract class OSITNElement implements RoutingElement {
                 case "Pedestrianised Street":
                 //case "Private Road - Restricted Access":
                 case "Private Road - Publicly Accessible":
-                case "Alley":
+                //case "Alley":
 
                 case "Local Street":
                         return elementText;
