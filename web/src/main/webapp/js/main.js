@@ -237,10 +237,10 @@ function checkInput() {
     // properly unbind previously click handlers
     $("#locationpoints .pointDelete").off();
 
-    // console.log("#### new checkInput #### ");
+    // console.log("## new checkInput");
     for (var i = 0; i < len; i++) {
         var div = $('#locationpoints > div.pointDiv').eq(i);
-        console.log(div.length + ", index:" + i + ", len:" + len);
+        // console.log(div.length + ", index:" + i + ", len:" + len);
         if (div.length === 0) {
             $('#locationpoints > div.pointAdd').before(nanoTemplate(template, {id: i}));
             div = $('#locationpoints > div.pointDiv').eq(i);
@@ -254,7 +254,7 @@ function checkInput() {
         if (len > 2) {
             div.find(".pointDelete").click(function () {
                 var index = $(this).parent().data('index');
-                ghRequest.route.delete(index);
+                ghRequest.route.removeSingle(index);
                 routingLayer.clearLayers();
                 routeLatLng(ghRequest, false);
             }).show();
@@ -546,7 +546,7 @@ function setIntermediateCoord(e) {
 
 function deleteCoord(e) {
     var latlng = e.target.getLatLng();
-    ghRequest.route.delete(latlng);
+    ghRequest.route.removeSingle(latlng);
     routingLayer.clearLayers();
     routeLatLng(ghRequest, false);
 }

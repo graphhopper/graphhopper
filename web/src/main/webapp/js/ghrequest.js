@@ -9,6 +9,33 @@ window.log = function () {
     }
 };
 
+// compatiblity script taken from http://stackoverflow.com/a/11054570/194609
+if (!Function.prototype.bind) {
+    Function.prototype.bind = function (oThis) {
+        if (typeof this !== 'function') {
+            // closest thing possible to the ECMAScript 5
+            // internal IsCallable function
+            throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
+        }
+
+        var aArgs = Array.prototype.slice.call(arguments, 1),
+                fToBind = this,
+                fNOP = function () {
+                },
+                fBound = function () {
+                    return fToBind.apply(this instanceof fNOP && oThis
+                            ? this
+                            : oThis,
+                            aArgs.concat(Array.prototype.slice.call(arguments)));
+                };
+
+        fNOP.prototype = this.prototype;
+        fBound.prototype = new fNOP();
+
+        return fBound;
+    };
+}
+
 GHRequest = function (host) {
     this.way_point_max_distance = 1;
     this.host = host;
@@ -26,7 +53,7 @@ GHRequest = function (host) {
     this.do_zoom = true;
     // use jsonp here if host allows CORS
     this.dataType = "json";
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // We know that you love 'free', we love it too :)! And so our entire software stack is free and even Open Source!      
     // Our routing service is also free for certain applications or smaller volume. Be fair, grab an API key and support us:
@@ -152,7 +179,7 @@ GHroute.prototype = {
         }
         return (this[to]);
     },
-    delete: function (value) {
+    removeSingle: function (value) {
         var index = false;
         if (!(isNaN(value) || value >= this.length) && this[value] !== undefined) {
             index = value;
@@ -168,13 +195,13 @@ GHroute.prototype = {
         return (this);
     },
     remove: function (from, to) {
-        var to = to || 1;
-        Array.prototype.splice.call(this, from, to);
+        var tmpTo = to || 1;
+        Array.prototype.splice.call(this, from, tmpTo);
         if (this.length === 1)
             Array.prototype.push.call(this, new GHInput());
         this.fire('route.remove', {
             from: from,
-            to: to
+            to: tmpTo
         });
         return (this);
     },
@@ -239,6 +266,7 @@ GHroute.prototype = {
             this._listeners[type] = [];
         }
         this._listeners[type].push(listener);
+        return this;
     },
     fire: function (event, options) {
         if (typeof event === "string") {
