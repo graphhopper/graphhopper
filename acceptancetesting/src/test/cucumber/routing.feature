@@ -156,6 +156,17 @@ Feature: Verify a route from A to B
       | 50.720454,-3.530089 | 50.722657,-3.526321 | car       |
 
   @Routing
+  Scenario Outline: Verify  One-Way(No Entry)Restriction   (SIVELL PLACE-Exeter)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc               | azimuth | direction | time | distance |
+      | 2             | 50.720531,-3.504654 | Turn left onto SIVELL MEWS | 24      | NE        | 4602 | 44.753   |
+
+    Examples: 
+      | pointA              | pointB              | routetype |
+      | 50.720561,-3.504848 | 50.720608,-3.505677 | car       |
+
+  @Routing
   Scenario Outline: Verify  under pass still finds route  from top road (Southampton- Charle WattsWay)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the trackPoints on the route map:
@@ -177,7 +188,7 @@ Feature: Verify a route from A to B
       | pointA             | pointB             | routetype |
       | 50.91525,-1.318761 | 50.92045,-1.316021 | car       |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  No Turn   (WSPIP-76:Eastley- TWYFORD ROAD )
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -188,7 +199,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 50.972281,-1.350942 | 50.972212,-1.351183 | car       |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  No Turn   (WSPIP-76:Eastley- Station Hill Road)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -198,3 +209,36 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA              | pointB             | routetype |
       | 50.970024,-1.350267 | 50.97008,-1.350521 | car       |
+
+  @Routing
+  Scenario Outline: Verify  No Turn   (Treaty Center-Hounslow- Fairfields Road)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                               | azimuth | direction | time | distance |
+      | 2             | 51.468925,-0.359049 | Turn slight left onto HANWORTH ROAD (A315) | 251     | W         | 3534 | 54.019   |
+
+    Examples: 
+      | pointA             | pointB              | routetype |
+      | 51.46882,-0.358687 | 51.469454,-0.357831 | car       |
+
+  @Routing @KnownIssues
+  Scenario Outline: Verify  No Turns with Exceptions(Vehicle Type:Bus)   (High Street-Hounslow)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the trackPoints not on the route map:
+      | trackPointco        |
+      | 51.470009,-0.357019 |
+
+    Examples: 
+      | pointA              | pointB              | routetype |
+      | 51.470198,-0.356036 | 51.470352,-0.357388 | car       |
+
+  @Routing
+  Scenario Outline: Verify  Mandatory Turn   (Alexandra Road-Hounslow- Fairfields Road)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                   | azimuth | direction | time  | distance |
+      | 2             | 51.470846,-0.363527 | Turn right onto LANSDOWNE ROAD | 264     | W         | 12772 | 124.177  |
+
+    Examples: 
+      | pointA             | pointB              | routetype |
+      | 51.47118,-0.363609 | 51.470651,-0.363495 | car       |
