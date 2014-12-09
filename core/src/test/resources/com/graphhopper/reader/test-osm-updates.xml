@@ -1,0 +1,83 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="pbf2osm">
+    
+    <!--  __B__ 
+         /  |  \
+    S___A___D__C___F
+         \  |  /
+          \_E_/    
+    -->
+    
+    <node id="5" lat="11.0" lon="49" uid="24852">
+        <tag k="name" v="S" />
+    </node>      
+    <node id="10" lat="11.1" lon="50" uid="24853">
+        <tag k="name" v="A" />
+    </node>
+    <node id="20" lat="12" lon="51" uid="24854">
+        <tag k="name" v="B" />
+    </node>
+    <node id="30" lat="11.2" lon="52" uid="24855">
+        <tag k="name" v="C" />
+    </node>
+    <node id="40" lat="11.3" lon="51" uid="24854">
+        <tag k="name" v="D" />
+    </node>
+    <node id="50" lat="10" lon="51">
+        <tag k="name" v="E" />
+    </node>  
+    <node id="55" lat="11.2" lon="53" uid="24856">
+        <tag k="name" v="S" />
+    </node>
+    
+    <way id="5" uid="85760">
+        <nd ref="5"/>
+        <nd ref="10"/>
+        <tag k="name" v="S A" />
+        <tag k="highway" v="secondary" />
+    </way>                   
+    
+    <way id="10" uid="85761">
+        <nd ref="10"/>
+        <nd ref="20"/>
+        <nd ref="30"/>
+        <tag k="name" v="A B C" />
+        <tag k="oneway" v="true" />
+        <tag k="highway" v="secondary" />
+    </way>    
+    
+    <way id="12" uid="85762">
+        <nd ref="10"/>
+        <nd ref="40"/>
+        <nd ref="30"/>
+        <tag k="name" v="A D C" />
+        <tag k="oneway" v="true" />
+        <tag k="highway" v="motorway" />      
+    </way>
+    
+    <way id="11" uid="85761">
+        <nd ref="10"/>
+        <nd ref="50"/>
+        <nd ref="30"/>
+        <tag k="name" v="A E C" />
+        <tag k="highway" v="footway"/>        
+    </way>    
+    
+    <way id="13">
+        <nd ref="20"/>
+        <nd ref="40"/>
+        <nd ref="50"/>
+        <tag k="name" v="B D E" />
+        <tag k="highway" v="motorway" />
+        <tag k="maxspeed" v="40" />
+    </way>
+    
+    <way id="15">
+        <nd ref="30"/>
+        <nd ref="55"/>
+        <tag k="name" v="C F" />
+        <tag k="highway" v="motorway" />
+    </way>
+    
+    <!-- TODO relations -->
+</osm>
