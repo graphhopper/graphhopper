@@ -1,0 +1,5 @@
+target/
+track-data/
+*~
+test-input.gpx
+test.gpx

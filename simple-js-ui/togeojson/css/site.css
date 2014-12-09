@@ -1,0 +1,30 @@
+body {
+    margin:0;
+    padding:0;
+}
+
+a {
+    color:darkblue;
+    text-decoration:none;
+}
+
+a:hover {
+    background:#def;
+}
+
+a.button {
+    background:darkblue;
+    padding:10px 20px;
+    border-radius:3px;
+    color:#fff;
+}
+
+a.button:hover {
+    background:blue;
+}
+
+.h30 {
+    height:30px;
+    margin-bottom:10px;
+    display:block;
+}

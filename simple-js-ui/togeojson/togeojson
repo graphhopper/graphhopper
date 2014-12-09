@@ -1,0 +1,28 @@
+#!/usr/bin/env node
+
+var tj = require('./'),
+    argv = require('minimist')(process.argv.slice(2)),
+    concat = require('concat-stream'),
+    fs = require('fs'),
+    xmldom = new (require('xmldom').DOMParser)();
+
+var filename = argv._[0] || '',
+    filetype = (argv.f || 'kml');
+
+if (filename.match(/\.kml$/i)) filetype = 'kml';
+if (filename.match(/\.gpx$/i)) filetype = 'gpx';
+
+if (!tj[filetype] || (process.stdin.isTTY && !argv._[0])) {
+    return help();
+}
+
+(argv._.length ? fs.createReadStream(argv._[0]) : process.stdin).pipe(concat(convert));
+
+function convert(data) { process.stdout.write(
+    JSON.stringify(tj[filetype](xmldom.parseFromString(data.toString())), null, 4));
+}
+
+function help() {
+    console.error('Usage: togeojson [-f format] FILE\n' +
+        '-f    file format. if not given, will be detected by filename');
+}

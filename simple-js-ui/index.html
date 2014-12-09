@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Leaflet.FileLayer</title>
+
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7/leaflet.css" />
+<!--    <link rel="stylesheet" href="font-awesome.min.css" /> -->
+
+    <script src="http://cdn.leafletjs.com/leaflet-0.7/leaflet.js"></script>
+    <script src="leaflet.filelayer.js"></script>
+    <script src="togeojson/togeojson.js"></script>
+    <style>
+        #map {
+            position: absolute;
+            top:0;
+            left: 0;
+            right: 0;
+            bottom:0;
+        }
+        .help {
+            font-size: 1.5em;
+            position: absolute;
+            top:0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            z-index: 10;
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            padding: 10px;
+            margin: 0px;
+            text-align: center;
+        }
+        .help a.sources {
+            float: left;
+            margin-left: 50px;
+            color: white;
+        }
+        .help a.logo {
+            float: right;
+        }
+        .help a.logo img {
+            height: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <p class="help">Use the X icon to browse and load local files on the map.
+      <a class="sources" href="http://github.com/makinacorpus/Leaflet.FileLayer/">Sources</a>
+      <a class="logo" href="http://makina-corpus.com"><img src="http://depot.makina-corpus.org/public/logo.gif"/></a>
+    </p>
+    <div id="map"></div>
+
+    <script type="text/javascript">
+
+        var osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data &copy; 2013 OpenStreetMap contributors',
+        });
+
+        var map = L.map('map')
+                   .fitWorld()
+                   .addLayer(osm);
+
+        var style = {color:'red', opacity: 1.0, fillOpacity: 1.0, weight: 2, clickable: false};
+        L.Control.FileLayerLoad.LABEL = 'X';
+        L.Control.fileLayerLoad({
+            fitBounds: true,
+            layerOptions: {style: style,
+                           pointToLayer: function (data, latlng) {
+                              return L.circleMarker(latlng, {style: style});
+                           }},
+        }).addTo(map);
+
+    </script>
+</body>
+</html>

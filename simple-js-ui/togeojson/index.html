@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <link href='css/style.css' type='text/css' rel='stylesheet' />
+        <link href='css/site.css' type='text/css' rel='stylesheet' />
+        <title>toGeoJSON</title>
+    </head>
+    <body>
+        <div class='col8 margin2 pad2'>
+            <h1 class='center'>
+                <a href='https://github.com/tmcw/togeojson'>toGeoJSON
+                    turns KML &amp; GPX</a> into <a target='_blank' href='http://geojson.org/'>GeoJSON</a>
+                <iframe class="github-btn" src="http://ghbtns.com/github-btn.html?user=tmcw&repo=togeojson&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="100px" height="20px"></iframe>
+            </h1>
+            <div class='clearfix col12'>
+                <div class='col6'>
+                    <select id='format'>
+                        <option value='kml'>KML</option>
+                        <option value='gpx'>GPX</option>
+                    </select>
+                    <textarea id='in'>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;kml xmlns=&quot;http://www.opengis.net/kml/2.2&quot;&gt;
+  &lt;Placemark&gt;
+    &lt;name&gt;Simple placemark&lt;/name&gt;
+    &lt;description&gt;Attached to the ground. Intelligently places itself
+       at the height of the underlying terrain.&lt;/description&gt;
+    &lt;Point&gt;
+      &lt;coordinates&gt;-122.0822035425683,37.42228990140251,0&lt;/coordinates&gt;
+    &lt;/Point&gt;
+  &lt;/Placemark&gt;
+&lt;/kml&gt;
+                </textarea>
+                </div>
+                <div class='col6'>
+                    <strong class='h30'>GeoJSON</strong>
+                    <textarea id='output'></textarea></div>
+            </div>
+            <div class='pad2 center'>
+                <a class='button' href='https://raw.github.com/tmcw/togeojson/gh-pages/togeojson.js' download='togeojson.js'>⬇ togeojson.js <small>3.9 KB</small></a>
+                <br /><br />
+                <small>
+                    <a href='http://github.com/tmcw/togeojson'>or clone &amp; contribute on github</a>
+                </small>
+            </div>
+            <div class='clearfix col12'>
+                <div class='col6 pad2'>
+                    <p>
+                    toGeoJSON is a simple way to use KML and GPX formats with
+                    modern web tools like Leaflet and MapBox. It's simple,
+                    written in plain, dependency-free JavaScript and designed
+                    to work across browsers and in node.js.
+                    </p>
+                    <p>
+                    Use this page to test it out, or download it to integrate
+                    into your application.
+                    </p>
+                </div>
+                <div class='col6 pad2'>
+                    <h3>KML</h3>
+                    <p>
+                    <ul class='features'>
+                        <li>LineString, Polygon, MultiPolygon, MultiLineString, Point, MultiGeometry</li>
+                        <li>ExtendedData, SimpleData, name, description</li>
+                    </ul>
+                    </p>
+                    <h3>GPX</h3>
+                    <p>
+                    <ul class='features'>
+                        <li>Tracks, Routes, and Waypoints</li>
+                        <li>Standard metadata</li>
+                    </ul>
+                    </p>
+                </div>
+        </div>
+        <div id='output'></div>
+        <script src='togeojson.js'></script>
+        <script>
+var input = document.getElementById('in');
+var out = document.getElementById('output');
+var format = document.getElementById('format');
+input.onchange = input.onkeyup = format.onchange = update = function() {
+    out.value = JSON.stringify(toGeoJSON[format.value]((new DOMParser()).parseFromString(input.value, 'text/xml')), null, 4);
+};
+update();
+        </script>
+        <script type="text/javascript">
+  var _gauges = _gauges || [];
+  (function() {
+    var t   = document.createElement('script');
+    t.type  = 'text/javascript';
+    t.async = true;
+    t.id    = 'gauges-tracker';
+    t.setAttribute('data-site-id', '4e36eb1ef5a1f53d6f000001');
+    t.src = '//secure.gaug.es/track.js';
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(t, s);
+  })();
+</script>
+    </body>
+</html>
