@@ -1,10 +1,14 @@
 package uk.co.ordnancesurvey.routing;
 
+import java.io.IOException;
+import java.sql.Date;
 import java.text.ParseException;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
 import uk.co.ordnancesurvey.webtests.IntegrationTestProperties;
+import cucumber.api.Scenario;
 import cucumber.api.java.After;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
@@ -52,7 +56,7 @@ public class GraphHopperHooks {
 			List<Map<String, String>> wayPointList) {
 		graphUiUtil.isWayPointonRouteMap(wayPointList);
 	}
-	
+
 	@Then("^I should be able to verify the waypoints not on the route map:")
 	public void I_should_be_able_to_verify_the_not_waypoints_on_the_route_map(
 			List<Map> wayPointList) {
@@ -60,7 +64,6 @@ public class GraphHopperHooks {
 		graphUiUtil.isWayPointNotonRouteMap(wayPointList);
 
 	}
-	
 
 	@Then("^The total route time should be not more than \"([^\"]*)\"$")
 	public void The_total_route_time_should_be_not_more_than(
@@ -86,7 +89,17 @@ public class GraphHopperHooks {
 	}
 
 	@After({ "@Routing" })
-	public void closeBrowser() {
+	public void closeBrowser(Scenario sc) {
+
+		if (sc.isFailed()) {
+			Calendar cal = Calendar.getInstance();
+			try {
+				graphUiUtil.takescreen("Screenshot" + cal.getTimeInMillis());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		graphUiUtil.logout();
 		System.out.println("closed");
 

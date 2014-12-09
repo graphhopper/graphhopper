@@ -112,7 +112,23 @@ public abstract class OSITNElement implements RoutingElement {
                                                 break;
                                         }
                                         case "instruction": {
-                                                event = handleRouteInformation(parser);
+                                            // eg. Mandatory Turn, No Turn, One Way, No Entry 
+                                                event = handleEnvironmentalQualifier_instruction(parser);
+                                                break;
+                                        }
+                                        case "type": {
+                                            // eg. Buses, Coaches, Mopeds, HGV's 
+                                                event = handleVehicleQualifier_type(parser);
+                                                break;
+                                        }
+                                        case "load": {
+                                            // eg. Explosives, Dangerous Goods, Abnormal Loads, Wide Loads 
+                                                event = handleVehicleQualifier_load(parser);
+                                                break;
+                                        }
+                                        case "use": {
+                                            // eg. Taxi, School Bus, Patron, Access, Emergency Vehicle, Public Transport
+                                                event = handleVehicleQualifier_use(parser);
                                                 break;
                                         }
                                         case "descriptiveTerm":
@@ -185,9 +201,9 @@ public abstract class OSITNElement implements RoutingElement {
                 case "Minor Road":
                 // Should we be handling these for Car routes?
                 case "Pedestrianised Street":
-                case "Private Road - Restricted Access":
+                //case "Private Road - Restricted Access":
                 case "Private Road - Publicly Accessible":
-                case "Alley":
+                //case "Alley":
 
                 case "Local Street":
                         return elementText;
@@ -208,34 +224,96 @@ public abstract class OSITNElement implements RoutingElement {
 
     /**
      * Process <code><osgb:instruction>One Way</osgb:instruction></code>
-     * instructions. It is either "One Way", "No Entry" or a turn restriction
-     * type
+     * instructions within an environmentalQualifier element. 
+     * 
+     * It is either "One Way", "No Entry" or a turn restriction type
      * 
      * @param parser
      * @return
      * @throws XMLStreamException
      */
-    private int handleRouteInformation(XMLStreamReader parser) throws XMLStreamException {
+    private int handleEnvironmentalQualifier_instruction(XMLStreamReader parser) throws XMLStreamException {
         String elementText = parser.getElementText();
         int event;
-        if ("One Way".equals(elementText)) {
+        switch (elementText) {
+        case "One Way" :
             setTag(TAG_KEY_TYPE, TAG_VALUE_TYPE_ONEWAY);
             setTag(TAG_KEY_ONEWAY_ORIENTATION, "-1");
-        } else if ("No Entry".equals(elementText)) {
+            break;
+        case "No Entry" :
             // We are processing a No Entry RoadRouteInformation element. Set the type to noentry
             setTag(TAG_KEY_TYPE, TAG_VALUE_TYPE_NOENTRY);
             // Default the orientation to -1. This could be changed when we process the directedLink element later
            setTag(TAG_KEY_NOENTRY_ORIENTATION, "-1");
             // We might need this?
             setTag(TAG_KEY_RESTRICTION, elementText);
-        } else {
+            break;
+        default :
             setTag(TAG_KEY_TYPE, TAG_VALUE_TYPE_RESTRICTION);
             setTag(TAG_KEY_RESTRICTION, elementText);
+            break;
         }
         event = parser.getEventType();
         return event;
     }
-
+    private int handleVehicleQualifier_type(XMLStreamReader parser) throws XMLStreamException {
+        String exceptForString = parser.getAttributeValue(null, "exceptFor");
+        Boolean exceptFor = null;
+        if (exceptForString!=null) {
+            exceptFor = Boolean.parseBoolean(exceptForString);
+        }
+        String elementText = parser.getElementText();
+        int event;
+        switch (elementText) {
+        case "Buses" :
+        case "Coaches" :
+        case "Mopeds" :
+        case "Motor Cycles" :
+        case "HGV's" :
+        case "LGV's" :
+        case "Towed Caravans" :
+        case "Motor Vehicles" :
+        case "Cycles" :
+        case "Tracked Vehicles" :
+            break;
+        }
+        event = parser.getEventType();
+        return event;
+    }
+    private int handleVehicleQualifier_load(XMLStreamReader parser) throws XMLStreamException {
+        String elementText = parser.getElementText();
+        int event;
+        switch (elementText) {
+        case "Explosives" :
+        case "Dangerous Goods" :
+        case "Abnormal Loads" :
+        case "Wide Loads" :
+            break;
+        }
+        event = parser.getEventType();
+        return event;
+    }
+    private int handleVehicleQualifier_use(XMLStreamReader parser) throws XMLStreamException {
+        String elementText = parser.getElementText();
+        int event;
+        switch (elementText) {
+        case "Taxi" :
+        case "School Bus" :
+        case "Patron" :
+        case "Access" :
+        case "Resident" :
+        case "Emergency Vehicle" :
+        case "Emergency Access" :
+        case "Public Transport" :
+        case "Authorised Vehicle" :
+        case "Local Bus" :
+        case "Escorted Traffic" :
+            break;
+        }
+        event = parser.getEventType();
+        return event;
+    }
+    
     /**
      * process parsing of directedLink data. If this is a "oneway" OR "noentry" we will change the -1 to true if the orientation on the link it "+"
      * @param parser
