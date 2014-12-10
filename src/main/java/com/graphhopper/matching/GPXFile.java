@@ -43,7 +43,8 @@ import org.w3c.dom.NodeList;
  */
 public class GPXFile
 {
-    private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
+    static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
+    static final String DATE_FORMAT_Z = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     private final List<GPXEntry> entries;
     private final boolean includeElevation = false;
 
@@ -87,8 +88,9 @@ public class GPXFile
     GPXFile doImport( String fileStr )
     {
         SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
+        SimpleDateFormat formatterZ = new SimpleDateFormat(DATE_FORMAT_Z);
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setValidating(true);
+        factory.setValidating(false);
         factory.setIgnoringElementContentWhitespace(true);
         try
         {
@@ -109,7 +111,15 @@ public class GPXFile
                 if (timeNodes.getLength() == 0)
                     throw new IllegalStateException("GPX without time is illegal");
 
-                long millis = formatter.parse(revertTZHack(timeNodes.item(0).getTextContent())).getTime();
+                String text = timeNodes.item(0).getTextContent();
+                long millis;
+                if (text.contains("Z"))
+                {
+                    millis = formatterZ.parse(text).getTime();
+                } else
+                {
+                    millis = formatter.parse(revertTZHack(text)).getTime();
+                }
 
                 NodeList eleNodes = e.getElementsByTagName("ele");
                 if (eleNodes.getLength() == 0)

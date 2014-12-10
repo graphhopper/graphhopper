@@ -6,6 +6,8 @@
 package com.graphhopper.matching;
 
 import com.graphhopper.util.GPXEntry;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -27,4 +29,12 @@ public class GPXFileTest
         assertEquals(new GPXEntry(51.377719, 12.338217, 0), res.get(0));
         assertEquals(new GPXEntry(51.371482, 12.363795, 235000), res.get(50));
     }
+
+    @Test
+    public void testParseDate() throws ParseException
+    {
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        assertEquals(1412693404000L, df.parse("2014-10-07T16:50:4Z").getTime());
+    }
+
 }

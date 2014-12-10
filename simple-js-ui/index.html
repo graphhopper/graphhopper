@@ -46,7 +46,7 @@
 </head>
 <body>
 
-    <p class="help">Use the X icon to browse and load local files on the map.
+    <p class="help">Use 'Open' to browse and load local files on the map.
       <a class="sources" href="http://github.com/makinacorpus/Leaflet.FileLayer/">Sources</a>
       <a class="logo" href="http://makina-corpus.com"><img src="http://depot.makina-corpus.org/public/logo.gif"/></a>
     </p>
@@ -63,7 +63,7 @@
                    .addLayer(osm);
 
         var style = {color:'red', opacity: 1.0, fillOpacity: 1.0, weight: 2, clickable: false};
-        L.Control.FileLayerLoad.LABEL = 'X';
+        L.Control.FileLayerLoad.LABEL = 'Open';
         L.Control.fileLayerLoad({
             fitBounds: true,
             layerOptions: {style: style,

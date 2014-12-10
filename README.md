@@ -7,9 +7,20 @@ Read more at [Wikipedia](https://en.wikipedia.org/wiki/Map_matching)
 
 Apache License 2.0
 
+### Installation
+
+Install Java and Maven
+
 ### Usage
 
-Use this Java snippet:
+Import the area you want to do some route matches on, then do those matches:
+
+ 1. ./map-matching action=import datasource=./some-dir/osm-file.pbf
+ 2. ./map-matching action=match gpx=./track-data/.*gpx
+
+This will produce gpx results similar named as the input files.
+
+Or use this Java snippet:
 
 ```java
 // import OpenStreetMap data
@@ -39,6 +50,13 @@ matches.get(0).edgeState
 ```
 
 Later we will add a simple web service
+
+### UI to visually compare
+
+There is a simple UI taken from [makinacorpus/Leaflet.FileLayer](https://github.com/makinacorpus/Leaflet.FileLayer)
+where you can load your input and output gpx files to compare the results. Some GPX seem to fail when trying to load them.
+
+Start e.g. via 'firefox simple-js-ui/index.html'
 
 ### Note
 
