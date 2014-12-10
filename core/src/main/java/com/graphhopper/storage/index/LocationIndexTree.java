@@ -788,7 +788,7 @@ public class LocationIndexTree implements LocationIndex
         storedNetworkEntryIds.forEach(new TIntProcedure()
         {
             @Override
-            public boolean execute( final int networkEntryNodeId )
+            public boolean execute( int networkEntryNodeId )
             {
                 new XFirstSearchCheck(queryLat, queryLon, checkBitset, edgeFilter)
                 {
