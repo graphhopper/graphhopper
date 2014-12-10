@@ -60,7 +60,7 @@ public class GraphHopper implements GraphHopperAPI
     private LockFactory lockFactory = new NativeFSLockFactory();
     private final String fileLockName = "gh.lock";
     private boolean allowWrites = true;
-    private boolean enableInstructions = true;
+    boolean enableInstructions = true;
     private boolean fullyLoaded = false;
     // for routing
     private boolean simplifyResponse = true;
@@ -831,16 +831,16 @@ public class GraphHopper implements GraphHopperAPI
         if (response.hasErrors())
             return response;
 
-        enableInstructions = request.getHints().getBool("instructions", enableInstructions);
-        calcPoints = request.getHints().getBool("calcPoints", calcPoints);
+        boolean tmpEnableInstructions = request.getHints().getBool("instructions", enableInstructions);
+        boolean tmpCalcPoints = request.getHints().getBool("calcPoints", calcPoints);
         double wayPointMaxDistance = request.getHints().getDouble("wayPointMaxDistance", 1d);
         Locale locale = request.getLocale();
         DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
 
         new PathMerger().
-                setCalcPoints(calcPoints).
+                setCalcPoints(tmpCalcPoints).
                 setDouglasPeucker(peucker).
-                setEnableInstructions(enableInstructions).
+                setEnableInstructions(tmpEnableInstructions).
                 setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0).
                 doWork(response, paths, trMap.getWithFallBack(locale));
         return response;
