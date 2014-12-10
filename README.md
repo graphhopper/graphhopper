@@ -3,6 +3,11 @@
 Map matching is the process to match a sequence of real world coordinates into a digital map.
 Read more at [Wikipedia](https://en.wikipedia.org/wiki/Map_matching)
 
+### Warning
+
+Highly Alpha and even the simple tests do not pass but already good enough
+for prototyping
+
 ### License
 
 Apache License 2.0
