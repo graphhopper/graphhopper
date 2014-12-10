@@ -61,4 +61,4 @@ Start e.g. via 'firefox simple-js-ui/index.html'
 ### Note
 
 Note that the edge and node IDs from GraphHopper will change for different PBF files,
-like if updating the OSM data.
+like when updating the OSM data.
