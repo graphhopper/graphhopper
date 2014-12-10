@@ -62,3 +62,7 @@ Start e.g. via 'firefox simple-js-ui/index.html'
 
 Note that the edge and node IDs from GraphHopper will change for different PBF files,
 like when updating the OSM data.
+
+### About
+
+The used algorithm is explained in [this blog post](http://karussell.wordpress.com/2014/07/28/digitalizing-gpx-points-or-how-to-track-vehicles-with-graphhopper/).
