@@ -15,8 +15,8 @@ Install Java and Maven
 
 Import the area you want to do some route matches on, then do those matches:
 
- 1. ./map-matching action=import datasource=./some-dir/osm-file.pbf
- 2. ./map-matching action=match gpx=./track-data/.*gpx
+ 1. ./map-matching.sh action=import datasource=./some-dir/osm-file.pbf
+ 2. ./map-matching.sh action=match gpx=./track-data/.*gpx
 
 This will produce gpx results similar named as the input files.
 
