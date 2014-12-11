@@ -1,7 +1,6 @@
 package uk.co.ordnancesurvey.routing;
 
 import java.io.IOException;
-import java.sql.Date;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.List;
@@ -92,9 +91,11 @@ public class GraphHopperHooks {
 	public void closeBrowser(Scenario sc) {
 
 		if (sc.isFailed()) {
-			Calendar cal = Calendar.getInstance();
+
 			try {
-				graphUiUtil.takescreen("Screenshot" + cal.getTimeInMillis());
+				byte[] screeenshot = graphUiUtil.takescreenAsBiteArray();
+				sc.embed(screeenshot, "image/png");
+
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

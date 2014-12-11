@@ -1,15 +1,15 @@
 	package uk.co.ordnancesurvey.routing;
-	import java.util.HashSet;
-
-	import org.alternativevision.gpx.beans.Route;
-	import org.alternativevision.gpx.beans.Waypoint;
-
-	import org.slf4j.Logger;
-	import org.slf4j.LoggerFactory;
-
-	import uk.co.ordnancesurvey.gpx.extensions.ExtensionConstants;
-	import uk.co.ordnancesurvey.gpx.graphhopper.GraphHopperGPXParserRouteTest;
 	import static org.junit.Assert.assertTrue;
+
+import java.util.HashSet;
+
+import org.alternativevision.gpx.beans.Route;
+import org.alternativevision.gpx.beans.Waypoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import uk.co.ordnancesurvey.gpx.extensions.ExtensionConstants;
+import uk.co.ordnancesurvey.gpx.graphhopper.GraphHopperGPXParserRouteTest;
 
 public class GraphHopperServiceUtil {
 	
@@ -35,6 +35,7 @@ public class GraphHopperServiceUtil {
 			GraphHopperGPXParserRouteTest ghrt = GraphHopperGPXParserRouteTest.getParserForgpxFileName(path);
 			//Waypoint wayPoint = getTestWayPoint();
 			HashSet<Route> hs = ghrt.getRoutes();
+			
 			
 			//assertTrue(ghrt.isWayPointOnRoute(wayPoint,hs.iterator().next()));
 		}

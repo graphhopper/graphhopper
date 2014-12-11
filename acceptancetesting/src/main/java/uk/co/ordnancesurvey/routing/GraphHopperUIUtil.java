@@ -356,7 +356,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 	}
 
-	public void takescreen(String testID) throws IOException {
+	public BufferedImage takescreen(String testID) throws IOException {
 
 		File file = new File(testID + "_screenshot.png");
 
@@ -365,9 +365,20 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		// actualMap = ImageIO.read(screenshot);
 
 		ImageIO.write(actualMap, "png", file);
+		return actualMap;
+
+	}
+	
+	public byte[] takescreenAsBiteArray() throws IOException {
+
+		byte[] screenshot = takeScreenShotAsBiteArray();
+
+		return screenshot;
 
 	}
 
+	
+	
 	public void compareMapImage(String expectedMap, String testID)
 			throws IOException {
 		takescreen(testID);
@@ -408,6 +419,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		g.drawImage(img, 0, 0, newW, newH, 0, 0, w, h, null);
 		g.dispose();
 		return dimg;
+		
 	}
 
 }
