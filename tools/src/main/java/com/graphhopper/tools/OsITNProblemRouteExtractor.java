@@ -271,7 +271,7 @@ public class OsITNProblemRouteExtractor {
 		OsITNProblemRouteExtractor extractor = new OsITNProblemRouteExtractor(
 				fileOrDirName, namedRoad, namedLinkRoad);
 		extractor.process(outputFileName);
-		args.put("reader.implementation", OsItnReader.class.getName());
+		args.put("reader.implementation", "OSITN");
 		args.put("osmreader.osm", outputFileName);
 		GraphHopper hopper = new GraphHopper().init(args).importOrLoad();
 		FlagEncoder carEncoder = hopper.getEncodingManager().getEncoder("CAR");

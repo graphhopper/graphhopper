@@ -31,6 +31,7 @@ import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.ITurnCostTableEntry;
 import com.graphhopper.reader.Node;
 import com.graphhopper.reader.Relation;
+import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.TurnRelation;
 import com.graphhopper.reader.Way;
 import com.graphhopper.storage.Directory;
@@ -505,4 +506,22 @@ public class EncodingManager
             bytesForFlags = 8;
         return new EncodingManager(acceptStr, bytesForFlags);
     }
+    
+    public boolean isVehicleQualifierTypeIncluded(RoutingElement routingElement) {
+        for (AbstractFlagEncoder encoder : edgeEncoders)
+        {
+            if (encoder.isVehicleQualifierTypeIncluded(routingElement))
+                return true;
+        }
+        return false;
+    }
+    public boolean isVehicleQualifierTypeExcluded(RoutingElement routingElement) {
+        for (AbstractFlagEncoder encoder : edgeEncoders)
+        {
+            if (encoder.isVehicleQualifierTypeExcluded(routingElement))
+                return true;
+        }
+        return false;
+    }
+
 }

@@ -223,10 +223,14 @@
 				<osgb:reasonForChange>New</osgb:reasonForChange>
 			</osgb:changeHistory>
 			<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+			<osgb:vehicleQualifier>
+<!-- 			One Way for Motor Vehicles but nothing else -->
+				<osgb:type exceptFor="false">Motor Vehicles</osgb:type>
+			</osgb:vehicleQualifier>
 			<osgb:environmentQualifier>
 				<osgb:instruction>One Way</osgb:instruction>
 			</osgb:environmentQualifier>
-			<osgb:directedLink orientation='+' xlink:href='#osgb4000000025288020' />
+			<osgb:directedLink orientation='-' xlink:href='#osgb4000000025288020' />
 		</osgb:RoadRouteInformation>
 	</osgb:roadInformationMember>
 	<osgb:roadInformationMember>

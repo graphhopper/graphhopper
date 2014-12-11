@@ -112,23 +112,25 @@ public abstract class OSITNElement implements RoutingElement {
                                                 break;
                                         }
                                         case "instruction": {
-                                            // eg. Mandatory Turn, No Turn, One Way, No Entry 
-                                                event = handleEnvironmentalQualifier_instruction(parser);
+                                            // eg. Mandatory Turn, No Turn, One Way, No Entry
+//                                            System.out.println("Handle instruction for " + id);
+                                                event = handleInstructionEnvironmentalQualifier(parser);
                                                 break;
                                         }
                                         case "type": {
                                             // eg. Buses, Coaches, Mopeds, HGV's 
-                                                event = handleVehicleQualifier_type(parser);
+//                                            System.out.println("Handle type for " + id);
+                                                event = handleTypeVehicleQualifier(parser);
                                                 break;
                                         }
                                         case "load": {
                                             // eg. Explosives, Dangerous Goods, Abnormal Loads, Wide Loads 
-                                                event = handleVehicleQualifier_load(parser);
+                                                event = handleLoadVehicleQualifier(parser);
                                                 break;
                                         }
                                         case "use": {
                                             // eg. Taxi, School Bus, Patron, Access, Emergency Vehicle, Public Transport
-                                                event = handleVehicleQualifier_use(parser);
+                                                event = handleUseVehicleQualifier(parser);
                                                 break;
                                         }
                                         case "descriptiveTerm":
@@ -232,7 +234,7 @@ public abstract class OSITNElement implements RoutingElement {
      * @return
      * @throws XMLStreamException
      */
-    private int handleEnvironmentalQualifier_instruction(XMLStreamReader parser) throws XMLStreamException {
+    private int handleInstructionEnvironmentalQualifier(XMLStreamReader parser) throws XMLStreamException {
         String elementText = parser.getElementText();
         int event;
         switch (elementText) {
@@ -241,6 +243,8 @@ public abstract class OSITNElement implements RoutingElement {
             setTag(TAG_KEY_ONEWAY_ORIENTATION, "-1");
             break;
         case "No Entry" :
+//        case "Access Prohibited To" :
+//        case "Access Limited To" :
             // We are processing a No Entry RoadRouteInformation element. Set the type to noentry
             setTag(TAG_KEY_TYPE, TAG_VALUE_TYPE_NOENTRY);
             // Default the orientation to -1. This could be changed when we process the directedLink element later
@@ -256,31 +260,33 @@ public abstract class OSITNElement implements RoutingElement {
         event = parser.getEventType();
         return event;
     }
-    private int handleVehicleQualifier_type(XMLStreamReader parser) throws XMLStreamException {
+    private int handleTypeVehicleQualifier(XMLStreamReader parser) throws XMLStreamException {
         String exceptForString = parser.getAttributeValue(null, "exceptFor");
         Boolean exceptFor = null;
         if (exceptForString!=null) {
             exceptFor = Boolean.parseBoolean(exceptForString);
         }
         String elementText = parser.getElementText();
+//        System.out.println("handleTypeVehicleQualifier " + elementText + " exceptFor " + exceptFor);
+        setTag(elementText, exceptFor.toString());
         int event;
-        switch (elementText) {
-        case "Buses" :
-        case "Coaches" :
-        case "Mopeds" :
-        case "Motor Cycles" :
-        case "HGV's" :
-        case "LGV's" :
-        case "Towed Caravans" :
-        case "Motor Vehicles" :
-        case "Cycles" :
-        case "Tracked Vehicles" :
-            break;
-        }
+//        switch (elementText) {
+//        case "Buses" :
+//        case "Coaches" :
+//        case "Mopeds" :
+//        case "Motor Cycles" :
+//        case "HGV's" :
+//        case "LGV's" :
+//        case "Towed Caravans" :
+//        case "Motor Vehicles" :
+//        case "Cycles" :
+//        case "Tracked Vehicles" :
+//            break;
+//        }
         event = parser.getEventType();
         return event;
     }
-    private int handleVehicleQualifier_load(XMLStreamReader parser) throws XMLStreamException {
+    private int handleLoadVehicleQualifier(XMLStreamReader parser) throws XMLStreamException {
         String elementText = parser.getElementText();
         int event;
         switch (elementText) {
@@ -293,24 +299,34 @@ public abstract class OSITNElement implements RoutingElement {
         event = parser.getEventType();
         return event;
     }
-    private int handleVehicleQualifier_use(XMLStreamReader parser) throws XMLStreamException {
-        String elementText = parser.getElementText();
-        int event;
-        switch (elementText) {
-        case "Taxi" :
-        case "School Bus" :
-        case "Patron" :
-        case "Access" :
-        case "Resident" :
-        case "Emergency Vehicle" :
-        case "Emergency Access" :
-        case "Public Transport" :
-        case "Authorised Vehicle" :
-        case "Local Bus" :
-        case "Escorted Traffic" :
-            break;
+    private int handleUseVehicleQualifier(XMLStreamReader parser) throws XMLStreamException {
+        String exceptForString = parser.getAttributeValue(null, "exceptFor");
+        Boolean exceptFor = null;
+        if (exceptForString!=null) {
+            exceptFor = Boolean.parseBoolean(exceptForString);
         }
-        event = parser.getEventType();
+      String elementText = parser.getElementText();
+//        System.out.println("handleUseVehicleQualifier " + elementText + " exceptFor " + exceptFor);
+        setTag(elementText, exceptFor.toString());
+        int event;
+        event = parser.getEventType();        // type and use are effectively the same thing
+//        return handleTypeVehicleQualifier(parser);
+//        int event;
+//        switch (elementText) {
+//        case "Taxi" :
+//        case "School Bus" :
+//        case "Patron" :
+//        case "Access" :
+//        case "Resident" :
+//        case "Emergency Vehicle" :
+//        case "Emergency Access" :
+//        case "Public Transport" :
+//        case "Authorised Vehicle" :
+//        case "Local Bus" :
+//        case "Escorted Traffic" :
+//            break;
+//        }
+//        event = parser.getEventType();
         return event;
     }
     
@@ -499,11 +515,12 @@ public abstract class OSITNElement implements RoutingElement {
          * values. Used to parse hierarchical access restrictions
          */
         public boolean hasTag(List<String> keyList, Set<String> values) {
-                for (String key : keyList) {
-                        if (values.contains(properties.get(key)))
-                                return true;
-                }
-                return false;
+            for (String key : keyList) {
+                Object value = properties.get(key);
+                if (values.contains(value))
+                        return true;
+            }
+            return false;
         }
 
         public void removeTag(String name) {
