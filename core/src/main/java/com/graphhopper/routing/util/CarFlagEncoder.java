@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.util;
 
+import static com.graphhopper.util.Helper.keepIn;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,6 +27,8 @@ import java.util.Set;
 
 import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.Way;
+import com.graphhopper.reader.osgb.OSITNElement;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 
 /**
@@ -278,11 +282,23 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         return acceptBit;
     }
 
-    @Override
-    public long handleRelationTags( Relation relation, long oldRelationFlags )
-    {
-        return oldRelationFlags;
-    }
+//    @Override
+//    public long handleRelationTags( Relation relation, long oldRelationFlags )
+//    {
+//        long flags = oldRelationFlags;
+//        
+//        // check access limited and access prohibited restrictions
+//        System.out.println("acceptWay for id " + relation.getId());
+//        if (relation.hasTag(OSITNElement.TAG_KEY_TYPE, OSITNElement.TAG_VALUE_TYPE_ACCESS_PROHIBITED)||relation.hasTag(OSITNElement.TAG_KEY_TYPE, OSITNElement.TAG_VALUE_TYPE_ACCESS_LIMITED) ) {
+//            System.out.println("OUR WAY HAS PROHIBITED OR LIMITED ACCESS");
+//            if (isVehicleQualifierTypeExcluded(relation) || isVehicleQualifierTypeIncluded(relation)) {
+//                System.out.println("WE ARE BLOCKING THIS ROAD....");
+//                flags = this.setBool(flags, K_FORWARD, false);
+//                flags = this.setBool(flags, K_BACKWARD, false);      
+//            }
+//        }
+//        return flags;
+//    }
 
     @Override
     public long handleWayTags( Way way, long allowed, long relationFlags )
@@ -315,7 +331,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
                     encoded |= forwardBit;
             } else
                 encoded |= directionBitMask;
-
+            
         } else
         {
             encoded = handleFerryTags(way, defaultSpeedMap.get("living_street"), defaultSpeedMap.get("service"), defaultSpeedMap.get("residential"));
@@ -357,10 +373,15 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         else
             return "destination: " + str;
     }
-
+    
     @Override
     public String toString()
     {
         return "car";
+    }
+
+    @Override
+    public long handleRelationTags(Relation relation, long oldRelationFlags) {
+        return oldRelationFlags;
     }
 }

@@ -59,7 +59,6 @@ public class OSITNRelation extends OSITNElement implements Relation {
 
 	public static OSITNRelation create(long id, XMLStreamReader parser)
 			throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
-//	    System.out.println("OSITNRelation create " + id);
 		OSITNRelation rel = new OSITNRelation(id);
 
 		parser.nextTag();
@@ -200,7 +199,7 @@ public class OSITNRelation extends OSITNElement implements Relation {
 				itnMember.role = "via";
 			}
 		}
-		if (size < 2 || hasTag("type", "oneway")) {
+		if (size < 2 || hasTag("type", OSITNElement.TAG_VALUE_TYPE_ONEWAY) || hasTag("type", OSITNElement.TAG_VALUE_TYPE_ACCESS_PROHIBITED) || hasTag("type", OSITNElement.TAG_VALUE_TYPE_ACCESS_LIMITED)) {
 			String idStr = nodeId.substring(5);
 			ITNMember member = new ITNMember(WAY, Long.valueOf(idStr),
 					0 == size ? "from" : "to");

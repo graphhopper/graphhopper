@@ -810,11 +810,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      */
     public boolean isVehicleQualifierTypeIncluded(RoutingElement routingElement) {
         if (routingElement.hasTag(vehicleQualifierTypeInclusions, intendedValues)) {
-            for (String string : vehicleQualifierTypeExclusions) {
-                if (routingElement.hasTag(string)) {
-                    System.out.println("Found inclusion " + string + " with " + routingElement.getTag(string));
-                }
-            }
+//            for (String string : vehicleQualifierTypeExclusions) {
+//                if (routingElement.hasTag(string)) {
+//                    System.out.println("Found inclusion " + string + " with " + routingElement.getTag(string));
+//                }
+//            }
             // It is specifically included
             return true;
         }
@@ -827,12 +827,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      */
     public boolean isVehicleQualifierTypeExcluded(RoutingElement routingElement) {
         if (routingElement.hasTag(vehicleQualifierTypeExclusions, excludedValues)) {
-            for (String string : vehicleQualifierTypeExclusions) {
-                if (routingElement.hasTag(string)) {
-                    System.out.println("Found exclusion " + string + " with " + routingElement.getTag(string));
-                }
-            }
-            System.out.println();
+//            for (String string : vehicleQualifierTypeExclusions) {
+//                if (routingElement.hasTag(string)) {
+//                    System.out.println("Found exclusion " + string + " with " + routingElement.getTag(string));
+//                }
+//            }
+//            System.out.println();
             // It is specifically excluded
             return true;
         }

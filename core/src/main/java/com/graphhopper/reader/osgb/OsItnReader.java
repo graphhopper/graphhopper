@@ -213,6 +213,7 @@ public class OsItnReader implements DataReader {
     private File routingFile;
 
     private TLongObjectMap<ItnNodePair> edgeIdToNodeMap;
+    private TLongSet prohibitedWayIds;
 
     private TLongObjectMap<String> edgeNameMap;
     private TLongObjectMap<String> edgeRoadTypeMap;
@@ -325,6 +326,12 @@ public class OsItnReader implements DataReader {
                     prepareNoEntryRelation(relation);
                 }
 
+                // If this way is prohibited then we want to make a note of it
+                // so we don't include it in later route generation
+                if (relation.hasTag(OSITNElement.TAG_KEY_TYPE, OSITNElement.TAG_VALUE_TYPE_ACCESS_LIMITED) || relation.hasTag(OSITNElement.TAG_KEY_TYPE, OSITNElement.TAG_VALUE_TYPE_ACCESS_PROHIBITED)) {
+                    prepareAccessProhibitedRelation(relation);
+                }
+
                 if (relation.hasTag("name"))
                     prepareNameRelation(relation);
 
@@ -348,6 +355,17 @@ public class OsItnReader implements DataReader {
         if (turnRelation != null) {
             getOsmIdStoreRequiredSet().add(((OSITNTurnRelation) turnRelation).getOsmIdFrom());
             getOsmIdStoreRequiredSet().add(((OSITNTurnRelation) turnRelation).getOsmIdTo());
+        }
+    }
+
+    private void prepareAccessProhibitedRelation(Relation relation) {
+        if (!encodingManager.isVehicleQualifierTypeExcluded(relation) && !encodingManager.isVehicleQualifierTypeIncluded(relation)) {
+            ArrayList<? extends RelationMember> members = relation.getMembers();
+            // There will be only one
+            for (RelationMember relationMember : members) {
+                long wayId = relationMember.ref();
+                getProhibitedWayIds().add(wayId);
+            }
         }
     }
 
@@ -378,7 +396,8 @@ public class OsItnReader implements DataReader {
     }
 
     private void prepareRoadDirectionRelation(Relation relation) {
-        // Check if this vehicle has an exception meaning we shouldn't handle one way
+        // Check if this vehicle has an exception meaning we shouldn't handle
+        // one way
         if (!encodingManager.isVehicleQualifierTypeExcluded(relation) && !encodingManager.isVehicleQualifierTypeIncluded(relation)) {
             // This will be "-1" the first time this is called
             String orientationIndicator = relation.getTag(OSITNElement.TAG_KEY_ONEWAY_ORIENTATION);
@@ -397,7 +416,8 @@ public class OsItnReader implements DataReader {
      * @param relation
      */
     private void prepareNoEntryRelation(Relation relation) {
-        // Check if this vehicle has an exception meaning we shouldn't handle no entry
+        // Check if this vehicle has an exception meaning we shouldn't handle no
+        // entry
         if (!encodingManager.isVehicleQualifierTypeExcluded(relation) && !encodingManager.isVehicleQualifierTypeIncluded(relation)) {
             long flags = 1l; // (+) orientation
             String orientationIndicator = relation.getTag(OSITNElement.TAG_KEY_NOENTRY_ORIENTATION);
@@ -407,7 +427,8 @@ public class OsItnReader implements DataReader {
             TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>> edgeIdToXToYToNodeFlagsMap = getEdgeIdToXToYToNodeFlagsMap();
 
             ArrayList<? extends RelationMember> members = relation.getMembers();
-            // There will be only one which is the directedLink that this No Entry relation sits on
+            // There will be only one which is the directedLink that this No
+            // Entry relation sits on
             for (RelationMember relationMember : members) {
                 long wayId = relationMember.ref();
                 String coords = ((OSITNRelation) relation).getCoordinates();
@@ -449,6 +470,13 @@ public class OsItnReader implements DataReader {
             edgeIdToNodeMap = new TLongObjectHashMap<ItnNodePair>(getOsmIdStoreRequiredSet().size());
 
         return edgeIdToNodeMap;
+    }
+
+    private TLongSet getProhibitedWayIds() {
+        if (prohibitedWayIds == null)
+            prohibitedWayIds = new TLongHashSet();
+
+        return prohibitedWayIds;
     }
 
     private TLongObjectMap<String> getEdgeNameMap() {
@@ -685,6 +713,11 @@ public class OsItnReader implements DataReader {
         if (includeWay == 0)
             return;
 
+        // Check if we are prohibited from ever traversing this way
+        if (getProhibitedWayIds().remove(wayOsmId)) {
+            return;
+        }
+
         long relationFlags = getRelFlagsMap().get(way.getId());
         logger.info(RELFLAGS_FORMAT, way.getId(), relationFlags);
         String wayName = getWayName(way.getId());
@@ -732,7 +765,7 @@ public class OsItnReader implements DataReader {
     }
 
     /**
-     * This method processes the list of NodeIds and checks if any noews have a
+     * This method processes the list of NodeIds and checks if any nodes have a
      * NoEntry Tag. If it does then it adds a shadow node and an extra way as a
      * OneWay. Once it has run out of NoEntry nodes to process it passes the
      * remainder on to processBarriers to check for barriers and construct the
@@ -1239,7 +1272,7 @@ public class OsItnReader implements DataReader {
     }
 
     void prepareWaysWithRelationInfo(Relation relation) {
-        // is there at least one tag interesting for the registed encoders?
+        // is there at least one tag interesting for the registered encoders?
         long handleRelationTags = encodingManager.handleRelationTags(relation, 0);
         // logger.warn(PREPARE_ONE_WAY_FORMAT, handleRelationTags);
         if (handleRelationTags == 0) {
@@ -1540,18 +1573,18 @@ public class OsItnReader implements DataReader {
         // if (no turn (Type.NOT) except buses=true) leave as is
         // if (no turn (Type.NOT) except buses=false) remove the restriction
         if (type == Type.NOT || type == Type.ONLY) {
-//            System.out.println("Handle turn relation of type " + type + " ");
-//            for (RelationMember member : relation.getMembers()) {
-//                System.out.println("" + member );
-//                
-//            }
+            // System.out.println("Handle turn relation of type " + type + " ");
+            // for (RelationMember member : relation.getMembers()) {
+            // System.out.println("" + member );
+            //
+            // }
             // There is a no entry or mandatory turn
             if (encodingManager.isVehicleQualifierTypeExcluded(relation) || encodingManager.isVehicleQualifierTypeIncluded(relation)) {
                 // The current encoder vehicle is excluded from this restriction
                 // so remove it OR (except buses=false)
                 // The current encoder vehicle is included in the exception so
                 // remove it.
-//                System.out.println("SET IT TO Type.UNSUPPORTED");
+                // System.out.println("SET IT TO Type.UNSUPPORTED");
                 type = Type.UNSUPPORTED;
             }
         }
