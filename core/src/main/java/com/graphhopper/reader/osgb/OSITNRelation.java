@@ -59,6 +59,7 @@ public class OSITNRelation extends OSITNElement implements Relation {
 
 	public static OSITNRelation create(long id, XMLStreamReader parser)
 			throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+//	    System.out.println("OSITNRelation create " + id);
 		OSITNRelation rel = new OSITNRelation(id);
 
 		parser.nextTag();
@@ -191,7 +192,7 @@ public class OSITNRelation extends OSITNElement implements Relation {
 
 	@Override
 	protected void addDirectedLink(String nodeId, String orientation) {
-		if (logger.isDebugEnabled()) logger.debug("ADDING REALTION LINK:" + nodeId);
+		if (logger.isDebugEnabled()) logger.debug("ADDING RELATION LINK:" + nodeId);
 		int size = members.size();
 		if (size > 1) {
 			ITNMember itnMember = members.get(members.size() - 1);

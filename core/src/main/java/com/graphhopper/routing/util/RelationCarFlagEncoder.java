@@ -8,44 +8,44 @@ import com.graphhopper.util.Helper;
 
 public class RelationCarFlagEncoder extends CarFlagEncoder {
 
-	private EncodedValue relationCodeEncoder;
+    private EncodedValue relationCodeEncoder;
 
-	public RelationCarFlagEncoder()
-	    {
-	        this(5, 5, 0);
-	    }
+    public RelationCarFlagEncoder() {
+        this(5, 5, 0);
+    }
 
-	
-	
-	public RelationCarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts)    {
+    public RelationCarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
         super(speedBits, speedFactor, maxTurnCosts);
-        restrictions = new ArrayList<String>(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
-        restrictedValues.add("private");
-        restrictedValues.add("agricultural");
-        restrictedValues.add("forestry");
-        restrictedValues.add("no");
-        restrictedValues.add("restricted");
-        restrictedValues.add("delivery");
+//        restrictions = new ArrayList<String>(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
+//        restrictedValues.add("private");
+//        restrictedValues.add("agricultural");
+//        restrictedValues.add("forestry");
+//        restrictedValues.add("no");
+//        restrictedValues.add("restricted");
+//        restrictedValues.add("delivery");
 
-        intendedValues.add("yes");
-        intendedValues.add("permissive");
+//        intendedValues.add("yes");
+//        intendedValues.add("permissive");
 
-        potentialBarriers.add("gate");
-        potentialBarriers.add("lift_gate");
-        potentialBarriers.add("kissing_gate");
-        potentialBarriers.add("swing_gate");
+//        potentialBarriers.add("gate");
+//        potentialBarriers.add("lift_gate");
+//        potentialBarriers.add("kissing_gate");
+//        potentialBarriers.add("swing_gate");
 
-        absoluteBarriers.add("bollard");
-        absoluteBarriers.add("stile");
-        absoluteBarriers.add("turnstile");
-        absoluteBarriers.add("cycle_barrier");
-        absoluteBarriers.add("block");
+//        absoluteBarriers.add("bollard");
+//        absoluteBarriers.add("stile");
+//        absoluteBarriers.add("turnstile");
+//        absoluteBarriers.add("cycle_barrier");
+//        absoluteBarriers.add("block");
 
         trackTypeSpeedMap.put("grade1", 20); // paved
-        trackTypeSpeedMap.put("grade2", 15); // now unpaved - gravel mixed with ...
+        trackTypeSpeedMap.put("grade2", 15); // now unpaved - gravel mixed with
+                                             // ...
         trackTypeSpeedMap.put("grade3", 10); // ... hard and soft materials
-        trackTypeSpeedMap.put("grade4", 5); // ... some hard or compressed materials
-        trackTypeSpeedMap.put("grade5", 5); // ... no hard materials. soil/sand/grass
+        trackTypeSpeedMap.put("grade4", 5); // ... some hard or compressed
+                                            // materials
+        trackTypeSpeedMap.put("grade5", 5); // ... no hard materials.
+                                            // soil/sand/grass
 
         badSurfaceSpeedMap.add("cobblestone");
         badSurfaceSpeedMap.add("grass_paver");
@@ -59,7 +59,7 @@ public class RelationCarFlagEncoder extends CarFlagEncoder {
         // autobahn
         defaultSpeedMap.put("motorway", 100);
         defaultSpeedMap.put("motorway_link", 70);
-        
+
         defaultSpeedMap.put("Motorway", 35);
         defaultSpeedMap.put("A Road", 55);
         defaultSpeedMap.put("B Road", 35);
@@ -88,61 +88,56 @@ public class RelationCarFlagEncoder extends CarFlagEncoder {
         // forestry stuff
         defaultSpeedMap.put("track", 15);
     }
-	
-	
 
-	@Override
-	public long handleRelationTags(Relation relation, long oldRelationFlags) {
-		oldRelationFlags = super.handleRelationTags(relation, oldRelationFlags);
+    @Override
+    public long handleRelationTags(Relation relation, long oldRelationFlags) {
+        oldRelationFlags = super.handleRelationTags(relation, oldRelationFlags);
 
-//		System.err.println(relation.getTag("oneway"));
-		boolean isRoundabout = relation.hasTag("junction", "roundabout");
-		long code = 0;
-//		if(relation.hasTag("highway")) {
-//			String roadTag = relation.getTag("highway");
-//			// get assumed speed from highway type
-//            double speed = getSpeed(relation);
-//            double maxSpeed = getMaxSpeed(relation);
-//            if (maxSpeed > 0)
-//                // apply maxSpeed which can mean increase or decrease
-//                speed = maxSpeed * 0.9;
-//
-//            // limit speed to max 30 km/h if bad surface
-//            if (speed > 30 && relation.hasTag("surface", badSurfaceSpeedMap))
-//                speed = 30;
-//
-//            System.err.println("ROAD REL:" + roadTag + ":" + speed);
-//            code = setSpeed(0, speed);
-//		}
-		
-		if (isRoundabout)
-			code = setBool(code, K_ROUNDABOUT, true);
-		if (relation.hasTag("oneway", oneways) || isRoundabout) {
-//			System.err.println("ONE WAY:" + relation.getTag("oneway"));
-			if (relation.hasTag("oneway", "-1"))
-				code |= backwardBit;
-			else
-				code |= forwardBit;
-		}
+        // System.err.println(relation.getTag("oneway"));
+        boolean isRoundabout = relation.hasTag("junction", "roundabout");
+        long code = 0;
+        // if(relation.hasTag("highway")) {
+        // String roadTag = relation.getTag("highway");
+        // // get assumed speed from highway type
+        // double speed = getSpeed(relation);
+        // double maxSpeed = getMaxSpeed(relation);
+        // if (maxSpeed > 0)
+        // // apply maxSpeed which can mean increase or decrease
+        // speed = maxSpeed * 0.9;
+        //
+        // // limit speed to max 30 km/h if bad surface
+        // if (speed > 30 && relation.hasTag("surface", badSurfaceSpeedMap))
+        // speed = 30;
+        //
+        // System.err.println("ROAD REL:" + roadTag + ":" + speed);
+        // code = setSpeed(0, speed);
+        // }
 
-		int oldCode = (int) relationCodeEncoder.getValue(oldRelationFlags);
-		if (oldCode < code)
-			return relationCodeEncoder.setValue(0, code);
-		return oldRelationFlags;
-	}
-	
-	protected double getSpeed( Relation way )
-    {
+        if (isRoundabout)
+            code = setBool(code, K_ROUNDABOUT, true);
+        if (relation.hasTag("oneway", oneways) || isRoundabout) {
+            // System.err.println("ONE WAY:" + relation.getTag("oneway"));
+            if (relation.hasTag("oneway", "-1"))
+                code |= backwardBit;
+            else
+                code |= forwardBit;
+        }
+
+        int oldCode = (int) relationCodeEncoder.getValue(oldRelationFlags);
+        if (oldCode < code)
+            return relationCodeEncoder.setValue(0, code);
+        return oldRelationFlags;
+    }
+
+    protected double getSpeed(Relation way) {
         String highwayValue = way.getTag("highway");
         Integer speed = defaultSpeedMap.get(highwayValue);
         if (speed == null)
             throw new IllegalStateException("car, no speed found for:" + highwayValue);
 
-        if (highwayValue.equals("track"))
-        {
+        if (highwayValue.equals("track")) {
             String tt = way.getTag("tracktype");
-            if (!Helper.isEmpty(tt))
-            {
+            if (!Helper.isEmpty(tt)) {
                 Integer tInt = trackTypeSpeedMap.get(tt);
                 if (tInt != null)
                     speed = tInt;
@@ -151,9 +146,8 @@ public class RelationCarFlagEncoder extends CarFlagEncoder {
 
         return speed;
     }
-	
-	protected double getMaxSpeed( Relation way )
-    {
+
+    protected double getMaxSpeed(Relation way) {
         double maxSpeed = parseSpeed(way.getTag("maxspeed"));
         double fwdSpeed = parseSpeed(way.getTag("maxspeed:forward"));
         if (fwdSpeed >= 0 && (maxSpeed < 0 || fwdSpeed < maxSpeed))
@@ -166,10 +160,9 @@ public class RelationCarFlagEncoder extends CarFlagEncoder {
         return maxSpeed;
     }
 
-	@Override
-	public int defineRelationBits(int index, int shift) {
-		relationCodeEncoder = new EncodedValue("RelationCode", shift, 8, 1, 0,
-				160);
-		return shift + relationCodeEncoder.getBits();
-	}
+    @Override
+    public int defineRelationBits(int index, int shift) {
+        relationCodeEncoder = new EncodedValue("RelationCode", shift, 8, 1, 0, 160);
+        return shift + relationCodeEncoder.getBits();
+    }
 }

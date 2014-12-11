@@ -214,7 +214,7 @@
 		</osgb:RoadLink>
 	</osgb:networkMember>
 	<osgb:roadInformationMember>
-		<osgb:RoadRouteInformation fid='osgb4000000025219978'>
+		<osgb:RoadRouteInformation fid='osgb4000000025219970'>
 			<osgb:version>2</osgb:version>
 			<osgb:versionDate>2005-09-13</osgb:versionDate>
 			<osgb:theme>Road Routing Information</osgb:theme>
@@ -223,27 +223,17 @@
 				<osgb:reasonForChange>New</osgb:reasonForChange>
 			</osgb:changeHistory>
 			<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+			<osgb:vehicleQualifier>
+<!-- 			No Turn -->
+<!-- 			No Turn for everything EXCEPT Motor Vehicles -->
+				<osgb:type exceptFor="true">Motor Vehicles</osgb:type>
+			</osgb:vehicleQualifier>
 			<osgb:environmentQualifier>
-				<osgb:instruction>One Way</osgb:instruction>
+				<osgb:instruction>No Turn</osgb:instruction>
 			</osgb:environmentQualifier>
-			<osgb:directedLink orientation='+' xlink:href='#osgb4000000025288020' />
+			<osgb:directedLink orientation='-' xlink:href='#osgb4000000025288017' />
+			<osgb:directedLink orientation='-' xlink:href='#osgb4000000025288019' />
 		</osgb:RoadRouteInformation>
-	</osgb:roadInformationMember>
-	<osgb:roadInformationMember>
-		<osgb:RoadNodeInformation fid='osgb4000000025220155'>
-			<osgb:version>2</osgb:version>
-			<osgb:versionDate>2005-09-13</osgb:versionDate>
-			<osgb:theme>Road Routing Information</osgb:theme>
-			<osgb:changeHistory>
-				<osgb:changeDate>2003-01-20</osgb:changeDate>
-				<osgb:reasonForChange>New</osgb:reasonForChange>
-			</osgb:changeHistory>
-			<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
-			<osgb:environmentQualifier>
-				<osgb:classification>Mini Roundabout</osgb:classification>
-			</osgb:environmentQualifier>
-			<osgb:referenceToRoadNode xlink:href='#osgb4000000025278486' />
-		</osgb:RoadNodeInformation>
 	</osgb:roadInformationMember>
 	<osgb:roadMember>
 		<osgb:Road fid='osgb4000000025366114'>

@@ -263,7 +263,7 @@
 				<osgb:changeDate>2002-12-04</osgb:changeDate>
 				<osgb:reasonForChange>New</osgb:reasonForChange>
 			</osgb:changeHistory>
-			<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+			<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>			
 			<osgb:environmentQualifier>
 				<osgb:instruction>No Entry</osgb:instruction>
 			</osgb:environmentQualifier>

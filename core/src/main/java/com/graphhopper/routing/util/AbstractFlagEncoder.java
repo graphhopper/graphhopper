@@ -30,6 +30,7 @@ import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.ITurnCostTableEntry;
 import com.graphhopper.reader.Node;
 import com.graphhopper.reader.Relation;
+import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.TurnRelation;
 import com.graphhopper.reader.Way;
 import com.graphhopper.util.BitUtil;
@@ -77,6 +78,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     /* restriction definitions where order is important */
     protected List<String> restrictions = new ArrayList<String>(5);
     protected final HashSet<String> intendedValues = new HashSet<String>(5);
+    protected final HashSet<String> excludedValues = new HashSet<String>(5);
     protected final HashSet<String> restrictedValues = new HashSet<String>(5);
     protected final HashSet<String> ferries = new HashSet<String>(5);
     protected final HashSet<String> oneways = new HashSet<String>(5);
@@ -84,6 +86,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final HashSet<String> absoluteBarriers = new HashSet<String>(5);
     protected final HashSet<String> potentialBarriers = new HashSet<String>(5);
+    /**
+     * Used to hold type exclusions
+     */
+    protected final List<String> vehicleQualifierTypeExclusions = new ArrayList<String>(5);
+    protected final List<String> vehicleQualifierTypeInclusions = new ArrayList<String>(5);
     private boolean blockByDefault = true;
     private boolean blockFords = true;
     protected final int speedBits;
@@ -118,6 +125,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         acceptedRailways.add("razed");
         acceptedRailways.add("historic");
         acceptedRailways.add("obliterated");
+        
+        intendedValues.add("true");
+
+        excludedValues.add("false");
+
     }
 
     /**
@@ -788,6 +800,42 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (TurnWeighting.class.isAssignableFrom(feature))
             return maxTurnCosts > 0;
 
+        return false;
+    }
+
+    /**
+     * The routingElement is specifically included in this exception. For example Motor Vehicles=true or Buses=true
+     * @param routingElement
+     * @return
+     */
+    public boolean isVehicleQualifierTypeIncluded(RoutingElement routingElement) {
+        if (routingElement.hasTag(vehicleQualifierTypeInclusions, intendedValues)) {
+            for (String string : vehicleQualifierTypeExclusions) {
+                if (routingElement.hasTag(string)) {
+                    System.out.println("Found inclusion " + string + " with " + routingElement.getTag(string));
+                }
+            }
+            // It is specifically included
+            return true;
+        }
+        return false;
+    }
+    /**
+     * The routingElement is specifically excluded in this exception. For example Motor Vehicles=false or Buses=false
+     * @param routingElement
+     * @return
+     */
+    public boolean isVehicleQualifierTypeExcluded(RoutingElement routingElement) {
+        if (routingElement.hasTag(vehicleQualifierTypeExclusions, excludedValues)) {
+            for (String string : vehicleQualifierTypeExclusions) {
+                if (routingElement.hasTag(string)) {
+                    System.out.println("Found exclusion " + string + " with " + routingElement.getTag(string));
+                }
+            }
+            System.out.println();
+            // It is specifically excluded
+            return true;
+        }
         return false;
     }
 }

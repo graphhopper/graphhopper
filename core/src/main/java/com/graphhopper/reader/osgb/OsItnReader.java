@@ -45,7 +45,9 @@ import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.RelationMember;
 import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.Way;
+import com.graphhopper.reader.OSMTurnRelation.Type;
 import com.graphhopper.reader.dem.ElevationProvider;
+import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.ExtendedStorage;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -109,15 +111,15 @@ import com.graphhopper.util.shapes.GHPoint;
 public class OsItnReader implements DataReader {
 
     private static final String TURN_FROM_TO_VIA_FORMAT = "Turn from:{} to:{} via:{}";
-	private static final String PRINT_INFO_FORMAT = "finished {}  processing. nodes:{}, osmIdMap.size:{}, osmIdMap:{}MB, nodeFlagsMap.size:{}, relFlagsMap.size:{} {}";
-	private static final String OS_ITN_READER_PREPARE_HIGHWAY_NODE_PILLAR_TOWER_FORMAT = "OsItnReader.prepareHighwayNode(PILLAR->TOWER):{}";
-	private static final String OS_ITN_READER_PREPARE_HIGHWAY_NODE_EMPTY_PILLAR_FORMAT = "OsItnReader.prepareHighwayNode(EMPTY->PILLAR):{}";
-	private static final String ADDING_NODE_AS_FORMAT = "Adding Node:{} as {}";
-	private static final String NOW_PARSING_RELATIONS_FORMAT = "{}, now parsing relations";
-	private static final String NOW_PARSING_WAYS_FORMAT = "{}, now parsing ways";
-	private static final String PROCESSING_LOCS_FORMAT = "{}, locs: {} ({}) {}";
-	private static final String PREPROCESS_OSM_ID_MAP_MB_FORMAT = "{} (preprocess), osmIdMap: {}  ({}MB) {}";
-	private static final String NO_MATCHING_EDGES_FOR_FORMAT = "No Matching Edges for {} : {}";
+    private static final String PRINT_INFO_FORMAT = "finished {}  processing. nodes:{}, osmIdMap.size:{}, osmIdMap:{}MB, nodeFlagsMap.size:{}, relFlagsMap.size:{} {}";
+    private static final String OS_ITN_READER_PREPARE_HIGHWAY_NODE_PILLAR_TOWER_FORMAT = "OsItnReader.prepareHighwayNode(PILLAR->TOWER):{}";
+    private static final String OS_ITN_READER_PREPARE_HIGHWAY_NODE_EMPTY_PILLAR_FORMAT = "OsItnReader.prepareHighwayNode(EMPTY->PILLAR):{}";
+    private static final String ADDING_NODE_AS_FORMAT = "Adding Node:{} as {}";
+    private static final String NOW_PARSING_RELATIONS_FORMAT = "{}, now parsing relations";
+    private static final String NOW_PARSING_WAYS_FORMAT = "{}, now parsing ways";
+    private static final String PROCESSING_LOCS_FORMAT = "{}, locs: {} ({}) {}";
+    private static final String PREPROCESS_OSM_ID_MAP_MB_FORMAT = "{} (preprocess), osmIdMap: {}  ({}MB) {}";
+    private static final String NO_MATCHING_EDGES_FOR_FORMAT = "No Matching Edges for {} : {}";
     private static final String RELATIONMEMBERREF_FORMAT = "RELATIONMEMBERREF: {}";
     private static final String CONVERTING_PILLAR_TO_PILLAR_FORMAT = "Converting Pillar {} to pillar? {}";
     private static final String STORE_OSM_WAY_ID_FOR_FORMAT = "StoreOSMWayID: {} for {}";
@@ -170,12 +172,12 @@ public class OsItnReader implements DataReader {
     private EncodingManager encodingManager = null;
     private int workerThreads = -1;
     protected long zeroCounter = 0;
-    
-    private long successfulStartNoEntries=0;
-    private long successfulEndNoEntries=0;
-    private long failedStartNoEntries=0;
-    private long failedEndNoEntries=0;
-    
+
+    private long successfulStartNoEntries = 0;
+    private long successfulEndNoEntries = 0;
+    private long failedStartNoEntries = 0;
+    private long failedEndNoEntries = 0;
+
     // Using the correct Map<Long, Integer> is hard. We need a memory efficient
     // and fast solution for big data sets!
     //
@@ -215,7 +217,6 @@ public class OsItnReader implements DataReader {
     private TLongObjectMap<String> edgeNameMap;
     private TLongObjectMap<String> edgeRoadTypeMap;
     private TLongObjectMap<String> edgeRoadDirectionMap;
-    // private TObjectLongHashMap<String> edgeIdCoordsToNodeFlagsMap;
 
     private TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>> edgeIdToXToYToNodeFlagsMap;
 
@@ -288,6 +289,7 @@ public class OsItnReader implements DataReader {
     }
 
     private void preProcessSingleFile(OsItnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+        System.out.println("==== preProcessSingleFile");
         long tmpWayCounter = 1;
         long tmpRelationCounter = 1;
         RoutingElement item;
@@ -376,21 +378,16 @@ public class OsItnReader implements DataReader {
     }
 
     private void prepareRoadDirectionRelation(Relation relation) {
-        String orientationIndicator = relation.getTag(OSITNElement.TAG_KEY_ONEWAY_ORIENTATION); // This
-                                                                                                // will
-                                                                                                // be
-                                                                                                // "-1"
-                                                                                                // the
-                                                                                                // first
-                                                                                                // time
-                                                                                                // this
-                                                                                                // is
-                                                                                                // called
-        TLongObjectMap<String> edgeIdToRoadDirectionMap = getEdgeRoadDirectionMap();
-        ArrayList<? extends RelationMember> members = relation.getMembers();
-        for (RelationMember relationMember : members) {
-            long wayId = relationMember.ref();
-            edgeIdToRoadDirectionMap.put(wayId, orientationIndicator);
+        // Check if this vehicle has an exception meaning we shouldn't handle one way
+        if (!encodingManager.isVehicleQualifierTypeExcluded(relation) && !encodingManager.isVehicleQualifierTypeIncluded(relation)) {
+            // This will be "-1" the first time this is called
+            String orientationIndicator = relation.getTag(OSITNElement.TAG_KEY_ONEWAY_ORIENTATION);
+            TLongObjectMap<String> edgeIdToRoadDirectionMap = getEdgeRoadDirectionMap();
+            ArrayList<? extends RelationMember> members = relation.getMembers();
+            for (RelationMember relationMember : members) {
+                long wayId = relationMember.ref();
+                edgeIdToRoadDirectionMap.put(wayId, orientationIndicator);
+            }
         }
     }
 
@@ -400,38 +397,38 @@ public class OsItnReader implements DataReader {
      * @param relation
      */
     private void prepareNoEntryRelation(Relation relation) {
-        long flags = 1l; // (+) orientation
-        String orientationIndicator = relation.getTag(OSITNElement.TAG_KEY_NOENTRY_ORIENTATION);
-        if ("-1".equals(orientationIndicator)) {
-            flags = 0l; // (-) orientation
-        }
-        // TObjectLongHashMap<String> edgeIdCoordsToNodeFlagsMap =
-        // getEdgeIdCoordsToNodeFlagsMap();
-        TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>> edgeIdToXToYToNodeFlagsMap = getEdgeIdToXToYToNodeFlagsMap();
-
-        ArrayList<? extends RelationMember> members = relation.getMembers();
-        // There will be only one which is the directedLink that this No Entry
-        // relation sits on
-        for (RelationMember relationMember : members) {
-            long wayId = relationMember.ref();
-            String coords = ((OSITNRelation) relation).getCoordinates();
-            String[] coordParts = coords.split(",");
-            double xCoord = Double.parseDouble(coordParts[0]);
-            double yCoord = Double.parseDouble(coordParts[1]);
-            TDoubleObjectMap<TDoubleLongMap> xCoordMap = edgeIdToXToYToNodeFlagsMap.get(wayId);
-            if (xCoordMap == null) {
-                xCoordMap = new TDoubleObjectHashMap<TDoubleLongMap>();
-                edgeIdToXToYToNodeFlagsMap.put(wayId, xCoordMap);
+        // Check if this vehicle has an exception meaning we shouldn't handle no entry
+        if (!encodingManager.isVehicleQualifierTypeExcluded(relation) && !encodingManager.isVehicleQualifierTypeIncluded(relation)) {
+            long flags = 1l; // (+) orientation
+            String orientationIndicator = relation.getTag(OSITNElement.TAG_KEY_NOENTRY_ORIENTATION);
+            if ("-1".equals(orientationIndicator)) {
+                flags = 0l; // (-) orientation
             }
-            TDoubleLongMap yCoordMap = xCoordMap.get(xCoord);
-            if (yCoordMap == null) {
-                yCoordMap = new TDoubleLongHashMap();
-                xCoordMap.put(xCoord, yCoordMap);
-            }
-            // now put the flag in there
-            logger.info(EDGE_ID_COORDS_TO_NODE_FLAGS_MAP_PUT_FORMAT, wayId, xCoord, yCoord, flags);
+            TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>> edgeIdToXToYToNodeFlagsMap = getEdgeIdToXToYToNodeFlagsMap();
 
-            yCoordMap.put(yCoord, flags);
+            ArrayList<? extends RelationMember> members = relation.getMembers();
+            // There will be only one which is the directedLink that this No Entry relation sits on
+            for (RelationMember relationMember : members) {
+                long wayId = relationMember.ref();
+                String coords = ((OSITNRelation) relation).getCoordinates();
+                String[] coordParts = coords.split(",");
+                double xCoord = Double.parseDouble(coordParts[0]);
+                double yCoord = Double.parseDouble(coordParts[1]);
+                TDoubleObjectMap<TDoubleLongMap> xCoordMap = edgeIdToXToYToNodeFlagsMap.get(wayId);
+                if (xCoordMap == null) {
+                    xCoordMap = new TDoubleObjectHashMap<TDoubleLongMap>();
+                    edgeIdToXToYToNodeFlagsMap.put(wayId, xCoordMap);
+                }
+                TDoubleLongMap yCoordMap = xCoordMap.get(xCoord);
+                if (yCoordMap == null) {
+                    yCoordMap = new TDoubleLongHashMap();
+                    xCoordMap.put(xCoord, yCoordMap);
+                }
+                // now put the flag in there
+                logger.info(EDGE_ID_COORDS_TO_NODE_FLAGS_MAP_PUT_FORMAT, wayId, xCoord, yCoord, flags);
+
+                yCoordMap.put(yCoord, flags);
+            }
         }
     }
 
@@ -475,14 +472,6 @@ public class OsItnReader implements DataReader {
         return edgeRoadDirectionMap;
     }
 
-    // private TObjectLongHashMap<String> getEdgeIdCoordsToNodeFlagsMap() {
-    // if (edgeIdCoordsToNodeFlagsMap == null)
-    // edgeIdCoordsToNodeFlagsMap = new TObjectLongHashMap<String>();
-    //
-    // return edgeIdCoordsToNodeFlagsMap;
-    // }
-    // TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>>
-    // edgeIdToXToYToNodeFlagsMap;
     private TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>> getEdgeIdToXToYToNodeFlagsMap() {
         if (edgeIdToXToYToNodeFlagsMap == null)
             edgeIdToXToYToNodeFlagsMap = new TLongObjectHashMap<TDoubleObjectMap<TDoubleLongMap>>();
@@ -585,6 +574,7 @@ public class OsItnReader implements DataReader {
     }
 
     private void processStageOne(ProcessData processData, OsItnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+        System.out.println("==== processStageOne");
         RoutingElement item;
         LongIntMap nodeFilter = getNodeMap();
         while ((item = in.getNext()) != null) {
@@ -609,6 +599,7 @@ public class OsItnReader implements DataReader {
     }
 
     private void processStageTwo(ProcessData processData, OsItnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+        System.out.println("==== processStageTwo");
         RoutingElement item;
         LongIntMap nodeFilter = getNodeMap();
         while ((item = in.getNext()) != null) {
@@ -631,7 +622,7 @@ public class OsItnReader implements DataReader {
                 break;
             }
             if (++processData.counter % 5000000 == 0) {
-            	logger.info(PROCESSING_LOCS_FORMAT, nf(processData.counter), nf(locations), skippedLocations, Helper.getMemInfo());
+                logger.info(PROCESSING_LOCS_FORMAT, nf(processData.counter), nf(locations), skippedLocations, Helper.getMemInfo());
             }
         }
     }
@@ -647,6 +638,7 @@ public class OsItnReader implements DataReader {
     }
 
     private void processStageThree(ProcessData processData, OsItnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+        System.out.println("==== processStageThree");
         RoutingElement item;
         while ((item = in.getNext()) != null) {
             switch (item.getType()) {
@@ -659,7 +651,7 @@ public class OsItnReader implements DataReader {
                 break;
             }
             if (++processData.counter % 5000000 == 0) {
-            	logger.info(PROCESSING_LOCS_FORMAT, nf(processData.counter), nf(locations), skippedLocations, Helper.getMemInfo());
+                logger.info(PROCESSING_LOCS_FORMAT, nf(processData.counter), nf(locations), skippedLocations, Helper.getMemInfo());
             }
         }
     }
@@ -733,7 +725,7 @@ public class OsItnReader implements DataReader {
         long wayFlags = encodingManager.handleWayTags(way, includeWay, relationFlags);
         if (wayFlags == 0)
             return;
-//        logger.warn(ADDING_RELATION_TO_WAYS_FORMAT, wayFlags);
+        // logger.warn(ADDING_RELATION_TO_WAYS_FORMAT, wayFlags);
         // Process No Entry and then Barriers, and finally add the remaining way
         processNoEntry(way, wayNodes, osmNodeIds, wayFlags, wayOsmId);
 
@@ -781,12 +773,13 @@ public class OsItnReader implements DataReader {
                 transfer[transfer.length - 1] = newNodeId;
                 TLongList partIds = new TLongArrayList(transfer);
                 Collection<EdgeIteratorState> newWays = addOSMWay(partIds, wayFlags, wayOsmId);
-                //logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
+                // logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
                 noEntryCreatedEdges.addAll(newWays);
 
                 // create zero length edge for barrier to the next node
                 Collection<EdgeIteratorState> newBarriers = addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId);
-//                logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
+                // logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId,
+                // newBarriers.size());
                 noEntryCreatedEdges.addAll(newBarriers);
                 // Update the orientation of our little one way
                 for (EdgeIteratorState edgeIteratorState : newWays) {
@@ -797,10 +790,9 @@ public class OsItnReader implements DataReader {
                     edgeIteratorState.setFlags(flags);
                 }
                 successfulStartNoEntries++;
-            }
-            else {
+            } else {
                 failedStartNoEntries++;
-                errors_logger.error("MISSING NODE: osmNodeIdToInternalNodeMap returned -1 for nodeId " + nodeId + " on way " + way.getId() + " for START Node " + osmNodeIds.toString() + " ("+successfulStartNoEntries+" succeeded, " + failedStartNoEntries + " failed)");
+                errors_logger.error("MISSING NODE: osmNodeIdToInternalNodeMap returned -1 for nodeId " + nodeId + " on way " + way.getId() + " for START Node " + osmNodeIds.toString() + " (" + successfulStartNoEntries + " succeeded, " + failedStartNoEntries + " failed)");
             }
         }
         // Process Way Nodes
@@ -830,12 +822,14 @@ public class OsItnReader implements DataReader {
                     transfer[transfer.length - 1] = newNodeId;
                     TLongList partIds = new TLongArrayList(transfer);
                     Collection<EdgeIteratorState> newWays = addOSMWay(partIds, wayFlags, wayOsmId);
-//                    logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
+                    // logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId,
+                    // newWays.size());
                     noEntryCreatedEdges.addAll(newWays);
 
                     // create zero length edge for barrier to the next node
                     Collection<EdgeIteratorState> newBarriers = addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId);
-//                    logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
+                    // logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId,
+                    // newBarriers.size());
                     noEntryCreatedEdges.addAll(newBarriers);
                     // Update the orientation of our little one way
                     for (EdgeIteratorState edgeIteratorState : newBarriers) {
@@ -851,7 +845,8 @@ public class OsItnReader implements DataReader {
                     // TODO end of way we will have issues
                     // run edge from real first node to shadow node
                     Collection<EdgeIteratorState> newBarriers = addBarrierEdge(nodeId, newNodeId, wayFlags, nodeFlags, wayOsmId);
-//                    logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
+                    // logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId,
+                    // newBarriers.size());
                     noEntryCreatedEdges.addAll(newBarriers);
                     // exchange first node for created barrier node
                     osmNodeIds.set(0, newNodeId);
@@ -879,7 +874,8 @@ public class OsItnReader implements DataReader {
                     long transfer[] = osmNodeIds.toArray(lastNoEntry, size - lastNoEntry - 1);
                     nodeIdsToCreateWaysFor = new TLongArrayList(transfer);
                     Collection<EdgeIteratorState> newEdges = addOSMWay(nodeIdsToCreateWaysFor, wayFlags, wayOsmId);
-//                    logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newEdges.size());
+                    // logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId,
+                    // newEdges.size());
                     createdEdges.addAll(newEdges);
                 }
 
@@ -900,12 +896,13 @@ public class OsItnReader implements DataReader {
                 transfer[transfer.length - 1] = newNodeId;
                 TLongList partIds = new TLongArrayList(transfer);
                 Collection<EdgeIteratorState> newWays = addOSMWay(partIds, wayFlags, wayOsmId);
-//                logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
+                // logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
                 noEntryCreatedEdges.addAll(newWays);
 
                 // create zero length edge for barrier to the next node
                 Collection<EdgeIteratorState> newBarriers = addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId);
-//                logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
+                // logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId,
+                // newBarriers.size());
                 noEntryCreatedEdges.addAll(newBarriers);
                 // Update the orientation of our little one way
                 for (EdgeIteratorState edgeIteratorState : newBarriers) {
@@ -919,7 +916,7 @@ public class OsItnReader implements DataReader {
                 failedEndNoEntries++;
                 // TODO Figure out why there are some end nodes that don't have
                 // internal node ids
-                errors_logger.error("MISSING NODE: osmNodeIdToInternalNodeMap returned -1 for nodeId " + nodeId + " on way " + way.getId() + " for END Node " + osmNodeIds.toString() + " ("+successfulEndNoEntries+" succeeded, " + failedEndNoEntries + " failed)");
+                errors_logger.error("MISSING NODE: osmNodeIdToInternalNodeMap returned -1 for nodeId " + nodeId + " on way " + way.getId() + " for END Node " + osmNodeIds.toString() + " (" + successfulEndNoEntries + " succeeded, " + failedEndNoEntries + " failed)");
             }
         }
 
@@ -1047,17 +1044,20 @@ public class OsItnReader implements DataReader {
                         transfer[transfer.length - 1] = newNodeId;
                         TLongList partIds = new TLongArrayList(transfer);
                         Collection<EdgeIteratorState> newWays = addOSMWay(partIds, wayFlags, wayOsmId);
-//                        logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
+                        // logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId,
+                        // newWays.size());
                         createdEdges.addAll(newWays);
 
                         // create zero length edge for barrier
                         Collection<EdgeIteratorState> newBarriers = addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId);
-//                        logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
+                        // logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId,
+                        // newBarriers.size());
                         createdEdges.addAll(newBarriers);
                     } else {
                         // run edge from real first node to shadow node
                         Collection<EdgeIteratorState> newBarriers = addBarrierEdge(nodeId, newNodeId, wayFlags, nodeFlags, wayOsmId);
-//                        logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId, newBarriers.size());
+                        // logger.warn(WAY_ADDS_BARRIER_EDGES_FORMAT, wayOsmId,
+                        // newBarriers.size());
                         createdEdges.addAll(newBarriers);
 
                         // exchange first node for created barrier node
@@ -1087,7 +1087,7 @@ public class OsItnReader implements DataReader {
 
             // Here we need to process no entries
             Collection<EdgeIteratorState> newEdges = addOSMWay(nodeIdsToCreateWaysFor, wayFlags, wayOsmId);
-//            logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newEdges.size());
+            // logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newEdges.size());
             createdEdges.addAll(newEdges);
         }
         // TODO Can we move this code out into processWay?
@@ -1217,7 +1217,7 @@ public class OsItnReader implements DataReader {
     boolean addNode(Node node) {
         int nodeType = getNodeMap().get(node.getId());
         if (nodeType == EMPTY) {
-//            logger.warn(MISSING_FROM_MAP_FORMAT, node.getId());
+            // logger.warn(MISSING_FROM_MAP_FORMAT, node.getId());
             return false;
         }
         logger.warn(ADDING_NODE_AS_FORMAT, node.getId(), nodeType);
@@ -1528,6 +1528,34 @@ public class OsItnReader implements DataReader {
      */
     OSITNTurnRelation createTurnRelation(Relation relation) {
         OSMTurnRelation.Type type = OSITNTurnRelation.getRestrictionType((String) relation.getTag(OSITNElement.TAG_KEY_RESTRICTION));
+
+        // Handle No Turn and Mandatory Turn Exceptions. This is done by
+        // selectively ignoring restrictions based on excluded/included vehicle
+        // types
+        // as defined in the AbstractFlagEncoder and populated in its child
+        // classes CarFlagEncoder and BikeFlagEncoder
+        // if (Mandatory Turn (Type.ONLY) except buses=true) remove the
+        // restriction
+        // if (Mandatory Turn (Type.ONLY) except buses=false) leave as is
+        // if (no turn (Type.NOT) except buses=true) leave as is
+        // if (no turn (Type.NOT) except buses=false) remove the restriction
+        if (type == Type.NOT || type == Type.ONLY) {
+//            System.out.println("Handle turn relation of type " + type + " ");
+//            for (RelationMember member : relation.getMembers()) {
+//                System.out.println("" + member );
+//                
+//            }
+            // There is a no entry or mandatory turn
+            if (encodingManager.isVehicleQualifierTypeExcluded(relation) || encodingManager.isVehicleQualifierTypeIncluded(relation)) {
+                // The current encoder vehicle is excluded from this restriction
+                // so remove it OR (except buses=false)
+                // The current encoder vehicle is included in the exception so
+                // remove it.
+//                System.out.println("SET IT TO Type.UNSUPPORTED");
+                type = Type.UNSUPPORTED;
+            }
+        }
+
         if (type != OSMTurnRelation.Type.UNSUPPORTED) {
             long fromWayID = -1;
             long viaNodeID = -1;
@@ -1535,7 +1563,8 @@ public class OsItnReader implements DataReader {
 
             for (RelationMember member : relation.getMembers()) {
                 long ref = member.ref();
-                logger.info(RELATIONMEMBERREF_FORMAT, ref);
+                if (logger.isInfoEnabled())
+                    logger.info(RELATIONMEMBERREF_FORMAT, ref);
                 if (OSMElement.WAY == member.type()) {
                     if ("from".equals(member.role())) {
                         fromWayID = ref;
@@ -1546,6 +1575,7 @@ public class OsItnReader implements DataReader {
                     viaNodeID = ref;
                 }
             }
+
             if (type != OSMTurnRelation.Type.UNSUPPORTED && fromWayID >= 0 && toWayID >= 0) {
                 long foundViaNode = findViaNode(fromWayID, toWayID);
                 if (-1 < foundViaNode) {

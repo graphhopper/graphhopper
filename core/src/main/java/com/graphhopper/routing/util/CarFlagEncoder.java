@@ -63,6 +63,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     {
         super(speedBits, speedFactor, maxTurnCosts);
         restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
+        
         restrictedValues.add("private");
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -166,7 +167,35 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         defaultSpeedMap.put("Private Road - Publicly Accessible", 35);
         defaultSpeedMap.put("Alley", 0);
         
+        // osgb:type
+        vehicleQualifierTypeExclusions.add("Buses");
+        vehicleQualifierTypeExclusions.add("Coaches");
+        vehicleQualifierTypeExclusions.add("Mopeds");
+        vehicleQualifierTypeExclusions.add("Motor Cycles");
+        vehicleQualifierTypeExclusions.add("HGV's");
+        vehicleQualifierTypeExclusions.add("LGV's");
+        vehicleQualifierTypeExclusions.add("Towed Caravans");
+        vehicleQualifierTypeExclusions.add("Cycles");
+        vehicleQualifierTypeExclusions.add("Tracked Vehicles");
+        // osgb:use
+        vehicleQualifierTypeExclusions.add("Taxi");
+        vehicleQualifierTypeExclusions.add("Taxis"); // Added from analysing the actual data
+        vehicleQualifierTypeExclusions.add("School Bus");
+        vehicleQualifierTypeExclusions.add("Patron");
+        vehicleQualifierTypeExclusions.add("Access");
+        vehicleQualifierTypeExclusions.add("Resident");
+        vehicleQualifierTypeExclusions.add("Emergency Vehicle");
+        vehicleQualifierTypeExclusions.add("Public Transport");
+        vehicleQualifierTypeExclusions.add("Authorised Vehicle");
+        vehicleQualifierTypeExclusions.add("Local Bus");
+        vehicleQualifierTypeExclusions.add("Local Buses"); // Added from analysing the actual data
+        vehicleQualifierTypeExclusions.add("Escorted Traffic");
+        vehicleQualifierTypeExclusions.add("Loading And Unloading"); // Added from analysing the actual data
         
+
+        
+        vehicleQualifierTypeInclusions.add("Motor Vehicles");
+        vehicleQualifierTypeInclusions.add("All Vehicles");
     }
 
     /**
@@ -244,8 +273,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
         // do not drive cars over railways (sometimes incorrectly mapped!)
         if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
-            return 0;
-
+            return 0;        
+        
         return acceptBit;
     }
 
