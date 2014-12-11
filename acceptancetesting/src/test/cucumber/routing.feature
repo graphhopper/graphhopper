@@ -3,7 +3,7 @@ Feature: Verify a route from A to B
     I want to get a route from location A to location B using the routing service
     And route should be the fastest route and contain the waypoints,restrictions,time and other instructions
 
-  @Routing
+  @Routing @New
   Scenario Outline: Verify  waypoints on a Route
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -242,3 +242,36 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA             | pointB              | routetype |
       | 51.47118,-0.363609 | 51.470651,-0.363495 | car       |
+
+  @Routing @KnownIssues
+  Scenario Outline: Verify  No Turn Restriction (Denmark Road-Exeter)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints not on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                 | azimuth | direction | time | distance |
+      | 2             | 50.724703,-3.520835 | turn right onto DENMARK ROAD | 208     | SW        | 2141 | 20.822   |
+
+    Examples: 
+      | pointA              | pointB              | routetype |
+      | 50.724901,-3.521588 | 50.724524,-3.520923 | car       |
+
+  @Routing @KnownIssues
+  Scenario Outline: Verify  Mandatory Turn Restriction (Denmark Road-Exeter)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints not on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                           | azimuth | direction | time  | distance |
+      | 2             | 50.724703,-3.520835 | Turn right onto HEAVITREE ROAD (B3183) | 105     | E         | 15636 | 152.027  |
+
+    Examples: 
+      | pointA              | pointB             | routetype |
+      | 50.724378,-3.520993 | 50.72413,-3.518874 | car       |
+
+  @Routing @KnownIssues
+  Scenario Outline: Verify  Private Road Restricted Access (Denmark Road-Exeter)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the trackPoints not on the route map:
+      | trackPointco      |
+      | 50.723966,-3.5198 |
+
+    Examples: 
+      | pointA              | pointB             | routetype |
+      | 50.724316,-3.521008 | 50.72413,-3.518874 | car       |
