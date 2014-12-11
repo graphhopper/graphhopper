@@ -3,12 +3,12 @@ Feature: Verify a route from A to B
     I want to get a route from location A to location B using the routing service
     And route should be the fastest route and contain the waypoints,restrictions,time and other instructions
 
-  @Routing 
+  @Routing @New
   Scenario Outline: Verify  waypoints on a Route
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                 | azimuth | direction | time  | distance |
-      | 1             | 51.472114,-0.361993 | Continue onto ELLINGTON ROAD | 274     | W         | 13537 | 131.626  |
+      | 1             | 51.472114,-0.361993 | Continue onto ELLINGTON ROAD | 275     | W         | 13535 | 131.626  |
 
     Examples: 
       | pointA                                 | pointB                                 | routetype |
