@@ -330,7 +330,7 @@ function initMap(selectLayer) {
         subdomains: ['otile1', 'otile2', 'otile3', 'otile4']
     });
 
-    var openMapsSurfer = L.tileLayer('http://openmapsurfer.uni-hd.de/tiles/roads/x={x}&y={y}&z={z}', {
+    var openMapSurfer = L.tileLayer('http://openmapsurfer.uni-hd.de/tiles/roads/x={x}&y={y}&z={z}', {
         attribution: osmAttr + ', <a href="http://openmapsurfer.uni-hd.de/contact.html">GIScience Heidelberg</a>'
     });
 
@@ -367,7 +367,7 @@ function initMap(selectLayer) {
         "Lyrk": lyrk,
         "MapQuest": mapquest,
         "MapQuest Aerial": mapquestAerial,
-        "OpenMapsSurfer": openMapsSurfer,
+        "OpenMapSurfer": openMapSurfer,
         "TF Transport": thunderTransport,
         "TF Cycle": thunderCycle,
         "TF Outdoors": thunderOutdoors,
