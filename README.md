@@ -8,14 +8,15 @@ Per default it uses OpenStreetMap data but can import other data sources.
 GraphHopper for the Web
 --------------
 
-See GraphHopper in action on **GraphHopper Maps*:
+See GraphHopper in action on [GraphHopper Maps](https://graphhopper.com/maps):
 
-[![GraphHopper Maps](https://karussell.files.wordpress.com/2014/12/graphhopper-maps-0-4-preview.png)](http://graphhopper.com/maps)
+[![GraphHopper Maps](https://karussell.files.wordpress.com/2014/12/graphhopper-maps-0-4-preview.png)](https://graphhopper.com/maps)
 
 GraphHopper for Mobile
 ---------------
 
-There are subprojects to make GraphHopper working on [Android](https://github.com/graphhopper/graphhopper/blob/master/docs/android/index.md)
+There are subprojects to make GraphHopper working offline
+on [Android](https://github.com/graphhopper/graphhopper/tree/master/android)
 and [iOS](http://github.com/graphhopper/graphhopper-ios)
 
 
