@@ -23,7 +23,6 @@ import org.json.JSONObject;
 
 public class InvalidRequestServlet extends GHBaseServlet
 {
-
     @Override
     protected void service( HttpServletRequest req, HttpServletResponse res ) throws ServletException, IOException
     {

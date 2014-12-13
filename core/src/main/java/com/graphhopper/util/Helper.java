@@ -163,6 +163,27 @@ public class Helper
         }
     }
 
+    public static String isToString( InputStream inputStream ) throws IOException
+    {
+        int size = 1024 * 8;
+        String encoding = "UTF-8";
+        InputStream in = new BufferedInputStream(inputStream, size);
+        try
+        {
+            byte[] buffer = new byte[size];
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            int numRead;
+            while ((numRead = in.read(buffer)) != -1)
+            {
+                output.write(buffer, 0, numRead);
+            }
+            return output.toString(encoding);
+        } finally
+        {
+            in.close();
+        }
+    }
+
     public static int idealIntArraySize( int need )
     {
         return idealByteArraySize(need * 4) / 4;

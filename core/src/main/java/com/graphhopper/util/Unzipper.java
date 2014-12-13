@@ -26,14 +26,6 @@ import java.util.zip.ZipInputStream;
  */
 public class Unzipper
 {
-    private int size = 1024 * 8;
-
-    public Unzipper setSize( int size )
-    {
-        this.size = size;
-        return this;
-    }
-
     public void unzip( String from, boolean remove ) throws IOException
     {
         String to = Helper.pruneFileEnd(from);
@@ -66,7 +58,7 @@ public class Unzipper
         try
         {
             ZipEntry ze = zis.getNextEntry();
-            byte[] buffer = new byte[size];
+            byte[] buffer = new byte[8 * 1024];
             while (ze != null)
             {
                 if (ze.isDirectory())
