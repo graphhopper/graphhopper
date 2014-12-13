@@ -26,7 +26,6 @@ import java.util.PriorityQueue;
 import com.graphhopper.routing.AStar.AStarEdge;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * This class implements a bidirectional A* algorithm. It is interesting to note that a
@@ -51,12 +50,12 @@ import com.graphhopper.util.shapes.GHPoint;
  * or could we even use this three phase approach?
  * www.lix.polytechnique.fr/~giacomon/papers/bidirtimedep.pdf
  * <p/>
- * @author Peter Karich
+ * @author Peter Karich, jansoe
  */
 public class AStarBidirection extends AbstractBidirAlgo
 {
     private DistanceCalc dist;
-    private ConsitentWeightApproximator weightApprox;
+    private ConsistentWeightApproximator weightApprox;
     private PriorityQueue<AStarEdge> prioQueueOpenSetFrom;
     private TIntObjectMap<AStarEdge> bestWeightMapFrom;
     private PriorityQueue<AStarEdge> prioQueueOpenSetTo;
@@ -71,8 +70,9 @@ public class AStarBidirection extends AbstractBidirAlgo
         super(graph, encoder, weighting, tMode);
         int nodes = Math.max(20, graph.getNodes());
         initCollections(nodes);
-        setApproximation(new BeelineWeightApproximator(nodeAccess, weighting));
-
+        BeelineWeightApproximator defaultApprox = new BeelineWeightApproximator(nodeAccess, weighting);
+        defaultApprox.setDistanceCalc(new  DistancePlaneProjection());
+        setApproximation(defaultApprox);
     }
 
     protected void initCollections( int size )
@@ -89,7 +89,7 @@ public class AStarBidirection extends AbstractBidirAlgo
      */
     public AStarBidirection setApproximation( WeightApproximator approx )
     {
-        weightApprox = new ConsitentWeightApproximator(approx);
+        weightApprox = new ConsistentWeightApproximator(approx);
         return this;
     }
 
@@ -224,7 +224,8 @@ public class AStarBidirection extends AbstractBidirAlgo
             int traversalId = traversalMode.createTraversalId(iter, reverse);
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
-            double alreadyVisitedWeight = weighting.calcWeight(iter, reverse, currEdge.edge) + currEdge.weightOfVisitedPath;
+            float alreadyVisitedWeight =(float) (weighting.calcWeight(iter, reverse, currEdge.edge)
+                                                 + currEdge.weightOfVisitedPath);
             if (Double.isInfinite(alreadyVisitedWeight))
                     continue;
             
@@ -237,14 +238,14 @@ public class AStarBidirection extends AbstractBidirAlgo
                 {
                     ase = new AStarEdge(iter.getEdge(), neighborNode, estimationFullDist, alreadyVisitedWeight);
                     shortestWeightMap.put(traversalId, ase);
-                } else //if (ase.weight > estimationFullDist)
+                } else
                 {
-                    //assert (ase.weight > estimationFullDist): "weight: " + ase.weight + "full" + estimationFullDist;
+                    assert(ase.weight > estimationFullDist): "Inconsistent distance estimate";
                     prioQueueOpenSet.remove(ase);
                     ase.edge = iter.getEdge();
                     ase.weight = estimationFullDist;
                     ase.weightOfVisitedPath = alreadyVisitedWeight;
-                } //else  continue;
+                }
 
                 ase.parent = currEdge;
                 prioQueueOpenSet.add(ase);

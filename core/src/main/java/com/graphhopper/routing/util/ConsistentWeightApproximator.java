@@ -10,30 +10,30 @@ import com.graphhopper.storage.NodeAccess;
  * pages 291–296.
  * <p/>
  *
- * @author Jan Soe
+ * @author jansoe
  */
-public class ConsitentWeightApproximator {
+public class ConsistentWeightApproximator {
 
     private NodeAccess nodeAccess;
     private Weighting weighting;
-    private WeightApproximator uniDirectionalApproximator;
-    int goalNode, sourceNode;
+    private WeightApproximator uniDirApproximatorForward, uniDirApproximatorReverse;
 
-    public ConsitentWeightApproximator(WeightApproximator weightApprox){
-        this.uniDirectionalApproximator = weightApprox;
+    public ConsistentWeightApproximator(WeightApproximator weightApprox){
+        uniDirApproximatorForward = weightApprox;
+        uniDirApproximatorReverse = weightApprox.duplicate();
     }
 
     public void setSourceNode(int sourceNode){
-        this.sourceNode = sourceNode;
+        uniDirApproximatorReverse.setGoalNode(sourceNode);
     }
 
     public void setGoalNode(int goalNode){
-        this.goalNode = goalNode;
+        uniDirApproximatorForward.setGoalNode(goalNode);
     }
 
     public double approximate(int fromNode, boolean reverse)    {
-        double weightApproximation = 0.5*(uniDirectionalApproximator.approximate(fromNode, goalNode)
-                                          - uniDirectionalApproximator.approximate(fromNode, sourceNode));
+        double weightApproximation = 0.5*(uniDirApproximatorForward.approximate(fromNode)
+                                          - uniDirApproximatorReverse.approximate(fromNode));
         if (reverse) {
             weightApproximation *= -1;
         }

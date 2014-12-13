@@ -114,7 +114,7 @@ public class RoutingAlgorithmSpecialAreaTests
         prepare.add(new AlgoHelperEntry(g, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA, encoder, weighting, tMode), idx));
 
         final AlgorithmOptions astarbiOpts = new AlgorithmOptions(AlgorithmOptions.ASTAR_BI, encoder, weighting, tMode);
-        astarbiOpts.getHints().put(AlgorithmOptions.ASTAR_BI + ".approximation", "true");
+        astarbiOpts.getHints().put(AlgorithmOptions.ASTAR_BI + ".approximation", "BeelineSimplification");
         final AlgorithmOptions dijkstrabiOpts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting, tMode);
         prepare.add(new AlgoHelperEntry(g, astarbiOpts, idx));
         prepare.add(new AlgoHelperEntry(g, dijkstrabiOpts, idx));

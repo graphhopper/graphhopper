@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.util.DistancePlaneProjection;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 
@@ -53,7 +54,9 @@ public class AStar extends AbstractRoutingAlgorithm
     {
         super(g, encoder, weighting, tMode);
         initCollections(1000);
-        setApproximation(new BeelineWeightApproximator(nodeAccess, weighting));
+        BeelineWeightApproximator defaultApprox = new BeelineWeightApproximator(nodeAccess, weighting);
+        defaultApprox.setDistanceCalc(new DistancePlaneProjection());
+        setApproximation(defaultApprox);
     }
 
     /**
@@ -76,6 +79,7 @@ public class AStar extends AbstractRoutingAlgorithm
     {
         checkAlreadyRun();
         to1 = to;
+        weightApprox.setGoalNode(to);
         currEdge = createEdgeEntry(from, 0);
         if (!traversalMode.isEdgeBased())
         {
@@ -103,27 +107,29 @@ public class AStar extends AbstractRoutingAlgorithm
 
                 int neighborNode = iter.getAdjNode();
                 int traversalId = traversalMode.createTraversalId(iter, false);
-                double alreadyVisitedWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weightOfVisitedPath;
+                // cast to float to avoid rounding errors in comparison to float entry of AStarEdge weight
+                float alreadyVisitedWeight = (float) (weighting.calcWeight(iter, false, currEdge.edge)
+                                                      + currEdge.weightOfVisitedPath);
                 if (Double.isInfinite(alreadyVisitedWeight))
                     continue;
 
                 AStarEdge ase = fromMap.get(traversalId);
-                if (ase == null || ase.weightOfVisitedPath > alreadyVisitedWeight)
+                if ((ase == null) || ase.weightOfVisitedPath > alreadyVisitedWeight)
                 {
-                    currWeightToGoal = weightApprox.approximate(neighborNode, to1);
+                    currWeightToGoal = weightApprox.approximate(neighborNode);
                     distEstimation = alreadyVisitedWeight + currWeightToGoal;
                     if (ase == null)
                     {
                         ase = new AStarEdge(iter.getEdge(), neighborNode, distEstimation, alreadyVisitedWeight);
                         fromMap.put(traversalId, ase);
-                    } else if (ase.weight > distEstimation)
+                    } else
                     {
+                        assert(ase.weight > distEstimation): "Inconsistent distance estimate";
                         prioQueueOpenSet.remove(ase);
                         ase.edge = iter.getEdge();
                         ase.weight = distEstimation;
                         ase.weightOfVisitedPath = alreadyVisitedWeight;
-                    } else
-                        continue;
+                    }
 
                     ase.parent = currEdge;
                     prioQueueOpenSet.add(ase);
@@ -176,7 +182,6 @@ public class AStar extends AbstractRoutingAlgorithm
         public AStarEdge( int edgeId, int adjNode, double weightForHeap, double weightOfVisitedPath )
         {
             super(edgeId, adjNode, weightForHeap);
-            // round makes distance smaller => heuristic should underestimate the distance!
             this.weightOfVisitedPath = (float) weightOfVisitedPath;
         }
     }
