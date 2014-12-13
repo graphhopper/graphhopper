@@ -8,9 +8,15 @@ Per default it uses OpenStreetMap data but can import other data sources.
 GraphHopper for the Web
 --------------
 
-See GraphHopper in action on [GraphHopper Maps](https://graphhopper.com/maps):
+See GraphHopper in action on [GraphHopper Maps](https://graphhopper.com/maps)
 
 [![GraphHopper Maps](https://karussell.files.wordpress.com/2014/12/graphhopper-maps-0-4-preview.png)](https://graphhopper.com/maps)
+
+GraphHopper Maps uses the [Directions API for Business](https://graphhopper.com/#directions-api), which provides 
+routing through GraphHopper and a fast address search via [Photon](https://github.com/komoot/photon).
+Additionally the map tiles from various Providers like [Lyrk](https://geodienste.lyrk.de/pakete)
+are used and all is available for free and through HTTPS for a secure route planning experience!
+
 
 GraphHopper for Mobile
 ---------------
