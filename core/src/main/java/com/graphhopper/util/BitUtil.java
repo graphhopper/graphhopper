@@ -265,6 +265,21 @@ public abstract class BitUtil
         return res;
     }
 
+    public final int getIntLow( long longValue )
+    {
+        return (int) (longValue & 0xFFFFFFFFL);
+    }
+
+    public final int getIntHigh( long longValue )
+    {
+        return (int) (longValue >> 32);
+    }
+
+    public final long combineIntsToLong( int intLow, int intHigh)
+    {
+        return ((long) intHigh << 32) | (intLow & 0xFFFFFFFFL);
+    }
+
     public final long reverseLeft( long value, int maxBits )
     {
         long res = 0;

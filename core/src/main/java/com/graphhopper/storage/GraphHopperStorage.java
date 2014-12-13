@@ -615,8 +615,11 @@ public class GraphHopperStorage implements GraphStorage
         @Override
         public EdgeIteratorState setName( String name )
         {
-            int nameIndexRef = nameIndex.put(name);
-            edges.setInt(edgePointer + E_NAME, nameIndexRef);
+            long nameIndexRef = nameIndex.put(name);
+            if (nameIndexRef < 0)
+                throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
+
+            edges.setInt(edgePointer + E_NAME, (int) nameIndexRef);
             return this;
         }
 
@@ -690,7 +693,7 @@ public class GraphHopperStorage implements GraphStorage
         if (flagsSizeIsLong)
         {
             int high = edges.getInt(edgePointer + E_FLAGS + 4);
-            res = ((long) high << 32) | (low & 0xFFFFFFFFL);
+            res = bitUtil.combineIntsToLong(low, high);
         }
         if (reverse)
             return reverseFlags(edgePointer, res);
@@ -707,12 +710,10 @@ public class GraphHopperStorage implements GraphStorage
         if (reverse)
             flags = reverseFlags(edgePointer, flags);
 
+        edges.setInt(edgePointer + E_FLAGS, bitUtil.getIntLow(flags));
+
         if (flagsSizeIsLong)
-        {
-            edges.setInt(edgePointer + E_FLAGS, (int) (flags & 0xFFFFFFFFL));
-            edges.setInt(edgePointer + E_FLAGS + 4, (int) (flags >> 32));
-        } else
-            edges.setInt(edgePointer + E_FLAGS, (int) (flags & 0xFFFFFFFFL));
+            edges.setInt(edgePointer + E_FLAGS + 4, bitUtil.getIntHigh(flags));
     }
 
     protected class SingleEdge extends EdgeIterable
@@ -888,8 +889,11 @@ public class GraphHopperStorage implements GraphStorage
         @Override
         public EdgeIteratorState setName( String name )
         {
-            int nameIndexRef = nameIndex.put(name);
-            edges.setInt(edgePointer + E_NAME, nameIndexRef);
+            long nameIndexRef = nameIndex.put(name);
+            if (nameIndexRef < 0)
+                throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
+
+            edges.setInt(edgePointer + E_NAME, (int) nameIndexRef);
             return this;
         }
 
@@ -1573,7 +1577,7 @@ public class GraphHopperStorage implements GraphStorage
     {
         return "edges:" + nf(edgeCount) + "(" + edges.getCapacity() / Helper.MB + "), "
                 + "nodes:" + nf(nodeCount) + "(" + nodes.getCapacity() / Helper.MB + "), "
-                + "name: - (" + nameIndex.getCapacity() / Helper.MB + "), "
+                + "name: /(" + nameIndex.getCapacity() / Helper.MB + "), "
                 + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "), "
                 + "bounds:" + bounds;
     }
