@@ -33,24 +33,25 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
         String algoStr = opts.getAlgorithm();
         if (AlgorithmOptions.DIJKSTRA_BI.equalsIgnoreCase(algoStr))
         {
-            algo = new DijkstraBidirectionRef(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+            return new DijkstraBidirectionRef(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
         } else if (AlgorithmOptions.DIJKSTRA.equalsIgnoreCase(algoStr))
         {
-            algo = new Dijkstra(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+            return new Dijkstra(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
         } else if (AlgorithmOptions.ASTAR_BI.equalsIgnoreCase(algoStr))
         {
-            algo = new AStarBidirection(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode()).
+            return new AStarBidirection(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode()).
                     setApproximation(opts.getHints().getBool(AlgorithmOptions.ASTAR_BI + ".approximation", false)).
                     setApproximationFactor(opts.getHints().getDouble(AlgorithmOptions.ASTAR_BI + ".approximation_factor", 1.2));
 
         } else if (AlgorithmOptions.DIJKSTRA_ONE_TO_MANY.equalsIgnoreCase(algoStr))
         {
-            algo = new DijkstraOneToMany(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+            return new DijkstraOneToMany(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+        } else if (AlgorithmOptions.ASTAR.equalsIgnoreCase(algoStr))
+        {
+            return new AStar(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
         } else
         {
-            algo = new AStar(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+            throw new IllegalArgumentException("Algorithm " + algoStr + " not found in " + getClass().getName());
         }
-
-        return algo;
     }
 }
