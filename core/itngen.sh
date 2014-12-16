@@ -2,12 +2,12 @@ LOGIT=
 #LOGIT=:${HOME}/.m2/repository/org/slf4j/slf4j-log4j12/1.7.7/slf4j-log4j12-1.7.7.jar:${HOME}/.m2/repository/log4j/log4j/1.2.17/log4j-1.2.17.jar
 
 # Actual ITN Data
-ITNDATA=${HOME}/Development/OSMMITN/data
-GRAPHOUTPUTDIR=${HOME}/Documents/graphhopper/core/osmitn-gh
+#ITNDATA=${HOME}/Development/OSMMITN/data
+#GRAPHOUTPUTDIR=${HOME}/Documents/graphhopper/core/osmitn-gh
 
 # Sample Data
-#ITNDATA=${HOME}/Development/geoserver-service-test/geoservertest/itn-sample-data/58096-SX9192-2c1.gz
-#GRAPHOUTPUTDIR=${HOME}/Documents/graphhopper/core/58096-SX9192-2c1-gh
+ITNDATA=${HOME}/Development/geoserver-service-test/geoservertest/itn-sample-data/58096-SX9192-2c1.gz
+GRAPHOUTPUTDIR=${HOME}/Documents/graphhopper/core/58096-SX9192-2c1-gh
 
 #ITNDATA=${HOME}/Development/graphhopper2/graphhopper/core/os-itn-lake-road-spicer-street.xml
 #GRAPHOUTPUTDIR=${HOME}/Documents/graphhopper/core/os-itn-lake-road-spicer-street-gh

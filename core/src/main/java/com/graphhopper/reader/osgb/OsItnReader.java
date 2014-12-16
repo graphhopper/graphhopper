@@ -715,6 +715,7 @@ public class OsItnReader implements DataReader {
 
         // Check if we are prohibited from ever traversing this way
         if (getProhibitedWayIds().remove(wayOsmId)) {
+            System.out.println("DONT PROCESS WAY " + wayOsmId);
             return;
         }
 
@@ -939,7 +940,7 @@ public class OsItnReader implements DataReader {
                 noEntryCreatedEdges.addAll(newBarriers);
                 // Update the orientation of our little one way
                 for (EdgeIteratorState edgeIteratorState : newBarriers) {
-                    boolean forwards = endDirection.equals("true");
+                    boolean forwards = endDirection.equals("-1");
                     long flags = encodingManager.flagsDefault(forwards, !forwards);
                     // Set the flags on our new edge.
                     edgeIteratorState.setFlags(flags);

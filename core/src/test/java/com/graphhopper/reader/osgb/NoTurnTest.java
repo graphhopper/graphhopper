@@ -1,5 +1,6 @@
 package com.graphhopper.reader.osgb;
 
+import static com.graphhopper.util.GHUtility.count;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -10,9 +11,11 @@ import java.io.IOException;
 import org.junit.Test;
 
 import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.AbstractGraphStorageTester;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
 public class NoTurnTest extends AbstractOsItnReaderTest{
@@ -40,6 +43,39 @@ public class NoTurnTest extends AbstractOsItnReaderTest{
     @Test
     public void testNoTurnExceptMotorVehicleFalseFrom17To19() throws IOException {
         runNoMotorVehicleTurnFrom17To19Test("./src/test/resources/com/graphhopper/reader/os-itn-no-turn-except-for-motor-vehicles-false-crossroad.xml");
+    }
+    /**
+     * No turn for Motor Vehicles
+     * @throws IOException
+     */
+    @Test
+    public void testNoTurnFromHeavitreeToDenmark() throws IOException {
+        boolean turnRestrictionsImport = true;
+        boolean is3D = false;
+        GraphHopperStorage graph = configureStorage(turnRestrictionsImport, is3D);
+
+        File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-heavitree-road-denmark-road.xml");
+        readGraphFile(graph, file);
+        System.out.println("Node Count: " + graph.getNodes());
+//        assertEquals(5, graph.getNodes());
+//        checkSimpleNodeNetwork(graph);
+
+        DefaultEdgeFilter carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
+        carOutExplorer = graph.createEdgeExplorer(carOutFilter);
+        
+        GHUtility.printInfo(graph, 0, 20, EdgeFilter.ALL_EDGES);
+        System.out.println(count(carOutExplorer.setBaseNode(0)) + " node 0");
+        System.out.println(count(carOutExplorer.setBaseNode(1)) + " node 1");
+        assertEquals(4, count(carOutExplorer.setBaseNode(0)));
+        
+        EdgeIterator iter = carOutExplorer.setBaseNode(0);
+        while (iter.next()) {
+            System.out.println("Edge: " + iter.getEdge());
+        }
+        iter = carOutExplorer.setBaseNode(1);
+        while (iter.next()) {
+            System.out.println("Edge: " + iter.getEdge());
+        }
     }
     
     private void runNoMotorVehicleTurnFrom17To19Test(String filename) throws IOException {

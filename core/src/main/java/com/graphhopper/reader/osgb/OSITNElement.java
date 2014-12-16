@@ -277,6 +277,7 @@ public abstract class OSITNElement implements RoutingElement {
             // setTag(TAG_KEY_RESTRICTION, elementText);
             break;
         default:
+            // Handles Mandatory Turn and No Turn
             setTag(TAG_KEY_TYPE, TAG_VALUE_TYPE_RESTRICTION);
             setTag(TAG_KEY_RESTRICTION, elementText);
             break;
@@ -295,21 +296,7 @@ public abstract class OSITNElement implements RoutingElement {
         // System.out.println("handleTypeVehicleQualifier " + elementText +
         // " exceptFor " + exceptFor);
         setTag(elementText, exceptFor.toString());
-        int event;
-        // switch (elementText) {
-        // case "Buses" :
-        // case "Coaches" :
-        // case "Mopeds" :
-        // case "Motor Cycles" :
-        // case "HGV's" :
-        // case "LGV's" :
-        // case "Towed Caravans" :
-        // case "Motor Vehicles" :
-        // case "Cycles" :
-        // case "Tracked Vehicles" :
-        // break;
-        // }
-        event = parser.getEventType();
+        int event = parser.getEventType();
         return event;
     }
 
@@ -337,26 +324,7 @@ public abstract class OSITNElement implements RoutingElement {
         // System.out.println("handleUseVehicleQualifier " + elementText +
         // " exceptFor " + exceptFor);
         setTag(elementText, exceptFor.toString());
-        int event;
-        event = parser.getEventType(); // type and use are effectively the same
-                                       // thing
-        // return handleTypeVehicleQualifier(parser);
-        // int event;
-        // switch (elementText) {
-        // case "Taxi" :
-        // case "School Bus" :
-        // case "Patron" :
-        // case "Access" :
-        // case "Resident" :
-        // case "Emergency Vehicle" :
-        // case "Emergency Access" :
-        // case "Public Transport" :
-        // case "Authorised Vehicle" :
-        // case "Local Bus" :
-        // case "Escorted Traffic" :
-        // break;
-        // }
-        // event = parser.getEventType();
+        int event = parser.getEventType(); // type and use are effectively the same thing
         return event;
     }
 

@@ -10,7 +10,10 @@ import java.io.IOException;
 
 import org.junit.Before;
 
+import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.BikeFlagEncoder;
+import com.graphhopper.routing.util.BusFlagEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -28,7 +31,8 @@ public abstract class AbstractOsItnReaderTest {
 
     protected EncodingManager encodingManager;// = new
     // EncodingManager("CAR");//"car:com.graphhopper.routing.util.RelationCarFlagEncoder");
-    protected RelationCarFlagEncoder carEncoder;// = (RelationCarFlagEncoder)
+    protected CarFlagEncoder carEncoder;// = (RelationCarFlagEncoder)
+    protected BusFlagEncoder busEncoder;// = (RelationCarFlagEncoder)
       // encodingManager
 // .getEncoder("CAR");
     protected EdgeFilter carOutEdges;// = new DefaultEdgeFilter(
@@ -63,21 +67,36 @@ public abstract class AbstractOsItnReaderTest {
     @Before
     public void initEncoding() {
         if (turnCosts) {
-            carEncoder = new RelationCarFlagEncoder(5, 5, 3);
+            carEncoder = new CarFlagEncoder(5, 5, 3);
+            busEncoder = new BusFlagEncoder(5, 5, 3);
+//            carEncoder = new RelationCarFlagEncoder(5, 5, 3);
             bikeEncoder = new BikeFlagEncoder(4, 2, 3);
         } else {
-            carEncoder = new RelationCarFlagEncoder();
+            carEncoder = new CarFlagEncoder();
+            busEncoder = new BusFlagEncoder();
+//            carEncoder = new RelationCarFlagEncoder();
             bikeEncoder = new BikeFlagEncoder();
         }
 
         footEncoder = new FootFlagEncoder();
         carOutEdges = new DefaultEdgeFilter(carEncoder, false, true);
         carInEdges  = new DefaultEdgeFilter(carEncoder, true, false);
-        encodingManager = new EncodingManager(footEncoder, carEncoder, bikeEncoder);
+//        encodingManager = new EncodingManager(footEncoder, carEncoder, bikeEncoder);
+        encodingManager = createEncodingManager();
+//        encodingManager = new EncodingManager("car|turnCosts=true");
+    }
+    
+    /**
+     * So we can create a specific encoding manager in subclasses
+     * @return
+     */
+    protected EncodingManager createEncodingManager() {
+        return new EncodingManager(footEncoder, carEncoder, bikeEncoder);
     }
     
     protected OsItnReader readGraphFile(GraphHopperStorage graph, File file) throws IOException {
         OsItnReader osItnReader = new OsItnReader(graph);
+        System.out.println("Read " + file.getAbsolutePath());
         osItnReader.setOSMFile(file);
         osItnReader.setEncodingManager(encodingManager);
         osItnReader.readGraph();
@@ -120,9 +139,27 @@ public abstract class AbstractOsItnReaderTest {
         return EdgeIterator.NO_EDGE;
     }
     protected void evaluateRouting(final EdgeIterator iter, final int node, final boolean forward, final boolean backward, final boolean finished) {
+        evaluateRouting(iter, node, forward, backward, finished, carEncoder);
+    }
+    protected void evaluateRouting(final EdgeIterator iter, final int node, final boolean forward, final boolean backward, final boolean finished, AbstractFlagEncoder flagEncoder) {
         assertEquals("Incorrect adjacent node", node, iter.getAdjNode());
-        assertEquals("Incorrect forward instructions", forward, carEncoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
-        assertEquals("Incorrect backward instructions", backward, carEncoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
+        assertEquals("Incorrect forward instructions", forward, flagEncoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
+        assertEquals("Incorrect backward instructions", backward, flagEncoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
         assertEquals(!finished, iter.next());
+    }
+    protected void printNodes(EdgeExplorer outExplorer, int numNodes) {
+        for (int i = 0; i < numNodes; i++) {
+//            logger.info("Node " + i + " " + count(outExplorer.setBaseNode(i)));
+            System.out.println("Node " + i + " " + count(outExplorer.setBaseNode(i)));
+        }
+
+        EdgeIterator iter = null; 
+        for (int i = 0; i < numNodes; i++) {
+            iter = outExplorer.setBaseNode(i);
+            while (iter.next()) {
+//                logger.info(i+" Adj node is " + iter.getAdjNode());
+                System.out.println(i+" Adj node is " + iter.getAdjNode());
+            }
+        }
     }
 }

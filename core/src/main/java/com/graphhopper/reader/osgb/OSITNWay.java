@@ -22,7 +22,6 @@ import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.TDoubleLongMap;
 import gnu.trove.map.TDoubleObjectMap;
 import gnu.trove.map.TLongObjectMap;
-import gnu.trove.map.hash.TObjectLongHashMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -82,11 +81,13 @@ public class OSITNWay extends OSITNElement implements Way {
 
     @Override
     protected void parseCoords(String lineDefinition) {
-        String[] lineSegments = lineDefinition.split(" ");
+        // Split on any number of whitespace characters
+        // String[] lineSegments = lineDefinition.trim().replace('\n', ' ').replace('\t', ' ').split(" ");
+        String[] lineSegments = lineDefinition.split("\\s+");
         wayCoords = Arrays.copyOfRange(lineSegments, 1, lineSegments.length - 1);
         startCoord = lineSegments[0];
         endCoord = lineSegments[lineSegments.length-1];
-        logger.info(toString() + " " + ((wayCoords.length == 0) ? "0" : wayCoords[0]));
+        logger.info("startCoord [" + startCoord + "] endCoord [" + endCoord + "] num elements = "+ lineSegments.length);
     }
 
     @Override
@@ -177,7 +178,7 @@ public class OSITNWay extends OSITNElement implements Way {
 
             logger.info("Node " + getId() + " coords: " + wayCoord + " tags: ");
             for (String tagKey : wayNode.getTags().keySet()) {
-                logger.info("\t " + tagKey + " : " + wayNode.getTag(tagKey));
+                logger.info("\t " + tagKey + " : " + wayNode.getTag(tagKey));   
             }
 
             wayNodes.add(wayNode);

@@ -1,23 +1,4 @@
-/*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
- *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
- *  compliance with the License. You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package com.graphhopper.routing.util;
-
-import static com.graphhopper.util.Helper.keepIn;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -27,17 +8,9 @@ import java.util.Set;
 
 import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.Way;
-import com.graphhopper.reader.osgb.OSITNElement;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 
-/**
- * Defines bit layout for cars. (speed, access, ferries, ...)
- * <p>
- * @author Peter Karich
- * @author Nop
- */
-public class CarFlagEncoder extends AbstractFlagEncoder
+public class BusFlagEncoder extends AbstractFlagEncoder
 {
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<String, Integer>();
     protected final Set<String> badSurfaceSpeedMap = new HashSet<String>();
@@ -51,19 +24,19 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     /**
      * Should be only instantied via EncodingManager
      */
-    public CarFlagEncoder()
+    public BusFlagEncoder()
     {
         this(5, 5, 0);
     }
 
-    public CarFlagEncoder( String propertiesStr )
+    public BusFlagEncoder( String propertiesStr )
     {
         this((int) parseLong(propertiesStr, "speedBits", 5),
                 parseDouble(propertiesStr, "speedFactor", 5),
                 parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
     }
 
-    public CarFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
+    public BusFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
     {
         super(speedBits, speedFactor, maxTurnCosts);
         restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
@@ -172,7 +145,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         defaultSpeedMap.put("Alley", 0);
         
         // osgb:type
-        vehicleQualifierTypeExclusions.add("Buses");
+//        vehicleQualifierTypeExclusions.add("Buses");
         vehicleQualifierTypeExclusions.add("Coaches");
         vehicleQualifierTypeExclusions.add("Mopeds");
         vehicleQualifierTypeExclusions.add("Motor Cycles");
@@ -189,10 +162,10 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         vehicleQualifierTypeExclusions.add("Access");
         vehicleQualifierTypeExclusions.add("Resident");
         vehicleQualifierTypeExclusions.add("Emergency Vehicle");
-        vehicleQualifierTypeExclusions.add("Public Transport");
+//        vehicleQualifierTypeExclusions.add("Public Transport");
         vehicleQualifierTypeExclusions.add("Authorised Vehicle");
-        vehicleQualifierTypeExclusions.add("Local Bus");
-        vehicleQualifierTypeExclusions.add("Local Buses"); // Added from analysing the actual data
+//        vehicleQualifierTypeExclusions.add("Local Bus");
+//        vehicleQualifierTypeExclusions.add("Local Buses"); // Added from analysing the actual data
         vehicleQualifierTypeExclusions.add("Escorted Traffic");
         vehicleQualifierTypeExclusions.add("Loading And Unloading"); // Added from analysing the actual data
         
@@ -200,6 +173,12 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         
         vehicleQualifierTypeInclusions.add("Motor Vehicles");
         vehicleQualifierTypeInclusions.add("All Vehicles");
+        // temp inclusions for testing
+        vehicleQualifierTypeInclusions.add("Buses");
+
+        vehicleQualifierTypeInclusions.add("Local Bus");
+        vehicleQualifierTypeInclusions.add("Local Buses");
+        vehicleQualifierTypeInclusions.add("Public Transport");
 
     }
 
@@ -378,7 +357,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     @Override
     public String toString()
     {
-        return "car";
+        return "bus";
     }
 
     @Override
