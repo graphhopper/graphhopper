@@ -33,7 +33,6 @@ import com.graphhopper.reader.RelationMember;
 import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.Way;
 import com.graphhopper.reader.osgb.OsItnInputFile;
-import com.graphhopper.reader.osgb.OsItnReader;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -48,7 +47,7 @@ import com.graphhopper.util.Helper;
  * directly referenced nodes and ways. A later version should probably also
  * extract all first order connections.
  * 
- * @author stuartadam
+ * @author stuartadam 
  * 
  */
 public class OsITNProblemRouteExtractor {
