@@ -760,11 +760,63 @@ public class OsItnReader implements DataReader {
         if (wayFlags == 0)
             return;
         // logger.warn(ADDING_RELATION_TO_WAYS_FORMAT, wayFlags);
+        
+        // Check if we need to add additional TOWER nodes at the start and end locations to deal
+        // with a routing algorithm bug which prevents turn restrictions from working when you start or finish on the 
+        // final edge of a way
+        boolean shouldAddStartEndTowers = true;
+        //if (osmNodeIds)
+        osmNodeIds = createStartTowerNodeAndEdge(osmNodeIds, way, wayNodes, wayFlags, wayOsmId);
         // Process No Entry and then Barriers, and finally add the remaining way
         processNoEntry(way, wayNodes, osmNodeIds, wayFlags, wayOsmId);
 
     }
 
+    private TLongList createStartTowerNodeAndEdge(TLongList osmNodeIds, OSITNWay way, List<OSITNNode> wayNodes, long wayFlags, long wayOsmId) {
+        //if (osmNodeIds.size()>2) {
+        List<EdgeIteratorState> startCreatedEdges = new ArrayList<EdgeIteratorState>();
+        
+        // Get the node id of the first pillar node/way node
+        
+        long nodeId = osmNodeIds.get(0); 
+        
+        
+        // Check if we have a pillar node at the start. If so we need to convert to a tower.
+        int graphIndex = getNodeMap().get(nodeId);
+        if (graphIndex < TOWER_NODE) {
+            
+            OSMNode newNode = addBarrierNode(nodeId);
+            long newNodeId = newNode.getId();
+            int nodeType = getNodeMap().get(newNodeId);
+            
+            // add way up to barrier shadow node
+            long transfer[] = osmNodeIds.toArray(0, 2); // From 0 for length
+                                                        // 2
+            transfer[transfer.length - 1] = newNodeId;
+            TLongList partIds = new TLongArrayList(transfer);
+            Collection<EdgeIteratorState> newWays = addOSMWay(partIds, wayFlags, wayOsmId);
+            // logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
+            startCreatedEdges.addAll(newWays);
+    
+    //      if (nodeType==PILLAR_NODE) {
+            // Set this to be a TOWER node explicitly. This has to be after the edges are created
+    //        getNodeMap().put(newNodeId, TOWER_NODE);
+    //    }
+    
+            
+            // Set the 0th node id to be our new node id
+            osmNodeIds.set(0, newNodeId);
+    //        osmNodeIds.insert(1, newNodeId);
+    
+            
+            for (EdgeIteratorState edge : startCreatedEdges) {
+                encodingManager.applyWayTags(way, edge);
+            }
+        }
+        return osmNodeIds;
+    }
+    
+    
     /**
      * This method processes the list of NodeIds and checks if any nodes have a
      * NoEntry Tag. If it does then it adds a shadow node and an extra way as a
@@ -921,6 +973,11 @@ public class OsItnReader implements DataReader {
                 // create shadow node copy for zero length edge
                 OSMNode newNode = addBarrierNode(nodeId);
                 long newNodeId = newNode.getId();
+                
+                // Set this to be a TOWER node explicitly to overcome a limitation in the GraphHopper code for TurnRestrictions
+                //getNodeMap().put(newNodeId, TOWER_NODE);
+
+                
                 // add way up to barrier shadow node
                 long transfer[] = osmNodeIds.toArray(osmNodeIds.size() - 2, 2); // From
                                                                                 // 0
@@ -1118,11 +1175,32 @@ public class OsItnReader implements DataReader {
         }
 
         if (nodeIdsToCreateWaysFor != null) {
+            long lastNodeId = nodeIdsToCreateWaysFor.get(nodeIdsToCreateWaysFor.size()-1);;
+            long newNodeId = -1;
 
-            // Here we need to process no entries
+            int graphIndex = getNodeMap().get(lastNodeId);
+            boolean doInsertAdditionalTowerNodes = (graphIndex < TOWER_NODE);
+
+            // add end tower here
+            if (doInsertAdditionalTowerNodes) {
+//                System.out.println("nodeIdsToCreateWaysFor.size() is " + nodeIdsToCreateWaysFor.size() + " lastNodeId is "+ lastNodeId);
+                OSMNode newNode = addBarrierNode(lastNodeId);
+                newNodeId = newNode.getId();
+                int nodeType = getNodeMap().get(newNodeId);
+                
+                nodeIdsToCreateWaysFor.set(nodeIdsToCreateWaysFor.size()-1, newNodeId);
+            }
+            
+
             Collection<EdgeIteratorState> newEdges = addOSMWay(nodeIdsToCreateWaysFor, wayFlags, wayOsmId);
-            // logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newEdges.size());
+
             createdEdges.addAll(newEdges);
+            if (doInsertAdditionalTowerNodes) {
+                long transfer[] = {newNodeId, lastNodeId};
+                TLongList partIds = new TLongArrayList(transfer);
+                newEdges = addOSMWay(partIds, wayFlags, wayOsmId);
+                createdEdges.addAll(newEdges);
+            }
         }
         // TODO Can we move this code out into processWay?
         for (EdgeIteratorState edge : createdEdges) {
@@ -1518,17 +1596,34 @@ public class OsItnReader implements DataReader {
     private OSMNode addBarrierNode(long nodeId) {
         OSMNode newNode = null;
         int graphIndex = getNodeMap().get(nodeId);
+//        System.out.println("graphIndex BEFORE is " + graphIndex);
+
         if (graphIndex < TOWER_NODE) {
             graphIndex = -graphIndex - 3;
+//            System.out.println("Create Tower node for nodeId " + nodeId + " graphIndex is " + graphIndex);
             newNode = new OSMNode(createNewNodeId(), nodeAccess, graphIndex);
         } else {
             graphIndex = graphIndex - 3;
             try {
+//                System.out.println("Create Pillar node for nodeId " + nodeId + " graphIndex is " + graphIndex);
                 newNode = new OSMNode(createNewNodeId(), pillarInfo, graphIndex);
+//                System.out.println("newNode is " + newNode);
             } catch (ArrayIndexOutOfBoundsException e) {
                 e.printStackTrace();
             }
         }
+
+        final long id = newNode.getId();
+        prepareHighwayNode(id);
+        addNode(newNode);
+        return newNode;
+    }
+    /**
+     * Create a copy of the barrier node
+     */
+    private OSMNode addBarrierNode(long nodeId, double lat, double lon) {
+        OSMNode newNode = null;
+        newNode = new OSMNode(createNewNodeId(), lat, lon);
 
         final long id = newNode.getId();
         prepareHighwayNode(id);

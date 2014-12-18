@@ -144,7 +144,7 @@ public class OsITNProblemRouteExtractor {
                     TLongList nodes = way.getNodes();
                     long startNode = nodes.get(0);
                     long endNode = nodes.get(nodes.size() - 1);
-                    System.out.println("Add start: " + startNode + " end: " + endNode);
+//                    System.out.println("Add start: " + startNode + " end: " + endNode);
                     fullNodeList.add(startNode);
                     fullNodeList.add(endNode);
                 }
@@ -419,7 +419,7 @@ public class OsITNProblemRouteExtractor {
     private void prepareNameRelation(Relation relation, TLongCollection wayList) {
         ArrayList<? extends RelationMember> members = relation.getMembers();
         for (RelationMember relationMember : members) {
-            System.out.println("\t Add way member: " + relationMember.ref());
+//            System.out.println("\t Add way member: " + relationMember.ref());
             wayList.add(relationMember.ref());
         }
     }

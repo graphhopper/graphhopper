@@ -13,6 +13,7 @@ import org.junit.Test;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -73,6 +74,8 @@ public class HeavitreeRoadDenmarkRoadCrossroadTest extends AbstractOsItnReaderTe
         carOutExplorer = graph.createEdgeExplorer(carOutFilter);
 
         GHUtility.printInfo(graph, 0, 20, EdgeFilter.ALL_EDGES);
+//        GHUtility.printInfo(graph, 2, 20, EdgeFilter.ALL_EDGES);
+//        GHUtility.printInfo(graph, 3, 20, EdgeFilter.ALL_EDGES);
 
         assertEquals(5, graph.getNodes());
         checkSimpleNodeNetwork(graph);
@@ -90,12 +93,15 @@ public class HeavitreeRoadDenmarkRoadCrossroadTest extends AbstractOsItnReaderTe
 
         TurnCostStorage tcStorage = (TurnCostStorage) ((GraphHopperStorage) graph).getExtendedStorage();
 
-        // Check that there is no restriction from SW to NE (our Mandatory turn)
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(nCenter, edge1264_SW_CENTER, edge1253_NW_CENTER)));
+        // Check that there is no restriction from SW to NW (our Mandatory turn)
+        long turnCostFlags = tcStorage.getTurnCostFlags(nCenter, edge1264_SW_CENTER, edge1253_NW_CENTER);
+        double cost = carEncoder.getTurnCost(turnCostFlags);
+        assertFalse(carEncoder.isTurnRestricted(turnCostFlags));
+        assertTrue(cost == 0.0);
 
         // Check that SW to NE is restricted (high cost)
-        long turnCostFlags = tcStorage.getTurnCostFlags(nCenter, edge1264_SW_CENTER, edge6127_NE_CENTER);
-        double cost = carEncoder.getTurnCost(turnCostFlags);
+        turnCostFlags = tcStorage.getTurnCostFlags(nCenter, edge1264_SW_CENTER, edge6127_NE_CENTER);
+        cost = carEncoder.getTurnCost(turnCostFlags);
         assertTrue(cost > 0.0);
 
         // Check that SW to SE is restricted (high cost)
@@ -103,27 +109,18 @@ public class HeavitreeRoadDenmarkRoadCrossroadTest extends AbstractOsItnReaderTe
         cost = carEncoder.getTurnCost(turnCostFlags);
         assertTrue(cost > 0.0);
 
-        // // Every route from 19 is not restricted
-        // assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81,
-        // edge19_81_83, edge17_80_81)));
-        // assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81,
-        // edge19_81_83, edge18_81_82)));
-        // assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81,
-        // edge19_81_83, edge20_81_84)));
-        // Every route from 18 is not restricted
-        // assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(nCenter,
-        // edge18_81_82, edge17_80_81)));
-        // assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(nCenter,
-        // edge18_81_82, edge19_81_83)));
-        // assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(nCenter,
-        // edge18_81_82, edge20_81_84)));
-        // Every route from 20 is not restricted
-        // assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(nCenter,
-        // edge20_81_84, edge17_80_81)));
-        // assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(nCenter,
-        // edge20_81_84, edge18_81_82)));
-        // assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(nCenter,
-        // edge20_81_84, edge19_81_83)));
+         // Every route from 19 is not restricted
+//         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81,         edge19_81_83, edge17_80_81)));
+//         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81,         edge19_81_83, edge18_81_82)));
+//         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81,         edge19_81_83, edge20_81_84)));
+////         Every route from 18 is not restricted
+//         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(nCenter,         edge18_81_82, edge17_80_81)));
+//         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(nCenter,         edge18_81_82, edge19_81_83)));
+//         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(nCenter,         edge18_81_82, edge20_81_84)));
+////         Every route from 20 is not restricted
+//         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(nCenter,         edge20_81_84, edge17_80_81)));
+//         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(nCenter,         edge20_81_84, edge18_81_82)));
+//         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(nCenter,         edge20_81_84, edge19_81_83)));
     }
 
     private void runNoMotorVehicleTurnFromNWToSWTest(String filename) throws IOException {
@@ -216,25 +213,39 @@ public class HeavitreeRoadDenmarkRoadCrossroadTest extends AbstractOsItnReaderTe
         assertFalse(iter.next());
     }
 
-    @Test
+    //@Test
     public void testActualGraph() {
         String graphLoc = "/home/phopkins/Documents/graphhopper/core/58096-SX9192-2c1";
         String inputFile = "/home/phopkins/Development/geoserver-service-test/geoservertest/itn-sample-data/58096-SX9192-2c1.xml";
-        // EncodingManager enc = new EncodingManager(carEncoder);
-        GraphHopper graphHopper = new GraphHopper().setInMemory().setGraphHopperLocation(graphLoc).setOSMFile(inputFile).setCHEnable(false).setEncodingManager(encodingManager);
+         EncodingManager enc = new EncodingManager(new CarFlagEncoder(5, 5, 3));
+        GraphHopper graphHopper = new GraphHopper().setInMemory().setGraphHopperLocation(graphLoc).setOSMFile(inputFile).setCHEnable(false).setEncodingManager(enc);
         graphHopper.importOrLoad();
-        outputRoute(graphHopper, nodeNWLatitude, nodeNWLongitude,nodeSWLatitude, nodeSWLongitude);
-        
+        outputRoute(graphHopper, nodeNWLatitude, nodeNWLongitude, nodeSWLatitude, nodeSWLongitude);
+
         outputRoute(graphHopper, 50.723729, -3.51897, 50.723975, -3.518228);
 
-        outputRoute(graphHopper, 50.727204,-3.523927, 50.726631,-3.524159);
+        outputRoute(graphHopper, 50.727204, -3.523927, 50.726631, -3.524159);
     }
+
     private void outputRoute(GraphHopper graphHopper, double lat1, double lon1, double lat2, double lon2) {
-        GHRequest ghRequest = new GHRequest(new GHPoint(lat1, lon1), new GHPoint(lat2, lon2));
+        GHPoint start = new GHPoint(lat1, lon1);
+        GHPoint end = new GHPoint(lat2, lon2);
+        System.out.println("Route from " + start + " to " + end);
+        GHRequest ghRequest = new GHRequest(start, end);
 
         GHResponse ghResponse = graphHopper.route(ghRequest);
-        System.err.println(ghResponse.getPoints());
-        System.err.println(ghResponse.getDebugInfo());
+        System.err.println("ghResponse.getPoints() " + ghResponse.getPoints());
+        System.err.println("ghResponse.getDebugInfo() " + ghResponse.getDebugInfo());
+    }
+
+    //@Test
+    public void testIngest() throws IOException {
+        boolean turnRestrictionsImport = true;
+        boolean is3D = false;
+        GraphHopperStorage graph = configureStorage(turnRestrictionsImport, is3D);
+
+        File file = new File("/home/phopkins/Development/geoserver-service-test/geoservertest/itn-sample-data/58096-SX9192-2c1.xml");
+        readGraphFile(graph, file);
     }
 
 }
