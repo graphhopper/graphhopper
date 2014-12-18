@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import static com.graphhopper.util.Helper.keepIn;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,8 +25,6 @@ import java.util.Set;
 
 import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.Way;
-import com.graphhopper.reader.osgb.OSITNElement;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 
 /**
