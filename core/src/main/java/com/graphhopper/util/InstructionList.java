@@ -314,32 +314,71 @@ public class InstructionList implements Iterable<Instruction>
     /**
      * This method is useful for navigation devices to find the next instruction for the specified
      * coordinate (e.g. the current position).
+     * <p>
+     * @param maxDistance the maximum acceptable distance to the instruction (in meter)
+     * @return the next Instruction or null if too far away.
      */
-    public Instruction find( double lat, double lon )
-    {        
-        double distanceToPath = Double.MAX_VALUE;
-        int nextInstrNumber = 0;
-
-        // Search the closest edge to the point
-        for (int instructionIndex = 0; instructionIndex < getSize() - 1; instructionIndex++)
+    public Instruction find( double lat, double lon, double maxDistance )
+    {
+        // handle special cases
+        if (getSize() == 0)
         {
-            double edgeNodeLat1 = get(instructionIndex).getPoints().getLatitude(0);
-            double edgeNodeLon1 = get(instructionIndex).getPoints().getLongitude(0);
-            int node2NOP = get(instructionIndex + 1).getPoints().getSize();
-            double edgeNodeLat2 = get(instructionIndex + 1).getPoints().getLatitude(node2NOP - 1);
-            double edgeNodeLon2 = get(instructionIndex + 1).getPoints().getLongitude(node2NOP - 1);
+            return null;
+        }
+        PointList points = get(0).getPoints();
+        double prevLat = points.getLatitude(0);
+        double prevLon = points.getLongitude(0);
+        DistanceCalc distCalc = Helper.DIST_EARTH;
+        double foundMinDistance = distCalc.calcNormalizedDist(lat, lon, prevLat, prevLon);
+        int foundInstruction = 0;
 
-            // calculate the distance from the point to the edge
-            double distanceToEdge = Helper.DIST_EARTH.calcNormalizedEdgeDistance(lat, lon, edgeNodeLat1, edgeNodeLon1, edgeNodeLat2, edgeNodeLon2);
-
-            if (distanceToEdge < distanceToPath)
+        // Search the closest edge to the query point
+        if (getSize() > 1)
+        {
+            for (int instructionIndex = 0; instructionIndex < getSize(); instructionIndex++)
             {
-                distanceToPath = distanceToEdge;
-                nextInstrNumber = instructionIndex + 1;
+                points = get(instructionIndex).getPoints();
+                for (int pointIndex = 0; pointIndex < points.size(); pointIndex++)
+                {
+                    double currLat = points.getLatitude(pointIndex);
+                    double currLon = points.getLongitude(pointIndex);
+
+                    if (!(instructionIndex == 0 && pointIndex == 0))
+                    {
+                        // calculate the distance from the point to the edge
+                        double distance;
+                        int index = instructionIndex;
+                        if (distCalc.validEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon))
+                        {
+                            distance = distCalc.calcNormalizedEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon);
+                            if (pointIndex > 0)
+                                index++;
+                        } else
+                        {
+                            distance = distCalc.calcNormalizedDist(lat, lon, currLat, currLon);
+                        }
+
+                        if (distance < foundMinDistance)
+                        {
+                            foundMinDistance = distance;
+                            foundInstruction = index;
+                        }
+                    }
+
+                    prevLat = currLat;
+                    prevLon = currLon;
+                }
             }
         }
 
-        return get(nextInstrNumber);
+        if (distCalc.calcDenormalizedDist(foundMinDistance) > maxDistance)
+            return null;
+
+        // special case finish condition
+        if (foundInstruction == getSize())
+            foundInstruction--;
+
+        return get(foundInstruction);
     }
 
 }
