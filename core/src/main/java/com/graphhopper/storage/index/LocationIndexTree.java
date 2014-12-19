@@ -50,8 +50,8 @@ public class LocationIndexTree implements LocationIndex
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int MAGIC_INT;
-    protected DistanceCalc distCalc = new DistancePlaneProjection();
-    private DistanceCalc preciseDistCalc = new DistanceCalcEarth();
+    protected DistanceCalc distCalc = Helper.DIST_PLANE;
+    private DistanceCalc preciseDistCalc = Helper.DIST_EARTH;
     protected final Graph graph;
     private final NodeAccess nodeAccess;
     final DataAccess dataAccess;
@@ -270,9 +270,9 @@ public class LocationIndexTree implements LocationIndex
     public LocationIndex setApproximation( boolean approx )
     {
         if (approx)
-            distCalc = new DistancePlaneProjection();
+            distCalc = Helper.DIST_PLANE;
         else
-            distCalc = new DistanceCalcEarth();
+            distCalc = Helper.DIST_EARTH;
         return this;
     }
 

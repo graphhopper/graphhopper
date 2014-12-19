@@ -316,27 +316,26 @@ public class InstructionList implements Iterable<Instruction>
      * coordinate (e.g. the current position).
      */
     public Instruction find( double lat, double lon )
-    {
-        DistanceCalcEarth distanceCalc = new DistanceCalcEarth();
+    {        
         double distanceToPath = Double.MAX_VALUE;
         int nextInstrNumber = 0;
 
         // Search the closest edge to the point
-        for (int i = 0; i < getSize() - 1; i++)
+        for (int instructionIndex = 0; instructionIndex < getSize() - 1; instructionIndex++)
         {
-            double edgeNodeLat1 = get(i).getPoints().getLatitude(0);
-            double edgeNodeLon1 = get(i).getPoints().getLongitude(0);
-            int node2NOP = get(i + 1).getPoints().getSize();
-            double edgeNodeLat2 = get(i + 1).getPoints().getLatitude(node2NOP - 1);
-            double edgeNodeLon2 = get(i + 1).getPoints().getLongitude(node2NOP - 1);
+            double edgeNodeLat1 = get(instructionIndex).getPoints().getLatitude(0);
+            double edgeNodeLon1 = get(instructionIndex).getPoints().getLongitude(0);
+            int node2NOP = get(instructionIndex + 1).getPoints().getSize();
+            double edgeNodeLat2 = get(instructionIndex + 1).getPoints().getLatitude(node2NOP - 1);
+            double edgeNodeLon2 = get(instructionIndex + 1).getPoints().getLongitude(node2NOP - 1);
 
             // calculate the distance from the point to the edge
-            double distanceToEdge = distanceCalc.calcNormalizedEdgeDistance(lat, lon, edgeNodeLat1, edgeNodeLon1, edgeNodeLat2, edgeNodeLon2);
+            double distanceToEdge = Helper.DIST_EARTH.calcNormalizedEdgeDistance(lat, lon, edgeNodeLat1, edgeNodeLon1, edgeNodeLat2, edgeNodeLon2);
 
             if (distanceToEdge < distanceToPath)
             {
                 distanceToPath = distanceToEdge;
-                nextInstrNumber = i + 1;
+                nextInstrNumber = instructionIndex + 1;
             }
         }
 

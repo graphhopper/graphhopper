@@ -22,7 +22,6 @@ import java.util.List;
 public class Instruction
 {
     private static final AngleCalc ac = new AngleCalc();
-    private static final DistanceCalc3D distanceCalc = new DistanceCalc3D();
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
     public static final int TURN_SLIGHT_LEFT = -1;
@@ -151,9 +150,9 @@ public class Instruction
             double nextLon = last ? nextInstr.getFirstLon() : points.getLongitude(i + 1);
             double nextEle = is3D ? (last ? nextInstr.getFirstEle() : points.getElevation(i + 1)) : Double.NaN;
             if (is3D)
-                prevTime = Math.round(prevTime + this.time * distanceCalc.calcDist(nextLat, nextLon, nextEle, lat, lon, ele) / distance);
+                prevTime = Math.round(prevTime + this.time * Helper.DIST_3D.calcDist(nextLat, nextLon, nextEle, lat, lon, ele) / distance);
             else
-                prevTime = Math.round(prevTime + this.time * distanceCalc.calcDist(nextLat, nextLon, lat, lon) / distance);
+                prevTime = Math.round(prevTime + this.time * Helper.DIST_3D.calcDist(nextLat, nextLon, lat, lon) / distance);
 
             lat = nextLat;
             lon = nextLon;

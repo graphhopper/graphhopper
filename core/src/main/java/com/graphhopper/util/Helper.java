@@ -42,7 +42,9 @@ import org.slf4j.LoggerFactory;
  */
 public class Helper
 {
-    private static final DistanceCalc dce = new DistanceCalcEarth();
+    public static final DistanceCalc DIST_EARTH = new DistanceCalcEarth();
+    public static final DistanceCalc3D DIST_3D = new DistanceCalc3D();
+    public static final DistancePlaneProjection DIST_PLANE = new DistancePlaneProjection();
     private static final Logger logger = LoggerFactory.getLogger(Helper.class);
     public static Charset UTF_CS = Charset.forName("UTF-8");
     public static final long MB = 1L << 20;
@@ -292,7 +294,7 @@ public class Helper
         if (!graphBounds.isValid())
             throw new IllegalArgumentException("Bounding box is not valid to calculate index size: " + graphBounds);
 
-        double dist = dce.calcDist(graphBounds.maxLat, graphBounds.minLon,
+        double dist = DIST_EARTH.calcDist(graphBounds.maxLat, graphBounds.minLon,
                 graphBounds.minLat, graphBounds.maxLon);
         // convert to km and maximum is 50000km => 1GB
         dist = Math.min(dist / 1000, 50000);

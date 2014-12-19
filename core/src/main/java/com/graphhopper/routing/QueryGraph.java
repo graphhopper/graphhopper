@@ -65,7 +65,7 @@ public class QueryGraph implements Graph
      * Store lat,lon of virtual tower nodes.
      */
     private PointList virtualNodes;
-    private final DistanceCalc distCalc = new DistancePlaneProjection();
+    private final DistanceCalc distCalc = Helper.DIST_PLANE;
 
     public QueryGraph( Graph graph )
     {

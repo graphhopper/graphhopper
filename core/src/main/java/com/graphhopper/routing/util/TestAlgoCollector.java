@@ -23,11 +23,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.PathMerger;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +35,7 @@ import java.util.Locale;
 public class TestAlgoCollector
 {
     private final String name;
-    private final DistanceCalc distCalc = new DistanceCalcEarth();
+    private final DistanceCalc distCalc = Helper.DIST_EARTH;
     private final TranslationMap trMap = new TranslationMap().doImport();
     public final List<String> errors = new ArrayList<String>();
 

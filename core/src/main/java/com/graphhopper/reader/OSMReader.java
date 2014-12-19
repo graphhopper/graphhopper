@@ -109,8 +109,8 @@ public class OSMReader implements DataReader
     private TIntLongMap edgeIdToOsmWayIdMap;
     private final TLongList barrierNodeIds = new TLongArrayList();
     protected PillarInfo pillarInfo;
-    private final DistanceCalc distCalc = new DistanceCalcEarth();
-    private final DistanceCalc3D distCalc3D = new DistanceCalc3D();
+    private final DistanceCalc distCalc = Helper.DIST_EARTH;
+    private final DistanceCalc3D distCalc3D = Helper.DIST_3D;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private boolean doSimplify = true;
     private int nextTowerId = 0;

@@ -24,6 +24,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.Helper;
 
 /**
  * Same as full index but calculates distance to all edges too
@@ -32,7 +33,7 @@ import com.graphhopper.util.DistanceCalcEarth;
  */
 public class Location2IDFullWithEdgesIndex implements LocationIndex
 {
-    private DistanceCalc calc = new DistanceCalcEarth();
+    private DistanceCalc calc = Helper.DIST_EARTH;
     private final Graph graph;
     private final NodeAccess nodeAccess;
     private boolean closed = false;
@@ -60,10 +61,10 @@ public class Location2IDFullWithEdgesIndex implements LocationIndex
     {
         if (approxDist)
         {
-            calc = new DistancePlaneProjection();
+            calc = Helper.DIST_PLANE;
         } else
         {
-            calc = new DistanceCalcEarth();
+            calc = Helper.DIST_EARTH;
         }
         return this;
     }
