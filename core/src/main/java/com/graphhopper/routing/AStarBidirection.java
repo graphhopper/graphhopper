@@ -32,8 +32,7 @@ import com.graphhopper.util.*;
  * bidirectional dijkstra is far more efficient than a single direction one. The same does not hold
  * for a bidirectional A* as the heuristic can not be as tight.
  * <p/>
- * See
- * http://research.microsoft.com/apps/pubs/default.aspx?id=64511
+ * See http://research.microsoft.com/apps/pubs/default.aspx?id=64511
  * http://i11www.iti.uni-karlsruhe.de/_media/teaching/sommer2012/routenplanung/vorlesung4.pdf
  * http://research.microsoft.com/pubs/64504/goldberg-sofsem07.pdf
  * http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
@@ -50,7 +49,8 @@ import com.graphhopper.util.*;
  * or could we even use this three phase approach?
  * www.lix.polytechnique.fr/~giacomon/papers/bidirtimedep.pdf
  * <p/>
- * @author Peter Karich, jansoe
+ * @author Peter Karich
+ * @author jansoe
  */
 public class AStarBidirection extends AbstractBidirAlgo
 {
@@ -71,7 +71,7 @@ public class AStarBidirection extends AbstractBidirAlgo
         int nodes = Math.max(20, graph.getNodes());
         initCollections(nodes);
         BeelineWeightApproximator defaultApprox = new BeelineWeightApproximator(nodeAccess, weighting);
-        defaultApprox.setDistanceCalc(new  DistancePlaneProjection());
+        defaultApprox.setDistanceCalc(new DistancePlaneProjection());
         setApproximation(defaultApprox);
     }
 
@@ -210,7 +210,7 @@ public class AStarBidirection extends AbstractBidirAlgo
     }
 
     private void fillEdges( AStarEdge currEdge, PriorityQueue<AStarEdge> prioQueueOpenSet,
-                            TIntObjectMap<AStarEdge> shortestWeightMap, EdgeExplorer explorer, boolean reverse )
+            TIntObjectMap<AStarEdge> shortestWeightMap, EdgeExplorer explorer, boolean reverse )
     {
 
         int currNode = currEdge.adjNode;
@@ -224,11 +224,11 @@ public class AStarBidirection extends AbstractBidirAlgo
             int traversalId = traversalMode.createTraversalId(iter, reverse);
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
-            float alreadyVisitedWeight =(float) (weighting.calcWeight(iter, reverse, currEdge.edge)
-                                                 + currEdge.weightOfVisitedPath);
+            float alreadyVisitedWeight = (float) (weighting.calcWeight(iter, reverse, currEdge.edge)
+                    + currEdge.weightOfVisitedPath);
             if (Double.isInfinite(alreadyVisitedWeight))
-                    continue;
-            
+                continue;
+
             AStarEdge ase = shortestWeightMap.get(traversalId);
             if (ase == null || ase.weightOfVisitedPath > alreadyVisitedWeight)
             {
@@ -240,7 +240,7 @@ public class AStarBidirection extends AbstractBidirAlgo
                     shortestWeightMap.put(traversalId, ase);
                 } else
                 {
-                    assert(ase.weight > estimationFullDist): "Inconsistent distance estimate";
+                    assert (ase.weight > estimationFullDist) : "Inconsistent distance estimate";
                     prioQueueOpenSet.remove(ase);
                     ase.edge = iter.getEdge();
                     ase.weight = estimationFullDist;

@@ -20,8 +20,8 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.BeelineWeightApproximator;
 import com.graphhopper.routing.util.WeightApproximator;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.DistancePlaneProjection;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.util.Helper;
 
 /**
  * A simple factory creating normal algorithms (RoutingAlgorithm) without preparation.
@@ -44,52 +44,41 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
         } else if (AlgorithmOptions.ASTAR_BI.equalsIgnoreCase(algoStr))
         {
             AStarBidirection aStarBi = new AStarBidirection(g, opts.getFlagEncoder(), opts.getWeighting(),
-                                                            opts.getTraversalMode());
-            String approximation = opts.getHints().get(AlgorithmOptions.ASTAR_BI + ".approximation",
-                                                       "BeelineSimplification");
-            if (approximation == "BeelineSimplification") {
-                BeelineWeightApproximator approx = new BeelineWeightApproximator(aStarBi.nodeAccess, aStarBi.weighting);
-                approx.setDistanceCalc(new DistancePlaneProjection());
-                aStarBi.setApproximation(approx);
-            }
-            else if (approximation == "BeelineAccurate")
-            {
-                BeelineWeightApproximator approx = new BeelineWeightApproximator(aStarBi.nodeAccess, aStarBi.weighting);
-                approx.setDistanceCalc(new DistanceCalcEarth());
-                aStarBi.setApproximation(approx);
-            } else
-            {
-                throw new IllegalArgumentException("Approximation " + approximation + " not found in " + getClass().getName());
-            }
-
+                    opts.getTraversalMode());
+            aStarBi.setApproximation(getApproximation(opts, g.getNodeAccess()));
             return aStarBi;
         } else if (AlgorithmOptions.DIJKSTRA_ONE_TO_MANY.equalsIgnoreCase(algoStr))
         {
             return new DijkstraOneToMany(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
         } else if (AlgorithmOptions.ASTAR.equalsIgnoreCase(algoStr))
         {
-            AStar aStar = new AStar(g, opts.getFlagEncoder(), opts.getWeighting(),opts.getTraversalMode());
-            String approximation = opts.getHints().get(AlgorithmOptions.ASTAR + ".approximation",
-                                                       "BeelineSimplification");
-            if (approximation == "BeelineSimplification") {
-                BeelineWeightApproximator approx = new BeelineWeightApproximator(aStar.nodeAccess, aStar.weighting);
-                approx.setDistanceCalc(new DistancePlaneProjection());
-                aStar.setApproximation(approx);
-            }
-            else if (approximation == "BeelineAccurate")
-            {
-                BeelineWeightApproximator approx = new BeelineWeightApproximator(aStar.nodeAccess, aStar.weighting);
-                approx.setDistanceCalc(new DistanceCalcEarth());
-                aStar.setApproximation(approx);
-            } else
-            {
-                throw new IllegalArgumentException("Approximation " + approximation + " not found in " + getClass().getName());
-            }
+            AStar aStar = new AStar(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+            aStar.setApproximation(getApproximation(opts, g.getNodeAccess()));
             return aStar;
         } else
         {
             throw new IllegalArgumentException("Algorithm " + algoStr + " not found in " + getClass().getName());
         }
 
+    }
+
+    private WeightApproximator getApproximation( AlgorithmOptions opts, NodeAccess na )
+    {
+        String approxAsStr = opts.getHints().get(AlgorithmOptions.ASTAR_BI + ".approximation", "BeelineSimplification");
+        if ("BeelineSimplification".equals(approxAsStr))
+        {
+            BeelineWeightApproximator approx = new BeelineWeightApproximator(na, opts.getWeighting());
+            approx.setDistanceCalc(Helper.DIST_PLANE);
+            return approx;
+
+        } else if ("BeelineAccurate".equals(approxAsStr))
+        {
+            BeelineWeightApproximator approx = new BeelineWeightApproximator(na, opts.getWeighting());
+            approx.setDistanceCalc(Helper.DIST_EARTH);
+            return approx;
+        } else
+        {
+            throw new IllegalArgumentException("Approximation " + approxAsStr + " not found in " + getClass().getName());
+        }
     }
 }
