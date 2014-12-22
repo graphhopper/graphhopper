@@ -45,7 +45,7 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
         {
             AStarBidirection aStarBi = new AStarBidirection(g, opts.getFlagEncoder(), opts.getWeighting(),
                     opts.getTraversalMode());
-            aStarBi.setApproximation(getApproximation(opts, g.getNodeAccess()));
+            aStarBi.setApproximation(getApproximation(AlgorithmOptions.ASTAR_BI, opts, g.getNodeAccess()));
             return aStarBi;
         } else if (AlgorithmOptions.DIJKSTRA_ONE_TO_MANY.equalsIgnoreCase(algoStr))
         {
@@ -53,7 +53,7 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
         } else if (AlgorithmOptions.ASTAR.equalsIgnoreCase(algoStr))
         {
             AStar aStar = new AStar(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
-            aStar.setApproximation(getApproximation(opts, g.getNodeAccess()));
+            aStar.setApproximation(getApproximation(AlgorithmOptions.ASTAR, opts, g.getNodeAccess()));
             return aStar;
         } else
         {
@@ -62,9 +62,9 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
 
     }
 
-    private WeightApproximator getApproximation( AlgorithmOptions opts, NodeAccess na )
+    private WeightApproximator getApproximation( String prop, AlgorithmOptions opts, NodeAccess na )
     {
-        String approxAsStr = opts.getHints().get(AlgorithmOptions.ASTAR_BI + ".approximation", "BeelineSimplification");
+        String approxAsStr = opts.getHints().get(prop + ".approximation", "BeelineSimplification");
         if ("BeelineSimplification".equals(approxAsStr))
         {
             BeelineWeightApproximator approx = new BeelineWeightApproximator(na, opts.getWeighting());
