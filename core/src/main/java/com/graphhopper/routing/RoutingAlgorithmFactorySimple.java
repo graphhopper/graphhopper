@@ -17,7 +17,11 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.BeelineWeightApproximator;
+import com.graphhopper.routing.util.WeightApproximator;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.DistancePlaneProjection;
 
 /**
  * A simple factory creating normal algorithms (RoutingAlgorithm) without preparation.
@@ -39,19 +43,53 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
             return new Dijkstra(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
         } else if (AlgorithmOptions.ASTAR_BI.equalsIgnoreCase(algoStr))
         {
-            return new AStarBidirection(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode()).
-                    setApproximation(opts.getHints().getBool(AlgorithmOptions.ASTAR_BI + ".approximation", false)).
-                    setApproximationFactor(opts.getHints().getDouble(AlgorithmOptions.ASTAR_BI + ".approximation_factor", 1.2));
+            AStarBidirection aStarBi = new AStarBidirection(g, opts.getFlagEncoder(), opts.getWeighting(),
+                                                            opts.getTraversalMode());
+            String approximation = opts.getHints().get(AlgorithmOptions.ASTAR_BI + ".approximation",
+                                                       "BeelineSimplification");
+            if (approximation == "BeelineSimplification") {
+                BeelineWeightApproximator approx = new BeelineWeightApproximator(aStarBi.nodeAccess, aStarBi.weighting);
+                approx.setDistanceCalc(new DistancePlaneProjection());
+                aStarBi.setApproximation(approx);
+            }
+            else if (approximation == "BeelineAccurate")
+            {
+                BeelineWeightApproximator approx = new BeelineWeightApproximator(aStarBi.nodeAccess, aStarBi.weighting);
+                approx.setDistanceCalc(new DistanceCalcEarth());
+                aStarBi.setApproximation(approx);
+            } else
+            {
+                throw new IllegalArgumentException("Approximation " + approximation + " not found in " + getClass().getName());
+            }
 
+            return aStarBi;
         } else if (AlgorithmOptions.DIJKSTRA_ONE_TO_MANY.equalsIgnoreCase(algoStr))
         {
             return new DijkstraOneToMany(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
         } else if (AlgorithmOptions.ASTAR.equalsIgnoreCase(algoStr))
         {
-            return new AStar(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+            AStar aStar = new AStar(g, opts.getFlagEncoder(), opts.getWeighting(),opts.getTraversalMode());
+            String approximation = opts.getHints().get(AlgorithmOptions.ASTAR + ".approximation",
+                                                       "BeelineSimplification");
+            if (approximation == "BeelineSimplification") {
+                BeelineWeightApproximator approx = new BeelineWeightApproximator(aStar.nodeAccess, aStar.weighting);
+                approx.setDistanceCalc(new DistancePlaneProjection());
+                aStar.setApproximation(approx);
+            }
+            else if (approximation == "BeelineAccurate")
+            {
+                BeelineWeightApproximator approx = new BeelineWeightApproximator(aStar.nodeAccess, aStar.weighting);
+                approx.setDistanceCalc(new DistanceCalcEarth());
+                aStar.setApproximation(approx);
+            } else
+            {
+                throw new IllegalArgumentException("Approximation " + approximation + " not found in " + getClass().getName());
+            }
+            return aStar;
         } else
         {
             throw new IllegalArgumentException("Algorithm " + algoStr + " not found in " + getClass().getName());
         }
+
     }
 }
