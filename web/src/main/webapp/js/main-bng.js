@@ -337,6 +337,21 @@ function getTopLeftCorners() {
 	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
 	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
 	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
+	/*
+	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
+	topLeftCorners[i++] = new L.LatLng(1376256.0, 0.0);
 	topLeftCorners[i++] = new L.LatLng(1347584.0, 0.0);
 	topLeftCorners[i++] = new L.LatLng(1347584.0, 0.0);
 	topLeftCorners[i++] = new L.LatLng(1347584.0, 0.0);
@@ -348,6 +363,7 @@ function getTopLeftCorners() {
 	topLeftCorners[i++] = new L.LatLng(1344000.0, 0.0);
 	topLeftCorners[i++] = new L.LatLng(1344000.0, 0.0);
 	topLeftCorners[i++] = new L.LatLng(1344000.0, 0.0);		
+	*/		
 	return topLeftCorners;
 }
 
