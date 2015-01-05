@@ -3,7 +3,7 @@ Feature: Verify a route from A to B
     I want to get a route from location A to location B using the routing service
     And route should be the fastest route and contain the waypoints,restrictions,time and other instructions
 
-  @Routing @New
+  @Routing 
   Scenario Outline: Verify  waypoints on a Route
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -13,6 +13,7 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA                                 | pointB                                 | routetype |
       | 51.471546541834144,-0.3618621826171875 | 51.45914115860512,-0.96679687499999995 | car       |
+      
 
   @Routing
   Scenario Outline: Verify  waypoints on a Route from Hounslow to Reading
@@ -275,3 +276,18 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA              | pointB             | routetype |
       | 50.724316,-3.521008 | 50.72413,-3.518874 | car       |
+      
+      
+      
+    @Routing 
+  Scenario Outline: Verify  Private Road Restricted Access (Warwick Road-Carlisle)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the trackPoints not on the route map:
+      | trackPointco      |
+      | 54.894721,-2.921665 |
+
+    Examples: 
+      | pointA              | pointB             | routetype |
+      | 54.894427,-2.921111 | 54.8922,-2.928296 | car       |
+      
+      
