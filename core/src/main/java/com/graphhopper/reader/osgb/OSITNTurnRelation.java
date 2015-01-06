@@ -4,20 +4,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.ITurnCostTableEntry;
-import com.graphhopper.reader.OSMReader;
-import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMTurnRelation.Type;
 import com.graphhopper.reader.TurnRelation;
-import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.TurnCostEncoder;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -30,7 +25,8 @@ import com.graphhopper.util.EdgeIterator;
  * @author Stuart Adam
  */
 public class OSITNTurnRelation implements TurnRelation {
-    private static final Logger logger = LoggerFactory.getLogger(OSITNTurnRelation.class);
+    private static final Logger logger = LoggerFactory
+            .getLogger(OSITNTurnRelation.class);
 
     private static Map<String, Type> tags = new HashMap<String, Type>();
 
@@ -52,7 +48,8 @@ public class OSITNTurnRelation implements TurnRelation {
     private final long toOsmWayId;
     private final Type restriction;
 
-    public OSITNTurnRelation(long fromWayID, long viaNodeID, long toWayID, Type restrictionType) {
+    public OSITNTurnRelation(long fromWayID, long viaNodeID, long toWayID,
+            Type restrictionType) {
         this.fromOsmWayId = fromWayID;
         this.viaOsmNodeId = viaNodeID;
         this.toOsmWayId = toWayID;
@@ -90,7 +87,11 @@ public class OSITNTurnRelation implements TurnRelation {
      * @return a collection of node cost entries which can be added to the graph
      *         later
      */
-    public Collection<ITurnCostTableEntry> getRestrictionAsEntries(TurnCostEncoder encoder, EdgeExplorer edgeOutExplorer, EdgeExplorer edgeInExplorer, DataReader osmReader) {
+    @Override
+    public Collection<ITurnCostTableEntry> getRestrictionAsEntries(
+            TurnCostEncoder encoder, EdgeExplorer edgeOutExplorer,
+            EdgeExplorer edgeInExplorer, DataReader dataReader) {
+        DataReader<Long> osmReader = dataReader;
         int viaNodeId = osmReader.getInternalNodeIdOfOsmNode(this.viaOsmNodeId);
 
         try {
@@ -124,7 +125,10 @@ public class OSITNTurnRelation implements TurnRelation {
             while (iter.next()) {
                 int edgeId = iter.getEdge();
                 long wayId = osmReader.getOsmIdOfInternalEdge(edgeId);
-                if (edgeId != edgeIdFrom && this.restriction == Type.ONLY && wayId != this.toOsmWayId || this.restriction == Type.NOT && wayId == this.toOsmWayId && wayId >= 0) {
+                if (edgeId != edgeIdFrom && this.restriction == Type.ONLY
+                        && wayId != this.toOsmWayId
+                        || this.restriction == Type.NOT
+                        && wayId == this.toOsmWayId && wayId >= 0) {
                     final TurnCostTableEntry entry = new TurnCostTableEntry();
                     entry.nodeViaNode = viaNodeId;
                     entry.edgeFrom = edgeIdFrom;
@@ -138,13 +142,16 @@ public class OSITNTurnRelation implements TurnRelation {
             }
             return entries;
         } catch (Exception e) {
-            throw new IllegalStateException("Could not built turn table entry for relation of node with osmId:" + this.viaOsmNodeId, e);
+            throw new IllegalStateException(
+                    "Could not built turn table entry for relation of node with osmId:"
+                            + this.viaOsmNodeId, e);
         }
     }
 
     @Override
     public String toString() {
-        return "*-(" + fromOsmWayId + ")->" + viaOsmNodeId + "-(" + toOsmWayId + ")->*";
+        return "*-(" + fromOsmWayId + ")->" + viaOsmNodeId + "-(" + toOsmWayId
+                + ")->*";
     }
 
     /**
@@ -160,8 +167,9 @@ public class OSITNTurnRelation implements TurnRelation {
          * @return an unique id (edgeFrom, edgeTo) to avoid duplicate entries if
          *         multiple encoders are involved.
          */
+        @Override
         public long getItemId() {
-            return ((long) edgeFrom) << 32 | ((long) edgeTo);
+            return ((long) edgeFrom) << 32 | (edgeTo);
         }
 
         @Override
@@ -192,7 +200,8 @@ public class OSITNTurnRelation implements TurnRelation {
 
         @Override
         public String toString() {
-            return "*-(" + edgeFrom + ")->" + nodeViaNode + "-(" + edgeTo + ")->*";
+            return "*-(" + edgeFrom + ")->" + nodeViaNode + "-(" + edgeTo
+                    + ")->*";
         }
     }
 

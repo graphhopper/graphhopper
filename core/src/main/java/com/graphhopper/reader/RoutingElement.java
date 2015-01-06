@@ -5,26 +5,24 @@ import java.util.Set;
 
 public interface RoutingElement {
 
-	void setTag(String name, Object value);
+    void setTag(String name, Object value);
 
-	String getTag(String string);
-	
-	<T> T getTag( String key, T defaultValue );
+    String getTag(String string);
 
-	boolean hasTags();
+    <T> T getTag(String key, T defaultValue);
 
-	boolean hasTag(String key, String... values);
+    boolean hasTags();
 
-	boolean hasTag(String key, Object value);
+    boolean hasTag(String key, String... values);
 
-	boolean hasTag(String key, Set<String> values);
+    boolean hasTag(String key, Object value);
 
-	boolean hasTag(List<String> keyList, Set<String> values);
+    boolean hasTag(String key, Set<String> values);
 
-	int getType();
+    boolean hasTag(List<String> keyList, Set<String> values);
 
-	boolean isType(int way);
+    int getType();
 
-	long getId();
+    boolean isType(int way);
 
 }
