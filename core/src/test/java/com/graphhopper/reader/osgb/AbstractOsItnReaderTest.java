@@ -19,7 +19,6 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
-import com.graphhopper.routing.util.RelationCarFlagEncoder;
 import com.graphhopper.storage.ExtendedStorage;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
@@ -33,10 +32,10 @@ public abstract class AbstractOsItnReaderTest {
     // EncodingManager("CAR");//"car:com.graphhopper.routing.util.RelationCarFlagEncoder");
     protected CarFlagEncoder carEncoder;// = (RelationCarFlagEncoder)
     protected BusFlagEncoder busEncoder;// = (RelationCarFlagEncoder)
-      // encodingManager
-// .getEncoder("CAR");
+    // encodingManager
+    // .getEncoder("CAR");
     protected EdgeFilter carOutEdges;// = new DefaultEdgeFilter(
-// carEncoder, false, true);
+    // carEncoder, false, true);
     protected EdgeFilter carInEdges;
     protected boolean turnCosts = true;
     protected EdgeExplorer carOutExplorer;
@@ -44,57 +43,60 @@ public abstract class AbstractOsItnReaderTest {
     protected BikeFlagEncoder bikeEncoder;
     protected FootFlagEncoder footEncoder;
 
-    //RoadNode 880
+    // RoadNode 880
     protected static double node0Lat = 50.6992070044d;
     protected static double node0Lon = -3.55893724720532d;
 
-    //RoadNode 881
+    // RoadNode 881
     protected static double node1Lat = 50.6972276414d;
     protected static double node1Lon = -3.70047108174d;
 
-    //RoadNode 882
+    // RoadNode 882
     protected static double node2Lat = 50.6950765311d;
     protected static double node2Lon = -3.84198830979d;
 
-    //RoadNode 883
+    // RoadNode 883
     protected static double node3Lat = 50.6522837438d;
     protected static double node3Lon = -3.69884731399d;
 
-    //RoadNode 884
+    // RoadNode 884
     protected static double node4Lat = 50.7421711523d;
     protected static double node4Lon = -3.70209900111d;
-    
+
     @Before
     public void initEncoding() {
         if (turnCosts) {
             carEncoder = new CarFlagEncoder(5, 5, 3);
             busEncoder = new BusFlagEncoder(5, 5, 3);
-//            carEncoder = new RelationCarFlagEncoder(5, 5, 3);
+            // carEncoder = new RelationCarFlagEncoder(5, 5, 3);
             bikeEncoder = new BikeFlagEncoder(4, 2, 3);
         } else {
             carEncoder = new CarFlagEncoder();
             busEncoder = new BusFlagEncoder();
-//            carEncoder = new RelationCarFlagEncoder();
+            // carEncoder = new RelationCarFlagEncoder();
             bikeEncoder = new BikeFlagEncoder();
         }
 
         footEncoder = new FootFlagEncoder();
         carOutEdges = new DefaultEdgeFilter(carEncoder, false, true);
-        carInEdges  = new DefaultEdgeFilter(carEncoder, true, false);
-//        encodingManager = new EncodingManager(footEncoder, carEncoder, bikeEncoder);
+        carInEdges = new DefaultEdgeFilter(carEncoder, true, false);
+        // encodingManager = new EncodingManager(footEncoder, carEncoder,
+        // bikeEncoder);
         encodingManager = createEncodingManager();
-//        encodingManager = new EncodingManager("car|turnCosts=true");
+        // encodingManager = new EncodingManager("car|turnCosts=true");
     }
-    
+
     /**
      * So we can create a specific encoding manager in subclasses
+     * 
      * @return
      */
     protected EncodingManager createEncodingManager() {
         return new EncodingManager(footEncoder, carEncoder, bikeEncoder);
     }
-    
-    protected OsItnReader readGraphFile(GraphHopperStorage graph, File file) throws IOException {
+
+    protected OsItnReader readGraphFile(GraphHopperStorage graph, File file)
+            throws IOException {
         OsItnReader osItnReader = new OsItnReader(graph);
         System.out.println("Read " + file.getAbsolutePath());
         osItnReader.setOSMFile(file);
@@ -103,10 +105,13 @@ public abstract class AbstractOsItnReaderTest {
         return osItnReader;
     }
 
-    protected GraphHopperStorage configureStorage(boolean turnRestrictionsImport, boolean is3D) {
+    protected GraphHopperStorage configureStorage(
+            boolean turnRestrictionsImport, boolean is3D) {
         String directory = "/tmp";
-        ExtendedStorage extendedStorage = turnRestrictionsImport ? new TurnCostStorage() : new ExtendedStorage.NoExtendedStorage();
-        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, is3D, extendedStorage);
+        ExtendedStorage extendedStorage = turnRestrictionsImport ? new TurnCostStorage()
+                : new ExtendedStorage.NoExtendedStorage();
+        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(
+                directory, false), encodingManager, is3D, extendedStorage);
         return graph;
     }
 
@@ -129,6 +134,7 @@ public abstract class AbstractOsItnReaderTest {
         assertEquals("BONHAY ROAD", iter.getName());
         assertFalse(iter.next());
     }
+
     protected int getEdge(int from, int to) {
         EdgeIterator iter = carOutExplorer.setBaseNode(from);
         while (iter.next()) {
@@ -138,27 +144,38 @@ public abstract class AbstractOsItnReaderTest {
         }
         return EdgeIterator.NO_EDGE;
     }
-    protected void evaluateRouting(final EdgeIterator iter, final int node, final boolean forward, final boolean backward, final boolean finished) {
+
+    protected void evaluateRouting(final EdgeIterator iter, final int node,
+            final boolean forward, final boolean backward,
+            final boolean finished) {
         evaluateRouting(iter, node, forward, backward, finished, carEncoder);
     }
-    protected void evaluateRouting(final EdgeIterator iter, final int node, final boolean forward, final boolean backward, final boolean finished, AbstractFlagEncoder flagEncoder) {
+
+    protected void evaluateRouting(final EdgeIterator iter, final int node,
+            final boolean forward, final boolean backward,
+            final boolean finished, AbstractFlagEncoder flagEncoder) {
         assertEquals("Incorrect adjacent node", node, iter.getAdjNode());
-        assertEquals("Incorrect forward instructions", forward, flagEncoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
-        assertEquals("Incorrect backward instructions", backward, flagEncoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
+        assertEquals("Incorrect forward instructions", forward,
+                flagEncoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
+        assertEquals("Incorrect backward instructions", backward,
+                flagEncoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
         assertEquals(!finished, iter.next());
     }
+
     protected void printNodes(EdgeExplorer outExplorer, int numNodes) {
         for (int i = 0; i < numNodes; i++) {
-//            logger.info("Node " + i + " " + count(outExplorer.setBaseNode(i)));
-            System.out.println("Node " + i + " " + count(outExplorer.setBaseNode(i)));
+            // logger.info("Node " + i + " " +
+            // count(outExplorer.setBaseNode(i)));
+            System.out.println("Node " + i + " "
+                    + count(outExplorer.setBaseNode(i)));
         }
 
-        EdgeIterator iter = null; 
+        EdgeIterator iter = null;
         for (int i = 0; i < numNodes; i++) {
             iter = outExplorer.setBaseNode(i);
             while (iter.next()) {
-//                logger.info(i+" Adj node is " + iter.getAdjNode());
-                System.out.println(i+" Adj node is " + iter.getAdjNode());
+                // logger.info(i+" Adj node is " + iter.getAdjNode());
+                System.out.println(i + " Adj node is " + iter.getAdjNode());
             }
         }
     }
