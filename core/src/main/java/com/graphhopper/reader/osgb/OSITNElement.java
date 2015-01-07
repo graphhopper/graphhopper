@@ -216,10 +216,10 @@ public abstract class OSITNElement implements RoutingElement {
     private String resolveNature(String elementText) {
         logger.info("OSITNElement.resolveNature( " + elementText + ")");
         switch (elementText) {
-        case "Single Carriageway":
-        case "Dual Carriageway":
-        case "Slip Road":
-            return elementText;
+            case "Single Carriageway":
+            case "Dual Carriageway":
+            case "Slip Road":
+                return elementText;
         }
         return null;
     }
@@ -448,6 +448,7 @@ public abstract class OSITNElement implements RoutingElement {
         return (String) properties.get(name);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public <T> T getTag(String key, T defaultValue) {
         T val = (T) properties.get(key);
@@ -456,6 +457,7 @@ public abstract class OSITNElement implements RoutingElement {
         return val;
     }
 
+    @Override
     public void setTag(String name, Object value) {
         properties.put(name, value);
     }
@@ -463,6 +465,7 @@ public abstract class OSITNElement implements RoutingElement {
     /**
      * Chaeck that the object has a given tag with a given value.
      */
+    @Override
     public boolean hasTag(String key, Object value) {
         return value.equals(properties.get(key));
     }
@@ -471,6 +474,7 @@ public abstract class OSITNElement implements RoutingElement {
      * Check that a given tag has one of the specified values. If no values are
      * given, just checks for presence of the tag
      */
+    @Override
     public boolean hasTag(String key, String... values) {
         Object osmValue = properties.get(key);
         if (osmValue == null)
@@ -490,6 +494,7 @@ public abstract class OSITNElement implements RoutingElement {
     /**
      * Check that a given tag has one of the specified values.
      */
+    @Override
     public final boolean hasTag(String key, Set<String> values) {
         return values.contains(properties.get(key));
     }
@@ -498,10 +503,10 @@ public abstract class OSITNElement implements RoutingElement {
      * Check a number of tags in the given order for the any of the given
      * values. Used to parse hierarchical access restrictions
      */
+    @Override
     public boolean hasTag(List<String> keyList, Set<String> values) {
         for (String key : keyList) {
-            Object value = properties.get(key);
-            if (values.contains(value))
+            if (values.contains(properties.get(key)))
                 return true;
         }
         return false;
@@ -515,10 +520,12 @@ public abstract class OSITNElement implements RoutingElement {
         properties.clear();
     }
 
+    @Override
     public int getType() {
         return type;
     }
 
+    @Override
     public boolean isType(int type) {
         return this.type == type;
     }

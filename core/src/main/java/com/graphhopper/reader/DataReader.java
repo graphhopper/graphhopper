@@ -29,25 +29,24 @@ import com.graphhopper.storage.GraphStorage;
  * @author Peter Karich
  * @author Stuart Adam
  */
-public interface DataReader
-{
+public interface DataReader<E> {
 
     void readGraph() throws IOException;
 
     GraphStorage getGraphStorage();
 
-	int getInternalNodeIdOfOsmNode(long viaOsm);
+    int getInternalNodeIdOfOsmNode(E viaOsm);
 
-	long getOsmIdOfInternalEdge(int edge);
+    E getOsmIdOfInternalEdge(int edge);
 
-	DataReader setOSMFile(File srcFile);
+    DataReader setOSMFile(File srcFile);
 
-	DataReader setElevationProvider(ElevationProvider eleProvider);
+    DataReader setElevationProvider(ElevationProvider eleProvider);
 
-	DataReader setWorkerThreads(int workerThreads);
+    DataReader setWorkerThreads(int workerThreads);
 
-	DataReader setEncodingManager(EncodingManager encodingManager);
+    DataReader setEncodingManager(EncodingManager encodingManager);
 
-	DataReader setWayPointMaxDistance(double wayPointMaxDistance);
+    DataReader setWayPointMaxDistance(double wayPointMaxDistance);
 
 }

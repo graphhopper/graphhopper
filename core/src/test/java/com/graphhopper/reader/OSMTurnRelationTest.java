@@ -18,6 +18,15 @@
  */
 package com.graphhopper.reader;
 
+import static org.junit.Assert.assertEquals;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+import org.junit.Test;
+
 import com.graphhopper.reader.OSMTurnRelation.Type;
 import com.graphhopper.routing.EdgeBasedRoutingAlgorithmTest;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -25,15 +34,9 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.EdgeExplorer;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
- *
+ * 
  * @author Peter Karich
  */
 public class OSMTurnRelationTest
@@ -44,29 +47,27 @@ public class OSMTurnRelationTest
         CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 3);
         final Map<Long, Integer> osmNodeToInternal = new HashMap<Long, Integer>();
         final Map<Integer, Long> internalToOSMEdge = new HashMap<Integer, Long>();
-                
+
         osmNodeToInternal.put(3L, 3);
         // edge ids are only stored if they occured before in an OSMRelation
-        internalToOSMEdge.put(3, 3L);        
-        internalToOSMEdge.put(4, 4L);        
+        internalToOSMEdge.put(3, 3L);
+        internalToOSMEdge.put(4, 4L);
 
-        GraphStorage graph = new GraphBuilder(new EncodingManager(encoder)).create();
+        GraphStorage graph = new GraphBuilder(new EncodingManager(encoder))
+                .create();
         EdgeBasedRoutingAlgorithmTest.initGraph(graph);
-        OSMReader osmReader = new OSMReader(graph)
-        {
+        OSMReader osmReader = new OSMReader(graph) {
 
             @Override
-            public int getInternalNodeIdOfOsmNode( long nodeOsmId )
-            {
+            public int getInternalNodeIdOfOsmNode(Long nodeOsmId) {
                 return osmNodeToInternal.get(nodeOsmId);
             }
 
             @Override
-            public long getOsmIdOfInternalEdge( int edgeId )
-            {
+            public Long getOsmIdOfInternalEdge(int edgeId) {
                 Long l = internalToOSMEdge.get(edgeId);
-                if(l == null)
-                    return -1;
+                if (l == null)
+                    return -1L;
                 return l;
             }
         };
@@ -75,8 +76,9 @@ public class OSMTurnRelationTest
 
         // TYPE == ONLY
         OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, Type.ONLY);
-        Collection<ITurnCostTableEntry> result
-                = instance.getRestrictionAsEntries(encoder, edgeExplorer, edgeExplorer, osmReader);
+        Collection<ITurnCostTableEntry> result = instance
+                .getRestrictionAsEntries(encoder, edgeExplorer, edgeExplorer,
+                        osmReader);
 
         assertEquals(2, result.size());
         Iterator<ITurnCostTableEntry> iter = result.iterator();
@@ -84,23 +86,23 @@ public class OSMTurnRelationTest
         assertEquals(4, entry.getEdgeFrom());
         assertEquals(6, entry.getEdgeTo());
         assertEquals(3, entry.getVia());
-        
+
         entry = iter.next();
         assertEquals(4, entry.getEdgeFrom());
         assertEquals(2, entry.getEdgeTo());
         assertEquals(3, entry.getVia());
-        
-        
+
         // TYPE == NOT
         instance = new OSMTurnRelation(4, 3, 3, Type.NOT);
-        result = instance.getRestrictionAsEntries(encoder, edgeExplorer, edgeExplorer, osmReader);
+        result = instance.getRestrictionAsEntries(encoder, edgeExplorer,
+                edgeExplorer, osmReader);
 
         assertEquals(1, result.size());
         iter = result.iterator();
         entry = iter.next();
         assertEquals(4, entry.getEdgeFrom());
         assertEquals(3, entry.getEdgeTo());
-        assertEquals(3, entry.getVia());       
+        assertEquals(3, entry.getVia());
     }
 
 }

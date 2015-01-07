@@ -23,12 +23,13 @@ import javax.xml.stream.XMLStreamReader;
 import org.opengis.geometry.MismatchedDimensionException;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.operation.TransformException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import uk.co.ordnancesurvey.api.srs.LatLong;
 import uk.co.ordnancesurvey.api.srs.OpenCoordConverter;
 
 import com.graphhopper.reader.Node;
-import com.graphhopper.reader.osgb.OSITNElement;
 import com.graphhopper.util.PointAccess;
 
 /**
@@ -37,132 +38,144 @@ import com.graphhopper.util.PointAccess;
  * 
  * @author Nop
  */
-public class OsDpnNode extends OSITNElement implements Node {
-	private double lat;
-	private double lon;
+public class OsDpnNode extends OsDpnElement implements Node {
+    private double lat;
+    private double lon;
 
-	public static OsDpnNode create(long id, XMLStreamReader parser)
-			throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
-		// int attributeCount = parser.getAttributeCount();
-		// for (int i = 0; i < attributeCount; i++) {
-		// QName attributeName = parser.getAttributeName(i);
-		// System.err.println("QName:" + attributeName);
-		// }
-		OsDpnNode node = new OsDpnNode(id);
+    private static final Logger logger = LoggerFactory
+            .getLogger(OsDpnElement.class);
 
-		parser.nextTag();
-		node.readTags(parser);
-		return node;
-	}
+    public static OsDpnNode create(String id, XMLStreamReader parser)
+            throws XMLStreamException, MismatchedDimensionException,
+            FactoryException, TransformException {
+        // int attributeCount = parser.getAttributeCount();
+        // for (int i = 0; i < attributeCount; i++) {
+        // QName attributeName = parser.getAttributeName(i);
+        // System.err.println("QName:" + attributeName);
+        // }
+        System.out.println("OsDpnNode.create()");
+        OsDpnNode node = new OsDpnNode(id);
 
-	public OsDpnNode(long id, PointAccess pointAccess, int accessId) {
-		super(id, NODE);
+        parser.nextTag();
+        node.readTags(parser);
+        return node;
+    }
 
-		this.lat = pointAccess.getLatitude(accessId);
-		this.lon = pointAccess.getLongitude(accessId);
-		if (pointAccess.is3D())
-			setTag("ele", pointAccess.getElevation(accessId));
-	}
+    public OsDpnNode(String id, PointAccess pointAccess, int accessId) {
+        super(id, NODE);
 
-	public OsDpnNode(long id) {
-		super(id, NODE);
+        this.lat = pointAccess.getLatitude(accessId);
+        this.lon = pointAccess.getLongitude(accessId);
+        if (pointAccess.is3D())
+            setTag("ele", pointAccess.getElevation(accessId));
+    }
 
-	}
+    public OsDpnNode(String id) {
+        super(id, NODE);
 
-	public double getLat() {
-		return lat;
-	}
+    }
 
-	public double getLon() {
-		return lon;
-	}
+    @Override
+    public double getLat() {
+        return lat;
+    }
 
-	public double getEle() {
-		Object ele = getTags().get("ele");
-		if (ele == null)
-			// return Double.NaN;
-			return 1d;
-		return (Double) ele;
-	}
+    @Override
+    public double getLon() {
+        return lon;
+    }
 
-	@Override
-	public void setTag(String name, Object value) {
-		if ("ele".equals(name)) {
-			if (value == null)
-				value = null;
-			else if (value instanceof String) {
-				String str = (String) value;
-				str = str.trim().replaceAll("\\,", ".");
-				if (str.isEmpty())
-					value = null;
-				else
-					try {
-						value = Double.parseDouble(str);
-					} catch (NumberFormatException ex) {
-						return;
-					}
-			} else
-				// force cast
-				value = ((Number) value).doubleValue();
-		}
-		super.setTag(name, value);
-	}
+    public double getEle() {
+        Object ele = getTags().get("ele");
+        if (ele == null)
+            // return Double.NaN;
+            return 1d;
+        return (Double) ele;
+    }
 
-	@Override
-	public String toString() {
-		StringBuilder txt = new StringBuilder();
-		txt.append("Node: ");
-		txt.append(getId());
-		txt.append(" lat=");
-		txt.append(getLat());
-		txt.append(" lon=");
-		txt.append(getLon());
-		if (!getTags().isEmpty()) {
-			txt.append("\n");
-			txt.append(tagsToString());
-		}
-		return txt.toString();
-	}
+    @Override
+    public void setTag(String name, Object value) {
+        if ("ele".equals(name)) {
+            if (value == null)
+                value = null;
+            else if (value instanceof String) {
+                String str = (String) value;
+                str = str.trim().replaceAll("\\,", ".");
+                if (str.isEmpty())
+                    value = null;
+                else
+                    try {
+                        value = Double.parseDouble(str);
+                    } catch (NumberFormatException ex) {
+                        return;
+                    }
+            } else
+                // force cast
+                value = ((Number) value).doubleValue();
+        }
+        super.setTag(name, value);
+    }
 
-	@Override
-	protected void parseCoords(String elementText) throws MismatchedDimensionException, FactoryException, TransformException {
-		String[] split = elementText.split(",");
+    @Override
+    public String toString() {
+        StringBuilder txt = new StringBuilder();
+        txt.append("Node: ");
+        txt.append(getId());
+        txt.append(" lat=");
+        txt.append(getLat());
+        txt.append(" lon=");
+        txt.append(getLon());
+        if (!getTags().isEmpty()) {
+            txt.append("\n");
+            txt.append(tagsToString());
+        }
+        return txt.toString();
+    }
 
-		Double easting = Double.parseDouble(split[0]);
-		Double northing = Double.parseDouble(split[1]);
-		LatLong wgs84 = OpenCoordConverter.toWGS84(easting, northing);
-		lat = wgs84.getLatAngle();
-		lon = wgs84.getLongAngle();
-		System.err.println(toString());
-	}
+    @Override
+    public void parseCoords(String elementText)
+            throws MismatchedDimensionException, FactoryException,
+            TransformException {
+        String elementSeparator = " ";
+        parseCoordinateString(elementText, elementSeparator);
+    }
 
-	@Override
-	protected void parseNetworkMember(String elementText) {
-		throw new UnsupportedOperationException("Nodes should not have members");
-	}
+    public void parseCoordinateString(String elementText,
+            String elementSeparator) throws MismatchedDimensionException,
+            FactoryException, TransformException {
+        String[] split = elementText.split(elementSeparator);
 
-	@Override
-	protected void addDirectedNode(String nodeId, String grade, String orientation) {
-		throw new UnsupportedOperationException(
-				"Nodes should not have directed nodes");
-	}
-	
-	@Override
-	protected void addDirectedLink(String nodeId, String orientation) {
-		throw new UnsupportedOperationException(
-				"Nodes should not have directed links");
-	}
+        if (3 == split.length) {
+            setTag("ele", split[2]);
+        }
+        Double easting = Double.parseDouble(split[0]);
+        Double northing = Double.parseDouble(split[1]);
+        LatLong wgs84 = OpenCoordConverter.toWGS84(easting, northing);
+        lat = wgs84.getLatAngle();
+        lon = wgs84.getLongAngle();
+        if (logger.isDebugEnabled())
+            logger.debug(toString());
+    }
 
-	@Override
-	protected void parseCoordinateString(String elementText,
-			String elementSeparator) {
-		throw new UnsupportedOperationException();
-		
-	}
+    @Override
+    protected void parseNetworkMember(String elementText) {
+        throw new UnsupportedOperationException("Nodes should not have members");
+    }
 
-	@Override
-	protected void parseCoords(int dimensions, String lineDefinition) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    protected void addNode(String nodeId) {
+        throw new UnsupportedOperationException(
+                "Nodes should not have directed nodes");
+    }
+
+    @Override
+    protected void addDirectedLink(String nodeId, String orientation) {
+        throw new UnsupportedOperationException(
+                "Nodes should not have directed links");
+    }
+
+    protected void parseCoords(int dimensions, String lineDefinition) {
+        throw new UnsupportedOperationException();
+    }
 
 }

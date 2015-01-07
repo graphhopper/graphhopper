@@ -1,9 +1,7 @@
-package com.graphhopper.reader.osgb;
+package com.graphhopper.reader.osgb.dpn;
 
 import static com.graphhopper.util.GHUtility.count;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +24,7 @@ import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
-public abstract class AbstractOsItnReaderTest {
+public abstract class AbstractOsDpnReaderTest {
 
     protected EncodingManager encodingManager;// = new
     // EncodingManager("CAR");//"car:com.graphhopper.routing.util.RelationCarFlagEncoder");
@@ -68,22 +66,17 @@ public abstract class AbstractOsItnReaderTest {
         if (turnCosts) {
             carEncoder = new CarFlagEncoder(5, 5, 3);
             busEncoder = new BusFlagEncoder(5, 5, 3);
-            // carEncoder = new RelationCarFlagEncoder(5, 5, 3);
             bikeEncoder = new BikeFlagEncoder(4, 2, 3);
         } else {
             carEncoder = new CarFlagEncoder();
             busEncoder = new BusFlagEncoder();
-            // carEncoder = new RelationCarFlagEncoder();
             bikeEncoder = new BikeFlagEncoder();
         }
 
         footEncoder = new FootFlagEncoder();
         carOutEdges = new DefaultEdgeFilter(carEncoder, false, true);
         carInEdges = new DefaultEdgeFilter(carEncoder, true, false);
-        // encodingManager = new EncodingManager(footEncoder, carEncoder,
-        // bikeEncoder);
         encodingManager = createEncodingManager();
-        // encodingManager = new EncodingManager("car|turnCosts=true");
     }
 
     /**
@@ -95,9 +88,9 @@ public abstract class AbstractOsItnReaderTest {
         return new EncodingManager(footEncoder, carEncoder, bikeEncoder);
     }
 
-    protected OsItnReader readGraphFile(GraphHopperStorage graph, File file)
+    protected OsDpnReader readGraphFile(GraphHopperStorage graph, File file)
             throws IOException {
-        OsItnReader osItnReader = new OsItnReader(graph);
+        OsDpnReader osItnReader = new OsDpnReader(graph);
         System.out.println("Read " + file.getAbsolutePath());
         osItnReader.setOSMFile(file);
         osItnReader.setEncodingManager(encodingManager);
@@ -113,26 +106,6 @@ public abstract class AbstractOsItnReaderTest {
         GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(
                 directory, false), encodingManager, is3D, extendedStorage);
         return graph;
-    }
-
-    protected void checkSimpleNodeNetwork(GraphHopperStorage graph) {
-        EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
-        assertEquals(4, count(explorer.setBaseNode(0)));
-        assertEquals(1, count(explorer.setBaseNode(1)));
-        assertEquals(1, count(explorer.setBaseNode(2)));
-        assertEquals(1, count(explorer.setBaseNode(3)));
-        assertEquals(1, count(explorer.setBaseNode(4)));
-
-        EdgeIterator iter = explorer.setBaseNode(0);
-        assertTrue(iter.next());
-        assertEquals("OTHER ROAD", iter.getName());
-        iter.next();
-        assertEquals("OTHER ROAD", iter.getName());
-        iter.next();
-        assertEquals("BONHAY ROAD", iter.getName());
-        iter.next();
-        assertEquals("BONHAY ROAD", iter.getName());
-        assertFalse(iter.next());
     }
 
     protected int getEdge(int from, int to) {
