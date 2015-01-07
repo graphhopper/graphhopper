@@ -223,8 +223,21 @@ public class OsItnReader implements DataReader<Long> {
 
     private TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>> edgeIdToXToYToNodeFlagsMap;
 
+    // With this set to true additional tower nodes will be added after the start node and before the final node
+    // of a way. This is to overcome an issue when you are routing short distances and turn restrictions wouldn't 
+    // be recognised.
+    private boolean addAdditionalTowerNodes;
+    
     public OsItnReader(GraphStorage storage) {
         this.graphStorage = storage;
+        String addAdditionalTowerNodesString = graphStorage.getProperties().get("add.additional.tower.nodes");
+        if (addAdditionalTowerNodesString != null ) {
+            // Only parse this if it has been explicitly set otherwise set to true
+            addAdditionalTowerNodes = Boolean.parseBoolean(addAdditionalTowerNodesString);
+        }
+        else {
+            addAdditionalTowerNodes = true;
+        }
         this.nodeAccess = graphStorage.getNodeAccess();
 
         osmNodeIdToInternalNodeMap = new GHLongIntBTree(200);
@@ -854,10 +867,9 @@ public class OsItnReader implements DataReader<Long> {
         // with a routing algorithm bug which prevents turn restrictions from
         // working when you start or finish on the
         // final edge of a way
-        boolean shouldAddStartEndTowers = true;
-        // if (osmNodeIds)
-        osmNodeIds = createStartTowerNodeAndEdge(osmNodeIds, way, wayNodes,
-                wayFlags, wayOsmId);
+         if (addAdditionalTowerNodes) {
+            osmNodeIds = createStartTowerNodeAndEdge(osmNodeIds, way, wayNodes, wayFlags, wayOsmId);
+         }
         // Process No Entry and then Barriers, and finally add the remaining way
         processNoEntry(way, wayNodes, osmNodeIds, wayFlags, wayOsmId);
 
@@ -1316,7 +1328,7 @@ public class OsItnReader implements DataReader<Long> {
             int graphIndex = getNodeMap().get(lastNodeId);// -4 for wayOsmId 4000000025288017
             
             // An index < TOWER_NODE means it is a tower node.
-            boolean doInsertAdditionalTowerNodes = (graphIndex < TOWER_NODE); 
+            boolean doInsertAdditionalTowerNodes = addAdditionalTowerNodes && (graphIndex < TOWER_NODE); 
 
             // add end tower here
             if (doInsertAdditionalTowerNodes) {

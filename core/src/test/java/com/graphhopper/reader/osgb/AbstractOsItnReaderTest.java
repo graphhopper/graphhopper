@@ -104,19 +104,24 @@ public abstract class AbstractOsItnReaderTest {
         osItnReader.readGraph();
         return osItnReader;
     }
-
     protected GraphHopperStorage configureStorage(
             boolean turnRestrictionsImport, boolean is3D) {
+        return configureStorage(turnRestrictionsImport, is3D, false);
+    }
+    protected GraphHopperStorage configureStorage(
+            boolean turnRestrictionsImport, boolean is3D, boolean addAdditionalTowerNodes) {
         String directory = "/tmp";
         ExtendedStorage extendedStorage = turnRestrictionsImport ? new TurnCostStorage()
                 : new ExtendedStorage.NoExtendedStorage();
         GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(
                 directory, false), encodingManager, is3D, extendedStorage);
+        graph.getProperties().put("add.additional.tower.nodes", addAdditionalTowerNodes);
         return graph;
     }
 
     protected void checkSimpleNodeNetwork(GraphHopperStorage graph) {
         EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
+        printNodes(explorer, 9);
         assertEquals(4, count(explorer.setBaseNode(0)));
         assertEquals(1, count(explorer.setBaseNode(1)));
         assertEquals(1, count(explorer.setBaseNode(2)));

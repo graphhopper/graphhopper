@@ -230,7 +230,7 @@
 			<osgb:directedLink orientation='-' xlink:href='#osgb4000000025288019' />
 		</osgb:RoadRouteInformation>
 	</osgb:roadInformationMember>
-	<!-- <osgb:roadMember>
+	<osgb:roadMember>
 		<osgb:Road fid='osgb4000000025366114'>
 			<osgb:version>6</osgb:version>
 			<osgb:versionDate>2008-11-11</osgb:versionDate>
@@ -301,7 +301,7 @@
 				</gml:Box>
 			</osgb:boundedBy>
 		</osgb:Road>
-	</osgb:roadMember>-->
+	</osgb:roadMember>
 	<osgb:boundedBy>
 		<gml:Box srsName='osgb:BNG'>
 			<gml:coordinates>290822.000,91912.000 293199.000,94222.000</gml:coordinates>

@@ -238,7 +238,7 @@ public class HeavitreeRoadDenmarkRoadCrossroadTest extends AbstractOsItnReaderTe
         System.err.println("ghResponse.getDebugInfo() " + ghResponse.getDebugInfo());
     }
 
-    @Test
+   // @Test
     public void testIngest() throws IOException {
         boolean turnRestrictionsImport = true;
         boolean is3D = false;
