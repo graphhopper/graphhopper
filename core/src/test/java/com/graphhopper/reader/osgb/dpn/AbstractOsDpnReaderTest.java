@@ -37,7 +37,7 @@ public abstract class AbstractOsDpnReaderTest {
     protected EdgeFilter carInEdges;
     protected boolean turnCosts = true;
     protected EdgeExplorer carOutExplorer;
-    protected EdgeExplorer carAllExplorer;
+    protected EdgeExplorer explorer;
     protected BikeFlagEncoder bikeEncoder;
     protected FootFlagEncoder footEncoder;
 
