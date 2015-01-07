@@ -32,7 +32,8 @@ import com.graphhopper.reader.OSMElement;
 import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.RelationMember;
 import com.graphhopper.reader.RoutingElement;
-import com.graphhopper.reader.Way;
+import com.graphhopper.reader.osgb.OSITNRelation;
+import com.graphhopper.reader.osgb.OSITNWay;
 import com.graphhopper.reader.osgb.OsItnInputFile;
 import com.graphhopper.util.Helper;
 //import com.graphhopper.tools.OsITNProblemRouteExtractor.ProcessFileVisitor;
@@ -99,7 +100,7 @@ abstract public class AbstractProblemRouteExtractor {
         @Override
         void processVisitor(final RoutingElement item) {
             if (item.isType(OSMElement.WAY)) {
-                final Way way = (Way) item;
+                final OSITNWay way = (OSITNWay) item;
                 if (item.hasTag("nothighway")) {
                     notHighwaySet.add(item.getTag("nothighway"));
                 }
@@ -120,7 +121,7 @@ abstract public class AbstractProblemRouteExtractor {
         @Override
         void processVisitor(final RoutingElement item) {
             if (item.isType(OSMElement.WAY)) {
-                final Way way = (Way) item;
+                final OSITNWay way = (OSITNWay) item;
                 final TLongList nodes = way.getNodes();
                 final long start = nodes.get(0);
                 final long end = nodes.get(nodes.size() - 1);
@@ -132,7 +133,7 @@ abstract public class AbstractProblemRouteExtractor {
                             final long otherEnd = testNode == start ? end : start;
                             otherEndOfWayNodeList.add(otherEnd);
 
-                            fullWayList.add(item.getId());
+                            fullWayList.add(way.getId());
 
                             return false;
                         }
@@ -148,7 +149,7 @@ abstract public class AbstractProblemRouteExtractor {
         @Override
         void processVisitor(final RoutingElement item) {
             if (item.isType(OSMElement.RELATION)) {
-                final Relation rel = (Relation) item;
+                final OSITNRelation rel = (OSITNRelation) item;
                 final ArrayList<? extends RelationMember> links = rel.getMembers();
                 final long start = links.get(0).ref();
                 final long end = links.get(links.size() - 1).ref();

@@ -20,10 +20,10 @@ import org.opengis.referencing.operation.TransformException;
 import org.xml.sax.SAXException;
 
 import com.graphhopper.reader.OSMElement;
-import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.RelationMember;
 import com.graphhopper.reader.RoutingElement;
-import com.graphhopper.reader.Way;
+import com.graphhopper.reader.osgb.OSITNRelation;
+import com.graphhopper.reader.osgb.OSITNWay;
 
 public class NodeListRouteExtractor extends AbstractProblemRouteExtractor {
 
@@ -87,11 +87,11 @@ public class NodeListRouteExtractor extends AbstractProblemRouteExtractor {
                 @Override
                 public boolean execute(final long testNode) {
                     if (item.isType(OSMElement.WAY)) {
-                        final Way way = (Way) item;
+                        final OSITNWay way = (OSITNWay) item;
                         if (way.getNodes().contains(testNode)) {
-                            System.out.println("\tWay found joining one of our nodes. Id: " + item.getId());
+                            System.out.println("\tWay found joining one of our nodes. Id: " + way.getId());
                             // Add the way to our list of ways
-                            fullWayList.add(item.getId());
+                            fullWayList.add(way.getId());
 
                             return false;
                         }
@@ -111,7 +111,7 @@ public class NodeListRouteExtractor extends AbstractProblemRouteExtractor {
                 @Override
                 public boolean execute(final long testWayId) {
                     if (item.isType(OSMElement.RELATION)) {
-                        final Relation relation = (Relation) item;
+                        final OSITNRelation relation = (OSITNRelation) item;
 
                         ArrayList<? extends RelationMember> members = relation.getMembers();
                         for (RelationMember relationMember : members) {

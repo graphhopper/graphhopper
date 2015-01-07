@@ -17,9 +17,9 @@ import org.opengis.referencing.operation.TransformException;
 import org.xml.sax.SAXException;
 
 import com.graphhopper.reader.OSMElement;
-import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.RoutingElement;
-import com.graphhopper.reader.Way;
+import com.graphhopper.reader.osgb.OSITNRelation;
+import com.graphhopper.reader.osgb.OSITNWay;
 
 public class TwoRoadsRouteExtractor extends AbstractProblemRouteExtractor {
     protected String workingRoadName;
@@ -74,14 +74,14 @@ public class TwoRoadsRouteExtractor extends AbstractProblemRouteExtractor {
         @Override
         void processVisitor(final RoutingElement item) {
             if (item.isType(OSMElement.WAY)) {
-                final Way way = (Way) item;
+                final OSITNWay way = (OSITNWay) item;
                 if (way.hasTag("name", workingRoadName)) {
                     System.out.println("Way found on " + workingRoadName + " id is " + way.getId());
                     fullWayList.add(way.getId());
                 }
             }
             if (item.isType(OSMElement.RELATION)) {
-                final Relation relation = (Relation) item;
+                final OSITNRelation relation = (OSITNRelation) item;
                 // if (!relation.isMetaRelation()
                 // && relation.hasTag(OSITNElement.TAG_KEY_TYPE, "route"))
                 // prepareWaysWithRelationInfo(relation);
