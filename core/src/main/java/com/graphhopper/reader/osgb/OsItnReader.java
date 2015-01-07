@@ -231,13 +231,15 @@ public class OsItnReader implements DataReader<Long> {
     public OsItnReader(GraphStorage storage) {
         this.graphStorage = storage;
         String addAdditionalTowerNodesString = graphStorage.getProperties().get("add.additional.tower.nodes");
-        if (addAdditionalTowerNodesString != null ) {
+        if (addAdditionalTowerNodesString != null && addAdditionalTowerNodesString.length()>0 ) {
             // Only parse this if it has been explicitly set otherwise set to true
             addAdditionalTowerNodes = Boolean.parseBoolean(addAdditionalTowerNodesString);
         }
         else {
             addAdditionalTowerNodes = true;
         }
+        
+        System.out.println("addAdditionalTowerNodes set to " + addAdditionalTowerNodes);
         this.nodeAccess = graphStorage.getNodeAccess();
 
         osmNodeIdToInternalNodeMap = new GHLongIntBTree(200);
