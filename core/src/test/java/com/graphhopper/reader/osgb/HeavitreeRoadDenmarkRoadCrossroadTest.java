@@ -238,13 +238,14 @@ public class HeavitreeRoadDenmarkRoadCrossroadTest extends AbstractOsItnReaderTe
         System.err.println("ghResponse.getDebugInfo() " + ghResponse.getDebugInfo());
     }
 
-    //@Test
+    @Test
     public void testIngest() throws IOException {
         boolean turnRestrictionsImport = true;
         boolean is3D = false;
         GraphHopperStorage graph = configureStorage(turnRestrictionsImport, is3D);
 
-        File file = new File("/home/phopkins/Development/geoserver-service-test/geoservertest/itn-sample-data/58096-SX9192-2c1.xml");
+        File file = new File("/home/phopkins/Development/OSMMITN/data");
+//        File file = new File("/home/phopkins/Development/geoserver-service-test/geoservertest/itn-sample-data/58096-SX9192-2c1.xml");
         readGraphFile(graph, file);
     }
 

@@ -117,13 +117,11 @@ public abstract class OSITNElement implements RoutingElement {
                     }
                     case "instruction": {
                         // eg. Mandatory Turn, No Turn, One Way, No Entry
-                        // System.out.println("Handle instruction for " + id);
                         event = handleInstructionEnvironmentalQualifier(parser);
                         break;
                     }
                     case "type": {
                         // eg. Buses, Coaches, Mopeds, HGV's
-                        // System.out.println("Handle type for " + id);
                         event = handleTypeVehicleQualifier(parser);
                         break;
                     }
@@ -172,9 +170,6 @@ public abstract class OSITNElement implements RoutingElement {
         String nature = resolveNature(parser.getElementText());
         String highwayType = getTag("highway");
         if (null != nature && null != highwayType) {
-            if (highwayType.contains("-")) {
-                System.err.println("Already Natured:" + highwayType + " Adding:" + nature);
-            }
             highwayType = highwayType + "-";
             highwayType = highwayType + nature;
             setTag("highway", highwayType);
@@ -185,13 +180,11 @@ public abstract class OSITNElement implements RoutingElement {
     private int handleDescriptiveGroup(XMLStreamReader parser) throws XMLStreamException {
         String elementText = parser.getElementText();
         String roadType = resolveHighway(elementText);
-        // System.err.println(this.getClass() + ".handleDescriptiveGroup(" +
-        // roadType
-        // + ")");
         if (null != roadType && !hasTag("highway")) {
             setTag("type", "route");
             setTag("highway", roadType);
         }
+        // This line is for debug and could possibly be removed.
         if (null == roadType) {
             setTag("nothighway", elementText);
         }
@@ -205,16 +198,19 @@ public abstract class OSITNElement implements RoutingElement {
         case "Motorway":
         case "B Road":
         case "Minor Road":
-            // Should we be handling these for Car routes?
+        // Pedestrianised Street is supported for walking so traversing will be controlled by speed in the flag encoders
         case "Pedestrianised Street":
-            // case "Private Road - Restricted Access":
         case "Private Road - Publicly Accessible":
-            // case "Alley":
-
+        // Alleys are not traversible
+        // case "Alley":
+        // Private Road - Restricted Access are not traversible
+        // case "Private Road - Restricted Access":
         case "Local Street":
             return elementText;
+        default:
+            return null;
         }
-        return null;
+        
     }
 
     private String resolveNature(String elementText) {
@@ -293,8 +289,6 @@ public abstract class OSITNElement implements RoutingElement {
             exceptFor = Boolean.parseBoolean(exceptForString);
         }
         String elementText = parser.getElementText();
-        // System.out.println("handleTypeVehicleQualifier " + elementText +
-        // " exceptFor " + exceptFor);
         setTag(elementText, exceptFor.toString());
         int event = parser.getEventType();
         return event;
@@ -321,8 +315,6 @@ public abstract class OSITNElement implements RoutingElement {
             exceptFor = Boolean.parseBoolean(exceptForString);
         }
         String elementText = parser.getElementText();
-        // System.out.println("handleUseVehicleQualifier " + elementText +
-        // " exceptFor " + exceptFor);
         setTag(elementText, exceptFor.toString());
         int event = parser.getEventType(); // type and use are effectively the same thing
         return event;
@@ -465,9 +457,6 @@ public abstract class OSITNElement implements RoutingElement {
     }
 
     public void setTag(String name, Object value) {
-        // if(name.equals("highway")) {
-        // System.err.println("HIGHWAY:" + value);
-        // }
         properties.put(name, value);
     }
 

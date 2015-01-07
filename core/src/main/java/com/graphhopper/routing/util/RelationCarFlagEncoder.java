@@ -1,8 +1,5 @@
 package com.graphhopper.routing.util;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
 import com.graphhopper.reader.Relation;
 import com.graphhopper.util.Helper;
 
@@ -16,27 +13,6 @@ public class RelationCarFlagEncoder extends CarFlagEncoder {
 
     public RelationCarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
         super(speedBits, speedFactor, maxTurnCosts);
-//        restrictions = new ArrayList<String>(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
-//        restrictedValues.add("private");
-//        restrictedValues.add("agricultural");
-//        restrictedValues.add("forestry");
-//        restrictedValues.add("no");
-//        restrictedValues.add("restricted");
-//        restrictedValues.add("delivery");
-
-//        intendedValues.add("yes");
-//        intendedValues.add("permissive");
-
-//        potentialBarriers.add("gate");
-//        potentialBarriers.add("lift_gate");
-//        potentialBarriers.add("kissing_gate");
-//        potentialBarriers.add("swing_gate");
-
-//        absoluteBarriers.add("bollard");
-//        absoluteBarriers.add("stile");
-//        absoluteBarriers.add("turnstile");
-//        absoluteBarriers.add("cycle_barrier");
-//        absoluteBarriers.add("block");
 
         trackTypeSpeedMap.put("grade1", 20); // paved
         trackTypeSpeedMap.put("grade2", 15); // now unpaved - gravel mixed with
@@ -65,8 +41,8 @@ public class RelationCarFlagEncoder extends CarFlagEncoder {
         defaultSpeedMap.put("B Road", 35);
         defaultSpeedMap.put("Minor Road", 35);
         defaultSpeedMap.put("Local Street", 35);
-        defaultSpeedMap.put("Alley", 35);
-        // bundesstra��e
+//        defaultSpeedMap.put("Alley", 35);
+        // 
         defaultSpeedMap.put("trunk", 70);
         defaultSpeedMap.put("trunk_link", 65);
         // linking bigger town

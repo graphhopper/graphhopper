@@ -40,14 +40,13 @@ import com.graphhopper.reader.OSMElement;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMTurnRelation;
+import com.graphhopper.reader.OSMTurnRelation.Type;
 import com.graphhopper.reader.PillarInfo;
 import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.RelationMember;
 import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.Way;
-import com.graphhopper.reader.OSMTurnRelation.Type;
 import com.graphhopper.reader.dem.ElevationProvider;
-import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.ExtendedStorage;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -617,6 +616,15 @@ public class OsItnReader implements DataReader {
                     String strId = String.valueOf(id);
                     addGradeNodesIfRequired(nodeItem, strId, nodeFilter);
                 }
+                else {
+                    // We have failed to find a node for the simple id. We need to check if we have any grade separated nodes
+                    // This can occur when the 0'th grade is not a supported road type, for example Private Road - Restricted Access
+                    // but the 1st grade is a valid road type. This situation was found around the M27/M3 slip road where Roman Road
+                    // crosses the motorway
+                    OSITNNode nodeItem = (OSITNNode) item;
+                    String strId = String.valueOf(id);
+                    addGradeNodesIfRequired(nodeItem, strId, nodeFilter);
+                }
                 break;
 
             }
@@ -639,11 +647,7 @@ public class OsItnReader implements DataReader {
                     logger.info(NOW_PARSING_WAYS_FORMAT, nf(processData.counter));
                     processData.wayStart = processData.counter;
                 }
-                if (!way.hasTag("highway")) {
-                    way.setTag("highway", "motorway");
-                }
-                // wayNodes will only contain the mid nodes and not the start or
-                // end nodes.
+                // wayNodes will only contain the mid nodes and not the start or end nodes.
                 List<OSITNNode> wayNodes = prepareWaysNodes(way, nodeFilter);
                 processWay(way, wayNodes);
                 way.clearStoredCoords();
@@ -696,26 +700,30 @@ public class OsItnReader implements DataReader {
         }
     }
 
+    
     /**
      * Process properties, encode flags and create edges for the way.
      */
     void processWay(OSITNWay way, List<OSITNNode> wayNodes) {
-        if (way.getNodes().size() < 2)
+
+        if (way.getNodes().size() < 2) {
             return;
+        }
 
         // ignore multipolygon geometry
-        if (!way.hasTags())
+        if (!way.hasTags()) {
             return;
+        }
 
         long wayOsmId = way.getId();
 
         long includeWay = encodingManager.acceptWay(way);
-        if (includeWay == 0)
+        if (includeWay == 0) {
             return;
+        }
 
         // Check if we are prohibited from ever traversing this way
         if (getProhibitedWayIds().remove(wayOsmId)) {
-            System.out.println("DONT PROCESS WAY " + wayOsmId);
             return;
         }
 
@@ -757,8 +765,9 @@ public class OsItnReader implements DataReader {
         }
 
         long wayFlags = encodingManager.handleWayTags(way, includeWay, relationFlags);
-        if (wayFlags == 0)
+        if (wayFlags == 0) {
             return;
+        }
         // logger.warn(ADDING_RELATION_TO_WAYS_FORMAT, wayFlags);
         
         // Check if we need to add additional TOWER nodes at the start and end locations to deal
@@ -784,7 +793,6 @@ public class OsItnReader implements DataReader {
         // Check if we have a pillar node at the start. If so we need to convert to a tower.
         int graphIndex = getNodeMap().get(nodeId);
         if (graphIndex < TOWER_NODE) {
-            
             OSMNode newNode = addBarrierNode(nodeId);
             long newNodeId = newNode.getId();
             int nodeType = getNodeMap().get(newNodeId);
@@ -797,16 +805,9 @@ public class OsItnReader implements DataReader {
             Collection<EdgeIteratorState> newWays = addOSMWay(partIds, wayFlags, wayOsmId);
             // logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
             startCreatedEdges.addAll(newWays);
-    
-    //      if (nodeType==PILLAR_NODE) {
-            // Set this to be a TOWER node explicitly. This has to be after the edges are created
-    //        getNodeMap().put(newNodeId, TOWER_NODE);
-    //    }
-    
             
             // Set the 0th node id to be our new node id
             osmNodeIds.set(0, newNodeId);
-    //        osmNodeIds.insert(1, newNodeId);
     
             
             for (EdgeIteratorState edge : startCreatedEdges) {
@@ -1178,19 +1179,19 @@ public class OsItnReader implements DataReader {
             long lastNodeId = nodeIdsToCreateWaysFor.get(nodeIdsToCreateWaysFor.size()-1);;
             long newNodeId = -1;
 
-            int graphIndex = getNodeMap().get(lastNodeId);
-            boolean doInsertAdditionalTowerNodes = (graphIndex < TOWER_NODE);
+            int graphIndex = getNodeMap().get(lastNodeId);// -4 for wayOsmId 4000000025288017
+            
+            // An index < TOWER_NODE means it is a tower node.
+            boolean doInsertAdditionalTowerNodes = (graphIndex < TOWER_NODE); 
 
             // add end tower here
             if (doInsertAdditionalTowerNodes) {
-//                System.out.println("nodeIdsToCreateWaysFor.size() is " + nodeIdsToCreateWaysFor.size() + " lastNodeId is "+ lastNodeId);
                 OSMNode newNode = addBarrierNode(lastNodeId);
                 newNodeId = newNode.getId();
                 int nodeType = getNodeMap().get(newNodeId);
                 
                 nodeIdsToCreateWaysFor.set(nodeIdsToCreateWaysFor.size()-1, newNodeId);
-            }
-            
+            }            
 
             Collection<EdgeIteratorState> newEdges = addOSMWay(nodeIdsToCreateWaysFor, wayFlags, wayOsmId);
 
@@ -1596,18 +1597,14 @@ public class OsItnReader implements DataReader {
     private OSMNode addBarrierNode(long nodeId) {
         OSMNode newNode = null;
         int graphIndex = getNodeMap().get(nodeId);
-//        System.out.println("graphIndex BEFORE is " + graphIndex);
 
         if (graphIndex < TOWER_NODE) {
             graphIndex = -graphIndex - 3;
-//            System.out.println("Create Tower node for nodeId " + nodeId + " graphIndex is " + graphIndex);
             newNode = new OSMNode(createNewNodeId(), nodeAccess, graphIndex);
         } else {
             graphIndex = graphIndex - 3;
             try {
-//                System.out.println("Create Pillar node for nodeId " + nodeId + " graphIndex is " + graphIndex);
                 newNode = new OSMNode(createNewNodeId(), pillarInfo, graphIndex);
-//                System.out.println("newNode is " + newNode);
             } catch (ArrayIndexOutOfBoundsException e) {
                 e.printStackTrace();
             }
@@ -1669,18 +1666,12 @@ public class OsItnReader implements DataReader {
         // if (no turn (Type.NOT) except buses=true) leave as is
         // if (no turn (Type.NOT) except buses=false) remove the restriction
         if (type == Type.NOT || type == Type.ONLY) {
-            // System.out.println("Handle turn relation of type " + type + " ");
-            // for (RelationMember member : relation.getMembers()) {
-            // System.out.println("" + member );
-            //
-            // }
             // There is a no entry or mandatory turn
             if (encodingManager.isVehicleQualifierTypeExcluded(relation) || encodingManager.isVehicleQualifierTypeIncluded(relation)) {
                 // The current encoder vehicle is excluded from this restriction
                 // so remove it OR (except buses=false)
                 // The current encoder vehicle is included in the exception so
                 // remove it.
-                // System.out.println("SET IT TO Type.UNSUPPORTED");
                 type = Type.UNSUPPORTED;
             }
         }

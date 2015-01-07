@@ -132,40 +132,43 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         defaultSpeedMap.put("B Road", 35);
         defaultSpeedMap.put("Minor Road", 35);
         defaultSpeedMap.put("Local Street", 35);
-        defaultSpeedMap.put("Alley", 35);
+//        defaultSpeedMap.put("Alley", 35);
         defaultSpeedMap.put("A Road-Single Carriageway", 55);
         defaultSpeedMap.put("B Road", 35);
         defaultSpeedMap.put("Minor Road", 35);
         defaultSpeedMap.put("Local Street", 35);
-        defaultSpeedMap.put("Alley", 35);
+//        defaultSpeedMap.put("Alley", 35);
         defaultSpeedMap.put("Motorway", 100);
         defaultSpeedMap.put("A Road", 55);
         defaultSpeedMap.put("B Road", 35);
         defaultSpeedMap.put("Minor Road", 35);
         defaultSpeedMap.put("Local Street", 35);
-        defaultSpeedMap.put("Alley", 35);
+//        defaultSpeedMap.put("Alley", 35);
         defaultSpeedMap.put("A Road-Dual Carriageway", 55);
         defaultSpeedMap.put("B Road", 35);
         defaultSpeedMap.put("Minor Road", 35);
         defaultSpeedMap.put("Local Street", 35);
-        defaultSpeedMap.put("Alley", 35);
+//        defaultSpeedMap.put("Alley", 35);
         defaultSpeedMap.put("Motorway-Slip Road", 100);
         defaultSpeedMap.put("A Road-Slip Road", 55);
         defaultSpeedMap.put("B Road", 35);
         defaultSpeedMap.put("Minor Road", 35);
         defaultSpeedMap.put("Local Street", 35);
-        defaultSpeedMap.put("Alley", 35);
+//        defaultSpeedMap.put("Alley", 35);
         defaultSpeedMap.put("Motorway-Roundabout", 100);
         defaultSpeedMap.put("A Road-Roundabout", 55);
         defaultSpeedMap.put("B Road-Roundabout", 35);
         defaultSpeedMap.put("Minor Road-Roundabout", 35);
         defaultSpeedMap.put("Local Street-Roundabout", 35);
         
-        // Should we be including these in car flags?
+        // You can not drive down a pedestrianised street
         defaultSpeedMap.put("Pedestrianised Street", 0);
-        defaultSpeedMap.put("Private Road - Restricted Access", 35);
-        defaultSpeedMap.put("Private Road - Publicly Accessible", 35);
-        defaultSpeedMap.put("Alley", 0);
+        // Limit the speed to 0 so we are not routed down these ways but include them to remove a grade separation
+        // issue when a Private Road - Restricted Access road passes over another road.
+//        defaultSpeedMap.put("Private Road - Restricted Access", 0);
+        // Lower the speed to 10 so it ideally routes us another way.
+        defaultSpeedMap.put("Private Road - Publicly Accessible", 10);
+//        defaultSpeedMap.put("Alley", 0);
         
         // osgb:type
         vehicleQualifierTypeExclusions.add("Buses");
@@ -278,24 +281,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         
         return acceptBit;
     }
-
-//    @Override
-//    public long handleRelationTags( Relation relation, long oldRelationFlags )
-//    {
-//        long flags = oldRelationFlags;
-//        
-//        // check access limited and access prohibited restrictions
-//        System.out.println("acceptWay for id " + relation.getId());
-//        if (relation.hasTag(OSITNElement.TAG_KEY_TYPE, OSITNElement.TAG_VALUE_TYPE_ACCESS_PROHIBITED)||relation.hasTag(OSITNElement.TAG_KEY_TYPE, OSITNElement.TAG_VALUE_TYPE_ACCESS_LIMITED) ) {
-//            System.out.println("OUR WAY HAS PROHIBITED OR LIMITED ACCESS");
-//            if (isVehicleQualifierTypeExcluded(relation) || isVehicleQualifierTypeIncluded(relation)) {
-//                System.out.println("WE ARE BLOCKING THIS ROAD....");
-//                flags = this.setBool(flags, K_FORWARD, false);
-//                flags = this.setBool(flags, K_BACKWARD, false);      
-//            }
-//        }
-//        return flags;
-//    }
 
     @Override
     public long handleWayTags( Way way, long allowed, long relationFlags )

@@ -185,8 +185,8 @@
 				<osgb:reasonForChange>Modified</osgb:reasonForChange>
 			</osgb:changeHistory>
 			<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
-			<osgb:descriptiveTerm>A Road</osgb:descriptiveTerm>
-<!-- 			<osgb:descriptiveTerm>Private Road - Restricted Access</osgb:descriptiveTerm> -->
+<!-- 			<osgb:descriptiveTerm>A Road</osgb:descriptiveTerm> -->
+			<osgb:descriptiveTerm>Private Road - Restricted Access</osgb:descriptiveTerm>
 			<osgb:natureOfRoad>Single Carriageway</osgb:natureOfRoad>
 			<osgb:length>538.90</osgb:length>
 			<osgb:polyline>
@@ -216,8 +216,8 @@
 				<osgb:reasonForChange>Modified</osgb:reasonForChange>
 			</osgb:changeHistory>
 			<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
-			<osgb:descriptiveTerm>A Road</osgb:descriptiveTerm>
-<!-- 			<osgb:descriptiveTerm>Private Road - Restricted Access</osgb:descriptiveTerm> -->
+<!-- 			<osgb:descriptiveTerm>A Road</osgb:descriptiveTerm> -->
+			<osgb:descriptiveTerm>Private Road - Restricted Access</osgb:descriptiveTerm>
 			<osgb:natureOfRoad>Single Carriageway</osgb:natureOfRoad>
 			<osgb:length>538.90</osgb:length>
 			<osgb:polyline>

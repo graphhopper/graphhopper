@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.AbstractGraphStorageTester;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.TurnCostStorage;
@@ -284,18 +283,6 @@ public class OsItnReaderTest extends AbstractOsItnReaderTest {
 
     }
 
-    @Test
-    public void testReadSimpleBridge() throws IOException {
-        final boolean turnRestrictionsImport = true;
-        final boolean is3D = false;
-        final GraphHopperStorage graph = configureStorage(turnRestrictionsImport, is3D);
-
-        final File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-simple-bridge.xml");
-        readGraphFile(graph, file);
-        assertEquals(7, graph.getNodes());
-        checkBridgeNodeNetwork(graph);
-    }
-
     private void checkMultiNodeNetwork(final GraphHopperStorage graph) {
         final EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
         assertEquals(4, count(explorer.setBaseNode(0)));
@@ -321,16 +308,6 @@ public class OsItnReaderTest extends AbstractOsItnReaderTest {
         assertFalse(iter.next());
     }
 
-    private void checkBridgeNodeNetwork(final GraphHopperStorage graph) {
-        final EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
-        assertEquals(2, count(explorer.setBaseNode(0)));
-        assertEquals(2, count(explorer.setBaseNode(1)));
-        assertEquals(2, count(explorer.setBaseNode(2)));
-        assertEquals(2, count(explorer.setBaseNode(3)));
-        assertEquals(2, count(explorer.setBaseNode(4)));
-        assertEquals(1, count(explorer.setBaseNode(5)));
-        assertEquals(1, count(explorer.setBaseNode(6)));
-    }
 
     // @Test
     public void testReadSample() throws IOException {
