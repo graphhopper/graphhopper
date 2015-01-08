@@ -54,7 +54,6 @@ import com.graphhopper.util.*;
  */
 public class AStarBidirection extends AbstractBidirAlgo
 {
-    private DistanceCalc dist;
     private ConsistentWeightApproximator weightApprox;
     private PriorityQueue<AStarEdge> prioQueueOpenSetFrom;
     private TIntObjectMap<AStarEdge> bestWeightMapFrom;

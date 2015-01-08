@@ -197,8 +197,8 @@ function initFromParams(params, doQuery) {
             resolveCoords([params.from, params.to], doQuery);
         else
             resolveCoords(params.point, doQuery);
-    } else if (params.point) {
-        ghRequest.from = new GHInput(params.point);
+    } else if (params.point.length === 1) {
+        ghRequest.from = new GHInput(params.point[0]);
         resolve("from", ghRequest.from);
         focus(ghRequest.from, 15, true);
     }
@@ -1197,10 +1197,6 @@ function parseUrlWithHisto() {
     return parseUrl(window.location.search);
 }
 
-function parseUrlAndRequest() {
-    return parseUrl(window.location.search);
-}
-
 function parseUrl(query) {
     var index = query.indexOf('?');
     if (index >= 0)
@@ -1218,24 +1214,26 @@ function parseUrl(query) {
         if (value === "")
             continue;
 
-        if (typeof res[key] === "undefined") {
-            if (value === 'true')
+        if (key === "point") {
+            res[key] = [value];
+        } else if (typeof res[key] === "string") {
+            var arr = [res[key], value];
+            res[key] = arr;
+        } else if (typeof res[key] === "undefined") {
+            if (value === 'true') {
                 res[key] = true;
-            else if (value === 'false')
+            } else if (value === 'false') {
                 res[key] = false;
-            else {
+            } else {
                 var tmp = Number(value);
                 if (isNaN(tmp))
                     res[key] = value;
                 else
                     res[key] = Number(value);
             }
-        } else if (typeof res[key] === "string") {
-            var arr = [res[key], value];
-            res[key] = arr;
-        } else
+        } else {
             res[key].push(value);
-
+        }
     }
     return res;
 }
