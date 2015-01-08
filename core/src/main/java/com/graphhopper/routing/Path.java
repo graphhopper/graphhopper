@@ -17,15 +17,27 @@
  */
 package com.graphhopper.routing;
 
+import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TIntArrayList;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
-import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
-import java.util.ArrayList;
-import java.util.List;
+import com.graphhopper.util.AngleCalc;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FinishInstruction;
+import com.graphhopper.util.Instruction;
+import com.graphhopper.util.InstructionAnnotation;
+import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.PointList;
+import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.Translation;
 
 /**
  * Stores the nodes for the found path of an algorithm. It additionally needs the edgeIds to make
@@ -34,7 +46,7 @@ import java.util.List;
  * <p/>
  * @author Peter Karich
  * @author Ottavio Campana
- */
+ */     
 public class Path
 {
     private static final AngleCalc ac = new AngleCalc();
@@ -257,7 +269,12 @@ public class Path
             tmpNode = edgeBase.getBaseNode();
             // later: more efficient swap
             edgeBase = graph.getEdgeProps(edgeBase.getEdge(), tmpNode);
-            visitor.next(edgeBase, i);
+            // If the add.additional.tower.nodes property is set to true additional zero length edges are created. This means that 
+            // direction calculations are not accurate because they are being calculated between identical locations. To overcome this 
+            // we will skip zero length edges
+            if (edgeBase.getDistance()>0.0) {
+                visitor.next(edgeBase, i);
+            }
         }
     }
 
@@ -384,6 +401,7 @@ public class Path
                 double adjLon = nodeAccess.getLongitude(adjNode);
                 double latitude, longitude;
                 PointList wayGeo = edge.fetchWayGeometry(3);
+
                 if (wayGeo.getSize() <= 2)
                 {
                     latitude = adjLat;

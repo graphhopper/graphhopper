@@ -239,7 +239,6 @@ public class OsItnReader implements DataReader<Long> {
             addAdditionalTowerNodes = true;
         }
         
-        System.out.println("addAdditionalTowerNodes set to " + addAdditionalTowerNodes);
         this.nodeAccess = graphStorage.getNodeAccess();
 
         osmNodeIdToInternalNodeMap = new GHLongIntBTree(200);
