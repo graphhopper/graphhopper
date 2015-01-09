@@ -197,7 +197,7 @@ function initFromParams(params, doQuery) {
             resolveCoords([params.from, params.to], doQuery);
         else
             resolveCoords(params.point, doQuery);
-    } else if (params.point.length === 1) {
+    } else if (params.point && params.point.length === 1) {
         ghRequest.from = new GHInput(params.point[0]);
         resolve("from", ghRequest.from);
         focus(ghRequest.from, 15, true);
@@ -1214,7 +1214,7 @@ function parseUrl(query) {
         if (value === "")
             continue;
 
-        if (key === "point") {
+        if (key === "point" && !res[key]) {
             res[key] = [value];
         } else if (typeof res[key] === "string") {
             var arr = [res[key], value];
