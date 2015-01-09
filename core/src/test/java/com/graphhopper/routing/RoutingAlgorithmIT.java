@@ -29,6 +29,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import java.io.File;
@@ -78,9 +79,18 @@ public class RoutingAlgorithmIT
     @Test
     public void testMonaco()
     {
-        runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
+        Graph g = runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
                 createMonacoCar(), "CAR", true, "CAR", "shortest", false);
+
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+
+        // When OSM file stays unchanged make static edge and node IDs a requirement
+        assertEquals(GHUtility.asSet(9, 111, 182), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
+        assertEquals(GHUtility.asSet(19, 21), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(20)));
+        assertEquals(GHUtility.asSet(478, 84, 83), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(480)));
+
+        assertEquals(43.736989, g.getNodeAccess().getLat(10), 1e-6);
+        assertEquals(7.429758, g.getNodeAccess().getLon(201), 1e-6);
     }
 
     @Test
@@ -178,9 +188,17 @@ public class RoutingAlgorithmIT
     @Test
     public void testMonacoFoot()
     {
-        runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
+        Graph g = runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
                 createMonacoFoot(), "FOOT", true, "FOOT", "shortest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+
+        // see testMonaco for similar ID test
+        assertEquals(GHUtility.asSet(2, 906, 570), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
+        assertEquals(GHUtility.asSet(443, 952, 739), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(440)));
+        assertEquals(GHUtility.asSet(909, 580, 912), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(911)));
+
+        assertEquals(43.743705, g.getNodeAccess().getLat(100), 1e-6);
+        assertEquals(7.426362, g.getNodeAccess().getLon(701), 1e-6);
     }
 
     @Test
@@ -421,7 +439,7 @@ public class RoutingAlgorithmIT
      * @param testAlsoCH if true also the CH algorithms will be tested which needs preparation and
      * takes a bit longer
      */
-    void runAlgo( TestAlgoCollector testCollector, String osmFile,
+    Graph runAlgo( TestAlgoCollector testCollector, String osmFile,
             String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
             boolean testAlsoCH, String vehicle, String weightStr, boolean is3D )
     {
@@ -463,6 +481,8 @@ public class RoutingAlgorithmIT
                     testCollector.assertDistance(algoEntry, list, oneRun);
                 }
             }
+
+            return hopper.getGraph();
         } catch (Exception ex)
         {
             if (algoEntry == null)

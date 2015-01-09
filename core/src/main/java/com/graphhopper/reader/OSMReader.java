@@ -46,7 +46,6 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalc3D;
-import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
