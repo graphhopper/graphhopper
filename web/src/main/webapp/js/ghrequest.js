@@ -535,7 +535,10 @@ GHRequest.prototype.doRequest = function (url, callback) {
             // problematic: this callback is not invoked when using JSONP!
             // http://stackoverflow.com/questions/19035557/jsonp-request-error-handling
             var msg = "API did not respond! ";
-            if (err && err.statusText && err.statusText !== "OK")
+            if (err && err.responseText && err.responseText.indexOf('{') >= 0) {
+                var jsonError = JSON.parse(err.responseText);
+                msg += jsonError.message;
+            } else if (err && err.statusText && err.statusText !== "OK")
                 msg += err.statusText;
 
             log(msg + " " + JSON.stringify(err));
