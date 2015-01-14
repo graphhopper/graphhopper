@@ -87,7 +87,7 @@ public abstract class AbstractRoutingAlgorithmTester
 
         Graph graphFastest = createGraph(false);
         initDirectedAndDiffSpeed(graphFastest);
-        Path p2 = createAlgo(graphFastest, 
+        Path p2 = createAlgo(graphFastest,
                 AlgorithmOptions.start().flagEncoder(carEncoder).weighting(new FastestWeighting(carEncoder)).build()).
                 calcPath(0, 3);
         assertEquals(Helper.createTList(0, 4, 6, 7, 5, 3), p2.calcNodes());
@@ -663,6 +663,26 @@ public abstract class AbstractRoutingAlgorithmTester
         assertEquals(85124371, p.getMillis());
         assertEquals(425622, p.getDistance(), 1);
         assertEquals(6568, p.getWeight(), 1);
+    }
+
+    @Test
+    public void test0SpeedButUnblocked_Issue242()
+    {
+        Graph graph = createGraph(false);
+        long flags = carEncoder.setAccess(carEncoder.setSpeed(0, 0), true, true);
+
+        graph.edge(0, 1).setFlags(flags).setDistance(10);
+        graph.edge(1, 2).setFlags(flags).setDistance(10);
+
+        RoutingAlgorithm algo = createAlgo(graph);
+        try
+        {
+            Path p = algo.calcPath(0, 2);
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Speed cannot be 0"));
+        }
     }
 
     @Test
