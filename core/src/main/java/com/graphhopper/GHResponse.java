@@ -36,7 +36,7 @@ public class GHResponse
     private double distance;
     private double routeWeight;
     private long time;
-    private InstructionList instructions = InstructionList.EMPTY;
+    private InstructionList instructions = null;
     private boolean found;
 
     public GHResponse()
@@ -214,6 +214,9 @@ public class GHResponse
     public InstructionList getInstructions()
     {
         check("getInstructions");
+        if (instructions == null)
+            throw new IllegalArgumentException("To access instructions you need to enable creation before routing");
+
         return instructions;
     }
 }
