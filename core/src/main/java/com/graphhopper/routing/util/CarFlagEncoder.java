@@ -1,10 +1,10 @@
 /*
  *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
  *
- *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *  GraphHopper licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
  *
  *       http://www.apache.org/licenses/LICENSE-2.0
@@ -63,7 +63,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     {
         super(speedBits, speedFactor, maxTurnCosts);
         restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
-        
+
         restrictedValues.add("private");
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -126,50 +126,50 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         defaultSpeedMap.put("road", 20);
         // forestry stuff
         defaultSpeedMap.put("track", 15);
-        
+
         defaultSpeedMap.put("Motorway", 100);
         defaultSpeedMap.put("A Road", 55);
         defaultSpeedMap.put("B Road", 35);
         defaultSpeedMap.put("Minor Road", 35);
         defaultSpeedMap.put("Local Street", 35);
-//        defaultSpeedMap.put("Alley", 35);
+        //        defaultSpeedMap.put("Alley", 35);
         defaultSpeedMap.put("A Road-Single Carriageway", 55);
         defaultSpeedMap.put("B Road", 35);
         defaultSpeedMap.put("Minor Road", 35);
         defaultSpeedMap.put("Local Street", 35);
-//        defaultSpeedMap.put("Alley", 35);
+        //        defaultSpeedMap.put("Alley", 35);
         defaultSpeedMap.put("Motorway", 100);
         defaultSpeedMap.put("A Road", 55);
         defaultSpeedMap.put("B Road", 35);
         defaultSpeedMap.put("Minor Road", 35);
         defaultSpeedMap.put("Local Street", 35);
-//        defaultSpeedMap.put("Alley", 35);
+        //        defaultSpeedMap.put("Alley", 35);
         defaultSpeedMap.put("A Road-Dual Carriageway", 55);
         defaultSpeedMap.put("B Road", 35);
         defaultSpeedMap.put("Minor Road", 35);
         defaultSpeedMap.put("Local Street", 35);
-//        defaultSpeedMap.put("Alley", 35);
+        //        defaultSpeedMap.put("Alley", 35);
         defaultSpeedMap.put("Motorway-Slip Road", 100);
         defaultSpeedMap.put("A Road-Slip Road", 55);
         defaultSpeedMap.put("B Road", 35);
         defaultSpeedMap.put("Minor Road", 35);
         defaultSpeedMap.put("Local Street", 35);
-//        defaultSpeedMap.put("Alley", 35);
+        //        defaultSpeedMap.put("Alley", 35);
         defaultSpeedMap.put("Motorway-Roundabout", 100);
         defaultSpeedMap.put("A Road-Roundabout", 55);
         defaultSpeedMap.put("B Road-Roundabout", 35);
         defaultSpeedMap.put("Minor Road-Roundabout", 35);
         defaultSpeedMap.put("Local Street-Roundabout", 35);
-        
+
         // You can not drive down a pedestrianised street
         defaultSpeedMap.put("Pedestrianised Street", 0);
         // Limit the speed to 0 so we are not routed down these ways but include them to remove a grade separation
         // issue when a Private Road - Restricted Access road passes over another road.
-//        defaultSpeedMap.put("Private Road - Restricted Access", 0);
+        //        defaultSpeedMap.put("Private Road - Restricted Access", 0);
         // Lower the speed to 10 so it ideally routes us another way.
         defaultSpeedMap.put("Private Road - Publicly Accessible", 10);
-//        defaultSpeedMap.put("Alley", 0);
-        
+        //        defaultSpeedMap.put("Alley", 0);
+
         // osgb:type
         vehicleQualifierTypeExclusions.add("Buses");
         vehicleQualifierTypeExclusions.add("Coaches");
@@ -194,9 +194,9 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         vehicleQualifierTypeExclusions.add("Local Buses"); // Added from analysing the actual data
         vehicleQualifierTypeExclusions.add("Escorted Traffic");
         vehicleQualifierTypeExclusions.add("Loading And Unloading"); // Added from analysing the actual data
-        
 
-        
+
+
         vehicleQualifierTypeInclusions.add("Motor Vehicles");
         vehicleQualifierTypeInclusions.add("All Vehicles");
 
@@ -260,6 +260,15 @@ public class CarFlagEncoder extends AbstractFlagEncoder
                 return 0;
         }
 
+        // absolute barriers always block
+        if (way.hasTag("barrier", absoluteBarriers))
+            return 0;
+
+        // movable barriers block always for cars
+        if (way.hasTag("barrier", potentialBarriers))
+            return 0;
+
+
         if (!defaultSpeedMap.containsKey(highwayValue))
             return 0;
 
@@ -268,7 +277,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
         // do not drive street cars into fords
         boolean carsAllowed = way.hasTag(restrictions, intendedValues);
-        if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")) && !carsAllowed)
+        boolean hasFordFlag = way.hasTag("ford");
+        if (isBlockFords() && ("ford".equals(highwayValue) || hasFordFlag) && !carsAllowed)
             return 0;
 
         // check access restrictions
@@ -277,8 +287,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
         // do not drive cars over railways (sometimes incorrectly mapped!)
         if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
-            return 0;        
-        
+            return 0;
+
         return acceptBit;
     }
 
@@ -313,7 +323,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
                     encoded |= forwardBit;
             } else
                 encoded |= directionBitMask;
-            
+
         } else
         {
             encoded = handleFerryTags(way, defaultSpeedMap.get("living_street"), defaultSpeedMap.get("service"), defaultSpeedMap.get("residential"));
@@ -355,7 +365,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         else
             return "destination: " + str;
     }
-    
+
     @Override
     public String toString()
     {

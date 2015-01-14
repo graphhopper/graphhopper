@@ -6,11 +6,13 @@ import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.TDoubleLongMap;
 import gnu.trove.map.TDoubleObjectMap;
 import gnu.trove.map.TIntLongMap;
+import gnu.trove.map.TLongIntMap;
 import gnu.trove.map.TLongLongMap;
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TDoubleLongHashMap;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.TIntLongHashMap;
+import gnu.trove.map.hash.TLongIntHashMap;
 import gnu.trove.map.hash.TLongLongHashMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.procedure.TLongProcedure;
@@ -64,15 +66,15 @@ import com.graphhopper.util.shapes.GHPoint;
 
 /*
  *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -102,7 +104,7 @@ import com.graphhopper.util.shapes.GHPoint;
  * from the OSM tags. When creating an edge the pillar node information from the
  * intermediate datastructure will be stored in the way geometry of that edge.
  * <p/>
- * 
+ *
  * @author Peter Karich
  */
 
@@ -196,6 +198,11 @@ public class OsItnReader implements DataReader<Long> {
     private final LongIntMap osmNodeIdToInternalNodeMap;
     private TLongLongHashMap osmNodeIdToNodeFlagsMap;
     private TLongLongHashMap osmWayIdToRouteWeightMap;
+
+    private TLongIntHashMap osmWayIdToAttributeBitMaskMap;
+    private static final int ATTRIBUTE_BIT_GATE = 1;
+    private static final int ATTRIBUTE_BIT_LEVEL_CROSSING = 2;
+    private static final int ATTRIBUTE_BIT_FORD = 4;
     // stores osm way ids used by relations to identify which edge ids needs to
     // be mapped later
     private TLongHashSet osmIdStoreRequiredSet = new TLongHashSet();
@@ -224,10 +231,10 @@ public class OsItnReader implements DataReader<Long> {
     private TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>> edgeIdToXToYToNodeFlagsMap;
 
     // With this set to true additional tower nodes will be added after the start node and before the final node
-    // of a way. This is to overcome an issue when you are routing short distances and turn restrictions wouldn't 
+    // of a way. This is to overcome an issue when you are routing short distances and turn restrictions wouldn't
     // be recognised.
     private boolean addAdditionalTowerNodes;
-    
+
     public OsItnReader(GraphStorage storage) {
         this.graphStorage = storage;
         String addAdditionalTowerNodesString = graphStorage.getProperties().get("add.additional.tower.nodes");
@@ -238,7 +245,7 @@ public class OsItnReader implements DataReader<Long> {
         else {
             addAdditionalTowerNodes = true;
         }
-        
+
         this.nodeAccess = graphStorage.getNodeAccess();
 
         osmNodeIdToInternalNodeMap = new GHLongIntBTree(200);
@@ -287,8 +294,8 @@ public class OsItnReader implements DataReader<Long> {
     }
 
     private void preProcessDirOrFile(File osmFile) throws XMLStreamException,
-            IOException, MismatchedDimensionException, FactoryException,
-            TransformException {
+    IOException, MismatchedDimensionException, FactoryException,
+    TransformException {
         if (osmFile.isDirectory()) {
             String absolutePath = osmFile.getAbsolutePath();
             String[] list = osmFile.list();
@@ -302,8 +309,8 @@ public class OsItnReader implements DataReader<Long> {
     }
 
     private void preProcessSingleFile(File osmFile) throws XMLStreamException,
-            IOException, MismatchedDimensionException, FactoryException,
-            TransformException {
+    IOException, MismatchedDimensionException, FactoryException,
+    TransformException {
         OsItnInputFile in = null;
         try {
             logger.error(PREPROCESS_FORMAT, osmFile.getName());
@@ -347,16 +354,13 @@ public class OsItnReader implements DataReader<Long> {
                 // logger.warn("RELATION :" + item.getClass() + " TYPE:" +
                 // item.getTag(OSITNElement.TAG_KEY_TYPE) + " meta?" +
                 // relation.isMetaRelation());
-                if (!relation.isMetaRelation()
-                        && relation.hasTag(OSITNElement.TAG_KEY_TYPE, "route"))
+                if (!relation.isMetaRelation() && relation.hasTag(OSITNElement.TAG_KEY_TYPE, "route"))
                     prepareWaysWithRelationInfo(relation);
 
-                if (relation.hasTag(OSITNElement.TAG_KEY_TYPE,
-                        OSITNElement.TAG_VALUE_TYPE_RESTRICTION))
+                if (relation.hasTag(OSITNElement.TAG_KEY_TYPE, OSITNElement.TAG_VALUE_TYPE_RESTRICTION))
                     prepareRestrictionRelation(relation);
 
-                if (relation.hasTag(OSITNElement.TAG_KEY_TYPE,
-                        OSITNElement.TAG_VALUE_TYPE_NOENTRY)) {
+                if (relation.hasTag(OSITNElement.TAG_KEY_TYPE, OSITNElement.TAG_VALUE_TYPE_NOENTRY)) {
                     prepareNoEntryRelation(relation);
                 }
 
@@ -379,10 +383,14 @@ public class OsItnReader implements DataReader<Long> {
                     prepareRoadDirectionRelation(relation);
                 }
 
+                if (relation.hasTag(OSITNElement.TAG_KEY_CLASSIFICATION)) {
+                    convertRelationTagsToWayAttributeBits(relation);
+                }
+
                 if (++tmpRelationCounter % 50000 == 0) {
                     logger.info(nf(tmpRelationCounter)
                             + " (preprocess), osmWayMap:"
-                            + nf(getRelFlagsMap().size()) + " "
+                            + nf(getOsmWayIdToRouteWeightMap().size()) + " "
                             + Helper.getMemInfo());
                 }
 
@@ -398,6 +406,10 @@ public class OsItnReader implements DataReader<Long> {
         }
     }
 
+    /**
+     * Currently identical handling for access prohibited and access limited to
+     * @param relation
+     */
     private void prepareAccessProhibitedRelation(Relation relation) {
         if (!encodingManager.isVehicleQualifierTypeExcluded(relation)
                 && !encodingManager.isVehicleQualifierTypeIncluded(relation)) {
@@ -452,10 +464,32 @@ public class OsItnReader implements DataReader<Long> {
             }
         }
     }
-
+    private void convertRelationTagsToWayAttributeBits(Relation relation) {
+        String classification = relation.getTag(OSITNElement.TAG_KEY_CLASSIFICATION);
+        TLongIntMap osmWayIdToAttributeBitMaskMap = getOsmWayIdToAttributeBitMaskMap();
+        int bitToSet = 0;
+        switch (classification) {
+        case OSITNElement.TAG_VALUE_CLASSIFICATION_FORD:
+            bitToSet = ATTRIBUTE_BIT_FORD;
+            break;
+        case OSITNElement.TAG_VALUE_CLASSIFICATION_GATE:
+            bitToSet = ATTRIBUTE_BIT_GATE;
+            break;
+        case OSITNElement.TAG_VALUE_CLASSIFICATION_LEVEL_CROSSING:
+            bitToSet = ATTRIBUTE_BIT_LEVEL_CROSSING;
+            break;
+        }
+        ArrayList<? extends RelationMember> members = relation.getMembers();
+        // There will be only one for a RoadLinkInformation classification
+        for (RelationMember relationMember : members) {
+            long wayId = relationMember.ref();
+            int wayAttributeBitMask = osmWayIdToAttributeBitMaskMap.get(wayId)|bitToSet;
+            osmWayIdToAttributeBitMaskMap.put(wayId, wayAttributeBitMask);
+        }
+    }
     /**
      * Handle "No Entry" instructions. Here we are going to store
-     * 
+     *
      * @param relation
      */
     private void prepareNoEntryRelation(Relation relation) {
@@ -551,6 +585,14 @@ public class OsItnReader implements DataReader<Long> {
 
         return edgeRoadDirectionMap;
     }
+    private TLongIntMap getOsmWayIdToAttributeBitMaskMap() {
+        if (osmWayIdToAttributeBitMaskMap == null)
+            osmWayIdToAttributeBitMaskMap = new TLongIntHashMap();
+
+        return osmWayIdToAttributeBitMaskMap;
+    }
+
+
 
     private TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>> getEdgeIdToXToYToNodeFlagsMap() {
         if (edgeIdToXToYToNodeFlagsMap == null)
@@ -565,7 +607,7 @@ public class OsItnReader implements DataReader<Long> {
      * Filter ways but do not analyze properties wayNodes will be filled with
      * participating node ids.
      * <p/>
-     * 
+     *
      * @return true the current xml entry is a way entry and has nodes
      */
     boolean filterWay(OSITNWay way) {
@@ -641,8 +683,8 @@ public class OsItnReader implements DataReader<Long> {
 
     private void writeOsm2GraphFromDirOrFile(File osmFile,
             ProcessData processData, ProcessVisitor processVisitor)
-            throws XMLStreamException, IOException,
-            MismatchedDimensionException, FactoryException, TransformException {
+                    throws XMLStreamException, IOException,
+                    MismatchedDimensionException, FactoryException, TransformException {
         if (osmFile.isDirectory()) {
             String absolutePath = osmFile.getAbsolutePath();
             String[] list = osmFile.list();
@@ -658,8 +700,8 @@ public class OsItnReader implements DataReader<Long> {
 
     private void writeOsm2GraphFromSingleFile(File osmFile,
             ProcessData processData, ProcessVisitor processVisitor)
-            throws XMLStreamException, IOException,
-            MismatchedDimensionException, FactoryException, TransformException {
+                    throws XMLStreamException, IOException,
+                    MismatchedDimensionException, FactoryException, TransformException {
         OsItnInputFile in = null;
         try {
             logger.error(PROCESS_FORMAT, osmFile.getName());
@@ -687,6 +729,7 @@ public class OsItnReader implements DataReader<Long> {
                 logger.info(NODEITEMID_FORMAT, id);
                 if (nodeFilter.get(id) != -1) {
                     OSITNNode nodeItem = (OSITNNode) item;
+
                     processNode(nodeItem);
 
                     String strId = String.valueOf(id);
@@ -758,14 +801,14 @@ public class OsItnReader implements DataReader<Long> {
         RoutingElement item;
         while ((item = in.getNext()) != null) {
             switch (item.getType()) {
-                case OSMElement.RELATION:
-                    if (processData.relationStart < 0) {
-                        logger.info(NOW_PARSING_RELATIONS_FORMAT,
-                                nf(processData.counter));
-                        processData.relationStart = processData.counter;
-                    }
-                    processRelation((Relation) item);
-                    break;
+            case OSMElement.RELATION:
+                if (processData.relationStart < 0) {
+                    logger.info(NOW_PARSING_RELATIONS_FORMAT,
+                            nf(processData.counter));
+                    processData.relationStart = processData.counter;
+                }
+                processRelation((Relation) item);
+                break;
             }
             if (++processData.counter % 5000000 == 0) {
                 logger.info(PROCESSING_LOCS_FORMAT, nf(processData.counter),
@@ -787,11 +830,11 @@ public class OsItnReader implements DataReader<Long> {
         }
     }
 
-    
+
     /**
      * Process properties, encode flags and create edges for the way.
      */
-    void processWay(OSITNWay way, List<OSITNNode> wayNodes) {
+    private void processWay(OSITNWay way, List<OSITNNode> wayNodes) {
 
         if (way.getNodes().size() < 2) {
             return;
@@ -804,6 +847,23 @@ public class OsItnReader implements DataReader<Long> {
 
         long wayOsmId = way.getId();
 
+        // Handle attributeBits
+        int attributeBits = getOsmWayIdToAttributeBitMaskMap().get(way.getId());
+        if (attributeBits!=getOsmWayIdToAttributeBitMaskMap().getNoEntryValue()) {
+            // We have at least one bit set so create tags for the set attributes
+            if ((attributeBits & ATTRIBUTE_BIT_FORD)!=0) {
+                way.setTag(OSITNElement.TAG_VALUE_CLASSIFICATION_FORD, "yes");
+            }
+            if ((attributeBits & ATTRIBUTE_BIT_GATE)!=0) {
+                way.setTag("barrier", OSITNElement.TAG_VALUE_CLASSIFICATION_GATE);
+            }
+            if ((attributeBits & ATTRIBUTE_BIT_LEVEL_CROSSING)!=0) {
+                way.setTag(OSITNElement.TAG_KEY_CLASSIFICATION, OSITNElement.TAG_VALUE_CLASSIFICATION_LEVEL_CROSSING);
+            }
+        }
+
+
+
         long includeWay = encodingManager.acceptWay(way);
         if (includeWay == 0) {
             return;
@@ -814,7 +874,7 @@ public class OsItnReader implements DataReader<Long> {
             return;
         }
 
-        long relationFlags = getRelFlagsMap().get(way.getId());
+        long relationFlags = getOsmWayIdToRouteWeightMap().get(way.getId());
         logger.info(RELFLAGS_FORMAT, way.getId(), relationFlags);
         String wayName = getWayName(way.getId());
         if (null != wayName) {
@@ -868,9 +928,9 @@ public class OsItnReader implements DataReader<Long> {
         // with a routing algorithm bug which prevents turn restrictions from
         // working when you start or finish on the
         // final edge of a way
-         if (addAdditionalTowerNodes) {
+        if (addAdditionalTowerNodes) {
             osmNodeIds = createStartTowerNodeAndEdge(osmNodeIds, way, wayNodes, wayFlags, wayOsmId);
-         }
+        }
         // Process No Entry and then Barriers, and finally add the remaining way
         processNoEntry(way, wayNodes, osmNodeIds, wayFlags, wayOsmId);
 
@@ -895,17 +955,17 @@ public class OsItnReader implements DataReader<Long> {
 
             // add way up to barrier shadow node
             long transfer[] = osmNodeIds.toArray(0, 2); // From 0 for length
-                                                        // 2
+            // 2
             transfer[transfer.length - 1] = newNodeId;
             TLongList partIds = new TLongArrayList(transfer);
             Collection<EdgeIteratorState> newWays = addOSMWay(partIds,
                     wayFlags, wayOsmId);
             // logger.warn(WAY_ADDS_EDGES_FORMAT, wayOsmId, newWays.size());
             startCreatedEdges.addAll(newWays);
-            
+
             // Set the 0th node id to be our new node id
             osmNodeIds.set(0, newNodeId);
-    
+
             for (EdgeIteratorState edge : startCreatedEdges) {
                 encodingManager.applyWayTags(way, edge);
             }
@@ -919,7 +979,7 @@ public class OsItnReader implements DataReader<Long> {
      * OneWay. Once it has run out of NoEntry nodes to process it passes the
      * remainder on to processBarriers to check for barriers and construct the
      * remaining way
-     * 
+     *
      * @param way
      * @param wayNodes
      *            OSITNNode objects for the way nodes, ie not including the
@@ -954,7 +1014,7 @@ public class OsItnReader implements DataReader<Long> {
                 long newNodeId = newNode.getId();
                 // add way up to barrier shadow node
                 long transfer[] = osmNodeIds.toArray(0, 2); // From 0 for length
-                                                            // 2
+                // 2
                 transfer[transfer.length - 1] = newNodeId;
                 TLongList partIds = new TLongArrayList(transfer);
                 Collection<EdgeIteratorState> newWays = addOSMWay(partIds,
@@ -981,17 +1041,17 @@ public class OsItnReader implements DataReader<Long> {
             } else {
                 failedStartNoEntries++;
                 errors_logger
-                        .error("MISSING NODE: osmNodeIdToInternalNodeMap returned -1 for nodeId "
-                                + nodeId
-                                + " on way "
-                                + way.getId()
-                                + " for START Node "
-                                + osmNodeIds.toString()
-                                + " ("
-                                + successfulStartNoEntries
-                                + " succeeded, "
-                                + failedStartNoEntries
-                                + " failed)");
+                .error("MISSING NODE: osmNodeIdToInternalNodeMap returned -1 for nodeId "
+                        + nodeId
+                        + " on way "
+                        + way.getId()
+                        + " for START Node "
+                        + osmNodeIds.toString()
+                        + " ("
+                        + successfulStartNoEntries
+                        + " succeeded, "
+                        + failedStartNoEntries
+                        + " failed)");
             }
         }
         // Process Way Nodes
@@ -1102,10 +1162,10 @@ public class OsItnReader implements DataReader<Long> {
 
                 // add way up to barrier shadow node
                 long transfer[] = osmNodeIds.toArray(osmNodeIds.size() - 2, 2); // From
-                                                                                // 0
-                                                                                // for
-                                                                                // length
-                                                                                // 2
+                // 0
+                // for
+                // length
+                // 2
                 transfer[transfer.length - 1] = newNodeId;
                 TLongList partIds = new TLongArrayList(transfer);
                 Collection<EdgeIteratorState> newWays = addOSMWay(partIds,
@@ -1133,17 +1193,17 @@ public class OsItnReader implements DataReader<Long> {
                 // TODO Figure out why there are some end nodes that don't have
                 // internal node ids
                 errors_logger
-                        .error("MISSING NODE: osmNodeIdToInternalNodeMap returned -1 for nodeId "
-                                + nodeId
-                                + " on way "
-                                + way.getId()
-                                + " for END Node "
-                                + osmNodeIds.toString()
-                                + " ("
-                                + successfulEndNoEntries
-                                + " succeeded, "
-                                + failedEndNoEntries
-                                + " failed)");
+                .error("MISSING NODE: osmNodeIdToInternalNodeMap returned -1 for nodeId "
+                        + nodeId
+                        + " on way "
+                        + way.getId()
+                        + " for END Node "
+                        + osmNodeIds.toString()
+                        + " ("
+                        + successfulEndNoEntries
+                        + " succeeded, "
+                        + failedEndNoEntries
+                        + " failed)");
             }
         }
 
@@ -1179,7 +1239,7 @@ public class OsItnReader implements DataReader<Long> {
     }
 
     /**
-     * 
+     *
      * @param wayId
      * @param wayCoord
      * @return "true" for (+), "-1" for (-), null for not set
@@ -1229,7 +1289,7 @@ public class OsItnReader implements DataReader<Long> {
      * same location and adds ways such that they are connected. The remaining
      * way once it has processed all barriers is just created as a series of
      * ways between the remaining nodes
-     * 
+     *
      * @param way
      *            Not really used much. Could be refactored so this parameter is
      *            not required.
@@ -1327,9 +1387,9 @@ public class OsItnReader implements DataReader<Long> {
             long newNodeId = -1;
 
             int graphIndex = getNodeMap().get(lastNodeId);// -4 for wayOsmId 4000000025288017
-            
+
             // An index < TOWER_NODE means it is a tower node.
-            boolean doInsertAdditionalTowerNodes = addAdditionalTowerNodes && (graphIndex < TOWER_NODE); 
+            boolean doInsertAdditionalTowerNodes = addAdditionalTowerNodes && (graphIndex < TOWER_NODE);
 
             // add end tower here
             if (doInsertAdditionalTowerNodes) {
@@ -1371,8 +1431,8 @@ public class OsItnReader implements DataReader<Long> {
     }
 
     /**
-     * Called at Stage 3
-     * 
+     * Called at Stage 3. This processes Mandatory Turn and No Turn
+     *
      * @param relation
      * @throws XMLStreamException
      */
@@ -1469,8 +1529,6 @@ public class OsItnReader implements DataReader<Long> {
         if (isInBounds(node)) {
             addNode(node);
 
-            // ADD HANDLING FOR NO ENTRY AT THE ENDS HERE
-
             // analyze node tags for barriers
             if (node.hasTags()) {
                 long nodeFlags = encodingManager.handleNodeTags(node);
@@ -1524,16 +1582,16 @@ public class OsItnReader implements DataReader<Long> {
                 continue;
             long osmId = member.ref();
             // logger.warn(ADDING_WAY_RELATION_TO_FORMAT, osmId);
-            long oldRelationFlags = getRelFlagsMap().get(osmId);
+            long oldRelationFlags = getOsmWayIdToRouteWeightMap().get(osmId);
 
-            // Check if our new relation data is better comparated to the the
+            // Check if our new relation data is better compared to the the
             // last one
             long newRelationFlags = encodingManager.handleRelationTags(
                     relation, oldRelationFlags);
             // logger.warn(APPLYING_RELATION_FORMAT, oldRelationFlags,
             // newRelationFlags);
             if (oldRelationFlags != newRelationFlags) {
-                getRelFlagsMap().put(osmId, newRelationFlags);
+                getOsmWayIdToRouteWeightMap().put(osmId, newRelationFlags);
             }
         }
     }
@@ -1620,7 +1678,7 @@ public class OsItnReader implements DataReader<Long> {
                 if (tmpNode <= -TOWER_NODE && tmpNode >= TOWER_NODE)
                     throw new AssertionError(
                             "Mapped index not in correct bounds " + tmpNode
-                                    + ", " + osmId);
+                            + ", " + osmId);
 
                 if (tmpNode > -TOWER_NODE) {
                     boolean convertToTowerNode = i == 0 || i == lastIndex;
@@ -1661,7 +1719,7 @@ public class OsItnReader implements DataReader<Long> {
         if (fromIndex < 0 || toIndex < 0)
             throw new AssertionError(
                     "to or from index is invalid for this edge " + fromIndex
-                            + "->" + toIndex + ", points:" + pointList);
+                    + "->" + toIndex + ", points:" + pointList);
         if (pointList.getDimension() != nodeAccess.getDimension())
             throw new AssertionError(
                     "Dimension does not match for pointList vs. nodeAccess "
@@ -1783,7 +1841,6 @@ public class OsItnReader implements DataReader<Long> {
     private OSITNNode addBarrierNode(long nodeId) {
         OSITNNode newNode = null;
         int graphIndex = getNodeMap().get(nodeId);
-        // System.out.println("graphIndex BEFORE is " + graphIndex);
 
         if (graphIndex < TOWER_NODE) {
             graphIndex = -graphIndex - 3;
@@ -1843,7 +1900,7 @@ public class OsItnReader implements DataReader<Long> {
     /**
      * Creates an OSM turn relation out of an unspecified OSM relation
      * <p>
-     * 
+     *
      * @return the OSM turn relation, <code>null</code>, if unsupported turn
      *         relation
      */
@@ -1926,7 +1983,7 @@ public class OsItnReader implements DataReader<Long> {
         return osmNodeIdToNodeFlagsMap;
     }
 
-    TLongLongHashMap getRelFlagsMap() {
+    private TLongLongHashMap getOsmWayIdToRouteWeightMap() {
         return osmWayIdToRouteWeightMap;
     }
 
@@ -1975,7 +2032,7 @@ public class OsItnReader implements DataReader<Long> {
     private void printInfo(String str) {
         logger.info(PRINT_INFO_FORMAT, str, graphStorage.getNodes(),
                 getNodeMap().getSize(), getNodeMap().getMemoryUsage(),
-                getNodeFlagsMap().size(), getRelFlagsMap().size(),
+                getNodeFlagsMap().size(), getOsmWayIdToRouteWeightMap().size(),
                 Helper.getMemInfo());
     }
 

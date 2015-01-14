@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ import com.graphhopper.reader.RoutingElement;
 /**
  * Base class for all OSM objects
  * <p/>
- * 
+ *
  * @author Nop
  * @author Peter
  * @author phopkins
@@ -53,12 +53,17 @@ public abstract class OSITNElement implements RoutingElement {
     public static final String TAG_KEY_ONEWAY_ORIENTATION = "oneway";
     public static final String TAG_KEY_NOENTRY_ORIENTATION = "noentry";
     public static final String TAG_KEY_RESTRICTION = "restriction";
+    public static final String TAG_KEY_CLASSIFICATION = "classification";
 
     public static final String TAG_VALUE_TYPE_ONEWAY = "oneway";
     public static final String TAG_VALUE_TYPE_NOENTRY = "noentry";
     public static final String TAG_VALUE_TYPE_ACCESS_LIMITED = "limited";
     public static final String TAG_VALUE_TYPE_ACCESS_PROHIBITED = "prohibited";
     public static final String TAG_VALUE_TYPE_RESTRICTION = "restriction";
+
+    public static final String TAG_VALUE_CLASSIFICATION_FORD = "ford";
+    public static final String TAG_VALUE_CLASSIFICATION_LEVEL_CROSSING = "level crossing";
+    public static final String TAG_VALUE_CLASSIFICATION_GATE = "gate";
 
     private final int type;
     private final long id;
@@ -113,6 +118,10 @@ public abstract class OSITNElement implements RoutingElement {
                     }
                     case "directedLink": {
                         event = handleDirectedLink(parser);
+                        break;
+                    }
+                    case "classification": {
+                        event = handleClassification(parser);
                         break;
                     }
                     case "instruction": {
@@ -198,28 +207,28 @@ public abstract class OSITNElement implements RoutingElement {
         case "Motorway":
         case "B Road":
         case "Minor Road":
-        // Pedestrianised Street is supported for walking so traversing will be controlled by speed in the flag encoders
+            // Pedestrianised Street is supported for walking so traversing will be controlled by speed in the flag encoders
         case "Pedestrianised Street":
         case "Private Road - Publicly Accessible":
-        // Alleys are not traversible
-        // case "Alley":
-        // Private Road - Restricted Access are not traversible
-        // case "Private Road - Restricted Access":
+            // Alleys are not traversible
+            // case "Alley":
+            // Private Road - Restricted Access are not traversible
+            // case "Private Road - Restricted Access":
         case "Local Street":
             return elementText;
         default:
             return null;
         }
-        
+
     }
 
     private String resolveNature(String elementText) {
         logger.info("OSITNElement.resolveNature( " + elementText + ")");
         switch (elementText) {
-            case "Single Carriageway":
-            case "Dual Carriageway":
-            case "Slip Road":
-                return elementText;
+        case "Single Carriageway":
+        case "Dual Carriageway":
+        case "Slip Road":
+            return elementText;
         }
         return null;
     }
@@ -227,9 +236,9 @@ public abstract class OSITNElement implements RoutingElement {
     /**
      * Process <code><osgb:instruction>One Way</osgb:instruction></code>
      * instructions within an environmentalQualifier element.
-     * 
+     *
      * It is either "One Way", "No Entry" or a turn restriction type
-     * 
+     *
      * @param parser
      * @return
      * @throws XMLStreamException
@@ -243,34 +252,19 @@ public abstract class OSITNElement implements RoutingElement {
             setTag(TAG_KEY_ONEWAY_ORIENTATION, "-1");
             break;
         case "No Entry":
-            // We are processing a No Entry RoadRouteInformation element. Set
-            // the type to noentry
+            // We are processing a No Entry RoadRouteInformation element.
             setTag(TAG_KEY_TYPE, TAG_VALUE_TYPE_NOENTRY);
             // Default the orientation to -1. This could be changed when we
             // process the directedLink element later
             setTag(TAG_KEY_NOENTRY_ORIENTATION, "-1");
-            // We might need this?
-            setTag(TAG_KEY_RESTRICTION, elementText);
             break;
         case "Access Prohibited To":
-            // We are processing a No Entry RoadRouteInformation element. Set
-            // the type to noentry
+            // We are processing a Access Prohibited To RoadPartialLinkInformation (maybe a RoadRouteInformation???) element.
             setTag(TAG_KEY_TYPE, TAG_VALUE_TYPE_ACCESS_PROHIBITED);
-            // Default the orientation to -1. This could be changed when we
-            // process the directedLink element later
-            // setTag(TAG_KEY_NOENTRY_ORIENTATION, "-1");
-            // We might need this?
-            // setTag(TAG_KEY_RESTRICTION, elementText);
             break;
         case "Access Limited To":
-            // We are processing a No Entry RoadRouteInformation element. Set
-            // the type to noentry
+            // We are processing a Access Limited To RoadPartialLinkInformation (maybe a RoadRouteInformation???) element.
             setTag(TAG_KEY_TYPE, TAG_VALUE_TYPE_ACCESS_LIMITED);
-            // Default the orientation to -1. This could be changed when we
-            // process the directedLink element later
-            // setTag(TAG_KEY_NOENTRY_ORIENTATION, "-1");
-            // We might need this?
-            // setTag(TAG_KEY_RESTRICTION, elementText);
             break;
         default:
             // Handles Mandatory Turn and No Turn
@@ -321,9 +315,33 @@ public abstract class OSITNElement implements RoutingElement {
     }
 
     /**
+     * Handle classifications - Level Crossing, Ford, Gate
+     * @param parser
+     * @return
+     * @throws XMLStreamException
+     */
+    private int handleClassification(XMLStreamReader parser) throws XMLStreamException {
+        String elementText = parser.getElementText();
+        System.out.println("HANDLE CLASSIFICATION "  + elementText + " " + this.getClass().getName());
+        switch (elementText) {
+        case "Ford":
+            setTag(TAG_KEY_CLASSIFICATION, TAG_VALUE_CLASSIFICATION_FORD);
+            break;
+        case "Level Crossing":
+            setTag(TAG_KEY_CLASSIFICATION, TAG_VALUE_CLASSIFICATION_LEVEL_CROSSING);
+            break;
+        case "Gate":
+            setTag(TAG_KEY_CLASSIFICATION, TAG_VALUE_CLASSIFICATION_GATE);
+            break;
+        }
+        int event = parser.getEventType();
+        return event;
+    }
+
+    /**
      * process parsing of directedLink data. If this is a "oneway" OR "noentry"
      * we will change the -1 to true if the orientation on the link it "+"
-     * 
+     *
      * @param parser
      * @return
      * @throws XMLStreamException
@@ -406,6 +424,7 @@ public abstract class OSITNElement implements RoutingElement {
         case "RoadNode":
         case "RoadLink":
         case "RoadRouteInformation":
+        case "RoadLinkInformation":
         case "Road":
         case "RouteLink":
         case "RouteNode":
@@ -440,10 +459,12 @@ public abstract class OSITNElement implements RoutingElement {
             }
     }
 
+    @Override
     public boolean hasTags() {
         return !properties.isEmpty();
     }
 
+    @Override
     public String getTag(String name) {
         return (String) properties.get(name);
     }

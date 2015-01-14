@@ -11,15 +11,13 @@ import java.io.IOException;
 import org.junit.Test;
 
 import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.storage.AbstractGraphStorageTester;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
 public class AccessProhibitedTest extends AbstractOsItnReaderTest{
-    
+
     /**
      * Access Prohibited for everything except Buses (So motor vehicles can NOT access)
      * @throws IOException
@@ -52,9 +50,9 @@ public class AccessProhibitedTest extends AbstractOsItnReaderTest{
     public void testAccessProhibitedExceptMotorVehicleFalseFrom17To19() throws IOException {
         runAccessProhibitedToNode19Test("./src/test/resources/com/graphhopper/reader/os-itn-access-prohibited-except-for-motor-vehicles-false-crossroad.xml");
     }
-    
+
     private void checkAccessProhibitedNetwork(GraphHopperStorage graph, EdgeExplorer explorer) {
-        // Assert that our graph has 4 nodes. We have lost one because of our prohibited route 
+        // Assert that our graph has 4 nodes. We have lost one because of our prohibited route
         assertEquals(4, graph.getNodes());
 
         // Assert that there are four links/roads/edges that can be seen from
@@ -101,7 +99,7 @@ public class AccessProhibitedTest extends AbstractOsItnReaderTest{
         evaluateRouting(iter, 0, true, true, true);
     }
     private void checkNonAccessProhibitedNetwork(GraphHopperStorage graph, EdgeExplorer explorer) {
-        // Assert that our graph has 4 nodes. We have lost one because of our prohibited route 
+        // Assert that our graph has 4 nodes. We have lost one because of our prohibited route
         assertEquals(5, graph.getNodes());
 
         // Assert that there are four links/roads/edges that can be seen from
@@ -181,11 +179,11 @@ public class AccessProhibitedTest extends AbstractOsItnReaderTest{
 
         DefaultEdgeFilter carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
         carOutExplorer = graph.createEdgeExplorer(carOutFilter);
-        
+
         checkAccessProhibitedNetwork(graph, carOutExplorer);
-        
+
     }
-    
+
     private void runNonAccessProhibitedToNode19Test(String filename) throws IOException {
         boolean turnRestrictionsImport = true;
         boolean is3D = false;
@@ -214,7 +212,7 @@ public class AccessProhibitedTest extends AbstractOsItnReaderTest{
 
         DefaultEdgeFilter carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
         carOutExplorer = graph.createEdgeExplorer(carOutFilter);
-        
+
         checkNonAccessProhibitedNetwork(graph, carOutExplorer);
-    }    
+    }
 }

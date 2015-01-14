@@ -212,14 +212,13 @@ public class OsItnInputFile implements Sink, Closeable {
                             return OSITNWay.create(id, parser);
                         }
 
+                        case "RoadLinkInformation": 
                         case "RoadRouteInformation": {
                             return OSITNRelation.create(id, parser);
                         }
 
                         case "Road": {
                             return OsItnMetaData.create(id, parser);
-                        }
-                        case "RoadLinkInformation": {
                         }
                         case "RoadNodeInformation": {
                         }

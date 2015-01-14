@@ -214,7 +214,7 @@
 		</osgb:RoadLink>
 	</osgb:networkMember>
 	<osgb:roadInformationMember>
-		<osgb:RoadRouteInformation fid='osgb4000000025219970'>
+		<osgb:RoadLinkInformation fid='osgb4000000025219970'>
 			<osgb:version>2</osgb:version>
 			<osgb:versionDate>2005-09-13</osgb:versionDate>
 			<osgb:theme>Road Routing Information</osgb:theme>
@@ -231,7 +231,7 @@
 				<osgb:instruction>Access Prohibited To</osgb:instruction>
 			</osgb:environmentQualifier>
 			<osgb:referenceToRoadLink xlink:href='#osgb4000000025288019'/>
-		</osgb:RoadRouteInformation>
+		</osgb:RoadLinkInformation>
 	</osgb:roadInformationMember>
 	<osgb:roadMember>
 		<osgb:Road fid='osgb4000000025366114'>

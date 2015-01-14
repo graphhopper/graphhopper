@@ -11,7 +11,7 @@
 			<osgb:changeHistory>
 				<osgb:changeDate>2002-10-31</osgb:changeDate>
 				<osgb:reasonForChange>New</osgb:reasonForChange>
-			</osgb:changeHistory>
+			</osgb:changeHistory> 
 			<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
 			<osgb:point>
 				<gml:Point srsName='osgb:BNG'>
@@ -57,42 +57,8 @@
 			<osgb:referenceToTopographicArea xlink:href='#osgb1000002062025665' />
 		</osgb:RoadNode>
 	</osgb:networkMember>
-	<osgb:networkMember>
-		<osgb:RoadNode fid='osgb4000000025277883'>
-			<osgb:version>2</osgb:version>
-			<osgb:versionDate>2005-09-13</osgb:versionDate>
-			<osgb:theme>Road Network</osgb:theme>
-			<osgb:changeHistory>
-				<osgb:changeDate>2002-10-31</osgb:changeDate>
-				<osgb:reasonForChange>New</osgb:reasonForChange>
-			</osgb:changeHistory>
-			<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
-			<osgb:point>
-				<gml:Point srsName='osgb:BNG'>
-					<gml:coordinates>280000.000,85000.000</gml:coordinates>
-				</gml:Point>
-			</osgb:point>
-			<osgb:referenceToTopographicArea xlink:href='#osgb1000002062025665' />
-		</osgb:RoadNode>
-	</osgb:networkMember>
-	<osgb:networkMember>
-		<osgb:RoadNode fid='osgb4000000025277884'>
-			<osgb:version>2</osgb:version>
-			<osgb:versionDate>2005-09-13</osgb:versionDate>
-			<osgb:theme>Road Network</osgb:theme>
-			<osgb:changeHistory>
-				<osgb:changeDate>2002-10-31</osgb:changeDate>
-				<osgb:reasonForChange>New</osgb:reasonForChange>
-			</osgb:changeHistory>
-			<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
-			<osgb:point>
-				<gml:Point srsName='osgb:BNG'>
-					<gml:coordinates>280000.000,95000.000</gml:coordinates>
-				</gml:Point>
-			</osgb:point>
-			<osgb:referenceToTopographicArea xlink:href='#osgb1000002062025665' />
-		</osgb:RoadNode>
-	</osgb:networkMember>
+	
+
 	<osgb:networkMember>
 		<osgb:RoadLink fid="osgb4000000025288017">
 			<osgb:version>4</osgb:version>
@@ -116,7 +82,8 @@
 				</gml:LineString>
 			</osgb:polyline>
 			<osgb:directedNode orientation="-" xlink:href="#osgb4000000025277880" />
-			<osgb:directedNode orientation="+" xlink:href="#osgb4000000025277881" />
+<!-- 			<osgb:directedNode orientation="+" xlink:href="#osgb4000000025277881" /> -->
+			<osgb:directedNode orientation="+" gradeSeparation='1' xlink:href="#osgb4000000025277881" />
 			<osgb:referenceToTopographicArea xlink:href="#osgb1000002062010639" />
 			<osgb:referenceToTopographicArea xlink:href="#osgb1000002062041282" />
 			<osgb:referenceToTopographicArea xlink:href="#osgb1000002062010640" />
@@ -145,69 +112,10 @@
 					<gml:coordinates>280000.000,90000.000 270000.000,90000.000 </gml:coordinates>
 				</gml:LineString>
 			</osgb:polyline>
-			<osgb:directedNode orientation="-" xlink:href="#osgb4000000025277881" />
+			<osgb:directedNode orientation="-" gradeSeparation='1' xlink:href="#osgb4000000025277881" />
+<!-- 			<osgb:directedNode orientation="-" xlink:href="#osgb4000000025277881" /> -->
 			<osgb:directedNode orientation="+" xlink:href="#osgb4000000025277882" />
 			<osgb:referenceToTopographicArea xlink:href="#osgb1000002062010639"></osgb:referenceToTopographicArea>
-			<osgb:referenceToTopographicArea xlink:href="#osgb1000002062041282" />
-			<osgb:referenceToTopographicArea xlink:href="#osgb1000002062010640" />
-			<osgb:referenceToTopographicArea xlink:href="#osgb1000002062010474" />
-		</osgb:RoadLink>
-	</osgb:networkMember>
-	<osgb:networkMember>
-		<osgb:RoadLink fid="osgb4000000025288019">
-			<osgb:version>4</osgb:version>
-			<osgb:versionDate>2006-02-03</osgb:versionDate>
-			<osgb:theme>Road Network</osgb:theme>
-			<osgb:changeHistory>
-				<osgb:changeDate>2003-01-27</osgb:changeDate>
-				<osgb:reasonForChange>New</osgb:reasonForChange>
-			</osgb:changeHistory>
-			<osgb:changeHistory>
-				<osgb:changeDate>2003-01-27</osgb:changeDate>
-				<osgb:reasonForChange>Modified</osgb:reasonForChange>
-			</osgb:changeHistory>
-			<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
-			<osgb:descriptiveTerm>A Road</osgb:descriptiveTerm>
-			<osgb:natureOfRoad>Single Carriageway</osgb:natureOfRoad>
-			<osgb:length>538.90</osgb:length>
-			<osgb:polyline>
-				<gml:LineString srsName="osgb:BNG">
-					<gml:coordinates>280000.000,85000.000 280000.000,90000.000 </gml:coordinates>
-				</gml:LineString>
-			</osgb:polyline>
-			<osgb:directedNode orientation="-" xlink:href="#osgb4000000025277883"></osgb:directedNode>
-			<osgb:directedNode orientation="+" xlink:href="#osgb4000000025277881" />
-			<osgb:referenceToTopographicArea xlink:href="#osgb1000002062010639" />
-			<osgb:referenceToTopographicArea xlink:href="#osgb1000002062041282" />
-			<osgb:referenceToTopographicArea xlink:href="#osgb1000002062010640" />
-			<osgb:referenceToTopographicArea xlink:href="#osgb1000002062010474" />
-		</osgb:RoadLink>
-	</osgb:networkMember>
-	<osgb:networkMember>
-		<osgb:RoadLink fid="osgb4000000025288020">
-			<osgb:version>4</osgb:version>
-			<osgb:versionDate>2006-02-03</osgb:versionDate>
-			<osgb:theme>Road Network</osgb:theme>
-			<osgb:changeHistory>
-				<osgb:changeDate>2003-01-27</osgb:changeDate>
-				<osgb:reasonForChange>New</osgb:reasonForChange>
-			</osgb:changeHistory>
-			<osgb:changeHistory>
-				<osgb:changeDate>2003-01-27</osgb:changeDate>
-				<osgb:reasonForChange>Modified</osgb:reasonForChange>
-			</osgb:changeHistory>
-			<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
-			<osgb:descriptiveTerm>A Road</osgb:descriptiveTerm>
-			<osgb:natureOfRoad>Single Carriageway</osgb:natureOfRoad>
-			<osgb:length>538.90</osgb:length>
-			<osgb:polyline>
-				<gml:LineString srsName="osgb:BNG">
-					<gml:coordinates>280000.000,90000.000 280000.000,95000.000 </gml:coordinates>
-				</gml:LineString>
-			</osgb:polyline>
-			<osgb:directedNode orientation="-" xlink:href="#osgb4000000025277881" />
-			<osgb:directedNode orientation="+" xlink:href="#osgb4000000025277884" />
-			<osgb:referenceToTopographicArea xlink:href="#osgb1000002062010639" />
 			<osgb:referenceToTopographicArea xlink:href="#osgb1000002062041282" />
 			<osgb:referenceToTopographicArea xlink:href="#osgb1000002062010640" />
 			<osgb:referenceToTopographicArea xlink:href="#osgb1000002062010474" />
@@ -223,14 +131,16 @@
 				<osgb:reasonForChange>New</osgb:reasonForChange>
 			</osgb:changeHistory>
 			<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
-			<osgb:vehicleQualifier>
-<!-- 			Access Prohibited To everthing EXCEPT Motor Vehicles -->
-				<osgb:type exceptFor="true">Motor Vehicles</osgb:type>
-			</osgb:vehicleQualifier>
 			<osgb:environmentQualifier>
-				<osgb:instruction>Access Prohibited To</osgb:instruction>
+				<osgb:classification>Ford</osgb:classification>
 			</osgb:environmentQualifier>
-			<osgb:referenceToRoadLink xlink:href='#osgb4000000025288019'/>
+			<osgb:referenceToRoadLink xlink:href='#osgb4000000025288017'/>
+			<osgb:distanceFromStart>5000.0</osgb:distanceFromStart>
+			<osgb:point>
+				<gml:Point srsName='osgb:BNG'>
+					<gml:coordinates>285000.000,90000.000</gml:coordinates>
+				</gml:Point>
+			</osgb:point>
 		</osgb:RoadLinkInformation>
 	</osgb:roadInformationMember>
 	<osgb:roadMember>
@@ -260,47 +170,12 @@
 			</osgb:changeHistory>
 			<osgb:descriptiveGroup>Named Road</osgb:descriptiveGroup>
 			<osgb:roadName>BONHAY ROAD</osgb:roadName>
-			<osgb:networkMember xlink:href='#osgb4000000025288017' />
-			<osgb:networkMember xlink:href='#osgb4000000025288018' />
+			<osgb:networkMember xlink:href='#osgb4000000025277880' />
+			<osgb:networkMember xlink:href='#osgb4000000025277881' />
+			<osgb:networkMember xlink:href='#osgb4000000025277882' />
 			<osgb:boundedBy>
 				<gml:Box srsName='osgb:BNG'>
-					<gml:coordinates>291211.000,92187.000 291549.000,93434.920</gml:coordinates>
-				</gml:Box>
-			</osgb:boundedBy>
-		</osgb:Road>
-	</osgb:roadMember>
-	<osgb:roadMember>
-		<osgb:Road fid='osgb4000000025366115'>
-			<osgb:version>6</osgb:version>
-			<osgb:versionDate>2008-11-11</osgb:versionDate>
-			<osgb:theme>Road Network</osgb:theme>
-			<osgb:changeHistory>
-				<osgb:changeDate>2003-03-13</osgb:changeDate>
-				<osgb:reasonForChange>New</osgb:reasonForChange>
-			</osgb:changeHistory>
-			<osgb:changeHistory>
-				<osgb:changeDate>2004-10-26</osgb:changeDate>
-				<osgb:reasonForChange>Modified</osgb:reasonForChange>
-			</osgb:changeHistory>
-			<osgb:changeHistory>
-				<osgb:changeDate>2008-02-11</osgb:changeDate>
-				<osgb:reasonForChange>Modified</osgb:reasonForChange>
-			</osgb:changeHistory>
-			<osgb:changeHistory>
-				<osgb:changeDate>2008-07-15</osgb:changeDate>
-				<osgb:reasonForChange>Modified</osgb:reasonForChange>
-			</osgb:changeHistory>
-			<osgb:changeHistory>
-				<osgb:changeDate>2008-10-08</osgb:changeDate>
-				<osgb:reasonForChange>Modified</osgb:reasonForChange>
-			</osgb:changeHistory>
-			<osgb:descriptiveGroup>Named Road</osgb:descriptiveGroup>
-			<osgb:roadName>OTHER ROAD</osgb:roadName>
-			<osgb:networkMember xlink:href='#osgb4000000025288019' />
-			<osgb:networkMember xlink:href='#osgb4000000025288020' />
-			<osgb:boundedBy>
-				<gml:Box srsName='osgb:BNG'>
-					<gml:coordinates>291211.000,92187.000 291549.000,93434.920</gml:coordinates>
+					<gml:coordinates>290000.000,90000.000 270000.000,90000.000</gml:coordinates>
 				</gml:Box>
 			</osgb:boundedBy>
 		</osgb:Road>

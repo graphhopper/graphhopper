@@ -1,10 +1,10 @@
 /*
  *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
  *
- *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *  GraphHopper licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
  *
  *       http://www.apache.org/licenses/LICENSE-2.0
@@ -125,7 +125,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         acceptedRailways.add("razed");
         acceptedRailways.add("historic");
         acceptedRailways.add("obliterated");
-        
+
         intendedValues.add("true");
 
         excludedValues.add("false");
@@ -495,7 +495,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         double durationInHours = parseDuration(way.getTag("duration")) / 60d;
         if (durationInHours > 0)
             try
-            {
+        {
                 Number estimatedLength = way.getTag("estimated_distance", null);
                 if (estimatedLength != null)
                 {
@@ -508,9 +508,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                         shortTripsSpeed = getMaxSpeed();
                     longTripsSpeed = shortTripsSpeed;
                 }
-            } catch (Exception ex)
-            {
-            }
+        } catch (Exception ex)
+        {
+        }
 
         if (durationInHours == 0)
         {
@@ -570,7 +570,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (maxTurnCosts == 0)
             return shift;
 
-        // optimization for turn restrictions only 
+        // optimization for turn restrictions only
         else if (maxTurnCosts == 1)
         {
             turnRestrictionBit = 1L << shift;
@@ -587,7 +587,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                 // find value
                 flags &= mask;
                 flags >>= shift;
-                return flags;
+            return flags;
             }
         };
         return shift + turnBits;
@@ -681,14 +681,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     {
         switch (key)
         {
-            case K_FORWARD:
-                return value ? flags | forwardBit : flags & ~forwardBit;
-            case K_BACKWARD:
-                return value ? flags | backwardBit : flags & ~backwardBit;
-            case K_ROUNDABOUT:
-                return value ? flags | roundaboutBit : flags & ~roundaboutBit;
-            default:
-                throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
+        case K_FORWARD:
+            return value ? flags | forwardBit : flags & ~forwardBit;
+        case K_BACKWARD:
+            return value ? flags | backwardBit : flags & ~backwardBit;
+        case K_ROUNDABOUT:
+            return value ? flags | roundaboutBit : flags & ~roundaboutBit;
+        default:
+            throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
         }
     }
 
@@ -697,14 +697,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     {
         switch (key)
         {
-            case K_FORWARD:
-                return (flags & forwardBit) != 0;
-            case K_BACKWARD:
-                return (flags & backwardBit) != 0;
-            case K_ROUNDABOUT:
-                return (flags & roundaboutBit) != 0;
-            default:
-                throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
+        case K_FORWARD:
+            return (flags & forwardBit) != 0;
+        case K_BACKWARD:
+            return (flags & backwardBit) != 0;
+        case K_ROUNDABOUT:
+            return (flags & roundaboutBit) != 0;
+        default:
+            throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
         }
     }
 
@@ -800,7 +800,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (TurnWeighting.class.isAssignableFrom(feature))
             return maxTurnCosts > 0;
 
-        return false;
+            return false;
     }
 
     /**
@@ -810,11 +810,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      */
     public boolean isVehicleQualifierTypeIncluded(RoutingElement routingElement) {
         if (routingElement.hasTag(vehicleQualifierTypeInclusions, intendedValues)) {
-//            for (String string : vehicleQualifierTypeExclusions) {
-//                if (routingElement.hasTag(string)) {
-//                    System.out.println("Found inclusion " + string + " with " + routingElement.getTag(string));
-//                }
-//            }
             // It is specifically included
             return true;
         }
@@ -827,12 +822,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      */
     public boolean isVehicleQualifierTypeExcluded(RoutingElement routingElement) {
         if (routingElement.hasTag(vehicleQualifierTypeExclusions, excludedValues)) {
-//            for (String string : vehicleQualifierTypeExclusions) {
-//                if (routingElement.hasTag(string)) {
-//                    System.out.println("Found exclusion " + string + " with " + routingElement.getTag(string));
-//                }
-//            }
-//            System.out.println();
             // It is specifically excluded
             return true;
         }
