@@ -131,10 +131,8 @@ public class RoutingAlgorithmIT
     public void testMoscowTurnCosts()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
-
-        // TODO #163
-        // list.add(new OneRun(55.813159,37.593884, 55.811278,37.594217, 1000, 12));
+        list.add(new OneRun(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));        
+        list.add(new OneRun(55.813159, 37.593884, 55.811278, 37.594217, 1048, 13));
         // TODO include CH
         boolean testAlsoCH = false, is3D = false;
         runAlgo(testCollector, "files/moscow.osm.gz", "target/graph-moscow",

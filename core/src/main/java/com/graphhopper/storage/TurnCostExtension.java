@@ -166,19 +166,19 @@ public class TurnCostExtension implements GraphExtension
     /**
      * @return turn flags of the specified node and edge properties.
      */
-    public long getTurnCostFlags( int node, int edgeFrom, int edgeTo )
+    public long getTurnCostFlags( int edgeFrom, int nodeVia, int edgeTo )
     {
         if (edgeFrom == EdgeIterator.NO_EDGE || edgeTo == EdgeIterator.NO_EDGE)
             throw new IllegalArgumentException("from and to edge cannot be NO_EDGE");
-        if (node < 0)
+        if (nodeVia < 0)
             throw new IllegalArgumentException("via node cannot be negative");
 
-        return nextCostFlags(node, edgeFrom, edgeTo);
+        return nextCostFlags(edgeFrom, nodeVia, edgeTo);
     }
 
-    private long nextCostFlags( int node, int edgeFrom, int edgeTo )
+    private long nextCostFlags( int edgeFrom, int nodeVia, int edgeTo )
     {
-        int turnCostIndex = nodeAccess.getAdditionalNodeField(node);
+        int turnCostIndex = nodeAccess.getAdditionalNodeField(nodeVia);
         int i = 0;
         for (; i < 1000; i++)
         {

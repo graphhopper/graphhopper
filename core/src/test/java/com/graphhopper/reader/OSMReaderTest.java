@@ -539,26 +539,26 @@ public class OSMReaderTest
 
         // (2-3)->(3-4) only_straight_on = (2-3)->(3-8) restricted
         // (4-3)->(3-8) no_right_turn = (4-3)->(3-8) restricted
-        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(n3, edge2_3, edge3_8)) > 0);
-        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(n3, edge4_3, edge3_8)) > 0);
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n3, edge2_3, edge3_4)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n3, edge2_3, edge3_2)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n3, edge2_3, edge3_4)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n3, edge4_3, edge3_2)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n3, edge8_3, edge3_2)));
+        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_8)) > 0);
+        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge4_3, n3, edge3_8)) > 0);
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_4)));
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_2)));
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_4)));
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge4_3, n3, edge3_2)));
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge8_3, n3, edge3_2)));
 
         // u-turn restriction for (6-1)->(1-6) but not for (1-6)->(6-1)
-        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(n1, edge1_6, edge1_6)) > 0);
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n6, edge1_6, edge1_6)));
+        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge1_6, n1, edge1_6)) > 0);
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge1_6, n6, edge1_6)));
 
         int edge4_5 = GHUtility.getEdge(graph, n4, n5).getEdge();
         int edge5_6 = GHUtility.getEdge(graph, n5, n6).getEdge();
         int edge5_1 = GHUtility.getEdge(graph, n5, n1).getEdge();
 
         // (4-5)->(5-1) right_turn_only = (4-5)->(5-6) restricted 
-        long costsFlags = tcStorage.getTurnCostFlags(n5, edge4_5, edge5_6);
+        long costsFlags = tcStorage.getTurnCostFlags(edge4_5, n5, edge5_6);
         assertFalse(carEncoder.isTurnRestricted(costsFlags));
-        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(n5, edge4_5, edge5_1)) > 0);
+        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge4_5, n5, edge5_1)) > 0);
 
         // for bike
         assertFalse(bikeEncoder.isTurnRestricted(costsFlags));
@@ -570,9 +570,9 @@ public class OSMReaderTest
         int edge10_11 = GHUtility.getEdge(graph, n10, n11).getEdge();
         int edge11_14 = GHUtility.getEdge(graph, n11, n14).getEdge();
 
-        assertEquals(0, tcStorage.getTurnCostFlags(n11, edge11_14, edge10_11));
+        assertEquals(0, tcStorage.getTurnCostFlags(edge11_14, n11, edge10_11));
 
-        costsFlags = tcStorage.getTurnCostFlags(n11, edge10_11, edge11_14);
+        costsFlags = tcStorage.getTurnCostFlags(edge10_11, n11, edge11_14);
         assertFalse(carEncoder.isTurnRestricted(costsFlags));
         assertTrue(bikeEncoder.isTurnRestricted(costsFlags));
     }

@@ -153,7 +153,7 @@ public class QueryGraphTest
         {
 
             @Override
-            void fillVirtualEdges( TIntObjectMap<QueryGraph.VirtualEdgeIterator> node2Edge, int towerNode, EdgeExplorer mainExpl )
+            void fillVirtualEdges( TIntObjectMap<VirtualEdgeIterator> node2Edge, int towerNode, EdgeExplorer mainExpl )
             {
                 super.fillVirtualEdges(node2Edge, towerNode, mainExpl);
                 // ignore nodes should include baseNode == 1
@@ -253,7 +253,7 @@ public class QueryGraphTest
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(0);
         iter.next();
 
-        QueryGraph.VirtualEdgeIterator vi = new QueryGraph.VirtualEdgeIterator(2);
+        VirtualEdgeIterator vi = new VirtualEdgeIterator(2);
         vi.add(iter.detach(false));
 
         assertTrue(vi.next());
@@ -439,7 +439,7 @@ public class QueryGraphTest
     }
 
     @Test
-    public void testIterationBug_163()
+    public void testIteration_Issue163()
     {
         EdgeFilter outEdgeFilter = new DefaultEdgeFilter(encodingManager.getEncoder("CAR"), false, true);
         EdgeFilter inEdgeFilter = new DefaultEdgeFilter(encodingManager.getEncoder("CAR"), true, false);
@@ -498,5 +498,45 @@ public class QueryGraphTest
         assertEquals(startNode, it.getAdjNode());
         assertEquals("The edge id is not the same,", expectedEdgeId, it.getEdge());
         assertFalse(it.next());
+    }
+
+    @Test
+    public void testTurnCostsProperlyPropagated_Issue282()
+    {
+        TurnCostExtension turnExt = new TurnCostExtension();
+        FlagEncoder encoder = new CarFlagEncoder(5, 5, 15);
+
+        GraphStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(),
+                new EncodingManager(encoder), false, turnExt).
+                create(100);
+        NodeAccess na = graphWithTurnCosts.getNodeAccess();
+        na.setNode(0, .00, .00);
+        na.setNode(1, .00, .01);
+        na.setNode(2, .01, .01);
+
+        EdgeIteratorState edge0 = graphWithTurnCosts.edge(0, 1, 10, true);
+        EdgeIteratorState edge1 = graphWithTurnCosts.edge(2, 1, 10, true);
+
+        QueryGraph qGraph = new QueryGraph(graphWithTurnCosts);
+        FastestWeighting weighting = new FastestWeighting(encoder);
+        TurnWeighting turnWeighting = new TurnWeighting(weighting, encoder, (TurnCostExtension) qGraph.getExtension());
+        
+        assertEquals(0, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
+
+        // now use turn costs and QueryGraph
+        turnExt.addTurnInfo(edge0.getEdge(), 1, edge1.getEdge(), encoder.getTurnFlags(false, 10));
+        assertEquals(10, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
+        
+        QueryResult res1 = createLocationResult(0.000, 0.005, edge0, 0, QueryResult.Position.EDGE);
+        QueryResult res2 = createLocationResult(0.005, 0.010, edge1, 0, QueryResult.Position.EDGE);
+
+        qGraph.lookup(Arrays.asList(res1, res2));
+
+        int fromQueryEdge = GHUtility.getEdge(qGraph, res1.getClosestNode(), 1).getEdge();
+        int toQueryEdge = GHUtility.getEdge(qGraph, res2.getClosestNode(), 1).getEdge();
+
+        assertEquals(10, turnWeighting.calcTurnWeight(fromQueryEdge, 1, toQueryEdge), .1);
+
+        graphWithTurnCosts.close();
     }
 }
