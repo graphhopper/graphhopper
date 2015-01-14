@@ -633,19 +633,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         return turnCostEncoder.setValue(0L, (int) costs);
     }
 
-    public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
-    {
-        if (!supports(TurnWeighting.class))
-            return Collections.emptyList();
-
-        if (edgeOutExplorer == null || edgeInExplorer == null)
-        {
-            edgeOutExplorer = osmReader.getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(this, false, true));
-            edgeInExplorer = osmReader.getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(this, true, false));
-        }
-        return turnRelation.getRestrictionAsEntries(this, edgeOutExplorer, edgeInExplorer, osmReader);
-    }
-
     protected boolean isFerry( long internalFlags )
     {
         return (internalFlags & ferryBit) != 0;

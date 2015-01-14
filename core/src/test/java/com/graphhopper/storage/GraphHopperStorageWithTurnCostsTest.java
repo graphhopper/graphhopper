@@ -65,9 +65,9 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
         graph.edge(9, 11, 200, true);
         graph.edge(1, 2, 120, false);
 
-        turnCostStorage.addTurnInfo(0, iter1.getEdge(), iter2.getEdge(), 1337);
-        turnCostStorage.addTurnInfo(0, iter2.getEdge(), iter1.getEdge(), 666);
-        turnCostStorage.addTurnInfo(1, iter1.getEdge(), iter2.getEdge(), 815);
+        turnCostStorage.addTurnInfo(iter1.getEdge(), 0, iter2.getEdge(), 1337);
+        turnCostStorage.addTurnInfo(iter2.getEdge(), 0, iter1.getEdge(), 666);
+        turnCostStorage.addTurnInfo(iter1.getEdge(), 1, iter2.getEdge(), 815);
 
         iter1.setName("named street1");
         iter2.setName("named street2");
@@ -123,14 +123,14 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
 
         // add 100 turn cost entries around node 50
         for (int edgeId = 0; edgeId < 50; edgeId++) {
-            turnCostStorage.addTurnInfo(50, edgeId, edgeId + 50, 1337);
-            turnCostStorage.addTurnInfo(50, edgeId + 50, edgeId, 1337);
+            turnCostStorage.addTurnInfo(edgeId, 50, edgeId + 50, 1337);
+            turnCostStorage.addTurnInfo(edgeId + 50, 50, edgeId, 1337);
         }
 
-        turnCostStorage.addTurnInfo(50, 0, 1, 1337);
+        turnCostStorage.addTurnInfo(0, 50, 1, 1337);
         assertEquals(104, turnCostStorage.getCapacity() / 16); // we are still good here
 
-        turnCostStorage.addTurnInfo(50, 0, 2, 1337);
+        turnCostStorage.addTurnInfo(0, 50, 2, 1337);
         // A new segment should be added, which will support 128 / 16 = 8 more entries.
         assertEquals(112, turnCostStorage.getCapacity() / 16);
     }

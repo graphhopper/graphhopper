@@ -17,15 +17,8 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.routing.util.*;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
 import static com.graphhopper.storage.index.QueryResult.Position.*;
 import com.graphhopper.util.*;
@@ -401,9 +394,9 @@ public class QueryGraphTest
         res1 = createLocationResult(1, 0, edgeState, 0, EDGE);
         // now create virtual edges
         edgeState = GHUtility.getEdge(g, 0, 2);
-        res2 = createLocationResult(0.5, 0, edgeState, 0, EDGE);        
+        res2 = createLocationResult(0.5, 0, edgeState, 0, EDGE);
         queryGraph = new QueryGraph(g);
-        queryGraph.lookup(Arrays.asList(res1, res2));        
+        queryGraph.lookup(Arrays.asList(res1, res2));
         // make sure only one virtual node was created
         assertEquals(queryGraph.getNodes(), g.getNodes() + 1);
         EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(0);

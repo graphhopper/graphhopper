@@ -107,27 +107,27 @@ public class EdgeBasedRoutingAlgorithmTest
         long tflags = tEncoder.getTurnFlags(true, 0);
 
         // only forward from 2-3 to 3-4 => limit 2,3->3,6 and 2,3->3,1
-        tcs.addTurnInfo(3, getEdge(g, 2, 3).getEdge(), getEdge(g, 3, 6).getEdge(), tflags);
-        tcs.addTurnInfo(3, getEdge(g, 2, 3).getEdge(), getEdge(g, 3, 1).getEdge(), tflags);
+        tcs.addTurnInfo(getEdge(g, 2, 3).getEdge(), 3, getEdge(g, 3, 6).getEdge(), tflags);
+        tcs.addTurnInfo(getEdge(g, 2, 3).getEdge(), 3, getEdge(g, 3, 1).getEdge(), tflags);
 
         // only right   from 5-2 to 2-3 => limit 5,2->2,0
-        tcs.addTurnInfo(2, getEdge(g, 5, 2).getEdge(), getEdge(g, 2, 0).getEdge(), tflags);
+        tcs.addTurnInfo(getEdge(g, 5, 2).getEdge(), 2, getEdge(g, 2, 0).getEdge(), tflags);
 
         // only right   from 7-6 to 6-3 => limit 7,6->6,5
-        tcs.addTurnInfo(6, getEdge(g, 7, 6).getEdge(), getEdge(g, 6, 5).getEdge(), tflags);
+        tcs.addTurnInfo(getEdge(g, 7, 6).getEdge(), 6, getEdge(g, 6, 5).getEdge(), tflags);
 
         // no 5-6 to 6-3
-        tcs.addTurnInfo(6, getEdge(g, 5, 6).getEdge(), getEdge(g, 6, 3).getEdge(), tflags);
+        tcs.addTurnInfo(getEdge(g, 5, 6).getEdge(), 6, getEdge(g, 6, 3).getEdge(), tflags);
         // no 4-3 to 3-1
-        tcs.addTurnInfo(3, getEdge(g, 4, 3).getEdge(), getEdge(g, 3, 1).getEdge(), tflags);
+        tcs.addTurnInfo(getEdge(g, 4, 3).getEdge(), 3, getEdge(g, 3, 1).getEdge(), tflags);
         // no 4-3 to 3-2
-        tcs.addTurnInfo(3, getEdge(g, 4, 3).getEdge(), getEdge(g, 3, 2).getEdge(), tflags);
+        tcs.addTurnInfo(getEdge(g, 4, 3).getEdge(), 3, getEdge(g, 3, 2).getEdge(), tflags);
 
         // no u-turn at 6-7
-        tcs.addTurnInfo(7, getEdge(g, 6, 7).getEdge(), getEdge(g, 7, 6).getEdge(), tflags);
+        tcs.addTurnInfo(getEdge(g, 6, 7).getEdge(), 7, getEdge(g, 7, 6).getEdge(), tflags);
 
         // no u-turn at 3-6
-        tcs.addTurnInfo(6, getEdge(g, 3, 6).getEdge(), getEdge(g, 6, 3).getEdge(), tflags);
+        tcs.addTurnInfo(getEdge(g, 3, 6).getEdge(), 6, getEdge(g, 6, 3).getEdge(), tflags);
     }
 
     Weighting createWeighting( FlagEncoder encoder, TurnCostExtension tcs )
@@ -171,8 +171,8 @@ public class EdgeBasedRoutingAlgorithmTest
         getEdge(g, 3, 2).setDistance(8642);
         getEdge(g, 1, 0).setDistance(8642);
 
-        tcs.addTurnInfo(6, getEdge(g, 7, 6).getEdge(), getEdge(g, 6, 5).getEdge(), tflags);
-        tcs.addTurnInfo(3, getEdge(g, 4, 3).getEdge(), e3_6.getEdge(), tflags);
+        tcs.addTurnInfo(getEdge(g, 7, 6).getEdge(), 6, getEdge(g, 6, 5).getEdge(), tflags);
+        tcs.addTurnInfo(getEdge(g, 4, 3).getEdge(), 3, e3_6.getEdge(), tflags);
         Path p = createAlgo(g,
                 AlgorithmOptions.start().flagEncoder(carEncoder).weighting(createWeighting(carEncoder, tcs)).traversalMode(TraversalMode.EDGE_BASED_2DIR_UTURN).build()).
                 calcPath(7, 5);
@@ -180,7 +180,7 @@ public class EdgeBasedRoutingAlgorithmTest
         assertEquals(Helper.createTList(7, 6, 3, 6, 5), p.calcNodes());
 
         // no u-turn    from 6-3
-        tcs.addTurnInfo(3, getEdge(g, 6, 3).getEdge(), getEdge(g, 3, 6).getEdge(), tflags);
+        tcs.addTurnInfo(getEdge(g, 6, 3).getEdge(), 3, getEdge(g, 3, 6).getEdge(), tflags);
         p = createAlgo(g, AlgorithmOptions.start().flagEncoder(carEncoder).weighting(createWeighting(carEncoder, tcs)).traversalMode(TraversalMode.EDGE_BASED_2DIR_UTURN).build()).
                 calcPath(7, 5);
 
@@ -203,7 +203,7 @@ public class EdgeBasedRoutingAlgorithmTest
 
         // now introduce some turn costs
         long tflags = carEncoder.getTurnFlags(false, 2);
-        tcs.addTurnInfo(2, getEdge(g, 5, 2).getEdge(), getEdge(g, 2, 3).getEdge(), tflags);
+        tcs.addTurnInfo(getEdge(g, 5, 2).getEdge(), 2, getEdge(g, 2, 3).getEdge(), tflags);
 
         p = createAlgo(g, AlgorithmOptions.start().flagEncoder(carEncoder).weighting(createWeighting(carEncoder, tcs)).traversalMode(TraversalMode.EDGE_BASED_1DIR).build()).
                 calcPath(5, 1);

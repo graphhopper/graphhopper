@@ -83,12 +83,12 @@ public class OSMTurnRelationTest
         OSMTurnRelation.TurnCostTableEntry entry = iter.next();
         assertEquals(4, entry.edgeFrom);
         assertEquals(6, entry.edgeTo);
-        assertEquals(3, entry.nodeViaNode);
+        assertEquals(3, entry.nodeVia);
         
         entry = iter.next();
         assertEquals(4, entry.edgeFrom);
         assertEquals(2, entry.edgeTo);
-        assertEquals(3, entry.nodeViaNode);
+        assertEquals(3, entry.nodeVia);
         
         
         // TYPE == NOT
@@ -100,7 +100,7 @@ public class OSMTurnRelationTest
         entry = iter.next();
         assertEquals(4, entry.edgeFrom);
         assertEquals(3, entry.edgeTo);
-        assertEquals(3, entry.nodeViaNode);       
+        assertEquals(3, entry.nodeVia);       
     }
 
 }

@@ -121,7 +121,7 @@ public class TurnCostExtension implements GraphExtension
      * This method adds a new entry which is a turn restriction or cost information via the
      * turnFlags.
      */
-    public void addTurnInfo( int nodeIndex, int from, int to, long turnFlags )
+    public void addTurnInfo( int from, int viaNode, int to, long turnFlags )
     {
         // no need to store turn information
         if (turnFlags == EMPTY_FLAGS)
@@ -133,11 +133,11 @@ public class TurnCostExtension implements GraphExtension
         ensureTurnCostIndex(newEntryIndex);
 
         // determine if we already have an cost entry for this node
-        int previousEntryIndex = nodeAccess.getAdditionalNodeField(nodeIndex);
+        int previousEntryIndex = nodeAccess.getAdditionalNodeField(viaNode);
         if (previousEntryIndex == NO_TURN_ENTRY)
         {
             // set cost-pointer to this new cost entry
-            nodeAccess.setAdditionalNodeField(nodeIndex, newEntryIndex);
+            nodeAccess.setAdditionalNodeField(viaNode, newEntryIndex);
         } else
         {
             int i = 0;

@@ -38,20 +38,14 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.AbstractGraphStorageTester;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
+import java.util.*;
 
 /**
  * Tests the OSMReader with the normal helper initialized.
@@ -707,5 +701,94 @@ public class OSMReaderTest
         edge = GHUtility.getEdge(graph, n10, n50);
         assertEquals(Helper.createPointList3D(49.501, 11.5001, 383.0, 49.5001, 11.501, 426.0),
                 edge.fetchWayGeometry(3));
+    }
+
+    /**
+     * Tests the combination of different turn cost flags by different encoders.
+     */
+    @Test
+    public void testTurnFlagCombination()
+    {
+        final OSMTurnRelation.TurnCostTableEntry turnCostEntry_car = new OSMTurnRelation.TurnCostTableEntry();
+        final OSMTurnRelation.TurnCostTableEntry turnCostEntry_foot = new OSMTurnRelation.TurnCostTableEntry();
+        final OSMTurnRelation.TurnCostTableEntry turnCostEntry_bike = new OSMTurnRelation.TurnCostTableEntry();
+
+        CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
+        FootFlagEncoder foot = new FootFlagEncoder();
+        BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
+        EncodingManager manager = new EncodingManager(Arrays.asList(bike, foot, car), 4);
+
+        OSMReader reader = new OSMReader(new GraphBuilder(manager).create())
+        {
+            @Override
+            public Collection<OSMTurnRelation.TurnCostTableEntry> analyzeTurnRelation( FlagEncoder encoder,
+                    OSMTurnRelation turnRelation )
+            {
+                // simulate by returning one turn cost entry directly
+                if (encoder.toString().equalsIgnoreCase("car"))
+                {
+
+                    return Collections.singleton(turnCostEntry_car);
+                } else if (encoder.toString().equalsIgnoreCase("foot"))
+                {
+                    return Collections.singleton(turnCostEntry_foot);
+                } else if (encoder.toString().equalsIgnoreCase("bike"))
+                {
+                    return Collections.singleton(turnCostEntry_bike);
+                } else
+                {
+                    throw new IllegalArgumentException("illegal encoder " + encoder.toString());
+                }
+            }
+        }.setEncodingManager(manager);
+
+        // turn cost entries for car and foot are for the same relations (same viaNode, edgeFrom and edgeTo), 
+        // turn cost entry for bike is for another relation (different viaNode) 
+        turnCostEntry_car.edgeFrom = 1;
+        turnCostEntry_foot.edgeFrom = 1;
+        turnCostEntry_bike.edgeFrom = 2;
+
+        // calculating arbitrary flags using the encoders
+        turnCostEntry_car.flags = car.getTurnFlags(true, 0);
+        turnCostEntry_foot.flags = foot.getTurnFlags(true, 0);
+        turnCostEntry_bike.flags = bike.getTurnFlags(false, 10);
+
+        // we expect two different entries: the first one is a combination of turn flags of car and foot, 
+        // since they provide the same relation, the other one is for bike only
+        long assertFlag1 = turnCostEntry_car.flags | turnCostEntry_foot.flags;
+        long assertFlag2 = turnCostEntry_bike.flags;
+
+        // combine flags of all encoders
+        Collection<OSMTurnRelation.TurnCostTableEntry> entries = reader.analyzeTurnRelation(null);
+
+        // we expect two different turnCost entries
+        assertEquals(2, entries.size());
+
+        for (OSMTurnRelation.TurnCostTableEntry entry : entries)
+        {
+            if (entry.edgeFrom == 1)
+            {
+                // the first entry provides turn flags for car and foot only 
+                assertEquals(assertFlag1, entry.flags);
+                assertTrue(car.isTurnRestricted(entry.flags));
+                assertFalse(foot.isTurnRestricted(entry.flags));
+                assertFalse(bike.isTurnRestricted(entry.flags));
+
+                assertTrue(Double.isInfinite(car.getTurnCost(entry.flags)));
+                assertEquals(0, foot.getTurnCost(entry.flags), 1e-1);
+                assertEquals(0, bike.getTurnCost(entry.flags), 1e-1);
+            } else if (entry.edgeFrom == 2)
+            {
+                // the 2nd entry provides turn flags for bike only
+                assertEquals(assertFlag2, entry.flags);
+                assertFalse(car.isTurnRestricted(entry.flags));
+                assertFalse(foot.isTurnRestricted(entry.flags));
+                assertFalse(bike.isTurnRestricted(entry.flags));
+
+                assertEquals(0, car.getTurnCost(entry.flags), 1e-1);
+                assertEquals(0, foot.getTurnCost(entry.flags), 1e-1);
+                assertEquals(10, bike.getTurnCost(entry.flags), 1e-1);
+            }
+        }
     }
 }
