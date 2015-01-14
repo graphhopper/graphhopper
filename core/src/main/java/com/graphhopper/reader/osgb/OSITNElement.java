@@ -322,7 +322,6 @@ public abstract class OSITNElement implements RoutingElement {
      */
     private int handleClassification(XMLStreamReader parser) throws XMLStreamException {
         String elementText = parser.getElementText();
-        System.out.println("HANDLE CLASSIFICATION "  + elementText + " " + this.getClass().getName());
         switch (elementText) {
         case "Ford":
             setTag(TAG_KEY_CLASSIFICATION, TAG_VALUE_CLASSIFICATION_FORD);
