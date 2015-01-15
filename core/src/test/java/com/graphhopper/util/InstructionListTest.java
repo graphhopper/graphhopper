@@ -28,7 +28,6 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import java.io.*;
-import java.net.URL;
 import java.util.*;
 import javax.xml.XMLConstants;
 import javax.xml.transform.Source;
@@ -38,8 +37,6 @@ import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.w3c.dom.ls.LSInput;
-import org.w3c.dom.ls.LSResourceResolver;
 import org.xml.sax.SAXException;
 
 /**
@@ -339,9 +336,11 @@ public class InstructionListTest
         assertTrue(gpxStr, gpxStr.contains("<rtept lat=\"15.1\" lon=\"10.0\">"));
         assertTrue(gpxStr, gpxStr.contains("<gh:distance>8000.0</gh:distance>"));
         assertTrue(gpxStr, gpxStr.contains("<desc>turn left onto 2-3</desc>"));
+        assertTrue(gpxStr, gpxStr.contains("<gh:sign>-2</gh:sign>"));
 
         assertTrue(gpxStr, gpxStr.contains("<gh:direction>N</gh:direction>"));
-        assertTrue(gpxStr, gpxStr.contains("<gh:azimuth>0</gh:azimuth>"));
+        assertTrue(gpxStr, gpxStr.contains("<gh:azimuth>0.0</gh:azimuth>"));
+
         assertFalse(gpxStr, gpxStr.contains("NaN"));
     }
 

@@ -144,7 +144,7 @@ public class Instruction
         for (int i = 0; i < len; i++)
         {
             list.add(new GPXEntry(lat, lon, ele, prevTime));
-            
+
             boolean last = i + 1 == len;
             double nextLat = last ? nextInstr.getFirstLat() : points.getLatitude(i + 1);
             double nextLon = last ? nextInstr.getFirstLon() : points.getLongitude(i + 1);
@@ -175,12 +175,10 @@ public class Instruction
     }
 
     /**
-     * Return Direction/Compass point based on the first tracksegment of the instruction. If
+     * Return the direction like 'NE' based on the first tracksegment of the instruction. If
      * Instruction does not contain enough coordinate points, an empty string will be returned.
-     * <p>
-     * @return
      */
-    String getDirection( Instruction nextI )
+    String calcDirection( Instruction nextI )
     {
         double azimuth = calcAzimuth(nextI);
         if (Double.isNaN(azimuth))
@@ -190,19 +188,10 @@ public class Instruction
     }
 
     /**
-     * Return Azimuth based on the first tracksegment of the instruction. If Instruction does not
-     * contain enough coordinate points, an empty string will be returned.
+     * Return the azimuth in degree based on the first tracksegment of the instruction. If
+     * Instruction does not contain enough coordinate points, an empty string will be returned.
      */
-    String getAzimuth( Instruction nextI )
-    {
-        double az = calcAzimuth(nextI);
-        if (Double.isNaN(az))
-            return "";
-
-        return "" + Math.round(az);
-    }
-
-    private double calcAzimuth( Instruction nextI )
+    public double calcAzimuth( Instruction nextI )
     {
         double nextLat;
         double nextLon;
@@ -211,7 +200,7 @@ public class Instruction
         {
             nextLat = points.getLatitude(1);
             nextLon = points.getLongitude(1);
-        } else if (points.getSize() == 1 && null != nextI)
+        } else if (nextI != null && points.getSize() == 1)
         {
             nextLat = nextI.points.getLatitude(0);
             nextLon = nextI.points.getLongitude(0);

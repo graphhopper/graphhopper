@@ -234,15 +234,15 @@ public class InstructionList implements Iterable<Instruction>
         if (!isEmpty())
         {
             track.append("\n<rte>");
-            Instruction nextI = null;
-            for (Instruction instr : instructions)
+            Instruction nextInstr = null;
+            for (Instruction currInstr : instructions)
             {
-                if (null != nextI)
-                    createRteptBlock(track, nextI, instr);
+                if (null != nextInstr)
+                    createRteptBlock(track, nextInstr, currInstr);
 
-                nextI = instr;
+                nextInstr = currInstr;
             }
-            createRteptBlock(track, nextI, null);
+            createRteptBlock(track, nextInstr, null);
             track.append("</rte>");
         }
 
@@ -286,14 +286,15 @@ public class InstructionList implements Iterable<Instruction>
         output.append("<gh:distance>").append(Helper.round(instruction.getDistance(), 1)).append("</gh:distance>");
         output.append("<gh:time>").append(instruction.getTime()).append("</gh:time>");
 
-        String direction = instruction.getDirection(nextI);
+        String direction = instruction.calcDirection(nextI);
         if (!direction.isEmpty())
             output.append("<gh:direction>").append(direction).append("</gh:direction>");
 
-        String azimuth = instruction.getAzimuth(nextI);
-        if (!azimuth.isEmpty())
-            output.append("<gh:azimuth>").append(azimuth).append("</gh:azimuth>");
+        double azimuth = instruction.calcAzimuth(nextI);
+        if (!Double.isNaN(azimuth))
+            output.append("<gh:azimuth>").append(Helper.round2(azimuth)).append("</gh:azimuth>");
 
+        output.append("<gh:sign>").append(instruction.getSign()).append("</gh:sign>");
         output.append("</extensions>");
         output.append("</rtept>");
     }
