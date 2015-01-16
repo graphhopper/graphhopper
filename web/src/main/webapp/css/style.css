@@ -14,7 +14,7 @@ body {
 
 #input {
     float: left;                
-    margin-left: 10px; 
+/*     margin-left: 10px;  */
     /*padding-right: 15px; */
 }
 
@@ -290,4 +290,10 @@ td img.pic {
 }
 #moreButton {
     background-image: linear-gradient(to bottom, white, #e7e7e7);
+}
+.tt-input, .tt-hint {
+    height: 34px;
+    font-size:12px; 
+    width: 235px;
+    padding: 2px 10px;
 }

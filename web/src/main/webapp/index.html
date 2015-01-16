@@ -18,22 +18,24 @@
         <link rel="stylesheet" href="css/leaflet.contextmenu.css" />
         <link rel="stylesheet" href="css/leaflet.loading.css" />
         <link rel="stylesheet" href="css/ui-lightness/jquery-ui-1.10.4.css" />
-        <script async="yes" type="text/javascript" src="js/leaflet.contextmenu.js"></script>
-        <script async="yes" type="text/javascript" src="js/leaflet.loading.js"></script>
-        <script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>        
-        <script type="text/javascript" src="js/jquery-ui-1.10.4.custom.min.js"></script>      
-        <script type="text/javascript" src="js/jquery.history.js"></script>
-        <!--
-        <script type="text/javascript" src="js/jquery.autocomplete.min.js"></script>
-        -->
-        <script type="text/javascript" src="js/jquery.autocomplete.js"></script>
-        <script type="text/javascript" src="js/ghrequest.js?v=0.4.4"></script>
-		<script src="js/proj4.js"></script>
-		<script src="js/proj4leaflet.js"></script>
-		<script src="js/L.Control.Zoomslider.js"></script>
-		<script src="js/leaflet-tilelayer-os-wmts.js"></script>
-        <script type="text/javascript" src="js/main-bng.js?v=0.4.4"></script>
+        <script async type="text/javascript" src="js/leaflet.contextmenu.js"></script>
+        <script async type="text/javascript" src="js/leaflet.loading.js"></script>
+    
+        <script src="js/proj4.js"></script>
+        <script src="js/proj4leaflet.js"></script>
+        <script src="js/L.Control.Zoomslider.js"></script>
+        <script src="js/leaflet-tilelayer-os-wmts.js"></script>
+        
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+        
+        <!-- Optional theme -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
+        <!-- Type Ahead -->
+        <link rel="stylesheet" type="text/css" href="http://twitter.github.io/typeahead.js/css/examples.css">
+        
         <link rel="stylesheet" type="text/css" href="css/style.css" />
+
     </head>
     <body>
         <div id="input">
@@ -77,8 +79,9 @@
                 <div id="{id}_Div" class="pointDiv">
                     <img id="{id}_Indicator" class="hidden pointIndicator" src="img/loading.gif"/>
                     <img id="{id}_Flag" class="pointFlag" src="img/marker-small-green.png"/>
-                    <input id="{id}_Input" class="pointInput" type="text" placeholder=""/>
-                    <div class="pointDelete"><img src="./img/point_delete.png"></div>
+<!--                     <input id="{id}_Input" class="pointInput" type="text" placeholder=""/> -->
+                    <input class="typeahead pointInput" type="text" placeholder="" id="{id}_searchBox"/>
+                    <div class="pointDelete"><img src="img/point_delete.png"></div>
                     <div class="clear"> </div>
                     <div id="{id}_ResolveFound" class="pointResolveFound"></div>
                     <div id="{id}_ResolveError" class="pointResolveError"></div>
@@ -88,27 +91,17 @@
 
         <div id="map">
         </div>
-        <!-- Piwik -->
-        <script type="text/javascript">
-            PIWIK = false;
-            if (PIWIK) {
-                var _paq = _paq || [];
-                _paq.push(['trackPageView']);
-                _paq.push(['enableLinkTracking']);
-                (function () {
-                    var u = (("https:" == document.location.protocol) ? "https" : "http") + "://graphhopper.com/piwik/";
-                    _paq.push(['setTrackerUrl', u + 'piwik.php']);
-                    _paq.push(['setSiteId', 1]);
-                    var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
-                    g.type = 'text/javascript';
-                    g.defer = true;
-                    g.async = true;
-                    g.src = u + 'piwik.js';
-                    s.parentNode.insertBefore(g, s);
-                })();
-            }
-        </script>
-        <noscript><p><img src="https://graphhopper.com/piwik/piwik.php?idsite=1" style="border:0;" alt="" /></p></noscript>
-        <!-- End Piwik Code -->
+  
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <script type="text/javascript" src="js/jquery-ui-1.10.4.custom.min.js" defer></script>      
+        <script type="text/javascript" src="js/jquery.history.js" defer></script>
+<!--         <script type="text/javascript" src="js/jquery.autocomplete.min.js"></script> -->
+        <script type="text/javascript" src="js/jquery.autocomplete.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    
+        <script type='text/javascript' src="http://twitter.github.io/typeahead.js/releases/latest/typeahead.bundle.js"></script>
+        <script type="text/javascript" src="js/search.js"></script>
+        <script type="text/javascript" src="js/ghrequest.js?v=0.4.4"></script>
+        <script type="text/javascript" src="js/main-bng.js?v=0.4.4"></script>
     </body>
 </html>
