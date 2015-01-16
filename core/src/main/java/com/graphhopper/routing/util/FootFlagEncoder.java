@@ -93,26 +93,22 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         safeHighwayTags.add("residential");
         safeHighwayTags.add("service");
 
-        allowedHighwayTags.addAll(safeHighwayTags);
-        allowedHighwayTags.add("trunk");
-        allowedHighwayTags.add("trunk_link");
-        allowedHighwayTags.add("primary");
-        allowedHighwayTags.add("primary_link");
-        allowedHighwayTags.add("secondary");
-        allowedHighwayTags.add("secondary_link");
-        allowedHighwayTags.add("tertiary");
-        allowedHighwayTags.add("tertiary_link");
-        allowedHighwayTags.add("unclassified");
-        allowedHighwayTags.add("road");
-        // disallowed in some countries
-        //allowedHighwayTags.add("bridleway");
-
         avoidHighwayTags.add("trunk");
         avoidHighwayTags.add("trunk_link");
         avoidHighwayTags.add("primary");
         avoidHighwayTags.add("primary_link");
         avoidHighwayTags.add("tertiary");
         avoidHighwayTags.add("tertiary_link");
+        avoidHighwayTags.add("cycleway");
+
+        allowedHighwayTags.addAll(safeHighwayTags);
+        allowedHighwayTags.addAll(avoidHighwayTags);
+        allowedHighwayTags.add("secondary");
+        allowedHighwayTags.add("secondary_link");
+        allowedHighwayTags.add("unclassified");
+        allowedHighwayTags.add("road");
+        // disallowed in some countries
+        //allowedHighwayTags.add("bridleway");
 
         hikingNetworkToCode.put("iwn", BEST.getValue());
         hikingNetworkToCode.put("nwn", BEST.getValue());
@@ -222,9 +218,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         // do not get our feet wet, "yes" is already included above
         if (isBlockFords() && (way.hasTag("highway", "ford") || way.hasTag("ford")))
-            return 0;
-
-        if (way.hasTag("bicycle", "official"))
             return 0;
 
         // check access restrictions
@@ -369,7 +362,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
                 weightToPrioMap.put(40d, UNCHANGED.getValue());
         }
 
-        if (avoidHighwayTags.contains(highway) || maxSpeed > 50)
+        if (avoidHighwayTags.contains(highway) || maxSpeed > 50 || way.hasTag("bicycle", "official"))
         {
             weightToPrioMap.put(50d, REACH_DEST.getValue());
 

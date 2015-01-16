@@ -111,6 +111,8 @@ public class FootFlagEncoderTest
         assertTrue(footEncoder.acceptWay(way) > 0);
 
         way.setTag("bicycle", "official");
+        assertTrue(footEncoder.acceptWay(way) > 0);
+        way.setTag("foot", "no");
         assertFalse(footEncoder.acceptWay(way) > 0);
 
         way.setTag("foot", "official");
@@ -128,9 +130,9 @@ public class FootFlagEncoderTest
 
         way.clearTags();
         way.setTag("highway", "cycleway");
-        assertFalse(footEncoder.acceptWay(way) > 0);
-        way.setTag("foot", "yes");
         assertTrue(footEncoder.acceptWay(way) > 0);
+        way.setTag("foot", "no");
+        assertFalse(footEncoder.acceptWay(way) > 0);
 
         way.clearTags();
         way.setTag("highway", "track");
@@ -150,7 +152,6 @@ public class FootFlagEncoderTest
     public void testMixSpeedAndSafe()
     {
         OSMWay way = new OSMWay(1);
-
         way.setTag("highway", "motorway");
         long flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
         assertEquals(0, flags);
@@ -163,6 +164,18 @@ public class FootFlagEncoderTest
         way.setTag("highway", "track");
         flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
         assertEquals(5, footEncoder.getSpeed(flags), 1e-1);
+    }
+
+    @Test
+    public void testPriority()
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "cycleway");
+        assertEquals(PriorityCode.REACH_DEST.getValue(), footEncoder.handlePriority(way, 0));
+
+        way.setTag("highway", "track");
+        way.setTag("bicycle", "official");
+        assertEquals(PriorityCode.REACH_DEST.getValue(), footEncoder.handlePriority(way, 0));
     }
 
     @Test
@@ -233,7 +246,7 @@ public class FootFlagEncoderTest
         node.setTag("foot", "yes");
         // no barrier!
         assertTrue(footEncoder.handleNodeTags(node) == 0);
-        
+
         node.setTag("locked", "yes");
         // barrier!
         assertTrue(footEncoder.handleNodeTags(node) > 0);
