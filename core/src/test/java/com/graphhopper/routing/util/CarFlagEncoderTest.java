@@ -48,10 +48,12 @@ public class CarFlagEncoderTest
         way.setTag("motorcar", "no");
         assertFalse(encoder.acceptWay(way) > 0);
 
+        // for now allow grade1+2+3 for every country, see #253
         way.clearTags();
         way.setTag("highway", "track");
-        way.setTag("tracktype", "grade2");
-        // disallow too rough tracks
+        way.setTag("tracktype", "grade2");        
+        assertTrue(encoder.acceptWay(way) > 0);
+        way.setTag("tracktype", "grade4");        
         assertFalse(encoder.acceptWay(way) > 0);
 
         way.clearTags();

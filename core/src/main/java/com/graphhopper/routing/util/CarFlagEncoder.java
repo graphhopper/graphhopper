@@ -181,7 +181,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         if ("track".equals(highwayValue))
         {
             String tt = way.getTag("tracktype");
-            if (tt != null && !tt.equals("grade1"))
+            if (tt != null && !tt.equals("grade1") && !tt.equals("grade2") && !tt.equals("grade3"))
                 return 0;
         }
 
