@@ -8,27 +8,27 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                 | azimuth | direction | time  | distance |
-      | 1             | 51.472114,-0.361993 | Continue onto ELLINGTON ROAD | 275     | W         | 13535 | 131.626  |
+      | 1             | 51.472387,-0.361788 | Continue onto ELLINGTON ROAD | 280     | W         | 10789 | 104.896  |
+
 
     Examples: 
       | pointA                                 | pointB                                 | routetype |
       | 51.471546541834144,-0.3618621826171875 | 51.45914115860512,-0.96679687499999995 | car       |
-      
 
-  @Routing
+  @Routing 
   Scenario Outline: Verify  waypoints on a Route from Hounslow to Reading
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                      | azimuth | direction | time    | distance  |
-      | 1             | 51.472114,-0.361993 | Continue onto ELLINGTON ROAD      | 274     | W         | 13535   | 131.626   |
-      | 9             | 51.491777,-0.41102  | Turn slight left onto M4          | 303     | NW        | 1298139 | 36068.009 |
+      | 1             | 51.472387,-0.361788 | Continue onto ELLINGTON ROAD | 280     | W         | 10789 | 104.896  |
+      | 9             | 51.491777,-0.41102  | Turn slight left onto M4          | 303     | NW        | 1298429 | 36068.472 |
       | 13            | 51.451397,-0.960099 | Turn right onto WATLINGTON STREET | 321     | NW        | 15401   | 149.744   |
 
-    Examples: 
+   Examples: 
       | pointA                                 | pointB                                 | routetype |
       | 51.471546541834144,-0.3618621826171875 | 51.45914115860512,-0.96679687499999995 | car       |
 
-  @Routing
+  @Routing 
   Scenario Outline: Verify  waypoints on a Route from Southampton to Glasgow
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -44,7 +44,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB             | routetype |
       | 50.896617,-1.400465 | 55.861284,-4.24996 | car       |
 
-  @Routing
+  @Routing 
   Scenario Outline: Verify  waypoints on a Route from London to Birmingham
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -276,18 +276,26 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA              | pointB             | routetype |
       | 50.724316,-3.521008 | 50.72413,-3.518874 | car       |
-      
-      
-      
-    @Routing 
+
+  @Routing
   Scenario Outline: Verify  Private Road Restricted Access (Warwick Road-Carlisle)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the trackPoints not on the route map:
-      | trackPointco      |
+      | trackPointco        |
       | 54.894721,-2.921665 |
 
     Examples: 
-      | pointA              | pointB             | routetype |
+      | pointA              | pointB            | routetype |
       | 54.894427,-2.921111 | 54.8922,-2.928296 | car       |
-      
-      
+
+  @Routing 
+  Scenario Outline: Verify  Route using Full UK Address (Southampton to London)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointdesc                          |
+      | 3             | Turn left onto BROWNHILL WAY          |
+      | 18            | Continue onto A219 (HAMMERSMITH ROAD) |
+
+    Examples: 
+      | pointA                                           | pointB                                 | routetype |
+      | 4, ADANAC DRIVE, NURSLING, SOUTHAMPTON, SO16 0AS | 1, PICCADILLY ARCADE, LONDON, SW1Y 6NH | car       |
