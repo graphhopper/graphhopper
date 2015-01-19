@@ -52,7 +52,6 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.util.Constants;
-import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.ProgressListener;
@@ -239,8 +238,7 @@ public class MainActivity extends Activity
             protected List<String> saveDoInBackground( Void... params )
                     throws Exception
             {
-                String[] lines = new Downloader("GraphHopper Android").
-                        downloadAsString(fileListURL).split("\n");
+                String[] lines = new AndroidDownloader().downloadAsString(fileListURL).split("\n");
                 List<String> res = new ArrayList<String>();
                 for (String str : lines)
                 {
@@ -263,6 +261,7 @@ public class MainActivity extends Activity
             {
                 if (hasError() || nameList.isEmpty())
                 {
+                    getError().printStackTrace();
                     logUser("Are you connected to the internet? Problem while fetching remote area list: "
                             + getErrorMessage());
                     return;
@@ -273,10 +272,8 @@ public class MainActivity extends Activity
                     public void onSelect( String selectedArea, String selectedFile )
                     {
                         if (selectedFile == null
-                                || new File(mapsFolder, selectedArea + ".ghz")
-                                .exists()
-                                || new File(mapsFolder, selectedArea + "-gh")
-                                .exists())
+                                || new File(mapsFolder, selectedArea + ".ghz").exists()
+                                || new File(mapsFolder, selectedArea + "-gh").exists())
                         {
                             downloadURL = null;
                         } else
@@ -357,7 +354,7 @@ public class MainActivity extends Activity
                 String localFolder = Helper.pruneFileEnd(AndroidHelper.getFileName(downloadURL));
                 localFolder = new File(mapsFolder, localFolder + "-gh").getAbsolutePath();
                 log("downloading & unzipping " + downloadURL + " to " + localFolder);
-                Downloader downloader = new Downloader("GraphHopper Android");
+                AndroidDownloader downloader = new AndroidDownloader();
                 downloader.setTimeout(30000);
                 downloader.downloadAndUnzip(downloadURL, localFolder,
                         new ProgressListener()
