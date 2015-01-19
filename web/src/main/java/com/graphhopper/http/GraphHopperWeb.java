@@ -22,6 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+import java.util.Arrays;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -36,8 +37,12 @@ public class GraphHopperWeb implements GraphHopperAPI
 {
     public static void main( String[] args )
     {
-        GraphHopperAPI gh = new GraphHopperWeb();
-        gh.load("http://localhost:8989/route");
+        GraphHopperWeb gh = new GraphHopperWeb();
+        gh.setKey("<your-key>");
+
+        // for local server: gh.load("http://localhost:8989/route");        
+        gh.load("https://graphhopper.com/api/1/route");
+
         //GHResponse ph = gh.route(new GHRequest(53.080827, 9.074707, 50.597186, 11.184082));
         GHResponse ph = gh.route(new GHRequest(49.6724, 11.3494, 49.6550, 11.4180));
         System.out.println(ph);

@@ -31,7 +31,7 @@ public class QueryTortureTest
     public void testGetQuery()
     {
         Query result = Query.parse("2013-08-07 18:06:50,905 [qtp1329318374-81] INFO  graphhopper.http.GraphHopperServlet - point=51.076329,13.738409&point=52.517037,13.38886&type=jsonp 46.4.67.134 en_US Wget/1.13.4 (linux-gnu) 51.076329, 13.738409->52.517037, 13.38886, distance: 189.4806800000001, time:123min, points:907, took:0.007393159, debug - idLookup:0.002483692s, algoInit:1.20837E-4s, dijkstraCH-routing:0.003138361s, extract time:1.66755E-4, simplify (1219->907):0.001040086s, instructions:2.26986E-4s, dijkstrabi, fastest, CAR");
-        assertEquals("point=51.076329,13.738409&point=52.517037,13.38886&type=jsonp", result.queryString);
+        assertEquals("point=51.076329,13.738409&point=52.517037,13.38886&type=jsonp", result.createQueryString());
         assertEquals(51.076329, result.start.lat, 1e-5);
         assertEquals(13.38886, result.end.lon, 1e-5);
     }
