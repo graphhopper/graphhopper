@@ -2,7 +2,6 @@ package uk.co.ordnancesurvey.routing;
 
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
@@ -18,7 +17,8 @@ public class GraphHopperHooks {
 	String instruction;
 
 	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI$")
-	public void getRoute(String pointA, String pointB, String routeType) {
+	public void getRoute(String pointA, String pointB, String routeType)
+			throws InterruptedException {
 
 		String testON = IntegrationTestProperties.getTestProperty("testON");
 
@@ -31,8 +31,16 @@ public class GraphHopperHooks {
 			graphUiUtil.getRouteFromService(pointA, pointB, routeType);
 			break;
 		default:
-			graphUiUtil.getRouteFromService(pointA, pointB, routeType);
-			graphUiUtil.getRouteFromUI(pointA, pointB, routeType);
+			
+			if (pointA.split(",").length==2){
+				graphUiUtil.getRouteFromService(pointA, pointB, routeType);
+				graphUiUtil.getRouteFromUI(pointA, pointB, routeType);
+			}
+			else
+				{
+				graphUiUtil.getRouteFromUI(pointA, pointB, routeType);
+				}
+			
 			break;
 
 		}
@@ -53,12 +61,14 @@ public class GraphHopperHooks {
 	@Then("^I should be able to verify the waypoints on the route map:")
 	public void I_should_be_able_to_verify_the_waypoints_on_the_route_map(
 			List<Map<String, String>> wayPointList) {
+
 		graphUiUtil.isWayPointonRouteMap(wayPointList);
+
 	}
 
 	@Then("^I should be able to verify the waypoints not on the route map:")
 	public void I_should_be_able_to_verify_the_not_waypoints_on_the_route_map(
-			List<Map> wayPointList) {
+			List<Map<String, String>> wayPointList) {
 
 		graphUiUtil.isWayPointNotonRouteMap(wayPointList);
 
@@ -73,7 +83,7 @@ public class GraphHopperHooks {
 
 	@Then("^I should be able to verify the trackPoints on the route map:")
 	public void I_should_be_able_to_verify_the_trackpoints_on_the_route_map(
-			List<Map> trackPointsList) throws ParseException {
+			List<Map<String, String>> trackPointsList) throws ParseException {
 
 		graphUiUtil.isTrackPointonRouteMap(trackPointsList);
 
@@ -81,7 +91,7 @@ public class GraphHopperHooks {
 
 	@Then("^I should be able to verify the trackPoints not on the route map:")
 	public void I_should_be_able_to_verify_the_trackpoints_not_on_the_route_map(
-			List<Map> trackPointsList) throws ParseException {
+			List<Map<String, String>> trackPointsList) throws ParseException {
 
 		graphUiUtil.isTrackPointNotonRouteMap(trackPointsList);
 

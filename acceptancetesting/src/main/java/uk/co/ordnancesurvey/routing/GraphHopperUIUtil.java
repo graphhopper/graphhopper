@@ -10,7 +10,7 @@ import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.RO
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ROUTE_TYPE_WALK;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.TOTAL_ROUTE_TIME;
 import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.TO_ROUTE;
-import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.WAYPOINT_ONMAP;
+import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.dropDown;
 
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -87,15 +87,19 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 	}
 
 	/**
-	 	 * <p>
 	 * <p>
 	 * <p>
+	 * <p>
+	 * 
 	 * @param pointA
 	 * @param pointB
-	 * @param routeType 
-	 * <p> Route type can be Car, walk or Cycle.
+	 * @param routeType
+	 *            <p>
+	 *            Route type can be Car, walk or Cycle.
+	 * @throws InterruptedException
 	 */
-	public void getRouteFromUI(String pointA, String pointB, String routeType) {
+	public void getRouteFromUI(String pointA, String pointB, String routeType)
+			throws InterruptedException {
 
 		switch (routeType)
 
@@ -115,10 +119,24 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 		}
 
-		typeIntoField(FROM_ROUTE, pointA);
-		typeIntoField(TO_ROUTE, pointB);
+		int length = pointA.split(",").length;
+
+		if (length == 2) {
+
+			typeIntoField(FROM_ROUTE, pointA);
+			typeIntoField(TO_ROUTE, pointB);
+
+		}
+
+		else {
+			typeIntoField(FROM_ROUTE, pointA);
+			clickElement(dropDown);
+			typeIntoField(TO_ROUTE, pointB);
+			clickElement(dropDown);
+
+		}
+
 		clickElement(ROUTE_SEARCH);
-		waitFor(INSTRUCTIONS,25);
 
 	}
 
@@ -130,6 +148,10 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 	public void verifyInstructionThroughUI(String routeStepNumber,
 			String stepInstruction) {
 		this.routeStepNumber = routeStepNumber;
+		List<WebElement> WAY_POINTS = driver.findElements(By
+				.xpath("//*[@id='instructions']/tbody/tr[*]/td[2]"));
+		WAY_POINTS.get(Integer.parseInt(routeStepNumber) - 1).click();
+
 		checkTableRow(INSTRUCTIONS, Integer.parseInt(this.routeStepNumber),
 				stepInstruction);
 
@@ -164,17 +186,21 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 	public void isWayPointonRouteMap(String wayPointIndex,
 			String wayPoint_Coordinates, String wayPointDescription,
 			String azimuth, String direction, String time, String distance) {
-		final List<WebElement> WAY_POINTS;
+
 		Waypoint wp;
 
 		switch (testOn.toUpperCase()) {
 		case "WEB":
-			WAY_POINTS = driver.findElements(By
-					.xpath("//*[@id='instructions']/tbody/tr[*]/td[2]"));
-			WAY_POINTS.get(Integer.parseInt(wayPointIndex) - 1).click();
-			Assert.assertTrue(getValue(WAYPOINT_ONMAP) + " comparison failed",
-					wayPointDescription
-							.equalsIgnoreCase(getValue(WAYPOINT_ONMAP)));
+
+			verifyInstructionThroughUI(wayPointIndex, wayPointDescription);
+			/*
+			 * WAY_POINTS = driver.findElements(By
+			 * .xpath("//*[@id='instructions']/tbody/tr[*]/td[2]"));
+			 * WAY_POINTS.get(Integer.parseInt(wayPointIndex) - 1).click();
+			 * Assert.assertTrue(getValue(WAYPOINT_ONMAP) +
+			 * " comparison failed", wayPointDescription
+			 * .equalsIgnoreCase(getValue(WAYPOINT_ONMAP)));
+			 */
 			break;
 		case "SERVICE":
 			wp = buildWayPoint(wayPoint_Coordinates, wayPointDescription,
@@ -184,12 +210,15 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 			break;
 
 		default:
-			WAY_POINTS = driver.findElements(By
-					.xpath("//*[@id='instructions']/tbody/tr[*]/td[2]"));
-			WAY_POINTS.get(Integer.parseInt(wayPointIndex) - 1).click();
-			Assert.assertTrue(getValue(WAYPOINT_ONMAP) + " comparison failed",
-					wayPointDescription
-							.equalsIgnoreCase(getValue(WAYPOINT_ONMAP)));
+			verifyInstructionThroughUI(wayPointIndex, wayPointDescription);
+			/*
+			 * WAY_POINTS = driver.findElements(By
+			 * .xpath("//*[@id='instructions']/tbody/tr[*]/td[2]"));
+			 * WAY_POINTS.get(Integer.parseInt(wayPointIndex) - 1).click();
+			 * Assert.assertTrue(getValue(WAYPOINT_ONMAP) +
+			 * " comparison failed", wayPointDescription
+			 * .equalsIgnoreCase(getValue(WAYPOINT_ONMAP)));
+			 */
 			wp = buildWayPoint(wayPoint_Coordinates, wayPointDescription,
 					azimuth, direction, time, distance);
 			Assert.assertTrue(GPHService.isWayPointOnGPXRoutes(wp));
@@ -215,36 +244,18 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		LOG.info(wp.toString());
 		return wp;
 	}
+	
+	public void isWayPointNotonRouteMap(List<Map<String, String>> wayPointList) {
 
-	public void isWayPointonRouteMap(List<Map<String, String>> waypointList) {
+		for (int i = 0; i < wayPointList.size(); i++) {
 
-		for (int i = 0; i < waypointList.size(); i++) {
-			String wayPointIndex = (String) waypointList.get(i).get(
-					"wayPointIndex");
-			String waypointco = (String) waypointList.get(i).get("waypointco");
-			String waypointdesc = (String) waypointList.get(i).get(
+			String waypointco = (String) wayPointList.get(i).get("waypointco");
+			String waypointdesc = (String) wayPointList.get(i).get(
 					"waypointdesc");
-			String azimuth = (String) waypointList.get(i).get("azimuth");
-			String direction = (String) waypointList.get(i).get("direction");
-			String time = (String) waypointList.get(i).get("time");
-			String distance = (String) waypointList.get(i).get("distance");
-			isWayPointonRouteMap(wayPointIndex, waypointco, waypointdesc,
-					azimuth, direction, time, distance);
-		}
-
-	}
-
-	public void isWayPointNotonRouteMap(List<Map> waypointList) {
-
-		for (int i = 0; i < waypointList.size(); i++) {
-
-			String waypointco = (String) waypointList.get(i).get("waypointco");
-			String waypointdesc = (String) waypointList.get(i).get(
-					"waypointdesc");
-			String azimuth = (String) waypointList.get(i).get("azimuth");
-			String direction = (String) waypointList.get(i).get("direction");
-			String time = (String) waypointList.get(i).get("time");
-			String distance = (String) waypointList.get(i).get("distance");
+			String azimuth = (String) wayPointList.get(i).get("azimuth");
+			String direction = (String) wayPointList.get(i).get("direction");
+			String time = (String) wayPointList.get(i).get("time");
+			String distance = (String) wayPointList.get(i).get("distance");
 			Waypoint wp = buildWayPoint(waypointco, waypointdesc, azimuth,
 					direction, time, distance);
 			assert (!GPHService.isWayPointOnGPXRoutes(wp));
@@ -252,6 +263,43 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		}
 
 	}
+
+	public void isWayPointonRouteMap(List<Map<String,String>> waypointList) {
+
+		for (int i = 0; i < waypointList.size(); i++) {
+
+			if (waypointList.get(i).size() > 2) {
+				String wayPointIndex = (String) waypointList.get(i).get(
+						"wayPointIndex");
+				String waypointco = (String) waypointList.get(i).get(
+						"waypointco");
+				String waypointdesc = (String) waypointList.get(i).get(
+						"waypointdesc");
+				String azimuth = (String) waypointList.get(i).get("azimuth");
+				String direction = (String) waypointList.get(i)
+						.get("direction");
+				String time = (String) waypointList.get(i).get("time");
+				String distance = (String) waypointList.get(i).get("distance");
+				isWayPointonRouteMap(wayPointIndex, waypointco, waypointdesc,
+						azimuth, direction, time, distance);
+			}
+
+			else
+
+			{
+
+				String wayPointIndex = (String) waypointList.get(i).get(
+						"wayPointIndex");
+				String waypointdesc = (String) waypointList.get(i).get(
+						"waypointdesc");
+				verifyInstructionThroughUI(wayPointIndex, waypointdesc);
+
+			}
+		}
+
+	}
+
+
 
 	public void verifyTotalRouteTime(String totalRouteTime)
 			throws ParseException {
@@ -322,7 +370,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 	}
 
-	public void isTrackPointonRouteMap(List<Map> trackPointsList)
+	public void isTrackPointonRouteMap(List<Map<String, String>> trackPointsList)
 			throws ParseException {
 
 		for (int i = 0; i < trackPointsList.size(); i++) {
@@ -339,7 +387,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 	}
 
-	public void isTrackPointNotonRouteMap(List<Map> trackPointsList)
+	public void isTrackPointNotonRouteMap(List<Map<String, String>> trackPointsList)
 			throws ParseException {
 
 		for (int i = 0; i < trackPointsList.size(); i++) {
@@ -368,7 +416,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		return actualMap;
 
 	}
-	
+
 	public byte[] takescreenAsBiteArray() throws IOException {
 
 		byte[] screenshot = takeScreenShotAsBiteArray();
@@ -377,8 +425,6 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 	}
 
-	
-	
 	public void compareMapImage(String expectedMap, String testID)
 			throws IOException {
 		takescreen(testID);
@@ -419,7 +465,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		g.drawImage(img, 0, 0, newW, newH, 0, 0, w, h, null);
 		g.dispose();
 		return dimg;
-		
+
 	}
 
 }
