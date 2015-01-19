@@ -238,12 +238,6 @@ elif [ "x$ACTION" = "ximport" ]; then
       $GH_IMPORT_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE"
 
 
-elif [ "x$ACTION" = "xtest" ]; then
- "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS printVersion=true config=$CONFIG \
- 	osmreader.wayPointMaxDistance=0 graph.location="$GRAPH" osmreader.osm="$OSM_FILE" prepare.chWeighting=false \
-	graph.testIT=true
-
-
 elif [ "x$ACTION" = "xtorture" ]; then
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.QueryTorture $3 $4 $5 $6 $7 $8 $9
 

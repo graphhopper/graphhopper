@@ -21,13 +21,14 @@ import com.graphhopper.routing.util.TestAlgoCollector;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.PrinctonReader;
 import com.graphhopper.reader.dem.SRTMProvider;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TestAlgoCollector.OneRun;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.LocationIndexTreeSC;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
@@ -131,7 +132,7 @@ public class RoutingAlgorithmIT
     public void testMoscowTurnCosts()
     {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));        
+        list.add(new OneRun(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
         list.add(new OneRun(55.813159, 37.593884, 55.811278, 37.594217, 1048, 13));
         // TODO include CH
         boolean testAlsoCH = false, is3D = false;
@@ -464,9 +465,8 @@ public class RoutingAlgorithmIT
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             Weighting weighting = hopper.createWeighting(new WeightingMap(weightStr), encoder);
 
-            Collection<AlgoHelperEntry> prepares = RoutingAlgorithmSpecialAreaTests.
-                    createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, testAlsoCH,
-                            tMode, weighting, hopper.getEncodingManager());
+            Collection<AlgoHelperEntry> prepares = createAlgos(hopper.getGraph(), hopper.getLocationIndex(),
+                    encoder, testAlsoCH, tMode, weighting, hopper.getEncodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
             for (AlgoHelperEntry entry : prepares)
             {
@@ -506,9 +506,9 @@ public class RoutingAlgorithmIT
         Graph graph = new GraphBuilder(eManager).create();
 
         String bigFile = "10000EWD.txt.gz";
-        new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
-        Collection<AlgoHelperEntry> prepares = RoutingAlgorithmSpecialAreaTests.
-                createAlgos(graph, null, encoder, false, TraversalMode.NODE_BASED, new ShortestWeighting(), eManager);
+        new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile))).read();
+        Collection<AlgoHelperEntry> prepares = createAlgos(graph, null, encoder, false, TraversalMode.NODE_BASED,
+                new ShortestWeighting(), eManager);
         for (AlgoHelperEntry entry : prepares)
         {
             StopWatch sw = new StopWatch();
@@ -607,5 +607,48 @@ public class RoutingAlgorithmIT
         assertEquals(MAX * algosLength * instances.size(), integ.get());
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
         hopper.close();
+    }
+
+    public static Collection<AlgoHelperEntry> createAlgos( Graph g,
+            LocationIndex idx, final FlagEncoder encoder, boolean withCh,
+            final TraversalMode tMode, final Weighting weighting, final EncodingManager manager )
+    {
+        List<AlgoHelperEntry> prepare = new ArrayList<AlgoHelperEntry>();
+        prepare.add(new AlgoHelperEntry(g, new AlgorithmOptions(AlgorithmOptions.ASTAR, encoder, weighting, tMode), idx));
+        // later: include dijkstraOneToMany        
+        prepare.add(new AlgoHelperEntry(g, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA, encoder, weighting, tMode), idx));
+
+        final AlgorithmOptions astarbiOpts = new AlgorithmOptions(AlgorithmOptions.ASTAR_BI, encoder, weighting, tMode);
+        astarbiOpts.getHints().put(AlgorithmOptions.ASTAR_BI + ".approximation", "BeelineSimplification");
+        final AlgorithmOptions dijkstrabiOpts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting, tMode);
+        prepare.add(new AlgoHelperEntry(g, astarbiOpts, idx));
+        prepare.add(new AlgoHelperEntry(g, dijkstrabiOpts, idx));
+
+        if (withCh)
+        {
+            final LevelGraph graphCH = (LevelGraph) ((GraphStorage) g).copyTo(new GraphBuilder(manager).
+                    set3D(g.getNodeAccess().is3D()).levelGraphCreate());
+            final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(graphCH, encoder, weighting, tMode);
+            prepareCH.doWork();
+            LocationIndex idxCH = new LocationIndexTreeSC(graphCH, new RAMDirectory()).prepareIndex();
+            prepare.add(new AlgoHelperEntry(graphCH, dijkstrabiOpts, idxCH)
+            {
+                @Override
+                public RoutingAlgorithm createAlgo( Graph qGraph )
+                {
+                    return prepareCH.createAlgo(qGraph, dijkstrabiOpts);
+                }
+            });
+
+            prepare.add(new AlgoHelperEntry(graphCH, astarbiOpts, idxCH)
+            {
+                @Override
+                public RoutingAlgorithm createAlgo( Graph qGraph )
+                {
+                    return prepareCH.createAlgo(qGraph, astarbiOpts);
+                }
+            });
+        }
+        return prepare;
     }
 }
