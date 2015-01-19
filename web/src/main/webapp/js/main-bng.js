@@ -799,17 +799,9 @@ function resolve(index, locCoord, inputsStr) {
     var ttinput = $(div).find(".tt-input"); 
     ttinput.val(locCoord.input);
     var tthint = $(div).find(".tt-hint"); 
-    tthint.val(locCoord.input);
-//	if (inputsStr) {
-//		ttinput.data.address_line = locCoord.input;
-//		tthint.data.address_line = locCoord.input;
-//	}
-//    }
-//    if ($(div).find(".pointInput").val()=='') {
-//    	$(div).find(".pointInput").val(locCoord.input);
-//    }
+    tthint.val('');
 
-    return createAmbiguityList(locCoord).always(function () {
+    return createAmbiguityList(locCoord, ttinput).always(function () {
         var errorDiv = $(div).find(".pointResolveError");
         errorDiv.empty();
 
@@ -829,7 +821,7 @@ function resolve(index, locCoord, inputsStr) {
  * Returns a defer object containing the location pointing to a resolvedList with all the found
  * coordinates.
  */
-function createAmbiguityList(locCoord) {
+function createAmbiguityList(locCoord, ttinput) {
     locCoord.error = "";
     locCoord.resolvedList = [];
     var timeout = 3000;
@@ -844,91 +836,28 @@ function createAmbiguityList(locCoord) {
         var tmpDefer = $.Deferred();
         tmpDefer.resolve([locCoord]);
         return tmpDefer;
-//        var url = nominatimReverseURL + "?lat=" + locCoord.lat + "&lon="
-//                + locCoord.lng + "&format=json&zoom=16";
-//        return $.ajax({
-//            url: url,
-//            type: "GET",
-//            dataType: "json",
-//            timeout: timeout
-//        }).then(
-//                function (json) {
-//                    if (!json) {
-//                        locCoord.error = "No description found for coordinate";
-//                        return [locCoord];
-//                    }
-//                    var address = json.address;
-//                    var point = {};
-//                    point.lat = locCoord.lat;
-//                    point.lng = locCoord.lng;
-//                    point.bbox = json.boundingbox;
-//                    point.positionType = json.type;
-//                    point.locationDetails = formatLocationEntry(address);
-//                    // point.address = json.address;
-//                    locCoord.resolvedList.push(point);
-//                    return [locCoord];
-//                },
-//                function (err) {
-//                    log("[nominatim_reverse] Error while looking up coordinate lat=" + locCoord.lat + "&lon=" + locCoord.lng);
-//                    locCoord.error = "Problem while looking up location.";
-//                    return [locCoord];
-//                }
-//        );
     } else {
-//    	if (!jsonArgs || jsonArgs.length === 0) {
-    	// Don't do the nominatum search as before.
-        locCoord.error = "Location not looked up";
         var tmpDefer = $.Deferred();
-        tmpDefer.resolve([locCoord]);
+        var enteredValue = ttinput.val();
+    	places.get(enteredValue, function(suggestions) {
+    		var resolved = false;
+    		jQuery.each(suggestions, function (index, item) {
+    			if (item.address_line===enteredValue) {
+    				locCoord.lat = item.latitude;
+    				locCoord.lng = item.longitude;
+    	            resolved = true;
+    				return false;
+    			}
+    	    });
+    		if(!resolved) {
+	            locCoord.error = "Failed to resolve entered value";
+				tmpDefer.resolve([locCoord]);
+    		}
+    		else {
+    			tmpDefer.resolve([locCoord]);
+    		}
+    	});
         return tmpDefer;
-//        }
-//        return doGeoCoding(locCoord.input, 10, timeout).then(
-//                function (jsonArgs) {
-//                    if (!jsonArgs || jsonArgs.length === 0) {
-//                        locCoord.error = "No area description found";
-//                        return [locCoord];
-//                    }
-//                    var prevImportance = jsonArgs[0].importance;
-//                    var address;
-//                    for (var index in jsonArgs) {
-//                        var json = jsonArgs[index];
-//                        // if we have already some results ignore unimportant
-//                        if (prevImportance - json.importance > 0.4)
-//                            break;
-//
-//                        // de-duplicate via ignoring boundary stuff => not perfect as 'Freiberg' would no longer be correct
-//                        // if (json.type === "administrative")
-//                        //    continue;
-//
-//                        // if no different properties => skip!
-//                        if (address && JSON.stringify(address) === JSON.stringify(json.address))
-//                            continue;
-//
-//                        address = json.address;
-//                        prevImportance = json.importance;
-//                        var point = {};
-//                        point.lat = round(json.lat);
-//                        point.lng = round(json.lon);
-//                        point.locationDetails = formatLocationEntry(address);
-//                        point.bbox = json.boundingbox;
-//                        point.positionType = json.type;
-//                        locCoord.resolvedList.push(point);
-//                    }
-//                    if (locCoord.resolvedList.length === 0) {
-//                        locCoord.error = "No area description found";
-//                        return [locCoord];
-//                    }
-//                    var list = locCoord.resolvedList;
-//                    locCoord.lat = list[0].lat;
-//                    locCoord.lng = list[0].lng;
-//                    // locCoord.input = dataToText(list[0]);
-//                    return [locCoord];
-//                },
-//                function () {
-//                    locCoord.error = "Problem while looking up address";
-//                    return [locCoord];
-//                }
-//        );
     }
 }
 
@@ -1030,6 +959,17 @@ function focus(coord, zoom, index) {
     }
 }
 function routeLatLng(request, doQuery) {
+	var valid = true;
+	jQuery.each(request.route, function (index, item) {
+		if (!item.lat || !item.lng) {
+            valid = false;
+			return false;
+		}
+    });
+	if(!valid) {
+		// If we have failed to geocode any point just return so we don't make a spurious request
+		return;
+	}
     // do_zoom should not show up in the URL but in the request object to avoid zooming for history change
     var doZoom = request.do_zoom;
     request.do_zoom = true;
@@ -1368,6 +1308,12 @@ function mySubmit() {
             allStr = [],
             inputsStr = [],
             inputOk = true;
+    
+    if (osplacesurl && osplacesurl.indexOf('OS_PLACES_KEY')>-1) {
+    	alert('Configuration error. You must configure your OS Places license key.');
+    	return;
+    }
+    
 //    var location_points = $("#locationpoints > div.pointDiv > input.pointInput");
     var location_points = $("#locationpoints > div.pointDiv > span.twitter-typeahead > input.tt-input");
     
