@@ -71,7 +71,7 @@ function ensureMaven {
         echo "No Maven found in the PATH. Now downloading+installing it to $MAVEN_HOME"
         cd "$GH_HOME"
         MVN_PACKAGE=apache-maven-3.2.5
-        wget -O maven.zip http://www.eu.apache.org/dist/maven/maven-3/3.2.5/binaries/$MVN_PACKAGE-bin.zip
+        wget -O maven.zip http://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/$MVN_PACKAGE-bin.zip
         unzip maven.zip
         mv $MVN_PACKAGE maven
         rm maven.zip
