@@ -108,7 +108,7 @@ public class Measurement
         int count = args.getInt("measurement.count", 5000);
 
         MeasureHopper hopper = new MeasureHopper();
-        hopper.forDesktop().setEnableInstructions(false);
+        hopper.forDesktop();
         if (!hopper.load(graphLocation))
             throw new IllegalStateException("Cannot load existing levelgraph at " + graphLocation);
 
