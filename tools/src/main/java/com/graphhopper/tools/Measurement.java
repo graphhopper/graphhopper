@@ -127,14 +127,15 @@ public class Measurement
             // Route via dijkstrabi. Normal routing takes a lot of time => smaller query number than CH
             // => values are not really comparable to routingCH as e.g. the mean distance etc is different            
             hopper.setCHEnable(false);
-            printTimeOfRouteQuery(hopper, count / 20, "routing", vehicleStr);
+            printTimeOfRouteQuery(hopper, count / 20, "routing", vehicleStr, true);
 
             System.gc();
 
             // route via CH. do preparation before                        
             hopper.setCHEnable(true);
             hopper.doPostProcessing();
-            printTimeOfRouteQuery(hopper, count, "routingCH", vehicleStr);
+            printTimeOfRouteQuery(hopper, count, "routingCH", vehicleStr, true);            
+            printTimeOfRouteQuery(hopper, count, "routingCH_no_instr", vehicleStr, false);
             logger.info("store into " + propLocation);
         } catch (Exception ex)
         {
@@ -194,7 +195,8 @@ public class Measurement
         print("location2id", miniPerf);
     }
 
-    private void printTimeOfRouteQuery( final GraphHopper hopper, int count, String prefix, final String vehicle )
+    private void printTimeOfRouteQuery( final GraphHopper hopper, int count, String prefix,
+            final String vehicle, final boolean withInstructions )
     {
         final Graph g = hopper.getGraph();
         final AtomicLong maxDistance = new AtomicLong(0);
@@ -224,18 +226,22 @@ public class Measurement
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
                         setWeighting("fastest").
                         setVehicle(vehicle);
+                req.getHints().put("instructions", withInstructions);
                 GHResponse res;
                 try
                 {
                     res = hopper.route(req);
                 } catch (Exception ex)
                 {
+                    // 'not found' can happen if import creates more than one subnetwork
                     throw new RuntimeException("Error while calculating route! "
                             + "nodes:" + from + " -> " + to + ", request:" + req, ex);
                 }
 
-                if (res.hasErrors())
-                    throw new IllegalStateException("errors should NOT happen in Measurement! " + res.getErrors());
+                if (res.hasErrors()) {
+                    logger.error("errors should NOT happen in Measurement! " + req + " => " + res.getErrors());
+                    return 0;
+                }
 
                 if (!warmup)
                 {

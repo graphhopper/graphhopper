@@ -251,10 +251,10 @@ elif [ "x$ACTION" = "xminiui" ]; then
 
 elif [ "x$ACTION" = "xmeasurement" ]; then
  ARGS="config=$CONFIG graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chWeighting=fastest graph.flagEncoders=CAR"
- # graph.doSort=true"
  echo -e "\ncreate graph via $ARGS, $JAR"
  START=$(date +%s)
- "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS $ARGS prepare.doPrepare=false
+ # avoid islands for measurement at all costs
+ "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS $ARGS prepare.doPrepare=false prepare.minNetworkSize=10000 prepare.minOnewayNetworkSize=10000
  END=$(date +%s)
  IMPORT_TIME=$(($END - $START))
 
