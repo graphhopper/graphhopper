@@ -566,9 +566,9 @@ function setEndCoord(e) {
     routeIfAllResolved();
 }
 
-function routeIfAllResolved() {
+function routeIfAllResolved(doQuery) {
     if (ghRequest.route.isResolved()) {
-        routeLatLng(ghRequest);
+        routeLatLng(ghRequest, doQuery);
         return true;
     }
     return false;
@@ -1439,7 +1439,7 @@ function setAutoCompleteList(index) {
             req.setCoord(point.lat, point.lng);
 
             req.input = suggestion.value;
-            if (!routeIfAllResolved())
+            if (!routeIfAllResolved(true))
                 focus(req, 15, index);
 
             myAutoDiv.autocomplete().enable();
