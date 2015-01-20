@@ -82,11 +82,6 @@ public class QueryGraph implements Graph
             wrappedExtension = mainGraph.getExtension();
     }
 
-    public Graph getOriginalGraph()
-    {
-        return mainGraph;
-    }
-
     /**
      * Convenient method to initialize this QueryGraph with the two specified query results.
      */
@@ -283,7 +278,7 @@ public class QueryGraph implements Graph
                 if (isVirtualEdge(edgeFrom))
                 {
                     edgeFrom = queryResults.get((edgeFrom - mainEdges) / 4).getClosestEdge().getEdge();
-                }                
+                }
                 if (isVirtualEdge(edgeTo))
                 {
                     edgeTo = queryResults.get((edgeTo - mainEdges) / 4).getClosestEdge().getEdge();

@@ -66,9 +66,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
 
     @Override
     public RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts )
-    {        
-        return createFactory(g instanceof QueryGraph ? ((QueryGraph) g).getOriginalGraph() : g, opts).
-                createAlgo(g, opts);
+    {
+        return createFactory(g, opts).createAlgo(g, opts);
     }
 
     @Override
