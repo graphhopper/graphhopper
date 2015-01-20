@@ -134,7 +134,7 @@ public class Measurement
             // route via CH. do preparation before                        
             hopper.setCHEnable(true);
             hopper.doPostProcessing();
-            printTimeOfRouteQuery(hopper, count, "routingCH", vehicleStr, true);            
+            printTimeOfRouteQuery(hopper, count, "routingCH", vehicleStr, true);
             printTimeOfRouteQuery(hopper, count, "routingCH_no_instr", vehicleStr, false);
             logger.info("store into " + propLocation);
         } catch (Exception ex)
@@ -238,20 +238,20 @@ public class Measurement
                             + "nodes:" + from + " -> " + to + ", request:" + req, ex);
                 }
 
-                if (res.hasErrors()) {
-                    logger.error("errors should NOT happen in Measurement! " + req + " => " + res.getErrors());
+                if (res.hasErrors())
+                {
+                    if (!warmup)
+                        failedCount.incrementAndGet();
+
+                    if (!res.getErrors().get(0).getMessage().toLowerCase().contains("not found"))
+                        logger.error("errors should NOT happen in Measurement! " + req + " => " + res.getErrors());
+
                     return 0;
                 }
 
                 if (!warmup)
                 {
                     long dist = (long) res.getDistance();
-                    if (dist < 1)
-                    {
-                        failedCount.incrementAndGet();
-                        return 0;
-                    }
-
                     distSum.addAndGet(dist);
 
                     airDistSum.addAndGet((long) distCalc.calcDist(fromLat, fromLon, toLat, toLon));
