@@ -366,7 +366,7 @@ function initMap(selectLayer) {
     var mapLink = '<a href="http://www.esri.com/">Esri</a>';
     var wholink = 'i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
     var esriAerial = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                attribution: osmAttr + '&copy; ' + mapLink + ', ' + wholink,
+                attribution: '&copy; ' + mapLink + ', ' + wholink,
                 maxZoom: 18
             });
 
