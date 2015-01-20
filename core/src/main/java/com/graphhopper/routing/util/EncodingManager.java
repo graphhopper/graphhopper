@@ -17,21 +17,15 @@
  */
 package com.graphhopper.routing.util;
 
-import gnu.trove.map.TLongObjectMap;
-import gnu.trove.map.hash.TLongObjectHashMap;
-
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.graphhopper.reader.OSMNode;
-import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import java.util.*;
@@ -51,29 +45,16 @@ public class EncodingManager
     public static final String RACINGBIKE = "racingbike";
     public static final String MOUNTAINBIKE = "mtb";
     public static final String FOOT = "foot";
-    private static final Map<String, String> defaultEdgeFlagEncoders = new HashMap<String, String>();
-    private static final Map<String, String> defaultTurnFlagEncoders = new HashMap<String, String>();
-
-    static
-    {
-        defaultEdgeFlagEncoders.put(CAR, CarFlagEncoder.class.getName());
-        defaultEdgeFlagEncoders.put(BIKE, BikeFlagEncoder.class.getName());
-        defaultEdgeFlagEncoders.put(BIKE2, Bike2WeightFlagEncoder.class.getName());
-        defaultEdgeFlagEncoders.put(RACINGBIKE, RacingBikeFlagEncoder.class.getName());
-        defaultEdgeFlagEncoders.put(MOUNTAINBIKE, MountainBikeFlagEncoder.class.getName());
-        defaultEdgeFlagEncoders.put(FOOT, FootFlagEncoder.class.getName());
-    }
+    public static final String MOTORCYCLE = "motorcycle";
 
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<AbstractFlagEncoder>();
-    private int edgeEncoderNextBit = 0;
 
     private int nextWayBit = 0;
     private int nextNodeBit = 0;
     private int nextRelBit = 0;
     private int nextTurnBit = 0;
-    private final int bytesForFlags;
-    private final int maxTurnFlagsBits;
-    private final int maxTurnCost;
+    private final int bitsForEdgeFlags;
+    private final int bitsForTurnFlags = 8 * 4;
     private boolean enableInstructions = true;
 
     /**
@@ -90,12 +71,7 @@ public class EncodingManager
 
     public EncodingManager( String flagEncodersStr, int bytesForFlags )
     {
-        this(flagEncodersStr, bytesForFlags, 0);
-    }
-
-    public EncodingManager( String flagEncodersStr, int bytesForFlags, int maxTurnCost )
-    {
-        this(Arrays.asList(readFromEncoderString(defaultEdgeFlagEncoders, flagEncodersStr).toArray(new FlagEncoder[0])), bytesForFlags, maxTurnCost);
+        this(parseEncoderString(flagEncodersStr), bytesForFlags);
     }
 
     /**
@@ -115,25 +91,22 @@ public class EncodingManager
      */
     public EncodingManager( List<? extends FlagEncoder> flagEncoders )
     {
-        // we don't need turn costs yet, but only restrictions => maxTurnCost = 0
-        this(flagEncoders, 4, 0);
+        this(flagEncoders, 4);
     }
 
-    public EncodingManager( List<? extends FlagEncoder> flagEncoders, int bytesForFlags, int maxTurnCost )
+    public EncodingManager( List<? extends FlagEncoder> flagEncoders, int bytesForEdgeFlags )
     {
-        if (bytesForFlags != 4 && bytesForFlags != 8)
-            throw new IllegalStateException("For 'flags' currently only 4 or 8 bytes supported");
+        if (bytesForEdgeFlags != 4 && bytesForEdgeFlags != 8)
+            throw new IllegalStateException("For 'edge flags' currently only 4 or 8 bytes supported");
 
-        this.maxTurnCost = maxTurnCost;
-        this.bytesForFlags = bytesForFlags * 8;
-        this.maxTurnFlagsBits = bytesForFlags * 8;
+        this.bitsForEdgeFlags = bytesForEdgeFlags * 8;
 
         Collections.sort(flagEncoders, new Comparator<FlagEncoder>()
         {
             @Override
             public int compare( FlagEncoder o1, FlagEncoder o2 )
             {
-                return o1.getClass().toString().compareTo(o2.getClass().toString());
+                return o1.toString().compareTo(o2.toString());
             }
         });
         for (FlagEncoder flagEncoder : flagEncoders)
@@ -144,41 +117,56 @@ public class EncodingManager
 
     public int getBytesForFlags()
     {
-        return bytesForFlags / 8;
+        return bitsForEdgeFlags / 8;
     }
 
-    private static List<FlagEncoder> readFromEncoderString( Map<String, String> defaultEncoders, String encoderList )
+    static List<FlagEncoder> parseEncoderString( String encoderList )
     {
+        if (encoderList.contains(":"))
+            throw new IllegalArgumentException("EncodingManager does no longer use reflection instantiate encoders directly.");
+
         String[] entries = encoderList.split(",");
         List<FlagEncoder> resultEncoders = new ArrayList<FlagEncoder>();
 
         for (String entry : entries)
         {
-            entry = entry.trim();
+            entry = entry.trim().toLowerCase();
             if (entry.isEmpty())
                 continue;
 
-            String className = null;
-            int pos = entry.indexOf(":");
-            if (pos > 0)
+            String entryVal = "";
+            if (entry.contains("|"))
             {
-                className = entry.substring(pos + 1);
-            } else
-            {
-                className = defaultEncoders.get(entry.toLowerCase());
-                if (className == null)
-                    throw new IllegalArgumentException("Unknown encoder name " + entry);
+                entryVal = entry;
+                entry = entry.split("\\|")[0];
             }
 
-            try
-            {
-                @SuppressWarnings("unchecked")
-                Class<FlagEncoder> cls = (Class<FlagEncoder>) Class.forName(className);
-                resultEncoders.add((FlagEncoder) cls.getDeclaredConstructor().newInstance());
-            } catch (Exception e)
-            {
-                throw new IllegalArgumentException("Cannot instantiate class " + className, e);
-            }
+            AbstractFlagEncoder fe;
+            if (entry.equals(CAR))
+                fe = new CarFlagEncoder(entryVal);
+
+            else if (entry.equals(BIKE))
+                fe = new BikeFlagEncoder(entryVal);
+
+            else if (entry.equals(BIKE2))
+                fe = new Bike2WeightFlagEncoder(entryVal);
+
+            else if (entry.equals(RACINGBIKE))
+                fe = new RacingBikeFlagEncoder(entryVal);
+
+            else if (entry.equals(MOUNTAINBIKE))
+                fe = new MountainBikeFlagEncoder(entryVal);
+
+            else if (entry.equals(FOOT))
+                fe = new FootFlagEncoder(entryVal);
+
+            else if (entry.equals(MOTORCYCLE))
+                fe = new MotorcycleFlagEncoder(entryVal);
+
+            else
+                throw new IllegalArgumentException("entry in encoder list not supported " + entry);
+
+            resultEncoders.add(fe);
         }
         return resultEncoders;
     }
@@ -189,33 +177,30 @@ public class EncodingManager
     private void registerEncoder( AbstractFlagEncoder encoder )
     {
         int encoderCount = edgeEncoders.size();
-        int usedBits = encoder.defineNodeBits(encoderCount, edgeEncoderNextBit);
-        if (usedBits > bytesForFlags)
-            throw new IllegalArgumentException(String.format(ERR, bytesForFlags, "node"));
+        int usedBits = encoder.defineNodeBits(encoderCount, nextNodeBit);
+        if (usedBits > bitsForEdgeFlags)
+            throw new IllegalArgumentException(String.format(ERR, bitsForEdgeFlags, "node"));
         encoder.setNodeBitMask(usedBits - nextNodeBit, nextNodeBit);
         nextNodeBit = usedBits;
 
         usedBits = encoder.defineWayBits(encoderCount, nextWayBit);
-        if (usedBits > bytesForFlags)
-            throw new IllegalArgumentException(String.format(ERR, bytesForFlags, "way") + WAY_ERR);
+        if (usedBits > bitsForEdgeFlags)
+            throw new IllegalArgumentException(String.format(ERR, bitsForEdgeFlags, "way") + WAY_ERR);
         encoder.setWayBitMask(usedBits - nextWayBit, nextWayBit);
         nextWayBit = usedBits;
 
         usedBits = encoder.defineRelationBits(encoderCount, nextRelBit);
-        if (usedBits > bytesForFlags)
-            throw new IllegalArgumentException(String.format(ERR, bytesForFlags, "relation"));
+        if (usedBits > bitsForEdgeFlags)
+            throw new IllegalArgumentException(String.format(ERR, bitsForEdgeFlags, "relation"));
         encoder.setRelBitMask(usedBits - nextRelBit, nextRelBit);
         nextRelBit = usedBits;
 
-        edgeEncoderNextBit = usedBits;
-
         // turn flag bits are independent from edge encoder bits
-        usedBits = encoder.defineTurnBits(encoderCount, nextTurnBit, determineRequiredBits(maxTurnCost));
-        if (usedBits > maxTurnFlagsBits)
-            throw new IllegalArgumentException(String.format(ERR, bytesForFlags, "turn"));
+        usedBits = encoder.defineTurnBits(encoderCount, nextTurnBit);
+        if (usedBits > bitsForTurnFlags)
+            throw new IllegalArgumentException(String.format(ERR, bitsForEdgeFlags, "turn"));
         nextTurnBit = usedBits;
 
-        //everything okay, add encoder
         edgeEncoders.add(encoder);
     }
 
@@ -316,8 +301,8 @@ public class EncodingManager
                 str.append(",");
 
             str.append(encoder.toString());
-            str.append(":");
-            str.append(encoder.getClass().getName());
+            str.append("|");
+            str.append(encoder.getPropertiesString());
         }
 
         return str.toString();
@@ -397,42 +382,6 @@ public class EncodingManager
         return flags;
     }
 
-    private static int determineRequiredBits( int value )
-    {
-        int numberOfBits = 0;
-        while (value > 0)
-        {
-            value = value >> 1;
-            numberOfBits++;
-        }
-        return numberOfBits;
-    }
-
-    public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
-    {
-        TLongObjectMap<TurnCostTableEntry> entries = new TLongObjectHashMap<OSMTurnRelation.TurnCostTableEntry>();
-
-        int encoderCount = edgeEncoders.size();
-        for (int i = 0; i < encoderCount; i++)
-        {
-            AbstractFlagEncoder encoder = edgeEncoders.get(i);
-            for (TurnCostTableEntry entry : encoder.analyzeTurnRelation(turnRelation, osmReader))
-            {
-                TurnCostTableEntry oldEntry = entries.get(entry.getItemId());
-                if (oldEntry != null)
-                {
-                    // merging different encoders
-                    oldEntry.flags |= entry.flags;
-                } else
-                {
-                    entries.put(entry.getItemId(), entry);
-                }
-            }
-        }
-
-        return entries.valueCollection();
-    }
-
     public EncodingManager setEnableInstructions( boolean enableInstructions )
     {
         this.enableInstructions = enableInstructions;
@@ -466,10 +415,53 @@ public class EncodingManager
         }
     }
 
+    public List<FlagEncoder> fetchEdgeEncoders()
+    {
+        List<FlagEncoder> list = new ArrayList<FlagEncoder>();
+        list.addAll(edgeEncoders);
+        return list;
+    }
+
     static String fixWayName( String str )
     {
         if (str == null)
             return "";
         return str.replaceAll(";[ ]*", ", ");
+    }
+
+    public boolean needsTurnCostsSupport()
+    {
+        for (FlagEncoder encoder : edgeEncoders)
+        {
+            if (encoder.supports(TurnWeighting.class))
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * Create the EncodingManager from the provided GraphHopper location. Throws an
+     * IllegalStateException if it fails.
+     */
+    public static EncodingManager create( String ghLoc )
+    {
+        Directory dir = new RAMDirectory(ghLoc, true);
+        StorableProperties properties = new StorableProperties(dir);
+        if (!properties.loadExisting())
+            throw new IllegalStateException("Cannot load properties to fetch EncodingManager configuration at: "
+                    + dir.getLocation());
+
+        // check encoding for compatiblity
+        properties.checkVersions(false);
+        String acceptStr = properties.get("graph.flagEncoders");
+
+        if (acceptStr.isEmpty())
+            throw new IllegalStateException("EncodingManager was not configured. And no one was found in the graph: "
+                    + dir.getLocation());
+
+        int bytesForFlags = 4;
+        if ("8".equals(properties.get("graph.bytesForFlags")))
+            bytesForFlags = 8;
+        return new EncodingManager(acceptStr, bytesForFlags);
     }
 }

@@ -17,13 +17,8 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.routing.util.*;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
 import static com.graphhopper.storage.index.QueryResult.Position.*;
 import com.graphhopper.util.*;
@@ -158,7 +153,7 @@ public class QueryGraphTest
         {
 
             @Override
-            void fillVirtualEdges( TIntObjectMap<QueryGraph.VirtualEdgeIterator> node2Edge, int towerNode, EdgeExplorer mainExpl )
+            void fillVirtualEdges( TIntObjectMap<VirtualEdgeIterator> node2Edge, int towerNode, EdgeExplorer mainExpl )
             {
                 super.fillVirtualEdges(node2Edge, towerNode, mainExpl);
                 // ignore nodes should include baseNode == 1
@@ -258,7 +253,7 @@ public class QueryGraphTest
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(0);
         iter.next();
 
-        QueryGraph.VirtualEdgeIterator vi = new QueryGraph.VirtualEdgeIterator(2);
+        VirtualEdgeIterator vi = new VirtualEdgeIterator(2);
         vi.add(iter.detach(false));
 
         assertTrue(vi.next());
@@ -311,7 +306,7 @@ public class QueryGraphTest
 
         QueryResult qr = new QueryResult(-0.0005, 0.001);
         qr.setClosestEdge(edge);
-        qr.setWayIndex(0);
+        qr.setWayIndex(1);
         qr.calcSnappedPoint(new DistanceCalc2D());
 
         QueryGraph qg = new QueryGraph(g);
@@ -353,11 +348,11 @@ public class QueryGraphTest
         assertTrue(qr.getClosestNode() > 1);
         assertEquals(2, GHUtility.count(ee.setBaseNode(qr.getClosestNode())));
         EdgeIterator iter = ee.setBaseNode(qr.getClosestNode());
-        iter.next();        
+        iter.next();
         assertTrue(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
         assertFalse(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
 
-        iter.next();        
+        iter.next();
         assertFalse(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
         assertTrue(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
     }
@@ -377,6 +372,35 @@ public class QueryGraphTest
         assertEquals(new GHPoint(1.300019, 1.899962), res2.getSnappedPoint());
         assertNotNull(GHUtility.getEdge(queryGraph, 0, 4));
         assertNotNull(GHUtility.getEdge(queryGraph, 0, 3));
+    }
+
+    @Test
+    public void testAvoidDuplicateVirtualNodesIfIdentical()
+    {
+        initGraph(g);
+
+        EdgeIteratorState edgeState = GHUtility.getEdge(g, 0, 2);
+        QueryResult res1 = createLocationResult(0.5, 0, edgeState, 0, EDGE);
+        QueryResult res2 = createLocationResult(0.5, 0, edgeState, 0, EDGE);
+        QueryGraph queryGraph = new QueryGraph(g);
+        queryGraph.lookup(Arrays.asList(res1, res2));
+        assertEquals(new GHPoint(0.5, 0), res1.getSnappedPoint());
+        assertEquals(new GHPoint(0.5, 0), res2.getSnappedPoint());
+        assertEquals(3, res1.getClosestNode());
+        assertEquals(3, res2.getClosestNode());
+
+        // force skip due to **tower** node snapping in phase 2, but no virtual edges should be created for res1
+        edgeState = GHUtility.getEdge(g, 0, 1);
+        res1 = createLocationResult(1, 0, edgeState, 0, EDGE);
+        // now create virtual edges
+        edgeState = GHUtility.getEdge(g, 0, 2);
+        res2 = createLocationResult(0.5, 0, edgeState, 0, EDGE);
+        queryGraph = new QueryGraph(g);
+        queryGraph.lookup(Arrays.asList(res1, res2));
+        // make sure only one virtual node was created
+        assertEquals(queryGraph.getNodes(), g.getNodes() + 1);
+        EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(0);
+        assertEquals(GHUtility.asSet(1, 3), GHUtility.getNeighbors(iter));
     }
 
     @Test
@@ -412,5 +436,107 @@ public class QueryGraphTest
         tmp.setSnappedPosition(pos);
         tmp.calcSnappedPoint(new DistanceCalcEarth());
         return tmp;
+    }
+
+    @Test
+    public void testIteration_Issue163()
+    {
+        EdgeFilter outEdgeFilter = new DefaultEdgeFilter(encodingManager.getEncoder("CAR"), false, true);
+        EdgeFilter inEdgeFilter = new DefaultEdgeFilter(encodingManager.getEncoder("CAR"), true, false);
+        EdgeExplorer inExplorer = g.createEdgeExplorer(inEdgeFilter);
+        EdgeExplorer outExplorer = g.createEdgeExplorer(outEdgeFilter);
+
+        int nodeA = 0;
+        int nodeB = 1;
+
+        /* init test graph: one directional edge going from A to B, via virtual nodes C and D
+         * 
+         *   (C)-(D)
+         *  /       \
+         * A         B
+         */
+        g.getNodeAccess().setNode(nodeA, 1, 0);
+        g.getNodeAccess().setNode(nodeB, 1, 10);
+        g.edge(nodeA, nodeB, 10, false).setWayGeometry(Helper.createPointList(1.5, 3, 1.5, 7));
+
+        // assert the behavior for classic edgeIterator        
+        assertEdgeIdsStayingEqual(inExplorer, outExplorer, nodeA, nodeB);
+
+        // setup query results
+        EdgeIteratorState it = GHUtility.getEdge(g, nodeA, nodeB);
+        QueryResult res1 = createLocationResult(1.5, 3, it, 1, QueryResult.Position.EDGE);
+        QueryResult res2 = createLocationResult(1.5, 7, it, 2, QueryResult.Position.EDGE);
+
+        QueryGraph q = new QueryGraph(g);
+        q.lookup(Arrays.asList(res1, res2));
+        int nodeC = res1.getClosestNode();
+        int nodeD = res2.getClosestNode();
+
+        inExplorer = q.createEdgeExplorer(inEdgeFilter);
+        outExplorer = q.createEdgeExplorer(outEdgeFilter);
+
+        // assert the same behavior for queryGraph
+        assertEdgeIdsStayingEqual(inExplorer, outExplorer, nodeA, nodeC);
+        assertEdgeIdsStayingEqual(inExplorer, outExplorer, nodeC, nodeD);
+        assertEdgeIdsStayingEqual(inExplorer, outExplorer, nodeD, nodeB);
+    }
+
+    private void assertEdgeIdsStayingEqual( EdgeExplorer inExplorer, EdgeExplorer outExplorer, int startNode, int endNode )
+    {
+        EdgeIterator it = outExplorer.setBaseNode(startNode);
+        it.next();
+        assertEquals(startNode, it.getBaseNode());
+        assertEquals(endNode, it.getAdjNode());
+        // we expect the edge id to be the same when exploring in backward direction
+        int expectedEdgeId = it.getEdge();
+        assertFalse(it.next());
+
+        // backward iteration, edge id should remain the same!!
+        it = inExplorer.setBaseNode(endNode);
+        it.next();
+        assertEquals(endNode, it.getBaseNode());
+        assertEquals(startNode, it.getAdjNode());
+        assertEquals("The edge id is not the same,", expectedEdgeId, it.getEdge());
+        assertFalse(it.next());
+    }
+
+    @Test
+    public void testTurnCostsProperlyPropagated_Issue282()
+    {
+        TurnCostExtension turnExt = new TurnCostExtension();
+        FlagEncoder encoder = new CarFlagEncoder(5, 5, 15);
+
+        GraphStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(),
+                new EncodingManager(encoder), false, turnExt).
+                create(100);
+        NodeAccess na = graphWithTurnCosts.getNodeAccess();
+        na.setNode(0, .00, .00);
+        na.setNode(1, .00, .01);
+        na.setNode(2, .01, .01);
+
+        EdgeIteratorState edge0 = graphWithTurnCosts.edge(0, 1, 10, true);
+        EdgeIteratorState edge1 = graphWithTurnCosts.edge(2, 1, 10, true);
+
+        QueryGraph qGraph = new QueryGraph(graphWithTurnCosts);
+        FastestWeighting weighting = new FastestWeighting(encoder);
+        TurnWeighting turnWeighting = new TurnWeighting(weighting, encoder, (TurnCostExtension) qGraph.getExtension());
+        
+        assertEquals(0, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
+
+        // now use turn costs and QueryGraph
+        turnExt.addTurnInfo(edge0.getEdge(), 1, edge1.getEdge(), encoder.getTurnFlags(false, 10));
+        assertEquals(10, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
+        
+        QueryResult res1 = createLocationResult(0.000, 0.005, edge0, 0, QueryResult.Position.EDGE);
+        QueryResult res2 = createLocationResult(0.005, 0.010, edge1, 0, QueryResult.Position.EDGE);
+
+        qGraph.lookup(Arrays.asList(res1, res2));
+
+        int fromQueryEdge = GHUtility.getEdge(qGraph, res1.getClosestNode(), 1).getEdge();
+        int toQueryEdge = GHUtility.getEdge(qGraph, res2.getClosestNode(), 1).getEdge();
+
+        assertEquals(10, turnWeighting.calcTurnWeight(fromQueryEdge, 1, toQueryEdge), .1);
+
+        graphWithTurnCosts.close();
     }
 }

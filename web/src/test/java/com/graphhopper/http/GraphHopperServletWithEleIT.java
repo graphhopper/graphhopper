@@ -25,7 +25,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.junit.BeforeClass;
 
 /**
  * @author Peter Karich
@@ -47,7 +46,7 @@ public class GraphHopperServletWithEleIT extends BaseServletTester
         CmdArgs args = new CmdArgs().
                 put("graph.elevation.provider", "srtm").
                 put("graph.elevation.cachedir", "../core/files/").
-                put("prepare.chShortcuts", "no").
+                put("prepare.chWeighting", "no").
                 put("config", "../config-example.properties").
                 put("osmreader.osm", "../core/files/monaco.osm.gz").
                 put("graph.location", dir);
@@ -66,7 +65,7 @@ public class GraphHopperServletWithEleIT extends BaseServletTester
         assertTrue("distance wasn't correct:" + distance, distance < 2700);
 
         JSONObject cson = path.getJSONObject("points");
-        assertTrue("no elevation?", cson.toString().indexOf("[7.421392,43.7307,66]") >= 0);        
+        assertTrue("no elevation?", cson.toString().contains("[7.421392,43.7307,66]"));
     }
 
     @Test
@@ -81,7 +80,7 @@ public class GraphHopperServletWithEleIT extends BaseServletTester
         assertTrue("distance wasn't correct:" + distance, distance > 2500);
         assertTrue("distance wasn't correct:" + distance, distance < 2700);
         JSONObject cson = path.getJSONObject("points");
-        assertTrue("Elevation should not be included!", cson.toString().indexOf("[7.421392,43.7307]") >= 0);        
+        assertTrue("Elevation should not be included!", cson.toString().indexOf("[7.421392,43.7307]") >= 0);
 
         // disable elevation
         json = query("point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=false");
@@ -89,6 +88,6 @@ public class GraphHopperServletWithEleIT extends BaseServletTester
         assertFalse(infoJson.has("errors"));
         path = json.getJSONArray("paths").getJSONObject(0);
         cson = path.getJSONObject("points");
-        assertTrue("Elevation should not be included!", cson.toString().indexOf("[7.421392,43.7307]") >= 0);        
+        assertTrue("Elevation should not be included!", cson.toString().indexOf("[7.421392,43.7307]") >= 0);
     }
 }

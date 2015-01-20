@@ -17,28 +17,55 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
-import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
 import com.graphhopper.storage.Graph;
 
 /**
  *
  * @author Peter Karich
  */
+@RunWith(Parameterized.class)
 public class DijkstraTest extends AbstractRoutingAlgorithmTester
 {
-    @Override
-    public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final Weighting weighting )
+    /**
+     * Runs the same test with each of the supported traversal modes
+     */
+    @Parameters
+    public static Collection<Object[]> configs()
     {
-        return new NoOpAlgorithmPreparation()
+        return Arrays.asList(new Object[][]
+        {
+            { TraversalMode.NODE_BASED },
+            { TraversalMode.EDGE_BASED_1DIR },
+            { TraversalMode.EDGE_BASED_2DIR },
+            { TraversalMode.EDGE_BASED_2DIR_UTURN }
+        });
+    }
+
+    private final TraversalMode traversalMode;
+
+    public DijkstraTest( TraversalMode tMode )
+    {
+        this.traversalMode = tMode;
+    }
+
+    @Override
+    public RoutingAlgorithmFactory createFactory( Graph prepareGraph, AlgorithmOptions prepareOpts )
+    {
+        return new RoutingAlgorithmFactory()
         {
             @Override
-            public RoutingAlgorithm createAlgo()
+            public RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts )
             {
-                return new Dijkstra(_graph, encoder, weighting);
+                return new Dijkstra(g, opts.getFlagEncoder(), opts.getWeighting(), traversalMode);
             }
-        }.setGraph(defaultGraph);
+        };
     }
 }

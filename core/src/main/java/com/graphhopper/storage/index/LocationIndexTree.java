@@ -50,8 +50,8 @@ public class LocationIndexTree implements LocationIndex
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int MAGIC_INT;
-    protected DistanceCalc distCalc = new DistancePlaneProjection();
-    private DistanceCalc preciseDistCalc = new DistanceCalcEarth();
+    protected DistanceCalc distCalc = Helper.DIST_PLANE;
+    private DistanceCalc preciseDistCalc = Helper.DIST_EARTH;
     protected final Graph graph;
     private final NodeAccess nodeAccess;
     final DataAccess dataAccess;
@@ -81,7 +81,7 @@ public class LocationIndexTree implements LocationIndex
     public LocationIndexTree( Graph g, Directory dir )
     {
         if (g instanceof LevelGraph)
-            throw new IllegalArgumentException("Use LevelGraph.getOriginalGraph instead of the graph itself");
+            throw new IllegalArgumentException("Call LevelGraph.getOriginalGraph() instead of using the LevelGraph itself");
 
         MAGIC_INT = Integer.MAX_VALUE / 22316;
         this.graph = g;
@@ -277,9 +277,9 @@ public class LocationIndexTree implements LocationIndex
     public LocationIndex setApproximation( boolean approx )
     {
         if (approx)
-            distCalc = new DistancePlaneProjection();
+            distCalc = Helper.DIST_PLANE;
         else
-            distCalc = new DistanceCalcEarth();
+            distCalc = Helper.DIST_EARTH;
         return this;
     }
 
@@ -532,7 +532,7 @@ public class LocationIndexTree implements LocationIndex
                 size += len;
                 intIndex++;
                 leafs++;
-                dataAccess.incCapacity((long) (intIndex + len + 1) * 4);
+                dataAccess.ensureCapacity((long) (intIndex + len + 1) * 4);
                 if (len == 1)
                 {
                     // less disc space for single entries
@@ -557,7 +557,7 @@ public class LocationIndexTree implements LocationIndex
                     {
                         continue;
                     }
-                    dataAccess.incCapacity((long) (intIndex + 1) * 4);
+                    dataAccess.ensureCapacity((long) (intIndex + 1) * 4);
                     int beforeIntIndex = intIndex;
                     intIndex = store(subEntry, beforeIntIndex);
                     if (intIndex == beforeIntIndex)
@@ -795,7 +795,7 @@ public class LocationIndexTree implements LocationIndex
         storedNetworkEntryIds.forEach(new TIntProcedure()
         {
             @Override
-            public boolean execute( final int networkEntryNodeId )
+            public boolean execute( int networkEntryNodeId )
             {
                 new XFirstSearchCheck(queryLat, queryLon, checkBitset, edgeFilter)
                 {
@@ -819,7 +819,7 @@ public class LocationIndexTree implements LocationIndex
                         }
                         return false;
                     }
-                }.start(explorer, networkEntryNodeId, false);
+                }.start(explorer, networkEntryNodeId);
                 return true;
             }
         });
@@ -837,7 +837,7 @@ public class LocationIndexTree implements LocationIndex
     /**
      * Make it possible to collect nearby location also for other purposes.
      */
-    protected abstract class XFirstSearchCheck extends XFirstSearch
+    protected abstract class XFirstSearchCheck extends BreadthFirstSearch
     {
         boolean goFurther = true;
         double currNormedDist;
@@ -914,16 +914,19 @@ public class LocationIndexTree implements LocationIndex
                     tmpNormedDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                             tmpLat, tmpLon, wayLat, wayLon);
                     check(tmpClosestNode, tmpNormedDist, pointIndex, currEdge, pos);
-                } else if (pointIndex + 1 == len)
-                {
-                    tmpNormedDist = adjDist;
-                    pos = QueryResult.Position.TOWER;
                 } else
                 {
-                    tmpNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
-                    pos = QueryResult.Position.PILLAR;
+                    if (pointIndex + 1 == len)
+                    {
+                        tmpNormedDist = adjDist;
+                        pos = QueryResult.Position.TOWER;
+                    } else
+                    {
+                        tmpNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
+                        pos = QueryResult.Position.PILLAR;
+                    }
+                    check(tmpClosestNode, tmpNormedDist, pointIndex + 1, currEdge, pos);
                 }
-                check(tmpClosestNode, tmpNormedDist, pointIndex + 1, currEdge, pos);
 
                 if (tmpNormedDist <= equalNormedDelta)
                     return false;

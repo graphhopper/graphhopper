@@ -32,7 +32,7 @@ import com.graphhopper.util.shapes.BBox;
  */
 public class OriginalGraph implements Graph
 {
-    private final Graph lg;
+    private final LevelGraph lg;
 
     public OriginalGraph( LevelGraph lg )
     {
@@ -43,7 +43,7 @@ public class OriginalGraph implements Graph
     public Graph getOriginalGraph()
     {
         return this;
-    }        
+    }
 
     @Override
     public int getNodes()
@@ -91,9 +91,9 @@ public class OriginalGraph implements Graph
         return new AllEdgesIterator()
         {
             @Override
-            public int getMaxId()
+            public int getCount()
             {
-                return tmpIter.getMaxId();
+                return tmpIter.getCount();
             }
 
             @Override
@@ -236,5 +236,11 @@ public class OriginalGraph implements Graph
     public Graph copyTo( Graph g )
     {
         throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public GraphExtension getExtension()
+    {
+        return lg.getExtension();
     }
 }

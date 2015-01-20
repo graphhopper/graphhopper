@@ -21,22 +21,21 @@ import com.graphhopper.routing.util.TestAlgoCollector;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.PrinctonReader;
 import com.graphhopper.reader.dem.SRTMProvider;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TestAlgoCollector.OneRun;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
 import static org.junit.Assert.*;
@@ -81,9 +80,18 @@ public class RoutingAlgorithmIT
     @Test
     public void testMonaco()
     {
-        runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
+        Graph g = runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
                 createMonacoCar(), "CAR", true, "CAR", "shortest", false);
+
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+
+        // When OSM file stays unchanged make static edge and node IDs a requirement
+        assertEquals(GHUtility.asSet(9, 111, 182), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
+        assertEquals(GHUtility.asSet(19, 21), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(20)));
+        assertEquals(GHUtility.asSet(478, 84, 83), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(480)));
+
+        assertEquals(43.736989, g.getNodeAccess().getLat(10), 1e-6);
+        assertEquals(7.429758, g.getNodeAccess().getLon(201), 1e-6);
     }
 
     @Test
@@ -117,6 +125,20 @@ public class RoutingAlgorithmIT
         list.add(new OneRun(55.819066, 37.596374, 55.818898, 37.59661, 1114, 23));
         runAlgo(testCollector, "files/moscow.osm.gz", "target/moscow-gh",
                 list, "CAR", true, "CAR", "fastest", false);
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testMoscowTurnCosts()
+    {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
+        list.add(new OneRun(55.813159, 37.593884, 55.811278, 37.594217, 1048, 13));
+        // TODO include CH
+        boolean testAlsoCH = false, is3D = false;
+        runAlgo(testCollector, "files/moscow.osm.gz", "target/graph-moscow",
+                list, "CAR|turnCosts=true", testAlsoCH, "CAR", "fastest", is3D);
+
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -165,9 +187,17 @@ public class RoutingAlgorithmIT
     @Test
     public void testMonacoFoot()
     {
-        runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
+        Graph g = runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
                 createMonacoFoot(), "FOOT", true, "FOOT", "shortest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+
+        // see testMonaco for similar ID test
+        assertEquals(GHUtility.asSet(2, 906, 570), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
+        assertEquals(GHUtility.asSet(443, 952, 739), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(440)));
+        assertEquals(GHUtility.asSet(909, 580, 912), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(911)));
+
+        assertEquals(43.743705, g.getNodeAccess().getLat(100), 1e-6);
+        assertEquals(7.426362, g.getNodeAccess().getLon(701), 1e-6);
     }
 
     @Test
@@ -178,13 +208,26 @@ public class RoutingAlgorithmIT
         list.get(0).setDistance(1, 1627);
         list.get(2).setDistance(1, 2258);
         list.get(3).setDistance(1, 1482);
-        
+
         // or slightly longer tour with less nodes: list.get(1).setDistance(1, 3610);
         list.get(1).setDistance(1, 3595);
-        list.get(1).setLocs(1, 149);               
+        list.get(1).setLocs(1, 149);
 
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
                 list, "FOOT", true, "FOOT", "shortest", true);
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testNorthBayreuthFootFastestAnd3D()
+    {
+        List<OneRun> list = new ArrayList<OneRun>();
+        // prefer hiking route 'Teufelsloch Unterwaiz' and 'Rotmain-Wanderweg'        
+        list.add(new OneRun(49.974972, 11.515657, 49.991022, 11.512299, 2365, 66));
+        // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach'
+        list.add(new OneRun(49.986111, 11.550407, 50.023182, 11.555386, 5165, 133));
+        runAlgo(testCollector, "files/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
+                list, "FOOT", true, "FOOT", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -371,7 +414,7 @@ public class RoutingAlgorithmIT
         List<OneRun> list = new ArrayList<OneRun>();
         // choose Unterloher Weg and the following residential + cycleway
         list.add(new OneRun(50.004333, 11.600254, 50.044449, 11.543434, 6931, 184));
-        runAlgo(testCollector, "files/harsdorf.osm.pbf", "target/harsdorf-gh",
+        runAlgo(testCollector, "files/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
                 list, "bike", true, "bike", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
@@ -383,29 +426,33 @@ public class RoutingAlgorithmIT
         // choose cycleway (Dreschenauer Straße)
         list.add(new OneRun(49.987132, 11.510496, 50.018839, 11.505024, 3985, 106));
 
-        runAlgo(testCollector, "files/neudrossenfeld.osm.pbf", "target/neudrossenfeld-gh",
+        runAlgo(testCollector, "files/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
                 list, "bike", true, "bike", "fastest", true);
 
-        runAlgo(testCollector, "files/neudrossenfeld.osm.pbf", "target/neudrossenfeld2-gh",
+        runAlgo(testCollector, "files/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
                 list, "bike2", true, "bike2", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
-    void runAlgo( TestAlgoCollector testCollector, String osmFile,
+    /**
+     * @param testAlsoCH if true also the CH algorithms will be tested which needs preparation and
+     * takes a bit longer
+     */
+    Graph runAlgo( TestAlgoCollector testCollector, String osmFile,
             String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
-            boolean ch, String vehicle, String weightCalcStr, boolean is3D )
+            boolean testAlsoCH, String vehicle, String weightStr, boolean is3D )
     {
-        AlgorithmPreparation tmpPrepare = null;
+        AlgoHelperEntry algoEntry = null;
         OneRun tmpOneRun = null;
         try
         {
             Helper.removeDir(new File(graphFile));
             GraphHopper hopper = new GraphHopper().
-                    setInMemory(true).
+                    setStoreOnFlush(true).
                     // avoid that path.getDistance is too different to path.getPoint.calcDistance
                     setWayPointMaxDistance(0).
                     setOSMFile(osmFile).
-                    disableCHShortcuts().
+                    setCHEnable(false).
                     setGraphHopperLocation(graphFile).
                     setEncodingManager(new EncodingManager(importVehicles));
             if (is3D)
@@ -413,30 +460,34 @@ public class RoutingAlgorithmIT
 
             hopper.importOrLoad();
 
-            FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);            
-            Weighting weighting = hopper.createWeighting(weightCalcStr, encoder);
-            
-            Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
-                    createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, ch, weighting, hopper.getEncodingManager());
+            TraversalMode tMode = importVehicles.toLowerCase().contains("turncosts=true")
+                    ? TraversalMode.EDGE_BASED_1DIR : TraversalMode.NODE_BASED;
+            FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
+            Weighting weighting = hopper.createWeighting(new WeightingMap(weightStr), encoder);
+
+            Collection<AlgoHelperEntry> prepares = createAlgos(hopper.getGraph(), hopper.getLocationIndex(),
+                    encoder, testAlsoCH, tMode, weighting, hopper.getEncodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-            for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
+            for (AlgoHelperEntry entry : prepares)
             {
-                tmpPrepare = entry.getKey();
-                LocationIndex idx = entry.getValue();
+                algoEntry = entry;
+                LocationIndex idx = entry.getIdx();
                 for (OneRun oneRun : forEveryAlgo)
                 {
                     tmpOneRun = oneRun;
                     List<QueryResult> list = oneRun.getList(idx, edgeFilter);
-                    testCollector.assertDistance(tmpPrepare, list, oneRun);
+                    testCollector.assertDistance(algoEntry, list, oneRun);
                 }
             }
+
+            return hopper.getGraph();
         } catch (Exception ex)
         {
-            if (tmpPrepare == null)
-                throw new RuntimeException("cannot handle file " + osmFile, ex);
+            if (algoEntry == null)
+                throw new RuntimeException("cannot handle file " + osmFile + ", " + ex.getMessage(), ex);
 
-            throw new RuntimeException("cannot handle " + tmpPrepare.toString() + ", for " + tmpOneRun
-                    + ", file " + osmFile, ex);
+            throw new RuntimeException("cannot handle " + algoEntry.toString() + ", for " + tmpOneRun
+                    + ", file " + osmFile + ", " + ex.getMessage(), ex);
         } finally
         {
             // Helper.removeDir(new File(graphFile));
@@ -455,18 +506,17 @@ public class RoutingAlgorithmIT
         Graph graph = new GraphBuilder(eManager).create();
 
         String bigFile = "10000EWD.txt.gz";
-        new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
-        Collection<Entry<AlgorithmPreparation, LocationIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
-                createAlgos(graph, null, encoder, false, new ShortestWeighting(), eManager);
-        for (Entry<AlgorithmPreparation, LocationIndex> entry : prepares)
+        new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile))).read();
+        Collection<AlgoHelperEntry> prepares = createAlgos(graph, null, encoder, false, TraversalMode.NODE_BASED,
+                new ShortestWeighting(), eManager);
+        for (AlgoHelperEntry entry : prepares)
         {
-            AlgorithmPreparation prepare = entry.getKey();
             StopWatch sw = new StopWatch();
             for (int i = 0; i < N; i++)
             {
                 int node1 = Math.abs(rand.nextInt(graph.getNodes()));
                 int node2 = Math.abs(rand.nextInt(graph.getNodes()));
-                RoutingAlgorithm d = prepare.createAlgo();
+                RoutingAlgorithm d = entry.createAlgo(graph);
                 if (i >= noJvmWarming)
                     sw.start();
 
@@ -479,7 +529,7 @@ public class RoutingAlgorithmIT
             }
 
             float perRun = sw.stop().getSeconds() / ((float) (N - noJvmWarming));
-            System.out.println("# " + getClass().getSimpleName() + " " + prepare.createAlgo().getName()
+            System.out.println("# " + getClass().getSimpleName() + " " + entry
                     + ":" + sw.stop().getSeconds() + ", per run:" + perRun);
             assertTrue("speed to low!? " + perRun + " per run", perRun < 0.08);
         }
@@ -493,11 +543,12 @@ public class RoutingAlgorithmIT
         Helper.removeDir(new File(graphFile));
         final EncodingManager encodingManager = new EncodingManager("CAR");
         GraphHopper hopper = new GraphHopper().
-                setInMemory(true).
+                setStoreOnFlush(true).
                 setEncodingManager(encodingManager).
-                disableCHShortcuts().
+                setCHEnable(false).
                 setWayPointMaxDistance(0).
-                setOSMFile("files/monaco.osm.gz").setGraphHopperLocation(graphFile).
+                setOSMFile("files/monaco.osm.gz").
+                setGraphHopperLocation(graphFile).
                 importOrLoad();
         final Graph g = hopper.getGraph();
         final LocationIndex idx = hopper.getLocationIndex();
@@ -505,23 +556,22 @@ public class RoutingAlgorithmIT
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);
         int MAX = 100;
-        FlagEncoder carEncoder = encodingManager.getEncoder("CAR");
+        final FlagEncoder carEncoder = encodingManager.getEncoder("CAR");
 
         // testing if algorithms are independent. should be. so test only two algorithms. 
         // also the preparing is too costly to be called for every thread
         int algosLength = 2;
-        Weighting weighting = new ShortestWeighting();
+        final Weighting weighting = new ShortestWeighting();
         final EdgeFilter filter = new DefaultEdgeFilter(carEncoder);
         for (int no = 0; no < MAX; no++)
         {
             for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++)
             {
-                RoutingAlgorithm[] algos = new RoutingAlgorithm[]
+                String[] algos = new String[]
                 {
-                    new AStar(g, carEncoder, weighting),
-                    new DijkstraBidirectionRef(g, carEncoder, weighting)
+                    "astar", "dijkstrabi"
                 };
-                for (final RoutingAlgorithm algo : algos)
+                for (final String algoStr : algos)
                 {
                     // an algorithm is not thread safe! reuse via clear() is ONLY appropriated if used from same thread!
                     final int instanceIndex = instanceNo;
@@ -531,21 +581,9 @@ public class RoutingAlgorithmIT
                         public void run()
                         {
                             OneRun oneRun = instances.get(instanceIndex);
-                            testCollector.assertDistance(new NoOpAlgorithmPreparation()
-                            {
-                                @Override
-                                public RoutingAlgorithm createAlgo()
-                                {
-                                    return algo;
-                                }
-
-                                @Override
-                                public String toString()
-                                {
-                                    return algo.toString();
-                                }
-
-                            }, oneRun.getList(idx, filter), oneRun);
+                            AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(weighting).algorithm(algoStr).build();
+                            testCollector.assertDistance(new AlgoHelperEntry(g, opts, idx),
+                                    oneRun.getList(idx, filter), oneRun);
                             integ.addAndGet(1);
                         }
                     };
@@ -569,5 +607,48 @@ public class RoutingAlgorithmIT
         assertEquals(MAX * algosLength * instances.size(), integ.get());
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
         hopper.close();
+    }
+
+    public static Collection<AlgoHelperEntry> createAlgos( Graph g,
+            LocationIndex idx, final FlagEncoder encoder, boolean withCh,
+            final TraversalMode tMode, final Weighting weighting, final EncodingManager manager )
+    {
+        List<AlgoHelperEntry> prepare = new ArrayList<AlgoHelperEntry>();
+        prepare.add(new AlgoHelperEntry(g, new AlgorithmOptions(AlgorithmOptions.ASTAR, encoder, weighting, tMode), idx));
+        // later: include dijkstraOneToMany        
+        prepare.add(new AlgoHelperEntry(g, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA, encoder, weighting, tMode), idx));
+
+        final AlgorithmOptions astarbiOpts = new AlgorithmOptions(AlgorithmOptions.ASTAR_BI, encoder, weighting, tMode);
+        astarbiOpts.getHints().put(AlgorithmOptions.ASTAR_BI + ".approximation", "BeelineSimplification");
+        final AlgorithmOptions dijkstrabiOpts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting, tMode);
+        prepare.add(new AlgoHelperEntry(g, astarbiOpts, idx));
+        prepare.add(new AlgoHelperEntry(g, dijkstrabiOpts, idx));
+
+        if (withCh)
+        {
+            final LevelGraph graphCH = (LevelGraph) ((GraphStorage) g).copyTo(new GraphBuilder(manager).
+                    set3D(g.getNodeAccess().is3D()).levelGraphCreate());
+            final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(graphCH, encoder, weighting, tMode);
+            prepareCH.doWork();
+            LocationIndex idxCH = new LocationIndexTree(graphCH.getOriginalGraph(), new RAMDirectory()).prepareIndex();
+            prepare.add(new AlgoHelperEntry(graphCH, dijkstrabiOpts, idxCH)
+            {
+                @Override
+                public RoutingAlgorithm createAlgo( Graph qGraph )
+                {
+                    return prepareCH.createAlgo(qGraph, dijkstrabiOpts);
+                }
+            });
+
+            prepare.add(new AlgoHelperEntry(graphCH, astarbiOpts, idxCH)
+            {
+                @Override
+                public RoutingAlgorithm createAlgo( Graph qGraph )
+                {
+                    return prepareCH.createAlgo(qGraph, astarbiOpts);
+                }
+            });
+        }
+        return prepare;
     }
 }

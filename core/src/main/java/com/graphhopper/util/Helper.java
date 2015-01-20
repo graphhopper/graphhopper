@@ -41,8 +41,10 @@ import org.slf4j.LoggerFactory;
  * @author Peter Karich
  */
 public class Helper
-{    
-    private static final DistanceCalc dce = new DistanceCalcEarth();
+{
+    public static final DistanceCalc DIST_EARTH = new DistanceCalcEarth();
+    public static final DistanceCalc3D DIST_3D = new DistanceCalc3D();
+    public static final DistancePlaneProjection DIST_PLANE = new DistancePlaneProjection();
     private static final Logger logger = LoggerFactory.getLogger(Helper.class);
     public static Charset UTF_CS = Charset.forName("UTF-8");
     public static final long MB = 1L << 20;
@@ -72,6 +74,15 @@ public class Helper
     static String packageToPath( Package pkg )
     {
         return pkg.getName().replaceAll("\\.", File.separator);
+    }
+
+    public static int countBitValue( int maxTurnCosts )
+    {
+        double val = Math.log(maxTurnCosts) / Math.log(2);
+        int intVal = (int) val;
+        if (val == intVal)
+            return intVal;
+        return intVal + 1;
     }
 
     private Helper()
@@ -151,6 +162,27 @@ public class Helper
         } finally
         {
             reader.close();
+        }
+    }
+
+    public static String isToString( InputStream inputStream ) throws IOException
+    {
+        int size = 1024 * 8;
+        String encoding = "UTF-8";
+        InputStream in = new BufferedInputStream(inputStream, size);
+        try
+        {
+            byte[] buffer = new byte[size];
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            int numRead;
+            while ((numRead = in.read(buffer)) != -1)
+            {
+                output.write(buffer, 0, numRead);
+            }
+            return output.toString(encoding);
+        } finally
+        {
+            in.close();
         }
     }
 
@@ -262,7 +294,7 @@ public class Helper
         if (!graphBounds.isValid())
             throw new IllegalArgumentException("Bounding box is not valid to calculate index size: " + graphBounds);
 
-        double dist = dce.calcDist(graphBounds.maxLat, graphBounds.minLon,
+        double dist = DIST_EARTH.calcDist(graphBounds.maxLat, graphBounds.minLon,
                 graphBounds.minLat, graphBounds.maxLon);
         // convert to km and maximum is 50000km => 1GB
         dist = Math.min(dist / 1000, 50000);
@@ -396,6 +428,15 @@ public class Helper
         }
     }
 
+    /**
+     * Trying to force the release of the mapped ByteBuffer. See
+     * http://stackoverflow.com/q/2972986/194609 and use only if you know what you are doing.
+     */
+    public static void cleanHack()
+    {
+        System.gc();
+    }
+
     public static String nf( long no )
     {
         // I like french localization the most: 123654 will be 123 654 instead
@@ -435,7 +476,7 @@ public class Helper
     {
         return Math.round(value * 1e6) / 1e6;
     }
-    
+
     public static final double round4( double value )
     {
         return Math.round(value * 1e4) / 1e4;

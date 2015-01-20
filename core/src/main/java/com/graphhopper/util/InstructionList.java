@@ -186,13 +186,15 @@ public class InstructionList implements Iterable<Instruction>
         Instruction lastI = get(size() - 1);
         if (lastI.points.size() != 1)
             throw new IllegalStateException("Last instruction must have exactly one point but was " + lastI.points.size());
-        double lastLat = lastI.getFirstLat(), lastLon = lastI.getFirstLon();
-        gpxList.add(new GPXEntry(lastLat, lastLon, timeOffset));
+        double lastLat = lastI.getFirstLat(), lastLon = lastI.getFirstLon(),
+                lastEle = lastI.getPoints().is3D() ? lastI.getFirstEle() : Double.NaN;
+        gpxList.add(new GPXEntry(lastLat, lastLon, lastEle, timeOffset));
         return gpxList;
     }
 
     /**
-     * Creates the standard GPX string out of the points.
+     * Creates the standard GPX string out of the points according to the schema found here:
+     * https://graphhopper.com/public/schema/gpx-1.1.xsd
      * <p/>
      * @return string to be stored as gpx file
      */
@@ -216,46 +218,50 @@ public class InstructionList implements Iterable<Instruction>
 
         formatter.setTimeZone(tz);
         String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
-                + "<gpx xmlns='http://www.topografix.com/GPX/1/1' creator='Graphhopper' version='1.1' >"
-                + "<metadata>"
+                + "<gpx xmlns='http://www.topografix.com/GPX/1/1' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'"
+                + " creator='Graphhopper' version='1.1'"
+                // This xmlns:gh acts only as ID, no valid URL necessary.
+                // Use a separate namespace for custom extensions to make basecamp happy.
+                + " xmlns:gh='https://graphhopper.com/public/schema/gpx/1.1'>"
+                + "\n<metadata>"
+                + "<copyright author=\"OpenStreetMap contributors\"/>"
                 + "<link href='http://graphhopper.com'>"
                 + "<text>GraphHopper GPX</text>"
                 + "</link>"
                 + "<time>" + tzHack(formatter.format(startTimeMillis)) + "</time>"
                 + "</metadata>";
         StringBuilder track = new StringBuilder(header);
-        track.append("<trk><name>").append(trackName).append("</name>");
+        if (!isEmpty())
+        {
+            track.append("\n<rte>");
+            Instruction nextInstr = null;
+            for (Instruction currInstr : instructions)
+            {
+                if (null != nextInstr)
+                    createRteptBlock(track, nextInstr, currInstr);
+
+                nextInstr = currInstr;
+            }
+            createRteptBlock(track, nextInstr, null);
+            track.append("</rte>");
+        }
+
+        track.append("\n<trk><name>").append(trackName).append("</name>");
 
         track.append("<trkseg>");
         for (GPXEntry entry : createGPXList())
         {
             track.append("\n<trkpt lat='").append(Helper.round6(entry.getLat()));
             track.append("' lon='").append(Helper.round6(entry.getLon())).append("'>");
-            track.append("<time>").append(tzHack(formatter.format(startTimeMillis + entry.getMillis()))).append("</time>");
             if (includeElevation)
                 track.append("<ele>").append(Helper.round2(entry.getEle())).append("</ele>");
-
+            track.append("<time>").append(tzHack(formatter.format(startTimeMillis + entry.getMillis()))).append("</time>");
             track.append("</trkpt>");
         }
         track.append("</trkseg>");
         track.append("</trk>");
 
-        if (!isEmpty())
-        {
-            track.append("<rte>");
-            Instruction nextI = null;
-            for (Instruction instr : instructions)
-            {
-                if (null != nextI)
-                    createRteptBlock(track, nextI, instr);
-
-                nextI = instr;
-            }
-            createRteptBlock(track, nextI, null);
-            track.append("</rte>");
-        }
-
-        // TODO #147 use wpt for via points!
+        // we could now use 'wpt' for via points
         track.append("</gpx>");
         return track.toString().replaceAll("\\'", "\"");
     }
@@ -270,24 +276,25 @@ public class InstructionList implements Iterable<Instruction>
 
     private void createRteptBlock( StringBuilder output, Instruction instruction, Instruction nextI )
     {
-        output.append("<rtept lat=\"").append(Helper.round6(instruction.getFirstLat())).
+        output.append("\n<rtept lat=\"").append(Helper.round6(instruction.getFirstLat())).
                 append("\" lon=\"").append(Helper.round6(instruction.getFirstLon())).append("\">");
 
         if (!instruction.getName().isEmpty())
             output.append("<desc>").append(instruction.getTurnDescription(tr)).append("</desc>");
 
         output.append("<extensions>");
-        output.append("<distance>").append(Helper.round(instruction.getDistance(), 3)).append("</distance>");
-        output.append("<time>").append(instruction.getTime()).append("</time>");
+        output.append("<gh:distance>").append(Helper.round(instruction.getDistance(), 1)).append("</gh:distance>");
+        output.append("<gh:time>").append(instruction.getTime()).append("</gh:time>");
 
-        String direction = instruction.getDirection(nextI);
-        if (direction != null)
-            output.append("<direction>").append(direction).append("</direction>");
+        String direction = instruction.calcDirection(nextI);
+        if (!direction.isEmpty())
+            output.append("<gh:direction>").append(direction).append("</gh:direction>");
 
-        String azimuth = instruction.getAzimuth(nextI);
-        if (azimuth != null)
-            output.append("<azimuth>").append(azimuth).append("</azimuth>");
+        double azimuth = instruction.calcAzimuth(nextI);
+        if (!Double.isNaN(azimuth))
+            output.append("<gh:azimuth>").append(Helper.round2(azimuth)).append("</gh:azimuth>");
 
+        output.append("<gh:sign>").append(instruction.getSign()).append("</gh:sign>");
         output.append("</extensions>");
         output.append("</rtept>");
     }
@@ -304,4 +311,75 @@ public class InstructionList implements Iterable<Instruction>
         }
         return res;
     }
+
+    /**
+     * This method is useful for navigation devices to find the next instruction for the specified
+     * coordinate (e.g. the current position).
+     * <p>
+     * @param maxDistance the maximum acceptable distance to the instruction (in meter)
+     * @return the next Instruction or null if too far away.
+     */
+    public Instruction find( double lat, double lon, double maxDistance )
+    {
+        // handle special cases
+        if (getSize() == 0)
+        {
+            return null;
+        }
+        PointList points = get(0).getPoints();
+        double prevLat = points.getLatitude(0);
+        double prevLon = points.getLongitude(0);
+        DistanceCalc distCalc = Helper.DIST_EARTH;
+        double foundMinDistance = distCalc.calcNormalizedDist(lat, lon, prevLat, prevLon);
+        int foundInstruction = 0;
+
+        // Search the closest edge to the query point
+        if (getSize() > 1)
+        {
+            for (int instructionIndex = 0; instructionIndex < getSize(); instructionIndex++)
+            {
+                points = get(instructionIndex).getPoints();
+                for (int pointIndex = 0; pointIndex < points.size(); pointIndex++)
+                {
+                    double currLat = points.getLatitude(pointIndex);
+                    double currLon = points.getLongitude(pointIndex);
+
+                    if (!(instructionIndex == 0 && pointIndex == 0))
+                    {
+                        // calculate the distance from the point to the edge
+                        double distance;
+                        int index = instructionIndex;
+                        if (distCalc.validEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon))
+                        {
+                            distance = distCalc.calcNormalizedEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon);
+                            if (pointIndex > 0)
+                                index++;
+                        } else
+                        {
+                            distance = distCalc.calcNormalizedDist(lat, lon, currLat, currLon);
+                        }
+
+                        if (distance < foundMinDistance)
+                        {
+                            foundMinDistance = distance;
+                            foundInstruction = index;
+                        }
+                    }
+
+                    prevLat = currLat;
+                    prevLon = currLon;
+                }
+            }
+        }
+
+        if (distCalc.calcDenormalizedDist(foundMinDistance) > maxDistance)
+            return null;
+
+        // special case finish condition
+        if (foundInstruction == getSize())
+            foundInstruction--;
+
+        return get(foundInstruction);
+    }
+
 }

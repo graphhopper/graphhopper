@@ -39,6 +39,7 @@ public abstract class AbstractRoutingAlgorithmTester
     protected static final EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
     protected FlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
     protected FlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
+    protected AlgorithmOptions defaultOpts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(new ShortestWeighting()).build();
 
     protected Graph createGraph( EncodingManager em, boolean is3D )
     {
@@ -50,20 +51,25 @@ public abstract class AbstractRoutingAlgorithmTester
         return createGraph(encodingManager, is3D);
     }
 
-    public AlgorithmPreparation prepareGraph( Graph g )
+    public RoutingAlgorithm createAlgo( Graph g )
     {
-        return prepareGraph(g, carEncoder, new ShortestWeighting());
+        return createAlgo(g, defaultOpts);
     }
 
-    public abstract AlgorithmPreparation prepareGraph( Graph g, FlagEncoder encoder, Weighting w );
+    public RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts )
+    {
+        return createFactory(g, opts).createAlgo(g, opts);
+    }
+
+    public abstract RoutingAlgorithmFactory createFactory( Graph g, AlgorithmOptions opts );
 
     @Test
     public void testCalcShortestPath()
     {
         Graph graph = createTestGraph();
-        Path p = prepareGraph(graph).createAlgo().calcPath(0, 7);
-        assertEquals(p.toString(), 13, p.getDistance(), 1e-4);
-        assertEquals(p.toString(), 5, p.calcNodes().size());
+        Path p = createAlgo(graph).calcPath(0, 7);
+        assertEquals(p.toString(), Helper.createTList(0, 4, 5, 7), p.calcNodes());
+        assertEquals(p.toString(), 62.1, p.getDistance(), .1);
     }
 
     // see calc-fastest-graph.svg
@@ -72,14 +78,17 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         Graph graphShortest = createGraph(false);
         initDirectedAndDiffSpeed(graphShortest);
-        Path p1 = prepareGraph(graphShortest, carEncoder, new ShortestWeighting()).createAlgo().calcPath(0, 3);
+        Path p1 = createAlgo(graphShortest, defaultOpts).
+                calcPath(0, 3);
         assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(p1.toString(), 402.293, p1.getDistance(), 1e-6);
         assertEquals(p1.toString(), 144823, p1.getMillis());
 
         Graph graphFastest = createGraph(false);
         initDirectedAndDiffSpeed(graphFastest);
-        Path p2 = prepareGraph(graphFastest, carEncoder, new FastestWeighting(carEncoder)).createAlgo().calcPath(0, 3);
+        Path p2 = createAlgo(graphFastest,
+                AlgorithmOptions.start().flagEncoder(carEncoder).weighting(new FastestWeighting(carEncoder)).build()).
+                calcPath(0, 3);
         assertEquals(Helper.createTList(0, 4, 6, 7, 5, 3), p2.calcNodes());
         assertEquals(p2.toString(), 1261.714, p2.getDistance(), 1e-6);
         assertEquals(p2.toString(), 111437, p2.getMillis());
@@ -131,7 +140,8 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         Graph graphShortest = createGraph(false);
         initFootVsCar(graphShortest);
-        Path p1 = prepareGraph(graphShortest, footEncoder, new ShortestWeighting()).createAlgo().calcPath(0, 7);
+        Path p1 = createAlgo(graphShortest, AlgorithmOptions.start().flagEncoder(footEncoder).weighting(new ShortestWeighting()).build()).
+                calcPath(0, 7);
         assertEquals(p1.toString(), 17000, p1.getDistance(), 1e-6);
         assertEquals(p1.toString(), 12240 * 1000, p1.getMillis());
         assertEquals(Helper.createTList(0, 4, 5, 7), p1.calcNodes());
@@ -185,24 +195,26 @@ public abstract class AbstractRoutingAlgorithmTester
         graph.edge(5, 6, 2, true);
         graph.edge(5, 7, 1, true);
 
-        graph.edge(6, 7, 5, true);
-        return graph;
-    }
+        EdgeIteratorState edge6_7 = graph.edge(6, 7, 5, true);
 
-    @Test
-    public void testCalcIfEmptyWay()
-    {
-        Graph graph = createTestGraph();
-        Path p = prepareGraph(graph).createAlgo().calcPath(0, 0);
-        assertEquals(p.toString(), 0, p.calcNodes().size());
-        assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
+        updateDistancesFor(graph, 0, 0.0010, 0.00001);
+        updateDistancesFor(graph, 1, 0.0008, 0.0000);
+        updateDistancesFor(graph, 2, 0.0005, 0.0001);
+        updateDistancesFor(graph, 3, 0.0006, 0.0002);
+        updateDistancesFor(graph, 4, 0.0009, 0.0001);
+        updateDistancesFor(graph, 5, 0.0007, 0.0001);
+        updateDistancesFor(graph, 6, 0.0009, 0.0002);
+        updateDistancesFor(graph, 7, 0.0008, 0.0003);
+
+        edge6_7.setDistance(5 * edge6_7.getDistance());
+        return graph;
     }
 
     @Test
     public void testNoPathFound()
     {
         Graph graph = createGraph(false);
-        assertFalse(prepareGraph(graph).createAlgo().calcPath(0, 1).isFound());
+        assertFalse(createAlgo(graph).calcPath(0, 1).isFound());
 
         // two disconnected areas
         graph.edge(0, 1, 7, true);
@@ -211,23 +223,22 @@ public abstract class AbstractRoutingAlgorithmTester
         graph.edge(5, 7, 1, true);
         graph.edge(5, 8, 1, true);
         graph.edge(7, 8, 1, true);
-        RoutingAlgorithm algo = prepareGraph(graph).createAlgo();
+        RoutingAlgorithm algo = createAlgo(graph);
         assertFalse(algo.calcPath(0, 5).isFound());
-        // assertEquals(4, algo.getVisitedNodes());
+        // assertEquals(3, algo.getVisitedNodes());
 
         // disconnected as directed graph
         graph = createGraph(false);
         graph.edge(0, 1, 1, false);
         graph.edge(0, 2, 1, true);
-        algo = prepareGraph(graph).createAlgo();
-        assertFalse(algo.calcPath(1, 2).isFound());
+        assertFalse(createAlgo(graph).calcPath(1, 2).isFound());
     }
 
     @Test
     public void testWikipediaShortestPath()
     {
         Graph graph = createWikipediaTestGraph();
-        Path p = prepareGraph(graph).createAlgo().calcPath(0, 4);
+        Path p = createAlgo(graph).calcPath(0, 4);
         assertEquals(p.toString(), 20, p.getDistance(), 1e-4);
         assertEquals(p.toString(), 4, p.calcNodes().size());
     }
@@ -236,9 +247,9 @@ public abstract class AbstractRoutingAlgorithmTester
     public void testCalcIf1EdgeAway()
     {
         Graph graph = createTestGraph();
-        Path p = prepareGraph(graph).createAlgo().calcPath(1, 2);
+        Path p = createAlgo(graph).calcPath(1, 2);
         assertEquals(Helper.createTList(1, 2), p.calcNodes());
-        assertEquals(p.toString(), 2, p.getDistance(), 1e-4);
+        assertEquals(p.toString(), 35.1, p.getDistance(), .1);
     }
 
     // see wikipedia-graph.svg !
@@ -262,7 +273,7 @@ public abstract class AbstractRoutingAlgorithmTester
     // |    8  |
     // \   /   |
     //  7-6----5
-    public static void initBiGraph( Graph graph )
+    public static Graph initBiGraph( Graph graph )
     {
         // distance will be overwritten in second step as we need to calculate it from lat,lon
         graph.edge(0, 1, 1, true);
@@ -289,6 +300,7 @@ public abstract class AbstractRoutingAlgorithmTester
         updateDistancesFor(graph, 7, 0, 0);
         updateDistancesFor(graph, 6, 0, 0.001);
         updateDistancesFor(graph, 5, 0, 0.004);
+        return graph;
     }
 
     private static final DistanceCalc distCalc = new DistanceCalcEarth();
@@ -304,6 +316,7 @@ public abstract class AbstractRoutingAlgorithmTester
             double adjLat = na.getLatitude(adj);
             double adjLon = na.getLongitude(adj);
             iter.setDistance(distCalc.calcDist(lat, lon, adjLat, adjLon));
+            // System.out.println(node + "->" + adj + ": " + iter.getDistance());
         }
     }
 
@@ -314,12 +327,12 @@ public abstract class AbstractRoutingAlgorithmTester
         initBiGraph(graph);
 
         // PrepareTowerNodesShortcutsTest.printEdges((LevelGraph) graph);
-        Path p = prepareGraph(graph).createAlgo().calcPath(0, 4);
+        Path p = createAlgo(graph).calcPath(0, 4);
         // PrepareTowerNodesShortcutsTest.printEdges((LevelGraph) graph);
         assertEquals(p.toString(), Helper.createTList(0, 7, 6, 8, 3, 4), p.calcNodes());
         assertEquals(p.toString(), 335.77, p.getDistance(), 1e-2);
 
-        p = prepareGraph(graph).createAlgo().calcPath(1, 2);
+        p = createAlgo(graph).calcPath(1, 2);
         // the other way around is even larger as 0-1 is already 11008.452
         assertEquals(p.toString(), Helper.createTList(1, 2), p.calcNodes());
         assertEquals(p.toString(), 10007.679, p.getDistance(), 1e-4);
@@ -346,7 +359,7 @@ public abstract class AbstractRoutingAlgorithmTester
         graph.edge(3, 8, 20, true);
         graph.edge(8, 6, 20, true);
 
-        Path p = prepareGraph(graph).createAlgo().calcPath(0, 4);
+        Path p = createAlgo(graph).calcPath(0, 4);
         assertEquals(p.toString(), 40, p.getDistance(), 1e-4);
         assertEquals(p.toString(), 5, p.calcNodes().size());
         assertEquals(Helper.createTList(0, 7, 6, 5, 4), p.calcNodes());
@@ -356,7 +369,7 @@ public abstract class AbstractRoutingAlgorithmTester
     public void testRekeyBugOfIntBinHeap()
     {
         // using Dijkstra + IntBinHeap then rekey loops endlessly
-        Path p = prepareGraph(getMatrixGraph()).createAlgo().calcPath(36, 91);
+        Path p = createAlgo(getMatrixGraph()).calcPath(36, 91);
         assertEquals(12, p.calcNodes().size());
 
         TIntList list = p.calcNodes();
@@ -371,7 +384,7 @@ public abstract class AbstractRoutingAlgorithmTester
     @Test
     public void testBug1()
     {
-        Path p = prepareGraph(getMatrixGraph()).createAlgo().calcPath(34, 36);
+        Path p = createAlgo(getMatrixGraph()).calcPath(34, 36);
         assertEquals(Helper.createTList(34, 35, 36), p.calcNodes());
         assertEquals(3, p.calcNodes().size());
         assertEquals(17, p.getDistance(), 1e-5);
@@ -380,7 +393,7 @@ public abstract class AbstractRoutingAlgorithmTester
     @Test
     public void testCorrectWeight()
     {
-        Path p = prepareGraph(getMatrixGraph()).createAlgo().calcPath(45, 72);
+        Path p = createAlgo(getMatrixGraph()).calcPath(45, 72);
         assertEquals(Helper.createTList(45, 44, 54, 64, 74, 73, 72), p.calcNodes());
         assertEquals(38f, p.getDistance(), 1e-3);
     }
@@ -392,7 +405,7 @@ public abstract class AbstractRoutingAlgorithmTester
         graph.edge(0, 1, 1, false);
         graph.edge(1, 2, 1, false);
 
-        Path p = prepareGraph(graph).createAlgo().calcPath(0, 2);
+        Path p = createAlgo(graph).calcPath(0, 2);
         assertEquals(p.toString(), 3, p.calcNodes().size());
     }
 
@@ -407,7 +420,7 @@ public abstract class AbstractRoutingAlgorithmTester
         graph.edge(3, 4, 3, false);
         graph.edge(4, 2, 1, false);
 
-        Path p = prepareGraph(graph).createAlgo().calcPath(0, 2);
+        Path p = createAlgo(graph).calcPath(0, 2);
         assertEquals(Helper.createTList(0, 1, 2), p.calcNodes());
         assertEquals(p.toString(), 5.99, p.getDistance(), 1e-4);
         assertEquals(p.toString(), 3, p.calcNodes().size());
@@ -423,7 +436,7 @@ public abstract class AbstractRoutingAlgorithmTester
 
         graph.edge(3, 1, 4, true);
 
-        Path p = prepareGraph(graph).createAlgo().calcPath(0, 3);
+        Path p = createAlgo(graph).calcPath(0, 3);
         assertEquals(Helper.createTList(0, 1, 2, 3), p.calcNodes());
     }
 
@@ -451,18 +464,52 @@ public abstract class AbstractRoutingAlgorithmTester
         graph.edge(1, 3, 1.3, true);
         graph.edge(1, 4, 1, true);
 
-        AlgorithmPreparation prepare = prepareGraph(graph);
-        Path p = prepare.createAlgo().calcPath(4, 0);
+        AlgorithmOptions opts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, carEncoder, new ShortestWeighting());
+        RoutingAlgorithmFactory prepare = createFactory(graph, opts);
+        Path p = prepare.createAlgo(graph, opts).calcPath(4, 0);
         assertEquals(Helper.createTList(4, 1, 0), p.calcNodes());
         assertEquals(Helper.createPointList(0.5, 4.5, 0, 3.5, 0, 3, 0, 2), p.calcPoints());
         assertEquals(291110, p.calcPoints().calcDistance(new DistanceCalcEarth()), 1);
 
         // PrepareTowerNodesShortcutsTest.printEdges((LevelGraph) graph);
-        p = prepare.createAlgo().calcPath(2, 1);
+        p = prepare.createAlgo(graph, opts).calcPath(2, 1);
         // System.out.println(p.toDetailsString());
         assertEquals(Helper.createTList(2, 0, 1), p.calcNodes());
         assertEquals(Helper.createPointList(1, 1, 1, 0, 0, 0, 0, 1.6, 0, 2, 0, 3, 0, 3.5), p.calcPoints());
         assertEquals(611555, p.calcPoints().calcDistance(new DistanceCalcEarth()), 1);
+    }
+
+    @Test
+    public void testCalcIfEmptyWay()
+    {
+        Graph graph = createTestGraph();
+        Path p = createAlgo(graph).calcPath(0, 0);
+        assertEquals(p.calcNodes().toString(), 1, p.calcNodes().size());
+        assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
+    }
+
+    @Test
+    public void testViaEdges_FromEqualsTo()
+    {
+        Graph graph = createTestGraph();
+        // identical tower nodes
+        Path p = calcPathViaQuery(graph, 0.001, 0.000, 0.001, 0.000);
+        assertTrue(p.isFound());
+        assertEquals(Helper.createTList(0), p.calcNodes());
+        // assertEquals(1, p.calcPoints().size());
+        assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
+
+        // identical query points on edge
+        p = calcPath(graph, 0, 1, 0, 1);
+        assertTrue(p.isFound());
+        assertEquals(Helper.createTList(8), p.calcNodes());
+        // assertEquals(1, p.calcPoints().size());
+        assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
+
+        // very close
+        p = calcPathViaQuery(graph, 0.00092, 0, 0.00091, 0);
+        assertEquals(Helper.createTList(8, 9), p.calcNodes());
+        assertEquals(p.toString(), 1.11, p.getDistance(), .1);
     }
 
     @Test
@@ -471,25 +518,15 @@ public abstract class AbstractRoutingAlgorithmTester
         Graph graph = createGraph(false);
         initBiGraph(graph);
 
-        // 0-7 to 4-3
+        // 0-7 to 4-3        
         Path p = calcPathViaQuery(graph, 0.0009, 0, 0.001, 0.001105);
         assertEquals(p.toString(), Helper.createTList(10, 7, 6, 8, 3, 9), p.calcNodes());
-        assertEquals(p.toString(), 324.11, p.getDistance(), 1e-2);
+        assertEquals(p.toString(), 324.11, p.getDistance(), 0.01);
 
         // 0-1 to 2-3
         p = calcPathViaQuery(graph, 0.001, 0.0001, 0.010, 0.0011);
-        assertEquals(p.toString(), Helper.createTList(10, 0, 7, 6, 8, 3, 9), p.calcNodes());
-        assertEquals(p.toString(), 1335.42, p.getDistance(), .2);
-    }
-
-    @Test
-    public void testViaEdges_FromEqualsTo()
-    {
-        Graph graph = createTestGraph();
-        Path p = calcPath(graph, 0, 1, 0, 1);
-        // or one node would be acceptable
-        assertEquals(Helper.createTList(8, 9), p.calcNodes());
-        assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
+        assertEquals(p.toString(), Helper.createTList(0, 7, 6, 8, 3, 9), p.calcNodes());
+        assertEquals(p.toString(), 1335.35, p.getDistance(), 0.01);
     }
 
     @Test
@@ -498,7 +535,7 @@ public abstract class AbstractRoutingAlgorithmTester
         Graph graph = createTestGraph();
         Path p = calcPath(graph, 0, 1, 2, 3);
         assertEquals(Helper.createTList(9, 1, 2, 8), p.calcNodes());
-        assertEquals(p.toString(), 2, p.getDistance(), 1e-4);
+        assertEquals(p.toString(), 56.7, p.getDistance(), .1);
     }
 
     @Test
@@ -526,9 +563,9 @@ public abstract class AbstractRoutingAlgorithmTester
         assertEquals(p.toString(), 26.81, p.getDistance(), .1);
 
         // overlapping edges: 2-3 and 3-2
-        p = calcPathViaQuery(graph, 0.000049, 0.00015, 0.00001, 0.0001);
+        p = calcPathViaQuery(graph, 0.000049, 0.00014, 0.00001, 0.0001);
         assertEquals(Helper.createTList(5, 6), p.calcNodes());
-        assertEquals(p.toString(), 7, p.getDistance(), .1);
+        assertEquals(p.toString(), 6.2, p.getDistance(), .1);
 
         // 'from' and 'to' edge share one node '2': 1-2 to 3-2
         p = calcPathViaQuery(graph, 0.00009, 0.00011, 0.00001, 0.00011);
@@ -561,7 +598,13 @@ public abstract class AbstractRoutingAlgorithmTester
         Weighting w = new ShortestWeighting();
         if (weighting.equalsIgnoreCase("fastest"))
             w = new FastestWeighting(carEncoder);
-        return prepareGraph(graph, carEncoder, w).createAlgo().calcPath(from, to);
+
+        // correct order for CH: in factory do prepare and afterwards wrap in query graph
+        AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(w).build();
+        RoutingAlgorithmFactory factory = createFactory(graph, opts);
+        QueryGraph qGraph = new QueryGraph(graph).lookup(from, to);
+        return factory.createAlgo(qGraph, opts).
+                calcPath(from.getClosestNode(), to.getClosestNode());
     }
 
     Path calcPath( Graph graph, int fromNode1, int fromNode2, int toNode1, int toNode2 )
@@ -569,7 +612,10 @@ public abstract class AbstractRoutingAlgorithmTester
         // lookup two edges: fromNode1-fromNode2 and toNode1-toNode2        
         QueryResult from = newQR(graph, fromNode1, fromNode2);
         QueryResult to = newQR(graph, toNode1, toNode2);
-        return prepareGraph(graph).createAlgo().calcPath(from, to);
+
+        RoutingAlgorithmFactory factory = createFactory(graph, defaultOpts);
+        QueryGraph qGraph = new QueryGraph(graph).lookup(from, to);
+        return factory.createAlgo(qGraph, defaultOpts).calcPath(from.getClosestNode(), to.getClosestNode());
     }
 
     /**
@@ -606,8 +652,7 @@ public abstract class AbstractRoutingAlgorithmTester
 
         // for two weights per edge it happened that Path (and also the Weighting) read the wrong side 
         // of the speed and read 0 => infinity weight => overflow of millis => negative millis!
-        Path p = prepareGraph(graph, encoder, new FastestWeighting(encoder)).
-                createAlgo().calcPath(0, 10);
+        Path p = createAlgo(graph, AlgorithmOptions.start().flagEncoder(encoder).weighting(new FastestWeighting(encoder)).build()).calcPath(0, 10);
 //        assertEquals(Helper.createTList(13, 0, 1, 2, 11, 7, 10, 12), p.calcNodes());
         assertEquals(85124371, p.getMillis());
         assertEquals(425622, p.getDistance(), 1);
@@ -615,10 +660,31 @@ public abstract class AbstractRoutingAlgorithmTester
     }
 
     @Test
+    public void test0SpeedButUnblocked_Issue242()
+    {
+        Graph graph = createGraph(false);
+        long flags = carEncoder.setAccess(carEncoder.setSpeed(0, 0), true, true);
+
+        graph.edge(0, 1).setFlags(flags).setDistance(10);
+        graph.edge(1, 2).setFlags(flags).setDistance(10);
+
+        RoutingAlgorithm algo = createAlgo(graph);
+        try
+        {
+            Path p = algo.calcPath(0, 2);
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Speed cannot be 0"));
+        }
+    }
+
+    @Test
     public void testTwoWeightsPerEdge2()
     {
+        // other direction should be different!
         Graph graph = initEleGraph(createGraph(true));
-        Path p = prepareGraph(graph, carEncoder, new ShortestWeighting()).createAlgo().calcPath(0, 10);
+        Path p = createAlgo(graph).calcPath(0, 10);
         // GHUtility.printEdgeInfo(graph, carEncoder);
         assertEquals(Helper.createTList(0, 4, 6, 10), p.calcNodes());
         Weighting fakeWeighting = new Weighting()
@@ -630,10 +696,10 @@ public abstract class AbstractRoutingAlgorithmTester
             }
 
             @Override
-            public double calcWeight( EdgeIteratorState edge, boolean reverse )
+            public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId )
             {
-                int adj = edge.getAdjNode();
-                int base = edge.getBaseNode();
+                int adj = edgeState.getAdjNode();
+                int base = edgeState.getBaseNode();
                 if (reverse)
                 {
                     int tmp = base;
@@ -643,20 +709,24 @@ public abstract class AbstractRoutingAlgorithmTester
 
                 // a 'hill' at node 6
                 if (adj == 6)
-                    return 3 * edge.getDistance();
+                    return 3 * edgeState.getDistance();
                 else if (base == 6)
-                    return edge.getDistance() * 0.9;
+                    return edgeState.getDistance() * 0.9;
                 else if (adj == 4)
-                    return 2 * edge.getDistance();
+                    return 2 * edgeState.getDistance();
 
-                return edge.getDistance() * 0.8;
+                return edgeState.getDistance() * 0.8;
             }
         };
 
         graph = initEleGraph(createGraph(true));
         QueryResult from = newQR(graph, 3, 0);
         QueryResult to = newQR(graph, 10, 9);
-        p = prepareGraph(graph, carEncoder, fakeWeighting).createAlgo().calcPath(from, to);
+
+        AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(fakeWeighting).build();
+        RoutingAlgorithmFactory factory = createFactory(graph, opts);
+        QueryGraph qGraph = new QueryGraph(graph).lookup(from, to);
+        p = factory.createAlgo(qGraph, opts).calcPath(from.getClosestNode(), to.getClosestNode());
         assertEquals(Helper.createTList(13, 0, 1, 2, 11, 7, 10, 12), p.calcNodes());
         assertEquals(37009621, p.getMillis());
         assertEquals(616827, p.getDistance(), 1);

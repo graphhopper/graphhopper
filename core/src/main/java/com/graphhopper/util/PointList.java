@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class PointList implements PointAccess
 {
-    private final static DistanceCalc3D distCalc3D = new DistanceCalc3D();
+    private final static DistanceCalc3D distCalc3D = Helper.DIST_3D;
     private static String ERR_MSG = "Tried to access PointList with too big index!";
     private double[] latitudes;
     private double[] longitudes;

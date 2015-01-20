@@ -24,11 +24,7 @@ import com.graphhopper.geohash.KeyAlgo;
 import com.graphhopper.geohash.LinearKeyAlgo;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.DistancePlaneProjection;
-import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.XFirstSearch;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.Arrays;
@@ -50,7 +46,7 @@ class Location2IDQuadtree implements LocationIndex
     private final static int MAGIC_INT = Integer.MAX_VALUE / 12306;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private KeyAlgo keyAlgo;
-    protected DistanceCalc distCalc = new DistancePlaneProjection();
+    protected DistanceCalc distCalc = Helper.DIST_PLANE;
     private final DataAccess index;
     private double maxRasterWidth2InMeterNormed;
     private final Graph graph;
@@ -69,9 +65,9 @@ class Location2IDQuadtree implements LocationIndex
     public LocationIndex setApproximation( boolean approxDist )
     {
         if (approxDist)
-            distCalc = new DistancePlaneProjection();
+            distCalc = Helper.DIST_PLANE;
         else
-            distCalc = new DistanceCalcEarth();
+            distCalc = Helper.DIST_EARTH;
 
         return this;
     }
@@ -350,7 +346,7 @@ class Location2IDQuadtree implements LocationIndex
         res.setClosestNode(id);
         res.setQueryDistance(distCalc.calcNormalizedDist(queryLat, queryLon, mainLat, mainLon));
         goFurtherHook(id);
-        new XFirstSearch()
+        new BreadthFirstSearch()
         {
             @Override
             protected GHBitSet createBitSet()
@@ -377,7 +373,7 @@ class Location2IDQuadtree implements LocationIndex
 
                 return currNormedDist < maxRasterWidth2InMeterNormed;
             }
-        }.start(graph.createEdgeExplorer(), id, false);
+        }.start(graph.createEdgeExplorer(), id);
 
         // denormalize distance
         res.setQueryDistance(distCalc.calcDenormalizedDist(res.getQueryDistance()));

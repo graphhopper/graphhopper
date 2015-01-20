@@ -7,6 +7,7 @@
  * dardin88, instructions improved
  * lmar, improved instructions information
  * fredao, translations
+ * jansoe, algorithm improvements
  * jansonhanson, general host config
  * JohannesPelzer, improved GPX information and various other things
  * karussell, lead developer

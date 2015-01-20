@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
-import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.*;
+import static com.graphhopper.routing.util.PriorityCode.*;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -92,12 +92,12 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 
         way.setTag("surface", "unknown_surface");
         assertEquals(4, encoder.getSpeed(way));
-        
+
         way.clearTags();
         way.setTag("highway", "residential");
         way.setTag("surface", "asphalt");
         assertEquals(18, encoder.getSpeed(way));
-        
+
         way.clearTags();
         way.setTag("highway", "motorway");
         way.setTag("bicycle", "yes");
@@ -232,37 +232,13 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         osmRel.setTag("network", "icn");
         long relFlags = encoder.handleRelationTags(osmRel, 0);
         long flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals((double) BEST.getValue() / BEST.getValue(), encoder.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY), 1e-3);
+        assertEquals((double) BEST.getValue() / BEST.getValue(), encoder.getDouble(flags, PriorityWeighting.KEY), 1e-3);
 
         // important: UNCHANGED should not get 0 priority!
         osmWay = new OSMWay(1);
         osmWay.setTag("highway", "somethingelse");
         flags = encoder.handleWayTags(osmWay, allowed, 0);
-        assertEquals((double) UNCHANGED.getValue() / BEST.getValue(), encoder.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY), 1e-3);
-    }
-
-    @Test
-    public void testTurnFlagEncoding_noCosts()
-    {
-        encoder.defineTurnBits(0, 0, 0);
-
-        long flags_r0 = encoder.getTurnFlags(true, 0);
-        long flags_0 = encoder.getTurnFlags(false, 0);
-
-        long flags_r20 = encoder.getTurnFlags(true, 20);
-        long flags_20 = encoder.getTurnFlags(false, 20);
-
-        assertEquals(0, encoder.getTurnCosts(flags_r0));
-        assertEquals(0, encoder.getTurnCosts(flags_0));
-
-        assertEquals(0, encoder.getTurnCosts(flags_r20));
-        assertEquals(0, encoder.getTurnCosts(flags_20));
-
-        assertTrue(encoder.isTurnRestricted(flags_r0));
-        assertFalse(encoder.isTurnRestricted(flags_0));
-
-        assertTrue(encoder.isTurnRestricted(flags_r20));
-        assertFalse(encoder.isTurnRestricted(flags_20));
+        assertEquals((double) UNCHANGED.getValue() / BEST.getValue(), encoder.getDouble(flags, PriorityWeighting.KEY), 1e-3);
     }
 
     @Test
@@ -277,36 +253,61 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testTurnFlagEncoding_withCosts()
+    public void testTurnFlagEncoding_DefaultNoRestrictionsAndNoCosts()
     {
-        //arbitrary shift, 7 turn cost bits: [0,127]
-        encoder.defineTurnBits(0, 2, 7);
-
+        // default is disabled turn costs and no restrictions
         long flags_r0 = encoder.getTurnFlags(true, 0);
         long flags_0 = encoder.getTurnFlags(false, 0);
 
         long flags_r20 = encoder.getTurnFlags(true, 20);
         long flags_20 = encoder.getTurnFlags(false, 20);
 
-        long flags_r220 = encoder.getTurnFlags(true, 220);
-        long flags_220 = encoder.getTurnFlags(false, 220);
+        assertEquals(0, encoder.getTurnCost(flags_r0), .1);
+        assertEquals(0, encoder.getTurnCost(flags_0), .1);
 
-        assertEquals(0, encoder.getTurnCosts(flags_r0));
-        assertEquals(0, encoder.getTurnCosts(flags_0));
+        assertEquals(0, encoder.getTurnCost(flags_r20), .1);
+        assertEquals(0, encoder.getTurnCost(flags_20), .1);
 
-        assertEquals(20, encoder.getTurnCosts(flags_r20));
-        assertEquals(20, encoder.getTurnCosts(flags_20));
+        assertFalse(encoder.isTurnRestricted(flags_r0));
+        assertFalse(encoder.isTurnRestricted(flags_0));
 
-        assertEquals(127, encoder.getTurnCosts(flags_r220));
-        assertEquals(127, encoder.getTurnCosts(flags_220));
+        assertFalse(encoder.isTurnRestricted(flags_r20));
+        assertFalse(encoder.isTurnRestricted(flags_20));
+    }
 
+    @Test
+    public void testTurnFlagEncoding_withCosts()
+    {
+        encoder = new BikeFlagEncoder(4, 2, 127);
+        new EncodingManager(encoder);
+
+        long flags_r0 = encoder.getTurnFlags(true, 0);
+        long flags_0 = encoder.getTurnFlags(false, 0);
+        assertTrue(Double.isInfinite(encoder.getTurnCost(flags_r0)));
+        assertEquals(0, encoder.getTurnCost(flags_0), .1);
         assertTrue(encoder.isTurnRestricted(flags_r0));
         assertFalse(encoder.isTurnRestricted(flags_0));
 
+        long flags_r20 = encoder.getTurnFlags(true, 0);
+        long flags_20 = encoder.getTurnFlags(false, 20);
+        assertTrue(Double.isInfinite(encoder.getTurnCost(flags_r20)));
+        assertEquals(20, encoder.getTurnCost(flags_20), .1);
         assertTrue(encoder.isTurnRestricted(flags_r20));
         assertFalse(encoder.isTurnRestricted(flags_20));
 
+        long flags_r220 = encoder.getTurnFlags(true, 0);
+        try
+        {
+            encoder.getTurnFlags(false, 220);
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+        }
+        long flags_126 = encoder.getTurnFlags(false, 126);
+        assertTrue(Double.isInfinite(encoder.getTurnCost(flags_r220)));
+
+        assertEquals(126, encoder.getTurnCost(flags_126), .1);
         assertTrue(encoder.isTurnRestricted(flags_r220));
-        assertFalse(encoder.isTurnRestricted(flags_220));
+        assertFalse(encoder.isTurnRestricted(flags_126));
     }
 }

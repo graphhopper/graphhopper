@@ -17,10 +17,7 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.Dijkstra;
-import com.graphhopper.routing.DijkstraOneToMany;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies.Shortcut;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
@@ -38,9 +35,10 @@ import org.junit.Test;
  */
 public class PrepareContractionHierarchiesTest
 {
-    private final Weighting weighting = new ShortestWeighting();
     private final EncodingManager encodingManager = new EncodingManager("CAR");
     private final CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
+    private final Weighting weighting = new ShortestWeighting();
+    private final TraversalMode tMode = TraversalMode.NODE_BASED;
 
     LevelGraph createGraph()
     {
@@ -71,11 +69,12 @@ public class PrepareContractionHierarchiesTest
     public void testShortestPathSkipNode()
     {
         LevelGraph g = createExampleGraph();
-        double normalDist = new Dijkstra(g, carEncoder, weighting).calcPath(4, 2).getDistance();
-        DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder, weighting);
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting);
-        prepare.setGraph(g).initFromGraph().prepareNodes();
+        double normalDist = new Dijkstra(g, carEncoder, weighting, tMode).calcPath(4, 2).getDistance();
+        DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder, weighting, tMode);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g, carEncoder, weighting, tMode);
+        prepare.initFromGraph().prepareNodes();
         algo.setEdgeFilter(new PrepareContractionHierarchies.IgnoreNodeFilter(g, g.getNodes() + 1).setAvoidNode(3));
+
         int nodeEntry = algo.setLimitWeight(100).findEndNode(4, 2);
         assertTrue(algo.getWeight(nodeEntry) > normalDist);
 
@@ -88,11 +87,11 @@ public class PrepareContractionHierarchiesTest
     public void testShortestPathSkipNode2()
     {
         LevelGraph g = createExampleGraph();
-        double normalDist = new Dijkstra(g, carEncoder, weighting).calcPath(4, 2).getDistance();
+        double normalDist = new Dijkstra(g, carEncoder, weighting, tMode).calcPath(4, 2).getDistance();
         assertEquals(3, normalDist, 1e-5);
-        DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder, weighting);
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting);
-        prepare.setGraph(g).initFromGraph().prepareNodes();
+        DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder, weighting, tMode);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g, carEncoder, weighting, tMode);
+        prepare.initFromGraph().prepareNodes();
         algo.setEdgeFilter(new PrepareContractionHierarchies.IgnoreNodeFilter(g, g.getNodes() + 1).setAvoidNode(3));
         int nodeEntry = algo.setLimitWeight(10).findEndNode(4, 2);
         assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
@@ -105,7 +104,9 @@ public class PrepareContractionHierarchiesTest
     public void testShortestPathLimit()
     {
         LevelGraph g = createExampleGraph();
-        DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder, weighting);
+        DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder, weighting, tMode);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g, carEncoder, weighting, tMode);
+        prepare.initFromGraph().prepareNodes();
         algo.setEdgeFilter(new PrepareContractionHierarchies.IgnoreNodeFilter(g, g.getNodes() + 1).setAvoidNode(0));
         int endNode = algo.setLimitWeight(2).findEndNode(4, 1);
         // did not reach endNode
@@ -116,20 +117,20 @@ public class PrepareContractionHierarchiesTest
     public void testAddShortcuts()
     {
         LevelGraph g = createExampleGraph();
-        int old = g.getAllEdges().getMaxId();
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
+        int old = g.getAllEdges().getCount();
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g, carEncoder, weighting, tMode);
         prepare.doWork();
-        assertEquals(old + 1, g.getAllEdges().getMaxId());
+        assertEquals(old + 1, g.getAllEdges().getCount());
     }
 
     @Test
     public void testMoreComplexGraph()
     {
         LevelGraph g = initShortcutsGraph(createGraph());
-        int old = g.getAllEdges().getMaxId();
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
+        int old = g.getAllEdges().getCount();
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g, carEncoder, weighting, tMode);
         prepare.doWork();
-        assertEquals(old + 10, g.getAllEdges().getMaxId());
+        assertEquals(old + 10, g.getAllEdges().getCount());
     }
 
     @Test
@@ -143,10 +144,10 @@ public class PrepareContractionHierarchiesTest
         g.edge(3, 5, 1, false);
         g.edge(4, 3, 1, false);
         int old = GHUtility.count(g.getAllEdges());
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g, carEncoder, weighting, tMode);
         prepare.doWork();
         assertEquals(old + 2, GHUtility.count(g.getAllEdges()));
-        RoutingAlgorithm algo = prepare.createAlgo();
+        RoutingAlgorithm algo = prepare.createAlgo(g, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, carEncoder, weighting, tMode));
         Path p = algo.calcPath(4, 2);
         assertEquals(3, p.getDistance(), 1e-6);
         assertEquals(Helper.createTList(4, 3, 5, 2), p.calcNodes());
@@ -158,11 +159,11 @@ public class PrepareContractionHierarchiesTest
         LevelGraph g = createGraph();
         initDirected2(g);
         int old = GHUtility.count(g.getAllEdges());
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g, carEncoder, weighting, tMode);
         prepare.doWork();
         // PrepareTowerNodesShortcutsTest.printEdges(g);
         assertEquals(old + 9, GHUtility.count(g.getAllEdges()));
-        RoutingAlgorithm algo = prepare.createAlgo();
+        RoutingAlgorithm algo = prepare.createAlgo(g, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, carEncoder, weighting, tMode));
         Path p = algo.calcPath(0, 10);
         assertEquals(10, p.getDistance(), 1e-6);
         assertEquals(Helper.createTList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), p.calcNodes());
@@ -191,7 +192,7 @@ public class PrepareContractionHierarchiesTest
         g.edge(3, 6, 2, true);
         g.edge(3, 7, 2, true);
 
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g, carEncoder, weighting, tMode);
         prepare.initFromGraph();
         prepare.prepareNodes();
         // find all shortcuts if we contract node 1
@@ -209,7 +210,7 @@ public class PrepareContractionHierarchiesTest
 
         // both dirs
         assertTrue(sc1.toString(), sc1.from == 3 && sc1.to == 2);
-        assertTrue(sc1.toString(), carEncoder.isBool(sc1.flags, FlagEncoder.K_FORWARD) 
+        assertTrue(sc1.toString(), carEncoder.isBool(sc1.flags, FlagEncoder.K_FORWARD)
                 && carEncoder.isBool(sc1.flags, FlagEncoder.K_BACKWARD));
 
         // directed
@@ -277,11 +278,11 @@ public class PrepareContractionHierarchiesTest
     {
         LevelGraph g = createGraph();
         initRoundaboutGraph(g);
-        int old = g.getAllEdges().getMaxId();
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
+        int old = g.getAllEdges().getCount();
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g, carEncoder, weighting, tMode);
         prepare.doWork();
-        assertEquals(old + 22, g.getAllEdges().getMaxId());
-        RoutingAlgorithm algo = prepare.createAlgo();
+        assertEquals(old + 22, g.getAllEdges().getCount());
+        RoutingAlgorithm algo = prepare.createAlgo(g, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, carEncoder, weighting, tMode));
         Path p = algo.calcPath(4, 7);
         assertEquals(Helper.createTList(4, 5, 6, 7), p.calcNodes());
     }
@@ -296,9 +297,9 @@ public class PrepareContractionHierarchiesTest
         EdgeIteratorState iter2_2 = g.edge(5, 6, 1, false);
         EdgeIteratorState iter3_1 = g.edge(6, 7, 1, true);
         EdgeIteratorState iter3_2 = g.edge(6, 8, 2, false);
-        g.edge(8, 4, 1, false);        
+        g.edge(8, 4, 1, false);
 
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g, carEncoder, weighting, tMode);
         EdgeSkipIterState tmp = g.shortcut(1, 4);
         tmp.setFlags(PrepareEncoder.getScDirMask());
         tmp.setWeight(2);
@@ -319,7 +320,7 @@ public class PrepareContractionHierarchiesTest
         g.setLevel(5, 5);
         g.setLevel(7, 7);
         g.setLevel(8, 8);
-        
+
         // there should be two different shortcuts for both directions!
         Collection<Shortcut> sc = prepare.testFindShortcuts(4);
         assertEquals(2, sc.size());
@@ -341,23 +342,24 @@ public class PrepareContractionHierarchiesTest
 
         int tmp = iterTmp1.getEdge();
         EdgeSkipIterState sc1 = g.shortcut(0, 2);
-        sc1.setWeight(w.calcWeight(iterTmp1, false) + w.calcWeight(iter2, false)).setDistance(2 * dist).setFlags(oneDirFlags);
+        int x = EdgeIterator.NO_EDGE;
+        sc1.setWeight(w.calcWeight(iterTmp1, false, x) + w.calcWeight(iter2, false, x)).setDistance(2 * dist).setFlags(oneDirFlags);
         sc1.setSkippedEdges(tmp, iter2.getEdge());
         tmp = sc1.getEdge();
         EdgeSkipIterState sc2 = g.shortcut(0, 3);
-        sc2.setWeight(w.calcWeight(sc1, false) + w.calcWeight(iter3, false)).setDistance(3 * dist).setFlags(oneDirFlags);
+        sc2.setWeight(w.calcWeight(sc1, false, x) + w.calcWeight(iter3, false, x)).setDistance(3 * dist).setFlags(oneDirFlags);
         sc2.setSkippedEdges(tmp, iter3.getEdge());
         tmp = sc2.getEdge();
         sc1 = g.shortcut(0, 4);
-        sc1.setWeight(w.calcWeight(sc2, false) + w.calcWeight(iter4, false)).setDistance(4).setFlags(oneDirFlags);
+        sc1.setWeight(w.calcWeight(sc2, false, x) + w.calcWeight(iter4, false, x)).setDistance(4).setFlags(oneDirFlags);
         sc1.setSkippedEdges(tmp, iter4.getEdge());
         tmp = sc1.getEdge();
         sc2 = g.shortcut(0, 5);
-        sc2.setWeight(w.calcWeight(sc1, false) + w.calcWeight(iter5, false)).setDistance(5).setFlags(oneDirFlags);
+        sc2.setWeight(w.calcWeight(sc1, false, x) + w.calcWeight(iter5, false, x)).setDistance(5).setFlags(oneDirFlags);
         sc2.setSkippedEdges(tmp, iter5.getEdge());
         tmp = sc2.getEdge();
         sc1 = g.shortcut(0, 6);
-        sc1.setWeight(w.calcWeight(sc2, false) + w.calcWeight(iter6, false)).setDistance(6).setFlags(oneDirFlags);
+        sc1.setWeight(w.calcWeight(sc2, false, x) + w.calcWeight(iter6, false, x)).setDistance(6).setFlags(oneDirFlags);
         sc1.setSkippedEdges(tmp, iter6.getEdge());
         g.setLevel(0, 10);
         g.setLevel(6, 9);
@@ -374,8 +376,8 @@ public class PrepareContractionHierarchiesTest
     {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
         initUnpackingGraph(g, weighting);
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
-        RoutingAlgorithm algo = prepare.createAlgo();
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g, carEncoder, weighting, tMode);
+        RoutingAlgorithm algo = prepare.createAlgo(g, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, carEncoder, weighting, tMode));
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.getDistance(), 1e-5);
         assertEquals(Helper.createTList(10, 0, 1, 2, 3, 4, 5, 6), p.calcNodes());
@@ -388,8 +390,8 @@ public class PrepareContractionHierarchiesTest
         Weighting w = new FastestWeighting(carEncoder);
         initUnpackingGraph(g, w);
 
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, w).setGraph(g);
-        RoutingAlgorithm algo = prepare.createAlgo();
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g, carEncoder, weighting, tMode);
+        RoutingAlgorithm algo = prepare.createAlgo(g, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, carEncoder, weighting, tMode));
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.getDistance(), 1e-1);
         assertEquals(Helper.createTList(10, 0, 1, 2, 3, 4, 5, 6), p.calcNodes());
@@ -406,7 +408,7 @@ public class PrepareContractionHierarchiesTest
         g.edge(0, 1, 4, true);
         g.edge(0, 2, 10, true);
         g.edge(0, 3, 10, true);
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g, carEncoder, weighting, tMode);
         prepare.doWork();
         assertEquals(0, prepare.getShortcuts());
     }
@@ -430,7 +432,7 @@ public class PrepareContractionHierarchiesTest
         g.edge(3, 4, 1, true);
         g.edge(6, 3, 1, true);
 
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, weighting).setGraph(g);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g, carEncoder, weighting, tMode);
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
     }

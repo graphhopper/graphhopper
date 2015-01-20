@@ -73,7 +73,7 @@ public interface Graph
      * @param adjNode is the node that will be returned via adjNode(). If adjNode is
      * Integer.MIN_VALUE then the edge with undefined values for adjNode and baseNode will be
      * returned.
-     * @return an edge iterator over one element where the method next() will always return false.
+     * @return an edge iterator state
      * @throws IllegalStateException if edgeId is not valid
      */
     EdgeIteratorState getEdgeProps( int edgeId, int adjNode );
@@ -106,4 +106,9 @@ public interface Graph
      * @return the specified GraphStorage g
      */
     Graph copyTo( Graph g );
+
+    /**
+     * @return the graph extension like a TurnCostExtension
+     */
+    GraphExtension getExtension();
 }

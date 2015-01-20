@@ -42,17 +42,13 @@ import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.dem.ElevationProvider;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalc3D;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.DouglasPeucker;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+import gnu.trove.map.TLongObjectMap;
+import gnu.trove.map.hash.TLongObjectHashMap;
+import java.util.*;
 
 /**
  * This class parses an OSM xml or pbf file and creates a graph from it. It does so in a two phase
@@ -105,12 +101,12 @@ public class OSMReader implements DataReader
     private TLongLongHashMap osmNodeIdToNodeFlagsMap;
     private TLongLongHashMap osmWayIdToRouteWeightMap;
     // stores osm way ids used by relations to identify which edge ids needs to be mapped later
-    private TLongHashSet osmIdStoreRequiredSet = new TLongHashSet();
-    private TIntLongMap edgeIdToOsmIdMap;
+    private TLongHashSet osmWayIdSet = new TLongHashSet();
+    private TIntLongMap edgeIdToOsmWayIdMap;
     private final TLongList barrierNodeIds = new TLongArrayList();
     protected PillarInfo pillarInfo;
-    private final DistanceCalc distCalc = new DistanceCalcEarth();
-    private final DistanceCalc3D distCalc3D = new DistanceCalc3D();
+    private final DistanceCalc distCalc = Helper.DIST_EARTH;
+    private final DistanceCalc3D distCalc3D = Helper.DIST_3D;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private boolean doSimplify = true;
     private int nextTowerId = 0;
@@ -120,6 +116,8 @@ public class OSMReader implements DataReader
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private boolean exitOnlyPillarNodeException = true;
     private File osmFile;
+    private Map<FlagEncoder, EdgeExplorer> outExplorerMap = new HashMap<FlagEncoder, EdgeExplorer>();
+    private Map<FlagEncoder, EdgeExplorer> inExplorerMap = new HashMap<FlagEncoder, EdgeExplorer>();
 
     public OSMReader( GraphStorage storage )
     {
@@ -185,7 +183,7 @@ public class OSMReader implements DataReader
                             prepareHighwayNode(wayNodes.get(index));
                         }
 
-                        if (++tmpWayCounter % 500000 == 0)
+                        if (++tmpWayCounter % 5000000 == 0)
                         {
                             logger.info(nf(tmpWayCounter) + " (preprocess), osmIdMap:" + nf(getNodeMap().getSize()) + " ("
                                     + getNodeMap().getMemoryUsage() + "MB) " + Helper.getMemInfo());
@@ -223,22 +221,25 @@ public class OSMReader implements DataReader
         OSMTurnRelation turnRelation = createTurnRelation(relation);
         if (turnRelation != null)
         {
-            getOsmIdStoreRequiredSet().add(((OSMTurnRelation) turnRelation).getOsmIdFrom());
-            getOsmIdStoreRequiredSet().add(((OSMTurnRelation) turnRelation).getOsmIdTo());
+            getOsmWayIdSet().add(turnRelation.getOsmIdFrom());
+            getOsmWayIdSet().add(turnRelation.getOsmIdTo());
         }
     }
 
-    private TLongSet getOsmIdStoreRequiredSet()
+    /**
+     * @return all required osmWayIds to process e.g. relations.
+     */
+    private TLongSet getOsmWayIdSet()
     {
-        return osmIdStoreRequiredSet;
+        return osmWayIdSet;
     }
 
-    private TIntLongMap getEdgeIdToOsmidMap()
+    private TIntLongMap getEdgeIdToOsmWayIdMap()
     {
-        if (edgeIdToOsmIdMap == null)
-            edgeIdToOsmIdMap = new TIntLongHashMap(getOsmIdStoreRequiredSet().size());
+        if (edgeIdToOsmWayIdMap == null)
+            edgeIdToOsmWayIdMap = new TIntLongHashMap(getOsmWayIdSet().size(), 0.5f, -1, -1);
 
-        return edgeIdToOsmIdMap;
+        return edgeIdToOsmWayIdMap;
     }
 
     /**
@@ -306,7 +307,7 @@ public class OSMReader implements DataReader
                         processRelation((OSMRelation) item);
                         break;
                 }
-                if (++counter % 5000000 == 0)
+                if (++counter % 100000000 == 0)
                 {
                     logger.info(nf(counter) + ", locs:" + nf(locations) + " (" + skippedLocations + ") " + Helper.getMemInfo());
                 }
@@ -315,7 +316,7 @@ public class OSMReader implements DataReader
             // logger.info("storage nodes:" + storage.nodes() + " vs. graph nodes:" + storage.getGraph().nodes());
         } catch (Exception ex)
         {
-            throw new RuntimeException("Couldn't process file " + osmFile, ex);
+            throw new RuntimeException("Couldn't process file " + osmFile + ", error: " + ex.getMessage(), ex);
         } finally
         {
             Helper.close(in);
@@ -441,22 +442,69 @@ public class OSMReader implements DataReader
             OSMTurnRelation turnRelation = createTurnRelation(relation);
             if (turnRelation != null)
             {
-                ExtendedStorage extendedStorage = ((GraphHopperStorage) graphStorage).getExtendedStorage();
-                if (extendedStorage instanceof TurnCostStorage)
+                GraphExtension extendedStorage = graphStorage.getExtension();
+                if (extendedStorage instanceof TurnCostExtension)
                 {
-                    Collection<TurnCostTableEntry> entries = encodingManager.analyzeTurnRelation(turnRelation, this);
+                    TurnCostExtension tcs = (TurnCostExtension) extendedStorage;
+                    Collection<TurnCostTableEntry> entries = analyzeTurnRelation(turnRelation);
                     for (TurnCostTableEntry entry : entries)
                     {
-                        ((TurnCostStorage) extendedStorage).setTurnCosts(entry.nodeVia, entry.edgeFrom, entry.edgeTo, (int) entry.flags);
+                        tcs.addTurnInfo(entry.edgeFrom, entry.nodeVia, entry.edgeTo, entry.flags);
                     }
                 }
             }
         }
     }
 
+    public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation )
+    {
+        TLongObjectMap<TurnCostTableEntry> entries = new TLongObjectHashMap<OSMTurnRelation.TurnCostTableEntry>();
+
+        for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders())
+        {
+            for (TurnCostTableEntry entry : analyzeTurnRelation(encoder, turnRelation))
+            {
+                TurnCostTableEntry oldEntry = entries.get(entry.getItemId());
+                if (oldEntry != null)
+                {
+                    // merging different encoders
+                    oldEntry.flags |= entry.flags;
+                } else
+                {
+                    entries.put(entry.getItemId(), entry);
+                }
+            }
+        }
+
+        return entries.valueCollection();
+    }
+
+    public Collection<TurnCostTableEntry> analyzeTurnRelation( FlagEncoder encoder, OSMTurnRelation turnRelation )
+    {
+        if (!encoder.supports(TurnWeighting.class))
+            return Collections.emptyList();
+
+        EdgeExplorer edgeOutExplorer = outExplorerMap.get(encoder);
+        EdgeExplorer edgeInExplorer = inExplorerMap.get(encoder);
+
+        if (edgeOutExplorer == null || edgeInExplorer == null)
+        {
+            edgeOutExplorer = getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
+            outExplorerMap.put(encoder, edgeOutExplorer);
+
+            edgeInExplorer = getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false));
+            inExplorerMap.put(encoder, edgeInExplorer);
+        }
+        return turnRelation.getRestrictionAsEntries(encoder, edgeOutExplorer, edgeInExplorer, this);
+    }
+
+    /**
+     * @return OSM way ID from specified edgeId. Only previously stored OSM-way-IDs are returned in
+     * order to reduce memory overhead.
+     */
     public long getOsmIdOfInternalEdge( int edgeId )
     {
-        return getEdgeIdToOsmidMap().get(edgeId);
+        return getEdgeIdToOsmWayIdMap().get(edgeId);
     }
 
     public int getInternalNodeIdOfOsmNode( long nodeOsmId )
@@ -745,15 +793,18 @@ public class OSMReader implements DataReader
 
             iter.setWayGeometry(pillarNodes);
         }
-        storeOSMWayID(iter.getEdge(), wayOsmId);
+        storeOsmWayID(iter.getEdge(), wayOsmId);
         return iter;
     }
 
-    private void storeOSMWayID( int edgeId, long osmWayID )
+    /**
+     * Stores only osmWayIds which are required for relations
+     */
+    private void storeOsmWayID( int edgeId, long osmWayId )
     {
-        if (getOsmIdStoreRequiredSet().contains(osmWayID))
+        if (getOsmWayIdSet().contains(osmWayId))
         {
-            getEdgeIdToOsmidMap().put(edgeId, osmWayID);
+            getEdgeIdToOsmWayIdMap().put(edgeId, osmWayId);
         }
     }
 
@@ -794,8 +845,8 @@ public class OSMReader implements DataReader
         osmNodeIdToInternalNodeMap = null;
         osmNodeIdToNodeFlagsMap = null;
         osmWayIdToRouteWeightMap = null;
-        osmIdStoreRequiredSet = null;
-        edgeIdToOsmIdMap = null;
+        osmWayIdSet = null;
+        edgeIdToOsmWayIdMap = null;
     }
 
     /**
@@ -847,7 +898,7 @@ public class OSMReader implements DataReader
      */
     OSMTurnRelation createTurnRelation( OSMRelation relation )
     {
-        OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType((String) relation.getTag("restriction"));
+        OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType(relation.getTag("restriction"));
         if (type != OSMTurnRelation.Type.UNSUPPORTED)
         {
             long fromWayID = -1;
@@ -870,7 +921,7 @@ public class OSMReader implements DataReader
                     viaNodeID = member.ref();
                 }
             }
-            if (type != OSMTurnRelation.Type.UNSUPPORTED && fromWayID >= 0 && toWayID >= 0 && viaNodeID >= 0)
+            if (fromWayID >= 0 && toWayID >= 0 && viaNodeID >= 0)
             {
                 return new OSMTurnRelation(fromWayID, viaNodeID, toWayID, type);
             }
@@ -907,9 +958,9 @@ public class OSMReader implements DataReader
     /**
      * Specify the type of the path calculation (car, bike, ...).
      */
-    public OSMReader setEncodingManager( EncodingManager acceptWay )
+    public OSMReader setEncodingManager( EncodingManager em )
     {
-        this.encodingManager = acceptWay;
+        this.encodingManager = em;
         return this;
     }
 

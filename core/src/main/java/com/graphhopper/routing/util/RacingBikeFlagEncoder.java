@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
-import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.*;
+import static com.graphhopper.routing.util.PriorityCode.*;
 import java.util.TreeMap;
 
 /**
@@ -29,8 +29,21 @@ import java.util.TreeMap;
  */
 public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
 {
-    RacingBikeFlagEncoder()
+    public RacingBikeFlagEncoder()
     {
+        this(4, 2, 0);
+    }
+
+    public RacingBikeFlagEncoder( String propertiesStr )
+    {
+        this((int) parseLong(propertiesStr, "speedBits", 4),
+                parseDouble(propertiesStr, "speedFactor", 2),
+                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+    }
+
+    public RacingBikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
+    {
+        super(speedBits, speedFactor, maxTurnCosts);
         preferHighwayTags.add("road");
         preferHighwayTags.add("secondary");
         preferHighwayTags.add("secondary_link");
@@ -129,6 +142,13 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
         String trackType = way.getTag("tracktype");
         return way.hasTag("highway", pushingSections)
                 || "track".equals(highway) && trackType != null && !"grade1".equals(trackType);
+    }
+
+    @Override
+    boolean allowedSacScale( String sacScale )
+    {
+        // for racing bike it is only allowed if empty
+        return false;
     }
 
     @Override

@@ -44,7 +44,7 @@ public class GraphBuilder
      * <p/>
      * @see LevelGraph
      */
-    GraphBuilder setLevelGraph( boolean level )
+    public GraphBuilder setLevelGraph( boolean level )
     {
         this.level = level;
         return this;
@@ -103,7 +103,7 @@ public class GraphBuilder
      * Afterwards you'll need to call GraphStorage.create to have a useable object. Better use
      * create.
      */
-    GraphStorage build()
+    public GraphStorage build()
     {
         Directory dir;
         if (mmap)
@@ -115,7 +115,12 @@ public class GraphBuilder
         if (level)
             graph = new LevelGraphStorage(dir, encodingManager, elevation);
         else
-            graph = new GraphHopperStorage(dir, encodingManager, elevation);
+        {
+            if (encodingManager.needsTurnCostsSupport())
+                graph = new GraphHopperStorage(dir, encodingManager, elevation, new TurnCostExtension());
+            else
+                graph = new GraphHopperStorage(dir, encodingManager, elevation);
+        }
 
         return graph;
     }

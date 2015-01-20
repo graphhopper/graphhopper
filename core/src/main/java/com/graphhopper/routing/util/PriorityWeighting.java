@@ -21,23 +21,28 @@ package com.graphhopper.routing.util;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
- * Special weighting for bike, uses the experimental API of encoder.getPriority(EdgeIteratorState)
+ * Special weighting for (motor)bike
  * <p>
  * @author Peter Karich
  */
 public class PriorityWeighting extends FastestWeighting
 {
+    /**
+     * For now used only in BikeCommonFlagEncoder and MotorcycleFlagEncoder
+     */
+    public static final int KEY = 101;
+
     public PriorityWeighting( FlagEncoder encoder )
     {
         super(encoder);
     }
 
     @Override
-    public double calcWeight( EdgeIteratorState edge, boolean reverse )
+    public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId )
     {
-        double weight = super.calcWeight(edge, reverse);
+        double weight = super.calcWeight(edgeState, reverse, prevOrNextEdgeId);
         if (Double.isInfinite(weight))
             return Double.POSITIVE_INFINITY;
-        return weight / (0.5 + encoder.getDouble(edge.getFlags(), BikeCommonFlagEncoder.K_PRIORITY));
+        return weight / (0.5 + encoder.getDouble(edgeState.getFlags(), KEY));
     }
 }

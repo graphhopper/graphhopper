@@ -18,15 +18,12 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.GHResponse;
-import com.graphhopper.routing.Path;
+import com.graphhopper.routing.*;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.PathMerger;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,35 +35,45 @@ import java.util.Locale;
 public class TestAlgoCollector
 {
     private final String name;
-    private final DistanceCalc distCalc = new DistanceCalcEarth();
+    private final DistanceCalc distCalc = Helper.DIST_EARTH;
     private final TranslationMap trMap = new TranslationMap().doImport();
-    public List<String> errors = new ArrayList<String>();
+    public final List<String> errors = new ArrayList<String>();
 
     public TestAlgoCollector( String name )
     {
         this.name = name;
     }
 
-    public TestAlgoCollector assertDistance( AlgorithmPreparation prepare, List<QueryResult> queryList, OneRun oneRun )
+    public TestAlgoCollector assertDistance( AlgoHelperEntry algoEntry, List<QueryResult> queryList,
+            OneRun oneRun )
     {
         List<Path> viaPaths = new ArrayList<Path>();
+        QueryGraph queryGraph = new QueryGraph(algoEntry.originalGraph);
+        queryGraph.lookup(queryList);
+        AlgorithmOptions opts = algoEntry.opts;
+        FlagEncoder encoder = opts.getFlagEncoder();
+        if (encoder.supports(TurnWeighting.class))
+            algoEntry.setAlgorithmOptions(AlgorithmOptions.start(opts).weighting(new TurnWeighting(opts.getWeighting(), opts.getFlagEncoder(), (TurnCostExtension) queryGraph.getExtension())).build());
+
         for (int i = 0; i < queryList.size() - 1; i++)
         {
-            Path path = prepare.createAlgo().calcPath(queryList.get(i), queryList.get(i + 1));
+            Path path = algoEntry.createAlgo(queryGraph).
+                    calcPath(queryList.get(i).getClosestNode(), queryList.get(i + 1).getClosestNode());
             // System.out.println(path.calcInstructions().createGPX("temp", 0, "GMT"));
             viaPaths.add(path);
         }
+
         PathMerger pathMerger = new PathMerger().
                 setCalcPoints(true).
-                setSimplifyRequest(false).
+                setSimplifyResponse(false).
                 setEnableInstructions(true);
         GHResponse rsp = new GHResponse();
         pathMerger.doWork(rsp, viaPaths, trMap.getWithFallBack(Locale.US));
 
-        if (!rsp.isFound())
+        if (rsp.hasErrors())
         {
-            errors.add(prepare + " returns no path! expected distance: " + rsp.getDistance()
-                    + ", expected points: " + oneRun + ". " + queryList);
+            errors.add(algoEntry + " response contains errors. Expected distance: " + rsp.getDistance()
+                    + ", expected points: " + oneRun + ". " + queryList + ", errors:" + rsp.getErrors());
             return this;
         }
 
@@ -74,14 +81,14 @@ public class TestAlgoCollector
         double tmpDist = pointList.calcDistance(distCalc);
         if (Math.abs(rsp.getDistance() - tmpDist) > 2)
         {
-            errors.add(prepare + " path.getDistance was  " + rsp.getDistance()
+            errors.add(algoEntry + " path.getDistance was  " + rsp.getDistance()
                     + "\t pointList.calcDistance was " + tmpDist + "\t (expected points " + oneRun.getLocs()
                     + ", expected distance " + oneRun.getDistance() + ") " + queryList);
         }
 
         if (Math.abs(rsp.getDistance() - oneRun.getDistance()) > 2)
         {
-            errors.add(prepare + " returns path not matching the expected distance of " + oneRun.getDistance()
+            errors.add(algoEntry + " returns path not matching the expected distance of " + oneRun.getDistance()
                     + "\t Returned was " + rsp.getDistance() + "\t (expected points " + oneRun.getLocs()
                     + ", was " + pointList.getSize() + ") " + queryList);
         }
@@ -89,7 +96,7 @@ public class TestAlgoCollector
         // There are real world instances where A-B-C is identical to A-C (in meter precision).
         if (Math.abs(pointList.getSize() - oneRun.getLocs()) > 1)
         {
-            errors.add(prepare + " returns path not matching the expected points of " + oneRun.getLocs()
+            errors.add(algoEntry + " returns path not matching the expected points of " + oneRun.getLocs()
                     + "\t Returned was " + pointList.getSize() + "\t (expected distance " + oneRun.getDistance()
                     + ", was " + rsp.getDistance() + ") " + queryList);
         }
@@ -136,6 +143,41 @@ public class TestAlgoCollector
         } else
         {
             System.out.println("SUCCESS for " + name + "!");
+        }
+    }
+
+    public static class AlgoHelperEntry
+    {
+        private Graph originalGraph;
+        private final LocationIndex idx;
+        private AlgorithmOptions opts;
+
+        public AlgoHelperEntry( Graph g, AlgorithmOptions opts, LocationIndex idx )
+        {
+            this.originalGraph = g;
+            this.opts = opts;
+            this.idx = idx;
+        }
+
+        public void setAlgorithmOptions( AlgorithmOptions opts )
+        {
+            this.opts = opts;
+        }
+
+        public LocationIndex getIdx()
+        {
+            return idx;
+        }
+
+        public RoutingAlgorithm createAlgo( Graph qGraph )
+        {
+            return new RoutingAlgorithmFactorySimple().createAlgo(qGraph, opts);
+        }
+
+        @Override
+        public String toString()
+        {
+            return opts.getAlgorithm();
         }
     }
 

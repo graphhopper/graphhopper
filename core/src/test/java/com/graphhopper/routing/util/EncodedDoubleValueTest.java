@@ -53,7 +53,7 @@ public class EncodedDoubleValueTest
         long swappedFlags = instance1.swap(flags, instance2);
         assertEquals(expectedFlags, swappedFlags);
 
-        CarFlagEncoder carEncoder = new CarFlagEncoder(8, 0.5);
+        CarFlagEncoder carEncoder = new CarFlagEncoder(8, 0.5, 0);
         new EncodingManager(carEncoder);
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "motorway_link");

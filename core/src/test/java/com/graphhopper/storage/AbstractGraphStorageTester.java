@@ -947,14 +947,14 @@ public abstract class AbstractGraphStorageTester
         graph.edge(2, 3, 1, true);
         AllEdgesIterator iter = graph.getAllEdges();
         assertEquals(4, GHUtility.count(iter));
-        assertEquals(4, iter.getMaxId());
+        assertEquals(4, iter.getCount());
 
         // delete
         graph.markNodeRemoved(1);
         graph.optimize();
         iter = graph.getAllEdges();
         assertEquals(2, GHUtility.count(iter));
-        assertEquals(4, iter.getMaxId());
+        assertEquals(4, iter.getCount());
 
         iter = graph.getAllEdges();
         iter.next();
@@ -1004,7 +1004,7 @@ public abstract class AbstractGraphStorageTester
                 return i;
             }
         }
-        return -1;
+        throw new IllegalArgumentException("did not find node with location " + (float) latitude + "," + (float) longitude);
     }
 
     @Test
@@ -1026,9 +1026,9 @@ public abstract class AbstractGraphStorageTester
     {
         Directory dir = new RAMDirectory();
         List<FlagEncoder> list = new ArrayList<FlagEncoder>();
-        list.add(new TmpCarFlagEncoder(29, 0.001));
-        list.add(new TmpCarFlagEncoder(29, 0.001));
-        EncodingManager manager = new EncodingManager(list, 8, 0);
+        list.add(new TmpCarFlagEncoder(29, 0.001, 0));
+        list.add(new TmpCarFlagEncoder(29, 0.001, 0));
+        EncodingManager manager = new EncodingManager(list, 8);
         graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
 
         EdgeIteratorState edge = graph.edge(0, 1);
@@ -1049,7 +1049,7 @@ public abstract class AbstractGraphStorageTester
         edge = graph.edge(2, 3);
         edge.setFlags(list.get(1).setProperties(44.123, true, false));
         assertEquals(44.123, list.get(1).getSpeed(edge.getFlags()), 1e-3);
-        
+
         flags = GHUtility.getEdge(graph, 3, 2).getFlags();
         assertEquals(44.123, list.get(1).getSpeed(flags), 1e-3);
         assertEquals(44.123, list.get(1).getReverseSpeed(flags), 1e-3);
@@ -1127,9 +1127,9 @@ public abstract class AbstractGraphStorageTester
 
     static class TmpCarFlagEncoder extends CarFlagEncoder
     {
-        public TmpCarFlagEncoder( int speedBits, double speedFactor )
+        public TmpCarFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
         {
-            super(speedBits, speedFactor);
+            super(speedBits, speedFactor, maxTurnCosts);
         }
     }
 }

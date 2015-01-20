@@ -50,6 +50,7 @@ import android.widget.Toast;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
@@ -70,7 +71,7 @@ public class MainActivity extends Activity
     private volatile boolean prepareInProgress = false;
     private volatile boolean shortestPathRunning = false;
     private String currentArea = "berlin";
-    private String fileListURL = "http://graphhopper.com/public/maps/0.3/";
+    private String fileListURL = "https://graphhopper.com/public/maps/0.4/";
     private String prefixURL = fileListURL;
     private String downloadURL;
     private File mapsFolder;
@@ -169,7 +170,9 @@ public class MainActivity extends Activity
     protected void onDestroy()
     {
         super.onDestroy();
-        hopper.close();
+        if (hopper != null)
+            hopper.close();
+
         hopper = null;
         // necessary?
         System.gc();
@@ -258,7 +261,7 @@ public class MainActivity extends Activity
             @Override
             protected void onPostExecute( List<String> nameList )
             {
-                if (hasError())
+                if (hasError() || nameList.isEmpty())
                 {
                     logUser("Are you connected to the internet? Problem while fetching remote area list: "
                             + getErrorMessage());
@@ -313,7 +316,7 @@ public class MainActivity extends Activity
             public void onClick( View v )
             {
                 Object o = spinner.getSelectedItem();
-                if (o != null && o.toString().length() > 0)
+                if (o != null && o.toString().length() > 0 && !nameToFullName.isEmpty())
                 {
                     String area = o.toString();
                     mylistener.onSelect(area, nameToFullName.get(area));
@@ -354,7 +357,9 @@ public class MainActivity extends Activity
                 String localFolder = Helper.pruneFileEnd(AndroidHelper.getFileName(downloadURL));
                 localFolder = new File(mapsFolder, localFolder + "-gh").getAbsolutePath();
                 log("downloading & unzipping " + downloadURL + " to " + localFolder);
-                new Downloader("GraphHopper Android").downloadAndUnzip(downloadURL, localFolder,
+                Downloader downloader = new Downloader("GraphHopper Android");
+                downloader.setTimeout(30000);
+                downloader.downloadAndUnzip(downloadURL, localFolder,
                         new ProgressListener()
                         {
                             @Override
@@ -422,7 +427,6 @@ public class MainActivity extends Activity
             protected Path saveDoInBackground( Void... v ) throws Exception
             {
                 GraphHopper tmpHopp = new GraphHopper().forMobile();
-                tmpHopp.setCHShortcuts("fastest");
                 tmpHopp.load(new File(mapsFolder, currentArea).getAbsolutePath());
                 log("found graph " + tmpHopp.getGraph().toString() + ", nodes:" + tmpHopp.getGraph().getNodes());
                 hopper = tmpHopp;
@@ -495,9 +499,9 @@ public class MainActivity extends Activity
             {
                 StopWatch sw = new StopWatch().start();
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
-                        setAlgorithm("dijkstrabi").
-                        putHint("instructions", false).
-                        putHint("douglas.minprecision", 1);
+                        setAlgorithm(AlgorithmOptions.DIJKSTRA_BI);
+                req.getHints().
+                        put("instructions", "false");
                 GHResponse resp = hopper.route(req);
                 time = sw.stop().getSeconds();
                 return resp;

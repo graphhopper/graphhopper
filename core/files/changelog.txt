@@ -1,11 +1,43 @@
 0.4.0
     removed LocationIndexTreeSC, use new LocationIndexTree(levelGraph.getOriginalGraph(), directory) instead
     getLevel and setLevel do no longer automatically increase node count, use getNodeAccess.ensureNode for that
-    normal algorithms are now possible on prepared graph
+    normal algorithms are now possible on prepared graph use getOriginalGraph, see #116
+    GHResponse no longer has isFound method, use !hasErrors instead
+    merged unused Edge class into EdgeEntry
+    astar and astarbi are now both none-heuristic and take parameters for beeline approximation: astar.approximation=BeelineSimplification|BeelineAccurate or astarbi.approximation=...
+    making GPX export according to the schema to support import from various tools like basecamp
+    refactoring: AllEdgesIterator.getMaxId is now named getCount
+    major change of internal API: moved method "Path RoutingAlgorithm.calcPath(QueryResult,QueryResult)" to a helper method QueryGraph.lookup, call queryResult.getClosestNode for the calcPath(nodeFrom,nodeTo) method
+    no cachedWays and cachedPoints in Path anymore
+    Path.findInstruction was moved to InstructionList.find
+    if start and end point are identical an algorithm will find the path consisting only of one node, one point and one instruction (finish instruction), but without edges
+    astarbi has new default values for approximation (false) and approximation_factor (1.2) in RoutingAlgorithmFactorySimple
+    instead of strings use the variables in AlgorithmOptions to specify an algorithm
+    use RoutingAlgorithmFactorySimple instead of RoutingAlgorithmFactory, also more constistent algorithm preparation handling due to new AlgorithmOptions, therefor removed NoOpAlgorithmPreparation
+    GHResponse.getXX methods now fail fast (throw an exception) if an error while route calculation occured. See #287
+    renamed less often used URL parameter 'min_path_precision' to way_point_max_distance which makes it identical to the setWayPointMaxDistance method used for simplification at OSMImport
+    removed douglas.minprecision from Java API ghRequest.hints => use wayPointMaxDistance instead
+    encoder.supportTurnCost is replaced by encoder.supports(TurnWeighting.class)
+    CmdArgs is now a Map<String, String> instead Map<String, Object>. The value will be parsed up on every getXY call
+    removed GHRequest.getHint, instead use the provided methods in GHRequest.getHints().getXY and GHRequest.getHints().put
+    graph incompatibility as properties cannot be loaded => version increase necessary
+        renamed osmreader.bytesForFlags to graph.bytesForFlags
+        renamed config property osmreader.acceptWay to graph.flagEncoders
+    default weighting is now fastest, fixing #261
+    moved method GraphHopper.main into tools module and class com.graphhopper.tools.Import, see #250
+    refactored GraphHopper.createWeighting to accept more than one configuration option, see #237
+    refactored GraphHopper.disableCHShortcuts to setCHEnable(boolean)
+    moving the boolean parameter of GraphHopper.setInMemory into a separate method setStoreOnFlush
+    renaming of GraphHopper.setCHShortcuts to setCHWeighting, as well as the property prepare.chShortcuts to prepare.chWeighting
+    jsonp is disabled by default. You need to enable it in the config.properties, see the config-example.properties
+    EncodingManager cannot be null in GraphHopperStorage since 0.4. If you need to parse EncodingManager configuration from existing graph use EncodingManager.create
+    no reflection done in EncodingManager which improves portability and makes configuration of encoders possible before adding to manager
+    removed dijkstraNativebi as no performance advantage but maintenance disadvantage and similar to oneToManyDijkstra
+    to provide context for turn costs we needed to add prevEdgeId into Weighting.calcWeight, see new documentation
+>>>>>>> master
     with the introduction of lock protection mechanism (see #112) GraphHopper needs always write access, see also #217
-    new GraphHopper.clean method to remove the directory via Java API
+    new GraphHopper.clean method to remove the graph directory via Java API
     FlagEncoder: replaced isFoward and isBackward with more generic isBool(flags, FlagEncoder.FORWARD|BACKWARD)
-        restrictions type was: String[], is: List<String>
 
 0.3.0
     introduced prefer bits, now bike uses more bits and 3 bike encoder do not fit into 32 bit anymore, will be fixed later

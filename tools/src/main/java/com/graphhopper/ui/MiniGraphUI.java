@@ -20,8 +20,7 @@ package com.graphhopper.ui;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -29,10 +28,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
-import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.TIntList;
-import gnu.trove.set.hash.TIntHashSet;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Random;
@@ -60,7 +56,7 @@ public class MiniGraphUI
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
     private Path path;
-    private AlgorithmPreparation prepare;
+    private RoutingAlgorithmFactory algoFactory;
     private final Graph graph;
     private final NodeAccess na;
     private LocationIndexTree index;
@@ -73,18 +69,18 @@ public class MiniGraphUI
     private boolean fastPaint = false;
     private final Weighting weighting;
     private final FlagEncoder encoder;
+    private AlgorithmOptions algoOpts;
 
     public MiniGraphUI( GraphHopper hopper, boolean debug )
     {
         this.graph = hopper.getGraph();
         this.na = graph.getNodeAccess();
-        prepare = hopper.getPreparation();
+        algoFactory = hopper.getAlgorithmFactory();
         encoder = hopper.getEncodingManager().getSingle();
-        weighting = hopper.createWeighting("fastest", encoder); //new PriorityWeighting(encoder);
-        if (prepare == null)
-            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, "dijkstrabi", encoder, weighting);
+        weighting = hopper.createWeighting(new WeightingMap("fastest"), encoder);
+        algoOpts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting);
 
-        logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algo:" + prepare.createAlgo().getName());
+        logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algoOpts:" + algoOpts);
         mg = new GraphicsWrapper(graph);
 
         // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
@@ -195,7 +191,8 @@ public class MiniGraphUI
                     return;
 
                 makeTransparent(g2);
-                RoutingAlgorithm algo = prepare.createAlgo();
+                QueryGraph qGraph = new QueryGraph(graph).lookup(fromRes, toRes);
+                RoutingAlgorithm algo = algoFactory.createAlgo(qGraph, algoOpts);
                 if (algo instanceof DebugAlgo)
                 {
                     ((DebugAlgo) algo).setGraphics2D(g2);
@@ -218,7 +215,7 @@ public class MiniGraphUI
 //                    mg.plotText(g2, lat, lon, nodeId + ": " + dist);
 //                    mg.plotNode(g2, nodeId, Color.red);
 //                }
-                path = algo.calcPath(fromRes, toRes);
+                path = algo.calcPath(fromRes.getClosestNode(), toRes.getClosestNode());
                 sw.stop();
 
                 // if directed edges

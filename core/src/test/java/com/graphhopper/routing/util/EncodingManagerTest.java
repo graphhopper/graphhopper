@@ -142,8 +142,8 @@ public class EncodingManagerTest
         long allow = defaultBike.acceptBit | lessRelationCodes.acceptBit;
         long flags = manager.handleWayTags(osmWay, allow, relFlags);
 
-        assertTrue(defaultBike.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY)
-                > lessRelationCodes.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY));
+        assertTrue(defaultBike.getDouble(flags, PriorityWeighting.KEY)
+                > lessRelationCodes.getDouble(flags, PriorityWeighting.KEY));
     }
 
     @Test
@@ -168,8 +168,8 @@ public class EncodingManagerTest
 
         // bike: uninfluenced speed for grade but via network => VERY_NICE                
         // mtb: uninfluenced speed only PREFER
-        assertTrue(bikeEncoder.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY)
-                > mtbEncoder.getDouble(flags, BikeCommonFlagEncoder.K_PRIORITY));
+        assertTrue(bikeEncoder.getDouble(flags, PriorityWeighting.KEY)
+                > mtbEncoder.getDouble(flags, PriorityWeighting.KEY));
     }
 
     public void testFullBitMask()
@@ -181,90 +181,6 @@ public class EncodingManagerTest
 
         AbstractFlagEncoder foot = (AbstractFlagEncoder) manager.getEncoder("FOOT");
         assertTrue(bitUtil.toBitString(foot.getNodeBitMask()).endsWith("00011111110000000"));
-    }
-
-    /**
-     * Tests the combination of different turn cost flags by different encoders.
-     */
-    @Test
-    public void testTurnFlagCombination()
-    {
-        final TurnCostTableEntry turnCostEntry_car = new TurnCostTableEntry();
-        final TurnCostTableEntry turnCostEntry_foot = new TurnCostTableEntry();
-        final TurnCostTableEntry turnCostEntry_bike = new TurnCostTableEntry();
-
-        CarFlagEncoder car = new CarFlagEncoder()
-        {
-            @Override
-            public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
-            {
-                return Collections.singleton(turnCostEntry_car); //simulate by returning one turn cost entry directly
-            }
-        };
-        FootFlagEncoder foot = new FootFlagEncoder()
-        {
-            @Override
-            public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
-            {
-                return Collections.singleton(turnCostEntry_foot); //simulate by returning one turn cost entry directly
-            }
-        };
-        BikeFlagEncoder bike = new BikeFlagEncoder()
-        {
-            @Override
-            public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
-            {
-                return Collections.singleton(turnCostEntry_bike); //simulate by returning one turn cost entry directly
-            }
-        };
-
-        EncodingManager manager = new EncodingManager(Arrays.asList(bike, foot, car), 4, 127);
-
-        // turn cost entries for car and foot are for the same relations (same viaNode, edgeFrom and edgeTo), turn cost entry for bike is for another relation (different viaNode) 
-        turnCostEntry_car.edgeFrom = 1;
-        turnCostEntry_foot.edgeFrom = 1;
-        turnCostEntry_bike.edgeFrom = 2;
-
-        // calculating arbitrary flags using the encoders
-        turnCostEntry_car.flags = car.getTurnFlags(true, 20);
-        turnCostEntry_foot.flags = foot.getTurnFlags(true, 0);
-        turnCostEntry_bike.flags = bike.getTurnFlags(false, 10);
-
-        // we expect two different entries: the first one is a combination of turn flags of car and foot, since they provide the same relation, the other one is for bike only
-        long assertFlag1 = turnCostEntry_car.flags | turnCostEntry_foot.flags;
-        long assertFlag2 = turnCostEntry_bike.flags;
-
-        // RUN: analyze = combine flags of all encoders
-        Collection<TurnCostTableEntry> entries = manager.analyzeTurnRelation(null, null);
-
-        assertEquals(2, entries.size()); //we expect two different turnCost entries
-
-        for (TurnCostTableEntry entry : entries)
-        {
-            if (entry.edgeFrom == 1)
-            {
-                // the first entry provides turn flags for car and foot only 
-                assertEquals(assertFlag1, entry.flags);
-                assertTrue(car.isTurnRestricted(entry.flags));
-                assertFalse(foot.isTurnRestricted(entry.flags));
-                assertFalse(bike.isTurnRestricted(entry.flags));
-
-                assertEquals(20, car.getTurnCosts(entry.flags));
-                assertEquals(0, foot.getTurnCosts(entry.flags));
-                assertEquals(0, bike.getTurnCosts(entry.flags));
-            } else if (entry.edgeFrom == 2)
-            {
-                // the 2nd entry provides turn flags for bike only
-                assertEquals(assertFlag2, entry.flags);
-                assertFalse(car.isTurnRestricted(entry.flags));
-                assertFalse(foot.isTurnRestricted(entry.flags));
-                assertFalse(bike.isTurnRestricted(entry.flags));
-
-                assertEquals(0, car.getTurnCosts(entry.flags));
-                assertEquals(0, foot.getTurnCosts(entry.flags));
-                assertEquals(10, bike.getTurnCosts(entry.flags));
-            }
-        }
     }
 
     @Test

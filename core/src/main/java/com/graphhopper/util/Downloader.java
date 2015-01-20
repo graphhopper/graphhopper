@@ -29,7 +29,6 @@ import java.util.zip.InflaterInputStream;
  */
 public class Downloader
 {
-
     public static void main( String[] args ) throws IOException
     {
         new Downloader("GraphHopper Downloader").downloadAndUnzip("http://graphhopper.com/public/maps/0.1/europe_germany_berlin.ghz", "somefolder",
@@ -46,7 +45,6 @@ public class Downloader
     private final String userAgent;
     private String acceptEncoding = "gzip, deflate";
     private int timeout = 4000;
-    private int size = 1024 * 8;
 
     public Downloader( String userAgent )
     {
@@ -107,6 +105,7 @@ public class Downloader
     {
         HttpURLConnection conn = createConnection(url);
         InputStream iStream = fetch(conn);
+        int size = 8 * 1024;
         BufferedOutputStream writer = new BufferedOutputStream(new FileOutputStream(toFile), size);
         InputStream in = new BufferedInputStream(iStream, size);
         try
@@ -130,7 +129,7 @@ public class Downloader
         final int length = conn.getContentLength();
         InputStream iStream = fetch(conn);
 
-        new Unzipper().setSize(size).unzip(iStream, new File(toFolder), new ProgressListener()
+        new Unzipper().unzip(iStream, new File(toFolder), new ProgressListener()
         {
             @Override
             public void update( long sumBytes )
@@ -142,26 +141,6 @@ public class Downloader
 
     public String downloadAsString( String url ) throws IOException
     {
-        return readString(fetch(url));
-    }
-
-    private String readString( InputStream inputStream ) throws IOException
-    {
-        String encoding = "UTF-8";
-        InputStream in = new BufferedInputStream(inputStream, size);
-        try
-        {
-            byte[] buffer = new byte[size];
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
-            int numRead;
-            while ((numRead = in.read(buffer)) != -1)
-            {
-                output.write(buffer, 0, numRead);
-            }
-            return output.toString(encoding);
-        } finally
-        {
-            in.close();
-        }
+        return Helper.isToString(fetch(url));
     }
 }

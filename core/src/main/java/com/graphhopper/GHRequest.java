@@ -17,13 +17,12 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.routing.util.WeightingMap;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * GraphHopper request wrapper to simplify requesting GraphHopper.
@@ -35,9 +34,8 @@ public class GHRequest
 {
     private String algo = "";
     private List<GHPoint> points;
-    private final Map<String, Object> hints = new HashMap<String, Object>(5);
+    private final WeightingMap hints = new WeightingMap();
     private String vehicle = "";
-    private String weighting = "";
     private boolean possibleToAdd = false;
     private Locale locale = Locale.US;
 
@@ -98,9 +96,7 @@ public class GHRequest
     }
 
     /**
-     * Possible values: astar (A* algorithm, default), astarbi (bidirectional A*) dijkstra
-     * (Dijkstra), dijkstrabi and dijkstraNativebi (a bit faster bidirectional Dijkstra). Or specify
-     * empty to use default.
+     * For possible values see AlgorithmOptions.*
      */
     public GHRequest setAlgorithm( String algo )
     {
@@ -136,14 +132,13 @@ public class GHRequest
      */
     public GHRequest setWeighting( String w )
     {
-        if (w != null)
-            this.weighting = w;
+        hints.setWeighting(w);
         return this;
     }
 
     public String getWeighting()
     {
-        return weighting;
+        return hints.getWeighting();
     }
 
     /**
@@ -161,34 +156,6 @@ public class GHRequest
         return vehicle;
     }
 
-    public GHRequest putHint( String key, Object value )
-    {
-        Object old = hints.put(key, value);
-        if (old != null)
-            throw new RuntimeException("Key is already associated with " + old + ", your value:" + value);
-
-        return this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> T getHint( String key, T defaultValue )
-    {
-        Object obj = hints.get(key);
-        if (obj == null)
-            return defaultValue;
-
-        if (defaultValue != null && defaultValue instanceof Number)
-        {
-            // what a monster! see #173
-            if (defaultValue instanceof Double)
-                return (T) (Double) ((Number) obj).doubleValue();
-            if (defaultValue instanceof Long)
-                return (T) (Long) ((Number) obj).longValue();
-        }
-
-        return (T) obj;
-    }
-
     @Override
     public String toString()
     {
@@ -201,5 +168,10 @@ public class GHRequest
                 res += "; " + point.toString();
         }
         return res + "(" + algo + ")";
+    }
+
+    public WeightingMap getHints()
+    {
+        return hints;
     }
 }

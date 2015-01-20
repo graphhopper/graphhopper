@@ -52,6 +52,9 @@ public class AngleCalcTest
     {
         double orientation = ac.calcOrientation(52.414918, 13.244221, 52.415333, 13.243595);
         assertEquals(146.5, Math.toDegrees(ac.alignOrientation(0, orientation)), 1);
+
+        orientation = ac.calcOrientation(52.414918, 13.244221, 52.414573, 13.243627);
+        assertEquals(-149.7, Math.toDegrees(ac.alignOrientation(0, orientation)), 1);
     }
 
     @Test
@@ -69,7 +72,7 @@ public class AngleCalcTest
     {
         assertEquals("S", ac.azimuth2compassPoint(199));
     }
-    
+
     @Test
     public void testAtan2()
     {

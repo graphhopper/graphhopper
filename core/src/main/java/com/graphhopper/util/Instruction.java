@@ -22,7 +22,6 @@ import java.util.List;
 public class Instruction
 {
     private static final AngleCalc ac = new AngleCalc();
-    private static final DistanceCalc3D distanceCalc = new DistanceCalc3D();
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
     public static final int TURN_SLIGHT_LEFT = -1;
@@ -144,16 +143,16 @@ public class Instruction
 
         for (int i = 0; i < len; i++)
         {
+            list.add(new GPXEntry(lat, lon, ele, prevTime));
+
             boolean last = i + 1 == len;
             double nextLat = last ? nextInstr.getFirstLat() : points.getLatitude(i + 1);
             double nextLon = last ? nextInstr.getFirstLon() : points.getLongitude(i + 1);
             double nextEle = is3D ? (last ? nextInstr.getFirstEle() : points.getElevation(i + 1)) : Double.NaN;
-
-            list.add(new GPXEntry(lat, lon, ele, prevTime));
             if (is3D)
-                prevTime = Math.round(prevTime + this.time * distanceCalc.calcDist(nextLat, nextLon, nextEle, lat, lon, ele) / distance);
+                prevTime = Math.round(prevTime + this.time * Helper.DIST_3D.calcDist(nextLat, nextLon, nextEle, lat, lon, ele) / distance);
             else
-                prevTime = Math.round(prevTime + this.time * distanceCalc.calcDist(nextLat, nextLon, lat, lon) / distance);
+                prevTime = Math.round(prevTime + this.time * Helper.DIST_3D.calcDist(nextLat, nextLon, lat, lon) / distance);
 
             lat = nextLat;
             lon = nextLon;
@@ -176,12 +175,10 @@ public class Instruction
     }
 
     /**
-     * Return Direction/Compass point based on the first tracksegment of the instruction. If
+     * Return the direction like 'NE' based on the first tracksegment of the instruction. If
      * Instruction does not contain enough coordinate points, an empty string will be returned.
-     * <p>
-     * @return
      */
-    String getDirection( Instruction nextI )
+    String calcDirection( Instruction nextI )
     {
         double azimuth = calcAzimuth(nextI);
         if (Double.isNaN(azimuth))
@@ -191,19 +188,10 @@ public class Instruction
     }
 
     /**
-     * Return Azimuth based on the first tracksegment of the instruction. If Instruction does not
-     * contain enough coordinate points, an empty string will be returned.
+     * Return the azimuth in degree based on the first tracksegment of the instruction. If
+     * Instruction does not contain enough coordinate points, an empty string will be returned.
      */
-    String getAzimuth( Instruction nextI )
-    {
-        double az = calcAzimuth(nextI);
-        if (Double.isNaN(az))
-            return "";
-
-        return "" + Math.round(az);
-    }
-
-    private double calcAzimuth( Instruction nextI )
+    public double calcAzimuth( Instruction nextI )
     {
         double nextLat;
         double nextLon;
@@ -212,7 +200,7 @@ public class Instruction
         {
             nextLat = points.getLatitude(1);
             nextLon = points.getLongitude(1);
-        } else if (points.getSize() == 1 && null != nextI)
+        } else if (nextI != null && points.getSize() == 1)
         {
             nextLat = nextI.points.getLatitude(0);
             nextLon = nextI.points.getLongitude(0);

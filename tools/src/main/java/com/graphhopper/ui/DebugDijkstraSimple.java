@@ -19,9 +19,11 @@ package com.graphhopper.ui;
 
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.EdgeEntry;
+import com.graphhopper.util.EdgeIteratorState;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
@@ -33,9 +35,9 @@ public class DebugDijkstraSimple extends Dijkstra implements DebugAlgo
     private GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugDijkstraSimple( Graph graph, FlagEncoder encoder, Weighting weighting, GraphicsWrapper mg )
+    public DebugDijkstraSimple( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode, GraphicsWrapper mg )
     {
-        super(graph, encoder, weighting);
+        super(graph, encoder, weighting, tMode);
         this.mg = mg;
     }
 
@@ -46,12 +48,12 @@ public class DebugDijkstraSimple extends Dijkstra implements DebugAlgo
     }
 
     @Override
-    public void updateBestPath( EdgeEntry shortestDE, int currLoc )
+    public void updateBestPath( EdgeIteratorState es, EdgeEntry bestEE, int currLoc )
     {
         if (g2 != null)
         {
             mg.plotNode(g2, currLoc, Color.YELLOW);
         }
-        super.updateBestPath(shortestDE, currLoc);
+        super.updateBestPath(es, bestEE, currLoc);
     }
 }

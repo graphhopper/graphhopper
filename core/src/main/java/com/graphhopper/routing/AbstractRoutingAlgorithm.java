@@ -17,18 +17,13 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
-import java.util.ArrayList;
-import java.util.List;
+import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * @author Peter Karich
@@ -36,54 +31,30 @@ import java.util.List;
 public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
 {
     private EdgeFilter additionalEdgeFilter;
-    protected Graph graph;
+    protected final Graph graph;
     protected NodeAccess nodeAccess;
     protected EdgeExplorer inEdgeExplorer;
     protected EdgeExplorer outEdgeExplorer;
     protected final Weighting weighting;
     protected final FlagEncoder flagEncoder;
+    protected final TraversalMode traversalMode;
     private boolean alreadyRun;
 
     /**
      * @param graph specifies the graph where this algorithm will run on
      * @param encoder sets the used vehicle (bike, car, foot)
      * @param weighting set the used weight calculation (e.g. fastest, shortest).
+     * @param traversalMode how the graph is traversed e.g. if via nodes or edges.
      */
-    public AbstractRoutingAlgorithm( Graph graph, FlagEncoder encoder, Weighting weighting )
+    public AbstractRoutingAlgorithm( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode traversalMode )
     {
         this.weighting = weighting;
         this.flagEncoder = encoder;
-        setGraph(graph);
-    }
-
-    /**
-     * Specify the graph on which this algorithm should operate. API glitch: this method overwrites
-     * graph specified while constructing the algorithm. Only necessary if graph is a QueryGraph.
-     */
-    protected RoutingAlgorithm setGraph( Graph graph )
-    {
+        this.traversalMode = traversalMode;
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
         outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
         inEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, true, false));
-        return this;
-    }
-
-    protected QueryGraph createQueryGraph()
-    {
-        return new QueryGraph(graph);
-    }
-
-    @Override
-    public Path calcPath( QueryResult fromRes, QueryResult toRes )
-    {
-        QueryGraph queryGraph = createQueryGraph();
-        List<QueryResult> results = new ArrayList<QueryResult>(2);
-        results.add(fromRes);
-        results.add(toRes);
-        queryGraph.lookup(results);
-        setGraph(queryGraph);
-        return calcPath(fromRes.getClosestNode(), toRes.getClosestNode());
     }
 
     public RoutingAlgorithm setEdgeFilter( EdgeFilter additionalEdgeFilter )
@@ -92,12 +63,15 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         return this;
     }
 
-    protected boolean accept( EdgeIterator iter )
+    protected boolean accept( EdgeIterator iter, int prevOrNextEdgeId )
     {
+        if (!traversalMode.hasUTurnSupport() && iter.getEdge() == prevOrNextEdgeId)
+            return false;
+
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
     }
 
-    protected void updateBestPath( EdgeEntry shortestDE, int currLoc )
+    protected void updateBestPath( EdgeIteratorState edgeState, EdgeEntry bestEdgeEntry, int traversalId )
     {
     }
 

@@ -1,24 +1,47 @@
-// IE fix
-if (!window.console) {
-    var console = {
-        log: function() {
-        },
-        warn: function() {
-        },
-        error: function() {
-        },
-        time: function() {
-        },
-        timeEnd: function() {
+// usage: log('inside coolFunc',this,arguments);
+// http://paulirish.com/2009/log-a-lightweight-wrapper-for-consolelog/
+var debug = false;
+window.log = function () {
+    log.history = log.history || [];   // store logs to an array for reference
+    log.history.push(arguments);
+    if (this.console && debug) {
+        console.log(Array.prototype.slice.call(arguments));
+    }
+};
+
+// compatiblity script taken from http://stackoverflow.com/a/11054570/194609
+if (!Function.prototype.bind) {
+    Function.prototype.bind = function (oThis) {
+        if (typeof this !== 'function') {
+            // closest thing possible to the ECMAScript 5
+            // internal IsCallable function
+            throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
         }
+
+        var aArgs = Array.prototype.slice.call(arguments, 1),
+                fToBind = this,
+                fNOP = function () {
+                },
+                fBound = function () {
+                    return fToBind.apply(this instanceof fNOP && oThis
+                            ? this
+                            : oThis,
+                            aArgs.concat(Array.prototype.slice.call(arguments)));
+                };
+
+        fNOP.prototype = this.prototype;
+        fBound.prototype = new fNOP();
+
+        return fBound;
     };
 }
 
-GHRequest = function(host) {
-    this.min_path_precision = 1;
+GHRequest = function (host) {
+    this.way_point_max_distance = 1;
     this.host = host;
-    this.from = new GHInput("");
-    this.to = new GHInput("");
+    this.route = new GHroute(new GHInput(), new GHInput());
+    this.from = this.route.first();
+    this.to = this.route.last();
     this.vehicle = "car";
     this.weighting = "fastest";
     this.points_encoded = true;
@@ -30,10 +53,258 @@ GHRequest = function(host) {
     this.do_zoom = true;
     // use jsonp here if host allows CORS
     this.dataType = "json";
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // We know that you love 'free', we love it too :)! And so our entire software stack is free and even Open Source!      
+    // Our routing service is also free for certain applications or smaller volume. Be fair, grab an API key and support us:
+    // https://graphhopper.com/#directions-api Misuse of API keys that you don't own is prohibited and you'll be blocked.                    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     this.key = "Cmmtvx01R56rdHcQQo7VjI6rgPgxuFLvqI8cR31u";
+
+    // register events
+    this.route.addListener('route.add', function (evt) {
+        this.to = this.route.last();
+        log("Foo just added.");
+    }.bind(this));
+    this.route.addListener('route.remove', function (evt) {
+        this.from = this.route.first();
+        this.to = this.route.last();
+        log("Foo just removed.");
+    }.bind(this));
+    this.route.addListener('route.move', function (evt) {
+        this.from = this.route.first();
+        this.to = this.route.last();
+        log("Foo just moved.");
+    }.bind(this));
+//    this.route.addListener('route.set', function (evt) {
+//        this.from = this.route.first();
+//        this.to = this.route.last();
+//        log("Foo just moved.");
+//    }.bind(this));
+    this.route.addListener('route.reverse', function (evt) {
+        this.from = this.route.first();
+        this.to = this.route.last();
+        log("Foo just reversed.");
+    }.bind(this));
 };
 
-GHRequest.prototype.init = function(params) {
+GHroute = function () {
+    var route = Object.create(Array.prototype);
+    route = (Array.apply(route, arguments) || route);
+    GHroute.injectClassMethods(route);
+    route._listeners = {};
+    return (route);
+};
+
+GHroute.injectClassMethods = function (route) {
+    for (var method in GHroute.prototype) {
+        if (GHroute.prototype.hasOwnProperty(method)) {
+            route[method] = GHroute.prototype[method];
+        }
+    }
+    return (route);
+};
+
+GHroute.fromArray = function (array) {
+    var route = GHroute.apply(null, array);
+    return (route);
+};
+
+GHroute.isArray = function (value) {
+    var stringValue = Object.prototype.toString.call(value);
+    return (stringValue.toLowerCase() === "[object array]");
+};
+
+GHroute.prototype = {
+    first: function () {
+        return this.getIndex(0);
+    },
+    last: function () {
+        return this.getIndex((this.length - 1));
+    },
+    getIndex: function (index) {
+        var index = (isNaN(index)) ? 0 : index;
+        if (this[index] instanceof GHInput) {
+            return this[index];
+        } else
+            return false;
+    },
+    getIndexByCoord: function (value) {
+        var point,
+                index = false,
+                coord = new GHInput(value),
+                i,
+                l;
+
+        for (i = 0, l = this.length; i < l; i++) {
+            point = this[i];
+            if (point.toString() === coord.toString()) {
+                index = i;
+                break;
+            }
+        }
+        return index;
+    },
+    getIndexFromCoord: function (value) {
+        return this.getIndex(this.getIndexByCoord(value));
+    },
+    size: function () {
+        return this.length;
+    },
+    add: function (value, to) {
+        if (GHroute.isArray(value)) {
+            for (var i = 0; i < value.length; i++) {
+                Array.prototype.push.call(this, (value[i] instanceof GHInput) ? value[i] : new GHInput(value[i]));
+                if (to !== undefined) {
+                    this.move(-1, to, true);
+                    to++;
+                } else
+                    to = this.lenght - 1;
+                this.fire('route.add', {
+                    point: this[to],
+                    to: to
+                });
+            }
+            return (this);
+        } else {
+            Array.prototype.push.call(this, (value instanceof GHInput) ? value : new GHInput(value));
+            if (to !== undefined)
+                this.move(-1, to, true);
+            else
+                to = this.lenght - 1;
+            this.fire('route.add', {
+                point: this[to],
+                to: to
+            });
+        }
+        return (this[to]);
+    },
+    removeSingle: function (value) {
+        var index = false;
+        if (!(isNaN(value) || value >= this.length) && this[value] !== undefined) {
+            index = value;
+        } else {
+            if (value instanceof GHInput) {
+                value = value.toString();
+            }
+            index = this.getIndexByCoord(value);
+        }
+        if (index !== false) {
+            this.remove(index);
+        }
+        return (this);
+    },
+    remove: function (from, to) {
+        var tmpTo = to || 1;
+        Array.prototype.splice.call(this, from, tmpTo);
+        if (this.length === 1)
+            Array.prototype.push.call(this, new GHInput());
+        this.fire('route.remove', {
+            from: from,
+            to: tmpTo
+        });
+        return (this);
+    },
+    addAll: function () {
+        for (var i = 0; i < arguments.length; i++) {
+            this.add(arguments[i]);
+        }
+        return (this);
+    },
+    set: function (value, to, create) {
+        if (value instanceof GHInput)
+            this[to] = value;
+        else if (this[to] instanceof GHInput) {
+            this[to].set(value);
+        } else if (create)
+            return this.add(value, to);
+        else
+            return false;
+        this.fire('route.set', {
+            point: this[to],
+            to: to
+        });
+        return (this[to]);
+    },
+    move: function (old_index, new_index, supress_event) {
+        while (old_index < 0) {
+            old_index += this.length;
+        }
+        while (new_index < 0) {
+            new_index += this.length;
+        }
+        if (new_index >= this.length) {
+            var k = new_index - this.length;
+            while ((k--) + 1) {
+                Array.prototype.push.call(this, undefined);
+            }
+        }
+        Array.prototype.splice.call(this, new_index, 0, Array.prototype.splice.call(this, old_index, 1)[0]);
+        if (!supress_event)
+            this.fire('route.move', {
+                old_index: old_index,
+                new_index: new_index
+            });
+        return (this);
+    },
+    reverse: function () {
+        Array.prototype.reverse.call(this);
+        this.fire('route.reverse', {});
+        return (this);
+    },
+    isResolved: function () {
+        for (var i = 0, l = this.length; i < l; i++) {
+            var point = this[i];
+            if (!point.isResolved()) {
+                return false;
+            }
+        }
+        return true;
+    },
+    addListener: function (type, listener) {
+        if (typeof this._listeners[type] === "undefined") {
+            this._listeners[type] = [];
+        }
+        this._listeners[type].push(listener);
+        return this;
+    },
+    fire: function (event, options) {
+        if (typeof event === "string") {
+            event = {type: event};
+        }
+        if (typeof options === "object") {
+            for (var attrname in options) {
+                event[attrname] = options[attrname];
+            }
+        }
+        if (!event.route) {
+            event.route = this;
+        }
+        if (!event.type) {  //falsy
+            throw new Error("Event object missing 'type' property.");
+        }
+        if (this._listeners[event.type] instanceof Array) {
+            var listeners = this._listeners[event.type];
+            for (var i = 0, len = listeners.length; i < len; i++) {
+                listeners[i].call(this, event);
+            }
+        }
+    },
+    removeListener: function (type, listener) {
+        if (this._listeners[type] instanceof Array) {
+            var listeners = this._listeners[type];
+            for (var i = 0, len = listeners.length; i < len; i++) {
+                if (listeners[i] === listener) {
+                    listeners.splice(i, 1);
+                    break;
+                }
+            }
+        }
+    }
+};
+
+// todo
+GHRequest.prototype.init = function (params) {
     //    for(var key in params) {
     //        var val = params[key];
     //        if(val === "false")
@@ -101,7 +372,7 @@ GHRequest.prototype.init = function(params) {
     }
 };
 
-GHRequest.prototype.initVehicle = function(vehicle) {
+GHRequest.prototype.initVehicle = function (vehicle) {
     this.vehicle = vehicle;
     var featureSet = this.features[this.vehicle];
     if (featureSet && featureSet.elevation)
@@ -110,33 +381,59 @@ GHRequest.prototype.initVehicle = function(vehicle) {
         this.elevation = false;
 };
 
-GHRequest.prototype.hasElevation = function() {
+GHRequest.prototype.hasElevation = function () {
     return this.elevation;
 };
 
-GHRequest.prototype.createGeocodeURL = function(host) {
+GHRequest.prototype.createGeocodeURL = function (host) {
     var tmpHost = this.host;
     if (host)
         tmpHost = host;
-    return this.createPath(tmpHost + "/geocode?limit=8&type=" + this.dataType + "&key=" + this.key);
+    return this.createPath(tmpHost + "/geocode?limit=8&type=" + this.dataType + "&key=" + this.key + "&locale=" + this.locale);
 };
 
-GHRequest.prototype.createURL = function(demoUrl) {
-    return this.createPath(this.host + "/route?" + demoUrl + "&type=" + this.dataType + "&key=" + this.key);
+GHRequest.prototype.createURL = function () {
+    return this.createPath(this.host + "/route?" + this.createParams() + "&type=" + this.dataType + "&key=" + this.key);
 };
 
-GHRequest.prototype.createGPXURL = function() {
+GHRequest.prototype.createGPXURL = function () {
     // use points instead of strings
-    var str = "point=" + encodeURIComponent(this.from.toString()) + "&point=" + encodeURIComponent(this.to.toString());
+    var str = "", point, i, l;
+
+    for (i = 0, l = this.route.size(); i < l; i++) {
+        point = this.route.getIndex(i);
+        if (i > 0)
+            str += "&";
+        str += "point=" + encodeURIComponent(point.toString());
+    }
     return this.createPath(this.host + "/route?" + str + "&type=gpx&key=" + this.key);
 };
 
-GHRequest.prototype.createFullURL = function() {
-    var str = "?point=" + encodeURIComponent(this.from.input) + "&point=" + encodeURIComponent(this.to.input);
+GHRequest.prototype.createHistoryURL = function () {
+    var str = "?", point, i, l;
+
+    for (i = 0, l = this.route.size(); i < l; i++) {
+        point = this.route.getIndex(i);
+        if (i > 0)
+            str += "&";
+        str += "point=" + encodeURIComponent(point.input);
+    }
     return this.createPath(str);
 };
 
-GHRequest.prototype.createPath = function(url) {
+GHRequest.prototype.createParams = function () {
+    var str = "", point, i, l;
+
+    for (i = 0, l = this.route.size(); i < l; i++) {
+        point = this.route.getIndex(i);
+        if (i > 0)
+            str += "&";
+        str += "point=" + encodeURIComponent(point.toString());
+    }
+    return (str);
+};
+
+GHRequest.prototype.createPath = function (url) {
     if (this.vehicle && this.vehicle !== "car")
         url += "&vehicle=" + this.vehicle;
     // fastest or shortest
@@ -147,14 +444,14 @@ GHRequest.prototype.createPath = function(url) {
     // dijkstra, dijkstrabi, astar, astarbi
     if (this.algorithm && this.algorithm !== "dijkstrabi")
         url += "&algorithm=" + this.algorithm;
-    if (this.min_path_precision !== 1)
-        url += "&min_path_precision=" + this.min_path_precision;
+    if (this.way_point_max_distance !== 1)
+        url += "&way_point_max_distance=" + this.way_point_max_distance;
     if (!this.instructions)
         url += "&instructions=false";
     if (!this.points_encoded)
         url += "&points_encoded=false";
 
-    if(this.elevation)
+    if (this.elevation)
         url += "&elevation=true";
     if (this.debug)
         url += "&debug=true";
@@ -213,12 +510,12 @@ function decodePath(encoded, is3D) {
     return array;
 }
 
-GHRequest.prototype.doRequest = function(url, callback) {
+GHRequest.prototype.doRequest = function (url, callback) {
     var that = this;
     $.ajax({
-        "timeout": 30000,
-        "url": url,
-        "success": function(json) {
+        timeout: 30000,
+        url: url,
+        success: function (json) {
             if (json.paths) {
                 for (var i = 0; i < json.paths.length; i++) {
                     var path = json.paths[i];
@@ -234,14 +531,17 @@ GHRequest.prototype.doRequest = function(url, callback) {
             }
             callback(json);
         },
-        "error": function(err) {
+        error: function (err) {
             // problematic: this callback is not invoked when using JSONP!
             // http://stackoverflow.com/questions/19035557/jsonp-request-error-handling
             var msg = "API did not respond! ";
-            if (err && err.statusText && err.statusText !== "OK")
+            if (err && err.responseText && err.responseText.indexOf('{') >= 0) {
+                var jsonError = JSON.parse(err.responseText);
+                msg += jsonError.message;
+            } else if (err && err.statusText && err.statusText !== "OK")
                 msg += err.statusText;
 
-            console.log(msg + " " + JSON.stringify(err));
+            log(msg + " " + JSON.stringify(err));
             var details = "Error for " + url;
             var json = {
                 "info": {
@@ -253,72 +553,100 @@ GHRequest.prototype.doRequest = function(url, callback) {
             };
             callback(json);
         },
-        "type": "GET",
-        "dataType": this.dataType
+        type: "GET",
+        dataType: this.dataType,
+        crossDomain: true
     });
 };
 
-GHRequest.prototype.getInfo = function() {
+GHRequest.prototype.getInfo = function () {
     var url = this.host + "/info?type=" + this.dataType + "&key=" + this.key;
-    console.log(url);
+    log(url);
     return $.ajax({
-        "url": url,
-        "timeout": 3000,
-        "type": "GET",
-        "dataType": this.dataType
+        url: url,
+        timeout: 3000,
+        type: "GET",
+        dataType: this.dataType,
+        crossDomain: true
     });
 };
 
-GHInput = function(str) {
-    // either text or coordinates
-    this.input = str;
-    try {
-        var index = str.indexOf(",");
+GHInput = function (input) {
+    this.set(input);
+};
+
+GHInput.isObject = function (value) {
+    var stringValue = Object.prototype.toString.call(value);
+    return (stringValue.toLowerCase() === "[object object]");
+};
+
+GHInput.isString = function (value) {
+    var stringValue = Object.prototype.toString.call(value);
+    return (stringValue.toLowerCase() === "[object string]");
+};
+
+GHInput.prototype.isResolved = function () {
+    return !isNaN(this.lat) && !isNaN(this.lng);
+};
+
+GHInput.prototype.setCoord = function (lat, lng) {
+    this.lat = round(lat);
+    this.lng = round(lng);
+    this.input = this.toString();
+};
+
+GHInput.prototype.setUnresolved = function () {
+    this.lat = undefined;
+    this.lng = undefined;
+};
+
+GHInput.prototype.set = function (strOrObject) {
+    // either text or coordinates or object
+    this.input = strOrObject;
+    // reset to unresolved
+
+
+    if (GHInput.isObject(strOrObject)) {
+        this.setCoord(strOrObject.lat, strOrObject.lng);
+    } else if (GHInput.isString(strOrObject)) {
+        var index = strOrObject.indexOf(",");
         if (index >= 0) {
-            this.lat = round(parseFloat(str.substr(0, index)));
-            this.lng = round(parseFloat(str.substr(index + 1)));
-            if (!isNaN(this.lat) && !isNaN(this.lng)) {
+            this.lat = round(parseFloat(strOrObject.substr(0, index)));
+            this.lng = round(parseFloat(strOrObject.substr(index + 1)));
+
+            if (this.isResolved()) {
                 this.input = this.toString();
             } else {
-                this.lat = undefined;
-                this.lng = undefined;
+                this.setUnresolved();
             }
+        } else {
+            this.setUnresolved();
         }
-    } catch (ex) {
     }
 };
 
-GHInput.prototype.isResolved = function() {
-    return this.lat && this.lng;
-};
-
-GHInput.prototype.setCoord = function(lat, lng) {
-    this.lat = round(lat);
-    this.lng = round(lng);
-    this.input = this.lat + "," + this.lng;
-};
-
-GHInput.prototype.toString = function() {
+GHInput.prototype.toString = function () {
     if (this.lat !== undefined && this.lng !== undefined)
         return this.lat + "," + this.lng;
     return undefined;
 };
 
-GHRequest.prototype.setLocale = function(locale) {
+GHRequest.prototype.setLocale = function (locale) {
     if (locale)
         this.locale = locale;
 };
 
-GHRequest.prototype.fetchTranslationMap = function(urlLocaleParam) {
+GHRequest.prototype.fetchTranslationMap = function (urlLocaleParam) {
     if (!urlLocaleParam)
         // let servlet figure out the locale from the Accept-Language header
         urlLocaleParam = "";
     var url = this.host + "/i18n/" + urlLocaleParam + "?type=" + this.dataType + "&key=" + this.key;
-    console.log(url);
+    log(url);
     return $.ajax({
-        "url": url,
-        "timeout": 3000,
-        "type": "GET",
-        "dataType": this.dataType
+        url: url,
+        timeout: 3000,
+        type: "GET",
+        dataType: this.dataType,
+        crossDomain: true
     });
 };

@@ -19,8 +19,8 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
-import com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode;
-import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PriorityCode.*;
+import com.graphhopper.routing.util.PriorityCode;
+import static com.graphhopper.routing.util.PriorityCode.*;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -80,6 +80,23 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.setTag("surface", "ground");
         assertEquals(16, encoder.getSpeed(way));
         assertPriority(PREFER.getValue(), way);
+    }
+
+    @Test
+    @Override
+    public void testSacScale()
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "service");
+        way.setTag("sac_scale", "hiking");
+        // allow
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.setTag("sac_scale", "alpine_hiking");
+        assertTrue(encoder.acceptWay(way) > 0);
+        
+        way.setTag("sac_scale", "demanding_alpine_hiking");
+        assertTrue(encoder.acceptWay(way) == 0);
     }
 
     @Test

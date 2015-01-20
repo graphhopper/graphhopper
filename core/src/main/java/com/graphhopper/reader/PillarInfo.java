@@ -60,7 +60,7 @@ public class PillarInfo implements PointAccess
     public void ensureNode( int nodeId )
     {
         long tmp = (long) nodeId * rowSizeInBytes;
-        da.incCapacity(tmp + rowSizeInBytes);
+        da.ensureCapacity(tmp + rowSizeInBytes);
     }        
 
     @Override

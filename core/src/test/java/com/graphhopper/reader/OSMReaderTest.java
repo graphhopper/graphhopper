@@ -38,20 +38,14 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.AbstractGraphStorageTester;
-import com.graphhopper.storage.ExtendedStorage;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
+import java.util.*;
 
 /**
  * Tests the OSMReader with the normal helper initialized.
@@ -69,7 +63,8 @@ public class OSMReaderTest
     private final String fileTurnRestrictions = "test-restrictions.xml";
     private final String dir = "./target/tmp/test-db";
     private CarFlagEncoder carEncoder;
-    private FootFlagEncoder footEncoder;
+    private BikeFlagEncoder bikeEncoder;
+    private FlagEncoder footEncoder;
     private EdgeExplorer carOutExplorer;
     private EdgeExplorer carAllExplorer;
 
@@ -88,21 +83,37 @@ public class OSMReaderTest
     GraphStorage newGraph( String directory, EncodingManager encodingManager, boolean is3D, boolean turnRestrictionsImport )
     {
         return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager,
-                is3D, turnRestrictionsImport ? new TurnCostStorage() : new ExtendedStorage.NoExtendedStorage());
+                is3D, turnRestrictionsImport ? new TurnCostExtension() : new GraphExtension.NoExtendedStorage());
     }
 
     class GraphHopperTest extends GraphHopper
     {
         public GraphHopperTest( String osmFile )
         {
-            setInMemory(false);
+            this(osmFile, false);
+        }
+
+        public GraphHopperTest( String osmFile, boolean turnCosts )
+        {
+            setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
             setEncodingManager(new EncodingManager("CAR,FOOT"));
-            disableCHShortcuts();
+            setCHEnable(false);
 
-            carEncoder = (CarFlagEncoder) getEncodingManager().getEncoder("CAR");
-            footEncoder = (FootFlagEncoder) getEncodingManager().getEncoder("FOOT");
+            if (turnCosts)
+            {
+                carEncoder = new CarFlagEncoder(5, 5, 3);
+                bikeEncoder = new BikeFlagEncoder(4, 2, 3);
+            } else
+            {
+                carEncoder = new CarFlagEncoder();
+                bikeEncoder = new BikeFlagEncoder();
+            }
+
+            footEncoder = new FootFlagEncoder();
+
+            setEncodingManager(new EncodingManager(footEncoder, carEncoder, bikeEncoder));
         }
 
         @Override
@@ -114,7 +125,7 @@ public class OSMReaderTest
         @Override
         protected DataReader importData() throws IOException
         {
-            GraphStorage tmpGraph = newGraph(dir, getEncodingManager(), hasElevation(), isEnableTurnRestrictions());
+            GraphStorage tmpGraph = newGraph(dir, getEncodingManager(), hasElevation(), getEncodingManager().needsTurnCostsSupport());
             setGraph(tmpGraph);
 
             DataReader osmReader = createReader(tmpGraph);
@@ -160,7 +171,7 @@ public class OSMReaderTest
         assertEquals("street 123, B 122", iter.getName());
         assertEquals(n50, iter.getAdjNode());
         AbstractGraphStorageTester.assertPList(Helper.createPointList(51.25, 9.43), iter.fetchWayGeometry(0));
-        CarFlagEncoder flags = carEncoder;
+        FlagEncoder flags = carEncoder;
         assertTrue(flags.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
         assertTrue(flags.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
 
@@ -277,7 +288,7 @@ public class OSMReaderTest
         assertTrue(iter.next());
         assertEquals(n30, iter.getAdjNode());
 
-        CarFlagEncoder encoder = carEncoder;
+        FlagEncoder encoder = carEncoder;
         iter = carAllExplorer.setBaseNode(n20);
         assertTrue(iter.next());
         assertEquals(n23, iter.getAdjNode());
@@ -502,60 +513,68 @@ public class OSMReaderTest
     @Test
     public void testTurnRestrictions()
     {
-        GraphHopper hopper = new GraphHopperTest(fileTurnRestrictions).setEnableTurnRestrictions(true).importOrLoad();
-        Graph graph = hopper.getGraph();
-        assertEquals(9, graph.getNodes());
-        assertTrue(((GraphHopperStorage) graph).getExtendedStorage() instanceof TurnCostStorage);
+        GraphHopper hopper = new GraphHopperTest(fileTurnRestrictions, true).
+                importOrLoad();
+        GraphStorage graph = hopper.getGraph();
+        assertEquals(15, graph.getNodes());
+        assertTrue(graph.getExtension() instanceof TurnCostExtension);
+        TurnCostExtension tcStorage = (TurnCostExtension) graph.getExtension();
 
-        TurnCostStorage tcStorage = (TurnCostStorage) ((GraphHopperStorage) graph).getExtendedStorage();
-
+        int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
         int n2 = AbstractGraphStorageTester.getIdOf(graph, 52, 10);
         int n3 = AbstractGraphStorageTester.getIdOf(graph, 52, 11);
         int n4 = AbstractGraphStorageTester.getIdOf(graph, 52, 12);
+        int n5 = AbstractGraphStorageTester.getIdOf(graph, 50, 12);
+        int n6 = AbstractGraphStorageTester.getIdOf(graph, 51, 11);
         int n8 = AbstractGraphStorageTester.getIdOf(graph, 54, 11);
 
-        int edge2_3 = getEdge(n2, n3);
-        int edge3_4 = getEdge(n3, n4);
-        int edge3_8 = getEdge(n3, n8);
+        int edge1_6 = GHUtility.getEdge(graph, n1, n6).getEdge();
+        int edge2_3 = GHUtility.getEdge(graph, n2, n3).getEdge();
+        int edge3_4 = GHUtility.getEdge(graph, n3, n4).getEdge();
+        int edge3_8 = GHUtility.getEdge(graph, n3, n8).getEdge();
 
-        int edge3_2 = getEdge(n3, n2);
-        int edge4_3 = getEdge(n4, n3);
-        int edge8_3 = getEdge(n8, n3);
+        int edge3_2 = GHUtility.getEdge(graph, n3, n2).getEdge();
+        int edge4_3 = GHUtility.getEdge(graph, n4, n3).getEdge();
+        int edge8_3 = GHUtility.getEdge(graph, n8, n3).getEdge();
 
         // (2-3)->(3-4) only_straight_on = (2-3)->(3-8) restricted
         // (4-3)->(3-8) no_right_turn = (4-3)->(3-8) restricted
-        assertTrue(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n3, edge2_3, edge3_8)));
-        assertTrue(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n3, edge4_3, edge3_8)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n3, edge2_3, edge3_4)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n3, edge2_3, edge3_2)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n3, edge2_3, edge3_4)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n3, edge4_3, edge3_2)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n3, edge8_3, edge3_2)));
+        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_8)) > 0);
+        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge4_3, n3, edge3_8)) > 0);
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_4)));
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_2)));
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_4)));
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge4_3, n3, edge3_2)));
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge8_3, n3, edge3_2)));
 
-        int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
-        int n5 = AbstractGraphStorageTester.getIdOf(graph, 50, 12);
-        int n6 = AbstractGraphStorageTester.getIdOf(graph, 50, 11);
+        // u-turn restriction for (6-1)->(1-6) but not for (1-6)->(6-1)
+        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge1_6, n1, edge1_6)) > 0);
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge1_6, n6, edge1_6)));
 
-        int edge4_5 = getEdge(n4, n5);
-        int edge5_6 = getEdge(n5, n6);
-        int edge5_1 = getEdge(n5, n1);
+        int edge4_5 = GHUtility.getEdge(graph, n4, n5).getEdge();
+        int edge5_6 = GHUtility.getEdge(graph, n5, n6).getEdge();
+        int edge5_1 = GHUtility.getEdge(graph, n5, n1).getEdge();
 
         // (4-5)->(5-1) right_turn_only = (4-5)->(5-6) restricted 
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n5, edge4_5, edge5_6)));
-        assertTrue(carEncoder.isTurnRestricted(tcStorage.getTurnCosts(n5, edge4_5, edge5_1)));
-    }
+        long costsFlags = tcStorage.getTurnCostFlags(edge4_5, n5, edge5_6);
+        assertFalse(carEncoder.isTurnRestricted(costsFlags));
+        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge4_5, n5, edge5_1)) > 0);
 
-    private int getEdge( int from, int to )
-    {
-        EdgeIterator iter = carOutExplorer.setBaseNode(from);
-        while (iter.next())
-        {
-            if (iter.getAdjNode() == to)
-            {
-                return iter.getEdge();
-            }
-        }
-        return EdgeIterator.NO_EDGE;
+        // for bike
+        assertFalse(bikeEncoder.isTurnRestricted(costsFlags));
+
+        int n10 = AbstractGraphStorageTester.getIdOf(graph, 40, 10);
+        int n11 = AbstractGraphStorageTester.getIdOf(graph, 40, 11);
+        int n14 = AbstractGraphStorageTester.getIdOf(graph, 39, 11);
+
+        int edge10_11 = GHUtility.getEdge(graph, n10, n11).getEdge();
+        int edge11_14 = GHUtility.getEdge(graph, n11, n14).getEdge();
+
+        assertEquals(0, tcStorage.getTurnCostFlags(edge11_14, n11, edge10_11));
+
+        costsFlags = tcStorage.getTurnCostFlags(edge10_11, n11, edge11_14);
+        assertFalse(carEncoder.isTurnRestricted(costsFlags));
+        assertTrue(bikeEncoder.isTurnRestricted(costsFlags));
     }
 
     @Test
@@ -682,5 +701,94 @@ public class OSMReaderTest
         edge = GHUtility.getEdge(graph, n10, n50);
         assertEquals(Helper.createPointList3D(49.501, 11.5001, 383.0, 49.5001, 11.501, 426.0),
                 edge.fetchWayGeometry(3));
+    }
+
+    /**
+     * Tests the combination of different turn cost flags by different encoders.
+     */
+    @Test
+    public void testTurnFlagCombination()
+    {
+        final OSMTurnRelation.TurnCostTableEntry turnCostEntry_car = new OSMTurnRelation.TurnCostTableEntry();
+        final OSMTurnRelation.TurnCostTableEntry turnCostEntry_foot = new OSMTurnRelation.TurnCostTableEntry();
+        final OSMTurnRelation.TurnCostTableEntry turnCostEntry_bike = new OSMTurnRelation.TurnCostTableEntry();
+
+        CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
+        FootFlagEncoder foot = new FootFlagEncoder();
+        BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
+        EncodingManager manager = new EncodingManager(Arrays.asList(bike, foot, car), 4);
+
+        OSMReader reader = new OSMReader(new GraphBuilder(manager).create())
+        {
+            @Override
+            public Collection<OSMTurnRelation.TurnCostTableEntry> analyzeTurnRelation( FlagEncoder encoder,
+                    OSMTurnRelation turnRelation )
+            {
+                // simulate by returning one turn cost entry directly
+                if (encoder.toString().equalsIgnoreCase("car"))
+                {
+
+                    return Collections.singleton(turnCostEntry_car);
+                } else if (encoder.toString().equalsIgnoreCase("foot"))
+                {
+                    return Collections.singleton(turnCostEntry_foot);
+                } else if (encoder.toString().equalsIgnoreCase("bike"))
+                {
+                    return Collections.singleton(turnCostEntry_bike);
+                } else
+                {
+                    throw new IllegalArgumentException("illegal encoder " + encoder.toString());
+                }
+            }
+        }.setEncodingManager(manager);
+
+        // turn cost entries for car and foot are for the same relations (same viaNode, edgeFrom and edgeTo), 
+        // turn cost entry for bike is for another relation (different viaNode) 
+        turnCostEntry_car.edgeFrom = 1;
+        turnCostEntry_foot.edgeFrom = 1;
+        turnCostEntry_bike.edgeFrom = 2;
+
+        // calculating arbitrary flags using the encoders
+        turnCostEntry_car.flags = car.getTurnFlags(true, 0);
+        turnCostEntry_foot.flags = foot.getTurnFlags(true, 0);
+        turnCostEntry_bike.flags = bike.getTurnFlags(false, 10);
+
+        // we expect two different entries: the first one is a combination of turn flags of car and foot, 
+        // since they provide the same relation, the other one is for bike only
+        long assertFlag1 = turnCostEntry_car.flags | turnCostEntry_foot.flags;
+        long assertFlag2 = turnCostEntry_bike.flags;
+
+        // combine flags of all encoders
+        Collection<OSMTurnRelation.TurnCostTableEntry> entries = reader.analyzeTurnRelation(null);
+
+        // we expect two different turnCost entries
+        assertEquals(2, entries.size());
+
+        for (OSMTurnRelation.TurnCostTableEntry entry : entries)
+        {
+            if (entry.edgeFrom == 1)
+            {
+                // the first entry provides turn flags for car and foot only 
+                assertEquals(assertFlag1, entry.flags);
+                assertTrue(car.isTurnRestricted(entry.flags));
+                assertFalse(foot.isTurnRestricted(entry.flags));
+                assertFalse(bike.isTurnRestricted(entry.flags));
+
+                assertTrue(Double.isInfinite(car.getTurnCost(entry.flags)));
+                assertEquals(0, foot.getTurnCost(entry.flags), 1e-1);
+                assertEquals(0, bike.getTurnCost(entry.flags), 1e-1);
+            } else if (entry.edgeFrom == 2)
+            {
+                // the 2nd entry provides turn flags for bike only
+                assertEquals(assertFlag2, entry.flags);
+                assertFalse(car.isTurnRestricted(entry.flags));
+                assertFalse(foot.isTurnRestricted(entry.flags));
+                assertFalse(bike.isTurnRestricted(entry.flags));
+
+                assertEquals(0, car.getTurnCost(entry.flags), 1e-1);
+                assertEquals(0, foot.getTurnCost(entry.flags), 1e-1);
+                assertEquals(10, bike.getTurnCost(entry.flags), 1e-1);
+            }
+        }
     }
 }
