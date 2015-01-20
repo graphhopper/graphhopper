@@ -110,8 +110,12 @@ public class PathMerger
         if (enableInstructions)
             rsp.setInstructions(fullInstructions);
 
-        rsp.setFound(allFound).
-                setPoints(fullPoints).
+        if (!allFound)
+        {
+            rsp.addError(new RuntimeException("Not found"));
+        }
+
+        rsp.setPoints(fullPoints).
                 setRouteWeight(fullWeight).
                 setDistance(fullDistance).
                 setMillis(fullMillis);

@@ -151,18 +151,6 @@ public class GHResponse
         return routeWeight;
     }
 
-    public GHResponse setFound( boolean found )
-    {
-        this.found = found;
-        return this;
-    }
-
-    public boolean isFound()
-    {
-        check("isFound");
-        return found;
-    }
-
     /**
      * Calculates the bounding box of this route response
      */
@@ -196,7 +184,7 @@ public class GHResponse
     @Override
     public String toString()
     {
-        String str = "found:" + isFound() + ", nodes:" + list.getSize() + ": " + list.toString();
+        String str = "nodes:" + list.getSize() + ": " + list.toString();
         if (!instructions.isEmpty())
             str += ", " + instructions.toString();
 

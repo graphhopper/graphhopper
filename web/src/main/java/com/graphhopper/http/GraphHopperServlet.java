@@ -199,12 +199,6 @@ public class GraphHopperServlet extends GHBaseServlet
                 list.add(map);
             }
             jsonInfo.put("errors", list);
-        } else if (!rsp.isFound())
-        {
-            Map<String, String> map = new HashMap<String, String>();
-            map.put("message", "Not found");
-            map.put("details", "");
-            jsonInfo.put("errors", Collections.singletonList(map));
         } else
         {
             jsonInfo.put("took", Math.round(took * 1000));
