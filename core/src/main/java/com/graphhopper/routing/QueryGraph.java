@@ -51,7 +51,8 @@ public class QueryGraph implements Graph
     private final NodeAccess mainNodeAccess;
     private final int mainNodes;
     private final int mainEdges;
-    private final Graph origGraph;
+    private final QueryGraph origGraph;
+    private final GraphExtension wrappedExtension;
     private List<QueryResult> queryResults;
     /**
      * Virtual edges are created between existing graph and new virtual tower nodes. For every
@@ -64,13 +65,10 @@ public class QueryGraph implements Graph
      * Store lat,lon of virtual tower nodes.
      */
     private PointList virtualNodes;
-    private final DistanceCalc distCalc = Helper.DIST_PLANE;
-    private final GraphExtension wrappedExtension;
 
     public QueryGraph( Graph graph )
     {
         mainGraph = graph;
-        origGraph = this;// TODO graph instanceof LevelGraph ? new OriginalGraph(this) : this;
         mainNodeAccess = graph.getNodeAccess();
         mainNodes = graph.getNodes();
         mainEdges = graph.getAllEdges().getCount();
@@ -79,6 +77,22 @@ public class QueryGraph implements Graph
             wrappedExtension = new QueryGraphTurnExt(this);
         else
             wrappedExtension = mainGraph.getExtension();
+
+        // create very lightweight QueryGraph which uses variables from this QueryGraph (same virtual edges)
+        origGraph = new QueryGraph(graph.getOriginalGraph(), this);
+    }
+
+    /**
+     * See 'lookup' for further variables that are initialized
+     */
+    private QueryGraph( Graph graph, QueryGraph superQueryGraph )
+    {
+        mainGraph = graph;
+        origGraph = this;
+        wrappedExtension = superQueryGraph.wrappedExtension;
+        mainNodeAccess = graph.getNodeAccess();
+        mainNodes = superQueryGraph.mainNodes;
+        mainEdges = superQueryGraph.mainEdges;
     }
 
     /**
@@ -102,9 +116,13 @@ public class QueryGraph implements Graph
         if (isInitialized())
             throw new IllegalStateException("Call lookup only once. Otherwise you'll have problems for queries sharing the same edge.");
 
+        // initialize all none-final variables
         virtualEdges = new ArrayList<EdgeIteratorState>(resList.size() * 2);
         virtualNodes = new PointList(resList.size(), mainNodeAccess.is3D());
         queryResults = new ArrayList<QueryResult>(resList.size());
+        origGraph.virtualEdges = virtualEdges;
+        origGraph.virtualNodes = virtualNodes;
+        origGraph.queryResults = queryResults;
 
         TIntObjectMap<List<QueryResult>> edge2res = new TIntObjectHashMap<List<QueryResult>>(resList.size());
 
@@ -190,8 +208,8 @@ public class QueryGraph implements Graph
 
                             double fromLat = fullPL.getLatitude(o1.getWayIndex());
                             double fromLon = fullPL.getLongitude(o1.getWayIndex());
-                            if (distCalc.calcNormalizedDist(fromLat, fromLon, p1.lat, p1.lon)
-                                    > distCalc.calcNormalizedDist(fromLat, fromLon, p2.lat, p2.lon))
+                            if (Helper.DIST_PLANE.calcNormalizedDist(fromLat, fromLon, p1.lat, p1.lon)
+                                    > Helper.DIST_PLANE.calcNormalizedDist(fromLat, fromLon, p2.lat, p2.lon))
                                 return 1;
                             return -1;
                         }
@@ -262,7 +280,7 @@ public class QueryGraph implements Graph
     {
         // Note: if the mainGraph of this QueryGraph is a LevelGraph then ignoring the shortcuts will produce a 
         // huge gap of edgeIds between original and virtual edge ids. The only solution would be to move virtual edges
-        // directly after normal edge ids which is ugly as we limit virtual edges to N edges and waste memory or make everything more complex.
+        // directly after normal edge ids which is ugly as we limit virtual edges to N edges and waste memory or make everything more complex.        
         return origGraph;
     }
 
@@ -325,7 +343,7 @@ public class QueryGraph implements Graph
         basePoints.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
 
         PointList baseReversePoints = basePoints.clone(true);
-        double baseDistance = basePoints.calcDistance(distCalc);
+        double baseDistance = basePoints.calcDistance(Helper.DIST_PLANE);
         int virtEdgeId = mainEdges + virtualEdges.size();
 
         // edges between base and snapped point

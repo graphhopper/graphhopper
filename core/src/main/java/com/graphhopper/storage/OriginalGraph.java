@@ -204,6 +204,9 @@ public class OriginalGraph implements Graph
     @Override
     public EdgeExplorer createEdgeExplorer( final EdgeFilter filter )
     {
+        if (filter == EdgeFilter.ALL_EDGES)
+            return createEdgeExplorer();
+
         return lg.createEdgeExplorer(new EdgeFilter()
         {
             @Override

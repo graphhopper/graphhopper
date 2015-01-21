@@ -34,7 +34,6 @@
     no reflection done in EncodingManager which improves portability and makes configuration of encoders possible before adding to manager
     removed dijkstraNativebi as no performance advantage but maintenance disadvantage and similar to oneToManyDijkstra
     to provide context for turn costs we needed to add prevEdgeId into Weighting.calcWeight, see new documentation
->>>>>>> master
     with the introduction of lock protection mechanism (see #112) GraphHopper needs always write access, see also #217
     new GraphHopper.clean method to remove the graph directory via Java API
     FlagEncoder: replaced isFoward and isBackward with more generic isBool(flags, FlagEncoder.FORWARD|BACKWARD)
