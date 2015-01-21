@@ -634,9 +634,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             EdgeSkipIterator iter = vehicleOutExplorer.setBaseNode(sc.from);
             while (iter.next())
             {
-                if (!levelFilter.accept(iter))
-                    continue;
-
                 if (iter.isShortcut() && iter.getAdjNode() == sc.to
                         && PrepareEncoder.canBeOverwritten(iter.getFlags(), sc.flags))
                 {
