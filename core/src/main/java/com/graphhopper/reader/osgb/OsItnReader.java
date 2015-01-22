@@ -949,7 +949,8 @@ public class OsItnReader implements DataReader<Long> {
         // to a tower.
         int graphIndex = getNodeMap().get(nodeId);
         if (graphIndex < TOWER_NODE) {
-            OSITNNode newNode = addBarrierNode(nodeId);
+            OSITNNode newNode = addBarrierNode(nodeId, true);
+            //            System.out.println("Add Node at start of way from " + nodeId + " to " + osmNodeIds.get(osmNodeIds.size()-1) + " lat lon is " + newNode.getLat() + " " + newNode.getLon());
             long newNodeId = newNode.getId();
             int nodeType = getNodeMap().get(newNodeId);
 
@@ -1391,9 +1392,12 @@ public class OsItnReader implements DataReader<Long> {
             // An index < TOWER_NODE means it is a tower node.
             boolean doInsertAdditionalTowerNodes = addAdditionalTowerNodes && (graphIndex < TOWER_NODE);
 
+            //            System.out.println("doInsertAdditionalTowerNodes is " + doInsertAdditionalTowerNodes + " for lastNodeId "+ lastNodeId );
+
             // add end tower here
             if (doInsertAdditionalTowerNodes) {
-                OSITNNode newNode = addBarrierNode(lastNodeId);
+                OSITNNode newNode = addBarrierNode(lastNodeId, true);
+                //                System.out.println("Add End shadow node between " + nodeIdsToCreateWaysFor.get(0) + " and " + lastNodeId + " lat lon is " + newNode.getLat() + " " + newNode.getLon());
                 newNodeId = newNode.getId();
 
                 nodeIdsToCreateWaysFor.set(nodeIdsToCreateWaysFor.size() - 1,
@@ -1613,7 +1617,7 @@ public class OsItnReader implements DataReader<Long> {
         }
     }
 
-    int addTowerNode(long osmId, double lat, double lon, double ele) {
+    private int addTowerNode(long osmId, double lat, double lon, double ele) {
         if (nodeAccess.is3D())
             nodeAccess.setNode(nextTowerId, lat, lon, ele);
         else
@@ -1834,47 +1838,37 @@ public class OsItnReader implements DataReader<Long> {
         edgeIdToOsmIdMap = null;
         edgeIdToNodeMap = null;
     }
-
     /**
      * Create a copy of the barrier node
      */
     private OSITNNode addBarrierNode(long nodeId) {
+        return addBarrierNode(nodeId, false);
+    }
+    private OSITNNode addBarrierNode(long nodeId, boolean forceAsTower) {
         OSITNNode newNode = null;
         int graphIndex = getNodeMap().get(nodeId);
 
-        if (graphIndex < TOWER_NODE) {
+        if (graphIndex < TOWER_NODE||forceAsTower) {
             graphIndex = -graphIndex - 3;
             // System.out.println("Create Tower node for nodeId " + nodeId +
             // " graphIndex is " + graphIndex);
+
             newNode = new OSITNNode(createNewNodeId(), nodeAccess, graphIndex);
         } else {
             graphIndex = graphIndex - 3;
             try {
-                // System.out.println("Create Pillar node for nodeId " + nodeId
-                // + " graphIndex is " + graphIndex);
-                newNode = new OSITNNode(createNewNodeId(), pillarInfo,
-                        graphIndex);
-                // System.out.println("newNode is " + newNode);
+                newNode = new OSITNNode(createNewNodeId(), pillarInfo, graphIndex);
             } catch (ArrayIndexOutOfBoundsException e) {
                 e.printStackTrace();
             }
         }
 
         final long id = newNode.getId();
-        prepareHighwayNode(id);
-        addNode(newNode);
-        return newNode;
-    }
-
-    /**
-     * Create a copy of the barrier node
-     */
-    private OSITNNode addBarrierNode(long nodeId, double lat, double lon) {
-        OSITNNode newNode = null;
-        newNode = new OSITNNode(createNewNodeId(), lat, lon);
-
-        final long id = newNode.getId();
-        prepareHighwayNode(id);
+        if(forceAsTower) {
+            getNodeMap().put(id, TOWER_NODE);
+        } else {
+            prepareHighwayNode(id);
+        }
         addNode(newNode);
         return newNode;
     }

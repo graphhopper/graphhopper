@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,20 +17,27 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.reader.pbf.Sink;
-import com.graphhopper.reader.pbf.PbfReader;
-
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
+
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+
+import com.graphhopper.reader.pbf.PbfReader;
+import com.graphhopper.reader.pbf.Sink;
 
 /**
  * A readable OSM file.
@@ -151,7 +158,7 @@ public class OSMInputFile implements Sink, Closeable
         int event = parser.next();
         if (event != XMLStreamConstants.START_ELEMENT || !parser.getLocalName().equalsIgnoreCase("osm"))
         {
-            throw new IllegalArgumentException("File is not a valid OSM stream");
+            throw new IllegalArgumentException("File is not a valid OSM stream. LocalName is " + parser.getLocalName());
         }
 
         eof = false;
@@ -190,23 +197,23 @@ public class OSMInputFile implements Sink, Closeable
                     long id = 0;
                     switch (name.charAt(0))
                     {
-                        case 'n':
-                            // note vs. node
-                            if ("node".equals(name))
-                            {
-                                id = Long.parseLong(idStr);
-                                return OSMNode.create(id, parser);
-                            }
-                            break;
-
-                        case 'w':
+                    case 'n':
+                        // note vs. node
+                        if ("node".equals(name))
                         {
                             id = Long.parseLong(idStr);
-                            return OSMWay.create(id, parser);
+                            return OSMNode.create(id, parser);
                         }
-                        case 'r':
-                            id = Long.parseLong(idStr);
-                            return OSMRelation.create(id, parser);
+                        break;
+
+                    case 'w':
+                    {
+                        id = Long.parseLong(idStr);
+                        return OSMWay.create(id, parser);
+                    }
+                    case 'r':
+                        id = Long.parseLong(idStr);
+                        return OSMRelation.create(id, parser);
                     }
                 }
             }

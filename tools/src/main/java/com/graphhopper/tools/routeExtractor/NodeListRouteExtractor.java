@@ -20,9 +20,10 @@ import org.opengis.referencing.operation.TransformException;
 import org.xml.sax.SAXException;
 
 import com.graphhopper.reader.OSMElement;
+import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.RelationMember;
 import com.graphhopper.reader.RoutingElement;
-import com.graphhopper.reader.osgb.OSITNRelation;
+import com.graphhopper.reader.osgb.OSITNElement;
 import com.graphhopper.reader.osgb.OSITNWay;
 
 public class NodeListRouteExtractor extends AbstractProblemRouteExtractor {
@@ -111,22 +112,21 @@ public class NodeListRouteExtractor extends AbstractProblemRouteExtractor {
                 @Override
                 public boolean execute(final long testWayId) {
                     if (item.isType(OSMElement.RELATION)) {
-                        final OSITNRelation relation = (OSITNRelation) item;
+                        final Relation relation = (Relation) item;
 
                         ArrayList<? extends RelationMember> members = relation.getMembers();
                         for (RelationMember relationMember : members) {
                             if (relationMember.ref() == testWayId) {
-                                System.out.println("\tRelation found for way "+testWayId+". Add the relation Id: " + relation.getId());
-                                roadFidList.add(relation.getId());
+                                // It will be either an OSITNRelation or an OsItnMetaData both of which are OSITNElement
+                                roadFidList.add(((OSITNElement)item).getId());
                                 return false;
                             }
                         }
-
                     }
                     return true;
                 }
             };
-//            System.out.println("Iterate over " + origFullNodeList.size());
+            //            System.out.println("Iterate over " + origFullNodeList.size());
             fullWayList.forEach(addWayIfNodeExists);
 
         }
@@ -163,9 +163,9 @@ public class NodeListRouteExtractor extends AbstractProblemRouteExtractor {
         findRoadLinksForWays(itnFile);
         findNodesOnBothWays(itnFile);
         origFullNodeList.forEach(nodeOutput);
-//         findWaysLinkedAtJunctionOfBothRoads(itnFile);
+        //         findWaysLinkedAtJunctionOfBothRoads(itnFile);
         fullWayList.forEach(wayOutput);
-//         findRelationsAtJunctionOfBothRoads(itnFile);
+        //         findRelationsAtJunctionOfBothRoads(itnFile);
         relationList.forEach(relOutput);
         // } else {
         // fullNodeList.forEach(nodeOutput);
