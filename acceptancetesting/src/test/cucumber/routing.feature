@@ -311,7 +311,7 @@ Feature: Verify a route from A to B
       | 4, ADANAC DRIVE, NURSLING, SOUTHAMPTON, SO16 0AS | 1, PICCADILLY ARCADE, LONDON, SW1Y 6NH | car       |
 
   @Routing
-  Scenario Outline: Verify  Route using Full UK Address (Hounslow to Slough)
+  Scenario Outline: Verify  Route using Full UK Address (Southampton to London)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointdesc                           |
