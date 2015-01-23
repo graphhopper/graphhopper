@@ -630,7 +630,7 @@ public class RoutingAlgorithmIT
                     set3D(g.getNodeAccess().is3D()).levelGraphCreate());
             final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(graphCH, encoder, weighting, tMode);
             prepareCH.doWork();
-            LocationIndex idxCH = new LocationIndexTree(graphCH.getOriginalGraph(), new RAMDirectory()).prepareIndex();
+            LocationIndex idxCH = new LocationIndexTree(graphCH.getBaseGraph(), new RAMDirectory()).prepareIndex();
             prepare.add(new AlgoHelperEntry(graphCH, dijkstrabiOpts, idxCH)
             {
                 @Override

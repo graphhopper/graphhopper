@@ -30,17 +30,17 @@ import com.graphhopper.util.shapes.BBox;
 /**
  * @author Peter Karich
  */
-public class OriginalGraph implements Graph
+class BaseGraph implements Graph
 {
     private final LevelGraph lg;
 
-    public OriginalGraph( LevelGraph lg )
+    BaseGraph( LevelGraph lg )
     {
         this.lg = lg;
     }
 
     @Override
-    public Graph getOriginalGraph()
+    public Graph getBaseGraph()
     {
         return this;
     }
@@ -79,7 +79,7 @@ public class OriginalGraph implements Graph
     public EdgeIteratorState getEdgeProps( int edgeId, int adjNode )
     {
         if (lg.isShortcut(edgeId))
-            throw new IllegalStateException("Do not fetch shortcuts from OriginalGraph use the LevelGraph instead");
+            throw new IllegalStateException("Do not fetch shortcuts from BaseGraph use the LevelGraph instead");
 
         return lg.getEdgeProps(edgeId, adjNode);
     }

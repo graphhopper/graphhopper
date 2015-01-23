@@ -51,7 +51,7 @@ public class QueryGraph implements Graph
     private final NodeAccess mainNodeAccess;
     private final int mainNodes;
     private final int mainEdges;
-    private final QueryGraph origGraph;
+    private final QueryGraph baseGraph;
     private final GraphExtension wrappedExtension;
     private List<QueryResult> queryResults;
     /**
@@ -79,7 +79,7 @@ public class QueryGraph implements Graph
             wrappedExtension = mainGraph.getExtension();
 
         // create very lightweight QueryGraph which uses variables from this QueryGraph (same virtual edges)
-        origGraph = new QueryGraph(graph.getOriginalGraph(), this);
+        baseGraph = new QueryGraph(graph.getBaseGraph(), this);
     }
 
     /**
@@ -88,7 +88,7 @@ public class QueryGraph implements Graph
     private QueryGraph( Graph graph, QueryGraph superQueryGraph )
     {
         mainGraph = graph;
-        origGraph = this;
+        baseGraph = this;
         wrappedExtension = superQueryGraph.wrappedExtension;
         mainNodeAccess = graph.getNodeAccess();
         mainNodes = superQueryGraph.mainNodes;
@@ -120,9 +120,9 @@ public class QueryGraph implements Graph
         virtualEdges = new ArrayList<EdgeIteratorState>(resList.size() * 2);
         virtualNodes = new PointList(resList.size(), mainNodeAccess.is3D());
         queryResults = new ArrayList<QueryResult>(resList.size());
-        origGraph.virtualEdges = virtualEdges;
-        origGraph.virtualNodes = virtualNodes;
-        origGraph.queryResults = queryResults;
+        baseGraph.virtualEdges = virtualEdges;
+        baseGraph.virtualNodes = virtualNodes;
+        baseGraph.queryResults = queryResults;
 
         TIntObjectMap<List<QueryResult>> edge2res = new TIntObjectHashMap<List<QueryResult>>(resList.size());
 
@@ -276,12 +276,12 @@ public class QueryGraph implements Graph
     }
 
     @Override
-    public Graph getOriginalGraph()
+    public Graph getBaseGraph()
     {
         // Note: if the mainGraph of this QueryGraph is a LevelGraph then ignoring the shortcuts will produce a 
-        // huge gap of edgeIds between original and virtual edge ids. The only solution would be to move virtual edges
+        // huge gap of edgeIds between base and virtual edge ids. The only solution would be to move virtual edges
         // directly after normal edge ids which is ugly as we limit virtual edges to N edges and waste memory or make everything more complex.        
-        return origGraph;
+        return baseGraph;
     }
 
     public boolean isVirtualEdge( int edgeId )

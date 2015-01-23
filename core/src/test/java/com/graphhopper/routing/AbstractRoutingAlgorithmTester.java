@@ -591,7 +591,7 @@ public abstract class AbstractRoutingAlgorithmTester
 
     Path calcPathViaQuery( String weighting, Graph graph, double fromLat, double fromLon, double toLat, double toLon )
     {
-        LocationIndex index = new LocationIndexTree(graph.getOriginalGraph(), new RAMDirectory());
+        LocationIndex index = new LocationIndexTree(graph.getBaseGraph(), new RAMDirectory());
         index.prepareIndex();
         QueryResult from = index.findClosest(fromLat, fromLon, EdgeFilter.ALL_EDGES);
         QueryResult to = index.findClosest(toLat, toLon, EdgeFilter.ALL_EDGES);

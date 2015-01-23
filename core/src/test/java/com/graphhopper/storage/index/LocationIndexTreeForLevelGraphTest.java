@@ -54,7 +54,7 @@ public class LocationIndexTreeForLevelGraphTest extends LocationIndexTreeTest
     public LocationIndexTree createIndexNoPrepare( Graph g, int resolution )
     {
         Directory dir = new RAMDirectory(location);
-        LocationIndexTree tmpIdx = new LocationIndexTree(g.getOriginalGraph(), dir);
+        LocationIndexTree tmpIdx = new LocationIndexTree(g.getBaseGraph(), dir);
         tmpIdx.setResolution(resolution);
         return tmpIdx;
     }

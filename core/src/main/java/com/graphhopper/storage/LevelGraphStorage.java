@@ -42,12 +42,12 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
     // after the last edge only shortcuts are stored
     private int lastEdgeIndex = -1;
     private final long scDirMask = PrepareEncoder.getScDirMask();
-    private final Graph originalGraph;
+    private final Graph baseGraph;
 
     public LevelGraphStorage( Directory dir, EncodingManager encodingManager, boolean enabled3D )
     {
         super(dir, encodingManager, enabled3D);
-        originalGraph = new OriginalGraph(this);
+        baseGraph = new BaseGraph(this);
     }
 
     @Override
@@ -441,8 +441,8 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
     }
 
     @Override
-    public Graph getOriginalGraph()
+    public Graph getBaseGraph()
     {
-        return originalGraph;
+        return baseGraph;
     }
 }

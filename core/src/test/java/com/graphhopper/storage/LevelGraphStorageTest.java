@@ -225,7 +225,7 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         QueryResult toRes = createQR(1.019, 1.00, 0, edge1);
         qGraph.lookup(fromRes, toRes);
 
-        Graph oGraph = qGraph.getOriginalGraph();
+        Graph oGraph = qGraph.getBaseGraph();
         EdgeExplorer explorer = oGraph.createEdgeExplorer();
 
         assertTrue(levelGraph.getNodes() < qGraph.getNodes());

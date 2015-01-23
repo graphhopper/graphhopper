@@ -940,7 +940,7 @@ public class GraphHopper implements GraphHopperAPI
 
     protected LocationIndex createLocationIndex( Directory dir )
     {
-        LocationIndexTree tmpIndex = new LocationIndexTree(graph.getOriginalGraph(), dir);
+        LocationIndexTree tmpIndex = new LocationIndexTree(graph.getBaseGraph(), dir);
         tmpIndex.setResolution(preciseIndexResolution);
         tmpIndex.setMaxRegionSearch(maxRegionSearch);
         if (!tmpIndex.loadExisting())

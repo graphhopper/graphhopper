@@ -250,7 +250,7 @@ public class Path
         int len = edgeIds.size();
         for (int i = 0; i < len; i++)
         {
-            EdgeIteratorState edgeBase = graph.getOriginalGraph().getEdgeProps(edgeIds.get(i), tmpNode);
+            EdgeIteratorState edgeBase = graph.getBaseGraph().getEdgeProps(edgeIds.get(i), tmpNode);
             if (edgeBase == null)
                 throw new IllegalStateException("Edge " + edgeIds.get(i) + " was empty when requested with node " + tmpNode
                         + ", array index:" + i + ", edges:" + edgeIds.size());

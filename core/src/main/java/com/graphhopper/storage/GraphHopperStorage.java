@@ -126,7 +126,7 @@ public class GraphHopperStorage implements GraphStorage
     }
 
     @Override
-    public Graph getOriginalGraph()
+    public Graph getBaseGraph()
     {
         return this;
     }
