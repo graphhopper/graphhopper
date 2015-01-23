@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ import com.graphhopper.util.Translation;
  * <p/>
  * @author Peter Karich
  * @author Ottavio Campana
- */     
+ */
 public class Path
 {
     private static final AngleCalc ac = new AngleCalc();
@@ -269,10 +269,11 @@ public class Path
             tmpNode = edgeBase.getBaseNode();
             // later: more efficient swap
             edgeBase = graph.getEdgeProps(edgeBase.getEdge(), tmpNode);
-            // If the add.additional.tower.nodes property is set to true additional zero length edges are created. This means that 
-            // direction calculations are not accurate because they are being calculated between identical locations. To overcome this 
-            // we will skip zero length edges
-            if (edgeBase.getDistance()>0.0) {
+            // If the add.additional.tower.nodes property is set to true additional zero length edges are created. This means that
+            // direction calculations are not accurate because they are being calculated between identical locations. To overcome this
+            // we will skip zero length edges. Unfortunately there is a loss of precision in Lat/Lon calculations in GHNodeAccess so we
+            // have to handle <=0.1 as zero length.
+            if (edgeBase.getDistance()>0.1) {
                 visitor.next(edgeBase, i);
             }
         }
@@ -401,13 +402,14 @@ public class Path
                 double adjLon = nodeAccess.getLongitude(adjNode);
                 double latitude, longitude;
                 PointList wayGeo = edge.fetchWayGeometry(3);
-
                 if (wayGeo.getSize() <= 2)
                 {
+                    // The way is a straight line
                     latitude = adjLat;
                     longitude = adjLon;
                 } else
                 {
+                    // The way contains pillar nodes so calc angle based on the latitude of the 1st one along.
                     latitude = wayGeo.getLatitude(1);
                     longitude = wayGeo.getLongitude(1);
 
@@ -478,12 +480,15 @@ public class Path
 
                 prevLat = adjLat;
                 prevLon = adjLon;
-                if (wayGeo.getSize() <= 2)
+                if (wayGeo.getSize() <= 2) {
                     prevOrientation = orientation;
+                }
                 else
                 {
                     int beforeLast = wayGeo.getSize() - 2;
-                    prevOrientation = ac.calcOrientation(wayGeo.getLatitude(beforeLast), wayGeo.getLongitude(beforeLast),
+                    double latBeforeLast = wayGeo.getLatitude(beforeLast);
+                    double lonBeforeLast = wayGeo.getLongitude(beforeLast);
+                    prevOrientation = ac.calcOrientation(latBeforeLast, lonBeforeLast,
                             adjLat, adjLon);
                 }
 

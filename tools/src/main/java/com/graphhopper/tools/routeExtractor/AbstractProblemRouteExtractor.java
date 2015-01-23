@@ -32,7 +32,7 @@ import com.graphhopper.reader.OSMElement;
 import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.RelationMember;
 import com.graphhopper.reader.RoutingElement;
-import com.graphhopper.reader.osgb.OSITNRelation;
+import com.graphhopper.reader.osgb.OSITNElement;
 import com.graphhopper.reader.osgb.OSITNWay;
 import com.graphhopper.reader.osgb.OsItnInputFile;
 import com.graphhopper.util.Helper;
@@ -74,8 +74,8 @@ abstract public class AbstractProblemRouteExtractor {
             innerProcess = process;
         }
     }
-    
-  
+
+
 
     protected  ProcessFileVisitor<RoutingElement> fileProcessProcessor = new ProcessFileVisitor<RoutingElement>() {
 
@@ -149,7 +149,8 @@ abstract public class AbstractProblemRouteExtractor {
         @Override
         void processVisitor(final RoutingElement item) {
             if (item.isType(OSMElement.RELATION)) {
-                final OSITNRelation rel = (OSITNRelation) item;
+                final Relation rel = (Relation) item;
+                //                    final OSITNRelation rel = (OSITNRelation) item;
                 final ArrayList<? extends RelationMember> links = rel.getMembers();
                 final long start = links.get(0).ref();
                 final long end = links.get(links.size() - 1).ref();
@@ -157,7 +158,8 @@ abstract public class AbstractProblemRouteExtractor {
                     @Override
                     public boolean execute(final long testNode) {
                         if ((testNode == start) || (testNode == end)) {
-                            relationList.add(rel.getId());
+                            // It will be either an OSITNRelation or an OsItnMetaData both of which are OSITNElement
+                            relationList.add(((OSITNElement)item).getId());
                             return false;
                         }
                         return true;
@@ -188,7 +190,7 @@ abstract public class AbstractProblemRouteExtractor {
                 public boolean execute(long value) {
                     System.out.println("Fid is " + value);
                     return true;
-                }});           
+                }});
             fidList.addAll(roadFidList);
 
             outputListedFids(fidList, bis);

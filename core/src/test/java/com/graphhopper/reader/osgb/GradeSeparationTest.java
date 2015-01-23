@@ -15,14 +15,14 @@ import com.graphhopper.util.EdgeExplorer;
 public class GradeSeparationTest extends AbstractOsItnReaderTest {
 
     private GraphHopperStorage graph;
-    
+
     @Before
     public void setupGraph() {
         final boolean turnRestrictionsImport = true;
         final boolean is3D = false;
         graph = configureStorage(turnRestrictionsImport, is3D, true);
     }
-    
+
     @Test
     public void testSimpleBridge() throws IOException {
 
@@ -33,16 +33,16 @@ public class GradeSeparationTest extends AbstractOsItnReaderTest {
         printNodes(explorer, 10);
         assertEquals(2, count(explorer.setBaseNode(0)));
         assertEquals(2, count(explorer.setBaseNode(1)));
-        assertEquals(1, count(explorer.setBaseNode(2)));
-        assertEquals(2, count(explorer.setBaseNode(3)));
+        assertEquals(2, count(explorer.setBaseNode(2)));
+        assertEquals(1, count(explorer.setBaseNode(3)));
         assertEquals(2, count(explorer.setBaseNode(4)));
         assertEquals(1, count(explorer.setBaseNode(5)));
-        assertEquals(1, count(explorer.setBaseNode(6)));
-        assertEquals(2, count(explorer.setBaseNode(7)));
+        assertEquals(2, count(explorer.setBaseNode(6)));
+        assertEquals(1, count(explorer.setBaseNode(7)));
         assertEquals(2, count(explorer.setBaseNode(8)));
         assertEquals(1, count(explorer.setBaseNode(9)));
     }
-    
+
     @Test
     public void testBridgeWithRestrictedAccessOver() throws IOException {
         final File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-bridge-restricted-access-over.xml");
@@ -51,8 +51,8 @@ public class GradeSeparationTest extends AbstractOsItnReaderTest {
         printNodes(explorer, 10);
         assertEquals(5, graph.getNodes());
         assertEquals(2, count(explorer.setBaseNode(0)));
-        assertEquals(1, count(explorer.setBaseNode(1)));
-        assertEquals(2, count(explorer.setBaseNode(2)));
+        assertEquals(2, count(explorer.setBaseNode(1)));
+        assertEquals(1, count(explorer.setBaseNode(2)));
         assertEquals(2, count(explorer.setBaseNode(3)));
         assertEquals(1, count(explorer.setBaseNode(4)));
     }
@@ -64,8 +64,8 @@ public class GradeSeparationTest extends AbstractOsItnReaderTest {
         final EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
         printNodes(explorer, 5);
         assertEquals(2, count(explorer.setBaseNode(0)));
-        assertEquals(1, count(explorer.setBaseNode(1)));
-        assertEquals(2, count(explorer.setBaseNode(2)));
+        assertEquals(2, count(explorer.setBaseNode(1)));
+        assertEquals(1, count(explorer.setBaseNode(2)));
         assertEquals(2, count(explorer.setBaseNode(3)));
         assertEquals(1, count(explorer.setBaseNode(4)));
 
@@ -78,8 +78,8 @@ public class GradeSeparationTest extends AbstractOsItnReaderTest {
         printNodes(explorer, 5);
         assertEquals(5, graph.getNodes());
         assertEquals(2, count(explorer.setBaseNode(0)));
-        assertEquals(1, count(explorer.setBaseNode(1)));
-        assertEquals(2, count(explorer.setBaseNode(2)));
+        assertEquals(2, count(explorer.setBaseNode(1)));
+        assertEquals(1, count(explorer.setBaseNode(2)));
         assertEquals(2, count(explorer.setBaseNode(3)));
         assertEquals(1, count(explorer.setBaseNode(4)));
     }

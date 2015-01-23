@@ -1,15 +1,15 @@
 /*
  *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
+ *
+ *  GraphHopper licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License. You may obtain a copy of the
  *  License at
  *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,11 +18,12 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.GHPoint3D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.GHPoint3D;
 
 /**
  * Slim list to store several points (without the need for a point object).
@@ -296,14 +297,14 @@ public class PointList implements PointAccess
         {
             if (includeElevation)
                 points.add(new Double[]
-                {
-                    Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i)), Helper.round2(getElevation(i))
-                });
+                        {
+                        Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i)), Helper.round2(getElevation(i))
+                        });
             else
                 points.add(new Double[]
-                {
-                    Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i))
-                });
+                        {
+                        Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i))
+                        });
         }
         return points;
     }
