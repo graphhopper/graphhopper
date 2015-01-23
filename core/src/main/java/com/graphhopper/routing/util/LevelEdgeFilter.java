@@ -28,12 +28,12 @@ import com.graphhopper.util.EdgeIteratorState;
 public class LevelEdgeFilter implements EdgeFilter
 {
     private final LevelGraph graph;
-    private final int nodes;
+    private final int maxNodes;
 
     public LevelEdgeFilter( LevelGraph g )
     {
         graph = g;
-        nodes = g.getNodes();
+        maxNodes = g.getNodes();
     }
 
     @Override
@@ -41,8 +41,8 @@ public class LevelEdgeFilter implements EdgeFilter
     {
         int base = edgeIterState.getBaseNode();
         int adj = edgeIterState.getAdjNode();
-        // for now workaround for #288
-        if (base >= nodes || adj >= nodes)
+        // always accept virtual edges, see #288
+        if (base >= maxNodes || adj >= maxNodes)
             return true;
 
         return graph.getLevel(base) <= graph.getLevel(adj);

@@ -624,7 +624,7 @@ public class QueryGraph implements Graph
     public int getLevel( int nodeId )
     {
         if (isVirtualNode(nodeId))
-            return 0;
+            throw new IllegalStateException("LevelEdgeFilter should prevent fetching level for virtual nodes: " + nodeId + ", See #288");
 
         return ((LevelGraph) mainGraph).getLevel(nodeId);
     }

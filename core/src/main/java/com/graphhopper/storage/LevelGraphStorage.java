@@ -80,7 +80,7 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
     {
         // automatically allocate new nodes only via creating edges or setting node properties
         if (nodeIndex >= getNodes())
-            return 0;
+            throw new IllegalStateException("node " + nodeIndex + " is invalid. Not in [0," + getNodes() + ")");
 
         return nodes.getInt((long) nodeIndex * nodeEntryBytes + I_LEVEL);
     }
