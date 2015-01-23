@@ -22,18 +22,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import org.junit.Test;
 
-import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.BitUtil;
-import java.util.*;
 
 /**
  *
@@ -198,7 +191,7 @@ public class EncodingManagerTest
         osmWay.setTag("highway", "footway");
         osmWay.setTag("name", "test");
 
-        BikeFlagEncoder singleBikeEnc = (BikeFlagEncoder) manager2.getSingle();
+        BikeFlagEncoder singleBikeEnc = (BikeFlagEncoder) manager2.getEncoder("bike2");
         long flags = manager2.handleWayTags(osmWay, singleBikeEnc.acceptBit, 0);
         double singleSpeed = singleBikeEnc.getSpeed(flags);
         assertEquals(4, singleSpeed, 1e-3);

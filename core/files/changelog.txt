@@ -1,4 +1,5 @@
 0.4.0
+    encodingManager.getSingle() is removed as one can specify an encoder explicitly. GraphHopper picks the first encoder automatically for default vehicle, can be overwritten via setDefaultVehicle
     removed LocationIndexTreeSC, use new LocationIndexTree(levelGraph.getOriginalGraph(), directory) instead
     getLevel and setLevel do no longer automatically increase node count, use getNodeAccess.ensureNode for that
     normal algorithms are now possible on prepared graph use getOriginalGraph, see #116

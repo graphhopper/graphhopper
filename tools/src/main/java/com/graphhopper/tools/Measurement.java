@@ -121,7 +121,7 @@ public class Measurement
         try
         {
             maxNode = g.getNodes();
-            printGraphDetails(g);
+            printGraphDetails(g, vehicleStr);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
 
             // Route via dijkstrabi. Normal routing takes a lot of time => smaller query number than CH
@@ -161,13 +161,13 @@ public class Measurement
         }
     }
 
-    private void printGraphDetails( GraphStorage g )
+    private void printGraphDetails( GraphStorage g, String vehicleStr )
     {
         // graph size (edge, node and storage size)
         put("graph.nodes", g.getNodes());
         put("graph.edges", g.getAllEdges().getCount());
         put("graph.sizeInMB", g.getCapacity() / Helper.MB);
-        put("graph.encoder", g.getEncodingManager().getSingle().toString());
+        put("graph.encoder", vehicleStr);
     }
 
     private void printLocationIndexQuery( Graph g, final LocationIndex idx, int count )

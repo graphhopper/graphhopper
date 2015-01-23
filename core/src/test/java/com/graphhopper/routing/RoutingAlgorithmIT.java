@@ -95,6 +95,57 @@ public class RoutingAlgorithmIT
     }
 
     @Test
+    public void testMonacoAllAlgorithmsWithBaseGraph()
+    {
+        String vehicle = "car";
+        String graphFile = "target/monaco-gh";
+        String osmFile = "files/monaco.osm.gz";
+        String importVehicles = vehicle;
+
+        Helper.removeDir(new File(graphFile));
+        GraphHopper hopper = new GraphHopper().
+                // avoid that path.getDistance is too different to path.getPoint.calcDistance
+                setWayPointMaxDistance(0).
+                setOSMFile(osmFile).
+                setCHEnable(false).
+                setGraphHopperLocation(graphFile).
+                setEncodingManager(new EncodingManager(importVehicles));
+
+        hopper.importOrLoad();
+
+        FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
+        Weighting weighting = hopper.createWeighting(new WeightingMap("shortest"), encoder);
+
+        List<AlgoHelperEntry> prepares = createAlgos(hopper.getGraph(), hopper.getLocationIndex(),
+                encoder, true, TraversalMode.NODE_BASED, weighting, hopper.getEncodingManager());
+        AlgoHelperEntry chPrepare = prepares.get(prepares.size() - 1);
+        if (!(chPrepare.getQueryGraph() instanceof LevelGraph))
+            throw new IllegalStateException("Last prepared queryGraph has to be a levelGraph");
+
+        // set all normal algorithms to baseGraph of already prepared to see if all algorithms still work
+        Graph baseGraphOfCHPrepared = chPrepare.getQueryGraph().getBaseGraph();
+        for (AlgoHelperEntry ahe : prepares)
+        {
+            if (!(ahe.getQueryGraph() instanceof LevelGraph))
+            {
+                ahe.setQueryGraph(baseGraphOfCHPrepared);
+            }
+        }
+
+        List<OneRun> forEveryAlgo = createMonacoCar();
+        EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
+        for (AlgoHelperEntry entry : prepares)
+        {
+            LocationIndex idx = entry.getIdx();
+            for (OneRun oneRun : forEveryAlgo)
+            {
+                List<QueryResult> list = oneRun.getList(idx, edgeFilter);
+                testCollector.assertDistance(entry, list, oneRun);
+            }
+        }
+    }
+
+    @Test
     public void testOneWayCircleBug()
     {
         // export from http://www.openstreetmap.org/export#map=19/51.37605/-0.53155
@@ -609,7 +660,7 @@ public class RoutingAlgorithmIT
         hopper.close();
     }
 
-    public static Collection<AlgoHelperEntry> createAlgos( Graph g,
+    static List<AlgoHelperEntry> createAlgos( Graph g,
             LocationIndex idx, final FlagEncoder encoder, boolean withCh,
             final TraversalMode tMode, final Weighting weighting, final EncodingManager manager )
     {

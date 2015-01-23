@@ -48,7 +48,7 @@ public class TestAlgoCollector
             OneRun oneRun )
     {
         List<Path> viaPaths = new ArrayList<Path>();
-        QueryGraph queryGraph = new QueryGraph(algoEntry.graph);
+        QueryGraph queryGraph = new QueryGraph(algoEntry.getQueryGraph());
         queryGraph.lookup(queryList);
         AlgorithmOptions opts = algoEntry.opts;
         FlagEncoder encoder = opts.getFlagEncoder();
@@ -148,15 +148,25 @@ public class TestAlgoCollector
 
     public static class AlgoHelperEntry
     {
-        private Graph graph;
+        private Graph queryGraph;
         private final LocationIndex idx;
         private AlgorithmOptions opts;
 
         public AlgoHelperEntry( Graph g, AlgorithmOptions opts, LocationIndex idx )
         {
-            this.graph = g;
+            this.queryGraph = g;
             this.opts = opts;
             this.idx = idx;
+        }
+
+        public Graph getQueryGraph()
+        {
+            return queryGraph;
+        }
+
+        public void setQueryGraph( Graph queryGraph )
+        {
+            this.queryGraph = queryGraph;
         }
 
         public void setAlgorithmOptions( AlgorithmOptions opts )

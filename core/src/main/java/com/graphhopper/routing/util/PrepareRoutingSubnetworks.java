@@ -46,18 +46,16 @@ public class PrepareRoutingSubnetworks
     private int minOnewayNetworkSize = 0;
     private int subNetworks = -1;
     private final AtomicInteger maxEdgesPerNode = new AtomicInteger(0);
-    private final EncodingManager encodingManager;
+    private FlagEncoder singleEncoder;
 
     public PrepareRoutingSubnetworks( GraphStorage g, EncodingManager em )
     {
         this.g = g;
-        if (em.getVehicleCount() == 0)
-            throw new IllegalStateException("No vehicles found");
-        else if (em.getVehicleCount() > 1)
+        List<FlagEncoder> encoders = em.fetchEdgeEncoders();
+        if (encoders.size() > 1)
             edgeFilter = EdgeFilter.ALL_EDGES;
         else
-            edgeFilter = new DefaultEdgeFilter(em.getSingle());
-        this.encodingManager = em;
+            edgeFilter = new DefaultEdgeFilter(singleEncoder = encoders.get(0));
     }
 
     public PrepareRoutingSubnetworks setMinNetworkSize( int minNetworkSize )
@@ -78,9 +76,9 @@ public class PrepareRoutingSubnetworks
         Map<Integer, Integer> map = findSubnetworks();
         keepLargeNetworks(map);
 
-        int unvisitedDeadEnds = 0;
-        if ((this.minOnewayNetworkSize > 0) && (this.encodingManager.getVehicleCount() == 1))
-            unvisitedDeadEnds = removeDeadEndUnvisitedNetworks(this.encodingManager.getSingle());
+        int unvisitedDeadEnds = -1;
+        if ((this.minOnewayNetworkSize > 0) && singleEncoder != null)
+            unvisitedDeadEnds = removeDeadEndUnvisitedNetworks(singleEncoder);
 
         logger.info("optimize to remove subnetworks (" + map.size() + "), zero-degree-nodes (" + del + "), "
                 + "unvisited-dead-end-nodes(" + unvisitedDeadEnds + "), "
@@ -231,9 +229,9 @@ public class PrepareRoutingSubnetworks
 
     /**
      * Clean small networks that will be never be visited by this explorer See #86 For example,
-     * small areas like parking lots are sometimes connected to the whole network through a one-way road.
-     * This is clearly an error - but is causes the routing to fail when point get connected to this
-     * small area. This routines removed all these points from the graph.
+     * small areas like parking lots are sometimes connected to the whole network through a one-way
+     * road. This is clearly an error - but is causes the routing to fail when point get connected
+     * to this small area. This routines removed all these points from the graph.
      * <p/>
      * @return number of removed nodes;
      */
@@ -245,12 +243,15 @@ public class PrepareRoutingSubnetworks
 
         // remove components less than minimum size
         int removed = 0;
-        for (TIntArrayList component : components) {
+        for (TIntArrayList component : components)
+        {
 
-            if (component.size() < minOnewayNetworkSize) {
-                for (int i = 0; i < component.size(); i++) {
+            if (component.size() < minOnewayNetworkSize)
+            {
+                for (int i = 0; i < component.size(); i++)
+                {
                     g.markNodeRemoved(component.get(i));
-                    removed ++;
+                    removed++;
                 }
             }
         }

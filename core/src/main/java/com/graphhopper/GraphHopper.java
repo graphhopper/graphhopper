@@ -65,6 +65,7 @@ public class GraphHopper implements GraphHopperAPI
     // for routing
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
+    private String defaultVehicleStr;
     private RoutingAlgorithmFactory algoFactory;
     // for index
     private LocationIndex locationIndex;
@@ -76,7 +77,7 @@ public class GraphHopper implements GraphHopperAPI
     // for CH prepare    
     private boolean doPrepare = true;
     private boolean chEnabled = true;
-    private String chWeighting = "fastest";
+    private String chWeightingStr = "fastest";
     private int periodicUpdates = -1;
     private int lazyUpdates = -1;
     private int neighborUpdates = -1;
@@ -114,7 +115,13 @@ public class GraphHopper implements GraphHopperAPI
     {
         ensureNotLoaded();
         this.encodingManager = em;
+        setDefaultVehicle(getFirstVehicle().toString());
         return this;
+    }
+
+    private FlagEncoder getFirstVehicle()
+    {
+        return encodingManager.fetchEdgeEncoders().get(0);
     }
 
     public EncodingManager getEncodingManager()
@@ -262,12 +269,24 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Disables "CH-preparation". Use only if you know what you do.
+     * This method sets the default vehicle to use if no vehicle is specified in the GHRequest
+     * object.
      */
-    public GraphHopper setDoPrepare( boolean doPrepare )
+    public void setDefaultVehicle( String defaultVehicleStr )
     {
-        this.doPrepare = doPrepare;
-        return this;
+        if (!encodingManager.supports(defaultVehicleStr))
+            throw new IllegalArgumentException("Default vehicle " + defaultVehicleStr + " is not supported. "
+                    + "Include vehicle in EncodingManager or via the property graph.flagEncoders");
+        this.defaultVehicleStr = defaultVehicleStr;
+    }
+
+    public String getDefaultVehicle()
+    {
+        if (defaultVehicleStr == null)
+        {
+            throw new RuntimeException("Set default vehicle before");
+        }
+        return defaultVehicleStr;
     }
 
     /**
@@ -279,17 +298,28 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setCHWeighting( String weighting )
     {
         ensureNotLoaded();
-        chWeighting = weighting;
+        chWeightingStr = weighting;
         return this;
     }
 
     public String getCHWeighting()
     {
-        return chWeighting;
+        return chWeightingStr;
     }
 
     /**
-     * Enables or disables contraction hierarchies. Enabled by default.
+     * Disables the "CH-preparation" preparation only. Use only if you know what you do. To disable
+     * the full usage of CH use setCHEnable(false) instead.
+     */
+    public GraphHopper setDoPrepare( boolean doPrepare )
+    {
+        this.doPrepare = doPrepare;
+        return this;
+    }
+
+    /**
+     * Enables or disables contraction hierarchies (CH). Enabled by default, this is called speed-up
+     * mode. Without CH it is called flexibility mode.
      */
     public GraphHopper setCHEnable( boolean enable )
     {
@@ -532,12 +562,15 @@ public class GraphHopper implements GraphHopperAPI
 
         // osm import
         osmReaderWayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", osmReaderWayPointMaxDistance);
-        String flagEncoders = args.get("graph.flagEncoders", "CAR");
+        String flagEncoders = args.get("graph.flagEncoders", "");
         if (flagEncoders.toLowerCase().contains("turncosts=true"))
             traversalMode = TraversalMode.EDGE_BASED_2DIR;
         encodingManager = new EncodingManager(flagEncoders, bytesForFlags);
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
+
+        // default vehicle which is used if no algorithm is specified
+        setDefaultVehicle(args.get("algorithm.defaultVehicle", getFirstVehicle().toString()));
 
         // index
         preciseIndexResolution = args.getInt("index.highResolution", preciseIndexResolution);
@@ -764,9 +797,16 @@ public class GraphHopper implements GraphHopperAPI
 
     protected RoutingAlgorithmFactory createPrepare()
     {
-        FlagEncoder encoder = encodingManager.getSingle();
-        PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies((LevelGraph) graph, encoder,
-                createWeighting(new WeightingMap(chWeighting), encoder), traversalMode);
+        if (!encodingManager.supports(getDefaultVehicle()))
+        {
+            throw new IllegalStateException("Should not happen: default vehicle " + getDefaultVehicle() + " not supported"
+                    + " from EncodingManager " + encodingManager.toDetailsString() + ". Cannot do CH preparation");
+        }
+
+        FlagEncoder defaultVehicle = encodingManager.getEncoder(getDefaultVehicle());
+        Weighting weighting = createWeighting(new WeightingMap(chWeightingStr), defaultVehicle);
+        PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies((LevelGraph) graph,
+                defaultVehicle, weighting, traversalMode);
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                 setLazyUpdates(lazyUpdates).
                 setNeighborUpdates(neighborUpdates).
@@ -850,7 +890,7 @@ public class GraphHopper implements GraphHopperAPI
     {
         String vehicle = request.getVehicle();
         if (vehicle.isEmpty())
-            vehicle = encodingManager.getSingle().toString();
+            vehicle = getDefaultVehicle();
 
         if (!encodingManager.supports(vehicle))
         {
@@ -992,10 +1032,6 @@ public class GraphHopper implements GraphHopperAPI
         if (tmpPrepare)
         {
             ensureWriteAccess();
-            if (encodingManager.getVehicleCount() > 1)
-                throw new IllegalArgumentException("Contraction hierarchies preparation "
-                        + "requires (at the moment) only one vehicle. But was:" + encodingManager);
-
             logger.info("calling prepare.doWork for " + encodingManager.toString() + " ... (" + Helper.getMemInfo() + ")");
             ((PrepareContractionHierarchies) algoFactory).doWork();
             graph.getProperties().put("prepare.date", formatDateTime(new Date()));

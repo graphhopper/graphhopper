@@ -499,7 +499,7 @@ public class GraphHopperTest
                 init(new CmdArgs().
                         put("osmreader.osm", testOsm3).
                         put("prepare.minNetworkSize", "1").
-                        put("graph.acceptWay", "CAR")).
+                        put("graph.flagEncoders", "CAR")).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
 

@@ -34,7 +34,7 @@ import static org.junit.Assert.*;
  */
 public class PrepareRoutingSubnetworksTest
 {
-    private final EncodingManager em = new EncodingManager("CAR");
+    private final EncodingManager em = new EncodingManager("car");
 
     GraphStorage createGraph( EncodingManager eman )
     {
@@ -198,7 +198,7 @@ public class PrepareRoutingSubnetworksTest
         assertEquals(11, g.getNodes());
 
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em).setMinOnewayNetworkSize(3);
-        int removed = instance.removeDeadEndUnvisitedNetworks(em.getSingle());
+        int removed = instance.removeDeadEndUnvisitedNetworks(em.getEncoder("car"));
 
         assertEquals(3, removed);
 
@@ -212,7 +212,7 @@ public class PrepareRoutingSubnetworksTest
         GraphStorage g = createSubnetworkTestGraph();
 
         // Requires a single vehicle type, otherwise we throw.
-        final FlagEncoder flagEncoder = em.getSingle();
+        final FlagEncoder flagEncoder = em.getEncoder("car");
         final EdgeFilter filter = new DefaultEdgeFilter(flagEncoder, false, true);
 
         TarjansStronglyConnectedComponentsAlgorithm tarjan = new TarjansStronglyConnectedComponentsAlgorithm(g, filter);
@@ -235,7 +235,7 @@ public class PrepareRoutingSubnetworksTest
         g.edge(2, 0, 1, false);
 
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em).setMinOnewayNetworkSize(2);
-        int removed = instance.removeDeadEndUnvisitedNetworks(em.getSingle());
+        int removed = instance.removeDeadEndUnvisitedNetworks(em.getEncoder("car"));
         
         assertEquals(3, removed);
     }

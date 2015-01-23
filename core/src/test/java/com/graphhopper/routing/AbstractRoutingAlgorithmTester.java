@@ -26,6 +26,7 @@ import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
 import java.util.Random;
 import static org.junit.Assert.*;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -37,9 +38,18 @@ public abstract class AbstractRoutingAlgorithmTester
     // problem is: matrix graph is expensive to create to cache it in a static variable
     private static Graph matrixGraph;
     protected static final EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
-    protected FlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
-    protected FlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
-    protected AlgorithmOptions defaultOpts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(new ShortestWeighting()).build();
+    protected FlagEncoder carEncoder;
+    protected FlagEncoder footEncoder;
+    protected AlgorithmOptions defaultOpts;
+
+    @Before
+    public void setUp()
+    {
+        carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
+        footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
+        defaultOpts = AlgorithmOptions.start().flagEncoder(carEncoder).
+                weighting(new ShortestWeighting()).build();
+    }
 
     protected Graph createGraph( EncodingManager em, boolean is3D )
     {
@@ -77,15 +87,14 @@ public abstract class AbstractRoutingAlgorithmTester
     public void testCalcFastestPath()
     {
         Graph graphShortest = createGraph(false);
-        initDirectedAndDiffSpeed(graphShortest);
-        Path p1 = createAlgo(graphShortest, defaultOpts).
-                calcPath(0, 3);
+        initDirectedAndDiffSpeed(graphShortest, carEncoder);
+        Path p1 = createAlgo(graphShortest, defaultOpts).calcPath(0, 3);
         assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(p1.toString(), 402.293, p1.getDistance(), 1e-6);
         assertEquals(p1.toString(), 144823, p1.getMillis());
 
         Graph graphFastest = createGraph(false);
-        initDirectedAndDiffSpeed(graphFastest);
+        initDirectedAndDiffSpeed(graphFastest, carEncoder);
         Path p2 = createAlgo(graphFastest,
                 AlgorithmOptions.start().flagEncoder(carEncoder).weighting(new FastestWeighting(carEncoder)).build()).
                 calcPath(0, 3);
@@ -99,28 +108,28 @@ public abstract class AbstractRoutingAlgorithmTester
     // 4-5-- |
     // |/ \--7
     // 6----/
-    void initDirectedAndDiffSpeed( Graph graph )
+    protected void initDirectedAndDiffSpeed( Graph graph, FlagEncoder enc )
     {
-        graph.edge(0, 1).setFlags(carEncoder.setProperties(10, true, false));
-        graph.edge(0, 4).setFlags(carEncoder.setProperties(100, true, false));
+        graph.edge(0, 1).setFlags(enc.setProperties(10, true, false));
+        graph.edge(0, 4).setFlags(enc.setProperties(100, true, false));
 
-        graph.edge(1, 4).setFlags(carEncoder.setProperties(10, true, true));
-        graph.edge(1, 5).setFlags(carEncoder.setProperties(10, true, true));
-        EdgeIteratorState edge12 = graph.edge(1, 2).setFlags(carEncoder.setProperties(10, true, true));
+        graph.edge(1, 4).setFlags(enc.setProperties(10, true, true));
+        graph.edge(1, 5).setFlags(enc.setProperties(10, true, true));
+        EdgeIteratorState edge12 = graph.edge(1, 2).setFlags(enc.setProperties(10, true, true));
 
-        graph.edge(5, 2).setFlags(carEncoder.setProperties(10, true, false));
-        graph.edge(2, 3).setFlags(carEncoder.setProperties(10, true, false));
+        graph.edge(5, 2).setFlags(enc.setProperties(10, true, false));
+        graph.edge(2, 3).setFlags(enc.setProperties(10, true, false));
 
-        EdgeIteratorState edge53 = graph.edge(5, 3).setFlags(carEncoder.setProperties(20, true, false));
-        graph.edge(3, 7).setFlags(carEncoder.setProperties(10, true, false));
+        EdgeIteratorState edge53 = graph.edge(5, 3).setFlags(enc.setProperties(20, true, false));
+        graph.edge(3, 7).setFlags(enc.setProperties(10, true, false));
 
-        graph.edge(4, 6).setFlags(carEncoder.setProperties(100, true, false));
-        graph.edge(5, 4).setFlags(carEncoder.setProperties(10, true, false));
+        graph.edge(4, 6).setFlags(enc.setProperties(100, true, false));
+        graph.edge(5, 4).setFlags(enc.setProperties(10, true, false));
 
-        graph.edge(5, 6).setFlags(carEncoder.setProperties(10, true, false));
-        graph.edge(7, 5).setFlags(carEncoder.setProperties(100, true, false));
+        graph.edge(5, 6).setFlags(enc.setProperties(10, true, false));
+        graph.edge(7, 5).setFlags(enc.setProperties(100, true, false));
 
-        graph.edge(6, 7).setFlags(carEncoder.setProperties(100, true, true));
+        graph.edge(6, 7).setFlags(enc.setProperties(100, true, true));
 
         updateDistancesFor(graph, 0, 0.002, 0);
         updateDistancesFor(graph, 1, 0.002, 0.001);
@@ -140,14 +149,15 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         Graph graphShortest = createGraph(false);
         initFootVsCar(graphShortest);
-        Path p1 = createAlgo(graphShortest, AlgorithmOptions.start().flagEncoder(footEncoder).weighting(new ShortestWeighting()).build()).
+        Path p1 = createAlgo(graphShortest, AlgorithmOptions.start().flagEncoder(footEncoder).
+                weighting(new ShortestWeighting()).build()).
                 calcPath(0, 7);
         assertEquals(p1.toString(), 17000, p1.getDistance(), 1e-6);
         assertEquals(p1.toString(), 12240 * 1000, p1.getMillis());
         assertEquals(Helper.createTList(0, 4, 5, 7), p1.calcNodes());
     }
 
-    void initFootVsCar( Graph graph )
+    protected void initFootVsCar( Graph graph )
     {
         graph.edge(0, 1).setDistance(7000).setFlags(footEncoder.setProperties(5, true, true) | carEncoder.setProperties(10, true, false));
         graph.edge(0, 4).setDistance(5000).setFlags(footEncoder.setProperties(5, true, true) | carEncoder.setProperties(20, true, false));
@@ -577,7 +587,7 @@ public abstract class AbstractRoutingAlgorithmTester
     public void testQueryGraphAndFastest()
     {
         Graph graph = createGraph(false);
-        initDirectedAndDiffSpeed(graph);
+        initDirectedAndDiffSpeed(graph, carEncoder);
         Path p = calcPathViaQuery("fastest", graph, 0.002, 0.0005, 0.0017, 0.0031);
         assertEquals(Helper.createTList(9, 1, 5, 3, 8), p.calcNodes());
         assertEquals(602.98, p.getDistance(), 1e-1);
