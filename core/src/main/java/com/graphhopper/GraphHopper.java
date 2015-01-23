@@ -104,6 +104,7 @@ public class GraphHopper implements GraphHopperAPI
         this.graph = g;
         fullyLoaded = true;
         initLocationIndex();
+        initDefaultVehicleIfNecessary();
         return this;
     }
 
@@ -115,7 +116,6 @@ public class GraphHopper implements GraphHopperAPI
     {
         ensureNotLoaded();
         this.encodingManager = em;
-        setDefaultVehicle(getFirstVehicle().toString());
         return this;
     }
 
@@ -274,18 +274,14 @@ public class GraphHopper implements GraphHopperAPI
      */
     public void setDefaultVehicle( String defaultVehicleStr )
     {
-        if (!encodingManager.supports(defaultVehicleStr))
-            throw new IllegalArgumentException("Default vehicle " + defaultVehicleStr + " is not supported. "
-                    + "Include vehicle in EncodingManager or via the property graph.flagEncoders");
         this.defaultVehicleStr = defaultVehicleStr;
     }
 
     public String getDefaultVehicle()
     {
         if (defaultVehicleStr == null)
-        {
             throw new RuntimeException("Set default vehicle before");
-        }
+
         return defaultVehicleStr;
     }
 
@@ -720,7 +716,9 @@ public class GraphHopper implements GraphHopperAPI
         setGraphHopperLocation(graphHopperFolder);
 
         if (encodingManager == null)
-            encodingManager = EncodingManager.create(ghLocation);
+            setEncodingManager(EncodingManager.create(ghLocation));
+
+        initDefaultVehicleIfNecessary();
 
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;
@@ -779,7 +777,6 @@ public class GraphHopper implements GraphHopperAPI
      */
     protected void postProcessing()
     {
-        encodingManager = graph.getEncodingManager();
         if (chEnabled)
             algoFactory = createPrepare();
         else
@@ -1121,5 +1118,15 @@ public class GraphHopper implements GraphHopperAPI
     public long getVisitedSum()
     {
         return visitedSum.get();
+    }
+
+    private void initDefaultVehicleIfNecessary()
+    {
+        if (defaultVehicleStr == null)
+            setDefaultVehicle(getFirstVehicle().toString());
+
+        if (!encodingManager.supports(getDefaultVehicle()))
+            throw new IllegalArgumentException("Default vehicle " + defaultVehicleStr + " is not supported. "
+                    + "Include vehicle in EncodingManager or via the property graph.flagEncoders OR set it explicitely via setDefaultVehicle");
     }
 }

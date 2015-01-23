@@ -74,8 +74,9 @@ public class GraphHopperTest
         assertEquals(3, rsp.getPoints().getSize());
 
         closableInstance.close();
-        closableInstance = new GraphHopper().setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("CAR"));
+        
+        // no encoding manager necessary
+        closableInstance = new GraphHopper().setStoreOnFlush(true);
         assertTrue(closableInstance.load(ghLoc));
         rsp = closableInstance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertFalse(rsp.hasErrors());
