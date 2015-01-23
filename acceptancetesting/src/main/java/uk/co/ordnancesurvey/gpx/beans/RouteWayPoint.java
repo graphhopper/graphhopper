@@ -41,10 +41,20 @@ public class RouteWayPoint {
 				
 				Object thisValue = m.invoke(waypoint);
 				Object thatValue = m.invoke(routeWayPoint.waypoint);
-				if (thisValue instanceof String) {
-					String thisValueAsString = (String) thisValue;
-					String thatValueAsString=(String)thatValue;
+				
+				if (f.getName()=="description")
+				{
+					// description string comparison ignoring case and special char "'"
+					
+					
+					
+					String thisValueAsString = ((String) thisValue).replaceAll("[^\\w]", "");
+					String thatValueAsString=((String)thatValue).replaceAll("[^\\w]", "");
 					isEqual = thisValueAsString.equalsIgnoreCase(( thatValueAsString));
+					
+				}
+				if (thisValue instanceof String) {
+
 					
 				} else {
 					isEqual = Objects.equals(thisValue, thatValue);

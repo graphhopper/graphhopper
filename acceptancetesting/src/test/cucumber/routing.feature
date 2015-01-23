@@ -358,7 +358,7 @@ Feature: Verify a route from A to B
       | pointA                                               | pointB                                  | routetype |
       | 6, CHANNEL WAY, OCEAN VILLAGE, SOUTHAMPTON, SO14 3TG| 311, CITY ROAD, LONDON, EC1V 1LA | car       |
 
-  @Routing  
+  @Routing 
   Scenario Outline: Verify  Route using Full UK Address (Coventry)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -389,7 +389,6 @@ Feature: Verify a route from A to B
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco         | waypointdesc                     | azimuth | direction | time | distance |
       | 2             | 50.782169,-1.06039 | Turn right onto ST GEORGE'S ROAD | 304     | NW        | 6038 | 58.711   |
-
 
     Examples: 
       | pointA             | pointB              | routetype |
