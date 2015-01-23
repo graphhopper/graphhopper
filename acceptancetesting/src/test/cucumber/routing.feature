@@ -76,7 +76,7 @@ Feature: Verify a route from A to B
       | pointA             | pointB              | routetype | totalRouteTime |
       | 51.475161,-0.39591 | 51.536292,-0.656802 | car       | 0h30min        |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  waypoints on a Route from Southampton to Glasgow
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the trackPoints on the route map:
@@ -89,7 +89,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB             | routetype |
       | 50.896617,-1.400465 | 55.861284,-4.24996 | car       |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  oneway Restrictions on a Route (Burmingham Route with one way restriction-WSPIP-74)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the trackPoints not on the route map:
@@ -311,7 +311,7 @@ Feature: Verify a route from A to B
       | 4, ADANAC DRIVE, NURSLING, SOUTHAMPTON, SO16 0AS | 1, PICCADILLY ARCADE, LONDON, SW1Y 6NH | car       |
 
   @Routing
-  Scenario Outline: Verify  Route using Full UK Address (Southampton to London)
+  Scenario Outline: Verify  Route using Full UK Address (Hounslow to Slough)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointdesc                           |
@@ -322,14 +322,63 @@ Feature: Verify a route from A to B
       | pointA                              | pointB                                      | routetype |
       | 135, TIVOLI ROAD, HOUNSLOW, TW4 6AS | 40, CHILTERN ROAD, BURNHAM, SLOUGH, SL1 7NH | car       |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  Route using Full UK Address (Southampton to London)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
-      | wayPointIndex | waypointdesc                          |
-      | 2             | Turn left onto MONTAGUE STREET        |
+      | wayPointIndex | waypointdesc                      |
+      | 2             | Turn left onto MONTAGUE STREET    |
       | 19            | Turn right onto WHITEKNIGHTS ROAD |
 
     Examples: 
-      | pointA                                           | pointB                                 | routetype |
+      | pointA                                                      | pointB                                                                                | routetype |
       | BIRMINGHAM VOLKSWAGEN, LAWLEY MIDDLEWAY, BIRMINGHAM, B4 7XH | READING ENTERPRISE CENTRE, UNIVERSITY OF READING, WHITEKNIGHTS ROAD, READING, RG6 6BU | car       |
+
+  @Routing
+  Scenario Outline: Verify  Route using Full UK Address (Birmingham to reading)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointdesc                      |
+      | 2             | Turn left onto MONTAGUE STREET    |
+      | 19            | Turn right onto WHITEKNIGHTS ROAD |
+
+    Examples: 
+      | pointA                                                      | pointB                                                                                | routetype |
+      | BIRMINGHAM VOLKSWAGEN, LAWLEY MIDDLEWAY, BIRMINGHAM, B4 7XH | READING ENTERPRISE CENTRE, UNIVERSITY OF READING, WHITEKNIGHTS ROAD, READING, RG6 6BU | car       |
+
+  @Routing
+  Scenario Outline: Verify  Route using Full UK Address (Southhampton to London)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointdesc                                |
+      | 3             | Turn right onto ROYAL CRESCENT ROAD (B3039) |
+      | 13            | Turn right onto HEATHHOUSE LANE             |
+
+    Examples: 
+      | pointA                                               | pointB | routetype                               |
+      | 6, CHANNEL WAY, OCEAN VILLAGE, SOUTHAMPTON, SO14 3TG |        | 317 City Road Islington London EC1V 1LH |
+
+  @Routing
+  Scenario Outline: Verify  Route using Full UK Address (Coventry)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointdesc                             |
+      | 3             | Turn sharp right onto HOWES LANE (B4115) |
+      | 6             | Turn right onto WARWICK ROAD (A429)      |
+      | 16            | Turn sharp right onto SADLER ROAD        |
+
+    Examples: 
+      | pointA                                                         | pointB                              | routetype |
+      | 3 BROMLEIGH VILLAS, COVENTRY ROAD, BAGINTON, COVENTRY, CV8 3AS | 2, PAXMEAD CLOSE, COVENTRY, CV6 2NJ | car       |
+
+  @Routing
+  Scenario Outline: Verify  Route using Full UK Address (Kington to London )
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointdesc             |
+      | 14            | Turn right onto A456     |
+      | 30            | Turn slight left onto M5 |
+
+    Examples: 
+      | pointA                           | pointB                                | routetype |
+      | 5, OXFORD LANE, KINGTON, HR5 3ED | 64, TOWER MILL ROAD, LONDON, SE15 6BZ | car       |
