@@ -12,4 +12,6 @@ If you want to get the lateset changes from the original repo into this repo, ru
     git merge upstream/master
     git push
 
-    
+##Creating Data Directories
+
+See [graphhopper_howto.md](file:../internal/docs/graphhopper_howto.md)

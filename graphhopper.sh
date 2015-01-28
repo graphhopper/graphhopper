@@ -189,7 +189,7 @@ else
 fi
 
 if [ "x$JAVA_OPTS" = "x" ]; then
-  JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1500m -Xms1000m -server"
+  JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx4000m -Xms1000m -server"
 fi
 
 
