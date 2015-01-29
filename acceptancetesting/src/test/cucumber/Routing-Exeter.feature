@@ -1,5 +1,4 @@
 #  Exeter Only Routing Scenarios
-
 Feature: Verify a route from A to B
     As a user
     I want to get a route from location A to location B using the routing service
@@ -39,7 +38,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 50.718282,-3.538437 | 50.717687,-3.541511 | car       |
 
-  @Routing
+  @Routing 
   Scenario Outline: Verify  one Way  Restrictions (Except Buses) on a Route (SIDWELL STREET-Exeter)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -61,12 +60,13 @@ Feature: Verify a route from A to B
       | pointA              | pointB             | routetype |
       | 50.720492,-3.535221 | 50.718641,-3.53476 | car       |
 
-  @Routing @KnownIssues
+  @Routing 
   Scenario Outline: Verify  one Way  Restrictions  on a Route (Exeter WSPIP-83)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints not on the route map:
-      | wayPointIndex | waypointco          | waypointdesc                    | azimuth | direction | time  | distance |
-      | 7             | 50.722198,-3.526704 | Turn left onto SOUTHERNHAY EAST | 32      | NE        | 11069 | 107.648  |
+      | wayPointIndex | waypointco          | waypointdesc                           | azimuth | direction | time  | distance |
+      | 7             | 50.722198,-3.526704 | Turn left onto SOUTHERNHAY EAST        | 32      | NE        | 5838  | 56.761   |
+
 
     Examples: 
       | pointA              | pointB              | routetype |
@@ -163,6 +163,8 @@ Feature: Verify a route from A to B
       | 50.726085,-3.522837 | 50.725076,-3.52442 | car       |
 
   # Mandatory Turn Restrictions
+
+  @Routing 
   Scenario Outline: Verify  Mandatory Turn(with exceptions) at Exeter area
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -173,6 +175,8 @@ Feature: Verify a route from A to B
       | pointA              | pointB             | routetype |
       | 50.727156,-3.523975 | 50.72554,-3.526873 | car       |
 
+
+  @Routing 
   Scenario Outline: Verify  Mandatory Turn at Exeter area(DENMARK ROAD)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -183,6 +187,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 50.724777,-3.520811 | 50.724394,-3.520953 | car       |
 
+  @Routing 
   Scenario Outline: Verify  Mandatory Turn at Exeter area(COLLEGE ROAD)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -193,7 +198,7 @@ Feature: Verify a route from A to B
       | pointA             | pointB              | routetype |
       | 50.723597,-3.51776 | 50.723773,-3.517251 | car       |
 
-  @Routing @KnownIssues
+  @Routing 
   Scenario Outline: Verify  Mandatory Turn Restriction (Denmark Road-Exeter)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints not on the route map:
@@ -221,13 +226,13 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints not on the route map:
       | wayPointIndex | waypointco         | waypointdesc                         | azimuth | direction | time  | distance |
-      | 2             | 50.725549,-3.52693 | Turn sharp right onto SIDWELL STREET | 75      | E         | 23258 | 226.123  |
+      | 5             | 50.726418,-3.52381| Turn left onto BAMPFYLDE STREET| 58      | NE         | 13514 | 131.399  |
 
     Examples: 
       | pointA              | pointB              | routetype |
       | 50.724989,-3.526006 | 50.729735,-3.519862 | car       |
 
-  Scenario: Access Prohibited To - whole RoadLink (plus dateTimeQualifiers)
+  # Access Prohibited To
 
   @Routing
   Scenario Outline: Verify  Access Prohibited To  Restrictions on a Route (Iron Bridge Street-Exeter)
@@ -252,12 +257,12 @@ Feature: Verify a route from A to B
       | 50.724614,-3.532555 | 50.724616,-3.530585 | car       |
 
   # Ford
-  @Routing
+  @Routing 
   Scenario Outline: Verify  Ford  Restrictions on a Route (BONHAY Road-Exeter)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints not on the route map:
       | wayPointIndex | waypointco          | waypointdesc                              | azimuth | direction | time  | distance |
-      | 3             | 50.730325,-3.541923 | Turn slight right onto A377 (BONHAY ROAD) | 217     | NW        | 87530 | 1337.351 |
+      | 3             | 50.730325,-3.541923 | Turn slight right onto A377 (BONHAY ROAD) | 217     | SW        | 87530 | 1337.351 |
 
     Examples: 
       | pointA             | pointB              | routetype |
@@ -297,10 +302,9 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 50.724302,-3.535635 | 50.723705,-3.534493 | car       |
 
-# Level Crossing (Not in Scope)
-
-
-  @Routing @KnownIssues
+  # Level Crossing (Not in Scope)
+  
+  @Routing
   Scenario Outline: Verify  Private Road Restricted Access (Denmark Road-Exeter)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the trackPoints not on the route map:
@@ -310,4 +314,3 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA              | pointB             | routetype |
       | 50.724316,-3.521008 | 50.72413,-3.518874 | car       |
-
