@@ -31,9 +31,9 @@ import java.util.List;
 public class PathMerger
 {
     private boolean enableInstructions = true;
-    private boolean simplifyResponse = false;
+    private boolean simplifyResponse = true;
     private DouglasPeucker douglasPeucker;
-    private boolean calcPoints;
+    private boolean calcPoints = true;
 
     public void doWork( GHResponse rsp, List<Path> paths, Translation tr )
     {

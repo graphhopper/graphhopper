@@ -28,7 +28,6 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.*;
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.io.File;
