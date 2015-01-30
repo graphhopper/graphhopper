@@ -37,7 +37,6 @@ public class GHResponse
     private double routeWeight;
     private long time;
     private InstructionList instructions = null;
-    private boolean found;
 
     public GHResponse()
     {
