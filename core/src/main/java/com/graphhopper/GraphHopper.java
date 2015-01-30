@@ -115,6 +115,9 @@ public class GraphHopper implements GraphHopperAPI
     {
         ensureNotLoaded();
         this.encodingManager = em;
+        if (em.needsTurnCostsSupport())
+            traversalMode = TraversalMode.EDGE_BASED_2DIR;
+
         return this;
     }
 
@@ -534,10 +537,8 @@ public class GraphHopper implements GraphHopperAPI
         // osm import
         osmReaderWayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", osmReaderWayPointMaxDistance);
         String flagEncoders = args.get("graph.flagEncoders", "CAR");
-        if (flagEncoders.toLowerCase().contains("turncosts=true"))
-            traversalMode = TraversalMode.EDGE_BASED_2DIR;
 
-        encodingManager = new EncodingManager(flagEncoders, bytesForFlags);
+        setEncodingManager(new EncodingManager(flagEncoders, bytesForFlags));
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
 
