@@ -28,6 +28,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.*;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.io.File;
@@ -535,6 +536,7 @@ public class GraphHopper implements GraphHopperAPI
         String flagEncoders = args.get("graph.flagEncoders", "CAR");
         if (flagEncoders.toLowerCase().contains("turncosts=true"))
             traversalMode = TraversalMode.EDGE_BASED_2DIR;
+
         encodingManager = new EncodingManager(flagEncoders, bytesForFlags);
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
@@ -820,12 +822,6 @@ public class GraphHopper implements GraphHopperAPI
     @Override
     public GHResponse route( GHRequest request )
     {
-        if (graph == null || !fullyLoaded)
-            throw new IllegalStateException("Call load or importOrLoad before routing");
-
-        if (graph.isClosed())
-            throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
-
         GHResponse response = new GHResponse();
         List<Path> paths = getPaths(request, response);
         if (response.hasErrors())
@@ -848,6 +844,12 @@ public class GraphHopper implements GraphHopperAPI
 
     protected List<Path> getPaths( GHRequest request, GHResponse rsp )
     {
+        if (graph == null || !fullyLoaded)
+            throw new IllegalStateException("Call load or importOrLoad before routing");
+
+        if (graph.isClosed())
+            throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
+
         String vehicle = request.getVehicle();
         if (vehicle.isEmpty())
             vehicle = encodingManager.getSingle().toString();
