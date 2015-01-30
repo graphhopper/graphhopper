@@ -176,18 +176,18 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Configures the underlying storage to be used on a well equipped server.
+     * Configures the underlying storage and response to be used on a well equipped server. Result
+     * also optimized for usage in the web module i.e. try reduce network IO.
      */
     public GraphHopper forServer()
     {
-        // simplify to reduce network IO
         setSimplifyResponse(true);
         return setInMemory();
     }
 
     /**
-     * Configures the underlying storage to be used on a Desktop computer with enough RAM but no
-     * network latency.
+     * Configures the underlying storage to be used on a Desktop computer or within another Java
+     * application with enough RAM but no network latency.
      */
     public GraphHopper forDesktop()
     {
@@ -196,8 +196,8 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Configures the underlying storage to be used on a less powerful machine like Android and
-     * Raspberry Pi with only few RAM.
+     * Configures the underlying storage to be used on a less powerful machine like Android or
+     * Raspberry Pi with only few MB of RAM.
      */
     public GraphHopper forMobile()
     {
