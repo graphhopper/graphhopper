@@ -22,10 +22,7 @@ import com.graphhopper.util.GPXEntry;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.Translation;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -89,6 +86,17 @@ public class GPXFile
 
     public GPXFile doImport( String fileStr )
     {
+        try
+        {
+            return doImport(new FileInputStream(fileStr));
+        } catch (FileNotFoundException ex)
+        {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public GPXFile doImport( InputStream is )
+    {
         SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
         SimpleDateFormat formatterZ = new SimpleDateFormat(DATE_FORMAT_Z);
         SimpleDateFormat formatterZMS = new SimpleDateFormat(DATE_FORMAT_Z_MS);
@@ -98,8 +106,7 @@ public class GPXFile
         try
         {
             DocumentBuilder builder = factory.newDocumentBuilder();
-            File file = new File(fileStr);
-            Document doc = builder.parse(file);
+            Document doc = builder.parse(is);
             NodeList nl = doc.getElementsByTagName("trkpt");
             for (int index = 0; index < nl.getLength(); index++)
             {
@@ -118,7 +125,8 @@ public class GPXFile
                 long millis;
                 if (text.contains("Z"))
                 {
-                    try {
+                    try
+                    {
                         // Try whole second matching
                         millis = formatterZ.parse(text).getTime();
                     } catch (ParseException ex)
@@ -143,7 +151,7 @@ public class GPXFile
             return this;
         } catch (Exception e)
         {
-            throw new IllegalStateException(e);
+            throw new RuntimeException(e);
         }
     }
 

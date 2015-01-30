@@ -22,12 +22,21 @@ public class GPXFileTest
     public void testDoImport()
     {
         GPXFile instance = new GPXFile();
-        instance.doImport("./src/test/resources/test.gpx");
+        instance.doImport("./src/test/resources/test1.gpx");
         List<GPXEntry> res = instance.getEntries();
         assertEquals(264, res.size());
 
         assertEquals(new GPXEntry(51.377719, 12.338217, 0), res.get(0));
         assertEquals(new GPXEntry(51.371482, 12.363795, 235000), res.get(50));
+    }
+
+    @Test
+    public void testDoImport2()
+    {
+        GPXFile instance = new GPXFile();
+        instance.doImport("./src/test/resources/test2.gpx");
+        List<GPXEntry> res = instance.getEntries();
+        assertEquals(2, res.size());
     }
 
     @Test
