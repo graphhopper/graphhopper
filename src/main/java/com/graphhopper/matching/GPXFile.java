@@ -85,7 +85,7 @@ public class GPXFile
         return entries;
     }
 
-    GPXFile doImport( String fileStr )
+    public GPXFile doImport( String fileStr )
     {
         SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
         SimpleDateFormat formatterZ = new SimpleDateFormat(DATE_FORMAT_Z);

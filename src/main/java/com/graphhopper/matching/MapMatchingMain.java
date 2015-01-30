@@ -21,11 +21,9 @@ package com.graphhopper.matching;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.GPXEntry;
+import com.graphhopper.util.*;
 import java.io.File;
 import java.io.FilenameFilter;
-import java.util.Arrays;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,11 +32,11 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich
  */
-public class Main
+public class MapMatchingMain
 {
     public static void main( String[] args )
     {
-        new Main().start(CmdArgs.read(args));
+        new MapMatchingMain().start(CmdArgs.read(args));
     }
 
     private final Logger logger = LoggerFactory.getLogger(getClass());

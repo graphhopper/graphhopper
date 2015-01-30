@@ -138,7 +138,7 @@ public class MapMatching
                     extensionMap.put(edge, extensionList);
                 }
 
-                extensionList.add(new GPXExtension(entry, qr.getQueryDistance(), gpxIndex, matchIndex));
+                extensionList.add(new GPXExtension(entry, qr, gpxIndex));
             }
         }
 
@@ -149,24 +149,16 @@ public class MapMatching
             @Override
             public boolean execute( int edge, List<GPXExtension> list )
             {
-                int minimumMatchIndex = maxEdgesPerPoint;
                 double minimumDist = Double.MAX_VALUE;
-                int goodMatches = 1;
                 for (GPXExtension ext : list)
                 {
-                    if (ext.match == 0)
-                        goodMatches++;
-
-                    if (ext.match < minimumMatchIndex)
-                        minimumMatchIndex = ext.match;
-
-                    if (ext.queryDistance < minimumDist)
-                        minimumDist = ext.queryDistance;
+                    if (ext.queryResult.getQueryDistance() < minimumDist)
+                        minimumDist = ext.queryResult.getQueryDistance();
                 }
 
                 // Prefer close match, prefer direct match (small minimumMatchIndex) and many GPX points.
                 // And '+0.5' to avoid extreme decrease in case of a match close to a tower node
-                double weight = minimumDist * (minimumMatchIndex * .1 + 1) / goodMatches + .5;
+                double weight = minimumDist + .5;
                 if (weight > maxWeight.get())
                     maxWeight.set((int) weight);
                 minWeightMap.put(edge, weight);
@@ -223,7 +215,7 @@ public class MapMatching
             {
                 edgeMatches.add(new EdgeMatch(edge, Collections.<GPXExtension>emptyList()));
                 continue;
-            }
+            }            
 
             List<GPXExtension> clonedList = new ArrayList<GPXExtension>(gpxExtensionList.size());
             // skip GPXExtensions with too small index otherwise EdgeMatch could go into past

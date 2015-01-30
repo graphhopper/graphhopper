@@ -68,7 +68,7 @@ public class LocationIndexMatch extends LocationIndexTree
         //   set.addAll(super.findNetworkEntries(queryLat, queryLon, 2));
         //
         final GHBitSet checkBitset = new GHTBitSet();
-        final EdgeExplorer explorer = graph.createEdgeExplorer(getEdgeFilter());
+        final EdgeExplorer explorer = graph.createEdgeExplorer(edgeFilter);
 
         set.forEach(new TIntProcedure()
         {

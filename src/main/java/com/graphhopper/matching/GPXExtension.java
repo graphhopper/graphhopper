@@ -17,6 +17,7 @@
  */
 package com.graphhopper.matching;
 
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.GPXEntry;
 
 /**
@@ -26,21 +27,21 @@ import com.graphhopper.util.GPXEntry;
 public class GPXExtension
 {
     final GPXEntry entry;
-    final double queryDistance;
+    final QueryResult queryResult;
     final int gpxListIndex;
-    final int match;
 
-    public GPXExtension( GPXEntry entry, double distance, int gpxListIndex, int match )
+    public GPXExtension( GPXEntry entry, QueryResult queryResult, int gpxListIndex )
     {
         this.entry = entry;
-        this.queryDistance = distance;
+        this.queryResult = queryResult;
         this.gpxListIndex = gpxListIndex;
-        this.match = match;
     }
 
     @Override
     public String toString()
     {
-        return "entry:" + entry + ", query distance:" + queryDistance + ", match:" + match + ", gpxListIndex:" + gpxListIndex;
+        return "entry:" + entry
+                + ", query distance:" + queryResult.getQueryDistance()
+                + ", gpxListIndex:" + gpxListIndex;
     }
 }

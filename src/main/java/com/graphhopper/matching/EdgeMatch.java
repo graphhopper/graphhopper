@@ -54,9 +54,9 @@ public class EdgeMatch
         double min = Double.MAX_VALUE;
         for (GPXExtension gpxExt : gpxExtensions)
         {
-            if (gpxExt.queryDistance < min)
+            if (gpxExt.queryResult.getQueryDistance() < min)
             {
-                min = gpxExt.queryDistance;
+                min = gpxExt.queryResult.getQueryDistance();
             }
         }
         return min;
