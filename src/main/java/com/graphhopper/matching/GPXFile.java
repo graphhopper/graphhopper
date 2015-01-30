@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
@@ -45,6 +46,7 @@ public class GPXFile
 {
     static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
     static final String DATE_FORMAT_Z = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+    static final String DATE_FORMAT_Z_MS = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
     private final List<GPXEntry> entries;
     private final boolean includeElevation = false;
 
@@ -89,6 +91,7 @@ public class GPXFile
     {
         SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
         SimpleDateFormat formatterZ = new SimpleDateFormat(DATE_FORMAT_Z);
+        SimpleDateFormat formatterZMS = new SimpleDateFormat(DATE_FORMAT_Z_MS);
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setValidating(false);
         factory.setIgnoringElementContentWhitespace(true);
@@ -115,7 +118,14 @@ public class GPXFile
                 long millis;
                 if (text.contains("Z"))
                 {
-                    millis = formatterZ.parse(text).getTime();
+                    try {
+                        // Try whole second matching
+                        millis = formatterZ.parse(text).getTime();
+                    } catch (ParseException ex)
+                    {
+                        // Error: try looking at milliseconds
+                        millis = formatterZMS.parse(text).getTime();
+                    }
                 } else
                 {
                     millis = formatter.parse(revertTZHack(text)).getTime();
