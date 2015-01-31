@@ -61,47 +61,6 @@ public class InstructionList implements Iterable<Instruction>
         return instructions.size();
     }
 
-    /**
-     * Returns the descriptions of the distance per instruction.
-     */
-    public List<String> createDistances( boolean mile )
-    {
-        List<String> labels = new ArrayList<String>(instructions.size());
-        for (int i = 0; i < instructions.size(); i++)
-        {
-            double distInMeter = instructions.get(i).getDistance();
-            if (mile)
-            {
-                // calculate miles
-                double distInMiles = distInMeter / 1000 / DistanceCalcEarth.KM_MILE;
-                if (distInMiles < 0.9)
-                {
-                    labels.add((int) Helper.round(distInMiles * 5280, 1) + " " + tr.tr("ftAbbr"));
-                } else
-                {
-                    if (distInMiles < 100)
-                        labels.add(Helper.round(distInMiles, 2) + " " + tr.tr("miAbbr"));
-                    else
-                        labels.add((int) Helper.round(distInMiles, 1) + " " + tr.tr("miAbbr"));
-                }
-            } else
-            {
-                if (distInMeter < 950)
-                {
-                    labels.add((int) Helper.round(distInMeter, 1) + " " + tr.tr("mAbbr"));
-                } else
-                {
-                    distInMeter /= 1000;
-                    if (distInMeter < 100)
-                        labels.add(Helper.round(distInMeter, 2) + " " + tr.tr("kmAbbr"));
-                    else
-                        labels.add((int) Helper.round(distInMeter, 1) + " " + tr.tr("kmAbbr"));
-                }
-            }
-        }
-        return labels;
-    }
-
     public List<Map<String, Object>> createJson()
     {
         List<Map<String, Object>> instrList = new ArrayList<Map<String, Object>>(instructions.size());

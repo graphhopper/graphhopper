@@ -106,10 +106,6 @@ public class InstructionListTest
                 "Turn left onto 7-8", "Continue onto 8-9", "Turn right", "Finish!"),
                 tmpList);
 
-        List<String> distStrings = wayList.createDistances(true);
-        assertEquals(Arrays.asList("6.21 mi", "6.21 mi", "6.21 mi", "6.21 mi", "12.43 mi", "6.21 mi", "0 ft"),
-                distStrings);
-
         wayList = p.calcInstructions(trMap.getWithFallBack(Locale.GERMAN));
         tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Geradeaus auf 0-1", "Rechts abbiegen auf 1-4", "Geradeaus auf 4-7",
@@ -117,9 +113,6 @@ public class InstructionListTest
                 tmpList);
 
         assertEquals(70000.0, sumDistances(wayList), 1e-1);
-        distStrings = wayList.createDistances(false);
-        assertEquals(Arrays.asList("10.0 km", "10.0 km", "10.0 km", "10.0 km", "20.0 km", "10.0 km", "0 m"),
-                distStrings);
 
         List<GPXEntry> gpxes = wayList.createGPXList();
         assertEquals(10, gpxes.size());
