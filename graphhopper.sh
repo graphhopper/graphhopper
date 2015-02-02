@@ -22,9 +22,18 @@ fi
 ACTION=$1
 FILE=$2
 
-USAGE="./graphhopper.sh import|ui|test|measurement|miniui|extract|build <your-osm-file>"
+USAGE="./graphhopper.sh import|web|clean|build <your-osm-file>"
 if [ "x$ACTION" = "x" ]; then
  echo -e "## action $ACTION not found. try \n$USAGE"
+ 
+ echo 'import' creates the graphhopper files used for later (faster) starts
+ echo 'ui' or 'web' starts the server (on 8989) which you can access via localhost:8989 with the browser and makes also a routing calculation interface available at localhost:8989/route
+ echo 'measurement' calls the Measurement class and does performance analysis of the current version (or older git commits) but only via artificial&random routes
+ echo 'torture' can be used to test real world routes via feeding graphhopper logs into a local or remote graphhopper system
+ echo 'miniui' is a simple Java/Swing application used for debugging purposes only
+ echo 'extract' calls the overpass API to easily grab any area as .osm file
+ echo 'build' creates the graphhopper JAR (without the web module)
+ echo 'clean' removes all JARs, necessary if you need to use the latest source (e.g. after switching the branch etc)                                                                          
 fi
 
 function ensureOsmXml { 
