@@ -258,7 +258,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 			String distance = (String) wayPointList.get(i).get("distance");
 			Waypoint wp = buildWayPoint(waypointco, waypointdesc, azimuth,
 					direction, time, distance);
-			assert (!GPHService.isWayPointOnGPXRoutes(wp));
+			assertTrue (!GPHService.isWayPointOnGPXRoutes(wp));
 
 		}
 

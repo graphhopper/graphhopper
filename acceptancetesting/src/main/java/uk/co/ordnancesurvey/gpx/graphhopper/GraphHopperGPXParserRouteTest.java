@@ -134,9 +134,10 @@ public class GraphHopperGPXParserRouteTest {
 		String maxX = coords[2];
 		String maxY = coords[3];
 		String graphHopperUrl = IntegrationTestProperties
-				.getTestProperty("graphhopperUrl");
+				.getTestProperty("graphHopperWebUrl");
 		StringBuilder sb = new StringBuilder();
 		sb.append(graphHopperUrl);
+		sb.append("route?");
 		if (routeType != null) {
 			sb.append("type=");
 			sb.append(routeType);

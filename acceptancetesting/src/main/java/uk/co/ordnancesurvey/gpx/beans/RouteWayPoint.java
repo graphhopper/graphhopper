@@ -47,7 +47,6 @@ public class RouteWayPoint {
 					// description string comparison ignoring case and special char "'"
 					
 					
-					
 					String thisValueAsString = ((String) thisValue).replaceAll("[^\\w]", "");
 					String thatValueAsString=((String)thatValue).replaceAll("[^\\w]", "");
 					isEqual = thisValueAsString.equalsIgnoreCase(( thatValueAsString));
