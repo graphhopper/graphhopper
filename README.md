@@ -1,5 +1,7 @@
 ## Map Matching based on GraphHopper
 
+[![Build Status](https://secure.travis-ci.org/graphhopper/map-matching.png?branch=master)](http://travis-ci.org/graphhopper/map-matching)
+
 Map matching is the process to match a sequence of real world coordinates into a digital map.
 Read more at [Wikipedia](https://en.wikipedia.org/wiki/Map_matching)
 
