@@ -3,24 +3,24 @@
 Map matching is the process to match a sequence of real world coordinates into a digital map.
 Read more at [Wikipedia](https://en.wikipedia.org/wiki/Map_matching)
 
-### Warning
-
-Highly Alpha but already good enough for various use cases
+Currently this project is under heavy development but produces already good results for various use cases. Let us know if not and create an issue!
 
 ### License
 
 Apache License 2.0
 
-### Installation
+### Installation and Usage
 
-Install Java and Maven
+Install Java and Maven. Then import the area you want to do map-matching on:
 
-### Usage
+```bash
+./map-matching.sh action=import datasource=./some-dir/osm-file.pbf
+```
 
-Import the area you want to do some route matches on, then do those matches:
-
- 1. ./map-matching.sh action=import datasource=./some-dir/osm-file.pbf
- 2. ./map-matching.sh action=match gpx=./track-data/.*gpx
+and then do these matches:
+```bash
+./map-matching.sh action=match gpx=./track-data/.*gpx
+```
 
 This will produce gpx results similar named as the input files.
 
