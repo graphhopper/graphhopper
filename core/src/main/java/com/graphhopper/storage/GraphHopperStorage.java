@@ -1139,7 +1139,7 @@ public class GraphHopperStorage implements GraphStorage
         if (delNodes <= 0)
             return;
 
-        // Deletes only nodes. 
+        // Deletes only nodes.
         // It reduces the fragmentation of the node space but introduces new unused edges.
         inPlaceNodeRemove(delNodes);
 
@@ -1289,7 +1289,7 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         // *rewrites* all edges connected to moved nodes
-        // go through all edges and pick the necessary <- this is easier to implement then
+        // go through all edges and pick the necessary <- this is easier to implement than
         // a more efficient (?) breadth-first search
         EdgeIterator iter = getAllEdges();
         while (iter.next())
