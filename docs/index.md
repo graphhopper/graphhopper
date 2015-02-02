@@ -24,16 +24,15 @@
  * [Technical overview](./core/technical.md)
  * [Slides from 2014](http://graphhopper.com/public/slides/)
  * [Contraction Hierarchies](./core/ch.md)
+
+## Web
+
+ * [Routing API](./web/api-doc.md)
  
-### Advanced Topics
+## Advanced Topics
 
  * [Low level API](./core/low-level-api.md)
  * [Create new FlagEncoder](./core/create-new-flagencoder.md)
  * [LocationIndex](./core/location-index.md)
  * [World-Wide-Road-Network](./core/world-wide.md)
  * [Changelog](https://github.com/graphhopper/graphhopper/blob/master/core/files/changelog.txt)
-
-## Web
-
- * [Routing API](./web/api-doc.md)
-
