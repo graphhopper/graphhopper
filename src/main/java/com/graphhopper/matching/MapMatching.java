@@ -38,102 +38,89 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * This class matches real world GPX entries to the digital road network stored in GraphHopper. The
- * algorithm is a simple 4 phase process:
+ * This class matches real world GPX entries to the digital road network stored
+ * in GraphHopper. The algorithm is a simple 4 phase process:
  * <p>
  * <ol>
  * <li>Lookup Phase: Find N closest edges for every GPX entry</li>
- * <li>Custom Weighting Phase: Create a weighting object where those edges will be preferred</li>
- * <li>Search Phase: Calculate the path and its list of edges from the best start to the best end
- * edge</li>
+ * <li>Custom Weighting Phase: Create a weighting object where those edges will
+ * be preferred</li>
+ * <li>Search Phase: Calculate the path and its list of edges from the best
+ * start to the best end edge</li>
  * <li>Match Phase: Associate all GPX entries for every edge</li>
  * </ol>
  * <p>
  *
- * Note: currently tested with very close GPX points only. Will fail if best match for start or end
- * node is incorrect. Performance improvements possible if not the full but only partial routes are
- * calculated this will also improve accuracy as currently all loops in a GPX trail are
- * automatically removed.
+ * Note: currently tested with very close GPX points only. Will fail if best
+ * match for start or end node is incorrect. Performance improvements possible
+ * if not the full but only partial routes are calculated this will also improve
+ * accuracy as currently all loops in a GPX trail are automatically removed.
  * <p>
  * @see http://en.wikipedia.org/wiki/Map_matching
  * @author Peter Karich
  */
-public class MapMatching
-{
+public class MapMatching {
+
     private final Graph graph;
     private final LocationIndexMatch locationIndex;
     private final FlagEncoder encoder;
-    private int maxEdgesPerPoint = 4;
     private TraversalMode traversalMode;
     private DistanceCalc distanceCalc = new DistancePlaneProjection();
 
-    public MapMatching( Graph graph, LocationIndexMatch locationIndex, FlagEncoder encoder )
-    {
+    public MapMatching(Graph graph, LocationIndexMatch locationIndex, FlagEncoder encoder) {
         this.graph = graph;
         this.locationIndex = locationIndex;
         this.traversalMode = graph.getExtension() instanceof TurnCostExtension ? TraversalMode.EDGE_BASED_2DIR : TraversalMode.NODE_BASED;
         this.encoder = encoder;
     }
 
-    public void setTraversalMode( TraversalMode traversalMode )
-    {
+    public void setTraversalMode(TraversalMode traversalMode) {
         this.traversalMode = traversalMode;
     }
 
-    /**
-     * @param maxEdgesPerPoint the maximum number of closest edges which should be searched by for
-     * one point
-     */
-    public void setMaxEdgesPerPoint( int maxEdgesPerPoint )
-    {
-        if (maxEdgesPerPoint < 1)
-            throw new IllegalArgumentException("Specify at least 1");
-
-        this.maxEdgesPerPoint = maxEdgesPerPoint;
-    }
-
-    public void setDistanceCalc( DistanceCalc distanceCalc )
-    {
+    public void setDistanceCalc(DistanceCalc distanceCalc) {
         this.distanceCalc = distanceCalc;
     }
 
     /**
      * This method does the actual map matchting.
      * <p>
-     * @param gpxList the input list with GPX points which should match to edges of the graph
+     * @param gpxList the input list with GPX points which should match to edges
+     * of the graph
      */
-    public MatchResult doWork( List<GPXEntry> gpxList )
-    {
-        QueryResult startQueryResult = null, endQueryResult = null;
+    public MatchResult doWork(List<GPXEntry> gpxList) {
+        int guessedEdgesPerPoint = 4;
         final TIntObjectHashMap<List<GPXExtension>> extensionMap
-                = new TIntObjectHashMap<List<GPXExtension>>(gpxList.size() * maxEdgesPerPoint, 0.5f, -1);
-        final TIntDoubleHashMap minWeightMap = new TIntDoubleHashMap(gpxList.size() * maxEdgesPerPoint, 0.5f, -1, -1);
+                = new TIntObjectHashMap<List<GPXExtension>>(gpxList.size() * guessedEdgesPerPoint, 0.5f, -1);
+        final TIntDoubleHashMap minWeightMap = new TIntDoubleHashMap(gpxList.size() * guessedEdgesPerPoint, 0.5f, -1, -1);
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
+        int startIndex = -1, endIndex = -1;
+        QueryResult startQueryResult = null, endQueryResult = null;
 
         //////// Lookup Phase (1) ////////
-        for (int gpxIndex = 0; gpxIndex < gpxList.size(); gpxIndex++)
-        {
+        for (int gpxIndex = 0; gpxIndex < gpxList.size(); gpxIndex++) {
             GPXEntry entry = gpxList.get(gpxIndex);
-            List<QueryResult> qResults = locationIndex.findNClosest(maxEdgesPerPoint, entry.lat, entry.lon, edgeFilter);
+            List<QueryResult> qResults = locationIndex.findNClosest(entry.lat, entry.lon, edgeFilter);
 
-            if (qResults.isEmpty())
-            {
+            if (qResults.isEmpty()) {
                 // throw new IllegalStateException("no match found for " + entry);
                 continue;
             }
 
             QueryResult bestQR = qResults.get(0);
-            if (startQueryResult == null)
+            if (startIndex < 0) {
+                startIndex = gpxIndex;
                 startQueryResult = bestQR;
+            }
 
             endQueryResult = bestQR;
-            for (int matchIndex = 0; matchIndex < qResults.size(); matchIndex++)
-            {
+            endIndex = gpxIndex;
+
+            for (int matchIndex = 0; matchIndex < qResults.size(); matchIndex++) {
                 QueryResult qr = qResults.get(matchIndex);
                 int edge = qr.getClosestEdge().getEdge();
                 List<GPXExtension> extensionList = extensionMap.get(edge);
-                if (extensionList == null)
-                {
+                if (extensionList == null) {
                     extensionList = new ArrayList(5);
                     extensionMap.put(edge, extensionList);
                 }
@@ -144,43 +131,16 @@ public class MapMatching
 
         //////// Custom Weighting Phase (2) ////////
         final AtomicInteger maxWeight = new AtomicInteger(0);
-        extensionMap.forEachEntry(new TIntObjectProcedure<List<GPXExtension>>()
-        {
-            @Override
-            public boolean execute( int edge, List<GPXExtension> list )
-            {
-                double minimumDist = Double.MAX_VALUE;
-                for (GPXExtension ext : list)
-                {
-                    if (ext.queryResult.getQueryDistance() < minimumDist)
-                        minimumDist = ext.queryResult.getQueryDistance();
-                }
-
-                // Prefer close match, prefer direct match (small minimumMatchIndex) and many GPX points.
-                // And '+0.5' to avoid extreme decrease in case of a match close to a tower node
-                double weight = minimumDist + .5;
-                if (weight > maxWeight.get())
-                    maxWeight.set((int) weight);
-                minWeightMap.put(edge, weight);
-                return true;
-            }
-        });
-        // System.out.println("MAX weight " + maxWeight);
-
-        if (startQueryResult == null || endQueryResult == null)
-        {
+        if (startQueryResult == null || endQueryResult == null) {
             throw new IllegalArgumentException("Input GPX list does not contain valid points!? " + gpxList.size() + ", " + gpxList);
         }
 
-        FastestWeighting customWeighting = new FastestWeighting(encoder)
-        {
+        FastestWeighting customWeighting = new FastestWeighting(encoder) {
             @Override
-            public double calcWeight( EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId )
-            {
+            public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
                 double matchWeight = minWeightMap.get(edge.getEdge());
                 double weight = super.calcWeight(edge, reverse, prevOrNextEdgeId);
-                if (matchWeight < 0)
-                {
+                if (matchWeight < 0) {
                     return maxWeight.get() * weight;
                 }
 
@@ -196,6 +156,29 @@ public class MapMatching
         // make new virtual edges from QueryGraph also available in minDistanceMap and prefer them
         fillVirtualEdges(minWeightMap, explorer.setBaseNode(startQueryResult.getClosestNode()), startQueryResult);
         fillVirtualEdges(minWeightMap, explorer.setBaseNode(endQueryResult.getClosestNode()), endQueryResult);
+        fillVirtualEdges(extensionMap, gpxList.get(startIndex), startIndex, explorer.setBaseNode(startQueryResult.getClosestNode()), startQueryResult);
+        fillVirtualEdges(extensionMap, gpxList.get(endIndex), endIndex, explorer.setBaseNode(endQueryResult.getClosestNode()), endQueryResult);
+        extensionMap.forEachEntry(new TIntObjectProcedure<List<GPXExtension>>() {
+            @Override
+            public boolean execute(int edge, List<GPXExtension> list) {
+                double minimumDist = Double.MAX_VALUE;
+                for (GPXExtension ext : list) {
+                    if (ext.queryResult.getQueryDistance() < minimumDist) {
+                        minimumDist = ext.queryResult.getQueryDistance();
+                    }
+                }
+
+                // Prefer close match, prefer direct match (small minimumMatchIndex) and many GPX points.
+                // And '+0.5' to avoid extreme decrease in case of a match close to a tower node
+                double weight = minimumDist + .5;
+                if (weight > maxWeight.get()) {
+                    maxWeight.set((int) weight);
+                }
+                minWeightMap.put(edge, weight);
+                return true;
+            }
+        });
+        // System.out.println("MAX weight " + maxWeight);
 
         // TODO limit search to maximum 5 times of the GPX length to avoid heavy memory consumption for large graphs        
         DijkstraBidirectionRef algo = new DijkstraBidirectionRef(queryGraph, encoder, customWeighting, traversalMode);
@@ -208,25 +191,22 @@ public class MapMatching
         // TODO stats: calculate missing GPX matches
         // TODO stats: calculate mean query distance
         int minGPXIndex = -1;
-        for (EdgeIteratorState edge : pathEdgeList)
-        {
+        for (EdgeIteratorState edge : pathEdgeList) {
             List<GPXExtension> gpxExtensionList = extensionMap.get(edge.getEdge());
-            if (gpxExtensionList == null)
-            {
+            if (gpxExtensionList == null) {
                 edgeMatches.add(new EdgeMatch(edge, Collections.<GPXExtension>emptyList()));
                 continue;
-            }            
+            }
 
             List<GPXExtension> clonedList = new ArrayList<GPXExtension>(gpxExtensionList.size());
             // skip GPXExtensions with too small index otherwise EdgeMatch could go into past
             int newMinGPXIndex = minGPXIndex;
-            for (GPXExtension ext : gpxExtensionList)
-            {
-                if (ext.gpxListIndex > minGPXIndex)
-                {
+            for (GPXExtension ext : gpxExtensionList) {
+                if (ext.gpxListIndex > minGPXIndex) {
                     clonedList.add(ext);
-                    if (newMinGPXIndex < ext.gpxListIndex)
+                    if (newMinGPXIndex < ext.gpxListIndex) {
                         newMinGPXIndex = ext.gpxListIndex;
+                    }
                 }
             }
             minGPXIndex = newMinGPXIndex;
@@ -237,8 +217,7 @@ public class MapMatching
         //////// Calculate stats //////// 
         double gpxLength = 0;
         GPXEntry prevEntry = gpxList.get(0);
-        for (int i = 1; i < gpxList.size(); i++)
-        {
+        for (int i = 1; i < gpxList.size(); i++) {
             GPXEntry entry = gpxList.get(i);
             gpxLength += distanceCalc.calcDist(prevEntry.lat, prevEntry.lon, entry.lat, entry.lon);
             prevEntry = entry;
@@ -251,11 +230,22 @@ public class MapMatching
         return matchResult;
     }
 
-    private void fillVirtualEdges( TIntDoubleHashMap minDistanceMap, EdgeIterator iter, QueryResult qr )
-    {
-        while (iter.next())
-        {
+    private void fillVirtualEdges(TIntDoubleHashMap minDistanceMap,
+            EdgeIterator iter, QueryResult qr) {
+        while (iter.next()) {
             minDistanceMap.put(iter.getEdge(), qr.getQueryDistance());
+        }
+    }
+
+    private void fillVirtualEdges(TIntObjectHashMap<List<GPXExtension>> extensionMap,
+            GPXEntry entry, int gpxListIndex, EdgeIterator iter, QueryResult qr) {
+        while (iter.next()) {
+            List<GPXExtension> list = extensionMap.get(iter.getEdge());
+            if (list == null) {
+                list = new ArrayList<GPXExtension>();
+                extensionMap.put(iter.getEdge(), list);
+            }
+            list.add(new GPXExtension(entry, qr, gpxListIndex));
         }
     }
 }

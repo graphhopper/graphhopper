@@ -18,11 +18,10 @@ import static org.junit.Assert.assertEquals;
  *
  * @author Peter Karich
  */
-public class LocationIndexMatchTest
-{
+public class LocationIndexMatchTest {
+
     @Test
-    public void testFindNClosest()
-    {
+    public void testFindNClosest() {
         RAMDirectory dir = new RAMDirectory();
         FlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = new EncodingManager(encoder);
@@ -36,17 +35,17 @@ public class LocationIndexMatchTest
         // |   |   |
         // 6---7---8
         NodeAccess na = graph.getNodeAccess();
-        na.setNode(0, 0.10, 0.00);
-        na.setNode(1, 0.10, 0.05);
-        na.setNode(2, 0.10, 0.10);
-        na.setNode(3, 0.05, 0.00);
-        na.setNode(4, 0.05, 0.05);
-        na.setNode(5, 0.05, 0.10);
-        na.setNode(6, 0.00, 0.00);
-        na.setNode(7, 0.00, 0.05);
-        na.setNode(8, 0.00, 0.10);
-        na.setNode(9, 0.05, 0.02);
-        na.setNode(10, 0.07, 0.02);
+        na.setNode(0, 0.0010, 0.0000);
+        na.setNode(1, 0.0010, 0.0005);
+        na.setNode(2, 0.0010, 0.0010);
+        na.setNode(3, 0.0005, 0.0000);
+        na.setNode(4, 0.0005, 0.0005);
+        na.setNode(5, 0.0005, 0.0010);
+        na.setNode(6, 0.0000, 0.0000);
+        na.setNode(7, 0.0000, 0.0005);
+        na.setNode(8, 0.0000, 0.0010);
+        na.setNode(9, 0.0005, 0.0002);
+        na.setNode(10, 0.0007, 0.0002);
         graph.edge(0, 1);
         graph.edge(1, 2);
         graph.edge(0, 3);
@@ -64,14 +63,15 @@ public class LocationIndexMatchTest
 
         LocationIndexMatch index = new LocationIndexMatch(graph, new RAMDirectory());
         index.prepareIndex();
-        List<QueryResult> result = index.findNClosest(4, 0.04, 0.7, EdgeFilter.ALL_EDGES);
-        assertEquals(4, result.size());
+        // query node 4 => get at least 4-5, 4-7
+        List<QueryResult> result = index.findNClosest(0.0004, 0.0006, EdgeFilter.ALL_EDGES);
         List<Integer> ids = new ArrayList<Integer>();
-        for(QueryResult qr : result) {
+        for (QueryResult qr : result) {
             ids.add(qr.getClosestEdge().getEdge());
         }
         Collections.sort(ids);
-        assertEquals(Arrays.asList(edge1_4.getEdge(), edge9_4.getEdge(), edge4_5.getEdge(), edge4_7.getEdge()),
+        assertEquals("edge ids do not match",
+                Arrays.asList(/*edge1_4.getEdge(), edge9_4.getEdge(), */ edge4_5.getEdge(), edge4_7.getEdge()),
                 ids);
     }
 

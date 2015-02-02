@@ -37,75 +37,89 @@ import java.util.List;
  *
  * @author Peter Karich
  */
-public class LocationIndexMatch extends LocationIndexTree
-{
-    private static final Comparator<QueryResult> QR_COMPARATOR = new Comparator<QueryResult>()
-    {
+public class LocationIndexMatch extends LocationIndexTree {
+
+    private static final Comparator<QueryResult> QR_COMPARATOR = new Comparator<QueryResult>() {
         @Override
-        public int compare( QueryResult o1, QueryResult o2 )
-        {
+        public int compare(QueryResult o1, QueryResult o2) {
             return Double.compare(o1.getQueryDistance(), o2.getQueryDistance());
         }
     };
 
-    public LocationIndexMatch( Graph g, Directory dir )
-    {
+    private final double returnAllResultsWithin;
+
+    public LocationIndexMatch(Graph g, Directory dir) {
         super(g, dir);
 
         // apply settings good for most map matching cases, let them be customizable afterwards too
         setMaxRegionSearch(2);
         setMinResolutionInMeter(20);
+
+        // Return ALL results which are very close and e.g. within the GPS signal accuracy.
+        // Also important to get all edges if GPS point is close to a junction.
+        returnAllResultsWithin = distCalc.calcNormalizedDist(15);
     }
 
-    public List<QueryResult> findNClosest( final int maxResults, final double queryLat, final double queryLon, final EdgeFilter edgeFilter )
-    {
+    public List<QueryResult> findNClosest(final double queryLat, final double queryLon, final EdgeFilter edgeFilter) {
         // implement a cheap priority queue via List, sublist and Collections.sort
-        final List<QueryResult> queryResults = new ArrayList<QueryResult>(maxResults);
+        final List<QueryResult> queryResults = new ArrayList<QueryResult>();
         TIntHashSet set = super.findNetworkEntries(queryLat, queryLon, 2);
 
-        // try bigger area
-        // if (set.size() < maxResults)
-        //   set.addAll(super.findNetworkEntries(queryLat, queryLon, 2));
-        //
-        final GHBitSet checkBitset = new GHTBitSet();
+        final GHBitSet exploredNodes = new GHTBitSet(new TIntHashSet(set));
         final EdgeExplorer explorer = graph.createEdgeExplorer(edgeFilter);
 
-        set.forEach(new TIntProcedure()
-        {
-            double maxQueryDistance = Double.MAX_VALUE;
+        set.forEach(new TIntProcedure() {
 
             @Override
-            public boolean execute( int node )
-            {
-                new XFirstSearchCheck(queryLat, queryLon, checkBitset, edgeFilter)
-                {
+            public boolean execute(int node) {
+                new XFirstSearchCheck(queryLat, queryLon, exploredNodes, edgeFilter) {
                     @Override
-                    protected double getQueryDistance()
-                    {
-                        return maxQueryDistance;
+                    protected double getQueryDistance() {
+                        // do not skip search if distance is 0 or near zero (equalNormedDelta)
+                        return Double.MAX_VALUE;
                     }
 
                     @Override
-                    protected boolean check( int node, double normedDist, int wayIndex, EdgeIteratorState edge, QueryResult.Position pos )
-                    {
-                        // skip TOWER matches as it does not help us to identify which of the connected edges should be preferred
-                        if (normedDist >= maxQueryDistance || pos == QueryResult.Position.TOWER)
-                            return false;
+                    protected boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState edge, QueryResult.Position pos) {
+                        if (normedDist < returnAllResultsWithin
+                                || queryResults.isEmpty()
+                                || queryResults.get(0).getQueryDistance() > normedDist) {
 
-                        if (queryResults.size() >= maxResults * 5)
-                        {
-                            Collections.sort(queryResults, QR_COMPARATOR);
-                            queryResults.subList(maxResults, queryResults.size()).clear();
-                            maxQueryDistance = queryResults.get(queryResults.size() - 1).getQueryDistance();
+                            int index = -1;
+                            for (int qrIndex = 0; qrIndex < queryResults.size(); qrIndex++) {
+                                QueryResult qr = queryResults.get(qrIndex);
+                                // overwrite older queryResults which are potentially more far away than returnAllResultsWithin
+                                if (qr.getQueryDistance() > returnAllResultsWithin) {
+                                    index = qrIndex;
+                                    break;
+                                }
+
+                                // avoid duplicate edges
+                                if (qr.getClosestEdge().getEdge() == edge.getEdge()) {
+                                    if (qr.getQueryDistance() < normedDist) {
+                                        // do not add current edge
+                                        return true;
+                                    } else {
+                                        // overwrite old edge with current
+                                        index = qrIndex;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            QueryResult qr = new QueryResult(queryLat, queryLon);
+                            qr.setQueryDistance(normedDist);
+                            qr.setClosestNode(node);
+                            qr.setClosestEdge(edge.detach(false));
+                            qr.setWayIndex(wayIndex);
+                            qr.setSnappedPosition(pos);
+
+                            if (index < 0) {
+                                queryResults.add(qr);
+                            } else {
+                                queryResults.set(index, qr);
+                            }
                         }
-
-                        QueryResult qr = new QueryResult(queryLat, queryLon);
-                        qr.setQueryDistance(normedDist);
-                        qr.setClosestNode(node);
-                        qr.setClosestEdge(edge.detach(false));
-                        qr.setWayIndex(wayIndex);
-                        qr.setSnappedPosition(pos);
-                        queryResults.add(qr);
                         return true;
                     }
                 }.start(explorer, node);
@@ -113,24 +127,18 @@ public class LocationIndexMatch extends LocationIndexTree
             }
         });
 
-        if (queryResults.size() > maxResults)
-        {
-            Collections.sort(queryResults, QR_COMPARATOR);
-            queryResults.subList(maxResults, queryResults.size()).clear();
-        }
+        Collections.sort(queryResults, QR_COMPARATOR);
 
-        for (QueryResult qr : queryResults)
-        {
-            if (qr.isValid())
-            {
-                // denormalize distance            
+        for (QueryResult qr : queryResults) {
+            if (qr.isValid()) {
+                // denormalize distance
                 qr.setQueryDistance(distCalc.calcDenormalizedDist(qr.getQueryDistance()));
                 qr.calcSnappedPoint(distCalc);
-            } else
+            } else {
                 throw new IllegalStateException("invalid query result should not happen here: " + qr);
+            }
         }
 
         return queryResults;
     }
-
 }

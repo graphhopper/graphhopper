@@ -28,6 +28,8 @@ import com.graphhopper.util.GPXEntry;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.Translation;
 import com.graphhopper.util.shapes.GHPoint;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
@@ -38,16 +40,15 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class MapMatchingTest
-{
+public class MapMatchingTest {
+
     // enable turn cost in encoder:
     private static final CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 3);
     private static final TestGraphHopper hopper = new TestGraphHopper();
 
     @BeforeClass
-    public static void doImport()
-    {
-        hopper.setOSMFile("./map-data/leipzig_germany.osm.pbf");       
+    public static void doImport() {
+        hopper.setOSMFile("./map-data/leipzig_germany.osm.pbf");
         hopper.setGraphHopperLocation("./target/mapmatchingtest");
         hopper.setEncodingManager(new EncodingManager(encoder));
         hopper.setCHEnable(false);
@@ -56,14 +57,12 @@ public class MapMatchingTest
     }
 
     @AfterClass
-    public static void doClose()
-    {
+    public static void doClose() {
         hopper.close();
     }
 
     @Test
-    public void testDoWork()
-    {
+    public void testDoWork() {
         Graph graph = hopper.getGraph();
 
         LocationIndexMatch locationIndex = new LocationIndexMatch(graph, new RAMDirectory());
@@ -75,7 +74,9 @@ public class MapMatchingTest
                 new GHPoint(51.358735, 12.360574),
                 new GHPoint(51.358594, 12.360032));
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
-        assertEquals(3, mr.getEdgeMatches().size());
+        // create street names
+        assertEquals(Arrays.asList("Platnerstraße", "Platnerstraße", "Platnerstraße"),
+                fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), .1);
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis());
 
@@ -83,11 +84,13 @@ public class MapMatchingTest
                 new GHPoint(51.33099, 12.380267),
                 new GHPoint(51.330689, 12.380776));
         mr = mapMatching.doWork(inputGPXEntries);
-        // new GPXFile(mr).doExport("test.gpx");
-        // TODO
-//        assertEquals(5, mr.getEdgeMatches().size());
-//        assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), .1);
-//        assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis());
+        // mr = new GPXFile(mr).doExport("test.gpx");
+        assertEquals(5, mr.getEdgeMatches().size());
+        assertEquals(Arrays.asList("Windmühlenstraße", "Windmühlenstraße",
+                "Bayrischer Platz", "Bayrischer Platz", "Bayrischer Platz"),
+                fetchStreets(mr.getEdgeMatches()));
+        assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), .1);
+        assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis());
 
         // full path
         inputGPXEntries = createRandomGPXEntries(
@@ -97,26 +100,35 @@ public class MapMatchingTest
         new GPXFile(inputGPXEntries).doExport("test-input.gpx");
         mr = mapMatching.doWork(inputGPXEntries);
         new GPXFile(mr).doExport("test.gpx");
-        assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), .1);
+
+        // System.out.println(fetchStreets(mr.getEdgeMatches()));
+        assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 0.5);
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis());
+        assertEquals(138, mr.getEdgeMatches().size());
 
         // TODO full path with 20m distortion
         // TODO full path with 40m distortion
     }
 
-    private List<GPXEntry> createRandomGPXEntries( GHPoint start, GHPoint end )
-    {
+    List<String> fetchStreets(List<EdgeMatch> emList) {
+        List<String> list = new ArrayList<String>();
+        for (EdgeMatch em : emList) {
+            list.add(em.edgeState.getName());
+        }
+        return list;
+    }
+
+    private List<GPXEntry> createRandomGPXEntries(GHPoint start, GHPoint end) {
         hopper.route(new GHRequest(start, end).setWeighting("fastest"));
         return hopper.getEdges(0);
     }
 
     // use a workaround to get access to 
-    static class TestGraphHopper extends GraphHopper
-    {
+    static class TestGraphHopper extends GraphHopper {
+
         private List<Path> paths;
 
-        List<GPXEntry> getEdges( int index )
-        {
+        List<GPXEntry> getEdges(int index) {
             Path path = paths.get(index);
             Translation tr = getTranslationMap().get("en");
             InstructionList instr = path.calcInstructions(tr);
@@ -125,8 +137,7 @@ public class MapMatchingTest
         }
 
         @Override
-        protected List<Path> getPaths( GHRequest request, GHResponse rsp )
-        {
+        protected List<Path> getPaths(GHRequest request, GHResponse rsp) {
             paths = super.getPaths(request, rsp);
             return paths;
         }
