@@ -5,8 +5,7 @@ Read more at [Wikipedia](https://en.wikipedia.org/wiki/Map_matching)
 
 ### Warning
 
-Highly Alpha and even the simple tests do not pass but already good enough
-for prototyping
+Highly Alpha but already good enough for various use cases
 
 ### License
 
