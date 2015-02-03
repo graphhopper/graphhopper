@@ -17,9 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.storage.AbstractGraphStorageTester.*;
@@ -28,9 +26,8 @@ import com.graphhopper.util.Instruction;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.util.*;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
+
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -41,7 +38,7 @@ import static org.junit.Assert.*;
 public class PathTest
 {
     private final EncodingManager carManager = new EncodingManager("CAR");
-    private final FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
+    private final FlagEncoder encoder = carManager.getEncoder("CAR");
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation tr = trMap.getWithFallBack(Locale.US);
 
@@ -211,6 +208,161 @@ public class PathTest
 
         // too far away
         assertNull(il.find(50.8, 50.25, 1000));
+    }
+
+    @Test
+    public void testCalcInstructionsRoundabout()
+    {
+        final AngleCalc ac = new AngleCalc();
+        EdgeIteratorState tmpEdge, edge2change;
+        EncodingManager carManager = new EncodingManager("CAR");
+
+        // counterclockwise roundabout
+        //
+        //         8
+        //         |
+        //         5
+        //       /  \
+        //  1 - 2    4 - 7
+        //       \  /
+        //        3
+        //        |
+        //        6
+
+        Graph g = new GraphBuilder(carManager).create();
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(1, 52.514321,13.34826);
+        na.setNode(2, 52.514432,13.349032);
+        na.setNode(3, 52.513857,13.350255);
+        na.setNode(4, 52.514536,13.351178);
+        na.setNode(5, 52.51502, 13.349333);
+        na.setNode(6, 52.513322,13.350363);
+        na.setNode(7, 52.514562,13.351886);
+        na.setNode(8, 52.51545, 13.348024);
+
+        tmpEdge = g.edge(1, 2, 5, true).setName("MainStreet");
+        tmpEdge = g.edge(2, 3, 5, false).setName("2-3");
+        tmpEdge.setFlags(encoder.setBool(tmpEdge.getFlags(), FlagEncoder.K_ROUNDABOUT, true));
+        tmpEdge = g.edge(3, 4, 5, false).setName("3-4");
+        tmpEdge.setFlags(encoder.setBool(tmpEdge.getFlags(), FlagEncoder.K_ROUNDABOUT, true));
+        tmpEdge = g.edge(4, 5, 5, false).setName("4-5");
+        tmpEdge.setFlags(encoder.setBool(tmpEdge.getFlags(), FlagEncoder.K_ROUNDABOUT, true));
+        tmpEdge = g.edge(5, 2, 5, false).setName("5-2");
+        tmpEdge.setFlags(encoder.setBool(tmpEdge.getFlags(), FlagEncoder.K_ROUNDABOUT, true));
+        tmpEdge = g.edge(4, 7, 5, true).setName("MainStreet");
+        tmpEdge = g.edge(5, 8, 5, true).setName("5-8");
+        tmpEdge = g.edge(3, 6, 5, true).setName("3-6");
+        edge2change = tmpEdge.detach(false);
+
+        double inOrientation = ac.calcOrientation(na.getLat(1), na.getLon(1), na.getLat(2), na.getLon(2));
+        Path p = new Dijkstra(g, carManager.getSingle(), new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 8);
+        InstructionList wayList = p.calcInstructions(tr);
+        // Test instructions
+        List<String> tmpList = pick("text", wayList.createJson());
+        assertEquals(Arrays.asList( "Continue onto MainStreet",
+                                    "Enter roundabout and use exit 3 in direction 5-8",
+                                    "Finish!"),
+                     tmpList);
+        // Test Radian
+        double outOrientation = ac.calcOrientation(na.getLat(5), na.getLon(5), na.getLat(8), na.getLon(8));
+        outOrientation = ac.alignOrientation(inOrientation, outOrientation);
+        double delta = (inOrientation - outOrientation);
+        delta = Math.PI - delta;
+        assertEquals(wayList.get(1).getRadian(), delta, 0.01);
+
+        // case of continuing a street through a roundabout
+        p = new Dijkstra(g, carManager.getSingle(), new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 7);
+        wayList = p.calcInstructions(tr);
+        tmpList = pick("text", wayList.createJson());
+        assertEquals(Arrays.asList( "Continue onto MainStreet",
+                                    "Enter roundabout and use exit 2 in direction MainStreet",
+                                    "Finish!"),
+                tmpList);
+        // Test Radian
+        outOrientation = ac.calcOrientation(na.getLat(4), na.getLon(4), na.getLat(7), na.getLon(7));
+        outOrientation = ac.alignOrientation(inOrientation, outOrientation);
+        delta = (inOrientation - outOrientation);
+        delta = Math.PI - delta;
+        assertEquals(wayList.get(1).getRadian(), delta, 0.01);
+
+        // case with one edge being not an exit
+        edge2change.setFlags(encoder.setBool(edge2change.getFlags(), FlagEncoder.K_FORWARD, false));
+        p = new Dijkstra(g, carManager.getSingle(), new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 8);
+        wayList = p.calcInstructions(tr);
+        tmpList = pick("text", wayList.createJson());
+        assertEquals(Arrays.asList( "Continue onto MainStreet",
+                        "Enter roundabout and use exit 2 in direction 5-8",
+                        "Finish!"),
+                tmpList);
+        // Test Radian
+        outOrientation = ac.calcOrientation(na.getLat(5), na.getLon(5), na.getLat(8), na.getLon(8));
+        outOrientation = ac.alignOrientation(inOrientation, outOrientation);
+        delta = (inOrientation - outOrientation);
+        delta = Math.PI - delta;
+        assertEquals(wayList.get(1).getRadian(), delta, 0.01);
+
+
+
+        // clockwise roundabout
+        //
+        //         8
+        //         |
+        //         5
+        //       /  \
+        //  1 - 2    4 - 7
+        //       \  /
+        //        3
+        //        |
+        //        6
+
+        g = new GraphBuilder(carManager).create();
+        na = g.getNodeAccess();
+        na.setNode(1, 52.514321,13.34826);
+        na.setNode(2, 52.514432,13.349032);
+        na.setNode(3, 52.513857,13.350255);
+        na.setNode(4, 52.514536,13.351178);
+        na.setNode(5, 52.51502, 13.349333);
+        na.setNode(6, 52.513322,13.350363);
+        na.setNode(7, 52.514562,13.351886);
+        na.setNode(8, 52.51545, 13.348024);
+
+        tmpEdge = g.edge(1, 2, 5, true).setName("MainStreet");
+        tmpEdge = g.edge(2, 5, 5, false).setName("2-3");
+        tmpEdge.setFlags(encoder.setBool(tmpEdge.getFlags(), FlagEncoder.K_ROUNDABOUT, true));
+        tmpEdge = g.edge(5, 4, 5, false).setName("3-4");
+        tmpEdge.setFlags(encoder.setBool(tmpEdge.getFlags(), FlagEncoder.K_ROUNDABOUT, true));
+        tmpEdge = g.edge(4, 3, 5, false).setName("4-5");
+        tmpEdge.setFlags(encoder.setBool(tmpEdge.getFlags(), FlagEncoder.K_ROUNDABOUT, true));
+        tmpEdge = g.edge(3, 2, 5, false).setName("5-2");
+        tmpEdge.setFlags(encoder.setBool(tmpEdge.getFlags(), FlagEncoder.K_ROUNDABOUT, true));
+        tmpEdge = g.edge(4, 7, 5, true).setName("MainStreet");
+        tmpEdge = g.edge(5, 8, 5, true).setName("5-8");
+        tmpEdge = g.edge(3, 6, 5, true).setName("3-6");
+
+        p = new Dijkstra(g, carManager.getSingle(), new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 8);
+        wayList = p.calcInstructions(tr);
+        tmpList = pick("text", wayList.createJson());
+        assertEquals(Arrays.asList( "Continue onto MainStreet",
+                        "Enter roundabout and use exit 1 in direction 5-8",
+                        "Finish!"),
+                tmpList);
+        // Test Radian
+        outOrientation = ac.calcOrientation(na.getLat(5), na.getLon(5), na.getLat(8), na.getLon(8));
+        outOrientation = ac.alignOrientation(inOrientation, outOrientation);
+        delta = (inOrientation - outOrientation);
+        delta = Math.PI + delta;
+        assertEquals(wayList.get(1).getRadian(), delta, 0.01);
+    }
+
+    List<String> pick( String key, List<Map<String, Object>> instructionJson )
+    {
+        List<String> list = new ArrayList<String>();
+
+        for (Map<String, Object> json : instructionJson)
+        {
+            list.add(json.get(key).toString());
+        }
+        return list;
     }
 
 }
