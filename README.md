@@ -2,6 +2,8 @@
 
 [![Build Status](https://secure.travis-ci.org/graphhopper/map-matching.png?branch=master)](http://travis-ci.org/graphhopper/map-matching)
 
+![Map Matching Illustration](https://karussell.files.wordpress.com/2014/07/map-matching.png)
+
 Map matching is the process to match a sequence of real world coordinates into a digital map.
 Read more at [Wikipedia](https://en.wikipedia.org/wiki/Map_matching). It can be used for tracking vehicles' GPS information,
 important for further digital analysis.
