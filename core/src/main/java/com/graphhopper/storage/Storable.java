@@ -30,7 +30,7 @@ import java.io.Closeable;
  * interface</li>
  * <li>if(!storable.loadExisting()) storable.create()</li>
  * <li>usage storable and optional flush() calls in-between. Keep in mind that some data structure
- * could require a call to increase memory while usage. E.g. DataAccess.incCapacity()</li>
+ * could require a call to increase memory while usage. E.g. DataAccess.ensureCapacity()</li>
  * <li>Finally do close() which does no flush()</li>
  * </ol>
  * <p/>

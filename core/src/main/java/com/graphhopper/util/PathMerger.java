@@ -31,7 +31,7 @@ import java.util.List;
 public class PathMerger
 {
     private boolean enableInstructions = true;
-    private boolean simplifyRequest = false;
+    private boolean simplifyResponse = false;
     private DouglasPeucker douglasPeucker;
     private boolean calcPoints;
 
@@ -40,6 +40,7 @@ public class PathMerger
         int origPoints = 0;
         StopWatch sw;
         long fullMillis = 0;
+        double fullWeight = 0;
         double fullDistance = 0;
         boolean allFound = true;
 
@@ -50,6 +51,7 @@ public class PathMerger
             Path path = paths.get(pathIndex);
             fullMillis += path.getMillis();
             fullDistance += path.getDistance();
+            fullWeight += path.getWeight();
             if (enableInstructions)
             {
                 InstructionList il = path.calcInstructions(tr);
@@ -62,7 +64,7 @@ public class PathMerger
 
                     for (Instruction i : il)
                     {
-                        if (simplifyRequest)
+                        if (simplifyResponse)
                         {
                             origPoints += i.getPoints().size();
                             douglasPeucker.simplify(i.getPoints());
@@ -86,7 +88,7 @@ public class PathMerger
                 if (fullPoints.isEmpty())
                     fullPoints = createSimilarPL(tmpPoints);
 
-                if (simplifyRequest)
+                if (simplifyResponse)
                 {
                     origPoints = tmpPoints.getSize();
                     sw = new StopWatch().start();
@@ -108,8 +110,13 @@ public class PathMerger
         if (enableInstructions)
             rsp.setInstructions(fullInstructions);
 
-        rsp.setFound(allFound).
-                setPoints(fullPoints).
+        if (!allFound)
+        {
+            rsp.addError(new RuntimeException("Not found"));
+        }
+
+        rsp.setPoints(fullPoints).
+                setRouteWeight(fullWeight).
                 setDistance(fullDistance).
                 setMillis(fullMillis);
     }
@@ -131,9 +138,9 @@ public class PathMerger
         return this;
     }
 
-    public PathMerger setSimplifyRequest( boolean simplifyRequest )
+    public PathMerger setSimplifyResponse( boolean simplifyRes )
     {
-        this.simplifyRequest = simplifyRequest;
+        this.simplifyResponse = simplifyRes;
         return this;
     }
 

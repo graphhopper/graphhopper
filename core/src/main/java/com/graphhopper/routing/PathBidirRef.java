@@ -21,7 +21,6 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
 
 /**
  * This class creates a DijkstraPath from two Edge's resulting from a BidirectionalDijkstra
@@ -66,10 +65,8 @@ public class PathBidirRef extends Path
         if (edgeEntry == null || edgeTo == null)
             return this;
 
-        int from = GHUtility.getToNode(graph, edgeEntry.edge, edgeEntry.adjNode);
-        int to = GHUtility.getToNode(graph, edgeTo.edge, edgeTo.adjNode);
-        if (from != to)
-            throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString());
+        if (edgeEntry.adjNode != edgeTo.adjNode)
+            throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString() + ", fromEntry:" + edgeEntry + ", toEntry:" + edgeTo);
 
         extractSW.start();
         if (switchWrapper)

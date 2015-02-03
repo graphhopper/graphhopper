@@ -1,0 +1,789 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns="http://www.topografix.com/GPX/1/1"
+    targetNamespace="http://www.topografix.com/GPX/1/1"    
+    elementFormDefault="qualified">
+
+    <xsd:annotation>
+        <xsd:documentation>
+            GPX schema version 1.1 - For more information on GPX and this schema, visit http://www.topografix.com/gpx.asp
+
+            GPX uses the following conventions: all coordinates are relative to the WGS84 datum.  All measurements are in metric units.
+        </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:element name="gpx"	type="gpxType">
+        <xsd:annotation>
+            <xsd:documentation>
+                GPX is the root element in the XML file.
+            </xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+
+    <xsd:complexType name="gpxType">
+        <xsd:annotation>
+            <xsd:documentation>
+                GPX documents contain a metadata header, followed by waypoints, routes, and tracks.  You can add your own elements
+                to the extensions section of the GPX document.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="metadata"	type="metadataType"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Metadata about the file.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="wpt"			type="wptType"	minOccurs="0" maxOccurs="unbounded">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        A list of waypoints.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="rte"			type="rteType"	minOccurs="0" maxOccurs="unbounded">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        A list of routes.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="trk"			type="trkType"	minOccurs="0" maxOccurs="unbounded">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        A list of tracks.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="extensions"	type="extensionsType"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        You can add extend GPX by adding your own elements from another schema here.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+
+        <xsd:attribute name="version" type="xsd:string" use="required" fixed="1.1">
+            <xsd:annotation>
+                <xsd:documentation>
+                    You must include the version number in your GPX document.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="creator" type="xsd:string" use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    You must include the name or URL of the software that created your GPX document.  This allows others to
+                    inform the creator of a GPX instance document that fails to validate.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:complexType name="metadataType">
+        <xsd:annotation>
+            <xsd:documentation>
+                Information about the GPX file, author, and copyright restrictions goes in the metadata section.  Providing rich,
+                meaningful information about your GPX files allows others to search for and use your GPS data.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>	<!-- elements must appear in this order -->
+            <xsd:element name="name"		type="xsd:string"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        The name of the GPX file.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="desc"		type="xsd:string"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        A description of the contents of the GPX file.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="author"		type="personType"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        The person or organization who created the GPX file.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="copyright"	type="copyrightType"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Copyright and license information governing use of the file.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="link"		type="linkType"			minOccurs="0" maxOccurs="unbounded">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        URLs associated with the location described in the file.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="time"		type="xsd:dateTime"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        The creation date of the file.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="keywords"	type="xsd:string"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Keywords associated with the file.  Search engines or databases can use this information to classify the data.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="bounds"		type="boundsType"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Minimum and maximum coordinates which describe the extent of the coordinates in the file.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+
+            <xsd:element name="extensions"	type="extensionsType"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        You can add extend GPX by adding your own elements from another schema here.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="wptType">
+        <xsd:annotation>
+            <xsd:documentation>
+                wpt represents a waypoint, point of interest, or named feature on a map.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>	<!-- elements must appear in this order -->
+            <!-- Position info -->
+            <xsd:element name="ele"			type="xsd:decimal"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Elevation (in meters) of the point.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="time"			type="xsd:dateTime"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Creation/modification timestamp for element. Date and time in are in Univeral Coordinated Time (UTC), not local time! Conforms to ISO 8601 specification for date/time representation. Fractional seconds are allowed for millisecond timing in tracklogs. 
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="magvar"		type="degreesType"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Magnetic variation (in degrees) at the point
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="geoidheight"	type="xsd:decimal"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Height (in meters) of geoid (mean sea level) above WGS84 earth ellipsoid.  As defined in NMEA GGA message.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+
+            <!-- Description info -->
+            <xsd:element name="name"			type="xsd:string"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        The GPS name of the waypoint. This field will be transferred to and from the GPS. GPX does not place restrictions on the length of this field or the characters contained in it. It is up to the receiving application to validate the field before sending it to the GPS.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="cmt"			type="xsd:string"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        GPS waypoint comment. Sent to GPS as comment. 
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="desc"			type="xsd:string"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        A text description of the element. Holds additional information about the element intended for the user, not the GPS.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="src"			type="xsd:string"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Source of data. Included to give user some idea of reliability and accuracy of data.  "Garmin eTrex", "USGS quad Boston North", e.g.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="link"			type="linkType"			minOccurs="0" maxOccurs="unbounded">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Link to additional information about the waypoint.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="sym"			type="xsd:string"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Text of GPS symbol name. For interchange with other programs, use the exact spelling of the symbol as displayed on the GPS.  If the GPS abbreviates words, spell them out.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="type"			type="xsd:string"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Type (classification) of the waypoint.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+
+            <!-- Accuracy info -->
+            <xsd:element name="fix"			type="fixType"			minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Type of GPX fix.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="sat"			type="xsd:nonNegativeInteger"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Number of satellites used to calculate the GPX fix.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="hdop"			type="xsd:decimal"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Horizontal dilution of precision.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="vdop"			type="xsd:decimal"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Vertical dilution of precision.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="pdop"			type="xsd:decimal"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Position dilution of precision.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="ageofdgpsdata"	type="xsd:decimal"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Number of seconds since last DGPS update.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="dgpsid"		type="dgpsStationType"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        ID of DGPS station used in differential correction.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+
+            <xsd:element name="extensions"		type="extensionsType"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        You can add extend GPX by adding your own elements from another schema here.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+
+        <xsd:attribute name="lat"			type="latitudeType"		use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The latitude of the point.  This is always in decimal degrees, and always in WGS84 datum.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="lon"			type="longitudeType"	use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The longitude of the point.  This is always in decimal degrees, and always in WGS84 datum.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:complexType name="rteType">
+        <xsd:annotation>
+            <xsd:documentation>
+                rte represents route - an ordered list of waypoints representing a series of turn points leading to a destination.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="name"			type="xsd:string"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        GPS name of route.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="cmt"			type="xsd:string"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        GPS comment for route.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="desc"			type="xsd:string"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Text description of route for user.  Not sent to GPS.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="src"			type="xsd:string"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Source of data. Included to give user some idea of reliability and accuracy of data.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="link"			type="linkType"		minOccurs="0" maxOccurs="unbounded">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Links to external information about the route.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="number"		type="xsd:nonNegativeInteger"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        GPS route number.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="type"			type="xsd:string"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Type (classification) of route.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+
+            <xsd:element name="extensions"		type="extensionsType"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        You can add extend GPX by adding your own elements from another schema here.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+ 
+            <xsd:element name="rtept"	type="wptType" minOccurs="0" maxOccurs="unbounded">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        A list of route points.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="trkType">
+        <xsd:annotation>
+            <xsd:documentation>
+                trk represents a track - an ordered list of points describing a path.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="name"			type="xsd:string"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        GPS name of track.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="cmt"			type="xsd:string"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        GPS comment for track.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="desc"			type="xsd:string"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        User description of track.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="src"			type="xsd:string"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Source of data. Included to give user some idea of reliability and accuracy of data.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="link"			type="linkType"			minOccurs="0" maxOccurs="unbounded">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Links to external information about track.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="number"		type="xsd:nonNegativeInteger"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        GPS track number.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="type"			type="xsd:string"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Type (classification) of track.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+
+            <xsd:element name="extensions"	type="extensionsType"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        You can add extend GPX by adding your own elements from another schema here.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+  
+            <xsd:element name="trkseg"		type="trksegType"		minOccurs="0" maxOccurs="unbounded">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        A Track Segment holds a list of Track Points which are logically connected in order. To represent a single GPS track where GPS reception was lost, or the GPS receiver was turned off, start a new Track Segment for each continuous span of track data.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+ 
+    <xsd:complexType name="extensionsType">
+        <xsd:annotation>
+            <xsd:documentation>
+                You can add extend GPX by adding your own elements from another schema here.
+            </xsd:documentation>
+        </xsd:annotation>
+        <!-- as we need separate namespace 'gh' could not get it working with proper validation :( so ignoring this for now-->
+        <xsd:sequence>
+            <xsd:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        You can add extend GPX by adding your own elements from another schema here.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:any>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="trksegType">
+        <xsd:annotation>
+            <xsd:documentation>
+                A Track Segment holds a list of Track Points which are logically connected in order. To represent a single GPS track where GPS reception was lost, or the GPS receiver was turned off, start a new Track Segment for each continuous span of track data.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>	<!-- elements must appear in this order -->
+            <xsd:element name="trkpt"	type="wptType" minOccurs="0" maxOccurs="unbounded">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        A Track Point holds the coordinates, elevation, timestamp, and metadata for a single point in a track.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+
+            <xsd:element name="extensions"	type="extensionsType"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        You can add extend GPX by adding your own elements from another schema here.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="copyrightType">
+        <xsd:annotation>
+            <xsd:documentation>
+                Information about the copyright holder and any license governing use of this file.  By linking to an appropriate license,
+                you may place your data into the public domain or grant additional usage rights.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>	<!-- elements must appear in this order -->
+            <xsd:element name="year"		type="xsd:gYear"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Year of copyright.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="license"		type="xsd:anyURI"	minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Link to external file containing license text.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+        <xsd:attribute name="author" type="xsd:string" use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    Copyright holder (TopoSoft, Inc.)
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:complexType name="linkType">
+        <xsd:annotation>
+            <xsd:documentation>
+                A link to an external resource (Web page, digital photo, video clip, etc) with additional information.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>	<!-- elements must appear in this order -->
+            <xsd:element name="text"		type="xsd:string"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Text of hyperlink.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="type"		type="xsd:string"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Mime type of content (image/jpeg)
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+        <xsd:attribute name="href" type="xsd:anyURI" use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    URL of hyperlink.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:complexType name="emailType">
+        <xsd:annotation>
+            <xsd:documentation>
+                An email address.  Broken into two parts (id and domain) to help prevent email harvesting.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:attribute name="id"			type="xsd:string"		use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    id half of email address (billgates2004)
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="domain"		type="xsd:string"		use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    domain half of email address (hotmail.com)
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:complexType name="personType">
+        <xsd:annotation>
+            <xsd:documentation>
+                A person or organization.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>	<!-- elements must appear in this order -->
+            <xsd:element name="name"		type="xsd:string"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Name of person or organization.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="email"		type="emailType"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Email address.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="link"		type="linkType"			minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Link to Web site or other external information about person.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="ptType">
+        <xsd:annotation>
+            <xsd:documentation>
+                A geographic point with optional elevation and time.  Available for use by other schemas.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>	<!-- elements must appear in this order -->
+            <xsd:element name="ele"			type="xsd:decimal"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        The elevation (in meters) of the point.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="time"		type="xsd:dateTime"		minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        The time that the point was recorded.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+        <xsd:attribute name="lat"			type="latitudeType"		use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The latitude of the point.  Decimal degrees, WGS84 datum.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="lon"			type="longitudeType"	use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The latitude of the point.  Decimal degrees, WGS84 datum.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:complexType name="ptsegType">
+        <xsd:annotation>
+            <xsd:documentation>
+                An ordered sequence of points.  (for polygons or polylines, e.g.)
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>	<!-- elements must appear in this order -->
+            <xsd:element name="pt"	type="ptType"	minOccurs="0" maxOccurs="unbounded">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Ordered list of geographic points.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="boundsType">
+        <xsd:annotation>
+            <xsd:documentation>
+                Two lat/lon pairs defining the extent of an element.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:attribute name="minlat"		type="latitudeType"		use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The minimum latitude.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="minlon"		type="longitudeType"	use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The minimum longitude.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="maxlat"		type="latitudeType"		use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The maximum latitude.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="maxlon"		type="longitudeType"	use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The maximum longitude.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
+
+    <xsd:simpleType name="latitudeType">
+        <xsd:annotation>
+            <xsd:documentation>
+                The latitude of the point.  Decimal degrees, WGS84 datum.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="xsd:decimal">
+            <xsd:minInclusive value="-90.0"/>
+            <xsd:maxInclusive value="90.0"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="longitudeType">
+        <xsd:annotation>
+            <xsd:documentation>
+                The longitude of the point.  Decimal degrees, WGS84 datum.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="xsd:decimal">
+            <xsd:minInclusive value="-180.0"/>
+            <xsd:maxExclusive value="180.0"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="degreesType">
+        <xsd:annotation>
+            <xsd:documentation>
+                Used for bearing, heading, course.  Units are decimal degrees, true (not magnetic).
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="xsd:decimal">
+            <xsd:minInclusive value="0.0"/>
+            <xsd:maxExclusive value="360.0"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="fixType">
+        <xsd:annotation>
+            <xsd:documentation>
+                Type of GPS fix.  none means GPS had no fix.  To signify "the fix info is unknown, leave out fixType entirely. pps = military signal used
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="none"/>
+            <xsd:enumeration value="2d"/>
+            <xsd:enumeration value="3d"/>
+            <xsd:enumeration value="dgps"/>
+            <xsd:enumeration value="pps"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="dgpsStationType">
+        <xsd:annotation>
+            <xsd:documentation>
+                Represents a differential GPS station.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="xsd:integer">
+            <xsd:minInclusive value="0"/>
+            <xsd:maxInclusive value="1023"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+</xsd:schema>

@@ -113,7 +113,7 @@ public class SimpleFSLockFactory implements LockFactory
         @Override
         public synchronized void release()
         {
-            if (isLocked() && !lockFile.delete())
+            if (isLocked() && lockFile.exists() && !lockFile.delete())
                 throw new RuntimeException("Cannot release lock file: " + lockFile);
         }
 

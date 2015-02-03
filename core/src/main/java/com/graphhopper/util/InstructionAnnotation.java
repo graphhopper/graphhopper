@@ -24,22 +24,33 @@ package com.graphhopper.util;
 public class InstructionAnnotation
 {
     public final static InstructionAnnotation EMPTY = new InstructionAnnotation();
-    private final boolean empty;
-    private final int importance;
-    private final String message;
+    private boolean empty;
+    private int importance;
+    private String message;
 
     private InstructionAnnotation()
     {
-        this.empty = true;
-        this.importance = 0;
-        this.message = "";
+        setEmpty();
     }
 
     public InstructionAnnotation( int importance, String message )
     {
-        this.empty = false;
-        this.importance = importance;
-        this.message = message;
+        if (message.isEmpty() && importance == 0)
+        {
+            setEmpty();
+        } else
+        {
+            this.empty = false;
+            this.importance = importance;
+            this.message = message;
+        }
+    }
+
+    private void setEmpty()
+    {
+        this.empty = true;
+        this.importance = 0;
+        this.message = "";
     }
 
     public boolean isEmpty()

@@ -20,15 +20,15 @@ package com.graphhopper.routing.util;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.XFirstSearch;
+import com.graphhopper.util.*;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import gnu.trove.list.array.TIntArrayList;
 
 /**
  * Removes nodes which are not part of the largest network. Ie. mostly nodes with no edges at all
@@ -43,8 +43,10 @@ public class PrepareRoutingSubnetworks
     private final GraphStorage g;
     private final EdgeFilter edgeFilter;
     private int minNetworkSize = 200;
+    private int minOnewayNetworkSize = 0;
     private int subNetworks = -1;
     private final AtomicInteger maxEdgesPerNode = new AtomicInteger(0);
+    private final EncodingManager encodingManager;
 
     public PrepareRoutingSubnetworks( GraphStorage g, EncodingManager em )
     {
@@ -55,6 +57,7 @@ public class PrepareRoutingSubnetworks
             edgeFilter = EdgeFilter.ALL_EDGES;
         else
             edgeFilter = new DefaultEdgeFilter(em.getSingle());
+        this.encodingManager = em;
     }
 
     public PrepareRoutingSubnetworks setMinNetworkSize( int minNetworkSize )
@@ -63,12 +66,24 @@ public class PrepareRoutingSubnetworks
         return this;
     }
 
+    public PrepareRoutingSubnetworks setMinOnewayNetworkSize( int minOnewayNetworkSize )
+    {
+        this.minOnewayNetworkSize = minOnewayNetworkSize;
+        return this;
+    }
+
     public void doWork()
     {
         int del = removeZeroDegreeNodes();
         Map<Integer, Integer> map = findSubnetworks();
         keepLargeNetworks(map);
+
+        int unvisitedDeadEnds = 0;
+        if ((this.minOnewayNetworkSize > 0) && (this.encodingManager.getVehicleCount() == 1))
+            unvisitedDeadEnds = removeDeadEndUnvisitedNetworks(this.encodingManager.getSingle());
+
         logger.info("optimize to remove subnetworks (" + map.size() + "), zero-degree-nodes (" + del + "), "
+                + "unvisited-dead-end-nodes(" + unvisitedDeadEnds + "), "
                 + "maxEdges/node (" + maxEdgesPerNode.get() + ")");
         g.optimize();
         subNetworks = map.size();
@@ -81,17 +96,21 @@ public class PrepareRoutingSubnetworks
 
     public Map<Integer, Integer> findSubnetworks()
     {
+        return findSubnetworks(g.createEdgeExplorer(edgeFilter));
+    }
+
+    private Map<Integer, Integer> findSubnetworks( final EdgeExplorer explorer )
+    {
         final Map<Integer, Integer> map = new HashMap<Integer, Integer>();
         final AtomicInteger integ = new AtomicInteger(0);
         int locs = g.getNodes();
         final GHBitSet bs = new GHBitSetImpl(locs);
-        EdgeExplorer explorer = g.createEdgeExplorer(edgeFilter);
         for (int start = 0; start < locs; start++)
         {
             if (g.isNodeRemoved(start) || bs.contains(start))
                 continue;
 
-            new XFirstSearch()
+            new BreadthFirstSearch()
             {
                 int tmpCounter = 0;
 
@@ -119,7 +138,7 @@ public class PrepareRoutingSubnetworks
                     return true;
                 }
 
-            }.start(explorer, start, false);
+            }.start(explorer, start);
             map.put(start, integ.get());
             integ.set(0);
         }
@@ -127,7 +146,7 @@ public class PrepareRoutingSubnetworks
     }
 
     /**
-     * Deletes all but the larges subnetworks.
+     * Deletes all but the largest subnetworks.
      */
     void keepLargeNetworks( Map<Integer, Integer> map )
     {
@@ -171,7 +190,7 @@ public class PrepareRoutingSubnetworks
             return;
         }
         EdgeExplorer explorer = g.createEdgeExplorer(edgeFilter);
-        new XFirstSearch()
+        new DepthFirstSearch()
         {
             @Override
             protected GHBitSet createBitSet()
@@ -185,7 +204,7 @@ public class PrepareRoutingSubnetworks
                 g.markNodeRemoved(nodeId);
                 return super.goFurther(nodeId);
             }
-        }.start(explorer, start, true);
+        }.start(explorer, start);
     }
 
     /**
@@ -205,6 +224,34 @@ public class PrepareRoutingSubnetworks
             {
                 removed++;
                 g.markNodeRemoved(start);
+            }
+        }
+        return removed;
+    }
+
+    /**
+     * Clean small networks that will be never be visited by this explorer See #86 For example,
+     * small areas like parking lots are sometimes connected to the whole network through a one-way road.
+     * This is clearly an error - but is causes the routing to fail when point get connected to this
+     * small area. This routines removed all these points from the graph.
+     * <p/>
+     * @return number of removed nodes;
+     */
+    public int removeDeadEndUnvisitedNetworks( final FlagEncoder encoder )
+    {
+        // Partition g into strongly connected components using Tarjan's Algorithm.
+        final EdgeFilter filter = new DefaultEdgeFilter(encoder, false, true);
+        List<TIntArrayList> components = new TarjansStronglyConnectedComponentsAlgorithm(g, filter).findComponents();
+
+        // remove components less than minimum size
+        int removed = 0;
+        for (TIntArrayList component : components) {
+
+            if (component.size() < minOnewayNetworkSize) {
+                for (int i = 0; i < component.size(); i++) {
+                    g.markNodeRemoved(component.get(i));
+                    removed ++;
+                }
             }
         }
         return removed;

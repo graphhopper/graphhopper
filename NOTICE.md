@@ -18,5 +18,7 @@ web
  * org.json, MIT style license
  * com.google.inject, Apache License 2.0
  * images from mapbox https://www.mapbox.com/maki/, BSD License, see core/files
+
+android
  * android, Apache License 2.0
  * org.mapsforge, LGPL

@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <actions>
     <action>
+        <actionName>CUSTOM-install</actionName>
+        <displayName>install</displayName>
+        <goals>
+            <goal>install</goal>
+        </goals>
+        <properties>
+            <skipTests>true</skipTests>
+        </properties>
+    </action>
+    <action>
         <actionName>CUSTOM-failsafe verify</actionName>
         <displayName>failsafe verify</displayName>
         <goals>
@@ -9,46 +19,46 @@
         </goals>
     </action>
     <action>
-            <actionName>run</actionName>
-            <packagings>
-                <packaging>jar</packaging>
-            </packagings>
-            <goals>
-                <goal>process-classes</goal>
-                <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
-            </goals>
-            <properties>
-                <exec.args>-classpath %classpath com.graphhopper.http.GHServer graph.elevation.cachedir=../srtmprovider jetty.port=8989 config=../config.properties osmreader.osm=../core/files/neudrossenfeld.osm.pbf</exec.args>
-                <exec.executable>java</exec.executable>
-            </properties>
-        </action>
+        <actionName>run</actionName>
+        <packagings>
+            <packaging>jar</packaging>
+        </packagings>
+        <goals>
+            <goal>process-classes</goal>
+            <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
+        </goals>
+        <properties>
+            <exec.args>-classpath %classpath com.graphhopper.http.GHServer graph.elevation.cachedir=../srtmprovider jetty.port=8989 config=../config.properties osmreader.osm=../europe_germany_berlin.pbf</exec.args>
+            <exec.executable>java</exec.executable>
+        </properties>
+    </action>
     <action>
-            <actionName>debug</actionName>
-            <packagings>
-                <packaging>jar</packaging>
-            </packagings>
-            <goals>
-                <goal>process-classes</goal>
-                <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
-            </goals>
-            <properties>
-                <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -classpath %classpath com.graphhopper.http.GHServer graph.elevation.cachedir=../srtmprovider jetty.port=8989 config=../config.properties osmreader.osm=../core/files/neudrossenfeld.osm.pbf</exec.args>
-                <exec.executable>java</exec.executable>
-                <jpda.listen>true</jpda.listen>
-            </properties>
-        </action>
+        <actionName>debug</actionName>
+        <packagings>
+            <packaging>jar</packaging>
+        </packagings>
+        <goals>
+            <goal>process-classes</goal>
+            <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
+        </goals>
+        <properties>
+            <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -classpath %classpath com.graphhopper.http.GHServer graph.elevation.cachedir=../srtmprovider jetty.port=8989 config=../config.properties osmreader.osm=../europe_germany_berlin.pbf</exec.args>
+            <exec.executable>java</exec.executable>
+            <jpda.listen>true</jpda.listen>
+        </properties>
+    </action>
     <action>
-            <actionName>profile</actionName>
-            <packagings>
-                <packaging>jar</packaging>
-            </packagings>
-            <goals>
-                <goal>process-classes</goal>
-                <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
-            </goals>
-            <properties>
-                <exec.args>-classpath %classpath com.graphhopper.http.GHServer graph.elevation.cachedir=../srtmprovider jetty.port=8989 config=../config.properties osmreader.osm=../core/files/neudrossenfeld.osm.pbf</exec.args>
-                <exec.executable>java</exec.executable>
-            </properties>
-        </action>
+        <actionName>profile</actionName>
+        <packagings>
+            <packaging>jar</packaging>
+        </packagings>
+        <goals>
+            <goal>process-classes</goal>
+            <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
+        </goals>
+        <properties>
+            <exec.args>-classpath %classpath com.graphhopper.http.GHServer graph.elevation.cachedir=../srtmprovider jetty.port=8989 config=../config.properties osmreader.osm=../europe_germany_berlin.pbf</exec.args>
+            <exec.executable>java</exec.executable>
+        </properties>
+    </action>
 </actions>

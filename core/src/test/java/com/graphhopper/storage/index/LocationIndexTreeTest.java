@@ -23,11 +23,10 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.set.hash.TIntHashSet;
+import java.util.Arrays;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -49,9 +48,9 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     public LocationIndexTree internalCreateIndex( Graph g, int minMeter )
     {
         Directory dir = new RAMDirectory(location);
-        LocationIndexTree idx = new LocationIndexTree(g, dir);
-        idx.setResolution(minMeter).prepareIndex();
-        return idx;
+        LocationIndexTree tmpIDX = new LocationIndexTree(g, dir);
+        tmpIDX.setResolution(minMeter).prepareIndex();
+        return tmpIDX;
     }
 
     @Override
@@ -109,8 +108,8 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
         assertEquals(Helper.createTList(4, 4), index.getEntries());
 
-        assertEquals(3, inMemIndex.getEntriesOf(0).size());
-        assertEquals(8, inMemIndex.getEntriesOf(1).size());
+        assertEquals(4, inMemIndex.getEntriesOf(0).size());
+        assertEquals(10, inMemIndex.getEntriesOf(1).size());
         assertEquals(0, inMemIndex.getEntriesOf(2).size());
         // [LEAF 0 {} {0, 2}, LEAF 2 {} {0, 1}, LEAF 1 {} {2}, LEAF 3 {} {1}, LEAF 8 {} {0}, LEAF 10 {} {0}, LEAF 9 {} {0}, LEAF 4 {} {2}, LEAF 6 {} {0, 1, 2, 3}, LEAF 5 {} {0, 2, 3}, LEAF 7 {} {1, 2, 3}, LEAF 13 {} {1}]        
         // System.out.println(inMemIndex.getLayer(2));
@@ -120,11 +119,12 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         // [LEAF 0 {2} {},    LEAF 2 {1} {},    LEAF 1 {2} {}, LEAF 3 {1} {}, LEAF 8 {0} {}, LEAF 10 {0} {}, LEAF 9 {0} {}, LEAF 4 {2} {}, LEAF 6 {0, 3} {},       LEAF 5 {0, 2, 3} {}, LEAF 7 {1, 2, 3} {}, LEAF 13 {1} {}]
         // System.out.println(inMemIndex.getLayer(2));
 
-        index.setSearchRegion(false);
         TIntHashSet set = new TIntHashSet();
         set.add(0);
-        assertEquals(set, index.findNetworkEntries(0.5, -0.5));
-        assertEquals(set, index.findNetworkEntries(-0.5, -0.9));
+        assertEquals(set, index.findNetworkEntries(0.5, -0.5, 2));
+        set.add(1);
+        set.add(2);
+        assertEquals(set, index.findNetworkEntries(-0.5, -0.9, 2));
         assertEquals(2, index.findID(-0.5, -0.9));
 
         // The optimization if(dist > normedHalf) => feed nodeA or nodeB
@@ -148,26 +148,25 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         index.setMinResolutionInMeter(500).prepareAlgo();
         LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
         assertEquals(Helper.createTList(4, 4), index.getEntries());
-        assertEquals(1, inMemIndex.getEntriesOf(0).size());
-        assertEquals(4, inMemIndex.getEntriesOf(1).size());
+        assertEquals(3, inMemIndex.getEntriesOf(0).size());
+        assertEquals(5, inMemIndex.getEntriesOf(1).size());
         assertEquals(0, inMemIndex.getEntriesOf(2).size());
 
         index.dataAccess.create(10);
         inMemIndex.store(inMemIndex.root, LocationIndexTree.START_POINTER);
-        index.setSearchRegion(false);
 
         // 0
         assertEquals(2L, index.keyAlgo.encode(49.94653, 11.57114));
         // 1
         assertEquals(3L, index.keyAlgo.encode(49.94653, 11.57214));
         // 28
-        assertEquals(3L, index.keyAlgo.encode(49.95053, 11.57714));
+        assertEquals(6L, index.keyAlgo.encode(49.95053, 11.57714));
         // 29
         assertEquals(6L, index.keyAlgo.encode(49.95053, 11.57814));
         // 8
         assertEquals(1L, index.keyAlgo.encode(49.94553, 11.57214));
         // 34
-        assertEquals(9L, index.keyAlgo.encode(49.95153, 11.57714));
+        assertEquals(12L, index.keyAlgo.encode(49.95153, 11.57714));
 
         // Query near point 25 (49.95053, 11.57314).
         // If we would have a perfect compaction (takes a lot longer) we would
@@ -175,11 +174,8 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         // The other subnetwork is already perfect {26}.
         // For compaction see: https://github.com/graphhopper/graphhopper/blob/5594f7f9d98d932f365557dc37b4b2d3b7abf698/core/src/main/java/com/graphhopper/storage/index/Location2NodesNtree.java#L277
         TIntHashSet set = new TIntHashSet();
-        set.add(16);
-        set.add(26);
-        set.add(27);
-        set.add(28);
-        assertEquals(set, index.findNetworkEntries(49.950, 11.5732));
+        set.addAll(Arrays.asList(28, 27, 26, 24, 23, 21, 19, 18, 16, 14, 6, 5, 4, 3, 2, 1, 0));
+        assertEquals(set, index.findNetworkEntries(49.950, 11.5732, 1));
     }
 
     @Test
@@ -192,7 +188,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         assertEquals(Helper.createTList(64, 4), index.getEntries());
 
         assertEquals(33, inMemIndex.getEntriesOf(0).size());
-        assertEquals(59, inMemIndex.getEntriesOf(1).size());
+        assertEquals(69, inMemIndex.getEntriesOf(1).size());
         assertEquals(0, inMemIndex.getEntriesOf(2).size());
 
         index.dataAccess.create(1024);
@@ -357,8 +353,8 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
 
         // to create correct bounds
         // bottom left
-        na.setNode(100, 49.94053, 11.56614);
-        // bottom right
+        na.setNode(100, 49.941, 11.56614);
+        // top right
         na.setNode(101, 49.96053, 11.58814);
 
         graph.edge(0, 1, 10, true);
@@ -400,5 +396,39 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         graph.edge(27, 33, 10, true);
         graph.edge(28, 34, 10, true);
         return graph;
+    }
+
+    @Test
+    public void testRMin()
+    {
+        Graph graph = createTestGraph();
+        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        index.setMaxRegionSearch(1);
+        index.setMinResolutionInMeter(50000).prepareAlgo();
+
+        //query: 0.05 | -0.3
+        DistanceCalc distCalc = new DistancePlaneProjection();
+
+        double rmin = index.calculateRMin(0.05, -0.3);
+        double check = distCalc.calcDist(0.05, Math.abs(graph.getNodeAccess().getLon(2)) - index.getDeltaLon(), -0.3, -0.3);
+
+        assertTrue((rmin - check) < 0.0001);
+
+        double rmin2 = index.calculateRMin(0.05, -0.3, 1);
+        double check2 = distCalc.calcDist(0.05, Math.abs(graph.getNodeAccess().getLat(0)), -0.3, -0.3);
+
+        assertTrue((rmin2 - check2) < 0.0001);
+
+        TIntHashSet points = new TIntHashSet();
+        assertEquals(Double.MAX_VALUE, index.calcMinDistance(0.05, -0.3, points), 1e-1);
+
+        points.add(0);
+        points.add(1);
+        assertEquals(54757.03, index.calcMinDistance(0.05, -0.3, points), 1e-1);
+
+        /*GraphVisualizer gv = new GraphVisualizer(graph, index.getDeltaLat(), index.getDeltaLon(), index.getCenter(0, 0).lat, index.getCenter(0, 0).lon);
+         try {
+         Thread.sleep(4000);
+         } catch(InterruptedException ie) {}*/
     }
 }

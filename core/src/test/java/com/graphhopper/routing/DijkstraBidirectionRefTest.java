@@ -18,24 +18,54 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
 import com.graphhopper.storage.Graph;
 
 /**
  *
  * @author Peter Karich
  */
+@RunWith(Parameterized.class)
 public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
 {
-    @Override
-    public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final Weighting w )
+    /**
+     * Runs the same test with each of the supported traversal modes
+     */
+    @Parameters
+    public static Collection<Object[]> configs()
     {
-        return new NoOpAlgorithmPreparation()
+        return Arrays.asList(new Object[][]
+        {
+            { TraversalMode.NODE_BASED },
+            { TraversalMode.EDGE_BASED_1DIR },
+            { TraversalMode.EDGE_BASED_2DIR },
+            { TraversalMode.EDGE_BASED_2DIR_UTURN }
+        });
+    }
+
+    private final TraversalMode traversalMode;
+
+    public DijkstraBidirectionRefTest( TraversalMode tMode )
+    {
+        this.traversalMode = tMode;
+    }
+
+    @Override
+    public RoutingAlgorithmFactory createFactory( Graph prepareGraph, AlgorithmOptions prepareOpts )
+    {
+        return new RoutingAlgorithmFactory()
         {
             @Override
-            public RoutingAlgorithm createAlgo()
+            public RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts )
             {
-                return new DijkstraBidirectionRef(_graph, encoder, w);
+                return new DijkstraBidirectionRef(g, opts.getFlagEncoder(), opts.getWeighting(), traversalMode);
             }
-        }.setGraph(defaultGraph);
+        };    
     }
 }

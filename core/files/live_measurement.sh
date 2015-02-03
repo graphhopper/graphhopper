@@ -29,7 +29,7 @@ GH_MAIN=/media/SAMSUNG/maps/unterfranken
 # import graph
 OSM_XML=$GH_MAIN.osm
 GL=$GH_MAIN-gh
-ARGS="osmreader.graph-location=$GL osmreader.osm=$OSM_XML osmreader.chShortcuts=fastest osmreader.type=CAR"
+ARGS="osmreader.graph-location=$GL osmreader.osm=$OSM_XML osmreader.chWeighting=fastest osmreader.type=CAR"
 echo -e "\ncreate graph via $ARGS, $JAR"
 $JAVA $JAVA_OPTS -cp $JAR com.graphhopper.reader.OSMReader $ARGS osmreader.doPrepare=false
 

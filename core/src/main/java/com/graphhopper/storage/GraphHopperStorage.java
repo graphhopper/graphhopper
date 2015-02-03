@@ -24,9 +24,17 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.search.NameIndex;
-import com.graphhopper.util.*;
-import static com.graphhopper.util.Helper.nf;
+import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
+
+import static com.graphhopper.util.Helper.nf;
+import java.io.UnsupportedEncodingException;
 
 /**
  * The main implementation which handles nodes and edges file format. It can be used with different
@@ -88,17 +96,21 @@ public class GraphHopperStorage implements GraphStorage
     private final StorableProperties properties;
     private final BitUtil bitUtil;
     private boolean flagsSizeIsLong;
-    final ExtendedStorage extStorage;
+    final GraphExtension extStorage;
     private final NodeAccess nodeAccess;
 
     public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation )
     {
-        this(dir, encodingManager, withElevation, new ExtendedStorage.NoExtendedStorage());
+        this(dir, encodingManager, withElevation, new GraphExtension.NoExtendedStorage());
     }
 
-    public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation, ExtendedStorage extendedStorage )
+    public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation,
+            GraphExtension extendedStorage )
     {
-        // here encoding manager can be null e.g. if we want to load existing graph
+        if (encodingManager == null)
+            throw new IllegalArgumentException("EncodingManager cannot be null in GraphHopperStorage since 0.4. "
+                    + "If you need to parse EncodingManager configuration from existing graph use EncodingManager.create");
+
         this.encodingManager = encodingManager;
         this.extStorage = extendedStorage;
         this.dir = dir;
@@ -178,8 +190,8 @@ public class GraphHopperStorage implements GraphStorage
         properties.create(100);
         extStorage.create(initSize);
 
-        properties.put("osmreader.bytesForFlags", encodingManager.getBytesForFlags());
-        properties.put("osmreader.acceptWay", encodingManager.toDetailsString());
+        properties.put("graph.bytesForFlags", encodingManager.getBytesForFlags());
+        properties.put("graph.flagEncoders", encodingManager.toDetailsString());
 
         properties.put("graph.byteOrder", dir.getByteOrder());
         properties.put("graph.dimension", nodeAccess.getDimension());
@@ -241,6 +253,10 @@ public class GraphHopperStorage implements GraphStorage
         return bounds;
     }
 
+    /**
+     * Check if byte capacity of DataAcess nodes object is sufficient to include node index, else
+     * extend byte capacity
+     */
     final void ensureNodeIndex( int nodeIndex )
     {
         if (!initialized)
@@ -251,13 +267,15 @@ public class GraphHopperStorage implements GraphStorage
 
         long oldNodes = nodeCount;
         nodeCount = nodeIndex + 1;
-        if (!nodes.incCapacity((long) nodeCount * nodeEntryBytes))
-            return;
+        boolean capacityIncreased = nodes.ensureCapacity((long) nodeCount * nodeEntryBytes);
+        if (capacityIncreased)
+        {
+            long newBytesCapacity = nodes.getCapacity();
+            initNodeRefs(oldNodes * nodeEntryBytes, newBytesCapacity);
+            if (removedNodes != null)
+                getRemovedNodes().ensureCapacity((int) (newBytesCapacity / nodeEntryBytes));
+        }
 
-        long newBytesCapacity = nodes.getCapacity();
-        initNodeRefs(oldNodes * nodeEntryBytes, newBytesCapacity);
-        if (removedNodes != null)
-            getRemovedNodes().ensureCapacity((int) (newBytesCapacity / nodeEntryBytes));
     }
 
     /**
@@ -280,12 +298,12 @@ public class GraphHopperStorage implements GraphStorage
 
     private void ensureEdgeIndex( int edgeIndex )
     {
-        edges.incCapacity(((long) edgeIndex + 1) * edgeEntryBytes);
+        edges.ensureCapacity(((long) edgeIndex + 1) * edgeEntryBytes);
     }
 
     private void ensureGeometry( long bytePos, int byteLength )
     {
-        wayGeometry.incCapacity(bytePos + byteLength);
+        wayGeometry.ensureCapacity(bytePos + byteLength);
     }
 
     @Override
@@ -294,6 +312,11 @@ public class GraphHopperStorage implements GraphStorage
         return edge(a, b).setDistance(distance).setFlags(encodingManager.flagsDefault(true, bothDirection));
     }
 
+    /**
+     * Create edge between nodes a and b
+     * <p>
+     * @return EdgeIteratorState of newly created edge
+     */
     @Override
     public EdgeIteratorState edge( int a, int b )
     {
@@ -319,17 +342,17 @@ public class GraphHopperStorage implements GraphStorage
     }
 
     /**
-     * @return edgeIdPointer which is edgeId * edgeEntrySize
+     * Write new edge between nodes fromNodeId, and toNodeId both to nodes index and edges index
      */
     int internalEdgeAdd( int fromNodeId, int toNodeId )
     {
-        int newOrExistingEdge = nextEdge();
-        writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
-        connectNewEdge(fromNodeId, newOrExistingEdge);
+        int newEdgeId = nextEdge();
+        writeEdge(newEdgeId, fromNodeId, toNodeId, EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
+        connectNewEdge(fromNodeId, newEdgeId);
         if (fromNodeId != toNodeId)
-            connectNewEdge(toNodeId, newOrExistingEdge);
+            connectNewEdge(toNodeId, newEdgeId);
 
-        return newOrExistingEdge;
+        return newEdgeId;
     }
 
     // for test only
@@ -338,6 +361,11 @@ public class GraphHopperStorage implements GraphStorage
         edgeCount = cnt;
     }
 
+    /**
+     * Determine next free edgeId and ensure byte capacity to store edge
+     * <p>
+     * @return next free edgeId
+     */
     private int nextEdge()
     {
         int nextEdge = edgeCount;
@@ -481,7 +509,7 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
-        public int getMaxId()
+        public int getCount()
         {
             return edgeCount;
         }
@@ -547,7 +575,8 @@ public class GraphHopperStorage implements GraphStorage
         @Override
         public EdgeIteratorState setFlags( long flags )
         {
-            throw new UnsupportedOperationException("Not supported yet.");
+            GraphHopperStorage.this.setFlags(edgePointer, reverse, flags);
+            return this;
         }
 
         @Override
@@ -586,8 +615,11 @@ public class GraphHopperStorage implements GraphStorage
         @Override
         public EdgeIteratorState setName( String name )
         {
-            int nameIndexRef = nameIndex.put(name);
-            edges.setInt(edgePointer + E_NAME, nameIndexRef);
+            long nameIndexRef = nameIndex.put(name);
+            if (nameIndexRef < 0)
+                throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
+
+            edges.setInt(edgePointer + E_NAME, (int) nameIndexRef);
             return this;
         }
 
@@ -661,7 +693,7 @@ public class GraphHopperStorage implements GraphStorage
         if (flagsSizeIsLong)
         {
             int high = edges.getInt(edgePointer + E_FLAGS + 4);
-            res = ((long) high << 32) | (low & 0xFFFFFFFFL);
+            res = bitUtil.combineIntsToLong(low, high);
         }
         if (reverse)
             return reverseFlags(edgePointer, res);
@@ -678,12 +710,10 @@ public class GraphHopperStorage implements GraphStorage
         if (reverse)
             flags = reverseFlags(edgePointer, flags);
 
+        edges.setInt(edgePointer + E_FLAGS, bitUtil.getIntLow(flags));
+
         if (flagsSizeIsLong)
-        {
-            edges.setInt(edgePointer + E_FLAGS, (int) (flags & 0xFFFFFFFFL));
-            edges.setInt(edgePointer + E_FLAGS + 4, (int) (flags >> 32));
-        } else
-            edges.setInt(edgePointer + E_FLAGS, (int) (flags & 0xFFFFFFFFL));
+            edges.setInt(edgePointer + E_FLAGS + 4, bitUtil.getIntHigh(flags));
     }
 
     protected class SingleEdge extends EdgeIterable
@@ -776,14 +806,6 @@ public class GraphHopperStorage implements GraphStorage
                             + ", " + edgePointer + ", " + edgeId);
 
                 foundNext = filter == null || filter.accept(this);
-//
-//                if(foundNext && nextEdge != EdgeIterator.NO_EDGE && extStorage instanceof TurnCostStorage){
-//                    int turncosts = ((TurnCostStorage) extStorage).getTurnCosts(baseNode, edgeId, nextEdge);
-//                    if(turncosts == Integer.MAX_VALUE){
-//                        foundNext = false;
-//                    }
-//                }
-
                 if (foundNext)
                     break;
             }
@@ -839,14 +861,14 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
-        public final EdgeIteratorState setWayGeometry( PointList pillarNodes )
+        public EdgeIteratorState setWayGeometry( PointList pillarNodes )
         {
             GraphHopperStorage.this.setWayGeometry(pillarNodes, edgePointer, reverse);
             return this;
         }
 
         @Override
-        public final PointList fetchWayGeometry( int mode )
+        public PointList fetchWayGeometry( int mode )
         {
             return GraphHopperStorage.this.fetchWayGeometry(edgePointer, reverse, mode, getBaseNode(), getAdjNode());
         }
@@ -867,8 +889,11 @@ public class GraphHopperStorage implements GraphStorage
         @Override
         public EdgeIteratorState setName( String name )
         {
-            int nameIndexRef = nameIndex.put(name);
-            edges.setInt(edgePointer + E_NAME, nameIndexRef);
+            long nameIndexRef = nameIndex.put(name);
+            if (nameIndexRef < 0)
+                throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
+
+            edges.setInt(edgePointer + E_NAME, (int) nameIndexRef);
             return this;
         }
 
@@ -979,7 +1004,6 @@ public class GraphHopperStorage implements GraphStorage
         {
             geoRef *= 4;
             count = wayGeometry.getInt(geoRef);
-            wayGeometry.getInt(geoRef);
 
             geoRef += 4;
             bytes = new byte[count * nodeAccess.getDimension() * 4];
@@ -1352,28 +1376,15 @@ public class GraphHopperStorage implements GraphStorage
     public boolean loadExisting()
     {
         checkInit();
-        if (edges.loadExisting())
+        if (nodes.loadExisting())
         {
-            if (!nodes.loadExisting())
-                throw new IllegalStateException("cannot load nodes. corrupt file or directory? " + dir);
-
-            if (!wayGeometry.loadExisting())
-                throw new IllegalStateException("cannot load geometry. corrupt file or directory? " + dir);
-
-            if (!nameIndex.loadExisting())
-                throw new IllegalStateException("cannot load name index. corrupt file or directory? " + dir);
-
-            if (!extStorage.loadExisting())
-            {
-                throw new IllegalStateException("cannot load extended storage. corrupt file or directory? " + dir);
-            }
-
             String acceptStr = "";
             if (properties.loadExisting())
             {
                 properties.checkVersions(false);
                 // check encoding for compatiblity
-                acceptStr = properties.get("osmreader.acceptWay");
+                acceptStr = properties.get("graph.flagEncoders");
+
             } else
                 throw new IllegalStateException("cannot load properties. corrupt file or directory? " + dir);
 
@@ -1384,7 +1395,7 @@ public class GraphHopperStorage implements GraphStorage
                             + dir.getLocation());
 
                 int bytesForFlags = 4;
-                if ("8".equals(properties.get("osmreader.bytesForFlags")))
+                if ("8".equals(properties.get("graph.bytesForFlags")))
                     bytesForFlags = 8;
                 encodingManager = new EncodingManager(acceptStr, bytesForFlags);
             } else if (!acceptStr.isEmpty() && !encodingManager.toDetailsString().equalsIgnoreCase(acceptStr))
@@ -1400,6 +1411,18 @@ public class GraphHopperStorage implements GraphStorage
             String byteOrder = properties.get("graph.byteOrder");
             if (!byteOrder.equalsIgnoreCase("" + dir.getByteOrder()))
                 throw new IllegalStateException("Configured byteOrder (" + dim + ") is not equal to byteOrder of loaded graph (" + dir.getByteOrder() + ")");
+
+            if (!edges.loadExisting())
+                throw new IllegalStateException("Cannot load nodes. corrupt file or directory? " + dir);
+
+            if (!wayGeometry.loadExisting())
+                throw new IllegalStateException("Cannot load geometry. corrupt file or directory? " + dir);
+
+            if (!nameIndex.loadExisting())
+                throw new IllegalStateException("Cannot load name index. corrupt file or directory? " + dir);
+
+            if (!extStorage.loadExisting())
+                throw new IllegalStateException("Cannot load extended storage. corrupt file or directory? " + dir);
 
             // first define header indices of this storage
             initStorage();
@@ -1451,7 +1474,7 @@ public class GraphHopperStorage implements GraphStorage
     protected int loadNodesHeader()
     {
         int hash = nodes.getHeader(0);
-        if (hash != getClass().getName().hashCode())
+        if (hash != stringHashCode(getClass().getName()))
             throw new IllegalStateException("Cannot load the graph when using instance of "
                     + getClass().getName() + " and location: " + dir);
 
@@ -1466,7 +1489,7 @@ public class GraphHopperStorage implements GraphStorage
 
     protected int setNodesHeader()
     {
-        nodes.setHeader(0, getClass().getName().hashCode());
+        nodes.setHeader(0, stringHashCode(getClass().getName()));
         nodes.setHeader(1 * 4, nodeEntryBytes);
         nodes.setHeader(2 * 4, nodeCount);
         nodes.setHeader(3 * 4, Helper.degreeToInt(bounds.minLon));
@@ -1535,8 +1558,9 @@ public class GraphHopperStorage implements GraphStorage
     {
         return nodes.isClosed();
     }
-    
-    public ExtendedStorage getExtendedStorage()
+
+    @Override
+    public GraphExtension getExtension()
     {
         return extStorage;
     }
@@ -1553,9 +1577,21 @@ public class GraphHopperStorage implements GraphStorage
     {
         return "edges:" + nf(edgeCount) + "(" + edges.getCapacity() / Helper.MB + "), "
                 + "nodes:" + nf(nodeCount) + "(" + nodes.getCapacity() / Helper.MB + "), "
-                + "name: - (" + nameIndex.getCapacity() / Helper.MB + "), "
+                + "name: /(" + nameIndex.getCapacity() / Helper.MB + "), "
                 + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "), "
                 + "bounds:" + bounds;
+    }
+
+    // workaround for graphhopper-ios https://github.com/google/j2objc/issues/423
+    private int stringHashCode( String str )
+    {
+        try
+        {
+            return java.util.Arrays.hashCode(str.getBytes("UTF-8"));
+        } catch (UnsupportedEncodingException ex)
+        {
+            throw new UnsupportedOperationException(ex);
+        }
     }
 
     @Override
@@ -1565,6 +1601,7 @@ public class GraphHopperStorage implements GraphStorage
                 + "|" + encodingManager
                 + "|" + getDirectory().getDefaultType()
                 + "|" + nodeAccess.getDimension() + "D"
+                + ((extStorage == null) ? "" : "|" + extStorage)
                 + "|" + getProperties().versionsToString();
     }
 }

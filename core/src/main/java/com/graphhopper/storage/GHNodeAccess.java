@@ -73,7 +73,7 @@ class GHNodeAccess implements NodeAccess
         if (lon < that.bounds.minLon)
             that.bounds.minLon = lon;
 
-        //set the default value for the additional field of this node
+        // set the default value for the additional field of this node
         if (that.extStorage.isRequireNodeField())
             that.nodes.setInt(tmp + that.N_ADDITIONAL, that.extStorage.getDefaultNodeFieldValue());
     }

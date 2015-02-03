@@ -27,16 +27,24 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public class LevelEdgeFilter implements EdgeFilter
 {
-    protected LevelGraph graph;
+    private final LevelGraph graph;
+    private final int nodes;
 
     public LevelEdgeFilter( LevelGraph g )
     {
         graph = g;
+        nodes = g.getNodes();
     }
 
     @Override
     public boolean accept( EdgeIteratorState edgeIter )
     {
-        return graph.getLevel(edgeIter.getBaseNode()) <= graph.getLevel(edgeIter.getAdjNode());
+        int base = edgeIter.getBaseNode();
+        int adj = edgeIter.getAdjNode();
+        // for now workaround for #288
+        if (base >= nodes || adj >= nodes)
+            return true;
+
+        return graph.getLevel(base) <= graph.getLevel(adj);
     }
 }

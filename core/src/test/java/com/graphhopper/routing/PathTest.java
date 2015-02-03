@@ -141,7 +141,7 @@ public class PathTest
         path.extract();
         // 2-1-0
         assertPList(Helper.createPointList(2, 0.1, 11, 1, 10, 1, 1, 0.1, 9, 1, 8, 1, 0, 0.1), path.calcPoints());
-        
+
         instr = path.calcInstructions(tr);
         res = instr.createJson();
         tmp = res.get(0);
@@ -192,16 +192,25 @@ public class PathTest
         path.setEdgeEntry(e1);
         path.extract();
 
-        path.calcInstructions(tr);
-        Instruction nextInstr1 = path.findInstruction(0.0, 0.1);
-        Instruction nextInstr2 = path.findInstruction(5.0, 0.4);
-        Instruction nextInstr3 = path.findInstruction(9.0, 0.53);
-        Instruction nextInstr4 = path.findInstruction(7.8, 0.25);
-
+        InstructionList il = path.calcInstructions(tr);
+        Instruction nextInstr0 = il.find(-0.001, 0.0, 1000);
+        assertEquals(Instruction.CONTINUE_ON_STREET, nextInstr0.getSign());
+        
+        Instruction nextInstr1 = il.find(0.001, 0.001, 1000);
         assertEquals(Instruction.TURN_RIGHT, nextInstr1.getSign());
+
+        Instruction nextInstr2 = il.find(5.0, 0.004, 1000);
         assertEquals(Instruction.TURN_LEFT, nextInstr2.getSign());
+
+        Instruction nextInstr3 = il.find(9.99, 0.503, 1000);
         assertEquals(Instruction.TURN_SHARP_LEFT, nextInstr3.getSign());
+
+        // a bit far away ...
+        Instruction nextInstr4 = il.find(7.40, 0.25, 20000);
         assertEquals(Instruction.FINISH, nextInstr4.getSign());
+
+        // too far away
+        assertNull(il.find(50.8, 50.25, 1000));
     }
 
 }

@@ -26,7 +26,7 @@ import com.graphhopper.util.Translation;
  * <p/>
  * @author Peter Karich
  */
-public interface FlagEncoder
+public interface FlagEncoder extends TurnCostEncoder
 {
     /**
      * @return the maximum speed in km/h
@@ -109,6 +109,11 @@ public interface FlagEncoder
     double getDouble( long flags, int key );
 
     long setDouble( long flags, int key, double value );
+
+    /**
+     * Returns true if the feature class is supported like TurnWeighting or PriorityWeighting.
+     */
+    public boolean supports( Class<?> feature );
 
     /**
      * @return additional cost or warning information for an instruction like ferry or road charges.

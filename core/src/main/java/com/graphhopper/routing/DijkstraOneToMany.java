@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.coll.IntDoubleBinHeap;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.QueryResult;
@@ -28,13 +29,15 @@ import gnu.trove.list.array.TIntArrayList;
 import java.util.Arrays;
 
 /**
- * A simple dijkstra tuned to perform one to many queries more efficient than DijkstraSimple. Old
- * data structures are cache between requests and potentially reused. Useful for CH preparation.
+ * A simple dijkstra tuned to perform one to many queries more efficient than Dijkstra. Old data
+ * structures are cached between requests and potentially reused. Useful for CH preparation.
  * <p/>
  * @author Peter Karich
  */
 public class DijkstraOneToMany extends AbstractRoutingAlgorithm
 {
+    private static final int EMPTY_PARENT = -1;
+    private static final int NOT_FOUND = -1;
     protected double[] weights;
     private final TIntArrayListWithCap changedNodes;
     private int[] parents;
@@ -47,17 +50,18 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     private int endNode;
     private int currNode, fromNode, to;
 
-    public DijkstraOneToMany( Graph graph, FlagEncoder encoder, Weighting weighting )
+    public DijkstraOneToMany( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
-        super(graph, encoder, weighting);
+        super(graph, encoder, weighting, tMode);
 
         parents = new int[graph.getNodes()];
-        Arrays.fill(parents, -1);
+        Arrays.fill(parents, EMPTY_PARENT);
 
         edgeIds = new int[graph.getNodes()];
         Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
 
         weights = new double[graph.getNodes()];
+
         Arrays.fill(weights, Double.MAX_VALUE);
 
         heap = new IntDoubleBinHeap();
@@ -74,12 +78,6 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     {
         this.limitVisitedNodes = nodes;
         return this;
-    }
-
-    @Override
-    public Path calcPath( QueryResult fromRes, QueryResult toRes )
-    {
-        throw new IllegalStateException("not supported yet");
     }
 
     @Override
@@ -102,6 +100,9 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         return p.setEndNode(endNode).extract();
     }
 
+    /**
+     * Call clear if you have a different start node and need to clear the cache.
+     */
     public DijkstraOneToMany clear()
     {
         doClear = true;
@@ -116,7 +117,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     public int findEndNode( int from, int to )
     {
         if (weights.length < 2)
-            return -1;
+            return NOT_FOUND;
 
         this.to = to;
         if (doClear)
@@ -127,7 +128,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             {
                 int n = changedNodes.get(i);
                 weights[n] = Double.MAX_VALUE;
-                parents[n] = -1;
+                parents[n] = EMPTY_PARENT;
                 edgeIds[n] = EdgeIterator.NO_EDGE;
             }
 
@@ -135,14 +136,20 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             changedNodes.reset();
 
             currNode = from;
-            weights[currNode] = 0;
-            changedNodes.add(currNode);
+            if (!traversalMode.isEdgeBased())
+            {
+                weights[currNode] = 0;
+                changedNodes.add(currNode);
+            }
         } else
         {
             // Cached! Re-use existing data structures
             int parentNode = parents[to];
-            if (parentNode >= 0 && weights[to] < weights[currNode] || heap.isEmpty())
+            if (parentNode != EMPTY_PARENT && weights[to] < weights[currNode])
                 return to;
+
+            if (heap.isEmpty() || visitedNodes >= limitVisitedNodes)
+                return NOT_FOUND;
 
             currNode = heap.poll_element();
         }
@@ -157,15 +164,17 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             EdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
             while (iter.next())
             {
-                if (!accept(iter))
-                    continue;
-                int adjNode = iter.getAdjNode();
-                // minor speed up
-                if (edgeIds[adjNode] == iter.getEdge())
+                int adjNode = iter.getAdjNode();                
+                int prevEdgeId = edgeIds[adjNode];
+                if (!accept(iter, prevEdgeId))
                     continue;
 
-                double tmpWeight = weighting.calcWeight(iter, false) + weights[currNode];
-                if (weights[adjNode] == Double.MAX_VALUE)
+                double tmpWeight = weighting.calcWeight(iter, false, prevEdgeId) + weights[currNode];
+                if (Double.isInfinite(tmpWeight))
+                    continue;
+
+                double w = weights[adjNode];
+                if (w == Double.MAX_VALUE)
                 {
                     parents[adjNode] = currNode;
                     weights[adjNode] = tmpWeight;
@@ -173,7 +182,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
                     changedNodes.add(adjNode);
                     edgeIds[adjNode] = iter.getEdge();
 
-                } else if (weights[adjNode] > tmpWeight)
+                } else if (w > tmpWeight)
                 {
                     parents[adjNode] = currNode;
                     weights[adjNode] = tmpWeight;
@@ -184,7 +193,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             }
 
             if (heap.isEmpty() || visitedNodes >= limitVisitedNodes)
-                return -1;
+                return NOT_FOUND;
 
             // calling just peek and not poll is important if the next query is cached
             currNode = heap.peek_element();
@@ -218,7 +227,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     @Override
     public String getName()
     {
-        return "dijkstraOneToMany";
+        return AlgorithmOptions.DIJKSTRA_ONE_TO_MANY;
     }
 
     /**

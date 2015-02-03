@@ -28,14 +28,14 @@ import com.graphhopper.util.EdgeIterator;
  */
 public class PathNative extends Path
 {
-    int[] parents;
-    int[] pathEdgeIds;
+    private final int[] parentNodes;
+    private final int[] parentEdges;
 
-    public PathNative( Graph g, FlagEncoder encoder, int[] parents, int[] pathEdgeIds )
+    public PathNative( Graph g, FlagEncoder encoder, int[] parentNodes, int[] parentEdges )
     {
         super(g, encoder);
-        this.parents = parents;
-        this.pathEdgeIds = pathEdgeIds;
+        this.parentNodes = parentNodes;
+        this.parentEdges = parentEdges;
     }
 
     /**
@@ -49,12 +49,12 @@ public class PathNative extends Path
 
         while (true)
         {
-            int edgeId = pathEdgeIds[endNode];
+            int edgeId = parentEdges[endNode];
             if (!EdgeIterator.Edge.isValid(edgeId))
                 break;
 
             processEdge(edgeId, endNode);
-            endNode = parents[endNode];
+            endNode = parentNodes[endNode];
         }
         reverseOrder();
         return setFound(true);

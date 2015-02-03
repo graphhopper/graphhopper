@@ -28,6 +28,7 @@ import com.graphhopper.storage.*;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A helper class to avoid cluttering the Graph interface with all the common methods. Most of the
@@ -78,7 +79,7 @@ public class GHUtility
         }
 
 //        for (int i = 0; i < nodes; i++) {
-//            new XFirstSearch().start(g, i, false);
+//            new BreadthFirstSearch().start(g, i);
 //        }
         return problems;
     }
@@ -115,7 +116,7 @@ public class GHUtility
         }
         return list;
     }
-    
+
     public static List<Integer> getEdgeIds( EdgeIterator iter )
     {
         List<Integer> list = new ArrayList<Integer>();
@@ -128,7 +129,7 @@ public class GHUtility
 
     public static void printEdgeInfo( final Graph g, FlagEncoder encoder )
     {
-        System.out.println("-- Graph n:" + g.getNodes() + " e:" + g.getAllEdges().getMaxId() + " ---");
+        System.out.println("-- Graph n:" + g.getNodes() + " e:" + g.getAllEdges().getCount() + " ---");
         AllEdgesIterator iter = g.getAllEdges();
         while (iter.next())
         {
@@ -146,7 +147,7 @@ public class GHUtility
 
     public static void printInfo( final Graph g, int startNode, final int counts, final EdgeFilter filter )
     {
-        new XFirstSearch()
+        new BreadthFirstSearch()
         {
             int counter = 0;
 
@@ -160,7 +161,7 @@ public class GHUtility
                 }
                 return true;
             }
-        }.start(g.createEdgeExplorer(), startNode, false);
+        }.start(g.createEdgeExplorer(), startNode);
     }
 
     public static String getNodeInfo( LevelGraph g, int nodeId, EdgeFilter filter )
@@ -214,12 +215,12 @@ public class GHUtility
         int nodes = g.getNodes();
         list.fill(0, nodes, -1);
         final GHBitSetImpl bitset = new GHBitSetImpl(nodes);
-        final IntRef ref = new IntRef(0);
+        final AtomicInteger ref = new AtomicInteger(-1);
         EdgeExplorer explorer = g.createEdgeExplorer();
         for (int startNode = 0; startNode >= 0 && startNode < nodes;
                 startNode = bitset.nextClear(startNode + 1))
         {
-            new XFirstSearch()
+            new DepthFirstSearch()
             {
                 @Override
                 protected GHBitSet createBitSet()
@@ -230,11 +231,10 @@ public class GHUtility
                 @Override
                 protected boolean goFurther( int nodeId )
                 {
-                    list.set(nodeId, ref.val);
-                    ref.val++;
+                    list.set(nodeId, ref.incrementAndGet());                    
                     return super.goFurther(nodeId);
                 }
-            }.start(explorer, startNode, false);
+            }.start(explorer, startNode);
         }
         return createSortedGraph(g, sortedGraph, list);
     }
@@ -340,14 +340,14 @@ public class GHUtility
         return g.copyTo(outGraph.create(g.getNodes()));
     }
 
-    public static int getToNode( Graph g, int edge, int endNode )
+    public static int getAdjNode( Graph g, int edge, int adjNode )
     {
         if (EdgeIterator.Edge.isValid(edge))
         {
-            EdgeIteratorState iterTo = g.getEdgeProps(edge, endNode);
+            EdgeIteratorState iterTo = g.getEdgeProps(edge, adjNode);
             return iterTo.getAdjNode();
         }
-        return endNode;
+        return adjNode;
     }
 
     public static class DisabledEdgeIterator implements EdgeSkipIterator
@@ -498,5 +498,26 @@ public class GHUtility
                 return iter;
         }
         return null;
+    }
+
+    /**
+     * Creates unique positive number for specified edgeId taking into account the direction defined
+     * by nodeA, nodeB and reverse.
+     */
+    public static int createEdgeKey( int nodeA, int nodeB, int edgeId, boolean reverse )
+    {
+        edgeId = edgeId << 1;
+        if (reverse)
+            return (nodeA > nodeB) ? edgeId : edgeId + 1;
+        return (nodeA > nodeB) ? edgeId + 1 : edgeId;
+    }
+
+    /**
+     * Returns if the specified edgeKeys (created by createEdgeKey) are identical regardless of the
+     * direction.
+     */
+    public static boolean isSameEdgeKeys( int edgeKey1, int edgeKey2 )
+    {
+        return edgeKey1 / 2 == edgeKey2 / 2;
     }
 }

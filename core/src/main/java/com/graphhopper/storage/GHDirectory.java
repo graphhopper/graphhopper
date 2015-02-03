@@ -120,8 +120,8 @@ public class GHDirectory implements Directory
                     da = new RAMDataAccess(name, location, false, byteOrder);
             }
         } else if (type.isMMap())
-        {
-            da = new MMapDataAccess(name, location, byteOrder);
+        {            
+            da = new MMapDataAccess(name, location, byteOrder, type.isAllowWrites());
         } else
         {
             da = new UnsafeDataAccess(name, location, byteOrder);
@@ -150,7 +150,7 @@ public class GHDirectory implements Directory
             removeDA(da, da.getName(), false);
         }
         if (mmapDA != null)
-            mmapDA.cleanHack();
+            Helper.cleanHack();
         map.clear();
     }
 

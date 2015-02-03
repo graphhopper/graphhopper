@@ -31,11 +31,34 @@ import org.slf4j.LoggerFactory;
 public class DefaultModule extends AbstractModule
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final CmdArgs args;
+    protected final CmdArgs args;
+    private GraphHopper graphHopper;
 
     public DefaultModule( CmdArgs args )
     {
-        this.args = args;
+        this.args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
+    }
+
+    public GraphHopper getGraphHopper()
+    {
+        if (graphHopper == null)
+            throw new IllegalStateException("createGraphHopper not called");
+
+        return graphHopper;
+    }
+
+    /**
+     * @return an initialized GraphHopper instance
+     */
+    protected GraphHopper createGraphHopper( CmdArgs args )
+    {
+        GraphHopper tmp = new GraphHopper().forServer().init(args);
+        tmp.importOrLoad();
+        logger.info("loaded graph at:" + tmp.getGraphHopperLocation()
+                + ", source:" + tmp.getOSMFile()
+                + ", flagEncoders:" + tmp.getEncodingManager()
+                + ", class:" + tmp.getGraph().getClass().getSimpleName());
+        return tmp;
     }
 
     @Override
@@ -43,18 +66,17 @@ public class DefaultModule extends AbstractModule
     {
         try
         {
-            GraphHopper hopper = new GraphHopper().forServer().init(args);
-            hopper.importOrLoad();
-            logger.info("loaded graph at:" + hopper.getGraphHopperLocation()
-                    + ", source:" + hopper.getOSMFile()
-                    + ", acceptWay:" + hopper.getEncodingManager()
-                    + ", class:" + hopper.getGraph().getClass().getSimpleName());
-
-            bind(GraphHopper.class).toInstance(hopper);
+            graphHopper = createGraphHopper(args);
+            bind(GraphHopper.class).toInstance(graphHopper);
+            bind(TranslationMap.class).toInstance(graphHopper.getTranslationMap());
 
             long timeout = args.getLong("web.timeout", 3000);
-            bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);            
-            bind(TranslationMap.class).toInstance(hopper.getTranslationMap());
+            bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);
+            boolean jsonpAllowed = args.getBool("web.jsonpAllowed", false);
+            if (!jsonpAllowed)
+                logger.info("jsonp disabled");
+
+            bind(Boolean.class).annotatedWith(Names.named("jsonpAllowed")).toInstance(jsonpAllowed);
         } catch (Exception ex)
         {
             throw new IllegalStateException("Couldn't load graph", ex);

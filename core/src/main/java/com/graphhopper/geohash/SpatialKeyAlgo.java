@@ -162,13 +162,13 @@ public class SpatialKeyAlgo implements KeyAlgo
             if (minLatTmp < maxLatTmp)
             {
                 double midLat = (minLatTmp + maxLatTmp) / 2;
-                if (lat > midLat)
+                if (lat < midLat)
+                {
+                    maxLatTmp = midLat;
+                } else
                 {
                     hash |= 1;
                     minLatTmp = midLat;
-                } else
-                {
-                    maxLatTmp = midLat;
                 }
             }
             i++;
@@ -182,13 +182,13 @@ public class SpatialKeyAlgo implements KeyAlgo
             if (minLonTmp < maxLonTmp)
             {
                 double midLon = (minLonTmp + maxLonTmp) / 2;
-                if (lon > midLon)
+                if (lon < midLon)
+                {
+                    maxLonTmp = midLon;
+                } else
                 {
                     hash |= 1;
                     minLonTmp = midLon;
-                } else
-                {
-                    maxLonTmp = midLon;
                 }
             }
             i++;

@@ -22,6 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+import java.util.Arrays;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -36,8 +37,12 @@ public class GraphHopperWeb implements GraphHopperAPI
 {
     public static void main( String[] args )
     {
-        GraphHopperAPI gh = new GraphHopperWeb();
-        gh.load("http://localhost:8989/route");
+        GraphHopperWeb gh = new GraphHopperWeb();
+        gh.setKey("<your-key>");
+
+        // for local server: gh.load("http://localhost:8989/route");        
+        gh.load("https://graphhopper.com/api/1/route");
+
         //GHResponse ph = gh.route(new GHRequest(53.080827, 9.074707, 50.597186, 11.184082));
         GHResponse ph = gh.route(new GHRequest(49.6724, 11.3494, 49.6550, 11.4180));
         System.out.println(ph);
@@ -47,6 +52,8 @@ public class GraphHopperWeb implements GraphHopperAPI
     private boolean pointsEncoded = true;
     private Downloader downloader = new Downloader("GraphHopperWeb");
     private boolean instructions = true;
+    private String key = "";
+    private boolean withElevation = false;
     private final TranslationMap trMap = new TranslationMap().doImport();
 
     public GraphHopperWeb()
@@ -80,6 +87,18 @@ public class GraphHopperWeb implements GraphHopperAPI
         return this;
     }
 
+    public GraphHopperWeb setElevation( boolean withElevation )
+    {
+        this.withElevation = withElevation;
+        return this;
+    }
+
+    public GraphHopperWeb setKey( String key )
+    {
+        this.key = key;
+        return this;
+    }
+
     @Override
     public GHResponse route( GHRequest request )
     {
@@ -92,78 +111,118 @@ public class GraphHopperWeb implements GraphHopperAPI
             {
                 places += "point=" + p.lat + "," + p.lon + "&";
             }
-            
-            boolean withElevation = false;
-            
+
             String url = serviceUrl
                     + "?"
                     + places
                     + "&type=json"
                     + "&points_encoded=" + pointsEncoded
-                    + "&min_path_precision=" + request.getHint("douglas.minprecision", 1)
+                    + "&way_point_max_distance=" + request.getHints().getDouble("wayPointMaxDistance", 1)
                     + "&algo=" + request.getAlgorithm()
                     + "&locale=" + request.getLocale().toString()
                     + "&elevation=" + withElevation;
-            
+
+            if (!request.getVehicle().isEmpty())
+                url += "&vehicle=" + request.getVehicle();
+
+            if (!key.isEmpty())
+                url += "&key=" + key;
+
             String str = downloader.downloadAsString(url);
             JSONObject json = new JSONObject(str);
-            took = json.getJSONObject("info").getDouble("took");
-            JSONArray paths = json.getJSONArray("paths");
-            JSONObject firstPath = paths.getJSONObject(0);            
-            double distance = firstPath.getDouble("distance");
-            int time = firstPath.getInt("time");
-            PointList pointList;
-            if (pointsEncoded)
+            GHResponse res = new GHResponse();
+
+            if (json.getJSONObject("info").has("errors"))
             {
-                pointList = WebHelper.decodePolyline(firstPath.getString("points"), 100, withElevation);
+                JSONArray errors = json.getJSONObject("info").getJSONArray("errors");
+
+                for (int i = 0; i < errors.length(); i++)
+                {
+                    JSONObject error = errors.getJSONObject(i);
+                    String exClass = error.getString("details");
+                    String exMessage = error.getString("message");
+
+                    if (exClass.equals(UnsupportedOperationException.class.getName()))
+                    {
+                        res.addError(new UnsupportedOperationException(exMessage));
+                    } else if (exClass.equals(IllegalStateException.class.getName()))
+                    {
+                        res.addError(new IllegalStateException(exMessage));
+                    } else if (exClass.equals(RuntimeException.class.getName()))
+                    {
+                        res.addError(new RuntimeException(exMessage));
+                    } else if (exClass.equals(IllegalArgumentException.class.getName()))
+                    {
+                        res.addError(new IllegalArgumentException(exMessage));
+                    } else
+                    {
+                        res.addError(new Exception(exClass + " " + exMessage));
+                    }
+                }
+
+                return res;
+
             } else
             {
-                JSONArray coords = firstPath.getJSONObject("points").getJSONArray("coordinates");
-                pointList = new PointList(coords.length(), withElevation);
-                for (int i = 0; i < coords.length(); i++)
+                took = json.getJSONObject("info").getDouble("took");
+                JSONArray paths = json.getJSONArray("paths");
+                JSONObject firstPath = paths.getJSONObject(0);
+                double distance = firstPath.getDouble("distance");
+                int time = firstPath.getInt("time");
+                PointList pointList;
+                if (pointsEncoded)
                 {
-                    JSONArray arr = coords.getJSONArray(i);
-                    double lon = arr.getDouble(0);
-                    double lat = arr.getDouble(1);
-                    if (withElevation)
-                        pointList.add(lat, lon, arr.getDouble(2));
-                    else
-                        pointList.add(lat, lon);
-                }
-            }
-            GHResponse res = new GHResponse();
-            if (instructions)
-            {
-                JSONArray instrArr = firstPath.getJSONArray("instructions");
-                
-                InstructionList il = new InstructionList(trMap.getWithFallBack(request.getLocale()));
-                for (int instrIndex = 0; instrIndex < instrArr.length(); instrIndex++)
+                    String pointStr = firstPath.getString("points");
+                    pointList = WebHelper.decodePolyline(pointStr, 100, withElevation);
+                } else
                 {
-                    JSONObject jsonObj = instrArr.getJSONObject(instrIndex);
-                    double instDist = jsonObj.getDouble("distance");
-                    String text = jsonObj.getString("text");
-                    long instTime = jsonObj.getLong("time");
-                    int sign = jsonObj.getInt("sign");
-                    JSONArray iv = jsonObj.getJSONArray("interval");
-                    int from = iv.getInt(0);
-                    int to = iv.getInt(1);
-                    PointList instPL = new PointList(to - from, withElevation);
-                    for (int j = from; j <= to; j++)
+                    JSONArray coords = firstPath.getJSONObject("points").getJSONArray("coordinates");
+                    pointList = new PointList(coords.length(), withElevation);
+                    for (int i = 0; i < coords.length(); i++)
                     {
-                        instPL.add(pointList, j);
+                        JSONArray arr = coords.getJSONArray(i);
+                        double lon = arr.getDouble(0);
+                        double lat = arr.getDouble(1);
+                        if (withElevation)
+                            pointList.add(lat, lon, arr.getDouble(2));
+                        else
+                            pointList.add(lat, lon);
                     }
-
-                    // TODO way and payment type
-                    Instruction instr = new Instruction(sign, text, InstructionAnnotation.EMPTY, instPL).
-                            setDistance(instDist).setTime(instTime);
-                    il.add(instr);
                 }
-                res.setInstructions(il);
+
+                if (instructions)
+                {
+                    JSONArray instrArr = firstPath.getJSONArray("instructions");
+
+                    InstructionList il = new InstructionList(trMap.getWithFallBack(request.getLocale()));
+                    for (int instrIndex = 0; instrIndex < instrArr.length(); instrIndex++)
+                    {
+                        JSONObject jsonObj = instrArr.getJSONObject(instrIndex);
+                        double instDist = jsonObj.getDouble("distance");
+                        String text = jsonObj.getString("text");
+                        long instTime = jsonObj.getLong("time");
+                        int sign = jsonObj.getInt("sign");
+                        JSONArray iv = jsonObj.getJSONArray("interval");
+                        int from = iv.getInt(0);
+                        int to = iv.getInt(1);
+                        PointList instPL = new PointList(to - from, withElevation);
+                        for (int j = from; j <= to; j++)
+                        {
+                            instPL.add(pointList, j);
+                        }
+
+                        // TODO way and payment type
+                        Instruction instr = new Instruction(sign, text, InstructionAnnotation.EMPTY, instPL).
+                                setDistance(instDist).setTime(instTime);
+                        il.add(instr);
+                    }
+                    res.setInstructions(il);
+                }
+                return res.setPoints(pointList).setDistance(distance).setMillis(time);
             }
-            return res.setPoints(pointList).setDistance(distance).setMillis(time);
         } catch (Exception ex)
         {
-            throw new RuntimeException("Problem while fetching path " + request.getPoints(), ex);
+            throw new RuntimeException("Problem while fetching path " + request.getPoints() + ": " + ex.getMessage(), ex);
         } finally
         {
             logger.debug("Full request took:" + sw.stop().getSeconds() + ", API took:" + took);

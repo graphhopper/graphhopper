@@ -25,6 +25,12 @@ import java.io.InputStream;
 import java.net.URLEncoder;
 
 /**
+ * Code which handles polyline encoding and other web stuff.
+ * <p>
+ * The necessary information for polyline encoding is in this answer:
+ * http://stackoverflow.com/a/24510799/194609 with a link to official Java sources as well as to a
+ * good explanation.
+ * <p>
  * @author Peter Karich
  */
 public class WebHelper
@@ -91,12 +97,11 @@ public class WebHelper
         return poly;
     }
 
-    // https://developers.google.com/maps/documentation/utilities/polylinealgorithm?hl=de
     public static String encodePolyline( PointList poly )
     {
         if (poly.isEmpty())
             return "";
-        
+
         return encodePolyline(poly, poly.is3D());
     }
 

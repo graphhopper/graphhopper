@@ -21,11 +21,7 @@ import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.AllEdgesSkipIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeSkipExplorer;
-import com.graphhopper.util.EdgeSkipIterator;
-import com.graphhopper.util.EdgeSkipIterState;
+import com.graphhopper.util.*;
 
 /**
  * A Graph necessary for shortcut algorithms like Contraction Hierarchies. This class enables the
@@ -212,6 +208,38 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
 //            EdgeSkipIterator eSkip = (EdgeSkipIterator) edge;
 //            setSkippedEdges(eSkip.getSkippedEdge1(), eSkip.getSkippedEdge2());
             return edge;
+        }
+
+        @Override
+        public String getName()
+        {
+            if (isShortcut())
+                throw new IllegalStateException("Cannot call getName on shortcut " + getEdge());
+            return super.getName();
+        }
+
+        @Override
+        public EdgeIteratorState setName( String name )
+        {
+            if (isShortcut())
+                throw new IllegalStateException("Cannot call setName on shortcut " + getEdge());
+            return super.setName(name);
+        }
+
+        @Override
+        public PointList fetchWayGeometry( int mode )
+        {
+            if (isShortcut())
+                throw new IllegalStateException("Cannot call fetchWayGeometry on shortcut " + getEdge());
+            return super.fetchWayGeometry(mode);
+        }
+
+        @Override
+        public EdgeIteratorState setWayGeometry( PointList list )
+        {
+            if (isShortcut())
+                throw new IllegalStateException("Cannot call setWayGeometry on shortcut " + getEdge());
+            return super.setWayGeometry(list);
         }
     }
 

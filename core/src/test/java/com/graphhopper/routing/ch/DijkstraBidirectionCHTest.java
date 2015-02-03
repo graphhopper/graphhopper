@@ -17,14 +17,13 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
-import com.graphhopper.routing.Path;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.ShortestWeighting;
-import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
@@ -53,7 +52,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         {
             LevelGraph lg = (LevelGraph) createGraph(false);
             getMatrixAlikeGraph().copyTo(lg);
-            prepareGraph(lg);
+            createFactory(lg, defaultOpts);
             preparedMatrixGraph = lg;
         }
         return preparedMatrixGraph;
@@ -66,10 +65,17 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     }
 
     @Override
-    public PrepareContractionHierarchies prepareGraph( Graph g, FlagEncoder encoder, Weighting w )
+    public RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts )
     {
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(encoder, w).setGraph(g);
-        // hack: prepare matrixgraph only once
+        return createFactory(g, opts).createAlgo(g, opts);
+    }
+
+    @Override
+    public RoutingAlgorithmFactory createFactory( Graph g, AlgorithmOptions opts )
+    {
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies((LevelGraph) g,
+                opts.getFlagEncoder(), opts.getWeighting(), TraversalMode.NODE_BASED);
+        // hack: prepare matrixGraph only once
         if (g != preparedMatrixGraph)
             ch.doWork();
 
@@ -114,8 +120,10 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         g2.setLevel(7, 6);
         g2.setLevel(0, 7);
 
-        Path p = new PrepareContractionHierarchies(encoder, new ShortestWeighting()).
-                setGraph(g2).createAlgo().calcPath(0, 7);
+        ShortestWeighting weighting = new ShortestWeighting();
+        AlgorithmOptions opts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting);
+        Path p = new PrepareContractionHierarchies(g2, encoder, weighting, TraversalMode.NODE_BASED).
+                createAlgo(g2, opts).calcPath(0, 7);
 
         assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());
         assertEquals(1064, p.getMillis());

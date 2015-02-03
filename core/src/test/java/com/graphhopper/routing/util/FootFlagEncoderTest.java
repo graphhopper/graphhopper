@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -110,6 +111,8 @@ public class FootFlagEncoderTest
         assertTrue(footEncoder.acceptWay(way) > 0);
 
         way.setTag("bicycle", "official");
+        assertTrue(footEncoder.acceptWay(way) > 0);
+        way.setTag("foot", "no");
         assertFalse(footEncoder.acceptWay(way) > 0);
 
         way.setTag("foot", "official");
@@ -127,9 +130,9 @@ public class FootFlagEncoderTest
 
         way.clearTags();
         way.setTag("highway", "cycleway");
-        assertFalse(footEncoder.acceptWay(way) > 0);
-        way.setTag("foot", "yes");
         assertTrue(footEncoder.acceptWay(way) > 0);
+        way.setTag("foot", "no");
+        assertFalse(footEncoder.acceptWay(way) > 0);
 
         way.clearTags();
         way.setTag("highway", "track");
@@ -149,7 +152,6 @@ public class FootFlagEncoderTest
     public void testMixSpeedAndSafe()
     {
         OSMWay way = new OSMWay(1);
-
         way.setTag("highway", "motorway");
         long flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
         assertEquals(0, flags);
@@ -162,6 +164,18 @@ public class FootFlagEncoderTest
         way.setTag("highway", "track");
         flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
         assertEquals(5, footEncoder.getSpeed(flags), 1e-1);
+    }
+
+    @Test
+    public void testPriority()
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "cycleway");
+        assertEquals(PriorityCode.REACH_DEST.getValue(), footEncoder.handlePriority(way, 0));
+
+        way.setTag("highway", "track");
+        way.setTag("bicycle", "official");
+        assertEquals(PriorityCode.REACH_DEST.getValue(), footEncoder.handlePriority(way, 0));
     }
 
     @Test
@@ -188,16 +202,53 @@ public class FootFlagEncoderTest
         long flags_r20 = footEncoder.getTurnFlags(true, 20);
         long flags_20 = footEncoder.getTurnFlags(false, 20);
 
-        assertEquals(0, footEncoder.getTurnCosts(flags_r0));
-        assertEquals(0, footEncoder.getTurnCosts(flags_0));
+        assertEquals(0, footEncoder.getTurnCost(flags_r0), 1e-1);
+        assertEquals(0, footEncoder.getTurnCost(flags_0), 1e-1);
 
-        assertEquals(0, footEncoder.getTurnCosts(flags_r20));
-        assertEquals(0, footEncoder.getTurnCosts(flags_20));
+        assertEquals(0, footEncoder.getTurnCost(flags_r20), 1e-1);
+        assertEquals(0, footEncoder.getTurnCost(flags_20), 1e-1);
 
         assertFalse(footEncoder.isTurnRestricted(flags_r0));
         assertFalse(footEncoder.isTurnRestricted(flags_0));
 
         assertFalse(footEncoder.isTurnRestricted(flags_r20));
         assertFalse(footEncoder.isTurnRestricted(flags_20));
+    }
+
+    @Test
+    public void testBarrierAccess()
+    {
+        // by default allow access through the gate for bike & foot!
+        OSMNode node = new OSMNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        // no barrier!
+        assertTrue(footEncoder.handleNodeTags(node) == 0);
+
+        node = new OSMNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        node.setTag("access", "yes");
+        // no barrier!
+        assertTrue(footEncoder.handleNodeTags(node) == 0);
+
+        node = new OSMNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        node.setTag("access", "no");
+        // barrier!
+        assertTrue(footEncoder.handleNodeTags(node) > 0);
+
+        node.setTag("bicycle", "yes");
+        // no barrier!?
+        // assertTrue(footEncoder.handleNodeTags(node) == 0);
+
+        node = new OSMNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        node.setTag("access", "no");
+        node.setTag("foot", "yes");
+        // no barrier!
+        assertTrue(footEncoder.handleNodeTags(node) == 0);
+
+        node.setTag("locked", "yes");
+        // barrier!
+        assertTrue(footEncoder.handleNodeTags(node) > 0);
     }
 }
