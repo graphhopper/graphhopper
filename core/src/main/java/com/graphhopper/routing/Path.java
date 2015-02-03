@@ -442,6 +442,7 @@ public class Path
                             int sign = Instruction.USE_ROUNDABOUT;
                             prevInstruction = new RoundaboutInstruction(sign, name, annotation,
                                     new PointList(10, nodeAccess.is3D()), 0);
+                            ways.add(prevInstruction);
 
                             if (prevName != null)
                             {
@@ -458,6 +459,7 @@ public class Path
                             } else // first instructions is roundabout instruction
                             {
                                 prevOrientation = ac.calcOrientation(prevLat, prevLon, latitude, longitude);
+                                prevName = name;
                             }
                         }
 
@@ -488,9 +490,6 @@ public class Path
                             .setContinuedStreet(!Helper.isEmpty(name) && (prevName.equals(name)))
                             .setDirOfRotation(delta)
                             .setFinished();
-
-
-                        ways.add(prevInstruction);
 
                         prevName = name;
                         prevAnnotation = annotation;
@@ -567,7 +566,7 @@ public class Path
                         orientation = ac.alignOrientation(prevOrientation, orientation);
                         double delta = (orientation - prevOrientation);
                         prevInstruction.setRadian(delta);
-                        ways.add(prevInstruction);
+
                     }
                     ways.add(new FinishInstruction(nodeAccess, adjNode));
                 }
