@@ -61,7 +61,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB             | routetype |
       | 50.720492,-3.535221 | 50.718641,-3.53476 | car       |
 
-  @Routing @Current
+  @Routing
   Scenario Outline: Verify  one Way  Restrictions  on a Route (Exeter WSPIP-83)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints not on the route map:
@@ -118,7 +118,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 50.726735,-3.520955 | 50.726914,-3.522033 | car       |
 
-  @Routing @Current
+  @Routing 
   Scenario Outline: Verify  No Turn Restriction (Denmark Road-Exeter)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -140,7 +140,7 @@ Feature: Verify a route from A to B
       | pointA             | pointB             | routetype |
       | 50.72148,-3.532485 | 50.721888,-3.53182 | car       |
 
-    @Routing @Current
+    @Routing
   Scenario Outline: Verify No  Turn Restrictions(Except Bus)  on a Route (BELGROVE ROAD -Exeter)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints not on the route map:
@@ -208,7 +208,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 50.722996,-3.533354 | 50.726428,-3.525129 | car       |
 
-  @Routing @Current
+  @Routing
   Scenario Outline: Verify  Access Limited To  Restrictions on a Route (Paris Street-Exeter)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
