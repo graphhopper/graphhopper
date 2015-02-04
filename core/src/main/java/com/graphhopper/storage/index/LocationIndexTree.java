@@ -739,22 +739,22 @@ public class LocationIndexTree implements LocationIndex
             }
 
             // see #232
-//            if (iteration % 2 == 1)
-//            {
-//                // Check if something was found already...
-//                if (foundEntries.size() > 0)
-//                {
-//                    double rMin = calculateRMin(queryLat, queryLon, iteration);
-//                    double minDistance = calcMinDistance(queryLat, queryLon, foundEntries);
-//
-//                    if (minDistance < rMin)
-//                    {   // resultEntries contains a nearest node for sure
-//                        break;
-//                    } // else: continue an undetected nearer node may sit in a neighbouring tile.
-//                    // Now calculate how far we have to look outside to find any hidden nearest nodes
-//                    // and repeat whole process with wider search area until this distance is covered.
-//                }
-//            }
+            if (iteration % 2 == 1)
+            {
+                // Check if something was found already...
+                if (foundEntries.size() > 0)
+                {
+                    double rMin = calculateRMin(queryLat, queryLon, iteration);
+                    double minDistance = calcMinDistance(queryLat, queryLon, foundEntries);
+
+                    if (minDistance < rMin)
+                    {   // resultEntries contains a nearest node for sure
+                        break;
+                    } // else: continue an undetected nearer node may sit in a neighbouring tile.
+                    // Now calculate how far we have to look outside to find any hidden nearest nodes
+                    // and repeat whole process with wider search area until this distance is covered.
+                }
+            }
         }
         return foundEntries;
     }
