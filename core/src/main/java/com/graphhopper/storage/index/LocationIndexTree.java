@@ -80,6 +80,7 @@ public class LocationIndexTree implements LocationIndex
     // do not start with 0 as a positive value means leaf and a negative means "entry with subentries"
     static final int START_POINTER = 1;
     int maxRegionSearch = 4;
+    boolean filterClosestSearch = false;
     /**
      * If normed distance is smaller than this value the node or edge is 'identical' and the
      * algorithm can stop search.
@@ -125,7 +126,13 @@ public class LocationIndexTree implements LocationIndex
 
         this.maxRegionSearch = numTiles;
         return this;
-    }    
+    }
+    
+    public LocationIndexTree setFilterClosestSearch( boolean filterClosest)
+    {
+        filterClosestSearch = filterClosest;
+        return this;
+    }
 
     void prepareAlgo()
     {
@@ -702,16 +709,24 @@ public class LocationIndexTree implements LocationIndex
         return center;
     }
     
-
+    /**
+     * So as not to break test compilations.
+     */
+    public final TIntHashSet findNetworkEntries( double queryLat, double queryLon, int maxIteration )
+    {
+        return findNetworkEntries(queryLat, queryLon, maxIteration, null);
+    }
+    
     /**
      * This method collects the node indices from the quad tree data structure in a certain order
      * which makes sure not too many nodes are collected as well as no nodes will be missing. See
      * discussion at issue #221.
      */
-    public final TIntHashSet findNetworkEntries( double queryLat, double queryLon, int maxIteration )
+    public final TIntHashSet findNetworkEntries( double queryLat, double queryLon, int maxIteration, final EdgeFilter edgeFilter )
     {
         TIntHashSet foundEntries = new TIntHashSet();
-
+        TIntHashSet filteredFound = new TIntHashSet();
+        
         for (int iteration = 0; iteration < maxIteration; iteration++)
         {
             // find entries in border of searchbox
@@ -737,15 +752,41 @@ public class LocationIndexTree implements LocationIndex
                 findNetworkEntriesSingleRegion(foundEntries, subqueryLatA, subqueryLon);
                 findNetworkEntriesSingleRegion(foundEntries, subqueryLatB, subqueryLon);
             }
-
+ 
             // see #232
             if (iteration % 2 == 1)
             {
+                if (edgeFilter != null) {
+                    final EdgeExplorer explorer = graph.createEdgeExplorer(edgeFilter);
+                    final TIntHashSet filtered = filteredFound;
+                    foundEntries.forEach(new TIntProcedure() {
+                        @Override
+                        public boolean execute(int value)
+                        {
+                            EdgeIterator iter = explorer.setBaseNode(value);
+                            while (iter.next()) {
+                                if (edgeFilter.accept(iter)) {
+                                    filtered.add(value);
+                                }    
+                            }
+                            return true;
+                        }
+                    });
+                    
+                    // Can clear these because we already run them through the filter
+                    // test, no need to do this again on subsequent iterations.
+                    foundEntries.clear();
+                }
+                else
+                {
+                    filteredFound = foundEntries;
+                }
+                
                 // Check if something was found already...
-                if (foundEntries.size() > 0)
+                if (filteredFound.size() > 0)
                 {
                     double rMin = calculateRMin(queryLat, queryLon, iteration);
-                    double minDistance = calcMinDistance(queryLat, queryLon, foundEntries);
+                    double minDistance = calcMinDistance(queryLat, queryLon, filteredFound);
 
                     if (minDistance < rMin)
                     {   // resultEntries contains a nearest node for sure
@@ -756,7 +797,11 @@ public class LocationIndexTree implements LocationIndex
                 }
             }
         }
-        return foundEntries;
+        
+        if (edgeFilter == null) {
+            return foundEntries;
+        }
+        return filteredFound;
     }
 
     final double calcMinDistance( double queryLat, double queryLon, TIntHashSet pointset )
@@ -789,7 +834,17 @@ public class LocationIndexTree implements LocationIndex
         if (isClosed())
             throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
 
-        final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon, maxRegionSearch);
+        EdgeFilter findFilter;
+        if (filterClosestSearch) {
+            findFilter = edgeFilter;
+        }
+        else
+        {
+            findFilter = null;
+        }
+   
+        final TIntHashSet storedNetworkEntryIds;
+        storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon, maxRegionSearch, findFilter);
         final QueryResult closestMatch = new QueryResult(queryLat, queryLon);
         if (storedNetworkEntryIds.isEmpty())
             return closestMatch;
