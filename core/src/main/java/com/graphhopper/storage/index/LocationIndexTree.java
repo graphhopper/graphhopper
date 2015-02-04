@@ -17,6 +17,25 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHTBitSet;
+import com.graphhopper.geohash.SpatialKeyAlgo;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.storage.DataAccess;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.GHPoint;
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.procedure.TIntProcedure;
+import gnu.trove.set.hash.TIntHashSet;
+import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This implementation implements an n-tree to get the closest node or edge from GPS coordinates.
@@ -32,7 +51,7 @@ public class LocationIndexTree implements LocationIndex
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int MAGIC_INT;
     protected DistanceCalc distCalc = Helper.DIST_PLANE;
-    private final DistanceCalc preciseDistCalc = Helper.DIST_EARTH;
+    private DistanceCalc preciseDistCalc = Helper.DIST_EARTH;
     protected final Graph graph;
     private final NodeAccess nodeAccess;
     final DataAccess dataAccess;
@@ -44,7 +63,7 @@ public class LocationIndexTree implements LocationIndex
     private int minResolutionInMeter = 300;
     private double deltaLat;
     private double deltaLon;
-    private final int initSizeLeafEntries = 4;
+    private int initSizeLeafEntries = 4;
     private boolean initialized = false;
     // do not start with 0 as a positive value means leaf and a negative means "entry with subentries"
     static final int START_POINTER = 1;
@@ -443,7 +462,7 @@ public class LocationIndexTree implements LocationIndex
         Collection<InMemEntry> getEntriesOf( int selectDepth )
         {
             List<InMemEntry> list = new ArrayList<InMemEntry>();
-            fillLayer(list, selectDepth, 0, root.getSubEntriesForDebug());
+            fillLayer(list, selectDepth, 0, ((InMemTreeEntry) root).getSubEntriesForDebug());
             return list;
         }
 
@@ -1013,8 +1032,6 @@ public class LocationIndexTree implements LocationIndex
         }
 
         @Override
-        @Override
-        @Override
         public final boolean isLeaf()
         {
             return true;
@@ -1092,8 +1109,6 @@ public class LocationIndexTree implements LocationIndex
             return list;
         }
 
-        @Override
-        @Override
         @Override
         public final boolean isLeaf()
         {
