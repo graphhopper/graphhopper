@@ -116,12 +116,12 @@ public class LocationIndexTree implements LocationIndex
      */
     public LocationIndexTree setMaxRegionSearch( int numTiles )
     {
-//        if (numTiles < 1)
-//            throw new IllegalArgumentException("Region of location index must be at least 1 but was " + numTiles);
-//
-//        // see #232
-//        if (numTiles % 2 == 1)
-//            numTiles++;
+        if (numTiles < 1)
+            throw new IllegalArgumentException("Region of location index must be at least 1 but was " + numTiles);
+
+        // see #232
+        if (numTiles % 2 == 1)
+            numTiles++;
 
         this.maxRegionSearch = numTiles;
         return this;
@@ -701,6 +701,7 @@ public class LocationIndexTree implements LocationIndex
         keyAlgo.decode(key, center);
         return center;
     }
+    
 
     /**
      * This method collects the node indices from the quad tree data structure in a certain order
@@ -738,22 +739,22 @@ public class LocationIndexTree implements LocationIndex
             }
 
             // see #232
-            if (iteration % 2 == 1)
-            {
-                // Check if something was found already...
-                if (foundEntries.size() > 0)
-                {
-                    double rMin = calculateRMin(queryLat, queryLon, iteration);
-                    double minDistance = calcMinDistance(queryLat, queryLon, foundEntries);
-
-                    if (minDistance < rMin)
-                    {   // resultEntries contains a nearest node for sure
-                        break;
-                    } // else: continue an undetected nearer node may sit in a neighbouring tile.
-                    // Now calculate how far we have to look outside to find any hidden nearest nodes
-                    // and repeat whole process with wider search area until this distance is covered.
-                }
-            }
+//            if (iteration % 2 == 1)
+//            {
+//                // Check if something was found already...
+//                if (foundEntries.size() > 0)
+//                {
+//                    double rMin = calculateRMin(queryLat, queryLon, iteration);
+//                    double minDistance = calcMinDistance(queryLat, queryLon, foundEntries);
+//
+//                    if (minDistance < rMin)
+//                    {   // resultEntries contains a nearest node for sure
+//                        break;
+//                    } // else: continue an undetected nearer node may sit in a neighbouring tile.
+//                    // Now calculate how far we have to look outside to find any hidden nearest nodes
+//                    // and repeat whole process with wider search area until this distance is covered.
+//                }
+//            }
         }
         return foundEntries;
     }

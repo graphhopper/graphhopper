@@ -189,7 +189,7 @@ else
 fi
 
 if [ "x$JAVA_OPTS" = "x" ]; then
-  JAVA_OPTS="-Xmx2000m -Xms2000m -server"
+  JAVA_OPTS="-Xmx3000m -Xms2000m -server"
 fi
 
 
