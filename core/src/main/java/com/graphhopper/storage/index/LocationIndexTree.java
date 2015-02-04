@@ -849,8 +849,6 @@ public class LocationIndexTree implements LocationIndex
                 new XFirstSearchCheck(queryLat, queryLon, checkBitset, edgeFilter)
                 {
                     @Override
-                    @Override
-                    @Override
                     protected double getQueryDistance()
                     {
                         return closestMatch.getQueryDistance();
