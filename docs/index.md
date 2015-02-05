@@ -21,6 +21,7 @@
 
  * [Simple routing](./core/routing.md) to integrate GraphHopper in your Java application (or pick any JVM language)
  * [Create custom weighting](./core/weighting.md)
+ * [Elevation](./core/elevation.md)
  * [Technical overview](./core/technical.md)
  * [Slides from 2014](http://graphhopper.com/public/slides/)
  * [Contraction Hierarchies](./core/ch.md)
