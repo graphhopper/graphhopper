@@ -39,118 +39,100 @@ import org.w3c.dom.NodeList;
  * <p>
  * @author Peter Karich
  */
-public class GPXFile
-{
+public class GPXFile {
+
     static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
     static final String DATE_FORMAT_Z = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     static final String DATE_FORMAT_Z_MS = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
     private final List<GPXEntry> entries;
     private final boolean includeElevation = false;
 
-    public GPXFile()
-    {
+    public GPXFile() {
         entries = new ArrayList<GPXEntry>();
     }
 
-    public GPXFile( List<GPXEntry> entries )
-    {
+    public GPXFile(List<GPXEntry> entries) {
         this.entries = entries;
     }
 
-    public GPXFile( MatchResult mr )
-    {
+    public GPXFile(MatchResult mr) {
         entries = new ArrayList<GPXEntry>(mr.getEdgeMatches().size());
         // TODO fetch time from GPX or from calculated route?
         long time = 0;
-        for (int emIndex = 0; emIndex < mr.getEdgeMatches().size(); emIndex++)
-        {
+        for (int emIndex = 0; emIndex < mr.getEdgeMatches().size(); emIndex++) {
             EdgeMatch em = mr.getEdgeMatches().get(emIndex);
-            PointList pl = em.edgeState.fetchWayGeometry(emIndex == 0 ? 3 : 2);
-            for (int i = 0; i < pl.size(); i++)
-            {
-                if (pl.is3D())
-                {
+            PointList pl = em.getEdgeState().fetchWayGeometry(emIndex == 0 ? 3 : 2);
+            for (int i = 0; i < pl.size(); i++) {
+                if (pl.is3D()) {
                     entries.add(new GPXEntry(pl.getLatitude(i), pl.getLongitude(i), pl.getElevation(i), time));
-                } else
-                {
+                } else {
                     entries.add(new GPXEntry(pl.getLatitude(i), pl.getLongitude(i), time));
                 }
             }
         }
     }
 
-    public List<GPXEntry> getEntries()
-    {
+    public List<GPXEntry> getEntries() {
         return entries;
     }
 
-    public GPXFile doImport( String fileStr )
-    {
-        try
-        {
+    public GPXFile doImport(String fileStr) {
+        try {
             return doImport(new FileInputStream(fileStr));
-        } catch (FileNotFoundException ex)
-        {
+        } catch (FileNotFoundException ex) {
             throw new RuntimeException(ex);
         }
     }
 
-    public GPXFile doImport( InputStream is )
-    {
+    public GPXFile doImport(InputStream is) {
         SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
         SimpleDateFormat formatterZ = new SimpleDateFormat(DATE_FORMAT_Z);
         SimpleDateFormat formatterZMS = new SimpleDateFormat(DATE_FORMAT_Z_MS);
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setValidating(false);
         factory.setIgnoringElementContentWhitespace(true);
-        try
-        {
+        try {
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(is);
             NodeList nl = doc.getElementsByTagName("trkpt");
-            for (int index = 0; index < nl.getLength(); index++)
-            {
+            for (int index = 0; index < nl.getLength(); index++) {
                 Node n = nl.item(index);
-                if (!(n instanceof Element))
+                if (!(n instanceof Element)) {
                     continue;
+                }
 
                 Element e = (Element) n;
                 double lat = Double.parseDouble(e.getAttribute("lat"));
                 double lon = Double.parseDouble(e.getAttribute("lon"));
                 NodeList timeNodes = e.getElementsByTagName("time");
-                if (timeNodes.getLength() == 0)
+                if (timeNodes.getLength() == 0) {
                     throw new IllegalStateException("GPX without time is illegal");
+                }
 
                 String text = timeNodes.item(0).getTextContent();
                 long millis;
-                if (text.contains("Z"))
-                {
-                    try
-                    {
+                if (text.contains("Z")) {
+                    try {
                         // Try whole second matching
                         millis = formatterZ.parse(text).getTime();
-                    } catch (ParseException ex)
-                    {
+                    } catch (ParseException ex) {
                         // Error: try looking at milliseconds
                         millis = formatterZMS.parse(text).getTime();
                     }
-                } else
-                {
+                } else {
                     millis = formatter.parse(revertTZHack(text)).getTime();
                 }
 
                 NodeList eleNodes = e.getElementsByTagName("ele");
-                if (eleNodes.getLength() == 0)
+                if (eleNodes.getLength() == 0) {
                     entries.add(new GPXEntry(lat, lon, millis));
-                else
-                {
+                } else {
                     double ele = Double.parseDouble(eleNodes.item(0).getTextContent());
                     entries.add(new GPXEntry(lat, lon, ele, millis));
                 }
             }
             return this;
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -158,8 +140,7 @@ public class GPXFile
     /**
      * Hack to parse time in Java and convert +0100 into +01:00
      */
-    private static String revertTZHack( String str )
-    {
+    private static String revertTZHack(String str) {
         return str.substring(0, str.length() - 3) + str.substring(str.length() - 2);
     }
 
@@ -167,19 +148,16 @@ public class GPXFile
     /**
      * Hack to form valid timezone ala +01:00 instead +0100
      */
-    private static String tzHack( String str )
-    {
+    private static String tzHack(String str) {
         return str.substring(0, str.length() - 2) + ":" + str.substring(str.length() - 2);
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "entries " + entries.size() + ", " + entries;
     }
 
-    public String createString()
-    {
+    public String createString() {
         long startTimeMillis = 0;
         SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
         String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
@@ -199,12 +177,12 @@ public class GPXFile
         track.append("\n<trk><name>").append("GraphHopper MapMatching").append("</name>");
 
         track.append("<trkseg>");
-        for (GPXEntry entry : entries)
-        {
+        for (GPXEntry entry : entries) {
             track.append("\n<trkpt lat='").append(Helper.round6(entry.getLat()));
             track.append("' lon='").append(Helper.round6(entry.getLon())).append("'>");
-            if (includeElevation)
+            if (includeElevation) {
                 track.append("<ele>").append(Helper.round2(entry.getEle())).append("</ele>");
+            }
             track.append("<time>").append(tzHack(formatter.format(startTimeMillis + entry.getMillis()))).append("</time>");
             track.append("</trkpt>");
         }
@@ -216,35 +194,27 @@ public class GPXFile
         return track.toString().replaceAll("\\'", "\"");
     }
 
-    public GPXFile doExport( String gpxFile )
-    {
+    public GPXFile doExport(String gpxFile) {
         BufferedWriter writer = null;
-        try
-        {
+        try {
             writer = new BufferedWriter(new FileWriter(gpxFile));
             writer.append(createString());
             return this;
-        } catch (IOException ex)
-        {
+        } catch (IOException ex) {
             throw new IllegalStateException(ex);
-        } finally
-        {
+        } finally {
             Helper.close(writer);
         }
     }
 
-    public static void write( Path path, String gpxFile, Translation translation )
-    {
+    public static void write(Path path, String gpxFile, Translation translation) {
         BufferedWriter writer = null;
-        try
-        {
+        try {
             writer = new BufferedWriter(new FileWriter(gpxFile));
             writer.append(path.calcInstructions(translation).createGPX());
-        } catch (IOException ex)
-        {
+        } catch (IOException ex) {
             throw new IllegalStateException(ex);
-        } finally
-        {
+        } finally {
             Helper.close(writer);
         }
     }

@@ -223,6 +223,12 @@ public class MapMatching {
             prevEntry = entry;
         }
 
+        EdgeMatch m = edgeMatches.get(0);
+        edgeMatches.set(0, new EdgeMatch(startQueryResult.getClosestEdge(), m.getGpxExtensions()));
+
+        m = edgeMatches.get(edgeMatches.size() - 1);
+        edgeMatches.set(edgeMatches.size() - 1, new EdgeMatch(endQueryResult.getClosestEdge(), m.getGpxExtensions()));
+
         long gpxMillis = gpxList.get(gpxList.size() - 1).getMillis() - gpxList.get(0).getMillis();
         MatchResult matchResult = new MatchResult(edgeMatches,
                 path.getDistance(), path.getMillis(),

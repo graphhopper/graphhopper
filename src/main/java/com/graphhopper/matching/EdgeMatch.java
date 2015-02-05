@@ -24,38 +24,39 @@ import java.util.List;
  *
  * @author Peter Karich
  */
-public class EdgeMatch
-{
-    final EdgeIteratorState edgeState;
-    final List<GPXExtension> gpxExtensions;
+public class EdgeMatch {
 
-    public EdgeMatch( EdgeIteratorState edgeState, List<GPXExtension> gpxExtension )
-    {
+    private final EdgeIteratorState edgeState;
+    private final List<GPXExtension> gpxExtensions;
+
+    public EdgeMatch(EdgeIteratorState edgeState, List<GPXExtension> gpxExtension) {
         this.edgeState = edgeState;
         this.gpxExtensions = gpxExtension;
-        if (this.gpxExtensions == null)
-        {
+        if (this.gpxExtensions == null) {
             throw new IllegalStateException("extension list cannot be null");
         }
     }
 
-    public boolean isEmpty()
-    {
+    public boolean isEmpty() {
         return gpxExtensions.isEmpty();
     }
 
-    public double getMinDistance()
-    {
-        if (isEmpty())
-        {
+    public EdgeIteratorState getEdgeState() {
+        return edgeState;
+    }
+
+    public List<GPXExtension> getGpxExtensions() {
+        return gpxExtensions;
+    }
+
+    public double getMinDistance() {
+        if (isEmpty()) {
             throw new IllegalStateException("No minimal distance for " + edgeState);
         }
 
         double min = Double.MAX_VALUE;
-        for (GPXExtension gpxExt : gpxExtensions)
-        {
-            if (gpxExt.queryResult.getQueryDistance() < min)
-            {
+        for (GPXExtension gpxExt : gpxExtensions) {
+            if (gpxExt.queryResult.getQueryDistance() < min) {
                 min = gpxExt.queryResult.getQueryDistance();
             }
         }
@@ -63,8 +64,7 @@ public class EdgeMatch
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "edge:" + edgeState + ", extensions:" + gpxExtensions;
     }
 }

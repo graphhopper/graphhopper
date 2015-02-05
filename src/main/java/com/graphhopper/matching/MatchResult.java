@@ -23,18 +23,17 @@ import java.util.List;
  *
  * @author Peter Karich
  */
-public class MatchResult
-{
+public class MatchResult {
+
     private final List<EdgeMatch> edgeMatches;
     private final double matchLength;
     private final long matchMillis;
     private final double gpxEntriesLength;
     private final long gpxEntriesMillis;
 
-    public MatchResult( List<EdgeMatch> edgeMatches, 
-            double matchLength, long matchMillis, 
-            double gpxEntriesLength, long gpxEntriesMillis )
-    {
+    public MatchResult(List<EdgeMatch> edgeMatches,
+            double matchLength, long matchMillis,
+            double gpxEntriesLength, long gpxEntriesMillis) {
         this.edgeMatches = edgeMatches;
         this.matchLength = matchLength;
         this.matchMillis = matchMillis;
@@ -42,28 +41,23 @@ public class MatchResult
         this.gpxEntriesMillis = gpxEntriesMillis;
     }
 
-    public List<EdgeMatch> getEdgeMatches()
-    {
+    public List<EdgeMatch> getEdgeMatches() {
         return edgeMatches;
     }
 
-    public double getGpxEntriesLength()
-    {
+    public double getGpxEntriesLength() {
         return gpxEntriesLength;
     }
 
-    public long getGpxEntriesMillis()
-    {
+    public long getGpxEntriesMillis() {
         return gpxEntriesMillis;
     }
 
-    public double getMatchLength()
-    {
+    public double getMatchLength() {
         return matchLength;
     }
 
-    public long getMatchMillis()
-    {
+    public long getMatchMillis() {
         return matchMillis;
     }
 }

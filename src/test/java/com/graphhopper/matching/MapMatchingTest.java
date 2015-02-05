@@ -114,7 +114,7 @@ public class MapMatchingTest {
     List<String> fetchStreets(List<EdgeMatch> emList) {
         List<String> list = new ArrayList<String>();
         for (EdgeMatch em : emList) {
-            list.add(em.edgeState.getName());
+            list.add(em.getEdgeState().getName());
         }
         return list;
     }
