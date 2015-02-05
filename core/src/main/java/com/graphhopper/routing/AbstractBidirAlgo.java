@@ -62,7 +62,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
         return extractPath();
     }
 
-    void runAlgo()
+    protected void runAlgo()
     {
         while (!finished())
         {
