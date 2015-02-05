@@ -81,7 +81,7 @@ public class Instruction
         this.name = name;
     }
 
-    public Map<String,Object> getExtraInfo()
+    public Map<String,Object> getExtraInfoJSON()
     {
         return Collections.<String, Object>emptyMap();
     }

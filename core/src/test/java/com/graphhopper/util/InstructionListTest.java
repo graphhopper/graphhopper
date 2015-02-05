@@ -35,6 +35,8 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
+
+import org.json.JSONObject;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.xml.sax.SAXException;
@@ -355,9 +357,12 @@ public class InstructionListTest
         il.add(instr);
 
         Map<String, Object> json = il.createJson().get(0);        
+        // assert that all information is present in map for JSON
         assertEquals("Enter roundabout and use exit 2 in direction streetname", json.get("text").toString());
         assertEquals(-1, (Double) json.get("turnAngle"), 0.01);
         assertEquals("2", json.get("exitNr").toString());
+        // assert that a valid JSON object can be written
+        assertNotNull(new JSONObject(json).toString());
     }
 
     // Roundabout with unknown dir of rotation
@@ -379,7 +384,9 @@ public class InstructionListTest
 
         Map<String, Object> json = il.createJson().get(0);
         assertEquals("Enter roundabout and use exit 2 in direction streetname", json.get("text").toString());
-        assertEquals("NaN", json.get("turnAngle").toString());
+        assertEquals("null", json.get("turnAngle").toString());
+        // assert that a valid JSON object can be written
+        assertNotNull(new JSONObject(json).toString());
     }
     
     @Test

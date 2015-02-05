@@ -120,7 +120,7 @@ paths[0].instructions[0].sign                 | A number which specifies the sig
 paths[0].instructions[0].annotationText       | [optional] A text describing the instruction in more detail, e.g. like surface of the way, warnings or involved costs
 paths[0].instructions[0].annotationImportance | [optional] 0 stands for INFO, 1 for warning, 2 for costs, 3 for costs and warning
 paths[0].instructions[0].exitNr               | [optional] Only available for USE_ROUNDABOUT instructions. The count of exits at which the route leaves the roundabout.
-paths[0].instructions[0].turnAngle            | [optional] Only available for USE_ROUNDABOUT instructions. The radian of the route within the roundabout: 0<r<2*PI for clockwise and -2PI<r<0 for counterclockwise transit. Is NaN if direction of rotation is undefined.
+paths[0].instructions[0].turnAngle            | [optional] Only available for USE_ROUNDABOUT instructions. The radian of the route within the roundabout: 0<r<2*PI for clockwise and -2PI<r<0 for counterclockwise transit. Is null the direction of rotation is undefined.
 
 
 ## Area information

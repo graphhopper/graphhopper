@@ -1,5 +1,7 @@
 package com.graphhopper.util;
 
+import org.json.JSONObject;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -106,14 +108,14 @@ public class RoundaboutInstruction extends Instruction
 
 
     @Override
-    public Map<String, Object> getExtraInfo()
+    public Map<String, Object> getExtraInfoJSON()
     {
         Map<String, Object> tmpMap = new HashMap<String, Object>();
         tmpMap.put("exitNr", getExitNr());
         double radian = getRadian();
         if (Double.isNaN(radian))
         {
-            tmpMap.put("turnAngle", radian);    
+            tmpMap.put("turnAngle", JSONObject.NULL);
         } else {
             tmpMap.put("turnAngle", Helper.round(radian, 2));
         }
