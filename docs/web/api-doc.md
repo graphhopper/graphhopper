@@ -119,8 +119,8 @@ paths[0].instructions[0].interval             | An array containing the first an
 paths[0].instructions[0].sign                 | A number which specifies the sign to show e.g. for right turn etc <br>TURN_SHARP_LEFT = -3<br>TURN_LEFT = -2<br>TURN_SLIGHT_LEFT = -1<br>CONTINUE_ON_STREET = 0<br>TURN_SLIGHT_RIGHT = 1<br>TURN_RIGHT = 2<br>TURN_SHARP_RIGHT = 3<br>FINISH = 4<br>VIA_REACHED = 5<br>USE_ROUNDABOUT = 6
 paths[0].instructions[0].annotationText       | [optional] A text describing the instruction in more detail, e.g. like surface of the way, warnings or involved costs
 paths[0].instructions[0].annotationImportance | [optional] 0 stands for INFO, 1 for warning, 2 for costs, 3 for costs and warning
-paths[0].instructions[0].exitNr               | [optional] Only available for USE_ROUNDABOUT instructions. The count of exits at which the route leaves the roundabout.
-paths[0].instructions[0].turnAngle            | [optional] Only available for USE_ROUNDABOUT instructions. The radian of the route within the roundabout: 0<r<2*PI for clockwise and -2PI<r<0 for counterclockwise transit. Is null the direction of rotation is undefined.
+paths[0].instructions[0].exit_nr              | [optional] Only available for USE_ROUNDABOUT instructions. The count of exits at which the route leaves the roundabout.
+paths[0].instructions[0].turn_angle           | [optional] Only available for USE_ROUNDABOUT instructions. The radian of the route within the roundabout: 0<r<2*PI for clockwise and -2PI<r<0 for counterclockwise transit. Is null the direction of rotation is undefined.
 
 
 ## Area information

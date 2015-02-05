@@ -110,14 +110,14 @@ public class RoundaboutInstruction extends Instruction
     @Override
     public Map<String, Object> getExtraInfoJSON()
     {
-        Map<String, Object> tmpMap = new HashMap<String, Object>();
-        tmpMap.put("exitNr", getExitNr());
+        Map<String, Object> tmpMap = new HashMap<String, Object>(2);
+        tmpMap.put("exit_nr", getExitNr());
         double radian = getRadian();
         if (Double.isNaN(radian))
         {
-            tmpMap.put("turnAngle", JSONObject.NULL);
+            tmpMap.put("turn_angle", JSONObject.NULL);
         } else {
-            tmpMap.put("turnAngle", Helper.round(radian, 2));
+            tmpMap.put("turn_angle", Helper.round(radian, 2));
         }
         return tmpMap;
         
