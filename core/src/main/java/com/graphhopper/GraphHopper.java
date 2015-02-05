@@ -63,6 +63,7 @@ public class GraphHopper implements GraphHopperAPI
     boolean enableInstructions = true;
     private boolean fullyLoaded = false;
     // for routing
+    private double defaultWeightLimit = Double.MAX_VALUE;
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private RoutingAlgorithmFactory algoFactory;
@@ -292,7 +293,10 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Enables or disables contraction hierarchies. Enabled by default.
+     * Enables or disables contraction hierarchies. Enabled by default. Disabling CH is only
+     * recommended for a small area or in combination with setDefaultWeightLimit
+     * <p>
+     * @see #setDefaultWeightLimit(double)
      */
     public GraphHopper setCHEnable( boolean enable )
     {
@@ -300,6 +304,17 @@ public class GraphHopper implements GraphHopperAPI
         algoFactory = null;
         chEnabled = enable;
         return this;
+    }
+
+    /**
+     * This methods stops the algorithm from searching further if the resulting path would go over
+     * specified weight, important if CH is disabled. The unit is defined by the used weighting
+     * created from createWeighting, e.g. distance for shortest or seconds for the standard
+     * FastestWeighting implementation.
+     */
+    public void setDefaultWeightLimit( double defaultWeightLimit )
+    {
+        this.defaultWeightLimit = defaultWeightLimit;
     }
 
     public boolean isCHEnabled()
@@ -544,6 +559,9 @@ public class GraphHopper implements GraphHopperAPI
         // index
         preciseIndexResolution = args.getInt("index.highResolution", preciseIndexResolution);
         maxRegionSearch = args.getInt("index.maxRegionSearch", maxRegionSearch);
+
+        // routing
+        defaultWeightLimit = args.getDouble("routing.defaultWeightLimit", defaultWeightLimit);
         return this;
     }
 
@@ -908,6 +926,7 @@ public class GraphHopper implements GraphHopperAPI
         Weighting weighting = createWeighting(request.getHints(), encoder);
         weighting = createTurnWeighting(weighting, queryGraph, encoder);
 
+        double weightLimit = request.getHints().getDouble("defaultWeightLimit", defaultWeightLimit);
         String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
         AlgorithmOptions algoOpts = AlgorithmOptions.start().algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).build();
 
@@ -916,6 +935,7 @@ public class GraphHopper implements GraphHopperAPI
             QueryResult toQResult = qResults.get(placeIndex);
             sw = new StopWatch().start();
             RoutingAlgorithm algo = getAlgorithmFactory().createAlgo(queryGraph, algoOpts);
+            algo.setWeightLimit(weightLimit);
             debug += ", algoInit:" + sw.stop().getSeconds() + "s";
 
             sw = new StopWatch().start();

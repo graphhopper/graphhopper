@@ -75,6 +75,9 @@ public class Dijkstra extends AbstractRoutingAlgorithm
         while (true)
         {
             visitedNodes++;
+            if (isWeightLimitReached())
+                return createEmptyPath();
+
             if (finished())
                 break;
 
@@ -135,14 +138,19 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     }
 
     @Override
-    public String getName()
-    {
-        return AlgorithmOptions.DIJKSTRA;
-    }
-
-    @Override
     public int getVisitedNodes()
     {
         return visitedNodes;
+    }
+
+    protected boolean isWeightLimitReached()
+    {
+        return currEdge.weight >= weightLimit;
+    }
+
+    @Override
+    public String getName()
+    {
+        return AlgorithmOptions.DIJKSTRA;
     }
 }

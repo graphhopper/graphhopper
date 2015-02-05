@@ -68,9 +68,22 @@ public abstract class AbstractRoutingAlgorithmTester
     public void testCalcShortestPath()
     {
         Graph graph = createTestGraph();
-        Path p = createAlgo(graph).calcPath(0, 7);
+        RoutingAlgorithm algo = createAlgo(graph);
+        Path p = algo.calcPath(0, 7);
         assertEquals(p.toString(), Helper.createTList(0, 4, 5, 7), p.calcNodes());
         assertEquals(p.toString(), 62.1, p.getDistance(), .1);
+    }
+
+    @Test
+    public void testCalcShortestPathWithLimit()
+    {
+        Graph graph = createTestGraph();
+        RoutingAlgorithm algo = createAlgo(graph);
+        algo.setWeightLimit(10);
+        Path p = algo.calcPath(0, 7);
+        assertTrue(algo.getVisitedNodes() < 7);
+        assertFalse(p.isFound());
+        assertEquals(p.toString(), Helper.createTList(), p.calcNodes());
     }
 
     // see calc-fastest-graph.svg

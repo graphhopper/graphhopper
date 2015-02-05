@@ -37,7 +37,7 @@ public class DijkstraTest extends AbstractRoutingAlgorithmTester
     /**
      * Runs the same test with each of the supported traversal modes
      */
-    @Parameters
+    @Parameters(name = "{0}")
     public static Collection<Object[]> configs()
     {
         return Arrays.asList(new Object[][]

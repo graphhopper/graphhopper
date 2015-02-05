@@ -38,6 +38,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     protected final Weighting weighting;
     protected final FlagEncoder flagEncoder;
     protected final TraversalMode traversalMode;
+    protected double weightLimit = Double.MAX_VALUE;
     private boolean alreadyRun;
 
     /**
@@ -57,6 +58,12 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         inEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, true, false));
     }
 
+    @Override
+    public void setWeightLimit( double weight )
+    {
+        this.weightLimit = weight;
+    }
+       
     public RoutingAlgorithm setEdgeFilter( EdgeFilter additionalEdgeFilter )
     {
         this.additionalEdgeFilter = additionalEdgeFilter;
