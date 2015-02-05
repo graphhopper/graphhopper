@@ -212,7 +212,7 @@ public class GraphHopperWeb implements GraphHopperAPI
                         }
 
                         // TODO way and payment type
-                        Instruction instr = new Instruction(sign, text, InstructionAnnotation.EMPTY, instPL, 0).
+                        Instruction instr = new Instruction(sign, text, InstructionAnnotation.EMPTY, instPL).
                                 setDistance(instDist).setTime(instTime);
                         il.add(instr);
                     }

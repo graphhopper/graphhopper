@@ -17,8 +17,10 @@
  */
 package com.graphhopper.util;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Instruction
 {
@@ -48,13 +50,12 @@ public class Instruction
      * The points, distances and times have exactly the same count. The last point of this
      * instruction is not duplicated here and should be in the next one.
      */
-    public Instruction( int sign, String name, InstructionAnnotation ia, PointList pl, double radian)
+    public Instruction( int sign, String name, InstructionAnnotation ia, PointList pl)
     {
         this.sign = sign;
         this.name = name;
         this.points = pl;
         this.annotation = ia;
-        this.radian = radian;
     }
 
     public InstructionAnnotation getAnnotation()
@@ -70,11 +71,6 @@ public class Instruction
         return sign;
     }
 
-    public void changeSing(int newSign)
-    {
-        this.sign = newSign;
-    }
-
     public String getName()
     {
         return name;
@@ -85,14 +81,14 @@ public class Instruction
         this.name = name;
     }
 
-    public double getRadian()
+    public Map<String,Object> getExtraInfo()
     {
-        return radian;
+        return Collections.<String, Object>emptyMap();
     }
 
-    public void setRadian(double radian)
+    public void setExtraInfo(String key, Object value)
     {
-        this.radian = radian;
+        throw new IllegalArgumentException("Key" + key + " is not a valid option");
     }
 
     public Instruction setDistance( double distance )

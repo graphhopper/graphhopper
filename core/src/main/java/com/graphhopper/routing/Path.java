@@ -423,11 +423,10 @@ public class Path
                 name = edge.getName();
                 annotation = encoder.getAnnotation(flags, tr);
 
-                if ((prevName == null) && (!isRoundabout))
-                // very first instruction (if not in Roundabout)
+                if ((prevName == null) && (!isRoundabout)) // very first instruction (if not in Roundabout)
                 {
                     int sign = Instruction.CONTINUE_ON_STREET;
-                    prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()), 0);
+                    prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
                     ways.add(prevInstruction);
                     prevName = name;
                     prevAnnotation = annotation;
@@ -440,10 +439,8 @@ public class Path
                         if (!prevInRoundabout) //just entered roundabout
                         {
                             int sign = Instruction.USE_ROUNDABOUT;
-                            prevInstruction = new RoundaboutInstruction(sign, name, annotation,
-                                    new PointList(10, nodeAccess.is3D()), 0);
-                            ways.add(prevInstruction);
-
+                            RoundaboutInstruction roundaboutInstruction = new RoundaboutInstruction(sign, name,
+                                                                annotation, new PointList(10, nodeAccess.is3D()));
                             if (prevName != null)
                             {
                                 // previous orientation is last orientation before entering roundabout
@@ -454,13 +451,16 @@ public class Path
                                 double orientation = ac.calcOrientation(prevLat, prevLon, latitude, longitude);
                                 orientation = ac.alignOrientation(prevOrientation, orientation);
                                 double delta = (orientation - prevOrientation);
-                                prevInstruction = ((RoundaboutInstruction) prevInstruction).setDirOfRotation(delta);
+                                roundaboutInstruction.setDirOfRotation(delta);
 
                             } else // first instructions is roundabout instruction
                             {
                                 prevOrientation = ac.calcOrientation(prevLat, prevLon, latitude, longitude);
                                 prevName = name;
+                                prevAnnotation = annotation;
                             }
+                            prevInstruction = roundaboutInstruction;
+                            ways.add(prevInstruction);
                         }
 
                         // Add passed exits to instruction. There is an exit if there are
@@ -470,25 +470,26 @@ public class Path
                         edgeIter.next();
                         if (edgeIter.next()) {((RoundaboutInstruction) prevInstruction).increaseExitNr();}
 
-                    } else if (prevInRoundabout){ //previously in roundabout but not anymore
+                    } else if (prevInRoundabout) //previously in roundabout but not anymore
+                    {
 
                         prevInstruction.setName(name);
 
                         // calc angle between roundabout entrance and exit
                         double orientation = ac.calcOrientation(prevLat, prevLon, latitude, longitude);
                         orientation = ac.alignOrientation(prevOrientation, orientation);
-                        double delta = (orientation - prevOrientation);
-                        prevInstruction.setRadian(delta);
+                        double deltaInOut = (orientation - prevOrientation);
 
                         // calculate direction of exit turn to determine direction of rotation
                         // right turn == counterclockwise and vice versa
                         double recentOrientation = ac.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
                         orientation = ac.alignOrientation(recentOrientation, orientation);
-                        delta = (orientation - recentOrientation);
+                        double deltaOut = (orientation - recentOrientation);
 
                         prevInstruction = ((RoundaboutInstruction) prevInstruction)
+                            .setRadian(deltaInOut)
                             .setContinuedStreet(!Helper.isEmpty(name) && (prevName.equals(name)))
-                            .setDirOfRotation(delta)
+                            .setDirOfRotation(deltaOut)
                             .setFinished();
 
                         prevName = name;
@@ -532,8 +533,7 @@ public class Path
                                 sign = Instruction.TURN_SHARP_RIGHT;
 
                         }
-                        prevInstruction = new Instruction(sign, name, annotation,
-                                                          new PointList(10, nodeAccess.is3D()), delta);
+                        prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()) );
                         ways.add(prevInstruction);
                         prevName = name;
                         prevAnnotation = annotation;
@@ -542,7 +542,8 @@ public class Path
 
                 updatePointsAndInstruction(edge, wayGeo);
 
-                if (wayGeo.getSize() <= 2) {
+                if (wayGeo.getSize() <= 2)
+                {
                     doublePrevLat = prevLat;
                     doublePrevLong = prevLon;
                 }
@@ -565,7 +566,7 @@ public class Path
                         double orientation = ac.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
                         orientation = ac.alignOrientation(prevOrientation, orientation);
                         double delta = (orientation - prevOrientation);
-                        prevInstruction.setRadian(delta);
+                        ((RoundaboutInstruction) prevInstruction).setRadian(delta);
 
                     }
                     ways.add(new FinishInstruction(nodeAccess, adjNode));

@@ -33,8 +33,7 @@ public class FinishInstruction extends Instruction
             {
                 add(lat, lon, ele);
             }
-        },
-        0);
+        });
     }
 
     public FinishInstruction( NodeAccess nodeAccess, int node )

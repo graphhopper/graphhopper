@@ -338,6 +338,51 @@ public class InstructionListTest
     }
 
     @Test
+    public void testRoundaboutJsonIntegrity()
+    {
+        InstructionList il = new InstructionList(usTR);
+
+        PointList pl = new PointList();
+        pl.add(52.514, 13.349);
+        pl.add(52.5135,13.35);
+        pl.add(52.514, 13.351);
+        RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname",
+                                                                 new InstructionAnnotation(0, ""), pl)
+                                          .setDirOfRotation(-0.1)
+                                          .setRadian(-Math.PI+1)
+                                          .setExitNr(2)  
+                                          .setFinished();  
+        il.add(instr);
+
+        Map<String, Object> json = il.createJson().get(0);        
+        assertEquals("Enter roundabout and use exit 2 in direction streetname", json.get("text").toString());
+        assertEquals(-1, (Double) json.get("turnAngle"), 0.01);
+        assertEquals("2", json.get("exitNr").toString());
+    }
+
+    // Roundabout with unknown dir of rotation
+    @Test
+    public void testRoundaboutJsonNaN()
+    {
+        InstructionList il = new InstructionList(usTR);
+
+        PointList pl = new PointList();
+        pl.add(52.514, 13.349);
+        pl.add(52.5135,13.35);
+        pl.add(52.514, 13.351);
+        RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname",
+                new InstructionAnnotation(0, ""), pl)
+                .setRadian(-Math.PI + 1)
+                .setExitNr(2)
+                .setFinished();
+        il.add(instr);
+
+        Map<String, Object> json = il.createJson().get(0);
+        assertEquals("Enter roundabout and use exit 2 in direction streetname", json.get("text").toString());
+        assertEquals("NaN", json.get("turnAngle").toString());
+    }
+    
+    @Test
     public void testCreateGPXWithEle()
     {
         final List<GPXEntry> fakeList = new ArrayList<GPXEntry>();
@@ -373,15 +418,15 @@ public class InstructionListTest
         PointList pl = new PointList();
         pl.add(49.942576, 11.580384);
         pl.add(49.941858, 11.582422);
-        instructions.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, pl, 0).setDistance(240).setTime(15000));
+        instructions.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, pl).setDistance(240).setTime(15000));
 
         pl = new PointList();
         pl.add(49.941575, 11.583501);
-        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", ea, pl, 1.5).setDistance(25).setTime(4000));
+        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", ea, pl).setDistance(25).setTime(4000));
 
         pl = new PointList();
         pl.add(49.941389, 11.584311);
-        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", ea, pl, 1.5).setDistance(25).setTime(3000));
+        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", ea, pl).setDistance(25).setTime(3000));
         instructions.add(new FinishInstruction(49.941029, 11.584514, 0));
 
         List<GPXEntry> result = instructions.createGPXList();
