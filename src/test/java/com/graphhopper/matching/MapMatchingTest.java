@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -64,10 +65,11 @@ public class MapMatchingTest {
     @Test
     public void testDoWork() {
         GraphStorage graph = hopper.getGraph();
+        int edgeCount = graph.getAllEdges().getCount();
 
         LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
                 (LocationIndexTree) hopper.getLocationIndex());
-        
+
         MapMatching mapMatching = new MapMatching(graph, locationIndex, encoder);
 
         // sub path
@@ -75,6 +77,10 @@ public class MapMatchingTest {
                 new GHPoint(51.358735, 12.360574),
                 new GHPoint(51.358594, 12.360032));
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
+        for (EdgeMatch em : mr.getEdgeMatches()) {
+            assertTrue(em.getEdgeState().toString(), em.getEdgeState().getEdge() < edgeCount);
+        }
+        
         // create street names
         assertEquals(Arrays.asList("Platnerstraße", "Platnerstraße", "Platnerstraße"),
                 fetchStreets(mr.getEdgeMatches()));
