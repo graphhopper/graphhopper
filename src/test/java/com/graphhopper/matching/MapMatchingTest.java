@@ -22,8 +22,8 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.GPXEntry;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.Translation;
@@ -63,10 +63,11 @@ public class MapMatchingTest {
 
     @Test
     public void testDoWork() {
-        Graph graph = hopper.getGraph();
+        GraphStorage graph = hopper.getGraph();
 
-        LocationIndexMatch locationIndex = new LocationIndexMatch(graph, new RAMDirectory());
-        locationIndex.prepareIndex();
+        LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
+                (LocationIndexTree) hopper.getLocationIndex());
+        
         MapMatching mapMatching = new MapMatching(graph, locationIndex, encoder);
 
         // sub path

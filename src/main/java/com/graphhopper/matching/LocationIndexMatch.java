@@ -20,12 +20,13 @@ package com.graphhopper.matching;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
 import java.util.ArrayList;
@@ -47,13 +48,11 @@ public class LocationIndexMatch extends LocationIndexTree {
     };
 
     private final double returnAllResultsWithin;
+    private final LocationIndexTree index;
 
-    public LocationIndexMatch(Graph g, Directory dir) {
-        super(g, dir);
-
-        // apply settings good for most map matching cases, let them be customizable afterwards too
-        setMaxRegionSearch(2);
-        setMinResolutionInMeter(20);
+    public LocationIndexMatch(GraphStorage graph, LocationIndexTree index) {
+        super(graph, graph.getDirectory());
+        this.index = index;
 
         // Return ALL results which are very close and e.g. within the GPS signal accuracy.
         // Also important to get all edges if GPS point is close to a junction.
@@ -63,7 +62,7 @@ public class LocationIndexMatch extends LocationIndexTree {
     public List<QueryResult> findNClosest(final double queryLat, final double queryLon, final EdgeFilter edgeFilter) {
         // implement a cheap priority queue via List, sublist and Collections.sort
         final List<QueryResult> queryResults = new ArrayList<QueryResult>();
-        TIntHashSet set = super.findNetworkEntries(queryLat, queryLon, 2);
+        TIntHashSet set = index.findNetworkEntries(queryLat, queryLon, 2);
 
         final GHBitSet exploredNodes = new GHTBitSet(new TIntHashSet(set));
         final EdgeExplorer explorer = graph.createEdgeExplorer(edgeFilter);

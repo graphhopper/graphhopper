@@ -25,6 +25,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
 import java.util.*;
@@ -78,8 +79,10 @@ public class LocationIndexMatchTest {
         graph.edge(6, 7);
         graph.edge(7, 8);
 
-        LocationIndexMatch index = new LocationIndexMatch(graph, new RAMDirectory());
-        index.prepareIndex();
+        LocationIndexTree tmpIndex = new LocationIndexTree(graph, new RAMDirectory());
+        tmpIndex.prepareIndex();
+        LocationIndexMatch index = new LocationIndexMatch(graph, tmpIndex);
+
         // query node 4 => get at least 4-5, 4-7
         List<QueryResult> result = index.findNClosest(0.0004, 0.0006, EdgeFilter.ALL_EDGES);
         List<Integer> ids = new ArrayList<Integer>();

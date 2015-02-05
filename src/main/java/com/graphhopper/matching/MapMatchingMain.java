@@ -19,8 +19,8 @@
 package com.graphhopper.matching;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
 import java.io.File;
 import java.io.FilenameFilter;
@@ -32,74 +32,64 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich
  */
-public class MapMatchingMain
-{
-    public static void main( String[] args )
-    {
+public class MapMatchingMain {
+
+    public static void main(String[] args) {
         new MapMatchingMain().start(CmdArgs.read(args));
     }
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private void start( CmdArgs args )
-    {
+    private void start(CmdArgs args) {
         String action = args.get("action", "").toLowerCase();
         args.put("graph.location", "./graph-cache");
-        if (action.equals("import"))
-        {
+        if (action.equals("import")) {
             args.put("osmreader.osm", args.get("datasource", ""));
             GraphHopper hopper = new GraphHopper().init(args);
             hopper.setCHEnable(false);
             hopper.importOrLoad();
 
-        } else if (action.equals("match"))
-        {
+        } else if (action.equals("match")) {
             GraphHopper hopper = new GraphHopper().init(args);
             hopper.setCHEnable(false);
             logger.info("loading graph from cache");
             hopper.load("./graph-cache");
-            Graph graph = hopper.getGraph();
-            // TODO use hopper.getLocationIndex() with smaller lookup area etc so we can avoid this:
+            GraphStorage graph = hopper.getGraph();
+
             logger.info("creating lookup index");
-            LocationIndexMatch locationIndex = new LocationIndexMatch(graph, new RAMDirectory());
-            locationIndex.prepareIndex();
+            LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
+                    (LocationIndexTree) hopper.getLocationIndex());
             MapMatching mapMatching = new MapMatching(graph, locationIndex, hopper.getEncodingManager().getSingle());
 
             // do the actual matching, get the GPX entries from a file or via stream
             String gpxLocation = args.get("gpx", "");
             File[] files;
-            if (gpxLocation.contains("*"))
-            {
+            if (gpxLocation.contains("*")) {
                 int lastIndex = gpxLocation.lastIndexOf(File.separator);
                 final String pattern;
                 File dir = new File(".");
-                if (lastIndex >= 0)
-                {
+                if (lastIndex >= 0) {
                     dir = new File(gpxLocation.substring(0, lastIndex));
                     pattern = gpxLocation.substring(lastIndex + 1);
-                } else
+                } else {
                     pattern = gpxLocation;
+                }
 
-                files = dir.listFiles(new FilenameFilter()
-                {
+                files = dir.listFiles(new FilenameFilter() {
                     @Override
-                    public boolean accept( File dir, String name )
-                    {
+                    public boolean accept(File dir, String name) {
                         return name.matches(pattern);
                     }
                 });
-            } else
-            {
-                files = new File[]
-                {
+            } else {
+                files = new File[]{
                     new File(gpxLocation)
                 };
             }
 
             // logger.info("Now processing the files: " + Arrays.toString(files));
             logger.info("Now processing " + files.length + " files");
-            for (File gpxFile : files)
-            {
+            for (File gpxFile : files) {
                 List<GPXEntry> inputGPXEntries = new GPXFile().doImport(gpxFile.getAbsolutePath()).getEntries();
                 MatchResult mr = mapMatching.doWork(inputGPXEntries);
                 System.out.println(gpxFile);
@@ -112,8 +102,7 @@ public class MapMatchingMain
                 new GPXFile(mr).doExport(outFile);
             }
 
-        } else
-        {
+        } else {
             System.out.println("Usage: Do an import once, then do the matching\n"
                     + "./map-matching action=import datasource=your.pbf\n"
                     + "./map-matching action=match gpx=your.gpx\n"
