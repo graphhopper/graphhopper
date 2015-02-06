@@ -17,9 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.storage.AbstractGraphStorageTester.*;
@@ -28,9 +26,8 @@ import com.graphhopper.util.Instruction;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.util.*;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
+
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -40,10 +37,11 @@ import static org.junit.Assert.*;
  */
 public class PathTest
 {
-    private final EncodingManager carManager = new EncodingManager("CAR");
-    private final FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
+    private final FlagEncoder encoder = new CarFlagEncoder();
+    private final EncodingManager carManager = new EncodingManager(encoder);
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation tr = trMap.getWithFallBack(Locale.US);
+    private final AngleCalc ac = new AngleCalc();
 
     @Test
     public void testFound()
@@ -211,6 +209,167 @@ public class PathTest
 
         // too far away
         assertNull(il.find(50.8, 50.25, 1000));
+    }
+
+    private class RoundaboutGraph
+    {
+        public EdgeIteratorState edge2change;
+        boolean clockwise;
+        final public Graph g = new GraphBuilder(carManager).create();
+        final public NodeAccess na = g.getNodeAccess();
+
+        private RoundaboutGraph(boolean clockwise)
+        {
+            //
+            //      8
+            //       \
+            //         5
+            //       /  \
+            //  1 - 2    4 - 7
+            //       \  /
+            //        3
+            //        |
+            //        6
+
+            na.setNode(1, 52.514, 13.348);
+            na.setNode(2, 52.514, 13.349);
+            na.setNode(3, 52.5135,13.35);
+            na.setNode(4, 52.514, 13.351);
+            na.setNode(5, 52.5145,13.351);
+            na.setNode(6, 52.513, 13.351);
+            na.setNode(7, 52.514, 13.352);
+            na.setNode(8, 52.515, 13.351);
+
+            EdgeIteratorState tmpEdge;
+            tmpEdge = g.edge(1, 2, 5, true).setName("MainStreet");
+            tmpEdge = clockwise? g.edge(3, 2, 5, false).setName("2-3") : g.edge(2, 3, 5, false).setName("2-3");
+            tmpEdge.setFlags(encoder.setBool(tmpEdge.getFlags(), FlagEncoder.K_ROUNDABOUT, true));
+            tmpEdge = clockwise? g.edge(4, 3, 5, false).setName("3-4") : g.edge(3, 4, 5, false).setName("3-4");
+            tmpEdge.setFlags(encoder.setBool(tmpEdge.getFlags(), FlagEncoder.K_ROUNDABOUT, true));
+            tmpEdge = clockwise? g.edge(5, 4, 5, false).setName("4-5") : g.edge(4, 5, 5, false).setName("4-5");
+            tmpEdge.setFlags(encoder.setBool(tmpEdge.getFlags(), FlagEncoder.K_ROUNDABOUT, true));
+            tmpEdge = clockwise? g.edge(2, 5, 5, false).setName("5-2") : g.edge(5, 2, 5, false).setName("5-2");
+            tmpEdge.setFlags(encoder.setBool(tmpEdge.getFlags(), FlagEncoder.K_ROUNDABOUT, true));
+            tmpEdge = g.edge(4, 7, 5, true).setName("MainStreet");
+            tmpEdge = g.edge(5, 8, 5, true).setName("5-8");
+            tmpEdge = g.edge(3, 6, 5, true).setName("3-6");
+            edge2change = tmpEdge.detach(false);
+            this.clockwise = clockwise;
+        }
+
+        private double getAngle(int n1, int n2, int n3, int n4)
+        {
+            double inOrientation = ac.calcOrientation(na.getLat(n1), na.getLon(n1), na.getLat(n2), na.getLon(n2));
+            double outOrientation = ac.calcOrientation(na.getLat(n3), na.getLon(n3), na.getLat(n4), na.getLon(n4));
+            outOrientation = ac.alignOrientation(inOrientation, outOrientation);
+            double delta = (inOrientation - outOrientation);
+            delta = clockwise? (Math.PI+delta) : -1*(Math.PI - delta);
+            return delta;
+        }
+    }
+
+    @Test
+    public void testCalcInstructionsRoundabout()
+    {
+        RoundaboutGraph rg = new RoundaboutGraph(false);
+        rg.edge2change.setFlags(encoder.setBool(rg.edge2change.getFlags(), FlagEncoder.K_FORWARD, true));
+        Path p = new Dijkstra(rg.g, carManager.getSingle(), new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 8);
+        InstructionList wayList = p.calcInstructions(tr);
+        // Test instructions
+        List<String> tmpList = pick("text", wayList.createJson());
+        assertEquals(Arrays.asList("Continue onto MainStreet",
+                        "Enter roundabout and use exit 3 in direction 5-8",
+                        "Finish!"),
+                tmpList);
+        // Test Radian
+        double delta = rg.getAngle(1, 2, 5, 8);
+        RoundaboutInstruction instr = (RoundaboutInstruction) wayList.get(1);
+        assertEquals(delta, instr.getRadian(), 0.01);
+
+        // case of continuing a street through a roundabout
+        p = new Dijkstra(rg.g, carManager.getSingle(), new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 7);
+        wayList = p.calcInstructions(tr);
+        tmpList = pick("text", wayList.createJson());
+        assertEquals(Arrays.asList("Continue onto MainStreet",
+                        "Enter roundabout and use exit 2 in direction MainStreet",
+                        "Finish!"),
+                tmpList);
+        // Test Radian
+        delta = rg.getAngle(1, 2, 4, 7);
+        instr = (RoundaboutInstruction) wayList.get(1);
+        assertEquals(delta, instr.getRadian(), 0.01);
+    }
+
+    /**
+     * case with one edge being not an exit
+     */
+    @Test
+    public void testCalcInstructionsRoundabout2()
+    {
+        RoundaboutGraph rg = new RoundaboutGraph(false);
+        rg.edge2change.setFlags(encoder.setBool(rg.edge2change.getFlags(), FlagEncoder.K_FORWARD, true));
+        Path p = new Dijkstra(rg.g, carManager.getSingle(), new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(2, 8);
+        InstructionList wayList = p.calcInstructions(tr);
+        List<String> tmpList = pick("text", wayList.createJson());
+        assertEquals(Arrays.asList( "Enter roundabout and use exit 3 in direction 5-8",
+                                    "Finish!"),
+                tmpList);
+    }
+
+    /**
+     * case starting in Roundabout
+     */
+    @Test
+    public void testCalcInstructionsRoundaboutBegin()
+    {
+        RoundaboutGraph rg = new RoundaboutGraph(false);
+        rg.edge2change.setFlags(encoder.setBool(rg.edge2change.getFlags(), FlagEncoder.K_FORWARD, false));
+        Path p = new Dijkstra(rg.g, carManager.getSingle(), new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 8);
+        InstructionList wayList = p.calcInstructions(tr);
+        List<String> tmpList = pick("text", wayList.createJson());
+        assertEquals(Arrays.asList("Continue onto MainStreet",
+                        "Enter roundabout and use exit 2 in direction 5-8",
+                        "Finish!"),
+                tmpList);
+        // Test Radian
+        double delta = rg.getAngle(1, 2, 5, 8);
+        RoundaboutInstruction instr = (RoundaboutInstruction) wayList.get(1);
+        assertEquals(delta, instr.getRadian(), 0.01);
+    }
+
+
+    /**
+     * clockwise roundabout
+     */
+    @Test
+    public void testCalcInstructionsRoundaboutClockwise()
+    {
+
+        RoundaboutGraph rg = new RoundaboutGraph(true);
+        System.out.println(rg.clockwise);
+
+        Path p = new Dijkstra(rg.g, carManager.getSingle(), new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 8);
+        InstructionList wayList = p.calcInstructions(tr);
+        List<String> tmpList = pick("text", wayList.createJson());
+        assertEquals(Arrays.asList( "Continue onto MainStreet",
+                        "Enter roundabout and use exit 1 in direction 5-8",
+                        "Finish!"),
+                tmpList);
+        // Test Radian
+        double delta = rg.getAngle(1, 2, 5, 8);
+        RoundaboutInstruction instr = (RoundaboutInstruction) wayList.get(1);
+        assertEquals(delta, instr.getRadian(), 0.01);
+    }
+
+    List<String> pick( String key, List<Map<String, Object>> instructionJson )
+    {
+        List<String> list = new ArrayList<String>();
+
+        for (Map<String, Object> json : instructionJson)
+        {
+            list.add(json.get(key).toString());
+        }
+        return list;
     }
 
 }

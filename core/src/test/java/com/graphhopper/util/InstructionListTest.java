@@ -35,6 +35,8 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
+
+import org.json.JSONObject;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.xml.sax.SAXException;
@@ -337,6 +339,56 @@ public class InstructionListTest
         assertFalse(gpxStr, gpxStr.contains("NaN"));
     }
 
+    @Test
+    public void testRoundaboutJsonIntegrity()
+    {
+        InstructionList il = new InstructionList(usTR);
+
+        PointList pl = new PointList();
+        pl.add(52.514, 13.349);
+        pl.add(52.5135,13.35);
+        pl.add(52.514, 13.351);
+        RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname",
+                                                                 new InstructionAnnotation(0, ""), pl)
+                                          .setDirOfRotation(-0.1)
+                                          .setRadian(-Math.PI+1)
+                                          .setExitNr(2)  
+                                          .setFinished();  
+        il.add(instr);
+
+        Map<String, Object> json = il.createJson().get(0);        
+        // assert that all information is present in map for JSON
+        assertEquals("Enter roundabout and use exit 2 in direction streetname", json.get("text").toString());
+        assertEquals(-1, (Double) json.get("turn_angle"), 0.01);
+        assertEquals("2", json.get("exit_nr").toString());
+        // assert that a valid JSON object can be written
+        assertNotNull(new JSONObject(json).toString());
+    }
+
+    // Roundabout with unknown dir of rotation
+    @Test
+    public void testRoundaboutJsonNaN()
+    {
+        InstructionList il = new InstructionList(usTR);
+
+        PointList pl = new PointList();
+        pl.add(52.514, 13.349);
+        pl.add(52.5135,13.35);
+        pl.add(52.514, 13.351);
+        RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname",
+                new InstructionAnnotation(0, ""), pl)
+                .setRadian(-Math.PI + 1)
+                .setExitNr(2)
+                .setFinished();
+        il.add(instr);
+
+        Map<String, Object> json = il.createJson().get(0);
+        assertEquals("Enter roundabout and use exit 2 in direction streetname", json.get("text").toString());
+        assertEquals("null", json.get("turn_angle").toString());
+        // assert that a valid JSON object can be written
+        assertNotNull(new JSONObject(json).toString());
+    }
+    
     @Test
     public void testCreateGPXWithEle()
     {
