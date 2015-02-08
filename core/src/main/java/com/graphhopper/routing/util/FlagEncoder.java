@@ -119,4 +119,9 @@ public interface FlagEncoder extends TurnCostEncoder
      * @return additional cost or warning information for an instruction like ferry or road charges.
      */
     InstructionAnnotation getAnnotation( long flags, Translation tr );
+
+    /**
+     * @return give possibility to block or allow fords depending on configuration.
+     */
+	void setBlockFords(boolean blockFords);
 }

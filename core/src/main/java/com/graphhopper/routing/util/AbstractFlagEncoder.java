@@ -230,10 +230,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                 return directionBitMask;
         }
 
+        // In case explicit flag ford=no, don't block
         if (blockFords
                 && (node.hasTag("highway", "ford") || node.hasTag("ford"))
-                && !node.hasTag(restrictions, intendedValues))
+                && !node.hasTag(restrictions, intendedValues)
+                && !node.hasTag("ford", "no")) {
             return directionBitMask;
+            
+        }
 
         return 0;
     }

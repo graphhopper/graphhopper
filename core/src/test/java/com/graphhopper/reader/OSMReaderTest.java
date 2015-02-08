@@ -716,7 +716,7 @@ public class OSMReaderTest
         CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
         FootFlagEncoder foot = new FootFlagEncoder();
         BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
-        EncodingManager manager = new EncodingManager(Arrays.asList(bike, foot, car), 4);
+        EncodingManager manager = new EncodingManager(Arrays.asList(bike, foot, car), 4, null);
 
         OSMReader reader = new OSMReader(new GraphBuilder(manager).create())
         {
@@ -790,5 +790,23 @@ public class OSMReaderTest
                 assertEquals(10, bike.getTurnCost(entry.flags), 1e-1);
             }
         }
+    }
+    
+
+    /**
+     * Tests the support of fords for given encoders.
+     */
+    @Test
+    public void testFordSupport() {
+
+        CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
+        FootFlagEncoder foot = new FootFlagEncoder();
+        BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
+        EncodingManager manager = new EncodingManager(Arrays.asList(bike, foot, car), 4, "foot,bike");
+
+        assertTrue(car.isBlockFords());
+        assertFalse(foot.isBlockFords());
+        assertFalse(foot.isBlockFords());
+
     }
 }
