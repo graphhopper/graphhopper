@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.graphhopper.reader.OSMReader;
@@ -215,5 +216,30 @@ public class EncodingManagerTest
 
         assertEquals(5, foot.getSpeed(flags), 1e-2);
         assertEquals(5, foot.getReverseSpeed(flags), 1e-2);
+    }
+
+
+    @Test
+    public void testSupportFords()
+    {
+    	// 1) no encoder crossing fords
+    	String flagEncodersStr = "car,bike,foot";
+    	String flagEncodersFordStr = "";
+        EncodingManager manager2 = new EncodingManager(flagEncodersStr, 8, flagEncodersFordStr);
+
+        assertTrue(manager2.getEncoder("car").isBlockFords());
+        assertTrue(manager2.getEncoder("bike").isBlockFords());
+        assertTrue(manager2.getEncoder("foot").isBlockFords());
+        
+
+    	// 2) two encoders crossing fords
+        flagEncodersStr = "car,bike,foot";
+        flagEncodersFordStr = "bike,foot";
+        manager2 = new EncodingManager(flagEncodersStr, 8, flagEncodersFordStr);
+
+        assertTrue(manager2.getEncoder("car").isBlockFords());
+        assertFalse(manager2.getEncoder("bike").isBlockFords());
+        assertFalse(manager2.getEncoder("foot").isBlockFords());
+        
     }
 }

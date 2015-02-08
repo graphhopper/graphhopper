@@ -233,7 +233,7 @@ public class EncodingManager
 				}
 
 				else
-					throw new IllegalArgumentException("entry in encoder list not supported " + entry);
+					throw new IllegalArgumentException("entry in ford allowing encoder list not supported " + entry);
 
 			}
 		}
