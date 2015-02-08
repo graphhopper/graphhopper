@@ -392,7 +392,7 @@ function initMap(selectLayer) {
     map = L.map('map', {
         layers: [defaultLayer],
         contextmenu: true,
-        contextmenuWidth: 140,
+        contextmenuWidth: 145,
         contextmenuItems: [{
                 separator: true,
                 index: 3,
@@ -599,7 +599,8 @@ function setFlag(coord, index) {
                     draggable: true,
                     contextmenu: true,
                     contextmenuItems: [{
-                            text: 'Marker ' + ((toFrom === FROM) ? 'Start' : ((toFrom === TO) ? 'End' : 'Intermediate')),
+                            text: 'Marker ' + ((toFrom === FROM) ?
+                                    'Start' : ((toFrom === TO) ? 'End' : 'Intermediate ' + index)),
                             disabled: true,
                             index: 0,
                             state: 2
@@ -620,7 +621,8 @@ function setFlag(coord, index) {
                             state: 2
                         }],
                     contextmenuAtiveState: 2
-                }).addTo(routingLayer).bindPopup(((toFrom === FROM) ? 'Start' : ((toFrom === TO) ? 'End' : 'Intermediate')));
+                }).addTo(routingLayer).bindPopup(((toFrom === FROM) ?
+                'Start' : ((toFrom === TO) ? 'End' : 'Intermediate ' + index)));
         // intercept openPopup
         marker._openPopup = marker.openPopup;
         marker.openPopup = function () {
