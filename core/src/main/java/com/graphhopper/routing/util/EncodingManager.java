@@ -221,12 +221,6 @@ public class EncodingManager
 				if (entry.isEmpty())
 					continue;
 
-				String entryVal = "";
-				if (entry.contains("|")) {
-					entryVal = entry;
-					entry = entry.split("\\|")[0];
-				}
-
 				FlagEncoder flagEncoder = mapEncoder.get(entry);
 				if (flagEncoder != null) {
 					flagEncoder.setBlockFords(Boolean.FALSE);
