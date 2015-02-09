@@ -163,11 +163,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
         // You can not drive down a pedestrianised street
         defaultSpeedMap.put("Pedestrianised Street", 0);
-        // Limit the speed to 0 so we are not routed down these ways but include them to remove a grade separation
-        // issue when a Private Road - Restricted Access road passes over another road.
-        //        defaultSpeedMap.put("Private Road - Restricted Access", 0);
-        // Lower the speed to 10 so it ideally routes us another way.
-        defaultSpeedMap.put("Private Road - Publicly Accessible", 10);
+        // Private Road - Publicly Accessible are NOT traversible
+        // defaultSpeedMap.put("Private Road - Restricted Access", 0);
+        // Private Road - Publicly Accessible are NOT traversible
+        // defaultSpeedMap.put("Private Road - Publicly Accessible", 10);
+
         //        defaultSpeedMap.put("Alley", 0);
 
         // osgb:type

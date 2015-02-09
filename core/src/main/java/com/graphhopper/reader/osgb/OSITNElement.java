@@ -209,7 +209,8 @@ public abstract class OSITNElement implements RoutingElement {
         case "Minor Road":
             // Pedestrianised Street is supported for walking so traversing will be controlled by speed in the flag encoders
         case "Pedestrianised Street":
-        case "Private Road - Publicly Accessible":
+            // Private Road - Publicly Accessible are NOT traversible
+            //        case "Private Road - Publicly Accessible":
             // Alleys are not traversible
             // case "Alley":
             // Private Road - Restricted Access are not traversible
