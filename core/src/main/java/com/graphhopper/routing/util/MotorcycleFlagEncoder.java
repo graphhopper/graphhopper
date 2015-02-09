@@ -38,12 +38,13 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     {
         this((int) parseLong(propertiesStr, "speedBits", 5),
                 parseDouble(propertiesStr, "speedFactor", 5),
-                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0,
+                parseBoolean(propertiesStr, "allowFords", false));
     }
 
-    public MotorcycleFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
+    public MotorcycleFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts, boolean allowFords )
     {
-        super(speedBits, speedFactor, maxTurnCosts);
+        super(speedBits, speedFactor, maxTurnCosts, allowFords);
         restrictions.remove("motorcar");
         //  moped, mofa
         restrictions.add("motorcycle");

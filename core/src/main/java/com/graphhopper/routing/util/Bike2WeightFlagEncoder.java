@@ -43,9 +43,9 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
         super(propertiesStr);
     }
 
-    public Bike2WeightFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
+    public Bike2WeightFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts, boolean allowFords )
     {
-        super(speedBits, speedFactor, maxTurnCosts);
+        super(speedBits, speedFactor, maxTurnCosts, allowFords);
     }
 
     @Override

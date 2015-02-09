@@ -33,19 +33,20 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
 {
     public MountainBikeFlagEncoder()
     {
-        this(4, 2, 0);
+        this(4, 2, 0, false);
     }
 
     public MountainBikeFlagEncoder( String propertiesStr )
     {
         this((int) parseLong(propertiesStr, "speedBits", 4),
                 parseDouble(propertiesStr, "speedFactor", 2),
-                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0,
+                parseBoolean(propertiesStr, "allowFords", false));
     }
 
-    public MountainBikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
+    public MountainBikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts, boolean allowFords )
     {
-        super(speedBits, speedFactor, maxTurnCosts);
+        super(speedBits, speedFactor, maxTurnCosts, allowFords);
         setTrackTypeSpeed("grade1", 18); // paved
         setTrackTypeSpeed("grade2", 16); // now unpaved ...
         setTrackTypeSpeed("grade3", 12);

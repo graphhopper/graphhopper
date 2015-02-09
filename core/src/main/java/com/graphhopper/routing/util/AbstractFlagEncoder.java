@@ -88,7 +88,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      * @param maxTurnCosts specify the maximum value used for turn costs, if this value is reached a
      * turn is forbidden and results in costs of positive infinity.
      */
-    protected AbstractFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
+    protected AbstractFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts, boolean allowFords )
     {
         this.maxTurnCosts = maxTurnCosts <= 0 ? 0 : maxTurnCosts;
         this.speedBits = speedBits;
@@ -110,6 +110,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         acceptedRailways.add("razed");
         acceptedRailways.add("historic");
         acceptedRailways.add("obliterated");
+        
+        // Check if fords are allowed
+        if (allowFords) {
+        	setBlockFords(false);
+        }
     }
 
     /**

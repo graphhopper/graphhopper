@@ -49,19 +49,25 @@ public class CarFlagEncoder extends AbstractFlagEncoder
      */
     public CarFlagEncoder()
     {
-        this(5, 5, 0);
+        this(5, 5, 0, false);
+    }
+    
+    public CarFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts)
+    {
+        this(speedBits, speedFactor, maxTurnCosts, false);
     }
 
     public CarFlagEncoder( String propertiesStr )
     {
         this((int) parseLong(propertiesStr, "speedBits", 5),
                 parseDouble(propertiesStr, "speedFactor", 5),
-                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0,
+                parseBoolean(propertiesStr, "allowFords", false));
     }
 
-    public CarFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
+    public CarFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts, boolean allowFords )
     {
-        super(speedBits, speedFactor, maxTurnCosts);
+        super(speedBits, speedFactor, maxTurnCosts, allowFords);
         restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
         restrictedValues.add("private");
         restrictedValues.add("agricultural");

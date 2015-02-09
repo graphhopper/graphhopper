@@ -57,9 +57,9 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     private EncodedValue wayTypeEncoder;
     private EncodedValue preferWayEncoder;
 
-    protected BikeCommonFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
+    protected BikeCommonFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts, boolean allowFords )
     {
-        super(speedBits, speedFactor, maxTurnCosts);
+        super(speedBits, speedFactor, maxTurnCosts, allowFords);
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
         restrictions.addAll(Arrays.asList("bicycle", "access"));
         restrictedValues.add("private");

@@ -242,4 +242,29 @@ public class EncodingManagerTest
         assertFalse(manager2.getEncoder("foot").isBlockFords());
         
     }
+
+
+    @Test
+    public void testParseEncoderString()
+    {
+    	// 1) no encoder crossing fords
+    	String flagEncodersStr = "car,bike,foot";
+    	String flagEncodersFordStr = "";
+        EncodingManager manager2 = new EncodingManager(flagEncodersStr, 8, flagEncodersFordStr);
+
+        assertTrue(manager2.getEncoder("car").isBlockFords());
+        assertTrue(manager2.getEncoder("bike").isBlockFords());
+        assertTrue(manager2.getEncoder("foot").isBlockFords());
+        
+
+    	// 2) two encoders crossing fords
+        flagEncodersStr = "car|turnCosts=true|allowFords=false,bike,foot|allowFords=true";
+        flagEncodersFordStr = "";
+        manager2 = new EncodingManager(flagEncodersStr, 8, flagEncodersFordStr);
+
+        assertTrue(manager2.getEncoder("car").isBlockFords());
+        assertTrue(manager2.getEncoder("bike").isBlockFords());
+        assertFalse(manager2.getEncoder("foot").isBlockFords());
+        
+    }
 }
