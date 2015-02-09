@@ -1045,7 +1045,7 @@ public abstract class AbstractGraphStorageTester
         List<FlagEncoder> list = new ArrayList<FlagEncoder>();
         list.add(new TmpCarFlagEncoder(29, 0.001, 0));
         list.add(new TmpCarFlagEncoder(29, 0.001, 0));
-        EncodingManager manager = new EncodingManager(list, 8, null);
+        EncodingManager manager = new EncodingManager(list, 8);
         graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
 
         EdgeIteratorState edge = graph.edge(0, 1);

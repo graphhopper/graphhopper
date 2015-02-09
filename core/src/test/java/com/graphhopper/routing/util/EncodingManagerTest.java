@@ -22,19 +22,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Collection;
-import java.util.Collections;
-
-import org.junit.Assert;
 import org.junit.Test;
 
-import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.BitUtil;
-import java.util.*;
 
 /**
  *
@@ -224,43 +216,23 @@ public class EncodingManagerTest
     {
     	// 1) no encoder crossing fords
     	String flagEncodersStr = "car,bike,foot";
-    	String flagEncodersFordStr = "";
-        EncodingManager manager2 = new EncodingManager(flagEncodersStr, 8, flagEncodersFordStr);
+        EncodingManager manager2 = new EncodingManager(flagEncodersStr, 8);
 
         assertTrue(manager2.getEncoder("car").isBlockFords());
         assertTrue(manager2.getEncoder("bike").isBlockFords());
         assertTrue(manager2.getEncoder("foot").isBlockFords());
-        
 
     	// 2) two encoders crossing fords
-        flagEncodersStr = "car,bike,foot";
-        flagEncodersFordStr = "bike,foot";
-        manager2 = new EncodingManager(flagEncodersStr, 8, flagEncodersFordStr);
+        flagEncodersStr = "car,bike|allowFords=true,foot|allowFords=true";
+        manager2 = new EncodingManager(flagEncodersStr, 8);
 
         assertTrue(manager2.getEncoder("car").isBlockFords());
         assertFalse(manager2.getEncoder("bike").isBlockFords());
         assertFalse(manager2.getEncoder("foot").isBlockFords());
         
-    }
-
-
-    @Test
-    public void testParseEncoderString()
-    {
-    	// 1) no encoder crossing fords
-    	String flagEncodersStr = "car,bike,foot";
-    	String flagEncodersFordStr = "";
-        EncodingManager manager2 = new EncodingManager(flagEncodersStr, 8, flagEncodersFordStr);
-
-        assertTrue(manager2.getEncoder("car").isBlockFords());
-        assertTrue(manager2.getEncoder("bike").isBlockFords());
-        assertTrue(manager2.getEncoder("foot").isBlockFords());
-        
-
-    	// 2) two encoders crossing fords
+    	// 2) Try combined with another tag
         flagEncodersStr = "car|turnCosts=true|allowFords=false,bike,foot|allowFords=true";
-        flagEncodersFordStr = "";
-        manager2 = new EncodingManager(flagEncodersStr, 8, flagEncodersFordStr);
+        manager2 = new EncodingManager(flagEncodersStr, 8);
 
         assertTrue(manager2.getEncoder("car").isBlockFords());
         assertTrue(manager2.getEncoder("bike").isBlockFords());

@@ -71,19 +71,8 @@ public class EncodingManager
 
     public EncodingManager( String flagEncodersStr, int bytesForFlags )
     {
-        this(flagEncodersStr, bytesForFlags, null);
+        this(parseEncoderString(flagEncodersStr), bytesForFlags);
     }
-
-    /**
-     * Add support for fords along with the list of encoders. 
-     * 
-     * @param flagEncodersStr
-     * @param bytesForFlags
-     * @param flagEncodersFordStr
-     */
-    public EncodingManager(String flagEncodersStr, int bytesForFlags, String flagEncodersFordStr) {
-        this(parseEncoderString(flagEncodersStr), bytesForFlags, flagEncodersFordStr);
-	}
 
     /**
      * Instantiate manager with the given list of encoders.
@@ -102,18 +91,16 @@ public class EncodingManager
      */
     public EncodingManager( List<? extends FlagEncoder> flagEncoders )
     {
-        this(flagEncoders, 4, null);
+        this(flagEncoders, 4);
     }
 
-    public EncodingManager( List<? extends FlagEncoder> flagEncoders, int bytesForEdgeFlags, String flagEncodersFordStr )
+    public EncodingManager( List<? extends FlagEncoder> flagEncoders, int bytesForEdgeFlags )
     {
         if (bytesForEdgeFlags != 4 && bytesForEdgeFlags != 8)
             throw new IllegalStateException("For 'edge flags' currently only 4 or 8 bytes supported");
 
         this.bitsForEdgeFlags = bytesForEdgeFlags * 8;
         
-        parseEncoderFordString(flagEncodersFordStr, flagEncoders);
-
         Collections.sort(flagEncoders, new Comparator<FlagEncoder>()
         {
             @Override
@@ -183,55 +170,6 @@ public class EncodingManager
         }
         return resultEncoders;
     }
-
-    static void parseEncoderFordString(String encoderFordList, List<? extends FlagEncoder> resultEncoders)
- {
-
-		if (encoderFordList != null && encoderFordList.length() > 0) {
-			// Build map of existing encoders to access them afterwards
-			Map<String, FlagEncoder> mapEncoder = new HashMap<String, FlagEncoder>();
-			for (FlagEncoder resultEncoder : resultEncoders) {
-				if (resultEncoder instanceof CarFlagEncoder) {
-					mapEncoder.put(CAR, resultEncoder);
-				}
-				if (resultEncoder instanceof BikeFlagEncoder) {
-					mapEncoder.put(BIKE, resultEncoder);
-				}
-				if (resultEncoder instanceof Bike2WeightFlagEncoder) {
-					mapEncoder.put(BIKE2, resultEncoder);
-				}
-				if (resultEncoder instanceof RacingBikeFlagEncoder) {
-					mapEncoder.put(RACINGBIKE, resultEncoder);
-				}
-				if (resultEncoder instanceof MountainBikeFlagEncoder) {
-					mapEncoder.put(MOUNTAINBIKE, resultEncoder);
-				}
-				if (resultEncoder instanceof FootFlagEncoder) {
-					mapEncoder.put(FOOT, resultEncoder);
-				}
-				if (resultEncoder instanceof MotorcycleFlagEncoder) {
-					mapEncoder.put(MOTORCYCLE, resultEncoder);
-				}
-			}
-
-			String[] entries = encoderFordList.split(",");
-
-			for (String entry : entries) {
-				entry = entry.trim().toLowerCase();
-				if (entry.isEmpty())
-					continue;
-
-				FlagEncoder flagEncoder = mapEncoder.get(entry);
-				if (flagEncoder != null) {
-					flagEncoder.setBlockFords(Boolean.FALSE);
-				}
-
-				else
-					throw new IllegalArgumentException("entry in ford allowing encoder list not supported " + entry);
-
-			}
-		}
-	}
 
     private static final String ERR = "Encoders are requesting more than %s bits of %s flags. ";
     private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long.";
