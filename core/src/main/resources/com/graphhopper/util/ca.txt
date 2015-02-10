@@ -43,3 +43,7 @@ unpaved=sense pavimentar
 stopover=passant per %1$s
 roundaboutInstruction=Entra a la rotonda y agafa la %1$ sortida
 roundaboutInstructionWithDir=Entra a la rotonda y agafa la %1$s sortida direcció %2$s
+roundaboutInstructionOnto=
+roundaboutEnter=
+roundaboutExit=
+roundaboutExitOnto=

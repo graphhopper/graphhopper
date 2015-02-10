@@ -43,3 +43,7 @@ unpaved=obelagd
 stopover=delmål %1$s
 roundaboutInstruction=Kör in i rondellen och ta avfart %1$s
 roundaboutInstructionWithDir=Kör in i rondellen och ta avfart %1$s mot %2$s
+roundaboutInstructionOnto=
+roundaboutEnter=
+roundaboutExit=
+roundaboutExitOnto=

@@ -43,3 +43,7 @@ unpaved=netlakovana
 stopover=postanek %1$s
 roundaboutInstruction=zapelji v krožišče in izberi izhod %1$
 roundaboutInstructionWithDir=zapelji v krožišče in izberi izhod %1$ v smeri %2$s
+roundaboutInstructionOnto=
+roundaboutEnter=
+roundaboutExit=
+roundaboutExitOnto=

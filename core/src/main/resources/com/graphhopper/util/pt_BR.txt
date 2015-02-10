@@ -43,3 +43,7 @@ unpaved=não pavimentada
 stopover=parada %1$s
 roundaboutInstruction=Entre na rotatória e saia na saída número %1$s
 roundaboutInstructionWithDir=Entre na rotatória e saia na saída número %1$s em direção a %2$s
+roundaboutInstructionOnto=
+roundaboutEnter=
+roundaboutExit=
+roundaboutExitOnto=

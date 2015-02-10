@@ -353,12 +353,12 @@ public class InstructionListTest
                                           .setDirOfRotation(-0.1)
                                           .setRadian(-Math.PI+1)
                                           .setExitNr(2)  
-                                          .setFinished();  
+                                          .setExited();
         il.add(instr);
 
         Map<String, Object> json = il.createJson().get(0);        
         // assert that all information is present in map for JSON
-        assertEquals("Enter roundabout and use exit 2 in direction streetname", json.get("text").toString());
+        assertEquals("At roundabout, take exit 2 onto streetname", json.get("text").toString());
         assertEquals(-1, (Double) json.get("turn_angle"), 0.01);
         assertEquals("2", json.get("exit_nr").toString());
         // assert that a valid JSON object can be written
@@ -379,11 +379,11 @@ public class InstructionListTest
                 new InstructionAnnotation(0, ""), pl)
                 .setRadian(-Math.PI + 1)
                 .setExitNr(2)
-                .setFinished();
+                .setExited();
         il.add(instr);
 
         Map<String, Object> json = il.createJson().get(0);
-        assertEquals("Enter roundabout and use exit 2 in direction streetname", json.get("text").toString());
+        assertEquals("At roundabout, take exit 2 onto streetname", json.get("text").toString());
         assertEquals("null", json.get("turn_angle").toString());
         // assert that a valid JSON object can be written
         assertNotNull(new JSONObject(json).toString());

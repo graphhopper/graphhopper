@@ -43,3 +43,7 @@ unpaved=non-pavé
 stopover=escale %1$s
 roundaboutInstruction=empruntez le rond point et prenez la sortie %1$s
 roundaboutInstructionWithDir=empruntez le rond point et prenez la sortie %1$s, en direction de %2$s
+roundaboutInstructionOnto=
+roundaboutEnter=
+roundaboutExit=
+roundaboutExitOnto=

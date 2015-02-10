@@ -43,3 +43,7 @@ unpaved=без покриття
 stopover=зупинка %1$s
 roundaboutInstruction=в’їзд на кільце та виїзд по %1$s
 roundaboutInstructionWithDir=в’їзд на кільце та виїзд по %1$s у напрямку %2$s
+roundaboutInstructionOnto=
+roundaboutEnter=
+roundaboutExit=
+roundaboutExitOnto=

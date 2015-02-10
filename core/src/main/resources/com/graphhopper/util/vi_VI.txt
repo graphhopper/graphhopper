@@ -43,3 +43,7 @@ unpaved=đường không lát
 stopover=điểm nghỉ %1$s
 roundaboutInstruction=Vào vòng xoay và tìm lối ra %1$s
 roundaboutInstructionWithDir=Vào vòng xoay và tìm lối ra %1$s theo hướng %2$s
+roundaboutInstructionOnto=
+roundaboutEnter=
+roundaboutExit=
+roundaboutExitOnto=

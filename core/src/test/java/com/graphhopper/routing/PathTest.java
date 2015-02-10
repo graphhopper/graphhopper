@@ -278,7 +278,7 @@ public class PathTest
         // Test instructions
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto MainStreet",
-                        "Enter roundabout and use exit 3 in direction 5-8",
+                        "At roundabout, take exit 3 onto 5-8",
                         "Finish!"),
                 tmpList);
         // Test Radian
@@ -291,7 +291,7 @@ public class PathTest
         wayList = p.calcInstructions(tr);
         tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto MainStreet",
-                        "Enter roundabout and use exit 2 in direction MainStreet",
+                        "At roundabout, take exit 2 onto MainStreet",
                         "Finish!"),
                 tmpList);
         // Test Radian
@@ -311,7 +311,7 @@ public class PathTest
         Path p = new Dijkstra(rg.g, carManager.getSingle(), new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(2, 8);
         InstructionList wayList = p.calcInstructions(tr);
         List<String> tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList( "Enter roundabout and use exit 3 in direction 5-8",
+        assertEquals(Arrays.asList( "At roundabout, take exit 3 onto 5-8",
                                     "Finish!"),
                 tmpList);
     }
@@ -328,7 +328,7 @@ public class PathTest
         InstructionList wayList = p.calcInstructions(tr);
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto MainStreet",
-                        "Enter roundabout and use exit 2 in direction 5-8",
+                        "At roundabout, take exit 2 onto 5-8",
                         "Finish!"),
                 tmpList);
         // Test Radian
@@ -352,7 +352,7 @@ public class PathTest
         InstructionList wayList = p.calcInstructions(tr);
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList( "Continue onto MainStreet",
-                        "Enter roundabout and use exit 1 in direction 5-8",
+                        "At roundabout, take exit 1 onto 5-8",
                         "Finish!"),
                 tmpList);
         // Test Radian

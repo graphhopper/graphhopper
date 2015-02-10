@@ -43,3 +43,7 @@ unpaved=לא סלולה
 stopover=נקודת עצירה מס׳ %1$s
 roundaboutInstruction=יש להיכנס לכיכר ולצאת ביציאה מס׳ %1$s
 roundaboutInstructionWithDir=יש להיכנס לכיכר ולצאת ביציאה מס׳ %1$s בכיוון %2$s
+roundaboutInstructionOnto=
+roundaboutEnter=
+roundaboutExit=
+roundaboutExitOnto=

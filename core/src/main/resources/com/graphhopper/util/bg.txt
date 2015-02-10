@@ -43,3 +43,7 @@ unpaved=черен
 stopover=прехвърляне %1$s
 roundaboutInstruction=Влез в кръговото и използвай изход %1$s
 roundaboutInstructionWithDir=Влез в кръговото и използвай изход %1$s в посока %2$s
+roundaboutInstructionOnto=
+roundaboutEnter=
+roundaboutExit=
+roundaboutExitOnto=

@@ -43,3 +43,7 @@ unpaved=unbefestigt
 stopover=Zwischenziel %1$s
 roundaboutInstruction=In den Kreisverkehr einfahren und Ausfahrt %1$s nehmen
 roundaboutInstructionWithDir=In den Kreisverkehr einfahren und Ausfahrt %1$s in Richtung %2$s nehmen
+roundaboutInstructionOnto=In den Kreisverkehr einfahren und Ausfahrt %1$s auf %2$s nehmen
+roundaboutEnter=In den Kreisverkehr einfahren
+roundaboutExit=Im Kreisverkehr Ausfahrt %1$s nehmen
+roundaboutExitOnto=Im Kreisverkehr Ausfahrt %1$s auf %2$s nehmen

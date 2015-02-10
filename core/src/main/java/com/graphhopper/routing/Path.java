@@ -488,9 +488,8 @@ public class Path
 
                         prevInstruction = ((RoundaboutInstruction) prevInstruction)
                             .setRadian(deltaInOut)
-                            .setContinuedStreet(!Helper.isEmpty(name) && (prevName.equals(name)))
                             .setDirOfRotation(deltaOut)
-                            .setFinished();
+                            .setExited();
 
                         prevName = name;
                         prevAnnotation = annotation;

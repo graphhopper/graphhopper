@@ -43,3 +43,7 @@ unpaved=без покрытия
 stopover=остановка %1$s
 roundaboutInstruction=Въезжайте на кольцо и используйте съезд %1$s
 roundaboutInstructionWithDir=Въезжайте на кольцо и используйте съезд %1$s в направлении %2$s
+roundaboutInstructionOnto=
+roundaboutEnter=
+roundaboutExit=
+roundaboutExitOnto=
