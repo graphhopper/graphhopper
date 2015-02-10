@@ -106,6 +106,8 @@ public class MapMatchingMain {
                     System.out.println("\texport results to:" + outFile);
                     new GPXFile(mr).doExport(outFile);
                 } catch (Exception ex) {
+                    importSW.stop();
+                    matchSW.stop();
                     logger.error("Problem with file " + gpxFile + " Error: " + ex.getMessage());
                 }
             }
