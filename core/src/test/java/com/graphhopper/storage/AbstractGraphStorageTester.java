@@ -1146,7 +1146,7 @@ public abstract class AbstractGraphStorageTester
     {
         public TmpCarFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
         {
-            super(speedBits, speedFactor, maxTurnCosts, false);
+            super(speedBits, speedFactor, maxTurnCosts);
         }
     }
 }

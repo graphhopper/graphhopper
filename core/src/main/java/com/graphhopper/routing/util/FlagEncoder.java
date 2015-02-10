@@ -124,10 +124,4 @@ public interface FlagEncoder extends TurnCostEncoder
      * @return give possibility to block or allow fords depending on configuration.
      */
 	void setBlockFords(boolean blockFords);
-	
-
-    /**
-     * Returns arbitrary boolean value identified by the specified key.
-     */
-    boolean isBlockFords();
 }

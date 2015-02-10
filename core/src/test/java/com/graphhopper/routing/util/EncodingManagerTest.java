@@ -216,27 +216,27 @@ public class EncodingManagerTest
     {
     	// 1) no encoder crossing fords
     	String flagEncodersStr = "car,bike,foot";
-        EncodingManager manager2 = new EncodingManager(flagEncodersStr, 8);
+        EncodingManager manager = new EncodingManager(flagEncodersStr, 8);
 
-        assertTrue(manager2.getEncoder("car").isBlockFords());
-        assertTrue(manager2.getEncoder("bike").isBlockFords());
-        assertTrue(manager2.getEncoder("foot").isBlockFords());
+        assertTrue(((AbstractFlagEncoder)manager.getEncoder("car")).isBlockFords());
+        assertTrue(((AbstractFlagEncoder)manager.getEncoder("bike")).isBlockFords());
+        assertTrue(((AbstractFlagEncoder)manager.getEncoder("foot")).isBlockFords());
 
     	// 2) two encoders crossing fords
-        flagEncodersStr = "car,bike|allowFords=true,foot|allowFords=true";
-        manager2 = new EncodingManager(flagEncodersStr, 8);
+        flagEncodersStr = "car,bike|blockFords=false,foot|blockFords=false";
+        manager = new EncodingManager(flagEncodersStr, 8);
 
-        assertTrue(manager2.getEncoder("car").isBlockFords());
-        assertFalse(manager2.getEncoder("bike").isBlockFords());
-        assertFalse(manager2.getEncoder("foot").isBlockFords());
+        assertTrue(((AbstractFlagEncoder)manager.getEncoder("car")).isBlockFords());
+        assertFalse(((AbstractFlagEncoder)manager.getEncoder("bike")).isBlockFords());
+        assertFalse(((AbstractFlagEncoder)manager.getEncoder("foot")).isBlockFords());
         
     	// 2) Try combined with another tag
-        flagEncodersStr = "car|turnCosts=true|allowFords=false,bike,foot|allowFords=true";
-        manager2 = new EncodingManager(flagEncodersStr, 8);
+        flagEncodersStr = "car|turnCosts=true|blockFords=true,bike,foot|blockFords=false";
+        manager = new EncodingManager(flagEncodersStr, 8);
 
-        assertTrue(manager2.getEncoder("car").isBlockFords());
-        assertTrue(manager2.getEncoder("bike").isBlockFords());
-        assertFalse(manager2.getEncoder("foot").isBlockFords());
+        assertTrue(((AbstractFlagEncoder)manager.getEncoder("car")).isBlockFords());
+        assertTrue(((AbstractFlagEncoder)manager.getEncoder("bike")).isBlockFords());
+        assertFalse(((AbstractFlagEncoder)manager.getEncoder("foot")).isBlockFords());
         
     }
 }

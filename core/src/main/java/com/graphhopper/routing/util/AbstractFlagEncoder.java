@@ -17,20 +17,23 @@
  */
 package com.graphhopper.routing.util;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.graphhopper.reader.OSMNode;
-import com.graphhopper.reader.OSMReader;
-import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
-import com.graphhopper.util.*;
-import java.util.*;
+import com.graphhopper.reader.OSMWay;
+import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.InstructionAnnotation;
+import com.graphhopper.util.Translation;
 
 /**
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
@@ -88,7 +91,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      * @param maxTurnCosts specify the maximum value used for turn costs, if this value is reached a
      * turn is forbidden and results in costs of positive infinity.
      */
-    protected AbstractFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts, boolean allowFords )
+    protected AbstractFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
     {
         this.maxTurnCosts = maxTurnCosts <= 0 ? 0 : maxTurnCosts;
         this.speedBits = speedBits;
@@ -110,11 +113,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         acceptedRailways.add("razed");
         acceptedRailways.add("historic");
         acceptedRailways.add("obliterated");
-        
-        // Check if fords are allowed
-        if (allowFords) {
-        	setBlockFords(false);
-        }
     }
 
     /**

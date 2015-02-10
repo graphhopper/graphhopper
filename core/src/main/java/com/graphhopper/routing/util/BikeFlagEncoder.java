@@ -29,25 +29,20 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
 {
     public BikeFlagEncoder()
     {
-        this(4, 2, 0, false);
-    }
-    
-    public BikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts)
-    {
-        this(speedBits, speedFactor, maxTurnCosts, false);
+        this(4, 2, 0);
     }
 
     public BikeFlagEncoder( String propertiesStr )
     {
         this((int) parseLong(propertiesStr, "speedBits", 4),
                 parseDouble(propertiesStr, "speedFactor", 2),
-                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0,
-                parseBoolean(propertiesStr, "allowFords", false));
+                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+        this.setBlockFords(parseBoolean(propertiesStr, "blockFords", true));
     }
 
-    public BikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts, boolean allowFords )
+    public BikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
     {
-        super(speedBits, speedFactor, maxTurnCosts, allowFords);
+        super(speedBits, speedFactor, maxTurnCosts);
         addPushingSection("path");
         addPushingSection("footway");
         addPushingSection("pedestrian");

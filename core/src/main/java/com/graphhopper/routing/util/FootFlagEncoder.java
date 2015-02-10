@@ -51,19 +51,19 @@ public class FootFlagEncoder extends AbstractFlagEncoder
      */
     public FootFlagEncoder()
     {
-        this(4, 1, false);
+        this(4, 1);
     }
 
     public FootFlagEncoder( String propertiesStr )
     {
         this((int) parseLong(propertiesStr, "speedBits", 4),
-                parseDouble(propertiesStr, "speedFactor", 1),
-                parseBoolean(propertiesStr, "allowFords", false));
+                parseDouble(propertiesStr, "speedFactor", 1));
+        this.setBlockFords(parseBoolean(propertiesStr, "blockFords", true));
     }
 
-    public FootFlagEncoder( int speedBits, double speedFactor, boolean allowFords )
+    public FootFlagEncoder( int speedBits, double speedFactor )
     {
-        super(speedBits, speedFactor, 0, allowFords);
+        super(speedBits, speedFactor, 0);
         restrictions.addAll(Arrays.asList("foot", "access"));
         restrictedValues.add("private");
         restrictedValues.add("no");

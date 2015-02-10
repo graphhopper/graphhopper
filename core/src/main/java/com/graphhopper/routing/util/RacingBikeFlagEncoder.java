@@ -31,20 +31,20 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
 {
     public RacingBikeFlagEncoder()
     {
-        this(4, 2, 0, false);
+        this(4, 2, 0);
     }
 
     public RacingBikeFlagEncoder( String propertiesStr )
     {
         this((int) parseLong(propertiesStr, "speedBits", 4),
                 parseDouble(propertiesStr, "speedFactor", 2),
-                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0,
-                parseBoolean(propertiesStr, "allowFords", false));
+                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+        this.setBlockFords(parseBoolean(propertiesStr, "blockFords", true));
     }
 
-    public RacingBikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts, boolean allowFords )
+    public RacingBikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
     {
-        super(speedBits, speedFactor, maxTurnCosts, allowFords);
+        super(speedBits, speedFactor, maxTurnCosts);
         preferHighwayTags.add("road");
         preferHighwayTags.add("secondary");
         preferHighwayTags.add("secondary_link");
