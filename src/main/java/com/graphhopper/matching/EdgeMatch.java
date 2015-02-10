@@ -26,7 +26,7 @@ import java.util.List;
  */
 public class EdgeMatch {
 
-    private final EdgeIteratorState edgeState;
+    private EdgeIteratorState edgeState;
     private final List<GPXExtension> gpxExtensions;
 
     public EdgeMatch(EdgeIteratorState edgeState, List<GPXExtension> gpxExtension) {
@@ -39,6 +39,10 @@ public class EdgeMatch {
 
     public boolean isEmpty() {
         return gpxExtensions.isEmpty();
+    }
+
+    void setEdgeState(EdgeIteratorState edgeState) {
+        this.edgeState = edgeState;
     }
 
     public EdgeIteratorState getEdgeState() {

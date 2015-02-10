@@ -26,38 +26,68 @@ import java.util.List;
 public class MatchResult {
 
     private final List<EdgeMatch> edgeMatches;
-    private final double matchLength;
-    private final long matchMillis;
-    private final double gpxEntriesLength;
-    private final long gpxEntriesMillis;
+    private double matchLength;
+    private long matchMillis;
+    private double gpxEntriesLength;
+    private long gpxEntriesMillis;
 
-    public MatchResult(List<EdgeMatch> edgeMatches,
-            double matchLength, long matchMillis,
-            double gpxEntriesLength, long gpxEntriesMillis) {
+    public MatchResult(List<EdgeMatch> edgeMatches) {
         this.edgeMatches = edgeMatches;
-        this.matchLength = matchLength;
-        this.matchMillis = matchMillis;
+    }
+
+    public void setGPXEntriesLength(double gpxEntriesLength) {
         this.gpxEntriesLength = gpxEntriesLength;
+    }
+
+    public void setGPXEntriesMillis(long gpxEntriesMillis) {
         this.gpxEntriesMillis = gpxEntriesMillis;
     }
 
+    public void setMatchLength(double matchLength) {
+        this.matchLength = matchLength;
+    }
+
+    public void setMatchMillis(long matchMillis) {
+        this.matchMillis = matchMillis;
+    }
+
+    /**
+     * All possible assigned edges.
+     */
     public List<EdgeMatch> getEdgeMatches() {
         return edgeMatches;
     }
 
+    /**
+     * Length of the original GPX track in meters
+     */
     public double getGpxEntriesLength() {
         return gpxEntriesLength;
     }
 
+    /**
+     * Length of the original GPX track in milliseconds
+     */
     public long getGpxEntriesMillis() {
         return gpxEntriesMillis;
     }
 
+    /**
+     * Length of the map-matched road in meters
+     */
     public double getMatchLength() {
         return matchLength;
     }
 
+    /**
+     * Length of the map-matched road in milliseconds
+     */
     public long getMatchMillis() {
         return matchMillis;
+    }
+
+    @Override
+    public String toString() {
+        return "length:" + matchLength + ", seconds:" + matchMillis / 1000f + ", matches:" + edgeMatches.toString();
     }
 }

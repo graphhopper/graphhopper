@@ -1,4 +1,3 @@
-
 /*
  *  Licensed to GraphHopper and Peter Karich under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
@@ -87,20 +86,30 @@ public class MapMatchingMain {
                 };
             }
 
-            // logger.info("Now processing the files: " + Arrays.toString(files));
             logger.info("Now processing " + files.length + " files");
+            StopWatch importSW = new StopWatch();
+            StopWatch matchSW = new StopWatch();
             for (File gpxFile : files) {
-                List<GPXEntry> inputGPXEntries = new GPXFile().doImport(gpxFile.getAbsolutePath()).getEntries();
-                MatchResult mr = mapMatching.doWork(inputGPXEntries);
-                System.out.println(gpxFile);
-                System.out.println("\tmatches:\t" + mr.getEdgeMatches().size());
-                System.out.println("\tgpx length:\t" + mr.getGpxEntriesLength() + " vs " + mr.getMatchLength());
-                System.out.println("\tgpx time:\t" + mr.getGpxEntriesMillis() / 1000f + " vs " + mr.getMatchMillis() / 1000f);
+                try {
+                    importSW.start();
+                    List<GPXEntry> inputGPXEntries = new GPXFile().doImport(gpxFile.getAbsolutePath()).getEntries();
+                    importSW.stop();
+                    matchSW.start();
+                    MatchResult mr = mapMatching.doWork(inputGPXEntries);
+                    matchSW.stop();
+                    System.out.println(gpxFile);
+                    System.out.println("\tmatches:\t" + mr.getEdgeMatches().size() + ", gps entries:" + inputGPXEntries.size());
+                    System.out.println("\tgpx length:\t" + (float) mr.getGpxEntriesLength() + " vs " + (float) mr.getMatchLength());
+                    System.out.println("\tgpx time:\t" + mr.getGpxEntriesMillis() / 1000f + " vs " + mr.getMatchMillis() / 1000f);
 
-                String outFile = gpxFile.getAbsolutePath() + ".res.gpx";
-                System.out.println("\texport results to:" + outFile);
-                new GPXFile(mr).doExport(outFile);
+                    String outFile = gpxFile.getAbsolutePath() + ".res.gpx";
+                    System.out.println("\texport results to:" + outFile);
+                    new GPXFile(mr).doExport(outFile);
+                } catch (Exception ex) {
+                    logger.error("Problem with file " + gpxFile + " Error: " + ex.getMessage());
+                }
             }
+            System.out.println("import took:" + importSW.getSeconds() + "s, match took: " + matchSW.getSeconds());
 
         } else {
             System.out.println("Usage: Do an import once, then do the matching\n"
