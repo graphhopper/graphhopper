@@ -43,3 +43,7 @@ unpaved=路面未铺就
 stopover=途中休息 %1$s
 roundaboutInstruction=进入环岛，并用%1$s出口出环岛
 roundaboutInstructionWithDir=进入环岛，并用%1$s出口出环岛，进入%2$s
+roundaboutInstructionOnto=
+roundaboutEnter=
+roundaboutExit=
+roundaboutExitOnto=

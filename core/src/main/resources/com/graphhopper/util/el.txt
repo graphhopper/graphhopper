@@ -43,3 +43,7 @@ unpaved=χωματόδρομος
 stopover=ενδιάμεση στάση %1$s
 roundaboutInstruction=Μπείτε στον κυκλικό κόμβο και βγείτε στην έξοδο %1$s
 roundaboutInstructionWithDir=Μπείτε στον κυκλικό κόμβο και βγείτε στην έξοδο %1$s στην κατεύθυνση %2$s
+roundaboutInstructionOnto=Μπείτε στον κυκλικό κόμβο και βγείτε στην έξοδο %1$s στην %2$s
+roundaboutEnter=Μπείτε στον κυκλικό κόμβο
+roundaboutExit=Στον κυκλικό κόμβο βγείτε στην έξοδο %1$s
+roundaboutExitOnto=Στον κυκλικό κόμβο βγείτε στην έξοδο %1$s στην %2$s

@@ -468,7 +468,7 @@ public class Path
                         // This could lead to problems if there are non-complete roundabouts!
                         EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(adjNode);
                         edgeIter.next();
-                        if (edgeIter.next()) {((RoundaboutInstruction) prevInstruction).increaseExitNr();}
+                        if (edgeIter.next()) {((RoundaboutInstruction) prevInstruction).increaseExitNumber();}
 
                     } else if (prevInRoundabout) //previously in roundabout but not anymore
                     {
@@ -488,9 +488,8 @@ public class Path
 
                         prevInstruction = ((RoundaboutInstruction) prevInstruction)
                             .setRadian(deltaInOut)
-                            .setContinuedStreet(!Helper.isEmpty(name) && (prevName.equals(name)))
                             .setDirOfRotation(deltaOut)
-                            .setFinished();
+                            .setExited();
 
                         prevName = name;
                         prevAnnotation = annotation;

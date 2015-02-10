@@ -43,3 +43,7 @@ unpaved=hindi aspaltado
 stopover=pamahingahan %1$s
 roundaboutInstruction=Lpasok rotonda at gamitin %1$s
 roundaboutInstructionWithDir=Epasok rotonda at gamitin %1$s direksyon %2$s
+roundaboutInstructionOnto=
+roundaboutEnter=
+roundaboutExit=
+roundaboutExitOnto=

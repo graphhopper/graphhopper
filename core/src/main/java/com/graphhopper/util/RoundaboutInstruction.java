@@ -13,40 +13,25 @@ import java.util.Map;
 public class RoundaboutInstruction extends Instruction
 {
 
-    private int exitNr = 0;
-    private boolean continuedStreet = false;
+    private int exitNumber = 0;
     private int clockwise = 0; // 0 undetermined, 1 clockwise, -1 counterclockwise, 2 inconsistent
-    private boolean finished = false;
-    private double radian = Double.NaN; 
+    private boolean exited = false;
+    private double radian = Double.NaN;
 
     public RoundaboutInstruction(int sign, String name, InstructionAnnotation ia, PointList pl)
     {
         super(sign, name, ia, pl);
     }
-
-    public boolean istContinuedStreet()
+  
+    public RoundaboutInstruction increaseExitNumber()
     {
-        return continuedStreet;
-    }
-
-    /**
-    * indicates whether one continues on the same street as before after roundabout
-    **/
-    public RoundaboutInstruction setContinuedStreet(boolean continued)
-    {
-        this.continuedStreet = continued;
+        this.exitNumber += 1;
         return this;
     }
 
-    public RoundaboutInstruction increaseExitNr()
+    public RoundaboutInstruction setExitNumber(int exitNumber)
     {
-        this.exitNr += 1;
-        return this;
-    }
-
-    public RoundaboutInstruction setExitNr(int exitNr)
-    {
-        this.exitNr = exitNr;
+        this.exitNumber = exitNumber;
         return this;
     }
 
@@ -67,19 +52,24 @@ public class RoundaboutInstruction extends Instruction
         return this;
     }
 
-    public RoundaboutInstruction setFinished()
+    public RoundaboutInstruction setExited()
     {
-        finished = true;
+        exited = true;
         return this;
     }
 
-    private int getExitNr()
+    public boolean isExited()
     {
-        if (finished && exitNr == 0)
+        return exited;
+    }
+
+    public int getExitNumber()
+    {
+        if (exited && exitNumber == 0)
         {
-            throw new IllegalStateException("RoundaboutInstruction must contain exitNr>0");
+            throw new IllegalStateException("RoundaboutInstruction must contain exitNumber>0");
         }
-        return exitNr;
+        return exitNumber;
     }
 
     /**
@@ -106,12 +96,11 @@ public class RoundaboutInstruction extends Instruction
         return this;
     }
 
-
     @Override
     public Map<String, Object> getExtraInfoJSON()
     {
         Map<String, Object> tmpMap = new HashMap<String, Object>(2);
-        tmpMap.put("exit_nr", getExitNr());
+        tmpMap.put("exit_number", getExitNumber());
         double radian = getRadian();
         if (Double.isNaN(radian))
         {
@@ -131,17 +120,12 @@ public class RoundaboutInstruction extends Instruction
         int indi = getSign();
         if (indi == Instruction.USE_ROUNDABOUT)
         {
-            if (!finished)
+            if (!exited)
             {
-                //str = tr.tr("roundaboutEntering");
-                str = tr.tr("roundaboutInstruction", 0);
-            } else if (continuedStreet)
-            {
-                //str = tr.tr("roundaboutInstructionContinue", getExitNr());
-                str = tr.tr("roundaboutInstructionWithDir", getExitNr(), streetName);
+                str = tr.tr("roundaboutEnter");
             } else {
-                str = Helper.isEmpty(streetName) ? tr.tr("roundaboutInstruction", getExitNr()) :
-                        tr.tr("roundaboutInstructionWithDir", getExitNr(), streetName);
+                str = Helper.isEmpty(streetName) ? tr.tr("roundaboutExit", getExitNumber()) :
+                        tr.tr("roundaboutExitOnto", getExitNumber(), streetName);
             }
         } else
         {

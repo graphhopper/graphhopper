@@ -43,3 +43,7 @@ unpaved=未舗装の道
 stopover=%1$sで降りる
 roundaboutInstruction=円形交差点の%1$s出口から
 roundaboutInstructionWithDir=円形交差点の%1$s出口から%2$s方向へ
+roundaboutInstructionOnto=
+roundaboutEnter=
+roundaboutExit=
+roundaboutExitOnto=

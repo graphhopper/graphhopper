@@ -43,3 +43,7 @@ unpaved=kaldırımsız yol
 stopover=mola yeri %1$s
 roundaboutInstruction=döner kavsağa girin ve cıkışı kullanın %1$
 roundaboutInstructionWithDir=döner kavşağa girin ve çıkışı kullanın %1$ - %2$s
+roundaboutInstructionOnto=
+roundaboutEnter=
+roundaboutExit=
+roundaboutExitOnto=

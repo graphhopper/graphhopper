@@ -43,3 +43,7 @@ unpaved=nepavat
 stopover=escala %1$s
 roundaboutInstruction= Intrați în giratoriu și folosiți ieșirea %1$s
 roundaboutInstructionWithDir= Intrați în giratoriu și folosiți ieșirea %1$s în direcția %2$s
+roundaboutInstructionOnto=
+roundaboutEnter=
+roundaboutExit=
+roundaboutExitOnto=
