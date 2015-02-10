@@ -13,7 +13,7 @@ import java.util.Map;
 public class RoundaboutInstruction extends Instruction
 {
 
-    private int exitNr = 0;
+    private int exitNumber = 0;
     private int clockwise = 0; // 0 undetermined, 1 clockwise, -1 counterclockwise, 2 inconsistent
     private boolean exited = false;
     private double radian = Double.NaN;
@@ -23,15 +23,15 @@ public class RoundaboutInstruction extends Instruction
         super(sign, name, ia, pl);
     }
   
-    public RoundaboutInstruction increaseExitNr()
+    public RoundaboutInstruction increaseExitNumber()
     {
-        this.exitNr += 1;
+        this.exitNumber += 1;
         return this;
     }
 
-    public RoundaboutInstruction setExitNr(int exitNr)
+    public RoundaboutInstruction setExitNumber(int exitNumber)
     {
-        this.exitNr = exitNr;
+        this.exitNumber = exitNumber;
         return this;
     }
 
@@ -63,13 +63,13 @@ public class RoundaboutInstruction extends Instruction
         return exited;
     }
 
-    public int getExitNr()
+    public int getExitNumber()
     {
-        if (exited && exitNr == 0)
+        if (exited && exitNumber == 0)
         {
-            throw new IllegalStateException("RoundaboutInstruction must contain exitNr>0");
+            throw new IllegalStateException("RoundaboutInstruction must contain exitNumber>0");
         }
-        return exitNr;
+        return exitNumber;
     }
 
     /**
@@ -100,7 +100,7 @@ public class RoundaboutInstruction extends Instruction
     public Map<String, Object> getExtraInfoJSON()
     {
         Map<String, Object> tmpMap = new HashMap<String, Object>(2);
-        tmpMap.put("exit_nr", getExitNr());
+        tmpMap.put("exit_number", getExitNumber());
         double radian = getRadian();
         if (Double.isNaN(radian))
         {
@@ -124,8 +124,8 @@ public class RoundaboutInstruction extends Instruction
             {
                 str = tr.tr("roundaboutEnter");
             } else {
-                str = Helper.isEmpty(streetName) ? tr.tr("roundaboutExit", getExitNr()) :
-                        tr.tr("roundaboutExitOnto", getExitNr(), streetName);
+                str = Helper.isEmpty(streetName) ? tr.tr("roundaboutExit", getExitNumber()) :
+                        tr.tr("roundaboutExitOnto", getExitNumber(), streetName);
             }
         } else
         {
