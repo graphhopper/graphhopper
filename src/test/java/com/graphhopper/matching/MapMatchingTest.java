@@ -116,13 +116,7 @@ public class MapMatchingTest {
         mr = mapMatching.doWork(inputGPXEntries);
         // new GPXFile(mr).doExport("test.gpx");
 
-        // [Defoestraße:7210->13321, Max-Liebermann-Straße, B 6:21098->21103, 
-        // Breitenfelder Straße:5345->15682, Breitenfelder Straße:3595->15656, 
-        // Breitenfelder Straße:21174->3940, Platnerstraße:1551->24190, 
-        // Waldstraße:5589->5605, Waldstraße:5605->199, Martin-Luther-Ring:1314->21471, 
-        // Peterssteinweg:12786->22687, Bayrischer Platz:22056->2657, 
-        // Straße des 18. Oktober:771->4020, Tarostraße:4022->7739]
-        System.out.println(fetchStreets(mr.getEdgeMatches()));
+        // System.out.println(fetchStreets(mr.getEdgeMatches()));
 
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 0.5);
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis(), 20);
