@@ -197,7 +197,7 @@ public class PrepareRoutingSubnetworksTest
         GraphStorage g = createDeadEndUnvisitedNetworkGraph(em);
         assertEquals(11, g.getNodes());
 
-        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em).setMinOnewayNetworkSize(3);
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em).setMinOneWayNetworkSize(3);
         int removed = instance.removeDeadEndUnvisitedNetworks(em.getSingle());
 
         assertEquals(3, removed);
@@ -234,7 +234,7 @@ public class PrepareRoutingSubnetworksTest
         g.edge(1, 2, 1, false);
         g.edge(2, 0, 1, false);
 
-        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em).setMinOnewayNetworkSize(2);
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em).setMinOneWayNetworkSize(2);
         int removed = instance.removeDeadEndUnvisitedNetworks(em.getSingle());
         
         assertEquals(3, removed);
