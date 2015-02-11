@@ -20,23 +20,18 @@ package com.graphhopper.storage.index;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.CoordTrig;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 
 /**
  * Result of LocationIndex lookup.
- * <p/>
- * <
- * pre> X=query coordinates S=snapped coordinates: "snapping" real coords to road N=tower or pillar
+ * <pre> X=query coordinates S=snapped coordinates: "snapping" real coords to road N=tower or pillar
  * node T=closest tower node XS=distance
- * <p/>
  * X
  * |
  * T--S----N
- * <p/>
  * </pre>
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class QueryResult
@@ -49,6 +44,14 @@ public class QueryResult
     private GHPoint3D snappedPoint;
     private Position snappedPosition;
 
+    /**
+     * Due to precision differences it is hard to define when something is exactly 90° or "on-node"
+     * like TOWER or PILLAR or if it is more "on-edge" (EDGE). The default mechanism is to prefer
+     * "on-edge" even if it could be 90°. To prefer "on-node" you could use e.g. GHPoint.equals with
+     * a default precision of 1e-6.
+     * <p>
+     * @see DistanceCalc#validEdgeDistance
+     */
     public static enum Position
     {
         EDGE, TOWER, PILLAR
@@ -120,7 +123,6 @@ public class QueryResult
      */
     public boolean isValid()
     {
-        // Location2IDQuadtree does not support edges
         return closestNode >= 0;
     }
 
@@ -137,7 +139,7 @@ public class QueryResult
         return closestEdge;
     }
 
-    public CoordTrig getQueryPoint()
+    public GHPoint getQueryPoint()
     {
         return queryPoint;
     }

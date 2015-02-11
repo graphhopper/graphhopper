@@ -43,6 +43,13 @@ public class HelperTest
     }
 
     @Test
+    public void testCountBitValue() throws Exception
+    {
+        assertEquals(2, Helper.countBitValue(4));
+        assertEquals(5, Helper.countBitValue(20));
+    }
+
+    @Test
     public void testUnzip() throws Exception
     {
         String to = "./target/tmp/test";
@@ -62,5 +69,21 @@ public class HelperTest
         assertEquals(Locale.GERMANY, Helper.getLocale("de-DE"));
         assertEquals(Locale.ENGLISH, Helper.getLocale("en"));
         assertEquals(Locale.US, Helper.getLocale("en_US"));
+    }
+
+    @Test
+    public void testRound()
+    {
+        assertEquals(100.94, Helper.round(100.94, 2), 1e-7);
+        assertEquals(100.9, Helper.round(100.94, 1), 1e-7);
+        assertEquals(101.0, Helper.round(100.95, 1), 1e-7);
+    }
+
+    @Test
+    public void testKeepIn()
+    {
+        assertEquals(2, Helper.keepIn(2, 1, 4), 1e-2);
+        assertEquals(3, Helper.keepIn(2, 3, 4), 1e-2);
+        assertEquals(3, Helper.keepIn(-2, 3, 4), 1e-2);
     }
 }

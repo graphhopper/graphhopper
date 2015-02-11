@@ -20,7 +20,8 @@ package com.graphhopper.search;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Storable;
-import java.io.UnsupportedEncodingException;
+import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,13 +31,13 @@ import org.slf4j.LoggerFactory;
  */
 public class NameIndex implements Storable<NameIndex>
 {
-    private static Logger logger = LoggerFactory.getLogger(NameIndex.class);
-    private static final int START_POINTER = 1;
-    private int bytePointer = START_POINTER;
-    private DataAccess names;
+    private static final Logger logger = LoggerFactory.getLogger(NameIndex.class);
+    private static final long START_POINTER = 1;
+    private final DataAccess names;
+    private long bytePointer = START_POINTER;
     // minor optimization for the previous stored name
     private String lastName;
-    private int lastIndex;
+    private long lastIndex;
 
     public NameIndex( Directory dir )
     {
@@ -55,7 +56,7 @@ public class NameIndex implements Storable<NameIndex>
     {
         if (names.loadExisting())
         {
-            bytePointer = names.getHeader(0);
+            bytePointer = BitUtil.LITTLE.combineIntsToLong(names.getHeader(0), names.getHeader(1));
             return true;
         }
 
@@ -63,9 +64,9 @@ public class NameIndex implements Storable<NameIndex>
     }
 
     /**
-     * @return the integer reference
+     * @return the byte pointer to the name
      */
-    public int put( String name )
+    public long put( String name )
     {
         if (name == null || name.isEmpty())
         {
@@ -76,8 +77,8 @@ public class NameIndex implements Storable<NameIndex>
             return lastIndex;
         }
         byte[] bytes = getBytes(name);
-        int oldPointer = bytePointer;
-        names.incCapacity(bytePointer + 1 + bytes.length);
+        long oldPointer = bytePointer;
+        names.ensureCapacity(bytePointer + 1 + bytes.length);
         byte[] sizeBytes = new byte[]
         {
             (byte) bytes.length
@@ -100,22 +101,16 @@ public class NameIndex implements Storable<NameIndex>
         byte[] bytes = null;
         for (int i = 0; i < 2; i++)
         {
-            try
+            bytes = name.getBytes(Helper.UTF_CS);
+            // we have to store the size of the array into *one* byte
+            if (bytes.length > 255)
             {
-                bytes = name.getBytes("UTF-8");
-                // we have to store the size of the array into *one* byte
-                if (bytes.length > 255)
-                {
-                    String newName = name.substring(0, 256 / 4);
-                    logger.info("Way name is too long: " + name + " truncated to " + newName);
-                    name = newName;
-                    continue;
-                }
-                break;
-            } catch (UnsupportedEncodingException ex)
-            {
-                throw new RuntimeException("Encoding not supported", ex);
+                String newName = name.substring(0, 256 / 4);
+                logger.info("Way name is too long: " + name + " truncated to " + newName);
+                name = newName;
+                continue;
             }
+            break;
         }
         if (bytes.length > 255)
         {
@@ -125,7 +120,7 @@ public class NameIndex implements Storable<NameIndex>
         return bytes;
     }
 
-    public String get( int pointer )
+    public String get( long pointer )
     {
         if (pointer < 0)
         {
@@ -140,19 +135,14 @@ public class NameIndex implements Storable<NameIndex>
         int size = sizeBytes[0] & 0xFF;
         byte[] bytes = new byte[size];
         names.getBytes(pointer + sizeBytes.length, bytes, size);
-        try
-        {
-            return new String(bytes, "UTF-8");
-        } catch (UnsupportedEncodingException ex)
-        {
-            throw new RuntimeException("Encoding not supported", ex);
-        }
+        return new String(bytes, Helper.UTF_CS);
     }
 
     @Override
     public void flush()
     {
-        names.setHeader(0, bytePointer);
+        names.setHeader(0, BitUtil.LITTLE.getIntLow(bytePointer));
+        names.setHeader(4, BitUtil.LITTLE.getIntHigh(bytePointer));
         names.flush();
     }
 
@@ -160,6 +150,12 @@ public class NameIndex implements Storable<NameIndex>
     public void close()
     {
         names.close();
+    }
+
+    @Override
+    public boolean isClosed()
+    {
+        return names.isClosed();
     }
 
     public void setSegmentSize( int segments )

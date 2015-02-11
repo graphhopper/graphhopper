@@ -25,16 +25,17 @@ import java.util.Map.Entry;
  * A class which manages the translations in-memory. Translations are managed here:
  * https://docs.google.com/spreadsheet/ccc?key=0AmukcXek0JP6dGM4R1VTV2d3TkRSUFVQakhVeVBQRHc#gid=0
  * <p/>
- * and can be easily converted to a language file via: ./core/files/update_translations.sh
- * GraphHopper.csv
- * <p/>
+ * See here for more information: ./docs/core/translations.md
+ * <p>
  * @author Peter Karich
  */
 public class TranslationMap
 {
-    // use 'en' as reference
-    private static final List<String> LOCALES = Arrays.asList("bg", "de_DE", "en_US", "es", "fr", "ja", "pt_PT", "pt_BR", "ro", "ru", "si", "tr");
-    private Map<String, Translation> translations = new HashMap<String, Translation>();
+    // ISO codes (639-1), use 'en_US' as reference
+    private static final List<String> LOCALES = Arrays.asList("bg", "ca", "de_DE", "el", "en_US", "es", "fil",
+            "fr", "gl", "he", "it", "ja", "nl", "pt_BR", "pt_PT", "ro", "ru", "si", "sk", "sv_SE", "tr", "uk",
+            "vi_VI", "zh_CN");
+    private final Map<String, Translation> translations = new HashMap<String, Translation>();
 
     /**
      * This loads the translation files from the specified folder.
@@ -49,7 +50,7 @@ public class TranslationMap
                 trMap.doImport(new FileInputStream(new File(folder, locale + ".txt")));
                 add(trMap);
             }
-            checkTranslations();
+            postImportHook();
             return this;
         } catch (Exception ex)
         {
@@ -70,7 +71,7 @@ public class TranslationMap
                 trMap.doImport(TranslationMap.class.getResourceAsStream(locale + ".txt"));
                 add(trMap);
             }
-            checkTranslations();
+            postImportHook();
             return this;
         } catch (Exception ex)
         {
@@ -82,8 +83,17 @@ public class TranslationMap
     {
         Locale locale = tr.getLocale();
         translations.put(locale.toString(), tr);
-        if (!locale.getCountry().isEmpty())
+        if (!locale.getCountry().isEmpty() && !translations.containsKey(tr.getLanguage()))
             translations.put(tr.getLanguage(), tr);
+
+        // Map old Java 'standard' to latest, Java is a bit ugly here: http://stackoverflow.com/q/13974169/194609
+        // Hebrew
+        if ("iw".equals(locale.getLanguage()))
+            translations.put("he", tr);
+
+        // Indonesia
+        if ("in".equals(locale.getLanguage()))
+            translations.put("id", tr);
     }
 
     /**
@@ -103,7 +113,7 @@ public class TranslationMap
     }
 
     /**
-     * Returns the Translation object for the specified locale.
+     * Returns the Translation object for the specified locale and returns null if not found.
      */
     public Translation get( String locale )
     {
@@ -122,46 +132,45 @@ public class TranslationMap
         return phrase.trim().split(splitter).length;
     }
 
-    private void checkTranslations()
+    /**
+     * This method does some checks and fills missing translation from en
+     */
+    private void postImportHook()
     {
         Map<String, String> enMap = get("en").asMap();
-        // check against english!
         StringBuilder sb = new StringBuilder();
         for (Translation tr : translations.values())
         {
             Map<String, String> trMap = tr.asMap();
-            for (Entry<String, String> e : enMap.entrySet())
+            for (Entry<String, String> enEntry : enMap.entrySet())
             {
-                String value = trMap.get(e.getKey());
+                String value = trMap.get(enEntry.getKey());
                 if (Helper.isEmpty(value))
+                {
+                    trMap.put(enEntry.getKey(), enEntry.getValue());
                     continue;
-                int expectedCount = countOccurence(e.getValue(), "\\%");
+                }
+
+                int expectedCount = countOccurence(enEntry.getValue(), "\\%");
                 if (expectedCount != countOccurence(value, "\\%"))
                 {
-                    sb.append(tr.getLocale()).append(" - error in ").append(e.getKey()).append("->").
+                    sb.append(tr.getLocale()).append(" - error in ").append(enEntry.getKey()).append("->").
                             append(value).append("\n");
                 }
             }
         }
+
         if (sb.length() > 0)
+        {
+            System.out.println(sb);
             throw new IllegalStateException(sb.toString());
-    }
-
-    public static interface Translation
-    {
-        String tr( String key, Object... params );
-
-        Map<String, String> asMap();
-
-        Locale getLocale();
-
-        String getLanguage();
+        }
     }
 
     public static class TranslationHashMap implements Translation
     {
         private final Map<String, String> map = new HashMap<String, String>();
-        private final Locale locale;
+        final Locale locale;
 
         public TranslationHashMap( Locale locale )
         {
@@ -221,7 +230,7 @@ public class TranslationMap
                 throw new IllegalStateException("No input stream found in class path!?");
             try
             {
-                for (String line : Helper.readFile(new InputStreamReader(is, "UTF-8")))
+                for (String line : Helper.readFile(new InputStreamReader(is, Helper.UTF_CS)))
                 {
                     if (line.isEmpty() || line.startsWith("//") || line.startsWith("#"))
                         continue;
@@ -234,9 +243,6 @@ public class TranslationMap
                         throw new IllegalStateException("No key provided:" + line);
 
                     String value = line.substring(index + 1);
-                    if (value.isEmpty() && !key.contains("web"))
-                        throw new IllegalStateException("A key for the core cannot be empty: " + key);
-
                     if (!value.isEmpty())
                         put(key, value);
 

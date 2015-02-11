@@ -4,7 +4,7 @@ cd $HOME/../..
 modules="core web tools"
 for module in $modules; do
   echo "====== INSTALL $module ====="
-  mvn -pl $module install -DskipTests=true
+  mvn -pl $module clean install -DskipTests=true
   EXIT_VAL="$?"    
   if [[ "x$EXIT_VAL" != "x0" ]]; then
     exit $EXIT_VAL

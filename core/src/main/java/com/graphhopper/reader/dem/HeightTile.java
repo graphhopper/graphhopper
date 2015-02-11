@@ -24,6 +24,7 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.imageio.ImageIO;
 
 /**
@@ -37,17 +38,38 @@ public class HeightTile
     private final int minLat;
     private final int minLon;
     private final int width;
+    private final int degree;
     private final double lowerBound;
     private final double higherBound;
+    private boolean calcMean;
 
-    public HeightTile( int minLat, int minLon, int width, double precision )
+    public HeightTile( int minLat, int minLon, int width, double precision, int degree )
     {
         this.minLat = minLat;
         this.minLon = minLon;
         this.width = width;
 
         this.lowerBound = -1 / precision;
-        this.higherBound = 1 + 1 / precision;
+        this.higherBound = degree + 1 / precision;
+
+        this.degree = degree;
+    }
+
+    public HeightTile setCalcMean( boolean b )
+    {
+        this.calcMean = b;
+        return this;
+    }
+
+    public HeightTile setSeaLevel( boolean b )
+    {
+        heights.setHeader(0, b ? 1 : 0);
+        return this;
+    }
+
+    public boolean isSeaLevel()
+    {
+        return heights.getHeader(0) == 1;
     }
 
     void setHeights( DataAccess da )
@@ -55,10 +77,10 @@ public class HeightTile
         this.heights = da;
     }
 
-    public short getHeight( double lat, double lon )
+    public double getHeight( double lat, double lon )
     {
-        double deltaLat = lat - minLat;
-        double deltaLon = lon - minLon;
+        double deltaLat = Math.abs(lat - minLat);
+        double deltaLon = Math.abs(lon - minLon);
         if (deltaLat > higherBound || deltaLat < lowerBound)
             throw new IllegalStateException("latitude not in boundary of this file:" + lat + "," + lon + ", this:" + this.toString());
         if (deltaLon > higherBound || deltaLon < lowerBound)
@@ -66,9 +88,47 @@ public class HeightTile
 
         // first row in the file is the northernmost one
         // http://gis.stackexchange.com/a/43756/9006
-        int lonSimilar = (int) Math.round(width * deltaLon);
-        int latSimilar = width - (int) Math.round(width * deltaLat);
-        return heights.getShort(2 * (latSimilar * width + lonSimilar));
+        int lonSimilar = (int) (width / degree * deltaLon);
+        // different fallback methods for lat and lon as we have different rounding (lon -> positive, lat -> negative)
+        if (lonSimilar >= width)
+            lonSimilar = width - 1;
+        int latSimilar = width - 1 - (int) (width / degree * deltaLat);
+        if (latSimilar < 0)
+            latSimilar = 0;
+
+        // always keep in mind factor 2 because of short value
+        int daPointer = 2 * (latSimilar * width + lonSimilar);
+        int value = heights.getShort(daPointer);
+        AtomicInteger counter = new AtomicInteger(1);
+        if (value == Short.MIN_VALUE)
+            return Double.NaN;
+
+        if (calcMean)
+        {
+            if (lonSimilar > 0)
+                value += includePoint(daPointer - 2, counter);
+
+            if (lonSimilar < width - 1)
+                value += includePoint(daPointer + 2, counter);
+
+            if (latSimilar > 0)
+                value += includePoint(daPointer - 2 * width, counter);
+
+            if (latSimilar < width - 1)
+                value += includePoint(daPointer + 2 * width, counter);
+        }
+
+        return (double) value / counter.get();
+    }
+
+    private double includePoint( int pointer, AtomicInteger counter )
+    {
+        short value = heights.getShort(pointer);
+        if (value == Short.MIN_VALUE)
+            return 0;
+
+        counter.incrementAndGet();
+        return value;
     }
 
     public void toImage( String imageFile ) throws IOException
@@ -85,18 +145,24 @@ public class HeightTile
         for (int i = 0; i < len; i++)
         {
             int lonSimilar = i % width;
-            // no need for width - x as coordinate system for Graphics is already this way
+            // no need for width - y as coordinate system for Graphics is already this way
             int latSimilar = i / width;
             int green = Math.abs(heights.getShort(i * 2));
-            int red = 0;
-            while (green > 255)
+            if (green == 0)
             {
-                green = green / 10;
-                red += 50;
+                g.setColor(new Color(255, 0, 0, 255));
+            } else
+            {
+                int red = 0;
+                while (green > 255)
+                {
+                    green = green / 10;
+                    red += 50;
+                }
+                if (red > 255)
+                    red = 255;
+                g.setColor(new Color(red, green, 122, 255));
             }
-            if (red > 255)
-                red = 255;
-            g.setColor(new Color(red, green, 122, 255));
             g.drawLine(lonSimilar, latSimilar, lonSimilar, latSimilar);
         }
         g.dispose();

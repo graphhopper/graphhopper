@@ -18,7 +18,7 @@
 package com.graphhopper.geohash;
 
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.CoordTrig;
+import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * This class maps lat,lon to a (tile)number unlike SpatialKeyAlgo.
@@ -71,7 +71,7 @@ public class LinearKeyAlgo implements KeyAlgo
     }
 
     @Override
-    public long encode( CoordTrig coord )
+    public long encode( GHPoint coord )
     {
         return encode(coord.lat, coord.lon);
     }
@@ -98,7 +98,7 @@ public class LinearKeyAlgo implements KeyAlgo
      * @param linearKey is the input
      */
     @Override
-    public final void decode( long linearKey, CoordTrig latLon )
+    public final void decode( long linearKey, GHPoint latLon )
     {
         double lat = linearKey / lonUnits * latDelta + bounds.minLat;
         double lon = linearKey % lonUnits * lonDelta + bounds.minLon;

@@ -20,7 +20,6 @@ package com.graphhopper.util;
 
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.Path;
-import com.graphhopper.util.shapes.GHPlace;
 import java.util.List;
 
 /**
@@ -31,42 +30,48 @@ import java.util.List;
  */
 public class PathMerger
 {
-    boolean enableInstructions = true;
-    boolean simplifyRequest = false;
-    DouglasPeucker douglasPeucker;
-    boolean calcPoints;
+    private boolean enableInstructions = true;
+    private boolean simplifyResponse = true;
+    private DouglasPeucker douglasPeucker;
+    private boolean calcPoints = true;
 
-    public void doWork( GHResponse rsp, List<Path> paths )
+    public void doWork( GHResponse rsp, List<Path> paths, Translation tr )
     {
         int origPoints = 0;
         StopWatch sw;
         long fullMillis = 0;
+        double fullWeight = 0;
         double fullDistance = 0;
         boolean allFound = true;
 
-        InstructionList fullInstructions = new InstructionList();
-        PointList fullPoints = null;
+        InstructionList fullInstructions = new InstructionList(tr);
+        PointList fullPoints = PointList.EMPTY;
         for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++)
         {
             Path path = paths.get(pathIndex);
             fullMillis += path.getMillis();
             fullDistance += path.getDistance();
+            fullWeight += path.getWeight();
             if (enableInstructions)
             {
-                InstructionList il = path.calcInstructions();
+                InstructionList il = path.calcInstructions(tr);
                 sw = new StopWatch().start();
 
                 if (!il.isEmpty())
                 {
-                    if (fullPoints == null)
-                        fullPoints = createSimilarPL(il.get(0).getPoints());
+                    if (fullPoints.isEmpty())
+                    {
+                        PointList pl = il.get(0).getPoints();
+                        // do a wild guess about the total number of points to avoid reallocation a bit
+                        fullPoints = new PointList(il.size() * Math.min(10, pl.size()), pl.is3D());
+                    }
 
                     for (Instruction i : il)
                     {
-                        if (simplifyRequest)
+                        if (simplifyResponse)
                         {
                             origPoints += i.getPoints().size();
-                            douglasPeucker.simplify(i.getPoints());                            
+                            douglasPeucker.simplify(i.getPoints());
                         }
                         fullInstructions.add(i);
                         fullPoints.add(i.getPoints());
@@ -80,14 +85,14 @@ public class PathMerger
                         fi.setVia(pathIndex + 1);
                     }
                 }
-                
+
             } else if (calcPoints)
             {
-                PointList tmpPoints = path.calcPoints();                
-                if (fullPoints == null)
-                    fullPoints = createSimilarPL(tmpPoints);
+                PointList tmpPoints = path.calcPoints();
+                if (fullPoints.isEmpty())
+                    fullPoints = new PointList(tmpPoints.size(), tmpPoints.is3D());
 
-                if (simplifyRequest)
+                if (simplifyResponse)
                 {
                     origPoints = tmpPoints.getSize();
                     sw = new StopWatch().start();
@@ -99,8 +104,8 @@ public class PathMerger
 
             allFound = allFound && path.isFound();
         }
-        
-        if (fullPoints != null)
+
+        if (!fullPoints.isEmpty())
         {
             String debug = rsp.getDebugInfo() + ", simplify (" + origPoints + "->" + fullPoints.getSize() + ")";
             rsp.setDebugInfo(debug);
@@ -109,15 +114,15 @@ public class PathMerger
         if (enableInstructions)
             rsp.setInstructions(fullInstructions);
 
-        rsp.setFound(allFound).
-                setPoints(fullPoints).
+        if (!allFound)
+        {
+            rsp.addError(new RuntimeException("Not found"));
+        }
+
+        rsp.setPoints(fullPoints).
+                setRouteWeight(fullWeight).
                 setDistance(fullDistance).
                 setMillis(fullMillis);
-    }
-
-    PointList createSimilarPL( PointList pl )
-    {
-        return new PointList(pl.size(), pl.is3D());
     }
 
     public PathMerger setCalcPoints( boolean calcPoints )
@@ -132,9 +137,9 @@ public class PathMerger
         return this;
     }
 
-    public PathMerger setSimplifyRequest( boolean simplifyRequest )
+    public PathMerger setSimplifyResponse( boolean simplifyRes )
     {
-        this.simplifyRequest = simplifyRequest;
+        this.simplifyResponse = simplifyRes;
         return this;
     }
 

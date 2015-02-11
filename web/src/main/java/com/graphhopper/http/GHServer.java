@@ -23,6 +23,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.servlet.GuiceFilter;
 import com.graphhopper.util.CmdArgs;
+import java.net.InetSocketAddress;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletHolder;
 
@@ -82,11 +83,13 @@ public class GHServer
         FilterHolder guiceFilter = new FilterHolder(injector.getInstance(GuiceFilter.class));
         servHandler.addFilter(guiceFilter, "/*", EnumSet.allOf(DispatcherType.class));
 
-        int httpPort = args.getInt("jetty.port", 8989);
         SelectChannelConnector connector0 = new SelectChannelConnector();
-        // don't allow access from outside!
-        // connector0.setHost("127.0.0.1");
+        int httpPort = args.getInt("jetty.port", 8989);
+        String host = args.get("jetty.host", "");
         connector0.setPort(httpPort);
+        if (!host.isEmpty())
+            connector0.setHost(host);
+
         server.addConnector(connector0);
 
         HandlerList handlers = new HandlerList();
@@ -96,10 +99,10 @@ public class GHServer
         });
         server.setHandler(handlers);
         server.start();
-        logger.info("Started server at HTTP " + httpPort);
+        logger.info("Started server at HTTP " + host + ":" + httpPort);
     }
 
-    private Module createModule()
+    protected Module createModule()
     {
         return new AbstractModule()
         {
@@ -109,7 +112,7 @@ public class GHServer
                 binder().requireExplicitBindings();
 
                 install(new DefaultModule(args));
-                install(new GHServletModule());
+                install(new GHServletModule(args));
 
                 bind(GuiceFilter.class);
             }
@@ -118,6 +121,9 @@ public class GHServer
 
     public void stop()
     {
+        if (server == null)
+            return;
+
         try
         {
             server.stop();

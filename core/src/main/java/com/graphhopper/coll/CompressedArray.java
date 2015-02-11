@@ -20,7 +20,6 @@ package com.graphhopper.coll;
 import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.storage.VLongStorage;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.CoordTrig;
 import com.graphhopper.util.shapes.GHPoint;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;

@@ -34,6 +34,7 @@
                     div.className = containerClass;
                     div.style.position = 'absolute';
                     div.style.display = 'none';
+					div.style.cursor = 'pointer';
                     return div;
                 }
             };
@@ -158,15 +159,15 @@
             // special on() plugin code for 'autocomplete'
             // http://api.jquery.com/on/#on-events-selector-data
             // Listen for mouse over event on suggestions list:
-            container.on('mouseenter.autocomplete', suggestionSelector, function () {
-                that.activate($(this).data('index'));
-            });
-
-            // Deselect active element when mouse leaves suggestions container:
-            container.on('mouseleave.autocomplete', suggestionSelector, function () {                
-                that.selectedIndex = -1;
-                container.children('.' + selected).removeClass(selected);
-            });
+//            container.on('mouseenter.autocomplete', suggestionSelector, function () {
+//                that.activate($(this).data('index'));
+//            });
+//
+//            // Deselect active element when mouse leaves suggestions container:
+//            container.on('mouseleave.autocomplete', suggestionSelector, function () {                
+//                that.selectedIndex = -1;
+//                container.children('.' + selected).removeClass(selected);
+//            });
 
             // Listen for click event on suggestions list:
             container.on('click.autocomplete', suggestionSelector, function () {
@@ -194,7 +195,7 @@
             var that = this;
             that.fixPosition();
             if (that.options.minChars <= that.el.val().length) {
-                that.onValueChange();
+                // that.onValueChange();
             }
         },
 

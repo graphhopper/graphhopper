@@ -24,7 +24,7 @@ import com.graphhopper.util.Helper;
  * <p/>
  * @author Peter Karich
  */
-public class GHPlace extends CoordTrig<String>
+public class GHPlace extends GHPoint
 {
     private String name = "";
 
@@ -39,11 +39,9 @@ public class GHPlace extends CoordTrig<String>
 
     public GHPlace( double lat, double lon )
     {
-        this.lat = lat;
-        this.lon = lon;
+        super(lat, lon);
     }
 
-    @Override
     public void setValue( String t )
     {
         setName(t);
@@ -76,34 +74,5 @@ public class GHPlace extends CoordTrig<String>
             str += " " + lat + ", " + lon;
 
         return str.trim();
-    }
-
-    public static GHPlace parse( String str )
-    {
-        // if the point is in the format of lat,lon we don't need to call geocoding service
-        String[] fromStrs = str.split(",");
-        if (fromStrs.length == 2)
-        {
-            try
-            {
-                double fromLat = Double.parseDouble(fromStrs[0]);
-                double fromLon = Double.parseDouble(fromStrs[1]);
-                return new GHPlace(fromLat, fromLon);
-            } catch (Exception ex)
-            {
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Attention: geoJson is LON,LAT
-     */
-    public Double[] toGeoJson()
-    {
-        return new Double[]
-        {
-            lon, lat
-        };
     }
 }

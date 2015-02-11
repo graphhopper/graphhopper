@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class PointList implements PointAccess
 {
-    private final static DistanceCalc3D distCalc3D = new DistanceCalc3D();
+    private final static DistanceCalc3D distCalc3D = Helper.DIST_3D;
     private static String ERR_MSG = "Tried to access PointList with too big index!";
     private double[] latitudes;
     private double[] longitudes;
@@ -94,16 +94,16 @@ public class PointList implements PointAccess
 
     private void incCap( int newSize )
     {
-        if (newSize >= latitudes.length)
-        {
-            int cap = (int) (newSize * 1.7);
-            if (cap < 8)
-                cap = 8;
-            latitudes = Arrays.copyOf(latitudes, cap);
-            longitudes = Arrays.copyOf(longitudes, cap);
-            if (is3D)
-                elevations = Arrays.copyOf(elevations, cap);
-        }
+        if (newSize < latitudes.length)
+            return;
+
+        int cap = newSize * 2;
+        if (cap < 15)
+            cap = 15;
+        latitudes = Arrays.copyOf(latitudes, cap);
+        longitudes = Arrays.copyOf(longitudes, cap);
+        if (is3D)
+            elevations = Arrays.copyOf(elevations, cap);
     }
 
     public void add( double lat, double lon )
@@ -285,18 +285,24 @@ public class PointList implements PointAccess
      */
     public List<Double[]> toGeoJson()
     {
+        return toGeoJson(is3D);
+    }
+
+    public List<Double[]> toGeoJson( boolean includeElevation )
+    {
+
         ArrayList<Double[]> points = new ArrayList<Double[]>(size);
         for (int i = 0; i < size; i++)
         {
-            if (is3D)
+            if (includeElevation)
                 points.add(new Double[]
                 {
-                    getLongitude(i), getLatitude(i), getElevation(i)
+                    Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i)), Helper.round2(getElevation(i))
                 });
             else
                 points.add(new Double[]
                 {
-                    getLongitude(i), getLatitude(i)
+                    Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i))
                 });
         }
         return points;

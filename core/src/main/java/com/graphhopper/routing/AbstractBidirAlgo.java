@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 
@@ -28,16 +29,18 @@ import com.graphhopper.storage.Graph;
  */
 public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
 {
-    int visitedFromCount;
-    int visitedToCount;
+    int visitedCountFrom;
+    int visitedCountTo;
     protected boolean finishedFrom;
     protected boolean finishedTo;
 
-    public abstract void initFrom( int from, double dist );
+    abstract void initFrom( int from, double dist );
 
-    public abstract void initTo( int to, double dist );
+    abstract void initTo( int to, double dist );
 
-    protected abstract void initPath();
+    protected abstract Path createAndInitPath();
+
+    protected abstract boolean isWeightLimitReached();
 
     abstract void checkState( int fromBase, int fromAdj, int toBase, int toAdj );
 
@@ -45,24 +48,25 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
 
     abstract boolean fillEdgesTo();
 
-    public AbstractBidirAlgo( Graph graph, FlagEncoder encoder, Weighting weighting )
+    public AbstractBidirAlgo( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
-        super(graph, encoder, weighting);
+        super(graph, encoder, weighting, tMode);
     }
 
     @Override
     public Path calcPath( int from, int to )
     {
         checkAlreadyRun();
-        initPath();
+        createAndInitPath();
         initFrom(from, 0);
         initTo(to, 0);
-        return runAlgo();
+        runAlgo();
+        return extractPath();
     }
 
-    private Path runAlgo()
+    protected void runAlgo()
     {
-        while (!finished())
+        while (!finished() && !isWeightLimitReached())
         {
             if (!finishedFrom)
                 finishedFrom = !fillEdgesFrom();
@@ -70,13 +74,11 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
             if (!finishedTo)
                 finishedTo = !fillEdgesTo();
         }
-
-        return extractPath();
     }
 
     @Override
     public int getVisitedNodes()
     {
-        return visitedFromCount + visitedToCount;
+        return visitedCountFrom + visitedCountTo;
     }
 }

@@ -17,7 +17,6 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.routing.DijkstraBidirection;
 import gnu.trove.map.hash.TIntIntHashMap;
 import java.util.Arrays;
 

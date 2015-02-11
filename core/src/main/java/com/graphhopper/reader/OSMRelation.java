@@ -132,9 +132,9 @@ public class OSMRelation extends OSMElement
         public static final int WAY = 1;
         public static final int RELATION = 2;
         private static final String typeDecode = "nwr";
-        private int type;
-        private long ref;
-        private String role;
+        private final int type;
+        private final long ref;
+        private final String role;
 
         public Member( XMLStreamReader parser )
         {

@@ -43,7 +43,28 @@ public class CarFlagEncoderTest
 
         way.clearTags();
         way.setTag("highway", "track");
+        assertTrue(encoder.acceptWay(way) > 0);
+
         way.setTag("motorcar", "no");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        // for now allow grade1+2+3 for every country, see #253
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("tracktype", "grade2");        
+        assertTrue(encoder.acceptWay(way) > 0);
+        way.setTag("tracktype", "grade4");        
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("access", "no");
+        way.setTag("motorcar", "yes");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("access", "delivery");
         assertFalse(encoder.acceptWay(way) > 0);
 
         way.clearTags();
@@ -56,6 +77,7 @@ public class CarFlagEncoderTest
         way.clearTags();
         way.setTag("route", "ferry");
         assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.isFerry(encoder.acceptWay(way)));
         way.setTag("motorcar", "no");
         assertFalse(encoder.acceptWay(way) > 0);
 
@@ -63,29 +85,41 @@ public class CarFlagEncoderTest
         way.setTag("route", "ferry");
         way.setTag("foot", "yes");
         assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.isFerry(encoder.acceptWay(way)));
 
         way.clearTags();
         way.setTag("highway", "primary");
         long flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
-        assertTrue(encoder.isForward(flags));
-        assertTrue(encoder.isBackward(flags));
+        assertTrue(encoder.isBool(flags, FlagEncoder.K_FORWARD));
+        assertTrue(encoder.isBool(flags, FlagEncoder.K_BACKWARD));
         way.setTag("oneway", "yes");
         flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
-        assertTrue(encoder.isForward(flags));
-        assertFalse(encoder.isBackward(flags));
+        assertTrue(encoder.isBool(flags, FlagEncoder.K_FORWARD));
+        assertFalse(encoder.isBool(flags, FlagEncoder.K_BACKWARD));
     }
 
     @Test
     public void testSetAccess()
     {
-        assertTrue(encoder.isForward(encoder.setProperties(0, true, true)));
-        assertTrue(encoder.isBackward(encoder.setProperties(0, true, true)));
+        assertTrue(encoder.isBool(encoder.setProperties(0, true, true), FlagEncoder.K_FORWARD));
+        assertTrue(encoder.isBool(encoder.setProperties(0, true, true), FlagEncoder.K_BACKWARD));
 
-        assertTrue(encoder.isForward(encoder.setProperties(0, true, false)));
-        assertFalse(encoder.isBackward(encoder.setProperties(0, true, false)));
+        assertTrue(encoder.isBool(encoder.setProperties(0, true, false), FlagEncoder.K_FORWARD));
+        assertFalse(encoder.isBool(encoder.setProperties(0, true, false), FlagEncoder.K_BACKWARD));
 
-        assertFalse(encoder.isForward(encoder.setProperties(0, false, true)));
-        assertTrue(encoder.isBackward(encoder.setProperties(0, false, true)));
+        assertFalse(encoder.isBool(encoder.setProperties(0, false, true), FlagEncoder.K_FORWARD));
+        assertTrue(encoder.isBool(encoder.setProperties(0, false, true), FlagEncoder.K_BACKWARD));
+
+        assertTrue(encoder.isBool(encoder.flagsDefault(true, true), FlagEncoder.K_FORWARD));
+        assertTrue(encoder.isBool(encoder.flagsDefault(true, true), FlagEncoder.K_BACKWARD));
+
+        assertTrue(encoder.isBool(encoder.flagsDefault(true, false), FlagEncoder.K_FORWARD));
+        assertFalse(encoder.isBool(encoder.flagsDefault(true, false), FlagEncoder.K_BACKWARD));
+
+        long flags = encoder.flagsDefault(true, true);
+        // disable access
+        assertFalse(encoder.isBool(encoder.setAccess(flags, false, false), FlagEncoder.K_FORWARD));
+        assertFalse(encoder.isBool(encoder.setAccess(flags, false, false), FlagEncoder.K_BACKWARD));
     }
 
     @Test
@@ -104,13 +138,13 @@ public class CarFlagEncoderTest
         way.setTag("maxspeed:forward", "20");
         encoded = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertEquals(10, encoder.getSpeed(encoded), 1e-1);
-        
+
         way = new OSMWay(1);
         way.setTag("highway", "primary");
         way.setTag("maxspeed:forward", "20");
         encoded = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertEquals(20, encoder.getSpeed(encoded), 1e-1);
-        
+
         way = new OSMWay(1);
         way.setTag("highway", "primary");
         way.setTag("maxspeed:backward", "20");
@@ -149,13 +183,6 @@ public class CarFlagEncoderTest
         encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(20, encoder.getSpeed(encoded), 1e-1);
 
-        way.clearTags();
-        way.setTag("highway", "track");
-        way.setTag("tracktype", "grade5");
-        allowed = encoder.acceptWay(way);
-        encoded = encoder.handleWayTags(way, allowed, 0);
-        assertEquals(5, encoder.getSpeed(encoded), 1e-1);
-
         try
         {
             encoder.setSpeed(0, -1);
@@ -172,19 +199,64 @@ public class CarFlagEncoderTest
     }
 
     @Test
+    public void testRoundabout()
+    {
+        long flags = encoder.setAccess(0, true, true);
+        long resFlags = encoder.setBool(flags, FlagEncoder.K_ROUNDABOUT, true);
+        assertTrue(encoder.isBool(resFlags, FlagEncoder.K_ROUNDABOUT));
+        assertTrue(encoder.isBool(resFlags, FlagEncoder.K_FORWARD));
+        assertTrue(encoder.isBool(resFlags, FlagEncoder.K_BACKWARD));
+
+        resFlags = encoder.setBool(flags, FlagEncoder.K_ROUNDABOUT, false);
+        assertFalse(encoder.isBool(resFlags, FlagEncoder.K_ROUNDABOUT));
+        assertTrue(encoder.isBool(resFlags, FlagEncoder.K_FORWARD));
+        assertTrue(encoder.isBool(resFlags, FlagEncoder.K_BACKWARD));
+
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "motorway");
+        flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
+        assertTrue(encoder.isBool(flags, FlagEncoder.K_FORWARD));
+        assertTrue(encoder.isBool(flags, FlagEncoder.K_BACKWARD));
+        assertFalse(encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
+
+        way.setTag("junction", "roundabout");
+        flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
+        assertTrue(encoder.isBool(flags, FlagEncoder.K_FORWARD));
+        assertFalse(encoder.isBool(flags, FlagEncoder.K_BACKWARD));
+        assertTrue(encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
+    }
+
+    @Test
     public void testRailway()
     {
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "secondary");
         way.setTag("railway", "rail");
         // disallow rail
-        assertEquals(0, encoder.acceptWay(way));
+        assertTrue(encoder.acceptWay(way) == 0);
+
+        way.clearTags();
+        way.setTag("highway", "path");
+        way.setTag("railway", "abandoned");
+        assertTrue(encoder.acceptWay(way) == 0);
+
+        // on disallowed highway, railway is allowed, sometimes incorrectly mapped
+        way.setTag("highway", "track");
+        assertTrue(encoder.acceptWay(way) > 0);        
+        
+        // this is fully okay as sometimes old rails are on the road
+        way.setTag("highway", "primary");
+        way.setTag("railway", "historic");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.setTag("motorcar", "no");
+        assertTrue(encoder.acceptWay(way) == 0);
 
         way = new OSMWay(1);
         way.setTag("highway", "secondary");
         way.setTag("railway", "tram");
         // but allow tram to be on the same way
-        assertNotSame(0, encoder.acceptWay(way));
+        assertTrue(encoder.acceptWay(way) > 0);
 
         way = new OSMWay(1);
         way.setTag("route", "shuttle_train");
@@ -193,32 +265,22 @@ public class CarFlagEncoderTest
         way.setTag("duration", "35");
         way.setTag("estimated_distance", 50000);
         // accept
-        assertNotSame(0, encoder.acceptWay(way));
+        assertTrue(encoder.acceptWay(way) > 0);
         // calculate speed from estimated_distance and duration
         assertEquals(60, encoder.getSpeed(encoder.handleFerryTags(way, 20, 30, 40)), 1e-1);
-    }
-
-    @Test
-    public void testBasics()
-    {
-        assertTrue(encoder.isForward(encoder.flagsDefault(true, true)));
-        assertTrue(encoder.isBackward(encoder.flagsDefault(true, true)));
-
-        assertTrue(encoder.isForward(encoder.flagsDefault(true, false)));
-        assertFalse(encoder.isBackward(encoder.flagsDefault(true, false)));
     }
 
     @Test
     public void testSwapDir()
     {
         long swappedFlags = encoder.reverseFlags(encoder.flagsDefault(true, true));
-        assertTrue(encoder.isForward(swappedFlags));
-        assertTrue(encoder.isBackward(swappedFlags));
+        assertTrue(encoder.isBool(swappedFlags, FlagEncoder.K_FORWARD));
+        assertTrue(encoder.isBool(swappedFlags, FlagEncoder.K_BACKWARD));
 
         swappedFlags = encoder.reverseFlags(encoder.flagsDefault(true, false));
 
-        assertFalse(encoder.isForward(swappedFlags));
-        assertTrue(encoder.isBackward(swappedFlags));
+        assertFalse(encoder.isBool(swappedFlags, FlagEncoder.K_FORWARD));
+        assertTrue(encoder.isBool(swappedFlags, FlagEncoder.K_BACKWARD));
 
         assertEquals(0, encoder.reverseFlags(0));
     }
@@ -251,70 +313,79 @@ public class CarFlagEncoderTest
         node.setTag("motorcar", "yes");
         // no barrier!
         assertTrue(encoder.handleNodeTags(node) == 0);
+
+        node = new OSMNode(1, -1, -1);
+        node.setTag("barrier", "bollard");
+        // barrier!
+        assertTrue(encoder.handleNodeTags(node) > 0);
+
+        // ignore other access tags for absolute barriers!
+        node.setTag("motorcar", "yes");
+        // still barrier!
+        assertTrue(encoder.handleNodeTags(node) > 0);
     }
 
     @Test
     public void testTurnFlagEncoding_noCosts()
     {
-        encoder.defineTurnBits(0, 0, 0);
+        FlagEncoder tmpEnc = new CarFlagEncoder(8, 5, 0);
+        EncodingManager em = new EncodingManager(tmpEnc);
 
-        long flags_r0 = encoder.getTurnFlags(true, 0);
-        long flags_0 = encoder.getTurnFlags(false, 0);
+        long flags_r0 = tmpEnc.getTurnFlags(true, 0);
+        long flags_0 = tmpEnc.getTurnFlags(false, 0);
 
-        long flags_r20 = encoder.getTurnFlags(true, 20);
-        long flags_20 = encoder.getTurnFlags(false, 20);
+        long flags_r20 = tmpEnc.getTurnFlags(true, 0);
+        long flags_20 = tmpEnc.getTurnFlags(false, 20);
 
-        assertEquals(0, encoder.getTurnCosts(flags_r0));
-        assertEquals(0, encoder.getTurnCosts(flags_0));
+        assertEquals(0, tmpEnc.getTurnCost(flags_r0), 1e-1);
+        assertEquals(0, tmpEnc.getTurnCost(flags_0), 1e-1);
 
-        assertEquals(0, encoder.getTurnCosts(flags_r20));
-        assertEquals(0, encoder.getTurnCosts(flags_20));
+        assertEquals(0, tmpEnc.getTurnCost(flags_r20), 1e-1);
+        assertEquals(0, tmpEnc.getTurnCost(flags_20), 1e-1);
 
-        assertTrue(encoder.isTurnRestricted(flags_r0));
-        assertFalse(encoder.isTurnRestricted(flags_0));
+        assertFalse(tmpEnc.isTurnRestricted(flags_r0));
+        assertFalse(tmpEnc.isTurnRestricted(flags_0));
 
-        assertTrue(encoder.isTurnRestricted(flags_r20));
-        assertFalse(encoder.isTurnRestricted(flags_20));
+        assertFalse(tmpEnc.isTurnRestricted(flags_r20));
+        assertFalse(tmpEnc.isTurnRestricted(flags_20));
     }
 
     @Test
     public void testTurnFlagEncoding_withCosts()
     {
-        //arbitrary shift, 7 turn cost bits: [0,127]
-        encoder.defineTurnBits(0, 2, 7);
+        FlagEncoder tmpEncoder = new CarFlagEncoder(8, 5, 127);
+        EncodingManager em = new EncodingManager(tmpEncoder);
 
-        long flags_r0 = encoder.getTurnFlags(true, 0);
-        long flags_0 = encoder.getTurnFlags(false, 0);
+        long flags_r0 = tmpEncoder.getTurnFlags(true, 0);
+        long flags_0 = tmpEncoder.getTurnFlags(false, 0);
+        assertTrue(Double.isInfinite(tmpEncoder.getTurnCost(flags_r0)));
+        assertEquals(0, tmpEncoder.getTurnCost(flags_0), 1e-1);
+        assertTrue(tmpEncoder.isTurnRestricted(flags_r0));
+        assertFalse(tmpEncoder.isTurnRestricted(flags_0));
 
-        long flags_r20 = encoder.getTurnFlags(true, 20);
-        long flags_20 = encoder.getTurnFlags(false, 20);
+        long flags_r20 = tmpEncoder.getTurnFlags(true, 0);
+        long flags_20 = tmpEncoder.getTurnFlags(false, 20);
+        assertTrue(Double.isInfinite(tmpEncoder.getTurnCost(flags_r20)));
+        assertEquals(20, tmpEncoder.getTurnCost(flags_20), 1e-1);
+        assertTrue(tmpEncoder.isTurnRestricted(flags_r20));
+        assertFalse(tmpEncoder.isTurnRestricted(flags_20));
 
-        long flags_r220 = encoder.getTurnFlags(true, 220);
-        long flags_220 = encoder.getTurnFlags(false, 220);
-
-        assertEquals(0, encoder.getTurnCosts(flags_r0));
-        assertEquals(0, encoder.getTurnCosts(flags_0));
-
-        assertEquals(20, encoder.getTurnCosts(flags_r20));
-        assertEquals(20, encoder.getTurnCosts(flags_20));
-
-        assertEquals(127, encoder.getTurnCosts(flags_r220)); // max costs is 2^7-1 = 127
-        assertEquals(127, encoder.getTurnCosts(flags_220));
-
-        assertTrue(encoder.isTurnRestricted(flags_r0));
-        assertFalse(encoder.isTurnRestricted(flags_0));
-
-        assertTrue(encoder.isTurnRestricted(flags_r20));
-        assertFalse(encoder.isTurnRestricted(flags_20));
-
-        assertTrue(encoder.isTurnRestricted(flags_r220));
-        assertFalse(encoder.isTurnRestricted(flags_220));
+        long flags_r220 = tmpEncoder.getTurnFlags(true, 0);
+        try
+        {
+            tmpEncoder.getTurnFlags(false, 220);
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+        }
+        assertTrue(Double.isInfinite(tmpEncoder.getTurnCost(flags_r220)));
+        assertTrue(tmpEncoder.isTurnRestricted(flags_r220));
     }
 
     @Test
     public void testMaxValue()
     {
-        CarFlagEncoder instance = new CarFlagEncoder(8, 0.5);
+        CarFlagEncoder instance = new CarFlagEncoder(8, 0.5, 0);
         EncodingManager em = new EncodingManager(instance);
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "motorway_link");
@@ -330,7 +401,7 @@ public class CarFlagEncoderTest
     @Test
     public void testRegisterOnlyOnceAllowed()
     {
-        CarFlagEncoder instance = new CarFlagEncoder(8, 0.5);
+        CarFlagEncoder instance = new CarFlagEncoder(8, 0.5, 0);
         EncodingManager em = new EncodingManager(instance);
         try
         {
@@ -338,7 +409,40 @@ public class CarFlagEncoderTest
             assertTrue(false);
         } catch (IllegalStateException ex)
         {
-
         }
     }
+
+    @Test
+    public void testSetToMaxSpeed()
+    {
+        OSMWay way = new OSMWay(12);
+        way.setTag("maxspeed", "90");
+        assertEquals(90, encoder.getMaxSpeed(way), 1e-2);
+    }
+
+    @Test
+    public void testFordAccess()
+    {
+        OSMNode node = new OSMNode(0, 0.0, 0.0);
+        node.setTag("ford", "yes");
+
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "unclassified");
+        way.setTag("ford", "yes");
+
+        // Node and way are initially blocking
+        assertTrue(encoder.isBlockFords());
+        assertFalse(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.handleNodeTags(node) > 0);
+
+        try {
+            // Now they are passable
+            encoder.setBlockFords(false);
+            assertTrue(encoder.acceptWay(way) > 0);
+            assertFalse(encoder.handleNodeTags(node) > 0);
+        } finally {
+            encoder.setBlockFords(true);
+        }
+    }
+
 }

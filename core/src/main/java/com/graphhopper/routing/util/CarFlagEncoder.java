@@ -17,19 +17,15 @@
  */
 package com.graphhopper.routing.util;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.graphhopper.reader.OSMNode;
-import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.Helper;
+import java.util.*;
 
 /**
  * Defines bit layout for cars. (speed, access, ferries, ...)
@@ -51,26 +47,31 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     /**
      * Should be only instantied via EncodingManager
      */
-    protected CarFlagEncoder()
+    public CarFlagEncoder()
     {
-        this(5, 5);
+        this(5, 5, 0);
     }
 
-    protected CarFlagEncoder( int speedBits, double speedFactor )
+    public CarFlagEncoder( String propertiesStr )
     {
-        super(speedBits, speedFactor);
-        restrictions = new String[]
-        {
-            "motorcar", "motor_vehicle", "vehicle", "access"
-        };
+        this((int) parseLong(propertiesStr, "speedBits", 5),
+                parseDouble(propertiesStr, "speedFactor", 5),
+                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+    }
+
+    public CarFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
+    {
+        super(speedBits, speedFactor, maxTurnCosts);
+        restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
         restrictedValues.add("private");
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
+        restrictedValues.add("delivery");
 
-        intended.add("yes");
-        intended.add("permissive");
+        intendedValues.add("yes");
+        intendedValues.add("permissive");
 
         potentialBarriers.add("gate");
         potentialBarriers.add("lift_gate");
@@ -81,6 +82,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         absoluteBarriers.add("stile");
         absoluteBarriers.add("turnstile");
         absoluteBarriers.add("cycle_barrier");
+        absoluteBarriers.add("motorcycle_barrier");
         absoluteBarriers.add("block");
 
         trackTypeSpeedMap.put("grade1", 20); // paved
@@ -101,6 +103,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         // autobahn
         defaultSpeedMap.put("motorway", 100);
         defaultSpeedMap.put("motorway_link", 70);
+        defaultSpeedMap.put("motorroad", 90);
         // bundesstraße
         defaultSpeedMap.put("trunk", 70);
         defaultSpeedMap.put("trunk_link", 65);
@@ -125,7 +128,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     }
 
     /**
-     * Define the place of speedBits in the flags variable for car.
+     * Define the place of the speedBits in the edge flags for car.
      */
     @Override
     public int defineWayBits( int index, int shift )
@@ -133,7 +136,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
         speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, defaultSpeedMap.get("secondary"), defaultSpeedMap.get("motorway"));
-        return shift + speedBits;
+        return shift + speedEncoder.getBits();
     }
 
     protected double getSpeed( OSMWay way )
@@ -141,7 +144,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         String highwayValue = way.getTag("highway");
         Integer speed = defaultSpeedMap.get(highwayValue);
         if (speed == null)
-            throw new IllegalStateException("car, no speed found for:" + highwayValue);
+            throw new IllegalStateException(toString() + ", no speed found for:" + highwayValue);
 
         if (highwayValue.equals("track"))
         {
@@ -175,6 +178,13 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             return 0;
         }
 
+        if ("track".equals(highwayValue))
+        {
+            String tt = way.getTag("tracktype");
+            if (tt != null && !tt.equals("grade1") && !tt.equals("grade2") && !tt.equals("grade3"))
+                return 0;
+        }
+
         if (!defaultSpeedMap.containsKey(highwayValue))
             return 0;
 
@@ -182,11 +192,12 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // do not drive street cars into fords
-        if ((way.hasTag("highway", "ford") || way.hasTag("ford")) && !way.hasTag(restrictions, intended))
+        boolean carsAllowed = way.hasTag(restrictions, intendedValues);
+        if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")) && !carsAllowed)
             return 0;
 
         // check access restrictions
-        if (way.hasTag(restrictions, restrictedValues))
+        if (way.hasTag(restrictions, restrictedValues) && !carsAllowed)
             return 0;
 
         // do not drive cars over railways (sometimes incorrectly mapped!)
@@ -203,28 +214,17 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long handleWayTags( OSMWay way, long allowed, long relationCode )
+    public long handleWayTags( OSMWay way, long allowed, long relationFlags )
     {
-        if ((allowed & acceptBit) == 0)
+        if (!isAccept(allowed))
             return 0;
 
         long encoded;
-        if ((allowed & ferryBit) == 0)
+        if (!isFerry(allowed))
         {
             // get assumed speed from highway type
             double speed = getSpeed(way);
-            double maxspeed = parseSpeed(way.getTag("maxspeed"));
-            // apply speed limit no matter of the road type
-            if (maxspeed >= 0)
-                // reduce speed limit to reflect average speed
-                speed = maxspeed * 0.9;
-
-            double maxSpeed = parseSpeed(way.getTag("maxspeed:forward"));
-            double backSpeed = parseSpeed(way.getTag("maxspeed:backward"));
-            if (maxSpeed >= 0)
-                speed = maxSpeed * 0.9;
-            if (backSpeed >= 0 && speed > backSpeed * 0.9)
-                speed = backSpeed * 0.9;
+            speed = applyMaxSpeed(way, speed, true);
 
             // limit speed to max 30 km/h if bad surface
             if (speed > 30 && way.hasTag("surface", badSurfaceSpeedMap))
@@ -232,7 +232,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
             encoded = setSpeed(0, speed);
 
-            if (way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))
+            boolean isRoundabout = way.hasTag("junction", "roundabout");
+            if (isRoundabout)
+                encoded = setBool(encoded, K_ROUNDABOUT, true);
+
+            if (way.hasTag("oneway", oneways) || isRoundabout)
             {
                 if (way.hasTag("oneway", "-1"))
                     encoded |= backwardBit;
@@ -248,16 +252,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         }
 
         return encoded;
-    }
-
-    @Override
-    public long handleNodeTags( OSMNode node )
-    {
-        // absolute barriers always block
-        if (node.hasTag("barrier", absoluteBarriers))
-            return directionBitMask;
-
-        return super.handleNodeTags(node);
     }
 
     public String getWayInfo( OSMWay way )
@@ -291,17 +285,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             return "destinations: " + str;
         else
             return "destination: " + str;
-    }
-
-    @Override
-    public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
-    {
-        if (edgeOutExplorer == null || edgeInExplorer == null)
-        {
-            edgeOutExplorer = osmReader.getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(this, false, true));
-            edgeInExplorer = osmReader.getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(this, true, false));
-        }
-        return turnRelation.getRestrictionAsEntries(this, edgeOutExplorer, edgeInExplorer, osmReader);
     }
 
     @Override

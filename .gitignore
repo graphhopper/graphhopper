@@ -1,6 +1,5 @@
 target/
 *~
-*largeEWD.txt.gz
 TODO.txt
 *-gh/
 *.osm
@@ -10,12 +9,9 @@ build.xml
 queries.sh
 maven/
 measurement*.properties
-live_graphhopper.sh
 gen/
 bin/
 *.map
-scripts/googlecode_upload.py
-deploy.sh
 android/libs/graphhopper-*-android.jar
 */nbactions.xml
 .idea/
@@ -28,3 +24,6 @@ core/TODO*.txt
 srtmprovider/
 core/docs/
 .*#
+cgiarprovider/
+/nbactions.xml
+tools/nb-configuration.xml

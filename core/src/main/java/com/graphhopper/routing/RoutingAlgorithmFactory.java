@@ -17,48 +17,12 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 
 /**
  * @author Peter Karich
  */
-public class RoutingAlgorithmFactory
+public interface RoutingAlgorithmFactory
 {
-    private String algoStr;
-    private boolean approx;
-
-    /**
-     * @param algo possible values are astar (A* algorithm), astarbi (bidirectional A*) dijkstra
-     * (Dijkstra), dijkstrabi and dijkstraNativebi (a bit faster bidirectional Dijkstra).
-     */
-    public RoutingAlgorithmFactory( String algo, boolean approx )
-    {
-        this.algoStr = algo;
-        this.approx = approx;
-    }
-
-    public RoutingAlgorithm createAlgo( Graph g, FlagEncoder encoder, Weighting weighting )
-    {
-        if ("dijkstrabi".equalsIgnoreCase(algoStr))
-        {
-            return new DijkstraBidirectionRef(g, encoder, weighting);
-        } else if ("dijkstraNativebi".equalsIgnoreCase(algoStr))
-        {
-            return new DijkstraBidirection(g, encoder, weighting);
-        } else if ("dijkstra".equalsIgnoreCase(algoStr))
-        {
-            return new Dijkstra(g, encoder, weighting);
-        } else if ("astarbi".equalsIgnoreCase(algoStr))
-        {
-            return new AStarBidirection(g, encoder, weighting).setApproximation(approx);
-        } else if ("dijkstraOneToMany".equalsIgnoreCase(algoStr))
-        {
-            return new DijkstraOneToMany(g, encoder, weighting);
-        } else
-        {
-            return new AStar(g, encoder, weighting);
-        }
-    }
+    RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts );   
 }

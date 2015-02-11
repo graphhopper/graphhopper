@@ -17,35 +17,61 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
-import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import java.util.Arrays;
+import java.util.Collection;
 import static org.junit.Assert.*;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 /**
  *
  * @author Peter Karich
  */
+@RunWith(Parameterized.class)
 public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
 {
-    @Override
-    public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final Weighting w )
+    /**
+     * Runs the same test with each of the supported traversal modes
+     */
+    @Parameters(name = "{0}")
+    public static Collection<Object[]> configs()
     {
-        return new NoOpAlgorithmPreparation()
+        return Arrays.asList(new Object[][]
+        {
+            {
+                TraversalMode.NODE_BASED
+            },
+//            TODO { TraversalMode.EDGE_BASED_1DIR },
+//            TODO { TraversalMode.EDGE_BASED_2DIR },
+//            TODO { TraversalMode.EDGE_BASED_2DIR_UTURN }
+        });
+    }
+
+    private final TraversalMode traversalMode;
+
+    public DijkstraOneToManyTest( TraversalMode tMode )
+    {
+        this.traversalMode = tMode;
+    }
+
+    @Override
+    public RoutingAlgorithmFactory createFactory( Graph prepareGraph, AlgorithmOptions prepareOpts )
+    {
+        return new RoutingAlgorithmFactory()
         {
             @Override
-            public RoutingAlgorithm createAlgo()
+            public RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts )
             {
-                return new DijkstraOneToMany(_graph, encoder, w);
+                return new DijkstraOneToMany(g, opts.getFlagEncoder(), opts.getWeighting(), traversalMode);
             }
-        }.setGraph(defaultGraph);
+        };
     }
 
     @Override
@@ -85,16 +111,44 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     }
 
     @Test
+    public void testIssue182()
+    {
+        RoutingAlgorithm algo = createAlgo(initGraph(createGraph(false)));
+        Path p = algo.calcPath(0, 8);
+        assertEquals(Helper.createTList(0, 7, 8), p.calcNodes());
+
+        // expand SPT
+        p = algo.calcPath(0, 10);
+        assertEquals(Helper.createTList(0, 1, 2, 3, 4, 10), p.calcNodes());
+    }
+
+    @Test
+    public void testIssue239()
+    {
+        Graph g = createGraph(false);
+        g.edge(0, 1, 1, true);
+        g.edge(1, 2, 1, true);
+        g.edge(2, 0, 1, true);
+
+        g.edge(4, 5, 1, true);
+        g.edge(5, 6, 1, true);
+        g.edge(6, 4, 1, true);
+
+        DijkstraOneToMany algo = (DijkstraOneToMany) createAlgo(g);
+        assertEquals(-1, algo.findEndNode(0, 4));
+        assertEquals(-1, algo.findEndNode(0, 4));
+    }
+
+    @Test
     public void testUseCache()
     {
-        AlgorithmPreparation prep = prepareGraph(createTestGraph());
-        RoutingAlgorithm algo = prep.createAlgo();
+        RoutingAlgorithm algo = createAlgo(createTestGraph());
         Path p = algo.calcPath(0, 4);
         assertEquals(Helper.createTList(0, 4), p.calcNodes());
 
         // expand SPT
         p = algo.calcPath(0, 7);
-        assertEquals(Helper.createTList(0, 4, 6, 5, 7), p.calcNodes());
+        assertEquals(Helper.createTList(0, 4, 5, 7), p.calcNodes());
 
         // use SPT
         p = algo.calcPath(0, 2);
@@ -111,8 +165,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
         g.edge(4, 5, 10, true);
         g.edge(5, 6, 10, true);
 
-        AlgorithmPreparation prep = prepareGraph(g);
-        DijkstraOneToMany algo = (DijkstraOneToMany) prep.createAlgo();
+        DijkstraOneToMany algo = (DijkstraOneToMany) createAlgo(g);
         algo.setEdgeFilter(new EdgeFilter()
         {
             @Override
@@ -136,5 +189,23 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
         });
         p = algo.calcPath(4, 6);
         assertEquals(Helper.createTList(4, 5, 6), p.calcNodes());
+    }
+
+    private Graph initGraph( Graph g )
+    {
+        // 0-1-2-3-4
+        // |       /
+        // 7-10----
+        // \-8
+        g.edge(0, 1, 1, true);
+        g.edge(1, 2, 1, true);
+        g.edge(2, 3, 1, true);
+        g.edge(3, 4, 1, true);
+        g.edge(4, 10, 1, true);
+
+        g.edge(0, 7, 1, true);
+        g.edge(7, 8, 1, true);
+        g.edge(7, 10, 10, true);
+        return g;
     }
 }

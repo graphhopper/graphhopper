@@ -30,5 +30,5 @@ public interface Geocoding
     /**
      * Returns a list of matching points for the specified place query string.
      */
-    List<GHPlace> name2point( GHPlace... place );
+    List<GHPlace> names2places( GHPlace... place );
 }

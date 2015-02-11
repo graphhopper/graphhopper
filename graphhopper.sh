@@ -1,6 +1,6 @@
 #!/bin/bash
 
-GH_CLASS=com.graphhopper.GraphHopper
+GH_CLASS=com.graphhopper.tools.Import
 GH_HOME=$(dirname "$0")
 JAVA=$JAVA_HOME/bin/java
 if [ "x$JAVA_HOME" = "x" ]; then
@@ -22,9 +22,25 @@ fi
 ACTION=$1
 FILE=$2
 
-USAGE="./graphhopper.sh import|ui|test|measurement|miniui|extract|build <your-osm-file>"
+function printUsage {
+ echo
+ echo "./graphhopper.sh import|web <your-osm-file>"
+ echo "./graphhopper.sh clean|build|help"
+ echo
+ echo "  help        this message"
+ echo "  import      creates the graphhopper files used for later (faster) starts"
+ echo "  web         starts a local server for user access at localhost:8989 and developer access at localhost:8989/route"
+ echo "  build       creates the graphhopper JAR (without the web module)"
+ echo "  clean       removes all JARs, necessary if you need to use the latest source (e.g. after switching the branch etc)"
+ echo "  measurement does performance analysis of the current source version via artificial, random routes (Measurement class)"
+ echo "  torture     can be used to test real world routes via feeding graphhopper logs into a graphhopper system (Torture class)"
+ echo "  miniui      is a simple Java/Swing application used for debugging purposes only (MiniGraphUI class)"
+ echo "  extract     calls the overpass API to easily grab any area as .osm file"
+}
+
 if [ "x$ACTION" = "x" ]; then
- echo -e "## action $ACTION not found. try \n$USAGE"
+ echo "## action $ACTION not found. try" 
+ printUsage
 fi
 
 function ensureOsmXml { 
@@ -70,8 +86,8 @@ function ensureMaven {
       if [ ! -f "$MAVEN_HOME/bin/mvn" ]; then
         echo "No Maven found in the PATH. Now downloading+installing it to $MAVEN_HOME"
         cd "$GH_HOME"
-        MVN_PACKAGE=apache-maven-3.2.1
-        wget -O maven.zip http://www.eu.apache.org/dist/maven/maven-3/3.2.1/binaries/$MVN_PACKAGE-bin.zip
+        MVN_PACKAGE=apache-maven-3.2.5
+        wget -O maven.zip http://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/$MVN_PACKAGE-bin.zip
         unzip maven.zip
         mv $MVN_PACKAGE maven
         rm maven.zip
@@ -96,7 +112,7 @@ function packageCoreJar {
     echo "## now building graphhopper jar: $JAR"
     echo "## using maven at $MAVEN_HOME"
     #mvn clean
-    "$MAVEN_HOME/bin/mvn" --projects core -DskipTests=true install assembly:single > /tmp/graphhopper-compile.log
+    "$MAVEN_HOME/bin/mvn" --projects core,tools -DskipTests=true install assembly:single > /tmp/graphhopper-compile.log
     returncode=$?
     if [[ $returncode != 0 ]] ; then
         echo "## compilation of core failed"
@@ -137,12 +153,13 @@ elif [ "x$ACTION" = "xextract" ]; then
  
 elif [ "x$ACTION" = "xandroid" ]; then
  prepareEclipse
- "$MAVEN_HOME/bin/mvn" --projects android install android:deploy android:run
+ "$MAVEN_HOME/bin/mvn" -P include-android --projects android install android:deploy android:run
  exit
 fi
 
 if [ "x$FILE" = "x" ]; then
-  echo -e "no file specified? try \n$USAGE"
+  echo -e "no file specified? try"
+  printUsage
   exit
 fi
 
@@ -172,7 +189,7 @@ fi
 
 GRAPH=$NAME-gh
 VERSION=$(grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1)
-JAR=core/target/graphhopper-$VERSION-jar-with-dependencies.jar
+JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
 
 LINK=$(echo $NAME | tr '_' '/')
 if [ "x$FILE" == "x-" ]; then
@@ -189,7 +206,7 @@ else
 fi
 
 if [ "x$JAVA_OPTS" = "x" ]; then
-  JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1000m -Xms1000m -server"
+  JAVA_OPTS="-Xmx1000m -Xms1000m -server"
 fi
 
 
@@ -218,12 +235,14 @@ if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
   RC_BASE=./web/src/main/webapp
 
   if [ "x$GH_FOREGROUND" = "x" ]; then
-    exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.resourcebase=$RC_BASE jetty.port=$JETTY_PORT config=$CONFIG \
-         $GH_WEB_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE"
+    exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.resourcebase=$RC_BASE \
+	jetty.port=$JETTY_PORT jetty.host=$JETTY_HOST \
+    	config=$CONFIG $GH_WEB_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE"
     # foreground => we never reach this here
   else
-    exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.resourcebase=$RC_BASE jetty.port=$JETTY_PORT config=$CONFIG \
-         $GH_WEB_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE" <&- &
+    exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.resourcebase=$RC_BASE \
+    	jetty.port=$JETTY_PORT jetty.host=$JETTY_HOST \
+    	config=$CONFIG $GH_WEB_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE" <&- &
     if [ "x$GH_PID_FILE" != "x" ]; then
        echo $! > $GH_PID_FILE
     fi
@@ -236,14 +255,8 @@ elif [ "x$ACTION" = "ximport" ]; then
       $GH_IMPORT_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE"
 
 
-elif [ "x$ACTION" = "xtest" ]; then
- "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS printVersion=true config=$CONFIG \
-       graph.location="$GRAPH" osmreader.osm="$OSM_FILE" prepare.chShortcuts=false \
-       graph.testIT=true
-
-
 elif [ "x$ACTION" = "xtorture" ]; then
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.QueryTorture $3 $4 $5 $6 $7 $8 $9
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.QueryTorture $3 $4 $5 $6 $7 $8 $9
 
 
 elif [ "x$ACTION" = "xminiui" ]; then
@@ -254,11 +267,11 @@ elif [ "x$ACTION" = "xminiui" ]; then
 
 
 elif [ "x$ACTION" = "xmeasurement" ]; then
- ARGS="config=$CONFIG graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chShortcuts=fastest osmreader.acceptWay=CAR"
- # graph.doSort=true"
+ ARGS="config=$CONFIG graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chWeighting=fastest graph.flagEncoders=CAR"
  echo -e "\ncreate graph via $ARGS, $JAR"
  START=$(date +%s)
- "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS $ARGS prepare.doPrepare=false
+ # avoid islands for measurement at all costs
+ "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS $ARGS prepare.doPrepare=false prepare.minNetworkSize=10000 prepare.minOnewayNetworkSize=10000
  END=$(date +%s)
  IMPORT_TIME=$(($END - $START))
 
@@ -266,7 +279,7 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
     COUNT=5000
     commit_info=$(git log -n 1 --pretty=oneline)
     echo -e "\nperform measurement via jar=> $JAR and ARGS=> $ARGS"
-    "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS measurement.count=$COUNT measurement.location="$M_FILE_NAME" \
+    "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.Measurement $ARGS measurement.count=$COUNT measurement.location="$M_FILE_NAME" \
             graph.importTime=$IMPORT_TIME measurement.gitinfo="$commit_info"
  }
  

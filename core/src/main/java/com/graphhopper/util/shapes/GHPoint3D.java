@@ -18,12 +18,13 @@
  */
 package com.graphhopper.util.shapes;
 
+import com.graphhopper.util.NumHelper;
+
 /**
  * @author Peter Karich
  */
 public class GHPoint3D extends GHPoint
 {
-
     public double ele;
 
     public GHPoint3D( double lat, double lon, double elevation )
@@ -32,8 +33,52 @@ public class GHPoint3D extends GHPoint
         this.ele = elevation;
     }
 
+    public double getElevation()
+    {
+        return ele;
+    }
+
     public double getEle()
     {
         return ele;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        int hash = 59 * super.hashCode()
+                + (int) (Double.doubleToLongBits(this.ele) ^ (Double.doubleToLongBits(this.ele) >>> 32));
+        return hash;
+    }
+
+    @Override
+    public boolean equals( Object obj )
+    {
+        if (obj == null)
+            return false;
+
+        @SuppressWarnings("unchecked")
+        final GHPoint3D other = (GHPoint3D) obj;
+        if (Double.isNaN(ele))
+            // very special case necessary in QueryGraph, asserted via test
+            return NumHelper.equalsEps(lat, other.lat) && NumHelper.equalsEps(lon, other.lon);
+        else
+            return NumHelper.equalsEps(lat, other.lat) && NumHelper.equalsEps(lon, other.lon)
+                    && NumHelper.equalsEps(ele, other.ele);
+    }
+
+    @Override
+    public String toString()
+    {
+        return super.toString() + "," + ele;
+    }
+
+    @Override
+    public Double[] toGeoJson()
+    {
+        return new Double[]
+        {
+            lon, lat, ele
+        };
     }
 }

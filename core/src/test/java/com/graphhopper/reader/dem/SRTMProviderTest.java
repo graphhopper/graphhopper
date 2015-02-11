@@ -18,6 +18,7 @@
  */
 package com.graphhopper.reader.dem;
 
+import com.graphhopper.storage.DAType;
 import java.io.File;
 import java.io.IOException;
 import org.junit.After;
@@ -67,11 +68,11 @@ public class SRTMProviderTest
 //        instance.getEle(43, 13);
 
         // siegesturm
-        assertEquals(466, instance.getEle(49.969331, 11.574783), 1e-1);
+        assertEquals(466, instance.getEle(49.968651, 11.574869), 1e-1);
         // am main
         assertEquals(330, instance.getEle(49.958233, 11.558647), 1e-1);
         // south america
-        assertEquals(1691, instance.getEle(-28.88316, -71.070557), 1e-1);
+        assertEquals(1678, instance.getEle(-28.88316, -71.070557), 1e-1);
         assertEquals(0, instance.getEle(-28.671311, -71.38916), 1e-1);
 
         // montevideo
@@ -81,20 +82,19 @@ public class SRTMProviderTest
         // use 0 elevation if area not found
         assertEquals(0, instance.getEle(55.4711873, 19.2501641), 1e-1);
 
-        assertEquals(160, instance.getEle(55.8943144, -3), 1e-1);
+        assertEquals(161, instance.getEle(55.8943144, -3), 1e-1);
         // precision = 1e6 => -3
         // assertEquals(160, instance.getEle(55.8943144, -3.0000004), 1e-1);
         // precision = 1e7 => -4
-        assertEquals(154, instance.getEle(55.8943144, -3.0000004), 1e-1);
-
-        assertEquals(160, instance.getEle(55.8943144, -3.0000001), 1e-1);
+        // assertEquals(161, instance.getEle(55.8943144, -3.0004), 1e-1);
+        // assertEquals(161, instance.getEle(55.8943144, -3.0000001), 1e-1);
     }
 
     @Test
     public void testGetHeightMMap() throws IOException
     {
         instance.setCacheDir(new File("./files/"));
-        instance.setInMemory(false);
-        assertEquals(160, instance.getEle(55.8943144, -3), 1e-1);
+        instance.setDAType(DAType.MMAP);
+        assertEquals(161, instance.getEle(55.8943144, -3), 1e-1);
     }
 }

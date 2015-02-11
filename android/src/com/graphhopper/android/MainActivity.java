@@ -50,9 +50,8 @@ import android.widget.Toast;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.GraphHopperAPI;
+import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.util.Constants;
-import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.ProgressListener;
@@ -61,7 +60,7 @@ import com.graphhopper.util.StopWatch;
 public class MainActivity extends Activity
 {
     private MapView mapView;
-    private GraphHopperAPI hopper;
+    private GraphHopper hopper;
     private LatLong start;
     private LatLong end;
     private Spinner localSpinner;
@@ -71,7 +70,7 @@ public class MainActivity extends Activity
     private volatile boolean prepareInProgress = false;
     private volatile boolean shortestPathRunning = false;
     private String currentArea = "berlin";
-    private String fileListURL = "http://graphhopper.com/public/maps/0.3/";
+    private String fileListURL = "https://graphhopper.com/public/maps/0.4/";
     private String prefixURL = fileListURL;
     private String downloadURL;
     private File mapsFolder;
@@ -166,6 +165,18 @@ public class MainActivity extends Activity
         chooseAreaFromLocal();
     }
 
+    @Override
+    protected void onDestroy()
+    {
+        super.onDestroy();
+        if (hopper != null)
+            hopper.close();
+
+        hopper = null;
+        // necessary?
+        System.gc();
+    }
+
     boolean isReady()
     {
         // only return true if already loaded
@@ -227,8 +238,7 @@ public class MainActivity extends Activity
             protected List<String> saveDoInBackground( Void... params )
                     throws Exception
             {
-                String[] lines = new Downloader("GraphHopper Android").
-                        downloadAsString(fileListURL).split("\n");
+                String[] lines = new AndroidDownloader().downloadAsString(fileListURL).split("\n");
                 List<String> res = new ArrayList<String>();
                 for (String str : lines)
                 {
@@ -249,8 +259,9 @@ public class MainActivity extends Activity
             @Override
             protected void onPostExecute( List<String> nameList )
             {
-                if (hasError())
+                if (hasError() || nameList.isEmpty())
                 {
+                    getError().printStackTrace();
                     logUser("Are you connected to the internet? Problem while fetching remote area list: "
                             + getErrorMessage());
                     return;
@@ -261,10 +272,8 @@ public class MainActivity extends Activity
                     public void onSelect( String selectedArea, String selectedFile )
                     {
                         if (selectedFile == null
-                                || new File(mapsFolder, selectedArea + ".ghz")
-                                .exists()
-                                || new File(mapsFolder, selectedArea + "-gh")
-                                .exists())
+                                || new File(mapsFolder, selectedArea + ".ghz").exists()
+                                || new File(mapsFolder, selectedArea + "-gh").exists())
                         {
                             downloadURL = null;
                         } else
@@ -304,7 +313,7 @@ public class MainActivity extends Activity
             public void onClick( View v )
             {
                 Object o = spinner.getSelectedItem();
-                if (o != null && o.toString().length() > 0)
+                if (o != null && o.toString().length() > 0 && !nameToFullName.isEmpty())
                 {
                     String area = o.toString();
                     mylistener.onSelect(area, nameToFullName.get(area));
@@ -345,7 +354,9 @@ public class MainActivity extends Activity
                 String localFolder = Helper.pruneFileEnd(AndroidHelper.getFileName(downloadURL));
                 localFolder = new File(mapsFolder, localFolder + "-gh").getAbsolutePath();
                 log("downloading & unzipping " + downloadURL + " to " + localFolder);
-                new Downloader("GraphHopper Android").downloadAndUnzip(downloadURL, localFolder,
+                AndroidDownloader downloader = new AndroidDownloader();
+                downloader.setTimeout(30000);
+                downloader.downloadAndUnzip(downloadURL, localFolder,
                         new ProgressListener()
                         {
                             @Override
@@ -390,7 +401,7 @@ public class MainActivity extends Activity
                 true, AndroidGraphicFactory.INSTANCE)
                 {
                     @Override
-                    public boolean onTap( LatLong tapLatLong, Point layerXY, Point tapXY )
+                    public boolean onLongPress( LatLong tapLatLong, Point layerXY, Point tapXY )
                     {
                         return onMapTap(tapLatLong, layerXY, tapXY);
                     }
@@ -413,7 +424,6 @@ public class MainActivity extends Activity
             protected Path saveDoInBackground( Void... v ) throws Exception
             {
                 GraphHopper tmpHopp = new GraphHopper().forMobile();
-                tmpHopp.setCHShortcuts("fastest");
                 tmpHopp.load(new File(mapsFolder, currentArea).getAbsolutePath());
                 log("found graph " + tmpHopp.getGraph().toString() + ", nodes:" + tmpHopp.getGraph().getNodes());
                 hopper = tmpHopp;
@@ -428,7 +438,7 @@ public class MainActivity extends Activity
                             + getErrorMessage());
                 } else
                 {
-                    logUser("Finished loading graph. Touch to route.");
+                    logUser("Finished loading graph. Press long to define where to start and end the route.");
                 }
 
                 finishPrepare();
@@ -445,7 +455,7 @@ public class MainActivity extends Activity
     {
         Paint paintStroke = AndroidGraphicFactory.INSTANCE.createPaint();
         paintStroke.setStyle(Style.STROKE);
-        paintStroke.setColor(Color.BLUE);
+        paintStroke.setColor(Color.argb(200, 0, 0xCC, 0x33));
         paintStroke.setDashPathEffect(new float[]
         {
             25, 15
@@ -470,7 +480,7 @@ public class MainActivity extends Activity
     {
         Drawable drawable = getResources().getDrawable(resource);
         Bitmap bitmap = AndroidGraphicFactory.convertToBitmap(drawable);
-        return new Marker(p, bitmap, -bitmap.getHeight(), -bitmap.getWidth() / 2);
+        return new Marker(p, bitmap, 0, -bitmap.getHeight() / 2);
     }
 
     public void calcPath( final double fromLat, final double fromLon,
@@ -486,9 +496,9 @@ public class MainActivity extends Activity
             {
                 StopWatch sw = new StopWatch().start();
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
-                        setAlgorithm("dijkstrabi").
-                        putHint("instructions", false).
-                        putHint("douglas.minprecision", 1);
+                        setAlgorithm(AlgorithmOptions.DIJKSTRA_BI);
+                req.getHints().
+                        put("instructions", "false");
                 GHResponse resp = hopper.route(req);
                 time = sw.stop().getSeconds();
                 return resp;

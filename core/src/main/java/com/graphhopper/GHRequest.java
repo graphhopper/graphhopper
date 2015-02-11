@@ -17,11 +17,12 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.util.shapes.GHPlace;
+import com.graphhopper.routing.util.WeightingMap;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 
 /**
  * GraphHopper request wrapper to simplify requesting GraphHopper.
@@ -31,15 +32,21 @@ import java.util.Map;
  */
 public class GHRequest
 {
-    private String algo = "dijkstrabi";
-    private List<GHPlace> places = new ArrayList<GHPlace>(5);
-    private final Map<String, Object> hints = new HashMap<String, Object>(5);
-    private String vehicle = "CAR";
-    private String weighting = "fastest";
+    private String algo = "";
+    private List<GHPoint> points;
+    private final WeightingMap hints = new WeightingMap();
+    private String vehicle = "";
     private boolean possibleToAdd = false;
+    private Locale locale = Locale.US;
 
     public GHRequest()
     {
+        this(5);
+    }
+
+    public GHRequest( int size )
+    {
+        points = new ArrayList<GHPoint>(size);
         possibleToAdd = true;
     }
 
@@ -48,52 +55,53 @@ public class GHRequest
      */
     public GHRequest( double fromLat, double fromLon, double toLat, double toLon )
     {
-        this(new GHPlace(fromLat, fromLon), new GHPlace(toLat, toLon));
+        this(new GHPoint(fromLat, fromLon), new GHPoint(toLat, toLon));
     }
 
     /**
      * Calculate the path from specified startPlace to endPlace.
      */
-    public GHRequest( GHPlace startPlace, GHPlace endPlace )
+    public GHRequest( GHPoint startPlace, GHPoint endPlace )
     {
         if (startPlace == null)
             throw new IllegalStateException("'from' cannot be null");
 
         if (endPlace == null)
             throw new IllegalStateException("'to' cannot be null");
-        places.add(startPlace);
-        places.add(endPlace);
+        points = new ArrayList<GHPoint>(2);
+        points.add(startPlace);
+        points.add(endPlace);
     }
 
-    public GHRequest( List<GHPlace> places )
+    public GHRequest( List<GHPoint> points )
     {
-        this.places = places;
+        this.points = points;
     }
 
-    public GHRequest addPlace( GHPlace place )
+    public GHRequest addPoint( GHPoint point )
     {
-        if (place == null)
-            throw new IllegalArgumentException("place cannot be null");
+        if (point == null)
+            throw new IllegalArgumentException("point cannot be null");
         if (!possibleToAdd)
             throw new IllegalStateException("Please call empty constructor if you intent to use "
                     + "more than two places via addPlace method.");
 
-        places.add(place);
+        points.add(point);
         return this;
     }
 
-    public List<GHPlace> getPlaces()
+    public List<GHPoint> getPoints()
     {
-        return places;
+        return points;
     }
 
     /**
-     * Possible values: astar (A* algorithm, default), astarbi (bidirectional A*) dijkstra
-     * (Dijkstra), dijkstrabi and dijkstraNativebi (a bit faster bidirectional Dijkstra).
+     * For possible values see AlgorithmOptions.*
      */
     public GHRequest setAlgorithm( String algo )
     {
-        this.algo = algo;
+        if (algo != null)
+            this.algo = algo;
         return this;
     }
 
@@ -102,70 +110,68 @@ public class GHRequest
         return algo;
     }
 
-    public GHRequest putHint( String key, Object value )
+    public Locale getLocale()
     {
-        Object old = hints.put(key, value);
-        if (old != null)
-            throw new RuntimeException("Key is already associated with " + old + ", your value:" + value);
+        return locale;
+    }
 
+    public GHRequest setLocale( Locale locale )
+    {
+        if (locale != null)
+            this.locale = locale;
         return this;
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> T getHint( String key, T defaultValue )
+    public GHRequest setLocale( String localeStr )
     {
-        Object obj = hints.get(key);
-        if (obj == null)
-            return defaultValue;
-
-        if (defaultValue != null && defaultValue instanceof Number)
-        {
-            // what a monster! see #173
-            if (defaultValue instanceof Double)
-                return (T) (Double) ((Number) obj).doubleValue();
-            if (defaultValue instanceof Long)
-                return (T) (Long) ((Number) obj).longValue();
-        }
-
-        return (T) obj;
-    }
-
-    @Override
-    public String toString()
-    {
-        String res = "";
-        for (GHPlace place : places)
-        {
-            if (res.isEmpty())
-                res = place.toString();
-            else
-                res += "; " + place.toString();
-        }
-        return res + "(" + algo + ")";
+        return setLocale(Helper.getLocale(localeStr));
     }
 
     /**
-     * By default it supports fastest and shortest
+     * By default it supports fastest and shortest. Or specify empty to use default.
      */
     public GHRequest setWeighting( String w )
     {
-        this.weighting = w;
+        hints.setWeighting(w);
         return this;
     }
 
     public String getWeighting()
     {
-        return weighting;
+        return hints.getWeighting();
     }
 
+    /**
+     * Specifiy car, bike or foot. Or specify empty to use default.
+     */
     public GHRequest setVehicle( String vehicle )
     {
-        this.vehicle = vehicle;
+        if (vehicle != null)
+            this.vehicle = vehicle;
         return this;
     }
 
     public String getVehicle()
     {
         return vehicle;
+    }
+
+    @Override
+    public String toString()
+    {
+        String res = "";
+        for (GHPoint point : points)
+        {
+            if (res.isEmpty())
+                res = point.toString();
+            else
+                res += "; " + point.toString();
+        }
+        return res + "(" + algo + ")";
+    }
+
+    public WeightingMap getHints()
+    {
+        return hints;
     }
 }

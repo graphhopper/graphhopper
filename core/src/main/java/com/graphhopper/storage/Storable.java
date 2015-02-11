@@ -23,10 +23,16 @@ import java.io.Closeable;
  * Interface for a storage abstraction. Currently is serves just the purpose to ensure the same
  * methods and names through all kind of 'storable' things in graphhopper.
  * <p/>
- * Then the lifecycle is identical for all such objects: <ol> <li>object creation via new</li>
- * <li>optional configuration via additional setters and getters</li>
- * <li>if(!storable.loadExisting()) storable.create()</li> <li>usage and flush() calls
- * in-between</li> <li>close which does no flush()</li> <ol>
+ * Then the lifecycle is identical for all such objects:
+ * <ol>
+ * <li>object creation via new</li>
+ * <li>optional configuration via additional setters and getters which are not in this
+ * interface</li>
+ * <li>if(!storable.loadExisting()) storable.create()</li>
+ * <li>usage storable and optional flush() calls in-between. Keep in mind that some data structure
+ * could require a call to increase memory while usage. E.g. DataAccess.ensureCapacity()</li>
+ * <li>Finally do close() which does no flush()</li>
+ * </ol>
  * <p/>
  * @author Peter Karich
  */
@@ -55,6 +61,8 @@ public interface Storable<T> extends Closeable
      */
     @Override
     void close();
+
+    boolean isClosed();
 
     /**
      * @return the allocated storage size in bytes

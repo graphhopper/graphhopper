@@ -28,12 +28,12 @@ import com.graphhopper.util.Helper;
 class GHNodeAccess implements NodeAccess
 {
     private final GraphHopperStorage that;
-    private final boolean enabled3D;
+    private final boolean elevation;
 
-    public GHNodeAccess( GraphHopperStorage that, boolean enabled3D )
+    public GHNodeAccess( GraphHopperStorage that, boolean withElevation )
     {
         this.that = that;
-        this.enabled3D = enabled3D;
+        this.elevation = withElevation;
     }
 
     @Override
@@ -73,7 +73,7 @@ class GHNodeAccess implements NodeAccess
         if (lon < that.bounds.minLon)
             that.bounds.minLon = lon;
 
-        //set the default value for the additional field of this node
+        // set the default value for the additional field of this node
         if (that.extStorage.isRequireNodeField())
             that.nodes.setInt(tmp + that.N_ADDITIONAL, that.extStorage.getDefaultNodeFieldValue());
     }
@@ -93,7 +93,7 @@ class GHNodeAccess implements NodeAccess
     @Override
     public final double getElevation( int nodeId )
     {
-        if (!enabled3D)
+        if (!elevation)
             throw new IllegalStateException("Cannot access elevation - 3D is not enabled");
 
         return Helper.intToEle(that.nodes.getInt((long) nodeId * that.nodeEntryBytes + that.N_ELE));
@@ -143,13 +143,13 @@ class GHNodeAccess implements NodeAccess
     @Override
     public final boolean is3D()
     {
-        return enabled3D;
+        return elevation;
     }
 
     @Override
     public int getDimension()
     {
-        if (enabled3D)
+        if (elevation)
             return 3;
         return 2;
     }

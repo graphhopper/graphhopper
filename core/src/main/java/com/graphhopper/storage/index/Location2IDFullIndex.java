@@ -22,8 +22,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.DistancePlaneProjection;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.Circle;
 
 /**
@@ -33,9 +32,10 @@ import com.graphhopper.util.shapes.Circle;
  */
 public class Location2IDFullIndex implements LocationIndex
 {
-    private DistanceCalc calc = new DistancePlaneProjection();
+    private DistanceCalc calc = Helper.DIST_PLANE;
     private final Graph graph;
     private final NodeAccess nodeAccess;
+    private boolean closed = false;
 
     public Location2IDFullIndex( Graph g )
     {
@@ -53,9 +53,9 @@ public class Location2IDFullIndex implements LocationIndex
     public LocationIndex setApproximation( boolean approxDist )
     {
         if (approxDist)
-            calc = new DistancePlaneProjection();
+            calc = Helper.DIST_PLANE;
         else
-            calc = new DistanceCalcEarth();
+            calc = Helper.DIST_EARTH;
 
         return this;
     }
@@ -75,6 +75,9 @@ public class Location2IDFullIndex implements LocationIndex
     @Override
     public QueryResult findClosest( double queryLat, double queryLon, EdgeFilter edgeFilter )
     {
+        if (isClosed())
+            throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
+
         QueryResult res = new QueryResult(queryLat, queryLon);
         Circle circle = null;
         AllEdgesIterator iter = graph.getAllEdges();
@@ -130,6 +133,13 @@ public class Location2IDFullIndex implements LocationIndex
     @Override
     public void close()
     {
+        closed = true;
+    }
+
+    @Override
+    public boolean isClosed()
+    {
+        return closed;
     }
 
     @Override

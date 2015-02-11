@@ -20,7 +20,6 @@ package com.graphhopper;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,16 +30,58 @@ import java.util.List;
  */
 public class GHResponse
 {
-    private PointList list = PointList.EMPTY;
-    private double distance;
-    private long time;
     private String debugInfo = "";
     private final List<Throwable> errors = new ArrayList<Throwable>(4);
-    private InstructionList instructions = new InstructionList(0);
-    private boolean found;
+    private PointList list = PointList.EMPTY;
+    private double distance;
+    private double routeWeight;
+    private long time;
+    private InstructionList instructions = null;
 
     public GHResponse()
     {
+    }
+
+    public String getDebugInfo()
+    {
+        check("getDebugInfo");
+        return debugInfo;
+    }
+
+    public GHResponse setDebugInfo( String debugInfo )
+    {
+        if (debugInfo != null)
+            this.debugInfo = debugInfo;
+        return this;
+    }
+
+    private void check( String method )
+    {
+        if (hasErrors())
+        {
+            throw new RuntimeException("You cannot call " + method + " if response contains errors. Check this with ghResponse.hasErrors(). "
+                    + "Errors are: " + getErrors());
+        }
+    }
+
+    /**
+     * @return true if one or more error found
+     */
+    public boolean hasErrors()
+    {
+        return !errors.isEmpty();
+    }
+
+    public List<Throwable> getErrors()
+    {
+        return errors;
+    }
+
+    @SuppressWarnings("unchecked")
+    public GHResponse addError( Throwable error )
+    {
+        errors.add(error);
+        return this;
     }
 
     public GHResponse setPoints( PointList points )
@@ -56,6 +97,7 @@ public class GHResponse
      */
     public PointList getPoints()
     {
+        check("getPoints");
         return list;
     }
 
@@ -73,6 +115,7 @@ public class GHResponse
      */
     public double getDistance()
     {
+        check("getDistance");
         return distance;
     }
 
@@ -90,15 +133,21 @@ public class GHResponse
         return time;
     }
 
-    public GHResponse setFound( boolean found )
+    public GHResponse setRouteWeight( double weight )
     {
-        this.found = found;
+        this.routeWeight = weight;
         return this;
     }
 
-    public boolean isFound()
+    /**
+     * This method returns a double value which is better than the time for comparison of routes but
+     * only if you know what you are doing, e.g. only to compare routes gained with the same query
+     * parameters like vehicle.
+     */
+    public double getRouteWeight()
     {
-        return found;
+        check("getRouteWeight");
+        return routeWeight;
     }
 
     /**
@@ -106,6 +155,7 @@ public class GHResponse
      */
     public BBox calcRouteBBox( BBox _fallback )
     {
+        check("calcRouteBBox");
         BBox bounds = BBox.INVERSE.clone();
         int len = list.getSize();
         if (len == 0)
@@ -130,44 +180,14 @@ public class GHResponse
         return bounds;
     }
 
-    public String getDebugInfo()
-    {
-        return debugInfo;
-    }
-
-    public GHResponse setDebugInfo( String debugInfo )
-    {
-        this.debugInfo = debugInfo;
-        return this;
-    }
-
-    /**
-     * @return true if one or more error found
-     */
-    public boolean hasErrors()
-    {
-        return !errors.isEmpty();
-    }
-
-    public List<Throwable> getErrors()
-    {
-        return errors;
-    }
-
-    public GHResponse addError( Throwable error )
-    {
-        errors.add(error);
-        return this;
-    }
-
     @Override
     public String toString()
     {
-        String str = "found:" + isFound() + ", nodes:" + list.getSize() + ": " + list.toString();
+        String str = "nodes:" + list.getSize() + ": " + list.toString();
         if (!instructions.isEmpty())
             str += ", " + instructions.toString();
 
-        if (!errors.isEmpty())
+        if (hasErrors())
             str += ", " + errors.toString();
 
         return str;
@@ -180,6 +200,10 @@ public class GHResponse
 
     public InstructionList getInstructions()
     {
+        check("getInstructions");
+        if (instructions == null)
+            throw new IllegalArgumentException("To access instructions you need to enable creation before routing");
+
         return instructions;
     }
 }

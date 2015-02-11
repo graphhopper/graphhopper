@@ -27,15 +27,5 @@ import static org.junit.Assert.*;
  */
 public class CoordTrigTest
 {
-    @Test
-    public void testIsValid()
-    {
-        CoordTrig instance = new CoordTrig();
-        assertFalse(instance.isValid());
-        instance.lat = 1;
-        assertFalse(instance.isValid());
-        instance.lon = 1;
-        assertTrue(instance.isValid());
-    }
 
 }

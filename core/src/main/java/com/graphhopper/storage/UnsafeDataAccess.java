@@ -17,7 +17,6 @@
  */
 package com.graphhopper.storage;
 
-import static com.graphhopper.storage.AbstractDataAccess.HEADER_OFFSET;
 import com.graphhopper.util.NotThreadSafe;
 import java.io.File;
 import java.io.IOException;
@@ -61,8 +60,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
     }
 
     private long address;
-    private long capacity;
-    private transient boolean closed = false;
+    private long capacity;    
 
     UnsafeDataAccess( String name, String location, ByteOrder order )
     {
@@ -75,12 +73,12 @@ public class UnsafeDataAccess extends AbstractDataAccess
         // TODO use unsafe.pageSize() instead segmentSizeInBytes?
         // e.g. on my system pageSize is only 4096
         setSegmentSize(segmentSizeInBytes);
-        incCapacity(bytes);
+        ensureCapacity(bytes);
         return this;
     }
 
     @Override
-    public final boolean incCapacity( long bytes )
+    public final boolean ensureCapacity(long bytes)
     {
         return ensureCapacity(bytes, true);
     }
@@ -127,8 +125,8 @@ public class UnsafeDataAccess extends AbstractDataAccess
     @Override
     public boolean loadExisting()
     {
-        if (closed)
-            return false;
+        if (isClosed())
+            throw new IllegalStateException("already closed");
 
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
@@ -173,7 +171,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
     @Override
     public void flush()
     {
-        if (closed)
+        if (isClosed())
             throw new IllegalStateException("already closed");
 
         try
@@ -204,7 +202,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
     @Override
     public void close()
     {
-        closed = true;
+        super.close();
         UNSAFE.freeMemory(address);
     }
 

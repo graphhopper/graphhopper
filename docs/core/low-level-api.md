@@ -4,6 +4,21 @@ If you just start to use GraphHopper please refer to [routing docs](./routing.md
 or [the quickstart for developers](./quickstart-from-source.md)
 and come back here later if the higher level API does not suit your needs.
 
+### What are pillar and tower nodes?
+
+From road network sources like OpenStreetMap we fetch all nodes and create the routing graph but 
+only a sub-set of them are actual junctions, which are the ones we are interested in while routing.
+
+Those junction nodes (and end-standing nodes of dead alleys) we call *tower nodes* which also 
+have a graphhopper node ID associated, going from 0 to graph.getNodes(). 
+The helper nodes between the junctions we call 'pillar nodes' which can be fetched via
+`edgeIteratorState.fetchWayGeometry(0)`. Avoiding the traversal of pillar nodes while routing makes 
+routing a lot faster (~8 times).
+
+That splitting into pillar and tower nodes is also the reason why there can't be a unique mapping from 
+one OSM node ID to exactly one GraphHopper node ID. And as one OSM Way is often splitted into multiple 
+edges the same applies for edge IDs too.
+
 ### Create and save the graph
 
 ```java

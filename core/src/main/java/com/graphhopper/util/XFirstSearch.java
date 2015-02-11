@@ -19,65 +19,20 @@ package com.graphhopper.util;
 
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import gnu.trove.stack.array.TIntArrayStack;
 
 /**
- * This class can be used for breadth first search (BFS) or depth first search (DFS)
+ * This abstract class defines commonalities for BFS and DFS
  * <p/>
- * @author Peter Karich
+ * @author Jan Sölter
  */
-public class XFirstSearch
+public abstract class XFirstSearch
 {
-    /**
-     * interface to use a queue (FIFO) OR a stack (LIFO)
-     */
-    interface HelperColl
-    {
-        boolean isEmpty();
-
-        int pop();
-
-        void push( int v );
-    }
-
     protected GHBitSet createBitSet()
     {
         return new GHBitSetImpl();
     }
 
-    public void start( EdgeExplorer explorer, int startNode, boolean depthFirst )
-    {
-        HelperColl coll;
-        if (depthFirst)
-        {
-            coll = new MyIntStack();
-        } else
-        {
-            coll = new MyHelperIntQueue();
-        }
-
-        GHBitSet visited = createBitSet();
-        visited.add(startNode);
-        coll.push(startNode);
-        int current;
-        while (!coll.isEmpty())
-        {
-            current = coll.pop();
-            if (goFurther(current))
-            {
-                EdgeIterator iter = explorer.setBaseNode(current);
-                while (iter.next())
-                {
-                    int connectedId = iter.getAdjNode();
-                    if (checkAdjacent(iter) && !visited.contains(connectedId))
-                    {
-                        visited.add(connectedId);
-                        coll.push(connectedId);
-                    }
-                }
-            }
-        }
-    }
+    public abstract void start( EdgeExplorer explorer, int startNode );
 
     protected boolean goFurther( int nodeId )
     {
@@ -87,18 +42,5 @@ public class XFirstSearch
     protected boolean checkAdjacent( EdgeIteratorState edge )
     {
         return true;
-    }
-
-    static class MyIntStack extends TIntArrayStack implements HelperColl
-    {
-        @Override
-        public boolean isEmpty()
-        {
-            return super.size() == 0;
-        }
-    }
-
-    static class MyHelperIntQueue extends SimpleIntDeque implements HelperColl
-    {
     }
 }

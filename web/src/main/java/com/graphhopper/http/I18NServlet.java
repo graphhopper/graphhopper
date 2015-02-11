@@ -19,7 +19,7 @@ package com.graphhopper.http;
 
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
-import com.graphhopper.util.TranslationMap.Translation;
+import com.graphhopper.util.Translation;
 import java.io.IOException;
 import java.util.Locale;
 import javax.inject.Inject;

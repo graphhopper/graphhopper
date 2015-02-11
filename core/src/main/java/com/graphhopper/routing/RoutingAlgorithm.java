@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.NotThreadSafe;
 
 /**
@@ -36,15 +35,10 @@ public interface RoutingAlgorithm
     Path calcPath( int from, int to );
 
     /**
-     * Calculates the best path between the specified query results from GPS lookup.
-     * <p/>
-     * Note: The underlying implementation introduces a state of the algorithm and so it is tightly
-     * coupled to the query! Reusing this instance should be done carefully: only from within one
-     * thread and only via this calcPath method.
-     * <p/>
-     * @return the path. Call the method found() to make sure that the path is valid.
+     * Limits the search to avoid full graph exploration in the case of disconnected networks. The
+     * default value is Double.MAX_VALUE. See #104
      */
-    Path calcPath( QueryResult from, QueryResult to );
+    void setWeightLimit( double weight );
 
     /**
      * @return name of this algorithm

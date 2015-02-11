@@ -9,12 +9,12 @@
 
 # MAVEN_HOME/bin/mvn
 MVN=mvn
-VERSION=0.4.0-SNAPSHOT
+VERSION=0.4.0
 libs="map map-android map-reader core"
 
 for lib in $libs; do
   FILE=$(ls ./libs/mapsforge-$lib-$VERSION.jar)
   echo "installing file: $FILE"
-  ARGS="-DgroupId=com.graphhopper -DartifactId=mapsforge-$lib -Dversion=0.3-0.4.0-SNAPSHOT -Dpackaging=jar -Dfile=$FILE"
+  ARGS="-DgroupId=com.graphhopper -DartifactId=mapsforge-$lib -Dversion=$VERSION -Dpackaging=jar -Dfile=$FILE"
   $MVN install:install-file $ARGS
 done

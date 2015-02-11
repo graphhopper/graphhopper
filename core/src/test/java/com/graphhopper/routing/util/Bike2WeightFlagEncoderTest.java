@@ -30,7 +30,7 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class Bike2WeightFlagEncoderTest
+public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest
 {
     private Graph initExampleGraph( FlagEncoder instance )
     {
@@ -42,6 +42,7 @@ public class Bike2WeightFlagEncoderTest
         na.setNode(1, 51.1, 12.002, 60);
         EdgeIteratorState edge = gs.edge(0, 1).
                 setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
+        edge.setDistance(100);
 
         edge.setFlags(instance.setReverseSpeed(instance.setProperties(10, true, true), 15));
         return gs;
@@ -58,25 +59,22 @@ public class Bike2WeightFlagEncoderTest
 
         long flags = edge.getFlags();
         // decrease speed
-        assertEquals(6, instance.getSpeed(flags), 1e-1);
+        assertEquals(2, instance.getSpeed(flags), 1e-1);
         // increase speed but use maximum speed (calculated was 24)
         assertEquals(18, instance.getReverseSpeed(flags), 1e-1);
     }
-
+        
     @Test
-    public void testSteps()
+    public void testUnchangedForStepsBridgeAndTunnel()
     {
         Bike2WeightFlagEncoder instance = new Bike2WeightFlagEncoder();
         Graph graph = initExampleGraph(instance);
         EdgeIteratorState edge = GHUtility.getEdge(graph, 0, 1);
+        long oldFlags = edge.getFlags();
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "steps");
         instance.applyWayTags(way, edge);
 
-        long flags = edge.getFlags();
-        // steps speed for both directions although upwards is probably harder
-        double stepSpeed = Bike2WeightFlagEncoder.PUSHING_SECTION_SPEED / 2;
-        assertEquals(stepSpeed, instance.getSpeed(flags), 1e-1);
-        assertEquals(stepSpeed, instance.getReverseSpeed(flags), 1e-1);
+        assertEquals(oldFlags, edge.getFlags());
     }
 }

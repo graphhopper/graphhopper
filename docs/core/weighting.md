@@ -15,7 +15,7 @@ class BlockingWeighting implements Weighting
     private final double maxSpeed;
     private Set<Integer> forbiddenEdges;
 
-    public FastestWeighting( FlagEncoder encoder, Set<Integer> forbiddenEdges)
+    public BlockingWeighting( FlagEncoder encoder, Set<Integer> forbiddenEdges)
     {
         this.encoder = encoder;
         this.maxSpeed = encoder.getMaxSpeed();
@@ -29,7 +29,7 @@ class BlockingWeighting implements Weighting
     }
 
     @Override
-    public double calcWeight( EdgeIteratorState edge, boolean reverse )
+    public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId )
     {
         if(forbiddenEdges.contains(edge.getEdge()))
             return Double.POSITIVE_INFINITY;
@@ -59,7 +59,9 @@ class MyGraphHopper extends GraphHopper {
     }
 
     @Override
-    public Weighting createWeighting(String weighting, FlagEncoder encoder) {        
+    public Weighting createWeighting( WeightingMap wMap, FlagEncoder encoder )
+    {
+        String weighting = wMap.getWeighting();
         if ("BLOCKING".equalsIgnoreCase(weighting))
             return new BlockingWeighting(encoder, forbiddenEdges);
         else

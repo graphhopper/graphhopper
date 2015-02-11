@@ -90,12 +90,12 @@ class RAMIntDataAccess extends AbstractDataAccess
 
         // initialize transient values
         setSegmentSize(segmentSizeInBytes);
-        incCapacity(Math.max(10 * 4, bytes));
+        ensureCapacity(Math.max(10 * 4, bytes));
         return this;
     }
 
     @Override
-    public boolean incCapacity( long bytes )
+    public boolean ensureCapacity(long bytes)
     {
         if (bytes < 0)
             throw new IllegalArgumentException("new capacity has to be strictly positive");
@@ -130,13 +130,14 @@ class RAMIntDataAccess extends AbstractDataAccess
     public boolean loadExisting()
     {
         if (segments.length > 0)
-        {
             throw new IllegalStateException("already initialized");
-        }
-        if (!store || closed)
-        {
+
+        if (isClosed())
+            throw new IllegalStateException("already closed");
+
+        if (!store)
             return false;
-        }
+
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
         {

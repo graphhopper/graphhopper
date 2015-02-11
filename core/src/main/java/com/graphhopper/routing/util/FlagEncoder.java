@@ -17,13 +17,16 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.util.InstructionAnnotation;
+import com.graphhopper.util.Translation;
+
 /**
  * This class provides methods to define how a value (like speed or direction) converts to a flag
  * (currently an integer value), which is stored in an edge .
  * <p/>
  * @author Peter Karich
  */
-public interface FlagEncoder
+public interface FlagEncoder extends TurnCostEncoder
 {
     /**
      * @return the maximum speed in km/h
@@ -66,19 +69,54 @@ public interface FlagEncoder
      */
     long setProperties( double speed, boolean forward, boolean backward );
 
-    boolean isForward( long flags );
-
-    boolean isBackward( long flags );    
+    /*
+     * Simple rules for every subclass which introduces a new key. It has to use the prefix K_ and
+     * uses a minimum value which is two magnitudes higher than in the super class. 
+     * Currently this means starting from 100, and subclasses of this class start from 10000 and so on.
+     */
+    /**
+     * Reports wether the edge is available in forward direction for a certain vehicle
+     */
+    static final int K_FORWARD = 0;
+    /**
+     * Reports wether the edge is available in backward direction for a certain vehicle
+     */
+    static final int K_BACKWARD = 1;
+    /**
+     * Reports wether this edge is part of a roundabout.
+     */
+    static final int K_ROUNDABOUT = 2;
 
     /**
-     * @return the number to identify a pavement of a road.
-     * @see InstructionList#getWayName
+     * Returns arbitrary boolean value identified by the specified key.
      */
-    int getPavementType( long flags );
+    boolean isBool( long flags, int key );
+
+    long setBool( long flags, int key, boolean value );
 
     /**
-     * @return the number to identify a pushing section, cycle way etc.
-     * @see InstructionList#getWayName
+     * Returns arbitrary long value identified by the specified key. E.g. can be used to return the
+     * way or surface type of an edge
      */
-    int getWayType( long flags );
+    long getLong( long flags, int key );
+
+    long setLong( long flags, int key, long value );
+
+    /**
+     * Returns arbitrary long value identified by the specified key. E.g. can be used to return the
+     * maximum width or height allowed for an edge.
+     */
+    double getDouble( long flags, int key );
+
+    long setDouble( long flags, int key, double value );
+
+    /**
+     * Returns true if the feature class is supported like TurnWeighting or PriorityWeighting.
+     */
+    public boolean supports( Class<?> feature );
+
+    /**
+     * @return additional cost or warning information for an instruction like ferry or road charges.
+     */
+    InstructionAnnotation getAnnotation( long flags, Translation tr );
 }

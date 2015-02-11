@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-android</artifactId>
-    <version>0.3-SNAPSHOT</version>
+    <version>0.4-SNAPSHOT</version>
     <name>GraphHopper Android</name>
     <packaging>apk</packaging>    
     <organization>
@@ -15,10 +15,13 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.3-SNAPSHOT</version>
+        <version>0.4-SNAPSHOT</version>
     </parent>
     <properties>
+        <!--
         <mapsforge.version>0.3-0.4.0-SNAPSHOT</mapsforge.version>
+        -->
+        <mapsforge.version>0.4.3</mapsforge.version>
         <!-- do not put the properties here as it differs from dev to dev <android.sdk.path>/home/peterk/Programme/android-sdk-linux_x86</android.sdk.path>
         instead use your IDE to set it up or specify android sdk via command line
         using -Dandroid.sdk.path=... or by setting environment variable ANDROID_HOME
@@ -32,18 +35,12 @@
             <version>${project.parent.version}</version>            
             <type>jar</type>
             <exclusions>
+                <!--
                 <exclusion>
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-api</artifactId>                    
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>                    
-                </exclusion>
-                <exclusion>
-                    <groupId>log4j</groupId>
-                    <artifactId>log4j</artifactId>                    
-                </exclusion>
+                </exclusion> 
+                -->
                 <exclusion>
                     <groupId>com.google.protobuf</groupId>
                     <artifactId>protobuf-java</artifactId>                    
@@ -52,29 +49,34 @@
                     <groupId>org.openstreetmap.osmosis</groupId>
                     <artifactId>osmosis-osm-binary</artifactId>                    
                 </exclusion>
+                <exclusion>
+                    <groupId>org.apache.xmlgraphics</groupId>
+                    <artifactId>xmlgraphics-commons</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>        
           
-        <!-- see scripts/maven-install-mapsforge.sh !
-            if we would use system dep it doesn't work (classnotfound). See also script for more infos.
+        <!-- see scripts/maven-install-mapsforge.sh if downloading from
+             maven central does not work (it should). 
+             if we would use system dep it doesn't work (classnotfound). See also script for more infos.
         -->          
         <dependency>
-            <groupId>com.graphhopper</groupId>            
+            <groupId>org.mapsforge</groupId>            
             <artifactId>mapsforge-core</artifactId>
             <version>${mapsforge.version}</version>
         </dependency>    
         <dependency>
-            <groupId>com.graphhopper</groupId>            
+            <groupId>org.mapsforge</groupId>            
             <artifactId>mapsforge-map</artifactId>
             <version>${mapsforge.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.graphhopper</groupId>            
+            <groupId>org.mapsforge</groupId>            
             <artifactId>mapsforge-map-android</artifactId>
             <version>${mapsforge.version}</version>
         </dependency>        
         <dependency>
-            <groupId>com.graphhopper</groupId>            
+            <groupId>org.mapsforge</groupId>            
             <artifactId>mapsforge-map-reader</artifactId>
             <version>${mapsforge.version}</version>
         </dependency>
@@ -82,8 +84,14 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-android</artifactId>
-            <version>1.6.1-RC1</version>
-        </dependency>        
+            <version>1.7.7</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.7</version>
+        </dependency>
 
         <!-- Make sure this is above (!) the android dependencies -->
         <!--
@@ -128,7 +136,7 @@
                 <!-- See http://code.google.com/p/maven-android-plugin/ -->
                 <groupId>com.jayway.maven.plugins.android.generation2</groupId>
                 <artifactId>android-maven-plugin</artifactId>
-                <version>3.8.0</version>
+                <version>3.8.2</version>
                 <extensions>true</extensions>
                 <configuration>
                     <sdk>

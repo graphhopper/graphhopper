@@ -44,10 +44,10 @@ public class DefaultEdgeFilter implements EdgeFilter
     }
 
     @Override
-    public boolean accept( EdgeIteratorState iter )
+    public final boolean accept( EdgeIteratorState iter )
     {
         long flags = iter.getFlags();
-        return out && encoder.isForward(flags) || in && encoder.isBackward(flags);
+        return out && encoder.isBool(flags, FlagEncoder.K_FORWARD) || in && encoder.isBool(flags, FlagEncoder.K_BACKWARD);
     }
 
     @Override
