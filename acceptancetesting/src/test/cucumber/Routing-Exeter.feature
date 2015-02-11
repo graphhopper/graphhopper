@@ -118,12 +118,12 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 50.726735,-3.520955 | 50.726914,-3.522033 | car       |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  No Turn Restriction (Denmark Road-Exeter)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
-      | wayPointIndex | waypointco          | waypointdesc                | azimuth | direction | time | distance |
-      | 3             | 50.725002,-3.520632 | Turn left onto RUSSELL STREET | 293      | NW        | 25597 | 248.881   |
+      | wayPointIndex | waypointco          | waypointdesc                  | azimuth | direction | time  | distance |
+      | 3             | 50.725002,-3.520632 | Turn left onto RUSSELL STREET | 293     | NW        | 25597 | 248.881  |
 
     Examples: 
       | pointA              | pointB              | routetype |
@@ -140,17 +140,16 @@ Feature: Verify a route from A to B
       | pointA             | pointB             | routetype |
       | 50.72148,-3.532485 | 50.721888,-3.53182 | car       |
 
-    @Routing
+  @Routing
   Scenario Outline: Verify No  Turn Restrictions(Except Bus)  on a Route (BELGROVE ROAD -Exeter)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints not on the route map:
-      | wayPointIndex | waypointco         | waypointdesc                      | azimuth | direction | time | distance |
+      | wayPointIndex | waypointco         | waypointdesc                       | azimuth | direction | time | distance |
       | 2             | 50.725997,-3.52296 | Turn sharp left onto CHEEKE STREET | 135     | SE        | 5639 | 56.915   |
 
     Examples: 
       | pointA              | pointB             | routetype |
       | 50.726085,-3.522837 | 50.725076,-3.52442 | car       |
-      
 
   # Mandatory Turn Restrictions
   @Routing
@@ -290,9 +289,53 @@ Feature: Verify a route from A to B
 
   #Private Road
   @Routing
-  Scenario Outline: Verify  Private Road Restricted Access (Denmark Road-Exeter)
+  Scenario Outline: Verify  a Private Road (Publicly Accessible) on a Route  (PERRY ROAD)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
-    Then I should be able to verify the trackPoints not on the route map:
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco         | waypointdesc                    | azimuth | direction | time  | distance |
+      | 2             | 50.732011,-3.53798 | Turn right onto STREATHAM DRIVE | 3       | N         | 17156 | 166.807  |
+
+    Examples: 
+      | pointA              | pointB              | routetype |
+      | 50.732296,-3.535372 | 50.733538,-3.537462 | car       |
+
+  @Routing
+  Scenario Outline: Verify a  Private Road (Publicly Accessible) on a Route (STOCKER ROAD)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                               | azimuth | direction | time  | distance |
+      | 2             | 50.735153,-3.531816 | Turn sharp right onto PRINCE OF WALES ROAD | 240     | SW        | 63836 | 620.659  |
+
+    Examples: 
+      | pointA              | pointB              | routetype |
+      | 50.735658,-3.532441 | 50.735994,-3.534644 | car       |
+
+  @Routing
+  Scenario Outline: Verify a  Private Road (Publicly Accessible) on a Route (QUEEN STREET)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                                 | azimuth | direction | time  | distance |
+      | 2             | 50.727397,-3.535531 | Turn slight left onto NEW NORTH ROAD (B3183) | 287     | W         | 18644 | 181.293  |
+
+    Examples: 
+      | pointA              | pointB              | routetype |
+      | 50.727003,-3.535041 | 50.727023,-3.533083 | car       |
+
+  @Routing
+  Scenario Outline: Verify a PrivateRoad -Restricted Access(WESTERN WAY)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco         | waypointdesc                      | azimuth | direction | time | distance |
+      | 1             | 50.72593,-3.521909 | Continue onto B3212 (WESTERN WAY) | 51      | NE        | 9125 | 88.731   |
+
+    Examples: 
+      | pointA              | pointB             | routetype |
+      | 50.725876,-3.521801 | 50.72619,-3.521541 | car       |
+
+  @Routing
+  Scenario Outline: Verify a Private Road - Restricted Access (Denmark Road-Exeter)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
       | trackPointco      |
       | 50.723966,-3.5198 |
 
