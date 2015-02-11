@@ -17,6 +17,8 @@
     </parent>
     <properties>
         <jetty.version>8.1.16.v20140903</jetty.version>
+    <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
+    <beanstalk.versionLabel>${maven.build.timestamp}</beanstalk.versionLabel>
     </properties>
     
     <dependencies>
@@ -114,11 +116,13 @@
             <!-- create a jar file too, so others can use it more easily -->
             <plugin>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>2.4</version>
+                <version>2.5</version>
                 <configuration>
-                    <attachClasses>true</attachClasses>
+<!--                    <attachClasses>true</attachClasses> -->
+		    <primaryArtifact>true</primaryArtifact>
                 </configuration>
-            </plugin>            
+            </plugin>           
+
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.4.1</version>
@@ -143,10 +147,6 @@
                             <goal>single</goal>
                         </goals>
                     </execution>
-                </executions>
-
-<!--
-                <executions>
                     <execution>
                         <id>build-jar</id>
                         <configuration>
@@ -180,17 +180,17 @@
                         </goals>
                     </execution>
                 </executions>
-                -->
-                <!--                <executions>
-                    <execution>
-                        <id>make-assembly</id>  this is used for inheritance merges 
-                        <phase>package</phase>  bind to the packaging phase 
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>-->
             </plugin>
+            
+            <plugin>
+				<groupId>br.com.ingenieux</groupId>
+				<artifactId>beanstalk-maven-plugin</artifactId>
+				<version>1.4.0</version>
+				<configuration>
+					<s3Bucket>elasticbeanstalk-eu-west-1-203198560946</s3Bucket>
+					<s3Key>${project.artifactId}-${project.version}.war</s3Key>
+				</configuration>
+			</plugin>
  
         </plugins>
     </build>
