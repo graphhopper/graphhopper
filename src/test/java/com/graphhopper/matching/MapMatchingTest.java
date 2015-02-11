@@ -117,7 +117,6 @@ public class MapMatchingTest {
         // new GPXFile(mr).doExport("test.gpx");
 
         // System.out.println(fetchStreets(mr.getEdgeMatches()));
-
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 0.5);
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis(), 20);
         assertEquals(138, mr.getEdgeMatches().size());
@@ -161,7 +160,7 @@ public class MapMatchingTest {
         // new GPXFile(mr).doExport("testLoop-matched.gpx");
 
         // Expected is ~800m. If too short like 166m then the loop was skipped        
-        assertEquals(Arrays.asList("Gustav-Adolf-Straße:1078->1393", "Gustav-Adolf-Straße:1393->205", 
+        assertEquals(Arrays.asList("Gustav-Adolf-Straße:1078->1393", "Gustav-Adolf-Straße:1393->205",
                 "Gustav-Adolf-Straße:205->204", "Leibnizstraße:204->206", "Hinrichsenstraße:206->1381",
                 "Hinrichsenstraße:1381->1392", "Tschaikowskistraße:1392->1393", "Tschaikowskistraße:1393->1394"),
                 fetchStreets(mr.getEdgeMatches()));
@@ -187,6 +186,23 @@ public class MapMatchingTest {
                 "Jahnallee, B 87, B 181:1680->21712", "Jahnallee, B 87, B 181:21712->207", "Funkenburgstraße:207->205",
                 "Gustav-Adolf-Straße:205->1393", "Tschaikowskistraße:1393->1394", "Jahnallee, B 87, B 181:1394->1680",
                 "Lessingstraße:1680->21711", "Lessingstraße:21711->1679"),
+                fetchStreets(mr.getEdgeMatches()));
+    }
+
+    @Test
+    public void testAvoidOffRoadUTurns() {
+        GraphStorage graph = hopper.getGraph();
+        LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
+                (LocationIndexTree) hopper.getLocationIndex());
+        MapMatching mapMatching = new MapMatching(graph, locationIndex, encoder);
+        mapMatching.setSeparatedSearchDistance(200);
+
+        // https://graphhopper.com/maps/?point=51.343618%2C12.360772&point=51.34401%2C12.361776&point=51.343977%2C12.362886&point=51.344734%2C12.36236&point=51.345233%2C12.362055&layer=Lyrk
+        List<GPXEntry> inputGPXEntries = new GPXFile().doImport("./src/test/resources/tour4-with-uturn.gpx").getEntries();
+        MatchResult mr = mapMatching.doWork(inputGPXEntries);
+
+        assertEquals(Arrays.asList("Gustav-Adolf-Straße:1078->1393", "Gustav-Adolf-Straße:1393->205",
+                "Funkenburgstraße:205->1381", "Funkenburgstraße:1381->1379"),
                 fetchStreets(mr.getEdgeMatches()));
     }
 

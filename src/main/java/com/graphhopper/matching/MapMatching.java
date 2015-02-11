@@ -76,7 +76,6 @@ public class MapMatching {
     // should we use the 'visited nodes' as more generic limit?
     private double maxSearchMultiplier = 50;
     private final int nodeCount;
-    private final int edgeCount;
     private DistanceCalc distanceCalc = new DistancePlaneProjection();
     private static final Comparator<QueryResult> CLOSEST_MATCH = new Comparator<QueryResult>() {
         @Override
@@ -88,11 +87,10 @@ public class MapMatching {
     public MapMatching(Graph graph, LocationIndexMatch locationIndex, FlagEncoder encoder) {
         this.graph = graph;
         this.nodeCount = graph.getNodes();
-        this.edgeCount = graph.getAllEdges().getCount();
         this.locationIndex = locationIndex;
 
-        // TODO initialization of start values for the algorithm is done via nodes! 
-        // to fix use: traversalMode.createTraversalId(iter, false);
+        // TODO initialization of start values for the algorithm is currently done explicitely via node IDs! 
+        // To fix this use instead: traversalMode.createTraversalId(iter, false);
 //        this.traversalMode = graph.getExtension() instanceof TurnCostExtension
 //                ? TraversalMode.EDGE_BASED_2DIR : TraversalMode.NODE_BASED;                
         this.traversalMode = TraversalMode.NODE_BASED;
@@ -108,9 +106,13 @@ public class MapMatching {
      * loops in meter. Use -1 if no route splitting should happen. Default is
      * 500m
      */
-    public MapMatching setSeparatedSearchDistance(double separatedSearchDistance) {
+    public MapMatching setSeparatedSearchDistance(int separatedSearchDistance) {
         this.separatedSearchDistance = separatedSearchDistance;
         return this;
+    }
+
+    public void setMaxSearchMultiplier(int maxSearchMultiplier) {
+        this.maxSearchMultiplier = maxSearchMultiplier;
     }
 
     /**
@@ -133,14 +135,14 @@ public class MapMatching {
             int separatedListEndIndex = separatedListStartIndex + 1;
             GPXEntry prevEntry = gpxList.get(separatedListStartIndex);
             double gpxLength = 0;
-            for (; separatedListEndIndex < gpxList.size();) {
+            while (separatedListEndIndex < gpxList.size()) {
                 GPXEntry entry = gpxList.get(separatedListEndIndex);
                 gpxLength += distanceCalc.calcDist(prevEntry.lat, prevEntry.lon, entry.lat, entry.lon);
                 prevEntry = entry;
                 separatedListEndIndex++;
                 if (separatedSearchDistance > 0 && gpxLength > separatedSearchDistance) {
-                    // avoid that last sublist is only 1 point and include it in current list
-                    if (gpxList.size() - separatedListEndIndex == 1) {
+                    // avoid that last sublist is only 1 or 2 points and include it in current list
+                    if (gpxList.size() - separatedListEndIndex <= 2) {
                         continue;
                     }
 
@@ -166,7 +168,20 @@ public class MapMatching {
             check(result);
 
             // no merging necessary as end of old and new start GPXExtension & edge should be identical
-            edgeMatches.addAll(result);
+            for (int i = 0; i < result.size(); i++) {
+                EdgeMatch currEM = result.get(i);
+
+                if (i == 0 && !edgeMatches.isEmpty()) {
+                    // skip edge if we would introduce a u-turn, see testAvoidOffRoadUTurns
+                    EdgeMatch lastEdgeMatch = edgeMatches.get(edgeMatches.size() - 1);
+                    if (lastEdgeMatch.getEdgeState().getAdjNode() == currEM.getEdgeState().getAdjNode()) {
+                        continue;
+                    }
+                }
+
+                edgeMatches.add(currEM);
+            }
+
             if (doEnd) {
                 break;
             }
@@ -199,7 +214,7 @@ public class MapMatching {
      * @param doEnd the very last virtual edges is always removed, except if
      * doEnd is true, then the original edge is added
      */
-    private MatchResult doWork(List<QueryResult> firstQueryResults,
+    MatchResult doWork(List<QueryResult> firstQueryResults,
             List<GPXEntry> gpxList, double gpxLength, boolean doEnd) {
         int guessedEdgesPerPoint = 4;
         List<EdgeMatch> edgeMatches = new ArrayList<EdgeMatch>();
@@ -365,7 +380,7 @@ public class MapMatching {
             // skip edges with virtual adjacent node => which are either incoming edges from end-QueryResult
             // or ignorable bridge edges from start-QueryResult with two virtual nodes                        
             // good: outgoding edges from end-QueryResults are adding => no problem if path includes end-QueryResult
-            if (es.getAdjNode() < nodeCount) {
+            if (!isVirtualNode(es.getAdjNode())) {
                 EdgeIteratorState realEdge = virtualEdgesMap.get(es.getEdge());
                 if (realEdge == null) {
                     list.add(es);
@@ -379,7 +394,7 @@ public class MapMatching {
         if (doEnd) {
             // add very last edge
             EdgeIteratorState es = pathEdgeList.get(pathEdgeList.size() - 1);
-            if (es.getAdjNode() >= nodeCount) {
+            if (isVirtualNode(es.getAdjNode())) {
                 EdgeIteratorState realEdge = virtualEdgesMap.get(es.getEdge());
                 if (list.isEmpty() || list.get(0).getEdge() != realEdge.getEdge()) {
                     list.add(realEdge.detach(true));
@@ -420,7 +435,11 @@ public class MapMatching {
         return res;
     }
 
-    static class DoubleRef {
+    private boolean isVirtualNode(int node) {
+        return node >= nodeCount;
+    }
+
+    private static class DoubleRef {
 
         double value;
 
@@ -430,7 +449,7 @@ public class MapMatching {
     }
 
     // make some methods public
-    class CustomDijkstra extends Dijkstra {
+    private class CustomDijkstra extends Dijkstra {
 
         private final TIntHashSet goalNodeSet;
         private boolean oneNodeWasReached = false;
@@ -500,7 +519,7 @@ public class MapMatching {
             EdgeExplorer explorer, QueryResult qr) {
         EdgeIterator iter = explorer.setBaseNode(qr.getClosestNode());
         while (iter.next()) {
-            if (qr.getClosestNode() >= nodeCount) {
+            if (isVirtualNode(qr.getClosestNode())) {
                 if (traverseToClosestRealAdj(explorer, iter) == qr.getClosestEdge().getAdjNode()) {
                     virtualEdgesMap.put(iter.getEdge(), qr.getClosestEdge());
                 } else {
@@ -515,12 +534,8 @@ public class MapMatching {
         }
     }
 
-    boolean isVirtualEdge(EdgeIteratorState edge) {
-        return edge.getEdge() >= edgeCount;
-    }
-
-    int traverseToClosestRealAdj(EdgeExplorer explorer, EdgeIteratorState edge) {
-        if (edge.getAdjNode() < nodeCount) {
+    private int traverseToClosestRealAdj(EdgeExplorer explorer, EdgeIteratorState edge) {
+        if (!isVirtualNode(edge.getAdjNode())) {
             return edge.getAdjNode();
         }
 
@@ -533,57 +548,7 @@ public class MapMatching {
         throw new IllegalStateException("Cannot find adjacent edge " + edge);
     }
 
-    /**
-     * Replaces the specified edge in pathEdgeList with one of the closestEdge
-     * in qrList
-     */
-    private void replaceVirtualEdge(List<QueryResult> qrList, List<EdgeIteratorState> pathEdgeList,
-            int index, boolean end) {
-
-        EdgeIteratorState edge = pathEdgeList.get(index);
-        int virtualNode, otherNode;
-        if (end) {
-            otherNode = edge.getBaseNode();
-            virtualNode = edge.getAdjNode();
-            if (virtualNode < nodeCount) {
-                return;
-            }
-        } else {
-            virtualNode = edge.getBaseNode();
-            otherNode = edge.getAdjNode();
-            if (virtualNode < nodeCount) {
-                return;
-            }
-        }
-
-        for (QueryResult qr : qrList) {
-            if (end) {
-                // find the QueryResult with the correct end node
-                if (qr.getClosestNode() == virtualNode) {
-                    if (qr.getClosestEdge().getBaseNode() == otherNode) {
-                        pathEdgeList.set(index, qr.getClosestEdge());
-                    } else {
-                        pathEdgeList.set(index, qr.getClosestEdge().detach(true));
-                    }
-                    return;
-                }
-            } else {
-                // find the QueryResult with the correct start node
-                if (qr.getClosestNode() == virtualNode) {
-                    if (qr.getClosestEdge().getAdjNode() == otherNode) {
-                        pathEdgeList.set(index, qr.getClosestEdge());
-                    } else {
-                        pathEdgeList.set(index, qr.getClosestEdge().detach(true));
-                    }
-                    return;
-                }
-            }
-        }
-        throw new RuntimeException("Cannot replace virtual edge " + edge/* + " " + edge.fetchWayGeometry(3)*/
-                + " (" + index + ") with one result of query list: " + qrList + ", end:" + end);
-    }
-
-    void check(List<EdgeMatch> emList) {
+    private void check(List<EdgeMatch> emList) {
         int prevNode = -1;
         int prevEdge = -1;
         List<String> errors = new ArrayList<String>();

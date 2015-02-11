@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?><gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creator="Graphhopper" version="1.1" xmlns:gh="https://graphhopper.com/public/schema/gpx/1.1">
+    <metadata>
+        <copyright author="OpenStreetMap contributors"/>
+        <link href="http://graphhopper.com">
+            <text>GraphHopper GPX</text>
+        </link>
+        <time>2015-02-11T08:16:35+00:00</time>
+    </metadata>
+    <rte>
+        <rtept lat="51.343324" lon="12.359187">
+            <desc>continue onto Gustav-Adolf-Straße</desc>
+            <extensions>
+                <gh:distance>176.5</gh:distance>
+                <gh:time>25416</gh:time>
+                <gh:direction>E</gh:direction>
+                <gh:azimuth>78.0</gh:azimuth>
+                <gh:sign>0</gh:sign>
+            </extensions>
+        </rtept>
+        <rtept lat="51.343853" lon="12.361583">
+            <extensions>
+                <gh:distance>0.0</gh:distance>
+                <gh:time>0</gh:time>
+                <gh:direction>N</gh:direction>
+                <gh:azimuth>0.0</gh:azimuth>
+                <gh:sign>5</gh:sign>
+            </extensions>
+        </rtept>
+        <rtept lat="51.343853" lon="12.361583">
+            <desc>continue onto Gustav-Adolf-Straße</desc>
+            <extensions>
+                <gh:distance>76.7</gh:distance>
+                <gh:time>11039</gh:time>
+                <gh:direction>E</gh:direction>
+                <gh:azimuth>77.0</gh:azimuth>
+                <gh:sign>0</gh:sign>
+            </extensions>
+        </rtept>
+        <rtept lat="51.344095" lon="12.362617">
+            <desc>turn right onto Funkenburgstraße</desc>
+            <extensions>
+                <gh:distance>29.7</gh:distance>
+                <gh:time>4274</gh:time>
+                <gh:direction>SE</gh:direction>
+                <gh:azimuth>153.0</gh:azimuth>
+                <gh:sign>2</gh:sign>
+            </extensions>
+        </rtept>
+        <rtept lat="51.34384" lon="12.362743">
+            <extensions>
+                <gh:distance>0.0</gh:distance>
+                <gh:time>0</gh:time>
+                <gh:direction>N</gh:direction>
+                <gh:azimuth>0.0</gh:azimuth>
+                <gh:sign>5</gh:sign>
+            </extensions>
+        </rtept>
+        <rtept lat="51.34384" lon="12.362743">
+            <desc>continue onto Funkenburgstraße</desc>
+            <extensions>
+                <gh:distance>102.8</gh:distance>
+                <gh:time>14800</gh:time>
+                <gh:direction>NW</gh:direction>
+                <gh:azimuth>333.0</gh:azimuth>
+                <gh:sign>0</gh:sign>
+            </extensions>
+        </rtept>
+        <rtept lat="51.344721" lon="12.362293">
+            <extensions>
+                <gh:distance>0.0</gh:distance>
+                <gh:time>0</gh:time>
+                <gh:direction>N</gh:direction>
+                <gh:azimuth>0.0</gh:azimuth>
+                <gh:sign>5</gh:sign>
+            </extensions>
+        </rtept>
+        <rtept lat="51.344721" lon="12.362293">
+            <desc>continue onto Funkenburgstraße</desc>
+            <extensions>
+                <gh:distance>59.5</gh:distance>
+                <gh:time>8569</gh:time>
+                <gh:direction>NW</gh:direction>
+                <gh:azimuth>332.0</gh:azimuth>
+                <gh:sign>0</gh:sign>
+            </extensions>
+        </rtept>
+        <rtept lat="51.345236" lon="12.362071">
+            <extensions>
+                <gh:distance>0.0</gh:distance>
+                <gh:time>0</gh:time>
+                <gh:sign>4</gh:sign>
+            </extensions>
+        </rtept>
+    </rte>
+    <trk>
+        <name>GraphHopper Track</name>
+        <trkseg>
+            <trkpt lat="51.343324" lon="12.359187">
+                <time>2015-02-11T08:16:35+00:00</time>
+            </trkpt>
+            <trkpt lat="51.343853" lon="12.361583">
+                <time>2015-02-11T08:17:01+00:00</time>
+            </trkpt>
+            <trkpt lat="51.34384" lon="12.362743">
+                <time>2015-02-11T08:17:16+00:00</time>
+            </trkpt>
+            <trkpt lat="51.344721" lon="12.362293">
+                <time>2015-02-11T08:17:31+00:00</time>
+            </trkpt>
+            <trkpt lat="51.345236" lon="12.362071">
+                <time>2015-02-11T08:17:39+00:00</time>
+            </trkpt>
+        </trkseg>
+    </trk>
+</gpx>
