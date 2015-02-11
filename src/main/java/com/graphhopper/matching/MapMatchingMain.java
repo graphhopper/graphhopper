@@ -55,9 +55,10 @@ public class MapMatchingMain {
             hopper.load("./graph-cache");
             GraphStorage graph = hopper.getGraph();
 
-            logger.info("creating lookup index");
+            int gpxAccuracy = args.getInt("gpxAccuracy", 15);
+            logger.info("Setup lookup index. Accuracy filter is at " + gpxAccuracy + "m");
             LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
-                    (LocationIndexTree) hopper.getLocationIndex());
+                    (LocationIndexTree) hopper.getLocationIndex(), gpxAccuracy);
             MapMatching mapMatching = new MapMatching(graph, locationIndex, hopper.getEncodingManager().getSingle());
             mapMatching.setSeparatedSearchDistance(args.getInt("separatedSearchDistance", 500));
             mapMatching.setMaxSearchMultiplier(args.getInt("maxSearchMultiplier", 50));
@@ -113,7 +114,7 @@ public class MapMatchingMain {
                     logger.error("Problem with file " + gpxFile + " Error: " + ex.getMessage());
                 }
             }
-            System.out.println("import took:" + importSW.getSeconds() + "s, match took: " + matchSW.getSeconds());
+            System.out.println("gps import took:" + importSW.getSeconds() + "s, match took: " + matchSW.getSeconds());
 
         } else {
             System.out.println("Usage: Do an import once, then do the matching\n"

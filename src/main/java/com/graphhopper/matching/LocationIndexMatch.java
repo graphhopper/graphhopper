@@ -51,12 +51,16 @@ public class LocationIndexMatch extends LocationIndexTree {
     private final LocationIndexTree index;
 
     public LocationIndexMatch(GraphStorage graph, LocationIndexTree index) {
+        this(graph, index, 15);
+    }
+
+    public LocationIndexMatch(GraphStorage graph, LocationIndexTree index, int gpxAccuracyInMetern) {
         super(graph, graph.getDirectory());
         this.index = index;
 
         // Return ALL results which are very close and e.g. within the GPS signal accuracy.
         // Also important to get all edges if GPS point is close to a junction.
-        returnAllResultsWithin = distCalc.calcNormalizedDist(15);
+        returnAllResultsWithin = distCalc.calcNormalizedDist(gpxAccuracyInMetern);
     }
 
     public List<QueryResult> findNClosest(final double queryLat, final double queryLon, final EdgeFilter edgeFilter) {

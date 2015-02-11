@@ -141,8 +141,8 @@ public class MapMatching {
                 prevEntry = entry;
                 separatedListEndIndex++;
                 if (separatedSearchDistance > 0 && gpxLength > separatedSearchDistance) {
-                    // avoid that last sublist is only 1 or 2 points and include it in current list
-                    if (gpxList.size() - separatedListEndIndex <= 2) {
+                    // avoid that last sublist is only 1 point and include it in current list
+                    if (gpxList.size() - separatedListEndIndex == 1) {
                         continue;
                     }
 
