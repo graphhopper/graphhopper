@@ -174,7 +174,7 @@
 			<plugin>
 				<groupId>br.com.ingenieux</groupId>
 				<artifactId>beanstalk-maven-plugin</artifactId>
-				<version>1.0.1</version>
+				<version>1.3.5</version>
 				<configuration>
 					<applicationName>GraphHopper</applicationName>
 					<s3Bucket>elasticbeanstalk-eu-west-1-203198560946</s3Bucket>
