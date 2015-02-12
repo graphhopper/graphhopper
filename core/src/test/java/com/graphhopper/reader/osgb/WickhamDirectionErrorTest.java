@@ -77,7 +77,9 @@ public class WickhamDirectionErrorTest extends AbstractOsItnReaderTest {
         assertEquals(Instruction.FINISH, instructionList.get(2).getSign());
 
     }
+
     @Test
+    @Ignore
     public void testWorkingTurn() {
         String graphLoc = "/home/phopkins/Documents/graphhopper/core/itn-gh";
         String inputFile = "/home/phopkins/Development/OSMMITN/data";
