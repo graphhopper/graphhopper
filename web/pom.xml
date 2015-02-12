@@ -18,8 +18,9 @@
 	<properties>
 		<jetty.version>8.1.16.v20140903</jetty.version>
 		<maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
-		<beanstalk.versionLabel>${maven.build.timestamp}</beanstalk.versionLabel>
+        <beanstalk.versionLabel>${maven.build.timestamp}</beanstalk.versionLabel>
         <beanstalk.environmentId>e-m7hgvar5ba</beanstalk.environmentId>
+        <beanstalk.region>eu-west-1</beanstalk.region>
 	</properties>
 
 	<dependencies>
@@ -179,6 +180,11 @@
 					<applicationName>GraphHopper</applicationName>
 					<s3Bucket>elasticbeanstalk-eu-west-1-203198560946</s3Bucket>
 					<s3Key>${project.artifactId}-${project.version}.war</s3Key>
+                    <environmentName>dpn-env</environmentName>
+                    <cnamePrefix>dpn-env</cnamePrefix>
+                    <versionDescription>Deployed from maven plugin</versionDescription>
+                    <s3Bucket>mydeployment-bucket</s3Bucket>
+                    <s3Key>folder/test-${project.version}-${maven.build.timestamp}.war</s3Key>
 				</configuration>
 			</plugin>
 
