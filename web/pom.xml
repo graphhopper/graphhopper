@@ -20,6 +20,8 @@
 		<maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
 		<beanstalk.versionLabel>${maven.build.timestamp}</beanstalk.versionLabel>
         <aws-environment>dpn-env</aws-environment>
+        <beanstalk.cnamePrefix>${aws-environment}</beanstalk.cnamePrefix>
+        <beanstalk.environmentName>${aws-environment}</beanstalk.environmentName>
 	</properties>
 
 	<dependencies>
