@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.Locale;
 
 import org.junit.Test;
+import org.junit.Ignore;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
