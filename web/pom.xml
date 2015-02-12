@@ -20,7 +20,6 @@
 		<maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
 		<beanstalk.versionLabel>${maven.build.timestamp}</beanstalk.versionLabel>
         <aws-environment>dpn-env</aws-environment>
-        <beanstalk.cnamePrefix>${aws-environment}</beanstalk.cnamePrefix>
         <beanstalk.environmentName>${aws-environment}</beanstalk.environmentName>
 	</properties>
 
@@ -179,7 +178,6 @@
 				<version>1.4.0</version>
 				<configuration>
 					<applicationName>GraphHopper</applicationName>
-                    <cnamePrefix>dpn-env</cnamePrefix>
                     <environmentName>dpn-env</environmentName>
 					<s3Bucket>elasticbeanstalk-eu-west-1-203198560946</s3Bucket>
 					<s3Key>${project.artifactId}-${project.version}.war</s3Key>
