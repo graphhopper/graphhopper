@@ -19,7 +19,6 @@
 		<jetty.version>8.1.16.v20140903</jetty.version>
 		<maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
         <beanstalk.versionLabel>${maven.build.timestamp}</beanstalk.versionLabel>
-        <beanstalk.environmentId>e-m7hgvar5ba</beanstalk.environmentId>
         <beanstalk.region>eu-west-1</beanstalk.region>
 	</properties>
 
@@ -183,8 +182,6 @@
                     <environmentName>dpn-env</environmentName>
                     <cnamePrefix>dpn-env</cnamePrefix>
                     <versionDescription>Deployed from maven plugin</versionDescription>
-                    <s3Bucket>mydeployment-bucket</s3Bucket>
-                    <s3Key>folder/test-${project.version}-${maven.build.timestamp}.war</s3Key>
 				</configuration>
 			</plugin>
 
