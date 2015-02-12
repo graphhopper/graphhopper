@@ -77,6 +77,7 @@ public class MapMatching {
     private double maxSearchMultiplier = 50;
     private final int nodeCount;
     private DistanceCalc distanceCalc = new DistancePlaneProjection();
+    private boolean forceRepair;
     private static final Comparator<QueryResult> CLOSEST_MATCH = new Comparator<QueryResult>() {
         @Override
         public int compare(QueryResult o1, QueryResult o2) {
@@ -113,6 +114,10 @@ public class MapMatching {
 
     public void setMaxSearchMultiplier(int maxSearchMultiplier) {
         this.maxSearchMultiplier = maxSearchMultiplier;
+    }
+
+    public void setForceRepair(boolean forceRepair) {
+        this.forceRepair = forceRepair;
     }
 
     /**
@@ -164,8 +169,8 @@ public class MapMatching {
             matchResult.setMatchLength(matchResult.getMatchLength() + subMatch.getMatchLength());
             matchResult.setMatchMillis(matchResult.getMatchMillis() + subMatch.getMatchMillis());
 
-            // remove later
-            check(result);
+            // an error should never occur
+            result = checkOrCleanup(result, false);
 
             // no merging necessary as end of old and new start GPXExtension & edge should be identical
             for (int i = 0; i < result.size(); i++) {
@@ -201,7 +206,7 @@ public class MapMatching {
         matchResult.setGPXEntriesLength(gpxLength);
 
         // remove later
-        check(matchResult.getEdgeMatches());
+        matchResult.setEdgeMatches(checkOrCleanup(matchResult.getEdgeMatches(), forceRepair));
 
         return matchResult;
     }
@@ -548,28 +553,85 @@ public class MapMatching {
         throw new IllegalStateException("Cannot find adjacent edge " + edge);
     }
 
-    private void check(List<EdgeMatch> emList) {
+    // TODO instead of checking for edge duplicates check for missing matches
+    List<EdgeMatch> checkOrCleanup(List<EdgeMatch> inputList, boolean forceRepair) {
         int prevNode = -1;
         int prevEdge = -1;
-        List<String> errors = new ArrayList<String>();
-        for (EdgeMatch em : emList) {
-            EdgeIteratorState es = em.getEdgeState();
-            if (prevNode >= 0) {
-                if (es.getBaseNode() != prevNode) {
-                    errors.add("wrong orientation:" + es.getName() + ":" + es.getBaseNode() + "->" + es.getAdjNode() /*+ ", " + es.fetchWayGeometry(3)*/);
-                }
-            }
-            if (prevEdge >= 0) {
-                if (es.getEdge() == prevEdge) {
-                    errors.add("duplicate edge:" + es.getName() + ":" + es.getBaseNode() + "->" + es.getAdjNode() /*+ ", " + es.fetchWayGeometry(3)*/);
-                }
-            }
-            prevEdge = es.getEdge();
-            prevNode = es.getAdjNode();
+        List<String> errors = null;
+        List<EdgeMatch> repairedResult = null;
+        if (forceRepair) {
+            repairedResult = new ArrayList<EdgeMatch>(inputList.size());
+        } else {
+            errors = new ArrayList<String>();
         }
 
-        if (!errors.isEmpty()) {
-            throw new IllegalStateException("Result contains illegal edges:" + errors);
+        for (int i = 0; i < inputList.size(); i++) {
+            EdgeMatch em = inputList.get(i);
+            EdgeIteratorState edge = em.getEdgeState();
+            String str = edge.getName() + ":" + edge.getBaseNode() + "->" + edge.getAdjNode();
+            if (prevEdge >= 0) {
+                if (edge.getEdge() == prevEdge) {
+                    if (forceRepair) {
+                        // in all cases skip current edge
+                        boolean hasNextEdge = i + 1 < inputList.size();
+                        if (hasNextEdge) {
+                            EdgeIteratorState nextEdge = inputList.get(i + 1).getEdgeState();
+                            // remove previous edge in case of a u-turn
+                            if (edge.getAdjNode() == nextEdge.getBaseNode()) {
+                                repairedResult.remove(repairedResult.size() - 1);
+                                if (!repairedResult.isEmpty()) {
+                                    em = repairedResult.get(repairedResult.size() - 1);
+                                    edge = em.getEdgeState();
+                                    prevEdge = edge.getEdge();
+                                    prevNode = edge.getAdjNode();
+                                } else {
+                                    prevEdge = -1;
+                                    prevNode = -1;
+                                }
+                            }
+                        }
+                        continue;
+                    } else {
+                        errors.add("duplicate edge:" + str);
+                    }
+                }
+            }
+
+            if (prevNode >= 0) {
+                if (edge.getBaseNode() != prevNode) {
+                    if (forceRepair) {
+                        if (edge.getAdjNode() != prevNode) {
+                            // both nodes inequal to prev adjacent node
+                            continue;
+                        } else {
+                            // really an orientation problem
+                            em = new EdgeMatch(edge = em.getEdgeState().detach(true), em.getGpxExtensions());
+                        }
+                    } else {
+                        errors.add("wrong orientation:" + str);
+                    }
+                }
+            }
+
+            if (forceRepair) {
+                repairedResult.add(em);
+            }
+
+            prevEdge = edge.getEdge();
+            prevNode = edge.getAdjNode();
+        }
+
+        if (!forceRepair && !errors.isEmpty()) {
+            String str = " Result contains illegal edges."
+                    + " Try to decrease the separatedSearchDistance (" + separatedSearchDistance + ")"
+                    + " or use forceRepair=true. Errors:";
+            throw new IllegalStateException(str + errors);
+        }
+
+        if (forceRepair) {
+            return repairedResult;
+        } else {
+            return inputList;
         }
     }
 }

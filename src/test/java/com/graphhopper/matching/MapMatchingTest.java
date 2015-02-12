@@ -22,6 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
@@ -29,6 +30,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.BreadthFirstSearch;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.GPXEntry;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
@@ -36,6 +38,7 @@ import com.graphhopper.util.Translation;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
@@ -206,6 +209,56 @@ public class MapMatchingTest {
                 fetchStreets(mr.getEdgeMatches()));
     }
 
+    @Test
+    public void testCheckOrRepair() {
+        Graph graph = hopper.getGraph();
+        MapMatching mm = new MapMatching(graph, null, null);
+        List<EdgeMatch> list = new ArrayList<EdgeMatch>();
+
+        // System.out.println(GHUtility.getNeighbors(graph.createEdgeExplorer().setBaseNode(24627)));
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, 0, 24627), Collections.<GPXExtension>emptyList()));
+
+        // incorrect orientation
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, 880, 24627), Collections.<GPXExtension>emptyList()));
+        // duplicate edge        
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, 880, 24627), Collections.<GPXExtension>emptyList()));
+
+        try {
+            mm.checkOrCleanup(list, false);
+            assertTrue(false);
+        } catch (Exception ex) {
+
+        }
+
+        // repair
+        List<EdgeMatch> res = mm.checkOrCleanup(list, true);
+        // dup edge is removed
+        assertEquals(Arrays.asList("A 9:0->24627", "A 9:24627->880"), fetchStreets(res));
+
+        // now repaired list must not throw an exception
+        mm.checkOrCleanup(res, false);
+    }
+
+    @Test
+    public void testRepairUTurn() {
+        Graph graph = hopper.getGraph();
+        MapMatching mm = new MapMatching(graph, null, null);
+        List<EdgeMatch> list = new ArrayList<EdgeMatch>();
+
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, 0, 24627), Collections.<GPXExtension>emptyList()));
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, 24627, 880), Collections.<GPXExtension>emptyList()));
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, 880, 24627), Collections.<GPXExtension>emptyList()));
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, 24627, 880), Collections.<GPXExtension>emptyList()));
+
+        // repair
+        List<EdgeMatch> res = mm.checkOrCleanup(list, true);
+        // two edges are removed
+        assertEquals(Arrays.asList("A 9:0->24627", "A 9:24627->880"), fetchStreets(res));
+
+        // now repaired list must not throw an exception
+        mm.checkOrCleanup(res, false);
+    }
+
     List<String> fetchStreets(List<EdgeMatch> emList) {
         List<String> list = new ArrayList<String>();
         int prevNode = -1;
@@ -222,7 +275,7 @@ public class MapMatchingTest {
         }
 
         if (!errors.isEmpty()) {
-            System.out.println(errors);
+            throw new IllegalStateException("Errors:" + errors);
         }
         return list;
     }

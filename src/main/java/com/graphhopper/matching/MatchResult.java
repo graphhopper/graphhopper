@@ -25,13 +25,21 @@ import java.util.List;
  */
 public class MatchResult {
 
-    private final List<EdgeMatch> edgeMatches;
+    private List<EdgeMatch> edgeMatches;
     private double matchLength;
     private long matchMillis;
     private double gpxEntriesLength;
     private long gpxEntriesMillis;
 
     public MatchResult(List<EdgeMatch> edgeMatches) {
+        setEdgeMatches(edgeMatches);
+    }
+
+    public void setEdgeMatches(List<EdgeMatch> edgeMatches) {
+        if (edgeMatches == null) {
+            throw new IllegalStateException("edgeMatches cannot be null");
+        }
+
         this.edgeMatches = edgeMatches;
     }
 
