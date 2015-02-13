@@ -109,7 +109,13 @@ working seamlessly with OpenStreetMap data.
 			<artifactId>neo4j</artifactId>
 			<version>2.1.5</version>
 		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.9.5</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 	<build>
 		<pluginManagement>
 			<plugins>
