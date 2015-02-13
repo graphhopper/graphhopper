@@ -286,7 +286,7 @@ public class GraphHopperTest
         // A to E only for foot
         res = instance.route(new GHRequest(11.1, 50, 10, 51).setVehicle(EncodingManager.FOOT));
         assertTrue(res.isFound());
-        assertEquals(3, res.getPoints().size());
+        assertEquals(2, res.getPoints().size());
 
         // A D E for car
         res = instance.route(new GHRequest(11.1, 50, 10, 51).setVehicle(EncodingManager.CAR));
