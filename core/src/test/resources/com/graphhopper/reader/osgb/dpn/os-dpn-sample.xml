@@ -80,6 +80,7 @@
       <dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteLinkDescriptiveTermValue#NoPhysicalManifestation">No Physical Manifestation</dpn:descriptiveTerm>
       <dpn:surfaceType codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/SurfaceTypeValue#Unmade">Unmade</dpn:surfaceType>
       <dpn:physicalLevel codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/LevelCodeValue#SurfaceLevel">Surface Level</dpn:physicalLevel>
+      <dpn:name>Named Road</dpn:name>
       <dpn:adoptedByNationalCycleRoute>false</dpn:adoptedByNationalCycleRoute>
       <dpn:adoptedByRecreationalRoute>false</dpn:adoptedByRecreationalRoute>
       <dpn:adoptedByOtherCycleRoute>false</dpn:adoptedByOtherCycleRoute>
@@ -111,6 +112,8 @@
       <dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteLinkDescriptiveTermValue#Cableway">Cableway</dpn:descriptiveTerm>
       <dpn:surfaceType codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/SurfaceTypeValue#"/>
       <dpn:physicalLevel codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/LevelCodeValue#SurfaceLevel">Surface Level</dpn:physicalLevel>
+      <dpn:name>Named Road Two</dpn:name>
+      <dpn:alternativeName>With Alternate</dpn:alternativeName>
       <dpn:rightOfUse codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RightOfWayValue#Footpath">Footpath</dpn:rightOfUse>
       <dpn:adoptedByNationalCycleRoute>false</dpn:adoptedByNationalCycleRoute>
       <dpn:adoptedByRecreationalRoute>false</dpn:adoptedByRecreationalRoute>
@@ -172,7 +175,7 @@
       <dpn:startNode xlink:href="#39e9eba8-4500-44cb-88c8-4f450bf7da14"/>
       <dpn:endNode xlink:href="#56dc4c0b-0586-4849-b3e2-1e00ee149429"/>
       <dpn:descriptiveGroup codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteDescriptiveGroupValue#NonMotorisedVehicularRouteNetwork">Non Motorised Vehicular Route Network</dpn:descriptiveGroup>
-      <dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteLinkDescriptiveTermValue#NoPhysicalManifestation">No Physical Manifestation</dpn:descriptiveTerm>
+      <dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteLinkDescriptiveTermValue#Alley">Alley</dpn:descriptiveTerm>
       <dpn:surfaceType codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/SurfaceTypeValue#Unmade">Unmade</dpn:surfaceType>
       <dpn:physicalLevel codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/LevelCodeValue#SurfaceLevel">Surface Level</dpn:physicalLevel>
       <dpn:rightOfUse codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RightOfWayValue#Bridleway">Bridleway</dpn:rightOfUse>
