@@ -85,6 +85,8 @@ public class OsDpnWay extends OsDpnElement implements Way {
         String text = parser.getElementText();
         if("Below Surface Level Tunnel".equals(text)) {
             setTag("tunnel", "yes");
+        } else if("Above Surface Level On Structure".equals(text)) {
+            setTag("bridge", "yes");
         }
         return super.handlePhysicalLevel(parser);
     }
