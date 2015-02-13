@@ -34,20 +34,7 @@ import java.util.List;
  */
 public class BBox implements Shape, Cloneable
 {
-    /**
-     * A bounding box which prefills the values with minimum values so that it can increase.
-     */
-    public static final BBox INVERSE = new BBox();
 
-    static
-    {
-        INVERSE.minLon = Double.MAX_VALUE;
-        INVERSE.maxLon = -Double.MAX_VALUE;
-        INVERSE.minLat = Double.MAX_VALUE;
-        INVERSE.maxLat = -Double.MAX_VALUE;
-        INVERSE.minEle = Double.MAX_VALUE;
-        INVERSE.maxEle = -Double.MAX_VALUE;
-    }
     // longitude (theta) = x, latitude (phi) = y, elevation = z
     public double minLon;
     public double maxLon;
@@ -56,16 +43,6 @@ public class BBox implements Shape, Cloneable
     public double minEle;
     public double maxEle;
     private final boolean is3D;
-
-    private BBox()
-    {
-        this.is3D = false;
-    }
-
-    private BBox( boolean is3D )
-    {
-        this.is3D = is3D;
-    }
 
     public BBox( double minLon, double maxLon, double minLat, double maxLat )
     {
@@ -88,6 +65,22 @@ public class BBox implements Shape, Cloneable
         this.maxEle = maxEle;
     }
 
+    /**
+     * Prefills BBox with minimum values so that it can increase.
+     */
+    public static BBox initInverse(boolean is3D)
+    {
+        if (is3D) 
+        {
+            return new BBox(Double.MAX_VALUE, -Double.MAX_VALUE, Double.MAX_VALUE, -Double.MAX_VALUE,
+                            Double.MAX_VALUE, -Double.MAX_VALUE, true);
+        } else
+        {
+            return new BBox(Double.MAX_VALUE, -Double.MAX_VALUE, Double.MAX_VALUE, -Double.MAX_VALUE,
+                            Double.NaN, Double.NaN, false);
+        }
+    }
+
     public boolean check()
     {
         // second longitude should be bigger than the first
@@ -105,7 +98,45 @@ public class BBox implements Shape, Cloneable
         return true;
 
     }
+    
+    public void update(double lat, double lon) {
+        if (lat > maxLat) {
+            maxLat = lat;
+        }
 
+        if (lat < minLat) {
+            minLat = lat;
+        }
+
+        if (lon > maxLon) {
+            maxLon = lon;
+        }
+        if (lon < minLon) {
+            minLon = lon;
+        }
+    }
+
+    public void update(double lat, double lon, double elev)
+    {
+        if (is3D)
+        {
+            if (elev > maxEle)
+            {
+                maxEle = elev;
+            } 
+            if (elev < minEle)
+            {
+                minEle = elev;
+            }
+        } else
+        {
+            throw new IllegalStateException("No BBox with elevation to update");
+        }
+        update(lat, lon);
+
+
+    }
+    
     @Override
     public BBox clone()
     {
@@ -214,10 +245,10 @@ public class BBox implements Shape, Cloneable
 
     public boolean isValid()
     {
-        return Double.doubleToLongBits(maxLat) != Double.doubleToLongBits(INVERSE.maxLat)
-                && Double.doubleToLongBits(minLat) != Double.doubleToLongBits(INVERSE.minLat)
-                && Double.doubleToLongBits(maxLon) != Double.doubleToLongBits(INVERSE.maxLon)
-                && Double.doubleToLongBits(minLon) != Double.doubleToLongBits(INVERSE.minLon);
+        return Double.compare(maxLat, -Double.MAX_VALUE) != 0
+                && Double.compare(minLat, Double.MAX_VALUE) != 0
+                && Double.compare(maxLon, -Double.MAX_VALUE) != 0
+                && Double.compare(minLon, Double.MAX_VALUE) != 0;
     }
 
     /**

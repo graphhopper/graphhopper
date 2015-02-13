@@ -156,7 +156,7 @@ public class GHResponse
     public BBox calcRouteBBox( BBox _fallback )
     {
         check("calcRouteBBox");
-        BBox bounds = BBox.INVERSE.clone();
+        BBox bounds = BBox.initInverse(false);
         int len = list.getSize();
         if (len == 0)
             return _fallback;

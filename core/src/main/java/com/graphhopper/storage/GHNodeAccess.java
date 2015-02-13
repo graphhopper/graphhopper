@@ -54,24 +54,12 @@ class GHNodeAccess implements NodeAccess
         {
             // meter precision is sufficient for now
             that.nodes.setInt(tmp + that.N_ELE, Helper.eleToInt(ele));
-            if (ele > that.bounds.maxEle)
-                that.bounds.maxEle = ele;
+            that.bounds.update(lat, lon, ele);
 
-            if (ele < that.bounds.minEle)
-                that.bounds.minEle = ele;
+        } else
+        {
+            that.bounds.update(lat, lon);
         }
-
-        if (lat > that.bounds.maxLat)
-            that.bounds.maxLat = lat;
-
-        if (lat < that.bounds.minLat)
-            that.bounds.minLat = lat;
-
-        if (lon > that.bounds.maxLon)
-            that.bounds.maxLon = lon;
-
-        if (lon < that.bounds.minLon)
-            that.bounds.minLon = lon;
 
         // set the default value for the additional field of this node
         if (that.extStorage.isRequireNodeField())
