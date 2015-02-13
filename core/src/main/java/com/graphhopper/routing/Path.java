@@ -329,7 +329,10 @@ public class Path {
             /*
              * We need three points to make directions
              *
-             * (1)----(2) / / (0)
+             *     (1)----(2)
+             *    /
+             *   /
+             * (0)
              *
              * 0 is the node visited at t-2, 1 is the node visited at t-1 and 2
              * is the node being visited at instant t. orientation is the angle
