@@ -122,6 +122,12 @@ public abstract class OsDpnElement implements RoutingElement
 		    event = handleName(parser);
 		    break;
 		}
+            case "physicalLevel":
+            {
+                event = handlePhysicalLevel(parser);
+                break;
+            }
+
 		default:
 		{
 		    event = parser.next();
@@ -130,6 +136,11 @@ public abstract class OsDpnElement implements RoutingElement
 	    else
 		// logger.trace("EVENT:" + event);
 		event = parser.next();
+    }
+
+    protected int handlePhysicalLevel(XMLStreamReader parser) throws XMLStreamException
+    {
+        return parser.next();
     }
 
     private int handleName(XMLStreamReader parser) throws XMLStreamException

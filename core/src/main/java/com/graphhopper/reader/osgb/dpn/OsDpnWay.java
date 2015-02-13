@@ -80,6 +80,16 @@ public class OsDpnWay extends OsDpnElement implements Way {
     }
 
     @Override
+    protected int handlePhysicalLevel(XMLStreamReader parser) throws XMLStreamException
+    {
+        String text = parser.getElementText();
+        if("Below Surface Level Tunnel".equals(text)) {
+            setTag("tunnel", "yes");
+        }
+        return super.handlePhysicalLevel(parser);
+    }
+
+    @Override
     protected void parseCoords(String lineDefinition) {
         String[] lineSegments = lineDefinition.split(" ");
         wayCoords = Arrays

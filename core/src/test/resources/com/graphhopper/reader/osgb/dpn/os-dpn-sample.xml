@@ -79,7 +79,7 @@
       <dpn:descriptiveGroup codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteDescriptiveGroupValue#NonMotorisedVehicularRouteNetwork">Non Motorised Vehicular Route Network</dpn:descriptiveGroup>
       <dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteLinkDescriptiveTermValue#NoPhysicalManifestation">No Physical Manifestation</dpn:descriptiveTerm>
       <dpn:surfaceType codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/SurfaceTypeValue#Unmade">Unmade</dpn:surfaceType>
-      <dpn:physicalLevel codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/LevelCodeValue#SurfaceLevel">Surface Level</dpn:physicalLevel>
+      <dpn:physicalLevel codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/LevelCodeValue#BelowSurfaceLevelTunnel">Below Surface Level Tunnel</dpn:physicalLevel>
       <dpn:name>Named Road</dpn:name>
       <dpn:adoptedByNationalCycleRoute>false</dpn:adoptedByNationalCycleRoute>
       <dpn:adoptedByRecreationalRoute>false</dpn:adoptedByRecreationalRoute>
