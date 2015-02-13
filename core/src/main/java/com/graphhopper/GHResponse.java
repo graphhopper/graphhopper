@@ -156,7 +156,7 @@ public class GHResponse
     public BBox calcRouteBBox( BBox _fallback )
     {
         check("calcRouteBBox");
-        BBox bounds = BBox.INVERSE.clone();
+        BBox bounds = BBox.createInverse(_fallback.hasElevation());
         int len = list.getSize();
         if (len == 0)
             return _fallback;
@@ -165,17 +165,14 @@ public class GHResponse
         {
             double lat = list.getLatitude(i);
             double lon = list.getLongitude(i);
-            if (lat > bounds.maxLat)
-                bounds.maxLat = lat;
-
-            if (lat < bounds.minLat)
-                bounds.minLat = lat;
-
-            if (lon > bounds.maxLon)
-                bounds.maxLon = lon;
-
-            if (lon < bounds.minLon)
-                bounds.minLon = lon;
+            if (bounds.hasElevation())
+            {
+                double ele = list.getEle(i);
+                bounds.update(lat, lon, ele);
+            } else
+            {
+                bounds.update(lat, lon);
+            }
         }
         return bounds;
     }

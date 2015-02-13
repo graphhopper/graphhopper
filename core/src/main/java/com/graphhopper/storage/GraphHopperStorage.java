@@ -120,7 +120,7 @@ public class GraphHopperStorage implements GraphStorage
         this.wayGeometry = dir.find("geometry");
         this.nameIndex = new NameIndex(dir);
         this.properties = new StorableProperties(dir);
-        this.bounds = BBox.INVERSE.clone();
+        this.bounds = BBox.createInverse(withElevation);
         this.nodeAccess = new GHNodeAccess(this, withElevation);
         extendedStorage.init(this);
     }
