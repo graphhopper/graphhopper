@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.Locale;
 
 import org.junit.Test;
+import org.junit.Ignore;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
@@ -77,7 +78,9 @@ public class WickhamDirectionErrorTest extends AbstractOsItnReaderTest {
         assertEquals(Instruction.FINISH, instructionList.get(2).getSign());
 
     }
+
     @Test
+    @Ignore
     public void testWorkingTurn() {
         String graphLoc = "/home/phopkins/Documents/graphhopper/core/itn-gh";
         String inputFile = "/home/phopkins/Development/OSMMITN/data";

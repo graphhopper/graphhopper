@@ -93,8 +93,8 @@ public class OSMTurnRelation implements TurnRelation
     public Collection<ITurnCostTableEntry> getRestrictionAsEntries(TurnCostEncoder encoder,
 		    EdgeExplorer edgeOutExplorer, EdgeExplorer edgeInExplorer, DataReader dataReader)
     {
-	OsItnReader itnReader = (OsItnReader) dataReader;
-	int viaNodeId = itnReader.getInternalNodeIdOfOsmNode(this.viaOsmNodeId);
+	OSMReader osmReader = (OSMReader) dataReader;
+	int viaNodeId = osmReader.getInternalNodeIdOfOsmNode(this.viaOsmNodeId);
 
 	try
 	{
@@ -110,7 +110,7 @@ public class OSMTurnRelation implements TurnRelation
 	    EdgeIterator iter = edgeInExplorer.setBaseNode(viaNodeId);
 
 	    while (iter.next())
-		if (itnReader.getOsmIdOfInternalEdge(iter.getEdge()) == this.fromOsmWayId)
+		if (osmReader.getOsmIdOfInternalEdge(iter.getEdge()) == this.fromOsmWayId)
 		{
 		    edgeIdFrom = iter.getEdge();
 		    break;
@@ -128,7 +128,7 @@ public class OSMTurnRelation implements TurnRelation
 	    while (iter.next())
 	    {
 		int edgeId = iter.getEdge();
-		long wayId = itnReader.getOsmIdOfInternalEdge(edgeId);
+		long wayId = osmReader.getOsmIdOfInternalEdge(edgeId);
 		if (edgeId != edgeIdFrom && this.restriction == Type.ONLY
 				&& wayId != this.toOsmWayId || this.restriction == Type.NOT
 				&& wayId == this.toOsmWayId && wayId >= 0)
