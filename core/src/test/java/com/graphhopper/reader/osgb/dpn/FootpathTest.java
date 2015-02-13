@@ -9,14 +9,14 @@ import org.mockito.MockitoAnnotations;
 
 import static org.mockito.Mockito.verify;
 
-public class BridleWayTest {
+public class FootpathTest {
     static OsDpnOsmAttributeMappingVisitor visitor;
     @Mock
     Way way;
 
     @BeforeClass
     public static void createVisitor() {
-        visitor = new BridleWay();
+        visitor = new Footpath();
     }
 
     @Before
@@ -26,8 +26,8 @@ public class BridleWayTest {
 
     @Test
     public void testVisitWayAttribute() {
-        visitor.visitWayAttribute("BridleWay", way);
-        verify(way).setTag("designation", "public_bridleway");
+        visitor.visitWayAttribute("Footpath", way);
+        verify(way).setTag("designation", "public_footpath");
     }
 
 }

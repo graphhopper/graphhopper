@@ -7,16 +7,18 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.verify;
 
-public class BridleWayTest {
+public class BywayOpenToAllTrafficTest {
+
     static OsDpnOsmAttributeMappingVisitor visitor;
     @Mock
     Way way;
 
     @BeforeClass
     public static void createVisitor() {
-        visitor = new BridleWay();
+        visitor = new BywayOpenToAllTraffic();
     }
 
     @Before
@@ -25,9 +27,9 @@ public class BridleWayTest {
     }
 
     @Test
-    public void testVisitWayAttribute() {
-        visitor.visitWayAttribute("BridleWay", way);
-        verify(way).setTag("designation", "public_bridleway");
+    public void testVisitWayAttribute() throws Exception {
+        visitor.visitWayAttribute("Byway Open To All Traffic", way);
+        verify(way).setTag("designation", "byway_open_to_all_traffic");
+        verify(way).setTag("highway", "track");
     }
-
 }
