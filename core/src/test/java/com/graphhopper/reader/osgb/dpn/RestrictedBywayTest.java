@@ -7,9 +7,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.verify;
 
-public class FootpathTest {
+public class RestrictedBywayTest {
     static OsDpnOsmAttributeMappingVisitor visitor;
     @Mock
     Way way;
@@ -17,7 +18,7 @@ public class FootpathTest {
     @BeforeClass
     public static void createVisitor()
     {
-        visitor = new Footpath();
+        visitor = new RestrictedByway();
     }
 
     @Before
@@ -27,10 +28,11 @@ public class FootpathTest {
     }
 
     @Test
-    public void testVisitWayAttribute()
+    public void testVisitWayAttribute() throws Exception
     {
-        visitor.visitWayAttribute("Footpath", way);
-        verify(way).setTag("designation", "public_footpath");
+        visitor.visitWayAttribute("Restricted Byway", way);
+        verify(way).setTag("designation", "restricted_byway");
+        verify(way).setTag("highway", "track");
+        verify(way).setTag("motor_vehicle", "no");
     }
-
 }

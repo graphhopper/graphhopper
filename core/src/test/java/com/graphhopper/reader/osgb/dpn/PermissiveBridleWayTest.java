@@ -9,7 +9,7 @@ import org.mockito.MockitoAnnotations;
 
 import static org.mockito.Mockito.verify;
 
-public class FootpathTest {
+public class PermissiveBridleWayTest {
     static OsDpnOsmAttributeMappingVisitor visitor;
     @Mock
     Way way;
@@ -17,7 +17,7 @@ public class FootpathTest {
     @BeforeClass
     public static void createVisitor()
     {
-        visitor = new Footpath();
+        visitor = new PermissiveBridleWay();
     }
 
     @Before
@@ -29,8 +29,9 @@ public class FootpathTest {
     @Test
     public void testVisitWayAttribute()
     {
-        visitor.visitWayAttribute("Footpath", way);
-        verify(way).setTag("designation", "public_footpath");
+        visitor.visitWayAttribute("Permissive BridleWay", way);
+        verify(way).setTag("horse", "permissive");
+        verify(way).setTag("bicycle", "permissive");
     }
 
 }
