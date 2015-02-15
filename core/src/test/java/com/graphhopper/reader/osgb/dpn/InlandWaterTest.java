@@ -10,7 +10,7 @@ import org.mockito.MockitoAnnotations;
 
 import com.graphhopper.reader.Way;
 
-public class TidalWaterTest {
+public class InlandWaterTest {
 	 static OsDpnOsmAttributeMappingVisitor visitor;
 	    @Mock
 	    Way way;
@@ -27,9 +27,8 @@ public class TidalWaterTest {
 
 	    @Test
 	    public void testVisitWayAttribute() throws Exception {
-	        visitor.visitWayAttribute("tidalwater", way);
+	        visitor.visitWayAttribute("inlandwater", way);
 	        verify(way).setTag("natural", "water");
-	        verify(way).setTag("tidal", "yes");
 	    }
 
 }
