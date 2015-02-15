@@ -17,7 +17,7 @@ public class InlandWaterTest {
 
 	    @BeforeClass
 	    public static void createVisitor() {
-	        visitor = new TidalWater();
+	        visitor = new InlandWater();
 	    }
 
 	    @Before

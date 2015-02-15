@@ -52,7 +52,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
     private static final Logger logger = LoggerFactory
             .getLogger(OsDpnWay.class);
     private static OsDpnOsmAttributeMappingVisitor[] rightOfWayVisitors = {new BridleWay(), new PermissiveBridleWay(), new BywayOpenToAllTraffic(), new Footpath(), new PermissivePath(), new RestrictedByway()};
-    private static OsDpnOsmAttributeMappingVisitor[] potentialHazzardVisitors = {new Boulders(), new Cliff(), new Marsh(), new Mud(), new Sand(), new Scree(), new Shingle(), new Spoil(), new Rock(), new TidalWater()};
+    private static OsDpnOsmAttributeMappingVisitor[] potentialHazardVisitors = {new Boulders(), new Cliff(), new Marsh(), new Mud(), new Sand(), new Scree(), new Shingle(), new Spoil(), new Rock(), new TidalWater()};
 
     /**
      * Constructor for XML Parser
@@ -104,13 +104,13 @@ public class OsDpnWay extends OsDpnElement implements Way {
     }
     
     @Override
-    protected int handlePotentialHazzard(XMLStreamReader parser) throws XMLStreamException
+    protected int handlePotentialHazard(XMLStreamReader parser) throws XMLStreamException
     {
         String attributeValue = parser.getElementText().replaceAll(" ", "").toLowerCase();
-        for(OsDpnOsmAttributeMappingVisitor potentialHazzardVisitor: potentialHazzardVisitors) {
+        for(OsDpnOsmAttributeMappingVisitor potentialHazzardVisitor: potentialHazardVisitors) {
         	potentialHazzardVisitor.visitWayAttribute(attributeValue, this);
         }
-        return super.handlePotentialHazzard(parser);
+        return super.handlePotentialHazard(parser);
     }
 
     @Override

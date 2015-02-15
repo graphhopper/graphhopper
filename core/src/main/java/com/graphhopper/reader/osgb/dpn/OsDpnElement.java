@@ -134,7 +134,7 @@ public abstract class OsDpnElement implements RoutingElement
             }
             case "potentialHazardCrossed":
             {
-                event = handlePotentialHazzard(parser);
+                event = handlePotentialHazard(parser);
                 break;
             }
 
@@ -158,7 +158,7 @@ public abstract class OsDpnElement implements RoutingElement
         return parser.next();
     }
     
-    protected int handlePotentialHazzard(XMLStreamReader parser) throws XMLStreamException
+    protected int handlePotentialHazard(XMLStreamReader parser) throws XMLStreamException
     {
         return parser.next();
     }
