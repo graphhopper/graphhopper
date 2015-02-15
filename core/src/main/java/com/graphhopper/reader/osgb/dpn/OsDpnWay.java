@@ -52,6 +52,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
     private static final Logger logger = LoggerFactory
             .getLogger(OsDpnWay.class);
     private static OsDpnOsmAttributeMappingVisitor[] rightOfWayVisitors = {new BridleWay(), new PermissiveBridleWay(), new BywayOpenToAllTraffic(), new Footpath(), new PermissivePath(), new RestrictedByway()};
+    private static OsDpnOsmAttributeMappingVisitor[] potentialHazzardVisitors = {new Boulders(), new Cliff(), new Marsh(), new Mud(), new Sand(), new Scree(), new Shingle(), new Spoil(), new Rock(), new TidalWater()};
 
     /**
      * Constructor for XML Parser
@@ -100,6 +101,16 @@ public class OsDpnWay extends OsDpnElement implements Way {
             rightOfWayVisitor.visitWayAttribute(attributeValue, this);
         }
         return super.handlePhysicalLevel(parser);
+    }
+    
+    @Override
+    protected int handlePotentialHazzard(XMLStreamReader parser) throws XMLStreamException
+    {
+        String attributeValue = parser.getElementText().replaceAll(" ", "").toLowerCase();
+        for(OsDpnOsmAttributeMappingVisitor potentialHazzardVisitor: potentialHazzardVisitors) {
+        	potentialHazzardVisitor.visitWayAttribute(attributeValue, this);
+        }
+        return super.handlePotentialHazzard(parser);
     }
 
     @Override
