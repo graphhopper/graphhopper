@@ -1,16 +1,17 @@
 package com.graphhopper.reader.osgb.dpn;
 
-import org.junit.Test;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.TransformException;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.io.StringReader;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import java.io.StringReader;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
+import org.junit.Test;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.operation.TransformException;
 
 public class OsDpnWayTest {
 
