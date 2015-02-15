@@ -30,7 +30,7 @@ public class RestrictedBywayTest {
     @Test
     public void testVisitWayAttribute() throws Exception
     {
-        visitor.visitWayAttribute("Restricted Byway", way);
+        visitor.visitWayAttribute("restrictedbyway", way);
         verify(way).setTag("designation", "restricted_byway");
         verify(way).setTag("highway", "track");
         verify(way).setTag("motor_vehicle", "no");

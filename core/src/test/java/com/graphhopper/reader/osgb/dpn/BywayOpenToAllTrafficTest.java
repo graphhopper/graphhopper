@@ -28,7 +28,7 @@ public class BywayOpenToAllTrafficTest {
 
     @Test
     public void testVisitWayAttribute() throws Exception {
-        visitor.visitWayAttribute("Byway Open To All Traffic", way);
+        visitor.visitWayAttribute("bywayopentoalltraffic", way);
         verify(way).setTag("designation", "byway_open_to_all_traffic");
         verify(way).setTag("highway", "track");
     }

@@ -26,7 +26,7 @@ public class BridleWayTest {
 
     @Test
     public void testVisitWayAttribute() {
-        visitor.visitWayAttribute("BridleWay", way);
+        visitor.visitWayAttribute("bridleway", way);
         verify(way).setTag("designation", "public_bridleway");
     }
 

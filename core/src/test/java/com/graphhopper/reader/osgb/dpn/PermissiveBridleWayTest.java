@@ -29,7 +29,7 @@ public class PermissiveBridleWayTest {
     @Test
     public void testVisitWayAttribute()
     {
-        visitor.visitWayAttribute("Permissive BridleWay", way);
+        visitor.visitWayAttribute("permissivebridleway", way);
         verify(way).setTag("horse", "permissive");
         verify(way).setTag("bicycle", "permissive");
     }

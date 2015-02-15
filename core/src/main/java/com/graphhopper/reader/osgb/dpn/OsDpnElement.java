@@ -127,6 +127,10 @@ public abstract class OsDpnElement implements RoutingElement
                 event = handlePhysicalLevel(parser);
                 break;
             }
+            case "rightOfUse":
+            {
+                event = handleRightOfUse(parser);
+            }
 
 		default:
 		{
@@ -139,6 +143,11 @@ public abstract class OsDpnElement implements RoutingElement
     }
 
     protected int handlePhysicalLevel(XMLStreamReader parser) throws XMLStreamException
+    {
+        return parser.next();
+    }
+
+    protected int handleRightOfUse(XMLStreamReader parser) throws XMLStreamException
     {
         return parser.next();
     }

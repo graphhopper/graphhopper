@@ -51,6 +51,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
     private String[] wayCoords;
     private static final Logger logger = LoggerFactory
             .getLogger(OsDpnWay.class);
+    private static OsDpnOsmAttributeMappingVisitor[] rightOfWayVisitors = {new BridleWay(), new PermissiveBridleWay(), new BywayOpenToAllTraffic(), new Footpath(), new PermissivePath(), new RestrictedByway()};
 
     /**
      * Constructor for XML Parser
@@ -87,6 +88,16 @@ public class OsDpnWay extends OsDpnElement implements Way {
             setTag("tunnel", "yes");
         } else if("Above Surface Level On Structure".equals(text)) {
             setTag("bridge", "yes");
+        }
+        return super.handlePhysicalLevel(parser);
+    }
+
+    @Override
+    protected int handleRightOfUse(XMLStreamReader parser) throws XMLStreamException
+    {
+        String attributeValue = parser.getElementText().replaceAll(" ", "").toLowerCase();
+        for(OsDpnOsmAttributeMappingVisitor rightOfWayVisitor: rightOfWayVisitors) {
+            rightOfWayVisitor.visitWayAttribute(attributeValue, this);
         }
         return super.handlePhysicalLevel(parser);
     }

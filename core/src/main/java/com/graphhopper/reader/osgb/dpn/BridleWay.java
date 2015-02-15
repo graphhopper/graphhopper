@@ -8,7 +8,8 @@ import com.graphhopper.reader.Way;
 public class BridleWay extends AbstractOsDpnOsmAttibuteMappingVisitor {
 
     @Override
-    protected void applyAttributes(Way way) {
+    protected void applyAttributes(Way way)
+    {
         way.setTag("designation", "public_bridleway");
     }
 

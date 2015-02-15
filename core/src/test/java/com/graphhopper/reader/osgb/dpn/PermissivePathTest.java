@@ -28,7 +28,7 @@ public class PermissivePathTest {
 
     @Test
     public void testVisitWayAttribute() throws Exception {
-        visitor.visitWayAttribute("Permissive Path", way);
+        visitor.visitWayAttribute("permissivepath", way);
         verify(way).setTag("foot", "permissive");
     }
 }

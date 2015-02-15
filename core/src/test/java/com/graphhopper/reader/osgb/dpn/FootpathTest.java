@@ -29,7 +29,7 @@ public class FootpathTest {
     @Test
     public void testVisitWayAttribute()
     {
-        visitor.visitWayAttribute("Footpath", way);
+        visitor.visitWayAttribute("footpath", way);
         verify(way).setTag("designation", "public_footpath");
     }
 
