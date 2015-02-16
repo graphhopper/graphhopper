@@ -50,7 +50,7 @@ public class Constants
     public static final String OS_ARCH = System.getProperty("os.arch");
     public static final String OS_VERSION = System.getProperty("os.version");
     public static final String JAVA_VENDOR = System.getProperty("java.vendor");
-    public static final int VERSION_NODE = 3;
+    public static final int VERSION_NODE = 4;
     public static final int VERSION_EDGE = 10;
     public static final int VERSION_GEOMETRY = 3;
     public static final int VERSION_LOCATION_IDX = 2;

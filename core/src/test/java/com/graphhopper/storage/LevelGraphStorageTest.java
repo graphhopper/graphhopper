@@ -25,6 +25,7 @@ import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.shapes.BBox;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -46,7 +47,7 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
     }
 
     @Test
-    public void testCannotBeLoadedViaDifferentClass()
+    public void testCannotBeLoadedWithNormalGraphHopperStorageClass()
     {
         GraphStorage g = newGraph(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
         g.flush();
@@ -63,6 +64,8 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
 
         g = newGraph(new RAMDirectory(defaultGraphLoc, true), false);
         assertTrue(g.loadExisting());
+        // empty graph still has invalid bounds
+        assertEquals(g.getBounds(), BBox.createInverse(false));
     }
 
     @Test
@@ -180,7 +183,7 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         flags = carEncoder.setProperties(10, false, true);
         sc1.setFlags(flags);
         sc1.setWeight(100.123);
-        assertEquals(100.123, sc1.getWeight(), 1e-3);        
+        assertEquals(100.123, sc1.getWeight(), 1e-3);
         assertFalse(carEncoder.isBool(sc1.getFlags(), FlagEncoder.K_FORWARD));
         assertTrue(carEncoder.isBool(sc1.getFlags(), FlagEncoder.K_BACKWARD));
     }

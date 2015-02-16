@@ -1484,6 +1484,13 @@ public class GraphHopperStorage implements GraphStorage
         bounds.maxLon = Helper.intToDegree(nodes.getHeader(4 * 4));
         bounds.minLat = Helper.intToDegree(nodes.getHeader(5 * 4));
         bounds.maxLat = Helper.intToDegree(nodes.getHeader(6 * 4));
+
+        if (bounds.hasElevation())
+        {
+            bounds.minEle = Helper.intToEle(nodes.getHeader(7 * 4));
+            bounds.maxEle = Helper.intToEle(nodes.getHeader(8 * 4));
+        }        
+
         return 7;
     }
 
@@ -1496,6 +1503,12 @@ public class GraphHopperStorage implements GraphStorage
         nodes.setHeader(4 * 4, Helper.degreeToInt(bounds.maxLon));
         nodes.setHeader(5 * 4, Helper.degreeToInt(bounds.minLat));
         nodes.setHeader(6 * 4, Helper.degreeToInt(bounds.maxLat));
+        if (bounds.hasElevation())
+        {
+            nodes.setHeader(7 * 4, Helper.eleToInt(bounds.minEle));
+            nodes.setHeader(8 * 4, Helper.eleToInt(bounds.maxEle));
+        }
+
         return 7;
     }
 

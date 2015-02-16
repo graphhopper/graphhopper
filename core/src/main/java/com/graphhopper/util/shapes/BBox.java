@@ -54,7 +54,7 @@ public class BBox implements Shape, Cloneable
         this(minLon, maxLon, minLat, maxLat, minEle, maxEle, true);
     }
 
-    public BBox( double minLon, double maxLon, double minLat, double maxLat, double minEle, double maxEle, boolean elevation)
+    public BBox( double minLon, double maxLon, double minLat, double maxLat, double minEle, double maxEle, boolean elevation )
     {
         this.elevation = elevation;
         this.maxLat = maxLat;
@@ -65,7 +65,7 @@ public class BBox implements Shape, Cloneable
         this.maxEle = maxEle;
     }
 
-    public boolean hasElevation() 
+    public boolean hasElevation()
     {
         return elevation;
     }
@@ -75,52 +75,34 @@ public class BBox implements Shape, Cloneable
      */
     public static BBox createInverse( boolean elevation )
     {
-        if (elevation) 
+        if (elevation)
         {
             return new BBox(Double.MAX_VALUE, -Double.MAX_VALUE, Double.MAX_VALUE, -Double.MAX_VALUE,
-                            Double.MAX_VALUE, -Double.MAX_VALUE, true);
+                    Double.MAX_VALUE, -Double.MAX_VALUE, true);
         } else
         {
             return new BBox(Double.MAX_VALUE, -Double.MAX_VALUE, Double.MAX_VALUE, -Double.MAX_VALUE,
-                            Double.NaN, Double.NaN, false);
+                    Double.NaN, Double.NaN, false);
         }
     }
 
-    public boolean check()
+    public void update( double lat, double lon )
     {
-        // second longitude should be bigger than the first
-        if (minLon >= maxLon)
-            return false;
-
-        // second latitude should be smaller than the first
-        if (minLat >= maxLat)
-            return false;
-
-        // second elevation should be smaller than the first
-        if (elevation && minEle >= maxEle)
-            return false;
-
-        return true;
-
-    }
-    
-    public void update( double lat, double lon ) 
-    {
-        if (lat > maxLat) 
+        if (lat > maxLat)
         {
             maxLat = lat;
         }
 
-        if (lat < minLat) 
+        if (lat < minLat)
         {
             minLat = lat;
         }
 
-        if (lon > maxLon) 
+        if (lon > maxLon)
         {
             maxLon = lon;
         }
-        if (lon < minLon) 
+        if (lon < minLon)
         {
             minLon = lon;
         }
@@ -133,7 +115,7 @@ public class BBox implements Shape, Cloneable
             if (elev > maxEle)
             {
                 maxEle = elev;
-            } 
+            }
             if (elev < minEle)
             {
                 minEle = elev;
@@ -144,9 +126,8 @@ public class BBox implements Shape, Cloneable
         }
         update(lat, lon);
 
-
     }
-    
+
     @Override
     public BBox clone()
     {
@@ -255,6 +236,25 @@ public class BBox implements Shape, Cloneable
 
     public boolean isValid()
     {
+        // second longitude should be bigger than the first
+        if (minLon >= maxLon)
+            return false;
+
+        // second latitude should be smaller than the first
+        if (minLat >= maxLat)
+            return false;
+
+        if (elevation)
+        {
+            // equal elevation is okay
+            if (minEle > maxEle)
+                return false;
+
+            if (Double.compare(maxEle, -Double.MAX_VALUE) == 0
+                    || Double.compare(minEle, Double.MAX_VALUE) == 0)
+                return false;
+        }
+
         return Double.compare(maxLat, -Double.MAX_VALUE) != 0
                 && Double.compare(minLat, Double.MAX_VALUE) != 0
                 && Double.compare(maxLon, -Double.MAX_VALUE) != 0

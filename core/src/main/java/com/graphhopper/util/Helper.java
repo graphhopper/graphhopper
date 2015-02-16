@@ -358,6 +358,8 @@ public class Helper
     {
         if (deg >= Double.MAX_VALUE)
             return Integer.MAX_VALUE;
+        if (deg <= -Double.MAX_VALUE)
+            return -Integer.MAX_VALUE;
         return (int) (deg * DEGREE_FACTOR);
     }
 
@@ -370,6 +372,8 @@ public class Helper
     {
         if (storedInt == Integer.MAX_VALUE)
             return Double.MAX_VALUE;
+        if (storedInt == -Integer.MAX_VALUE)
+            return -Double.MAX_VALUE;
         return (double) storedInt / DEGREE_FACTOR;
     }
 
