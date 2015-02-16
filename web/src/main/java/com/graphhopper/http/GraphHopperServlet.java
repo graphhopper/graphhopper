@@ -83,7 +83,7 @@ public class GraphHopperServlet extends GHBaseServlet
         boolean enableInstructions = writeGPX || getBooleanParam(httpReq, "instructions", true);
         boolean calcPoints = getBooleanParam(httpReq, "calc_points", true);
         boolean elevation = getBooleanParam(httpReq, "elevation", false);
-        String vehicleStr = getParam(httpReq, "vehicle", "CAR").toUpperCase();
+        String vehicleStr = getParam(httpReq, "vehicle", "car");
         String weighting = getParam(httpReq, "weighting", "fastest");
         String algoStr = getParam(httpReq, "algorithm", "");
         String localeStr = getParam(httpReq, "locale", "en");
