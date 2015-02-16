@@ -15,6 +15,7 @@
  * [Quickstart](./core/quickstart-from-source.md) for developers with git checkout and IDE setup etc
  * [Android](./android/index.md)
  * [Windows](./core/windows-setup.md)
+ * [Set up and run GraphHopper in Eclipse](./core/eclipse-setup.md)
  * [iOS](https://github.com/graphhopper/graphhopper-ios/)
 
 ## Core
