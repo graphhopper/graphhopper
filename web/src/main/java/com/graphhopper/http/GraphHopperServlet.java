@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightingMap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -213,7 +214,11 @@ public class GraphHopperServlet extends GHBaseServlet
 
                 PointList points = rsp.getPoints();
                 if (points.getSize() >= 2)
-                    jsonPath.put("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
+                {
+                    BBox maxBounds = hopper.getGraph().getBounds();
+                    BBox maxBounds2D = new BBox(maxBounds.minLon, maxBounds.maxLon, maxBounds.minLat, maxBounds.maxLat);
+                    jsonPath.put("bbox", rsp.calcRouteBBox(maxBounds2D).toGeoJson());
+                }
 
                 jsonPath.put("points", createPoints(points, pointsEncoded, includeElevation));
 
