@@ -11,6 +11,9 @@ public class BywayOpenToAllTraffic extends AbstractOsDpnOsmAttibuteMappingVisito
     protected void applyAttributes(Way way) {
         way.setTag("designation", "byway_open_to_all_traffic");
         way.setTag("highway", "track");
+        way.setTag("foot", "yes");
+        way.setTag("horse", "yes");
+        way.setTag("bicycle", "yes");
     }
 
 }

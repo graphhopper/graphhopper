@@ -11,6 +11,8 @@ public class BridleWay extends AbstractOsDpnOsmAttibuteMappingVisitor {
     protected void applyAttributes(Way way)
     {
         way.setTag("designation", "public_bridleway");
+        way.setTag("highway", "bridleway");
+        way.setTag("foot", "yes");
     }
 
 }

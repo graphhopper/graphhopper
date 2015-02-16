@@ -127,8 +127,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         acceptedRailways.add("obliterated");
 
         intendedValues.add("true");
+        intendedValues.add("yes");
 
         excludedValues.add("false");
+        excludedValues.add("no");
+
 
     }
 

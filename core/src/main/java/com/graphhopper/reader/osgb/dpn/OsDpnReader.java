@@ -195,9 +195,11 @@ public class OsDpnReader implements DataReader<String> {
                 if (item.isType(OSMElement.WAY)) {
                     final OsDpnWay way = (OsDpnWay) item;
                     boolean valid = filterWay(way);
+                    logger.info("Valid Way:" + valid);
                     if (valid) {
                         List<String> wayNodes = way.getNodes();
                         int s = wayNodes.size();
+                        logger.info("With Nodes:" + s);
                         for (int index = 0; index < s; index++) {
                             prepareHighwayNode(wayNodes.get(index));
                         }
@@ -263,13 +265,14 @@ public class OsDpnReader implements DataReader<String> {
      * @return true the current xml entry is a way entry and has nodes
      */
     boolean filterWay(OsDpnWay way) {
+        logger.info(way.getNodes().size() + ":" + way.hasTags());
         // ignore broken geometry
         if (way.getNodes().size() < 2)
             return false;
 
         // ignore multipolygon geometry
-        if (!way.hasTags())
-            return false;
+        //if (!way.hasTags())
+        //    return false;
 
         return encodingManager.acceptWay(way) > 0;
     }
@@ -297,6 +300,7 @@ public class OsDpnReader implements DataReader<String> {
                     case OSMElement.NODE:
                         OsDpnNode dpnNode = (OsDpnNode) item;
                         String id = dpnNode.getId();
+                        System.out.println(id);
                         logger.info("NODEITEMID:" + id);
                         if (nodeFilter.get(id) != -1) {
                             processNode(dpnNode);
@@ -337,7 +341,7 @@ public class OsDpnReader implements DataReader<String> {
 
         finishedReading();
         if (graphStorage.getNodes() == 0)
-            throw new IllegalStateException("osm must not be empty. read "
+            throw new IllegalStateException("dpn must not be empty. read "
                     + counter + " lines and " + locations + " locations");
     }
 
@@ -579,6 +583,7 @@ public class OsDpnReader implements DataReader<String> {
      */
 
     void prepareHighwayNode(String idStr) {
+        logger.info("Prepare HighwayNode:" + idStr);
         int tmpIndex = getNodeMap().get(idStr);
         if (tmpIndex == EMPTY) {
             // osmId is used exactly once

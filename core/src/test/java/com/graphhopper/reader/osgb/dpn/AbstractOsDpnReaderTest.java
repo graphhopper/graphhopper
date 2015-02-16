@@ -28,8 +28,7 @@ public abstract class AbstractOsDpnReaderTest {
 
     protected EncodingManager encodingManager;// = new
     // EncodingManager("CAR");//"car:com.graphhopper.routing.util.RelationCarFlagEncoder");
-    protected CarFlagEncoder carEncoder;// = (RelationCarFlagEncoder)
-    protected BusFlagEncoder busEncoder;// = (RelationCarFlagEncoder)
+    protected BusFlagEncoder busEncoder;
     // encodingManager
     // .getEncoder("CAR");
     protected EdgeFilter carOutEdges;// = new DefaultEdgeFilter(
@@ -64,18 +63,12 @@ public abstract class AbstractOsDpnReaderTest {
     @Before
     public void initEncoding() {
         if (turnCosts) {
-            carEncoder = new CarFlagEncoder(5, 5, 3);
-            busEncoder = new BusFlagEncoder(5, 5, 3);
             bikeEncoder = new BikeFlagEncoder(4, 2, 3);
         } else {
-            carEncoder = new CarFlagEncoder();
-            busEncoder = new BusFlagEncoder();
             bikeEncoder = new BikeFlagEncoder();
         }
 
         footEncoder = new FootFlagEncoder();
-        carOutEdges = new DefaultEdgeFilter(carEncoder, false, true);
-        carInEdges = new DefaultEdgeFilter(carEncoder, true, false);
         encodingManager = createEncodingManager();
     }
 
@@ -85,7 +78,7 @@ public abstract class AbstractOsDpnReaderTest {
      * @return
      */
     protected EncodingManager createEncodingManager() {
-        return new EncodingManager(footEncoder, carEncoder, bikeEncoder);
+        return new EncodingManager(footEncoder, bikeEncoder);
     }
 
     protected OsDpnReader readGraphFile(GraphHopperStorage graph, File file)
@@ -121,7 +114,7 @@ public abstract class AbstractOsDpnReaderTest {
     protected void evaluateRouting(final EdgeIterator iter, final int node,
             final boolean forward, final boolean backward,
             final boolean finished) {
-        evaluateRouting(iter, node, forward, backward, finished, carEncoder);
+        evaluateRouting(iter, node, forward, backward, finished, footEncoder);
     }
 
     protected void evaluateRouting(final EdgeIterator iter, final int node,

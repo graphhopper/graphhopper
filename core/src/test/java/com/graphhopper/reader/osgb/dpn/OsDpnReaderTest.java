@@ -122,7 +122,7 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
 
     private void configureExplorer(final GraphHopperStorage graph)
     {
-	explorer = graph.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, true));
+	explorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, true, true));
     }
 
     private GraphHopperStorage readGraph() throws IOException

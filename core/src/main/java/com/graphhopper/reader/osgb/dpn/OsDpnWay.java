@@ -51,7 +51,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
     private String[] wayCoords;
     private static final Logger logger = LoggerFactory
             .getLogger(OsDpnWay.class);
-    private static OsDpnOsmAttributeMappingVisitor[] rightOfWayVisitors = {new BridleWay(), new PermissiveBridleWay(), new BywayOpenToAllTraffic(), new Footpath(), new PermissivePath(), new RestrictedByway()};
+    private static OsDpnOsmAttributeMappingVisitor[] rightOfWayVisitors = {new BridleWay(), new PermissiveBridleWay(), new BywayOpenToAllTraffic(), new None(), new OtherRouteWithPublicAccess(), new Footpath(), new PermissivePath(), new RestrictedByway()};
     private static OsDpnOsmAttributeMappingVisitor[] potentialHazardVisitors = {new Boulders(), new Cliff(), new Marsh(), new Mud(), new Sand(), new Scree(), new Shingle(), new Spoil(), new Rock(), new TidalWater()};
 
     /**
@@ -67,6 +67,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
         System.out.println("OsDpnWay.create()");
         OsDpnWay way = new OsDpnWay(idStr);
         parser.nextTag();
+        way.setTag("highway", "footway");
         way.readTags(parser);
         logger.info(way.toString());
         return way;
@@ -97,7 +98,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
             surface = "unpaved";
         }
         setTag("surface", surface);
-        return super.handleSurfaceType(parser);
+        return parser.getEventType();
     }
 
     @Override
@@ -109,7 +110,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
         } else if("Above Surface Level On Structure".equals(text)) {
             setTag("bridge", "yes");
         }
-        return super.handlePhysicalLevel(parser);
+        return parser.getEventType();
     }
 
     @Override
@@ -119,7 +120,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
         for(OsDpnOsmAttributeMappingVisitor rightOfWayVisitor: rightOfWayVisitors) {
             rightOfWayVisitor.visitWayAttribute(attributeValue, this);
         }
-        return super.handlePhysicalLevel(parser);
+        return parser.getEventType();
     }
     
     @Override
@@ -129,7 +130,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
         for(OsDpnOsmAttributeMappingVisitor potentialHazzardVisitor: potentialHazardVisitors) {
         	potentialHazzardVisitor.visitWayAttribute(attributeValue, this);
         }
-        return super.handlePotentialHazard(parser);
+        return parser.getEventType();
     }
 
     @Override
@@ -137,7 +138,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
         String[] lineSegments = lineDefinition.split(" ");
         wayCoords = Arrays
                 .copyOfRange(lineSegments, 1, lineSegments.length - 1);
-        logger.info(toString() + " "
+        logger.info("parseCoords1" + toString() + " "
                 + ((wayCoords.length == 0) ? "0" : wayCoords[0]));
     }
 
@@ -169,7 +170,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
         wayCoords[wayCoords.length - 1] = curString.toString();
         addWayNodes();
         nodes.add(endNode);
-        logger.info(toString() + " "
+        logger.info("parsecoord2" + toString() + " "
                 + ((wayCoords.length == 0) ? "0" : wayCoords[0]));
     }
 
