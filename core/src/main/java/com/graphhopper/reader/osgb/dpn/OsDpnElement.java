@@ -106,11 +106,15 @@ public abstract class OsDpnElement implements RoutingElement
 		}
 		case "instruction":
 		{
-		    System.err.println("INSTRUCTION:");
 		    setTag("type", "restriction");
 		    event = handleTag("restriction", parser);
 		    break;
 		}
+            case "surfaceType":
+            {
+                event=handleSurfaceType(parser);
+                break;
+            }
 		case "descriptiveTerm":
 		{
 		    event = handleDescriptiveTerm(parser);
@@ -140,6 +144,11 @@ public abstract class OsDpnElement implements RoutingElement
 	    else
 		// logger.trace("EVENT:" + event);
 		event = parser.next();
+    }
+
+    protected int handleSurfaceType(XMLStreamReader parser) throws XMLStreamException
+    {
+        return parser.next();
     }
 
     protected int handlePhysicalLevel(XMLStreamReader parser) throws XMLStreamException

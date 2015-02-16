@@ -67,7 +67,6 @@ public class OsDpnWay extends OsDpnElement implements Way {
         OsDpnWay way = new OsDpnWay(idStr);
         parser.nextTag();
         way.readTags(parser);
-        way.setTag("highway", "motorway");
         logger.info(way.toString());
         return way;
     }
@@ -78,6 +77,26 @@ public class OsDpnWay extends OsDpnElement implements Way {
 
     public List<String> getNodes() {
         return nodes;
+    }
+
+    @Override
+    protected int handleSurfaceType(XMLStreamReader parser) throws XMLStreamException {
+        String surface;
+        String surfaceType = parser.getElementText();
+        if("Made Sealed".equals(surfaceType))
+        {
+            surface = "paved";
+        }
+        else if("Unmade".equals(surfaceType))
+        {
+            surface = "ground";
+        }
+        else
+        {
+            surface = "unpaved";
+        }
+        setTag("surface", surface);
+        return super.handleSurfaceType(parser);
     }
 
     @Override
