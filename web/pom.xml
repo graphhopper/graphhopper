@@ -139,7 +139,7 @@
 				<configuration>
 					<!-- <attachClasses>true</attachClasses> -->
 					<primaryArtifact>true</primaryArtifact>
-                    <packagingExcludes>WEB-INF/lib/jetty*.jar</packagingExcludes>
+                   <!-- <packagingExcludes>WEB-INF/lib/jetty*.jar</packagingExcludes> -->
 				</configuration>
 			</plugin>
 
