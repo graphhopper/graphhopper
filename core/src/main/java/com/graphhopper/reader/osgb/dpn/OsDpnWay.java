@@ -73,12 +73,25 @@ public class OsDpnWay extends OsDpnElement implements Way {
         return way;
     }
 
-    public OsDpnWay(String id) {
+    public OsDpnWay(String id)
+    {
         super(id, WAY);
     }
 
-    public List<String> getNodes() {
+    public List<String> getNodes()
+    {
         return nodes;
+    }
+
+    @Override
+    protected int handleCycleRoute(XMLStreamReader parser) throws XMLStreamException
+    {
+        String access = parser.getElementText();
+        if("true".equals(access))
+        {
+            setTag("bicycle", "yes");
+        }
+        return parser.getEventType();
     }
 
     @Override

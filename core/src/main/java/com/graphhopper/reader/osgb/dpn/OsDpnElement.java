@@ -138,6 +138,13 @@ public abstract class OsDpnElement implements RoutingElement
                     event = handleAccessLand(parser);
                     break;
                 }
+
+                case "adoptedByNationalCycleRoute" :
+                case "adoptedByOtherCycleRoute" :
+                {
+                    event = handleCycleRoute(parser);
+                    break;
+                }
                 default: {
                     event = parser.next();
                 }
@@ -145,6 +152,11 @@ public abstract class OsDpnElement implements RoutingElement
 	    else
             // logger.trace("EVENT:" + event);
             event = parser.next();
+    }
+
+    protected int handleCycleRoute(XMLStreamReader parser) throws XMLStreamException
+    {
+        return parser.next();
     }
 
     protected int handleAccessLand(XMLStreamReader parser) throws XMLStreamException

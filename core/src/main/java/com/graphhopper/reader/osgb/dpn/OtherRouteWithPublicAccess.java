@@ -7,7 +7,8 @@ import com.graphhopper.reader.Way;
  */
 public class OtherRouteWithPublicAccess extends AbstractOsDpnOsmAttibuteMappingVisitor {
     @Override
-    protected void applyAttributes(Way way) {
+    protected void applyAttributes(Way way)
+    {
         way.setTag("foot", "yes");
     }
 }
