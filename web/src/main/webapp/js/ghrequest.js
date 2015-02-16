@@ -53,6 +53,8 @@ GHRequest = function (host) {
     this.do_zoom = true;
     // use jsonp here if host allows CORS
     this.dataType = "json";
+    // all URL parameters starting with "api." will be forwarded to GraphHopper directly    
+    this.api_params = [];
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // We know that you love 'free', we love it too :)! And so our entire software stack is free and even Open Source!      
@@ -303,20 +305,26 @@ GHroute.prototype = {
     }
 };
 
-// todo
 GHRequest.prototype.init = function (params) {
-    //    for(var key in params) {
-    //        var val = params[key];
-    //        if(val === "false")
-    //            val = false;
-    //        else if(val === "true")
-    //            val = true;
-    //        else {            
-    //            if(parseFloat(val) != NaN)
-    //                val = parseFloat(val)
-    //        }
-    //        this[key] = val;
-    //    } 
+    for (var key in params) {
+        var val = params[key];
+        if (val === "false")
+            val = false;
+        else if (val === "true")
+            val = true;
+        else {
+            if (parseFloat(val) != NaN)
+                val = parseFloat(val)
+        }
+
+        // todo
+        // this[key] = val;
+
+        if (key.indexOf('api.') === 0) {
+            this.api_params[key.substring(4)] = val;
+        }
+    }
+
     if (params.minPathPrecision)
         this.minPathPrecision = params.minPathPrecision;
     if (params.vehicle)
@@ -393,42 +401,28 @@ GHRequest.prototype.createGeocodeURL = function (host) {
 };
 
 GHRequest.prototype.createURL = function () {
-    return this.createPath(this.host + "/route?" + this.createParams() + "&type=" + this.dataType + "&key=" + this.key);
+    return this.createPath(this.host + "/route?" + this.createPointParams(false) + "&type=" + this.dataType + "&key=" + this.key);
 };
 
 GHRequest.prototype.createGPXURL = function () {
-    // use points instead of strings
-    var str = "", point, i, l;
-
-    for (i = 0, l = this.route.size(); i < l; i++) {
-        point = this.route.getIndex(i);
-        if (i > 0)
-            str += "&";
-        str += "point=" + encodeURIComponent(point.toString());
-    }
-    return this.createPath(this.host + "/route?" + str + "&type=gpx&key=" + this.key);
+    return this.createPath(this.host + "/route?" + this.createPointParams(false) + "&type=gpx&key=" + this.key);
 };
 
 GHRequest.prototype.createHistoryURL = function () {
-    var str = "?", point, i, l;
-
-    for (i = 0, l = this.route.size(); i < l; i++) {
-        point = this.route.getIndex(i);
-        if (i > 0)
-            str += "&";
-        str += "point=" + encodeURIComponent(point.input);
-    }
-    return this.createPath(str);
+    return this.createPath("?" + this.createPointParams(true));
 };
 
-GHRequest.prototype.createParams = function () {
+GHRequest.prototype.createPointParams = function (useRawInput) {
     var str = "", point, i, l;
 
     for (i = 0, l = this.route.size(); i < l; i++) {
         point = this.route.getIndex(i);
         if (i > 0)
             str += "&";
-        str += "point=" + encodeURIComponent(point.toString());
+        if (useRawInput)
+            str += "point=" + encodeURIComponent(point.input);
+        else
+            str += "point=" + encodeURIComponent(point.toString());
     }
     return (str);
 };
@@ -455,6 +449,10 @@ GHRequest.prototype.createPath = function (url) {
         url += "&elevation=true";
     if (this.debug)
         url += "&debug=true";
+
+    for (var key in this.api_params) {
+        url += "&" + key + "=" + this.api_params[key];
+    }
     return url;
 };
 
