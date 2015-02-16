@@ -190,16 +190,16 @@ public class OsDpnReader implements DataReader<String> {
             long tmpRelationCounter = 1;
             RoutingElement item;
             while ((item = in.getNext()) != null) {
-                System.out.println("OsItnReader.preProcess( " + item.getType()
+                logger.trace("OsDpnReader.preProcess( " + item.getType()
                         + " )");
                 if (item.isType(OSMElement.WAY)) {
                     final OsDpnWay way = (OsDpnWay) item;
                     boolean valid = filterWay(way);
-                    logger.info("Valid Way:" + valid);
+                    logger.trace("Valid Way:" + valid);
                     if (valid) {
                         List<String> wayNodes = way.getNodes();
                         int s = wayNodes.size();
-                        logger.info("With Nodes:" + s);
+                        logger.trace("With Nodes:" + s);
                         for (int index = 0; index < s; index++) {
                             prepareHighwayNode(wayNodes.get(index));
                         }
@@ -300,7 +300,6 @@ public class OsDpnReader implements DataReader<String> {
                     case OSMElement.NODE:
                         OsDpnNode dpnNode = (OsDpnNode) item;
                         String id = dpnNode.getId();
-                        System.out.println(id);
                         logger.info("NODEITEMID:" + id);
                         if (nodeFilter.get(id) != -1) {
                             processNode(dpnNode);
@@ -560,6 +559,11 @@ public class OsDpnReader implements DataReader<String> {
     }
 
     private double getElevation(Node node) {
+        if(null==eleProvider)
+        {
+            String eleString = node.getTag("ele");
+            return Double.valueOf(eleString);
+        }
         return eleProvider.getEle(node.getLat(), node.getLon());
     }
 

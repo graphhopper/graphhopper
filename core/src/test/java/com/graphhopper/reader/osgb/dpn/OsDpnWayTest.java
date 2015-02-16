@@ -316,7 +316,7 @@ public class OsDpnWayTest {
             "      </dpn:geometry>\n" +
             "    </dpn:RouteLink>";
 
-    public static final String unmade = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><gml:FeatureCollection xmlns:gml=\"http://www.opengis.net/gml/3.2\" xsi:schemaLocation=\"http://namespaces.ordnancesurvey.co.uk/networks/detailedPathNetwork/1.0 detailedPathNetwork.xsd http://www.opengis.net/gml/3.2 gml/3.2.1/gml.xsd\" gml:id=\"DPN\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:dpn=\"http://namespaces.ordnancesurvey.co.uk/networks/detailedPathNetwork/1.0\" xmlns:gmd=\"http://www.isotc211.org/2005/gmd\" xmlns:gco=\"http://www.isotc211.org/2005/gco\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:gss=\"http://www.isotc211.org/2005/gss\" xmlns:gts=\"http://www.isotc211.org/2005/gts\" xmlns:gsr=\"http://www.isotc211.org/2005/gsr\" xmlns:gmlxbt=\"http://www.opengis.net/gml/3.3/xbt\">" +
+    public static final String unmadeNoPhysicalButWithinAccessLand = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><gml:FeatureCollection xmlns:gml=\"http://www.opengis.net/gml/3.2\" xsi:schemaLocation=\"http://namespaces.ordnancesurvey.co.uk/networks/detailedPathNetwork/1.0 detailedPathNetwork.xsd http://www.opengis.net/gml/3.2 gml/3.2.1/gml.xsd\" gml:id=\"DPN\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:dpn=\"http://namespaces.ordnancesurvey.co.uk/networks/detailedPathNetwork/1.0\" xmlns:gmd=\"http://www.isotc211.org/2005/gmd\" xmlns:gco=\"http://www.isotc211.org/2005/gco\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:gss=\"http://www.isotc211.org/2005/gss\" xmlns:gts=\"http://www.isotc211.org/2005/gts\" xmlns:gsr=\"http://www.isotc211.org/2005/gsr\" xmlns:gmlxbt=\"http://www.opengis.net/gml/3.3/xbt\">" +
             "  <gml:featureMember>\n" +
             "    <dpn:RouteLink gml:id=\"osgb35cff694-c2a8-461e-9540-730e3ae11a7a\">" +
             "      <dpn:featureID>35cff694-c2a8-461e-9540-730e3ae11a7a</dpn:featureID>\n" +
@@ -329,7 +329,6 @@ public class OsDpnWayTest {
             "      <dpn:surfaceType codeSpace=\"http://www.ordnancesurvey.co.uk/xml/codelists/SurfaceTypeValue#Unmade\">Unmade</dpn:surfaceType>\n" +
             "      <dpn:physicalLevel codeSpace=\"http://www.ordnancesurvey.co.uk/xml/codelists/LevelCodeValue#BelowSurfaceLevelTunnel\">Below Surface Level Tunnel</dpn:physicalLevel>\n" +
             "      <dpn:name>Named Road</dpn:name>\n" +
-            "      <dpn:rightOfUse>Restricted Byway</dpn:rightOfUse>\n" +
             "      <dpn:adoptedByNationalCycleRoute>false</dpn:adoptedByNationalCycleRoute>\n" +
             "      <dpn:adoptedByRecreationalRoute>false</dpn:adoptedByRecreationalRoute>\n" +
             "      <dpn:adoptedByOtherCycleRoute>false</dpn:adoptedByOtherCycleRoute>\n" +
@@ -351,14 +350,23 @@ public class OsDpnWayTest {
             "    </dpn:RouteLink>";
 
     @Test
-    public void testSurface() throws XMLStreamException, FactoryException, TransformException {
+    public void testSurface() throws XMLStreamException, FactoryException, TransformException
+    {
         OsDpnWay way = getOsDpnWay(surfaceWay);
         assertFalse("Way should not have a tunnel", way.hasTag("tunnel", "yes"));
         assertFalse("Way should not have a bridge", way.hasTag("bridge", "yes"));
     }
 
     @Test
-    public void testBelowSurfaceTunnel() throws XMLStreamException, FactoryException, TransformException {
+    public void testWithinAccessLand() throws XMLStreamException, FactoryException, TransformException
+    {
+        OsDpnWay way = getOsDpnWay(unmadeNoPhysicalButWithinAccessLand);
+        assertTrue("Should allow walking as within access land even though no other right of way declared", way.hasTag("foot", "yes"));
+    }
+
+    @Test
+    public void testBelowSurfaceTunnel() throws XMLStreamException, FactoryException, TransformException
+    {
         OsDpnWay way = getOsDpnWay(tunnelWay);
         assertTrue("Way should have a tunnel", way.hasTag("tunnel", "yes"));
         assertFalse("Way should not have a bridge", way.hasTag("bridge", "yes"));
@@ -413,7 +421,7 @@ public class OsDpnWayTest {
 
     @Test
     public void testUnmade() throws XMLStreamException, FactoryException, TransformException {
-        OsDpnWay way = getOsDpnWay(unmade);
+        OsDpnWay way = getOsDpnWay(unmadeNoPhysicalButWithinAccessLand);
         assertTrue("Way surface paved", way.hasTag("surface", "ground"));
     }
 

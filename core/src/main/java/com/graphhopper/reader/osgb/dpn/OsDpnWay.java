@@ -64,10 +64,10 @@ public class OsDpnWay extends OsDpnElement implements Way {
     public static OsDpnWay create(String idStr, XMLStreamReader parser)
             throws XMLStreamException, MismatchedDimensionException,
             FactoryException, TransformException {
-        System.out.println("OsDpnWay.create()");
+        logger.trace("OsDpnWay.create()");
         OsDpnWay way = new OsDpnWay(idStr);
         parser.nextTag();
-        way.setTag("highway", "footway");
+        way.setTag("highway", "track");
         way.readTags(parser);
         logger.info(way.toString());
         return way;
@@ -79,6 +79,16 @@ public class OsDpnWay extends OsDpnElement implements Way {
 
     public List<String> getNodes() {
         return nodes;
+    }
+
+    @Override
+    protected int handleAccessLand(XMLStreamReader parser) throws XMLStreamException {
+        String access = parser.getElementText();
+        if("true".equals(access))
+        {
+            setTag("foot", "yes");
+        }
+        return parser.getEventType();
     }
 
     @Override

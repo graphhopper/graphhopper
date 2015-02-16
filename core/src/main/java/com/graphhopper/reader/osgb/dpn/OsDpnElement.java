@@ -112,23 +112,32 @@ public abstract class OsDpnElement implements RoutingElement
                     break;
                 }
                 case "name":
-                case "alternativeName": {
+                case "alternativeName":
+                {
                     event = handleName(parser);
                     break;
                 }
-                case "physicalLevel": {
+                case "physicalLevel":
+                {
                     event = handlePhysicalLevel(parser);
                     break;
                 }
-                case "rightOfUse": {
+                case "rightOfUse":
+                {
                     event = handleRightOfUse(parser);
                     break;
                 }
-                case "potentialHazardCrossed": {
+                case "potentialHazardCrossed":
+                {
                     event = handlePotentialHazard(parser);
                     break;
                 }
 
+                case "withinAccessLand" :
+                {
+                    event = handleAccessLand(parser);
+                    break;
+                }
                 default: {
                     event = parser.next();
                 }
@@ -136,6 +145,11 @@ public abstract class OsDpnElement implements RoutingElement
 	    else
             // logger.trace("EVENT:" + event);
             event = parser.next();
+    }
+
+    protected int handleAccessLand(XMLStreamReader parser) throws XMLStreamException
+    {
+        return parser.next();
     }
 
     protected int handleSurfaceType(XMLStreamReader parser) throws XMLStreamException
