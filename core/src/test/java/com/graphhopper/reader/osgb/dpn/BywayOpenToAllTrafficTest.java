@@ -1,14 +1,14 @@
 package com.graphhopper.reader.osgb.dpn;
 
-import com.graphhopper.reader.Way;
+import static org.mockito.Mockito.verify;
+
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.verify;
+import com.graphhopper.reader.Way;
 
 public class BywayOpenToAllTrafficTest {
 

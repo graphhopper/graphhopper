@@ -134,6 +134,12 @@ public abstract class OsDpnElement implements RoutingElement
             case "rightOfUse":
             {
                 event = handleRightOfUse(parser);
+                break;
+            }
+            case "potentialHazardCrossed":
+            {
+                event = handlePotentialHazard(parser);
+                break;
             }
 
 		default:
@@ -157,6 +163,11 @@ public abstract class OsDpnElement implements RoutingElement
     }
 
     protected int handleRightOfUse(XMLStreamReader parser) throws XMLStreamException
+    {
+        return parser.next();
+    }
+    
+    protected int handlePotentialHazard(XMLStreamReader parser) throws XMLStreamException
     {
         return parser.next();
     }
