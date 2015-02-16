@@ -230,6 +230,8 @@ public abstract class OsDpnElement implements RoutingElement
 			typeName="service";
 			setTag("service", "alley");
 			break;
+		case "Private Road":
+			typeName="private";
 		default:
 			break;
 		}
