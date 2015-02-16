@@ -225,6 +225,11 @@ public abstract class OsDpnElement implements RoutingElement
 			break;
 		case "B Road":
 			typeName = "secondary";
+			break;
+		case "Alley":
+			typeName="service";
+			setTag("service", "alley");
+			break;
 		default:
 			break;
 		}
