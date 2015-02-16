@@ -204,16 +204,31 @@ public abstract class OsDpnElement implements RoutingElement
     {
 	String roadType = parser.getElementText();
 	setTag("type", "route");
-	setTag("highway", roadType);
+	setTag("highway", getOsmMappedTypeName(roadType));
 	setTag("name", getTypeBasedName(roadType));
 	return parser.getEventType();
     }
 
-    private Object getTypeBasedName(String roadType)
+    private String getTypeBasedName(String roadType)
     {
 	if (roadType.equals("No Physical Manifestation"))
 	    return "Route";
 	return roadType;
+    }
+    
+    private String getOsmMappedTypeName(String roadType)
+    {
+    	String typeName = roadType;
+    	switch (roadType) {
+		case "A Road":
+			typeName = "primary";
+			break;
+		case "B Road":
+			typeName = "secondary";
+		default:
+			break;
+		}
+    	return typeName;
     }
 
     private int handleDirectedLink(XMLStreamReader parser) throws XMLStreamException
