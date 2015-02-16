@@ -43,7 +43,7 @@ You should take the below steps to install your needed components:
 
 *   Click on _Install_ button. Please note if the component is already installed then there are two other buttons available instead of _Install_. _Update_ if there is an update for the component and _Uninstall_. For example in picture below the user has tried to install EGit using market place, while it has already been included in the package. 
 
-<img src="images/egit.png" alt="Adding Egit using Market Place while it has been already installed" height="100" width="400" style="margin:0 auto;display:block;" title="Adding Egit using Market Place while it has been already installed">  
+[[images/egit.png]]
 
 *	The Web Tools components can in fact be installed via the Eclipse Marketplace system, but they will not be found in a search unless you switch to the "EclipseSource Yoxos Marketplace" instead of the "Eclipse marketplace". This is accomplished by clicking on the Orange circle icon next to the purple Eclipse icon at the bottom of the Marketplace dialog box. 
 
@@ -55,11 +55,11 @@ Based on needed components take the below steps:
  
 *	To install “EGit” in the "Work with:" dialog box, type the EGit server address  at http://download.eclipse.org/egit/updates. Select Eclipse Git Team Provider and JGit form option and click _Next_ and _Finish_ install.
  
-<img src="images/egit2.png" alt="Adding Egit using Add New Software Option" height="100" width="400" style="margin:0 auto;display:block;" title="Adding Egit using Add New Software Option">  
+[[images/egit2.png]]  
 
 *	To install “m2e” In the "Work with:" dialog box, type the me2eclipse server address at http://download.eclipse.org/technology/m2e/releases. Select Maven Integration for Eclipse form option and click _Next_ and _Finish_ install. 
 
-<img src="images/maven.png" alt="Adding Maven Integration for Eclipse using Add New Software Option" height="100" width="400" style="margin:0 auto;display:block;" title="Adding Maven Integration for Eclipse using Add New Software Option"> 
+[[images/maven.png]] 
 
 *	Also if you do happen to miss some web development components,   in the "Work with:" dialog box, type your eclipse server version (e.g. luna) address at http://download.eclipse.org/releases/luna and try  checking the "Web, XML, Java EE, and OSGi Enterprise Development" category, which should include everything you need.  
 
@@ -85,17 +85,17 @@ Below we talk more about the first and third approaches of cloning.
 * Switch to the "Git Repository Exploring" perspective in Eclipse by selecting:  _Window -> Open Perspective -> Git Repositories_ .
 If you don't see this option under "Open Perspective", choose:  _Window -> Open Perspective -> Other..._ and select "Git Repository Exploring". 
 
-<img src="images/clone1.png" alt="Git Repository Exploring perspective" height="100" width="400" style="margin:0 auto;display:block;" title="Git Repository Exploring perspective">
+[[images/clone1.png]]
 
 The "Repository Exploring perspective" is preconfigured to contain the Git Repositories view. Alternatively, you can add the Git Repositories view to your main Java perspective: _Window -> Show View -> Other -> Git Repositories_. 
 
 * In the Git Repositories view, click on the "Clone a Git Repository and add clone to this view" button as shown below:
 
-<img src="images/clone2.png" alt="Click on Clone a Git Repository Icon" height="100" width="400" style="margin:0 auto;display:block;" title="Click on Clone a Git Repository Icon">
+[[images/clone2.png]]
 
 * Enter https://github.com/graphhopper/graphhopper/ for the URI, select "HTTPS" for the protocol. Entering the GitHub username and password is not necessary for cloning the repository. However, if you want to contribute edits back, you'll need to enter your GitHub username and password here too.
 
-<img src="images/clone3.png" alt="Clone Repository URI" height="100" width="400" style="margin:0 auto;display:block;" title="Clone Repository URI">
+[[images/clone3.png]]
 
 * Click _Next_, then select all branches (the “master” branch is probably what need).
 
@@ -113,11 +113,11 @@ If you used approach 1 or if you have downloaded the GraphHopper zip file direct
 
 * Choose the menu option _File -> Import, and then browse to the Maven / Existing Maven Projects element_.
 
-<img src="images/import1.png" alt="Browse to Existing Maven Projects element" height="100" width="400" style="margin:0 auto;display:block;" title="Browse to Existing Maven Projects element">
+[[images/import1.png]]
 
 * Browse to the local directory where you cloned the GraphHopper Git repository, and then select all the projects of interest.
 
-<img src="images/import2.png" alt="Select Projects of Interest" height="100" width="400" style="margin:0 auto;display:block;" title="Select Projects of Interest">
+[[images/import2.png]]
 
 * Click _Finish_. It may take a while to initially build all the projects in your workspace. In the background, the Maven plugin is downloading all the project dependencies. If everything works fine you should be able to see each GraphHopper maven module checked out as an individual Eclipse project in your workspace.
 
@@ -125,7 +125,7 @@ If you used approach 1 or if you have downloaded the GraphHopper zip file direct
 To use this method follow the below steps:
 * In Eclipse, choose _File -> Import..._ then choose _Maven / Check out Maven projects from SCM_ in the dialog box, as shown below:
 
-<img src="images/clone4.png" alt="Check out Maven projects from SCM " height="100" width="400" style="margin:0 auto;display:block;" title="Check out Maven projects from SCM ">
+[[images/clone4.png]]
 
 * Click _Next_, then confirm that you are using the Git version control sytstem using the dropdown box next to the label "SCM URL". 
 
@@ -133,7 +133,7 @@ To use this method follow the below steps:
 
 * specify the "Target Location" (in this case, the URL of the remote Github repository that you want to clone locally), as shown in below figure. This URL should be https://github.com/graphhopper/graphhopper/
 
-<img src="images/clone5.png" alt="Specify Traget Location " height="100" width="400" style="margin:0 auto;display:block;" title="Specify Traget Location">
+[[images/clone5.png]]
 
 * Click _Next_, then uncheck "Use default workspace location" and specify a directory outside your Eclipse workspace (e.g. ~/git). Your cloned copy of the repository will be placed in a subdirectory of the specified directory, with a rather uninformative name (e.g. ~/git/ maven.1424033308371).
 
