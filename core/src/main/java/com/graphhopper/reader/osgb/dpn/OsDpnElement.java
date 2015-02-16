@@ -232,6 +232,10 @@ public abstract class OsDpnElement implements RoutingElement
 			break;
 		case "Private Road":
 			typeName="private";
+			break;
+		case "Path":
+			typeName="path";
+			break;
 		default:
 			break;
 		}
