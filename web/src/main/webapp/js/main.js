@@ -15,7 +15,6 @@ if (!host) {
 }
 
 var ghRequest = new GHRequest(host);
-var tmpArgs = parseUrlWithHisto();
 var bounds = {};
 
 var nominatimURL = "https://nominatim.openstreetmap.org/search";
