@@ -7,7 +7,6 @@ def ms_to_hms(milliseconds):
     hours, milliseconds = divmod(milliseconds, 3600000)
     minutes, milliseconds = divmod(milliseconds, 60000)
     seconds = float(milliseconds) / 1000
-    #s = "%i:%02i:%02.0f" % (hours, minutes, seconds)
     s = "%i:%02i" % (hours, minutes)
     return s
 def ghroutetime(p1,p2,v):
@@ -32,14 +31,10 @@ def ghroutetime(p1,p2,v):
     data = requests.get(url=gcurl, params=params)
     binary = data.content
     result=json.loads(binary)
-    #print result
-    result['paths'][0]['time']=ms_to_hms(result['paths'][0]['time'])#=json.loads(binary)['paths'][0][ms_to_hms('time')]
-    #distance="%.2f" % (result['paths'][0]['distance']/1000)
+    result['paths'][0]['time']=ms_to_hms(result['paths'][0]['time'])
     distance=(result['paths'][0]['distance'])
     time=result['paths'][0]['time']
     geom=json.dumps(result['paths'][0]['points'])
-    #result = json.dumps(result)
-    #return {'distance':distance, 'time':time}
     return distance,time,geom
 def format_point(lat, lon):
 	p=str(lat)+', '+str(lon)
