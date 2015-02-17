@@ -40,7 +40,6 @@ public class Instruction
 
     protected int sign;
     protected String name;
-    protected double radian;
     protected double distance;
     protected long time;
     protected final PointList points;

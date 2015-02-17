@@ -4,13 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by jan on 02.02.15.
- * <p>
  * @author jansoe
  */
 public class RoundaboutInstruction extends Instruction
 {
-
     private int exitNumber = 0;
     private int clockwise = 0; // 0 undetermined, 1 clockwise, -1 counterclockwise, 2 inconsistent
     private boolean exited = false;
