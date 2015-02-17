@@ -10,10 +10,7 @@ def ms_to_hms(milliseconds):
     #s = "%i:%02i:%02.0f" % (hours, minutes, seconds)
     s = "%i:%02i" % (hours, minutes)
     return s
-def ghroutetime(p1,p2,v,key):
-    #https://graphhopper.com/api/1/route?point=51.516974%2C6.322819&point=51.457206%2C7.011496&type=json&key=9cfe1620-1e83-4b4c-bf1a-ac8a95c9c9ea&debug=true&points_encoded=false
-    #with geometries
-    #https://graphhopper.com/api/1/route?instructions=false&debug=true&point=48.778493%2C9.180046&point=48.491951%2C9.211414&points_encoded=false&type=json&key=9cfe1620-1e83-4b4c-bf1a-ac8a95c9c9ea
+def ghroutetime(p1,p2,v):
     gcurl="http://localhost:8989/route?"
     params=[]
     result={}
@@ -51,7 +48,6 @@ try:
 	dist,time,geom=ghroutetime(format_point(lata,lona),format_point(latb,lonb),vehicle)
 except:
 	dist,time,geom=0,0,''
-#geom = select ST_AsText(ST_GeomFromGeoJSON(geom))
 return dist,time,geom	
 $BODY$
   LANGUAGE plpythonu VOLATILE
