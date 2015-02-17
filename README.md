@@ -26,6 +26,13 @@ and then do these matches:
 ```bash
 ./map-matching.sh action=match gpx=./track-data/.*gpx
 ```
+Possible flags to pass are the following:
+```bash
+gpxAccuracy=15              # default=15, type=integer, unit=meter
+separatedSearchDistance=500 # default=500, type=integer, unit=meter
+maxSearchMultiplier=50      # default=50, type=integer
+forceRepair=flase           # default=false, type=boolean
+```
 
 This will produce gpx results similar named as the input files.
 
