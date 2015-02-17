@@ -88,6 +88,7 @@
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
             <version>20140107</version>
+            <scope>test</scope>
         </dependency>
         
     </dependencies>

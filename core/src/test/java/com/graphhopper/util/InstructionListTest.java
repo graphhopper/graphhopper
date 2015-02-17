@@ -346,17 +346,17 @@ public class InstructionListTest
 
         PointList pl = new PointList();
         pl.add(52.514, 13.349);
-        pl.add(52.5135,13.35);
+        pl.add(52.5135, 13.35);
         pl.add(52.514, 13.351);
         RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname",
-                                                                 new InstructionAnnotation(0, ""), pl)
-                                          .setDirOfRotation(-0.1)
-                                          .setRadian(-Math.PI+1)
-                                          .setExitNumber(2)
-                                          .setExited();
+                new InstructionAnnotation(0, ""), pl)
+                .setDirOfRotation(-0.1)
+                .setRadian(-Math.PI + 1)
+                .setExitNumber(2)
+                .setExited();
         il.add(instr);
 
-        Map<String, Object> json = il.createJson().get(0);        
+        Map<String, Object> json = il.createJson().get(0);
         // assert that all information is present in map for JSON
         assertEquals("At roundabout, take exit 2 onto streetname", json.get("text").toString());
         assertEquals(-1, (Double) json.get("turn_angle"), 0.01);
@@ -373,7 +373,7 @@ public class InstructionListTest
 
         PointList pl = new PointList();
         pl.add(52.514, 13.349);
-        pl.add(52.5135,13.35);
+        pl.add(52.5135, 13.35);
         pl.add(52.514, 13.351);
         RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname",
                 new InstructionAnnotation(0, ""), pl)
@@ -384,11 +384,11 @@ public class InstructionListTest
 
         Map<String, Object> json = il.createJson().get(0);
         assertEquals("At roundabout, take exit 2 onto streetname", json.get("text").toString());
-        assertEquals("null", json.get("turn_angle").toString());
+        assertNull(json.get("turn_angle"));
         // assert that a valid JSON object can be written
         assertNotNull(new JSONObject(json).toString());
     }
-    
+
     @Test
     public void testCreateGPXWithEle()
     {
