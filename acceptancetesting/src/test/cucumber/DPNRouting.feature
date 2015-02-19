@@ -20,11 +20,11 @@ Feature: Verify a route from A to B
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                          | azimuth | direction | time   | distance |
       | 5             | 53.197269,-1.608797 | continue onto Chatsworth Road         | 181     | S         | 670049 | 930.629  |
-      | 6             | 53.189535,-1.613492 | turn slight left onto Dale Road North | 141     | SE        | 984236 | 1366.997 |
+      | 6             | 53.189535,-1.613492 | turn slight left onto Dale Road North | 141     | SE        | 312088 | 433.456  |
 
     Examples: 
-      | pointA              | pointB             | routetype |
-      |53.211013,-1.619393|53.185757,-1.611969 | foot      |
+      | pointA              | pointB              | routetype |
+      | 53.211013,-1.619393 | 53.185757,-1.611969 | foot      |
 
   @Routing
   Scenario Outline: Verify  Gate  Restrictions on a Route
