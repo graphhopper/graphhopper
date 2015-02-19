@@ -139,6 +139,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		}
 
 		clickElement(ROUTE_SEARCH);
+		waitFor(INSTRUCTIONS);
 
 	}
 
