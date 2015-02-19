@@ -83,7 +83,7 @@ public class GPHRouteTest {
 		wp.addExtensionData(ExtensionConstants.DIRECTION, direction);
 		wp.addExtensionData(ExtensionConstants.TIME, time);
 		wp.addExtensionData(ExtensionConstants.DISTANCE, distance);
-		return wp;
+return wp;
 	}
 	
 	
