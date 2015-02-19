@@ -57,9 +57,11 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(GraphHopperUIUtil.class);
 
-	public GraphHopperUIUtil() {
+	public GraphHopperUIUtil(String url) {
+				
 		super(BrowserPlatformOptions.getEnabledOptionsArrayList().get(0)[0]);
 		try {
+			baseUrl=url;
 			init();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
@@ -68,11 +70,11 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 	}
 
 	private void init() throws InterruptedException {
-		baseUrl = IntegrationTestProperties
-				.getTestProperty("graphHopperWebUrl");
-		if (null == baseUrl) {
-			baseUrl = "http://os-graphhopper.elasticbeanstalk.com/";
-		}
+	//	baseUrl = IntegrationTestProperties
+		//		.getTestProperty("graphHopperWebUrl");
+		//if (null == baseUrl) {
+		//	baseUrl = "http://os-graphhopper.elasticbeanstalk.com/";
+		//}
 
 		if (!testOn.equalsIgnoreCase("SERVICE")) {
 			initialiseWebDriver();
@@ -110,7 +112,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		case "bike":
 			clickElement(ROUTE_TYPE_BIKE);
 			break;
-		case "walk":
+		case "foot":
 			clickElement(ROUTE_TYPE_WALK);
 			break;
 		default:
@@ -152,7 +154,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 				.xpath("//*[@id='instructions']/tbody/tr[*]/td[2]"));
 		WAY_POINTS.get(Integer.parseInt(routeStepNumber) - 1).click();
 
-		checkTableRow(INSTRUCTIONS, Integer.parseInt(this.routeStepNumber),
+		checkTableRowIgnoreCase(INSTRUCTIONS, Integer.parseInt(this.routeStepNumber),
 				stepInstruction);
 
 	}
