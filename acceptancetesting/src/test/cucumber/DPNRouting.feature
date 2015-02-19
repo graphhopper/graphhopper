@@ -80,3 +80,36 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA              | pointB              | routetype |
       | 53.348832,-1.761122 | 53.197338,-1.594157 | foot      |
+
+  @Routing
+  Scenario Outline: 
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                 | azimuth | direction | time   | distance |
+      | 3             | 53.305821,-1.814508 | Continue onto Hernstone Lane | 288     | W         | 298331 | 414.351  |
+
+    Examples: 
+      | pointA              | pointB              | routetype |
+      | 53.300714,-1.786126 | 53.287803,-1.816746 | foot      |
+
+  @Routing
+  Scenario Outline: 
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco         | waypointdesc               | azimuth | direction | time   | distance |
+      | 5             | 53.20882,-1.688212 | Continue onto Monyash Road | 67      | NE        | 445921 | 619.335  |
+
+    Examples: 
+      | pointA              | pointB              | routetype |
+      | 53.194909,-1.710481 | 53.156696,-1.634947 | foot      |
+
+  @Routing
+  Scenario Outline: 
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                      | azimuth | direction | time   | distance |
+      | 4             | 53.143286,-1.647841 | Turn slight right onto Elton Road | 280     | W         | 193296 | 268.469  |
+
+    Examples: 
+      | pointA              | pointB              | routetype |
+      | 53.142876,-1.642599 | 53.163897,-1.714249 | foot      |
