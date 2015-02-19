@@ -24,7 +24,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB             | routetype |
-      | 53.176062,-1.871472 | 53.154773,-1.77272 | foot      |
+      |53.211013,-1.619393|53.185757,-1.611969 | foot      |
 
   @Routing
   Scenario Outline: Verify  Gate  Restrictions on a Route
