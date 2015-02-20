@@ -393,11 +393,17 @@ GHRequest.prototype.hasElevation = function () {
     return this.elevation;
 };
 
-GHRequest.prototype.createGeocodeURL = function (host) {
+GHRequest.prototype.createGeocodeURL = function (host, prevIndex) {
     var tmpHost = this.host;
     if (host)
         tmpHost = host;
-    return this.createPath(tmpHost + "/geocode?limit=8&type=" + this.dataType + "&key=" + this.key + "&locale=" + this.locale);
+
+    var path = this.createPath(tmpHost + "/geocode?limit=8&type=" + this.dataType + "&key=" + this.key + "&locale=" + this.locale);
+    if (prevIndex >= 0 && prevIndex < this.route.size()) {
+        var point = this.route.getIndex(prevIndex);
+        path += "&lat=" + point.lat + "&lon=" + point.lng;
+    }
+    return path;
 };
 
 GHRequest.prototype.createURL = function () {

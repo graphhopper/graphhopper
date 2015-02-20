@@ -1413,7 +1413,7 @@ function setAutoCompleteList(index) {
         },
         serviceUrl: function () {
             // see https://graphhopper.com/#directions-api
-            return ghRequest.createGeocodeURL(host);
+            return ghRequest.createGeocodeURL(host, index - 1);
         },
         transformResult: function (response, originalQuery) {
             response.suggestions = [];
