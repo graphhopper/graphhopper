@@ -5,8 +5,7 @@
 ![Map Matching Illustration](https://karussell.files.wordpress.com/2014/07/map-matching.png)
 
 Map matching is the process to match a sequence of real world coordinates into a digital map.
-Read more at [Wikipedia](https://en.wikipedia.org/wiki/Map_matching). It can be used for tracking vehicles' GPS information,
-important for further digital analysis.
+Read more at [Wikipedia](https://en.wikipedia.org/wiki/Map_matching). It can be used for tracking vehicles' GPS information, important for further digital analysis. Or e.g. attaching turn instructions for every GPX route.
 
 Currently this project is under heavy development but produces already good results for various use cases. Let us know if not and create an issue!
 
