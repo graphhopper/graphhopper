@@ -398,7 +398,7 @@ GHRequest.prototype.createGeocodeURL = function (host, prevIndex) {
     if (host)
         tmpHost = host;
 
-    var path = this.createPath(tmpHost + "/geocode?limit=8&type=" + this.dataType + "&key=" + this.key + "&locale=" + this.locale);
+    var path = this.createPath(tmpHost + "/geocode?limit=8&type=" + this.dataType + "&key=" + this.key);
     if (prevIndex >= 0 && prevIndex < this.route.size()) {
         var point = this.route.getIndex(prevIndex);
         path += "&lat=" + point.lat + "&lon=" + point.lng;
