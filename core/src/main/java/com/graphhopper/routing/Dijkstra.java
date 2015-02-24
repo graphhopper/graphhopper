@@ -38,11 +38,11 @@ import com.graphhopper.util.EdgeIterator;
  */
 public class Dijkstra extends AbstractRoutingAlgorithm
 {
-    private TIntObjectMap<EdgeEntry> fromMap;
-    private PriorityQueue<EdgeEntry> fromHeap;
+    protected TIntObjectMap<EdgeEntry> fromMap;
+    protected PriorityQueue<EdgeEntry> fromHeap;
+    protected EdgeEntry currEdge;
     private int visitedNodes;
     private int to = -1;
-    private EdgeEntry currEdge;
 
     public Dijkstra( Graph g, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
@@ -66,16 +66,17 @@ public class Dijkstra extends AbstractRoutingAlgorithm
         {
             fromMap.put(from, currEdge);
         }
-        return runAlgo();
+        runAlgo();
+        return extractPath();
     }
 
-    private Path runAlgo()
+    protected void runAlgo()
     {
         EdgeExplorer explorer = outEdgeExplorer;
         while (true)
         {
             visitedNodes++;
-            if (finished())
+            if (isWeightLimitReached() || finished())
                 break;
 
             int startNode = currEdge.adjNode;
@@ -111,13 +112,12 @@ public class Dijkstra extends AbstractRoutingAlgorithm
             }
 
             if (fromHeap.isEmpty())
-                return createEmptyPath();
+                break;
 
             currEdge = fromHeap.poll();
             if (currEdge == null)
                 throw new AssertionError("Empty edge cannot happen");
         }
-        return extractPath();
     }
 
     @Override
@@ -129,20 +129,26 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     @Override
     protected Path extractPath()
     {
-        if (currEdge == null || !finished())
+        if (currEdge == null || isWeightLimitReached() || !finished())
             return createEmptyPath();
-        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setEdgeEntry(currEdge).extract();
-    }
 
-    @Override
-    public String getName()
-    {
-        return AlgorithmOptions.DIJKSTRA;
+        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setEdgeEntry(currEdge).extract();
     }
 
     @Override
     public int getVisitedNodes()
     {
         return visitedNodes;
+    }
+
+    protected boolean isWeightLimitReached()
+    {
+        return currEdge.weight >= weightLimit;
+    }
+
+    @Override
+    public String getName()
+    {
+        return AlgorithmOptions.DIJKSTRA;
     }
 }

@@ -32,7 +32,7 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
 {
     @Override
     public RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts )
-    {
+    {        
         AbstractRoutingAlgorithm algo;
         String algoStr = opts.getAlgorithm();
         if (AlgorithmOptions.DIJKSTRA_BI.equalsIgnoreCase(algoStr))

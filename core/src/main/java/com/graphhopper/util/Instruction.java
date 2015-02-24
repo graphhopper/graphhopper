@@ -17,11 +17,16 @@
  */
 package com.graphhopper.util;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Instruction
 {
     private static final AngleCalc ac = new AngleCalc();
+
+    public static final int LEAVE_ROUNDABOUT = -6; // for future use
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
     public static final int TURN_SLIGHT_LEFT = -1;
@@ -31,18 +36,20 @@ public class Instruction
     public static final int TURN_SHARP_RIGHT = 3;
     public static final int FINISH = 4;
     public static final int REACHED_VIA = 5;
+    public static final int USE_ROUNDABOUT = 6;
+
     protected int sign;
-    private final String name;
-    private double distance;
-    private long time;
-    final PointList points;
-    private final InstructionAnnotation annotation;
+    protected String name;
+    protected double distance;
+    protected long time;
+    protected final PointList points;
+    protected final InstructionAnnotation annotation;
 
     /**
      * The points, distances and times have exactly the same count. The last point of this
      * instruction is not duplicated here and should be in the next one.
      */
-    public Instruction( int sign, String name, InstructionAnnotation ia, PointList pl )
+    public Instruction( int sign, String name, InstructionAnnotation ia, PointList pl)
     {
         this.sign = sign;
         this.name = name;
@@ -55,17 +62,32 @@ public class Instruction
         return annotation;
     }
 
+    /**
+     * The instruction for the person/driver to execute.
+     */
     public int getSign()
     {
         return sign;
     }
 
-    /**
-     * The instruction for the person/driver to execute.
-     */
     public String getName()
     {
         return name;
+    }
+
+    public void setName(String name)
+    {
+        this.name = name;
+    }
+
+    public Map<String,Object> getExtraInfoJSON()
+    {
+        return Collections.<String, Object>emptyMap();
+    }
+
+    public void setExtraInfo(String key, Object value)
+    {
+        throw new IllegalArgumentException("Key" + key + " is not a valid option");
     }
 
     public Instruction setDistance( double distance )
@@ -223,7 +245,7 @@ public class Instruction
     public String getTurnDescription( Translation tr )
     {
         String str;
-        String n = getName();
+        String streetName = getName();
         int indi = getSign();
         if (indi == Instruction.FINISH)
         {
@@ -233,7 +255,7 @@ public class Instruction
             str = tr.tr("stopover", ((FinishInstruction) this).getViaPosition());
         } else if (indi == Instruction.CONTINUE_ON_STREET)
         {
-            str = Helper.isEmpty(n) ? tr.tr("continue") : tr.tr("continue_onto", n);
+            str = Helper.isEmpty(streetName) ? tr.tr("continue") : tr.tr("continue_onto", streetName);
         } else
         {
             String dir = null;
@@ -261,7 +283,7 @@ public class Instruction
             if (dir == null)
                 throw new IllegalStateException("Indication not found " + indi);
 
-            str = Helper.isEmpty(n) ? tr.tr("turn", dir) : tr.tr("turn_onto", dir, n);
+            str = Helper.isEmpty(streetName) ? tr.tr("turn", dir) : tr.tr("turn_onto", dir, streetName);
         }
         return str;
     }

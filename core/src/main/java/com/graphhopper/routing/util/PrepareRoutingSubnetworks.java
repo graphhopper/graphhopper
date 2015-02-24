@@ -43,7 +43,7 @@ public class PrepareRoutingSubnetworks
     private final GraphStorage g;
     private final EdgeFilter edgeFilter;
     private int minNetworkSize = 200;
-    private int minOnewayNetworkSize = 0;
+    private int minOneWayNetworkSize = 0;
     private int subNetworks = -1;
     private final AtomicInteger maxEdgesPerNode = new AtomicInteger(0);
     private FlagEncoder singleEncoder;
@@ -64,9 +64,9 @@ public class PrepareRoutingSubnetworks
         return this;
     }
 
-    public PrepareRoutingSubnetworks setMinOnewayNetworkSize( int minOnewayNetworkSize )
+    public PrepareRoutingSubnetworks setMinOneWayNetworkSize( int minOnewayNetworkSize )
     {
-        this.minOnewayNetworkSize = minOnewayNetworkSize;
+        this.minOneWayNetworkSize = minOnewayNetworkSize;
         return this;
     }
 
@@ -77,7 +77,7 @@ public class PrepareRoutingSubnetworks
         keepLargeNetworks(map);
 
         int unvisitedDeadEnds = -1;
-        if ((this.minOnewayNetworkSize > 0) && singleEncoder != null)
+        if ((this.minOneWayNetworkSize > 0) && singleEncoder != null)
             unvisitedDeadEnds = removeDeadEndUnvisitedNetworks(singleEncoder);
 
         logger.info("optimize to remove subnetworks (" + map.size() + "), zero-degree-nodes (" + del + "), "
@@ -245,8 +245,7 @@ public class PrepareRoutingSubnetworks
         int removed = 0;
         for (TIntArrayList component : components)
         {
-
-            if (component.size() < minOnewayNetworkSize)
+            if (component.size() < minOneWayNetworkSize)
             {
                 for (int i = 0; i < component.size(); i++)
                 {

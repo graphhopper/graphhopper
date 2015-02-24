@@ -83,6 +83,14 @@
             <artifactId>osmosis-osm-binary</artifactId>
             <version>0.43.1</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20140107</version>
+            <scope>test</scope>
+        </dependency>
+        
     </dependencies>
         
     <build>

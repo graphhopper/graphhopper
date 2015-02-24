@@ -43,3 +43,7 @@ unpaved=onverhard
 stopover=tussenbestemming %1$s
 roundaboutInstruction=ga de rotonde op en neem afrit %1$s
 roundaboutInstructionWithDir=ga de rotonde op en neem afrit %1$s richting %2$s
+roundaboutInstructionOnto=
+roundaboutEnter=
+roundaboutExit=
+roundaboutExitOnto=

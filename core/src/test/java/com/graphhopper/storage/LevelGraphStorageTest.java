@@ -19,9 +19,13 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.BBox;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -43,7 +47,7 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
     }
 
     @Test
-    public void testCannotBeLoadedViaDifferentClass()
+    public void testCannotBeLoadedWithNormalGraphHopperStorageClass()
     {
         GraphStorage g = newGraph(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
         g.flush();
@@ -60,6 +64,8 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
 
         g = newGraph(new RAMDirectory(defaultGraphLoc, true), false);
         assertTrue(g.loadExisting());
+        // empty graph still has invalid bounds
+        assertEquals(g.getBounds(), BBox.createInverse(false));
     }
 
     @Test

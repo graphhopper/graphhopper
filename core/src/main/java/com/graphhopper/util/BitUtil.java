@@ -195,6 +195,9 @@ public abstract class BitUtil
 
     public abstract byte[] fromBitString( String str );
 
+    /**
+     * Similar to Long.toBinaryString
+     */
     public final String toBitString( long value )
     {
         return toBitString(value, 64);
@@ -275,7 +278,7 @@ public abstract class BitUtil
         return (int) (longValue >> 32);
     }
 
-    public final long combineIntsToLong( int intLow, int intHigh)
+    public final long combineIntsToLong( int intLow, int intHigh )
     {
         return ((long) intHigh << 32) | (intLow & 0xFFFFFFFFL);
     }

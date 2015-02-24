@@ -31,9 +31,9 @@ import java.util.List;
 public class PathMerger
 {
     private boolean enableInstructions = true;
-    private boolean simplifyResponse = false;
+    private boolean simplifyResponse = true;
     private DouglasPeucker douglasPeucker;
-    private boolean calcPoints;
+    private boolean calcPoints = true;
 
     public void doWork( GHResponse rsp, List<Path> paths, Translation tr )
     {
@@ -60,7 +60,11 @@ public class PathMerger
                 if (!il.isEmpty())
                 {
                     if (fullPoints.isEmpty())
-                        fullPoints = createSimilarPL(il.get(0).getPoints());
+                    {
+                        PointList pl = il.get(0).getPoints();
+                        // do a wild guess about the total number of points to avoid reallocation a bit
+                        fullPoints = new PointList(il.size() * Math.min(10, pl.size()), pl.is3D());
+                    }
 
                     for (Instruction i : il)
                     {
@@ -86,7 +90,7 @@ public class PathMerger
             {
                 PointList tmpPoints = path.calcPoints();
                 if (fullPoints.isEmpty())
-                    fullPoints = createSimilarPL(tmpPoints);
+                    fullPoints = new PointList(tmpPoints.size(), tmpPoints.is3D());
 
                 if (simplifyResponse)
                 {
@@ -119,11 +123,6 @@ public class PathMerger
                 setRouteWeight(fullWeight).
                 setDistance(fullDistance).
                 setMillis(fullMillis);
-    }
-
-    PointList createSimilarPL( PointList pl )
-    {
-        return new PointList(pl.size(), pl.is3D());
     }
 
     public PathMerger setCalcPoints( boolean calcPoints )

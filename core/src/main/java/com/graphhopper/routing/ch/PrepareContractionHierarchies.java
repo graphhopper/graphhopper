@@ -590,8 +590,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     continue;
 
                 double existingDistSum = v_u_dist + outgoingEdges.getDistance();
-                prepareAlgo.setLimitWeight(existingDirectWeight)
-                        .setLimitVisitedNodes((int) meanDegree * 100)
+                prepareAlgo.setWeightLimit(existingDirectWeight);
+                prepareAlgo.setLimitVisitedNodes((int) meanDegree * 100)
                         .setEdgeFilter(ignoreNodeFilter.setAvoidNode(sch.getNode()));
 
                 dijkstraSW.start();
@@ -792,9 +792,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     if (finishedFrom && finishedTo)
                         return true;
 
+                    if (currFrom.weight + currTo.weight > weightLimit)
+                        return true;
+
                     // changed finish condition for CH
-                    double tmpWeight = bestPath.getWeight();
-                    return currFrom.weight >= tmpWeight && currTo.weight >= tmpWeight;
+                    return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
                 }
 
                 @Override
@@ -835,6 +837,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 {
                     // we need to finish BOTH searches for CH!
                     if (finishedFrom && finishedTo)
+                        return true;
+
+                    if (currFrom.weight + currTo.weight > weightLimit)
                         return true;
 
                     // changed also the final finish condition for CH                

@@ -63,6 +63,7 @@ public class GraphHopper implements GraphHopperAPI
     boolean enableInstructions = true;
     private boolean fullyLoaded = false;
     // for routing
+    private double defaultWeightLimit = Double.MAX_VALUE;
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private String defaultVehicleStr;
@@ -73,7 +74,7 @@ public class GraphHopper implements GraphHopperAPI
     private int maxRegionSearch = 4;
     // for prepare
     private int minNetworkSize = 200;
-    private int minOnewayNetworkSize = 0;
+    private int minOneWayNetworkSize = 0;
     // for CH prepare    
     private boolean doPrepare = true;
     private boolean chEnabled = true;
@@ -116,6 +117,9 @@ public class GraphHopper implements GraphHopperAPI
     {
         ensureNotLoaded();
         this.encodingManager = em;
+        if (em.needsTurnCostsSupport())
+            traversalMode = TraversalMode.EDGE_BASED_2DIR;
+
         return this;
     }
 
@@ -180,18 +184,18 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Configures the underlying storage to be used on a well equipped server.
+     * Configures the underlying storage and response to be used on a well equipped server. Result
+     * also optimized for usage in the web module i.e. try reduce network IO.
      */
     public GraphHopper forServer()
     {
-        // simplify to reduce network IO
         setSimplifyResponse(true);
         return setInMemory();
     }
 
     /**
-     * Configures the underlying storage to be used on a Desktop computer with enough RAM but no
-     * network latency.
+     * Configures the underlying storage to be used on a Desktop computer or within another Java
+     * application with enough RAM but no network latency.
      */
     public GraphHopper forDesktop()
     {
@@ -200,8 +204,8 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Configures the underlying storage to be used on a less powerful machine like Android and
-     * Raspberry Pi with only few RAM.
+     * Configures the underlying storage to be used on a less powerful machine like Android or
+     * Raspberry Pi with only few MB of RAM.
      */
     public GraphHopper forMobile()
     {
@@ -219,6 +223,12 @@ public class GraphHopper implements GraphHopperAPI
         ensureNotLoaded();
         preciseIndexResolution = precision;
         return this;
+    }
+
+    public void setMinNetworkSize( int minNetworkSize, int minOneWayNetworkSize )
+    {
+        this.minNetworkSize = minNetworkSize;
+        this.minOneWayNetworkSize = minOneWayNetworkSize;
     }
 
     /**
@@ -304,8 +314,8 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Disables the "CH-preparation" preparation only. Use only if you know what you do. To disable
-     * the full usage of CH use setCHEnable(false) instead.
+     * <<<<<<< HEAD Disables the "CH-preparation" preparation only. Use only if you know what you
+     * do. To disable the full usage of CH use setCHEnable(false) instead.
      */
     public GraphHopper setDoPrepare( boolean doPrepare )
     {
@@ -315,7 +325,11 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * Enables or disables contraction hierarchies (CH). Enabled by default, this is called speed-up
-     * mode. Without CH it is called flexibility mode.
+     * mode. Without CH it is called flexibility mode. ======= Enables or disables contraction
+     * hierarchies. Enabled by default. Disabling CH is only recommended for a small area or in
+     * combination with setDefaultWeightLimit
+     * <p>
+     * @see #setDefaultWeightLimit(double) >>>>>>> master
      */
     public GraphHopper setCHEnable( boolean enable )
     {
@@ -323,6 +337,17 @@ public class GraphHopper implements GraphHopperAPI
         algoFactory = null;
         chEnabled = enable;
         return this;
+    }
+
+    /**
+     * This methods stops the algorithm from searching further if the resulting path would go over
+     * specified weight, important if CH is disabled. The unit is defined by the used weighting
+     * created from createWeighting, e.g. distance for shortest or seconds for the standard
+     * FastestWeighting implementation.
+     */
+    public void setDefaultWeightLimit( double defaultWeightLimit )
+    {
+        this.defaultWeightLimit = defaultWeightLimit;
     }
 
     public boolean isCHEnabled()
@@ -542,7 +567,7 @@ public class GraphHopper implements GraphHopperAPI
 
         // optimizable prepare
         minNetworkSize = args.getInt("prepare.minNetworkSize", minNetworkSize);
-        minOnewayNetworkSize = args.getInt("prepare.minOnewayNetworkSize", minOnewayNetworkSize);
+        minOneWayNetworkSize = args.getInt("prepare.minOneWayNetworkSize", minOneWayNetworkSize);
 
         // prepare CH
         doPrepare = args.getBool("prepare.doPrepare", doPrepare);
@@ -559,9 +584,7 @@ public class GraphHopper implements GraphHopperAPI
         // osm import
         osmReaderWayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", osmReaderWayPointMaxDistance);
         String flagEncoders = args.get("graph.flagEncoders", "");
-        if (flagEncoders.toLowerCase().contains("turncosts=true"))
-            traversalMode = TraversalMode.EDGE_BASED_2DIR;
-        encodingManager = new EncodingManager(flagEncoders, bytesForFlags);
+        setEncodingManager(new EncodingManager(flagEncoders, bytesForFlags));
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
 
@@ -571,6 +594,9 @@ public class GraphHopper implements GraphHopperAPI
         // index
         preciseIndexResolution = args.getInt("index.highResolution", preciseIndexResolution);
         maxRegionSearch = args.getInt("index.maxRegionSearch", maxRegionSearch);
+
+        // routing
+        defaultWeightLimit = args.getDouble("routing.defaultWeightLimit", defaultWeightLimit);
         return this;
     }
 
@@ -857,12 +883,6 @@ public class GraphHopper implements GraphHopperAPI
     @Override
     public GHResponse route( GHRequest request )
     {
-        if (graph == null || !fullyLoaded)
-            throw new IllegalStateException("Call load or importOrLoad before routing");
-
-        if (graph.isClosed())
-            throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
-
         GHResponse response = new GHResponse();
         List<Path> paths = getPaths(request, response);
         if (response.hasErrors())
@@ -885,6 +905,12 @@ public class GraphHopper implements GraphHopperAPI
 
     protected List<Path> getPaths( GHRequest request, GHResponse rsp )
     {
+        if (graph == null || !fullyLoaded)
+            throw new IllegalStateException("Call load or importOrLoad before routing");
+
+        if (graph.isClosed())
+            throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
+
         String vehicle = request.getVehicle();
         if (vehicle.isEmpty())
             vehicle = getDefaultVehicle();
@@ -943,6 +969,7 @@ public class GraphHopper implements GraphHopperAPI
         Weighting weighting = createWeighting(request.getHints(), encoder);
         weighting = createTurnWeighting(weighting, queryGraph, encoder);
 
+        double weightLimit = request.getHints().getDouble("defaultWeightLimit", defaultWeightLimit);
         String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
         AlgorithmOptions algoOpts = AlgorithmOptions.start().algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).build();
 
@@ -951,6 +978,7 @@ public class GraphHopper implements GraphHopperAPI
             QueryResult toQResult = qResults.get(placeIndex);
             sw = new StopWatch().start();
             RoutingAlgorithm algo = getAlgorithmFactory().createAlgo(queryGraph, algoOpts);
+            algo.setWeightLimit(weightLimit);
             debug += ", algoInit:" + sw.stop().getSeconds() + "s";
 
             sw = new StopWatch().start();
@@ -1041,7 +1069,7 @@ public class GraphHopper implements GraphHopperAPI
         int prev = graph.getNodes();
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(graph, encodingManager);
         preparation.setMinNetworkSize(minNetworkSize);
-        preparation.setMinOnewayNetworkSize(this.minOnewayNetworkSize);
+        preparation.setMinOneWayNetworkSize(minOneWayNetworkSize);
         logger.info("start finding subnetworks, " + Helper.getMemInfo());
         preparation.doWork();
         int n = graph.getNodes();
