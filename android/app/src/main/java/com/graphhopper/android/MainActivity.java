@@ -259,7 +259,11 @@ public class MainActivity extends Activity
             @Override
             protected void onPostExecute( List<String> nameList )
             {
-                if (hasError() || nameList.isEmpty())
+                if(nameList.isEmpty())
+                {
+                    logUser("No maps created for your version!? " + fileListURL);
+                    return;
+                } else if (hasError())
                 {
                     getError().printStackTrace();
                     logUser("Are you connected to the internet? Problem while fetching remote area list: "
@@ -538,6 +542,7 @@ public class MainActivity extends Activity
 
     private void logUser( String str )
     {
+        log(str);
         Toast.makeText(this, str, Toast.LENGTH_LONG).show();
     }
     private static final int NEW_MENU_ID = Menu.FIRST + 1;
