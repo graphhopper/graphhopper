@@ -280,13 +280,21 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * This method sets the default vehicle to use if no vehicle is specified in the GHRequest
-     * object.
+     * object. Per default the lexicographically first vehicle is used.
      */
     public void setDefaultVehicle( String defaultVehicleStr )
     {
+        if (this.defaultVehicleStr != null)
+            throw new RuntimeException("Cannot change default vehicle " + this.defaultVehicleStr + " to " + defaultVehicleStr);
+
         this.defaultVehicleStr = defaultVehicleStr;
     }
 
+    /**
+     * The default vehicle is the single vehicle used for CH preparation as well as the default
+     * vehicle if no specified in GHRequest. Per default the lexicographically first vehicle is
+     * used.
+     */
     public String getDefaultVehicle()
     {
         if (defaultVehicleStr == null)
@@ -314,8 +322,8 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * <<<<<<< HEAD Disables the "CH-preparation" preparation only. Use only if you know what you
-     * do. To disable the full usage of CH use setCHEnable(false) instead.
+     * Disables the "CH-preparation" preparation only. Use only if you know what you do. To disable
+     * the full usage of CH use setCHEnable(false) instead.
      */
     public GraphHopper setDoPrepare( boolean doPrepare )
     {
@@ -324,12 +332,11 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Enables or disables contraction hierarchies (CH). Enabled by default, this is called speed-up
-     * mode. Without CH it is called flexibility mode. ======= Enables or disables contraction
-     * hierarchies. Enabled by default. Disabling CH is only recommended for a small area or in
-     * combination with setDefaultWeightLimit
+     * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
+     * Disabling CH is only recommended for short routes or in combination with
+     * setDefaultWeightLimit and called flexibility mode
      * <p>
-     * @see #setDefaultWeightLimit(double) >>>>>>> master
+     * @see #setDefaultWeightLimit(double)
      */
     public GraphHopper setCHEnable( boolean enable )
     {
@@ -961,7 +968,19 @@ public class GraphHopper implements GraphHopperAPI
             return Collections.emptyList();
 
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
-        QueryGraph queryGraph = new QueryGraph(graph);
+
+        QueryGraph queryGraph;
+        RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory();
+        if (chEnabled && !vehicle.equals(getDefaultVehicle()))
+        {
+            // fall back to normal traversing
+            tmpAlgoFactory = new RoutingAlgorithmFactorySimple();
+            queryGraph = new QueryGraph(graph.getBaseGraph());
+        } else
+        {
+            queryGraph = new QueryGraph(graph);
+        }
+
         queryGraph.lookup(qResults);
 
         List<Path> paths = new ArrayList<Path>(points.size() - 1);
@@ -971,13 +990,15 @@ public class GraphHopper implements GraphHopperAPI
 
         double weightLimit = request.getHints().getDouble("defaultWeightLimit", defaultWeightLimit);
         String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
-        AlgorithmOptions algoOpts = AlgorithmOptions.start().algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).build();
+        AlgorithmOptions algoOpts = AlgorithmOptions.start().
+                algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).
+                build();
 
         for (int placeIndex = 1; placeIndex < points.size(); placeIndex++)
         {
             QueryResult toQResult = qResults.get(placeIndex);
             sw = new StopWatch().start();
-            RoutingAlgorithm algo = getAlgorithmFactory().createAlgo(queryGraph, algoOpts);
+            RoutingAlgorithm algo = tmpAlgoFactory.createAlgo(queryGraph, algoOpts);
             algo.setWeightLimit(weightLimit);
             debug += ", algoInit:" + sw.stop().getSeconds() + "s";
 
@@ -1057,7 +1078,7 @@ public class GraphHopper implements GraphHopperAPI
         if (tmpPrepare)
         {
             ensureWriteAccess();
-            logger.info("calling prepare.doWork for " + encodingManager.toString() + " ... (" + Helper.getMemInfo() + ")");
+            logger.info("calling prepare.doWork for " + getDefaultVehicle() + " ... (" + Helper.getMemInfo() + ")");
             ((PrepareContractionHierarchies) algoFactory).doWork();
             graph.getProperties().put("prepare.date", formatDateTime(new Date()));
         }

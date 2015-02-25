@@ -288,7 +288,7 @@ public class GraphHopperIT
     {
         String tmpOsmFile = "files/monaco.osm.gz";
         String tmpVehicle = "car";
-        String tmpImportVehicles = "car";
+        String tmpImportVehicles = "foot,car";
         String tmpWeightCalcStr = "fastest";
 
         GraphHopper tmpHopper = new GraphHopper().
@@ -297,6 +297,10 @@ public class GraphHopperIT
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager(tmpImportVehicles)).
                 importOrLoad();
+
+        // lexicographically first vehicle
+        assertEquals(tmpVehicle, tmpHopper.getDefaultVehicle());
+        assertFalse(RoutingAlgorithmFactorySimple.class.isAssignableFrom(tmpHopper.getAlgorithmFactory().getClass()));
 
         GHResponse rsp = tmpHopper.route(new GHRequest(43.745084, 7.430513, 43.745247, 7.430347)
                 .setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
@@ -310,5 +314,29 @@ public class GraphHopperIT
                 .setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
 
         assertEquals(1, ((RoundaboutInstruction) rsp.getInstructions().get(1)).getExitNumber());
+    }
+
+    @Test
+    public void testMultipleVehiclesAndCH()
+    {
+        String tmpOsmFile = "files/monaco.osm.gz";
+        String tmpImportVehicles = "foot,car";
+
+        GraphHopper tmpHopper = new GraphHopper().
+                setStoreOnFlush(true).
+                setOSMFile(tmpOsmFile).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager(tmpImportVehicles)).
+                importOrLoad();
+
+        GHResponse rsp = tmpHopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
+                .setVehicle("car"));
+        assertEquals(207, rsp.getMillis() / 1000f, 1);
+        assertEquals(2838, rsp.getDistance(), 1);        
+
+        rsp = tmpHopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
+                .setVehicle("foot"));
+        assertEquals(1574, rsp.getMillis() / 1000f, 1);
+        assertEquals(2187, rsp.getDistance(), 1);        
     }
 }
