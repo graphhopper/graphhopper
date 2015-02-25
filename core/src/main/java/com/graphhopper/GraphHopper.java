@@ -810,14 +810,14 @@ public class GraphHopper implements GraphHopperAPI
      */
     protected void postProcessing()
     {
+        initLocationIndex();
         if (chEnabled)
             algoFactory = createPrepare();
         else
             algoFactory = new RoutingAlgorithmFactorySimple();
 
         if (!isPrepared())
-            prepare();
-        initLocationIndex();
+            prepare();        
     }
 
     private boolean isPrepared()
