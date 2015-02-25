@@ -252,7 +252,7 @@ public class Path
         int len = edgeIds.size();
         for (int i = 0; i < len; i++)
         {
-            EdgeIteratorState edgeBase = graph.getBaseGraph().getEdgeProps(edgeIds.get(i), tmpNode);
+            EdgeIteratorState edgeBase = graph.getEdgeProps(edgeIds.get(i), tmpNode);
             if (edgeBase == null)
                 throw new IllegalStateException("Edge " + edgeIds.get(i) + " was empty when requested with node " + tmpNode
                         + ", array index:" + i + ", edges:" + edgeIds.size());
@@ -434,13 +434,13 @@ public class Path
                 } else
                 {
                     if (isRoundabout)
-                        // remark: names and annotations within roundabout are ignored
+                    // remark: names and annotations within roundabout are ignored
                     {
                         if (!prevInRoundabout) //just entered roundabout
                         {
                             int sign = Instruction.USE_ROUNDABOUT;
                             RoundaboutInstruction roundaboutInstruction = new RoundaboutInstruction(sign, name,
-                                                                annotation, new PointList(10, nodeAccess.is3D()));
+                                    annotation, new PointList(10, nodeAccess.is3D()));
                             if (prevName != null)
                             {
                                 // previous orientation is last orientation before entering roundabout
@@ -468,7 +468,10 @@ public class Path
                         // This could lead to problems if there are non-complete roundabouts!
                         EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(adjNode);
                         edgeIter.next();
-                        if (edgeIter.next()) {((RoundaboutInstruction) prevInstruction).increaseExitNumber();}
+                        if (edgeIter.next())
+                        {
+                            ((RoundaboutInstruction) prevInstruction).increaseExitNumber();
+                        }
 
                     } else if (prevInRoundabout) //previously in roundabout but not anymore
                     {
@@ -487,9 +490,9 @@ public class Path
                         double deltaOut = (orientation - recentOrientation);
 
                         prevInstruction = ((RoundaboutInstruction) prevInstruction)
-                            .setRadian(deltaInOut)
-                            .setDirOfRotation(deltaOut)
-                            .setExited();
+                                .setRadian(deltaInOut)
+                                .setDirOfRotation(deltaOut)
+                                .setExited();
 
                         prevName = name;
                         prevAnnotation = annotation;
@@ -532,7 +535,7 @@ public class Path
                                 sign = Instruction.TURN_SHARP_RIGHT;
 
                         }
-                        prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()) );
+                        prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
                         ways.add(prevInstruction);
                         prevName = name;
                         prevAnnotation = annotation;
@@ -545,12 +548,11 @@ public class Path
                 {
                     doublePrevLat = prevLat;
                     doublePrevLong = prevLon;
-                }
-                else
+                } else
                 {
                     int beforeLast = wayGeo.getSize() - 2;
                     doublePrevLat = wayGeo.getLatitude(beforeLast);
-                    doublePrevLong =  wayGeo.getLongitude(beforeLast);
+                    doublePrevLong = wayGeo.getLongitude(beforeLast);
                 }
                 prevInRoundabout = isRoundabout;
                 prevLat = adjLat;
