@@ -111,7 +111,7 @@ function packageCoreJar {
 function prepareEclipse {
  ensureMaven   
  packageCoreJar
- cp core/target/graphhopper-*-android.jar android/libs/   
+ # cp core/target/graphhopper-*-android.jar android/libs/   
 }
 
 

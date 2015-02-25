@@ -27,3 +27,6 @@ core/docs/
 cgiarprovider/
 /nbactions.xml
 tools/nb-configuration.xml
+android/build/
+android/app/build/
+android/.gradle

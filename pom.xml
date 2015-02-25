@@ -185,7 +185,7 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <modules>
-                <module>android</module>
+                <module>android/app</module>
             </modules>
         </profile>
     </profiles>

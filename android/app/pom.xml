@@ -118,7 +118,7 @@
         -->
         <sourceDirectory>src</sourceDirectory>        
         <finalName>${project.artifactId}</finalName>        
-
+        
         <plugins>     
             <!-- android (apache harmony) is nearly java but not really 1.6 -->
             <plugin>
@@ -136,7 +136,7 @@
                 <!-- See http://code.google.com/p/maven-android-plugin/ -->
                 <groupId>com.jayway.maven.plugins.android.generation2</groupId>
                 <artifactId>android-maven-plugin</artifactId>
-                <version>3.8.2</version>
+                <version>4.0.0-rc.2</version>
                 <extensions>true</extensions>
                 <configuration>
                     <sdk>
@@ -145,6 +145,7 @@
                     </sdk>
                     <deleteConflictingFiles>true</deleteConflictingFiles>
                     <undeployBeforeDeploy>true</undeployBeforeDeploy>
+		    
                     <!--
                     bug in maven plugin I think
                     <extractDuplicates>true</extractDuplicates>
