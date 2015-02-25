@@ -59,7 +59,7 @@ For [_Contraction Hierarchies_](http://ad-wiki.informatik.uni-freiburg.de/teachi
 See issue [#116](https://github.com/graphhopper/graphhopper/issues/116) for the progress of this feature.
 
 In order to traverse the _LevelGraph_ like a normal _Graph_ one needs to hide the shortcuts, which
-is done automatically for you if you call graph.getOriginalGraph(). This is necessary in a 
+is done automatically for you if you call graph.getBaseGraph(). This is necessary in a 
 _LocationIndex_ and partially in the _Path_ class in order to identify how many streets leave a junction
 or similar. See #116 for more information.
 
