@@ -188,7 +188,7 @@ public class MainActivity extends Activity
             logUser("Preparation still in progress");
             return false;
         }
-        log("Prepare finished but hopper not ready. This happens when there was an error while loading the files");
+        logUser("Prepare finished but hopper not ready. This happens when there was an error while loading the files");
         return false;
     }
 
