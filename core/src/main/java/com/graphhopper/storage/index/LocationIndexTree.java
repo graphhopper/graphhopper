@@ -20,11 +20,11 @@ package com.graphhopper.storage.index;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.geohash.SpatialKeyAlgo;
-import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -74,8 +74,15 @@ public class LocationIndexTree implements LocationIndex
      */
     private double equalNormedDelta;
 
+    /**
+     * @param g the graph for which this index should do the lookup based on latitude,longitude.
+     * @param dir
+     */
     public LocationIndexTree( Graph g, Directory dir )
     {
+        if (g instanceof LevelGraph)
+            throw new IllegalArgumentException("Call LevelGraph.getBaseGraph() instead of using the LevelGraph itself");
+
         MAGIC_INT = Integer.MAX_VALUE / 22316;
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
@@ -374,7 +381,7 @@ public class LocationIndexTree implements LocationIndex
 
         void prepare()
         {
-            final EdgeIterator allIter = getAllEdges();
+            final EdgeIterator allIter = graph.getAllEdges();
             try
             {
                 while (allIter.next())
@@ -418,7 +425,7 @@ public class LocationIndexTree implements LocationIndex
                     long key = keyAlgo.encode(lat, lon);
                     long keyPart = createReverseKey(key);
                     // no need to feed both nodes as we search neighbors in fillIDs
-                    addNode(root, pickBestNode(nodeA, nodeB), 0, keyPart, key);
+                    addNode(root, nodeA, 0, keyPart, key);
                 }
             };
             BresenhamLine.calcPoints(lat1, lon1, lat2, lon2, pointEmitter,
@@ -787,7 +794,7 @@ public class LocationIndexTree implements LocationIndex
         // clone storedIds to avoid interference with forEach
         final GHBitSet checkBitset = new GHTBitSet(new TIntHashSet(storedNetworkEntryIds));
         // find nodes from the network entries which are close to 'point'
-        final EdgeExplorer explorer = graph.createEdgeExplorer(getEdgeFilter());
+        final EdgeExplorer explorer = graph.createEdgeExplorer();
         storedNetworkEntryIds.forEach(new TIntProcedure()
         {
             @Override
@@ -936,23 +943,6 @@ public class LocationIndexTree implements LocationIndex
         protected abstract double getQueryDistance();
 
         protected abstract boolean check( int node, double normedDist, int wayIndex, EdgeIteratorState iter, QueryResult.Position pos );
-    }
-
-    protected int pickBestNode( int nodeA, int nodeB )
-    {
-        // For normal graph the node does not matter because if nodeA is conntected to nodeB
-        // then nodeB is also connect to nodeA, but for a LevelGraph this does not apply.
-        return nodeA;
-    }
-
-    protected EdgeFilter getEdgeFilter()
-    {
-        return EdgeFilter.ALL_EDGES;
-    }
-
-    protected AllEdgesIterator getAllEdges()
-    {
-        return graph.getAllEdges();
     }
 
     // make entries static as otherwise we get an additional reference to this class (memory waste)

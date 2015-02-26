@@ -18,12 +18,7 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.ShortestWeighting;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
@@ -145,9 +140,60 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
             }
         };
 
-        footEncoder = new EncodingManager("FOOT").getSingle();
+        footEncoder = new FootFlagEncoder();
+        new EncodingManager(footEncoder);
+        
         super.testCalcFootPath();
         footEncoder = tmpFootEncoder;
         carEncoder = tmpCarEncoder;
+    }
+
+    @Test
+    public void testBaseGraph()
+    {
+        CarFlagEncoder carFE = new CarFlagEncoder();
+        Graph g = createGraph(new EncodingManager(carFE), false);
+        initDirectedAndDiffSpeed(g, carFE);
+
+        // do CH preparation for car
+        createFactory(g, defaultOpts);
+
+        // use base graph for solving normal Dijkstra
+        Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(g, defaultOpts).calcPath(0, 3);
+        assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.calcNodes());
+        assertEquals(p1.toString(), 402.293, p1.getDistance(), 1e-6);
+        assertEquals(p1.toString(), 144823, p1.getMillis());
+    }
+
+    @Test
+    public void testBaseGraphMultipleVehicles()
+    {
+        Graph g = createGraph(encodingManager, false);
+        initFootVsCar(g);
+
+        AlgorithmOptions footOptions = AlgorithmOptions.start().flagEncoder(footEncoder).
+                weighting(new FastestWeighting(footEncoder)).build();
+        AlgorithmOptions carOptions = AlgorithmOptions.start().flagEncoder(carEncoder).
+                weighting(new FastestWeighting(carEncoder)).build();
+
+        // do CH preparation for car
+        RoutingAlgorithmFactory contractedFactory = createFactory(g, carOptions);
+
+        // use contracted graph
+        Path p1 = contractedFactory.createAlgo(g, carOptions).calcPath(0, 7);
+        assertEquals(Helper.createTList(0, 4, 6, 7), p1.calcNodes());
+        assertEquals(p1.toString(), 15000, p1.getDistance(), 1e-6);
+
+        // use base graph for solving normal Dijkstra via car
+        Path p2 = new RoutingAlgorithmFactorySimple().createAlgo(g.getBaseGraph(), carOptions).calcPath(0, 7);
+        assertEquals(Helper.createTList(0, 4, 6, 7), p2.calcNodes());
+        assertEquals(p2.toString(), 15000, p2.getDistance(), 1e-6);
+        assertEquals(p2.toString(), 2700 * 1000, p2.getMillis());
+
+        // use base graph for solving normal Dijkstra via foot
+        Path p3 = new RoutingAlgorithmFactorySimple().createAlgo(g.getBaseGraph(), footOptions).calcPath(0, 7);
+        assertEquals(p3.toString(), 17000, p3.getDistance(), 1e-6);
+        assertEquals(p3.toString(), 12240 * 1000, p3.getMillis());
+        assertEquals(Helper.createTList(0, 4, 5, 7), p3.calcNodes());
     }
 }

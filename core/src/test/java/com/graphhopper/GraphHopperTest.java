@@ -74,8 +74,9 @@ public class GraphHopperTest
         assertEquals(3, rsp.getPoints().getSize());
 
         closableInstance.close();
-        closableInstance = new GraphHopper().setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("CAR"));
+        
+        // no encoding manager necessary
+        closableInstance = new GraphHopper().setStoreOnFlush(true);
         assertTrue(closableInstance.load(ghLoc));
         rsp = closableInstance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertFalse(rsp.hasErrors());
@@ -230,7 +231,7 @@ public class GraphHopperTest
         GHResponse rsp = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).
                 setAlgorithm(AlgorithmOptions.DIJKSTRA_BI));
         assertFalse(rsp.hasErrors());
-        assertEquals("(51.24921503475044,9.431716451757769), (52.0,9.0), (51.199999850988384,9.39999970197677)", rsp.getPoints().toString());
+        assertEquals(Helper.createPointList(51.249215, 9.431716, 52.0, 9.0, 51.2, 9.4), rsp.getPoints());
         assertEquals(3, rsp.getPoints().getSize());
     }
 
@@ -499,7 +500,7 @@ public class GraphHopperTest
                 init(new CmdArgs().
                         put("osmreader.osm", testOsm3).
                         put("prepare.minNetworkSize", "1").
-                        put("graph.acceptWay", "CAR")).
+                        put("graph.flagEncoders", "CAR")).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
 

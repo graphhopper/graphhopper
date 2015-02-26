@@ -273,7 +273,7 @@ public class PathTest
     {
         RoundaboutGraph rg = new RoundaboutGraph(false);
         rg.edge2change.setFlags(encoder.setBool(rg.edge2change.getFlags(), FlagEncoder.K_FORWARD, true));
-        Path p = new Dijkstra(rg.g, carManager.getSingle(), new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 8);
+        Path p = new Dijkstra(rg.g, encoder, new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 8);
         InstructionList wayList = p.calcInstructions(tr);
         // Test instructions
         List<String> tmpList = pick("text", wayList.createJson());
@@ -287,7 +287,7 @@ public class PathTest
         assertEquals(delta, instr.getRadian(), 0.01);
 
         // case of continuing a street through a roundabout
-        p = new Dijkstra(rg.g, carManager.getSingle(), new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 7);
+        p = new Dijkstra(rg.g, encoder, new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 7);
         wayList = p.calcInstructions(tr);
         tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto MainStreet",
@@ -308,7 +308,7 @@ public class PathTest
     {
         RoundaboutGraph rg = new RoundaboutGraph(false);
         rg.edge2change.setFlags(encoder.setBool(rg.edge2change.getFlags(), FlagEncoder.K_FORWARD, true));
-        Path p = new Dijkstra(rg.g, carManager.getSingle(), new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(2, 8);
+        Path p = new Dijkstra(rg.g, encoder, new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(2, 8);
         InstructionList wayList = p.calcInstructions(tr);
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList( "At roundabout, take exit 3 onto 5-8",
@@ -324,7 +324,7 @@ public class PathTest
     {
         RoundaboutGraph rg = new RoundaboutGraph(false);
         rg.edge2change.setFlags(encoder.setBool(rg.edge2change.getFlags(), FlagEncoder.K_FORWARD, false));
-        Path p = new Dijkstra(rg.g, carManager.getSingle(), new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 8);
+        Path p = new Dijkstra(rg.g, encoder, new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 8);
         InstructionList wayList = p.calcInstructions(tr);
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto MainStreet",
@@ -348,7 +348,7 @@ public class PathTest
         RoundaboutGraph rg = new RoundaboutGraph(true);
         System.out.println(rg.clockwise);
 
-        Path p = new Dijkstra(rg.g, carManager.getSingle(), new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 8);
+        Path p = new Dijkstra(rg.g, encoder, new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 8);
         InstructionList wayList = p.calcInstructions(tr);
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList( "Continue onto MainStreet",

@@ -259,8 +259,8 @@ elif [ "$ACTION" = "torture" ]; then
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.QueryTorture $3 $4 $5 $6 $7 $8 $9
 
 
-elif [ "$ACTION" = "miniui" ]; then
- "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/tools/pom.xml" -DskipTests clean install assembly:single
+elif [ "$ACTION" = "xminiui" ]; then
+ "$MAVEN_HOME/bin/mvn" --projects tools -DskipTests clean install assembly:single
  JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar   
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI osmreader.osm="$OSM_FILE" printVersion=true config=$CONFIG \
               graph.location="$GRAPH"
@@ -289,7 +289,7 @@ elif [ "$ACTION" = "measurement" ]; then
   
  if [ "$last_commits" = "" ]; then
    # use current version
-   "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests clean install assembly:single
+   "$MAVEN_HOME/bin/mvn" --projects core,tools -DskipTests clean install assembly:single
    startMeasurement
    exit
  fi
@@ -302,7 +302,7 @@ elif [ "$ACTION" = "measurement" ]; then
    M_FILE_NAME="measurement$M_FILE_NAME.properties"
    echo -e "\nusing commit $commit and $M_FILE_NAME"
    
-   "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests clean install assembly:single
+   "$MAVEN_HOME/bin/mvn" --projects core,tools -DskipTests clean install assembly:single
    startMeasurement
    echo -e "\nmeasurement.commit=$commit\n" >> "$M_FILE_NAME"
  done

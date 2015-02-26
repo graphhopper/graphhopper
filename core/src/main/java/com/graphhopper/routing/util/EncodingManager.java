@@ -113,6 +113,9 @@ public class EncodingManager
         {
             registerEncoder((AbstractFlagEncoder) flagEncoder);
         }
+
+        if (edgeEncoders.isEmpty())
+            throw new IllegalStateException("No vehicles found");
     }
 
     public int getBytesForFlags()
@@ -272,11 +275,6 @@ public class EncodingManager
         return flags;
     }
 
-    public int getVehicleCount()
-    {
-        return edgeEncoders.size();
-    }
-
     @Override
     public String toString()
     {
@@ -306,17 +304,6 @@ public class EncodingManager
         }
 
         return str.toString();
-    }
-
-    public FlagEncoder getSingle()
-    {
-        if (getVehicleCount() > 1)
-            throw new IllegalStateException("Multiple encoders are active. cannot return one:" + toString());
-
-        if (getVehicleCount() == 0)
-            throw new IllegalStateException("No encoder is active!");
-
-        return edgeEncoders.get(0);
     }
 
     public long flagsDefault( boolean forward, boolean backward )
@@ -415,6 +402,9 @@ public class EncodingManager
         }
     }
 
+    /**
+     * The returned list is never empty.
+     */
     public List<FlagEncoder> fetchEdgeEncoders()
     {
         List<FlagEncoder> list = new ArrayList<FlagEncoder>();
