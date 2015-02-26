@@ -148,7 +148,7 @@ public class GraphHopperStorage implements GraphStorage
     protected final int nextNodeEntryIndex( int sizeInBytes )
     {
         int tmp = nodeEntryIndex;
-        nodeEntryIndex += 4;
+        nodeEntryIndex += sizeInBytes;
         return tmp;
     }
 
