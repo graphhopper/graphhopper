@@ -70,10 +70,10 @@ public class TestAlgoCollector
         GHResponse rsp = new GHResponse();
         pathMerger.doWork(rsp, viaPaths, trMap.getWithFallBack(Locale.US));
 
-        if (!rsp.isFound())
+        if (rsp.hasErrors())
         {
-            errors.add(algoEntry + " returns no path! expected distance: " + rsp.getDistance()
-                    + ", expected points: " + oneRun + ". " + queryList);
+            errors.add(algoEntry + " response contains errors. Expected distance: " + rsp.getDistance()
+                    + ", expected points: " + oneRun + ". " + queryList + ", errors:" + rsp.getErrors());
             return this;
         }
 

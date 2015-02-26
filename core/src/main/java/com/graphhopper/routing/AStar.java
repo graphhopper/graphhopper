@@ -96,6 +96,9 @@ public class AStar extends AbstractRoutingAlgorithm
         {
             int currVertex = currEdge.adjNode;
             visitedCount++;
+            if (isWeightLimitReached())
+                return createEmptyPath();
+
             if (finished())
                 break;
 
@@ -109,7 +112,7 @@ public class AStar extends AbstractRoutingAlgorithm
                 int traversalId = traversalMode.createTraversalId(iter, false);
                 // cast to float to avoid rounding errors in comparison to float entry of AStarEdge weight
                 float alreadyVisitedWeight = (float) (weighting.calcWeight(iter, false, currEdge.edge)
-                                                      + currEdge.weightOfVisitedPath);
+                        + currEdge.weightOfVisitedPath);
                 if (Double.isInfinite(alreadyVisitedWeight))
                     continue;
 
@@ -124,7 +127,7 @@ public class AStar extends AbstractRoutingAlgorithm
                         fromMap.put(traversalId, ase);
                     } else
                     {
-                        assert(ase.weight > distEstimation): "Inconsistent distance estimate";
+                        assert (ase.weight > distEstimation) : "Inconsistent distance estimate";
                         prioQueueOpenSet.remove(ase);
                         ase.edge = iter.getEdge();
                         ase.weight = distEstimation;
@@ -171,6 +174,11 @@ public class AStar extends AbstractRoutingAlgorithm
     public int getVisitedNodes()
     {
         return visitedCount;
+    }
+
+    protected boolean isWeightLimitReached()
+    {
+        return currEdge.weight >= weightLimit;
     }
 
     public static class AStarEdge extends EdgeEntry

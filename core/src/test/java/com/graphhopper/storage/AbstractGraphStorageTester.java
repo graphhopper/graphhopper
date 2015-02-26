@@ -686,7 +686,7 @@ public abstract class AbstractGraphStorageTester
     {
         graph = createGraph();
         BBox b = graph.getBounds();
-        assertEquals(BBox.INVERSE.maxLat, b.maxLat, 1e-6);
+        assertEquals(BBox.createInverse(false).maxLat, b.maxLat, 1e-6);
 
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 10, 20);

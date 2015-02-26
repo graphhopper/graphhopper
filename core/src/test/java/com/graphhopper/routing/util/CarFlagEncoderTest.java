@@ -51,9 +51,9 @@ public class CarFlagEncoderTest
         // for now allow grade1+2+3 for every country, see #253
         way.clearTags();
         way.setTag("highway", "track");
-        way.setTag("tracktype", "grade2");        
+        way.setTag("tracktype", "grade2");
         assertTrue(encoder.acceptWay(way) > 0);
-        way.setTag("tracktype", "grade4");        
+        way.setTag("tracktype", "grade4");
         assertFalse(encoder.acceptWay(way) > 0);
 
         way.clearTags();
@@ -96,6 +96,15 @@ public class CarFlagEncoderTest
         flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertTrue(encoder.isBool(flags, FlagEncoder.K_FORWARD));
         assertFalse(encoder.isBool(flags, FlagEncoder.K_BACKWARD));
+    }
+
+    @Test
+    public void testMilitaryAccess()
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "track");
+        way.setTag("access", "military");
+        assertFalse(encoder.acceptWay(way) > 0);
     }
 
     @Test
@@ -242,8 +251,8 @@ public class CarFlagEncoderTest
 
         // on disallowed highway, railway is allowed, sometimes incorrectly mapped
         way.setTag("highway", "track");
-        assertTrue(encoder.acceptWay(way) > 0);        
-        
+        assertTrue(encoder.acceptWay(way) > 0);
+
         // this is fully okay as sometimes old rails are on the road
         way.setTag("highway", "primary");
         way.setTag("railway", "historic");
@@ -435,12 +444,14 @@ public class CarFlagEncoderTest
         assertFalse(encoder.acceptWay(way) > 0);
         assertTrue(encoder.handleNodeTags(node) > 0);
 
-        try {
+        try
+        {
             // Now they are passable
             encoder.setBlockFords(false);
             assertTrue(encoder.acceptWay(way) > 0);
             assertFalse(encoder.handleNodeTags(node) > 0);
-        } finally {
+        } finally
+        {
             encoder.setBlockFords(true);
         }
     }

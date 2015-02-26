@@ -42,7 +42,7 @@ import org.junit.Test;
  */
 public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
 {
-    // graph is expensive to create and to prepare!
+    // matrix graph is expensive to create and to prepare!
     private static Graph preparedMatrixGraph;
 
     @Override
@@ -66,9 +66,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
 
     @Override
     public RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts )
-    {        
-        return createFactory(g instanceof QueryGraph ? ((QueryGraph) g).getOriginalGraph() : g, opts).
-                createAlgo(g, opts);
+    {
+        return createFactory(g, opts).createAlgo(g, opts);
     }
 
     @Override

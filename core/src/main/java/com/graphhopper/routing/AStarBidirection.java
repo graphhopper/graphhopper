@@ -162,6 +162,9 @@ public class AStarBidirection extends AbstractBidirAlgo
     @Override
     protected Path extractPath()
     {
+        if (isWeightLimitReached())
+            return bestPath;
+
         return bestPath.extract();
     }
 
@@ -178,8 +181,13 @@ public class AStarBidirection extends AbstractBidirAlgo
         if (finishedFrom || finishedTo)
             return true;
 
-        double tmp = bestPath.getWeight();
-        return currFrom.weight + currTo.weight >= tmp;
+        return currFrom.weight + currTo.weight >= bestPath.getWeight();
+    }
+
+    @Override
+    protected boolean isWeightLimitReached()
+    {
+        return currFrom.weight + currTo.weight >= weightLimit;
     }
 
     @Override

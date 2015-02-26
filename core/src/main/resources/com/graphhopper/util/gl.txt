@@ -43,3 +43,7 @@ unpaved=non pavimentada
 stopover=escala%1$s
 roundaboutInstruction= Entre na rotonda e tome a saída %1$s
 roundaboutInstructionWithDir= Entre na rotonda e tome a saída %1$s en dirección%2$s
+roundaboutInstructionOnto=
+roundaboutEnter=
+roundaboutExit=
+roundaboutExitOnto=

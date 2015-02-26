@@ -72,7 +72,8 @@ public class PrepareContractionHierarchiesTest
         double normalDist = new Dijkstra(g, carEncoder, weighting, tMode).calcPath(4, 2).getDistance();
         DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder, weighting, tMode);
         algo.setEdgeFilter(new PrepareContractionHierarchies.IgnoreNodeFilter(g).setAvoidNode(3));
-        int nodeEntry = algo.setLimitWeight(100).findEndNode(4, 2);
+        algo.setWeightLimit(100);
+        int nodeEntry = algo.findEndNode(4, 2);
         assertTrue(algo.getWeight(nodeEntry) > normalDist);
 
         algo.clear();
@@ -88,10 +89,11 @@ public class PrepareContractionHierarchiesTest
         assertEquals(3, normalDist, 1e-5);
         DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder, weighting, tMode);
         algo.setEdgeFilter(new PrepareContractionHierarchies.IgnoreNodeFilter(g).setAvoidNode(3));
-        int nodeEntry = algo.setLimitWeight(10).findEndNode(4, 2);
+        algo.setWeightLimit(10);
+        int nodeEntry = algo.findEndNode(4, 2);
         assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
 
-        nodeEntry = algo.setLimitWeight(10).findEndNode(4, 1);
+        nodeEntry = algo.findEndNode(4, 1);
         assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
     }
 
@@ -101,7 +103,8 @@ public class PrepareContractionHierarchiesTest
         LevelGraph g = createExampleGraph();
         DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder, weighting, tMode);
         algo.setEdgeFilter(new PrepareContractionHierarchies.IgnoreNodeFilter(g).setAvoidNode(0));
-        int endNode = algo.setLimitWeight(2).findEndNode(4, 1);
+        algo.setWeightLimit(2);
+        int endNode = algo.findEndNode(4, 1);
         // did not reach endNode
         assertNotEquals(1, endNode);
     }

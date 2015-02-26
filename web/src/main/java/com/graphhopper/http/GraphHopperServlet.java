@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightingMap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -72,20 +73,20 @@ public class GraphHopperServlet extends GHBaseServlet
         }
     }
 
-    void writePath( HttpServletRequest req, HttpServletResponse res ) throws Exception
+    void writePath( HttpServletRequest httpReq, HttpServletResponse res ) throws Exception
     {
-        List<GHPoint> infoPoints = getPoints(req);
+        List<GHPoint> infoPoints = getPoints(httpReq, "point");
 
         // we can reduce the path length based on the maximum differences to the original coordinates
-        double minPathPrecision = getDoubleParam(req, "way_point_max_distance", 1d);
-        boolean writeGPX = "gpx".equalsIgnoreCase(getParam(req, "type", "json"));
-        boolean enableInstructions = writeGPX || getBooleanParam(req, "instructions", true);
-        boolean calcPoints = getBooleanParam(req, "calc_points", true);
-        boolean elevation = getBooleanParam(req, "elevation", false);
-        String vehicleStr = getParam(req, "vehicle", "CAR").toUpperCase();
-        String weighting = getParam(req, "weighting", "fastest");
-        String algoStr = getParam(req, "algorithm", "");
-        String localeStr = getParam(req, "locale", "en");
+        double minPathPrecision = getDoubleParam(httpReq, "way_point_max_distance", 1d);
+        boolean writeGPX = "gpx".equalsIgnoreCase(getParam(httpReq, "type", "json"));
+        boolean enableInstructions = writeGPX || getBooleanParam(httpReq, "instructions", true);
+        boolean calcPoints = getBooleanParam(httpReq, "calc_points", true);
+        boolean elevation = getBooleanParam(httpReq, "elevation", false);
+        String vehicleStr = getParam(httpReq, "vehicle", "car");
+        String weighting = getParam(httpReq, "weighting", "fastest");
+        String algoStr = getParam(httpReq, "algorithm", "");
+        String localeStr = getParam(httpReq, "locale", "en");
 
         StopWatch sw = new StopWatch().start();
         GHResponse ghRsp;
@@ -100,7 +101,7 @@ public class GraphHopperServlet extends GHBaseServlet
             FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
             GHRequest request = new GHRequest(infoPoints);
 
-            initHints(request, req.getParameterMap());
+            initHints(request, httpReq.getParameterMap());
             request.setVehicle(algoVehicle.toString()).
                     setWeighting(weighting).
                     setAlgorithm(algoStr).
@@ -114,8 +115,8 @@ public class GraphHopperServlet extends GHBaseServlet
         }
 
         float took = sw.stop().getSeconds();
-        String infoStr = req.getRemoteAddr() + " " + req.getLocale() + " " + req.getHeader("User-Agent");
-        String logStr = req.getQueryString() + " " + infoStr + " " + infoPoints + ", took:"
+        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
+        String logStr = httpReq.getQueryString() + " " + infoStr + " " + infoPoints + ", took:"
                 + took + ", " + algoStr + ", " + weighting + ", " + vehicleStr;
 
         if (ghRsp.hasErrors())
@@ -126,9 +127,9 @@ public class GraphHopperServlet extends GHBaseServlet
                     + "min, points:" + ghRsp.getPoints().getSize() + ", debug - " + ghRsp.getDebugInfo());
 
         if (writeGPX)
-            writeResponse(res, createGPXString(req, res, ghRsp));
+            writeResponse(res, createGPXString(httpReq, res, ghRsp));
         else
-            writeJson(req, res, new JSONObject(createJson(req, ghRsp, took)));
+            writeJson(httpReq, res, new JSONObject(createJson(httpReq, ghRsp, took)));
     }
 
     protected String createGPXString( HttpServletRequest req, HttpServletResponse res, GHResponse rsp )
@@ -199,12 +200,6 @@ public class GraphHopperServlet extends GHBaseServlet
                 list.add(map);
             }
             jsonInfo.put("errors", list);
-        } else if (!rsp.isFound())
-        {
-            Map<String, String> map = new HashMap<String, String>();
-            map.put("message", "Not found");
-            map.put("details", "");
-            jsonInfo.put("errors", Collections.singletonList(map));
         } else
         {
             jsonInfo.put("took", Math.round(took * 1000));
@@ -219,7 +214,11 @@ public class GraphHopperServlet extends GHBaseServlet
 
                 PointList points = rsp.getPoints();
                 if (points.getSize() >= 2)
-                    jsonPath.put("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
+                {
+                    BBox maxBounds = hopper.getGraph().getBounds();
+                    BBox maxBounds2D = new BBox(maxBounds.minLon, maxBounds.maxLon, maxBounds.minLat, maxBounds.maxLat);
+                    jsonPath.put("bbox", rsp.calcRouteBBox(maxBounds2D).toGeoJson());
+                }
 
                 jsonPath.put("points", createPoints(points, pointsEncoded, includeElevation));
 
@@ -245,25 +244,27 @@ public class GraphHopperServlet extends GHBaseServlet
         return jsonPoints;
     }
 
-    private List<GHPoint> getPoints( HttpServletRequest req ) throws IOException
+    protected List<GHPoint> getPoints( HttpServletRequest req, String key ) throws IOException
     {
-        String[] pointsAsStr = getParams(req, "point");
+        String[] pointsAsStr = getParams(req, key);
         final List<GHPoint> infoPoints = new ArrayList<GHPoint>(pointsAsStr.length);
         for (String str : pointsAsStr)
         {
             String[] fromStrs = str.split(",");
             if (fromStrs.length == 2)
             {
-                GHPoint place = GHPoint.parse(str);
-                if (place != null)
-                    infoPoints.add(place);
+                GHPoint point = GHPoint.parse(str);
+                if (point != null)
+                {
+                    infoPoints.add(point);
+                }
             }
         }
 
         return infoPoints;
     }
 
-    private void initHints( GHRequest request, Map<String, String[]> parameterMap )
+    protected void initHints( GHRequest request, Map<String, String[]> parameterMap )
     {
         WeightingMap m = request.getHints();
         for (Entry<String, String[]> e : parameterMap.entrySet())

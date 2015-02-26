@@ -35,6 +35,12 @@ public interface RoutingAlgorithm
     Path calcPath( int from, int to );
 
     /**
+     * Limits the search to avoid full graph exploration in the case of disconnected networks. The
+     * default value is Double.MAX_VALUE. See #104
+     */
+    void setWeightLimit( double weight );
+
+    /**
      * @return name of this algorithm
      */
     String getName();

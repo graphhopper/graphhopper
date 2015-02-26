@@ -1,4 +1,5 @@
 0.4.0
+    GHResponse no longer has isFound method, use !hasErrors instead
     merged unused Edge class into EdgeEntry
     astar and astarbi are now both none-heuristic and take parameters for beeline approximation: astar.approximation=BeelineSimplification|BeelineAccurate or astarbi.approximation=...
     making GPX export according to the schema to support import from various tools like basecamp

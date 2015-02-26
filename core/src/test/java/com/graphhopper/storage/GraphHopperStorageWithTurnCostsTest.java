@@ -48,19 +48,21 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
         return newGraph(new RAMDirectory(), false);
     }
 
+    @Override
     @Test
-    public void testSave_and_fileFormat_withTurnCostEntries() throws IOException
+    public void testSave_and_fileFormat() throws IOException
     {
-        graph = newGraph(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
+        graph = newGraph(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
-        na.setNode(0, 10, 10);
-        na.setNode(1, 11, 20);
-        na.setNode(2, 12, 12);
+        assertTrue(na.is3D());
+        na.setNode(0, 10, 10, 0);
+        na.setNode(1, 11, 20, 1);
+        na.setNode(2, 12, 12, 0.4);
 
         EdgeIteratorState iter2 = graph.edge(0, 1, 100, true);
-        iter2.setWayGeometry(Helper.createPointList(1.5, 1, 2, 3));
+        iter2.setWayGeometry(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0));
         EdgeIteratorState iter1 = graph.edge(0, 2, 200, true);
-        iter1.setWayGeometry(Helper.createPointList(3.5, 4.5, 5, 6));
+        iter1.setWayGeometry(Helper.createPointList3D(3.5, 4.5, 0, 5, 6, 0));
         graph.edge(9, 10, 200, true);
         graph.edge(9, 11, 200, true);
         graph.edge(1, 2, 120, false);
@@ -76,7 +78,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
         graph.flush();
         graph.close();
 
-        graph = newGraph(new MMapDirectory(defaultGraphLoc), false);
+        graph = newGraph(new MMapDirectory(defaultGraphLoc), true);
         assertTrue(graph.loadExisting());
 
         assertEquals(12, graph.getNodes());
@@ -90,12 +92,13 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
         assertEquals(815, turnCostStorage.getTurnCostFlags(iter1.getEdge(), 1, iter2.getEdge()));
         assertEquals(0, turnCostStorage.getTurnCostFlags(iter1.getEdge(), 3, iter2.getEdge()));
 
-        graph.edge(3, 4, 123, true).setWayGeometry(Helper.createPointList(4.4, 5.5, 6.6, 7.7));
+        graph.edge(3, 4, 123, true).setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
         checkGraph(graph);
     }
 
     @Test
-    public void testEnsureCapacity() throws IOException {
+    public void testEnsureCapacity() throws IOException
+    {
         graph = newGraph(new MMapDirectory(defaultGraphLoc), false);
         graph.setSegmentSize(128);
         graph.create(100); // 100 is the minimum size
@@ -106,7 +109,8 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
         Random r = new Random();
 
         NodeAccess na = graph.getNodeAccess();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 100; i++)
+        {
             double randomLat = 90 * r.nextDouble();
             double randomLon = 180 * r.nextDouble();
 
@@ -114,15 +118,18 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
         }
 
         // Make node 50 the 'center' node
-        for (int nodeId = 51; nodeId < 100; nodeId++) {
+        for (int nodeId = 51; nodeId < 100; nodeId++)
+        {
             graph.edge(50, nodeId, r.nextDouble(), true);
         }
-        for (int nodeId = 0; nodeId < 50; nodeId++) {
+        for (int nodeId = 0; nodeId < 50; nodeId++)
+        {
             graph.edge(nodeId, 50, r.nextDouble(), true);
         }
 
         // add 100 turn cost entries around node 50
-        for (int edgeId = 0; edgeId < 50; edgeId++) {
+        for (int edgeId = 0; edgeId < 50; edgeId++)
+        {
             turnCostStorage.addTurnInfo(edgeId, 50, edgeId + 50, 1337);
             turnCostStorage.addTurnInfo(edgeId + 50, 50, edgeId, 1337);
         }

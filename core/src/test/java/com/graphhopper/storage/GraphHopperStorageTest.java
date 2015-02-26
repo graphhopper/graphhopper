@@ -67,16 +67,17 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
     @Test
     public void testSave_and_fileFormat() throws IOException
     {
-        graph = newGraph(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
+        graph = newGraph(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
-        na.setNode(0, 10, 10);
-        na.setNode(1, 11, 20);
-        na.setNode(2, 12, 12);
+        assertTrue(na.is3D());
+        na.setNode(0, 10, 10, 0);
+        na.setNode(1, 11, 20, 1);
+        na.setNode(2, 12, 12, 0.4);
 
         EdgeIteratorState iter2 = graph.edge(0, 1, 100, true);
-        iter2.setWayGeometry(Helper.createPointList(1.5, 1, 2, 3));
+        iter2.setWayGeometry(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0));
         EdgeIteratorState iter1 = graph.edge(0, 2, 200, true);
-        iter1.setWayGeometry(Helper.createPointList(3.5, 4.5, 5, 6));
+        iter1.setWayGeometry(Helper.createPointList3D(3.5, 4.5, 0, 5, 6, 0));
         graph.edge(9, 10, 200, true);
         graph.edge(9, 11, 200, true);
         graph.edge(1, 2, 120, false);
@@ -88,7 +89,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
         graph.flush();
         graph.close();
 
-        graph = newGraph(new MMapDirectory(defaultGraphLoc), false);
+        graph = newGraph(new MMapDirectory(defaultGraphLoc), true);
         assertTrue(graph.loadExisting());
 
         assertEquals(12, graph.getNodes());
@@ -96,14 +97,17 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
 
         assertEquals("named street1", graph.getEdgeProps(iter1.getEdge(), iter1.getAdjNode()).getName());
         assertEquals("named street2", graph.getEdgeProps(iter2.getEdge(), iter2.getAdjNode()).getName());
-        graph.edge(3, 4, 123, true).setWayGeometry(Helper.createPointList(4.4, 5.5, 6.6, 7.7));
+        graph.edge(3, 4, 123, true).setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
         checkGraph(graph);
     }
 
     protected void checkGraph( Graph g )
     {
         NodeAccess na = g.getNodeAccess();
-        assertEquals(new BBox(10, 20, 10, 12), g.getBounds());
+        assertTrue(na.is3D());
+        assertTrue(g.getBounds().isValid());
+        
+        assertEquals(new BBox(10, 20, 10, 12, 0, 1), g.getBounds());
         assertEquals(10, na.getLatitude(0), 1e-2);
         assertEquals(10, na.getLongitude(0), 1e-2);
         EdgeExplorer explorer = g.createEdgeExplorer(carOutFilter);
@@ -112,12 +116,12 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
 
         EdgeIterator iter = explorer.setBaseNode(0);
         assertTrue(iter.next());
-        assertEquals(Helper.createPointList(3.5, 4.5, 5, 6), iter.fetchWayGeometry(0));
+        assertEquals(Helper.createPointList3D(3.5, 4.5, 0, 5, 6, 0), iter.fetchWayGeometry(0));
 
         assertTrue(iter.next());
-        assertEquals(Helper.createPointList(1.5, 1, 2, 3), iter.fetchWayGeometry(0));
-        assertEquals(Helper.createPointList(10, 10, 1.5, 1, 2, 3), iter.fetchWayGeometry(1));
-        assertEquals(Helper.createPointList(1.5, 1, 2, 3, 11, 20), iter.fetchWayGeometry(2));
+        assertEquals(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0), iter.fetchWayGeometry(0));
+        assertEquals(Helper.createPointList3D(10, 10, 0, 1.5, 1, 0, 2, 3, 0), iter.fetchWayGeometry(1));
+        assertEquals(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0, 11, 20, 1), iter.fetchWayGeometry(2));
 
         assertEquals(11, na.getLatitude(1), 1e-2);
         assertEquals(20, na.getLongitude(1), 1e-2);
@@ -131,9 +135,9 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(2)));
 
         EdgeIteratorState eib = GHUtility.getEdge(g, 1, 2);
-        assertEquals(Helper.createPointList(), eib.fetchWayGeometry(0));
-        assertEquals(Helper.createPointList(11, 20), eib.fetchWayGeometry(1));
-        assertEquals(Helper.createPointList(12, 12), eib.fetchWayGeometry(2));
+        assertEquals(Helper.createPointList3D(), eib.fetchWayGeometry(0));
+        assertEquals(Helper.createPointList3D(11, 20, 1), eib.fetchWayGeometry(1));
+        assertEquals(Helper.createPointList3D(12, 12, 0.4), eib.fetchWayGeometry(2));
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(2)));
     }
 

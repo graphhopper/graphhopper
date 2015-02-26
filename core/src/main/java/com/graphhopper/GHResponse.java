@@ -37,7 +37,6 @@ public class GHResponse
     private double routeWeight;
     private long time;
     private InstructionList instructions = null;
-    private boolean found;
 
     public GHResponse()
     {
@@ -151,25 +150,13 @@ public class GHResponse
         return routeWeight;
     }
 
-    public GHResponse setFound( boolean found )
-    {
-        this.found = found;
-        return this;
-    }
-
-    public boolean isFound()
-    {
-        check("isFound");
-        return found;
-    }
-
     /**
      * Calculates the bounding box of this route response
      */
     public BBox calcRouteBBox( BBox _fallback )
     {
         check("calcRouteBBox");
-        BBox bounds = BBox.INVERSE.clone();
+        BBox bounds = BBox.createInverse(_fallback.hasElevation());
         int len = list.getSize();
         if (len == 0)
             return _fallback;
@@ -178,17 +165,14 @@ public class GHResponse
         {
             double lat = list.getLatitude(i);
             double lon = list.getLongitude(i);
-            if (lat > bounds.maxLat)
-                bounds.maxLat = lat;
-
-            if (lat < bounds.minLat)
-                bounds.minLat = lat;
-
-            if (lon > bounds.maxLon)
-                bounds.maxLon = lon;
-
-            if (lon < bounds.minLon)
-                bounds.minLon = lon;
+            if (bounds.hasElevation())
+            {
+                double ele = list.getEle(i);
+                bounds.update(lat, lon, ele);
+            } else
+            {
+                bounds.update(lat, lon);
+            }
         }
         return bounds;
     }
@@ -196,7 +180,7 @@ public class GHResponse
     @Override
     public String toString()
     {
-        String str = "found:" + isFound() + ", nodes:" + list.getSize() + ": " + list.toString();
+        String str = "nodes:" + list.getSize() + ": " + list.toString();
         if (!instructions.isEmpty())
             str += ", " + instructions.toString();
 
