@@ -402,6 +402,7 @@ public class MainActivity extends Activity
         mapView.getLayerManager().getLayers().clear();
 
         TileRendererLayer tileRendererLayer = new TileRendererLayer(tileCache, mapView.getModel().mapViewPosition,
+                false,
                 true, AndroidGraphicFactory.INSTANCE)
                 {
                     @Override
