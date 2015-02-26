@@ -17,10 +17,7 @@ $ ./graphhopper.sh import your-area.pbf
 
 ## Android Studio
 
- 1. [download](http://developer.android.com/sdk/index.html) and start android studio
- 2. Connect your device in development mode (USB debugging)
- 3. File -> Open -> 'android' module (not the parent 'graphhopper')
- 4. Then hit SHIFT+F10 or click Run->Run 'app' in the menu
+Please read [here](./android-studio-setup.md) for a detailed instruction.
 
 ## None-Android Studio
 
