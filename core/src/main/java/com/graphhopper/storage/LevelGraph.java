@@ -23,16 +23,29 @@ import com.graphhopper.util.EdgeSkipExplorer;
 import com.graphhopper.util.EdgeSkipIterState;
 
 /**
- * Extended graph interface which supports storing and retrieving the level for a node.
+ * Extended graph interface which supports storing and retrieving the level for a node and creating
+ * shortcuts, which are additional 'artificial' edges to speedup traversal in certain cases.
  * <p/>
  * @author Peter Karich
  */
 public interface LevelGraph extends Graph
 {
-    void setLevel( int index, int level );
+    /**
+     * This methods sets the level of the specified node.
+     */
+    void setLevel( int nodeId, int level );
 
-    int getLevel( int index );
+    /**
+     * @return the level of the specified node.
+     */
+    int getLevel( int nodeId );
 
+    boolean isShortcut( int edgeId );
+
+    /**
+     * This method creates a shortcut between a to b which is nearly identical to creating an edge
+     * except that it can be excluded or included for certain traversals or algorithms.
+     */
     EdgeSkipIterState shortcut( int a, int b );
 
     @Override

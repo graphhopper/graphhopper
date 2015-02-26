@@ -37,16 +37,22 @@ class GHNodeAccess implements NodeAccess
     }
 
     @Override
+    public void ensureNode( int nodeId )
+    {
+        that.ensureNodeIndex(nodeId);
+    }
+
+    @Override
     public final void setNode( int nodeId, double lat, double lon )
     {
         setNode(nodeId, lat, lon, Double.NaN);
     }
 
     @Override
-    public final void setNode( int index, double lat, double lon, double ele )
+    public final void setNode( int nodeId, double lat, double lon, double ele )
     {
-        that.ensureNodeIndex(index);
-        long tmp = (long) index * that.nodeEntryBytes;
+        that.ensureNodeIndex(nodeId);
+        long tmp = (long) nodeId * that.nodeEntryBytes;
         that.nodes.setInt(tmp + that.N_LAT, Helper.degreeToInt(lat));
         that.nodes.setInt(tmp + that.N_LON, Helper.degreeToInt(lon));
 

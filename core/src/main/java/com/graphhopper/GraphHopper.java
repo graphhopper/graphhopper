@@ -66,6 +66,7 @@ public class GraphHopper implements GraphHopperAPI
     private double defaultWeightLimit = Double.MAX_VALUE;
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
+    private String defaultVehicleStr;
     private RoutingAlgorithmFactory algoFactory;
     // for index
     private LocationIndex locationIndex;
@@ -77,7 +78,7 @@ public class GraphHopper implements GraphHopperAPI
     // for CH prepare    
     private boolean doPrepare = true;
     private boolean chEnabled = true;
-    private String chWeighting = "fastest";
+    private String chWeightingStr = "fastest";
     private int periodicUpdates = -1;
     private int lazyUpdates = -1;
     private int neighborUpdates = -1;
@@ -104,6 +105,7 @@ public class GraphHopper implements GraphHopperAPI
         this.graph = g;
         fullyLoaded = true;
         initLocationIndex();
+        initDefaultVehicleIfNecessary();
         return this;
     }
 
@@ -119,6 +121,11 @@ public class GraphHopper implements GraphHopperAPI
             traversalMode = TraversalMode.EDGE_BASED_2DIR;
 
         return this;
+    }
+
+    private FlagEncoder getFirstVehicle()
+    {
+        return encodingManager.fetchEdgeEncoders().get(0);
     }
 
     public EncodingManager getEncodingManager()
@@ -272,12 +279,28 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Disables "CH-preparation". Use only if you know what you do.
+     * This method sets the default vehicle to use if no vehicle is specified in the GHRequest
+     * object. Per default the lexicographically first vehicle is used.
      */
-    public GraphHopper setDoPrepare( boolean doPrepare )
+    public void setDefaultVehicle( String defaultVehicleStr )
     {
-        this.doPrepare = doPrepare;
-        return this;
+        if (this.defaultVehicleStr != null)
+            throw new RuntimeException("Cannot change default vehicle " + this.defaultVehicleStr + " to " + defaultVehicleStr);
+
+        this.defaultVehicleStr = defaultVehicleStr;
+    }
+
+    /**
+     * The default vehicle is the single vehicle used for CH preparation as well as the default
+     * vehicle if no specified in GHRequest. Per default the lexicographically first vehicle is
+     * used.
+     */
+    public String getDefaultVehicle()
+    {
+        if (defaultVehicleStr == null)
+            throw new RuntimeException("Set default vehicle before");
+
+        return defaultVehicleStr;
     }
 
     /**
@@ -289,18 +312,29 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setCHWeighting( String weighting )
     {
         ensureNotLoaded();
-        chWeighting = weighting;
+        chWeightingStr = weighting;
         return this;
     }
 
     public String getCHWeighting()
     {
-        return chWeighting;
+        return chWeightingStr;
     }
 
     /**
-     * Enables or disables contraction hierarchies. Enabled by default. Disabling CH is only
-     * recommended for a small area or in combination with setDefaultWeightLimit
+     * Disables the "CH-preparation" preparation only. Use only if you know what you do. To disable
+     * the full usage of CH use setCHEnable(false) instead.
+     */
+    public GraphHopper setDoPrepare( boolean doPrepare )
+    {
+        this.doPrepare = doPrepare;
+        return this;
+    }
+
+    /**
+     * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
+     * Disabling CH is only recommended for short routes or in combination with
+     * setDefaultWeightLimit and called flexibility mode
      * <p>
      * @see #setDefaultWeightLimit(double)
      */
@@ -556,11 +590,13 @@ public class GraphHopper implements GraphHopperAPI
 
         // osm import
         osmReaderWayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", osmReaderWayPointMaxDistance);
-        String flagEncoders = args.get("graph.flagEncoders", "CAR");
-
+        String flagEncoders = args.get("graph.flagEncoders", "");
         setEncodingManager(new EncodingManager(flagEncoders, bytesForFlags));
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
+
+        // default vehicle which is used if no algorithm is specified
+        setDefaultVehicle(args.get("algorithm.defaultVehicle", getFirstVehicle().toString()));
 
         // index
         preciseIndexResolution = args.getInt("index.highResolution", preciseIndexResolution);
@@ -713,7 +749,9 @@ public class GraphHopper implements GraphHopperAPI
         setGraphHopperLocation(graphHopperFolder);
 
         if (encodingManager == null)
-            encodingManager = EncodingManager.create(ghLocation);
+            setEncodingManager(EncodingManager.create(ghLocation));
+
+        initDefaultVehicleIfNecessary();
 
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;
@@ -772,15 +810,14 @@ public class GraphHopper implements GraphHopperAPI
      */
     protected void postProcessing()
     {
-        encodingManager = graph.getEncodingManager();
+        initLocationIndex();
         if (chEnabled)
             algoFactory = createPrepare();
         else
             algoFactory = new RoutingAlgorithmFactorySimple();
 
         if (!isPrepared())
-            prepare();
-        initLocationIndex();
+            prepare();        
     }
 
     private boolean isPrepared()
@@ -790,9 +827,16 @@ public class GraphHopper implements GraphHopperAPI
 
     protected RoutingAlgorithmFactory createPrepare()
     {
-        FlagEncoder encoder = encodingManager.getSingle();
-        PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies((LevelGraph) graph, encoder,
-                createWeighting(new WeightingMap(chWeighting), encoder), traversalMode);
+        if (!encodingManager.supports(getDefaultVehicle()))
+        {
+            throw new IllegalStateException("Should not happen: default vehicle " + getDefaultVehicle() + " not supported"
+                    + " from EncodingManager " + encodingManager.toDetailsString() + ". Cannot do CH preparation");
+        }
+
+        FlagEncoder defaultVehicle = encodingManager.getEncoder(getDefaultVehicle());
+        Weighting weighting = createWeighting(new WeightingMap(chWeightingStr), defaultVehicle);
+        PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies((LevelGraph) graph,
+                defaultVehicle, weighting, traversalMode);
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                 setLazyUpdates(lazyUpdates).
                 setNeighborUpdates(neighborUpdates).
@@ -876,7 +920,7 @@ public class GraphHopper implements GraphHopperAPI
 
         String vehicle = request.getVehicle();
         if (vehicle.isEmpty())
-            vehicle = encodingManager.getSingle().toString();
+            vehicle = getDefaultVehicle();
 
         if (!encodingManager.supports(vehicle))
         {
@@ -924,7 +968,19 @@ public class GraphHopper implements GraphHopperAPI
             return Collections.emptyList();
 
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
-        QueryGraph queryGraph = new QueryGraph(graph);
+
+        QueryGraph queryGraph;
+        RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory();
+        if (chEnabled && !vehicle.equals(getDefaultVehicle()))
+        {
+            // fall back to normal traversing
+            tmpAlgoFactory = new RoutingAlgorithmFactorySimple();
+            queryGraph = new QueryGraph(graph.getBaseGraph());
+        } else
+        {
+            queryGraph = new QueryGraph(graph);
+        }
+
         queryGraph.lookup(qResults);
 
         List<Path> paths = new ArrayList<Path>(points.size() - 1);
@@ -934,13 +990,15 @@ public class GraphHopper implements GraphHopperAPI
 
         double weightLimit = request.getHints().getDouble("defaultWeightLimit", defaultWeightLimit);
         String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
-        AlgorithmOptions algoOpts = AlgorithmOptions.start().algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).build();
+        AlgorithmOptions algoOpts = AlgorithmOptions.start().
+                algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).
+                build();
 
         for (int placeIndex = 1; placeIndex < points.size(); placeIndex++)
         {
             QueryResult toQResult = qResults.get(placeIndex);
             sw = new StopWatch().start();
-            RoutingAlgorithm algo = getAlgorithmFactory().createAlgo(queryGraph, algoOpts);
+            RoutingAlgorithm algo = tmpAlgoFactory.createAlgo(queryGraph, algoOpts);
             algo.setWeightLimit(weightLimit);
             debug += ", algoInit:" + sw.stop().getSeconds() + "s";
 
@@ -968,17 +1026,9 @@ public class GraphHopper implements GraphHopperAPI
 
     protected LocationIndex createLocationIndex( Directory dir )
     {
-        LocationIndex tmpIndex;
-        if (graph instanceof LevelGraph)
-        {
-            tmpIndex = new LocationIndexTreeSC((LevelGraph) graph, dir);
-        } else
-        {
-            tmpIndex = new LocationIndexTree(graph, dir);
-        }
+        LocationIndexTree tmpIndex = new LocationIndexTree(graph.getBaseGraph(), dir);
         tmpIndex.setResolution(preciseIndexResolution);
-        ((LocationIndexTree) tmpIndex).setMaxRegionSearch(maxRegionSearch);
-
+        tmpIndex.setMaxRegionSearch(maxRegionSearch);
         if (!tmpIndex.loadExisting())
         {
             ensureWriteAccess();
@@ -1028,11 +1078,7 @@ public class GraphHopper implements GraphHopperAPI
         if (tmpPrepare)
         {
             ensureWriteAccess();
-            if (encodingManager.getVehicleCount() > 1)
-                throw new IllegalArgumentException("Contraction hierarchies preparation "
-                        + "requires (at the moment) only one vehicle. But was:" + encodingManager);
-
-            logger.info("calling prepare.doWork for " + encodingManager.toString() + " ... (" + Helper.getMemInfo() + ")");
+            logger.info("calling prepare.doWork for " + getDefaultVehicle() + " ... (" + Helper.getMemInfo() + ")");
             ((PrepareContractionHierarchies) algoFactory).doWork();
             graph.getProperties().put("prepare.date", formatDateTime(new Date()));
         }
@@ -1121,5 +1167,15 @@ public class GraphHopper implements GraphHopperAPI
     public long getVisitedSum()
     {
         return visitedSum.get();
+    }
+
+    private void initDefaultVehicleIfNecessary()
+    {
+        if (defaultVehicleStr == null)
+            setDefaultVehicle(getFirstVehicle().toString());
+
+        if (!encodingManager.supports(getDefaultVehicle()))
+            throw new IllegalArgumentException("Default vehicle " + defaultVehicleStr + " is not supported. "
+                    + "Include vehicle in EncodingManager or via the property graph.flagEncoders OR set it explicitely via setDefaultVehicle");
     }
 }

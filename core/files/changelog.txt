@@ -1,4 +1,9 @@
 0.4.0
+    create location index before preparation in the GraphHopper class
+    encodingManager.getSingle() is removed as one can specify an encoder explicitly. GraphHopper picks the first encoder automatically for default vehicle, can be overwritten via setDefaultVehicle
+    removed LocationIndexTreeSC, use new LocationIndexTree(levelGraph.getOriginalGraph(), directory) instead
+    getLevel and setLevel do no longer automatically increase node count, use getNodeAccess.ensureNode for that
+    normal algorithms are now possible on prepared graph use getOriginalGraph, see #116
     GHResponse no longer has isFound method, use !hasErrors instead
     merged unused Edge class into EdgeEntry
     astar and astarbi are now both none-heuristic and take parameters for beeline approximation: astar.approximation=BeelineSimplification|BeelineAccurate or astarbi.approximation=...
