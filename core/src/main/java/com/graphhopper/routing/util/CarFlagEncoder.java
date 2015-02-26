@@ -57,6 +57,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         this((int) parseLong(propertiesStr, "speedBits", 5),
                 parseDouble(propertiesStr, "speedFactor", 5),
                 parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+        this.setBlockFords(parseBoolean(propertiesStr, "blockFords", true));
     }
 
     public CarFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )

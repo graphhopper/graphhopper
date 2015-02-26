@@ -17,20 +17,23 @@
  */
 package com.graphhopper.routing.util;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.graphhopper.reader.OSMNode;
-import com.graphhopper.reader.OSMReader;
-import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
-import com.graphhopper.util.*;
-import java.util.*;
+import com.graphhopper.reader.OSMWay;
+import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.InstructionAnnotation;
+import com.graphhopper.util.Translation;
 
 /**
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
@@ -230,10 +233,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                 return directionBitMask;
         }
 
+        // In case explicit flag ford=no, don't block
         if (blockFords
                 && (node.hasTag("highway", "ford") || node.hasTag("ford"))
-                && !node.hasTag(restrictions, intendedValues))
+                && !node.hasTag(restrictions, intendedValues)
+                && !node.hasTag("ford", "no")) {
             return directionBitMask;
+            
+        }
 
         return 0;
     }

@@ -17,19 +17,36 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.*;
-import com.graphhopper.util.*;
-import static com.graphhopper.util.GHUtility.*;
-import com.graphhopper.util.shapes.BBox;
+import static com.graphhopper.util.GHUtility.count;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.Closeable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import static org.junit.Assert.*;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PointList;
+import com.graphhopper.util.shapes.BBox;
 
 /**
  * Abstract test class to be extended for implementations of the Graph interface. Graphs

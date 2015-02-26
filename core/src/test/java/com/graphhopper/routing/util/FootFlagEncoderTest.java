@@ -251,4 +251,31 @@ public class FootFlagEncoderTest
         // barrier!
         assertTrue(footEncoder.handleNodeTags(node) > 0);
     }
+
+    @Test
+    public void testFord()
+    {
+        // by default deny access through fords!
+        OSMNode node = new OSMNode(1, -1, -1);
+
+        node = new OSMNode(1, -1, -1);
+        node.setTag("ford", "no");
+        assertTrue(footEncoder.handleNodeTags(node) == 0);
+
+        node = new OSMNode(1, -1, -1);
+        node.setTag("ford", "yes");
+        assertTrue(footEncoder.handleNodeTags(node) > 0);
+        
+        // Now let's allow fords for foot
+        footEncoder.setBlockFords(Boolean.FALSE);
+
+        node = new OSMNode(1, -1, -1);
+        node.setTag("ford", "no");
+        assertTrue(footEncoder.handleNodeTags(node) == 0);
+
+        node = new OSMNode(1, -1, -1);
+        node.setTag("ford", "yes");
+        assertTrue(footEncoder.handleNodeTags(node) == 0);
+    }
+
 }
