@@ -33,7 +33,7 @@ public class TranslationMap
 {
     // ISO codes (639-1), use 'en_US' as reference
     private static final List<String> LOCALES = Arrays.asList("bg", "ca", "de_DE", "el", "en_US", "es", "fil",
-            "fr", "gl", "he", "it", "ja", "nl", "pt_BR", "pt_PT", "ro", "ru", "si", "sk", "sv_SE", "tr", "uk",
+            "fi", "fr", "gl", "he", "it", "ja", "ne", "nl", "pt_BR", "pt_PT", "ro", "ru", "si", "sk", "sv_SE", "tr", "uk",
             "vi_VI", "zh_CN");
     private final Map<String, Translation> translations = new HashMap<String, Translation>();
 

@@ -1,15 +1,14 @@
 # do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
 
-sharp_left=draai naar links
-sharp_right=draai naar rechts
-left=links
-right=rechts
-slight_left=houd links aan
-slight_right=houd rechts aan
 continue=neem 
 continue_onto=blijf op %1$s
-turn=%1$s afbuigen
-turn_onto=sla %1$s af naar %2$s
+turn_left=links afbuigen
+turn_right=rechts afbuigen
+turn_slight_left=houd links aan afbuigen
+turn_slight_right=houd rechts aan afbuigen
+turn_sharp_left=ga linksaf afbuigen
+turn_sharp_right=ga rechtsaf afbuigen
+turn_onto=%1$s af naar %2$s
 web.searchButton=zoek
 web.fromHint=van
 web.viaHint=via
@@ -40,10 +39,7 @@ cycleway=fietspad
 way=weg
 paved=verhard
 unpaved=onverhard
-stopover=tussenbestemming %1$s
-roundaboutInstruction=ga de rotonde op en neem afrit %1$s
-roundaboutInstructionWithDir=ga de rotonde op en neem afrit %1$s richting %2$s
-roundaboutInstructionOnto=
-roundaboutEnter=
-roundaboutExit=
-roundaboutExitOnto=
+stopover=tussenstop %1$s
+roundaboutEnter=ga de rotonde op
+roundaboutExit=neem afslag %1$s op de rotonde 
+roundaboutExitOnto=neem afslag %1$s naar %2$s op de rotonde 

@@ -1,15 +1,14 @@
 # do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
 
-sharp_left=brusc la stânga
-sharp_right=brusc la dreapta
-left=stânga
-right=dreapta
-slight_left=ușor la stânga
-slight_right=ușor la dreapta
 continue=continuă
 continue_onto=continuă pe %1$s
-turn=schimbați direcția la %1$s
-turn_onto=schimbați direcția la %1$s pe %2$s
+turn_left=schimbați direcția la stânga
+turn_right=schimbați direcția la dreapta
+turn_slight_left=schimbați direcția la ușor la stânga
+turn_slight_right=schimbați direcția la ușor la dreapta
+turn_sharp_left=schimbați direcția la brusc la stânga
+turn_sharp_right=schimbați direcția la brusc la dreapta
+turn_onto=%1$s pe %2$s
 web.searchButton=Caută
 web.fromHint=De la
 web.viaHint=Prin
@@ -41,9 +40,6 @@ way=cale
 paved=pavat
 unpaved=nepavat
 stopover=escala %1$s
-roundaboutInstruction= Intrați în giratoriu și folosiți ieșirea %1$s
-roundaboutInstructionWithDir= Intrați în giratoriu și folosiți ieșirea %1$s în direcția %2$s
-roundaboutInstructionOnto=
-roundaboutEnter=
-roundaboutExit=
-roundaboutExitOnto=
+roundaboutEnter=Intrați în giratoriu 
+roundaboutExit=La giratoriu folosiți ieșirea %1$
+roundaboutExitOnto=La giratoriu folosiți ieșirea %1$ către %2$

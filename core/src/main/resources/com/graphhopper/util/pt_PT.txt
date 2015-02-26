@@ -1,15 +1,14 @@
 # do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
 
-sharp_left=curva apertada à esquerda
-sharp_right=curva apertada à direita
-left=esquerda
-right=direita
-slight_left=curva ligeira à esquerda
-slight_right=curva ligeira à direita
 continue=continuar
 continue_onto=continue na %1$s
-turn=vire à %1$s
-turn_onto=vire à %1$s para %2$s
+turn_left=vire à esquerda
+turn_right=vire à direita
+turn_slight_left=vire à curva ligeira à esquerda
+turn_slight_right=vire à curva ligeira à direita
+turn_sharp_left=vire à curva apertada à esquerda
+turn_sharp_right=vire à curva apertada à direita
+turn_onto=%1$s para %2$s
 web.searchButton=Pesquisar
 web.fromHint=De
 web.viaHint=Por
@@ -41,9 +40,6 @@ way=caminho
 paved=pavimentado
 unpaved=não pavimentada
 stopover=paragem %1$s
-roundaboutInstruction=Entre na rotunda e saia na saída número %1$s
-roundaboutInstructionWithDir=Entre na rotunda e saia na saída número %1$s em direção a %2$s
-roundaboutInstructionOnto=
-roundaboutEnter=
-roundaboutExit=
-roundaboutExitOnto=
+roundaboutEnter=Entre na rotunda
+roundaboutExit=Na rotunda, saia na %1$ saída
+roundaboutExitOnto=Na rotunda, saia na %1$ saida em direção a %2$s

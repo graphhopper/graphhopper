@@ -1,15 +1,14 @@
 # do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
 
-sharp_left=kraftigt vänster
-sharp_right=kraftigt höger
-left=vänster
-right=höger
-slight_left=svagt vänster
-slight_right=svagt höger
 continue=fortsätt
 continue_onto=fortsätt in på %1$s
-turn=sväng %1$s
-turn_onto=sväng %1$s in på %2$s
+turn_left=sväng vänster
+turn_right=sväng höger
+turn_slight_left=sväng svagt vänster
+turn_slight_right=sväng svagt höger
+turn_sharp_left=sväng kraftigt vänster
+turn_sharp_right=sväng kraftigt höger
+turn_onto=%1$s in på %2$s
 web.searchButton=Sök
 web.fromHint=Från
 web.viaHint=Via
@@ -41,9 +40,6 @@ way=väg
 paved=belagd
 unpaved=obelagd
 stopover=delmål %1$s
-roundaboutInstruction=Kör in i rondellen och ta avfart %1$s
-roundaboutInstructionWithDir=Kör in i rondellen och ta avfart %1$s mot %2$s
-roundaboutInstructionOnto=
 roundaboutEnter=
 roundaboutExit=
 roundaboutExitOnto=

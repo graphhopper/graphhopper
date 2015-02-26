@@ -1,15 +1,14 @@
 # do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
 
-sharp_left=sola keskin dönüş
-sharp_right=sağa keskin dönüş
-left=sol 
-right=sağ 
-slight_left=hafif sola
-slight_right=hafif sağa
 continue=devam
 continue_onto=-e devam %1$s
-turn=dön %1$s
-turn_onto=-e dön %1$s %2$s
+turn_left=dön sol 
+turn_right=dön sağ 
+turn_slight_left=dön hafif sola
+turn_slight_right=dön hafif sağa
+turn_sharp_left=dön sola keskin dönüş
+turn_sharp_right=dön sağa keskin dönüş
+turn_onto=%1$s %2$s
 web.searchButton=ara
 web.fromHint=-den 
 web.viaHint=araciligi ile
@@ -41,9 +40,6 @@ way=yol
 paved=kaldırım
 unpaved=kaldırımsız yol
 stopover=mola yeri %1$s
-roundaboutInstruction=döner kavsağa girin ve cıkışı kullanın %1$
-roundaboutInstructionWithDir=döner kavşağa girin ve çıkışı kullanın %1$ - %2$s
-roundaboutInstructionOnto=
 roundaboutEnter=
 roundaboutExit=
 roundaboutExitOnto=

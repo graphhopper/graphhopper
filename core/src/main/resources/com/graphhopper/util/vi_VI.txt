@@ -1,15 +1,14 @@
 # do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
 
-sharp_left=rẽ trái ngay
-sharp_right=rẽ phải ngay
-left=rẽ trái
-right=rẽ phải
-slight_left=rẽ nhẹ trái
-slight_right=rẽ nhẹ phải
 continue=tiếp tục
 continue_onto=tiếp tục theo %1$s
-turn=rẽ %1$s
-turn_onto=rẽ %1$s theo %1$s
+turn_left=rẽ trái
+turn_right=rẽ phải
+turn_slight_left=rẽ nhẹ trái
+turn_slight_right=rẽ nhẹ phải
+turn_sharp_left=rẽ trái ngay
+turn_sharp_right=rẽ phải ngay
+turn_onto=%1$s theo %1$s
 web.searchButton=Tìm
 web.fromHint=Từ
 web.viaHint=Qua
@@ -41,9 +40,6 @@ way=đường
 paved=đường lát
 unpaved=đường không lát
 stopover=điểm nghỉ %1$s
-roundaboutInstruction=Vào vòng xoay và tìm lối ra %1$s
-roundaboutInstructionWithDir=Vào vòng xoay và tìm lối ra %1$s theo hướng %2$s
-roundaboutInstructionOnto=
 roundaboutEnter=
 roundaboutExit=
 roundaboutExitOnto=

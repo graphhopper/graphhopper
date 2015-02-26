@@ -262,28 +262,28 @@ public class Instruction
             switch (indi)
             {
                 case Instruction.TURN_SHARP_LEFT:
-                    dir = tr.tr("sharp_left");
+                    dir = tr.tr("turn_sharp_left");
                     break;
                 case Instruction.TURN_LEFT:
-                    dir = tr.tr("left");
+                    dir = tr.tr("turn_left");
                     break;
                 case Instruction.TURN_SLIGHT_LEFT:
-                    dir = tr.tr("slight_left");
+                    dir = tr.tr("turn_slight_left");
                     break;
                 case Instruction.TURN_SLIGHT_RIGHT:
-                    dir = tr.tr("slight_right");
+                    dir = tr.tr("turn_slight_right");
                     break;
                 case Instruction.TURN_RIGHT:
-                    dir = tr.tr("right");
+                    dir = tr.tr("turn_right");
                     break;
                 case Instruction.TURN_SHARP_RIGHT:
-                    dir = tr.tr("sharp_right");
+                    dir = tr.tr("turn_sharp_right");
                     break;
             }
             if (dir == null)
-                throw new IllegalStateException("Indication not found " + indi);
+                throw new IllegalStateException("Turn indication not found " + indi);
 
-            str = Helper.isEmpty(streetName) ? tr.tr("turn", dir) : tr.tr("turn_onto", dir, streetName);
+            str = Helper.isEmpty(streetName) ? dir : tr.tr("turn_onto", dir, streetName);
         }
         return str;
     }

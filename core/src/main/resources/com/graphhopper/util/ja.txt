@@ -1,14 +1,13 @@
 # do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
 
-sharp_left=左
-sharp_right=右
-left=左
-right=右
-slight_left=左
-slight_right=右
 continue=進む
 continue_onto=%1$sまで進む
-turn=%1$sに曲がる
+turn_left=左に曲がる
+turn_right=右に曲がる
+turn_slight_left=左に曲がる
+turn_slight_right=右に曲がる
+turn_sharp_left=左に曲がる
+turn_sharp_right=右に曲がる
 turn_onto=%1$sに曲がって%2$sに入る
 web.searchButton=検索
 web.fromHint=出発地点
@@ -41,9 +40,6 @@ way=道
 paved=舗装された道
 unpaved=未舗装の道
 stopover=%1$sで降りる
-roundaboutInstruction=円形交差点の%1$s出口から
-roundaboutInstructionWithDir=円形交差点の%1$s出口から%2$s方向へ
-roundaboutInstructionOnto=
-roundaboutEnter=
-roundaboutExit=
-roundaboutExitOnto=
+roundaboutEnter=円形交差点に入る
+roundaboutExit=円形交差点の出口%1$sへ
+roundaboutExitOnto=円形交差点の出口%1$sから%2$sへ

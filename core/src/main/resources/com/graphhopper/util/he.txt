@@ -1,14 +1,13 @@
 # do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
 
-sharp_left=שמאלה בחדות
-sharp_right=ימינה בחדות
-left=שמאלה
-right=ימינה
-slight_left=מעט שמאלה
-slight_right=מעט ימינה
 continue=להמשיך
 continue_onto=להמשיך לתוך %1$s
-turn=נא לפנות %1$s
+turn_left=שמאלה
+turn_right=ימינה
+turn_slight_left=מעט שמאלה
+turn_slight_right=מעט ימינה
+turn_sharp_left=שמאלה בחדות
+turn_sharp_right=ימינה בחדות
 turn_onto=נא לפנות %1$s לתוך %2$s
 web.searchButton=חיפוש
 web.fromHint=מוצא
@@ -41,9 +40,6 @@ way=דרך
 paved=סלולה
 unpaved=לא סלולה
 stopover=נקודת עצירה מס׳ %1$s
-roundaboutInstruction=יש להיכנס לכיכר ולצאת ביציאה מס׳ %1$s
-roundaboutInstructionWithDir=יש להיכנס לכיכר ולצאת ביציאה מס׳ %1$s בכיוון %2$s
-roundaboutInstructionOnto=
-roundaboutEnter=
-roundaboutExit=
-roundaboutExitOnto=
+roundaboutEnter=יש להיכנס לכיכר
+roundaboutExit=בכיכר, יש לצאת ביציאה %1$s
+roundaboutExitOnto=בכיכר, יש לצאת ביציאה %1$s לתוך %2$s
