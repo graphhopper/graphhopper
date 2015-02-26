@@ -65,7 +65,7 @@ public class TurnCostExtension implements GraphExtension
 
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
-        this.turnCosts = this.graph.getDirectory().find("turnCosts");
+        this.turnCosts = this.graph.getDirectory().find("turn_costs");
     }
 
     private int nextTurnCostEntryIndex()

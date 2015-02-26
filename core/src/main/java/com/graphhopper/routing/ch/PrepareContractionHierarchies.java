@@ -98,7 +98,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     + "It seems that you have imported more than one.");
 
         prepareWeighting = new PreparationWeighting(weighting);
-        originalEdges = new GHDirectory("", DAType.RAM_INT).find("originalEdges");
+        originalEdges = new GHDirectory("", DAType.RAM_INT).find("original_edges");
         originalEdges.create(1000);
     }
 
