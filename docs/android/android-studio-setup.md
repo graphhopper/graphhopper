@@ -2,19 +2,15 @@
 
 Get the [./index.md](GraphHopper sources and demo) before you proceed.
 
-## Download Android Studio
+## Setup
 
 [Download](http://developer.android.com/sdk/index.html) and start android studio
 
-## Open Existing Android Project
-
-1. Open existing project and then open 'android' not the parent 'graphhopper'
+Open existing Android studio project and then open 'graphhopper/android' not the parent 'graphhopper'
 
 ![Open Existing](./images/android-studio-open-existing.png)
 
-2. Import project from Gradle
-
-Make sure the path points to graphhopper/android
+Import project from Gradle, but make sure the 'Gradle project' points to graphhopper/android
 
 ![Import project from Gradle](./images/android-studio-import-project-from-gradle.png)
 
