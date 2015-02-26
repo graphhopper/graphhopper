@@ -1,6 +1,6 @@
 # Open Demo App with Android Studio
 
-Get the [./index.md](GraphHopper sources and demo) before you proceed.
+Get the [GraphHopper sources and demo](./index.md) before you proceed.
 
 ## Setup
 
