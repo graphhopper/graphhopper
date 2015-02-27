@@ -221,6 +221,31 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         long relFlags = encoder.handleRelationTags(osmRel, 0);
         assertPriority(REACH_DEST.getValue(), osmWay, relFlags);
     }
+    
+    @Test
+    public void testSacScale()
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "path");
+        way.setTag("sac_scale", "hiking");
+        // allow
+        assertEquals(1, encoder.acceptWay(way));
+        
+        way.setTag("highway", "path");
+        way.setTag("sac_scale", "mountain_hiking");
+        // disallow
+        assertEquals(0, encoder.acceptWay(way));
+        
+        way.setTag("highway", "cycleway");
+        way.setTag("sac_scale", "hiking");
+        // allow
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.setTag("highway", "cycleway");
+        way.setTag("sac_scale", "mountain_hiking");
+        // disallow
+        assertEquals(0, encoder.acceptWay(way));
+    }
 
     @Test
     public void testCalcPriority()
