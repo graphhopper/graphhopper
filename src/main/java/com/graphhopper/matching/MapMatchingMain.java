@@ -18,6 +18,7 @@
 package com.graphhopper.matching;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -44,6 +45,8 @@ public class MapMatchingMain {
         String action = args.get("action", "").toLowerCase();
         args.put("graph.location", "./graph-cache");
         if (action.equals("import")) {
+            String vehicle = args.get("vehicle", "car").toLowerCase();
+            args.put("graph.flagEncoders", vehicle);
             args.put("osmreader.osm", args.get("datasource", ""));
             GraphHopper hopper = new GraphHopper().init(args);
             hopper.setCHEnable(false);
@@ -51,10 +54,10 @@ public class MapMatchingMain {
 
         } else if (action.equals("match")) {
             GraphHopper hopper = new GraphHopper().init(args);
-            FlagEncoder firstEncoder = hopper.getEncodingManager().fetchEdgeEncoders().get(0);
             hopper.setCHEnable(false);
             logger.info("loading graph from cache");
             hopper.load("./graph-cache");
+            FlagEncoder firstEncoder = hopper.getEncodingManager().fetchEdgeEncoders().get(0);
             GraphStorage graph = hopper.getGraph();
 
             int gpxAccuracy = args.getInt("gpxAccuracy", 15);

@@ -18,14 +18,15 @@ Apache License 2.0
 Install Java and Maven. Then import the area you want to do map-matching on:
 
 ```bash
-./map-matching.sh action=import datasource=./some-dir/osm-file.pbf
+./map-matching.sh action=import datasource=./some-dir/osm-file.pbf [vehicle=car]
 ```
 
 and then do these matches:
 ```bash
 ./map-matching.sh action=match gpx=./track-data/.*gpx
 ```
-Possible flags to pass are the following:
+
+Possible arguments are:
 ```bash
 gpxAccuracy=15              # default=15, type=integer, unit=meter
 separatedSearchDistance=500 # default=500, type=integer, unit=meter
