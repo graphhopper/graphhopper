@@ -18,7 +18,6 @@
 package com.graphhopper.matching;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -48,6 +47,10 @@ public class MapMatchingMain {
             String vehicle = args.get("vehicle", "car").toLowerCase();
             args.put("graph.flagEncoders", vehicle);
             args.put("osmreader.osm", args.get("datasource", ""));
+            
+            // standard should be to remove disconnected islands
+            args.put("prepare.minNetworkSize", 200);
+            args.put("prepare.minOneWayNetworkSize", 200);            
             GraphHopper hopper = new GraphHopper().init(args);
             hopper.setCHEnable(false);
             hopper.importOrLoad();
