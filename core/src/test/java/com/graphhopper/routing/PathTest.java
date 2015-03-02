@@ -272,7 +272,7 @@ public class PathTest
     public void testCalcInstructionsRoundabout()
     {
         RoundaboutGraph rg = new RoundaboutGraph(false);
-        rg.edge2change.setFlags(encoder.setBool(rg.edge2change.getFlags(), FlagEncoder.K_FORWARD, true));
+        rg.edge2change.setFlags(encoder.setAccess(rg.edge2change.getFlags(), true, false));
         Path p = new Dijkstra(rg.g, encoder, new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 8);
         InstructionList wayList = p.calcInstructions(tr);
         // Test instructions
@@ -307,7 +307,7 @@ public class PathTest
     public void testCalcInstructionsRoundabout2()
     {
         RoundaboutGraph rg = new RoundaboutGraph(false);
-        rg.edge2change.setFlags(encoder.setBool(rg.edge2change.getFlags(), FlagEncoder.K_FORWARD, true));
+        rg.edge2change.setFlags(encoder.setAccess(rg.edge2change.getFlags(), true, false));
         Path p = new Dijkstra(rg.g, encoder, new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(2, 8);
         InstructionList wayList = p.calcInstructions(tr);
         List<String> tmpList = pick("text", wayList.createJson());
@@ -323,7 +323,7 @@ public class PathTest
     public void testCalcInstructionsRoundaboutBegin()
     {
         RoundaboutGraph rg = new RoundaboutGraph(false);
-        rg.edge2change.setFlags(encoder.setBool(rg.edge2change.getFlags(), FlagEncoder.K_FORWARD, false));
+        rg.edge2change.setFlags(encoder.setAccess(rg.edge2change.getFlags(), false, false));        
         Path p = new Dijkstra(rg.g, encoder, new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 8);
         InstructionList wayList = p.calcInstructions(tr);
         List<String> tmpList = pick("text", wayList.createJson());

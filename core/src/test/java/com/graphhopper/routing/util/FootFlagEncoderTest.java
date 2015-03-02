@@ -60,12 +60,12 @@ public class FootFlagEncoderTest
         FlagEncoder carEncoder = encodingManager.getEncoder("CAR");
         long fl = footEncoder.setProperties(10, true, true) | carEncoder.setProperties(100, true, false);
         assertEquals(10, footEncoder.getSpeed(fl), 1e-1);
-        assertTrue(footEncoder.isBool(fl, FlagEncoder.K_FORWARD));
-        assertTrue(footEncoder.isBool(fl, FlagEncoder.K_BACKWARD));
+        assertTrue(footEncoder.isForward(fl));
+        assertTrue(footEncoder.isBackward(fl));
 
         assertEquals(100, carEncoder.getSpeed(fl), 1e-1);
-        assertTrue(carEncoder.isBool(fl, FlagEncoder.K_FORWARD));
-        assertFalse(carEncoder.isBool(fl, FlagEncoder.K_BACKWARD));
+        assertTrue(carEncoder.isForward(fl));
+        assertFalse(carEncoder.isBackward(fl));
 
         assertEquals(0, carEncoder.getSpeed(footEncoder.setProperties(10, true, true)), 1e-1);
     }

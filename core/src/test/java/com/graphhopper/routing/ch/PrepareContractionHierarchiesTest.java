@@ -212,12 +212,11 @@ public class PrepareContractionHierarchiesTest
 
         // both dirs
         assertTrue(sc1.toString(), sc1.from == 3 && sc1.to == 2);
-        assertTrue(sc1.toString(), carEncoder.isBool(sc1.flags, FlagEncoder.K_FORWARD)
-                && carEncoder.isBool(sc1.flags, FlagEncoder.K_BACKWARD));
+        assertTrue(sc1.toString(), carEncoder.isForward(sc1.flags) && carEncoder.isBackward(sc1.flags));
 
         // directed
         assertTrue(sc2.toString(), sc2.from == 2 && sc2.to == 3);
-        assertTrue(sc2.toString(), carEncoder.isBool(sc2.flags, FlagEncoder.K_FORWARD));
+        assertTrue(sc2.toString(), carEncoder.isForward(sc2.flags));
 
         assertEquals(sc1.toString(), 4, sc1.weight, 1e-4);
         assertEquals(sc2.toString(), 12, sc2.weight, 1e-4);
