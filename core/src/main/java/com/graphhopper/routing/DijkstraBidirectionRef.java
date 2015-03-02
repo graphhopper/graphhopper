@@ -84,6 +84,9 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         {
             if (currTo != null && currTo.adjNode == from)
             {
+                // special case of identical start and end
+                bestPath.edgeEntry = currFrom;
+                bestPath.edgeTo = currTo;
                 finishedFrom = true;
                 finishedTo = true;
             }
@@ -107,6 +110,9 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         {
             if (currFrom != null && currFrom.adjNode == to)
             {
+                // special case of identical start and end
+                bestPath.edgeEntry = currFrom;
+                bestPath.edgeTo = currTo;
                 finishedFrom = true;
                 finishedTo = true;
             }
@@ -123,6 +129,9 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     @Override
     protected Path extractPath()
     {
+        if (isWeightLimitReached())
+            return bestPath;
+
         return bestPath.extract();
     }
 
@@ -169,6 +178,12 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
             return true;
 
         return currFrom.weight + currTo.weight >= bestPath.getWeight();
+    }
+
+    @Override
+    protected boolean isWeightLimitReached()
+    {
+        return currFrom.weight + currTo.weight >= weightLimit;
     }
 
     void fillEdges( EdgeEntry currEdge, PriorityQueue<EdgeEntry> prioQueue,
@@ -246,12 +261,6 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         }
     }
 
-    @Override
-    public String getName()
-    {
-        return "dijkstrabi";
-    }
-
     TIntObjectMap<EdgeEntry> getBestFromMap()
     {
         return bestWeightMapFrom;
@@ -295,5 +304,11 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     void setBestPath( PathBidirRef bestPath )
     {
         this.bestPath = bestPath;
+    }
+
+    @Override
+    public String getName()
+    {
+        return AlgorithmOptions.DIJKSTRA_BI;
     }
 }

@@ -18,15 +18,14 @@
 package com.graphhopper.util.shapes;
 
 import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.Helper;
 
 /**
  * @author Peter Karich
  */
 public class Circle implements Shape
 {
-    private final static DistanceCalc SINGLETON = new DistanceCalcEarth();
-    private DistanceCalc calc = SINGLETON;
+    private DistanceCalc calc = Helper.DIST_EARTH;
     private final double radiusInKm;
     private final double lat;
     private final double lon;
@@ -35,7 +34,7 @@ public class Circle implements Shape
 
     public Circle( double lat, double lon, double radiusInMeter )
     {
-        this(lat, lon, radiusInMeter, SINGLETON);
+        this(lat, lon, radiusInMeter, Helper.DIST_EARTH);
     }
 
     public Circle( double lat, double lon, double radiusInMeter, DistanceCalc calc )

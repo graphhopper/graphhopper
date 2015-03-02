@@ -29,7 +29,7 @@ import javax.inject.Singleton;
 public class GHServletModule extends ServletModule
 {
     protected Map<String, String> params = new HashMap<String, String>();
-    private final CmdArgs args;
+    protected final CmdArgs args;
 
     public GHServletModule( CmdArgs args )
     {

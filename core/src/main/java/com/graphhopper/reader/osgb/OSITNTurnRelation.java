@@ -21,7 +21,7 @@ import com.graphhopper.util.EdgeIterator;
  * Helper object which gives OSGB ITN instruction to GraphHopper relation
  * mapping
  * <p>
- * 
+ *
  * @author Stuart Adam
  */
 public class OSITNTurnRelation implements TurnRelation {
@@ -58,7 +58,7 @@ public class OSITNTurnRelation implements TurnRelation {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.graphhopper.reader.TurnRelation#getOsmIdFrom()
      */
     @Override
@@ -68,7 +68,7 @@ public class OSITNTurnRelation implements TurnRelation {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.graphhopper.reader.TurnRelation#getOsmIdTo()
      */
     @Override
@@ -79,7 +79,7 @@ public class OSITNTurnRelation implements TurnRelation {
     /**
      * Transforms this relation into a collection of turn cost entries
      * <p>
-     * 
+     *
      * @param edgeOutExplorer
      *            an edge filter which only allows outgoing edges
      * @param edgeInExplorer
@@ -197,7 +197,15 @@ public class OSITNTurnRelation implements TurnRelation {
             this.flags = flags;
 
         }
+        @Override
+        public void setEdgeFrom(int from) {
+            this.edgeFrom = from;
+        }
 
+        @Override
+        public void setEdgeTo(int to) {
+            this.edgeTo = to;
+        }
         @Override
         public String toString() {
             return "*-(" + edgeFrom + ")->" + nodeViaNode + "-(" + edgeTo

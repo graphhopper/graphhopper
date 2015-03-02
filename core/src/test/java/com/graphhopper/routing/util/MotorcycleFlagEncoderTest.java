@@ -27,8 +27,8 @@ import static org.junit.Assert.*;
  */
 public class MotorcycleFlagEncoderTest
 {
-    private final EncodingManager em = new EncodingManager("CAR,BIKE,FOOT");
-    private final CarFlagEncoder encoder = (CarFlagEncoder) em.getEncoder("CAR");
+    private final EncodingManager em = new EncodingManager("motorcycle,foot");
+    private final MotorcycleFlagEncoder encoder = (MotorcycleFlagEncoder) em.getEncoder("motorcycle");
 
     @Test
     public void testHandleWayTags()

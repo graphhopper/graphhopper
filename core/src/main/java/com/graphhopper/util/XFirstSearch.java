@@ -27,12 +27,12 @@ import com.graphhopper.coll.GHBitSetImpl;
  */
 public abstract class XFirstSearch
 {
-        protected GHBitSet createBitSet()
+    protected GHBitSet createBitSet()
     {
         return new GHBitSetImpl();
     }
 
-    public abstract void start( EdgeExplorer explorer, int startNode);
+    public abstract void start( EdgeExplorer explorer, int startNode );
 
     protected boolean goFurther( int nodeId )
     {

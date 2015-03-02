@@ -35,7 +35,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.AbstractGraphStorageTester;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
@@ -164,8 +164,8 @@ public class OsItnReaderTest extends AbstractOsItnReaderTest {
 
         assertEquals(2, count(explorer.setBaseNode(2)));
         assertEquals(1, count(explorer.setBaseNode(3))); // No Entry part way
-                                                         // down one crossroad
-                                                         // branch
+        // down one crossroad
+        // branch
 
         // Assert that this is true
         iter = explorer.setBaseNode(0);
@@ -212,7 +212,7 @@ public class OsItnReaderTest extends AbstractOsItnReaderTest {
         assertFalse(iter.next());
     }
 
- 
+
     @Test
     public void testReadSimpleCrossRoads() throws IOException {
         final boolean turnRestrictionsImport = false;
@@ -261,7 +261,7 @@ public class OsItnReaderTest extends AbstractOsItnReaderTest {
         final int edge1_3 = getEdge(n1, n3);
         final int edge1_4 = getEdge(n1, n4);
 
-        final TurnCostStorage tcStorage = (TurnCostStorage) graph.getExtendedStorage();
+        TurnCostExtension tcStorage = (TurnCostExtension)graph.getExtension();
 
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n1, edge0_1, edge1_2)));
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n1, edge1_2, edge0_1)));

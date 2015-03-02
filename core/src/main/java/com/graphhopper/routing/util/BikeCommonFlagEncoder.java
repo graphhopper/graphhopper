@@ -67,6 +67,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         restrictedValues.add("private");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
+        restrictedValues.add("military");
 
         intendedValues.add("yes");
         intendedValues.add("designated");

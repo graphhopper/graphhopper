@@ -17,7 +17,6 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.util.AngleCalc;
 import static java.lang.Math.*;
 
 /**

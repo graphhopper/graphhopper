@@ -17,6 +17,7 @@
  */
 package com.graphhopper.geohash;
 
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -66,5 +67,22 @@ public class LinearKeyAlgoTest
         algo.decode(10, latLon);
         assertEquals(16.3333333, latLon.lat, 1e-7);
         assertEquals(5.25, latLon.lon, 1e-7);
+    }
+    /*
+    * Test if different constructors yield same results
+     */
+    @Test
+    public void testInstantiation()
+    {
+        double minLon = 0; 
+        double minLat = 2;
+        double maxLat = 6;
+        double maxLon = 5;
+        
+        BBox bounds = new BBox(minLon,maxLon,minLat,maxLat);
+        LinearKeyAlgo algo1 = new LinearKeyAlgo(4,4).setBounds(bounds);
+        LinearKeyAlgo algo2 = new LinearKeyAlgo(4,4).setBounds(minLon, maxLon, minLat, maxLat);
+        assertEquals(algo1.getLonDelta(), algo2.getLonDelta(), 1e-7);
+        assertEquals(algo1.getLatDelta(), algo2.getLatDelta(), 1e-7);
     }
 }

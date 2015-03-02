@@ -28,13 +28,14 @@ import java.util.List;
 import java.util.Map;
 import org.junit.*;
 import static org.junit.Assert.*;
+
 /**
  *
  * @author Peter Karich
  */
 public class PrepareRoutingSubnetworksTest
 {
-    private final EncodingManager em = new EncodingManager("CAR");
+    private final EncodingManager em = new EncodingManager("car");
 
     GraphStorage createGraph( EncodingManager eman )
     {
@@ -197,8 +198,9 @@ public class PrepareRoutingSubnetworksTest
         GraphStorage g = createDeadEndUnvisitedNetworkGraph(em);
         assertEquals(11, g.getNodes());
 
-        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em).setMinOnewayNetworkSize(3);
-        int removed = instance.removeDeadEndUnvisitedNetworks(em.getSingle());
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em).
+                setMinOneWayNetworkSize(3);
+        int removed = instance.removeDeadEndUnvisitedNetworks(em.getEncoder("car"));
 
         assertEquals(3, removed);
 
@@ -212,7 +214,7 @@ public class PrepareRoutingSubnetworksTest
         GraphStorage g = createSubnetworkTestGraph();
 
         // Requires a single vehicle type, otherwise we throw.
-        final FlagEncoder flagEncoder = em.getSingle();
+        final FlagEncoder flagEncoder = em.getEncoder("car");
         final EdgeFilter filter = new DefaultEdgeFilter(flagEncoder, false, true);
 
         TarjansStronglyConnectedComponentsAlgorithm tarjan = new TarjansStronglyConnectedComponentsAlgorithm(g, filter);
@@ -220,24 +222,36 @@ public class PrepareRoutingSubnetworksTest
         List<TIntArrayList> components = tarjan.findComponents();
 
         assertEquals(4, components.size());
-        assertEquals(new TIntArrayList(new int[]{ 13, 5, 3, 7, 0 }), components.get(0));
-        assertEquals(new TIntArrayList(new int[]{ 2, 4, 12, 11, 8, 1 }), components.get(1));
-        assertEquals(new TIntArrayList(new int[] {10, 14, 6}), components.get(2));
-        assertEquals(new TIntArrayList(new int[] {9}), components.get(3));
+        assertEquals(new TIntArrayList(new int[]
+        {
+            13, 5, 3, 7, 0
+        }), components.get(0));
+        assertEquals(new TIntArrayList(new int[]
+        {
+            2, 4, 12, 11, 8, 1
+        }), components.get(1));
+        assertEquals(new TIntArrayList(new int[]
+        {
+            10, 14, 6
+        }), components.get(2));
+        assertEquals(new TIntArrayList(new int[]
+        {
+            9
+        }), components.get(3));
     }
 
     // Previous two-pass implementation failed on 1 -> 2 -> 0
     @Test
-    public void testNodeOrderingRegression() {
+    public void testNodeOrderingRegression()
+    {
         // 1 -> 2 -> 0
         GraphStorage g = createGraph(em);
         g.edge(1, 2, 1, false);
         g.edge(2, 0, 1, false);
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em).
+                setMinOneWayNetworkSize(2);
+        int removed = instance.removeDeadEndUnvisitedNetworks(em.getEncoder("car"));
 
-        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em).setMinOnewayNetworkSize(2);
-        int removed = instance.removeDeadEndUnvisitedNetworks(em.getSingle());
-        
         assertEquals(3, removed);
     }
-
 }

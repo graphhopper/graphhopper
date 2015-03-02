@@ -55,20 +55,23 @@ public interface DistanceCalc
     double calcNormalizedDist( double fromLat, double fromLon, double toLat, double toLon );
 
     /**
-     * This method decides case 1: if we should use distance(r to edge) where r=(lat,lon) or case 2:
-     * min(distance(r to a), distance(r to b)) where edge=(a to b)
-     * <p/>
-     * @return true for case 1
+     * This method decides for case 1: if we should use distance(r to edge) where r=(lat,lon) or
+     * case 2: min(distance(r to a), distance(r to b)) where edge=(a to b). Note that due to
+     * rounding errors it cannot properly detect if it is case 1 or 90°.
+     * <pre>
+     * case 1 (including ):
+     *   r
+     *  .
+     * a-------b
+     *
+     * case 2:
+     * r
+     *  .
+     *    a-------b
+     * </pre>
+     * <p>
+     * @return true for case 1 which is "on edge" or the special case of 90° to the edge
      */
-    // case 1:
-    //   r
-    //  . 
-    // a-------b
-    //    
-    // case 2:
-    // r
-    //  .
-    //    a-------b
     boolean validEdgeDistance( double r_lat_deg, double r_lon_deg,
             double a_lat_deg, double a_lon_deg,
             double b_lat_deg, double b_lon_deg );

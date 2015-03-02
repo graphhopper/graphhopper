@@ -17,12 +17,16 @@
  */
 package com.graphhopper.util;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Instruction
 {
     private static final AngleCalc ac = new AngleCalc();
-    private static final DistanceCalc3D distanceCalc = new DistanceCalc3D();
+
+    public static final int LEAVE_ROUNDABOUT = -6; // for future use
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
     public static final int TURN_SLIGHT_LEFT = -1;
@@ -32,18 +36,20 @@ public class Instruction
     public static final int TURN_SHARP_RIGHT = 3;
     public static final int FINISH = 4;
     public static final int REACHED_VIA = 5;
+    public static final int USE_ROUNDABOUT = 6;
+
     protected int sign;
-    private final String name;
-    private double distance;
-    private long time;
-    final PointList points;
-    private final InstructionAnnotation annotation;
+    protected String name;
+    protected double distance;
+    protected long time;
+    protected final PointList points;
+    protected final InstructionAnnotation annotation;
 
     /**
      * The points, distances and times have exactly the same count. The last point of this
      * instruction is not duplicated here and should be in the next one.
      */
-    public Instruction( int sign, String name, InstructionAnnotation ia, PointList pl )
+    public Instruction( int sign, String name, InstructionAnnotation ia, PointList pl)
     {
         this.sign = sign;
         this.name = name;
@@ -56,17 +62,32 @@ public class Instruction
         return annotation;
     }
 
+    /**
+     * The instruction for the person/driver to execute.
+     */
     public int getSign()
     {
         return sign;
     }
 
-    /**
-     * The instruction for the person/driver to execute.
-     */
     public String getName()
     {
         return name;
+    }
+
+    public void setName(String name)
+    {
+        this.name = name;
+    }
+
+    public Map<String,Object> getExtraInfoJSON()
+    {
+        return Collections.<String, Object>emptyMap();
+    }
+
+    public void setExtraInfo(String key, Object value)
+    {
+        throw new IllegalArgumentException("Key" + key + " is not a valid option");
     }
 
     public Instruction setDistance( double distance )
@@ -144,16 +165,16 @@ public class Instruction
 
         for (int i = 0; i < len; i++)
         {
+            list.add(new GPXEntry(lat, lon, ele, prevTime));
+
             boolean last = i + 1 == len;
             double nextLat = last ? nextInstr.getFirstLat() : points.getLatitude(i + 1);
             double nextLon = last ? nextInstr.getFirstLon() : points.getLongitude(i + 1);
             double nextEle = is3D ? (last ? nextInstr.getFirstEle() : points.getElevation(i + 1)) : Double.NaN;
-
-            list.add(new GPXEntry(lat, lon, ele, prevTime));
             if (is3D)
-                prevTime = Math.round(prevTime + this.time * distanceCalc.calcDist(nextLat, nextLon, nextEle, lat, lon, ele) / distance);
+                prevTime = Math.round(prevTime + this.time * Helper.DIST_3D.calcDist(nextLat, nextLon, nextEle, lat, lon, ele) / distance);
             else
-                prevTime = Math.round(prevTime + this.time * distanceCalc.calcDist(nextLat, nextLon, lat, lon) / distance);
+                prevTime = Math.round(prevTime + this.time * Helper.DIST_3D.calcDist(nextLat, nextLon, lat, lon) / distance);
 
             lat = nextLat;
             lon = nextLon;
@@ -176,12 +197,10 @@ public class Instruction
     }
 
     /**
-     * Return Direction/Compass point based on the first tracksegment of the instruction. If
+     * Return the direction like 'NE' based on the first tracksegment of the instruction. If
      * Instruction does not contain enough coordinate points, an empty string will be returned.
-     * <p>
-     * @return
      */
-    String getDirection( Instruction nextI )
+    String calcDirection( Instruction nextI )
     {
         double azimuth = calcAzimuth(nextI);
         if (Double.isNaN(azimuth))
@@ -191,19 +210,10 @@ public class Instruction
     }
 
     /**
-     * Return Azimuth based on the first tracksegment of the instruction. If Instruction does not
-     * contain enough coordinate points, an empty string will be returned.
+     * Return the azimuth in degree based on the first tracksegment of the instruction. If
+     * Instruction does not contain enough coordinate points, an empty string will be returned.
      */
-    String getAzimuth( Instruction nextI )
-    {
-        double az = calcAzimuth(nextI);
-        if (Double.isNaN(az))
-            return "";
-
-        return "" + Math.round(az);
-    }
-
-    private double calcAzimuth( Instruction nextI )
+    public double calcAzimuth( Instruction nextI )
     {
         double nextLat;
         double nextLon;
@@ -212,7 +222,7 @@ public class Instruction
         {
             nextLat = points.getLatitude(1);
             nextLon = points.getLongitude(1);
-        } else if (points.getSize() == 1 && null != nextI)
+        } else if (nextI != null && points.getSize() == 1)
         {
             nextLat = nextI.points.getLatitude(0);
             nextLon = nextI.points.getLongitude(0);
@@ -235,7 +245,7 @@ public class Instruction
     public String getTurnDescription( Translation tr )
     {
         String str;
-        String n = getName();
+        String streetName = getName();
         int indi = getSign();
         if (indi == Instruction.FINISH)
         {
@@ -245,35 +255,35 @@ public class Instruction
             str = tr.tr("stopover", ((FinishInstruction) this).getViaPosition());
         } else if (indi == Instruction.CONTINUE_ON_STREET)
         {
-            str = Helper.isEmpty(n) ? tr.tr("continue") : tr.tr("continue_onto", n);
+            str = Helper.isEmpty(streetName) ? tr.tr("continue") : tr.tr("continue_onto", streetName);
         } else
         {
             String dir = null;
             switch (indi)
             {
                 case Instruction.TURN_SHARP_LEFT:
-                    dir = tr.tr("sharp_left");
+                    dir = tr.tr("turn_sharp_left");
                     break;
                 case Instruction.TURN_LEFT:
-                    dir = tr.tr("left");
+                    dir = tr.tr("turn_left");
                     break;
                 case Instruction.TURN_SLIGHT_LEFT:
-                    dir = tr.tr("slight_left");
+                    dir = tr.tr("turn_slight_left");
                     break;
                 case Instruction.TURN_SLIGHT_RIGHT:
-                    dir = tr.tr("slight_right");
+                    dir = tr.tr("turn_slight_right");
                     break;
                 case Instruction.TURN_RIGHT:
-                    dir = tr.tr("right");
+                    dir = tr.tr("turn_right");
                     break;
                 case Instruction.TURN_SHARP_RIGHT:
-                    dir = tr.tr("sharp_right");
+                    dir = tr.tr("turn_sharp_right");
                     break;
             }
             if (dir == null)
-                throw new IllegalStateException("Indication not found " + indi);
+                throw new IllegalStateException("Turn indication not found " + indi);
 
-            str = Helper.isEmpty(n) ? tr.tr("turn", dir) : tr.tr("turn_onto", dir, n);
+            str = Helper.isEmpty(streetName) ? dir : tr.tr("turn_onto", dir, streetName);
         }
         return str;
     }

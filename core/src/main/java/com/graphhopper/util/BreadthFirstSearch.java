@@ -18,7 +18,6 @@
 package com.graphhopper.util;
 
 import com.graphhopper.coll.GHBitSet;
-import com.graphhopper.coll.GHBitSetImpl;
 
 /**
  * Implementattion of breadth first search (BFS)
@@ -27,9 +26,8 @@ import com.graphhopper.coll.GHBitSetImpl;
  */
 public class BreadthFirstSearch extends XFirstSearch
 {
-
     @Override
-    public void start( EdgeExplorer explorer, int startNode)
+    public void start( EdgeExplorer explorer, int startNode )
     {
         SimpleIntDeque fifo = new SimpleIntDeque();
         GHBitSet visited = createBitSet();
@@ -39,20 +37,19 @@ public class BreadthFirstSearch extends XFirstSearch
         while (!fifo.isEmpty())
         {
             current = fifo.pop();
-            if (goFurther(current))
+            if (!goFurther(current))
+                continue;
+
+            EdgeIterator iter = explorer.setBaseNode(current);
+            while (iter.next())
             {
-                EdgeIterator iter = explorer.setBaseNode(current);
-                while (iter.next())
+                int connectedId = iter.getAdjNode();
+                if (checkAdjacent(iter) && !visited.contains(connectedId))
                 {
-                    int connectedId = iter.getAdjNode();
-                    if (checkAdjacent(iter) && !visited.contains(connectedId))
-                    {
-                        visited.add(connectedId);
-                        fifo.push(connectedId);
-                    }
+                    visited.add(connectedId);
+                    fifo.push(connectedId);
                 }
             }
         }
     }
-
 }
