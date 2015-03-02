@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.graphhopper.GHRequest;
@@ -58,6 +59,7 @@ public class HeavitreeRoadDenmarkRoadCrossroadTest extends AbstractOsItnReaderTe
     }
 
     @Test
+    @Ignore
     public void testMandatoryTurnFromSWToNW() throws IOException {
         runMandatoryMotorVehicleTurnFromSWToNWTest(FILENAME);
     }
