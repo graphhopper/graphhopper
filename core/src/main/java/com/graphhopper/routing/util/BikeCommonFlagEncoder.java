@@ -257,6 +257,9 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         String sacScale = way.getTag("sac_scale");
         if (sacScale != null)
         {
+            if ( (way.hasTag("highway", "cycleway")) &&
+                 (way.hasTag("sac_scale", "hiking")) )
+                return 1;  // This combination is fine with every kind of bike, including a racingbike
             if (!allowedSacScale(sacScale))
                 return 0;
         }
@@ -265,8 +268,8 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
 
     boolean allowedSacScale( String sacScale )
     {
-        // other scales are nearly impossible by bike, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
-        return "hiking".equals(sacScale) || "mountain_hiking".equals(sacScale);
+        // other scales are nearly impossible by an ordinary bike, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
+        return "hiking".equals(sacScale);
     }
 
     @Override
