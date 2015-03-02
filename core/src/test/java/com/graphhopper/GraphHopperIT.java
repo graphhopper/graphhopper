@@ -346,7 +346,7 @@ public class GraphHopperIT
     {
         // route directly after import
         executeCHFootRoute();
-        
+
         // now only load is called
         executeCHFootRoute();
     }
@@ -369,7 +369,7 @@ public class GraphHopperIT
                 setVehicle(vehicle));
 
         // identify the number of counts to compare with none-CH foot route which had nearly 700 counts
-        assertTrue(tmpHopper.getVisitedSum() < 100);
+        assertTrue("Too many nodes visited " + tmpHopper.getVisitedSum(), tmpHopper.getVisitedSum() < 120);
         assertEquals(3437.6, rsp.getDistance(), .1);
         assertEquals(89, rsp.getPoints().getSize());
         tmpHopper.close();
