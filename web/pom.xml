@@ -151,7 +151,8 @@
 						</manifest>
 					</archive>
 					<descriptors>
-						<descriptor>src/main/assembly/jar.xml</descriptor>
+					   <!-- Temporarily removing this so we can get the build running -->
+<!-- 						<descriptor>src/main/assembly/jar.xml</descriptor> -->
 						<!-- this is defined to be executed afterwards -->
 						<descriptor>src/main/assembly/zip.xml</descriptor>
 					</descriptors>
