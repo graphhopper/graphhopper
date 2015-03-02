@@ -125,6 +125,11 @@ public class GraphHopper implements GraphHopperAPI
 
     private FlagEncoder getFirstVehicle()
     {
+        if (encodingManager == null)
+        {
+            throw new IllegalStateException("No encoding manager specified or loaded");
+        }
+
         return encodingManager.fetchEdgeEncoders().get(0);
     }
 
@@ -295,7 +300,7 @@ public class GraphHopper implements GraphHopperAPI
      * vehicle if no specified in GHRequest. Per default the lexicographically first vehicle is
      * used.
      */
-    public String getDefaultVehicle()
+    String getDefaultVehicle()
     {
         if (defaultVehicleStr == null)
             throw new RuntimeException("Set default vehicle before");
@@ -591,15 +596,15 @@ public class GraphHopper implements GraphHopperAPI
         // osm import
         osmReaderWayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", osmReaderWayPointMaxDistance);
         String flagEncoders = args.get("graph.flagEncoders", "");
-
         if (!flagEncoders.isEmpty())
+        {
             setEncodingManager(new EncodingManager(flagEncoders, bytesForFlags));
+            // default vehicle which is used if no algorithm is specified
+            setDefaultVehicle(args.get("algorithm.defaultVehicle", getFirstVehicle().toString()));
+        }
 
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
-
-        // default vehicle which is used if no algorithm is specified
-        setDefaultVehicle(args.get("algorithm.defaultVehicle", getFirstVehicle().toString()));
 
         // index
         preciseIndexResolution = args.getInt("index.highResolution", preciseIndexResolution);
