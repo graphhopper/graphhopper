@@ -95,8 +95,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
         // shortcuts store weight in flags where we assume bit 1 and 2 are used for access restriction
         if ((scFwdDir & PrepareEncoder.getScFwdDir()) == 0)
-            throw new IllegalArgumentException("Currently only one vehicle is supported if you enable CH. "
-                    + "It seems that you have imported more than one.");
+            throw new IllegalArgumentException("Enabling the speed-up mode is currently only supported for the first vehicle.");
 
         prepareWeighting = new PreparationWeighting(weighting);
         originalEdges = new GHDirectory("", DAType.RAM_INT).find("original_edges");
@@ -705,7 +704,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 return allFilter.accept(edgeState);
             }
         };
-        
+
         maxLevel = prepareGraph.getNodes() + 1;
         ignoreNodeFilter = new IgnoreNodeFilter(prepareGraph, maxLevel);
         vehicleAllExplorer = prepareGraph.createEdgeExplorer(allFilter);

@@ -130,6 +130,7 @@ public class GHResponse
      */
     public long getMillis()
     {
+        check("getMillis");
         return time;
     }
 

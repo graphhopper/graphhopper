@@ -321,11 +321,12 @@ public class GraphHopperIT
     public void testMultipleVehiclesAndCH()
     {
         String tmpOsmFile = "files/monaco.osm.gz";
-        String tmpImportVehicles = "foot,car";
+        String tmpImportVehicles = "bike,car";
 
         GraphHopper tmpHopper = new GraphHopper().
                 setStoreOnFlush(true).
                 setOSMFile(tmpOsmFile).
+                setDefaultVehicle("car").
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager(tmpImportVehicles)).
                 importOrLoad();
@@ -336,9 +337,13 @@ public class GraphHopperIT
         assertEquals(2838, rsp.getDistance(), 1);
 
         rsp = tmpHopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
+                .setVehicle("bike"));
+        assertEquals(494, rsp.getMillis() / 1000f, 1);
+        assertEquals(2192, rsp.getDistance(), 1);
+
+        rsp = tmpHopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setVehicle("foot"));
-        assertEquals(1574, rsp.getMillis() / 1000f, 1);
-        assertEquals(2187, rsp.getDistance(), 1);
+        assertTrue("only bike and car were imported. foot request should fail", rsp.hasErrors());
     }
 
     @Test

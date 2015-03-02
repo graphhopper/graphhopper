@@ -250,8 +250,7 @@ if [ "$ACTION" = "ui" ] || [ "$ACTION" = "web" ]; then
   fi
 
 elif [ "$ACTION" = "import" ]; then
- "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS printVersion=true \
-      config=$CONFIG \
+ "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS config=$CONFIG \
       $GH_IMPORT_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE"
 
 
@@ -262,7 +261,7 @@ elif [ "$ACTION" = "torture" ]; then
 elif [ "$ACTION" = "xminiui" ]; then
  "$MAVEN_HOME/bin/mvn" --projects tools -DskipTests clean install assembly:single
  JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar   
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI osmreader.osm="$OSM_FILE" printVersion=true config=$CONFIG \
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI osmreader.osm="$OSM_FILE" config=$CONFIG \
               graph.location="$GRAPH"
 
 

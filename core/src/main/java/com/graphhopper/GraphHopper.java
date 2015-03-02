@@ -287,12 +287,13 @@ public class GraphHopper implements GraphHopperAPI
      * This method sets the default vehicle to use if no vehicle is specified in the GHRequest
      * object. Per default the lexicographically first vehicle is used.
      */
-    public void setDefaultVehicle( String defaultVehicleStr )
+    public GraphHopper setDefaultVehicle( String defaultVehicleStr )
     {
         if (this.defaultVehicleStr != null)
             throw new RuntimeException("Cannot change default vehicle " + this.defaultVehicleStr + " to " + defaultVehicleStr);
 
         this.defaultVehicleStr = defaultVehicleStr;
+        return this;
     }
 
     /**
