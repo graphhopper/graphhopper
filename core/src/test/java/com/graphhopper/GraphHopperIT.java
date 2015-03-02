@@ -289,7 +289,7 @@ public class GraphHopperIT
     {
         String tmpOsmFile = "files/monaco.osm.gz";
         String tmpVehicle = "car";
-        String tmpImportVehicles = "foot,car";
+        String tmpImportVehicles = "car,bike";
         String tmpWeightCalcStr = "fastest";
 
         GraphHopper tmpHopper = new GraphHopper().
@@ -299,8 +299,7 @@ public class GraphHopperIT
                 setEncodingManager(new EncodingManager(tmpImportVehicles)).
                 importOrLoad();
 
-        // lexicographically first vehicle
-        assertEquals(tmpVehicle, tmpHopper.getDefaultVehicle());
+        assertEquals(tmpVehicle, tmpHopper.getDefaultVehicle().toString());
         assertFalse(RoutingAlgorithmFactorySimple.class.isAssignableFrom(tmpHopper.getAlgorithmFactory().getClass()));
 
         GHResponse rsp = tmpHopper.route(new GHRequest(43.745084, 7.430513, 43.745247, 7.430347)
@@ -318,7 +317,7 @@ public class GraphHopperIT
     }
 
     @Test
-    public void testMultipleVehiclesAndCH()
+    public void testMultipleVehiclesAndDoCHForBike()
     {
         String tmpOsmFile = "files/monaco.osm.gz";
         String tmpImportVehicles = "bike,car";
@@ -326,10 +325,10 @@ public class GraphHopperIT
         GraphHopper tmpHopper = new GraphHopper().
                 setStoreOnFlush(true).
                 setOSMFile(tmpOsmFile).
-                // TODO in #350, setDefaultVehicle("car").
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager(tmpImportVehicles)).
                 importOrLoad();
+        assertEquals("bike", tmpHopper.getDefaultVehicle().toString());
 
         GHResponse rsp = tmpHopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setVehicle("car"));

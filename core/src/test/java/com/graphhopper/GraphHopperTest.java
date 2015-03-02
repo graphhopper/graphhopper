@@ -74,7 +74,7 @@ public class GraphHopperTest
         assertEquals(3, rsp.getPoints().getSize());
 
         closableInstance.close();
-        
+
         // no encoding manager necessary
         closableInstance = new GraphHopper().setStoreOnFlush(true);
         assertTrue(closableInstance.load(ghLoc));
@@ -322,31 +322,36 @@ public class GraphHopperTest
         assertEquals(5, instance.getGraph().getNodes());
         instance.close();
 
-        instance = new GraphHopper().init(
-                new CmdArgs().
-                put("osmreader.osm", testOsm3).
-                put("osmreader.dataaccess", "RAM").
-                put("graph.flagEncoders", "FOOT").
-                put("prepare.chWeighting", "no")).
-                setOSMFile(testOsm3);
+        // different config (flagEncoder list)
         try
         {
-            instance.load(ghLoc);
+            GraphHopper tmpGH = new GraphHopper().init(
+                    new CmdArgs().
+                    put("osmreader.osm", testOsm3).
+                    put("osmreader.dataaccess", "RAM").
+                    put("graph.flagEncoders", "FOOT").
+                    put("prepare.chWeighting", "no")).
+                    setOSMFile(testOsm3);
+            tmpGH.load(ghLoc);
             assertTrue(false);
         } catch (Exception ex)
         {
         }
 
-        // different order should be ok
-        instance = new GraphHopper().init(
-                new CmdArgs().
-                put("osmreader.osm", testOsm3).
-                put("osmreader.dataaccess", "RAM").
-                put("prepare.chWeighting", "no").
-                put("graph.flagEncoders", "CAR,FOOT")).
-                setOSMFile(testOsm3);
-        assertTrue(instance.load(ghLoc));
-        assertEquals(5, instance.getGraph().getNodes());
+        // different order is no longer okay, see #350
+        try
+        {
+            GraphHopper tmpGH = new GraphHopper().init(new CmdArgs().
+                    put("osmreader.osm", testOsm3).
+                    put("osmreader.dataaccess", "RAM").
+                    put("prepare.chWeighting", "no").
+                    put("graph.flagEncoders", "CAR,FOOT")).
+                    setOSMFile(testOsm3);
+            tmpGH.load(ghLoc);
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+        }
     }
 
     @Test

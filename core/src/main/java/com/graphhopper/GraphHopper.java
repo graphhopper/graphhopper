@@ -105,7 +105,6 @@ public class GraphHopper implements GraphHopperAPI
         this.graph = g;
         fullyLoaded = true;
         initLocationIndex();
-        initDefaultVehicleIfNecessary();
         return this;
     }
 
@@ -123,7 +122,7 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
-    private FlagEncoder getFirstVehicle()
+    FlagEncoder getDefaultVehicle()
     {
         if (encodingManager == null)
         {
@@ -281,32 +280,6 @@ public class GraphHopper implements GraphHopperAPI
         ensureNotLoaded();
         dataAccessType = DAType.UNSAFE_STORE;
         return this;
-    }
-
-    /**
-     * This method sets the default vehicle to use if no vehicle is specified in the GHRequest
-     * object. Per default the lexicographically first vehicle is used.
-     */
-    public GraphHopper setDefaultVehicle( String defaultVehicleStr )
-    {
-        if (this.defaultVehicleStr != null)
-            throw new RuntimeException("Cannot change default vehicle " + this.defaultVehicleStr + " to " + defaultVehicleStr);
-
-        this.defaultVehicleStr = defaultVehicleStr;
-        return this;
-    }
-
-    /**
-     * The default vehicle is the single vehicle used for CH preparation as well as the default
-     * vehicle if no specified in GHRequest. Per default the lexicographically first vehicle is
-     * used.
-     */
-    String getDefaultVehicle()
-    {
-        if (defaultVehicleStr == null)
-            throw new RuntimeException("Set default vehicle before");
-
-        return defaultVehicleStr;
     }
 
     /**
@@ -598,11 +571,7 @@ public class GraphHopper implements GraphHopperAPI
         osmReaderWayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", osmReaderWayPointMaxDistance);
         String flagEncoders = args.get("graph.flagEncoders", "");
         if (!flagEncoders.isEmpty())
-        {
             setEncodingManager(new EncodingManager(flagEncoders, bytesForFlags));
-            // default vehicle which is used if no algorithm is specified
-            setDefaultVehicle(args.get("algorithm.defaultVehicle", getFirstVehicle().toString()));
-        }
 
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
@@ -760,8 +729,6 @@ public class GraphHopper implements GraphHopperAPI
         if (encodingManager == null)
             setEncodingManager(EncodingManager.create(ghLocation));
 
-        initDefaultVehicleIfNecessary();
-
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;
 
@@ -836,13 +803,7 @@ public class GraphHopper implements GraphHopperAPI
 
     protected RoutingAlgorithmFactory createPrepare()
     {
-        if (!encodingManager.supports(getDefaultVehicle()))
-        {
-            throw new IllegalStateException("Should not happen: default vehicle " + getDefaultVehicle() + " not supported"
-                    + " from EncodingManager " + encodingManager.toDetailsString() + ". Cannot do CH preparation");
-        }
-
-        FlagEncoder defaultVehicle = encodingManager.getEncoder(getDefaultVehicle());
+        FlagEncoder defaultVehicle = getDefaultVehicle();
         Weighting weighting = createWeighting(new WeightingMap(chWeightingStr), defaultVehicle);
         PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies((LevelGraph) graph,
                 defaultVehicle, weighting, traversalMode);
@@ -929,7 +890,7 @@ public class GraphHopper implements GraphHopperAPI
 
         String vehicle = request.getVehicle();
         if (vehicle.isEmpty())
-            vehicle = getDefaultVehicle();
+            vehicle = getDefaultVehicle().toString();
 
         if (!encodingManager.supports(vehicle))
         {
@@ -980,7 +941,7 @@ public class GraphHopper implements GraphHopperAPI
 
         QueryGraph queryGraph;
         RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory();
-        if (chEnabled && !vehicle.equalsIgnoreCase(getDefaultVehicle()))
+        if (chEnabled && !vehicle.equalsIgnoreCase(getDefaultVehicle().toString()))
         {
             // fall back to normal traversing
             tmpAlgoFactory = new RoutingAlgorithmFactorySimple();
@@ -1173,15 +1134,5 @@ public class GraphHopper implements GraphHopperAPI
     long getVisitedSum()
     {
         return visitedSum.get();
-    }
-
-    private void initDefaultVehicleIfNecessary()
-    {
-        if (defaultVehicleStr == null)
-            setDefaultVehicle(getFirstVehicle().toString());
-
-        if (!encodingManager.supports(getDefaultVehicle()))
-            throw new IllegalArgumentException("Default vehicle " + defaultVehicleStr + " is not supported. "
-                    + "Include vehicle in EncodingManager or via the property graph.flagEncoders OR set it explicitely via setDefaultVehicle");
     }
 }

@@ -100,15 +100,6 @@ public class EncodingManager
             throw new IllegalStateException("For 'edge flags' currently only 4 or 8 bytes supported");
 
         this.bitsForEdgeFlags = bytesForEdgeFlags * 8;
-
-        Collections.sort(flagEncoders, new Comparator<FlagEncoder>()
-        {
-            @Override
-            public int compare( FlagEncoder o1, FlagEncoder o2 )
-            {
-                return o1.toString().compareTo(o2.toString());
-            }
-        });
         for (FlagEncoder flagEncoder : flagEncoders)
         {
             registerEncoder((AbstractFlagEncoder) flagEncoder);
