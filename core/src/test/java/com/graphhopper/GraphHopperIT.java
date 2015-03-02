@@ -326,7 +326,7 @@ public class GraphHopperIT
         GraphHopper tmpHopper = new GraphHopper().
                 setStoreOnFlush(true).
                 setOSMFile(tmpOsmFile).
-                setDefaultVehicle("car").
+                // TODO in #350, setDefaultVehicle("car").
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager(tmpImportVehicles)).
                 importOrLoad();
