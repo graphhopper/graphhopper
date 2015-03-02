@@ -59,8 +59,8 @@ public class CGIARProvider implements ElevationProvider
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final Map<String, HeightTile> cacheData = new HashMap<String, HeightTile>();
     private File cacheDir = new File("/tmp/cgiar");
-    // String baseUrl = "http://srtm.csi.cgiar.org/SRT-ZIP/SRTM_V41/SRTM_Data_GeoTiff";
-    private String baseUrl = "http://droppr.org/srtm/v4.1/6_5x5_TIFs";
+    // for alternatives see #346
+    private String baseUrl = "http://srtm.csi.cgiar.org/SRT-ZIP/SRTM_V41/SRTM_Data_GeoTiff";    
     private Directory dir;
     private DAType daType = DAType.MMAP;
     final double precision = 1e7;
