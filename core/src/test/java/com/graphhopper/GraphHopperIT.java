@@ -15,12 +15,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing;
+package com.graphhopper;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.dem.SRTMProvider;
+import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -84,6 +83,8 @@ public class GraphHopperIT
         GHResponse rsp = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setAlgorithm(AlgorithmOptions.ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
 
+        // identify the number of counts to compare with CH foot route
+        assertEquals(698, hopper.getVisitedSum());
         assertEquals(3437.6, rsp.getDistance(), .1);
         assertEquals(89, rsp.getPoints().getSize());
 
@@ -332,11 +333,45 @@ public class GraphHopperIT
         GHResponse rsp = tmpHopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setVehicle("car"));
         assertEquals(207, rsp.getMillis() / 1000f, 1);
-        assertEquals(2838, rsp.getDistance(), 1);        
+        assertEquals(2838, rsp.getDistance(), 1);
 
         rsp = tmpHopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setVehicle("foot"));
         assertEquals(1574, rsp.getMillis() / 1000f, 1);
-        assertEquals(2187, rsp.getDistance(), 1);        
+        assertEquals(2187, rsp.getDistance(), 1);
+    }
+
+    @Test
+    public void testIfCHIsUsed() throws Exception
+    {
+        // route directly after import
+        executeCHFootRoute();
+        
+        // now only load is called
+        executeCHFootRoute();
+    }
+
+    private void executeCHFootRoute()
+    {
+        String tmpOsmFile = "files/monaco.osm.gz";
+        String tmpImportVehicles = "foot";
+
+        GraphHopper tmpHopper = new GraphHopper().
+                setStoreOnFlush(true).
+                setOSMFile(tmpOsmFile).
+                setCHWeighting(weightCalcStr).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager(tmpImportVehicles)).
+                importOrLoad();
+
+        // same query as in testMonacoWithInstructions
+        GHResponse rsp = tmpHopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setVehicle(vehicle));
+
+        // identify the number of counts to compare with none-CH foot route which had nearly 700 counts
+        assertTrue(tmpHopper.getVisitedSum() < 100);
+        assertEquals(3437.6, rsp.getDistance(), .1);
+        assertEquals(89, rsp.getPoints().getSize());
+        tmpHopper.close();
     }
 }

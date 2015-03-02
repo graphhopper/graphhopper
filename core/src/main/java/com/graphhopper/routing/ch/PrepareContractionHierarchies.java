@@ -60,7 +60,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private EdgeSkipExplorer vehicleAllExplorer;
     private EdgeSkipExplorer vehicleAllTmpExplorer;
     private EdgeSkipExplorer calcPrioAllExplorer;
-    private LevelEdgeFilter levelFilter;
+    private final LevelEdgeFilter levelFilter;
     private int maxLevel;
     private final LevelGraph prepareGraph;
 
@@ -91,6 +91,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         this.traversalMode = traversalMode;
         this.prepareFlagEncoder = encoder;
         long scFwdDir = encoder.setAccess(0, true, false);
+        levelFilter = new LevelEdgeFilter(prepareGraph);
 
         // shortcuts store weight in flags where we assume bit 1 and 2 are used for access restriction
         if ((scFwdDir & PrepareEncoder.getScFwdDir()) == 0)
@@ -704,8 +705,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 return allFilter.accept(edgeState);
             }
         };
-
-        levelFilter = new LevelEdgeFilter(prepareGraph);
+        
         maxLevel = prepareGraph.getNodes() + 1;
         ignoreNodeFilter = new IgnoreNodeFilter(prepareGraph, maxLevel);
         vehicleAllExplorer = prepareGraph.createEdgeExplorer(allFilter);

@@ -974,7 +974,7 @@ public class GraphHopper implements GraphHopperAPI
 
         QueryGraph queryGraph;
         RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory();
-        if (chEnabled && !vehicle.equals(getDefaultVehicle()))
+        if (chEnabled && !vehicle.equalsIgnoreCase(getDefaultVehicle()))
         {
             // fall back to normal traversing
             tmpAlgoFactory = new RoutingAlgorithmFactorySimple();
@@ -1164,7 +1164,7 @@ public class GraphHopper implements GraphHopperAPI
      * Returns the current sum of the visited nodes while routing. Mainly for statistic and
      * debugging purposes.
      */
-    public long getVisitedSum()
+    long getVisitedSum()
     {
         return visitedSum.get();
     }
