@@ -12,7 +12,7 @@ import org.junit.Test;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.storage.AbstractGraphStorageTester;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.GHUtility;
 
 public class MandatoryTurnTest extends AbstractOsItnReaderTest{
@@ -21,7 +21,7 @@ public class MandatoryTurnTest extends AbstractOsItnReaderTest{
     public void testReadSimpleCrossRoadsWithMandatoryTurnRestrictionFrom17To19() throws IOException {
         runMandatoryMotorVehicleTurnFrom17To19Test("./src/test/resources/com/graphhopper/reader/os-itn-simple-mandatory-turn-restricted-crossroad.xml");
     }
-    
+
     @Test
     public void testMandatoryTurnExceptBusTrueFrom17To19() throws IOException {
         runMandatoryMotorVehicleTurnFrom17To19Test("./src/test/resources/com/graphhopper/reader/os-itn-mandatory-turn-except-for-buses-true-crossroad.xml");
@@ -42,7 +42,7 @@ public class MandatoryTurnTest extends AbstractOsItnReaderTest{
     public void testMandatoryTurnExceptMotorVehicleFalseFrom17To19() throws IOException {
         runMandatoryMotorVehicleTurnFrom17To19Test("./src/test/resources/com/graphhopper/reader/os-itn-mandatory-turn-except-for-motor-vehicles-false-crossroad.xml");
     }
-    
+
     private void runMandatoryMotorVehicleTurnFrom17To19Test(String filename) throws IOException {
         boolean turnRestrictionsImport = true;
         boolean is3D = false;
@@ -54,7 +54,7 @@ public class MandatoryTurnTest extends AbstractOsItnReaderTest{
         checkSimpleNodeNetwork(graph);
 
         DefaultEdgeFilter carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
-                carOutExplorer = graph.createEdgeExplorer(carOutFilter);
+        carOutExplorer = graph.createEdgeExplorer(carOutFilter);
 
         GHUtility.printInfo(graph, 0, 20, carOutFilter);
         int n80 = AbstractGraphStorageTester.getIdOf(graph, node0Lat, node0Lon);
@@ -68,7 +68,7 @@ public class MandatoryTurnTest extends AbstractOsItnReaderTest{
         int edge19_81_83 = getEdge(n81, n83);
         int edge20_81_84 = getEdge(n81, n84);
 
-        TurnCostStorage tcStorage = (TurnCostStorage) ((GraphHopperStorage) graph).getExtendedStorage();
+        TurnCostExtension tcStorage = (TurnCostExtension)graph.getExtension();
 
         // Check that there is no restriction from 17 to 19 (our Mandatory turn)
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge17_80_81, edge19_81_83)));
@@ -77,7 +77,7 @@ public class MandatoryTurnTest extends AbstractOsItnReaderTest{
         long turnCostFlags = tcStorage.getTurnCostFlags(n81, edge17_80_81, edge20_81_84);
         double cost = carEncoder.getTurnCost(turnCostFlags);
         assertTrue(cost > 0.0);
-        
+
         // Check that 17 to 18 is restricted (high cost)
         turnCostFlags = tcStorage.getTurnCostFlags(n81, edge17_80_81, edge18_81_82);
         cost = carEncoder.getTurnCost(turnCostFlags);
@@ -97,7 +97,7 @@ public class MandatoryTurnTest extends AbstractOsItnReaderTest{
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge20_81_84, edge18_81_82)));
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge20_81_84, edge19_81_83)));
     }
-    
+
     private void runNonMandatoryMotorVehicleTurnFrom17To19Test(String filename) throws IOException {
         boolean turnRestrictionsImport = true;
         boolean is3D = false;
@@ -109,7 +109,7 @@ public class MandatoryTurnTest extends AbstractOsItnReaderTest{
         checkSimpleNodeNetwork(graph);
 
         DefaultEdgeFilter carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
-                carOutExplorer = graph.createEdgeExplorer(carOutFilter);
+        carOutExplorer = graph.createEdgeExplorer(carOutFilter);
 
         GHUtility.printInfo(graph, 0, 20, carOutFilter);
         int n80 = AbstractGraphStorageTester.getIdOf(graph, node0Lat, node0Lon);
@@ -123,7 +123,7 @@ public class MandatoryTurnTest extends AbstractOsItnReaderTest{
         int edge19_81_83 = getEdge(n81, n83);
         int edge20_81_84 = getEdge(n81, n84);
 
-        TurnCostStorage tcStorage = (TurnCostStorage) ((GraphHopperStorage) graph).getExtendedStorage();
+        TurnCostExtension tcStorage = (TurnCostExtension)graph.getExtension();
 
         // Check that there is no restriction from 17 to 19 (our Mandatory turn)
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge17_80_81, edge19_81_83)));
@@ -131,7 +131,7 @@ public class MandatoryTurnTest extends AbstractOsItnReaderTest{
         // Check that 17 to 20 is NOT restricted
         long turnCostFlags = tcStorage.getTurnCostFlags(n81, edge17_80_81, edge20_81_84);
         assertFalse(carEncoder.isTurnRestricted(turnCostFlags));
-        
+
         // Check that 17 to 18 is NOT restricted
         turnCostFlags = tcStorage.getTurnCostFlags(n81, edge17_80_81, edge18_81_82);
         assertFalse(carEncoder.isTurnRestricted(turnCostFlags));
@@ -150,5 +150,5 @@ public class MandatoryTurnTest extends AbstractOsItnReaderTest{
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge20_81_84, edge18_81_82)));
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge20_81_84, edge19_81_83)));
     }
-    
+
 }

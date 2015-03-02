@@ -38,7 +38,7 @@ public class FastestWeighting implements Weighting
     public FastestWeighting( FlagEncoder encoder )
     {
         this.encoder = encoder;
-        maxSpeed = encoder.getMaxSpeed() * SPEED_CONV;
+        maxSpeed = encoder.getMaxSpeed() / SPEED_CONV;
     }
 
     @Override
@@ -53,7 +53,7 @@ public class FastestWeighting implements Weighting
         double speed = reverse ? encoder.getReverseSpeed(edge.getFlags()) : encoder.getSpeed(edge.getFlags());
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
-        return edge.getDistance() / (speed * SPEED_CONV);
+        return edge.getDistance() / speed * SPEED_CONV;
     }
 
     @Override

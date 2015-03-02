@@ -14,12 +14,12 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.AbstractGraphStorageTester;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
 public class NoTurnTest extends AbstractOsItnReaderTest{
-    
+
     @Test
     public void testNoTurnExceptBusTrueFrom17To19() throws IOException {
         runNoMotorVehicleTurnFrom17To19Test("./src/test/resources/com/graphhopper/reader/os-itn-no-turn-except-for-buses-true-crossroad.xml");
@@ -57,17 +57,17 @@ public class NoTurnTest extends AbstractOsItnReaderTest{
         File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-heavitree-road-denmark-road.xml");
         readGraphFile(graph, file);
         System.out.println("Node Count: " + graph.getNodes());
-//        assertEquals(5, graph.getNodes());
-//        checkSimpleNodeNetwork(graph);
+        //        assertEquals(5, graph.getNodes());
+        //        checkSimpleNodeNetwork(graph);
 
         DefaultEdgeFilter carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
         carOutExplorer = graph.createEdgeExplorer(carOutFilter);
-        
+
         GHUtility.printInfo(graph, 0, 20, EdgeFilter.ALL_EDGES);
         System.out.println(count(carOutExplorer.setBaseNode(0)) + " node 0");
         System.out.println(count(carOutExplorer.setBaseNode(1)) + " node 1");
         assertEquals(4, count(carOutExplorer.setBaseNode(0)));
-        
+
         EdgeIterator iter = carOutExplorer.setBaseNode(0);
         while (iter.next()) {
             System.out.println("Edge: " + iter.getEdge());
@@ -77,7 +77,7 @@ public class NoTurnTest extends AbstractOsItnReaderTest{
             System.out.println("Edge: " + iter.getEdge());
         }
     }
-    
+
     private void runNoMotorVehicleTurnFrom17To19Test(String filename) throws IOException {
         boolean turnRestrictionsImport = true;
         boolean is3D = false;
@@ -89,7 +89,7 @@ public class NoTurnTest extends AbstractOsItnReaderTest{
         checkSimpleNodeNetwork(graph);
 
         DefaultEdgeFilter carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
-                carOutExplorer = graph.createEdgeExplorer(carOutFilter);
+        carOutExplorer = graph.createEdgeExplorer(carOutFilter);
 
         GHUtility.printInfo(graph, 0, 20, carOutFilter);
         int n80 = AbstractGraphStorageTester.getIdOf(graph, node0Lat, node0Lon);
@@ -103,7 +103,7 @@ public class NoTurnTest extends AbstractOsItnReaderTest{
         int edge19_81_83 = getEdge(n81, n83);
         int edge20_81_84 = getEdge(n81, n84);
 
-        TurnCostStorage tcStorage = (TurnCostStorage) ((GraphHopperStorage) graph).getExtendedStorage();
+        TurnCostExtension tcStorage = (TurnCostExtension)graph.getExtension();
 
         // Check that 17 to 19 is restricted (high cost)
         long turnCostFlags = tcStorage.getTurnCostFlags(n81, edge17_80_81, edge19_81_83);
@@ -112,7 +112,7 @@ public class NoTurnTest extends AbstractOsItnReaderTest{
 
         // We don't care about whether 17 to 20 is restricted (high cost) but it won't be in this example
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge17_80_81, edge20_81_84)));
-        
+
         // We don't care about whether 17 to 18 is restricted (high cost)
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge17_80_81, edge18_81_82)));
 
@@ -130,7 +130,7 @@ public class NoTurnTest extends AbstractOsItnReaderTest{
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge20_81_84, edge18_81_82)));
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge20_81_84, edge19_81_83)));
     }
-    
+
     private void runNonNoMotorVehicleTurnFrom17To19Test(String filename) throws IOException {
         boolean turnRestrictionsImport = true;
         boolean is3D = false;
@@ -142,7 +142,7 @@ public class NoTurnTest extends AbstractOsItnReaderTest{
         checkSimpleNodeNetwork(graph);
 
         DefaultEdgeFilter carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
-                carOutExplorer = graph.createEdgeExplorer(carOutFilter);
+        carOutExplorer = graph.createEdgeExplorer(carOutFilter);
 
         GHUtility.printInfo(graph, 0, 20, carOutFilter);
         int n80 = AbstractGraphStorageTester.getIdOf(graph, node0Lat, node0Lon);
@@ -156,7 +156,7 @@ public class NoTurnTest extends AbstractOsItnReaderTest{
         int edge19_81_83 = getEdge(n81, n83);
         int edge20_81_84 = getEdge(n81, n84);
 
-        TurnCostStorage tcStorage = (TurnCostStorage) ((GraphHopperStorage) graph).getExtendedStorage();
+        TurnCostExtension tcStorage = (TurnCostExtension)graph.getExtension();
 
         // Check that there is no restriction from 17 to 19 (our Non No turn)
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge17_80_81, edge19_81_83)));
@@ -164,7 +164,7 @@ public class NoTurnTest extends AbstractOsItnReaderTest{
         // Check that 17 to 20 is NOT restricted
         long turnCostFlags = tcStorage.getTurnCostFlags(n81, edge17_80_81, edge20_81_84);
         assertFalse(carEncoder.isTurnRestricted(turnCostFlags));
-        
+
         // Check that 17 to 18 is NOT restricted
         turnCostFlags = tcStorage.getTurnCostFlags(n81, edge17_80_81, edge18_81_82);
         assertFalse(carEncoder.isTurnRestricted(turnCostFlags));
@@ -183,5 +183,5 @@ public class NoTurnTest extends AbstractOsItnReaderTest{
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge20_81_84, edge18_81_82)));
         assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n81, edge20_81_84, edge19_81_83)));
     }
-    
+
 }

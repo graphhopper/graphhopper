@@ -1,11 +1,13 @@
-## Get Demo
+# Get Demo
 
 [Download GraphHopper Demo APK](http://graphhopper.com/#download)
 
-## Set-up Development
-As starting point you can use [the demo project](https://github.com/graphhopper/graphhopper/tree/master/android) which can be used from Eclipse or NetBeans via maven command line.
+# Set-up Development
 
-### Before installation
+As starting point you can use [the demo project](https://github.com/graphhopper/graphhopper/tree/master/android) 
+which can be used from Android Studio, NetBeans, gradle or maven.
+
+Before the installation fetch the source, the OpenStreetMap data and the dependencies:
 
 ```bash
 $ git clone git://github.com/graphhopper/graphhopper.git graphhopper
@@ -13,21 +15,29 @@ $ cd graphhopper
 $ ./graphhopper.sh import your-area.pbf
 ```
 
-And go to the Android SDK Manager and install at least 2.3 (API 9)
+## Android Studio
 
-**Either via Maven and Command line -> use this for NetBeans**
+Please read [here](./android-studio-setup.md) for a detailed instruction.
+
+## None-Android Studio
+
+Download the [Android SDK](http://developer.android.com/sdk/installing/index.html?pkg=tools) and 
+go to the Android SDK Manager and install at least 2.3 (API 9).
+
+### Maven or NetBeans
  1. Download [Maven SDK Deployer](https://github.com/mosabua/maven-android-sdk-deployer) and execute `mvn install -P 2.3` - it uses [Android Maven Plugin](http://code.google.com/p/maven-android-plugin/wiki/GettingStarted) under the hood where you need to set up ANDROID_HOME
  2. Now do `./graphhopper.sh android`
 
-**Or Eclipse**
+### Gradle
 
-Import Sources as Android project. If you want to customize graphhopper itself do:
- 1. `cd graphhopper; ./graphhopper.sh eclipse`
- 2. Refresh your Eclipse project and use it.
+```bash
+$ cd graphhopper/android
+$ ./gradlew clean build
+# push to device, start manually
+$ gradle installDebug
+```
 
-See [this](https://lists.openstreetmap.org/pipermail/graphhopper/2013-November/000501.html) for the discussion.
-
-**Maps**
+## Maps
 
 Now that you have a running android app you need to copy somehow the routing and maps data. 
 

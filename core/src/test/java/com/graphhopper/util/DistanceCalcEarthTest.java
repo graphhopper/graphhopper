@@ -130,6 +130,9 @@ public class DistanceCalcEarthTest
         assertFalse(dc.validEdgeDistance(49.944482, 11.555446, 49.937964, 11.541824, 49.942272, 11.555643));
         // right bottom of the edge
         assertFalse(dc.validEdgeDistance(49.94085, 11.557356, 49.937964, 11.541824, 49.942272, 11.555643));
+
+        // rounding error
+        // assertFalse(dc.validEdgeDistance(0.001, 0.001, 0.001, 0.002, 0.00099987, 0.00099987));
     }
 
     @Test

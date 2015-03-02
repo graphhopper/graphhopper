@@ -1,4 +1,23 @@
 0.4.0
+    translation key turn changed and merged with left etc into turn_left, turn_right etc
+    create location index before preparation in the GraphHopper class
+    encodingManager.getSingle() is removed as one can specify an encoder explicitly. GraphHopper picks the first encoder automatically for default vehicle, can be overwritten via setDefaultVehicle
+    removed LocationIndexTreeSC, use new LocationIndexTree(levelGraph.getBaseGraph(), directory) instead
+    getLevel and setLevel do no longer automatically increase node count, use getNodeAccess.ensureNode for that
+    normal algorithms are now possible on prepared graph use getBaseGraph, see #116
+    GHResponse no longer has isFound method, use !hasErrors instead
+    merged unused Edge class into EdgeEntry
+    astar and astarbi are now both none-heuristic and take parameters for beeline approximation: astar.approximation=BeelineSimplification|BeelineAccurate or astarbi.approximation=...
+    making GPX export according to the schema to support import from various tools like basecamp
+    refactoring: AllEdgesIterator.getMaxId is now named getCount
+    major change of internal API: moved method "Path RoutingAlgorithm.calcPath(QueryResult,QueryResult)" to a helper method QueryGraph.lookup, call queryResult.getClosestNode for the calcPath(nodeFrom,nodeTo) method
+    no cachedWays and cachedPoints in Path anymore
+    Path.findInstruction was moved to InstructionList.find
+    if start and end point are identical an algorithm will find the path consisting only of one node, one point and one instruction (finish instruction), but without edges
+    astarbi has new default values for approximation (false) and approximation_factor (1.2) in RoutingAlgorithmFactorySimple
+    instead of strings use the variables in AlgorithmOptions to specify an algorithm
+    use RoutingAlgorithmFactorySimple instead of RoutingAlgorithmFactory, also more constistent algorithm preparation handling due to new AlgorithmOptions, therefor removed NoOpAlgorithmPreparation
+    GHResponse.getXX methods now fail fast (throw an exception) if an error while route calculation occured. See #287
     renamed less often used URL parameter 'min_path_precision' to way_point_max_distance which makes it identical to the setWayPointMaxDistance method used for simplification at OSMImport
     removed douglas.minprecision from Java API ghRequest.hints => use wayPointMaxDistance instead
     encoder.supportTurnCost is replaced by encoder.supports(TurnWeighting.class)

@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,13 +17,18 @@
  */
 package com.graphhopper.reader;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import gnu.trove.list.TLongList;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,15 +42,22 @@ import org.junit.Test;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.BikeFlagEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EncodedValue;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.AbstractGraphStorageTester;
-import com.graphhopper.storage.ExtendedStorage;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -56,10 +68,10 @@ import com.graphhopper.util.shapes.GHPoint;
 /**
  * Tests the OSMReader with the normal helper initialized.
  * <p/>
+ *
  * @author Peter Karich
  */
-public class OSMReaderTest
-{
+public class OSMReaderTest {
     private final String file1 = "test-osm.xml";
     private final String file2 = "test-osm2.xml";
     private final String file3 = "test-osm3.xml";
@@ -75,44 +87,35 @@ public class OSMReaderTest
     private EdgeExplorer carAllExplorer;
 
     @Before
-    public void setUp()
-    {
+    public void setUp() {
         new File(dir).mkdirs();
     }
 
     @After
-    public void tearDown()
-    {
+    public void tearDown() {
         Helper.removeDir(new File(dir));
     }
 
-    GraphStorage newGraph( String directory, EncodingManager encodingManager, boolean is3D, boolean turnRestrictionsImport )
-    {
-        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager,
-                is3D, turnRestrictionsImport ? new TurnCostStorage() : new ExtendedStorage.NoExtendedStorage());
+    GraphStorage newGraph(String directory, EncodingManager encodingManager, boolean is3D, boolean turnRestrictionsImport) {
+        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, is3D, turnRestrictionsImport ? new TurnCostExtension() : new GraphExtension.NoExtendedStorage());
     }
 
-    class GraphHopperTest extends GraphHopper
-    {
-        public GraphHopperTest( String osmFile )
-        {
+    class GraphHopperTest extends GraphHopper {
+        public GraphHopperTest(String osmFile) {
             this(osmFile, false);
         }
 
-        public GraphHopperTest( String osmFile, boolean turnCosts )
-        {
+        public GraphHopperTest(String osmFile, boolean turnCosts) {
             setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
             setEncodingManager(new EncodingManager("CAR,FOOT"));
             setCHEnable(false);
 
-            if (turnCosts)
-            {
+            if (turnCosts) {
                 carEncoder = new CarFlagEncoder(5, 5, 3);
                 bikeEncoder = new BikeFlagEncoder(4, 2, 3);
-            } else
-            {
+            } else {
                 carEncoder = new CarFlagEncoder();
                 bikeEncoder = new BikeFlagEncoder();
             }
@@ -123,23 +126,19 @@ public class OSMReaderTest
         }
 
         @Override
-        protected DataReader createReader( GraphStorage tmpGraph )
-        {
+        protected DataReader createReader(GraphStorage tmpGraph) {
             return initReader(new OSMReader(tmpGraph));
         }
 
         @Override
-        protected DataReader importData() throws IOException
-        {
+        protected DataReader importData() throws IOException {
             GraphStorage tmpGraph = newGraph(dir, getEncodingManager(), hasElevation(), getEncodingManager().needsTurnCostsSupport());
             setGraph(tmpGraph);
 
             DataReader osmReader = createReader(tmpGraph);
-            try
-            {
+            try {
                 ((OSMReader) osmReader).setOSMFile(new File(getClass().getResource(getOSMFile()).toURI()));
-            } catch (URISyntaxException e)
-            {
+            } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             }
             osmReader.readGraph();
@@ -149,16 +148,14 @@ public class OSMReaderTest
         }
     }
 
-    InputStream getResource( String file )
-    {
+    InputStream getResource(String file) {
         return getClass().getResourceAsStream(file);
     }
 
     @Test
-    public void testMain()
-    {
+    public void testMain() {
         GraphHopper hopper = new GraphHopperTest(file1).importOrLoad();
-        GraphStorage graph = (GraphStorage) hopper.getGraph();
+        GraphStorage graph = hopper.getGraph();
 
         assertNotNull(graph.getProperties().get("osmreader.import.date"));
         assertNotEquals("", graph.getProperties().get("osmreader.import.date"));
@@ -212,8 +209,7 @@ public class OSMReaderTest
     }
 
     @Test
-    public void testSort()
-    {
+    public void testSort() {
         GraphHopper hopper = new GraphHopperTest(file1).setSortGraph(true).importOrLoad();
         Graph graph = hopper.getGraph();
         NodeAccess na = graph.getNodeAccess();
@@ -222,18 +218,13 @@ public class OSMReaderTest
     }
 
     @Test
-    public void testWithBounds()
-    {
-        GraphHopper hopper = new GraphHopperTest(file1)
-        {
+    public void testWithBounds() {
+        GraphHopper hopper = new GraphHopperTest(file1) {
             @Override
-            protected DataReader createReader( GraphStorage tmpGraph )
-            {
-                return new OSMReader(tmpGraph)
-                {
+            protected DataReader createReader(GraphStorage tmpGraph) {
+                return new OSMReader(tmpGraph) {
                     @Override
-                    public boolean isInBounds( OSMNode node )
-                    {
+                    public boolean isInBounds(OSMNode node) {
                         return node.getLat() > 49 && node.getLon() > 8;
                     }
                 }.setEncodingManager(getEncodingManager());
@@ -274,8 +265,7 @@ public class OSMReaderTest
     }
 
     @Test
-    public void testOneWay()
-    {
+    public void testOneWay() {
         GraphHopper hopper = new GraphHopperTest(file2).importOrLoad();
         Graph graph = hopper.getGraph();
 
@@ -322,13 +312,10 @@ public class OSMReaderTest
     }
 
     @Test
-    public void testFerry()
-    {
-        GraphHopper hopper = new GraphHopperTest(file2)
-        {
+    public void testFerry() {
+        GraphHopper hopper = new GraphHopperTest(file2) {
             @Override
-            public void cleanUp()
-            {
+            public void cleanUp() {
             }
         }.importOrLoad();
         Graph graph = hopper.getGraph();
@@ -343,21 +330,19 @@ public class OSMReaderTest
         iter.next();
         assertEquals(5, carEncoder.getSpeed(iter.getFlags()), 1e-1);
 
-        // duration 01:10 is given => more precise speed calculation! 
-        // ~111km (from 54.0,10.1 to 55.0,10.2) in duration=70 minutes => 95km/h => / 1.4 => 71km/h        
+        // duration 01:10 is given => more precise speed calculation!
+        // ~111km (from 54.0,10.1 to 55.0,10.2) in duration=70 minutes => 95km/h
+        // => / 1.4 => 71km/h
         iter = carOutExplorer.setBaseNode(n40);
         iter.next();
         assertEquals(70, carEncoder.getSpeed(iter.getFlags()), 1e-1);
     }
 
     @Test
-    public void testMaxSpeed()
-    {
-        GraphHopper hopper = new GraphHopperTest(file2)
-        {
+    public void testMaxSpeed() {
+        GraphHopper hopper = new GraphHopperTest(file2) {
             @Override
-            public void cleanUp()
-            {
+            public void cleanUp() {
             }
         }.importOrLoad();
         Graph graph = hopper.getGraph();
@@ -369,8 +354,7 @@ public class OSMReaderTest
     }
 
     @Test
-    public void testWayReferencesNotExistingAdjNode()
-    {
+    public void testWayReferencesNotExistingAdjNode() {
         GraphHopper hopper = new GraphHopperTest(file4).importOrLoad();
         Graph graph = hopper.getGraph();
 
@@ -382,8 +366,7 @@ public class OSMReaderTest
     }
 
     @Test
-    public void testFoot()
-    {
+    public void testFoot() {
         GraphHopper hopper = new GraphHopperTest(file3).importOrLoad();
         Graph graph = hopper.getGraph();
 
@@ -405,8 +388,7 @@ public class OSMReaderTest
     }
 
     @Test
-    public void testNegativeIds()
-    {
+    public void testNegativeIds() {
         GraphHopper hopper = new GraphHopperTest(fileNegIds).importOrLoad();
         Graph graph = hopper.getGraph();
         assertEquals(4, graph.getNodes());
@@ -430,8 +412,7 @@ public class OSMReaderTest
     }
 
     @Test
-    public void testBarriers()
-    {
+    public void testBarriers() {
         GraphHopper hopper = new GraphHopperTest(fileBarriers).importOrLoad();
         Graph graph = hopper.getGraph();
         assertEquals(8, graph.getNodes());
@@ -465,8 +446,7 @@ public class OSMReaderTest
     }
 
     @Test
-    public void testBarriersOnTowerNodes()
-    {
+    public void testBarriersOnTowerNodes() {
         GraphHopper hopper = new GraphHopperTest(fileBarriers).importOrLoad();
         Graph graph = hopper.getGraph();
         assertEquals(8, graph.getNodes());
@@ -487,11 +467,9 @@ public class OSMReaderTest
     }
 
     @Test
-    public void testRelation()
-    {
+    public void testRelation() {
         EncodingManager manager = new EncodingManager("bike");
-        OSMReader reader = new OSMReader(new GraphHopperStorage(new RAMDirectory(), manager, false)).
-                setEncodingManager(manager);
+        OSMReader reader = new OSMReader(new GraphHopperStorage(new RAMDirectory(), manager, false)).setEncodingManager(manager);
         OSMRelation osmRel = new OSMRelation(1);
         osmRel.getMembers().add(new OSMRelation.Member(OSMRelation.WAY, 1, ""));
         osmRel.getMembers().add(new OSMRelation.Member(OSMRelation.WAY, 2, ""));
@@ -517,14 +495,12 @@ public class OSMReaderTest
     }
 
     @Test
-    public void testTurnRestrictions()
-    {
-        GraphHopper hopper = new GraphHopperTest(fileTurnRestrictions, true).
-                importOrLoad();
+    public void testTurnRestrictions() {
+        GraphHopper hopper = new GraphHopperTest(fileTurnRestrictions, true).importOrLoad();
         GraphStorage graph = hopper.getGraph();
         assertEquals(15, graph.getNodes());
-        assertTrue(graph.getExtendedStorage() instanceof TurnCostStorage);
-        TurnCostStorage tcStorage = (TurnCostStorage) graph.getExtendedStorage();
+        assertTrue(graph.getExtension() instanceof TurnCostExtension);
+        TurnCostExtension tcStorage = (TurnCostExtension) graph.getExtension();
 
         int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
         int n2 = AbstractGraphStorageTester.getIdOf(graph, 52, 10);
@@ -545,26 +521,26 @@ public class OSMReaderTest
 
         // (2-3)->(3-4) only_straight_on = (2-3)->(3-8) restricted
         // (4-3)->(3-8) no_right_turn = (4-3)->(3-8) restricted
-        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(n3, edge2_3, edge3_8)) > 0);
-        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(n3, edge4_3, edge3_8)) > 0);
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n3, edge2_3, edge3_4)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n3, edge2_3, edge3_2)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n3, edge2_3, edge3_4)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n3, edge4_3, edge3_2)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n3, edge8_3, edge3_2)));
+        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_8)) > 0);
+        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge4_3, n3, edge3_8)) > 0);
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_4)));
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_2)));
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_4)));
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge4_3, n3, edge3_2)));
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge8_3, n3, edge3_2)));
 
         // u-turn restriction for (6-1)->(1-6) but not for (1-6)->(6-1)
-        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(n1, edge1_6, edge1_6)) > 0);
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(n6, edge1_6, edge1_6)));
+        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge1_6, n1, edge1_6)) > 0);
+        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge1_6, n6, edge1_6)));
 
         int edge4_5 = GHUtility.getEdge(graph, n4, n5).getEdge();
         int edge5_6 = GHUtility.getEdge(graph, n5, n6).getEdge();
         int edge5_1 = GHUtility.getEdge(graph, n5, n1).getEdge();
 
-        // (4-5)->(5-1) right_turn_only = (4-5)->(5-6) restricted 
-        long costsFlags = tcStorage.getTurnCostFlags(n5, edge4_5, edge5_6);
+        // (4-5)->(5-1) right_turn_only = (4-5)->(5-6) restricted
+        long costsFlags = tcStorage.getTurnCostFlags(edge4_5, n5, edge5_6);
         assertFalse(carEncoder.isTurnRestricted(costsFlags));
-        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(n5, edge4_5, edge5_1)) > 0);
+        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge4_5, n5, edge5_1)) > 0);
 
         // for bike
         assertFalse(bikeEncoder.isTurnRestricted(costsFlags));
@@ -576,31 +552,27 @@ public class OSMReaderTest
         int edge10_11 = GHUtility.getEdge(graph, n10, n11).getEdge();
         int edge11_14 = GHUtility.getEdge(graph, n11, n14).getEdge();
 
-        assertEquals(0, tcStorage.getTurnCostFlags(n11, edge11_14, edge10_11));
+        assertEquals(0, tcStorage.getTurnCostFlags(edge11_14, n11, edge10_11));
 
-        costsFlags = tcStorage.getTurnCostFlags(n11, edge10_11, edge11_14);
+        costsFlags = tcStorage.getTurnCostFlags(edge10_11, n11, edge11_14);
         assertFalse(carEncoder.isTurnRestricted(costsFlags));
         assertTrue(bikeEncoder.isTurnRestricted(costsFlags));
     }
 
     @Test
-    public void testEstimatedCenter()
-    {
-        final CarFlagEncoder encoder = new CarFlagEncoder()
-        {
+    public void testEstimatedCenter() {
+        final CarFlagEncoder encoder = new CarFlagEncoder() {
             private EncodedValue objectEncoder;
 
             @Override
-            public int defineNodeBits( int index, int shift )
-            {
+            public int defineNodeBits(int index, int shift) {
                 shift = super.defineNodeBits(index, shift);
                 objectEncoder = new EncodedValue("oEnc", shift, 2, 1, 0, 3, true);
                 return shift + 2;
             }
 
             @Override
-            public long handleNodeTags( Node node )
-            {
+            public long handleNodeTags(Node node) {
                 if (node.hasTag("test", "now"))
                     return -objectEncoder.setValue(0, 1);
                 return 0;
@@ -616,24 +588,20 @@ public class OSMReaderTest
         lonMap.put(1, 1.0d);
         lonMap.put(2, 1.0d);
         final AtomicInteger increased = new AtomicInteger(0);
-        OSMReader osmreader = new OSMReader(graph)
-        {
+        OSMReader osmreader = new OSMReader(graph) {
             // mock data access
             @Override
-            double getTmpLatitude( int id )
-            {
+            double getTmpLatitude(int id) {
                 return latMap.get(id);
             }
 
             @Override
-            double getTmpLongitude( int id )
-            {
+            double getTmpLongitude(int id) {
                 return lonMap.get(id);
             }
 
             @Override
-            Collection<EdgeIteratorState> addOSMWay( TLongList osmNodeIds, long wayFlags, long osmId )
-            {
+            Collection<EdgeIteratorState> addOSMWay(TLongList osmNodeIds, long wayFlags, long osmId) {
                 return Collections.emptyList();
             }
         };
@@ -659,18 +627,13 @@ public class OSMReaderTest
     }
 
     @Test
-    public void testReadEleFromCustomOSM()
-    {
-        GraphHopper hopper = new GraphHopperTest("custom-osm-ele.xml")
-        {
+    public void testReadEleFromCustomOSM() {
+        GraphHopper hopper = new GraphHopperTest("custom-osm-ele.xml") {
             @Override
-            protected DataReader createReader( GraphStorage tmpGraph )
-            {
-                return initReader(new OSMReader(tmpGraph)
-                {
+            protected DataReader createReader(GraphStorage tmpGraph) {
+                return initReader(new OSMReader(tmpGraph) {
                     @Override
-                    protected double getElevation( OSMNode node )
-                    {
+                    protected double getElevation(OSMNode node) {
                         return node.getEle();
                     }
                 });
@@ -686,8 +649,7 @@ public class OSMReaderTest
     }
 
     @Test
-    public void testReadEleFromDataProvider()
-    {
+    public void testReadEleFromDataProvider() {
         GraphHopper hopper = new GraphHopperTest("test-osm5.xml");
         // get N10E046.hgt.zip
         ElevationProvider provider = new SRTMProvider();
@@ -701,11 +663,89 @@ public class OSMReaderTest
         int n50 = AbstractGraphStorageTester.getIdOf(graph, 49.5001);
 
         EdgeIteratorState edge = GHUtility.getEdge(graph, n50, n30);
-        assertEquals(Helper.createPointList3D(49.5001, 11.501, 426, 49.5002, 11.5015, 441, 49.5011, 11.502, 410.0),
-                edge.fetchWayGeometry(3));
+        assertEquals(Helper.createPointList3D(49.5001, 11.501, 426, 49.5002, 11.5015, 441, 49.5011, 11.502, 410.0), edge.fetchWayGeometry(3));
 
         edge = GHUtility.getEdge(graph, n10, n50);
-        assertEquals(Helper.createPointList3D(49.501, 11.5001, 383.0, 49.5001, 11.501, 426.0),
-                edge.fetchWayGeometry(3));
+        assertEquals(Helper.createPointList3D(49.501, 11.5001, 383.0, 49.5001, 11.501, 426.0), edge.fetchWayGeometry(3));
+    }
+
+    /**
+     * Tests the combination of different turn cost flags by different encoders.
+     */
+    @Test
+    public void testTurnFlagCombination() {
+        final ITurnCostTableEntry turnCostEntry_car = new OSMTurnRelation.TurnCostTableEntry();
+        final ITurnCostTableEntry turnCostEntry_foot = new OSMTurnRelation.TurnCostTableEntry();
+        final ITurnCostTableEntry turnCostEntry_bike = new OSMTurnRelation.TurnCostTableEntry();
+
+        CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
+        FootFlagEncoder foot = new FootFlagEncoder();
+        BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
+        EncodingManager manager = new EncodingManager(Arrays.asList(bike, foot, car), 4);
+
+        OSMReader reader = new OSMReader(new GraphBuilder(manager).create()) {
+            @Override
+            public Collection<ITurnCostTableEntry> analyzeTurnRelation(FlagEncoder encoder, TurnRelation turnRelation) {
+                // simulate by returning one turn cost entry directly
+                if (encoder.toString().equalsIgnoreCase("car")) {
+
+                    return Collections.singleton(turnCostEntry_car);
+                } else if (encoder.toString().equalsIgnoreCase("foot")) {
+                    return Collections.singleton(turnCostEntry_foot);
+                } else if (encoder.toString().equalsIgnoreCase("bike")) {
+                    return Collections.singleton(turnCostEntry_bike);
+                } else {
+                    throw new IllegalArgumentException("illegal encoder " + encoder.toString());
+                }
+            }
+        }.setEncodingManager(manager);
+
+        // turn cost entries for car and foot are for the same relations (same
+        // viaNode, edgeFrom and edgeTo),
+        // turn cost entry for bike is for another relation (different viaNode)
+        turnCostEntry_car.setEdgeFrom(1);
+        turnCostEntry_foot.setEdgeFrom(1);
+        turnCostEntry_bike.setEdgeFrom(2);
+
+        // calculating arbitrary flags using the encoders
+        turnCostEntry_car.setFlags(car.getTurnFlags(true, 0));
+        turnCostEntry_foot.setFlags(foot.getTurnFlags(true, 0));
+        turnCostEntry_bike.setFlags(bike.getTurnFlags(false, 10));
+
+        // we expect two different entries: the first one is a combination of
+        // turn flags of car and foot,
+        // since they provide the same relation, the other one is for bike only
+        long assertFlag1 = turnCostEntry_car.getFlags() | turnCostEntry_foot.getFlags();
+        long assertFlag2 = turnCostEntry_bike.getFlags();
+
+        // combine flags of all encoders
+        Collection<ITurnCostTableEntry> entries = reader.analyzeTurnRelation(null);
+
+        // we expect two different turnCost entries
+        assertEquals(2, entries.size());
+
+        for (ITurnCostTableEntry entry : entries) {
+            if (entry.getEdgeFrom() == 1) {
+                // the first entry provides turn flags for car and foot only
+                assertEquals(assertFlag1, entry.getFlags());
+                assertTrue(car.isTurnRestricted(entry.getFlags()));
+                assertFalse(foot.isTurnRestricted(entry.getFlags()));
+                assertFalse(bike.isTurnRestricted(entry.getFlags()));
+
+                assertTrue(Double.isInfinite(car.getTurnCost(entry.getFlags())));
+                assertEquals(0, foot.getTurnCost(entry.getFlags()), 1e-1);
+                assertEquals(0, bike.getTurnCost(entry.getFlags()), 1e-1);
+            } else if (entry.getEdgeFrom() == 2) {
+                // the 2nd entry provides turn flags for bike only
+                assertEquals(assertFlag2, entry.getFlags());
+                assertFalse(car.isTurnRestricted(entry.getFlags()));
+                assertFalse(foot.isTurnRestricted(entry.getFlags()));
+                assertFalse(bike.isTurnRestricted(entry.getFlags()));
+
+                assertEquals(0, car.getTurnCost(entry.getFlags()), 1e-1);
+                assertEquals(0, foot.getTurnCost(entry.getFlags()), 1e-1);
+                assertEquals(10, bike.getTurnCost(entry.getFlags()), 1e-1);
+            }
+        }
     }
 }

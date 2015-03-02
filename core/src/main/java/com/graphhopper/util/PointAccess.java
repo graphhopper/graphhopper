@@ -23,7 +23,6 @@ package com.graphhopper.util;
  */
 public interface PointAccess
 {
-
     /**
      * @return true if elevation data is stored and can be retrieved
      */
@@ -33,6 +32,12 @@ public interface PointAccess
      * @return 3 if elevation enabled. 2 otherwise
      */
     int getDimension();
+
+    /**
+     * This method ensures that the node with the specified index exists i.e. allocates space for
+     * it.
+     */
+    void ensureNode( int nodeId );
 
     /**
      * This method ensures that the node with the specified index exists and prepares access to it.

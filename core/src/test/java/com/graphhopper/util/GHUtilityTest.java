@@ -111,7 +111,7 @@ public class GHUtilityTest
         LevelGraph lg = new GraphBuilder(encodingManager).levelGraphCreate();
         GHUtility.copyTo(g, lg);
 
-        assertEquals(g.getAllEdges().getMaxId(), lg.getAllEdges().getMaxId());
+        assertEquals(g.getAllEdges().getCount(), lg.getAllEdges().getCount());
     }
 
     @Test

@@ -35,8 +35,6 @@ import com.graphhopper.util.shapes.BBox;
 
 import static com.graphhopper.util.Helper.nf;
 import java.io.UnsupportedEncodingException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * The main implementation which handles nodes and edges file format. It can be used with different
@@ -98,16 +96,16 @@ public class GraphHopperStorage implements GraphStorage
     private final StorableProperties properties;
     private final BitUtil bitUtil;
     private boolean flagsSizeIsLong;
-    final ExtendedStorage extStorage;
+    final GraphExtension extStorage;
     private final NodeAccess nodeAccess;
 
     public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation )
     {
-        this(dir, encodingManager, withElevation, new ExtendedStorage.NoExtendedStorage());
+        this(dir, encodingManager, withElevation, new GraphExtension.NoExtendedStorage());
     }
 
     public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation,
-            ExtendedStorage extendedStorage )
+            GraphExtension extendedStorage )
     {
         if (encodingManager == null)
             throw new IllegalArgumentException("EncodingManager cannot be null in GraphHopperStorage since 0.4. "
@@ -122,9 +120,15 @@ public class GraphHopperStorage implements GraphStorage
         this.wayGeometry = dir.find("geometry");
         this.nameIndex = new NameIndex(dir);
         this.properties = new StorableProperties(dir);
-        this.bounds = BBox.INVERSE.clone();
+        this.bounds = BBox.createInverse(withElevation);
         this.nodeAccess = new GHNodeAccess(this, withElevation);
         extendedStorage.init(this);
+    }
+
+    @Override
+    public Graph getBaseGraph()
+    {
+        return this;
     }
 
     void checkInit()
@@ -144,7 +148,7 @@ public class GraphHopperStorage implements GraphStorage
     protected final int nextNodeEntryIndex( int sizeInBytes )
     {
         int tmp = nodeEntryIndex;
-        nodeEntryIndex += 4;
+        nodeEntryIndex += sizeInBytes;
         return tmp;
     }
 
@@ -511,7 +515,7 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
-        public int getMaxId()
+        public int getCount()
         {
             return edgeCount;
         }
@@ -617,8 +621,11 @@ public class GraphHopperStorage implements GraphStorage
         @Override
         public EdgeIteratorState setName( String name )
         {
-            int nameIndexRef = nameIndex.put(name);
-            edges.setInt(edgePointer + E_NAME, nameIndexRef);
+            long nameIndexRef = nameIndex.put(name);
+            if (nameIndexRef < 0)
+                throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
+
+            edges.setInt(edgePointer + E_NAME, (int) nameIndexRef);
             return this;
         }
 
@@ -692,7 +699,7 @@ public class GraphHopperStorage implements GraphStorage
         if (flagsSizeIsLong)
         {
             int high = edges.getInt(edgePointer + E_FLAGS + 4);
-            res = ((long) high << 32) | (low & 0xFFFFFFFFL);
+            res = bitUtil.combineIntsToLong(low, high);
         }
         if (reverse)
             return reverseFlags(edgePointer, res);
@@ -709,12 +716,10 @@ public class GraphHopperStorage implements GraphStorage
         if (reverse)
             flags = reverseFlags(edgePointer, flags);
 
+        edges.setInt(edgePointer + E_FLAGS, bitUtil.getIntLow(flags));
+
         if (flagsSizeIsLong)
-        {
-            edges.setInt(edgePointer + E_FLAGS, (int) (flags & 0xFFFFFFFFL));
-            edges.setInt(edgePointer + E_FLAGS + 4, (int) (flags >> 32));
-        } else
-            edges.setInt(edgePointer + E_FLAGS, (int) (flags & 0xFFFFFFFFL));
+            edges.setInt(edgePointer + E_FLAGS + 4, bitUtil.getIntHigh(flags));
     }
 
     protected class SingleEdge extends EdgeIterable
@@ -800,13 +805,13 @@ public class GraphHopperStorage implements GraphStorage
                 adjNode = getOtherNode(baseNode, edgePointer);
                 reverse = baseNode > adjNode;
 
-                // position to next edge
+                // position to next edge                
                 nextEdge = edges.getInt(getLinkPosInEdgeArea(baseNode, adjNode, edgePointer));
                 if (nextEdge == edgeId)
                     throw new AssertionError("endless loop detected for " + baseNode + ", " + adjNode
                             + ", " + edgePointer + ", " + edgeId);
 
-                foundNext = filter == null || filter.accept(this);
+                foundNext = filter.accept(this);
                 if (foundNext)
                     break;
             }
@@ -890,8 +895,11 @@ public class GraphHopperStorage implements GraphStorage
         @Override
         public EdgeIteratorState setName( String name )
         {
-            int nameIndexRef = nameIndex.put(name);
-            edges.setInt(edgePointer + E_NAME, nameIndexRef);
+            long nameIndexRef = nameIndex.put(name);
+            if (nameIndexRef < 0)
+                throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
+
+            edges.setInt(edgePointer + E_NAME, (int) nameIndexRef);
             return this;
         }
 
@@ -901,7 +909,7 @@ public class GraphHopperStorage implements GraphStorage
             if (edgeId == nextEdge)
                 throw new IllegalStateException("call next before detaching");
 
-            EdgeIterable iter = iter = new EdgeIterable(filter);
+            EdgeIterable iter = new EdgeIterable(filter);
             iter.setBaseNode(baseNode);
             iter.setEdgeId(edgeId);
             iter.next();
@@ -1137,7 +1145,7 @@ public class GraphHopperStorage implements GraphStorage
         if (delNodes <= 0)
             return;
 
-        // Deletes only nodes. 
+        // Deletes only nodes.
         // It reduces the fragmentation of the node space but introduces new unused edges.
         inPlaceNodeRemove(delNodes);
 
@@ -1287,7 +1295,7 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         // *rewrites* all edges connected to moved nodes
-        // go through all edges and pick the necessary <- this is easier to implement then
+        // go through all edges and pick the necessary <- this is easier to implement than
         // a more efficient (?) breadth-first search
         EdgeIterator iter = getAllEdges();
         while (iter.next())
@@ -1482,6 +1490,13 @@ public class GraphHopperStorage implements GraphStorage
         bounds.maxLon = Helper.intToDegree(nodes.getHeader(4 * 4));
         bounds.minLat = Helper.intToDegree(nodes.getHeader(5 * 4));
         bounds.maxLat = Helper.intToDegree(nodes.getHeader(6 * 4));
+
+        if (bounds.hasElevation())
+        {
+            bounds.minEle = Helper.intToEle(nodes.getHeader(7 * 4));
+            bounds.maxEle = Helper.intToEle(nodes.getHeader(8 * 4));
+        }        
+
         return 7;
     }
 
@@ -1494,6 +1509,12 @@ public class GraphHopperStorage implements GraphStorage
         nodes.setHeader(4 * 4, Helper.degreeToInt(bounds.maxLon));
         nodes.setHeader(5 * 4, Helper.degreeToInt(bounds.minLat));
         nodes.setHeader(6 * 4, Helper.degreeToInt(bounds.maxLat));
+        if (bounds.hasElevation())
+        {
+            nodes.setHeader(7 * 4, Helper.eleToInt(bounds.minEle));
+            nodes.setHeader(8 * 4, Helper.eleToInt(bounds.maxEle));
+        }
+
         return 7;
     }
 
@@ -1558,7 +1579,7 @@ public class GraphHopperStorage implements GraphStorage
     }
 
     @Override
-    public ExtendedStorage getExtendedStorage()
+    public GraphExtension getExtension()    
     {
         return extStorage;
     }
@@ -1575,7 +1596,7 @@ public class GraphHopperStorage implements GraphStorage
     {
         return "edges:" + nf(edgeCount) + "(" + edges.getCapacity() / Helper.MB + "), "
                 + "nodes:" + nf(nodeCount) + "(" + nodes.getCapacity() / Helper.MB + "), "
-                + "name: - (" + nameIndex.getCapacity() / Helper.MB + "), "
+                + "name: /(" + nameIndex.getCapacity() / Helper.MB + "), "
                 + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "), "
                 + "bounds:" + bounds;
     }

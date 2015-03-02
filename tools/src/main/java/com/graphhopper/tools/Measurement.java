@@ -79,12 +79,12 @@ public class Measurement
         {
             // re-create index to avoid bug as pickNode in locationIndex.prepare could be wrong while indexing if level is not taken into account and assumed to be 0 for pre-initialized graph            
             StopWatch sw = new StopWatch().start();
-            int edges = getGraph().getAllEdges().getMaxId();
-            initCHPrepare();
+            int edges = getGraph().getAllEdges().getCount();
+            setAlgorithmFactory(createPrepare());
             super.prepare();
             setLocationIndex(createLocationIndex(new RAMDirectory()));
             put("prepare.time", sw.stop().getTime());
-            put("prepare.shortcuts", getGraph().getAllEdges().getMaxId() - edges);
+            put("prepare.shortcuts", getGraph().getAllEdges().getCount() - edges);
         }
     }
 
@@ -108,7 +108,7 @@ public class Measurement
         int count = args.getInt("measurement.count", 5000);
 
         MeasureHopper hopper = new MeasureHopper();
-        hopper.forDesktop().setEnableInstructions(false);
+        hopper.forDesktop();
         if (!hopper.load(graphLocation))
             throw new IllegalStateException("Cannot load existing levelgraph at " + graphLocation);
 
@@ -121,20 +121,21 @@ public class Measurement
         try
         {
             maxNode = g.getNodes();
-            printGraphDetails(g);
+            printGraphDetails(g, vehicleStr);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
 
             // Route via dijkstrabi. Normal routing takes a lot of time => smaller query number than CH
             // => values are not really comparable to routingCH as e.g. the mean distance etc is different            
             hopper.setCHEnable(false);
-            printTimeOfRouteQuery(hopper, count / 20, "routing", vehicleStr);
+            printTimeOfRouteQuery(hopper, count / 20, "routing", vehicleStr, true);
 
             System.gc();
 
             // route via CH. do preparation before                        
             hopper.setCHEnable(true);
             hopper.doPostProcessing();
-            printTimeOfRouteQuery(hopper, count, "routingCH", vehicleStr);
+            printTimeOfRouteQuery(hopper, count, "routingCH", vehicleStr, true);
+            printTimeOfRouteQuery(hopper, count, "routingCH_no_instr", vehicleStr, false);
             logger.info("store into " + propLocation);
         } catch (Exception ex)
         {
@@ -160,13 +161,13 @@ public class Measurement
         }
     }
 
-    private void printGraphDetails( GraphStorage g )
+    private void printGraphDetails( GraphStorage g, String vehicleStr )
     {
         // graph size (edge, node and storage size)
         put("graph.nodes", g.getNodes());
-        put("graph.edges", g.getAllEdges().getMaxId());
+        put("graph.edges", g.getAllEdges().getCount());
         put("graph.sizeInMB", g.getCapacity() / Helper.MB);
-        put("graph.encoder", g.getEncodingManager().getSingle().toString());
+        put("graph.encoder", vehicleStr);
     }
 
     private void printLocationIndexQuery( Graph g, final LocationIndex idx, int count )
@@ -194,7 +195,8 @@ public class Measurement
         print("location2id", miniPerf);
     }
 
-    private void printTimeOfRouteQuery( final GraphHopper hopper, int count, String prefix, final String vehicle )
+    private void printTimeOfRouteQuery( final GraphHopper hopper, int count, String prefix,
+            final String vehicle, final boolean withInstructions )
     {
         final Graph g = hopper.getGraph();
         final AtomicLong maxDistance = new AtomicLong(0);
@@ -224,28 +226,32 @@ public class Measurement
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
                         setWeighting("fastest").
                         setVehicle(vehicle);
+                req.getHints().put("instructions", withInstructions);
                 GHResponse res;
                 try
                 {
                     res = hopper.route(req);
                 } catch (Exception ex)
                 {
+                    // 'not found' can happen if import creates more than one subnetwork
                     throw new RuntimeException("Error while calculating route! "
                             + "nodes:" + from + " -> " + to + ", request:" + req, ex);
                 }
 
                 if (res.hasErrors())
-                    throw new IllegalStateException("errors should NOT happen in Measurement! " + res.getErrors());
+                {
+                    if (!warmup)
+                        failedCount.incrementAndGet();
+
+                    if (!res.getErrors().get(0).getMessage().toLowerCase().contains("not found"))
+                        logger.error("errors should NOT happen in Measurement! " + req + " => " + res.getErrors());
+
+                    return 0;
+                }
 
                 if (!warmup)
                 {
                     long dist = (long) res.getDistance();
-                    if (dist < 1)
-                    {
-                        failedCount.incrementAndGet();
-                        return 0;
-                    }
-
                     distSum.addAndGet(dist);
 
                     airDistSum.addAndGet((long) distCalc.calcDist(fromLat, fromLon, toLat, toLon));

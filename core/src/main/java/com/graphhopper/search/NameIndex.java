@@ -20,6 +20,7 @@ package com.graphhopper.search;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Storable;
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,13 +31,13 @@ import org.slf4j.LoggerFactory;
  */
 public class NameIndex implements Storable<NameIndex>
 {
-    private static Logger logger = LoggerFactory.getLogger(NameIndex.class);
-    private static final int START_POINTER = 1;
-    private int bytePointer = START_POINTER;
-    private DataAccess names;
+    private static final Logger logger = LoggerFactory.getLogger(NameIndex.class);
+    private static final long START_POINTER = 1;
+    private final DataAccess names;
+    private long bytePointer = START_POINTER;
     // minor optimization for the previous stored name
     private String lastName;
-    private int lastIndex;
+    private long lastIndex;
 
     public NameIndex( Directory dir )
     {
@@ -55,7 +56,7 @@ public class NameIndex implements Storable<NameIndex>
     {
         if (names.loadExisting())
         {
-            bytePointer = names.getHeader(0);
+            bytePointer = BitUtil.LITTLE.combineIntsToLong(names.getHeader(0), names.getHeader(1));
             return true;
         }
 
@@ -63,9 +64,9 @@ public class NameIndex implements Storable<NameIndex>
     }
 
     /**
-     * @return the integer reference
+     * @return the byte pointer to the name
      */
-    public int put( String name )
+    public long put( String name )
     {
         if (name == null || name.isEmpty())
         {
@@ -76,7 +77,7 @@ public class NameIndex implements Storable<NameIndex>
             return lastIndex;
         }
         byte[] bytes = getBytes(name);
-        int oldPointer = bytePointer;
+        long oldPointer = bytePointer;
         names.ensureCapacity(bytePointer + 1 + bytes.length);
         byte[] sizeBytes = new byte[]
         {
@@ -119,7 +120,7 @@ public class NameIndex implements Storable<NameIndex>
         return bytes;
     }
 
-    public String get( int pointer )
+    public String get( long pointer )
     {
         if (pointer < 0)
         {
@@ -140,7 +141,8 @@ public class NameIndex implements Storable<NameIndex>
     @Override
     public void flush()
     {
-        names.setHeader(0, bytePointer);
+        names.setHeader(0, BitUtil.LITTLE.getIntLow(bytePointer));
+        names.setHeader(4, BitUtil.LITTLE.getIntHigh(bytePointer));
         names.flush();
     }
 

@@ -19,7 +19,6 @@ package com.graphhopper;
 
 import com.graphhopper.routing.util.WeightingMap;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,8 +96,7 @@ public class GHRequest
     }
 
     /**
-     * Possible values: astar (A* algorithm, default), astarbi (bidirectional A*), dijkstra
-     * (Dijkstra) or dijkstrabi. Or specify empty to use default.
+     * For possible values see AlgorithmOptions.*
      */
     public GHRequest setAlgorithm( String algo )
     {
