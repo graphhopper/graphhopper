@@ -109,7 +109,7 @@
 				<version>2.17</version>
 			</plugin>
 
-			<!-- create a jar file too, so others can use it more easily -->
+			<!-- create a jar file too, so others can use it more easily
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
@@ -131,17 +131,15 @@
 					</execution>
 				</executions>
 			</plugin>
-			
-			<!-- create a standard war file too, so others can use it more easily -->
+			 -->
+			<!-- create a standard war file too, so others can use it more easily 
 			<plugin>
 				<artifactId>maven-war-plugin</artifactId>
 				<version>2.5</version>
 				<configuration>
-					<!-- <attachClasses>true</attachClasses> -->
 					<primaryArtifact>true</primaryArtifact>
-                   <!-- <packagingExcludes>WEB-INF/lib/jetty*.jar</packagingExcludes> -->
 				</configuration>
-			</plugin>
+			</plugin>-->
 
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
@@ -153,7 +151,8 @@
 						</manifest>
 					</archive>
 					<descriptors>
-						<descriptor>src/main/assembly/jar.xml</descriptor>
+					   <!-- Temporarily removing this so we can get the build running -->
+<!-- 						<descriptor>src/main/assembly/jar.xml</descriptor> -->
 						<!-- this is defined to be executed afterwards -->
 						<descriptor>src/main/assembly/zip.xml</descriptor>
 					</descriptors>
@@ -171,7 +170,7 @@
 				</executions>
 			</plugin>
 
-			<plugin>
+			<!-- <plugin>
 				<groupId>br.com.ingenieux</groupId>
 				<artifactId>beanstalk-maven-plugin</artifactId>
 				<version>1.4.0</version>
@@ -183,7 +182,7 @@
                     <cnamePrefix>dpn-env</cnamePrefix>
                     <versionDescription>Deployed from maven plugin</versionDescription>
 				</configuration>
-			</plugin>
+			</plugin>-->
 
 		</plugins>
 	</build>
