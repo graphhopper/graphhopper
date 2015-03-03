@@ -144,6 +144,48 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     }
 
     @Test
+    public void testOneway()
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "tertiary");
+        long flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertTrue(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
+        way.setTag("oneway", "yes");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertTrue(encoder.isForward(flags));
+        assertFalse(encoder.isBackward(flags));
+        way.clearTags();
+
+        way.setTag("highway", "tertiary");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertTrue(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
+        way.clearTags();
+
+        way.setTag("highway", "tertiary");
+        way.setTag("vehicle:forward", "no");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertFalse(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
+        way.clearTags();
+
+        way.setTag("highway", "tertiary");
+        way.setTag("vehicle:backward", "no");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertTrue(encoder.isForward(flags));
+        assertFalse(encoder.isBackward(flags));
+        way.clearTags();
+        
+        way.setTag("highway", "tertiary");
+        way.setTag("motor_vehicle:backward", "no");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertTrue(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
+        way.clearTags();
+    }
+
+    @Test
     public void testHandleWayTagsInfluencedByRelation()
     {
         OSMWay osmWay = new OSMWay(1);
@@ -221,7 +263,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         long relFlags = encoder.handleRelationTags(osmRel, 0);
         assertPriority(REACH_DEST.getValue(), osmWay, relFlags);
     }
-    
+
     @Test
     public void testSacScale()
     {
@@ -230,12 +272,12 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.setTag("sac_scale", "hiking");
         // allow
         assertEquals(1, encoder.acceptWay(way));
-        
+
         way.setTag("highway", "path");
         way.setTag("sac_scale", "mountain_hiking");
         // disallow
         assertEquals(0, encoder.acceptWay(way));
-        
+
         way.setTag("highway", "cycleway");
         way.setTag("sac_scale", "hiking");
         // allow

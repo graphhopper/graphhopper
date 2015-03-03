@@ -86,8 +86,12 @@ public class CarFlagEncoderTest
         way.setTag("foot", "yes");
         assertFalse(encoder.acceptWay(way) > 0);
         assertFalse(encoder.isFerry(encoder.acceptWay(way)));
+    }
 
-        way.clearTags();
+    @Test
+    public void testOneway()
+    {
+        OSMWay way = new OSMWay(1);
         way.setTag("highway", "primary");
         long flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertTrue(encoder.isForward(flags));
@@ -96,6 +100,27 @@ public class CarFlagEncoderTest
         flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertTrue(encoder.isForward(flags));
         assertFalse(encoder.isBackward(flags));
+        way.clearTags();
+
+        way.setTag("highway", "tertiary");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertTrue(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
+        way.clearTags();
+
+        way.setTag("highway", "tertiary");
+        way.setTag("vehicle:forward", "no");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertFalse(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
+        way.clearTags();
+
+        way.setTag("highway", "tertiary");
+        way.setTag("vehicle:backward", "no");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertTrue(encoder.isForward(flags));
+        assertFalse(encoder.isBackward(flags));
+        way.clearTags();
     }
 
     @Test

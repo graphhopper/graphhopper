@@ -257,8 +257,8 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         String sacScale = way.getTag("sac_scale");
         if (sacScale != null)
         {
-            if ( (way.hasTag("highway", "cycleway")) &&
-                 (way.hasTag("sac_scale", "hiking")) )
+            if ((way.hasTag("highway", "cycleway"))
+                    && (way.hasTag("sac_scale", "hiking")))
                 return 1;  // This combination is fine with every kind of bike, including a racingbike
             if (!allowedSacScale(sacScale))
                 return 0;
@@ -586,11 +586,17 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         encoded = setSpeed(encoded, speed);
 
         // handle oneways
-        if ((way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))
+        boolean isOneway = way.hasTag("oneway", oneways)
+                || way.hasTag("vehicle:backward")
+                || way.hasTag("vehicle:forward");
+
+        if ((isOneway || way.hasTag("junction", "roundabout"))
                 && !way.hasTag("oneway:bicycle", "no")
                 && !way.hasTag("cycleway", oppositeLanes))
         {
-            if (way.hasTag("oneway", "-1"))
+            boolean isBackward = way.hasTag("oneway", "-1")
+                    || way.hasTag("vehicle:forward", "no");
+            if (isBackward)
                 encoded |= backwardBit;
             else
                 encoded |= forwardBit;

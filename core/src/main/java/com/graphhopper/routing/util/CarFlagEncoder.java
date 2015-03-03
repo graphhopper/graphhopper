@@ -237,9 +237,18 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             if (isRoundabout)
                 encoded = setBool(encoded, K_ROUNDABOUT, true);
 
-            if (way.hasTag("oneway", oneways) || isRoundabout)
+            boolean isOneway = way.hasTag("oneway", oneways)
+                    || way.hasTag("vehicle:backward")
+                    || way.hasTag("vehicle:forward")
+                    || way.hasTag("motor_vehicle:backward")
+                    || way.hasTag("motor_vehicle:forward");
+
+            if (isOneway || isRoundabout)
             {
-                if (way.hasTag("oneway", "-1"))
+                boolean isBackward = way.hasTag("oneway", "-1")
+                        || way.hasTag("vehicle:forward", "no")
+                        || way.hasTag("motor_vehicle:forward", "no");
+                if (isBackward)
                     encoded |= backwardBit;
                 else
                     encoded |= forwardBit;
