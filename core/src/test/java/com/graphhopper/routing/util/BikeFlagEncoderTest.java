@@ -176,9 +176,25 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertTrue(encoder.isForward(flags));
         assertFalse(encoder.isBackward(flags));
         way.clearTags();
-        
+
         way.setTag("highway", "tertiary");
         way.setTag("motor_vehicle:backward", "no");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertTrue(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
+        way.clearTags();
+
+        // attention bicycle:backward=no/yes has a completely different meaning!
+        // https://wiki.openstreetmap.org/wiki/Key:access#One-way_restrictions
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("bicycle:backward", "no");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertTrue(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
+        way.clearTags();
+
+        way.setTag("bicycle:backward", "yes");
         flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertTrue(encoder.isForward(flags));
         assertTrue(encoder.isBackward(flags));

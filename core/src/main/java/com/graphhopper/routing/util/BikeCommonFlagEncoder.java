@@ -462,8 +462,12 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                 weightToPrioMap.put(40d, UNCHANGED.getValue());
         }
 
-        if (pushingSections.contains(highway) || "parking_aisle".equals(service))
+        if (pushingSections.contains(highway)
+                || way.hasTag("bicycle", "use_sidepath")
+                || "parking_aisle".equals(service))
+        {
             weightToPrioMap.put(50d, AVOID_IF_POSSIBLE.getValue());
+        }
 
         if (avoidHighwayTags.contains(highway) || maxSpeed > 80)
         {
@@ -585,13 +589,14 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     {
         encoded = setSpeed(encoded, speed);
 
-        // handle oneways
+        // handle oneways        
         boolean isOneway = way.hasTag("oneway", oneways)
                 || way.hasTag("vehicle:backward")
                 || way.hasTag("vehicle:forward");
 
         if ((isOneway || way.hasTag("junction", "roundabout"))
                 && !way.hasTag("oneway:bicycle", "no")
+                && !way.hasTag("bicycle:backward")
                 && !way.hasTag("cycleway", oppositeLanes))
         {
             boolean isBackward = way.hasTag("oneway", "-1")
