@@ -30,6 +30,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.GZIPInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.security.x509.CRLDistributionPointsExtension;
@@ -203,7 +204,13 @@ public class QueryTorture
             {
                 try
                 {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(logFile), Helper.UTF_CS));
+                    InputStream is;
+                    if (logFile.endsWith(".gz"))
+                        is = new GZIPInputStream(new FileInputStream(logFile));
+                    else
+                        is = new FileInputStream(logFile);
+
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(is, Helper.UTF_CS));
                     try
                     {
                         String logLine;
