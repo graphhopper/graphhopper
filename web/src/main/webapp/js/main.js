@@ -1155,11 +1155,11 @@ function addInstruction(main, instr, instrIndex, lngLat) {
     else
         throw "did not found sign " + sign;
     var title = instr.text;
-    if (instr.annotationText) {
+    if (instr.annotation_text) {
         if (!title)
-            title = instr.annotationText;
+            title = instr.annotation_text;
         else
-            title = title + ", " + instr.annotationText;
+            title = title + ", " + instr.annotation_text;
     }
     var distance = instr.distance;
     var str = "<td class='instr_title'>" + title + "</td>";
