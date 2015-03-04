@@ -449,9 +449,10 @@ public class Path
                                 while (edgeIter.next()) 
                                 {
                                     if ((edgeIter.getAdjNode() != prevNode) 
-                                         && edgeIter.getAdjNode() != adjNode)
+                                         && !encoder.isBool(edgeIter.getFlags(), FlagEncoder.K_ROUNDABOUT))
                                     {
                                         roundaboutInstruction.increaseExitNumber();
+                                        break;
                                     }
                                 }
 
@@ -475,14 +476,16 @@ public class Path
                             ways.add(prevInstruction);
                         }
 
-                        // Add passed exits to instruction. There is an exit if there are
-                        // at least 2 out-going edges (one continuing in the roundabout)
-                        // This could lead to problems if there are non-complete roundabouts!
+                        // Add passed exits to instruction. A node is countet if there is at least one outgoing edge
+                        // out of the roundabout
                         EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(adjNode);
-                        edgeIter.next();
-                        if (edgeIter.next())
+                        while (edgeIter.next())
                         {
-                            ((RoundaboutInstruction) prevInstruction).increaseExitNumber();
+                            if (!encoder.isBool(edgeIter.getFlags(), encoder.K_ROUNDABOUT))
+                            {
+                                ((RoundaboutInstruction) prevInstruction).increaseExitNumber();
+                                break;
+                            }
                         }
 
                     } else if (prevInRoundabout) //previously in roundabout but not anymore
