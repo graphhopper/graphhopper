@@ -312,8 +312,11 @@ public class GraphHopperIT
 
         rsp = tmpHopper.route(new GHRequest(43.745948, 7.42914, 43.746173, 7.428834)
                 .setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
-
         assertEquals(1, ((RoundaboutInstruction) rsp.getInstructions().get(1)).getExitNumber());
+
+        rsp = tmpHopper.route(new GHRequest(43.735817,7.417096, 43.735666,7.416587)
+                .setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
+        assertEquals(2, ((RoundaboutInstruction) rsp.getInstructions().get(1)).getExitNumber());
     }
 
     @Test
