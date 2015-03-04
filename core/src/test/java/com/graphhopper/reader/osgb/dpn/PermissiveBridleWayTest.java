@@ -31,8 +31,10 @@ public class PermissiveBridleWayTest {
     public void testVisitWayAttribute()
     {
         visitor.visitWayAttribute("permissivebridleway", way);
+        verify(way).setTag("highway", "bridleway");
         verify(way).setTag("horse", "permissive");
         verify(way).setTag("bicycle", "permissive");
+        verify(way).setTag("foot", "permissive");
     }
 
 }

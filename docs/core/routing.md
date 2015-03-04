@@ -46,9 +46,16 @@ List<String> iList = il.createDescription(tr);
 List<GPXEntry> list = il.createGPXList();
 ```
 
-If you want a more flexible routing (but slower) you can disable contraction hierarchies
-and import multiple vehicles. Then pick one vehicle and optionally the algorithm like
-astar as algorithm:
+If you want to support multiple profiles you have to specify the default vehicle in order
+to pick the vehicle where contraction hierarchies will be enabled:
+```java
+GraphHopper hopper = new GraphHopper().forServer();
+hopper.setDefaultVehicle("car");
+...
+```
+
+If you want a more flexible routing (but slower) you can disable contraction hierarchies. 
+Then pick one vehicle to route on and optionally the algorithm like 'bidirectional astar' as algorithm:
 
 ```java
 GraphHopper hopper = new GraphHopper().forServer();
@@ -60,14 +67,20 @@ hopper.setEncodingManager(new EncodingManager("car,bike"));
 
 hopper.importOrLoad();
 
-GHRequest req = new GHRequest(latFrom, lonFrom, latTo, lonTo).setVehicle("bike").setAlgorithm("astar");
+GHRequest req = new GHRequest(latFrom, lonFrom, latTo, lonTo).
+    setVehicle("bike").setAlgorithm(AlgorithmOptions.ASTAR_BI);
 GHResponse res = hopper.route(req);
 ```
 
-In case you need the online routing API in a Java or Android application the GraphHopperWeb comes handy - see the 'web' sub module.
+In case you need a web access in a Java or an Android application the GraphHopperWeb class comes handy,
+ see the 'web' sub module.
 
 ```java
 GraphHopperAPI gh = new GraphHopperWeb();
 gh.load("http://your-graphhopper-service.com");
+
+// or for the GraphHopper Directions API https://graphhopper.com/#directions-api
+// gh.load("https://graphhopper.com/api/1/route");
+
 GHResponse rsp = gh.route(new GHRequest(...));
 ```

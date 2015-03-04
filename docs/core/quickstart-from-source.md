@@ -76,7 +76,7 @@ For simplicity you could just start jetty from maven and schedule it as backgrou
 Then the service will be accessible on port 11111.
 
 For production usage you can install the latest jetty (8 or 9) as a service but we prefer to have it bundled as a 
-simple jar. Tomcat should work too. To create a war file do `mvn clean war:war` and copy it from the target/ 
+simple jar. Tomcat should work too. To create a war file do `mvn clean install war:war` and copy it from the target/ 
 folder to your jetty installation. Then copy web/config.properties also there and change this properties 
 file to point to the required graphhopper folder. Increase the Xmx/Xms values of your jetty server e.g. 
 for world wide coverage with a hierarchical graph I do the following in bin/jetty.sh

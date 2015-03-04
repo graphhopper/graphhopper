@@ -19,10 +19,10 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
-import com.graphhopper.storage.ExtendedStorage;
+import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
@@ -88,7 +88,7 @@ public abstract class AbstractOsItnReaderTest {
 
     /**
      * So we can create a specific encoding manager in subclasses
-     * 
+     *
      * @return
      */
     protected EncodingManager createEncodingManager() {
@@ -111,8 +111,7 @@ public abstract class AbstractOsItnReaderTest {
     protected GraphHopperStorage configureStorage(
             boolean turnRestrictionsImport, boolean is3D, boolean addAdditionalTowerNodes) {
         String directory = "/tmp";
-        ExtendedStorage extendedStorage = turnRestrictionsImport ? new TurnCostStorage()
-                : new ExtendedStorage.NoExtendedStorage();
+        GraphExtension extendedStorage = turnRestrictionsImport ? new TurnCostExtension() : new GraphExtension.NoExtendedStorage();
         GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(
                 directory, false), encodingManager, is3D, extendedStorage);
         graph.getProperties().put("add.additional.tower.nodes", addAdditionalTowerNodes);

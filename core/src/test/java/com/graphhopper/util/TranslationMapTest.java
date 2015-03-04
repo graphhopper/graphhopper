@@ -41,6 +41,9 @@ public class TranslationMapTest
 
         Translation ruMap = SINGLETON.getWithFallBack(new Locale("ru"));
         assertEquals("Пешком", ruMap.tr("web.FOOT"));
+        
+        Translation zhMap = SINGLETON.getWithFallBack(new Locale("vi", "VI"));
+        assertEquals("Đi bộ", zhMap.tr("web.FOOT"));
 
         trMap = SINGLETON.get("de_DE");
         assertEquals("Zu Fuß", trMap.tr("web.FOOT"));

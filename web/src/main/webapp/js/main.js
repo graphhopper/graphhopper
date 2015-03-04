@@ -15,7 +15,6 @@ if (!host) {
 }
 
 var ghRequest = new GHRequest(host);
-var tmpArgs = parseUrlWithHisto();
 var bounds = {};
 
 var nominatimURL = "https://nominatim.openstreetmap.org/search";
@@ -197,8 +196,8 @@ function initFromParams(params, doQuery) {
             resolveCoords([params.from, params.to], doQuery);
         else
             resolveCoords(params.point, doQuery);
-    } else if (params.point) {
-        ghRequest.from = new GHInput(params.point);
+    } else if (params.point && params.point.length === 1) {
+        ghRequest.from = new GHInput(params.point[0]);
         resolve("from", ghRequest.from);
         focus(ghRequest.from, 15, true);
     }
@@ -237,10 +236,10 @@ function checkInput() {
     // properly unbind previously click handlers
     $("#locationpoints .pointDelete").off();
 
-    // console.log("#### new checkInput #### ");
+    // console.log("## new checkInput");
     for (var i = 0; i < len; i++) {
         var div = $('#locationpoints > div.pointDiv').eq(i);
-        console.log(div.length + ", index:" + i + ", len:" + len);
+        // console.log(div.length + ", index:" + i + ", len:" + len);
         if (div.length === 0) {
             $('#locationpoints > div.pointAdd').before(nanoTemplate(template, {id: i}));
             div = $('#locationpoints > div.pointDiv').eq(i);
@@ -254,7 +253,7 @@ function checkInput() {
         if (len > 2) {
             div.find(".pointDelete").click(function () {
                 var index = $(this).parent().data('index');
-                ghRequest.route.delete(index);
+                ghRequest.route.removeSingle(index);
                 routingLayer.clearLayers();
                 routeLatLng(ghRequest, false);
             }).show();
@@ -330,7 +329,7 @@ function initMap(selectLayer) {
         subdomains: ['otile1', 'otile2', 'otile3', 'otile4']
     });
 
-    var openMapsSurfer = L.tileLayer('http://openmapsurfer.uni-hd.de/tiles/roads/x={x}&y={y}&z={z}', {
+    var openMapSurfer = L.tileLayer('http://openmapsurfer.uni-hd.de/tiles/roads/x={x}&y={y}&z={z}', {
         attribution: osmAttr + ', <a href="http://openmapsurfer.uni-hd.de/contact.html">GIScience Heidelberg</a>'
     });
 
@@ -363,11 +362,19 @@ function initMap(selectLayer) {
         subdomains: ['a', 'b', 'c']
     });
 
+    var mapLink = '<a href="http://www.esri.com/">Esri</a>';
+    var wholink = 'i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
+    var esriAerial = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '&copy; ' + mapLink + ', ' + wholink,
+        maxZoom: 18
+    });
+
     var baseMaps = {
         "Lyrk": lyrk,
         "MapQuest": mapquest,
         "MapQuest Aerial": mapquestAerial,
-        "OpenMapsSurfer": openMapsSurfer,
+        "Esri Aerial": esriAerial,
+        "OpenMapSurfer": openMapSurfer,
         "TF Transport": thunderTransport,
         "TF Cycle": thunderCycle,
         "TF Outdoors": thunderOutdoors,
@@ -384,7 +391,7 @@ function initMap(selectLayer) {
     map = L.map('map', {
         layers: [defaultLayer],
         contextmenu: true,
-        contextmenuWidth: 140,
+        contextmenuWidth: 145,
         contextmenuItems: [{
                 separator: true,
                 index: 3,
@@ -546,7 +553,7 @@ function setIntermediateCoord(e) {
 
 function deleteCoord(e) {
     var latlng = e.target.getLatLng();
-    ghRequest.route.delete(latlng);
+    ghRequest.route.removeSingle(latlng);
     routingLayer.clearLayers();
     routeLatLng(ghRequest, false);
 }
@@ -558,9 +565,9 @@ function setEndCoord(e) {
     routeIfAllResolved();
 }
 
-function routeIfAllResolved() {
+function routeIfAllResolved(doQuery) {
     if (ghRequest.route.isResolved()) {
-        routeLatLng(ghRequest);
+        routeLatLng(ghRequest, doQuery);
         return true;
     }
     return false;
@@ -591,7 +598,8 @@ function setFlag(coord, index) {
                     draggable: true,
                     contextmenu: true,
                     contextmenuItems: [{
-                            text: 'Marker ' + ((toFrom === FROM) ? 'Start' : ((toFrom === TO) ? 'End' : 'Intermediate')),
+                            text: 'Marker ' + ((toFrom === FROM) ?
+                                    'Start' : ((toFrom === TO) ? 'End' : 'Intermediate ' + index)),
                             disabled: true,
                             index: 0,
                             state: 2
@@ -612,7 +620,8 @@ function setFlag(coord, index) {
                             state: 2
                         }],
                     contextmenuAtiveState: 2
-                }).addTo(routingLayer).bindPopup(((toFrom === FROM) ? 'Start' : ((toFrom === TO) ? 'End' : 'Intermediate')));
+                }).addTo(routingLayer).bindPopup(((toFrom === FROM) ?
+                'Start' : ((toFrom === TO) ? 'End' : 'Intermediate ' + index)));
         // intercept openPopup
         marker._openPopup = marker.openPopup;
         marker.openPopup = function () {
@@ -1138,6 +1147,8 @@ function addInstruction(main, instr, instrIndex, lngLat) {
         sign = "marker-icon-red";
     else if (sign === 5)
         sign = "marker-icon-blue";
+    else if (sign === 6)
+        sign = "roundabout";
     else
         throw "did not found sign " + sign;
     var title = instr.text;
@@ -1197,10 +1208,6 @@ function parseUrlWithHisto() {
     return parseUrl(window.location.search);
 }
 
-function parseUrlAndRequest() {
-    return parseUrl(window.location.search);
-}
-
 function parseUrl(query) {
     var index = query.indexOf('?');
     if (index >= 0)
@@ -1218,24 +1225,26 @@ function parseUrl(query) {
         if (value === "")
             continue;
 
-        if (typeof res[key] === "undefined") {
-            if (value === 'true')
+        if (key === "point" && !res[key]) {
+            res[key] = [value];
+        } else if (typeof res[key] === "string") {
+            var arr = [res[key], value];
+            res[key] = arr;
+        } else if (typeof res[key] === "undefined") {
+            if (value === 'true') {
                 res[key] = true;
-            else if (value === 'false')
+            } else if (value === 'false') {
                 res[key] = false;
-            else {
+            } else {
                 var tmp = Number(value);
                 if (isNaN(tmp))
                     res[key] = value;
                 else
                     res[key] = Number(value);
             }
-        } else if (typeof res[key] === "string") {
-            var arr = [res[key], value];
-            res[key] = arr;
-        } else
+        } else {
             res[key].push(value);
-
+        }
     }
     return res;
 }
@@ -1404,14 +1413,15 @@ function setAutoCompleteList(index) {
         },
         serviceUrl: function () {
             // see https://graphhopper.com/#directions-api
-            return ghRequest.createGeocodeURL(host);
+            return ghRequest.createGeocodeURL(host, index - 1);
         },
         transformResult: function (response, originalQuery) {
             response.suggestions = [];
-            for (var i = 0; i < response.hits.length; i++) {
-                var hit = response.hits[i];
-                response.suggestions.push({value: dataToText(hit), data: hit});
-            }
+            if (response.hits)
+                for (var i = 0; i < response.hits.length; i++) {
+                    var hit = response.hits[i];
+                    response.suggestions.push({value: dataToText(hit), data: hit});
+                }
             return response;
         },
         onSearchError: function (element, q, jqXHR, textStatus, errorThrown) {
@@ -1433,7 +1443,7 @@ function setAutoCompleteList(index) {
             req.setCoord(point.lat, point.lng);
 
             req.input = suggestion.value;
-            if (!routeIfAllResolved())
+            if (!routeIfAllResolved(true))
                 focus(req, 15, index);
 
             myAutoDiv.autocomplete().enable();

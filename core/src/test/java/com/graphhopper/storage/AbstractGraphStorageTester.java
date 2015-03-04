@@ -686,7 +686,7 @@ public abstract class AbstractGraphStorageTester
     {
         graph = createGraph();
         BBox b = graph.getBounds();
-        assertEquals(BBox.INVERSE.maxLat, b.maxLat, 1e-6);
+        assertEquals(BBox.createInverse(false).maxLat, b.maxLat, 1e-6);
 
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 10, 20);
@@ -947,14 +947,14 @@ public abstract class AbstractGraphStorageTester
         graph.edge(2, 3, 1, true);
         AllEdgesIterator iter = graph.getAllEdges();
         assertEquals(4, GHUtility.count(iter));
-        assertEquals(4, iter.getMaxId());
+        assertEquals(4, iter.getCount());
 
         // delete
         graph.markNodeRemoved(1);
         graph.optimize();
         iter = graph.getAllEdges();
         assertEquals(2, GHUtility.count(iter));
-        assertEquals(4, iter.getMaxId());
+        assertEquals(4, iter.getCount());
 
         iter = graph.getAllEdges();
         iter.next();

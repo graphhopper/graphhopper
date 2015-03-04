@@ -21,13 +21,9 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Peter Karich
@@ -35,13 +31,14 @@ import java.util.List;
 public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
 {
     private EdgeFilter additionalEdgeFilter;
-    protected Graph graph;
+    protected final Graph graph;
     protected NodeAccess nodeAccess;
     protected EdgeExplorer inEdgeExplorer;
     protected EdgeExplorer outEdgeExplorer;
     protected final Weighting weighting;
     protected final FlagEncoder flagEncoder;
     protected final TraversalMode traversalMode;
+    protected double weightLimit = Double.MAX_VALUE;
     private boolean alreadyRun;
 
     /**
@@ -55,39 +52,18 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         this.weighting = weighting;
         this.flagEncoder = encoder;
         this.traversalMode = traversalMode;
-        setGraph(graph);
-    }
-
-    /**
-     * Specify the graph on which this algorithm should operate. API glitch: this method overwrites
-     * graph specified while constructing the algorithm. Only necessary if graph is a QueryGraph.
-     */
-    protected RoutingAlgorithm setGraph( Graph graph )
-    {
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
         outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
         inEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, true, false));
-        return this;
-    }
-
-    protected QueryGraph createQueryGraph()
-    {
-        return new QueryGraph(graph);
     }
 
     @Override
-    public Path calcPath( QueryResult fromRes, QueryResult toRes )
+    public void setWeightLimit( double weight )
     {
-        QueryGraph queryGraph = createQueryGraph();
-        List<QueryResult> results = new ArrayList<QueryResult>(2);
-        results.add(fromRes);
-        results.add(toRes);
-        queryGraph.lookup(results);
-        setGraph(queryGraph);
-        return calcPath(fromRes.getClosestNode(), toRes.getClosestNode());
+        this.weightLimit = weight;
     }
-
+       
     public RoutingAlgorithm setEdgeFilter( EdgeFilter additionalEdgeFilter )
     {
         this.additionalEdgeFilter = additionalEdgeFilter;

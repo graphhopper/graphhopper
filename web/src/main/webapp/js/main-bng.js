@@ -403,14 +403,14 @@ function getTopLeftCorners() {
 }
 
 	// The WMTS URL 
-	var url = "http://gwccluster2-env.elasticbeanstalk.com/service/wmts";
+	var url = "https://api.beta.os.uk/service/wmts";
 
 
 
     var osZoom = new L.TileLayer(url + '?height=256&width=256&tilematrixSet=EPSG%3A27700&version=1.0.0&style=&layer=Zoom%20Map%20Auto&SERVICE=WMTS&REQUEST=GetTile&format=image/png&TileMatrix=EPSG:27700:{z}&TileRow={y}&TileCol={x}',{
        tileSize: 256,
        continuousWorld: true,
-       attribution: '&copy; <a href="http://www.ordnancesurvey.co.uk/">Ordnance Survey</a> '
+       attribution: '&copy; <a href="http://os.uk/">Ordnance Survey</a> '
     });
 
     var lyrk = L.tileLayer('https://tiles.lyrk.org/' + tp + '/{z}/{x}/{y}?apikey=6e8cfef737a140e2a58c8122aaa26077', {

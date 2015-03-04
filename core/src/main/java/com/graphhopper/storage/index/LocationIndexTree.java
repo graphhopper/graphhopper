@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,25 +17,40 @@
  */
 package com.graphhopper.storage.index;
 
-import com.graphhopper.coll.GHBitSet;
-import com.graphhopper.coll.GHTBitSet;
-import com.graphhopper.geohash.SpatialKeyAlgo;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.DataAccess;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHTBitSet;
+import com.graphhopper.geohash.SpatialKeyAlgo;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.storage.DataAccess;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.BreadthFirstSearch;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PointList;
+import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * This implementation implements an n-tree to get the closest node or edge from GPS coordinates.
@@ -50,8 +65,8 @@ public class LocationIndexTree implements LocationIndex
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int MAGIC_INT;
-    protected DistanceCalc distCalc = new DistancePlaneProjection();
-    private DistanceCalc preciseDistCalc = new DistanceCalcEarth();
+    protected DistanceCalc distCalc = Helper.DIST_PLANE;
+    private DistanceCalc preciseDistCalc = Helper.DIST_EARTH;
     protected final Graph graph;
     private final NodeAccess nodeAccess;
     final DataAccess dataAccess;
@@ -74,12 +89,19 @@ public class LocationIndexTree implements LocationIndex
      */
     private double equalNormedDelta;
 
+    /**
+     * @param g the graph for which this index should do the lookup based on latitude,longitude.
+     * @param dir
+     */
     public LocationIndexTree( Graph g, Directory dir )
     {
+        if (g instanceof LevelGraph)
+            throw new IllegalArgumentException("Call LevelGraph.getBaseGraph() instead of using the LevelGraph itself");
+
         MAGIC_INT = Integer.MAX_VALUE / 22316;
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
-        dataAccess = dir.find("locationIndex");
+        dataAccess = dir.find("location_index");
     }
 
     public int getMinResolutionInMeter()
@@ -121,17 +143,15 @@ public class LocationIndexTree implements LocationIndex
         equalNormedDelta = distCalc.calcNormalizedDist(0.1);
 
         // now calculate the necessary maxDepth d for our current bounds
-        // if we assume a minimum resolution like 0.5km for a leaf-tile                
+        // if we assume a minimum resolution like 0.5km for a leaf-tile
         // n^(depth/2) = toMeter(dLon) / minResolution
         BBox bounds = graph.getBounds();
-        int nodes = graph.getNodes();
-		if (nodes == 0) {
-			throw new IllegalStateException("No Nodes");
-		}
-		if(!bounds.check()) {
-            throw new IllegalStateException("Bounds of graph are invalid: " + bounds);
-		}
-		
+        if (graph.getNodes() == 0)
+            throw new IllegalStateException("Cannot create location index of empty graph!");
+
+        if (!bounds.isValid())
+            throw new IllegalStateException("Cannot create location index when graph has invalid bounds: " + bounds);
+
         double lat = Math.min(Math.abs(bounds.maxLat), Math.abs(bounds.minLat));
         double maxDistInMeter = Math.max(
                 (bounds.maxLat - bounds.minLat) / 360 * DistanceCalcEarth.C,
@@ -181,7 +201,7 @@ public class LocationIndexTree implements LocationIndex
     private LocationIndexTree initEntries( int[] entries )
     {
         if (entries.length < 1)
-        // at least one depth should have been specified
+            // at least one depth should have been specified
         {
             throw new IllegalStateException("depth needs to be at least 1");
         }
@@ -275,9 +295,9 @@ public class LocationIndexTree implements LocationIndex
     public LocationIndex setApproximation( boolean approx )
     {
         if (approx)
-            distCalc = new DistancePlaneProjection();
+            distCalc = Helper.DIST_PLANE;
         else
-            distCalc = new DistanceCalcEarth();
+            distCalc = Helper.DIST_EARTH;
         return this;
     }
 
@@ -376,7 +396,7 @@ public class LocationIndexTree implements LocationIndex
 
         void prepare()
         {
-            final EdgeIterator allIter = getAllEdges();
+            final EdgeIterator allIter = graph.getAllEdges();
             try
             {
                 while (allIter.next())
@@ -420,7 +440,7 @@ public class LocationIndexTree implements LocationIndex
                     long key = keyAlgo.encode(lat, lon);
                     long keyPart = createReverseKey(key);
                     // no need to feed both nodes as we search neighbors in fillIDs
-                    addNode(root, pickBestNode(nodeA, nodeB), 0, keyPart, key);
+                    addNode(root, nodeA, 0, keyPart, key);
                 }
             };
             BresenhamLine.calcPoints(lat1, lon1, lat2, lon2, pointEmitter,
@@ -438,29 +458,29 @@ public class LocationIndexTree implements LocationIndex
             {
                 int index = (int) (bitmasks[depth] & keyPart);
                 keyPart = keyPart >>> shifts[depth];
-                InMemTreeEntry treeEntry = ((InMemTreeEntry) entry);
-                InMemEntry subentry = treeEntry.getSubEntry(index);
-                depth++;
-                if (subentry == null)
-                {
-                    if (depth == entries.length)
-                    {
-                        subentry = new InMemLeafEntry(initSizeLeafEntries, key);
-                    } else
-                    {
-                        subentry = new InMemTreeEntry(entries[depth]);
-                    }
-                    treeEntry.setSubEntry(index, subentry);
-                }
+        InMemTreeEntry treeEntry = ((InMemTreeEntry) entry);
+        InMemEntry subentry = treeEntry.getSubEntry(index);
+        depth++;
+        if (subentry == null)
+        {
+            if (depth == entries.length)
+            {
+                subentry = new InMemLeafEntry(initSizeLeafEntries, key);
+            } else
+            {
+                subentry = new InMemTreeEntry(entries[depth]);
+            }
+            treeEntry.setSubEntry(index, subentry);
+        }
 
-                addNode(subentry, nodeId, depth, keyPart, key);
+        addNode(subentry, nodeId, depth, keyPart, key);
             }
         }
 
         Collection<InMemEntry> getEntriesOf( int selectDepth )
         {
             List<InMemEntry> list = new ArrayList<InMemEntry>();
-            fillLayer(list, selectDepth, 0, ((InMemTreeEntry) root).getSubEntriesForDebug());
+            fillLayer(list, selectDepth, 0, root.getSubEntriesForDebug());
             return list;
         }
 
@@ -530,7 +550,7 @@ public class LocationIndexTree implements LocationIndex
                 size += len;
                 intIndex++;
                 leafs++;
-                dataAccess.ensureCapacity((long)(intIndex + len + 1) * 4);
+                dataAccess.ensureCapacity((long) (intIndex + len + 1) * 4);
                 if (len == 1)
                 {
                     // less disc space for single entries
@@ -555,7 +575,7 @@ public class LocationIndexTree implements LocationIndex
                     {
                         continue;
                     }
-                    dataAccess.ensureCapacity((long)(intIndex + 1) * 4);
+                    dataAccess.ensureCapacity((long) (intIndex + 1) * 4);
                     int beforeIntIndex = intIndex;
                     intIndex = store(subEntry, beforeIntIndex);
                     if (intIndex == beforeIntIndex)
@@ -584,7 +604,7 @@ public class LocationIndexTree implements LocationIndex
         {
             int value = dataAccess.getInt(pointer);
             if (value < 0)
-            // single data entries (less disc space)            
+                // single data entries (less disc space)
             {
                 set.add(-(value + 1));
             } else
@@ -789,11 +809,11 @@ public class LocationIndexTree implements LocationIndex
         // clone storedIds to avoid interference with forEach
         final GHBitSet checkBitset = new GHTBitSet(new TIntHashSet(storedNetworkEntryIds));
         // find nodes from the network entries which are close to 'point'
-        final EdgeExplorer explorer = graph.createEdgeExplorer(getEdgeFilter());
+        final EdgeExplorer explorer = graph.createEdgeExplorer();
         storedNetworkEntryIds.forEach(new TIntProcedure()
         {
             @Override
-            public boolean execute( final int networkEntryNodeId )
+            public boolean execute( int networkEntryNodeId )
             {
                 new XFirstSearchCheck(queryLat, queryLon, checkBitset, edgeFilter)
                 {
@@ -824,7 +844,7 @@ public class LocationIndexTree implements LocationIndex
 
         if (closestMatch.isValid())
         {
-            // denormalize distance            
+            // denormalize distance
             closestMatch.setQueryDistance(distCalc.calcDenormalizedDist(closestMatch.getQueryDistance()));
             closestMatch.calcSnappedPoint(distCalc);
         }
@@ -912,16 +932,19 @@ public class LocationIndexTree implements LocationIndex
                     tmpNormedDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                             tmpLat, tmpLon, wayLat, wayLon);
                     check(tmpClosestNode, tmpNormedDist, pointIndex, currEdge, pos);
-                } else if (pointIndex + 1 == len)
-                {
-                    tmpNormedDist = adjDist;
-                    pos = QueryResult.Position.TOWER;
                 } else
                 {
-                    tmpNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
-                    pos = QueryResult.Position.PILLAR;
+                    if (pointIndex + 1 == len)
+                    {
+                        tmpNormedDist = adjDist;
+                        pos = QueryResult.Position.TOWER;
+                    } else
+                    {
+                        tmpNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
+                        pos = QueryResult.Position.PILLAR;
+                    }
+                    check(tmpClosestNode, tmpNormedDist, pointIndex + 1, currEdge, pos);
                 }
-                check(tmpClosestNode, tmpNormedDist, pointIndex + 1, currEdge, pos);
 
                 if (tmpNormedDist <= equalNormedDelta)
                     return false;
@@ -935,23 +958,6 @@ public class LocationIndexTree implements LocationIndex
         protected abstract double getQueryDistance();
 
         protected abstract boolean check( int node, double normedDist, int wayIndex, EdgeIteratorState iter, QueryResult.Position pos );
-    }
-
-    protected int pickBestNode( int nodeA, int nodeB )
-    {
-        // For normal graph the node does not matter because if nodeA is conntected to nodeB
-        // then nodeB is also connect to nodeA, but for a LevelGraph this does not apply.
-        return nodeA;
-    }
-
-    protected EdgeFilter getEdgeFilter()
-    {
-        return EdgeFilter.ALL_EDGES;
-    }
-
-    protected AllEdgesIterator getAllEdges()
-    {
-        return graph.getAllEdges();
     }
 
     // make entries static as otherwise we get an additional reference to this class (memory waste)

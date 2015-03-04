@@ -42,14 +42,16 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     @Override
     public LocationIndexTree createIndex( Graph g, int resolution )
     {
-        return internalCreateIndex(g, 500000);
+        if (resolution < 0)
+            resolution = 500000;        
+        return (LocationIndexTree) createIndexNoPrepare(g, resolution).prepareIndex();
     }
 
-    public LocationIndexTree internalCreateIndex( Graph g, int minMeter )
+    public LocationIndexTree createIndexNoPrepare( Graph g, int resolution )
     {
         Directory dir = new RAMDirectory(location);
         LocationIndexTree tmpIDX = new LocationIndexTree(g, dir);
-        tmpIDX.setResolution(minMeter).prepareIndex();
+        tmpIDX.setResolution(resolution);
         return tmpIDX;
     }
 
@@ -87,7 +89,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     public void testSnappedPointAndGeometry()
     {
         Graph graph = createTestGraph();
-        LocationIndex index = createIndex(graph, 1000);
+        LocationIndex index = createIndex(graph, -1);
         // query directly the tower node
         QueryResult res = index.findClosest(-0.4, 0.9, EdgeFilter.ALL_EDGES);
         assertEquals(new GHPoint(-0.4, 0.9), res.getSnappedPoint());
@@ -103,8 +105,8 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     public void testInMemIndex()
     {
         Graph graph = createTestGraph();
-        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
-        index.setMinResolutionInMeter(50000).prepareAlgo();
+        LocationIndexTree index = createIndexNoPrepare(graph, 50000);
+        index.prepareAlgo();
         LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
         assertEquals(Helper.createTList(4, 4), index.getEntries());
 
@@ -144,8 +146,8 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     public void testInMemIndex2()
     {
         Graph graph = createTestGraph2();
-        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
-        index.setMinResolutionInMeter(500).prepareAlgo();
+        LocationIndexTree index = createIndexNoPrepare(graph, 500);
+        index.prepareAlgo();
         LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
         assertEquals(Helper.createTList(4, 4), index.getEntries());
         assertEquals(3, inMemIndex.getEntriesOf(0).size());
@@ -181,9 +183,8 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     @Test
     public void testInMemIndex3()
     {
-        Graph graph = createTestGraph();
-        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
-        index.setMinResolutionInMeter(10000).prepareAlgo();
+        LocationIndexTree index = createIndexNoPrepare(createTestGraph(), 10000);
+        index.prepareAlgo();
         LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
         assertEquals(Helper.createTList(64, 4), index.getEntries());
 
@@ -202,8 +203,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     @Test
     public void testReverseSpatialKey()
     {
-        LocationIndexTree index = new LocationIndexTree(createTestGraph(), new RAMDirectory());
-        index.setMinResolutionInMeter(200).prepareAlgo();
+        LocationIndexTree index = createIndex(createTestGraph(), 200);
         assertEquals(Helper.createTList(64, 64, 64, 4), index.getEntries());
 
         // 10111110111110101010
@@ -224,7 +224,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         graph.edge(1, 0, 1000, true);
         graph.edge(0, 2, 1000, true);
         graph.edge(0, 3, 1000, true).setWayGeometry(Helper.createPointList(51.21, 9.43));
-        LocationIndex index = internalCreateIndex(graph, 1000);
+        LocationIndex index = createIndex(graph, -1);
         assertEquals(2, index.findID(51.2, 9.4));
     }
 
@@ -261,7 +261,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     public void testWayGeometry()
     {
         Graph g = createTestGraphWithWayGeometry();
-        LocationIndex index = createIndex(g, 1000);
+        LocationIndex index = createIndex(g, -1);
         assertEquals(1, index.findID(0, 0));
         assertEquals(1, index.findID(0, 0.1));
         assertEquals(1, index.findID(0.1, 0.1));
@@ -289,7 +289,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     public void testEdgeFilter()
     {
         Graph graph = createTestGraph();
-        LocationIndexTree index = createIndex(graph, 1000);
+        LocationIndexTree index = createIndex(graph, -1);
 
         assertEquals(1, index.findClosest(-.6, -.6, EdgeFilter.ALL_EDGES).getClosestNode());
         assertEquals(2, index.findClosest(-.6, -.6, new EdgeFilter()
@@ -402,9 +402,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     public void testRMin()
     {
         Graph graph = createTestGraph();
-        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
-        index.setMaxRegionSearch(1);
-        index.setMinResolutionInMeter(50000).prepareAlgo();
+        LocationIndexTree index = createIndex(graph, 50000);
 
         //query: 0.05 | -0.3
         DistanceCalc distCalc = new DistancePlaneProjection();

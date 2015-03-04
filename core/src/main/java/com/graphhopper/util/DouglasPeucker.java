@@ -42,9 +42,9 @@ public class DouglasPeucker
     {
         approx = a;
         if (approx)
-            calc = new DistancePlaneProjection();
+            calc = Helper.DIST_PLANE;
         else
-            calc = new DistanceCalcEarth();
+            calc = Helper.DIST_EARTH;
     }
 
     /**

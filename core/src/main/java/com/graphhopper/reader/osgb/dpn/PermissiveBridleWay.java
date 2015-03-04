@@ -10,8 +10,10 @@ public class PermissiveBridleWay extends AbstractOsDpnOsmAttibuteMappingVisitor 
     @Override
     protected void applyAttributes(Way way)
     {
+        way.setTag("highway", "bridleway");
         way.setTag("horse", "permissive");
         way.setTag("bicycle", "permissive");
+        way.setTag("foot", "permissive");
     }
 
 }

@@ -12,13 +12,23 @@ import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 
 public class GraphHopperHooks {
-	GraphHopperUIUtil graphUiUtil = new GraphHopperUIUtil();
+	GraphHopperUIUtil graphUiUtil;
 
 	String instruction;
 
 	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI$")
 	public void getRoute(String pointA, String pointB, String routeType)
 			throws InterruptedException {
+
+		if (routeType.equalsIgnoreCase("car"))
+
+			graphUiUtil = new GraphHopperUIUtil(
+					IntegrationTestProperties
+							.getTestProperty("graphHopperWebUrl"));
+		else
+			graphUiUtil = new GraphHopperUIUtil(
+					IntegrationTestProperties
+							.getTestProperty("DPNgraphHopperWebUrl"));
 
 		String testON = IntegrationTestProperties.getTestProperty("testON");
 
@@ -31,16 +41,14 @@ public class GraphHopperHooks {
 			graphUiUtil.getRouteFromService(pointA, pointB, routeType);
 			break;
 		default:
-			
-			if (pointA.split(",").length==2){
+
+			if (pointA.split(",").length == 2) {
 				graphUiUtil.getRouteFromService(pointA, pointB, routeType);
 				graphUiUtil.getRouteFromUI(pointA, pointB, routeType);
-			}
-			else
-				{
+			} else {
 				graphUiUtil.getRouteFromUI(pointA, pointB, routeType);
-				}
-			
+			}
+
 			break;
 
 		}

@@ -29,6 +29,8 @@ public class BridleWayTest {
     public void testVisitWayAttribute() {
         visitor.visitWayAttribute("bridleway", way);
         verify(way).setTag("designation", "public_bridleway");
+        verify(way).setTag("highway", "bridleway");
+        verify(way).setTag("foot", "yes");
     }
 
 }

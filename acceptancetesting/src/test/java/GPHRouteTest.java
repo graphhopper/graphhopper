@@ -41,13 +41,17 @@ public class GPHRouteTest {
 		
 		assertTrue(ghrt.routeContainsTurn(turn, hs.iterator().next()));
 	}
-
+	
+	
 	@Test
 	public void testWayPointIsOnRoute() {
-		
+
+				
 		String path = getClass().getResource("sampleGraphHopper.gpx").getPath();
 		GraphHopperGPXParserRouteTest ghrt = GraphHopperGPXParserRouteTest.getParserForgpxFileName(path);
-		Waypoint wayPoint = getTestWayPoint();
+		Waypoint wayPoint = getTestWayPoint("50.927146","-1.416787","339","N","2515","13.974");
+		
+
 		HashSet<Route> hs = ghrt.getRoutes();
 		
 		assertTrue(ghrt.isWayPointOnRoute(wayPoint,hs.iterator().next()));
@@ -70,16 +74,20 @@ public class GPHRouteTest {
 		assertTrue(ghrt.routeContainsTurn("turn sharp right onto Bellemoor Road",next));
 	}
 
-	private Waypoint getTestWayPoint() {
+	private Waypoint getTestWayPoint(String lat, String lon,String azimuth,String direction,String time,String distance) {
 		
 		Waypoint wp = new Waypoint();
-		wp.setLatitude(new Double(50.927146));
-		wp.setLongitude(new Double(-1.416787));
-		wp.addExtensionData(ExtensionConstants.AZIMUTH, "339");
-		wp.addExtensionData(ExtensionConstants.DIRECTION, "N");
-		wp.addExtensionData(ExtensionConstants.TIME, "2515");
-		wp.addExtensionData(ExtensionConstants.DISTANCE, "13.974");
-		
-		return wp;
+		wp.setLatitude(new Double(lat));
+		wp.setLongitude(new Double(lon));
+		wp.addExtensionData(ExtensionConstants.AZIMUTH, azimuth);
+		wp.addExtensionData(ExtensionConstants.DIRECTION, direction);
+		wp.addExtensionData(ExtensionConstants.TIME, time);
+		wp.addExtensionData(ExtensionConstants.DISTANCE, distance);
+return wp;
 	}
+	
+	
+
+	
+
 }

@@ -49,11 +49,10 @@ import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.Way;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.ExtendedStorage;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalc3D;
 import com.graphhopper.util.DistanceCalcEarth;
@@ -1456,15 +1455,13 @@ public class OsItnReader implements DataReader<Long> {
                 logger.info(TURN_FROM_TO_VIA_FORMAT,
                         turnRelation.getOsmIdFrom(), turnRelation.getOsmIdTo(),
                         turnRelation.getVia());
-                ExtendedStorage extendedStorage = ((GraphHopperStorage) graphStorage)
-                        .getExtendedStorage();
-                if (extendedStorage instanceof TurnCostStorage) {
+                GraphExtension extendedStorage = graphStorage.getExtension();
+                if (extendedStorage instanceof TurnCostExtension) {
+                    TurnCostExtension tcs = (TurnCostExtension) extendedStorage;
                     Collection<ITurnCostTableEntry> entries = encodingManager
                             .analyzeTurnRelation(turnRelation, this);
                     for (ITurnCostTableEntry entry : entries) {
-                        ((TurnCostStorage) extendedStorage).addTurnInfo(
-                                entry.getVia(), entry.getEdgeFrom(),
-                                entry.getEdgeTo(), (int) entry.getFlags());
+                        tcs.addTurnInfo(entry.getEdgeFrom(), entry.getVia(), entry.getEdgeTo(), entry.getFlags());
                     }
                 }
             }

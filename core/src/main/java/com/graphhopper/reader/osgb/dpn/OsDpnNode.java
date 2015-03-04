@@ -53,7 +53,7 @@ public class OsDpnNode extends OsDpnElement implements Node {
         // QName attributeName = parser.getAttributeName(i);
         // System.err.println("QName:" + attributeName);
         // }
-        System.out.println("OsDpnNode.create()");
+        logger.trace("OsDpnNode.create()");
         OsDpnNode node = new OsDpnNode(id);
 
         parser.nextTag();

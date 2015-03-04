@@ -11,16 +11,14 @@ import org.junit.Before;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.BusFlagEncoder;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
-import com.graphhopper.storage.ExtendedStorage;
+import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
@@ -28,8 +26,7 @@ public abstract class AbstractOsDpnReaderTest {
 
     protected EncodingManager encodingManager;// = new
     // EncodingManager("CAR");//"car:com.graphhopper.routing.util.RelationCarFlagEncoder");
-    protected CarFlagEncoder carEncoder;// = (RelationCarFlagEncoder)
-    protected BusFlagEncoder busEncoder;// = (RelationCarFlagEncoder)
+    protected BusFlagEncoder busEncoder;
     // encodingManager
     // .getEncoder("CAR");
     protected EdgeFilter carOutEdges;// = new DefaultEdgeFilter(
@@ -64,28 +61,22 @@ public abstract class AbstractOsDpnReaderTest {
     @Before
     public void initEncoding() {
         if (turnCosts) {
-            carEncoder = new CarFlagEncoder(5, 5, 3);
-            busEncoder = new BusFlagEncoder(5, 5, 3);
             bikeEncoder = new BikeFlagEncoder(4, 2, 3);
         } else {
-            carEncoder = new CarFlagEncoder();
-            busEncoder = new BusFlagEncoder();
             bikeEncoder = new BikeFlagEncoder();
         }
 
         footEncoder = new FootFlagEncoder();
-        carOutEdges = new DefaultEdgeFilter(carEncoder, false, true);
-        carInEdges = new DefaultEdgeFilter(carEncoder, true, false);
         encodingManager = createEncodingManager();
     }
 
     /**
      * So we can create a specific encoding manager in subclasses
-     * 
+     *
      * @return
      */
     protected EncodingManager createEncodingManager() {
-        return new EncodingManager(footEncoder, carEncoder, bikeEncoder);
+        return new EncodingManager(footEncoder, bikeEncoder);
     }
 
     protected OsDpnReader readGraphFile(GraphHopperStorage graph, File file)
@@ -101,8 +92,7 @@ public abstract class AbstractOsDpnReaderTest {
     protected GraphHopperStorage configureStorage(
             boolean turnRestrictionsImport, boolean is3D) {
         String directory = "/tmp";
-        ExtendedStorage extendedStorage = turnRestrictionsImport ? new TurnCostStorage()
-                : new ExtendedStorage.NoExtendedStorage();
+        GraphExtension extendedStorage = turnRestrictionsImport ? new TurnCostExtension() : new GraphExtension.NoExtendedStorage();
         GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(
                 directory, false), encodingManager, is3D, extendedStorage);
         return graph;
@@ -121,7 +111,7 @@ public abstract class AbstractOsDpnReaderTest {
     protected void evaluateRouting(final EdgeIterator iter, final int node,
             final boolean forward, final boolean backward,
             final boolean finished) {
-        evaluateRouting(iter, node, forward, backward, finished, carEncoder);
+        evaluateRouting(iter, node, forward, backward, finished, footEncoder);
     }
 
     protected void evaluateRouting(final EdgeIterator iter, final int node,

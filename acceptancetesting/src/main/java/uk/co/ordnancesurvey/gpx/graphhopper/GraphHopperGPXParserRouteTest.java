@@ -133,18 +133,19 @@ public class GraphHopperGPXParserRouteTest {
 		String minY = coords[1];
 		String maxX = coords[2];
 		String maxY = coords[3];
-		String graphHopperUrl = IntegrationTestProperties
-				.getTestProperty("graphHopperWebUrl");
+		String graphHopperUrl;
+		
+		graphHopperUrl=vehicle.equalsIgnoreCase("car")?(IntegrationTestProperties
+				.getTestProperty("graphHopperWebUrl")):(IntegrationTestProperties
+						.getTestProperty("DPNgraphHopperWebUrl"));
+		 
 		StringBuilder sb = new StringBuilder();
 		sb.append(graphHopperUrl);
 		sb.append("route?");
 		if (routeType != null) {
 			sb.append("type=");
 			sb.append(routeType);
-		} else {
-			sb.append("type=");
-			sb.append("gpx");
-		}
+		} 
 
 		sb.append("&vehicle=");
 		sb.append(vehicle);

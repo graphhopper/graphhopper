@@ -72,84 +72,96 @@ public abstract class OsDpnElement implements RoutingElement
 	while (event != XMLStreamConstants.END_DOCUMENT
 			&& (event != XMLStreamConstants.END_ELEMENT || !exitElement(parser)))
 	    if (event == XMLStreamConstants.CHARACTERS)
-		event = parser.next();
+            event = parser.next();
 	    else if (event == XMLStreamConstants.START_ELEMENT)
-		// logger.info("LOCALNAME: {}", parser.getLocalName());
-		switch (parser.getLocalName())
-		{
-		case "pos":
-		case "coordinates":
-		{
-		    event = handleCoordinates(parser);
-		    break;
-		}
-		case "networkMember":
-		{
-		    event = handleNetworkMember(parser);
-		    break;
-		}
-		case "posList":
-		{
-		    event = handleMultiDimensionCoords(parser);
-		    break;
-		}
-		case "startNode":
-		case "endNode":
-		{
-		    event = handleNode(parser);
-		    break;
-		}
-		case "directedLink":
-		{
-		    event = handleDirectedLink(parser);
-		    break;
-		}
-		case "instruction":
-		{
-		    setTag("type", "restriction");
-		    event = handleTag("restriction", parser);
-		    break;
-		}
-            case "surfaceType":
-            {
-                event=handleSurfaceType(parser);
-                break;
-            }
-		case "descriptiveTerm":
-		{
-		    event = handleDescriptiveTerm(parser);
-		    break;
-		}
-		case "name":
-		case "alternativeName":
-		{
-		    event = handleName(parser);
-		    break;
-		}
-            case "physicalLevel":
-            {
-                event = handlePhysicalLevel(parser);
-                break;
-            }
-            case "rightOfUse":
-            {
-                event = handleRightOfUse(parser);
-                break;
-            }
-            case "potentialHazardCrossed":
-            {
-                event = handlePotentialHazard(parser);
-                break;
-            }
+            // logger.info("LOCALNAME: {}", parser.getLocalName());
+            switch (parser.getLocalName()) {
+                case "pos":
+                case "coordinates": {
+                    event = handleCoordinates(parser);
+                    break;
+                }
+                case "networkMember": {
+                    event = handleNetworkMember(parser);
+                    break;
+                }
+                case "posList": {
+                    event = handleMultiDimensionCoords(parser);
+                    break;
+                }
+                case "startNode":
+                case "endNode": {
+                    event = handleNode(parser);
+                    break;
+                }
+                case "directedLink": {
+                    event = handleDirectedLink(parser);
+                    break;
+                }
+                case "instruction": {
+                    setTag("type", "restriction");
+                    event = handleTag("restriction", parser);
+                    break;
+                }
+                case "surfaceType": {
+                    event = handleSurfaceType(parser);
+                    break;
+                }
+                case "descriptiveTerm": {
+                    event = handleDescriptiveTerm(parser);
+                    break;
+                }
+                case "name":
+                case "alternativeName":
+                {
+                    event = handleName(parser);
+                    break;
+                }
+                case "physicalLevel":
+                {
+                    event = handlePhysicalLevel(parser);
+                    break;
+                }
+                case "rightOfUse":
+                {
+                    event = handleRightOfUse(parser);
+                    break;
+                }
+                case "potentialHazardCrossed":
+                {
+                    event = handlePotentialHazard(parser);
+                    break;
+                }
 
-		default:
-		{
-		    event = parser.next();
-		}
-		}
+                case "withinAccessLand" :
+                {
+                    event = handleAccessLand(parser);
+                    break;
+                }
+
+                case "adoptedByNationalCycleRoute" :
+                case "adoptedByOtherCycleRoute" :
+                {
+                    event = handleCycleRoute(parser);
+                    break;
+                }
+                default: {
+                    event = parser.next();
+                }
+            }
 	    else
-		// logger.trace("EVENT:" + event);
-		event = parser.next();
+            // logger.trace("EVENT:" + event);
+            event = parser.next();
+    }
+
+    protected int handleCycleRoute(XMLStreamReader parser) throws XMLStreamException
+    {
+        return parser.next();
+    }
+
+    protected int handleAccessLand(XMLStreamReader parser) throws XMLStreamException
+    {
+        return parser.next();
     }
 
     protected int handleSurfaceType(XMLStreamReader parser) throws XMLStreamException
@@ -192,16 +204,42 @@ public abstract class OsDpnElement implements RoutingElement
     {
 	String roadType = parser.getElementText();
 	setTag("type", "route");
-	setTag("highway", roadType);
+	setTag("highway", getOsmMappedTypeName(roadType));
 	setTag("name", getTypeBasedName(roadType));
 	return parser.getEventType();
     }
 
-    private Object getTypeBasedName(String roadType)
+    private String getTypeBasedName(String roadType)
     {
 	if (roadType.equals("No Physical Manifestation"))
 	    return "Route";
 	return roadType;
+    }
+    
+    private String getOsmMappedTypeName(String roadType)
+    {
+    	String typeName = roadType;
+    	switch (roadType) {
+		case "A Road":
+			typeName = "primary";
+			break;
+		case "B Road":
+			typeName = "secondary";
+			break;
+		case "Alley":
+			typeName="service";
+			setTag("service", "alley");
+			break;
+		case "Private Road":
+			typeName="private";
+			break;
+		case "Path":
+			typeName="path";
+			break;
+		default:
+			break;
+		}
+    	return typeName;
     }
 
     private int handleDirectedLink(XMLStreamReader parser) throws XMLStreamException

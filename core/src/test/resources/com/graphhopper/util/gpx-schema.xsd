@@ -2,7 +2,7 @@
 <xsd:schema
     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
     xmlns="http://www.topografix.com/GPX/1/1"
-    targetNamespace="http://www.topografix.com/GPX/1/1"
+    targetNamespace="http://www.topografix.com/GPX/1/1"    
     elementFormDefault="qualified">
 
     <xsd:annotation>
@@ -478,15 +478,15 @@
                 You can add extend GPX by adding your own elements from another schema here.
             </xsd:documentation>
         </xsd:annotation>
+        <!-- as we need separate namespace 'gh' could not get it working with proper validation :( so ignoring this for now-->
         <xsd:sequence>
-            <xsd:element name="distance" type="xsd:decimal"	minOccurs="0">                
-            </xsd:element>
-            <xsd:element name="time" type="xsd:nonNegativeInteger"	minOccurs="0">
-            </xsd:element>
-            <xsd:element name="direction" type="xsd:string"		minOccurs="0">                
-            </xsd:element>
-            <xsd:element name="azimuth"	type="xsd:string"		minOccurs="0">                
-            </xsd:element>
+            <xsd:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        You can add extend GPX by adding your own elements from another schema here.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:any>
         </xsd:sequence>
     </xsd:complexType>
 

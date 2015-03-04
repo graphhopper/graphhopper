@@ -22,8 +22,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.DistancePlaneProjection;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.Circle;
 
 /**
@@ -33,7 +32,7 @@ import com.graphhopper.util.shapes.Circle;
  */
 public class Location2IDFullIndex implements LocationIndex
 {
-    private DistanceCalc calc = new DistancePlaneProjection();
+    private DistanceCalc calc = Helper.DIST_PLANE;
     private final Graph graph;
     private final NodeAccess nodeAccess;
     private boolean closed = false;
@@ -54,9 +53,9 @@ public class Location2IDFullIndex implements LocationIndex
     public LocationIndex setApproximation( boolean approxDist )
     {
         if (approxDist)
-            calc = new DistancePlaneProjection();
+            calc = Helper.DIST_PLANE;
         else
-            calc = new DistanceCalcEarth();
+            calc = Helper.DIST_EARTH;
 
         return this;
     }

@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -104,25 +104,28 @@ public class EncodingManager
         this(flagEncoders, 4);
     }
 
-    public EncodingManager( List<? extends FlagEncoder> flagEncoders, int bytesForFlags )
+    public EncodingManager( List<? extends FlagEncoder> flagEncoders, int bytesForEdgeFlags )
     {
-        if (bytesForFlags != 4 && bytesForFlags != 8)
-            throw new IllegalStateException("For 'flags' currently only 4 or 8 bytes supported");
+        if (bytesForEdgeFlags != 4 && bytesForEdgeFlags != 8)
+            throw new IllegalStateException("For 'edge flags' currently only 4 or 8 bytes supported");
 
-        this.bitsForEdgeFlags = bytesForFlags * 8;
+        this.bitsForEdgeFlags = bytesForEdgeFlags * 8;
 
         Collections.sort(flagEncoders, new Comparator<FlagEncoder>()
-        {
+                {
             @Override
             public int compare( FlagEncoder o1, FlagEncoder o2 )
             {
                 return o1.toString().compareTo(o2.toString());
             }
-        });
+                });
         for (FlagEncoder flagEncoder : flagEncoders)
         {
             registerEncoder((AbstractFlagEncoder) flagEncoder);
         }
+
+        if (edgeEncoders.isEmpty())
+            throw new IllegalStateException("No vehicles found");
     }
 
     public int getBytesForFlags()
@@ -282,11 +285,6 @@ public class EncodingManager
         return flags;
     }
 
-    public int getVehicleCount()
-    {
-        return edgeEncoders.size();
-    }
-
     @Override
     public String toString()
     {
@@ -316,17 +314,6 @@ public class EncodingManager
         }
 
         return str.toString();
-    }
-
-    public FlagEncoder getSingle()
-    {
-        if (getVehicleCount() > 1)
-            throw new IllegalStateException("Multiple encoders are active. cannot return one:" + toString());
-
-        if (getVehicleCount() == 0)
-            throw new IllegalStateException("No encoder is active!");
-
-        return edgeEncoders.get(0);
     }
 
     public long flagsDefault( boolean forward, boolean backward )
@@ -417,10 +404,10 @@ public class EncodingManager
                 if (oldEntry != null)
                 {
                     // merging different encoders
-                	long oldFlags = oldEntry.getFlags();
-                	long flags = entry.getFlags();
-                	oldFlags |= flags;
-                	oldEntry.setFlags(oldFlags);
+                    long oldFlags = oldEntry.getFlags();
+                    long flags = entry.getFlags();
+                    oldFlags |= flags;
+                    oldEntry.setFlags(oldFlags);
                 } else
                 {
                     entries.put(entry.getItemId(), entry);
@@ -462,6 +449,16 @@ public class EncodingManager
         {
             encoder.applyWayTags(way, edge);
         }
+    }
+
+    /**
+     * The returned list is never empty.
+     */
+    public List<FlagEncoder> fetchEdgeEncoders()
+    {
+        List<FlagEncoder> list = new ArrayList<FlagEncoder>();
+        list.addAll(edgeEncoders);
+        return list;
     }
 
     static String fixWayName( String str )
@@ -506,7 +503,7 @@ public class EncodingManager
             bytesForFlags = 8;
         return new EncodingManager(acceptStr, bytesForFlags);
     }
-    
+
     public boolean isVehicleQualifierTypeIncluded(RoutingElement routingElement) {
         for (AbstractFlagEncoder encoder : edgeEncoders)
         {

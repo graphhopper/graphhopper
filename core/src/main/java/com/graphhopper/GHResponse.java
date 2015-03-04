@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,11 +17,12 @@
  */
 package com.graphhopper;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Wrapper to simplify output of GraphHopper.
@@ -34,9 +35,9 @@ public class GHResponse
     private final List<Throwable> errors = new ArrayList<Throwable>(4);
     private PointList list = PointList.EMPTY;
     private double distance;
-    private double weight;
+    private double routeWeight;
     private long time;
-    private InstructionList instructions = InstructionList.EMPTY;
+    private InstructionList instructions = null;
     private boolean found;
 
     public GHResponse()
@@ -45,7 +46,17 @@ public class GHResponse
 
     public String getDebugInfo()
     {
+        check("getDebugInfo");
         return debugInfo;
+    }
+    public GHResponse setFound( boolean found )
+    {
+        this.found = found;
+        return this;
+    }
+    public boolean isFound()
+    {
+        return found;
     }
 
     public GHResponse setDebugInfo( String debugInfo )
@@ -53,6 +64,15 @@ public class GHResponse
         if (debugInfo != null)
             this.debugInfo = debugInfo;
         return this;
+    }
+
+    private void check( String method )
+    {
+        if (hasErrors())
+        {
+            throw new RuntimeException("You cannot call " + method + " if response contains errors. Check this with ghResponse.hasErrors(). "
+                    + "Errors are: " + getErrors());
+        }
     }
 
     /**
@@ -88,6 +108,7 @@ public class GHResponse
      */
     public PointList getPoints()
     {
+        check("getPoints");
         return list;
     }
 
@@ -105,6 +126,7 @@ public class GHResponse
      */
     public double getDistance()
     {
+        check("getDistance");
         return distance;
     }
 
@@ -124,7 +146,7 @@ public class GHResponse
 
     public GHResponse setRouteWeight( double weight )
     {
-        this.weight = weight;
+        this.routeWeight = weight;
         return this;
     }
 
@@ -135,18 +157,8 @@ public class GHResponse
      */
     public double getRouteWeight()
     {
-        return weight;
-    }
-
-    public GHResponse setFound( boolean found )
-    {
-        this.found = found;
-        return this;
-    }
-
-    public boolean isFound()
-    {
-        return found;
+        check("getRouteWeight");
+        return routeWeight;
     }
 
     /**
@@ -154,7 +166,8 @@ public class GHResponse
      */
     public BBox calcRouteBBox( BBox _fallback )
     {
-        BBox bounds = BBox.INVERSE.clone();
+        check("calcRouteBBox");
+        BBox bounds = BBox.createInverse(_fallback.hasElevation());
         int len = list.getSize();
         if (len == 0)
             return _fallback;
@@ -163,17 +176,14 @@ public class GHResponse
         {
             double lat = list.getLatitude(i);
             double lon = list.getLongitude(i);
-            if (lat > bounds.maxLat)
-                bounds.maxLat = lat;
-
-            if (lat < bounds.minLat)
-                bounds.minLat = lat;
-
-            if (lon > bounds.maxLon)
-                bounds.maxLon = lon;
-
-            if (lon < bounds.minLon)
-                bounds.minLon = lon;
+            if (bounds.hasElevation())
+            {
+                double ele = list.getEle(i);
+                bounds.update(lat, lon, ele);
+            } else
+            {
+                bounds.update(lat, lon);
+            }
         }
         return bounds;
     }
@@ -181,7 +191,7 @@ public class GHResponse
     @Override
     public String toString()
     {
-        String str = "found:" + isFound() + ", nodes:" + list.getSize() + ": " + list.toString();
+        String str = "nodes:" + list.getSize() + ": " + list.toString();
         if (!instructions.isEmpty())
             str += ", " + instructions.toString();
 
@@ -198,6 +208,10 @@ public class GHResponse
 
     public InstructionList getInstructions()
     {
+        check("getInstructions");
+        if (instructions == null)
+            throw new IllegalArgumentException("To access instructions you need to enable creation before routing");
+
         return instructions;
     }
 }

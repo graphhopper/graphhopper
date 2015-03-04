@@ -81,6 +81,7 @@
       <dpn:surfaceType codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/SurfaceTypeValue#Unmade">Unmade</dpn:surfaceType>
       <dpn:physicalLevel codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/LevelCodeValue#BelowSurfaceLevelTunnel">Below Surface Level Tunnel</dpn:physicalLevel>
       <dpn:name>Named Road</dpn:name>
+        <dpn:rightOfUse codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RightOfWayValue#Footpath">Footpath</dpn:rightOfUse>
       <dpn:adoptedByNationalCycleRoute>false</dpn:adoptedByNationalCycleRoute>
       <dpn:adoptedByRecreationalRoute>false</dpn:adoptedByRecreationalRoute>
       <dpn:adoptedByOtherCycleRoute>false</dpn:adoptedByOtherCycleRoute>

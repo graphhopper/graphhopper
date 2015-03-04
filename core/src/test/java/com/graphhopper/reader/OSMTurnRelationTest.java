@@ -36,7 +36,7 @@ import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.EdgeExplorer;
 
 /**
- * 
+ *
  * @author Peter Karich
  */
 public class OSMTurnRelationTest
@@ -54,7 +54,7 @@ public class OSMTurnRelationTest
         internalToOSMEdge.put(4, 4L);
 
         GraphStorage graph = new GraphBuilder(new EncodingManager(encoder))
-                .create();
+        .create();
         EdgeBasedRoutingAlgorithmTest.initGraph(graph);
         OSMReader osmReader = new OSMReader(graph) {
 

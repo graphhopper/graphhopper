@@ -11,6 +11,8 @@ public class Footpath extends AbstractOsDpnOsmAttibuteMappingVisitor {
     protected void applyAttributes(Way way)
     {
         way.setTag("designation", "public_footpath");
+        way.setTag("highway", "footway");
+        way.setTag("foot", "yes");
     }
 
 }
