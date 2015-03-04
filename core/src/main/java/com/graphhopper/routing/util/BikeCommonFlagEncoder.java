@@ -259,7 +259,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         {
             if ((way.hasTag("highway", "cycleway"))
                     && (way.hasTag("sac_scale", "hiking")))
-                return 1;  // This combination is fine with every kind of bike, including a racingbike
+                return acceptBit;
             if (!allowedSacScale(sacScale))
                 return 0;
         }
