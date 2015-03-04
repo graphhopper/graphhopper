@@ -78,8 +78,8 @@ public class InstructionList implements Iterable<Instruction>
             instrJson.put("text", Helper.firstBig(str));
             if (!ia.isEmpty())
             {
-                instrJson.put("annotationText", ia.getMessage());
-                instrJson.put("annotationImportance", ia.getImportance());
+                instrJson.put("annotation_text", ia.getMessage());
+                instrJson.put("annotation_importance", ia.getImportance());
             }
 
             instrJson.put("time", instruction.getTime());
