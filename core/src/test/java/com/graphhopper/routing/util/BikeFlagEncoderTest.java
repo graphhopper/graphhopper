@@ -141,6 +141,12 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.setTag("tracktype", "grade2");
         wayType = getWayTypeFromFlags(way);
         assertEquals("get off the bike, unpaved", wayType);
+
+        way.clearTags();
+        way.setTag("junction", "roundabout");
+        way.setTag("highway", "tertiary");
+        long flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertTrue(encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
     }
 
     @Test
@@ -199,7 +205,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertTrue(encoder.isBackward(flags));
         way.clearTags();
     }
-
+    
     @Test
     public void testHandleWayTagsInfluencedByRelation()
     {

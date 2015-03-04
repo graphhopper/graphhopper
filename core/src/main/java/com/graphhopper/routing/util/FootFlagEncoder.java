@@ -262,7 +262,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         long encoded;
         if (!isFerry(allowed))
-        {
+        {           
             String sacScale = way.getTag("sac_scale");
             if (sacScale != null)
             {
@@ -281,6 +281,12 @@ public class FootFlagEncoder extends AbstractFlagEncoder
                 priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
 
             encoded = setLong(encoded, PriorityWeighting.KEY, handlePriority(way, priorityFromRelation));
+
+            boolean isRoundabout = way.hasTag("junction", "roundabout");
+            if (isRoundabout)
+            {
+                encoded = setBool(encoded, K_ROUNDABOUT, true);
+            }
 
         } else
         {
