@@ -33,7 +33,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.security.x509.CRLDistributionPointsExtension;
 
 /**
  * Reads log files and queries the live service

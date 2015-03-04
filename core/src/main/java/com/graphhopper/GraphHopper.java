@@ -820,15 +820,15 @@ public class GraphHopper implements GraphHopperAPI
      * created. Note that all URL parameters are available in the weightingParameters as String if
      * you use the GraphHopper Web module.
      * <p>
-     * @see Weighting.Params.create
-     * @param wMap all parameters influencing the weighting. E.g. URL parameters coming via
-     * GHRequest
+     * @see WeightingMap
+     * @param weightingMap all parameters influencing the weighting. E.g. parameters coming via
+     * GHRequest.getHints or directly via "&api.xy=" from the URL of the web UI
      * @param encoder the required vehicle
      * @return the weighting to be used for route calculation
      */
-    public Weighting createWeighting( WeightingMap wMap, FlagEncoder encoder )
+    public Weighting createWeighting( WeightingMap weightingMap, FlagEncoder encoder )
     {
-        String weighting = wMap.getWeighting();
+        String weighting = weightingMap.getWeighting();
         Weighting result;
 
         if ("shortest".equalsIgnoreCase(weighting))
