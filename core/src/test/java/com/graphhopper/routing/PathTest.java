@@ -214,13 +214,15 @@ public class PathTest
     private class RoundaboutGraph
     {
         public EdgeIteratorState edge2change;
+        public EdgeIteratorState directExitEdge;
+
         boolean clockwise;
         final public Graph g = new GraphBuilder(carManager).create();
         final public NodeAccess na = g.getNodeAccess();
 
         private RoundaboutGraph(boolean clockwise)
         {
-            //
+            //                          
             //      8
             //       \
             //         5
@@ -228,17 +230,18 @@ public class PathTest
             //  1 - 2    4 - 7
             //       \  /
             //        3
-            //        |
-            //        6
+            //        | \
+            //        6 [ 9 ] edge 9 is turned off in default mode 
 
             na.setNode(1, 52.514, 13.348);
             na.setNode(2, 52.514, 13.349);
             na.setNode(3, 52.5135,13.35);
             na.setNode(4, 52.514, 13.351);
             na.setNode(5, 52.5145,13.351);
-            na.setNode(6, 52.513, 13.351);
+            na.setNode(6, 52.513, 13.35);
             na.setNode(7, 52.514, 13.352);
             na.setNode(8, 52.515, 13.351);
+            na.setNode(9, 52.513, 13.351);
 
             EdgeIteratorState tmpEdge;
             tmpEdge = g.edge(1, 2, 5, true).setName("MainStreet");
@@ -252,8 +255,14 @@ public class PathTest
             tmpEdge.setFlags(encoder.setBool(tmpEdge.getFlags(), FlagEncoder.K_ROUNDABOUT, true));
             tmpEdge = g.edge(4, 7, 5, true).setName("MainStreet");
             tmpEdge = g.edge(5, 8, 5, true).setName("5-8");
-            tmpEdge = g.edge(3, 6, 5, true).setName("3-6");
+            
+            tmpEdge = g.edge(3, 6, 5, true).setName("3-6");                       
             edge2change = tmpEdge.detach(false);
+
+            tmpEdge = g.edge(3, 9, 5, false).setName("3-6");
+            tmpEdge.setFlags(encoder.setAccess(tmpEdge.getFlags(), false, false));
+            directExitEdge = tmpEdge.detach(false);
+            
             this.clockwise = clockwise;
         }
 
@@ -272,7 +281,6 @@ public class PathTest
     public void testCalcInstructionsRoundabout()
     {
         RoundaboutGraph rg = new RoundaboutGraph(false);
-        rg.edge2change.setFlags(encoder.setAccess(rg.edge2change.getFlags(), true, false));
         Path p = new Dijkstra(rg.g, encoder, new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 8);
         InstructionList wayList = p.calcInstructions(tr);
         // Test instructions
@@ -301,13 +309,12 @@ public class PathTest
     }
 
     /**
-     * case with one edge being not an exit
+     * case starting in Roundabout
      */
     @Test
-    public void testCalcInstructionsRoundabout2()
+    public void testCalcInstructionsRoundaboutBegin()
     {
         RoundaboutGraph rg = new RoundaboutGraph(false);
-        rg.edge2change.setFlags(encoder.setAccess(rg.edge2change.getFlags(), true, false));
         Path p = new Dijkstra(rg.g, encoder, new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(2, 8);
         InstructionList wayList = p.calcInstructions(tr);
         List<String> tmpList = pick("text", wayList.createJson());
@@ -317,10 +324,27 @@ public class PathTest
     }
 
     /**
-     * case starting in Roundabout
+     * case with one node being containig already exit 
      */
     @Test
-    public void testCalcInstructionsRoundaboutBegin()
+    public void testCalcInstructionsRoundaboutDirectExit()
+    {
+        RoundaboutGraph rg = new RoundaboutGraph(false);
+        rg.directExitEdge.setFlags(encoder.setAccess(rg.directExitEdge.getFlags(), true, true));
+        Path p = new Dijkstra(rg.g, encoder, new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(6, 8);
+        InstructionList wayList = p.calcInstructions(tr);
+        List<String> tmpList = pick("text", wayList.createJson());
+        assertEquals(Arrays.asList("Continue onto 3-6",
+                        "At roundabout, take exit 3 onto 5-8",
+                        "Finish!"),
+                tmpList);
+    }
+
+    /**
+     * case with one edge being not an exit
+     */
+    @Test
+    public void testCalcInstructionsRoundabout2()
     {
         RoundaboutGraph rg = new RoundaboutGraph(false);
         rg.edge2change.setFlags(encoder.setAccess(rg.edge2change.getFlags(), false, false));        
@@ -337,13 +361,11 @@ public class PathTest
         assertEquals(delta, instr.getRadian(), 0.01);
     }
 
-
     /**
      * clockwise roundabout
      */
     @Test
-    public void testCalcInstructionsRoundaboutClockwise()
-    {
+    public void testCalcInstructionsRoundaboutClockwise()    {
 
         RoundaboutGraph rg = new RoundaboutGraph(true);
         System.out.println(rg.clockwise);

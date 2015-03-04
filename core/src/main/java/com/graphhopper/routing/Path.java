@@ -387,6 +387,7 @@ public class Path
             private double prevLat = nodeAccess.getLatitude(tmpNode);
             private double prevLon = nodeAccess.getLongitude(tmpNode);
             private double doublePrevLat, doublePrevLong; // Lat and Lon of node t-2
+            private int prevNode = -1;
             private double prevOrientation;
             private Instruction prevInstruction;
             private boolean prevInRoundabout = false;
@@ -443,6 +444,17 @@ public class Path
                                     annotation, new PointList(10, nodeAccess.is3D()));
                             if (prevName != null)
                             {
+                                // check if there is an exit at the same node the roundabout was entered
+                                EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
+                                while (edgeIter.next()) 
+                                {
+                                    if ((edgeIter.getAdjNode() != prevNode) 
+                                         && edgeIter.getAdjNode() != adjNode)
+                                    {
+                                        roundaboutInstruction.increaseExitNumber();
+                                    }
+                                }
+
                                 // previous orientation is last orientation before entering roundabout
                                 prevOrientation = ac.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
 
@@ -554,7 +566,9 @@ public class Path
                     doublePrevLat = wayGeo.getLatitude(beforeLast);
                     doublePrevLong = wayGeo.getLongitude(beforeLast);
                 }
+                
                 prevInRoundabout = isRoundabout;
+                prevNode = baseNode;
                 prevLat = adjLat;
                 prevLon = adjLon;
 
