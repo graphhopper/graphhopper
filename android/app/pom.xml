@@ -110,11 +110,6 @@
     </dependencies>
 
     <build>
-        <!-- 
-        1. Use src/test/java for JUnit tests that don't call any Android APIs (directly or transitively)
-        2. Use src/main/java for JUnit tests that call Android APIs  
-        -->
-        <sourceDirectory>src/main/java</sourceDirectory>        
         <finalName>${project.artifactId}</finalName>        
         
         <plugins>     
