@@ -206,6 +206,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder
                 return 0;
         }
 
+        if (way.hasTag("sidewalk", "no"))
+       		return 0;
+       		
         if (way.hasTag("sidewalk", sidewalks))
             return acceptBit;
 
