@@ -16,6 +16,7 @@
  * [Android](./android/index.md)
  * [Windows](./core/windows-setup.md)
  * [Set up and run GraphHopper in Eclipse](./core/eclipse-setup.md)
+ * [Setting up Apache Tomcat Server](./core/ApacheTomcatServer-setup.md)
  * [iOS](https://github.com/graphhopper/graphhopper-ios/)
 
 ## Core
