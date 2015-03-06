@@ -1,7 +1,7 @@
 # Users
 
- * [Read Overview](http://graphhopper.com/#overview)
  * [Quickstart](./web/quickstart.md) for users
+ * [Read Overview](http://graphhopper.com/#overview)
  * [Add GraphHopper Maps to your Browser](./web/open-search.md)
  * [GraphHopper on Twitter](https://twitter.com/graphhopper)
 
