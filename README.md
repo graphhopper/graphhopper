@@ -65,6 +65,17 @@ List<EdgeMatch> matches = mr.getEdgeMatches();
 matches.get(0).edgeState
 ```
 
+with this maven dependency:
+
+```xml
+<dependency>
+    <groupId>com.graphhopper</groupId>
+    <artifactId>map-matching</artifactId>
+    <!-- or 0.5-SNAPSHOT for the unstable -->
+    <version>0.4.0</version>
+</dependency>
+```
+
 Later we will add a simple web service
 
 ### UI to visually compare
