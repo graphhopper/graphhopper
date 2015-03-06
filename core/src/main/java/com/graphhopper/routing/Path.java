@@ -387,6 +387,7 @@ public class Path
             private double prevLat = nodeAccess.getLatitude(tmpNode);
             private double prevLon = nodeAccess.getLongitude(tmpNode);
             private double doublePrevLat, doublePrevLong; // Lat and Lon of node t-2
+            private int prevNode = -1;
             private double prevOrientation;
             private Instruction prevInstruction;
             private boolean prevInRoundabout = false;
@@ -443,6 +444,18 @@ public class Path
                                     annotation, new PointList(10, nodeAccess.is3D()));
                             if (prevName != null)
                             {
+                                // check if there is an exit at the same node the roundabout was entered
+                                EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
+                                while (edgeIter.next()) 
+                                {
+                                    if ((edgeIter.getAdjNode() != prevNode) 
+                                         && !encoder.isBool(edgeIter.getFlags(), FlagEncoder.K_ROUNDABOUT))
+                                    {
+                                        roundaboutInstruction.increaseExitNumber();
+                                        break;
+                                    }
+                                }
+
                                 // previous orientation is last orientation before entering roundabout
                                 prevOrientation = ac.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
 
@@ -463,14 +476,16 @@ public class Path
                             ways.add(prevInstruction);
                         }
 
-                        // Add passed exits to instruction. There is an exit if there are
-                        // at least 2 out-going edges (one continuing in the roundabout)
-                        // This could lead to problems if there are non-complete roundabouts!
+                        // Add passed exits to instruction. A node is countet if there is at least one outgoing edge
+                        // out of the roundabout
                         EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(adjNode);
-                        edgeIter.next();
-                        if (edgeIter.next())
+                        while (edgeIter.next())
                         {
-                            ((RoundaboutInstruction) prevInstruction).increaseExitNumber();
+                            if (!encoder.isBool(edgeIter.getFlags(), encoder.K_ROUNDABOUT))
+                            {
+                                ((RoundaboutInstruction) prevInstruction).increaseExitNumber();
+                                break;
+                            }
                         }
 
                     } else if (prevInRoundabout) //previously in roundabout but not anymore
@@ -554,7 +569,9 @@ public class Path
                     doublePrevLat = wayGeo.getLatitude(beforeLast);
                     doublePrevLong = wayGeo.getLongitude(beforeLast);
                 }
+                
                 prevInRoundabout = isRoundabout;
+                prevNode = baseNode;
                 prevLat = adjLat;
                 prevLon = adjLon;
 

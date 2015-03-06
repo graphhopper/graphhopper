@@ -266,9 +266,9 @@ public class GraphHopperIT
         List<Map<String, Object>> resultJson = il.createJson();
 
         assertEquals("Continue onto Obere Landstraße", resultJson.get(0).get("text"));
-        assertEquals("get off the bike", resultJson.get(0).get("annotationText"));
+        assertEquals("get off the bike", resultJson.get(0).get("annotation_text"));
         assertEquals("Turn sharp left onto Kirchengasse", resultJson.get(1).get("text"));
-        assertEquals("get off the bike", resultJson.get(1).get("annotationText"));
+        assertEquals("get off the bike", resultJson.get(1).get("annotation_text"));
 
         assertEquals("Turn sharp right onto Pfarrplatz", resultJson.get(2).get("text"));
         assertEquals("Turn right onto Margarethenstraße", resultJson.get(3).get("text"));
@@ -281,7 +281,7 @@ public class GraphHopperIT
         assertEquals("Turn slight left onto Rechte Kremszeile", resultJson.get(10).get("text"));
         //..
         assertEquals("Turn right onto Treppelweg", resultJson.get(15).get("text"));
-        assertEquals("cycleway", resultJson.get(15).get("annotationText"));
+        assertEquals("cycleway", resultJson.get(15).get("annotation_text"));
     }
 
     @Test
@@ -312,8 +312,11 @@ public class GraphHopperIT
 
         rsp = tmpHopper.route(new GHRequest(43.745948, 7.42914, 43.746173, 7.428834)
                 .setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
-
         assertEquals(1, ((RoundaboutInstruction) rsp.getInstructions().get(1)).getExitNumber());
+
+        rsp = tmpHopper.route(new GHRequest(43.735817,7.417096, 43.735666,7.416587)
+                .setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
+        assertEquals(2, ((RoundaboutInstruction) rsp.getInstructions().get(1)).getExitNumber());
     }
 
     @Test

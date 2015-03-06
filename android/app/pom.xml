@@ -110,11 +110,6 @@
     </dependencies>
 
     <build>
-        <!-- 
-        1. Use src/test/java for JUnit tests that don't call any Android APIs (directly or transitively)
-        2. Use src/main/java for JUnit tests that call Android APIs  
-        -->
-        <sourceDirectory>src</sourceDirectory>        
         <finalName>${project.artifactId}</finalName>        
         
         <plugins>     
@@ -125,8 +120,8 @@
                 <configuration>
                     <!-- <compilerArgument>-Xlint:unchecked</compilerArgument>
                     -->
-                    <source>1.5</source>
-                    <target>1.5</target>
+                    <source>1.6</source>
+                    <target>1.6</target>
                 </configuration>
             </plugin>       
             <plugin>

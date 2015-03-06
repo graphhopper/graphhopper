@@ -259,7 +259,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         {
             if ((way.hasTag("highway", "cycleway"))
                     && (way.hasTag("sac_scale", "hiking")))
-                return 1;  // This combination is fine with every kind of bike, including a racingbike
+                return acceptBit;
             if (!allowedSacScale(sacScale))
                 return 0;
         }
@@ -312,6 +312,12 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             speed = applyMaxSpeed(way, speed, false);
             encoded = handleSpeed(way, speed, encoded);
             encoded = handleBikeRelated(way, encoded, relationFlags > UNCHANGED.getValue());
+
+            boolean isRoundabout = way.hasTag("junction", "roundabout");
+            if (isRoundabout)
+            {
+                encoded = setBool(encoded, K_ROUNDABOUT, true);
+            }
 
         } else
         {

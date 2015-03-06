@@ -255,4 +255,13 @@ public class FootFlagEncoderTest
         // barrier!
         assertTrue(footEncoder.handleNodeTags(node) > 0);
     }
+
+    @Test
+    public void handleWayTagsRoundabout() {
+        OSMWay way = new OSMWay(1);
+        way.setTag("junction", "roundabout");
+        way.setTag("highway", "tertiary");
+        long flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
+        assertTrue(footEncoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
+    }
 }

@@ -481,4 +481,18 @@ public class CarFlagEncoderTest
         }
     }
 
+    @Test
+    public void testCombination()
+    {
+        OSMWay way = new OSMWay(123);
+        way.setTag("highway", "cycleway");
+        way.setTag("sac_scale", "hiking");        
+
+        long flags = em.acceptWay(way);
+        long edgeFlags = em.handleWayTags(way, flags, 0);
+        assertFalse(encoder.isBackward(edgeFlags));
+        assertFalse(encoder.isForward(edgeFlags));
+        assertTrue(em.getEncoder("bike").isBackward(edgeFlags));
+        assertTrue(em.getEncoder("bike").isForward(edgeFlags));
+    }
 }
