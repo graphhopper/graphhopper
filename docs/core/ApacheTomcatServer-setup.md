@@ -101,7 +101,7 @@ To complete setting up the Tomcat server go through the below steps:
 
 ![](./images/13.jpg)
 
- ###5. Run Server
+###5. Run Server
  After going through all the previous steps, you are ready to run GraphHopper using Apache Tomcat server in Eclipse. Right click on the name of you server and choose "Start". Or simply click on the green "start" icon.
  If you faced no error and the server started successfully, in your browser type the server address and port. In our example it is : http://localhost:8080/. 
  Congratulations! You have GraphHopper (with basic settings) running and ready for work!
@@ -110,8 +110,7 @@ To complete setting up the Tomcat server go through the below steps:
  ![](./images/17.jpg)
  
 
-
- ###6.	Configuring Classpath and Resolving Maven Dependencies Problem
+###6. Configuring Classpath and Resolving Maven Dependencies Problem
 Depending on your Eclipse version or the _m2e_ that you use, _Maven_ may not set _Classpath_ for dependencies properly. Therefore, while running your Tomcat server you may face an error as **"NoClassDefFoundError"**. 
 If you faced such an error, at first please check the below websites for the additional plug-ins, instructions on changing pom.xml and solving the similar problem:
 
