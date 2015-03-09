@@ -61,7 +61,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB             | routetype |
       | 50.720492,-3.535221 | 50.718641,-3.53476 | car       |
 
-  @Routing @KnownIssue
+  @KnownIssue
   Scenario Outline: Verify  one Way  Restrictions  on a Route (Exeter WSPIP-98)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints not on the route map:
@@ -140,7 +140,7 @@ Feature: Verify a route from A to B
       | pointA             | pointB             | routetype |
       | 50.72148,-3.532485 | 50.721888,-3.53182 | car       |
 
-  @Routing @KnownIssue
+  @KnownIssue
   Scenario Outline: Verify No  Turn Restrictions(Except Bus)  on a Route (BELGROVE ROAD -Exeter ROUTE-67)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints not on the route map:
