@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 public class DefaultModule extends AbstractModule
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final CmdArgs args;
+    protected final CmdArgs args;
     private GraphHopper graphHopper;
 
     public DefaultModule( CmdArgs args )

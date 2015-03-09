@@ -17,36 +17,21 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.storage.Graph;
-
 /**
  * @author Peter Karich
  */
-public abstract class AbstractAlgoPreparation<T extends AlgorithmPreparation> implements AlgorithmPreparation
+public abstract class AbstractAlgoPreparation
 {
-    protected Graph _graph;
     private boolean prepared = false;
 
-    @Override
-    public AlgorithmPreparation setGraph( Graph g )
-    {
-        _graph = g;
-        return this;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public T doWork()
+    public void doWork()
     {
         if (prepared)
             throw new IllegalStateException("Call doWork only once!");
 
         prepared = true;
-        // no operation        
-        return (T) this;
     }
 
-    @Override
     public boolean isPrepared()
     {
         return prepared;

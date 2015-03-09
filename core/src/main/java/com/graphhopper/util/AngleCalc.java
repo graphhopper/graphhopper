@@ -87,13 +87,13 @@ public class AngleCalc
     }
 
     /**
-     * Calculate Azimuth for a line given by two coordinates. Direction in 'degree' where 0 is
-     * north, 90 is east, 180 is south and 270 is west.
+     * Calculate the azimuth in degree for a line given by two coordinates. Direction in 'degree'
+     * where 0 is north, 90 is east, 180 is south and 270 is west.
      */
     double calcAzimuth( double lat1, double lon1, double lat2, double lon2 )
     {
         double orientation = -calcOrientation(lat1, lon1, lat2, lon2);
-        orientation = Helper.round4(orientation + Math.PI / 2);        
+        orientation = Helper.round4(orientation + Math.PI / 2);
         if (orientation < 0)
             orientation += 2 * Math.PI;
 

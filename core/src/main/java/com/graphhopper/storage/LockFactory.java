@@ -35,7 +35,8 @@ public interface LockFactory
     Lock create( String fileName, boolean writeAccess );
 
     /**
-     * Removes the specified lock.
+     * Removes the specified lock. Note: on windows we cannot forcefully remove an unreleased native
+     * lock
      */
     void forceRemove( String fileName, boolean writeAccess );
 }

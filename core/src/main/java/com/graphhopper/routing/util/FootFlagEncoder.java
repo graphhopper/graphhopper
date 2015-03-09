@@ -67,6 +67,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         restrictedValues.add("private");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
+        restrictedValues.add("military");
 
         intendedValues.add("yes");
         intendedValues.add("designated");
@@ -93,26 +94,24 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         safeHighwayTags.add("residential");
         safeHighwayTags.add("service");
 
-        allowedHighwayTags.addAll(safeHighwayTags);
-        allowedHighwayTags.add("trunk");
-        allowedHighwayTags.add("trunk_link");
-        allowedHighwayTags.add("primary");
-        allowedHighwayTags.add("primary_link");
-        allowedHighwayTags.add("secondary");
-        allowedHighwayTags.add("secondary_link");
-        allowedHighwayTags.add("tertiary");
-        allowedHighwayTags.add("tertiary_link");
-        allowedHighwayTags.add("unclassified");
-        allowedHighwayTags.add("road");
-        // disallowed in some countries
-        //allowedHighwayTags.add("bridleway");
-
         avoidHighwayTags.add("trunk");
         avoidHighwayTags.add("trunk_link");
         avoidHighwayTags.add("primary");
         avoidHighwayTags.add("primary_link");
         avoidHighwayTags.add("tertiary");
         avoidHighwayTags.add("tertiary_link");
+        // for now no explicit avoiding #257
+        //avoidHighwayTags.add("cycleway"); 
+
+        allowedHighwayTags.addAll(safeHighwayTags);
+        allowedHighwayTags.addAll(avoidHighwayTags);
+        allowedHighwayTags.add("cycleway");
+        allowedHighwayTags.add("secondary");
+        allowedHighwayTags.add("secondary_link");
+        allowedHighwayTags.add("unclassified");
+        allowedHighwayTags.add("road");
+        // disallowed in some countries
+        //allowedHighwayTags.add("bridleway");
 
         hikingNetworkToCode.put("iwn", BEST.getValue());
         hikingNetworkToCode.put("nwn", BEST.getValue());
@@ -224,9 +223,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         if (isBlockFords() && (way.hasTag("highway", "ford") || way.hasTag("ford")))
             return 0;
 
-        if (way.hasTag("bicycle", "official"))
-            return 0;
-
         // check access restrictions
         if (way.hasTag(restrictions, restrictedValues))
             return 0;
@@ -266,7 +262,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         long encoded;
         if (!isFerry(allowed))
-        {
+        {           
             String sacScale = way.getTag("sac_scale");
             if (sacScale != null)
             {
@@ -285,6 +281,12 @@ public class FootFlagEncoder extends AbstractFlagEncoder
                 priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
 
             encoded = setLong(encoded, PriorityWeighting.KEY, handlePriority(way, priorityFromRelation));
+
+            boolean isRoundabout = way.hasTag("junction", "roundabout");
+            if (isRoundabout)
+            {
+                encoded = setBool(encoded, K_ROUNDABOUT, true);
+            }
 
         } else
         {
@@ -360,13 +362,21 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             weightToPrioMap.put(100d, PREFER.getValue());
 
         double maxSpeed = getMaxSpeed(way);
-        if (safeHighwayTags.contains(highway) || maxSpeed > 0 && maxSpeed <= 20
-                || way.hasTag("sidewalk", sidewalks))
+        if (safeHighwayTags.contains(highway) || maxSpeed > 0 && maxSpeed <= 20)
         {
             weightToPrioMap.put(40d, PREFER.getValue());
-
             if (way.hasTag("tunnel", intendedValues))
                 weightToPrioMap.put(40d, UNCHANGED.getValue());
+        }
+
+        if (way.hasTag("bicycle", "official") || way.hasTag("bicycle", "designated"))
+        {
+            weightToPrioMap.put(44d, AVOID_IF_POSSIBLE.getValue());
+        }
+
+        if (way.hasTag("sidewalk", sidewalks))
+        {
+            weightToPrioMap.put(45d, PREFER.getValue());
         }
 
         if (avoidHighwayTags.contains(highway) || maxSpeed > 50)

@@ -30,17 +30,20 @@ import com.graphhopper.util.EdgeSkipIterState;
  */
 public class Path4CH extends PathBidirRef
 {
-    public Path4CH( Graph g, FlagEncoder encoder )
+    private final Graph routingGraph;
+
+    public Path4CH( Graph routingGraph, Graph baseGraph, FlagEncoder encoder )
     {
-        super(g, encoder);
+        super(baseGraph, encoder);
+        this.routingGraph = routingGraph;
     }
 
     @Override
-    protected void processEdge( int tmpEdge, int endNode )
+    protected final void processEdge( int tmpEdge, int endNode )
     {
         // Shortcuts do only contain valid weight so first expand before adding
         // to distance and time
-        expandEdge((EdgeSkipIterState) graph.getEdgeProps(tmpEdge, endNode), false);
+        expandEdge((EdgeSkipIterState) routingGraph.getEdgeProps(tmpEdge, endNode), false);
     }
 
     private void expandEdge( EdgeSkipIterState mainEdgeState, boolean reverse )
@@ -58,6 +61,8 @@ public class Path4CH extends PathBidirRef
         int skippedEdge1 = mainEdgeState.getSkippedEdge1();
         int skippedEdge2 = mainEdgeState.getSkippedEdge2();
         int from = mainEdgeState.getBaseNode(), to = mainEdgeState.getAdjNode();
+
+        // get properties like speed of the edge in the correct direction
         if (reverse)
         {
             int tmp = from;
@@ -68,32 +73,32 @@ public class Path4CH extends PathBidirRef
         // getEdgeProps could possibly return an empty edge if the shortcut is available for both directions
         if (reverseOrder)
         {
-            EdgeSkipIterState edgeState = (EdgeSkipIterState) graph.getEdgeProps(skippedEdge1, to);
+            EdgeSkipIterState edgeState = (EdgeSkipIterState) routingGraph.getEdgeProps(skippedEdge1, to);
             boolean empty = edgeState == null;
             if (empty)
-                edgeState = (EdgeSkipIterState) graph.getEdgeProps(skippedEdge2, to);
+                edgeState = (EdgeSkipIterState) routingGraph.getEdgeProps(skippedEdge2, to);
 
             expandEdge(edgeState, false);
 
             if (empty)
-                edgeState = (EdgeSkipIterState) graph.getEdgeProps(skippedEdge1, from);
+                edgeState = (EdgeSkipIterState) routingGraph.getEdgeProps(skippedEdge1, from);
             else
-                edgeState = (EdgeSkipIterState) graph.getEdgeProps(skippedEdge2, from);
+                edgeState = (EdgeSkipIterState) routingGraph.getEdgeProps(skippedEdge2, from);
 
             expandEdge(edgeState, true);
         } else
         {
-            EdgeSkipIterState iter = (EdgeSkipIterState) graph.getEdgeProps(skippedEdge1, from);
+            EdgeSkipIterState iter = (EdgeSkipIterState) routingGraph.getEdgeProps(skippedEdge1, from);
             boolean empty = iter == null;
             if (empty)
-                iter = (EdgeSkipIterState) graph.getEdgeProps(skippedEdge2, from);
+                iter = (EdgeSkipIterState) routingGraph.getEdgeProps(skippedEdge2, from);
 
             expandEdge(iter, true);
 
             if (empty)
-                iter = (EdgeSkipIterState) graph.getEdgeProps(skippedEdge1, to);
+                iter = (EdgeSkipIterState) routingGraph.getEdgeProps(skippedEdge1, to);
             else
-                iter = (EdgeSkipIterState) graph.getEdgeProps(skippedEdge2, to);
+                iter = (EdgeSkipIterState) routingGraph.getEdgeProps(skippedEdge2, to);
 
             expandEdge(iter, false);
         }

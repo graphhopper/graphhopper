@@ -61,7 +61,7 @@ public class LinearKeyAlgo implements KeyAlgo
 
     public LinearKeyAlgo setBounds( BBox bounds )
     {
-        setBounds(bounds.minLon, bounds.maxLat, bounds.minLat, bounds.maxLat);
+        setBounds(bounds.minLon, bounds.maxLon, bounds.minLat, bounds.maxLat);
         return this;
     }
 
@@ -115,4 +115,5 @@ public class LinearKeyAlgo implements KeyAlgo
     {
         return lonDelta;
     }
+
 }

@@ -63,25 +63,33 @@ public abstract class MiniPerfTest
         return this;
     }
 
-    // in ms
+    /**
+     * @return minimum time of every call, in ms
+     */
     public double getMin()
     {
         return min / 1e6;
     }
 
-    // in ms
+    /**
+     * @return maximum time of every calls, in ms
+     */
     public double getMax()
     {
         return max / 1e6;
     }
 
-    // in ms
+    /**
+     * @return time for all calls accumulated, in ms
+     */
     public double getSum()
     {
         return fullTime / 1e6;
     }
 
-    // in ms
+    /**
+     * @return mean time per call, in ms
+     */
     public double getMean()
     {
         return getSum() / counts;

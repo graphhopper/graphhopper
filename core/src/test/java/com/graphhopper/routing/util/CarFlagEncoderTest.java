@@ -48,10 +48,12 @@ public class CarFlagEncoderTest
         way.setTag("motorcar", "no");
         assertFalse(encoder.acceptWay(way) > 0);
 
+        // for now allow grade1+2+3 for every country, see #253
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade2");
-        // disallow too rough tracks
+        assertTrue(encoder.acceptWay(way) > 0);
+        way.setTag("tracktype", "grade4");
         assertFalse(encoder.acceptWay(way) > 0);
 
         way.clearTags();
@@ -84,40 +86,74 @@ public class CarFlagEncoderTest
         way.setTag("foot", "yes");
         assertFalse(encoder.acceptWay(way) > 0);
         assertFalse(encoder.isFerry(encoder.acceptWay(way)));
+    }
 
-        way.clearTags();
+    @Test
+    public void testOneway()
+    {
+        OSMWay way = new OSMWay(1);
         way.setTag("highway", "primary");
         long flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
-        assertTrue(encoder.isBool(flags, FlagEncoder.K_FORWARD));
-        assertTrue(encoder.isBool(flags, FlagEncoder.K_BACKWARD));
+        assertTrue(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
         way.setTag("oneway", "yes");
         flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
-        assertTrue(encoder.isBool(flags, FlagEncoder.K_FORWARD));
-        assertFalse(encoder.isBool(flags, FlagEncoder.K_BACKWARD));
+        assertTrue(encoder.isForward(flags));
+        assertFalse(encoder.isBackward(flags));
+        way.clearTags();
+
+        way.setTag("highway", "tertiary");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertTrue(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
+        way.clearTags();
+
+        way.setTag("highway", "tertiary");
+        way.setTag("vehicle:forward", "no");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertFalse(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
+        way.clearTags();
+
+        way.setTag("highway", "tertiary");
+        way.setTag("vehicle:backward", "no");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertTrue(encoder.isForward(flags));
+        assertFalse(encoder.isBackward(flags));
+        way.clearTags();
+    }
+
+    @Test
+    public void testMilitaryAccess()
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "track");
+        way.setTag("access", "military");
+        assertFalse(encoder.acceptWay(way) > 0);
     }
 
     @Test
     public void testSetAccess()
     {
-        assertTrue(encoder.isBool(encoder.setProperties(0, true, true), FlagEncoder.K_FORWARD));
-        assertTrue(encoder.isBool(encoder.setProperties(0, true, true), FlagEncoder.K_BACKWARD));
+        assertTrue(encoder.isForward(encoder.setProperties(0, true, true)));
+        assertTrue(encoder.isBackward(encoder.setProperties(0, true, true)));
 
-        assertTrue(encoder.isBool(encoder.setProperties(0, true, false), FlagEncoder.K_FORWARD));
-        assertFalse(encoder.isBool(encoder.setProperties(0, true, false), FlagEncoder.K_BACKWARD));
+        assertTrue(encoder.isForward(encoder.setProperties(0, true, false)));
+        assertFalse(encoder.isBackward(encoder.setProperties(0, true, false)));
 
-        assertFalse(encoder.isBool(encoder.setProperties(0, false, true), FlagEncoder.K_FORWARD));
-        assertTrue(encoder.isBool(encoder.setProperties(0, false, true), FlagEncoder.K_BACKWARD));
+        assertFalse(encoder.isForward(encoder.setProperties(0, false, true)));
+        assertTrue(encoder.isBackward(encoder.setProperties(0, false, true)));
 
-        assertTrue(encoder.isBool(encoder.flagsDefault(true, true), FlagEncoder.K_FORWARD));
-        assertTrue(encoder.isBool(encoder.flagsDefault(true, true), FlagEncoder.K_BACKWARD));
+        assertTrue(encoder.isForward(encoder.flagsDefault(true, true)));
+        assertTrue(encoder.isBackward(encoder.flagsDefault(true, true)));
 
-        assertTrue(encoder.isBool(encoder.flagsDefault(true, false), FlagEncoder.K_FORWARD));
-        assertFalse(encoder.isBool(encoder.flagsDefault(true, false), FlagEncoder.K_BACKWARD));
+        assertTrue(encoder.isForward(encoder.flagsDefault(true, false)));
+        assertFalse(encoder.isBackward(encoder.flagsDefault(true, false)));
 
         long flags = encoder.flagsDefault(true, true);
         // disable access
-        assertFalse(encoder.isBool(encoder.setAccess(flags, false, false), FlagEncoder.K_FORWARD));
-        assertFalse(encoder.isBool(encoder.setAccess(flags, false, false), FlagEncoder.K_BACKWARD));
+        assertFalse(encoder.isForward(encoder.setAccess(flags, false, false)));
+        assertFalse(encoder.isBackward(encoder.setAccess(flags, false, false)));
     }
 
     @Test
@@ -202,25 +238,25 @@ public class CarFlagEncoderTest
         long flags = encoder.setAccess(0, true, true);
         long resFlags = encoder.setBool(flags, FlagEncoder.K_ROUNDABOUT, true);
         assertTrue(encoder.isBool(resFlags, FlagEncoder.K_ROUNDABOUT));
-        assertTrue(encoder.isBool(resFlags, FlagEncoder.K_FORWARD));
-        assertTrue(encoder.isBool(resFlags, FlagEncoder.K_BACKWARD));
+        assertTrue(encoder.isForward(resFlags));
+        assertTrue(encoder.isBackward(resFlags));
 
         resFlags = encoder.setBool(flags, FlagEncoder.K_ROUNDABOUT, false);
         assertFalse(encoder.isBool(resFlags, FlagEncoder.K_ROUNDABOUT));
-        assertTrue(encoder.isBool(resFlags, FlagEncoder.K_FORWARD));
-        assertTrue(encoder.isBool(resFlags, FlagEncoder.K_BACKWARD));
+        assertTrue(encoder.isForward(resFlags));
+        assertTrue(encoder.isBackward(resFlags));
 
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "motorway");
         flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
-        assertTrue(encoder.isBool(flags, FlagEncoder.K_FORWARD));
-        assertTrue(encoder.isBool(flags, FlagEncoder.K_BACKWARD));
+        assertTrue(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
         assertFalse(encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
 
         way.setTag("junction", "roundabout");
         flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
-        assertTrue(encoder.isBool(flags, FlagEncoder.K_FORWARD));
-        assertFalse(encoder.isBool(flags, FlagEncoder.K_BACKWARD));
+        assertTrue(encoder.isForward(flags));
+        assertFalse(encoder.isBackward(flags));
         assertTrue(encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
     }
 
@@ -240,8 +276,8 @@ public class CarFlagEncoderTest
 
         // on disallowed highway, railway is allowed, sometimes incorrectly mapped
         way.setTag("highway", "track");
-        assertTrue(encoder.acceptWay(way) > 0);        
-        
+        assertTrue(encoder.acceptWay(way) > 0);
+
         // this is fully okay as sometimes old rails are on the road
         way.setTag("highway", "primary");
         way.setTag("railway", "historic");
@@ -272,13 +308,13 @@ public class CarFlagEncoderTest
     public void testSwapDir()
     {
         long swappedFlags = encoder.reverseFlags(encoder.flagsDefault(true, true));
-        assertTrue(encoder.isBool(swappedFlags, FlagEncoder.K_FORWARD));
-        assertTrue(encoder.isBool(swappedFlags, FlagEncoder.K_BACKWARD));
+        assertTrue(encoder.isForward(swappedFlags));
+        assertTrue(encoder.isBackward(swappedFlags));
 
         swappedFlags = encoder.reverseFlags(encoder.flagsDefault(true, false));
 
-        assertFalse(encoder.isBool(swappedFlags, FlagEncoder.K_FORWARD));
-        assertTrue(encoder.isBool(swappedFlags, FlagEncoder.K_BACKWARD));
+        assertFalse(encoder.isForward(swappedFlags));
+        assertTrue(encoder.isBackward(swappedFlags));
 
         assertEquals(0, encoder.reverseFlags(0));
     }
@@ -433,14 +469,30 @@ public class CarFlagEncoderTest
         assertFalse(encoder.acceptWay(way) > 0);
         assertTrue(encoder.handleNodeTags(node) > 0);
 
-        try {
+        try
+        {
             // Now they are passable
             encoder.setBlockFords(false);
             assertTrue(encoder.acceptWay(way) > 0);
             assertFalse(encoder.handleNodeTags(node) > 0);
-        } finally {
+        } finally
+        {
             encoder.setBlockFords(true);
         }
     }
 
+    @Test
+    public void testCombination()
+    {
+        OSMWay way = new OSMWay(123);
+        way.setTag("highway", "cycleway");
+        way.setTag("sac_scale", "hiking");        
+
+        long flags = em.acceptWay(way);
+        long edgeFlags = em.handleWayTags(way, flags, 0);
+        assertFalse(encoder.isBackward(edgeFlags));
+        assertFalse(encoder.isForward(edgeFlags));
+        assertTrue(em.getEncoder("bike").isBackward(edgeFlags));
+        assertTrue(em.getEncoder("bike").isForward(edgeFlags));
+    }
 }

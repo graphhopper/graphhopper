@@ -69,6 +69,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         restrictedValues.add("no");
         restrictedValues.add("restricted");
         restrictedValues.add("delivery");
+        restrictedValues.add("military");
 
         intendedValues.add("yes");
         intendedValues.add("permissive");
@@ -144,7 +145,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         String highwayValue = way.getTag("highway");
         Integer speed = defaultSpeedMap.get(highwayValue);
         if (speed == null)
-            throw new IllegalStateException(toString() + ", no speed found for:" + highwayValue);
+            throw new IllegalStateException(toString() + ", no speed found for: " + highwayValue + ", tags: " + way);
 
         if (highwayValue.equals("track"))
         {
@@ -181,7 +182,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         if ("track".equals(highwayValue))
         {
             String tt = way.getTag("tracktype");
-            if (tt != null && !tt.equals("grade1"))
+            if (tt != null && !tt.equals("grade1") && !tt.equals("grade2") && !tt.equals("grade3"))
                 return 0;
         }
 
@@ -236,9 +237,18 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             if (isRoundabout)
                 encoded = setBool(encoded, K_ROUNDABOUT, true);
 
-            if (way.hasTag("oneway", oneways) || isRoundabout)
+            boolean isOneway = way.hasTag("oneway", oneways)
+                    || way.hasTag("vehicle:backward")
+                    || way.hasTag("vehicle:forward")
+                    || way.hasTag("motor_vehicle:backward")
+                    || way.hasTag("motor_vehicle:forward");
+
+            if (isOneway || isRoundabout)
             {
-                if (way.hasTag("oneway", "-1"))
+                boolean isBackward = way.hasTag("oneway", "-1")
+                        || way.hasTag("vehicle:forward", "no")
+                        || way.hasTag("motor_vehicle:forward", "no");
+                if (isBackward)
                     encoded |= backwardBit;
                 else
                     encoded |= forwardBit;

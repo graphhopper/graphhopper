@@ -17,22 +17,16 @@
  */
 package com.graphhopper.routing.util;
 
-import gnu.trove.map.TLongObjectMap;
-import gnu.trove.map.hash.TLongObjectHashMap;
-
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import com.graphhopper.reader.OSMNode;
-import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.StorableProperties;
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import java.util.*;
@@ -101,25 +95,19 @@ public class EncodingManager
         this(flagEncoders, 4);
     }
 
-    public EncodingManager( List<? extends FlagEncoder> flagEncoders, int bytesForFlags )
+    public EncodingManager( List<? extends FlagEncoder> flagEncoders, int bytesForEdgeFlags )
     {
-        if (bytesForFlags != 4 && bytesForFlags != 8)
-            throw new IllegalStateException("For 'flags' currently only 4 or 8 bytes supported");
+        if (bytesForEdgeFlags != 4 && bytesForEdgeFlags != 8)
+            throw new IllegalStateException("For 'edge flags' currently only 4 or 8 bytes supported");
 
-        this.bitsForEdgeFlags = bytesForFlags * 8;
-
-        Collections.sort(flagEncoders, new Comparator<FlagEncoder>()
-        {
-            @Override
-            public int compare( FlagEncoder o1, FlagEncoder o2 )
-            {
-                return o1.toString().compareTo(o2.toString());
-            }
-        });
+        this.bitsForEdgeFlags = bytesForEdgeFlags * 8;
         for (FlagEncoder flagEncoder : flagEncoders)
         {
             registerEncoder((AbstractFlagEncoder) flagEncoder);
         }
+
+        if (edgeEncoders.isEmpty())
+            throw new IllegalStateException("No vehicles found");
     }
 
     public int getBytesForFlags()
@@ -279,11 +267,6 @@ public class EncodingManager
         return flags;
     }
 
-    public int getVehicleCount()
-    {
-        return edgeEncoders.size();
-    }
-
     @Override
     public String toString()
     {
@@ -313,17 +296,6 @@ public class EncodingManager
         }
 
         return str.toString();
-    }
-
-    public FlagEncoder getSingle()
-    {
-        if (getVehicleCount() > 1)
-            throw new IllegalStateException("Multiple encoders are active. cannot return one:" + toString());
-
-        if (getVehicleCount() == 0)
-            throw new IllegalStateException("No encoder is active!");
-
-        return edgeEncoders.get(0);
     }
 
     public long flagsDefault( boolean forward, boolean backward )
@@ -389,42 +361,6 @@ public class EncodingManager
         return flags;
     }
 
-    private static int determineRequiredBits( int value )
-    {
-        int numberOfBits = 0;
-        while (value > 0)
-        {
-            value = value >> 1;
-            numberOfBits++;
-        }
-        return numberOfBits;
-    }
-
-    public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation, OSMReader osmReader )
-    {
-        TLongObjectMap<TurnCostTableEntry> entries = new TLongObjectHashMap<OSMTurnRelation.TurnCostTableEntry>();
-
-        int encoderCount = edgeEncoders.size();
-        for (int i = 0; i < encoderCount; i++)
-        {
-            AbstractFlagEncoder encoder = edgeEncoders.get(i);
-            for (TurnCostTableEntry entry : encoder.analyzeTurnRelation(turnRelation, osmReader))
-            {
-                TurnCostTableEntry oldEntry = entries.get(entry.getItemId());
-                if (oldEntry != null)
-                {
-                    // merging different encoders
-                    oldEntry.flags |= entry.flags;
-                } else
-                {
-                    entries.put(entry.getItemId(), entry);
-                }
-            }
-        }
-
-        return entries.valueCollection();
-    }
-
     public EncodingManager setEnableInstructions( boolean enableInstructions )
     {
         this.enableInstructions = enableInstructions;
@@ -456,6 +392,16 @@ public class EncodingManager
         {
             encoder.applyWayTags(way, edge);
         }
+    }
+
+    /**
+     * The returned list is never empty.
+     */
+    public List<FlagEncoder> fetchEdgeEncoders()
+    {
+        List<FlagEncoder> list = new ArrayList<FlagEncoder>();
+        list.addAll(edgeEncoders);
+        return list;
     }
 
     static String fixWayName( String str )

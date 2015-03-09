@@ -65,7 +65,11 @@ public class GraphHopperServletWithEleIT extends BaseServletTester
         assertTrue("distance wasn't correct:" + distance, distance < 2700);
 
         JSONObject cson = path.getJSONObject("points");
-        assertTrue("no elevation?", cson.toString().indexOf("[7.421392,43.7307,66]") >= 0);
+        assertTrue("no elevation?", cson.toString().contains("[7.421392,43.7307,66]"));
+
+        // Although we include elevation DO NOT include it in the bbox as bbox.toGeoJSON messes up when reading
+        // or reading with and without elevation would be too complex for the client with no real use
+        assertEquals(4, path.getJSONArray("bbox").length());
     }
 
     @Test

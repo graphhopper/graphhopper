@@ -22,8 +22,7 @@ import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.dem.CGIARProvider;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
@@ -61,23 +60,25 @@ public class GraphHopper implements GraphHopperAPI
     private LockFactory lockFactory = new NativeFSLockFactory();
     private final String fileLockName = "gh.lock";
     private boolean allowWrites = true;
-    private boolean enableInstructions = true;
+    boolean enableInstructions = true;
     private boolean fullyLoaded = false;
     // for routing
+    private double defaultWeightLimit = Double.MAX_VALUE;
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
+    private String defaultVehicleStr;
+    private RoutingAlgorithmFactory algoFactory;
     // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
     private int maxRegionSearch = 4;
     // for prepare
     private int minNetworkSize = 200;
-    private int minOnewayNetworkSize = 0;
-    // for CH prepare
-    private AlgorithmPreparation prepare;
+    private int minOneWayNetworkSize = 0;
+    // for CH prepare    
     private boolean doPrepare = true;
     private boolean chEnabled = true;
-    private String chWeighting = "fastest";
+    private String chWeightingStr = "fastest";
     private int periodicUpdates = -1;
     private int lazyUpdates = -1;
     private int neighborUpdates = -1;
@@ -115,7 +116,20 @@ public class GraphHopper implements GraphHopperAPI
     {
         ensureNotLoaded();
         this.encodingManager = em;
+        if (em.needsTurnCostsSupport())
+            traversalMode = TraversalMode.EDGE_BASED_2DIR;
+
         return this;
+    }
+
+    FlagEncoder getDefaultVehicle()
+    {
+        if (encodingManager == null)
+        {
+            throw new IllegalStateException("No encoding manager specified or loaded");
+        }
+
+        return encodingManager.fetchEdgeEncoders().get(0);
     }
 
     public EncodingManager getEncodingManager()
@@ -174,18 +188,18 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Configures the underlying storage to be used on a well equipped server.
+     * Configures the underlying storage and response to be used on a well equipped server. Result
+     * also optimized for usage in the web module i.e. try reduce network IO.
      */
     public GraphHopper forServer()
     {
-        // simplify to reduce network IO
         setSimplifyResponse(true);
         return setInMemory();
     }
 
     /**
-     * Configures the underlying storage to be used on a Desktop computer with enough RAM but no
-     * network latency.
+     * Configures the underlying storage to be used on a Desktop computer or within another Java
+     * application with enough RAM but no network latency.
      */
     public GraphHopper forDesktop()
     {
@@ -194,8 +208,8 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Configures the underlying storage to be used on a less powerful machine like Android and
-     * Raspberry Pi with only few RAM.
+     * Configures the underlying storage to be used on a less powerful machine like Android or
+     * Raspberry Pi with only few MB of RAM.
      */
     public GraphHopper forMobile()
     {
@@ -213,6 +227,12 @@ public class GraphHopper implements GraphHopperAPI
         ensureNotLoaded();
         preciseIndexResolution = precision;
         return this;
+    }
+
+    public void setMinNetworkSize( int minNetworkSize, int minOneWayNetworkSize )
+    {
+        this.minNetworkSize = minNetworkSize;
+        this.minOneWayNetworkSize = minOneWayNetworkSize;
     }
 
     /**
@@ -263,15 +283,6 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Disables "CH-preparation". Use only if you know what you do.
-     */
-    public GraphHopper setDoPrepare( boolean doPrepare )
-    {
-        this.doPrepare = doPrepare;
-        return this;
-    }
-
-    /**
      * Enables the use of contraction hierarchies to reduce query times. Enabled by default.
      * <p/>
      * @param weighting can be "fastest", "shortest" or your own weight-calculation type.
@@ -280,23 +291,49 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setCHWeighting( String weighting )
     {
         ensureNotLoaded();
-        chWeighting = weighting;
+        chWeightingStr = weighting;
         return this;
     }
 
     public String getCHWeighting()
     {
-        return chWeighting;
+        return chWeightingStr;
     }
 
     /**
-     * Enables or disables contraction hierarchies. Enabled by default.
+     * Disables the "CH-preparation" preparation only. Use only if you know what you do. To disable
+     * the full usage of CH use setCHEnable(false) instead.
+     */
+    public GraphHopper setDoPrepare( boolean doPrepare )
+    {
+        this.doPrepare = doPrepare;
+        return this;
+    }
+
+    /**
+     * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
+     * Disabling CH is only recommended for short routes or in combination with
+     * setDefaultWeightLimit and called flexibility mode
+     * <p>
+     * @see #setDefaultWeightLimit(double)
      */
     public GraphHopper setCHEnable( boolean enable )
     {
         ensureNotLoaded();
+        algoFactory = null;
         chEnabled = enable;
         return this;
+    }
+
+    /**
+     * This methods stops the algorithm from searching further if the resulting path would go over
+     * specified weight, important if CH is disabled. The unit is defined by the used weighting
+     * created from createWeighting, e.g. distance for shortest or seconds for the standard
+     * FastestWeighting implementation.
+     */
+    public void setDefaultWeightLimit( double defaultWeightLimit )
+    {
+        this.defaultWeightLimit = defaultWeightLimit;
     }
 
     public boolean isCHEnabled()
@@ -424,11 +461,6 @@ public class GraphHopper implements GraphHopperAPI
         return locationIndex;
     }
 
-    public AlgorithmPreparation getPreparation()
-    {
-        return prepare;
-    }
-
     /**
      * Sorts the graph which requires more RAM while import. See #12
      */
@@ -521,7 +553,7 @@ public class GraphHopper implements GraphHopperAPI
 
         // optimizable prepare
         minNetworkSize = args.getInt("prepare.minNetworkSize", minNetworkSize);
-        minOnewayNetworkSize = args.getInt("prepare.minOnewayNetworkSize", minOnewayNetworkSize);
+        minOneWayNetworkSize = args.getInt("prepare.minOneWayNetworkSize", minOneWayNetworkSize);
 
         // prepare CH
         doPrepare = args.getBool("prepare.doPrepare", doPrepare);
@@ -537,16 +569,19 @@ public class GraphHopper implements GraphHopperAPI
 
         // osm import
         osmReaderWayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", osmReaderWayPointMaxDistance);
-        String flagEncoders = args.get("graph.flagEncoders", "CAR");
-        if (flagEncoders.toLowerCase().contains("turncosts=true"))
-            traversalMode = TraversalMode.EDGE_BASED_2DIR;
-        encodingManager = new EncodingManager(flagEncoders, bytesForFlags);
+        String flagEncoders = args.get("graph.flagEncoders", "");
+        if (!flagEncoders.isEmpty())
+            setEncodingManager(new EncodingManager(flagEncoders, bytesForFlags));
+
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
 
         // index
         preciseIndexResolution = args.getInt("index.highResolution", preciseIndexResolution);
         maxRegionSearch = args.getInt("index.maxRegionSearch", maxRegionSearch);
+
+        // routing
+        defaultWeightLimit = args.getDouble("routing.defaultWeightLimit", defaultWeightLimit);
         return this;
     }
 
@@ -692,7 +727,7 @@ public class GraphHopper implements GraphHopperAPI
         setGraphHopperLocation(graphHopperFolder);
 
         if (encodingManager == null)
-            encodingManager = EncodingManager.create(ghLocation);
+            setEncodingManager(EncodingManager.create(ghLocation));
 
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;
@@ -701,7 +736,7 @@ public class GraphHopper implements GraphHopperAPI
         if (chEnabled)
             graph = new LevelGraphStorage(dir, encodingManager, hasElevation());
         else if (encodingManager.needsTurnCostsSupport())
-            graph = new GraphHopperStorage(dir, encodingManager, hasElevation(), new TurnCostStorage());
+            graph = new GraphHopperStorage(dir, encodingManager, hasElevation(), new TurnCostExtension());
         else
             graph = new GraphHopperStorage(dir, encodingManager, hasElevation());
 
@@ -733,18 +768,32 @@ public class GraphHopper implements GraphHopperAPI
         }
     }
 
+    public RoutingAlgorithmFactory getAlgorithmFactory()
+    {
+        if (algoFactory == null)
+            this.algoFactory = new RoutingAlgorithmFactorySimple();
+
+        return algoFactory;
+    }
+
+    public void setAlgorithmFactory( RoutingAlgorithmFactory algoFactory )
+    {
+        this.algoFactory = algoFactory;
+    }
+
     /**
      * Sets EncodingManager, does the preparation and creates the locationIndex
      */
     protected void postProcessing()
     {
-        encodingManager = graph.getEncodingManager();
+        initLocationIndex();
         if (chEnabled)
-            initCHPrepare();
+            algoFactory = createPrepare();
+        else
+            algoFactory = new RoutingAlgorithmFactorySimple();
 
         if (!isPrepared())
             prepare();
-        initLocationIndex();
     }
 
     private boolean isPrepared()
@@ -752,18 +801,18 @@ public class GraphHopper implements GraphHopperAPI
         return "true".equals(graph.getProperties().get("prepare.done"));
     }
 
-    protected void initCHPrepare()
+    protected RoutingAlgorithmFactory createPrepare()
     {
-        FlagEncoder encoder = encodingManager.getSingle();
-        PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder,
-                createWeighting(new WeightingMap(chWeighting), encoder), traversalMode);
+        FlagEncoder defaultVehicle = getDefaultVehicle();
+        Weighting weighting = createWeighting(new WeightingMap(chWeightingStr), defaultVehicle);
+        PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies((LevelGraph) graph,
+                defaultVehicle, weighting, traversalMode);
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                 setLazyUpdates(lazyUpdates).
                 setNeighborUpdates(neighborUpdates).
                 setLogMessages(logMessages);
 
-        prepare = tmpPrepareCH;
-        prepare.setGraph(graph);
+        return tmpPrepareCH;
     }
 
     /**
@@ -771,15 +820,15 @@ public class GraphHopper implements GraphHopperAPI
      * created. Note that all URL parameters are available in the weightingParameters as String if
      * you use the GraphHopper Web module.
      * <p>
-     * @see Weighting.Params.create
-     * @param wMap all parameters influencing the weighting. E.g. URL parameters coming via
-     * GHRequest
+     * @see WeightingMap
+     * @param weightingMap all parameters influencing the weighting. E.g. parameters coming via
+     * GHRequest.getHints or directly via "&api.xy=" from the URL of the web UI
      * @param encoder the required vehicle
      * @return the weighting to be used for route calculation
      */
-    public Weighting createWeighting( WeightingMap wMap, FlagEncoder encoder )
+    public Weighting createWeighting( WeightingMap weightingMap, FlagEncoder encoder )
     {
-        String weighting = wMap.getWeighting();
+        String weighting = weightingMap.getWeighting();
         Weighting result;
 
         if ("shortest".equalsIgnoreCase(weighting))
@@ -795,38 +844,37 @@ public class GraphHopper implements GraphHopperAPI
         {
             throw new UnsupportedOperationException("weighting " + weighting + " not supported");
         }
-
-        if (encoder.supports(TurnWeighting.class))
-        {
-            result = new TurnWeighting(result, encoder, (TurnCostStorage) graph.getExtendedStorage());
-        }
         return result;
+    }
+
+    /**
+     * Potentially wraps the specified weighting into a TurnWeighting instance.
+     */
+    public Weighting createTurnWeighting( Weighting weighting, Graph graph, FlagEncoder encoder )
+    {
+        if (encoder.supports(TurnWeighting.class))
+            return new TurnWeighting(weighting, encoder, (TurnCostExtension) graph.getExtension());
+        return weighting;
     }
 
     @Override
     public GHResponse route( GHRequest request )
     {
-        if (graph == null || !fullyLoaded)
-            throw new IllegalStateException("Call load or importOrLoad before routing");
-
-        if (graph.isClosed())
-            throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
-
         GHResponse response = new GHResponse();
         List<Path> paths = getPaths(request, response);
         if (response.hasErrors())
             return response;
 
-        enableInstructions = request.getHints().getBool("instructions", enableInstructions);
-        calcPoints = request.getHints().getBool("calcPoints", calcPoints);
+        boolean tmpEnableInstructions = request.getHints().getBool("instructions", enableInstructions);
+        boolean tmpCalcPoints = request.getHints().getBool("calcPoints", calcPoints);
         double wayPointMaxDistance = request.getHints().getDouble("wayPointMaxDistance", 1d);
         Locale locale = request.getLocale();
         DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
 
         new PathMerger().
-                setCalcPoints(calcPoints).
+                setCalcPoints(tmpCalcPoints).
                 setDouglasPeucker(peucker).
-                setEnableInstructions(enableInstructions).
+                setEnableInstructions(tmpEnableInstructions).
                 setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0).
                 doWork(response, paths, trMap.getWithFallBack(locale));
         return response;
@@ -834,9 +882,15 @@ public class GraphHopper implements GraphHopperAPI
 
     protected List<Path> getPaths( GHRequest request, GHResponse rsp )
     {
+        if (graph == null || !fullyLoaded)
+            throw new IllegalStateException("Call load or importOrLoad before routing");
+
+        if (graph.isClosed())
+            throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
+
         String vehicle = request.getVehicle();
         if (vehicle.isEmpty())
-            vehicle = encodingManager.getSingle().toString();
+            vehicle = getDefaultVehicle().toString();
 
         if (!encodingManager.supports(vehicle))
         {
@@ -863,69 +917,71 @@ public class GraphHopper implements GraphHopperAPI
             return Collections.emptyList();
         }
 
+        visitedSum.set(0);
+
         FlagEncoder encoder = encodingManager.getEncoder(vehicle);
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-        GHPoint startPoint = points.get(0);
-        StopWatch sw = new StopWatch().start();
-        QueryResult fromRes = locationIndex.findClosest(startPoint.lat, startPoint.lon, edgeFilter);
-        String debug = "idLookup[0]:" + sw.stop().getSeconds() + "s";
-        sw.stop();
-        if (!fromRes.isValid())
-        {
-            rsp.addError(new IllegalArgumentException("Cannot find point 0: " + startPoint));
-            return Collections.emptyList();
-        }
 
-        List<Path> paths = new ArrayList<Path>(points.size() - 1);
-        for (int placeIndex = 1; placeIndex < points.size(); placeIndex++)
+        StopWatch sw = new StopWatch().start();
+        List<QueryResult> qResults = new ArrayList<QueryResult>(points.size());
+        for (int placeIndex = 0; placeIndex < points.size(); placeIndex++)
         {
             GHPoint point = points.get(placeIndex);
-            sw = new StopWatch().start();
-            QueryResult toRes = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
-            debug += ", [" + placeIndex + "] idLookup:" + sw.stop().getSeconds() + "s";
-            if (!toRes.isValid())
-            {
+            QueryResult res = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
+            if (!res.isValid())
                 rsp.addError(new IllegalArgumentException("Cannot find point " + placeIndex + ": " + point));
-                break;
-            }
 
+            qResults.add(res);
+        }
+
+        if (rsp.hasErrors())
+            return Collections.emptyList();
+
+        String debug = "idLookup:" + sw.stop().getSeconds() + "s";
+
+        QueryGraph queryGraph;
+        RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory();
+        if (chEnabled && !vehicle.equalsIgnoreCase(getDefaultVehicle().toString()))
+        {
+            // fall back to normal traversing
+            tmpAlgoFactory = new RoutingAlgorithmFactorySimple();
+            queryGraph = new QueryGraph(graph.getBaseGraph());
+        } else
+        {
+            queryGraph = new QueryGraph(graph);
+        }
+
+        queryGraph.lookup(qResults);
+
+        List<Path> paths = new ArrayList<Path>(points.size() - 1);
+        QueryResult fromQResult = qResults.get(0);
+        Weighting weighting = createWeighting(request.getHints(), encoder);
+        weighting = createTurnWeighting(weighting, queryGraph, encoder);
+
+        double weightLimit = request.getHints().getDouble("defaultWeightLimit", defaultWeightLimit);
+        String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
+        AlgorithmOptions algoOpts = AlgorithmOptions.start().
+                algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).
+                build();
+
+        for (int placeIndex = 1; placeIndex < points.size(); placeIndex++)
+        {
+            QueryResult toQResult = qResults.get(placeIndex);
             sw = new StopWatch().start();
-            String algoStr = request.getAlgorithm().isEmpty() ? "dijkstrabi" : request.getAlgorithm();
-            RoutingAlgorithm algo = null;
-            if (chEnabled)
-            {
-                if (prepare == null)
-                    throw new IllegalStateException("Preparation object is null. CH-preparation wasn't done or did you "
-                            + "forget to call setCHEnable(false)?");
-
-                if (algoStr.equals("dijkstrabi"))
-                    algo = prepare.createAlgo();
-                else if (algoStr.equals("astarbi"))
-                    algo = ((PrepareContractionHierarchies) prepare).createAStar();
-                else
-                {
-                    rsp.addError(new IllegalStateException(
-                            "Only dijkstrabi and astarbi is supported for LevelGraph (using contraction hierarchies)!"));
-                    break;
-                }
-            } else
-            {
-                Weighting weighting = createWeighting(request.getHints(), encoder);
-                prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, algoStr, encoder, weighting, tMode);
-                algo = prepare.createAlgo();
-            }
-
+            RoutingAlgorithm algo = tmpAlgoFactory.createAlgo(queryGraph, algoOpts);
+            algo.setWeightLimit(weightLimit);
             debug += ", algoInit:" + sw.stop().getSeconds() + "s";
-            sw = new StopWatch().start();
 
-            Path path = algo.calcPath(fromRes, toRes);
+            sw = new StopWatch().start();
+            Path path = algo.calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode());
             if (path.getMillis() < 0)
                 throw new RuntimeException("Time was negative. Please report as bug and include:" + request);
 
             paths.add(path);
             debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
+
             visitedSum.addAndGet(algo.getVisitedNodes());
-            fromRes = toRes;
+            fromQResult = toQResult;
         }
 
         if (rsp.hasErrors())
@@ -940,17 +996,9 @@ public class GraphHopper implements GraphHopperAPI
 
     protected LocationIndex createLocationIndex( Directory dir )
     {
-        LocationIndex tmpIndex;
-        if (graph instanceof LevelGraph)
-        {
-            tmpIndex = new LocationIndexTreeSC((LevelGraph) graph, dir);
-        } else
-        {
-            tmpIndex = new LocationIndexTree(graph, dir);
-        }
+        LocationIndexTree tmpIndex = new LocationIndexTree(graph.getBaseGraph(), dir);
         tmpIndex.setResolution(preciseIndexResolution);
-        ((LocationIndexTree) tmpIndex).setMaxRegionSearch(maxRegionSearch);
-
+        tmpIndex.setMaxRegionSearch(maxRegionSearch);
         if (!tmpIndex.loadExisting())
         {
             ensureWriteAccess();
@@ -961,10 +1009,7 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Initializes the location index. Currently this has to be done after the ch-preparation!
-     * Because - to improve performance - certain edges won't be available in a ch-graph and the
-     * index needs to know this and selects the correct nodes which still see the correct neighbors.
-     * See #116
+     * Initializes the location index after the import is done.
      */
     protected void initLocationIndex()
     {
@@ -996,16 +1041,12 @@ public class GraphHopper implements GraphHopperAPI
 
     protected void prepare()
     {
-        boolean tmpPrepare = doPrepare && prepare != null;
+        boolean tmpPrepare = doPrepare && algoFactory instanceof PrepareContractionHierarchies;
         if (tmpPrepare)
         {
             ensureWriteAccess();
-            if (prepare instanceof PrepareContractionHierarchies && encodingManager.getVehicleCount() > 1)
-                throw new IllegalArgumentException("Contraction hierarchies preparation "
-                        + "requires (at the moment) only one vehicle. But was:" + encodingManager);
-
-            logger.info("calling prepare.doWork for " + encodingManager.toString() + " ... (" + Helper.getMemInfo() + ")");
-            prepare.doWork();
+            logger.info("calling prepare.doWork for " + getDefaultVehicle() + " ... (" + Helper.getMemInfo() + ")");
+            ((PrepareContractionHierarchies) algoFactory).doWork();
             graph.getProperties().put("prepare.date", formatDateTime(new Date()));
         }
         graph.getProperties().put("prepare.done", tmpPrepare);
@@ -1016,13 +1057,13 @@ public class GraphHopper implements GraphHopperAPI
         int prev = graph.getNodes();
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(graph, encodingManager);
         preparation.setMinNetworkSize(minNetworkSize);
-        preparation.setMinOnewayNetworkSize(this.minOnewayNetworkSize);
+        preparation.setMinOneWayNetworkSize(minOneWayNetworkSize);
         logger.info("start finding subnetworks, " + Helper.getMemInfo());
         preparation.doWork();
         int n = graph.getNodes();
         // calculate remaining subnetworks
         int remainingSubnetworks = preparation.findSubnetworks().size();
-        logger.info("edges: " + graph.getAllEdges().getMaxId() + ", nodes " + n + ", there were " + preparation.getSubNetworks()
+        logger.info("edges: " + graph.getAllEdges().getCount() + ", nodes " + n + ", there were " + preparation.getSubNetworks()
                 + " subnetworks. removed them => " + (prev - n) + " less nodes. Remaining subnetworks:" + remainingSubnetworks);
     }
 
@@ -1050,7 +1091,7 @@ public class GraphHopper implements GraphHopperAPI
             lockFactory.forceRemove(fileLockName, true);
         } catch (Exception ex)
         {
-            // silently fail
+            // silently fail e.g. on Windows where we cannot remove an unreleased native lock
         }
     }
 
@@ -1090,7 +1131,7 @@ public class GraphHopper implements GraphHopperAPI
      * Returns the current sum of the visited nodes while routing. Mainly for statistic and
      * debugging purposes.
      */
-    public long getVisitedSum()
+    long getVisitedSum()
     {
         return visitedSum.get();
     }

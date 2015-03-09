@@ -17,14 +17,15 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.LevelEdgeFilter;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeSkipIterState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.BBox;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -46,7 +47,7 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
     }
 
     @Test
-    public void testCannotBeLoadedViaDifferentClass()
+    public void testCannotBeLoadedWithNormalGraphHopperStorageClass()
     {
         GraphStorage g = newGraph(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
         g.flush();
@@ -63,12 +64,15 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
 
         g = newGraph(new RAMDirectory(defaultGraphLoc, true), false);
         assertTrue(g.loadExisting());
+        // empty graph still has invalid bounds
+        assertEquals(g.getBounds(), BBox.createInverse(false));
     }
 
     @Test
     public void testPriosWhileDeleting()
     {
         LevelGraphStorage g = createGraph();
+        g.getNodeAccess().ensureNode(19);
         for (int i = 0; i < 20; i++)
         {
             g.setLevel(i, i);
@@ -77,13 +81,14 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         g.optimize();
         assertEquals(9, g.getLevel(9));
         assertNotSame(10, g.getLevel(10));
-        assertEquals(19, g.getNodes());
     }
 
     @Test
     public void testPrios()
     {
         LevelGraph g = createGraph();
+        g.getNodeAccess().ensureNode(30);
+
         assertEquals(0, g.getLevel(10));
 
         g.setLevel(10, 100);
@@ -174,15 +179,15 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         sc1.setFlags(flags);
         sc1.setWeight(100.123);
         assertEquals(100.123, sc1.getWeight(), 1e-3);
-        assertTrue(carEncoder.isBool(sc1.getFlags(), FlagEncoder.K_FORWARD));
-        assertTrue(carEncoder.isBool(sc1.getFlags(), FlagEncoder.K_BACKWARD));
+        assertTrue(carEncoder.isForward(sc1.getFlags()));
+        assertTrue(carEncoder.isBackward(sc1.getFlags()));
 
         flags = carEncoder.setProperties(10, false, true);
         sc1.setFlags(flags);
         sc1.setWeight(100.123);
-        assertEquals(100.123, sc1.getWeight(), 1e-3);        
-        assertFalse(carEncoder.isBool(sc1.getFlags(), FlagEncoder.K_FORWARD));
-        assertTrue(carEncoder.isBool(sc1.getFlags(), FlagEncoder.K_BACKWARD));
+        assertEquals(100.123, sc1.getWeight(), 1e-3);
+        assertFalse(carEncoder.isForward(sc1.getFlags()));
+        assertTrue(carEncoder.isBackward(sc1.getFlags()));
     }
 
     @Test
@@ -206,5 +211,48 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         sc1.setFlags(PrepareEncoder.getScDirMask());
         sc1.setWeight(1.011011);
         assertEquals(1.011011, sc1.getWeight(), 1e-3);
+    }
+
+    @Test
+    public void testQueryGraph()
+    {
+        LevelGraph levelGraph = createGraph();
+        NodeAccess na = levelGraph.getNodeAccess();
+        na.setNode(0, 1.00, 1.00);
+        na.setNode(1, 1.02, 1.00);
+        na.setNode(2, 1.04, 1.00);
+
+        EdgeIteratorState edge1 = levelGraph.edge(0, 1);
+        EdgeIteratorState edge2 = levelGraph.edge(1, 2);
+        levelGraph.shortcut(0, 1);
+        
+        QueryGraph qGraph = new QueryGraph(levelGraph);
+        QueryResult fromRes = createQR(1.004, 1.01, 0, edge1);
+        QueryResult toRes = createQR(1.019, 1.00, 0, edge1);
+        qGraph.lookup(fromRes, toRes);
+
+        Graph oGraph = qGraph.getBaseGraph();
+        EdgeExplorer explorer = oGraph.createEdgeExplorer();
+
+        assertTrue(levelGraph.getNodes() < qGraph.getNodes());
+        assertTrue(oGraph.getNodes() == qGraph.getNodes());
+
+        // traverse virtual edges and normal edges but no shortcuts!
+        assertEquals(GHUtility.asSet(fromRes.getClosestNode()), GHUtility.getNeighbors(explorer.setBaseNode(0)));
+        assertEquals(GHUtility.asSet(toRes.getClosestNode(), 2), GHUtility.getNeighbors(explorer.setBaseNode(1)));
+
+        // get neighbors from virtual nodes
+        assertEquals(GHUtility.asSet(0, toRes.getClosestNode()), GHUtility.getNeighbors(explorer.setBaseNode(fromRes.getClosestNode())));
+        assertEquals(GHUtility.asSet(1, fromRes.getClosestNode()), GHUtility.getNeighbors(explorer.setBaseNode(toRes.getClosestNode())));
+    }
+
+    QueryResult createQR( double lat, double lon, int wayIndex, EdgeIteratorState edge )
+    {
+        QueryResult res = new QueryResult(lat, lon);
+        res.setClosestEdge(edge);
+        res.setWayIndex(wayIndex);
+        res.setSnappedPosition(QueryResult.Position.EDGE);
+        res.calcSnappedPoint(Helper.DIST_PLANE);
+        return res;
     }
 }

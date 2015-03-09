@@ -42,17 +42,13 @@ import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.dem.ElevationProvider;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalc3D;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.DouglasPeucker;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+import gnu.trove.map.TLongObjectMap;
+import gnu.trove.map.hash.TLongObjectHashMap;
+import java.util.*;
 
 /**
  * This class parses an OSM xml or pbf file and creates a graph from it. It does so in a two phase
@@ -109,8 +105,8 @@ public class OSMReader implements DataReader
     private TIntLongMap edgeIdToOsmWayIdMap;
     private final TLongList barrierNodeIds = new TLongArrayList();
     protected PillarInfo pillarInfo;
-    private final DistanceCalc distCalc = new DistanceCalcEarth();
-    private final DistanceCalc3D distCalc3D = new DistanceCalc3D();
+    private final DistanceCalc distCalc = Helper.DIST_EARTH;
+    private final DistanceCalc3D distCalc3D = Helper.DIST_3D;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private boolean doSimplify = true;
     private int nextTowerId = 0;
@@ -120,6 +116,8 @@ public class OSMReader implements DataReader
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private boolean exitOnlyPillarNodeException = true;
     private File osmFile;
+    private Map<FlagEncoder, EdgeExplorer> outExplorerMap = new HashMap<FlagEncoder, EdgeExplorer>();
+    private Map<FlagEncoder, EdgeExplorer> inExplorerMap = new HashMap<FlagEncoder, EdgeExplorer>();
 
     public OSMReader( GraphStorage storage )
     {
@@ -333,19 +331,61 @@ public class OSMReader implements DataReader
             OSMTurnRelation turnRelation = createTurnRelation(relation);
             if (turnRelation != null)
             {
-                ExtendedStorage extendedStorage = graphStorage.getExtendedStorage();
-                if (extendedStorage instanceof TurnCostStorage)
+                GraphExtension extendedStorage = graphStorage.getExtension();
+                if (extendedStorage instanceof TurnCostExtension)
                 {
-                    TurnCostStorage tcs = (TurnCostStorage) extendedStorage;
-                    Collection<TurnCostTableEntry> entries = encodingManager.analyzeTurnRelation(turnRelation, this);
+                    TurnCostExtension tcs = (TurnCostExtension) extendedStorage;
+                    Collection<TurnCostTableEntry> entries = analyzeTurnRelation(turnRelation);
                     for (TurnCostTableEntry entry : entries)
                     {
-                        tcs.addTurnInfo(entry.nodeViaNode, entry.edgeFrom, entry.edgeTo, entry.flags);
+                        tcs.addTurnInfo(entry.edgeFrom, entry.nodeVia, entry.edgeTo, entry.flags);
                     }
                 }
             }
         }
     }*/
+
+    public Collection<TurnCostTableEntry> analyzeTurnRelation( OSMTurnRelation turnRelation )
+    {
+        TLongObjectMap<TurnCostTableEntry> entries = new TLongObjectHashMap<OSMTurnRelation.TurnCostTableEntry>();
+
+        for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders())
+        {
+            for (TurnCostTableEntry entry : analyzeTurnRelation(encoder, turnRelation))
+            {
+                TurnCostTableEntry oldEntry = entries.get(entry.getItemId());
+                if (oldEntry != null)
+                {
+                    // merging different encoders
+                    oldEntry.flags |= entry.flags;
+                } else
+                {
+                    entries.put(entry.getItemId(), entry);
+                }
+            }
+        }
+
+        return entries.valueCollection();
+    }
+
+    public Collection<TurnCostTableEntry> analyzeTurnRelation( FlagEncoder encoder, OSMTurnRelation turnRelation )
+    {
+        if (!encoder.supports(TurnWeighting.class))
+            return Collections.emptyList();
+
+        EdgeExplorer edgeOutExplorer = outExplorerMap.get(encoder);
+        EdgeExplorer edgeInExplorer = inExplorerMap.get(encoder);
+
+        if (edgeOutExplorer == null || edgeInExplorer == null)
+        {
+            edgeOutExplorer = getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
+            outExplorerMap.put(encoder, edgeOutExplorer);
+
+            edgeInExplorer = getGraphStorage().createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false));
+            inExplorerMap.put(encoder, edgeInExplorer);
+        }
+        return turnRelation.getRestrictionAsEntries(encoder, edgeOutExplorer, edgeInExplorer, this);
+    }
 
     /**
      * @return OSM way ID from specified edgeId. Only previously stored OSM-way-IDs are returned in

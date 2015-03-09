@@ -199,7 +199,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
             double fwdDecline = decDist2DSum > 1 ? decEleSum / decDist2DSum : 0;
             double restDist2D = fullDist2D - incDist2DSum - decDist2DSum;
             double maxSpeed = getHighwaySpeed("cycleway");
-            if (isBool(flags, K_FORWARD))
+            if (isForward(flags))
             {
                 // use weighted mean so that longer incline infuences speed more than shorter
                 double speed = getSpeed(flags);
@@ -211,7 +211,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
                 flags = this.setSpeed(flags, keepIn(speed, PUSHING_SECTION_SPEED / 2, maxSpeed));
             }
 
-            if (isBool(flags, K_BACKWARD))
+            if (isBackward(flags))
             {
                 double speedReverse = getReverseSpeed(flags);
                 double bwFaster = 1 + 2 * keepIn(fwdIncline, 0, 0.2);
