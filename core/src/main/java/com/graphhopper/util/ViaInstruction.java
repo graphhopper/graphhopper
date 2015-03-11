@@ -42,6 +42,9 @@ public class ViaInstruction extends Instruction
 
     public int getViaCount()
     {
+        if (viaPosition < 0)
+            throw new IllegalStateException("Uninitialized via count in instruction " + getName());
+
         return viaPosition;
     }
 
