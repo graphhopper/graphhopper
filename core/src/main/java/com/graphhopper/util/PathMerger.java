@@ -81,8 +81,9 @@ public class PathMerger
                     // if not yet reached finish replace with 'reached via'
                     if (pathIndex + 1 < paths.size())
                     {
-                        FinishInstruction fi = (FinishInstruction) fullInstructions.get(fullInstructions.size() - 1);
-                        fi.setVia(pathIndex + 1);
+                        ViaInstruction newInstr = new ViaInstruction(fullInstructions.get(fullInstructions.size() - 1));
+                        newInstr.setViaCount(pathIndex + 1);
+                        fullInstructions.replaceLast(newInstr);
                     }
                 }
 

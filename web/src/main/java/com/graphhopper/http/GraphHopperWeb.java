@@ -22,14 +22,14 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-import java.util.Arrays;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Main wrapper of the offline API for a simple and efficient usage.
+ * This class is nearly identical in usage as the offline API but connects to a remove routing
+ * service like self-hosted or the GraphHopper Directions API.
  * <p/>
  * @author Peter Karich
  */
@@ -117,6 +117,7 @@ public class GraphHopperWeb implements GraphHopperAPI
                     + places
                     + "&type=json"
                     + "&points_encoded=" + pointsEncoded
+                    + "&instructions=" + instructions
                     + "&way_point_max_distance=" + request.getHints().getDouble("wayPointMaxDistance", 1)
                     + "&algo=" + request.getAlgorithm()
                     + "&locale=" + request.getLocale().toString()
@@ -195,6 +196,7 @@ public class GraphHopperWeb implements GraphHopperAPI
                     JSONArray instrArr = firstPath.getJSONArray("instructions");
 
                     InstructionList il = new InstructionList(trMap.getWithFallBack(request.getLocale()));
+                    int viaCount = 1;
                     for (int instrIndex = 0; instrIndex < instrArr.length(); instrIndex++)
                     {
                         JSONObject jsonObj = instrArr.getJSONObject(instrIndex);
@@ -211,9 +213,35 @@ public class GraphHopperWeb implements GraphHopperAPI
                             instPL.add(pointList, j);
                         }
 
-                        // TODO way and payment type
-                        Instruction instr = new Instruction(sign, text, InstructionAnnotation.EMPTY, instPL).
-                                setDistance(instDist).setTime(instTime);
+                        InstructionAnnotation ia = InstructionAnnotation.EMPTY;
+                        if (jsonObj.has("annotation_importance") && jsonObj.has("annotation_text"))
+                        {
+                            ia = new InstructionAnnotation(jsonObj.getInt("annotation_importance"), jsonObj.getString("annotation_text"));
+                        }
+
+                        Instruction instr;
+                        if (sign == Instruction.USE_ROUNDABOUT || sign == Instruction.LEAVE_ROUNDABOUT)
+                        {
+                            instr = new RoundaboutInstruction(sign, text, ia, instPL);
+                        } else if (sign == Instruction.REACHED_VIA)
+                        {
+                            ViaInstruction tmpInstr = new ViaInstruction(text, ia, instPL);
+                            tmpInstr.setViaCount(viaCount);
+                            viaCount++;
+                            instr = tmpInstr;
+                        } else if (sign == Instruction.FINISH)
+                        {
+                            instr = new FinishInstruction(instPL, 0);
+                        } else
+                        {
+                            instr = new Instruction(sign, text, ia, instPL);
+                        }
+
+                        // The translation is done from the routing service so just use the provided string
+                        // instead of creating a combination with sign and name etc
+                        instr.setUseRawName();
+
+                        instr.setDistance(instDist).setTime(instTime);
                         il.add(instr);
                     }
                     res.setInstructions(il);

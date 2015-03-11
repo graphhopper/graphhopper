@@ -31,7 +31,8 @@ import static org.junit.Assert.*;
  */
 public class GraphHopperWebTest
 {
-
+    // see also GraphHopperServletIT.testGraphHopperWeb for real routes against local jetty service
+    
     @Test
     public void testReadUnencoded() throws Exception
     {
