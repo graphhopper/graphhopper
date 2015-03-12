@@ -82,7 +82,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         setBlockByDefault(false);
         potentialBarriers.add("gate");
 
-        acceptedRailways.add("station");
         acceptedRailways.add("platform");
 
         safeHighwayTags.add("footway");
@@ -194,6 +193,11 @@ public class FootFlagEncoder extends AbstractFlagEncoder
                 if (footTag == null || "yes".equals(footTag))
                     return acceptBit | ferryBit;
             }
+
+            // special case not for all acceptedRailways, only platform
+            if (way.hasTag("railway", "platform"))
+                return acceptBit;
+
             return 0;
         }
 
@@ -262,7 +266,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         long encoded;
         if (!isFerry(allowed))
-        {           
+        {
             String sacScale = way.getTag("sac_scale");
             if (sacScale != null)
             {

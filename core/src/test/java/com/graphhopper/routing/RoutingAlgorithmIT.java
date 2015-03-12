@@ -242,10 +242,10 @@ public class RoutingAlgorithmIT
                 createMonacoFoot(), "FOOT", true, "FOOT", "shortest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
-        // see testMonaco for similar ID test
-        assertEquals(GHUtility.asSet(2, 906, 570), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
-        assertEquals(GHUtility.asSet(443, 952, 739), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(440)));
-        assertEquals(GHUtility.asSet(909, 580, 912), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(911)));
+        // see testMonaco for a similar ID test
+        assertEquals(GHUtility.asSet(2, 908, 570), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
+        assertEquals(GHUtility.asSet(443, 954, 739), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(440)));
+        assertEquals(GHUtility.asSet(910, 403, 122, 913), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(911)));
 
         assertEquals(43.743705, g.getNodeAccess().getLat(100), 1e-6);
         assertEquals(7.426362, g.getNodeAccess().getLon(701), 1e-6);

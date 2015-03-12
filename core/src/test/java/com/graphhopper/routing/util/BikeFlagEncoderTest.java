@@ -286,6 +286,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     }
 
     @Test
+    @Override
     public void testSacScale()
     {
         OSMWay way = new OSMWay(1);

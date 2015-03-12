@@ -33,12 +33,6 @@
             <version>${project.parent.version}</version>            
             <type>jar</type>
             <exclusions>
-                <!--
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>                    
-                </exclusion> 
-                -->
                 <exclusion>
                     <groupId>com.google.protobuf</groupId>
                     <artifactId>protobuf-java</artifactId>                    

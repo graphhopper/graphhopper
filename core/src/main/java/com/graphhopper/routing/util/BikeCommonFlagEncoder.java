@@ -85,6 +85,9 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         absoluteBarriers.add("stile");
         absoluteBarriers.add("turnstile");
 
+        // make intermodal connections possible but mark as pushing section
+        acceptedRailways.add("platform");
+
         unpavedSurfaceTags.add("unpaved");
         unpavedSurfaceTags.add("gravel");
         unpavedSurfaceTags.add("ground");
@@ -225,6 +228,11 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                 if (bikeTag == null && !way.hasTag("foot") || "yes".equals(bikeTag))
                     return acceptBit | ferryBit;
             }
+
+            // special case not for all acceptedRailways, only platform
+            if (way.hasTag("railway", "platform"))
+                return acceptBit;
+
             return 0;
         }
 
@@ -588,7 +596,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
 
     boolean isPushingSection( OSMWay way )
     {
-        return way.hasTag("highway", pushingSections);
+        return way.hasTag("highway", pushingSections) || way.hasTag("railway", "platform");
     }
 
     protected long handleSpeed( OSMWay way, double speed, long encoded )
