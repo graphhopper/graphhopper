@@ -3,6 +3,7 @@ package com.graphhopper.wrapper;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -32,11 +33,15 @@ public class PathsBean {
      * sometimes contain misleading information, so, make sure you always show an image
      * of the map at the same time when navigating your users!
      */
+    @XmlElement(name = "instruction")
+    @XmlElementWrapper(name = "instructions")
     private List<InstructionBean> instructions;
 
     /**
      * Points of the paths
      */
+    @XmlElement(name = "point")
+    @XmlElementWrapper(name = "points")
     private PointsBean points;
 
     /**
@@ -106,3 +111,4 @@ public class PathsBean {
         this.time = time;
     }
 }
+

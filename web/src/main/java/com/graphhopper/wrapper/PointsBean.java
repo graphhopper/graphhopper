@@ -2,6 +2,7 @@ package com.graphhopper.wrapper;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -9,6 +10,7 @@ public class PointsBean {
 
     private String type;
 
+    @XmlElementWrapper(name = "point")
     private List<Double[]> coordinates;
 
     public String getType() {

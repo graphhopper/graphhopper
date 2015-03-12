@@ -6,7 +6,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
- * Bean astraction for GHResponse
+ * Bean abstraction for GHResponse
  *
  * @see com.graphhopper.http.WebHelper#wrapResponse(com.graphhopper.GHResponse, boolean, boolean)
  */
