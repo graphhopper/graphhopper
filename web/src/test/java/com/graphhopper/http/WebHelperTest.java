@@ -131,4 +131,49 @@ public class WebHelperTest {
         assertNull(firstInstruction.getAnnotationText());
         assertNull(firstInstruction.getAnnotationImportance());
     }
+
+    @Test
+    public void testWrapResponseWithPointsEncoded() {
+        Downloader downloader = new Downloader("GraphHopper Test") {
+            @Override
+            public InputStream fetch(String url) throws IOException {
+                return getClass().getResourceAsStream("test.json");
+            }
+        };
+
+        GraphHopperWeb instance = new GraphHopperWeb().setPointsEncoded(false);
+        instance.setDownloader(downloader);
+
+        GHResponse res = instance.route(new GHRequest(52.47379, 13.362808, 52.4736925, 13.3904394));
+        GHRestResponse restRes = WebHelper.wrapResponse(res, true, false);
+
+        assertEquals(restRes.getPaths().getPointsEncoded(), "oxg_Iy|ppAl@wCdE}LfFsN|@_Ej@eEtAaMh@sGVuDNcDb@{PFyGdAi]FoC?q@sXQ_@?");
+    }
+
+    @Test
+    public void testWrapResponseWithErrors() {
+        Downloader downloader = new Downloader("GraphHopper Test") {
+            @Override
+            public InputStream fetch(String url) throws IOException {
+                return getClass().getResourceAsStream("test.json");
+            }
+        };
+
+        GraphHopperWeb instance = new GraphHopperWeb().setPointsEncoded(false);
+        instance.setDownloader(downloader);
+
+        GHRequest req = new GHRequest(52.47379, 13.362808, 52.4736925, 13.3904394).setVehicle("SPACE-SHUTTLE");
+        GHResponse res = instance.route(req);
+
+        Throwable error = new RuntimeException("test");
+        res.addError(error);
+
+        GHRestResponse restRes = WebHelper.wrapResponse(res, true, false);
+
+        List<ErrorBean> errors = restRes.getInfo().getErrors();
+        assertNotNull(errors);
+        assertEquals(errors.size(), 1);
+        assertEquals(errors.get(0).getMessage(), error.getMessage());
+        assertEquals(errors.get(0).getDetails(), error.getClass().getName());
+    }
 }
