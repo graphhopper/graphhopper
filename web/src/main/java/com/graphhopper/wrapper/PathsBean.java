@@ -40,8 +40,6 @@ public class PathsBean {
     /**
      * Points of the paths
      */
-    @XmlElement(name = "point")
-    @XmlElementWrapper(name = "points")
     private PointsBean points;
 
     /**
