@@ -3,8 +3,6 @@ package com.graphhopper.wrapper;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -22,8 +20,6 @@ public class InfoBean {
      * Sometimes a point can be "off the road" and you'll get 'cannot find point', this normally does not
      * indicate a bug in the routing engine and is expected to a certain degree if too far away.
      */
-    @XmlElement(name = "error")
-    @XmlElementWrapper(name = "errors")
     private List<ErrorBean> errors;
 
     public int getTook() {
