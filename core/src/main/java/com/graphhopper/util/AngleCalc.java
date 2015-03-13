@@ -58,7 +58,8 @@ public class AngleCalc
      */
     public double calcOrientation( double lat1, double lon1, double lat2, double lon2 )
     {
-        return atan2((lat2 - lat1), (lon2 - lon1));
+        double factor = Math.cos((lat1 + lat2) * Math.PI / 360);
+        return atan2((lat2 - lat1), factor * (lon2 - lon1));
     }
 
     /**
