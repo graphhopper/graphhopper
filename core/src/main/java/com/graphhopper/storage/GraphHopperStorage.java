@@ -1495,7 +1495,7 @@ public class GraphHopperStorage implements GraphStorage
         {
             bounds.minEle = Helper.intToEle(nodes.getHeader(7 * 4));
             bounds.maxEle = Helper.intToEle(nodes.getHeader(8 * 4));
-        }        
+        }
 
         return 7;
     }
@@ -1579,7 +1579,7 @@ public class GraphHopperStorage implements GraphStorage
     }
 
     @Override
-    public GraphExtension getExtension()    
+    public GraphExtension getExtension()
     {
         return extStorage;
     }
