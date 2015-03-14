@@ -29,11 +29,11 @@
 
 ## Web
 
- * [Routing API](./web/api-doc.md)
+ * [Routing API](./web/api-doc.md) Documentation of the Web API to communicate with any graphhopper server via http.
  
 ## Advanced Topics
 
- * [Low level API](./core/low-level-api.md)
+ * [Low level API](./core/low-level-api.md) Use Graphhopper as a Java library.
  * [Create new FlagEncoder](./core/create-new-flagencoder.md) to create new routing profiles to influence which ways to favor and how the track-time is calculated.
  * [LocationIndex](./core/location-index.md) to get the location index to get i.e. the nearest edge.
  * [World-Wide-Road-Network](./core/world-wide.md) Details about using the whole world wide street data.
