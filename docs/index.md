@@ -12,7 +12,7 @@
 
 # Developers
 
- * [Quickstart](./core/quickstart-from-source.md) for developers with git checkout and IDE setup etc
+ * [Quickstart](./core/quickstart-from-source.md) for developers. Explains git checkout, IDE setup and commands for setting up a graphhopper server.
  * [Android](./android/index.md)
  * [Windows](./core/windows-setup.md)
  * [Set up and run GraphHopper in Eclipse](./core/eclipse-setup.md)
@@ -29,12 +29,12 @@
 
 ## Web
 
- * [Routing API](./web/api-doc.md)
+ * [Routing API](./web/api-doc.md) Documentation of the Web API to communicate with any graphhopper server via http.
  
 ## Advanced Topics
 
- * [Low level API](./core/low-level-api.md)
- * [Create new FlagEncoder](./core/create-new-flagencoder.md)
- * [LocationIndex](./core/location-index.md)
- * [World-Wide-Road-Network](./core/world-wide.md)
- * [Changelog](https://github.com/graphhopper/graphhopper/blob/master/core/files/changelog.txt)
+ * [Low level API](./core/low-level-api.md) Use Graphhopper as a Java library.
+ * [Create new FlagEncoder](./core/create-new-flagencoder.md) to create new routing profiles to influence which ways to favor and how the track-time is calculated.
+ * [LocationIndex](./core/location-index.md) to get the location index to get i.e. the nearest edge.
+ * [World-Wide-Road-Network](./core/world-wide.md) Details about using the whole world wide street data.
+ * [Changelog](https://github.com/graphhopper/graphhopper/blob/master/core/files/changelog.txt) Latest changes.
