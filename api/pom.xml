@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>graphhopper-parent</artifactId>
+        <groupId>com.graphhopper</groupId>
+        <version>0.5-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <name>GraphHopper Api</name>
+
+    <artifactId>graphhopper-api</artifactId>
+
+    <properties>
+        <jackson.version>2.4.4</jackson.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper-web</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+    </dependencies>
+</project>
