@@ -17,21 +17,13 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.GHResponse;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.wrapper.*;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Code which handles polyline encoding and other web stuff.
@@ -174,77 +166,5 @@ public class WebHelper
         {
             in.close();
         }
-    }
-
-    public static GHRestResponse wrapResponse(GHResponse response, boolean pointsEncoded, boolean includeElevation) {
-        GHRestResponse restResponse = new GHRestResponse();
-
-        // Note: info.took is established from the request, therefore here is always set to -1
-        restResponse.setInfo(new InfoBean());
-
-        // Info.Errors[]
-        if(response.hasErrors()) {
-            restResponse.getInfo().setErrors(new ArrayList<ErrorBean>());
-            for (Throwable throwable : response.getErrors()) {
-                ErrorBean error = new ErrorBean();
-                error.setDetails(throwable.getClass().getName());
-                error.setMessage(throwable.getMessage());
-                restResponse.getInfo().getErrors().add(error);
-            }
-        } else {
-            PathsBean paths = new PathsBean();
-            restResponse.setPaths(paths);
-
-            paths.setDistance(Helper.round(response.getDistance(), 3));
-            paths.setWeight(Helper.round6(response.getDistance()));
-            paths.setTime(response.getMillis());
-
-            // Paths.Points[]
-            PointList responsePoints = response.getPoints();
-            if (responsePoints != null && !responsePoints.isEmpty()) {
-
-                // Paths.Bbox
-                if (responsePoints.getSize() >= 2) {
-                    // Note: The calcRouteBBox fallback is actually ignored ('cause the wrapping is GraphHopperAPI unaware).
-                    paths.setBbox(response.calcRouteBBox(new BBox(0, 0, 0, 0)).toGeoJson());
-                }
-
-                // Paths.Points Encoding
-                if (pointsEncoded) {
-                    // Note: original points_encoded is a boolean, here it containts the polyline string directly
-                    paths.setPointsEncoded(WebHelper.encodePolyline(response.getPoints(), includeElevation));
-                } else {
-                    paths.setPoints(new PointsBean());
-                    paths.getPoints().setType("LineString");
-                    paths.getPoints().setCoordinates(response.getPoints().toGeoJson(includeElevation));
-                }
-
-                // Paths.Instructions[]
-                InstructionList responseInstructions = response.getInstructions();
-                if (responseInstructions != null && !responseInstructions.isEmpty()) {
-                    paths.setInstructions(new ArrayList<InstructionBean>(responseInstructions.size()));
-
-                    for (Map<String, Object> jsonInstruction : responseInstructions.createJson()) {
-                        InstructionBean instruction = new InstructionBean();
-                        instruction.setDistance((Double) jsonInstruction.get("distance"));
-                        instruction.setSign((Integer) jsonInstruction.get("sign"));
-                        instruction.setTime((Long) jsonInstruction.get("time"));
-                        instruction.setText((String) jsonInstruction.get("text"));
-
-                        //noinspection unchecked
-                        instruction.setInterval((List<Integer>) jsonInstruction.get("interval"));
-
-                        if (jsonInstruction.containsKey("annotation_text") && jsonInstruction.containsKey("annotation_importance")) {
-                            instruction.setAnnotationText((String) jsonInstruction.get("annotation_text"));
-                            instruction.setAnnotationImportance((Integer) jsonInstruction.get("annotation_importance"));
-                        }
-
-                        paths.getInstructions().add(instruction);
-                    }
-                }
-            }
-        }
-
-        return restResponse;
     }
 }

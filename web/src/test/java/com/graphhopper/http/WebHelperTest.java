@@ -17,21 +17,11 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.Instruction;
 import com.graphhopper.util.PointList;
-import com.graphhopper.wrapper.*;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -83,97 +73,5 @@ public class WebHelperTest {
         assertEquals("_p~iF~ps|Uo}@", WebHelper.encodePolyline(Helper.createPointList3D(38.5, -120.2, 10)));
         assertEquals("_p~iF~ps|Uo}@_ulLnnqC_anF_mqNvxq`@?", WebHelper.encodePolyline(
                 Helper.createPointList3D(38.5, -120.2, 10, 40.7, -120.95, 1234, 43.252, -126.453, 1234)));
-    }
-
-    @Test
-    public void testWrapResponse() {
-        Downloader downloader = new Downloader("GraphHopper Test") {
-            @Override
-            public InputStream fetch(String url) throws IOException {
-                return getClass().getResourceAsStream("test.json");
-            }
-        };
-
-        GraphHopperWeb instance = new GraphHopperWeb().setPointsEncoded(false);
-        instance.setDownloader(downloader);
-
-        GHResponse res = instance.route(new GHRequest(52.47379, 13.362808, 52.4736925, 13.3904394));
-        GHRestResponse restRes = WebHelper.wrapResponse(res, false, false);
-
-        // Info
-        assertNull(restRes.getInfo().getErrors());
-
-        // Paths
-        PathsBean paths = restRes.getPaths();
-        assertNotNull(paths);
-        assertEquals(paths.getBbox(), Arrays.asList(13.362854, 52.469482, 13.385837, 52.473849));
-        assertEquals(paths.getDistance(), 2138.3027624572337, 0.1);
-
-        // Points
-        PointsBean points = paths.getPoints();
-        assertNotNull(points);
-        assertEquals(points.getType(), "LineString");
-        assertEquals(points.getCoordinates().size(), 17);
-
-        // Instructions
-        List<InstructionBean> instructions = paths.getInstructions();
-        assertNotNull(instructions);
-        assertEquals(instructions.size(), 5);
-
-        // First Instruction
-        InstructionBean firstInstruction = instructions.get(0);
-        assertNotNull(firstInstruction);
-        assertEquals(firstInstruction.getDistance(), 1268.519, 0.1);
-        assertEquals(firstInstruction.getInterval(), Arrays.asList(0, 11));
-        assertEquals(firstInstruction.getSign(), Instruction.CONTINUE_ON_STREET);
-        assertEquals(firstInstruction.getText(), "Geradeaus auf A 100");
-        assertEquals(firstInstruction.getTime(), 65237);
-        assertNull(firstInstruction.getAnnotationText());
-        assertNull(firstInstruction.getAnnotationImportance());
-    }
-
-    @Test
-    public void testWrapResponseWithPointsEncoded() {
-        Downloader downloader = new Downloader("GraphHopper Test") {
-            @Override
-            public InputStream fetch(String url) throws IOException {
-                return getClass().getResourceAsStream("test.json");
-            }
-        };
-
-        GraphHopperWeb instance = new GraphHopperWeb().setPointsEncoded(false);
-        instance.setDownloader(downloader);
-
-        GHResponse res = instance.route(new GHRequest(52.47379, 13.362808, 52.4736925, 13.3904394));
-        GHRestResponse restRes = WebHelper.wrapResponse(res, true, false);
-
-        assertEquals(restRes.getPaths().getPointsEncoded(), "oxg_Iy|ppAl@wCdE}LfFsN|@_Ej@eEtAaMh@sGVuDNcDb@{PFyGdAi]FoC?q@sXQ_@?");
-    }
-
-    @Test
-    public void testWrapResponseWithErrors() {
-        Downloader downloader = new Downloader("GraphHopper Test") {
-            @Override
-            public InputStream fetch(String url) throws IOException {
-                return getClass().getResourceAsStream("test.json");
-            }
-        };
-
-        GraphHopperWeb instance = new GraphHopperWeb().setPointsEncoded(false);
-        instance.setDownloader(downloader);
-
-        GHRequest req = new GHRequest(52.47379, 13.362808, 52.4736925, 13.3904394).setVehicle("SPACE-SHUTTLE");
-        GHResponse res = instance.route(req);
-
-        Throwable error = new RuntimeException("test");
-        res.addError(error);
-
-        GHRestResponse restRes = WebHelper.wrapResponse(res, true, false);
-
-        List<ErrorBean> errors = restRes.getInfo().getErrors();
-        assertNotNull(errors);
-        assertEquals(errors.size(), 1);
-        assertEquals(errors.get(0).getMessage(), error.getMessage());
-        assertEquals(errors.get(0).getDetails(), error.getClass().getName());
     }
 }
