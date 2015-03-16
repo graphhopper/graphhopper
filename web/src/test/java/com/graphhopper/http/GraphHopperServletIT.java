@@ -73,7 +73,7 @@ public class GraphHopperServletIT extends BaseServletTester
     {
         JSONObject json = query("point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false");
         JSONObject cson = json.getJSONArray("paths").getJSONObject(0).getJSONObject("points");
-        assertTrue("unexpected precision!", cson.toString().indexOf("[1.536374,42.554839]") >= 0);
+        assertTrue("unexpected precision!", cson.toString().contains("[1.536374,42.554839]"));
     }
 
     @Test
