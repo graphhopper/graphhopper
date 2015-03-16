@@ -7,6 +7,7 @@ import com.graphhopper.HopperResponse;
 import com.graphhopper.bean.RouteInstruction;
 import com.graphhopper.bean.RoutePoint;
 import com.graphhopper.internal.HopperEngine;
+import com.graphhopper.internal.HopperEngineConfiguration;
 import com.graphhopper.routing.Path;
 import com.graphhopper.util.Translation;
 
@@ -22,11 +23,11 @@ public abstract class AbstractHopperClient implements HopperClient {
 
     public AbstractHopperClient(HopperEngine engine) {
         this.engine = engine;
-        inizializeEngine(engine);
+        engine.inizialize(getConfiguration());
     }
 
     // All child-classes must provide a customized engine configuration
-    protected abstract void inizializeEngine(HopperEngine engine);
+    protected abstract HopperEngineConfiguration getConfiguration();
 
     @Override
     public HopperResponse route(HopperRequest request) {

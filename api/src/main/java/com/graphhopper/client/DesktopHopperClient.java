@@ -6,13 +6,18 @@ import com.graphhopper.internal.HopperEngineConfiguration;
 
 public class DesktopHopperClient extends AbstractHopperClient {
 
+    private final HopperEngineConfiguration configuration = new HopperEngineConfiguration()
+            .setSimplifyResponse(true)
+            .setWeightLimit(3);
+
     public DesktopHopperClient(HopperEngine engine) {
         super(engine);
     }
 
     @Override
-    protected void inizializeEngine(HopperEngine engine) {
-        // Inizializes the hopper with custom configuration
-        engine.inizialize(new HopperEngineConfiguration().setSimplifyResponse(true).setWeightLimit(3));
+    protected HopperEngineConfiguration getConfiguration() {
+        return configuration;
     }
+
+
 }
