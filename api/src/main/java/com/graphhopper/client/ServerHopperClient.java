@@ -2,10 +2,17 @@ package com.graphhopper.client;
 
 
 import com.graphhopper.internal.HopperEngine;
+import com.graphhopper.internal.HopperEngineConfiguration;
 
 public class ServerHopperClient extends AbstractHopperClient {
+
+    public ServerHopperClient(HopperEngine engine) {
+        super(engine);
+    }
+
     @Override
-    public HopperEngine getEngine() {
-        return null;
+    protected void inizializeEngine(HopperEngine engine) {
+        // Inizialize the hopperEnding with custom configuration
+        engine.inizialize(new HopperEngineConfiguration().setSimplifyResponse(true).setWeightLimit(3));
     }
 }

@@ -3,11 +3,11 @@ package com.graphhopper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.graphhopper.bean.RoutePoint;
+import com.graphhopper.bean.RouteInstruction;
 import com.graphhopper.client.DesktopHopperClient;
+import com.graphhopper.internal.HopperEngine;
 
 import java.io.IOException;
-import java.util.Random;
 
 public class Example {
 
@@ -16,32 +16,22 @@ public class Example {
         // 'cause "GraphHopperSomething" is TOO much long
         // and "GHSomething" is mostly unreadable
 
-        HopperResponse res = new DesktopHopperClient()
-                .route(new HopperRequest(52.47379, 13.362808, 52.4736925, 13.3904394));
+        // Step 1: Create an Engine
+        HopperEngine engine = new HopperEngine("italy.osm");
 
-        boolean severalHundredRequestsPerSecond = new Random().nextBoolean();
+        // Step 2: Create a Client
+        // It will inizialize the engine for the user, see AbstractHopperClient constructor
+        HopperClient client = new DesktopHopperClient(engine);
 
-        double lat = 0, lon = 0;
-        if(severalHundredRequestsPerSecond) {
-            // For advanced people with GC concerns
-            for(double[] point : res.getCoordinates()) {
-                lat = point[0];
-                lon = point[1];
-            }
-        } else {
-            // For normal people
-            for(RoutePoint point : res.getPoints()) {
-                lat = point.getLatitude();
-                lon = point.getLongitude();
-            }
+        // Step 3: Use it
+        HopperResponse res = client.route(new HopperRequest(52.47379, 13.362808, 52.4736925, 13.3904394));
+
+        // Step 4: Traverse the response
+        for(RouteInstruction instruction : res.getInstructions()) {
+            System.out.println(instruction.getText());
         }
 
-        System.out.println("Paranoic Mode: " + severalHundredRequestsPerSecond);
-        System.out.println(lat + " " + lon);
-        System.out.println(res.getBbox().getMaxLatitude());
-        System.out.println(res.getPolyline());
-
-        // Serialization Example
+        // Step 5 [Optional] Serialize
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);// Optional
 
@@ -49,7 +39,7 @@ public class Example {
         String jsonString = mapper.writeValueAsString(res);
         System.out.println(jsonString);
 
-        // JsonToObject (yes, the web-client can be almost fired now :)
+        // JsonToObject
         HopperResponse serializerResponse = mapper.readValue(jsonString, HopperResponse.class);
         System.out.println("From JSON: " + serializerResponse.getDistance());
     }
