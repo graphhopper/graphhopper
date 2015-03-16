@@ -22,6 +22,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -29,7 +30,7 @@ import java.util.List;
  * <p/>
  * @author Peter Karich
  */
-public class PointList implements PointAccess
+public class PointList implements Iterable<GHPoint3D>, PointAccess
 {
     private final static DistanceCalc3D distCalc3D = Helper.DIST_3D;
     private static String ERR_MSG = "Tried to access PointList with too big index!";
@@ -572,5 +573,34 @@ public class PointList implements PointAccess
     int getCapacity()
     {
         return latitudes.length;
+    }
+
+    @Override
+    public Iterator<GHPoint3D> iterator()
+    {
+        return new Iterator<GHPoint3D>()
+        {
+            int counter = 0;
+
+            @Override
+            public boolean hasNext()
+            {
+                return counter < PointList.this.getSize();
+            }
+
+            @Override
+            public GHPoint3D next()
+            {
+                GHPoint3D point = PointList.this.toGHPoint(counter);
+                counter++;
+                return point;
+            }
+
+            @Override
+            public void remove()
+            {
+                throw new UnsupportedOperationException("Not supported.");
+            }
+        };
     }
 }
