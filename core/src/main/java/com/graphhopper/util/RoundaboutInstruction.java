@@ -9,7 +9,8 @@ import java.util.Map;
 public class RoundaboutInstruction extends Instruction
 {
     private int exitNumber = 0;
-    private int clockwise = 0; // 0 undetermined, 1 clockwise, -1 counterclockwise, 2 inconsistent
+    // 0 undetermined, 1 clockwise, -1 counterclockwise, 2 inconsistent
+    private int clockwise = 0;
     private boolean exited = false;
     private double radian = Double.NaN;
 
@@ -107,6 +108,9 @@ public class RoundaboutInstruction extends Instruction
     @Override
     public String getTurnDescription( Translation tr )
     {
+        if (rawName)
+            return getName();
+
         String str;
         String streetName = getName();
         int indi = getSign();

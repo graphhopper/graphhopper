@@ -190,7 +190,7 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("railway", "station");
         way.setTag("bicycle", "yes");
         // allow stations if explicitely tagged
-        assertNotSame(0, encoder.acceptWay(way));
+        assertNotEquals(0, encoder.acceptWay(way));
 
         way = new OSMWay(1);
         way.setTag("highway", "secondary");
@@ -198,6 +198,24 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("bicycle", "no");
         // disallow
         assertEquals(0, encoder.acceptWay(way));
+
+        way = new OSMWay(1);
+        way.setTag("railway", "platform");
+        long flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertNotEquals(0, flags);
+
+        way = new OSMWay(1);
+        way.setTag("highway", "track");
+        way.setTag("railway", "platform");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertNotEquals(0, flags);
+
+        way = new OSMWay(1);
+        way.setTag("highway", "track");
+        way.setTag("railway", "platform");
+        way.setTag("bicycle", "no");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertEquals(0, flags);
     }
 
     @Test
@@ -287,6 +305,17 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("surface", "grass");
         wayType = getWayTypeFromFlags(way);
         assertEquals("way, unpaved", wayType);
+
+        way.clearTags();
+        way.setTag("railway", "platform");
+        wayType = getWayTypeFromFlags(way);
+        assertEquals("get off the bike", wayType);
+
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("railway", "platform");
+        wayType = getWayTypeFromFlags(way);
+        assertEquals("get off the bike, unpaved", wayType);
     }
 
     @Test

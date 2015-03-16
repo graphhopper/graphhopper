@@ -46,6 +46,14 @@ public class InstructionList implements Iterable<Instruction>
         this.tr = tr;
     }
 
+    public void replaceLast( Instruction instr )
+    {
+        if (instructions.isEmpty())
+            throw new IllegalStateException("Cannot replace last instruction as list is empty");
+
+        instructions.set(instructions.size() - 1, instr);
+    }
+
     public void add( Instruction instr )
     {
         instructions.add(instr);

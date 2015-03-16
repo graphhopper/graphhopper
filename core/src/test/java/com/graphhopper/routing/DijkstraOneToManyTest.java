@@ -123,7 +123,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     }
 
     @Test
-    public void testIssue239()
+    public void testIssue239_and362()
     {
         Graph g = createGraph(false);
         g.edge(0, 1, 1, true);
@@ -137,6 +137,9 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
         DijkstraOneToMany algo = (DijkstraOneToMany) createAlgo(g);
         assertEquals(-1, algo.findEndNode(0, 4));
         assertEquals(-1, algo.findEndNode(0, 4));
+
+        assertEquals(1, algo.findEndNode(0, 1));
+        assertEquals(1, algo.findEndNode(0, 1));
     }
 
     @Test

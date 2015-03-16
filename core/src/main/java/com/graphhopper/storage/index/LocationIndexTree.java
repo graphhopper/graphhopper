@@ -246,27 +246,6 @@ public class LocationIndexTree implements LocationIndex
     }
 
     @Override
-    public boolean loadExisting()
-    {
-        if (initialized)
-            throw new IllegalStateException("Call loadExisting only once");
-
-        if (!dataAccess.loadExisting())
-            return false;
-
-        if (dataAccess.getHeader(0) != MAGIC_INT)
-            throw new IllegalStateException("incorrect location2id index version, expected:" + MAGIC_INT);
-
-        if (dataAccess.getHeader(1 * 4) != calcChecksum())
-            throw new IllegalStateException("location2id index was opened with incorrect graph");
-
-        setMinResolutionInMeter(dataAccess.getHeader(2 * 4));
-        prepareAlgo();
-        initialized = true;
-        return true;
-    }
-
-    @Override
     public LocationIndex setResolution( int minResolutionInMeter )
     {
         if (minResolutionInMeter <= 0)
@@ -293,9 +272,31 @@ public class LocationIndexTree implements LocationIndex
     }
 
     @Override
+    public boolean loadExisting()
+    {
+        if (initialized)
+            throw new IllegalStateException("Call loadExisting only once");
+
+        if (!dataAccess.loadExisting())
+            return false;
+
+        if (dataAccess.getHeader(0) != MAGIC_INT)
+            throw new IllegalStateException("incorrect location2id index version, expected:" + MAGIC_INT);
+
+        if (dataAccess.getHeader(1 * 4) != calcChecksum())
+            throw new IllegalStateException("location2id index was opened with incorrect graph: "
+                    + dataAccess.getHeader(1 * 4) + " vs. " + calcChecksum());
+
+        setMinResolutionInMeter(dataAccess.getHeader(2 * 4));
+        prepareAlgo();
+        initialized = true;
+        return true;
+    }
+
+    @Override
     public void flush()
     {
-        dataAccess.setHeader(0, MAGIC_INT);
+        dataAccess.setHeader(0, MAGIC_INT);        
         dataAccess.setHeader(1 * 4, calcChecksum());
         dataAccess.setHeader(2 * 4, minResolutionInMeter);
 
@@ -331,6 +332,7 @@ public class LocationIndexTree implements LocationIndex
                 + ", leafs:" + Helper.nf(inMem.leafs)
                 + ", precision:" + minResolutionInMeter
                 + ", depth:" + entries.length
+                + ", checksum:" + calcChecksum()
                 + ", entries:" + Arrays.toString(entries)
                 + ", entriesPerLeaf:" + entriesPerLeaf);
 
