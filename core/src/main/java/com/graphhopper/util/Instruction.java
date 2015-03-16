@@ -219,8 +219,9 @@ public class Instruction
     }
 
     /**
-     * Return the azimuth in degree based on the first tracksegment of the instruction. If
-     * Instruction does not contain enough coordinate points, an empty string will be returned.
+     * Return the azimuth in degree based on the first tracksegment of this instruction. If this
+     * instruction contains less than 2 points then NaN will be returned or the specified
+     * instruction will be used if that is the finish instruction.
      */
     public double calcAzimuth( Instruction nextI )
     {
