@@ -1,23 +1,14 @@
 package com.graphhopper.client;
 
 
-import com.graphhopper.internal.HopperEngine;
-import com.graphhopper.internal.HopperEngineConfiguration;
+import com.graphhopper.HopperEngine;
 
 public class DesktopHopperClient extends AbstractHopperClient {
 
-    private final HopperEngineConfiguration configuration = new HopperEngineConfiguration()
-            .setSimplifyResponse(true)
-            .setWeightLimit(3);
-
     public DesktopHopperClient(HopperEngine engine) {
         super(engine);
+
+        // Example
+        engine.getConfiguration().setSimplifyResponse(true);
     }
-
-    @Override
-    protected HopperEngineConfiguration getConfiguration() {
-        return configuration;
-    }
-
-
 }

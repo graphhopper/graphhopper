@@ -1,4 +1,4 @@
-package com.graphhopper.internal;
+package com.graphhopper.engine;
 
 // Cointains all (and only) the configuration for an HopperEngine
 // Usually each HopperClient provides its customized configuration

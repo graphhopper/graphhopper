@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.graphhopper.bean.RouteInstruction;
 import com.graphhopper.client.DesktopHopperClient;
-import com.graphhopper.internal.HopperEngine;
+import com.graphhopper.engine.FileHopperEngine;
 
 import java.io.IOException;
 
@@ -13,7 +13,7 @@ public class Example {
 
     public static void main(String[] args) throws IOException {
         // Step 1: Create an Engine
-        HopperEngine engine = new HopperEngine("italy.osm");
+        HopperEngine engine = new FileHopperEngine("italy.osm");
 
         // Step 2: Create a Client
         // It will inizialize the engine for the user, see AbstractHopperClient constructor

@@ -1,19 +1,13 @@
 package com.graphhopper.client;
 
 
-import com.graphhopper.internal.HopperEngine;
-import com.graphhopper.internal.HopperEngineConfiguration;
+import com.graphhopper.HopperEngine;
 
 public class MobileHopperClient extends AbstractHopperClient {
 
     public MobileHopperClient(HopperEngine engine) {
         super(engine);
+
+        // See DesktopHopperClient
     }
-
-    @Override
-    protected HopperEngineConfiguration getConfiguration() {
-        return null;// see DesktopHopperClient for an example
-    }
-
-
 }
