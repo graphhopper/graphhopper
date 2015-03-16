@@ -8,15 +8,16 @@ import com.graphhopper.bean.RouteInstruction;
 import com.graphhopper.bean.RoutePoint;
 import com.graphhopper.internal.HopperEngine;
 import com.graphhopper.routing.Path;
+import com.graphhopper.util.Translation;
 
 import java.util.ArrayList;
 import java.util.List;
 
-// Please do not throw an error if hasError (with check everywhere)
-// Throws errors on errors is an anti-pattern
+
 public abstract class AbstractHopperClient implements HopperClient {
 
     private final HopperEngine engine;
+    private Translation translation;
     // We need a TranslationMap too and some other classes here....
 
     public AbstractHopperClient(HopperEngine engine) {

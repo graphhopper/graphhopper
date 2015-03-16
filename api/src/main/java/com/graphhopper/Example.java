@@ -12,10 +12,6 @@ import java.io.IOException;
 public class Example {
 
     public static void main(String[] args) throws IOException {
-        // Note: I made a new *Hopper* naming convention,
-        // 'cause "GraphHopperSomething" is TOO much long
-        // and "GHSomething" is mostly unreadable
-
         // Step 1: Create an Engine
         HopperEngine engine = new HopperEngine("italy.osm");
 
@@ -31,11 +27,9 @@ public class Example {
             System.out.println(instruction.getText());
         }
 
-        // Step 5 [Optional] Serialize
+        // Step 5 [Optional]: Serialize ObjectToJson
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);// Optional
-
-        // ObjectToJson
         String jsonString = mapper.writeValueAsString(res);
         System.out.println(jsonString);
 

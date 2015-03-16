@@ -1,21 +1,17 @@
 package com.graphhopper;
 
-// extends GHRequest only temporary
-// GHRequest needs some love too, but time is sparce...
+// Extends GHRequest only temporary
+
+// While some of this flags tecnically intersects, the developer really think about
+// his response and what he gets, not about the implementation below it
+
+// Right now is ALL enabled by default, not sure about this
 public class HopperRequest extends GHRequest {
 
     public HopperRequest(double fromLat, double fromLon, double toLat, double toLon) {
         super(fromLat, fromLon, toLat, toLon);
     }
 
-    /**
-     * I know, the fetching of some of this tecnically intersects, but the developer really think about
-     * HIS RESPONSE and what he gets, not about the implementation below it, and nobody tell us that
-     * we cannot find some optimization for removing some fetch-dependencies in the future.
-     * Bonus: the REST response can be "stripped down".
-     *
-     * By default is ALL enabled, but the advanced user can choose.
-     */
     private boolean fetchPolyline = true;// global route
 
     private boolean fetchCoordinates = true;// global route
@@ -29,6 +25,8 @@ public class HopperRequest extends GHRequest {
     private boolean fetchInstructionsPolyline = true;// for each instruction
 
     private boolean fetchInstructionsCoordinates = true;// for each instruction
+
+    /** ********************************* **/
 
     public boolean isFetchPolyline() {
         return fetchPolyline;

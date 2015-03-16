@@ -17,9 +17,9 @@ public class RouteInstruction {
 
     private int[] interval;
 
-    private List<RoutePoint> points;// LazyPointList: must be documented VERY well
+    private List<RoutePoint> points;// LazyPointList
 
-    private List<double[]> coordinates;// Removed the immutable "LineString" for each request, yes, not plug-and-play on leaflet, but managing forever a constant is a bad idea
+    private List<double[]> coordinates;
 
     private String polyline;
 

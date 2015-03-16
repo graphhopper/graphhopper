@@ -12,7 +12,7 @@ public class DesktopHopperClient extends AbstractHopperClient {
 
     @Override
     protected void inizializeEngine(HopperEngine engine) {
-        // Inizialize the hopperEnding with custom configuration
+        // Inizializes the hopper with custom configuration
         engine.inizialize(new HopperEngineConfiguration().setSimplifyResponse(true).setWeightLimit(3));
     }
 }

@@ -28,7 +28,8 @@ public class HopperEngine {
         // This must allow to build RouteInstruction and RoutePoint and RouteError
         // in AbstractHopperClient.route()
         //
-        // I'm not actually sure that List<Path> is actually sufficient, but anyway...
+        // I'm not actually sure that List<Path> is actually sufficient, probably not,
+        // but anyway we can make an public EngineResponse route() or something like that...
 
         return new ArrayList<Path>();
     }

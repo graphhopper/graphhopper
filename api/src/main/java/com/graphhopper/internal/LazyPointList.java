@@ -5,6 +5,10 @@ import com.graphhopper.bean.RoutePoint;
 
 import java.util.*;
 
+// LazyList which populates (form coordinates) only on user usage
+//
+// This is an optimization only, totally transparent to the user
+// As the List in HopperResponse are simply List<RoutePoint>
 public class LazyPointList implements List<RoutePoint> {
 
     private List<RoutePoint> instance;

@@ -8,7 +8,6 @@ import javax.xml.bind.annotation.XmlAccessorType;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @XmlAccessorType(value = XmlAccessType.FIELD)
-// not the real "Throwable" inside, but who cares? Abstraction is the key :)
 public class RouteError {
 
     private String text;
