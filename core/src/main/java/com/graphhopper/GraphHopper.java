@@ -66,7 +66,6 @@ public class GraphHopper implements GraphHopperAPI
     private double defaultWeightLimit = Double.MAX_VALUE;
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
-    private String defaultVehicleStr;
     private RoutingAlgorithmFactory algoFactory;
     // for index
     private LocationIndex locationIndex;

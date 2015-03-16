@@ -94,7 +94,7 @@ public class GraphHopperIT
         List<Map<String, Object>> resultJson = il.createJson();
         // TODO roundabout fine tuning -> enter + leave roundabout (+ two rounabouts -> is it necessary if we do not leave the street?)
         assertEquals("Continue onto Avenue des Guelfes", resultJson.get(0).get("text"));
-        assertEquals("Turn slight left onto Avenue des Papalins", resultJson.get(1).get("text"));
+        assertEquals("Continue onto Avenue des Papalins", resultJson.get(1).get("text"));
         assertEquals("Turn sharp right onto Quai Jean-Charles Rey", resultJson.get(2).get("text"));
         assertEquals("Turn left", resultJson.get(3).get("text"));
         assertEquals("Turn right onto Avenue Albert II", resultJson.get(4).get("text"));
@@ -136,7 +136,7 @@ public class GraphHopperIT
         assertEquals(26, il.size());
         List<Map<String, Object>> resultJson = il.createJson();
         assertEquals("Continue onto Avenue des Guelfes", resultJson.get(0).get("text"));
-        assertEquals("Turn slight left onto Avenue des Papalins", resultJson.get(1).get("text"));
+        assertEquals("Continue onto Avenue des Papalins", resultJson.get(1).get("text"));
         assertEquals("Turn sharp right onto Quai Jean-Charles Rey", resultJson.get(2).get("text"));
         assertEquals("Turn left", resultJson.get(3).get("text"));
         assertEquals("Turn right onto Avenue Albert II", resultJson.get(4).get("text"));
@@ -147,7 +147,7 @@ public class GraphHopperIT
         assertEquals("Turn left", resultJson.get(21).get("text"));
         assertEquals("Turn right onto Quai Jean-Charles Rey", resultJson.get(22).get("text"));
         assertEquals("Turn sharp left onto Avenue des Papalins", resultJson.get(23).get("text"));
-        assertEquals("Turn slight right onto Avenue des Guelfes", resultJson.get(24).get("text"));
+        assertEquals("Continue onto Avenue des Guelfes", resultJson.get(24).get("text"));
         assertEquals("Finish!", resultJson.get(25).get("text"));
 
         assertEquals(11, (Double) resultJson.get(0).get("distance"), 1);
@@ -225,8 +225,8 @@ public class GraphHopperIT
                 str.substring(0, 662));
 
         assertEquals("(43.727778875703635,7.418772930326453,11.0), (43.72768239068275,7.419007064826944,11.0), "
-                + "(43.727680946587874,7.4191987684222065,11.0)",
-                str.substring(str.length() - 133));
+                + "(43.727680946587874,7.419198768422206,11.0)",
+                str.substring(str.length() - 132));
 
         List<GPXEntry> list = rsp.getInstructions().createGPXList();
         assertEquals(60, list.size());
@@ -267,17 +267,17 @@ public class GraphHopperIT
 
         assertEquals("Continue onto Obere Landstraße", resultJson.get(0).get("text"));
         assertEquals("get off the bike", resultJson.get(0).get("annotation_text"));
-        assertEquals("Turn sharp left onto Kirchengasse", resultJson.get(1).get("text"));
+        assertEquals("Turn left onto Kirchengasse", resultJson.get(1).get("text"));
         assertEquals("get off the bike", resultJson.get(1).get("annotation_text"));
 
-        assertEquals("Turn sharp right onto Pfarrplatz", resultJson.get(2).get("text"));
+        assertEquals("Turn right onto Pfarrplatz", resultJson.get(2).get("text"));
         assertEquals("Turn right onto Margarethenstraße", resultJson.get(3).get("text"));
-        assertEquals("Turn left onto Hoher Markt", resultJson.get(4).get("text"));
-        assertEquals("Turn slight right onto Wegscheid", resultJson.get(5).get("text"));
+        assertEquals("Turn slight left onto Hoher Markt", resultJson.get(4).get("text"));
+        assertEquals("Turn right onto Wegscheid", resultJson.get(5).get("text"));
         assertEquals("Turn slight left onto Untere Landstraße", resultJson.get(6).get("text"));
         assertEquals("Turn right onto Ringstraße, L73", resultJson.get(7).get("text"));
         assertEquals("Continue onto Eyblparkstraße", resultJson.get(8).get("text"));
-        assertEquals("Continue onto Austraße", resultJson.get(9).get("text"));
+        assertEquals("Turn slight left onto Austraße", resultJson.get(9).get("text"));
         assertEquals("Turn slight left onto Rechte Kremszeile", resultJson.get(10).get("text"));
         //..
         assertEquals("Turn right onto Treppelweg", resultJson.get(15).get("text"));
@@ -314,7 +314,7 @@ public class GraphHopperIT
                 .setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
         assertEquals(1, ((RoundaboutInstruction) rsp.getInstructions().get(1)).getExitNumber());
 
-        rsp = tmpHopper.route(new GHRequest(43.735817,7.417096, 43.735666,7.416587)
+        rsp = tmpHopper.route(new GHRequest(43.735817, 7.417096, 43.735666, 7.416587)
                 .setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
         assertEquals(2, ((RoundaboutInstruction) rsp.getInstructions().get(1)).getExitNumber());
     }
