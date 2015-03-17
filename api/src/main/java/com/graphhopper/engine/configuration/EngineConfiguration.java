@@ -1,8 +1,9 @@
 package com.graphhopper.engine.configuration;
 
 // Cointains all (and only) the configuration for an HopperEngine
-// Usually each HopperClient provides its customized configuration
 public abstract class EngineConfiguration {
+
+    private String graphLocation = "";
 
     private double weightLimit = Double.MAX_VALUE;
 
@@ -16,7 +17,6 @@ public abstract class EngineConfiguration {
 
     public EngineConfiguration setWeightLimit(double weightLimit) {
         this.weightLimit = weightLimit;
-
         return this;
     }
 
@@ -26,7 +26,15 @@ public abstract class EngineConfiguration {
 
     public EngineConfiguration setSimplifyResponse(boolean simplifyResponse) {
         this.simplifyResponse = simplifyResponse;
+        return this;
+    }
 
+    public String getGraphLocation() {
+        return graphLocation;
+    }
+
+    public EngineConfiguration setGraphLocation(String graphLocation) {
+        this.graphLocation = graphLocation;
         return this;
     }
 }

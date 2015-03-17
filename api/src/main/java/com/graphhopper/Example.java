@@ -32,7 +32,6 @@ public class Example {
         HopperEngine engine = new FileHopperEngine("italy.osm").inizialize(new MobileEngineConfiguration());
 
         // Step 2: Create a Client
-        // It will inizialize the engine for the user, see AbstractHopperClient constructor
         HopperClient client = new EmbeddedHopperClient(engine);
 
         // Step 3: Use it
