@@ -4,10 +4,12 @@ import com.graphhopper.util.CmdArgs;
 
 public class CmdArgsEngineConfiguration extends EngineConfiguration {
 
-    public CmdArgsEngineConfiguration(CmdArgs args) {
-        // the merge with graphhopper.config can be made outside (must be documented)
-        setGraphLocation(args.get("graph.location", getGraphLocation()));
+    public CmdArgsEngineConfiguration(String configFilePath, CmdArgs args) {
+        this(CmdArgs.readFromConfigAndMerge(args, "config", configFilePath));
+    }
 
+    public CmdArgsEngineConfiguration(CmdArgs args) {
+        setGraphLocation(args.get("graph.location", getGraphLocation()));
         // etc...
     }
 }
