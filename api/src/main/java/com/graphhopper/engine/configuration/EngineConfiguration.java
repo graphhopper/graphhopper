@@ -1,8 +1,8 @@
-package com.graphhopper.engine;
+package com.graphhopper.engine.configuration;
 
 // Cointains all (and only) the configuration for an HopperEngine
 // Usually each HopperClient provides its customized configuration
-public class HopperEngineConfiguration {
+public abstract class EngineConfiguration {
 
     private double weightLimit = Double.MAX_VALUE;
 
@@ -14,7 +14,7 @@ public class HopperEngineConfiguration {
         return weightLimit;
     }
 
-    public HopperEngineConfiguration setWeightLimit(double weightLimit) {
+    public EngineConfiguration setWeightLimit(double weightLimit) {
         this.weightLimit = weightLimit;
 
         return this;
@@ -24,7 +24,7 @@ public class HopperEngineConfiguration {
         return simplifyResponse;
     }
 
-    public HopperEngineConfiguration setSimplifyResponse(boolean simplifyResponse) {
+    public EngineConfiguration setSimplifyResponse(boolean simplifyResponse) {
         this.simplifyResponse = simplifyResponse;
 
         return this;

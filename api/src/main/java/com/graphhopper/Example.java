@@ -6,8 +6,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.graphhopper.bean.RouteBbox;
 import com.graphhopper.bean.RouteInstruction;
 import com.graphhopper.bean.RoutePoint;
-import com.graphhopper.client.DesktopHopperClient;
+import com.graphhopper.client.EmbeddedHopperClient;
 import com.graphhopper.engine.FileHopperEngine;
+import com.graphhopper.engine.configuration.MobileEngineConfiguration;
 import com.graphhopper.http.GraphHopperWeb;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.internal.LazyPointList;
@@ -27,12 +28,12 @@ import java.util.Map;
 public class Example {
 
     public static void main(String[] args) throws IOException {
-        // Step 1: Create an Engine
-        HopperEngine engine = new FileHopperEngine("italy.osm");
+        // Step 1: Create an Engine and choose the good configuration
+        HopperEngine engine = new FileHopperEngine("italy.osm").inizialize(new MobileEngineConfiguration());
 
         // Step 2: Create a Client
         // It will inizialize the engine for the user, see AbstractHopperClient constructor
-        HopperClient client = new DesktopHopperClient(engine);
+        HopperClient client = new EmbeddedHopperClient(engine);
 
         // Step 3: Use it
         HopperRequest req = new HopperRequest(52.47379, 13.362808, 52.4736925, 13.3904394);

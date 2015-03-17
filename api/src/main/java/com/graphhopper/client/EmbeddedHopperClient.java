@@ -14,13 +14,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public abstract class AbstractHopperClient implements HopperClient {
+public class EmbeddedHopperClient implements HopperClient {
 
     private final HopperEngine engine;
     private Translation translation;
     // We need a TranslationMap too and some other classes here....
 
-    public AbstractHopperClient(HopperEngine engine) {
+    public EmbeddedHopperClient(HopperEngine engine) {
         this.engine = engine;
     }
 
