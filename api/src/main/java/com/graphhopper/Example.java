@@ -36,17 +36,14 @@ public class Example {
 
         // Step 3: Use it
         HopperRequest req = new HopperRequest(52.47379, 13.362808, 52.4736925, 13.3904394);
-        HopperResponse res = client.route(req);
-
-        // Step 3.1: Replace it with a fake response for testing, for now...
-        res = new Example().getFakeResponseForTestingSerialization(req);
+        HopperResponse res = /** client.route(req); **/ new Example().getFakeResponseForTestingSerialization(req);
 
         // Step 4.0: Traverse the response
         for(RouteInstruction instruction : res.getInstructions()) {
             System.out.println("Instruction Text: " + instruction.getText());
         }
 
-        //Step 4.1 You can use List<Point>
+        //Step 4.1 You can use List<RoutePoint>
         for(RoutePoint point : res.getPoints()) {
             System.out.println("Latitude from Point s" + point.getLatitude());
         }

@@ -35,12 +35,12 @@ public abstract class AbstractHopperClient implements HopperClient {
             // without instantiating InstructionList or PointList (hopefully)
         }
 
-        if(request.isFetchInstructions()) {
+        if(request.isEnableInstructions()) {
             // Example
             response.setInstructions(instructions);
         }
 
-        if(request.isFetchPoints()) {
+        if(request.isEnablePoints()) {
             // Example
             response.setPoints(points);
         }

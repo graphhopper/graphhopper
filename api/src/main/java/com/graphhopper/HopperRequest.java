@@ -12,75 +12,75 @@ public class HopperRequest extends GHRequest {
         super(fromLat, fromLon, toLat, toLon);
     }
 
-    private boolean fetchPolyline = true;// global route
+    private boolean enablePolyline = true;// global route
 
-    private boolean fetchCoordinates = true;// global route
+    private boolean enableCoordinates = true;// global route
 
-    private boolean fetchPoints = true;// global route
+    private boolean enablePoints = true;// global route
 
-    private boolean fetchInstructions = true;// global route
+    private boolean enableInstructions = true;// global route
 
-    private boolean fetchInstructionsPoints = true;// for each instruction
+    private boolean enableInstructionsPoints = true;// for each instruction
 
-    private boolean fetchInstructionsPolyline = true;// for each instruction
+    private boolean enableInstructionsPolyline = true;// for each instruction
 
-    private boolean fetchInstructionsCoordinates = true;// for each instruction
+    private boolean enableInstructionsCoordinates = true;// for each instruction
 
     /** ********************************* **/
 
-    public boolean isFetchPolyline() {
-        return fetchPolyline;
+    public boolean isEnablePolyline() {
+        return enablePolyline;
     }
 
-    public void setFetchPolyline(boolean fetchPolyline) {
-        this.fetchPolyline = fetchPolyline;
+    public void setEnablePolyline(boolean enablePolyline) {
+        this.enablePolyline = enablePolyline;
     }
 
-    public boolean isFetchCoordinates() {
-        return fetchCoordinates;
+    public boolean isEnableCoordinates() {
+        return enableCoordinates;
     }
 
-    public void setFetchCoordinates(boolean fetchCoordinates) {
-        this.fetchCoordinates = fetchCoordinates;
+    public void setEnableCoordinates(boolean enableCoordinates) {
+        this.enableCoordinates = enableCoordinates;
     }
 
-    public boolean isFetchPoints() {
-        return fetchPoints;
+    public boolean isEnablePoints() {
+        return enablePoints;
     }
 
-    public void setFetchPoints(boolean fetchPoints) {
-        this.fetchPoints = fetchPoints;
+    public void setEnablePoints(boolean enablePoints) {
+        this.enablePoints = enablePoints;
     }
 
-    public boolean isFetchInstructions() {
-        return fetchInstructions;
+    public boolean isEnableInstructions() {
+        return enableInstructions;
     }
 
-    public void setFetchInstructions(boolean fetchInstructions) {
-        this.fetchInstructions = fetchInstructions;
+    public void setEnableInstructions(boolean enableInstructions) {
+        this.enableInstructions = enableInstructions;
     }
 
-    public boolean isFetchInstructionsPolyline() {
-        return fetchInstructionsPolyline;
+    public boolean isEnableInstructionsPolyline() {
+        return enableInstructionsPolyline;
     }
 
-    public void setFetchInstructionsPolyline(boolean fetchInstructionsPolyline) {
-        this.fetchInstructionsPolyline = fetchInstructionsPolyline;
+    public void setEnableInstructionsPolyline(boolean enableInstructionsPolyline) {
+        this.enableInstructionsPolyline = enableInstructionsPolyline;
     }
 
-    public boolean isFetchInstructionsCoordinates() {
-        return fetchInstructionsCoordinates;
+    public boolean isEnableInstructionsCoordinates() {
+        return enableInstructionsCoordinates;
     }
 
-    public void setFetchInstructionsCoordinates(boolean fetchInstructionsCoordinates) {
-        this.fetchInstructionsCoordinates = fetchInstructionsCoordinates;
+    public void setEnableInstructionsCoordinates(boolean enableInstructionsCoordinates) {
+        this.enableInstructionsCoordinates = enableInstructionsCoordinates;
     }
 
-    public boolean isFetchInstructionsPoints() {
-        return fetchInstructionsPoints;
+    public boolean isEnableInstructionsPoints() {
+        return enableInstructionsPoints;
     }
 
-    public void setFetchInstructionsPoints(boolean fetchInstructionsPoints) {
-        this.fetchInstructionsPoints = fetchInstructionsPoints;
+    public void setEnableInstructionsPoints(boolean enableInstructionsPoints) {
+        this.enableInstructionsPoints = enableInstructionsPoints;
     }
 }
