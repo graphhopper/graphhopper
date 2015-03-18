@@ -1,7 +1,7 @@
 Feature: Verify a route from A to B
-    As a user
-    I want to get a route from location A to location B using the routing service
-    And route should be the fastest route and contain the waypoints,restrictions,time and other instructions
+   As a user
+   I want to get a route from location A to location B using the routing service
+   And route should be the fastest route and contain the waypoints,restrictions,time and other instructions
 
   @Routing
   Scenario Outline: Verify  waypoints on a Route
@@ -111,7 +111,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 52.446564,-1.930268 | 52.446744,-1.929469 | car       |
 
-  @Routing @KnownIssues
+  @KnownIssues
   Scenario Outline: Verify  No Turn Restrictions  on a Route (Birmingham Bristol Road WSPIP-83)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the trackPoints not on the route map:
@@ -144,6 +144,7 @@ Feature: Verify a route from A to B
       | pointA             | pointB             | routetype |
       | 50.91525,-1.318761 | 50.92045,-1.316021 | car       |
 
+ 
   @Routing
   Scenario Outline: Verify  No Turn   (WSPIP-76:Eastley- TWYFORD ROAD )
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
@@ -162,6 +163,7 @@ Feature: Verify a route from A to B
       | wayPointIndex | waypointco          | waypointdesc                              | azimuth | direction | time | distance |
       | 2             | 50.969817,-1.350504 | Turn slight left onto STATION HILL (A335) | 180     | S         | 2932 | 44.811   |
 
+
     Examples: 
       | pointA              | pointB             | routetype |
       | 50.970024,-1.350267 | 50.97008,-1.350521 | car       |
@@ -177,7 +179,7 @@ Feature: Verify a route from A to B
       | pointA             | pointB              | routetype |
       | 51.46882,-0.358687 | 51.469454,-0.357831 | car       |
 
-  @Routing @KnownIssues
+  @KnownIssues
   Scenario Outline: Verify  No Turns with Exceptions(Vehicle Type:Bus)   (High Street-Hounslow)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the trackPoints not on the route map:
