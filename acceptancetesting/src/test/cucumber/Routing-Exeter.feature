@@ -41,7 +41,7 @@ Feature: Verify a route from A to B
 
   @Routing
   Scenario Outline: Verify  one Way  Restrictions (Except Buses) on a Route (SIDWELL STREET-Exeter)
-    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Given I request a route between "<pointA>" and "webDriverHubUrl=http://ND26185.ordsvy.gov.uk:5555/wd/hub<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco         | waypointdesc                    | azimuth | direction | time | distance |
       | 4             | 50.726689,-3.52712 | Turn left onto LONGBROOK STREET | 196     | S         | 8057 | 78.339   |

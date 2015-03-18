@@ -31,7 +31,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.graphhopper.reader.DataReader;
@@ -273,7 +272,6 @@ public class GraphHopperTest
     }
 
     @Test
-    @Ignore
     public void testFootAndCar()
     {
         // now all ways are imported
