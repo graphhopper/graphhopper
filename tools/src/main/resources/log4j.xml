@@ -11,7 +11,7 @@
         <appender-ref ref="stdout"/>
     </appender>   
     <logger name="com.graphhopper" additivity="false">
-        <level value="info" />
+        <level value="warn" />
         <appender-ref ref="ASYNC" />
     </logger>
     <!-- order important otherwise we'll get a warning -->
