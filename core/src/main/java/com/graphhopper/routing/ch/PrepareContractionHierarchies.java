@@ -25,13 +25,7 @@ import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.DataAccess;
-import com.graphhopper.storage.DAType;
-import com.graphhopper.storage.GHDirectory;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import java.util.*;
 import org.slf4j.Logger;
@@ -85,7 +79,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private double nodesContractedPercentage = 100;
     private double logMessagesPercentage = 20;
 
-    public PrepareContractionHierarchies( LevelGraph g, FlagEncoder encoder, Weighting weighting, TraversalMode traversalMode )
+    public PrepareContractionHierarchies( Directory dir, LevelGraph g, FlagEncoder encoder, Weighting weighting, TraversalMode traversalMode )
     {
         this.prepareGraph = g;
         this.traversalMode = traversalMode;
@@ -98,7 +92,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             throw new IllegalArgumentException("Enabling the speed-up mode is currently only supported for the first vehicle.");
 
         prepareWeighting = new PreparationWeighting(weighting);
-        originalEdges = new GHDirectory("", DAType.RAM_INT).find("original_edges");
+        originalEdges = dir.find("original_edges");
         originalEdges.create(1000);
     }
 

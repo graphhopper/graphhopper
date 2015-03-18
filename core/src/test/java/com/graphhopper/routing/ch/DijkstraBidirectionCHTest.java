@@ -19,10 +19,7 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeSkipIterState;
 import com.graphhopper.util.Helper;
@@ -68,8 +65,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     @Override
     public RoutingAlgorithmFactory createFactory( Graph g, AlgorithmOptions opts )
     {
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies((LevelGraph) g,
-                opts.getFlagEncoder(), opts.getWeighting(), TraversalMode.NODE_BASED);
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
+                (LevelGraph) g, opts.getFlagEncoder(), opts.getWeighting(), TraversalMode.NODE_BASED);
         // hack: prepare matrixGraph only once
         if (g != preparedMatrixGraph)
             ch.doWork();
@@ -117,7 +114,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
 
         ShortestWeighting weighting = new ShortestWeighting();
         AlgorithmOptions opts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting);
-        Path p = new PrepareContractionHierarchies(g2, encoder, weighting, TraversalMode.NODE_BASED).
+        Path p = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT), 
+                g2, encoder, weighting, TraversalMode.NODE_BASED).
                 createAlgo(g2, opts).calcPath(0, 7);
 
         assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());
@@ -142,7 +140,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
 
         footEncoder = new FootFlagEncoder();
         new EncodingManager(footEncoder);
-        
+
         super.testCalcFootPath();
         footEncoder = tmpFootEncoder;
         carEncoder = tmpCarEncoder;
