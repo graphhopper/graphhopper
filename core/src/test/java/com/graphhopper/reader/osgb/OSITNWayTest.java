@@ -41,6 +41,7 @@ public class OSITNWayTest {
 		XMLStreamReader parser = factory.createXMLStreamReader(stringReader);
 		OSITNWay way = OSITNWay.create(0, parser);
 		assertTrue(way.hasTag("junction", "roundabout"));
+        assertTrue("ITN Data is uk specific so roundabouts should be clockwise", way.hasTag("direction", "clockwise"));
 	}
 
 }

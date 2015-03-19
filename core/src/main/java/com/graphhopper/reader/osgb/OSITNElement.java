@@ -186,6 +186,7 @@ public abstract class OSITNElement implements RoutingElement {
 //        }
     	if(parser.getElementText().equals("Roundabout")) {
     		setTag("junction", "roundabout");
+            setTag("direction", "clockwise");
     	}
         return parser.getEventType();
     }
