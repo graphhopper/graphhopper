@@ -13,10 +13,10 @@
 # Developers
 
  * [Quickstart](./core/quickstart-from-source.md) for developers. Explains git checkout, IDE setup and commands for setting up a graphhopper server.
- * [Android](./android/index.md)
- * [Windows](./core/windows-setup.md)
- * [Set up and run GraphHopper in Eclipse](./core/eclipse-setup.md)
- * [iOS](https://github.com/graphhopper/graphhopper-ios/)
+ * [Android](./android/index.md) Instructions how to setup the demo project for graphhopper on Android as base for further development (i.e. with Android Studio).
+ * [Windows](./core/windows-setup.md) Documentation about how to get an graphhopper instance running on windows (cygwin).
+ * [Set up and run GraphHopper in Eclipse](./core/eclipse-setup.md) Detailed instructions how to setup Graphhopper in eclipse with maven.
+ * [iOS](https://github.com/graphhopper/graphhopper-ios/) Link to the Graphhopper-iOS github repository.
 
 ## Core
 
