@@ -1,0 +1,2200 @@
+<?xml version='1.0' encoding='UTF-8'?><osgb:FeatureCollection xmlns:osgb='http://www.ordnancesurvey.co.uk/xml/namespaces/osgb' xmlns:gml='http://www.opengis.net/gml' xmlns:xlink='http://www.w3.org/1999/xlink' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='http://www.ordnancesurvey.co.uk/xml/namespaces/osgb http://www.ordnancesurvey.co.uk/xml/schema/v7/OSDNFFeatures.xsd' fid='GDS-58096-1'><gml:description>Ordnance Survey, (c) Crown Copyright. All rights reserved, 2009-07-30</gml:description><gml:boundedBy><gml:null>unknown</gml:null></gml:boundedBy><osgb:queryTime>2009-07-30T02:01:07</osgb:queryTime><osgb:queryExtent><osgb:Rectangle srsName='osgb:BNG'><gml:coordinates>291000.000,92000.000 293000.000,94000.000</gml:coordinates></osgb:Rectangle></osgb:queryExtent>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220434'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>No Turn</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='-' xlink:href='#osgb4000000025346073'/>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025346072'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220436'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>No Turn</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='-' xlink:href='#osgb4000000025346074'/>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025346075'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220437'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>No Turn</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='-' xlink:href='#osgb4000000025346092'/>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025351705'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220469'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='-' xlink:href='#osgb4000000025346073'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220471'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='-' xlink:href='#osgb4000000025346074'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220472'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025346072'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220473'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025346076'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220474'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025353490'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220475'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025346075'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220476'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025346077'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220477'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025346110'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220478'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025346078'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220479'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='-' xlink:href='#osgb4000000025346092'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220514'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>No Turn</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='-' xlink:href='#osgb4000000025346107'/>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025346106'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220516'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>No Turn</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='-' xlink:href='#osgb4000000025346109'/>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025346108'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220518'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='-' xlink:href='#osgb4000000025346107'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220519'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025346106'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220520'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025351713'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220521'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025346111'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220522'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025346108'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220523'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025346112'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220524'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025351705'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220525'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025351699'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220526'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025351714'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025220527'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>One Way</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='-' xlink:href='#osgb4000000025346109'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025367755'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2003-04-23</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:vehicleQualifier>
+<osgb:type exceptFor='true'>Cycles</osgb:type>
+<osgb:type exceptFor='true'>Buses</osgb:type>
+<osgb:use exceptFor='true'>Loading And Unloading</osgb:use>
+<osgb:use exceptFor='true'>Taxis</osgb:use>
+</osgb:vehicleQualifier>
+<osgb:environmentQualifier>
+<osgb:instruction>No Entry</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025336190'/>
+<osgb:distanceFromStart>0.00</osgb:distanceFromStart>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292602.000,92926.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025383303'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-21</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>Mandatory Turn</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='-' xlink:href='#osgb4000000025321264'/>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025321253'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025383329'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-21</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:environmentQualifier>
+<osgb:instruction>No Turn</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='-' xlink:href='#osgb4000000025321253'/>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025321264'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadRouteInformation fid='osgb4000000025455125'>
+<osgb:version>1</osgb:version>
+<osgb:versionDate>2009-03-29</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2009-02-10</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:vehicleQualifier>
+<osgb:use exceptFor='false'>Local Buses</osgb:use>
+<osgb:use exceptFor='false'>Taxis</osgb:use>
+</osgb:vehicleQualifier>
+<osgb:environmentQualifier>
+<osgb:instruction>No Turn</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025321266'/>
+<osgb:directedLink orientation='+' xlink:href='#osgb4000000025336190'/>
+</osgb:RoadRouteInformation>
+</osgb:roadInformationMember>
+<osgb:roadInformationMember>
+<osgb:RoadLinkInformation fid='osgb4000000025455119'>
+<osgb:version>1</osgb:version>
+<osgb:versionDate>2009-03-29</osgb:versionDate>
+<osgb:theme>Road Routing Information</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2009-02-10</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Routing Information</osgb:descriptiveGroup>
+<osgb:vehicleQualifier>
+<osgb:use exceptFor='false'>Local Buses</osgb:use>
+<osgb:use exceptFor='false'>Taxis</osgb:use>
+</osgb:vehicleQualifier>
+<osgb:environmentQualifier>
+<osgb:instruction>Access Limited To</osgb:instruction>
+</osgb:environmentQualifier>
+<osgb:referenceToRoadLink xlink:href='#osgb4000000025346092'/>
+</osgb:RoadLinkInformation>
+</osgb:roadInformationMember>
+<osgb:roadMember>
+<osgb:Road fid='osgb4000000025357264'>
+<osgb:version>6</osgb:version>
+<osgb:versionDate>2009-06-08</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2003-03-13</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2008-10-08</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2009-02-12</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2009-05-20</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Named Road</osgb:descriptiveGroup>
+<osgb:roadName>PARIS STREET</osgb:roadName>
+<osgb:networkMember xlink:href='#osgb4000000025321216'/>
+<osgb:networkMember xlink:href='#osgb4000000025321217'/>
+<osgb:networkMember xlink:href='#osgb4000000025321219'/>
+<osgb:networkMember xlink:href='#osgb4000000025336179'/>
+<osgb:networkMember xlink:href='#osgb4000000025346070'/>
+<osgb:networkMember xlink:href='#osgb4000000025346074'/>
+<osgb:networkMember xlink:href='#osgb4000000025346075'/>
+<osgb:networkMember xlink:href='#osgb4000000025351704'/>
+<osgb:boundedBy>
+<gml:Box srsName='osgb:BNG'>
+<gml:coordinates>292320.737,92814.101 292604.000,92881.942</gml:coordinates>
+</gml:Box>
+</osgb:boundedBy>
+</osgb:Road>
+</osgb:roadMember>
+<osgb:roadMember>
+<osgb:Road fid='osgb4000000025408360'>
+<osgb:version>16</osgb:version>
+<osgb:versionDate>2009-06-09</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2005-02-11</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2005-03-01</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2005-04-21</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2005-05-08</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2005-09-27</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2006-08-08</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2008-01-02</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2008-02-11</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2008-05-09</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2008-06-11</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2008-08-29</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2008-10-29</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2008-11-27</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2009-02-18</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2009-04-29</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>B Road</osgb:descriptiveGroup>
+<osgb:roadName>B3212</osgb:roadName>
+<osgb:networkMember xlink:href='#osgb4000000025281619'/>
+<osgb:networkMember xlink:href='#osgb4000000025281649'/>
+<osgb:networkMember xlink:href='#osgb4000000025281718'/>
+<osgb:networkMember xlink:href='#osgb4000000025281734'/>
+<osgb:networkMember xlink:href='#osgb4000000025282404'/>
+<osgb:networkMember xlink:href='#osgb4000000025282483'/>
+<osgb:networkMember xlink:href='#osgb4000000025282946'/>
+<osgb:networkMember xlink:href='#osgb4000000025285559'/>
+<osgb:networkMember xlink:href='#osgb4000000025287400'/>
+<osgb:networkMember xlink:href='#osgb4000000025287401'/>
+<osgb:networkMember xlink:href='#osgb4000000025287507'/>
+<osgb:networkMember xlink:href='#osgb4000000025287546'/>
+<osgb:networkMember xlink:href='#osgb4000000025287549'/>
+<osgb:networkMember xlink:href='#osgb4000000025287576'/>
+<osgb:networkMember xlink:href='#osgb4000000025287594'/>
+<osgb:networkMember xlink:href='#osgb4000000025287599'/>
+<osgb:networkMember xlink:href='#osgb4000000025287602'/>
+<osgb:networkMember xlink:href='#osgb4000000025287603'/>
+<osgb:networkMember xlink:href='#osgb4000000025287880'/>
+<osgb:networkMember xlink:href='#osgb4000000025287883'/>
+<osgb:networkMember xlink:href='#osgb4000000025287885'/>
+<osgb:networkMember xlink:href='#osgb4000000025292029'/>
+<osgb:networkMember xlink:href='#osgb4000000025292093'/>
+<osgb:networkMember xlink:href='#osgb4000000025292096'/>
+<osgb:networkMember xlink:href='#osgb4000000025292098'/>
+<osgb:networkMember xlink:href='#osgb4000000025292257'/>
+<osgb:networkMember xlink:href='#osgb4000000025292662'/>
+<osgb:networkMember xlink:href='#osgb4000000025292663'/>
+<osgb:networkMember xlink:href='#osgb4000000025292672'/>
+<osgb:networkMember xlink:href='#osgb4000000025294698'/>
+<osgb:networkMember xlink:href='#osgb4000000025294699'/>
+<osgb:networkMember xlink:href='#osgb4000000025294716'/>
+<osgb:networkMember xlink:href='#osgb4000000025294720'/>
+<osgb:networkMember xlink:href='#osgb4000000025294721'/>
+<osgb:networkMember xlink:href='#osgb4000000025294810'/>
+<osgb:networkMember xlink:href='#osgb4000000025294864'/>
+<osgb:networkMember xlink:href='#osgb4000000025294870'/>
+<osgb:networkMember xlink:href='#osgb4000000025294909'/>
+<osgb:networkMember xlink:href='#osgb4000000025294910'/>
+<osgb:networkMember xlink:href='#osgb4000000025295218'/>
+<osgb:networkMember xlink:href='#osgb4000000025295222'/>
+<osgb:networkMember xlink:href='#osgb4000000025295277'/>
+<osgb:networkMember xlink:href='#osgb4000000025295279'/>
+<osgb:networkMember xlink:href='#osgb4000000025295450'/>
+<osgb:networkMember xlink:href='#osgb4000000025295482'/>
+<osgb:networkMember xlink:href='#osgb4000000025295596'/>
+<osgb:networkMember xlink:href='#osgb4000000025301622'/>
+<osgb:networkMember xlink:href='#osgb4000000025301625'/>
+<osgb:networkMember xlink:href='#osgb4000000025305103'/>
+<osgb:networkMember xlink:href='#osgb4000000025305200'/>
+<osgb:networkMember xlink:href='#osgb4000000025305244'/>
+<osgb:networkMember xlink:href='#osgb4000000025305566'/>
+<osgb:networkMember xlink:href='#osgb4000000025305948'/>
+<osgb:networkMember xlink:href='#osgb4000000025305949'/>
+<osgb:networkMember xlink:href='#osgb4000000025306044'/>
+<osgb:networkMember xlink:href='#osgb4000000025306103'/>
+<osgb:networkMember xlink:href='#osgb4000000025306127'/>
+<osgb:networkMember xlink:href='#osgb4000000025306164'/>
+<osgb:networkMember xlink:href='#osgb4000000025306165'/>
+<osgb:networkMember xlink:href='#osgb4000000025306365'/>
+<osgb:networkMember xlink:href='#osgb4000000025306366'/>
+<osgb:networkMember xlink:href='#osgb4000000025314496'/>
+<osgb:networkMember xlink:href='#osgb4000000025314497'/>
+<osgb:networkMember xlink:href='#osgb4000000025314498'/>
+<osgb:networkMember xlink:href='#osgb4000000025314538'/>
+<osgb:networkMember xlink:href='#osgb4000000025314604'/>
+<osgb:networkMember xlink:href='#osgb4000000025315286'/>
+<osgb:networkMember xlink:href='#osgb4000000025315287'/>
+<osgb:networkMember xlink:href='#osgb4000000025315290'/>
+<osgb:networkMember xlink:href='#osgb4000000025315291'/>
+<osgb:networkMember xlink:href='#osgb4000000025319872'/>
+<osgb:networkMember xlink:href='#osgb4000000025319880'/>
+<osgb:networkMember xlink:href='#osgb4000000025319884'/>
+<osgb:networkMember xlink:href='#osgb4000000025319885'/>
+<osgb:networkMember xlink:href='#osgb4000000025319889'/>
+<osgb:networkMember xlink:href='#osgb4000000025319964'/>
+<osgb:networkMember xlink:href='#osgb4000000025319965'/>
+<osgb:networkMember xlink:href='#osgb4000000025320247'/>
+<osgb:networkMember xlink:href='#osgb4000000025320250'/>
+<osgb:networkMember xlink:href='#osgb4000000025320341'/>
+<osgb:networkMember xlink:href='#osgb4000000025320342'/>
+<osgb:networkMember xlink:href='#osgb4000000025320814'/>
+<osgb:networkMember xlink:href='#osgb4000000025320878'/>
+<osgb:networkMember xlink:href='#osgb4000000025321077'/>
+<osgb:networkMember xlink:href='#osgb4000000025321078'/>
+<osgb:networkMember xlink:href='#osgb4000000025321255'/>
+<osgb:networkMember xlink:href='#osgb4000000025321258'/>
+<osgb:networkMember xlink:href='#osgb4000000025321303'/>
+<osgb:networkMember xlink:href='#osgb4000000025321304'/>
+<osgb:networkMember xlink:href='#osgb4000000025321368'/>
+<osgb:networkMember xlink:href='#osgb4000000025321369'/>
+<osgb:networkMember xlink:href='#osgb4000000025321389'/>
+<osgb:networkMember xlink:href='#osgb4000000025321390'/>
+<osgb:networkMember xlink:href='#osgb4000000025321391'/>
+<osgb:networkMember xlink:href='#osgb4000000025321392'/>
+<osgb:networkMember xlink:href='#osgb4000000025321393'/>
+<osgb:networkMember xlink:href='#osgb4000000025321705'/>
+<osgb:networkMember xlink:href='#osgb4000000025321706'/>
+<osgb:networkMember xlink:href='#osgb4000000025321726'/>
+<osgb:networkMember xlink:href='#osgb4000000025329691'/>
+<osgb:networkMember xlink:href='#osgb4000000025329692'/>
+<osgb:networkMember xlink:href='#osgb4000000025329706'/>
+<osgb:networkMember xlink:href='#osgb4000000025329797'/>
+<osgb:networkMember xlink:href='#osgb4000000025330024'/>
+<osgb:networkMember xlink:href='#osgb4000000025330025'/>
+<osgb:networkMember xlink:href='#osgb4000000025330026'/>
+<osgb:networkMember xlink:href='#osgb4000000025334843'/>
+<osgb:networkMember xlink:href='#osgb4000000025334844'/>
+<osgb:networkMember xlink:href='#osgb4000000025334902'/>
+<osgb:networkMember xlink:href='#osgb4000000025334903'/>
+<osgb:networkMember xlink:href='#osgb4000000025334936'/>
+<osgb:networkMember xlink:href='#osgb4000000025334961'/>
+<osgb:networkMember xlink:href='#osgb4000000025335166'/>
+<osgb:networkMember xlink:href='#osgb4000000025335167'/>
+<osgb:networkMember xlink:href='#osgb4000000025335259'/>
+<osgb:networkMember xlink:href='#osgb4000000025335739'/>
+<osgb:networkMember xlink:href='#osgb4000000025335740'/>
+<osgb:networkMember xlink:href='#osgb4000000025335741'/>
+<osgb:networkMember xlink:href='#osgb4000000025335775'/>
+<osgb:networkMember xlink:href='#osgb4000000025335776'/>
+<osgb:networkMember xlink:href='#osgb4000000025335864'/>
+<osgb:networkMember xlink:href='#osgb4000000025335865'/>
+<osgb:networkMember xlink:href='#osgb4000000025336047'/>
+<osgb:networkMember xlink:href='#osgb4000000025336048'/>
+<osgb:networkMember xlink:href='#osgb4000000025336049'/>
+<osgb:networkMember xlink:href='#osgb4000000025336050'/>
+<osgb:networkMember xlink:href='#osgb4000000025336051'/>
+<osgb:networkMember xlink:href='#osgb4000000025336052'/>
+<osgb:networkMember xlink:href='#osgb4000000025336053'/>
+<osgb:networkMember xlink:href='#osgb4000000025336054'/>
+<osgb:networkMember xlink:href='#osgb4000000025336217'/>
+<osgb:networkMember xlink:href='#osgb4000000025336218'/>
+<osgb:networkMember xlink:href='#osgb4000000025336219'/>
+<osgb:networkMember xlink:href='#osgb4000000025336220'/>
+<osgb:networkMember xlink:href='#osgb4000000025336326'/>
+<osgb:networkMember xlink:href='#osgb4000000025336327'/>
+<osgb:networkMember xlink:href='#osgb4000000025336328'/>
+<osgb:networkMember xlink:href='#osgb4000000025336343'/>
+<osgb:networkMember xlink:href='#osgb4000000025336344'/>
+<osgb:networkMember xlink:href='#osgb4000000025336345'/>
+<osgb:networkMember xlink:href='#osgb4000000025336346'/>
+<osgb:networkMember xlink:href='#osgb4000000025336347'/>
+<osgb:networkMember xlink:href='#osgb4000000025336706'/>
+<osgb:networkMember xlink:href='#osgb4000000025336707'/>
+<osgb:networkMember xlink:href='#osgb4000000025336708'/>
+<osgb:networkMember xlink:href='#osgb4000000025336721'/>
+<osgb:networkMember xlink:href='#osgb4000000025336722'/>
+<osgb:networkMember xlink:href='#osgb4000000025336725'/>
+<osgb:networkMember xlink:href='#osgb4000000025336729'/>
+<osgb:networkMember xlink:href='#osgb4000000025336731'/>
+<osgb:networkMember xlink:href='#osgb4000000025341868'/>
+<osgb:networkMember xlink:href='#osgb4000000025341880'/>
+<osgb:networkMember xlink:href='#osgb4000000025341923'/>
+<osgb:networkMember xlink:href='#osgb4000000025342060'/>
+<osgb:networkMember xlink:href='#osgb4000000025342064'/>
+<osgb:networkMember xlink:href='#osgb4000000025342065'/>
+<osgb:networkMember xlink:href='#osgb4000000025342308'/>
+<osgb:networkMember xlink:href='#osgb4000000025342310'/>
+<osgb:networkMember xlink:href='#osgb4000000025345169'/>
+<osgb:networkMember xlink:href='#osgb4000000025345172'/>
+<osgb:networkMember xlink:href='#osgb4000000025345174'/>
+<osgb:networkMember xlink:href='#osgb4000000025345185'/>
+<osgb:networkMember xlink:href='#osgb4000000025345187'/>
+<osgb:networkMember xlink:href='#osgb4000000025345265'/>
+<osgb:networkMember xlink:href='#osgb4000000025345266'/>
+<osgb:networkMember xlink:href='#osgb4000000025345289'/>
+<osgb:networkMember xlink:href='#osgb4000000025345416'/>
+<osgb:networkMember xlink:href='#osgb4000000025345473'/>
+<osgb:networkMember xlink:href='#osgb4000000025346007'/>
+<osgb:networkMember xlink:href='#osgb4000000025346072'/>
+<osgb:networkMember xlink:href='#osgb4000000025346073'/>
+<osgb:networkMember xlink:href='#osgb4000000025346076'/>
+<osgb:networkMember xlink:href='#osgb4000000025346077'/>
+<osgb:networkMember xlink:href='#osgb4000000025346078'/>
+<osgb:networkMember xlink:href='#osgb4000000025346108'/>
+<osgb:networkMember xlink:href='#osgb4000000025346109'/>
+<osgb:networkMember xlink:href='#osgb4000000025346110'/>
+<osgb:networkMember xlink:href='#osgb4000000025346111'/>
+<osgb:networkMember xlink:href='#osgb4000000025346112'/>
+<osgb:networkMember xlink:href='#osgb4000000025346113'/>
+<osgb:networkMember xlink:href='#osgb4000000025346114'/>
+<osgb:networkMember xlink:href='#osgb4000000025346115'/>
+<osgb:networkMember xlink:href='#osgb4000000025346116'/>
+<osgb:networkMember xlink:href='#osgb4000000025346117'/>
+<osgb:networkMember xlink:href='#osgb4000000025346118'/>
+<osgb:networkMember xlink:href='#osgb4000000025346119'/>
+<osgb:networkMember xlink:href='#osgb4000000025346120'/>
+<osgb:networkMember xlink:href='#osgb4000000025346139'/>
+<osgb:networkMember xlink:href='#osgb4000000025346175'/>
+<osgb:networkMember xlink:href='#osgb4000000025346176'/>
+<osgb:networkMember xlink:href='#osgb4000000025346177'/>
+<osgb:networkMember xlink:href='#osgb4000000025346375'/>
+<osgb:networkMember xlink:href='#osgb4000000025346376'/>
+<osgb:networkMember xlink:href='#osgb4000000025346377'/>
+<osgb:networkMember xlink:href='#osgb4000000025346384'/>
+<osgb:networkMember xlink:href='#osgb4000000025346385'/>
+<osgb:networkMember xlink:href='#osgb4000000025346386'/>
+<osgb:networkMember xlink:href='#osgb4000000025346388'/>
+<osgb:networkMember xlink:href='#osgb4000000025346390'/>
+<osgb:networkMember xlink:href='#osgb4000000025351267'/>
+<osgb:networkMember xlink:href='#osgb4000000025351667'/>
+<osgb:networkMember xlink:href='#osgb4000000025351699'/>
+<osgb:networkMember xlink:href='#osgb4000000025351713'/>
+<osgb:networkMember xlink:href='#osgb4000000025351714'/>
+<osgb:networkMember xlink:href='#osgb4000000025351715'/>
+<osgb:networkMember xlink:href='#osgb4000000025351716'/>
+<osgb:networkMember xlink:href='#osgb4000000025351717'/>
+<osgb:networkMember xlink:href='#osgb4000000025351744'/>
+<osgb:networkMember xlink:href='#osgb4000000025351918'/>
+<osgb:networkMember xlink:href='#osgb4000000025352820'/>
+<osgb:networkMember xlink:href='#osgb4000000025353490'/>
+<osgb:networkMember xlink:href='#osgb4000000025353505'/>
+<osgb:networkMember xlink:href='#osgb4000000025384086'/>
+<osgb:networkMember xlink:href='#osgb4000000025384087'/>
+<osgb:networkMember xlink:href='#osgb4000000025393671'/>
+<osgb:networkMember xlink:href='#osgb4000000025402626'/>
+<osgb:networkMember xlink:href='#osgb4000000025403211'/>
+<osgb:networkMember xlink:href='#osgb4000000025403212'/>
+<osgb:networkMember xlink:href='#osgb4000000025403831'/>
+<osgb:networkMember xlink:href='#osgb4000000025405841'/>
+<osgb:networkMember xlink:href='#osgb4000000025405842'/>
+<osgb:networkMember xlink:href='#osgb4000000025405843'/>
+<osgb:networkMember xlink:href='#osgb4000000025405844'/>
+<osgb:networkMember xlink:href='#osgb4000000025405845'/>
+<osgb:networkMember xlink:href='#osgb4000000025417776'/>
+<osgb:networkMember xlink:href='#osgb4000000025420403'/>
+<osgb:networkMember xlink:href='#osgb4000000025420404'/>
+<osgb:networkMember xlink:href='#osgb4000000025421834'/>
+<osgb:networkMember xlink:href='#osgb4000000025421837'/>
+<osgb:networkMember xlink:href='#osgb4000000025429869'/>
+<osgb:networkMember xlink:href='#osgb4000000025429870'/>
+<osgb:networkMember xlink:href='#osgb4000000025429871'/>
+<osgb:networkMember xlink:href='#osgb4000000025429872'/>
+<osgb:networkMember xlink:href='#osgb4000000025437961'/>
+<osgb:networkMember xlink:href='#osgb4000000025445091'/>
+<osgb:networkMember xlink:href='#osgb4000000025445092'/>
+<osgb:networkMember xlink:href='#osgb4000000025445441'/>
+<osgb:networkMember xlink:href='#osgb4000000025445443'/>
+<osgb:networkMember xlink:href='#osgb4000000025449403'/>
+<osgb:networkMember xlink:href='#osgb4000000025449404'/>
+<osgb:networkMember xlink:href='#osgb4000000025449405'/>
+<osgb:networkMember xlink:href='#osgb4000000025449406'/>
+<osgb:networkMember xlink:href='#osgb4000000025450488'/>
+<osgb:networkMember xlink:href='#osgb4000000025452181'/>
+<osgb:networkMember xlink:href='#osgb4000000025452182'/>
+<osgb:networkMember xlink:href='#osgb4000000025453274'/>
+<osgb:networkMember xlink:href='#osgb4000000025453275'/>
+<osgb:networkMember xlink:href='#osgb4000000025456147'/>
+<osgb:boundedBy>
+<gml:Box srsName='osgb:BNG'>
+<gml:coordinates>252117.000,67875.000 295587.000,93823.000</gml:coordinates>
+</gml:Box>
+</osgb:boundedBy>
+</osgb:Road>
+</osgb:roadMember>
+<osgb:roadMember>
+<osgb:Road fid='osgb4000000025364082'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2003-03-13</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Named Road</osgb:descriptiveGroup>
+<osgb:roadName>CHEEKE STREET</osgb:roadName>
+<osgb:networkMember xlink:href='#osgb4000000025321237'/>
+<osgb:networkMember xlink:href='#osgb4000000025336187'/>
+<osgb:networkMember xlink:href='#osgb4000000025336190'/>
+<osgb:networkMember xlink:href='#osgb4000000025346092'/>
+<osgb:networkMember xlink:href='#osgb4000000025351705'/>
+<osgb:boundedBy>
+<gml:Box srsName='osgb:BNG'>
+<gml:coordinates>292496.231,92870.000 292625.000,93020.730</gml:coordinates>
+</gml:Box>
+</osgb:boundedBy>
+</osgb:Road>
+</osgb:roadMember>
+<osgb:roadMember>
+<osgb:Road fid='osgb4000000025357266'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2003-03-13</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Named Road</osgb:descriptiveGroup>
+<osgb:roadName>WESTERN WAY</osgb:roadName>
+<osgb:networkMember xlink:href='#osgb4000000025295482'/>
+<osgb:networkMember xlink:href='#osgb4000000025321258'/>
+<osgb:networkMember xlink:href='#osgb4000000025336217'/>
+<osgb:networkMember xlink:href='#osgb4000000025336218'/>
+<osgb:networkMember xlink:href='#osgb4000000025346072'/>
+<osgb:networkMember xlink:href='#osgb4000000025346073'/>
+<osgb:networkMember xlink:href='#osgb4000000025346076'/>
+<osgb:networkMember xlink:href='#osgb4000000025346077'/>
+<osgb:networkMember xlink:href='#osgb4000000025346078'/>
+<osgb:networkMember xlink:href='#osgb4000000025346108'/>
+<osgb:networkMember xlink:href='#osgb4000000025346109'/>
+<osgb:networkMember xlink:href='#osgb4000000025346110'/>
+<osgb:networkMember xlink:href='#osgb4000000025346111'/>
+<osgb:networkMember xlink:href='#osgb4000000025346112'/>
+<osgb:networkMember xlink:href='#osgb4000000025351699'/>
+<osgb:networkMember xlink:href='#osgb4000000025351713'/>
+<osgb:networkMember xlink:href='#osgb4000000025351714'/>
+<osgb:networkMember xlink:href='#osgb4000000025353490'/>
+<osgb:boundedBy>
+<gml:Box srsName='osgb:BNG'>
+<gml:coordinates>292598.000,92809.000 292794.000,93214.000</gml:coordinates>
+</gml:Box>
+</osgb:boundedBy>
+</osgb:Road>
+</osgb:roadMember>
+<osgb:roadMember>
+<osgb:Road fid='osgb4000000025355282'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2008-08-19</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2003-03-13</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2008-07-15</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Named Road</osgb:descriptiveGroup>
+<osgb:roadName>HEAVITREE ROAD</osgb:roadName>
+<osgb:networkMember xlink:href='#osgb4000000025295477'/>
+<osgb:networkMember xlink:href='#osgb4000000025321102'/>
+<osgb:networkMember xlink:href='#osgb4000000025321103'/>
+<osgb:networkMember xlink:href='#osgb4000000025321253'/>
+<osgb:networkMember xlink:href='#osgb4000000025321254'/>
+<osgb:networkMember xlink:href='#osgb4000000025321256'/>
+<osgb:networkMember xlink:href='#osgb4000000025321257'/>
+<osgb:networkMember xlink:href='#osgb4000000025336216'/>
+<osgb:networkMember xlink:href='#osgb4000000025346106'/>
+<osgb:networkMember xlink:href='#osgb4000000025346107'/>
+<osgb:networkMember xlink:href='#osgb4000000025384089'/>
+<osgb:networkMember xlink:href='#osgb4000000025447470'/>
+<osgb:boundedBy>
+<gml:Box srsName='osgb:BNG'>
+<gml:coordinates>292641.000,92498.000 293434.000,92842.000</gml:coordinates>
+</gml:Box>
+</osgb:boundedBy>
+</osgb:Road>
+</osgb:roadMember>
+<osgb:roadMember>
+<osgb:Road fid='osgb4000000025366230'>
+<osgb:version>10</osgb:version>
+<osgb:versionDate>2009-03-30</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2003-11-06</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2005-09-08</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2007-04-20</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2008-02-11</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2008-05-09</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2008-08-05</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2008-10-08</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2009-02-12</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>B Road</osgb:descriptiveGroup>
+<osgb:roadName>B3183</osgb:roadName>
+<osgb:networkMember xlink:href='#osgb4000000025295477'/>
+<osgb:networkMember xlink:href='#osgb4000000025295583'/>
+<osgb:networkMember xlink:href='#osgb4000000025306022'/>
+<osgb:networkMember xlink:href='#osgb4000000025306023'/>
+<osgb:networkMember xlink:href='#osgb4000000025306024'/>
+<osgb:networkMember xlink:href='#osgb4000000025306084'/>
+<osgb:networkMember xlink:href='#osgb4000000025306093'/>
+<osgb:networkMember xlink:href='#osgb4000000025306094'/>
+<osgb:networkMember xlink:href='#osgb4000000025306102'/>
+<osgb:networkMember xlink:href='#osgb4000000025306104'/>
+<osgb:networkMember xlink:href='#osgb4000000025306180'/>
+<osgb:networkMember xlink:href='#osgb4000000025306298'/>
+<osgb:networkMember xlink:href='#osgb4000000025306310'/>
+<osgb:networkMember xlink:href='#osgb4000000025306311'/>
+<osgb:networkMember xlink:href='#osgb4000000025321023'/>
+<osgb:networkMember xlink:href='#osgb4000000025321102'/>
+<osgb:networkMember xlink:href='#osgb4000000025321103'/>
+<osgb:networkMember xlink:href='#osgb4000000025321168'/>
+<osgb:networkMember xlink:href='#osgb4000000025321169'/>
+<osgb:networkMember xlink:href='#osgb4000000025321170'/>
+<osgb:networkMember xlink:href='#osgb4000000025321193'/>
+<osgb:networkMember xlink:href='#osgb4000000025321194'/>
+<osgb:networkMember xlink:href='#osgb4000000025321216'/>
+<osgb:networkMember xlink:href='#osgb4000000025321217'/>
+<osgb:networkMember xlink:href='#osgb4000000025321219'/>
+<osgb:networkMember xlink:href='#osgb4000000025321253'/>
+<osgb:networkMember xlink:href='#osgb4000000025321254'/>
+<osgb:networkMember xlink:href='#osgb4000000025321256'/>
+<osgb:networkMember xlink:href='#osgb4000000025321257'/>
+<osgb:networkMember xlink:href='#osgb4000000025321413'/>
+<osgb:networkMember xlink:href='#osgb4000000025321621'/>
+<osgb:networkMember xlink:href='#osgb4000000025321622'/>
+<osgb:networkMember xlink:href='#osgb4000000025321635'/>
+<osgb:networkMember xlink:href='#osgb4000000025321637'/>
+<osgb:networkMember xlink:href='#osgb4000000025321638'/>
+<osgb:networkMember xlink:href='#osgb4000000025321639'/>
+<osgb:networkMember xlink:href='#osgb4000000025321640'/>
+<osgb:networkMember xlink:href='#osgb4000000025335968'/>
+<osgb:networkMember xlink:href='#osgb4000000025335969'/>
+<osgb:networkMember xlink:href='#osgb4000000025335988'/>
+<osgb:networkMember xlink:href='#osgb4000000025335989'/>
+<osgb:networkMember xlink:href='#osgb4000000025336160'/>
+<osgb:networkMember xlink:href='#osgb4000000025336161'/>
+<osgb:networkMember xlink:href='#osgb4000000025336178'/>
+<osgb:networkMember xlink:href='#osgb4000000025336179'/>
+<osgb:networkMember xlink:href='#osgb4000000025336216'/>
+<osgb:networkMember xlink:href='#osgb4000000025336560'/>
+<osgb:networkMember xlink:href='#osgb4000000025336561'/>
+<osgb:networkMember xlink:href='#osgb4000000025336587'/>
+<osgb:networkMember xlink:href='#osgb4000000025336590'/>
+<osgb:networkMember xlink:href='#osgb4000000025336591'/>
+<osgb:networkMember xlink:href='#osgb4000000025336592'/>
+<osgb:networkMember xlink:href='#osgb4000000025336594'/>
+<osgb:networkMember xlink:href='#osgb4000000025336595'/>
+<osgb:networkMember xlink:href='#osgb4000000025336597'/>
+<osgb:networkMember xlink:href='#osgb4000000025336598'/>
+<osgb:networkMember xlink:href='#osgb4000000025345951'/>
+<osgb:networkMember xlink:href='#osgb4000000025346059'/>
+<osgb:networkMember xlink:href='#osgb4000000025346067'/>
+<osgb:networkMember xlink:href='#osgb4000000025346070'/>
+<osgb:networkMember xlink:href='#osgb4000000025346074'/>
+<osgb:networkMember xlink:href='#osgb4000000025346075'/>
+<osgb:networkMember xlink:href='#osgb4000000025346079'/>
+<osgb:networkMember xlink:href='#osgb4000000025346106'/>
+<osgb:networkMember xlink:href='#osgb4000000025346107'/>
+<osgb:networkMember xlink:href='#osgb4000000025346309'/>
+<osgb:networkMember xlink:href='#osgb4000000025346310'/>
+<osgb:networkMember xlink:href='#osgb4000000025346311'/>
+<osgb:networkMember xlink:href='#osgb4000000025346312'/>
+<osgb:networkMember xlink:href='#osgb4000000025346313'/>
+<osgb:networkMember xlink:href='#osgb4000000025346321'/>
+<osgb:networkMember xlink:href='#osgb4000000025346322'/>
+<osgb:networkMember xlink:href='#osgb4000000025351642'/>
+<osgb:networkMember xlink:href='#osgb4000000025351643'/>
+<osgb:networkMember xlink:href='#osgb4000000025351651'/>
+<osgb:networkMember xlink:href='#osgb4000000025351690'/>
+<osgb:networkMember xlink:href='#osgb4000000025351704'/>
+<osgb:networkMember xlink:href='#osgb4000000025351871'/>
+<osgb:networkMember xlink:href='#osgb4000000025353469'/>
+<osgb:networkMember xlink:href='#osgb4000000025353470'/>
+<osgb:networkMember xlink:href='#osgb4000000025353473'/>
+<osgb:networkMember xlink:href='#osgb4000000025353868'/>
+<osgb:networkMember xlink:href='#osgb4000000025384089'/>
+<osgb:networkMember xlink:href='#osgb4000000025421833'/>
+<osgb:networkMember xlink:href='#osgb4000000025421836'/>
+<osgb:networkMember xlink:href='#osgb4000000025421838'/>
+<osgb:networkMember xlink:href='#osgb4000000025439368'/>
+<osgb:networkMember xlink:href='#osgb4000000025439369'/>
+<osgb:networkMember xlink:href='#osgb4000000025447470'/>
+<osgb:networkMember xlink:href='#osgb4000000025447471'/>
+<osgb:networkMember xlink:href='#osgb4000000025447474'/>
+<osgb:networkMember xlink:href='#osgb4000000025455145'/>
+<osgb:boundedBy>
+<gml:Box srsName='osgb:BNG'>
+<gml:coordinates>291119.000,92104.000 295759.000,94104.000</gml:coordinates>
+</gml:Box>
+</osgb:boundedBy>
+</osgb:Road>
+</osgb:roadMember>
+<osgb:roadMember>
+<osgb:Road fid='osgb4000000025357247'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2008-05-27</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2003-03-13</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2008-05-02</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Named Road</osgb:descriptiveGroup>
+<osgb:roadName>WESTERN WAY</osgb:roadName>
+<osgb:networkMember xlink:href='#osgb4000000025306044'/>
+<osgb:networkMember xlink:href='#osgb4000000025306103'/>
+<osgb:networkMember xlink:href='#osgb4000000025336050'/>
+<osgb:networkMember xlink:href='#osgb4000000025336051'/>
+<osgb:networkMember xlink:href='#osgb4000000025351667'/>
+<osgb:networkMember xlink:href='#osgb4000000025445091'/>
+<osgb:networkMember xlink:href='#osgb4000000025445092'/>
+<osgb:boundedBy>
+<gml:Box srsName='osgb:BNG'>
+<gml:coordinates>292499.000,92368.000 292603.000,92809.000</gml:coordinates>
+</gml:Box>
+</osgb:boundedBy>
+</osgb:Road>
+</osgb:roadMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025306103'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Single Carriageway</osgb:natureOfRoad>
+<osgb:length>261.70</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292509.505,92567.022 292511.000,92573.000 292513.000,92578.000 292525.000,92621.000 292569.000,92756.000 292574.000,92769.000 292579.000,92777.000 292588.000,92792.000 292603.000,92809.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025278752'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279072'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002070387684'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222139'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025321253'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Single Carriageway</osgb:natureOfRoad>
+<osgb:length>91.84</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292749.000,92779.000 292747.000,92780.000 292677.000,92811.000 292668.000,92817.000 292666.000,92818.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279154'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279153'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222046'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222048'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025321258'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Single Carriageway</osgb:natureOfRoad>
+<osgb:length>121.56</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292729.000,92982.000 292728.000,92980.000 292657.000,92894.000 292652.000,92888.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279173'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279157'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062221620'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062221636'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025336179'>
+<osgb:version>5</osgb:version>
+<osgb:versionDate>2008-11-07</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-21</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2008-10-08</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Single Carriageway</osgb:natureOfRoad>
+<osgb:length>71.84</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292510.000,92830.000 292516.011,92830.931 292581.000,92841.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279074'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279076'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062221781'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025336190'>
+<osgb:version>5</osgb:version>
+<osgb:versionDate>2006-03-09</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>Local Street</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Single Carriageway</osgb:natureOfRoad>
+<osgb:length>40.56</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292602.000,92926.000 292605.000,92922.000 292608.000,92916.000 292615.000,92888.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279095'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279101'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062221397'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062221602'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025346072'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Traffic Island Link At Junction</osgb:natureOfRoad>
+<osgb:length>18.43</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292603.000,92809.000 292607.000,92827.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279072'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279078'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025346073'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Traffic Island Link At Junction</osgb:natureOfRoad>
+<osgb:length>21.16</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292603.000,92809.000 292612.000,92813.000 292620.000,92821.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279072'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279080'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025346074'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Traffic Island Link At Junction</osgb:natureOfRoad>
+<osgb:length>25.07</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292581.000,92841.000 292604.000,92831.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279076'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279077'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062221781'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025346075'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Traffic Island Link At Junction</osgb:natureOfRoad>
+<osgb:length>21.63</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292581.000,92841.000 292599.000,92853.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279076'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279079'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062221781'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025346076'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Roundabout</osgb:natureOfRoad>
+<osgb:length>14.40</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292620.000,92821.000 292617.000,92822.000 292614.000,92823.000 292610.000,92825.000 292607.000,92827.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279080'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279078'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025346077'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Roundabout</osgb:natureOfRoad>
+<osgb:length>23.60</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292604.000,92831.000 292603.000,92833.000 292599.000,92839.000 292598.000,92844.000 292598.000,92845.000 292599.000,92853.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279077'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279079'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025346078'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Roundabout</osgb:natureOfRoad>
+<osgb:length>20.78</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292599.000,92853.000 292599.000,92855.000 292601.000,92859.000 292604.000,92864.000 292609.000,92869.000 292610.000,92870.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279079'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279081'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025346092'>
+<osgb:version>6</osgb:version>
+<osgb:versionDate>2006-03-09</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>Local Street</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Traffic Island Link At Junction</osgb:natureOfRoad>
+<osgb:length>18.68</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292615.000,92888.000 292610.000,92870.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279101'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279081'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062221397'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025346106'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Traffic Island Link At Junction</osgb:natureOfRoad>
+<osgb:length>25.96</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292666.000,92818.000 292641.000,92825.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279153'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279159'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025346107'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Traffic Island Link At Junction</osgb:natureOfRoad>
+<osgb:length>27.29</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292666.000,92818.000 292653.000,92842.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279153'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279160'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025346108'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Traffic Island Link At Junction</osgb:natureOfRoad>
+<osgb:length>27.11</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292652.000,92888.000 292652.000,92878.000 292650.000,92861.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279157'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279158'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025346109'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Traffic Island Link At Junction</osgb:natureOfRoad>
+<osgb:length>22.30</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292652.000,92888.000 292648.000,92883.000 292645.000,92880.000 292635.000,92874.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279157'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279161'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025346110'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Roundabout</osgb:natureOfRoad>
+<osgb:length>22.06</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292641.000,92825.000 292634.000,92821.000 292632.000,92821.000 292620.000,92821.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279159'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279080'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025346111'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Roundabout</osgb:natureOfRoad>
+<osgb:length>19.88</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292650.000,92861.000 292652.000,92858.000 292653.000,92853.000 292654.000,92847.000 292653.000,92842.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279158'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279160'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025346112'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Roundabout</osgb:natureOfRoad>
+<osgb:length>20.51</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292635.000,92874.000 292644.000,92869.000 292650.000,92862.000 292650.000,92861.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279161'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279158'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025351699'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Roundabout</osgb:natureOfRoad>
+<osgb:length>16.22</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292610.000,92870.000 292612.000,92871.000 292615.000,92873.000 292620.000,92875.000 292625.000,92875.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279081'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279082'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025351705'>
+<osgb:version>6</osgb:version>
+<osgb:versionDate>2006-03-10</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>Local Street</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Traffic Island Link At Junction</osgb:natureOfRoad>
+<osgb:length>16.40</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292615.000,92888.000 292625.000,92875.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279101'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279082'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062221397'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025351713'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Roundabout</osgb:natureOfRoad>
+<osgb:length>22.31</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292653.000,92842.000 292652.000,92837.000 292649.000,92830.000 292642.000,92825.000 292641.000,92825.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279160'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279159'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025351714'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2004-10-26</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Roundabout</osgb:natureOfRoad>
+<osgb:length>10.16</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292625.000,92875.000 292632.000,92875.000 292635.000,92874.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279082'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279161'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadLink fid='osgb4000000025353490'>
+<osgb:version>3</osgb:version>
+<osgb:versionDate>2005-09-15</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:descriptiveTerm>B Road</osgb:descriptiveTerm>
+<osgb:natureOfRoad>Roundabout</osgb:natureOfRoad>
+<osgb:length>5.06</osgb:length>
+<osgb:polyline>
+<gml:LineString srsName='osgb:BNG'>
+<gml:coordinates>292607.000,92827.000 292606.000,92829.000 292604.000,92831.000 </gml:coordinates>
+</gml:LineString>
+</osgb:polyline>
+<osgb:directedNode orientation='-' xlink:href='#osgb4000000025279078'/>
+<osgb:directedNode orientation='+' xlink:href='#osgb4000000025279077'/>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadLink>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025278752'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292509.505,92567.022</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222139'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279072'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2003-03-14</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292603.000,92809.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279074'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292510.000,92830.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062221781'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279076'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292581.000,92841.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062221781'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279077'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292604.000,92831.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279078'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292607.000,92827.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279079'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292599.000,92853.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279080'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292620.000,92821.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279081'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292610.000,92870.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279082'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292625.000,92875.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279095'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-05</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292602.000,92926.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062221602'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279101'>
+<osgb:version>4</osgb:version>
+<osgb:versionDate>2006-03-06</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>Modified</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292615.000,92888.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062221397'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279153'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292666.000,92818.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279154'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292749.000,92779.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222046'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279157'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292652.000,92888.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279158'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292650.000,92861.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279159'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292641.000,92825.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279160'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292653.000,92842.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279161'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-10-31</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292635.000,92874.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062222025'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:networkMember>
+<osgb:RoadNode fid='osgb4000000025279173'>
+<osgb:version>2</osgb:version>
+<osgb:versionDate>2005-09-13</osgb:versionDate>
+<osgb:theme>Road Network</osgb:theme>
+<osgb:changeHistory>
+<osgb:changeDate>2002-12-04</osgb:changeDate>
+<osgb:reasonForChange>New</osgb:reasonForChange>
+</osgb:changeHistory>
+<osgb:descriptiveGroup>Road Topology</osgb:descriptiveGroup>
+<osgb:point>
+<gml:Point srsName='osgb:BNG'>
+<gml:coordinates>292729.000,92982.000</gml:coordinates>
+</gml:Point>
+</osgb:point>
+<osgb:referenceToTopographicArea xlink:href='#osgb1000002062221636'/>
+</osgb:RoadNode>
+</osgb:networkMember>
+<osgb:boundedBy><gml:Box srsName='osgb:BNG'><gml:coordinates>290822.000,91912.000 293199.000,94222.000</gml:coordinates></gml:Box></osgb:boundedBy></osgb:FeatureCollection>
