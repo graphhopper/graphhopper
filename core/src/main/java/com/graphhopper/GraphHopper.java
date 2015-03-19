@@ -317,11 +317,7 @@ public class GraphHopper implements GraphHopperAPI {
      * the GHRequest object. Per default the lexicographically first vehicle is
      * used.
      */
-    // <<<<<<< HEAD
-    // public GraphHopper setDoPrepare(boolean doPrepare)
-    // =======
     public void setDefaultVehicle(String defaultVehicleStr)
-    // >>>>>>> upstream/master
     {
         if (this.defaultVehicleStr != null)
             throw new RuntimeException("Cannot change default vehicle " + this.defaultVehicleStr + " to " + defaultVehicleStr);
@@ -615,20 +611,11 @@ public class GraphHopper implements GraphHopperAPI {
         neighborUpdates = args.getInt("prepare.updates.neighbor", neighborUpdates);
         logMessages = args.getDouble("prepare.logmessages", logMessages);
 
-        // osm import
-        // <<<<<<< HEAD
-        // osmReaderWayPointMaxDistance =
-        // args.getDouble("osmreader.wayPointMaxDistance",
-        // osmReaderWayPointMaxDistance);
-        // String flagEncoders = args.get("graph.flagEncoders", "CAR");
-        // if (flagEncoders.toLowerCase().contains("turncosts=true"))
-        // traversalMode = TraversalMode.EDGE_BASED_2DIR;
-        // encodingManager = new EncodingManager(flagEncoders, bytesForFlags);
-        // =======
         osmReaderWayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", osmReaderWayPointMaxDistance);
         String flagEncoders = args.get("graph.flagEncoders", "");
-        setEncodingManager(new EncodingManager(flagEncoders, bytesForFlags));
-        // >>>>>>> upstream/master
+        if(!flagEncoders.isEmpty())
+            setEncodingManager(new EncodingManager(flagEncoders, bytesForFlags));
+
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
 
@@ -782,13 +769,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (chEnabled)
             graph = new LevelGraphStorage(dir, encodingManager, hasElevation());
         else if (encodingManager.needsTurnCostsSupport())
-            // <<<<<<< HEAD
-            // graph = new GraphHopperStorage(dir, encodingManager,
-            // hasElevation(),
-            // new TurnCostStorage());
-            // =======
             graph = new GraphHopperStorage(dir, encodingManager, hasElevation(), new TurnCostExtension());
-        // >>>>>>> upstream/master
         else
             graph = new GraphHopperStorage(dir, encodingManager, hasElevation());
 
@@ -848,15 +829,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     protected RoutingAlgorithmFactory createPrepare() {
-        // <<<<<<< HEAD
-        // FlagEncoder encoder = encodingManager.getSingle();
-        // PrepareContractionHierarchies tmpPrepareCH = new
-        // PrepareContractionHierarchies(encoder,
-        // createWeighting(new WeightingMap(chWeighting), encoder),
-        // traversalMode);
-        // tmpPrepareCH.setPeriodicUpdates(periodicUpdates).setLazyUpdates(lazyUpdates)
-        // .setNeighborUpdates(neighborUpdates).setLogMessages(logMessages);
-        // =======
+
         if (!encodingManager.supports(getDefaultVehicle())) {
             throw new IllegalStateException("Should not happen: default vehicle " + getDefaultVehicle() + " not supported" + " from EncodingManager " + encodingManager.toDetailsString() + ". Cannot do CH preparation");
         }
@@ -865,7 +838,6 @@ public class GraphHopper implements GraphHopperAPI {
         Weighting weighting = createWeighting(new WeightingMap(chWeightingStr), defaultVehicle);
         PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies((LevelGraph) graph, defaultVehicle, weighting, traversalMode);
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).setLazyUpdates(lazyUpdates).setNeighborUpdates(neighborUpdates).setLogMessages(logMessages);
-        // >>>>>>> upstream/master
 
         return tmpPrepareCH;
     }
@@ -905,30 +877,13 @@ public class GraphHopper implements GraphHopperAPI {
      */
     public Weighting createTurnWeighting(Weighting weighting, Graph graph, FlagEncoder encoder) {
         if (encoder.supports(TurnWeighting.class)) {
-            // <<<<<<< HEAD
-            // result = new TurnWeighting(result, encoder,
-            // (TurnCostStorage) graph.getExtendedStorage());
-            // return result;
-            // =======
             return new TurnWeighting(weighting, encoder, (TurnCostExtension) graph.getExtension());
         }
         return weighting;
-        // >>>>>>> upstream/master
     }
 
     @Override
     public GHResponse route(GHRequest request) {
-        // <<<<<<< HEAD
-        // if (graph == null || !fullyLoaded)
-        // throw new
-        // IllegalStateException("Call load or importOrLoad before routing");
-        //
-        // if (graph.isClosed())
-        // throw new IllegalStateException(
-        // "You need to create a new GraphHopper instance as it is already closed");
-        //
-        // =======
-        // >>>>>>> upstream/master
         GHResponse response = new GHResponse();
         List<Path> paths = getPaths(request, response);
         if (response.hasErrors())
@@ -940,14 +895,7 @@ public class GraphHopper implements GraphHopperAPI {
         Locale locale = request.getLocale();
         DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
 
-        // <<<<<<< HEAD
-        // new PathMerger().setCalcPoints(calcPoints).setDouglasPeucker(peucker)
-        // .setEnableInstructions(enableInstructions)
-        // .setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0)
-        // .doWork(response, paths, trMap.getWithFallBack(locale));
-        // =======
         new PathMerger().setCalcPoints(tmpCalcPoints).setDouglasPeucker(peucker).setEnableInstructions(tmpEnableInstructions).setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0).doWork(response, paths, trMap.getWithFallBack(locale));
-        // >>>>>>> upstream/master
         return response;
     }
 
@@ -1025,59 +973,10 @@ public class GraphHopper implements GraphHopperAPI {
         AlgorithmOptions algoOpts = AlgorithmOptions.start().algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).build();
 
         for (int placeIndex = 1; placeIndex < points.size(); placeIndex++) {
-            // <<<<<<< HEAD
-            // GHPoint point = points.get(placeIndex);
-            // sw = new StopWatch().start();
-            // QueryResult toRes = locationIndex.findClosest(point.lat,
-            // point.lon, edgeFilter);
-            // debug += ", [" + placeIndex + "] idLookup:" +
-            // sw.stop().getSeconds() + "s";
-            // if (!toRes.isValid())
-            // {
-            // rsp.addError(new IllegalArgumentException("Cannot find point " +
-            // placeIndex + ": "
-            // + point));
-            // break;
-            // }
-            //
-            // sw = new StopWatch().start();
-            // String algoStr = request.getAlgorithm().isEmpty() ? "dijkstrabi"
-            // : request
-            // .getAlgorithm();
-            // RoutingAlgorithm algo = null;
-            // if (chEnabled)
-            // {
-            // if (prepare == null)
-            // throw new IllegalStateException(
-            // "Preparation object is null. CH-preparation wasn't done or did you "
-            // + "forget to call setCHEnable(false)?");
-            //
-            // if (algoStr.equals("dijkstrabi"))
-            // algo = prepare.createAlgo();
-            // else if (algoStr.equals("astarbi"))
-            // algo = ((PrepareContractionHierarchies) prepare).createAStar();
-            // else
-            // {
-            // rsp.addError(new IllegalStateException(
-            // "Only dijkstrabi and astarbi is supported for LevelGraph (using contraction hierarchies)!"));
-            // break;
-            // }
-            // } else
-            // {
-            // Weighting weighting = createWeighting(request.getHints(),
-            // encoder);
-            // prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph,
-            // algoStr, encoder,
-            // weighting, tMode);
-            // algo = prepare.createAlgo();
-            // }
-            //
-            // =======
             QueryResult toQResult = qResults.get(placeIndex);
             sw = new StopWatch().start();
             RoutingAlgorithm algo = tmpAlgoFactory.createAlgo(queryGraph, algoOpts);
             algo.setWeightLimit(weightLimit);
-            // >>>>>>> upstream/master
             debug += ", algoInit:" + sw.stop().getSeconds() + "s";
 
             sw = new StopWatch().start();
@@ -1086,14 +985,8 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new RuntimeException("Time was negative. Please report as bug and include:" + request);
 
             paths.add(path);
-            // <<<<<<< HEAD
-            // debug += ", " + algo.getName() + "-routing:" +
-            // sw.stop().getSeconds() + "s, "
-            // + path.getDebugInfo();
-            // =======
             debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
 
-            // >>>>>>> upstream/master
             visitedSum.addAndGet(algo.getVisitedNodes());
             fromQResult = toQResult;
         }
@@ -1109,15 +1002,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     protected LocationIndex createLocationIndex(Directory dir) {
-        // <<<<<<< HEAD
-        // LocationIndex tmpIndex;
-        // if (graph instanceof LevelGraph)
-        // tmpIndex = new LocationIndexTreeSC((LevelGraph) graph, dir);
-        // else
-        // tmpIndex = new LocationIndexTree(graph, dir);
-        // =======
         LocationIndexTree tmpIndex = new LocationIndexTree(graph.getBaseGraph(), dir);
-        // >>>>>>> upstream/master
         tmpIndex.setResolution(preciseIndexResolution);
         tmpIndex.setMaxRegionSearch(maxRegionSearch);
         if (!tmpIndex.loadExisting()) {
@@ -1161,22 +1046,8 @@ public class GraphHopper implements GraphHopperAPI {
         boolean tmpPrepare = doPrepare && algoFactory instanceof PrepareContractionHierarchies;
         if (tmpPrepare) {
             ensureWriteAccess();
-            // <<<<<<< HEAD
-            // if (prepare instanceof PrepareContractionHierarchies
-            // && encodingManager.getVehicleCount() > 1)
-            // throw new
-            // IllegalArgumentException("Contraction hierarchies preparation "
-            // + "requires (at the moment) only one vehicle. But was:"
-            // + encodingManager);
-            //
-            // logger.info("calling prepare.doWork for " +
-            // encodingManager.toString() + " ... ("
-            // + Helper.getMemInfo() + ")");
-            // prepare.doWork();
-            // =======
             logger.info("calling prepare.doWork for " + getDefaultVehicle() + " ... (" + Helper.getMemInfo() + ")");
             ((PrepareContractionHierarchies) algoFactory).doWork();
-            // >>>>>>> upstream/master
             graph.getProperties().put("prepare.date", formatDateTime(new Date()));
         }
         graph.getProperties().put("prepare.done", tmpPrepare);
@@ -1192,15 +1063,7 @@ public class GraphHopper implements GraphHopperAPI {
         int n = graph.getNodes();
         // calculate remaining subnetworks
         int remainingSubnetworks = preparation.findSubnetworks().size();
-        // <<<<<<< HEAD
-        // logger.info("edges: " + graph.getAllEdges().getMaxId() + ", nodes " +
-        // n + ", there were "
-        // + preparation.getSubNetworks() + " subnetworks. removed them => "
-        // + (prev - n) + " less nodes. Remaining subnetworks:" +
-        // remainingSubnetworks);
-        // =======
         logger.info("edges: " + graph.getAllEdges().getCount() + ", nodes " + n + ", there were " + preparation.getSubNetworks() + " subnetworks. removed them => " + (prev - n) + " less nodes. Remaining subnetworks:" + remainingSubnetworks);
-        // >>>>>>> upstream/master
     }
 
     protected void flush() {
@@ -1265,7 +1128,6 @@ public class GraphHopper implements GraphHopperAPI {
         return visitedSum.get();
     }
 
-    // <<<<<<< HEAD
     public GraphHopper setAsOSMReader() {
         dataReader = "OSM";
         return this;
@@ -1279,7 +1141,6 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper setAsDpnReader() {
         dataReader = "OSDPN";
         return this;
-        // =======
     }
 
     private void initDefaultVehicleIfNecessary() {
@@ -1288,6 +1149,5 @@ public class GraphHopper implements GraphHopperAPI {
 
         if (!encodingManager.supports(getDefaultVehicle()))
             throw new IllegalArgumentException("Default vehicle " + defaultVehicleStr + " is not supported. " + "Include vehicle in EncodingManager or via the property graph.flagEncoders OR set it explicitely via setDefaultVehicle");
-        // >>>>>>> upstream/master
     }
 }

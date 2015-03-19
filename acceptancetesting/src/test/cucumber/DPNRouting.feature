@@ -8,7 +8,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco        | waypointdesc            | azimuth | direction | time  | distance |
-      | 4             | 53.1356,-1.820891 | continue onto Mill Lane | 78      | E         | 23165 | 32.175   |
+      | 4             | 53.1356,-1.820891 | Continue onto Mill Lane | 78      | E         | 23165 | 32.175   |
 
     Examples: 
       | pointA              | pointB             | routetype |
@@ -19,8 +19,8 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                          | azimuth | direction | time   | distance |
-      | 5             | 53.197269,-1.608797 | continue onto Chatsworth Road         | 181     | S         | 670049 | 930.629  |
-      | 6             | 53.189535,-1.613492 | turn slight left onto Dale Road North | 141     | SE        | 312088 | 433.456  |
+      | 5             | 53.197269,-1.608797 | Continue onto Chatsworth Road         | 181     | S         | 670049 | 930.629  |
+      | 6             | 53.189535,-1.613492 | Turn slight left onto Dale Road North | 141     | SE        | 312088 | 433.456  |
 
     Examples: 
       | pointA              | pointB              | routetype |
@@ -113,3 +113,14 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA              | pointB              | routetype |
       | 53.142876,-1.642599 | 53.163897,-1.714249 | foot      |
+
+  @Routing
+  Scenario Outline: Verify  Road Names on a Walking Route  (Cardlemere Lane)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                   | azimuth | direction | time   | distance |
+      | 4             | 53.129383,-1.754591 | Turn left onto Cardlemere Lane | 115     | SE        | 581179 | 807.194  |
+
+    Examples: 
+      | pointA              | pointB             | routetype |
+      | 53.114295,-1.762789 | 53.086961,-1.69626 | foot      |

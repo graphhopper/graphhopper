@@ -155,7 +155,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 				.xpath("//*[@id='instructions']/tbody/tr[*]/td[2]"));
 		WAY_POINTS.get(Integer.parseInt(routeStepNumber) - 1).click();
 
-		checkTableRowIgnoreCase(INSTRUCTIONS, Integer.parseInt(this.routeStepNumber),
+		checkTableRow(INSTRUCTIONS, Integer.parseInt(this.routeStepNumber),
 				stepInstruction);
 
 	}
