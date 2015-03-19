@@ -36,11 +36,12 @@ import org.slf4j.LoggerFactory;
 import com.graphhopper.reader.RoutingElement;
 
 /**
- * Base class for all OSM objects
+ * Base class for all OsITN objects
  * <p/>
  *
  * @author Nop
  * @author Peter
+ * @author stuartadam
  * @author phopkins
  */
 public abstract class OSITNElement implements RoutingElement {
@@ -151,10 +152,10 @@ public abstract class OSITNElement implements RoutingElement {
                         event = handleDescriptiveGroup(parser);
                         break;
                     }
-                    // case "natureOfRoad": {
-                    // event = handleRoadNature(parser);
-                    // break;
-                    // }
+                    case "natureOfRoad": {
+                        event = handleRoadNature(parser);
+                        break;
+                    }
                     case "roadNumber":
                     case "name":
                     case "alternativeName":
@@ -176,13 +177,16 @@ public abstract class OSITNElement implements RoutingElement {
     }
 
     private int handleRoadNature(XMLStreamReader parser) throws XMLStreamException {
-        String nature = resolveNature(parser.getElementText());
-        String highwayType = getTag("highway");
-        if (null != nature && null != highwayType) {
-            highwayType = highwayType + "-";
-            highwayType = highwayType + nature;
-            setTag("highway", highwayType);
-        }
+//        String nature = resolveNature(parser.getElementText());
+//        String highwayType = getTag("highway");
+//        if (null != nature && null != highwayType) {
+//            highwayType = highwayType + "-";
+//            highwayType = highwayType + nature;
+//            setTag("highway", highwayType);
+//        }
+    	if(parser.getElementText().equals("Roundabout")) {
+    		setTag("junction", "roundabout");
+    	}
         return parser.getEventType();
     }
 
