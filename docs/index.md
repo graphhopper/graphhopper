@@ -21,11 +21,11 @@
 ## Core
 
  * [Simple routing](./core/routing.md) to integrate GraphHopper in your Java application (or pick any JVM language)
- * [Create custom weighting](./core/weighting.md)
- * [Elevation](./core/elevation.md)
- * [Technical overview](./core/technical.md)
- * [Slides from 2014](http://graphhopper.com/public/slides/)
- * [Contraction Hierarchies](./core/ch.md)
+ * [Create custom weighting](./core/weighting.md) Documentation about how to create a custom weighting class to influence the track calculation.
+ * [Elevation](./core/elevation.md) Documentation how to enable the usage of elevation for the output of the track.
+ * [Technical overview](./core/technical.md) Technical details about how graphhoppers calculations are working.
+ * [Slides from 2014](https://graphhopper.com/public/slides/) Small presentations about how graphhopper ist working.
+ * [Contraction Hierarchies](./core/ch.md) details about speeding up the track calculations by [Contraction Hierarchies](http://en.wikipedia.org/wiki/Contraction_hierarchies).
 
 ## Web
 
