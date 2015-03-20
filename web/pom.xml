@@ -118,14 +118,14 @@
                     </archive>
                     <descriptors>
                         <descriptor>src/main/assembly/jar.xml</descriptor>
-                        -- this is defined to be executed afterwards --
+                        - this is defined to be executed afterwards -
                         <descriptor>src/main/assembly/zip.xml</descriptor>
                     </descriptors>
                 </configuration>
                 <executions>
                     <execution>
                         <id>make-assembly</id>
-                        -- bind to verify and not package to pass integration tests before creating assemblies --
+                        - bind to verify and not package to pass integration tests before creating assemblies -
                         <phase>integration-test</phase> 
                        <goals>
                             <goal>single</goal>
