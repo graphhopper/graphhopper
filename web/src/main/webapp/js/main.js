@@ -1063,11 +1063,14 @@ function routeLatLng(request, doQuery) {
 
             var exportLink = $("#export-link a");
             exportLink.attr('href', urlForHistory);
-            var startOsmLink = $("<a>start</a>");
-            startOsmLink.attr("href", "https://www.openstreetmap.org/?zoom=14&mlat=" + request.from.lat + "&mlon=" + request.from.lng);
-            var endOsmLink = $("<a>end</a>");
-            endOsmLink.attr("href", "https://www.openstreetmap.org/?zoom=14&mlat=" + request.to.lat + "&mlon=" + request.to.lng);
-            hiddenDiv.append("<br/><span>View on OSM: </span>").append(startOsmLink).append(endOsmLink);
+            var osmRouteLink = $("<br/><a>view on OSM</a>");
+
+            var osmVehicle = "bicycle";
+            if (request.vehicle.toUpperCase() === "FOOT") {
+                osmVehicle = "foot";
+            }
+            osmRouteLink.attr("href", "http://www.openstreetmap.org/directions?engine=graphhopper_" + osmVehicle + "&route=" + encodeURIComponent(request.from.lat + "," + request.from.lng + ";" + request.to.lat + "," + request.to.lng));
+            hiddenDiv.append(osmRouteLink);
 
             var osrmLink = $("<a>OSRM</a>");
             osrmLink.attr("href", "http://map.project-osrm.org/?loc=" + request.from + "&loc=" + request.to);
@@ -1152,11 +1155,11 @@ function addInstruction(main, instr, instrIndex, lngLat) {
     else
         throw "did not found sign " + sign;
     var title = instr.text;
-    if (instr.annotationText) {
+    if (instr.annotation_text) {
         if (!title)
-            title = instr.annotationText;
+            title = instr.annotation_text;
         else
-            title = title + ", " + instr.annotationText;
+            title = title + ", " + instr.annotation_text;
     }
     var distance = instr.distance;
     var str = "<td class='instr_title'>" + title + "</td>";
