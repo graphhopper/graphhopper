@@ -406,7 +406,7 @@ public class Path
                 // we will skip zero length edges. Unfortunately there is a loss
                 // of precision in Lat/Lon calculations in GHNodeAccess so we
                 // have to handle <=0.1 as zero length.
-                if (edge.getDistance() > 0.1) {
+//                if (edge.getDistance() > 0.1) {
                     // baseNode is the current node and adjNode is the next
                     int adjNode = edge.getAdjNode();
                     int baseNode = edge.getBaseNode();
@@ -416,7 +416,7 @@ public class Path
                     double latitude, longitude;
 
                     PointList wayGeo = edge.fetchWayGeometry(3);
-                    boolean isRoundabout = encoder.isBool(flags, encoder.K_ROUNDABOUT);
+                    boolean isRoundabout = encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT);
 
                     if (wayGeo.getSize() <= 2) {
                         latitude = adjLat;
@@ -483,7 +483,7 @@ public class Path
                             // out of the roundabout
                             EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(adjNode);
                             while (edgeIter.next()) {
-                                if (!encoder.isBool(edgeIter.getFlags(), encoder.K_ROUNDABOUT)) {
+                                if (!encoder.isBool(edgeIter.getFlags(), FlagEncoder.K_ROUNDABOUT)) {
                                     ((RoundaboutInstruction) prevInstruction).increaseExitNumber();
                                     break;
                                 }
@@ -581,7 +581,7 @@ public class Path
                         }
                         ways.add(new FinishInstruction(nodeAccess, adjNode));
                     }
-                }
+//                }
             }
 
             private void updatePointsAndInstruction( EdgeIteratorState edge, PointList pl )
