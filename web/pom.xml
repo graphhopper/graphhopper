@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-web</artifactId>
-    <packaging>jar</packaging>
+    <packaging>war</packaging>
     <version>0.5-SNAPSHOT</version>
     <name>GraphHopper Web</name>
     <description>Example on how to use GraphHopper in a web-based application</description>
