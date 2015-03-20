@@ -17,15 +17,11 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.storage.NodeAccess;
-
 /**
  * @author Peter Karich
  */
 public class FinishInstruction extends Instruction
 {
-    private int count = -1;
-
     public FinishInstruction( final double lat, final double lon, final double ele )
     {
         super(FINISH, "", InstructionAnnotation.EMPTY, new PointList(2, true)
@@ -36,20 +32,18 @@ public class FinishInstruction extends Instruction
         });
     }
 
-    public FinishInstruction( NodeAccess nodeAccess, int node )
+    public FinishInstruction( PointAccess pointAccess, int node )
     {
-        this(nodeAccess.getLatitude(node), nodeAccess.getLongitude(node),
-                nodeAccess.is3D() ? nodeAccess.getElevation(node) : 0);
+        this(pointAccess.getLatitude(node), pointAccess.getLongitude(node),
+                pointAccess.is3D() ? pointAccess.getElevation(node) : 0);
     }
 
-    void setVia( int i )
+    @Override
+    public String getTurnDescription( Translation tr )
     {
-        sign = REACHED_VIA;
-        count = i;
-    }
+        if (rawName)
+            return getName();
 
-    public int getViaPosition()
-    {
-        return count;
+        return tr.tr("finish");
     }
 }
