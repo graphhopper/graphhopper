@@ -25,13 +25,7 @@ import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.DataAccess;
-import com.graphhopper.storage.DAType;
-import com.graphhopper.storage.GHDirectory;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import java.util.*;
 import org.slf4j.Logger;
@@ -60,7 +54,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private EdgeSkipExplorer vehicleAllExplorer;
     private EdgeSkipExplorer vehicleAllTmpExplorer;
     private EdgeSkipExplorer calcPrioAllExplorer;
-    private LevelEdgeFilter levelFilter;
+    private final LevelEdgeFilter levelFilter;
     private int maxLevel;
     private final LevelGraph prepareGraph;
 
@@ -85,20 +79,20 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private double nodesContractedPercentage = 100;
     private double logMessagesPercentage = 20;
 
-    public PrepareContractionHierarchies( LevelGraph g, FlagEncoder encoder, Weighting weighting, TraversalMode traversalMode )
+    public PrepareContractionHierarchies( Directory dir, LevelGraph g, FlagEncoder encoder, Weighting weighting, TraversalMode traversalMode )
     {
         this.prepareGraph = g;
         this.traversalMode = traversalMode;
         this.prepareFlagEncoder = encoder;
         long scFwdDir = encoder.setAccess(0, true, false);
+        levelFilter = new LevelEdgeFilter(prepareGraph);
 
         // shortcuts store weight in flags where we assume bit 1 and 2 are used for access restriction
         if ((scFwdDir & PrepareEncoder.getScFwdDir()) == 0)
-            throw new IllegalArgumentException("Currently only one vehicle is supported if you enable CH. "
-                    + "It seems that you have imported more than one.");
+            throw new IllegalArgumentException("Enabling the speed-up mode is currently only supported for the first vehicle.");
 
         prepareWeighting = new PreparationWeighting(weighting);
-        originalEdges = new GHDirectory("", DAType.RAM_INT).find("original_edges");
+        originalEdges = dir.find("original_edges");
         originalEdges.create(1000);
     }
 
@@ -705,7 +699,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
         };
 
-        levelFilter = new LevelEdgeFilter(prepareGraph);
         maxLevel = prepareGraph.getNodes() + 1;
         ignoreNodeFilter = new IgnoreNodeFilter(prepareGraph, maxLevel);
         vehicleAllExplorer = prepareGraph.createEdgeExplorer(allFilter);
