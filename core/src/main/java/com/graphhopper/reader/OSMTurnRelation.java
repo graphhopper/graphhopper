@@ -118,7 +118,7 @@ public class OSMTurnRelation implements TurnRelation
             if (edgeIdFrom == EdgeIterator.NO_EDGE)
                 return Collections.emptyList();
 
-            final Collection<ITurnCostTableEntry> entries = new ArrayList<>();
+            final Collection<ITurnCostTableEntry> entries = new ArrayList<ITurnCostTableEntry>();
             // get all outgoing edges of the via node
             iter = edgeOutExplorer.setBaseNode(nodeVia);
             // for TYPE_ONLY_* we add ALL restrictions (from, via, * ) EXCEPT the given turn

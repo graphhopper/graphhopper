@@ -19,7 +19,7 @@ public class DatexReader {
 
 	private String curValue;
 	private Map<String, String> locSpeedMap;
-	private List<LatLongMetaData> list = new ArrayList<>();
+	private List<LatLongMetaData> list = new ArrayList<LatLongMetaData>();
 	
 	private DefaultHandler datexStreamHandler = new DefaultHandler() {
 		private boolean speedChars=false;
@@ -135,7 +135,7 @@ public class DatexReader {
 
 	public List<LatLongMetaData> read(String datexModelStream,
 			String datexStream) throws ParserConfigurationException, SAXException, IOException  {
-		locSpeedMap = new HashMap<>();
+		locSpeedMap = new HashMap<String, String>();
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		factory.setValidating(false);
 		factory.setNamespaceAware(false);

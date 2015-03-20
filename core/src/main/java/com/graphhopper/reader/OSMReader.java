@@ -482,7 +482,7 @@ public class OSMReader implements DataReader<Long>
 
     public Collection<ITurnCostTableEntry> analyzeTurnRelation( TurnRelation turnRelation )
     {
-        TLongObjectMap<ITurnCostTableEntry> entries = new TLongObjectHashMap<>();
+        TLongObjectMap<ITurnCostTableEntry> entries = new TLongObjectHashMap<ITurnCostTableEntry>();
 
         for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders())
         {

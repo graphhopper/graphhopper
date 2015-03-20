@@ -160,9 +160,9 @@ public abstract class AbstractOsItnReaderTest {
             final boolean finished, AbstractFlagEncoder flagEncoder) {
         assertEquals("Incorrect adjacent node", node, iter.getAdjNode());
         assertEquals("Incorrect forward instructions", forward,
-                flagEncoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
+                flagEncoder.isForward(iter.getFlags()));
         assertEquals("Incorrect backward instructions", backward,
-                flagEncoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
+                flagEncoder.isBackward(iter.getFlags()));
         assertEquals(!finished, iter.next());
     }
 
