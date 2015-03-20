@@ -17,24 +17,21 @@
  */
 package com.graphhopper.reader.osgb.dpn;
 
+import com.graphhopper.reader.Way;
 import gnu.trove.map.TDoubleLongMap;
 import gnu.trove.map.TDoubleObjectMap;
 import gnu.trove.map.TLongObjectMap;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-
 import org.opengis.geometry.MismatchedDimensionException;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.operation.TransformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.graphhopper.reader.Way;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Represents an OSM Way
