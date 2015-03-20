@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-web</artifactId>
-    <packaging>war</packaging>
+    <packaging>jar</packaging>
     <version>0.5-SNAPSHOT</version>
     <name>GraphHopper Web</name>
     <description>Example on how to use GraphHopper in a web-based application</description>
@@ -107,7 +107,7 @@
                     <attachClasses>true</attachClasses>
                 </configuration>
             </plugin>            
-            <plugin>
+        <!--    <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
@@ -118,21 +118,21 @@
                     </archive>
                     <descriptors>
                         <descriptor>src/main/assembly/jar.xml</descriptor>
-                        <!-- this is defined to be executed afterwards -->
+                        -- this is defined to be executed afterwards --
                         <descriptor>src/main/assembly/zip.xml</descriptor>
                     </descriptors>
                 </configuration>
                 <executions>
                     <execution>
                         <id>make-assembly</id>
-                        <!-- bind to verify and not package to pass integration tests before creating assemblies -->
+                        -- bind to verify and not package to pass integration tests before creating assemblies --
                         <phase>integration-test</phase> 
                        <goals>
                             <goal>single</goal>
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin> -->
  
         </plugins>
     </build>
