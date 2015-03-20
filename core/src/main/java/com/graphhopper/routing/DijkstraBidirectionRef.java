@@ -36,8 +36,7 @@ import com.graphhopper.util.GHUtility;
  * Calculates best path in bidirectional way.
  * <p/>
  * 'Ref' stands for reference implementation and is using the normal Java-'reference'-way.
- * <p/>
- * @see DijkstraBidirection for an array based but more complicated version
+ * <p>
  * @author Peter Karich
  */
 public class DijkstraBidirectionRef extends AbstractBidirAlgo
