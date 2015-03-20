@@ -82,6 +82,7 @@
         <module>core</module>
         <module>tools</module>
         <module>web</module>
+        <module>api</module>
     </modules>
         
     <build>        

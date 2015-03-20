@@ -1,0 +1,52 @@
+package com.graphhopper.client;
+
+
+import com.graphhopper.HopperClient;
+import com.graphhopper.HopperEngine;
+import com.graphhopper.HopperRequest;
+import com.graphhopper.HopperResponse;
+import com.graphhopper.bean.RouteInstruction;
+import com.graphhopper.bean.RoutePoint;
+import com.graphhopper.routing.Path;
+import com.graphhopper.util.Translation;
+
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class EmbeddedHopperClient implements HopperClient {
+
+    private final HopperEngine engine;
+    private Translation translation;
+    // We need a TranslationMap too and some other classes here....
+
+    public EmbeddedHopperClient(HopperEngine engine) {
+        this.engine = engine;
+    }
+
+    @Override
+    public HopperResponse route(HopperRequest request) {
+        HopperResponse response = new HopperResponse();
+        List<RouteInstruction> instructions = new ArrayList<RouteInstruction>();
+        List<RoutePoint> points = new ArrayList<RoutePoint>();// This actually will be a LazyPointList
+
+        for(Path path : engine.route(request)) {
+            // populating and translating the beans somehow
+            // without instantiating InstructionList or PointList (hopefully)
+        }
+
+        if(request.isEnableInstructions()) {
+            // Example
+            response.setInstructions(instructions);
+        }
+
+        if(request.isEnablePoints()) {
+            // Example
+            response.setPoints(points);
+        }
+
+        // etc....
+
+        return response;
+    }
+}
