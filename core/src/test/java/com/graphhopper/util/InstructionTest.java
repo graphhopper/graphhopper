@@ -46,7 +46,7 @@ public class InstructionTest
         p2.add(49.944, 11.582);
         Instruction i2 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, p2);
 
-        assertEquals(45, i2.calcAzimuth(null), .1);
+        assertEquals(32.76, i2.calcAzimuth(null), .1);
         assertEquals("NE", i2.calcDirection(null));
 
         PointList p3 = new PointList();
