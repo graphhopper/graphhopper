@@ -53,7 +53,7 @@ import com.graphhopper.util.Translation;
 public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncoder
 {
     private final static Logger logger = LoggerFactory.getLogger(AbstractFlagEncoder.class);
-
+    private final static int K_FORWARD = 0, K_BACKWARD = 1;
     /* Edge Flag Encoder fields */
     private long nodeBitMask;
     private long wayBitMask;
@@ -680,6 +680,18 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     @Override
+    public boolean isBackward( long flags )
+    {
+        return (flags & backwardBit) != 0;
+    }
+
+    @Override
+    public boolean isForward( long flags )
+    {
+        return (flags & forwardBit) != 0;
+    }
+
+    @Override
     public long setBool( long flags, int key, boolean value )
     {
         switch (key)
@@ -700,14 +712,15 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     {
         switch (key)
         {
-        case K_FORWARD:
-            return (flags & forwardBit) != 0;
-        case K_BACKWARD:
-            return (flags & backwardBit) != 0;
-        case K_ROUNDABOUT:
-            return (flags & roundaboutBit) != 0;
-        default:
-            throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
+
+            case K_FORWARD:
+                return isForward(flags);
+            case K_BACKWARD:
+                return isBackward(flags);
+            case K_ROUNDABOUT:
+                return (flags & roundaboutBit) != 0;
+            default:
+                throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
         }
     }
 

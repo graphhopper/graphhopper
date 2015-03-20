@@ -69,19 +69,21 @@ public interface FlagEncoder extends TurnCostEncoder
      */
     long setProperties( double speed, boolean forward, boolean backward );
 
+    /**
+     * Reports wether the edge is available in forward direction for a certain vehicle
+     */
+    boolean isForward( long flags );
+
+    /**
+     * Reports wether the edge is available in backward direction for a certain vehicle
+     */
+    boolean isBackward( long flags );
+
     /*
      * Simple rules for every subclass which introduces a new key. It has to use the prefix K_ and
      * uses a minimum value which is two magnitudes higher than in the super class. 
      * Currently this means starting from 100, and subclasses of this class start from 10000 and so on.
      */
-    /**
-     * Reports wether the edge is available in forward direction for a certain vehicle
-     */
-    static final int K_FORWARD = 0;
-    /**
-     * Reports wether the edge is available in backward direction for a certain vehicle
-     */
-    static final int K_BACKWARD = 1;
     /**
      * Reports wether this edge is part of a roundabout.
      */
