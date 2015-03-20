@@ -31,11 +31,15 @@ public class AngleCalcTest
     @Test
     public void testOrientation()
     {
-        assertEquals(90.0, Math.toDegrees(ac.calcOrientation(0, 0, 10, 0)), 0.001);
-        assertEquals(45.0, Math.toDegrees(ac.calcOrientation(0, 0, 10, 10)), 0.001);
-        assertEquals(0.0, Math.toDegrees(ac.calcOrientation(0, 0, 0, 10)), 0.001);
-        assertEquals(-45.0, Math.toDegrees(ac.calcOrientation(0, 0, -10, 10)), 0.001);
-        assertEquals(-135.0, Math.toDegrees(ac.calcOrientation(0, 0, -10, -10)), 0.001);
+        assertEquals(90.0, Math.toDegrees(ac.calcOrientation(0, 0, 1, 0)), 0.01);
+        assertEquals(45.0, Math.toDegrees(ac.calcOrientation(0, 0, 1, 1)), 0.01);
+        assertEquals(0.0, Math.toDegrees(ac.calcOrientation(0, 0, 0, 1)), 0.01);
+        assertEquals(-45.0, Math.toDegrees(ac.calcOrientation(0, 0, -1, 1)), 0.01);
+        assertEquals(-135.0, Math.toDegrees(ac.calcOrientation(0, 0, -1, -1)), 0.01);
+
+        // is symetric?
+        assertEquals(90 - 32.76, Math.toDegrees(ac.calcOrientation(49.942, 11.580, 49.944, 11.582)), 0.01);
+        assertEquals(-90 - 32.76, Math.toDegrees(ac.calcOrientation(49.944, 11.582, 49.942, 11.580)), 0.01);
     }
 
     @Test
@@ -51,19 +55,19 @@ public class AngleCalcTest
     public void testCombined()
     {
         double orientation = ac.calcOrientation(52.414918, 13.244221, 52.415333, 13.243595);
-        assertEquals(146.5, Math.toDegrees(ac.alignOrientation(0, orientation)), 1);
+        assertEquals(132.7, Math.toDegrees(ac.alignOrientation(0, orientation)), 1);
 
         orientation = ac.calcOrientation(52.414918, 13.244221, 52.414573, 13.243627);
-        assertEquals(-149.7, Math.toDegrees(ac.alignOrientation(0, orientation)), 1);
+        assertEquals(-136.38, Math.toDegrees(ac.alignOrientation(0, orientation)), 1);
     }
 
     @Test
     public void testCalcAzimuth()
     {
-        assertEquals(45.0, ac.calcAzimuth(0, 0, 10, 10), 0.001);
-        assertEquals(90.0, ac.calcAzimuth(0, 0, 0, 10), 0.001);
-        assertEquals(180.0, ac.calcAzimuth(0, 0, -10, 0), 0.001);
-        assertEquals(270.0, ac.calcAzimuth(0, 0, 0, -10), 0.001);
+        assertEquals(45.0, ac.calcAzimuth(0, 0, 1, 1), 0.001);
+        assertEquals(90.0, ac.calcAzimuth(0, 0, 0, 1), 0.001);
+        assertEquals(180.0, ac.calcAzimuth(0, 0, -1, 0), 0.001);
+        assertEquals(270.0, ac.calcAzimuth(0, 0, 0, -1), 0.001);
         assertEquals(0.0, ac.calcAzimuth(49.942, 11.580, 49.944, 11.580), 0.001);
     }
 
