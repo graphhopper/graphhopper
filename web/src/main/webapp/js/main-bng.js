@@ -4,7 +4,7 @@ var host;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // We know that you love 'free', we love it too :)! And so our entire software stack is free and even Open Source!      
 // Our routing service is also free for certain applications or smaller volume. Be fair, grab an API key and support us:
-// http://graphhopper.com/#enterprise Misuse of API keys that you don't own is prohibited and you'll be blocked.                    
+// https://graphhopper.com/#directions-api Misuse of API keys that you don't own is prohibited and you'll be blocked.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 if (!host) {
     if (location.port === '') {
@@ -200,8 +200,8 @@ function initFromParams(params, doQuery) {
             resolveCoords([params.from, params.to], doQuery);
         else
             resolveCoords(params.point, doQuery);
-    } else if (params.point) {
-        ghRequest.from = new GHInput(params.point);
+    } else if (params.point && params.point.length === 1) {
+        ghRequest.from = new GHInput(params.point[0]);
         resolve("from", ghRequest.from);
         focus(ghRequest.from, 15, true);
     }
@@ -255,7 +255,7 @@ function checkInput() {
         if (len > 2) {
             div.find(".pointDelete").click(function () {
                 var index = $(this).parent().data('index');
-                ghRequest.route.delete(index);
+                ghRequest.route.removeSingle(index);
                 routingLayer.clearLayers();
                 routeLatLng(ghRequest, false);
             }).show();
@@ -531,6 +531,12 @@ function getTopLeftCorners() {
     menuIntermediate = map.contextmenu.insertItem(_intItem, _intItem.index);
     menuEnd = map.contextmenu.insertItem(_endItem, _endItem.index);
 
+    var zoomControl = new L.Control.Zoom({position: 'topleft'}).addTo(map);
+
+    new L.Control.loading({
+        zoomControl: zoomControl
+    }).addTo(map);
+
     map.contextmenu.addSet({
         name: 'markers',
         state: 2
@@ -640,7 +646,7 @@ function setIntermediateCoord(e) {
 
 function deleteCoord(e) {
     var latlng = e.target.getLatLng();
-    ghRequest.route.delete(latlng);
+    ghRequest.route.removeSingle(latlng);
     routingLayer.clearLayers();
     routeLatLng(ghRequest, false);
 }
@@ -685,7 +691,8 @@ function setFlag(coord, index) {
                     draggable: true,
                     contextmenu: true,
                     contextmenuItems: [{
-                            text: 'Marker ' + ((toFrom === FROM) ? 'Start' : ((toFrom === TO) ? 'End' : 'Intermediate')),
+                            text: 'Marker ' + ((toFrom === FROM) ?
+                                    'Start' : ((toFrom === TO) ? 'End' : 'Intermediate ' + index)),
                             disabled: true,
                             index: 0,
                             state: 2
@@ -706,7 +713,8 @@ function setFlag(coord, index) {
                             state: 2
                         }],
                     contextmenuAtiveState: 2
-                }).addTo(routingLayer).bindPopup(((toFrom === FROM) ? 'Start' : ((toFrom === TO) ? 'End' : 'Intermediate')));
+                }).addTo(routingLayer).bindPopup(((toFrom === FROM) ?
+                'Start' : ((toFrom === TO) ? 'End' : 'Intermediate ' + index)));
         // intercept openPopup
         marker._openPopup = marker.openPopup;
         marker.openPopup = function () {
@@ -959,17 +967,6 @@ function focus(coord, zoom, index) {
     }
 }
 function routeLatLng(request, doQuery) {
-	var valid = true;
-	jQuery.each(request.route, function (index, item) {
-		if (!item.lat || !item.lng) {
-            valid = false;
-			return false;
-		}
-    });
-	if(!valid) {
-		// If we have failed to geocode any point just return so we don't make a spurious request
-		return;
-	}
     // do_zoom should not show up in the URL but in the request object to avoid zooming for history change
     var doZoom = request.do_zoom;
     request.do_zoom = true;
@@ -1115,11 +1112,14 @@ function routeLatLng(request, doQuery) {
 
             var exportLink = $("#export-link a");
             exportLink.attr('href', urlForHistory);
-            var startOsmLink = $("<a>start</a>");
-            startOsmLink.attr("href", "https://www.openstreetmap.org/?zoom=14&mlat=" + request.from.lat + "&mlon=" + request.from.lng);
-            var endOsmLink = $("<a>end</a>");
-            endOsmLink.attr("href", "https://www.openstreetmap.org/?zoom=14&mlat=" + request.to.lat + "&mlon=" + request.to.lng);
-            hiddenDiv.append("<br/><span>View on OSM: </span>").append(startOsmLink).append(endOsmLink);
+            var osmRouteLink = $("<br/><a>view on OSM</a>");
+
+            var osmVehicle = "bicycle";
+            if (request.vehicle.toUpperCase() === "FOOT") {
+                osmVehicle = "foot";
+            }
+            osmRouteLink.attr("href", "http://www.openstreetmap.org/directions?engine=graphhopper_" + osmVehicle + "&route=" + encodeURIComponent(request.from.lat + "," + request.from.lng + ";" + request.to.lat + "," + request.to.lng));
+            hiddenDiv.append(osmRouteLink);
 
             var osrmLink = $("<a>OSRM</a>");
             osrmLink.attr("href", "http://map.project-osrm.org/?loc=" + request.from + "&loc=" + request.to);
@@ -1199,14 +1199,16 @@ function addInstruction(main, instr, instrIndex, lngLat) {
         sign = "marker-icon-red";
     else if (sign === 5)
         sign = "marker-icon-blue";
+    else if (sign === 6)
+        sign = "roundabout";
     else
         throw "did not found sign " + sign;
     var title = instr.text;
-    if (instr.annotationText) {
+    if (instr.annotation_text) {
         if (!title)
-            title = instr.annotationText;
+            title = instr.annotation_text;
         else
-            title = title + ", " + instr.annotationText;
+            title = title + ", " + instr.annotation_text;
     }
     var distance = instr.distance;
     var str = "<td class='instr_title'>" + title + "</td>";
@@ -1219,7 +1221,7 @@ function addInstruction(main, instr, instrIndex, lngLat) {
 
     if (sign !== "continue") {
         var indiPic = "<img class='pic' style='vertical-align: middle' src='" +
-                 "img/" + sign + ".png'/>";
+                window.location.pathname + "img/" + sign + ".png'/>";
         str = "<td class='instr_pic'>" + indiPic + "</td>" + str;
     } else
         str = "<td class='instr_pic'/>" + str;
@@ -1279,24 +1281,26 @@ function parseUrl(query) {
         if (value === "")
             continue;
 
-        if (typeof res[key] === "undefined") {
-            if (value === 'true')
+        if (key === "point" && !res[key]) {
+            res[key] = [value];
+        } else if (typeof res[key] === "string") {
+            var arr = [res[key], value];
+            res[key] = arr;
+        } else if (typeof res[key] === "undefined") {
+            if (value === 'true') {
                 res[key] = true;
-            else if (value === 'false')
+            } else if (value === 'false') {
                 res[key] = false;
-            else {
+            } else {
                 var tmp = Number(value);
                 if (isNaN(tmp))
                     res[key] = value;
                 else
                     res[key] = Number(value);
             }
-        } else if (typeof res[key] === "string") {
-            var arr = [res[key], value];
-            res[key] = arr;
-        } else
+        } else {
             res[key].push(value);
-
+        }
     }
     return res;
 }
@@ -1519,14 +1523,15 @@ function setAutoCompleteList(index) {
         },
         serviceUrl: function () {
             // see http://graphhopper.com/#enterprise
-            return ghRequest.createGeocodeURL(host);
+            return ghRequest.createGeocodeURL(host, index -1);
         },
         transformResult: function (response, originalQuery) {
             response.suggestions = [];
-            for (var i = 0; i < response.hits.length; i++) {
-                var hit = response.hits[i];
-                response.suggestions.push({value: dataToText(hit), data: hit});
-            }
+            if (response.hits)
+                for (var i = 0; i < response.hits.length; i++) {
+                    var hit = response.hits[i];
+                    response.suggestions.push({value: dataToText(hit), data: hit});
+                }
             return response;
         },
         onSearchError: function (element, q, jqXHR, textStatus, errorThrown) {
@@ -1548,7 +1553,7 @@ function setAutoCompleteList(index) {
             req.setCoord(point.lat, point.lng);
 
             req.input = suggestion.value;
-            if (!routeIfAllResolved())
+            if (!routeIfAllResolved(true))
                 focus(req, 15, index);
 
             myAutoDiv.autocomplete().enable();
