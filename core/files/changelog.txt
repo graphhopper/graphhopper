@@ -1,7 +1,7 @@
-0.4.0
+0.4.0    
     translation key turn changed and merged with left etc into turn_left, turn_right etc
     create location index before preparation in the GraphHopper class
-    encodingManager.getSingle() is removed as one can specify an encoder explicitly. GraphHopper picks the first encoder automatically for default vehicle, can be overwritten via setDefaultVehicle
+    encodingManager.getSingle() is removed and flagEncoder list is no longer sorted, the first vehicle is used for CH preparation    
     removed LocationIndexTreeSC, use new LocationIndexTree(levelGraph.getBaseGraph(), directory) instead
     getLevel and setLevel do no longer automatically increase node count, use getNodeAccess.ensureNode for that
     normal algorithms are now possible on prepared graph use getBaseGraph, see #116
@@ -21,11 +21,9 @@
     renamed less often used URL parameter 'min_path_precision' to way_point_max_distance which makes it identical to the setWayPointMaxDistance method used for simplification at OSMImport
     removed douglas.minprecision from Java API ghRequest.hints => use wayPointMaxDistance instead
     encoder.supportTurnCost is replaced by encoder.supports(TurnWeighting.class)
-    CmdArgs is now a Map<String, String> instead Map<String, Object>. The value will be parsed up on every getXY call
+    CmdArgs is now a Map<String, String> instead Map<String, Object>. The value will be parsed up on every getXY call, makes storing string vs. object less error-prone
     removed GHRequest.getHint, instead use the provided methods in GHRequest.getHints().getXY and GHRequest.getHints().put
-    graph incompatibility as properties cannot be loaded => version increase necessary
-        renamed osmreader.bytesForFlags to graph.bytesForFlags
-        renamed config property osmreader.acceptWay to graph.flagEncoders
+    important graph incompatibility as properties cannot be loaded. renamed osmreader.bytesForFlags to graph.bytesForFlags, renamed config property osmreader.acceptWay to graph.flagEncoders
     default weighting is now fastest, fixing #261
     moved method GraphHopper.main into tools module and class com.graphhopper.tools.Import, see #250
     refactored GraphHopper.createWeighting to accept more than one configuration option, see #237
@@ -33,13 +31,12 @@
     moving the boolean parameter of GraphHopper.setInMemory into a separate method setStoreOnFlush
     renaming of GraphHopper.setCHShortcuts to setCHWeighting, as well as the property prepare.chShortcuts to prepare.chWeighting
     jsonp is disabled by default. You need to enable it in the config.properties, see the config-example.properties
-    EncodingManager cannot be null in GraphHopperStorage since 0.4. If you need to parse EncodingManager configuration from existing graph use EncodingManager.create
+    EncodingManager cannot be null in GraphHopperStorage. If you need to parse EncodingManager configuration from existing graph use EncodingManager.create
     no reflection done in EncodingManager which improves portability and makes configuration of encoders possible before adding to manager
     removed dijkstraNativebi as no performance advantage but maintenance disadvantage and similar to oneToManyDijkstra
     to provide context for turn costs we needed to add prevEdgeId into Weighting.calcWeight, see new documentation
     with the introduction of lock protection mechanism (see #112) GraphHopper needs always write access, see also #217
-    new GraphHopper.clean method to remove the graph directory via Java API
-    FlagEncoder: replaced isFoward and isBackward with more generic isBool(flags, FlagEncoder.FORWARD|BACKWARD)
+    new GraphHopper.clean method to remove the graph directory via Java API    
 
 0.3.0
     introduced prefer bits, now bike uses more bits and 3 bike encoder do not fit into 32 bit anymore, will be fixed later

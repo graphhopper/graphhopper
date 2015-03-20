@@ -1,7 +1,7 @@
 ## Routing Web API Docs
 
 In order to communicate with your or [our](http://graphhopper.com/#enterprise) hosted GraphHopper 
-server you need to understand how to use it.
+server you need to understand how to use it. There is a separate [JavaScript](https://github.com/graphhopper/directions-api-js-client) and [Java](https://github.com/graphhopper/directions-api-java-client) client for this API or use the plain JSON response for your language.
 
 ### A simple example
 [http://localhost:8989/route?point=45.752193%2C-0.686646&point=46.229253%2C-0.32959](http://localhost:8989/route?point=45.752193%2C-0.686646&point=46.229253%2C-0.32959)
@@ -28,7 +28,28 @@ type               | json    | Specifies the resulting format of the route, for 
 
 ## Example output for the case type=json
 
-Keep in mind that some attributes which are not documented here can be removed in the future - you should not rely on them!
+Keep in mind that some attributes which are not documented here can be removed in the future - 
+you should not rely on them! The JSON result contains the following structure:
+
+JSON path/attribute        | Description
+:--------------------------|:------------
+info.took                  | How many ms the request took on the server, of course without network latency taken into account.
+paths                      | An array of possible paths
+paths[0].distance          | The overall distance of the route, in meter
+paths[0].time              | The overall time of the route, in ms
+paths[0].points            | The polyline encoded coordinates of the path. Order is lat,lon,elelevation as it is no geoJson!
+paths[0].points_encoded    | Is true if the points are encoded, if not paths[0].points contains the geo json of the path (then order is lon,lat,elevation), which is easier to handle but consumes more bandwidth compared to encoded version
+paths[0].bbox              | The bounding box of the route, format: <br> minLon, minLat, maxLon, maxLat
+paths[0].instructions      | Contains information about the instructions for this route. The last instruction is always the Finish instruction and takes 0ms and 0meter. Keep in mind that instructions are currently under active development and can sometimes contain misleading information, so, make sure you always show an image of the map at the same time when navigating your users!
+paths[0].instructions[0].text                 | A description what the user has to do in order to follow the route. The language depends on the locale parameter.
+paths[0].instructions[0].distance             | The distance for this instruction, in meter
+paths[0].instructions[0].time                 | The duration for this instruction, in ms
+paths[0].instructions[0].interval             | An array containing the first and the last index (relative to paths[0].points) of the points for this instruction. This is useful to know for which part of the route the instructions are valid.
+paths[0].instructions[0].sign                 | A number which specifies the sign to show e.g. for right turn etc <br>TURN_SHARP_LEFT = -3<br>TURN_LEFT = -2<br>TURN_SLIGHT_LEFT = -1<br>CONTINUE_ON_STREET = 0<br>TURN_SLIGHT_RIGHT = 1<br>TURN_RIGHT = 2<br>TURN_SHARP_RIGHT = 3<br>FINISH = 4<br>VIA_REACHED = 5<br>USE_ROUNDABOUT = 6
+paths[0].instructions[0].annotation_text      | [optional] A text describing the instruction in more detail, e.g. like surface of the way, warnings or involved costs
+paths[0].instructions[0].annotation_importance| [optional] 0 stands for INFO, 1 for warning, 2 for costs, 3 for costs and warning
+paths[0].instructions[0].exit_number          | [optional] Only available for USE_ROUNDABOUT instructions. The count of exits at which the route leaves the roundabout.
+paths[0].instructions[0].turn_angle           | [optional] Only available for USE_ROUNDABOUT instructions. The radian of the route within the roundabout: 0<r<2*PI for clockwise and -2PI<r<0 for counterclockwise transit. Is null the direction of rotation is undefined.
 
 ```json
 {
@@ -99,29 +120,6 @@ Keep in mind that some attributes which are not documented here can be removed i
   }]
 }
 ```
-
-The JSON result contains the following structure:
-
-JSON path/attribute        | Description
-:--------------------------|:------------
-info.took                  | How many ms the request took on the server, of course without network latency taken into account.
-paths                      | An array of possible paths
-paths[0].distance          | The overall distance of the route, in meter
-paths[0].time              | The overall time of the route, in ms
-paths[0].points            | The polyline encoded coordinates of the path. Order is lat,lon,elelevation as it is no geoJson!
-paths[0].points_encoded    | Is true if the points are encoded, if not paths[0].points contains the geo json of the path (then order is lon,lat,elevation), which is easier to handle but consumes more bandwidth compared to encoded version
-paths[0].bbox              | The bounding box of the route, format: <br> minLon, minLat, maxLon, maxLat
-paths[0].instructions      | Contains information about the instructions for this route. The last instruction is always the Finish instruction and takes 0ms and 0meter. Keep in mind that instructions are currently under active development and can sometimes contain misleading information, so, make sure you always show an image of the map at the same time when navigating your users!
-paths[0].instructions[0].text                 | A description what the user has to do in order to follow the route. The language depends on the locale parameter.
-paths[0].instructions[0].distance             | The distance for this instruction, in meter
-paths[0].instructions[0].time                 | The duration for this instruction, in ms
-paths[0].instructions[0].interval             | An array containing the first and the last index (relative to paths[0].points) of the points for this instruction. This is useful to know for which part of the route the instructions are valid.
-paths[0].instructions[0].sign                 | A number which specifies the sign to show e.g. for right turn etc <br>TURN_SHARP_LEFT = -3<br>TURN_LEFT = -2<br>TURN_SLIGHT_LEFT = -1<br>CONTINUE_ON_STREET = 0<br>TURN_SLIGHT_RIGHT = 1<br>TURN_RIGHT = 2<br>TURN_SHARP_RIGHT = 3<br>FINISH = 4<br>VIA_REACHED = 5<br>USE_ROUNDABOUT = 6
-paths[0].instructions[0].annotationText       | [optional] A text describing the instruction in more detail, e.g. like surface of the way, warnings or involved costs
-paths[0].instructions[0].annotationImportance | [optional] 0 stands for INFO, 1 for warning, 2 for costs, 3 for costs and warning
-paths[0].instructions[0].exit_number          | [optional] Only available for USE_ROUNDABOUT instructions. The count of exits at which the route leaves the roundabout.
-paths[0].instructions[0].turn_angle           | [optional] Only available for USE_ROUNDABOUT instructions. The radian of the route within the roundabout: 0<r<2*PI for clockwise and -2PI<r<0 for counterclockwise transit. Is null the direction of rotation is undefined.
-
 
 ## Area information
 

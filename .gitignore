@@ -27,7 +27,9 @@ core/docs/
 cgiarprovider/
 /nbactions.xml
 tools/nb-configuration.xml
-/acceptancetesting
 android/build/
 android/app/build/
 android/.gradle
+.settings/
+.classpath
+.project

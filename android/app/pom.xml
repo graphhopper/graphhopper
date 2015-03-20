@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-android</artifactId>
-    <version>0.4-SNAPSHOT</version>
+    <version>0.5-SNAPSHOT</version>
     <name>GraphHopper Android</name>
     <packaging>apk</packaging>    
     <organization>
@@ -13,9 +13,10 @@
     </organization>
     
     <parent>
+        <relativePath>../..</relativePath>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.4-SNAPSHOT</version>
+        <version>0.5-SNAPSHOT</version>
     </parent>
     <properties>
         <mapsforge.version>0.5.0</mapsforge.version>
@@ -32,12 +33,6 @@
             <version>${project.parent.version}</version>            
             <type>jar</type>
             <exclusions>
-                <!--
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>                    
-                </exclusion> 
-                -->
                 <exclusion>
                     <groupId>com.google.protobuf</groupId>
                     <artifactId>protobuf-java</artifactId>                    
@@ -109,23 +104,17 @@
     </dependencies>
 
     <build>
-        <!-- 
-        1. Use src/test/java for JUnit tests that don't call any Android APIs (directly or transitively)
-        2. Use src/main/java for JUnit tests that call Android APIs  
-        -->
-        <sourceDirectory>src</sourceDirectory>        
         <finalName>${project.artifactId}</finalName>        
         
         <plugins>     
-            <!-- android (apache harmony) is nearly java but not really 1.6 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <!-- <compilerArgument>-Xlint:unchecked</compilerArgument>
                     -->
-                    <source>1.5</source>
-                    <target>1.5</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                 </configuration>
             </plugin>       
             <plugin>

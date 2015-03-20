@@ -46,16 +46,12 @@ List<String> iList = il.createDescription(tr);
 List<GPXEntry> list = il.createGPXList();
 ```
 
-If you want to support multiple profiles you have to specify the default vehicle in order
-to pick the vehicle where contraction hierarchies will be enabled:
-```java
-GraphHopper hopper = new GraphHopper().forServer();
-hopper.setDefaultVehicle("car");
-...
-```
+The default is to use the speed-up mode for one profile. If you need multiple profiles you 
+specify a list of profiles (e.g. car,bike) and the speed-up mode is applied to the first profile only (e.g. car).
+The other vehicles then use a more flexible routing.
 
-If you want a more flexible routing (but slower) you can disable contraction hierarchies. 
-Then pick one vehicle to route on and optionally the algorithm like 'bidirectional astar' as algorithm:
+You can also completely disable the speed-up mode to make all vehicles using the flexibility mode.
+Then pick one vehicle and optionally the algorithm like 'bidirectional astar' as algorithm:
 
 ```java
 GraphHopper hopper = new GraphHopper().forServer();
