@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except in
+ * 
+ *  GraphHopper licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,8 +37,10 @@ import com.graphhopper.reader.Way;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.StorableProperties;
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import java.util.*;
 
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders
@@ -110,15 +112,6 @@ public class EncodingManager
             throw new IllegalStateException("For 'edge flags' currently only 4 or 8 bytes supported");
 
         this.bitsForEdgeFlags = bytesForEdgeFlags * 8;
-
-        Collections.sort(flagEncoders, new Comparator<FlagEncoder>()
-                {
-            @Override
-            public int compare( FlagEncoder o1, FlagEncoder o2 )
-            {
-                return o1.toString().compareTo(o2.toString());
-            }
-                });
         for (FlagEncoder flagEncoder : flagEncoders)
         {
             registerEncoder((AbstractFlagEncoder) flagEncoder);
