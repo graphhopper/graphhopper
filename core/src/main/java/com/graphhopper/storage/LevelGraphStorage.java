@@ -95,7 +95,7 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
     public EdgeSkipIterState edge( int a, int b )
     {
         if (lastEdgeIndex + 1 < edgeCount)
-            throw new IllegalStateException("Cannot create after shortcut was created");
+            throw new IllegalStateException("Cannot create edge after first shortcut was created");
 
         lastEdgeIndex = edgeCount;
         return createEdge(a, b);

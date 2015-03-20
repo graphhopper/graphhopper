@@ -133,15 +133,16 @@ public class DistanceCalcEarth implements DistanceCalc
             double a_lat_deg, double a_lon_deg,
             double b_lat_deg, double b_lon_deg, boolean reduceToSegment )
     {
-        double shrink_factor = cos((toRadians(a_lat_deg) + toRadians(b_lat_deg)) / 2);
+        double shrinkFactor = cos(toRadians((a_lat_deg + b_lat_deg) / 2));
+
         double a_lat = a_lat_deg;
-        double a_lon = a_lon_deg * shrink_factor;
+        double a_lon = a_lon_deg * shrinkFactor;
 
         double b_lat = b_lat_deg;
-        double b_lon = b_lon_deg * shrink_factor;
+        double b_lon = b_lon_deg * shrinkFactor;
 
         double r_lat = r_lat_deg;
-        double r_lon = r_lon_deg * shrink_factor;
+        double r_lon = r_lon_deg * shrinkFactor;
 
         double delta_lon = b_lon - a_lon;
         double delta_lat = b_lat - a_lat;
@@ -168,7 +169,7 @@ public class DistanceCalcEarth implements DistanceCalc
         // x,y is projection of r onto segment a-b
         double c_lon = a_lon + factor * delta_lon;
         double c_lat = a_lat + factor * delta_lat;
-        return calcNormalizedDist(c_lat, c_lon / shrink_factor, r_lat_deg, r_lon_deg);
+        return calcNormalizedDist(c_lat, c_lon / shrinkFactor, r_lat_deg, r_lon_deg);
     }
 
     @Override
@@ -176,15 +177,15 @@ public class DistanceCalcEarth implements DistanceCalc
             double a_lat_deg, double a_lon_deg,
             double b_lat_deg, double b_lon_deg )
     {
-        double shrink_factor = cos((toRadians(a_lat_deg) + toRadians(b_lat_deg)) / 2);
+        double shrinkFactor = cos(toRadians((a_lat_deg + b_lat_deg) / 2));
         double a_lat = a_lat_deg;
-        double a_lon = a_lon_deg * shrink_factor;
+        double a_lon = a_lon_deg * shrinkFactor;
 
         double b_lat = b_lat_deg;
-        double b_lon = b_lon_deg * shrink_factor;
+        double b_lon = b_lon_deg * shrinkFactor;
 
         double r_lat = r_lat_deg;
-        double r_lon = r_lon_deg * shrink_factor;
+        double r_lon = r_lon_deg * shrinkFactor;
 
         double delta_lon = b_lon - a_lon;
         double delta_lat = b_lat - a_lat;
@@ -211,7 +212,7 @@ public class DistanceCalcEarth implements DistanceCalc
         // x,y is projection of r onto segment a-b
         double c_lon = a_lon + factor * delta_lon;
         double c_lat = a_lat + factor * delta_lat;
-        return new GHPoint(c_lat, c_lon / shrink_factor);
+        return new GHPoint(c_lat, c_lon / shrinkFactor);
     }
 
     @Override
@@ -219,15 +220,15 @@ public class DistanceCalcEarth implements DistanceCalc
             double a_lat_deg, double a_lon_deg,
             double b_lat_deg, double b_lon_deg )
     {
-        double factor = cos((toRadians(a_lat_deg) + toRadians(b_lat_deg)) / 2);
+        double shrinkFactor = cos(toRadians((a_lat_deg + b_lat_deg) / 2));
         double a_lat = a_lat_deg;
-        double a_lon = a_lon_deg * factor;
+        double a_lon = a_lon_deg * shrinkFactor;
 
         double b_lat = b_lat_deg;
-        double b_lon = b_lon_deg * factor;
+        double b_lon = b_lon_deg * shrinkFactor;
 
         double r_lat = r_lat_deg;
-        double r_lon = r_lon_deg * factor;
+        double r_lon = r_lon_deg * shrinkFactor;
 
         double ar_x = r_lon - a_lon;
         double ar_y = r_lat - a_lat;
