@@ -20,8 +20,15 @@ package com.graphhopper.ui;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
-import com.graphhopper.routing.*;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.QueryGraph;
+import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.RoutingAlgorithmFactory;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.util.WeightingMap;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -29,12 +36,16 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.Random;
-import javax.swing.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.util.Random;
 
 /**
  * A rough graphical user interface for visualizing the OSM graph. Mainly for debugging algorithms
@@ -215,7 +226,7 @@ public class MiniGraphUI
 //                    mg.plotText(g2, lat, lon, nodeId + ": " + dist);
 //                    mg.plotNode(g2, nodeId, Color.red);
 //                }
-                path = algo.calcPath(fromRes.getClosestNode(), toRes.getClosestNode());
+//                path = algo.calcPath(fromRes.getClosestNode(), toRes.getClosestNode());
                 sw.stop();
 
                 // if directed edges
