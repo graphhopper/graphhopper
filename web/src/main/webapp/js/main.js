@@ -457,8 +457,12 @@ function initMap(selectLayer) {
     L.control.layers(baseMaps/*, overlays*/).addTo(map);
 
     map.on('baselayerchange', function (a) {
-        if (a.name)
+        if (a.name) {
             activeLayer = a.name;
+            $("#export-link a").attr('href', function(i, v) {
+                return v.replace(/(layer=)([\w\s]+)/, '$1' + activeLayer);
+            });
+        }
     });
 
     L.control.scale().addTo(map);
