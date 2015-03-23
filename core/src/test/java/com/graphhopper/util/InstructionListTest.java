@@ -330,7 +330,8 @@ public class InstructionListTest
         String gpxStr = wayList.createGPX("test", 0, "GMT+1");
         verifyGPX(gpxStr);
 
-        assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T01:00:00+01:00</time>"));
+        assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\">"));
+        assertTrue(gpxStr, gpxStr.contains("<time>1970-01-01T01:00:00+01:00</time>"));
         assertTrue(gpxStr, gpxStr.contains("<extensions>") && gpxStr.contains("</extensions>"));
         assertTrue(gpxStr, gpxStr.contains("<rtept lat=\"15.1\" lon=\"10.0\">"));
         assertTrue(gpxStr, gpxStr.contains("<gh:distance>8000.0</gh:distance>"));
