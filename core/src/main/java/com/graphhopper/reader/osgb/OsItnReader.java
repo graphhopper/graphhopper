@@ -242,7 +242,7 @@ public class OsItnReader implements DataReader<Long> {
             addAdditionalTowerNodes = Boolean.parseBoolean(addAdditionalTowerNodesString);
         }
         else {
-            addAdditionalTowerNodes = true;
+            addAdditionalTowerNodes = false;
         }
 
         this.nodeAccess = graphStorage.getNodeAccess();
