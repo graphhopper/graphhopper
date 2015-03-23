@@ -21,10 +21,10 @@ public class GraphHopperHooks {
 			throws InterruptedException {
 
 		if (routeType.equalsIgnoreCase("car"))
-//added ITN url
+
 			graphUiUtil = new GraphHopperUIUtil(
 					IntegrationTestProperties
-							.getTestProperty("itngraphHopperWebUrl"));
+							.getTestProperty("graphHopperWebUrl"));
 		else
 			graphUiUtil = new GraphHopperUIUtil(
 					IntegrationTestProperties

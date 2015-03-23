@@ -105,7 +105,7 @@
 		<dependency>
 			<groupId>uk.co.ordnancesurvey</groupId>
 			<artifactId>SimpleSelenium</artifactId>
-			<version>0.0.21-SNAPSHOT</version>
+			<version>0.0.22-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-httpclient</groupId>

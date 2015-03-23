@@ -30,7 +30,7 @@ Feature: Verify a route from A to B
   @Routing
   Scenario Outline: Verify  waypoints on a Route from Southampton to Glasgow
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
-    Then I should be able to verify the waypoints on the route map:
+    Then I should be able to verify the waypoints on the route map:Sunia
       | wayPointIndex | waypointco          | waypointdesc                      | azimuth | direction | time     | distance   |
       | 1             | 50.896796,-1.400544 | Continue onto PLATFORM ROAD (A33) | 261     | W         | 5514     | 84.266     |
       | 16            | 50.953446,-1.403571 | Turn slight right onto M3         | 41      | NE        | 3006306  | 83510.255  |
@@ -144,7 +144,6 @@ Feature: Verify a route from A to B
       | pointA             | pointB             | routetype |
       | 50.91525,-1.318761 | 50.92045,-1.316021 | car       |
 
- 
   @Routing
   Scenario Outline: Verify  No Turn   (WSPIP-76:Eastley- TWYFORD ROAD )
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
@@ -162,7 +161,6 @@ Feature: Verify a route from A to B
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                              | azimuth | direction | time | distance |
       | 2             | 50.969817,-1.350504 | Turn slight left onto STATION HILL (A335) | 180     | S         | 2932 | 44.811   |
-
 
     Examples: 
       | pointA              | pointB             | routetype |
@@ -227,12 +225,12 @@ Feature: Verify a route from A to B
   Scenario Outline: Verify  Ford Gate at CRAMPOOR ROAD(ROMSEY-Southampton)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
-      | wayPointIndex | waypointco         | waypointdesc                     | azimuth | direction | time | distance |
-      | 2             | 50.782169,-1.06039 | Turn right onto ST GEORGE'S ROAD | 304     | NW        | 6038 | 58.711   |
+      | wayPointIndex | waypointco          | waypointdesc                               | azimuth | direction | time  | distance |
+      | 3             | 50.782654,-1.060556 | Turn sharp left onto A288 (EASTERN PARADE) | 256     | W         | 46621 | 712.337  |
 
     Examples: 
       | pointA             | pointB              | routetype |
-      | 50.78222,-1.059975 | 50.779796,-1.073651 | car       |
+      | 50.78222,-1.059975 | 50.779123,-1.080019 | car       |
 
   @Routing
   Scenario Outline: Verify  Route using Full UK Address (Southampton to London)
