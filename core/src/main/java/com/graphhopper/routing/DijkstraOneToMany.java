@@ -205,7 +205,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
 
     protected boolean isWeightLimitReached()
     {
-        return weights[currNode] >= weightLimit;
+        return weights[currNode] > weightLimit;
     }
 
     public void close()

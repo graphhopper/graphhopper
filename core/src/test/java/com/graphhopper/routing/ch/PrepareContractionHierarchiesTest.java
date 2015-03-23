@@ -534,6 +534,54 @@ public class PrepareContractionHierarchiesTest
         return g;
     }
 
+
+    public static LevelGraph initShortcutsGraph2( LevelGraph g)
+    {
+        //      0----1
+        //     /     |
+        //    7--    |
+        //   /   |   |
+        //   6---5   |
+        //   |   |   |
+        //   4---3---2
+
+        g.edge(0, 1, 1, true);
+        g.edge(1, 2, 1, true);
+
+        g.edge(3, 2, 1, true);
+        g.edge(3, 5, 1, true);
+        g.edge(5, 7, 1, true);
+        g.edge(3, 4, 1, true);
+        g.edge(4, 6, 1, true);
+        g.edge(6, 7, 1, true);
+        g.edge(6, 5, 1, true);
+        g.edge(0, 7, 1, true);
+        return g;
+    }
+
+    @Test
+    public void testLimitWeightBug()
+    {
+        LevelGraphStorage g = (LevelGraphStorage) createGraph();
+        initShortcutsGraph2(g);
+        DijkstraOneToMany prepareAlgo = new DijkstraOneToMany(g, carEncoder, weighting, tMode);
+        prepareAlgo.setEdgeFilter(new PrepareContractionHierarchies.IgnoreNodeFilter(g, g.getNodes() + 1).setAvoidNode(2));
+
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g, carEncoder, weighting, tMode);
+        prepare.initFromGraph().prepareNodes();
+        prepareAlgo.setWeightLimit(3);
+
+        int endNode = prepareAlgo.findEndNode(0, 4);
+        assertEquals(4, endNode);
+        assertEquals(3.0, prepareAlgo.getWeight(4), 1e-6);
+
+        prepareAlgo.clear();
+
+        endNode = prepareAlgo.findEndNode(0, 3);
+        assertEquals(3, endNode);
+        assertEquals(3.0, prepareAlgo.getWeight(3), 1e-6);
+    }
+
 //    public static void printEdges(LevelGraph g) {
 //        RawEdgeIterator iter = g.getAllEdges();
 //        while (iter.next()) {
