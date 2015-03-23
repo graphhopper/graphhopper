@@ -39,6 +39,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         this((int) parseLong(propertiesStr, "speedBits", 5),
                 parseDouble(propertiesStr, "speedFactor", 5),
                 parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+        this.setBlockFords(parseBoolean(propertiesStr, "blockFords", true));
     }
 
     public MotorcycleFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
