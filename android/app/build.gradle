@@ -41,10 +41,10 @@ dependencies {
        exclude group: 'org.apache.xmlgraphics', module: 'xmlgraphics-commons'
     }
 
-    compile group: 'org.mapsforge', name: 'mapsforge-core', version: '0.5.0'
-    compile group: 'org.mapsforge', name: 'mapsforge-map', version: '0.5.0'
-    compile group: 'org.mapsforge', name: 'mapsforge-map-android', version: '0.5.0'
-    compile group: 'org.mapsforge', name: 'mapsforge-map-reader', version: '0.5.0'
+    compile group: 'org.mapsforge', name: 'mapsforge-core', version: '0.5.1'
+    compile group: 'org.mapsforge', name: 'mapsforge-map', version: '0.5.1'
+    compile group: 'org.mapsforge', name: 'mapsforge-map-android', version: '0.5.1'
+    compile group: 'org.mapsforge', name: 'mapsforge-map-reader', version: '0.5.1'
 
     compile group: 'org.slf4j', name: 'slf4j-android', version: '1.7.10'
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.10'
