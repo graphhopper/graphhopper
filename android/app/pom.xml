@@ -19,7 +19,7 @@
         <version>0.5-SNAPSHOT</version>
     </parent>
     <properties>
-        <mapsforge.version>0.5.0</mapsforge.version>
+        <mapsforge.version>0.5.1</mapsforge.version>
         <!-- do not put the properties here as it differs from dev to dev <android.sdk.path>/home/peterk/Programme/android-sdk-linux_x86</android.sdk.path>
         instead use your IDE to set it up or specify android sdk via command line
         using -Dandroid.sdk.path=... or by setting environment variable ANDROID_HOME
