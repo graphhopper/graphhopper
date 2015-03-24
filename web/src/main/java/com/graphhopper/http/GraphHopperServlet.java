@@ -140,12 +140,11 @@ public class GraphHopperServlet extends GHBaseServlet
         res.setContentType("application/xml");
         String trackName = getParam(req, "track", "GraphHopper Track");
         res.setHeader("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
-        String timeZone = getParam(req, "timezone", "GMT");
         long time = getLongParam(req, "millis", System.currentTimeMillis());
         if (rsp.hasErrors())
             return errorsToXML(rsp.getErrors());
         else
-            return rsp.getInstructions().createGPX(trackName, time, timeZone, includeElevation);
+            return rsp.getInstructions().createGPX(trackName, time, includeElevation);
     }
 
     String errorsToXML( List<Throwable> list ) throws Exception

@@ -327,10 +327,10 @@ public class InstructionListTest
         assertEquals(15.2, wayList.get(3).getFirstLat(), 1e-3);
         assertEquals(9.9, wayList.get(3).getFirstLon(), 1e-3);
 
-        String gpxStr = wayList.createGPX("test", 0, "GMT+1");
+        String gpxStr = wayList.createGPX("test", 0);
         verifyGPX(gpxStr);
 
-        assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T01:00:00+01:00</time>"));
+        assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T00:00:00Z</time>"));
         assertTrue(gpxStr, gpxStr.contains("<extensions>") && gpxStr.contains("</extensions>"));
         assertTrue(gpxStr, gpxStr.contains("<rtept lat=\"15.1\" lon=\"10.0\">"));
         assertTrue(gpxStr, gpxStr.contains("<gh:distance>8000.0</gh:distance>"));
@@ -407,7 +407,7 @@ public class InstructionListTest
                 return fakeList;
             }
         };
-        String gpxStr = il.createGPX("test", 0, "GMT");
+        String gpxStr = il.createGPX("test", 0);
         verifyGPX(gpxStr);
         assertFalse(gpxStr, gpxStr.contains("NaN"));
         assertFalse(gpxStr, gpxStr.contains("<ele>"));
@@ -415,7 +415,7 @@ public class InstructionListTest
         fakeList.clear();
         fakeList.add(new GPXEntry(12, 13, 11, 0));
         fakeList.add(new GPXEntry(12.5, 13, 10, 1000));
-        gpxStr = il.createGPX("test", 0, "GMT", true);
+        gpxStr = il.createGPX("test", 0, true);
 
         assertTrue(gpxStr, gpxStr.contains("<ele>11.0</ele>"));
         assertFalse(gpxStr, gpxStr.contains("NaN"));
