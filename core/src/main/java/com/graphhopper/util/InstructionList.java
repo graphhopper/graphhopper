@@ -18,7 +18,6 @@
 package com.graphhopper.util;
 
 import java.text.SimpleDateFormat;
-
 import java.util.*;
 
 /**
@@ -168,7 +167,7 @@ public class InstructionList implements Iterable<Instruction>
      */
     public String createGPX()
     {
-        return createGPX("GraphHopper", 0);
+        return createGPX("GraphHopper", new Date().getTime());
     }
 
     public String createGPX( String trackName, long startTimeMillis )
