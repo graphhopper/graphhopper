@@ -120,7 +120,7 @@ public class GHDirectory implements Directory
                     da = new RAMDataAccess(name, location, false, byteOrder);
             }
         } else if (type.isMMap())
-        {            
+        {
             da = new MMapDataAccess(name, location, byteOrder, type.isAllowWrites());
         } else
         {
@@ -196,7 +196,8 @@ public class GHDirectory implements Directory
             new File(location).mkdirs();
     }
 
-    Collection<DataAccess> getAll()
+    @Override
+    public Collection<DataAccess> getAll()
     {
         return map.values();
     }
