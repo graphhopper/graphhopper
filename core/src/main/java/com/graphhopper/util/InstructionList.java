@@ -168,23 +168,20 @@ public class InstructionList implements Iterable<Instruction>
      */
     public String createGPX()
     {
-        return createGPX("GraphHopper", 0, "GMT");
+        return createGPX("GraphHopper", 0);
     }
 
-    public String createGPX( String trackName, long startTimeMillis, String timeZoneId )
+    public String createGPX( String trackName, long startTimeMillis )
     {
         boolean includeElevation = getSize() > 0 ? get(0).getPoints().is3D() : false;
-        return createGPX(trackName, startTimeMillis, timeZoneId, includeElevation);
+        return createGPX(trackName, startTimeMillis, includeElevation);
     }
 
-    public String createGPX( String trackName, long startTimeMillis, String timeZoneId, boolean includeElevation )
+    public String createGPX( String trackName, long startTimeMillis, boolean includeElevation )
     {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        TimeZone tz = TimeZone.getDefault();
-        if (!Helper.isEmpty(timeZoneId))
-            tz = TimeZone.getTimeZone(timeZoneId);
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 
-        formatter.setTimeZone(tz);
         String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
                 + "<gpx xmlns='http://www.topografix.com/GPX/1/1' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'"
                 + " creator='Graphhopper' version='1.1'"
