@@ -128,10 +128,10 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     @Override
     protected Path extractPath()
     {
-        if (isWeightLimitReached())
-            return bestPath;
+        if (finished())
+            return bestPath.extract();
 
-        return bestPath.extract();
+        return bestPath;
     }
 
     @Override
@@ -180,9 +180,9 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     }
 
     @Override
-    protected boolean isWeightLimitReached()
+    protected boolean isWeightLimitExceeded()
     {
-        return currFrom.weight + currTo.weight >= weightLimit;
+        return currFrom.weight + currTo.weight > weightLimit;
     }
 
     void fillEdges( EdgeEntry currEdge, PriorityQueue<EdgeEntry> prioQueue,

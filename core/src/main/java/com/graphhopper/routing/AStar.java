@@ -96,7 +96,7 @@ public class AStar extends AbstractRoutingAlgorithm
         {
             int currVertex = currEdge.adjNode;
             visitedCount++;
-            if (isWeightLimitReached())
+            if (isWeightLimitExceeded())
                 return createEmptyPath();
 
             if (finished())
@@ -176,9 +176,10 @@ public class AStar extends AbstractRoutingAlgorithm
         return visitedCount;
     }
 
-    protected boolean isWeightLimitReached()
+    @Override
+    protected boolean isWeightLimitExceeded()
     {
-        return currEdge.weight >= weightLimit;
+        return currEdge.weight > weightLimit;
     }
 
     public static class AStarEdge extends EdgeEntry

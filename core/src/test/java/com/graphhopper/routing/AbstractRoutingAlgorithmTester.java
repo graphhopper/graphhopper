@@ -84,7 +84,7 @@ public abstract class AbstractRoutingAlgorithmTester
     }
 
     @Test
-    public void testCalcShortestPathWithLimit()
+    public void testWeightLimit()
     {
         Graph graph = createTestGraph();
         RoutingAlgorithm algo = createAlgo(graph);
@@ -93,6 +93,24 @@ public abstract class AbstractRoutingAlgorithmTester
         assertTrue(algo.getVisitedNodes() < 7);
         assertFalse(p.isFound());
         assertEquals(p.toString(), Helper.createTList(), p.calcNodes());
+    }
+
+    @Test
+    public void testWeightLimit_issue380()
+    {
+        Graph graph = createGraph(false);
+        initGraphWeightLimit(graph);
+        RoutingAlgorithm algo = createAlgo(graph);
+        algo.setWeightLimit(3);
+        Path p = algo.calcPath(0, 4);
+        assertTrue(p.isFound());
+        assertEquals(3.0, p.getWeight(), 1e-6);
+
+        algo = createAlgo(graph);
+        algo.setWeightLimit(3);
+        p = algo.calcPath(0, 3);
+        assertTrue(p.isFound());
+        assertEquals(3.0, p.getWeight(), 1e-6);
     }
 
     // see calc-fastest-graph.svg
@@ -796,6 +814,30 @@ public abstract class AbstractRoutingAlgorithmTester
         updateDistancesFor(g, 11, 2, 2);
         updateDistancesFor(g, 7, 1, 2);
         updateDistancesFor(g, 10, 0, 2);
+        return g;
+    }
+
+    public static Graph initGraphWeightLimit( Graph g )
+    {
+        //      0----1
+        //     /     |
+        //    7--    |
+        //   /   |   |
+        //   6---5   |
+        //   |   |   |
+        //   4---3---2
+
+        g.edge(0, 1, 1, true);
+        g.edge(1, 2, 1, true);
+
+        g.edge(3, 2, 1, true);
+        g.edge(3, 5, 1, true);
+        g.edge(5, 7, 1, true);
+        g.edge(3, 4, 1, true);
+        g.edge(4, 6, 1, true);
+        g.edge(6, 7, 1, true);
+        g.edge(6, 5, 1, true);
+        g.edge(0, 7, 1, true);
         return g;
     }
 
