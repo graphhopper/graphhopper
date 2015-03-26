@@ -43,7 +43,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
      * http://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed
      */
     protected final Map<String, Integer> defaultSpeedMap = new HashMap<String, Integer>();
-
+    protected int maxPossibleSpeed;
+    
     /**
      * Should be only instantied via EncodingManager
      */
@@ -101,6 +102,10 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         badSurfaceSpeedMap.add("ground");
         badSurfaceSpeedMap.add("grass");
 
+        // This value determines the maximal possible speed of any road regardless the maxspeed value
+        // lower values allow more compact representation of the routing graph
+        maxPossibleSpeed = 100;
+        
         // autobahn
         defaultSpeedMap.put("motorway", 100);
         defaultSpeedMap.put("motorway_link", 70);
@@ -136,7 +141,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     {
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
-        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, defaultSpeedMap.get("secondary"), defaultSpeedMap.get("motorway"));
+        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, defaultSpeedMap.get("secondary"), 
+                                              maxPossibleSpeed);
         return shift + speedEncoder.getBits();
     }
 
