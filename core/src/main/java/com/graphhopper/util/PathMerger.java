@@ -39,7 +39,7 @@ public class PathMerger
     {
         int origPoints = 0;
         StopWatch sw;
-        long fullMillis = 0;
+        long fullTimeInMillis = 0;
         double fullWeight = 0;
         double fullDistance = 0;
         boolean allFound = true;
@@ -49,7 +49,7 @@ public class PathMerger
         for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++)
         {
             Path path = paths.get(pathIndex);
-            fullMillis += path.getMillis();
+            fullTimeInMillis += path.getTime();
             fullDistance += path.getDistance();
             fullWeight += path.getWeight();
             if (enableInstructions)
@@ -122,8 +122,7 @@ public class PathMerger
 
         rsp.setPoints(fullPoints).
                 setRouteWeight(fullWeight).
-                setDistance(fullDistance).
-                setMillis(fullMillis);
+                setDistance(fullDistance).setTime(fullTimeInMillis);
     }
 
     public PathMerger setCalcPoints( boolean calcPoints )

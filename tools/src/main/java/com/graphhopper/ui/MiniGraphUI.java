@@ -266,7 +266,7 @@ public class MiniGraphUI
                 }
 
                 logger.info("found path in " + sw.getSeconds() + "s with nodes:"
-                        + path.calcNodes().size() + ", millis: " + path.getMillis() + ", " + path);
+                        + path.calcNodes().size() + ", millis: " + path.getTime() + ", " + path);
                 g2.setColor(Color.BLUE.brighter().brighter());
                 plotPath(path, g2, 1);
             }

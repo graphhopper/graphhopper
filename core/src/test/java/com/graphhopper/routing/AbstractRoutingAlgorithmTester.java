@@ -122,7 +122,7 @@ public abstract class AbstractRoutingAlgorithmTester
         Path p1 = createAlgo(graphShortest, defaultOpts).calcPath(0, 3);
         assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(p1.toString(), 402.293, p1.getDistance(), 1e-6);
-        assertEquals(p1.toString(), 144823, p1.getMillis());
+        assertEquals(p1.toString(), 144823, p1.getTime());
 
         Graph graphFastest = createGraph(false);
         initDirectedAndDiffSpeed(graphFastest, carEncoder);
@@ -131,7 +131,7 @@ public abstract class AbstractRoutingAlgorithmTester
                 calcPath(0, 3);
         assertEquals(Helper.createTList(0, 4, 6, 7, 5, 3), p2.calcNodes());
         assertEquals(p2.toString(), 1261.714, p2.getDistance(), 1e-6);
-        assertEquals(p2.toString(), 111437, p2.getMillis());
+        assertEquals(p2.toString(), 111437, p2.getTime());
     }
 
     // 0-1-2-3
@@ -184,7 +184,7 @@ public abstract class AbstractRoutingAlgorithmTester
                 weighting(new ShortestWeighting()).build()).
                 calcPath(0, 7);
         assertEquals(p1.toString(), 17000, p1.getDistance(), 1e-6);
-        assertEquals(p1.toString(), 12240 * 1000, p1.getMillis());
+        assertEquals(p1.toString(), 12240 * 1000, p1.getTime());
         assertEquals(Helper.createTList(0, 4, 5, 7), p1.calcNodes());
     }
 
@@ -695,7 +695,7 @@ public abstract class AbstractRoutingAlgorithmTester
         // of the speed and read 0 => infinity weight => overflow of millis => negative millis!
         Path p = createAlgo(graph, AlgorithmOptions.start().flagEncoder(encoder).weighting(new FastestWeighting(encoder)).build()).calcPath(0, 10);
 //        assertEquals(Helper.createTList(13, 0, 1, 2, 11, 7, 10, 12), p.calcNodes());
-        assertEquals(85124371, p.getMillis());
+        assertEquals(85124371, p.getTime());
         assertEquals(425622, p.getDistance(), 1);
         assertEquals(85124.4, p.getWeight(), 1);
     }
@@ -769,7 +769,7 @@ public abstract class AbstractRoutingAlgorithmTester
         QueryGraph qGraph = new QueryGraph(graph).lookup(from, to);
         p = factory.createAlgo(qGraph, opts).calcPath(from.getClosestNode(), to.getClosestNode());
         assertEquals(Helper.createTList(13, 0, 1, 2, 11, 7, 10, 12), p.calcNodes());
-        assertEquals(37009621, p.getMillis());
+        assertEquals(37009621, p.getTime());
         assertEquals(616827, p.getDistance(), 1);
         assertEquals(493462, p.getWeight(), 1);
     }

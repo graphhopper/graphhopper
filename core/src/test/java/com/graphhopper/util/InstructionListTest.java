@@ -308,8 +308,8 @@ public class InstructionListTest
         assertEquals(34000, p.getDistance(), 1e-1);
         assertEquals(34000, sumDistances(wayList), 1e-1);
         assertEquals(5, gpxList.size());
-        assertEquals(1604120, p.getMillis());
-        assertEquals(1604120, gpxList.get(gpxList.size() - 1).getMillis());
+        assertEquals(1604120, p.getTime());
+        assertEquals(1604120, gpxList.get(gpxList.size() - 1).getTime());
 
         assertEquals(Instruction.CONTINUE_ON_STREET, wayList.get(0).getSign());
         assertEquals(15, wayList.get(0).getFirstLat(), 1e-3);
@@ -443,11 +443,11 @@ public class InstructionListTest
         List<GPXEntry> result = instructions.createGPXList();
         assertEquals(5, result.size());
 
-        assertEquals(0, result.get(0).getMillis());
-        assertEquals(10391, result.get(1).getMillis());
-        assertEquals(15000, result.get(2).getMillis());
-        assertEquals(19000, result.get(3).getMillis());
-        assertEquals(22000, result.get(4).getMillis());
+        assertEquals(0, result.get(0).getTime());
+        assertEquals(10391, result.get(1).getTime());
+        assertEquals(15000, result.get(2).getTime());
+        assertEquals(19000, result.get(3).getTime());
+        assertEquals(22000, result.get(4).getTime());
 
         verifyGPX(instructions.createGPX());
     }

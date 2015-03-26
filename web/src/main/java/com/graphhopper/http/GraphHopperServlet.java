@@ -123,7 +123,7 @@ public class GraphHopperServlet extends GHBaseServlet
             logger.error(logStr + ", errors:" + ghRsp.getErrors());
         else
             logger.info(logStr + ", distance: " + ghRsp.getDistance()
-                    + ", time:" + Math.round(ghRsp.getMillis() / 60000f)
+                    + ", time:" + Math.round(ghRsp.getTime() / 60000f)
                     + "min, points:" + ghRsp.getPoints().getSize() + ", debug - " + ghRsp.getDebugInfo());
 
         if (writeGPX)
@@ -205,7 +205,7 @@ public class GraphHopperServlet extends GHBaseServlet
             Map<String, Object> jsonPath = new HashMap<String, Object>();
             jsonPath.put("distance", Helper.round(rsp.getDistance(), 3));
             jsonPath.put("weight", Helper.round6(rsp.getDistance()));
-            jsonPath.put("time", rsp.getMillis());
+            jsonPath.put("time", rsp.getTime());
 
             if (calcPoints)
             {

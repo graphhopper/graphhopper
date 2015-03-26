@@ -119,7 +119,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
                 createAlgo(g2, opts).calcPath(0, 7);
 
         assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());
-        assertEquals(1064, p.getMillis());
+        assertEquals(1064, p.getTime());
         assertEquals(4.2, p.getDistance(), 1e-5);
     }
 
@@ -160,7 +160,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(g, defaultOpts).calcPath(0, 3);
         assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(p1.toString(), 402.293, p1.getDistance(), 1e-6);
-        assertEquals(p1.toString(), 144823, p1.getMillis());
+        assertEquals(p1.toString(), 144823, p1.getTime());
     }
 
     @Test
@@ -186,12 +186,12 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         Path p2 = new RoutingAlgorithmFactorySimple().createAlgo(g.getBaseGraph(), carOptions).calcPath(0, 7);
         assertEquals(Helper.createTList(0, 4, 6, 7), p2.calcNodes());
         assertEquals(p2.toString(), 15000, p2.getDistance(), 1e-6);
-        assertEquals(p2.toString(), 2700 * 1000, p2.getMillis());
+        assertEquals(p2.toString(), 2700 * 1000, p2.getTime());
 
         // use base graph for solving normal Dijkstra via foot
         Path p3 = new RoutingAlgorithmFactorySimple().createAlgo(g.getBaseGraph(), footOptions).calcPath(0, 7);
         assertEquals(p3.toString(), 17000, p3.getDistance(), 1e-6);
-        assertEquals(p3.toString(), 12240 * 1000, p3.getMillis());
+        assertEquals(p3.toString(), 12240 * 1000, p3.getTime());
         assertEquals(Helper.createTList(0, 4, 5, 7), p3.calcNodes());
     }
 }

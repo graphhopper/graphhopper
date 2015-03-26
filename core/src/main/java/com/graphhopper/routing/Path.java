@@ -45,7 +45,7 @@ public class Path
     protected double distance;
     // we go upwards (via EdgeEntry.parent) from the goal node to the origin node
     protected boolean reverseOrder = true;
-    protected long millis;
+    protected long time;
     private boolean found;
     protected EdgeEntry edgeEntry;
     final StopWatch extractSW = new StopWatch("extract");
@@ -142,10 +142,19 @@ public class Path
 
     /**
      * @return time in millis
+     * @deprecated use getTime instead
      */
     public long getMillis()
     {
-        return millis;
+        return time;
+    }
+
+    /**
+     * @return time in millis
+     */
+    public long getTime()
+    {
+        return time;
     }
 
     /**
@@ -206,7 +215,7 @@ public class Path
         EdgeIteratorState iter = graph.getEdgeProps(edgeId, adjNode);
         double dist = iter.getDistance();
         distance += dist;
-        millis += calcMillis(dist, iter.getFlags(), false);
+        time += calcMillis(dist, iter.getFlags(), false);
         addEdge(edgeId);
     }
 
@@ -446,10 +455,10 @@ public class Path
                             {
                                 // check if there is an exit at the same node the roundabout was entered
                                 EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
-                                while (edgeIter.next()) 
+                                while (edgeIter.next())
                                 {
-                                    if ((edgeIter.getAdjNode() != prevNode) 
-                                         && !encoder.isBool(edgeIter.getFlags(), FlagEncoder.K_ROUNDABOUT))
+                                    if ((edgeIter.getAdjNode() != prevNode)
+                                            && !encoder.isBool(edgeIter.getFlags(), FlagEncoder.K_ROUNDABOUT))
                                     {
                                         roundaboutInstruction.increaseExitNumber();
                                         break;
@@ -569,7 +578,7 @@ public class Path
                     doublePrevLat = wayGeo.getLatitude(beforeLast);
                     doublePrevLong = wayGeo.getLongitude(beforeLast);
                 }
-                
+
                 prevInRoundabout = isRoundabout;
                 prevNode = baseNode;
                 prevLat = adjLat;

@@ -219,7 +219,7 @@ public class InstructionList implements Iterable<Instruction>
             track.append("' lon='").append(Helper.round6(entry.getLon())).append("'>");
             if (includeElevation)
                 track.append("<ele>").append(Helper.round2(entry.getEle())).append("</ele>");
-            track.append("<time>").append(formatter.format(startTimeMillis + entry.getMillis())).append("</time>");
+            track.append("<time>").append(formatter.format(startTimeMillis + entry.getTime())).append("</time>");
             track.append("</trkpt>");
         }
         track.append("</trkseg>");
