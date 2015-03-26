@@ -54,6 +54,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected long acceptBit;
     protected long ferryBit;
 
+    // This value determines the maximal possible speed of any road regardless the maxspeed value
+    // lower values allow more compact representation of the routing graph
+    protected int maxPossibleSpeed;
+
     private EncodedValue turnCostEncoder;
     private long turnRestrictionBit;
     private final int maxTurnCosts;
