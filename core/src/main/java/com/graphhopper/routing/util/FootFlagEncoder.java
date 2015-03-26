@@ -117,6 +117,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         hikingNetworkToCode.put("nwn", BEST.getValue());
         hikingNetworkToCode.put("rwn", VERY_NICE.getValue());
         hikingNetworkToCode.put("lwn", VERY_NICE.getValue());
+        
+        maxPossibleSpeed = FERRY_SPEED;
     }
 
     @Override
@@ -125,7 +127,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
         // larger value required - ferries are faster than pedestrians
-        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, MEAN_SPEED, FERRY_SPEED);
+        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, MEAN_SPEED, maxPossibleSpeed);
         shift += speedEncoder.getBits();
 
         preferWayEncoder = new EncodedValue("PreferWay", shift, 3, 1, 0, 7);
