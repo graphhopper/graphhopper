@@ -308,15 +308,7 @@ function initMap(selectLayer) {
     var osmAttr = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
     // provider
     //@see http://leaflet-extras.github.io/leaflet-providers/preview/index.html
-    var osmAttr = '&copy; <a href="http://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors';
-
-    var tp = "ls";
-    if (L.Browser.retina)
-        tp = "lr";
-
-    var sorbianLang = L.tileLayer('http://map.dgpsonline.eu/osmsb/{z}/{x}/{y}.png', {
-        attribution: osmAttr + ', <a href="http://www.alberding.eu/">© Alberding GmbH, CC-BY-SA</a>'
-    });
+    var osmAttr = '&copy; <a href="http://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors';    
 
     var mapquest = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
         attribution: osmAttr + ', <a href="http://open.mapquest.co.uk" target="_blank">MapQuest</a>',
@@ -327,9 +319,17 @@ function initMap(selectLayer) {
         attribution: osmAttr + ', <a href="http://open.mapquest.co.uk" target="_blank">MapQuest</a>',
         subdomains: ['otile1', 'otile2', 'otile3', 'otile4']
     });
-
+        
     var openMapSurfer = L.tileLayer('http://openmapsurfer.uni-hd.de/tiles/roads/x={x}&y={y}&z={z}', {
         attribution: osmAttr + ', <a href="http://openmapsurfer.uni-hd.de/contact.html">GIScience Heidelberg</a>'
+    });
+    
+    var mapbox= L.tileLayer('https://{s}.tiles.mapbox.com/v4/peterk.map-vkt0kusv/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoicGV0ZXJrIiwiYSI6IkdFc2FJd2MifQ.YUd7dS_gOpT3xrQnB8_K-w', {
+        attribution: osmAttr + ', <a href="https://www.mapbox.com/about/maps/">&copy; MapBox</a>'
+    });
+    
+    var sorbianLang = L.tileLayer('http://map.dgpsonline.eu/osmsb/{z}/{x}/{y}.png', {
+        attribution: osmAttr + ', <a href="http://www.alberding.eu/">&copy; Alberding GmbH, CC-BY-SA</a>'
     });
 
     var thunderTransport = L.tileLayer('http://{s}.tile.thunderforest.com/transport/{z}/{x}/{y}.png', {
@@ -369,6 +369,7 @@ function initMap(selectLayer) {
     });
 
     var baseMaps = {
+        "MapBox": mapbox,
         "MapQuest": mapquest,
         "MapQuest Aerial": mapquestAerial,
         "Esri Aerial": esriAerial,
@@ -384,7 +385,7 @@ function initMap(selectLayer) {
 
     var defaultLayer = baseMaps[selectLayer];
     if (!defaultLayer)
-        defaultLayer = mapquest;
+        defaultLayer = mapbox;
 
     // default
     map = L.map('map', {
