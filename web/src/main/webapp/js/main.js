@@ -29,7 +29,7 @@ var defaultTranslationMap = null;
 var enTranslationMap = null;
 var routeSegmentPopup = null;
 var elevationControl = null;
-var activeLayer = 'Lyrk';
+var activeLayer = 'MapQuest';
 var i18nIsInitialized;
 
 var iconFrom = L.icon({
@@ -314,11 +314,6 @@ function initMap(selectLayer) {
     if (L.Browser.retina)
         tp = "lr";
 
-    var lyrk = L.tileLayer('https://tiles.lyrk.org/' + tp + '/{z}/{x}/{y}?apikey=6e8cfef737a140e2a58c8122aaa26077', {
-        attribution: osmAttr + ', <a href="https://geodienste.lyrk.de/">Lyrk</a>',
-        subdomains: ['a', 'b', 'c']
-    });
-    
     var sorbianLang = L.tileLayer('http://map.dgpsonline.eu/osmsb/{z}/{x}/{y}.png', {
         attribution: osmAttr + ', <a href="http://www.alberding.eu/">© Alberding GmbH, CC-BY-SA</a>'
     });
@@ -374,7 +369,6 @@ function initMap(selectLayer) {
     });
 
     var baseMaps = {
-        "Lyrk": lyrk,        
         "MapQuest": mapquest,
         "MapQuest Aerial": mapquestAerial,
         "Esri Aerial": esriAerial,
@@ -390,7 +384,7 @@ function initMap(selectLayer) {
 
     var defaultLayer = baseMaps[selectLayer];
     if (!defaultLayer)
-        defaultLayer = lyrk;
+        defaultLayer = mapquest;
 
     // default
     map = L.map('map', {
