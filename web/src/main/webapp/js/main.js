@@ -318,6 +318,10 @@ function initMap(selectLayer) {
         attribution: osmAttr + ', <a href="https://geodienste.lyrk.de/">Lyrk</a>',
         subdomains: ['a', 'b', 'c']
     });
+    
+    var sorbianLang = L.tileLayer('http://map.dgpsonline.eu/osmsb/{z}/{x}/{y}.png', {
+        attribution: osmAttr + ', <a href="http://www.alberding.eu/">© Alberding GmbH, CC-BY-SA</a>'
+    });
 
     var mapquest = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
         attribution: osmAttr + ', <a href="http://open.mapquest.co.uk" target="_blank">MapQuest</a>',
@@ -370,7 +374,7 @@ function initMap(selectLayer) {
     });
 
     var baseMaps = {
-        "Lyrk": lyrk,
+        "Lyrk": lyrk,        
         "MapQuest": mapquest,
         "MapQuest Aerial": mapquestAerial,
         "Esri Aerial": esriAerial,
@@ -380,7 +384,8 @@ function initMap(selectLayer) {
         "TF Outdoors": thunderOutdoors,
         "WanderReitKarte": wrk,
         "OpenStreetMap": osm,
-        "OpenStreetMap.de": osmde
+        "OpenStreetMap.de": osmde,
+        "Sorbian Language": sorbianLang
     };
 
     var defaultLayer = baseMaps[selectLayer];
