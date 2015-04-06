@@ -1,6 +1,6 @@
 #!/bin/bash
 
-GH_CLASS=com.graphhopper.tools.Import
+GH_CLASS=com.samsix.graphhopper.tools.S6Import
 GH_HOME=$(dirname "$0")
 JAVA=$JAVA_HOME/bin/java
 if [ "x$JAVA_HOME" = "x" ]; then
