@@ -9,9 +9,10 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.CmdArgs;
 import com.samsix.graphhopper.FeederPatrolFlagEncoder;
+import com.samsix.graphhopper.S6CarFlagEncoder;
 import com.samsix.graphhopper.S6FootFlagEncoder;
 import com.samsix.graphhopper.S6GraphHopper;
-import com.samsix.graphhopper.TruckServiceFlagEncoder;
+import com.samsix.graphhopper.TruckFlagEncoder;
 
 public class S6Import
 {
@@ -23,8 +24,8 @@ public class S6Import
         List<FlagEncoder> encoders = new ArrayList<FlagEncoder>();
         encoders.add(new S6FootFlagEncoder());
         encoders.add(new FeederPatrolFlagEncoder());
-        encoders.add(new CarFlagEncoder());
-        encoders.add(new TruckServiceFlagEncoder());
+        encoders.add(new S6CarFlagEncoder());
+        encoders.add(new TruckFlagEncoder());
         EncodingManager manager = new EncodingManager(encoders, 8);
         hopper.setEncodingManager(manager);
         

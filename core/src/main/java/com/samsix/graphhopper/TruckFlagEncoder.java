@@ -3,11 +3,11 @@ package com.samsix.graphhopper;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.routing.util.CarFlagEncoder;
 
-public class TruckServiceFlagEncoder
+public class TruckFlagEncoder
     extends
         CarFlagEncoder
 {
-    public TruckServiceFlagEncoder()
+    public TruckFlagEncoder()
     {
         super();
         
@@ -41,6 +41,6 @@ public class TruckServiceFlagEncoder
     @Override
     public String toString()
     {
-        return "truckservice";
+        return "truck";
     }
 }
