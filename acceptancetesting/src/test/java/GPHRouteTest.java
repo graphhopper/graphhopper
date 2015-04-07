@@ -49,7 +49,7 @@ public class GPHRouteTest {
 				
 		String path = getClass().getResource("sampleGraphHopper.gpx").getPath();
 		GraphHopperGPXParserRouteTest ghrt = GraphHopperGPXParserRouteTest.getParserForgpxFileName(path);
-		Waypoint wayPoint = getTestWayPoint("50.927146","-1.416787","339","N","2515","13.974");
+		Waypoint wayPoint = getTestWayPoint("50.927146","-1.416787","339","N","2515","13.974","turn  right onto Wellington Road");
 		
 
 		HashSet<Route> hs = ghrt.getRoutes();
@@ -74,11 +74,12 @@ public class GPHRouteTest {
 		assertTrue(ghrt.routeContainsTurn("turn sharp right onto Bellemoor Road",next));
 	}
 
-	private Waypoint getTestWayPoint(String lat, String lon,String azimuth,String direction,String time,String distance) {
+	private Waypoint getTestWayPoint(String lat, String lon,String azimuth,String direction,String time,String distance,String description) {
 		
 		Waypoint wp = new Waypoint();
 		wp.setLatitude(new Double(lat));
 		wp.setLongitude(new Double(lon));
+		wp.setDescription(description);
 		wp.addExtensionData(ExtensionConstants.AZIMUTH, azimuth);
 		wp.addExtensionData(ExtensionConstants.DIRECTION, direction);
 		wp.addExtensionData(ExtensionConstants.TIME, time);

@@ -31,8 +31,8 @@ public class RoutePointAzimuthParser implements IExtensionParser {
 		String value = "";
 		for (int idx = 0; idx < node.getChildNodes().getLength(); idx++) {
 			Node currentNode = node.getChildNodes().item(idx);
-			LOG.info("Node Type is " + currentNode.getNodeType() + " And node name is" + currentNode.getNodeName() + " And node value is " + currentNode.getTextContent());
-			if ("azimuth".equals(currentNode.getNodeName())) {
+			LOG.debug("Node Type is " + currentNode.getNodeType() + " And node name is" + currentNode.getNodeName() + " And node value is " + currentNode.getTextContent());
+			if ("gh:azimuth".equals(currentNode.getNodeName())) {
 				value = currentNode.getTextContent();
 				break;
 			}

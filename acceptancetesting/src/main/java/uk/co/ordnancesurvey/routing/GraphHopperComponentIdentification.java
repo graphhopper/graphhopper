@@ -11,8 +11,8 @@ import uk.co.ordnancesurvey.webtests.base.GridFinder;
 public class GraphHopperComponentIdentification implements
 		ComponentIdentification {
 
-	public static final ComponentIdentifier FROM_ROUTE = new ComponentID("0_searchBox");
-	public static final  ComponentIdentifier TO_ROUTE = new ComponentID("1_searchBox");
+	public static ComponentIdentifier waypoint = new ComponentID("0_searchBox");
+	public static final ComponentIdentifier ADD_WAYPOINT= new ComponentByXPATH("//*[@class='pointAdd']");
 	public static final  ComponentIdentifier ROUTE_TYPE_CAR = new ComponentID("car");
 	public static final  ComponentIdentifier ROUTE_TYPE_BIKE = new ComponentID("bike");
 	public static final  ComponentIdentifier ROUTE_TYPE_WALK = new ComponentID("foot");

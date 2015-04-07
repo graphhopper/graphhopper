@@ -1,5 +1,9 @@
 package uk.co.ordnancesurvey.routing;
 
+
+
+import gherkin.formatter.model.Feature;
+
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.List;
@@ -8,6 +12,7 @@ import java.util.Map;
 import uk.co.ordnancesurvey.webtests.IntegrationTestProperties;
 import cucumber.api.Scenario;
 import cucumber.api.java.After;
+import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 
@@ -15,38 +20,101 @@ public class GraphHopperHooks {
 	GraphHopperUIUtil graphUiUtil;
 
 	String instruction;
+	
 
 	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI$")
 	public void getRoute(String pointA, String pointB, String routeType)
 			throws InterruptedException {
 
-		if (routeType.equalsIgnoreCase("car"))
-
 			graphUiUtil = new GraphHopperUIUtil(
 					IntegrationTestProperties
 							.getTestProperty("graphHopperWebUrl"));
-		else
-			graphUiUtil = new GraphHopperUIUtil(
-					IntegrationTestProperties
-							.getTestProperty("DPNgraphHopperWebUrl"));
 
 		String testON = IntegrationTestProperties.getTestProperty("testON");
 
 		switch (testON.toUpperCase()) {
 		case "WEB":
 
-			graphUiUtil.getRouteFromUI(pointA, pointB, routeType);
+			graphUiUtil.getRouteFromUI(routeType,pointA, pointB);
 			break;
 		case "SERVICE":
-			graphUiUtil.getRouteFromService(pointA, pointB, routeType);
+			graphUiUtil.getRouteFromService(routeType,pointA, pointB);
 			break;
 		default:
 
 			if (pointA.split(",").length == 2) {
-				graphUiUtil.getRouteFromService(pointA, pointB, routeType);
-				graphUiUtil.getRouteFromUI(pointA, pointB, routeType);
+				graphUiUtil.getRouteFromService(routeType,pointA, pointB);
+				graphUiUtil.getRouteFromUI(routeType,pointA, pointB);
 			} else {
-				graphUiUtil.getRouteFromUI(pointA, pointB, routeType);
+				graphUiUtil.getRouteFromUI(routeType,pointA, pointB);
+			}
+
+			break;
+
+		}
+
+	}
+	
+	
+	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI via \"([^\"]*)\"$")
+	public void getRoute(String pointA, String pointB, String routeType,String pointC)
+			throws InterruptedException {
+
+			graphUiUtil = new GraphHopperUIUtil(
+					IntegrationTestProperties
+							.getTestProperty("graphHopperWebUrl"));
+
+		String testON = IntegrationTestProperties.getTestProperty("testON");
+
+		switch (testON.toUpperCase()) {
+		case "WEB":
+
+			graphUiUtil.getRouteFromUI(routeType,pointA, pointB, pointC);
+			break;
+		case "SERVICE":
+			graphUiUtil.getRouteFromService(routeType,pointA, pointB, pointC);
+			break;
+		default:
+
+			if (pointA.split(",").length == 2) {
+				graphUiUtil.getRouteFromService(routeType,pointA, pointB, pointC);
+				graphUiUtil.getRouteFromUI(routeType,pointA, pointB, pointC);
+			} else {
+				graphUiUtil.getRouteFromUI(routeType,pointA, pointB, pointC);
+			}
+
+			break;
+
+		}
+
+	}
+	
+	
+	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI via \"([^\"]*)\" and \"([^\"]*)\"$")
+	public void getRoute(String pointA, String pointB, String routeType,String pointC,String pointD)
+			throws InterruptedException {
+
+			graphUiUtil = new GraphHopperUIUtil(
+					IntegrationTestProperties
+							.getTestProperty("graphHopperWebUrl"));
+
+		String testON = IntegrationTestProperties.getTestProperty("testON");
+
+		switch (testON.toUpperCase()) {
+		case "WEB":
+
+			graphUiUtil.getRouteFromUI(routeType,pointA, pointB, pointC,pointD);
+			break;
+		case "SERVICE":
+			graphUiUtil.getRouteFromService(routeType,pointA, pointB, pointC,pointD);
+			break;
+		default:
+
+			if (pointA.split(",").length == 2) {
+				graphUiUtil.getRouteFromService(routeType,pointA, pointB, pointC,pointD);
+				graphUiUtil.getRouteFromUI(routeType,pointA, pointB, pointC,pointD);
+			} else {
+				graphUiUtil.getRouteFromUI(routeType,pointA, pointB, pointC,pointD);
 			}
 
 			break;
@@ -107,6 +175,7 @@ public class GraphHopperHooks {
 
 	@After({ "@Routing" })
 	public void closeBrowser(Scenario sc) {
+	
 
 		if (sc.isFailed()) {
 

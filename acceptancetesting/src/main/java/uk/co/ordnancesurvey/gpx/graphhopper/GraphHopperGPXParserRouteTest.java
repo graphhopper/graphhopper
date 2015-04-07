@@ -13,7 +13,6 @@ import org.alternativevision.gpx.GPXParser;
 import org.alternativevision.gpx.beans.GPX;
 import org.alternativevision.gpx.beans.Route;
 import org.alternativevision.gpx.beans.Track;
-import org.alternativevision.gpx.beans.TrackPoint;
 import org.alternativevision.gpx.beans.Waypoint;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.ClientProtocolException;
@@ -59,27 +58,12 @@ public class GraphHopperGPXParserRouteTest {
 		init();
 	}
 
-
 	private void parseGPXFromString(String gpxString) {
 		if (gpxString != null && gpxString.length() > 0) {
 			try {
 				gpx = gpxParser.parseGPX(new ByteArrayInputStream(gpxString
 						.getBytes()));
-				/*
-				 * for (Route aRoute : gpx.getRoutes()) { for (Waypoint
-				 * aWayPoint : aRoute.getRoutePoints()) {
-				 * LOG.info("A RoutePoint with data " //+ aWayPoint +
-				 * " Direction=" +
-				 * aWayPoint.getExtensionData("routePointDirectionExtension") +
-				 * " Time=" +
-				 * aWayPoint.getExtensionData("routePointTimeExtension") +
-				 * " Distance=" +
-				 * aWayPoint.getExtensionData("routePointDistanceExtension") +
-				 * " Azimuth=" +
-				 * aWayPoint.getExtensionData("routePointAzimuthExtension"));
-				 * 
-				 * } }
-				 */} catch (Exception e) {
+			} catch (Exception e) {
 				LOG.info("Invalid File supplied for parsing " + e.getMessage());
 			}
 		}
@@ -89,21 +73,8 @@ public class GraphHopperGPXParserRouteTest {
 		if (gpxFileName != null && gpxFileName.length() > 0) {
 			try {
 				gpx = gpxParser.parseGPX(new FileInputStream(gpxFileName));
-				/*
-				 * for (Route aRoute : gpx.getRoutes()) { for (Waypoint
-				 * aWayPoint : aRoute.getRoutePoints()) {
-				 * LOG.info("A RoutePoint with data " //+ aWayPoint +
-				 * " Direction=" +
-				 * aWayPoint.getExtensionData("routePointDirectionExtension") +
-				 * " Time=" +
-				 * aWayPoint.getExtensionData("routePointTimeExtension") +
-				 * " Distance=" +
-				 * aWayPoint.getExtensionData("routePointDistanceExtension") +
-				 * " Azimuth=" +
-				 * aWayPoint.getExtensionData("routePointAzimuthExtension"));
-				 * 
-				 * } }
-				 */} catch (Exception e) {
+
+			} catch (Exception e) {
 				LOG.info("Invalid File supplied for parsing " + e.getMessage());
 			}
 		}
@@ -124,39 +95,34 @@ public class GraphHopperGPXParserRouteTest {
 		return httpClient.execute(httpget);
 	}
 
-	public String parseRoute(String bbox, String routeType, String vehicle) {
+	public String parseRoute(String routeType, String vehicle, String[] points) {
 		LOG.debug("Here we are");
 		// Set up the URL
 		String xmlResponse = "";
-		String[] coords = bbox.split(",");
-		String minX = coords[0];
-		String minY = coords[1];
-		String maxX = coords[2];
-		String maxY = coords[3];
+		String coordinateString = "";
 		String graphHopperUrl;
-		
-		graphHopperUrl=vehicle.equalsIgnoreCase("car")?(IntegrationTestProperties
-				.getTestProperty("graphHopperWebUrl")):(IntegrationTestProperties
-						.getTestProperty("DPNgraphHopperWebUrl"));
-		 
+
+		for (int i = 0; i < points.length; i++) {
+
+			coordinateString = coordinateString + "&point=" + points[i];
+
+		}
+
+		graphHopperUrl = vehicle.equalsIgnoreCase("car") ? (IntegrationTestProperties
+				.getTestProperty("graphHopperWebUrl"))
+				: (IntegrationTestProperties
+						.getTestProperty("graphHopperWebUrl"));
+
 		StringBuilder sb = new StringBuilder();
 		sb.append(graphHopperUrl);
 		sb.append("route?");
 		if (routeType != null) {
 			sb.append("type=");
 			sb.append(routeType);
-		} 
-
+		}
 		sb.append("&vehicle=");
 		sb.append(vehicle);
-		sb.append("&point=");
-		sb.append(minX);
-		sb.append(",");
-		sb.append(minY);
-		sb.append("&point=");
-		sb.append(maxX);
-		sb.append(",");
-		sb.append(maxY);
+		sb.append(coordinateString);
 
 		try {
 			CloseableHttpResponse httpResponse = sendAndGetResponse(sb
@@ -179,7 +145,7 @@ public class GraphHopperGPXParserRouteTest {
 	public HashSet<Route> getRoutes() {
 		return gpx.getRoutes();
 	}
-	
+
 	public HashSet<Track> getTracks() {
 		return gpx.getTracks();
 	}
@@ -217,7 +183,7 @@ public class GraphHopperGPXParserRouteTest {
 	}
 
 	public boolean isWayPointOnRoute(Waypoint aWayPoint, Route aRoute) {
-
+		System.out.println(aWayPoint.getExtensionData().toString());
 		boolean isWayPointOnRoute = false;
 		System.out.println(aRoute.getRoutePoints());
 		for (Waypoint aWaypointInaRoute : aRoute.getRoutePoints()) {
@@ -231,7 +197,7 @@ public class GraphHopperGPXParserRouteTest {
 
 		return isWayPointOnRoute;
 	}
-	
+
 	public boolean isWayPointOnTrack(Waypoint aWayPoint, Track aTrack) {
 
 		boolean isWayPointOnTrack = false;
@@ -239,18 +205,16 @@ public class GraphHopperGPXParserRouteTest {
 		for (Waypoint aWaypointInaTrack : aTrack.getTrackPoints()) {
 			if (new RouteWayPoint(aWaypointInaTrack).equals(new RouteWayPoint(
 					aWayPoint))) {
-				
+
 				isWayPointOnTrack = true;
 				LOG.info("WayPoint " + aWayPoint + " Found In a Track" + aTrack);
 				break;
 			}
-			
-			
+
 		}
 
 		return isWayPointOnTrack;
 	}
-
 
 	public boolean routeContainsTurn(String turnDescription, Route aRoute) {
 		System.out.println(aRoute);
@@ -298,9 +262,5 @@ public class GraphHopperGPXParserRouteTest {
 		}
 		return isWayPointOnRoute;
 	}
-
-
-		
-
 
 }

@@ -6,8 +6,16 @@ import java.lang.reflect.Method;
 import java.util.Objects;
 
 import org.alternativevision.gpx.beans.Waypoint;
+import org.eclipse.jetty.util.log.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import uk.co.ordnancesurvey.gpx.graphhopper.GraphHopperGPXParserRouteTest;
 
 public class RouteWayPoint {
+
+	private static final Logger LOG = LoggerFactory
+			.getLogger(RouteWayPoint.class);
 
 	public Waypoint waypoint;
 
@@ -81,15 +89,25 @@ public class RouteWayPoint {
 			}
 		}
 		if (isEqual) {
-			System.out.println(routeWayPoint.waypoint.getExtensionData());
 			if (null != routeWayPoint.waypoint.getExtensionData()) {
 				for (String anExtensionDataKey : waypoint.getExtensionData()
 						.keySet()) {
+
 					isEqual = Objects.equals(waypoint
 							.getExtensionData(anExtensionDataKey),
 							routeWayPoint.waypoint
 									.getExtensionData(anExtensionDataKey));
+
 					if (!isEqual) {
+
+						LOG.info("********Way point attribute "
+								+ anExtensionDataKey
+								+ " "
+								+ waypoint.getExtensionData(anExtensionDataKey)
+								+ " is not matching with expected value "
+								+ routeWayPoint.waypoint
+										.getExtensionData(anExtensionDataKey));
+
 						break;
 					}
 				}

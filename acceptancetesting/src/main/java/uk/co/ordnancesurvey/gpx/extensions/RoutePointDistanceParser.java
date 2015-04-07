@@ -15,7 +15,7 @@ public class RoutePointDistanceParser implements IExtensionParser {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(RoutePointDistanceParser.class);
 
-	public static final String MYID = ExtensionConstants.DIRECTION;
+	public static final String MYID = ExtensionConstants.DISTANCE;
 
 	public RoutePointDistanceParser() {
 		// TODO Auto-generated constructor stub
@@ -31,8 +31,8 @@ public class RoutePointDistanceParser implements IExtensionParser {
 		String value = "";
 		for (int idx = 0; idx < node.getChildNodes().getLength(); idx++) {
 			Node currentNode = node.getChildNodes().item(idx);
-			LOG.info("Node Type is " + currentNode.getNodeType() + " And node name is" + currentNode.getNodeName() + " And node value is " + currentNode.getTextContent());
-			if ("distance".equals(currentNode.getNodeName())) {
+			LOG.debug("Node Type is " + currentNode.getNodeType() + " And node name is" + currentNode.getNodeName() + " And node value is " + currentNode.getTextContent());
+			if ("gh:distance".equals(currentNode.getNodeName())) {
 				value = currentNode.getTextContent();
 				break;
 			}

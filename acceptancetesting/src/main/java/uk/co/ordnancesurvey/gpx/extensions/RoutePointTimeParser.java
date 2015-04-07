@@ -31,7 +31,8 @@ public class RoutePointTimeParser implements IExtensionParser {
         Object value = "";
         for(int idx = 0; idx < node.getChildNodes().getLength(); idx++) {
             Node currentNode = node.getChildNodes().item(idx);
-            if("time".equals(currentNode.getNodeName())) {
+            LOG.debug("Node Type is " + currentNode.getNodeType() + " And node name is" + currentNode.getNodeName() + " And node value is " + currentNode.getTextContent());
+            if("gh:time".equals(currentNode.getNodeName())) {
             	value = currentNode.getTextContent();
             	break;
             }
