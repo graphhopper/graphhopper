@@ -12,6 +12,7 @@ import com.graphhopper.util.CmdArgs;
 import com.samsix.graphhopper.NoHighwayFlagEncoder;
 import com.samsix.graphhopper.S6CarFlagEncoder;
 import com.samsix.graphhopper.S6FootFlagEncoder;
+import com.samsix.graphhopper.S6GHUtils;
 import com.samsix.graphhopper.S6GraphHopper;
 import com.samsix.graphhopper.TruckFlagEncoder;
 
@@ -22,14 +23,7 @@ public class S6Import
         CmdArgs args = CmdArgs.read(strs);
         GraphHopper hopper = new S6GraphHopper().init(args);
 
-        List<FlagEncoder> encoders = new ArrayList<FlagEncoder>();
-        encoders.add(new S6FootFlagEncoder());
-        encoders.add(new NoHighwayFlagEncoder());
-        encoders.add(new S6CarFlagEncoder());
-        encoders.add(new TruckFlagEncoder());
-        encoders.add(new BikeFlagEncoder());
-        EncodingManager manager = new EncodingManager(encoders, 8);
-        hopper.setEncodingManager(manager);
+        hopper.setEncodingManager(S6GHUtils.getS6EncodingManager());
         
         hopper.importOrLoad();
         hopper.close();
