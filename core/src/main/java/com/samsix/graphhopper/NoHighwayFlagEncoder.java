@@ -4,11 +4,11 @@ import com.graphhopper.reader.OSMWay;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
 
-public class FeederPatrolFlagEncoder
+public class NoHighwayFlagEncoder
     extends
         CarFlagEncoder
 {
-    public FeederPatrolFlagEncoder()
+    public NoHighwayFlagEncoder()
     {
         super();
         
@@ -38,6 +38,6 @@ public class FeederPatrolFlagEncoder
     @Override
     public String toString()
     {
-        return "feederpatrol";
+        return "nohighway";
     }
 }
