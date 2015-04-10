@@ -26,6 +26,7 @@ import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.pbf.Sink;
 
 /**
+ * Abstract base class for reading in input files from xml, gz etc
  *
  * @author phopkins
  *
