@@ -19,8 +19,8 @@ package com.graphhopper;
 
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.OSMReader;
-import com.graphhopper.reader.osgb.OsItnReader;
 import com.graphhopper.reader.osgb.dpn.OsDpnReader;
+import com.graphhopper.reader.osgb.itn.OsItnReader;
 import com.graphhopper.reader.dem.CGIARProvider;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
@@ -33,6 +33,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

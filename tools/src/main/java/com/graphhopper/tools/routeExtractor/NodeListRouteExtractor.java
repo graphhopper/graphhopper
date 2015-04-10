@@ -23,8 +23,8 @@ import com.graphhopper.reader.OSMElement;
 import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.RelationMember;
 import com.graphhopper.reader.RoutingElement;
-import com.graphhopper.reader.osgb.OSITNElement;
-import com.graphhopper.reader.osgb.OSITNWay;
+import com.graphhopper.reader.osgb.itn.OSITNElement;
+import com.graphhopper.reader.osgb.itn.OSITNWay;
 
 public class NodeListRouteExtractor extends AbstractProblemRouteExtractor {
 

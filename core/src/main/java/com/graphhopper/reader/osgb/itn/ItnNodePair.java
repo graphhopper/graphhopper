@@ -1,4 +1,4 @@
-package com.graphhopper.reader.osgb;
+package com.graphhopper.reader.osgb.itn;
 
 public class ItnNodePair {
 	long first;

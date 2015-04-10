@@ -31,7 +31,7 @@ import com.graphhopper.reader.RelationMember;
 import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.TurnRelation;
 import com.graphhopper.reader.dem.ElevationProvider;
-import com.graphhopper.reader.osgb.OSITNTurnRelation;
+import com.graphhopper.reader.osgb.itn.OSITNTurnRelation;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.NodeAccess;
@@ -47,15 +47,15 @@ import com.graphhopper.util.shapes.GHPoint;
 
 /*
  *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -85,7 +85,7 @@ import com.graphhopper.util.shapes.GHPoint;
  * from the OSM tags. When creating an edge the pillar node information from the
  * intermediate datastructure will be stored in the way geometry of that edge.
  * <p/>
- * 
+ *
  * @author Peter Karich
  */
 
@@ -183,8 +183,8 @@ public class OsDpnReader implements DataReader<String> {
     void preProcess(File osmFile) {
         OsDpnInputFile in = null;
         try {
-            in = new OsDpnInputFile(osmFile).setWorkerThreads(workerThreads)
-                    .open();
+            in = new OsDpnInputFile(osmFile);
+            in.setWorkerThreads(workerThreads).open();
 
             long tmpWayCounter = 1;
             long tmpRelationCounter = 1;
@@ -261,7 +261,7 @@ public class OsDpnReader implements DataReader<String> {
      * Filter ways but do not analyze properties wayNodes will be filled with
      * participating node ids.
      * <p/>
-     * 
+     *
      * @return true the current xml entry is a way entry and has nodes
      */
     boolean filterWay(OsDpnWay way) {
@@ -290,38 +290,38 @@ public class OsDpnReader implements DataReader<String> {
         long counter = 1;
         OsDpnInputFile in = null;
         try {
-            in = new OsDpnInputFile(osmFile).setWorkerThreads(workerThreads)
-                    .open();
+            in = new OsDpnInputFile(osmFile);
+            in.setWorkerThreads(workerThreads).open();
             TObjectIntMap<String> nodeFilter = getNodeMap();
 
             RoutingElement item;
             while ((item = in.getNext()) != null) {
                 switch (item.getType()) {
-                    case OSMElement.NODE:
-                        OsDpnNode dpnNode = (OsDpnNode) item;
-                        String id = dpnNode.getId();
-                        logger.info("NODEITEMID:" + id);
-                        if (nodeFilter.get(id) != -1) {
-                            processNode(dpnNode);
-                        }
-                        break;
+                case OSMElement.NODE:
+                    OsDpnNode dpnNode = (OsDpnNode) item;
+                    String id = dpnNode.getId();
+                    logger.info("NODEITEMID:" + id);
+                    if (nodeFilter.get(id) != -1) {
+                        processNode(dpnNode);
+                    }
+                    break;
 
-                    case OSMElement.WAY:
-                        OsDpnWay dpnWay = (OsDpnWay) item;
-                        logger.info("WAY:" + dpnWay.getId() + ":" + wayStart);
-                        if (wayStart < 0) {
-                            logger.info(nf(counter) + ", now parsing ways");
-                            wayStart = counter;
-                        }
-                        processWay(dpnWay);
-                        break;
-                    case OSMElement.RELATION:
-                        if (relationStart < 0) {
-                            logger.info(nf(counter) + ", now parsing relations");
-                            relationStart = counter;
-                        }
-                        processRelation((Relation) item);
-                        break;
+                case OSMElement.WAY:
+                    OsDpnWay dpnWay = (OsDpnWay) item;
+                    logger.info("WAY:" + dpnWay.getId() + ":" + wayStart);
+                    if (wayStart < 0) {
+                        logger.info(nf(counter) + ", now parsing ways");
+                        wayStart = counter;
+                    }
+                    processWay(dpnWay);
+                    break;
+                case OSMElement.RELATION:
+                    if (relationStart < 0) {
+                        logger.info(nf(counter) + ", now parsing relations");
+                        relationStart = counter;
+                    }
+                    processRelation((Relation) item);
+                    break;
                 }
                 if (++counter % 5000000 == 0) {
                     logger.info(nf(counter) + ", locs:" + nf(locations) + " ("
@@ -571,15 +571,15 @@ public class OsDpnReader implements DataReader<String> {
      * void prepareWaysWithRelationInfo(OSMRelation osmRelation) { // is there
      * at least one tag interesting for the registed encoders? if
      * (encodingManager.handleRelationTags(osmRelation, 0) == 0) return;
-     * 
+     *
      * int size = osmRelation.getMembers().size(); for (int index = 0; index <
      * size; index++) { OSMRelation.Member member =
      * osmRelation.getMembers().get(index); if (member.type() !=
      * OSMRelation.Member.WAY) continue;
-     * 
+     *
      * long osmId = member.ref(); long oldRelationFlags =
      * getRelFlagsMap().get(osmId);
-     * 
+     *
      * // Check if our new relation data is better comparated to the the // last
      * one long newRelationFlags = encodingManager.handleRelationTags(
      * osmRelation, oldRelationFlags); if (oldRelationFlags != newRelationFlags)
@@ -667,7 +667,7 @@ public class OsDpnReader implements DataReader<String> {
                 if (tmpNode <= -TOWER_NODE && tmpNode >= TOWER_NODE)
                     throw new AssertionError(
                             "Mapped index not in correct bounds " + tmpNode
-                                    + ", " + osmId);
+                            + ", " + osmId);
 
                 if (tmpNode > -TOWER_NODE) {
                     boolean convertToTowerNode = i == 0 || i == lastIndex;
@@ -708,7 +708,7 @@ public class OsDpnReader implements DataReader<String> {
         if (fromIndex < 0 || toIndex < 0)
             throw new AssertionError(
                     "to or from index is invalid for this edge " + fromIndex
-                            + "->" + toIndex + ", points:" + pointList);
+                    + "->" + toIndex + ", points:" + pointList);
         if (pointList.getDimension() != nodeAccess.getDimension())
             throw new AssertionError(
                     "Dimension does not match for pointList vs. nodeAccess "
@@ -853,7 +853,7 @@ public class OsDpnReader implements DataReader<String> {
     /**
      * Creates an OSM turn relation out of an unspecified OSM relation
      * <p>
-     * 
+     *
      * @return the OSM turn relation, <code>null</code>, if unsupported turn
      *         relation
      */

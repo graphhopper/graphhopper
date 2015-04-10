@@ -1,20 +1,3 @@
-/*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
- *  additional information regarding copyright ownership.
- * 
- *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
- *  compliance with the License. You may obtain a copy of the License at
- * 
- *       http://www.apache.org/licenses/LICENSE-2.0
- * 
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package com.graphhopper.reader.osgb;
 
 import java.io.BufferedInputStream;
@@ -25,7 +8,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
-import java.math.BigDecimal;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.zip.GZIPInputStream;
@@ -39,39 +21,31 @@ import javax.xml.stream.XMLStreamReader;
 import org.opengis.geometry.MismatchedDimensionException;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.operation.TransformException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.pbf.Sink;
 
-/**
- * A readable OS ITN file.
- * <p/>
- * 
- * @author Stuart Adam
- */
-public class OsItnInputFile implements Sink, Closeable {
+abstract public class AbstractOsInputFile<T extends RoutingElement>  implements Sink, Closeable {
     private boolean eof;
     private final InputStream bis;
     // for xml parsing
-    private XMLStreamReader parser;
+    protected XMLStreamReader parser;
     // for pbf parsing
     private boolean binary = false;
     private final BlockingQueue<RoutingElement> itemQueue;
-    private boolean hasIncomingData;
-    private int workerThreads = -1;
-    private static final Logger logger = LoggerFactory
-            .getLogger(OsItnInputFile.class);
+    //    private boolean hasIncomingData;
+    //    private int workerThreads = -1;
+    //    private static final Logger logger = LoggerFactory
+    //            .getLogger(OsItnInputFile.class);
     private final String name;
 
-    public OsItnInputFile(File file) throws IOException {
+    public AbstractOsInputFile(File file) throws IOException {
         name = file.getAbsolutePath();
         bis = decode(file);
         itemQueue = new LinkedBlockingQueue<RoutingElement>(50000);
     }
 
-    public OsItnInputFile open() throws XMLStreamException {
+    public AbstractOsInputFile<T> open() throws XMLStreamException {
         openXMLStream(bis);
         return this;
     }
@@ -83,8 +57,8 @@ public class OsItnInputFile implements Sink, Closeable {
     /**
      * Currently on for pbf format. Default is number of cores.
      */
-    public OsItnInputFile setWorkerThreads(int num) {
-        workerThreads = num;
+    public AbstractOsInputFile<T> setWorkerThreads(int num) {
+        //        workerThreads = num;
         return this;
     }
 
@@ -166,11 +140,11 @@ public class OsItnInputFile implements Sink, Closeable {
     }
 
     public RoutingElement getNext() throws XMLStreamException,
-            MismatchedDimensionException, FactoryException, TransformException {
+    MismatchedDimensionException, FactoryException, TransformException {
         if (eof)
             throw new IllegalStateException("EOF reached");
 
-        RoutingElement item;
+        T item;
         item = getNextXML();
 
         if (item != null)
@@ -180,60 +154,8 @@ public class OsItnInputFile implements Sink, Closeable {
         return null;
     }
 
-    private OSITNElement getNextXML() throws XMLStreamException,
-            MismatchedDimensionException, FactoryException, TransformException {
-
-        int event = parser.next();
-        while (event != XMLStreamConstants.END_DOCUMENT) {
-            if (event == XMLStreamConstants.START_ELEMENT) {
-                String idStr = parser.getAttributeValue(null, "fid");
-                if (null == idStr) {
-                    idStr = parser.getAttributeValue(
-                            "http://www.opengis.net/gml/3.2", "id");
-                }
-                if (idStr != null) {
-                    String name = parser.getLocalName();
-                    idStr = idStr.substring(4);
-                    logger.info(idStr + ":" + name + ":");
-
-                    long id;
-                    try {
-                        id = Long.parseLong(idStr);
-                    } catch (NumberFormatException nfe) {
-                        BigDecimal bd = new BigDecimal(idStr);
-                        id = bd.longValue();
-                    }
-                    logger.info(id + ":" + name + ":");
-                    switch (name) {
-                        case "RoadNode": {
-                            return OSITNNode.create(id, parser);
-                        }
-                        case "RoadLink": {
-                            return OSITNWay.create(id, parser);
-                        }
-
-                        case "RoadLinkInformation": 
-                        case "RoadRouteInformation": {
-                            return OSITNRelation.create(id, parser);
-                        }
-
-                        case "Road": {
-                            return OsItnMetaData.create(id, parser);
-                        }
-                        case "RoadNodeInformation": {
-                        }
-                        default: {
-
-                        }
-
-                    }
-                }
-            }
-            event = parser.next();
-        }
-        parser.close();
-        return null;
-    }
+    abstract protected T getNextXML() throws XMLStreamException,
+    MismatchedDimensionException, FactoryException, TransformException;
 
     public boolean isEOF() {
         return eof;
@@ -267,6 +189,6 @@ public class OsItnInputFile implements Sink, Closeable {
 
     @Override
     public void complete() {
-        hasIncomingData = false;
+        //        hasIncomingData = false;
     }
 }

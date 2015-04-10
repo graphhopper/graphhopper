@@ -10,6 +10,7 @@ import java.io.IOException;
 
 import org.junit.Before;
 
+import com.graphhopper.reader.osgb.itn.OsItnReader;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.BusFlagEncoder;

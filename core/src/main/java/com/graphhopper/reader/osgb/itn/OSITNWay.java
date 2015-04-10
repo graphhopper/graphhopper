@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader.osgb;
+package com.graphhopper.reader.osgb.itn;
 
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;

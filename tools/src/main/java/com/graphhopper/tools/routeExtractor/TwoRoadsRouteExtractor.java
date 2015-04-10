@@ -18,8 +18,8 @@ import org.xml.sax.SAXException;
 
 import com.graphhopper.reader.OSMElement;
 import com.graphhopper.reader.RoutingElement;
-import com.graphhopper.reader.osgb.OSITNRelation;
-import com.graphhopper.reader.osgb.OSITNWay;
+import com.graphhopper.reader.osgb.itn.OSITNRelation;
+import com.graphhopper.reader.osgb.itn.OSITNWay;
 
 public class TwoRoadsRouteExtractor extends AbstractProblemRouteExtractor {
     protected String workingRoadName;

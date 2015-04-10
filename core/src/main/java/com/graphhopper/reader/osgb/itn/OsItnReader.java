@@ -1,4 +1,4 @@
-package com.graphhopper.reader.osgb;
+package com.graphhopper.reader.osgb.itn;
 
 import static com.graphhopper.util.Helper.nf;
 import gnu.trove.list.TLongList;
@@ -313,8 +313,8 @@ public class OsItnReader implements DataReader<Long> {
         OsItnInputFile in = null;
         try {
             logger.error(PREPROCESS_FORMAT, osmFile.getName());
-            in = new OsItnInputFile(osmFile).setWorkerThreads(workerThreads)
-                    .open();
+            in = new OsItnInputFile(osmFile);
+            in.setWorkerThreads(workerThreads).open();
             preProcessSingleFile(in);
         } finally {
             Helper.close(in);
@@ -704,8 +704,8 @@ public class OsItnReader implements DataReader<Long> {
         OsItnInputFile in = null;
         try {
             logger.error(PROCESS_FORMAT, osmFile.getName());
-            in = new OsItnInputFile(osmFile).setWorkerThreads(workerThreads)
-                    .open();
+            in = new OsItnInputFile(osmFile);
+            in.setWorkerThreads(workerThreads).open();
             processVisitor.process(processData, in);
             logger.info(STORAGE_NODES_FORMAT, graphStorage.getNodes());
         } finally {

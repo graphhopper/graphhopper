@@ -13,6 +13,8 @@ import org.opengis.geometry.MismatchedDimensionException;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.operation.TransformException;
 
+import com.graphhopper.reader.osgb.itn.OSITNWay;
+
 public class OSITNWayTest {
 
 	@Test
