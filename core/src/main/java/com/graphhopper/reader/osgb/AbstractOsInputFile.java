@@ -25,6 +25,12 @@ import org.opengis.referencing.operation.TransformException;
 import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.pbf.Sink;
 
+/**
+ *
+ * @author phopkins
+ *
+ * @param <T>
+ */
 abstract public class AbstractOsInputFile<T extends RoutingElement>  implements Sink, Closeable {
     private boolean eof;
     private final InputStream bis;
