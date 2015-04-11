@@ -335,6 +335,8 @@ GHRequest.prototype.init = function (params) {
         this.algorithm = params.algorithm;
     if (params.locale)
         this.locale = params.locale;
+    if (params.key)
+        this.key = params.key;
 
     if ('do_zoom' in params)
         this.do_zoom = params.do_zoom;

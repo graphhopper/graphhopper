@@ -29,7 +29,7 @@ var defaultTranslationMap = null;
 var enTranslationMap = null;
 var routeSegmentPopup = null;
 var elevationControl = null;
-var activeLayer = 'MapQuest';
+var activeLayer = '';
 var i18nIsInitialized;
 
 var iconFrom = L.icon({
@@ -308,7 +308,16 @@ function initMap(selectLayer) {
     var osmAttr = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
     // provider
     //@see http://leaflet-extras.github.io/leaflet-providers/preview/index.html
-    var osmAttr = '&copy; <a href="http://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors';    
+    var osmAttr = '&copy; <a href="http://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors';
+
+    var tp = "ls";
+    if (L.Browser.retina)
+        tp = "lr";
+
+    var lyrk = L.tileLayer('https://tiles.lyrk.org/' + tp + '/{z}/{x}/{y}?apikey=6e8cfef737a140e2a58c8122aaa26077', {
+        attribution: osmAttr + ', <a href="https://geodienste.lyrk.de/">Lyrk</a>',
+        subdomains: ['a', 'b', 'c']
+    });
 
     var mapquest = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
         attribution: osmAttr + ', <a href="http://open.mapquest.co.uk" target="_blank">MapQuest</a>',
@@ -319,15 +328,16 @@ function initMap(selectLayer) {
         attribution: osmAttr + ', <a href="http://open.mapquest.co.uk" target="_blank">MapQuest</a>',
         subdomains: ['otile1', 'otile2', 'otile3', 'otile4']
     });
-        
+
     var openMapSurfer = L.tileLayer('http://openmapsurfer.uni-hd.de/tiles/roads/x={x}&y={y}&z={z}', {
         attribution: osmAttr + ', <a href="http://openmapsurfer.uni-hd.de/contact.html">GIScience Heidelberg</a>'
     });
-    
-    var mapbox= L.tileLayer('https://{s}.tiles.mapbox.com/v4/peterk.map-vkt0kusv/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoicGV0ZXJrIiwiYSI6IkdFc2FJd2MifQ.YUd7dS_gOpT3xrQnB8_K-w', {
-        attribution: osmAttr + ', <a href="https://www.mapbox.com/about/maps/">&copy; MapBox</a>'
-    });
-    
+
+    // not an option as too fast over limit
+//    var mapbox= L.tileLayer('https://{s}.tiles.mapbox.com/v4/peterk.map-vkt0kusv/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoicGV0ZXJrIiwiYSI6IkdFc2FJd2MifQ.YUd7dS_gOpT3xrQnB8_K-w', {
+//        attribution: osmAttr + ', <a href="https://www.mapbox.com/about/maps/">&copy; MapBox</a>'
+//    });
+
     var sorbianLang = L.tileLayer('http://map.dgpsonline.eu/osmsb/{z}/{x}/{y}.png', {
         attribution: osmAttr + ', <a href="http://www.alberding.eu/">&copy; Alberding GmbH, CC-BY-SA</a>'
     });
@@ -369,7 +379,7 @@ function initMap(selectLayer) {
     });
 
     var baseMaps = {
-        "MapBox": mapbox,
+        "Lyrk": lyrk,
         "MapQuest": mapquest,
         "MapQuest Aerial": mapquestAerial,
         "Esri Aerial": esriAerial,
@@ -385,7 +395,7 @@ function initMap(selectLayer) {
 
     var defaultLayer = baseMaps[selectLayer];
     if (!defaultLayer)
-        defaultLayer = mapbox;
+        defaultLayer = lyrk;
 
     // default
     map = L.map('map', {
@@ -459,7 +469,7 @@ function initMap(selectLayer) {
     map.on('baselayerchange', function (a) {
         if (a.name) {
             activeLayer = a.name;
-            $("#export-link a").attr('href', function(i, v) {
+            $("#export-link a").attr('href', function (i, v) {
                 return v.replace(/(layer=)([\w\s]+)/, '$1' + activeLayer);
             });
         }
