@@ -239,9 +239,9 @@ public class GraphHopperGPXParserRouteTest {
 	private CloseableHttpResponse sendAndGetResponse(String requestUrl)
 			throws IOException {
 		String serviceUrl = requestUrl;
-		if (IntegrationTestProperties.getTestPropertyBool("UseKey")) {
-			serviceUrl += "&key="
-					+ IntegrationTestProperties.getTestProperty("Key");
+		if (IntegrationTestProperties.getTestPropertyBool("useKey")) {
+			serviceUrl += "&apikey="
+					+ IntegrationTestProperties.getTestProperty("apiKey");
 			LOG.debug("APPLYING KEY:");
 		}
 
