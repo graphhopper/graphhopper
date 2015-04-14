@@ -232,7 +232,7 @@ Feature: Verify a route from A to B
       | pointA             | pointB              | routetype |
       | 50.78222,-1.059975 | 50.779123,-1.080019 | car       |
 
-  @Routing
+  @Routing @WebOnly
   Scenario Outline: Verify  Route using Full UK Address (Southampton to London)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -244,7 +244,7 @@ Feature: Verify a route from A to B
       | pointA                                           | pointB                                 | routetype |
       | 4, ADANAC DRIVE, NURSLING, SOUTHAMPTON, SO16 0AS | 1, PICCADILLY ARCADE, LONDON, SW1Y 6NH | car       |
 
-  @Routing
+  @Routing @WebOnly
   Scenario Outline: Verify  Route using Full UK Address (Hounslow to Slough)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -256,7 +256,7 @@ Feature: Verify a route from A to B
       | pointA                              | pointB                                      | routetype |
       | 135, TIVOLI ROAD, HOUNSLOW, TW4 6AS | 40, CHILTERN ROAD, BURNHAM, SLOUGH, SL1 7NH | car       |
 
-  @Routing
+  @Routing @WebOnly
   Scenario Outline: Verify  Route using Full UK Address (Southampton to London)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -268,7 +268,7 @@ Feature: Verify a route from A to B
       | pointA                                                      | pointB                                                                                | routetype |
       | BIRMINGHAM VOLKSWAGEN, LAWLEY MIDDLEWAY, BIRMINGHAM, B4 7XH | READING ENTERPRISE CENTRE, UNIVERSITY OF READING, WHITEKNIGHTS ROAD, READING, RG6 6BU | car       |
 
-  @Routing
+  @Routing @WebOnly
   Scenario Outline: Verify  Route using Full UK Address (Birmingham to reading)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -280,7 +280,7 @@ Feature: Verify a route from A to B
       | pointA                                                      | pointB                                                                                | routetype |
       | BIRMINGHAM VOLKSWAGEN, LAWLEY MIDDLEWAY, BIRMINGHAM, B4 7XH | READING ENTERPRISE CENTRE, UNIVERSITY OF READING, WHITEKNIGHTS ROAD, READING, RG6 6BU | car       |
 
-  @Routing
+  @Routing @WebOnly
   Scenario Outline: Verify  Route using Full UK Address (Southhampton to London)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -292,7 +292,7 @@ Feature: Verify a route from A to B
       | pointA                                               | pointB                           | routetype |
       | 6, CHANNEL WAY, OCEAN VILLAGE, SOUTHAMPTON, SO14 3TG | 311, CITY ROAD, LONDON, EC1V 1LA | car       |
 
-  @Routing
+  @Routing @WebOnly
   Scenario Outline: Verify  Route using Full UK Address (Coventry)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -305,7 +305,7 @@ Feature: Verify a route from A to B
       | pointA                                                         | pointB                              | routetype |
       | 3 BROMLEIGH VILLAS, COVENTRY ROAD, BAGINTON, COVENTRY, CV8 3AS | 2, PAXMEAD CLOSE, COVENTRY, CV6 2NJ | car       |
 
-  @Routing
+  @Routing @WebOnly
   Scenario Outline: Verify  Route using Full UK Address (Kington to London )
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
