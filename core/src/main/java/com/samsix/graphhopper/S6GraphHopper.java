@@ -15,6 +15,14 @@ public class S6GraphHopper
     @Override
     public Weighting createWeighting( WeightingMap wMap, FlagEncoder encoder )
     {
+        Weighting defaultWeighting = super.createWeighting(wMap, encoder);
+        
+        //
+        // This was created to avoid doing U-Turns if possible.
+        // We specify the edge we just drove on as an edge to avoid if possible.
+        // We give it a very large, but not infinite number. If it is the only
+        // possibility then it will take it thus indicating a valid u-turn.
+        //
         String avoid = wMap.get("avoidEdge", null);
         
         Set<Integer> avoidEdges = null;
@@ -24,18 +32,20 @@ public class S6GraphHopper
             for (int ii=0; ii < edges.length; ii++) {
                 avoidEdges.add(Integer.parseInt(edges[ii].trim()));
             }
+            return new AvoidEdgeWeighting(defaultWeighting, avoidEdges);
         }
-        return new NoUTurnWeighting(super.createWeighting(wMap, encoder), avoidEdges);
+        
+        return defaultWeighting;
     }
     
     
-    public static class NoUTurnWeighting
+    public static class AvoidEdgeWeighting
         implements Weighting
     {
         public Weighting weighting;
         private Set<Integer> avoidEdges;
        
-        public NoUTurnWeighting(final Weighting weighting,
+        public AvoidEdgeWeighting(final Weighting weighting,
                                 final Set<Integer> avoidEdges)
         {
             this.weighting = weighting;

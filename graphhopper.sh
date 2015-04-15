@@ -1,6 +1,6 @@
 #!/bin/bash
 
-GH_CLASS=com.graphhopper.tools.Import
+GH_CLASS=com.samsix.graphhopper.tools.S6Import
 GH_HOME=$(dirname "$0")
 JAVA=$JAVA_HOME/bin/java
 if [ "x$JAVA_HOME" = "x" ]; then
@@ -189,7 +189,7 @@ else
 fi
 
 if [ "x$JAVA_OPTS" = "x" ]; then
-  JAVA_OPTS="-Xmx3000m -Xms2000m -server"
+  JAVA_OPTS="-Xmx8000m -Xms2000m -server"
 fi
 
 
