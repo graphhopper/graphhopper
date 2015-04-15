@@ -11,11 +11,10 @@ import org.slf4j.LoggerFactory;
 
 import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.osgb.AbstractRoutingElementFactory;
-import com.graphhopper.reader.osgb.itn.OsItnRoutingElementFactory;
 
 public class OsDpnRoutingElementFactory extends AbstractRoutingElementFactory<RoutingElement>{
 
-    private static final Logger logger = LoggerFactory.getLogger(OsItnRoutingElementFactory.class);
+    private static final Logger logger = LoggerFactory.getLogger(OsDpnRoutingElementFactory.class);
 
     @Override
     public RoutingElement create(String name, String idStr, XMLStreamReader parser) throws MismatchedDimensionException, XMLStreamException, FactoryException, TransformException {

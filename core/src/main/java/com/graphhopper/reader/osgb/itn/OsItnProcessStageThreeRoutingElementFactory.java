@@ -13,9 +13,14 @@ import org.slf4j.LoggerFactory;
 
 import com.graphhopper.reader.osgb.AbstractRoutingElementFactory;
 
-public class OsItnRoutingElementFactory extends AbstractRoutingElementFactory<OSITNElement>{
+/**
+ * Stage three only needs Relations
+ * @author phopkins
+ *
+ */
+public class OsItnProcessStageThreeRoutingElementFactory extends AbstractRoutingElementFactory<OSITNElement>{
 
-    private static final Logger logger = LoggerFactory.getLogger(OsItnRoutingElementFactory.class);
+    private static final Logger logger = LoggerFactory.getLogger(OsItnProcessStageThreeRoutingElementFactory.class);
 
     @Override
     public OSITNElement create(String name, String idStr, XMLStreamReader parser) throws MismatchedDimensionException, XMLStreamException, FactoryException, TransformException {
@@ -31,25 +36,9 @@ public class OsItnRoutingElementFactory extends AbstractRoutingElementFactory<OS
         }
         logger.info(id + ":" + name + ":");
         switch (name) {
-        case "RoadNode": {
-            return OSITNNode.create(id, parser);
-        }
-        case "RoadLink": {
-            return OSITNWay.create(id, parser);
-        }
-
         case "RoadLinkInformation":
         case "RoadRouteInformation": {
             return OSITNRelation.create(id, parser);
-        }
-
-        case "Road": {
-            return OsItnMetaData.create(id, parser);
-        }
-        case "RoadNodeInformation": {
-        }
-        default: {
-
         }
         }
         return null;

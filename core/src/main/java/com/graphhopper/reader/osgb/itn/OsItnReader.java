@@ -296,6 +296,8 @@ public class OsItnReader extends AbstractOsReader<Long> {
         long tmpWayCounter = 1;
         long tmpRelationCounter = 1;
         RoutingElement item;
+        // Limit the number of xml nodes we process to speed up ingestion
+        in.setAbstractFactory(new OsItnPreProcessRoutingElementFactory());
         while ((item = in.getNext()) != null) {
             logger.info(OS_ITN_READER_PRE_PROCESS_FORMAT, item.getType());
             if (item.isType(OSMElement.WAY)) {
@@ -689,6 +691,8 @@ public class OsItnReader extends AbstractOsReader<Long> {
         System.out.println("==== processStageOne");
         RoutingElement item;
         LongIntMap nodeFilter = getNodeMap();
+        // Limit the number of xml nodes we process to speed up ingestion
+        in.setAbstractFactory(new OsItnProcessStageOneRoutingElementFactory());
         while ((item = in.getNext()) != null) {
             switch (item.getType()) {
             case OSMElement.NODE:
@@ -727,6 +731,8 @@ public class OsItnReader extends AbstractOsReader<Long> {
         System.out.println("==== processStageTwo");
         RoutingElement item;
         LongIntMap nodeFilter = getNodeMap();
+        // Limit the number of xml nodes we process to speed up ingestion
+        in.setAbstractFactory(new OsItnProcessStageTwoRoutingElementFactory());
         while ((item = in.getNext()) != null) {
             switch (item.getType()) {
             case OSMElement.WAY:
@@ -767,6 +773,8 @@ public class OsItnReader extends AbstractOsReader<Long> {
             FactoryException, TransformException {
         System.out.println("==== processStageThree");
         RoutingElement item;
+        // Limit the number of xml nodes we process to speed up ingestion
+        in.setAbstractFactory(new OsItnProcessStageThreeRoutingElementFactory());
         while ((item = in.getNext()) != null) {
             switch (item.getType()) {
             case OSMElement.RELATION:

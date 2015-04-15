@@ -30,6 +30,7 @@ import com.graphhopper.reader.osgb.AbstractOsInputFile;
  */
 public class OsItnInputFile extends AbstractOsInputFile<OSITNElement> {
     public OsItnInputFile(File file) throws IOException {
-        super(file, new OsItnRoutingElementFactory());
+        // We don't specify a factory as it will be different depending on which stage of the ingestion we are at.
+        super(file, null);
     }
 }

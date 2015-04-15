@@ -62,6 +62,14 @@ abstract public class AbstractOsInputFile<T extends RoutingElement>  implements 
         return bis;
     }
 
+    public AbstractRoutingElementFactory<T> getAbstractFactory() {
+        return abstractFactory;
+    }
+
+    public void setAbstractFactory(AbstractRoutingElementFactory<T> abstractFactory) {
+        this.abstractFactory = abstractFactory;
+    }
+
     /**
      * Currently on for pbf format. Default is number of cores.
      */
