@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,31 +17,72 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.reader.DataReader;
-import com.graphhopper.reader.OSMReader;
-import com.graphhopper.reader.osgb.dpn.OsDpnReader;
-import com.graphhopper.reader.osgb.itn.OsItnReader;
-import com.graphhopper.reader.dem.CGIARProvider;
-import com.graphhopper.reader.dem.ElevationProvider;
-import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.routing.*;
-import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.*;
-import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
+import com.graphhopper.reader.DataReader;
+import com.graphhopper.reader.OSMReader;
+import com.graphhopper.reader.dem.CGIARProvider;
+import com.graphhopper.reader.dem.ElevationProvider;
+import com.graphhopper.reader.dem.SRTMProvider;
+import com.graphhopper.reader.osgb.dpn.OsDpnReader;
+import com.graphhopper.reader.osgb.hn.OsHnReader;
+import com.graphhopper.reader.osgb.itn.OsItnReader;
+import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.QueryGraph;
+import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.RoutingAlgorithmFactory;
+import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FastestWeighting;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
+import com.graphhopper.routing.util.PriorityWeighting;
+import com.graphhopper.routing.util.ShortestWeighting;
+import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.TurnWeighting;
+import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.util.WeightingMap;
+import com.graphhopper.storage.DAType;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.GHDirectory;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.LevelGraphStorage;
+import com.graphhopper.storage.Lock;
+import com.graphhopper.storage.LockFactory;
+import com.graphhopper.storage.NativeFSLockFactory;
+import com.graphhopper.storage.SimpleFSLockFactory;
+import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.DouglasPeucker;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PathMerger;
+import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.Unzipper;
+import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -80,7 +121,7 @@ public class GraphHopper implements GraphHopperAPI
     // for prepare
     private int minNetworkSize = 200;
     private int minOneWayNetworkSize = 0;
-    // for CH prepare    
+    // for CH prepare
     private boolean doPrepare = true;
     private boolean chEnabled = true;
     private String chWeightingStr = "fastest";
@@ -94,7 +135,7 @@ public class GraphHopper implements GraphHopperAPI
     private double osmReaderWayPointMaxDistance = 1;
     private int workerThreads = -1;
     private boolean calcPoints = true;
-    // utils    
+    // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private final AtomicLong visitedSum = new AtomicLong(0);
@@ -680,6 +721,8 @@ public class GraphHopper implements GraphHopperAPI
             reader = new OsItnReader(tmpGraph);
         else if ("OSDPN".equals(dataReader))
             reader = new OsDpnReader(tmpGraph);
+        else if ("OSHN".equals(dataReader))
+            reader = new OsHnReader(tmpGraph);
         else {
             String exceptionMessage = String.format(READER_UNAVAILABLE, dataReader);
             throw new IllegalArgumentException(exceptionMessage);
@@ -717,7 +760,7 @@ public class GraphHopper implements GraphHopperAPI
 
         if (graphHopperFolder.endsWith("-gh"))
         {
-            // do nothing  
+            // do nothing
         } else if (graphHopperFolder.endsWith(".osm") || graphHopperFolder.endsWith(".xml"))
         {
             throw new IllegalArgumentException("To import an osm file you need to use importOrLoad");
@@ -762,7 +805,7 @@ public class GraphHopper implements GraphHopperAPI
         Lock lock = null;
         try
         {
-            // create locks only if writes are allowed, if they are not allowed a lock cannot be created 
+            // create locks only if writes are allowed, if they are not allowed a lock cannot be created
             // (e.g. on a read only filesystem locks would fail)
             if (graph.getDirectory().getDefaultType().isStoring() && isAllowWrites())
             {
@@ -810,7 +853,7 @@ public class GraphHopper implements GraphHopperAPI
             algoFactory = new RoutingAlgorithmFactorySimple();
 
         if (!isPrepared())
-            prepare();        
+            prepare();
     }
 
     private boolean isPrepared()
@@ -825,9 +868,9 @@ public class GraphHopper implements GraphHopperAPI
         PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
                 (LevelGraph) graph, defaultVehicle, weighting, traversalMode);
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
-                setLazyUpdates(lazyUpdates).
-                setNeighborUpdates(neighborUpdates).
-                setLogMessages(logMessages);
+        setLazyUpdates(lazyUpdates).
+        setNeighborUpdates(neighborUpdates).
+        setLogMessages(logMessages);
 
         return tmpPrepareCH;
     }
@@ -889,11 +932,11 @@ public class GraphHopper implements GraphHopperAPI
         DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
 
         new PathMerger().
-                setCalcPoints(tmpCalcPoints).
-                setDouglasPeucker(peucker).
-                setEnableInstructions(tmpEnableInstructions).
-                setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0).
-                doWork(response, paths, trMap.getWithFallBack(locale));
+        setCalcPoints(tmpCalcPoints).
+        setDouglasPeucker(peucker).
+        setEnableInstructions(tmpEnableInstructions).
+        setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0).
+        doWork(response, paths, trMap.getWithFallBack(locale));
         return response;
     }
 
@@ -1160,6 +1203,10 @@ public class GraphHopper implements GraphHopperAPI
 
     public GraphHopper setAsItnReader() {
         dataReader = "OSITN";
+        return this;
+    }
+    public GraphHopper setAsHnReader() {
+        dataReader = "OSHN";
         return this;
     }
 

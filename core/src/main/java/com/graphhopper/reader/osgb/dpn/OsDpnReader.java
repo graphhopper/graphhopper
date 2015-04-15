@@ -21,7 +21,6 @@ import javax.xml.stream.XMLStreamException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.Node;
 import com.graphhopper.reader.OSMElement;
 import com.graphhopper.reader.OSMTurnRelation;
@@ -30,15 +29,12 @@ import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.RelationMember;
 import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.TurnRelation;
-import com.graphhopper.reader.dem.ElevationProvider;
+import com.graphhopper.reader.osgb.AbstractOsReader;
 import com.graphhopper.reader.osgb.itn.OSITNTurnRelation;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalc3D;
 import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
@@ -89,7 +85,7 @@ import com.graphhopper.util.shapes.GHPoint;
  * @author Peter Karich
  */
 
-public class OsDpnReader implements DataReader<String> {
+public class OsDpnReader extends AbstractOsReader<String> {
     private InputStream is;
 
     protected static final int EMPTY = -1;
@@ -101,10 +97,6 @@ public class OsDpnReader implements DataReader<String> {
             .getLogger(OsDpnReader.class);
     private long locations;
     private long skippedLocations;
-    private final GraphStorage graphStorage;
-    private final NodeAccess nodeAccess;
-    private EncodingManager encodingManager = null;
-    private int workerThreads = -1;
     protected long zeroCounter = 0;
     // Using the correct Map<Long, Integer> is hard. We need a memory efficient
     // and fast solution for big data sets!
@@ -129,19 +121,15 @@ public class OsDpnReader implements DataReader<String> {
     protected PillarInfo pillarInfo;
     private final DistanceCalc distCalc = new DistanceCalcEarth();
     private final DistanceCalc3D distCalc3D = new DistanceCalc3D();
-    private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
-    private boolean doSimplify = true;
     private int nextTowerId = 0;
     private int nextPillarId = 0;
     // negative but increasing to avoid clash with custom created OSM files
     private long newUniqueOsmId = -Long.MAX_VALUE;
-    private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private final boolean exitOnlyPillarNodeException = true;
     private File routingFile;
 
     public OsDpnReader(GraphStorage storage) {
-        this.graphStorage = storage;
-        this.nodeAccess = graphStorage.getNodeAccess();
+        super(storage);
 
         osmNodeIdToInternalNodeMap = new TObjectIntHashMap<String>(200, .5f, -1);
         osmNodeIdToNodeFlagsMap = new TObjectLongHashMap<String>(200, .5f, 0);
@@ -180,7 +168,8 @@ public class OsDpnReader implements DataReader<String> {
      * Preprocessing of OSM file to select nodes which are used for highways.
      * This allows a more compact graph data structure.
      */
-    void preProcess(File osmFile) {
+    @Override
+    protected void preProcess(File osmFile) {
         OsDpnInputFile in = null;
         try {
             in = new OsDpnInputFile(osmFile);
@@ -280,7 +269,8 @@ public class OsDpnReader implements DataReader<String> {
     /**
      * Creates the edges and nodes files from the specified osm file.
      */
-    private void writeOsm2Graph(File osmFile) {
+    @Override
+    protected void writeOsm2Graph(File osmFile) {
         int tmp = Math.max(getNodeMap().size() / 50, 100);
         logger.info("creating graph. Found nodes (pillar+tower):"
                 + nf(getNodeMap().size()) + ", " + Helper.getMemInfo());
@@ -907,42 +897,6 @@ public class OsDpnReader implements DataReader<String> {
         return osmWayIdToRouteWeightMap;
     }
 
-    /**
-     * Specify the type of the path calculation (car, bike, ...).
-     */
-    @Override
-    public OsDpnReader setEncodingManager(EncodingManager acceptWay) {
-        this.encodingManager = acceptWay;
-        return this;
-    }
-
-    @Override
-    public OsDpnReader setWayPointMaxDistance(double maxDist) {
-        doSimplify = maxDist > 0;
-        simplifyAlgo.setMaxDistance(maxDist);
-        return this;
-    }
-
-    @Override
-    public OsDpnReader setWorkerThreads(int numOfWorkers) {
-        this.workerThreads = numOfWorkers;
-        return this;
-    }
-
-    @Override
-    public OsDpnReader setElevationProvider(ElevationProvider eleProvider) {
-        if (eleProvider == null)
-            throw new IllegalStateException(
-                    "Use the NOOP elevation provider instead of null or don't call setElevationProvider");
-
-        if (!nodeAccess.is3D() && ElevationProvider.NOOP != eleProvider)
-            throw new IllegalStateException(
-                    "Make sure you graph accepts 3D data");
-
-        this.eleProvider = eleProvider;
-        return this;
-    }
-
     @Override
     public OsDpnReader setOSMFile(File osmFile) {
         this.routingFile = osmFile;
@@ -957,15 +911,5 @@ public class OsDpnReader implements DataReader<String> {
                         + ", nodeFlagsMap.size:" + getNodeFlagsMap().size()
                         + ", relFlagsMap.size:" + getRelFlagsMap().size() + " "
                         + Helper.getMemInfo());
-    }
-
-    @Override
-    public String toString() {
-        return getClass().getSimpleName();
-    }
-
-    @Override
-    public GraphStorage getGraphStorage() {
-        return graphStorage;
     }
 }

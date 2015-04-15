@@ -30,7 +30,7 @@ import com.graphhopper.reader.pbf.Sink;
  *
  * @author phopkins
  *
- * @param <T>
+ * @param <T extends RoutingElement> The type of object to return from the next xml functions
  */
 abstract public class AbstractOsInputFile<T extends RoutingElement>  implements Sink, Closeable {
     private boolean eof;
@@ -40,13 +40,14 @@ abstract public class AbstractOsInputFile<T extends RoutingElement>  implements 
     // for pbf parsing
     private boolean binary = false;
     private final BlockingQueue<RoutingElement> itemQueue;
-    //    private boolean hasIncomingData;
-    //    private int workerThreads = -1;
-    //    private static final Logger logger = LoggerFactory
-    //            .getLogger(OsItnInputFile.class);
     private final String name;
+    /**
+     * The factory to use to create RoutingElements. eg Itn, Dpn or Hn
+     */
+    private AbstractRoutingElementFactory<T> abstractFactory;
 
-    public AbstractOsInputFile(File file) throws IOException {
+    public AbstractOsInputFile(File file, AbstractRoutingElementFactory<T> abstractFactory) throws IOException {
+        this.abstractFactory = abstractFactory;
         name = file.getAbsolutePath();
         bis = decode(file);
         itemQueue = new LinkedBlockingQueue<RoutingElement>(50000);
@@ -146,7 +147,7 @@ abstract public class AbstractOsInputFile<T extends RoutingElement>  implements 
         eof = false;
     }
 
-    public RoutingElement getNext() throws XMLStreamException,
+    public T getNext() throws XMLStreamException,
     MismatchedDimensionException, FactoryException, TransformException {
         if (eof)
             throw new IllegalStateException("EOF reached");
@@ -161,8 +162,28 @@ abstract public class AbstractOsInputFile<T extends RoutingElement>  implements 
         return null;
     }
 
-    abstract protected T getNextXML() throws XMLStreamException,
-    MismatchedDimensionException, FactoryException, TransformException;
+    //    private T getNextXML() throws XMLStreamException,
+    //    MismatchedDimensionException, FactoryException, TransformException;
+
+    private T getNextXML() throws XMLStreamException,
+    MismatchedDimensionException, FactoryException, TransformException {
+        T result = null;
+        int event = parser.next();
+        while (event != XMLStreamConstants.END_DOCUMENT) {
+            if (event == XMLStreamConstants.START_ELEMENT) {
+                String idStr = parser.getAttributeValue(null, "id");
+                if (idStr != null) {
+                    String name = parser.getLocalName();
+                    idStr = idStr.substring(4);
+                    result = abstractFactory.create(name, idStr, parser);
+                }
+            }
+            event = parser.next();
+        }
+        parser.close();
+        return result;
+    }
+
 
     public boolean isEOF() {
         return eof;

@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader.osgb;
+package com.graphhopper.reader.osgb.itn;
 
 import static com.graphhopper.util.GHUtility.count;
 import static org.junit.Assert.assertEquals;
@@ -30,6 +30,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.graphhopper.reader.osgb.AbstractOsItnReaderTest;
 import com.graphhopper.reader.osgb.itn.OsItnReader;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;

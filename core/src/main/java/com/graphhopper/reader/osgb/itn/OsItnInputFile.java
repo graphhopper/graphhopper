@@ -19,16 +19,6 @@ package com.graphhopper.reader.osgb.itn;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
-
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.TransformException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.graphhopper.reader.osgb.AbstractOsInputFile;
 
@@ -38,76 +28,8 @@ import com.graphhopper.reader.osgb.AbstractOsInputFile;
  *
  * @author Stuart Adam
  */
-public class OsItnInputFile extends AbstractOsInputFile<OSITNElement> {//implements Sink, Closeable {
-    //    private boolean eof;
-    //    private final InputStream bis;
-    //    // for xml parsing
-    //    private XMLStreamReader parser;
-    //    // for pbf parsing
-    //    private boolean binary = false;
-    //    private final BlockingQueue<RoutingElement> itemQueue;
-    //    private boolean hasIncomingData;
-    //    private int workerThreads = -1;
-    private static final Logger logger = LoggerFactory.getLogger(OsItnInputFile.class);
-    //    private final String name;
-
+public class OsItnInputFile extends AbstractOsInputFile<OSITNElement> {
     public OsItnInputFile(File file) throws IOException {
-        super(file);
-    }
-
-    @Override
-    protected OSITNElement getNextXML() throws XMLStreamException,
-    MismatchedDimensionException, FactoryException, TransformException {
-
-        int event = parser.next();
-        while (event != XMLStreamConstants.END_DOCUMENT) {
-            if (event == XMLStreamConstants.START_ELEMENT) {
-                String idStr = parser.getAttributeValue(null, "fid");
-                if (null == idStr) {
-                    idStr = parser.getAttributeValue(
-                            "http://www.opengis.net/gml/3.2", "id");
-                }
-                if (idStr != null) {
-                    String name = parser.getLocalName();
-                    idStr = idStr.substring(4);
-                    logger.info(idStr + ":" + name + ":");
-
-                    long id;
-                    try {
-                        id = Long.parseLong(idStr);
-                    } catch (NumberFormatException nfe) {
-                        BigDecimal bd = new BigDecimal(idStr);
-                        id = bd.longValue();
-                    }
-                    logger.info(id + ":" + name + ":");
-                    switch (name) {
-                    case "RoadNode": {
-                        return OSITNNode.create(id, parser);
-                    }
-                    case "RoadLink": {
-                        return OSITNWay.create(id, parser);
-                    }
-
-                    case "RoadLinkInformation":
-                    case "RoadRouteInformation": {
-                        return OSITNRelation.create(id, parser);
-                    }
-
-                    case "Road": {
-                        return OsItnMetaData.create(id, parser);
-                    }
-                    case "RoadNodeInformation": {
-                    }
-                    default: {
-
-                    }
-
-                    }
-                }
-            }
-            event = parser.next();
-        }
-        parser.close();
-        return null;
+        super(file, new OsItnRoutingElementFactory());
     }
 }

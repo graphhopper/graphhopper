@@ -83,7 +83,8 @@ abstract public class AbstractProblemRouteExtractor {
         void processVisitor(final File file) throws XMLStreamException, IOException, TransformerConfigurationException, ParserConfigurationException, SAXException, TransformerException, XPathExpressionException, MismatchedDimensionException, FactoryException, TransformException {
             OsItnInputFile in = null;
             try {
-                in = new OsItnInputFile(file).setWorkerThreads(1).open();
+                in = new OsItnInputFile(file);
+                in.setWorkerThreads(1).open();
                 RoutingElement item;
                 while ((item = in.getNext()) != null) {
                     innerProcess.processVisitor(item);

@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 
 import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
-import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.ITurnCostTableEntry;
 import com.graphhopper.reader.Node;
 import com.graphhopper.reader.OSMElement;
@@ -48,6 +47,7 @@ import com.graphhopper.reader.RelationMember;
 import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.Way;
 import com.graphhopper.reader.dem.ElevationProvider;
+import com.graphhopper.reader.osgb.AbstractOsReader;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphStorage;
@@ -56,11 +56,9 @@ import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalc3D;
 import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 
 /*
@@ -107,7 +105,7 @@ import com.graphhopper.util.shapes.GHPoint;
  * @author Peter Karich
  */
 
-public class OsItnReader implements DataReader<Long> {
+public class OsItnReader extends AbstractOsReader<Long> {
 
     private static final String TURN_FROM_TO_VIA_FORMAT = "Turn from:{} to:{} via:{}";
     private static final String PRINT_INFO_FORMAT = "finished {}  processing. nodes:{}, osmIdMap.size:{}, osmIdMap:{}MB, nodeFlagsMap.size:{}, relFlagsMap.size:{} {}";
@@ -131,8 +129,6 @@ public class OsItnReader implements DataReader<Long> {
     private static final String RELFLAGS_FORMAT = "RELFLAGS: {} : {}";
     private static final String EDGE_ID_COORDS_TO_NODE_FLAGS_MAP_PUT_FORMAT = "edgeIdCoordsToNodeFlagsMap put: {} {} {} : {}";
     private static final String OS_ITN_READER_PRE_PROCESS_FORMAT = "OsItnReader.preProcess( {} )";
-    private static final String PREPROCESS_FORMAT = "preprocess: {}";
-    private static final String TIME_PASS1_PASS2_TOTAL_FORMAT = "time(pass1): {} pass2: {} total: ";
     private static final String WAY_ADDS_EDGES_FORMAT = "Way {} adds edges: {}";
     private static final String WAY_ADDS_BARRIER_EDGES_FORMAT = "Way {} adds barrier edges: {}";
     private static final String WE_HAVE_EVALUATED_WAY_NODES_FORMAT = "We have evaluated {} way nodes.";
@@ -170,10 +166,7 @@ public class OsItnReader implements DataReader<Long> {
     private static final int MAX_GRADE_SEPARATION = 4;
     private long locations;
     private long skippedLocations;
-    private final GraphStorage graphStorage;
     private final NodeAccess nodeAccess;
-    private EncodingManager encodingManager = null;
-    private int workerThreads = -1;
     protected long zeroCounter = 0;
 
     private long successfulStartNoEntries = 0;
@@ -210,7 +203,6 @@ public class OsItnReader implements DataReader<Long> {
     protected PillarInfo pillarInfo;
     private final DistanceCalc distCalc = new DistanceCalcEarth();
     private final DistanceCalc3D distCalc3D = new DistanceCalc3D();
-    private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private boolean doSimplify = true;
     private int nextTowerId = 0;
     private int nextPillarId = 0;
@@ -218,7 +210,6 @@ public class OsItnReader implements DataReader<Long> {
     private long newUniqueOsmId = -Long.MAX_VALUE;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private final boolean exitOnlyPillarNodeException = true;
-    private File routingFile;
 
     private TLongObjectMap<ItnNodePair> edgeIdToNodeMap;
     private TLongSet prohibitedWayIds;
@@ -235,7 +226,7 @@ public class OsItnReader implements DataReader<Long> {
     private boolean addAdditionalTowerNodes;
 
     public OsItnReader(GraphStorage storage) {
-        this.graphStorage = storage;
+        super(storage);
         String addAdditionalTowerNodesString = graphStorage.getProperties().get("add.additional.tower.nodes");
         if (addAdditionalTowerNodesString != null && addAdditionalTowerNodesString.length()>0 ) {
             // Only parse this if it has been explicitly set otherwise set to true
@@ -254,37 +245,14 @@ public class OsItnReader implements DataReader<Long> {
                 graphStorage.getDirectory());
     }
 
-    @Override
-    public void readGraph() throws IOException {
-        if (encodingManager == null)
-            throw new IllegalStateException("Encoding manager was not set.");
 
-        if (routingFile == null)
-            throw new IllegalStateException("No OS ITN file specified");
-
-        if (!routingFile.exists())
-            throw new IllegalStateException(
-                    "Your specified OS ITN file does not exist:"
-                            + routingFile.getAbsolutePath());
-
-        StopWatch sw1 = new StopWatch().start();
-        preProcess(routingFile);
-        sw1.stop();
-
-        StopWatch sw2 = new StopWatch().start();
-        writeOsm2Graph(routingFile);
-        sw2.stop();
-
-        logger.info(TIME_PASS1_PASS2_TOTAL_FORMAT, (int) sw1.getSeconds(),
-                (int) sw2.getSeconds(),
-                ((int) (sw1.getSeconds() + sw2.getSeconds())));
-    }
 
     /**
      * Preprocessing of ITN file to select nodes which are used for highways.
      * This allows a more compact graph data structure.
      */
-    void preProcess(File itnFile) {
+    @Override
+    protected void preProcess(File itnFile) {
         try {
             preProcessDirOrFile(itnFile);
         } catch (Exception ex) {
@@ -624,7 +592,8 @@ public class OsItnReader implements DataReader<Long> {
     /**
      * Creates the edges and nodes files from the specified osm file.
      */
-    private void writeOsm2Graph(File osmFile) {
+    @Override
+    protected void writeOsm2Graph(File osmFile) {
         int tmp = (int) Math.max(getNodeMap().getSize() / 50, 100);
         logger.error(CREATING_GRAPH_FOUND_NODES_PILLAR_TOWER_FORMAT,
                 nf(getNodeMap().getSize()), Helper.getMemInfo());
@@ -2000,41 +1969,11 @@ public class OsItnReader implements DataReader<Long> {
         return this;
     }
 
-    @Override
-    public OsItnReader setElevationProvider(ElevationProvider eleProvider) {
-        if (eleProvider == null)
-            throw new IllegalStateException(
-                    "Use the NOOP elevation provider instead of null or don't call setElevationProvider");
-
-        if (!nodeAccess.is3D() && ElevationProvider.NOOP != eleProvider)
-            throw new IllegalStateException(
-                    "Make sure you graph accepts 3D data");
-
-        this.eleProvider = eleProvider;
-        return this;
-    }
-
-    @Override
-    public OsItnReader setOSMFile(File osmFile) {
-        this.routingFile = osmFile;
-        return this;
-    }
-
     private void printInfo(String str) {
         logger.info(PRINT_INFO_FORMAT, str, graphStorage.getNodes(),
                 getNodeMap().getSize(), getNodeMap().getMemoryUsage(),
                 getNodeFlagsMap().size(), getOsmWayIdToRouteWeightMap().size(),
                 Helper.getMemInfo());
-    }
-
-    @Override
-    public String toString() {
-        return getClass().getSimpleName();
-    }
-
-    @Override
-    public GraphStorage getGraphStorage() {
-        return graphStorage;
     }
 
     private long findViaNode(long fromOsm, long toOsm) {

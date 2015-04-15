@@ -20,15 +20,6 @@ package com.graphhopper.reader.osgb.dpn;
 import java.io.File;
 import java.io.IOException;
 
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.TransformException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.osgb.AbstractOsInputFile;
 
@@ -39,46 +30,8 @@ import com.graphhopper.reader.osgb.AbstractOsInputFile;
  * @author Nop
  */
 public class OsDpnInputFile extends AbstractOsInputFile<RoutingElement> {
-    private static final Logger logger = LoggerFactory
-            .getLogger(OsDpnInputFile.class);
 
     public OsDpnInputFile(File file) throws IOException {
-        super(file);
-    }
-
-    @Override
-    protected RoutingElement getNextXML() throws XMLStreamException,
-    MismatchedDimensionException, FactoryException, TransformException {
-
-        int event = parser.next();
-        while (event != XMLStreamConstants.END_DOCUMENT) {
-            if (event == XMLStreamConstants.START_ELEMENT) {
-                String idStr = parser.getAttributeValue(null, "id");
-                if (idStr != null) {
-                    String name = parser.getLocalName();
-                    idStr = idStr.substring(4);
-
-                    logger.info(":" + name + ":");
-                    switch (name) {
-                    case "RouteNode": {
-                        return OsDpnNode.create(idStr, parser);
-                    }
-                    case "RouteLink": {
-                        return OsDpnWay.create(idStr, parser);
-                    }
-                    case "Route": {
-                        // TODO grouped features
-                    }
-                    default: {
-
-                    }
-
-                    }
-                }
-            }
-            event = parser.next();
-        }
-        parser.close();
-        return null;
+        super(file, new OsDpnRoutingElementFactory());
     }
 }
