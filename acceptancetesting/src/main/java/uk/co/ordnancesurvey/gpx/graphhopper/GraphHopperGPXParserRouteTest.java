@@ -108,10 +108,17 @@ public class GraphHopperGPXParserRouteTest {
 
 		}
 
-		graphHopperUrl = vehicle.equalsIgnoreCase("car") ? (IntegrationTestProperties
-				.getTestProperty("graphHopperWebUrl"))
-				: (IntegrationTestProperties
-						.getTestProperty("graphHopperWebUrl"));
+		
+		if (IntegrationTestProperties.getTestPropertyBool("viaApigee"))
+		{
+			graphHopperUrl = IntegrationTestProperties.getTestProperty("graphHopperWebUrlViaApigee");
+		}
+		else
+		{
+			graphHopperUrl = IntegrationTestProperties.getTestProperty("graphHopperWebUrl");
+		}
+		
+				
 
 		StringBuilder sb = new StringBuilder();
 		sb.append(graphHopperUrl);
