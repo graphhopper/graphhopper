@@ -7,7 +7,7 @@ import com.graphhopper.util.Translation;
 /**
  * Created by sadam on 4/15/15.
  */
-public class OsAvoidanceDecorator {
+public class OsAvoidanceDecorator implements EncoderDecorator {
     private EncodedValue wayTypeEncoder;
 
 

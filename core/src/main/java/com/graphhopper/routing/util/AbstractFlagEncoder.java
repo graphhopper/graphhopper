@@ -95,6 +95,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     private boolean blockFords = true;
     protected final int speedBits;
     protected final double speedFactor;
+	protected List<EncoderDecorator> encoderDecorators=null;
 
     /**
      * @param speedBits specify the number of bits used for speed
@@ -188,6 +189,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         acceptBit = 1L << index;
         ferryBit = 2L << index;
 
+        if(null!=encoderDecorators) {
+        	for (EncoderDecorator decorator : encoderDecorators) {
+        		shift = decorator.defineWayBits(shift);
+        	}
+        }
         return shift;
     }
 
@@ -220,7 +226,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      * Analyze properties of a way and create the routing flags. This method is called in the second
      * parsing step.
      */
-    public abstract long handleWayTags( Way way, long allowed, long relationFlags );
+    public long handleWayTags( Way way, long allowed, long relationFlags ) {
+    	if(null!=encoderDecorators) {
+    		for (EncoderDecorator decorator : encoderDecorators) {
+				relationFlags = decorator.handleWayTags(way, relationFlags);
+			}
+    	}
+    	return relationFlags;
+    };
 
     /**
      * Parse tags on nodes. Node tags can add to speed (like traffic_signals) where the value is
@@ -264,6 +277,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     @Override
     public InstructionAnnotation getAnnotation( long flags, Translation tr )
     {
+    	if(null!=encoderDecorators) {
+    		for (EncoderDecorator decorator : encoderDecorators) {
+				InstructionAnnotation anno = decorator.getAnnotation(flags, tr);
+				if(!anno.isEmpty()) {
+					return anno;
+				}
+			}
+    	}
         return InstructionAnnotation.EMPTY;
     }
 
@@ -487,6 +508,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      */
     public void applyWayTags( Way way, EdgeIteratorState edge )
     {
+    	if(null!=encoderDecorators) {
+    		for (EncoderDecorator decorator : encoderDecorators) {
+    			
+			}
+    	}
     }
 
     /**
