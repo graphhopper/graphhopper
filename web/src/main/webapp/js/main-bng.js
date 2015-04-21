@@ -403,7 +403,7 @@ function getTopLeftCorners() {
 }
 
 	// The WMTS URL 
-	var url = "https://api.beta.os.uk/service/wmts";
+	var url = "https://gwccluster2-env.elasticbeanstalk.com/service/wmts";
 
 
 
