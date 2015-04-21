@@ -30,6 +30,7 @@ public class OsHnReaderTest {
         String graphLoc = "./target/output/hn-gh";
         String inputFile = "/data/Development/highways_network";
         GraphHopper graphHopper = new GraphHopper().setInMemory().setOSMFile(inputFile).setGraphHopperLocation(graphLoc).setCHEnable(false).setEncodingManager(encodingManager).setAsHnReader();
+        // THIS WILL FAIL FOR NOW UNTIL THE READER GENERATES SOME OSM NODES
         graphHopper.importOrLoad();
         GraphStorage graph = graphHopper.getGraph();
 
