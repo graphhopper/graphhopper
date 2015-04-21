@@ -64,5 +64,8 @@ public class GHServletModule extends ServletModule
 
         serve("/route*").with(GraphHopperServlet.class);
         bind(GraphHopperServlet.class).in(Singleton.class);
+        
+        serve("/nearest*").with(NearestServlet.class);
+        bind(NearestServlet.class).in(Singleton.class);
     }
 }
