@@ -179,11 +179,14 @@ abstract public class AbstractOsInputFile<T extends RoutingElement>  implements 
         int event = parser.next();
         while (event != XMLStreamConstants.END_DOCUMENT) {
             if (event == XMLStreamConstants.START_ELEMENT) {
-                String idStr = parser.getAttributeValue(null, "id");
+                String idStr = parser.getAttributeValue(null, "fid");
                 if (idStr != null) {
                     String name = parser.getLocalName();
                     idStr = idStr.substring(4);
                     result = abstractFactory.create(name, idStr, parser);
+                    if (result!=null) {
+                        return result;
+                    }
                 }
             }
             event = parser.next();

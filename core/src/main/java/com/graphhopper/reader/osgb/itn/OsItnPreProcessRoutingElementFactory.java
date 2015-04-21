@@ -25,7 +25,7 @@ public class OsItnPreProcessRoutingElementFactory extends AbstractRoutingElement
 
     @Override
     public OSITNElement create(String name, String idStr, XMLStreamReader parser) throws MismatchedDimensionException, XMLStreamException, FactoryException, TransformException {
-        idStr = idStr.substring(4);
+        //        idStr = idStr.substring(4);
         logger.info(idStr + ":" + name + ":");
 
         long id;

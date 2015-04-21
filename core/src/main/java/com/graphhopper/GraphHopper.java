@@ -140,6 +140,11 @@ public class GraphHopper implements GraphHopperAPI
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private final AtomicLong visitedSum = new AtomicLong(0);
 
+    /**
+     * Certain readers require additional arguments so this can be passed to them as a constructor parameter
+     */
+    private CmdArgs args;
+
     public GraphHopper()
     {
     }
@@ -545,7 +550,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper init( CmdArgs args )
     {
-        args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
+        this.args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
         String tmpOsmFile = args.get("osmreader.osm", "");
         if (!Helper.isEmpty(tmpOsmFile))
             osmFile = tmpOsmFile;
@@ -718,7 +723,7 @@ public class GraphHopper implements GraphHopperAPI
         if ("OSM".equals(dataReader))
             reader = new OSMReader(tmpGraph);
         else if ("OSITN".equals(dataReader))
-            reader = new OsItnReader(tmpGraph);
+            reader = new OsItnReader(tmpGraph, args);
         else if ("OSDPN".equals(dataReader))
             reader = new OsDpnReader(tmpGraph);
         else if ("OSHN".equals(dataReader))
