@@ -9,7 +9,7 @@ import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 
-import uk.co.ordnancesurvey.webtests.IntegrationTestProperties;
+import uk.co.ordnancesurvey.gpx.graphhopper.IntegrationTestProperties;
 import cucumber.api.Scenario;
 import cucumber.api.java.After;
 import cucumber.api.java.Before;
@@ -25,10 +25,24 @@ public class GraphHopperHooks {
 	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI$")
 	public void getRoute(String pointA, String pointB, String routeType)
 			throws InterruptedException {
+		String graphHopperWebUrl;
+		
+		if(IntegrationTestProperties.getTestPropertyBool("viaApigee"))
+		{
+			 graphHopperWebUrl=IntegrationTestProperties
+			.getTestProperty("graphHopperWebUrlViaApigee");
+		}
+		else
+		{
+			 graphHopperWebUrl=IntegrationTestProperties
+					.getTestProperty("graphHopperWebUrl");
+		}
 
-			graphUiUtil = new GraphHopperUIUtil(
-					IntegrationTestProperties
-							.getTestProperty("graphHopperWebUrl"));
+		
+			graphUiUtil = new GraphHopperUIUtil(graphHopperWebUrl);
+					
+					
+
 
 		String testON = IntegrationTestProperties.getTestProperty("testON");
 
@@ -59,10 +73,21 @@ public class GraphHopperHooks {
 	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI via \"([^\"]*)\"$")
 	public void getRoute(String pointA, String pointB, String routeType,String pointC)
 			throws InterruptedException {
+		String graphHopperWebUrl;
+		
+		if(IntegrationTestProperties.getTestPropertyBool("viaApigee"))
+		{
+			 graphHopperWebUrl=IntegrationTestProperties
+			.getTestProperty("graphHopperWebUrlViaApigee");
+		}
+		else
+		{
+			 graphHopperWebUrl=IntegrationTestProperties
+					.getTestProperty("graphHopperWebUrl");
+		}
 
 			graphUiUtil = new GraphHopperUIUtil(
-					IntegrationTestProperties
-							.getTestProperty("graphHopperWebUrl"));
+					graphHopperWebUrl);
 
 		String testON = IntegrationTestProperties.getTestProperty("testON");
 
