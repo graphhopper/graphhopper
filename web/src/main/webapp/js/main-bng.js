@@ -594,7 +594,7 @@ function getTopLeftCorners() {
 
     routingLayer = L.geoJson().addTo(map);
     routingLayer.options = {
-        style: {color: "#00cc33", "weight": 5, "opacity": 0.6}, // route color and style
+        style: {color: "#ED1A5E", "weight": 5, "opacity": 0.6}, // route color and style
         contextmenu: true,
         contextmenuItems: [{
                 text: 'Route ',
