@@ -77,11 +77,13 @@ public class NearestServlet extends GHBaseServlet
             }
             
             if (snappedPoint != null) {
+                result.put("type", "Point");
+                
                 JSONArray coord = new JSONArray();
-                coord.put(snappedPoint.lat);
                 coord.put(snappedPoint.lon);
+                coord.put(snappedPoint.lat);
 
-                result.put("point", coord);
+                result.put("coordinates", coord);
                 
                 DistanceCalcEarth calc = new DistanceCalcEarth();
                 double distance = calc.calcDist(place.lat, place.lon, snappedPoint.lat, snappedPoint.lon);
