@@ -58,7 +58,6 @@ public class OsItnReaderTest extends AbstractOsItnReaderTest {
     private static final InputStream COMPLEX_ITN_EXAMPLE = OsItnReader.class.getResourceAsStream("os-itn-sample.xml");
 
     @Test
-    @Ignore
     public void testReadItnNoEntryMultipointCrossroad() throws IOException {
         final boolean turnRestrictionsImport = true;
         final boolean is3D = false;
@@ -189,7 +188,6 @@ public class OsItnReaderTest extends AbstractOsItnReaderTest {
 
 
     @Test
-    @Ignore
     public void testReadSimpleCrossRoads() throws IOException {
         final boolean turnRestrictionsImport = false;
         final boolean is3D = false;
@@ -202,7 +200,6 @@ public class OsItnReaderTest extends AbstractOsItnReaderTest {
     }
 
     @Test
-    @Ignore
     public void testReadSimpleMultiPointCrossRoads() throws IOException {
         final boolean turnRestrictionsImport = false;
         final boolean is3D = false;
@@ -215,7 +212,6 @@ public class OsItnReaderTest extends AbstractOsItnReaderTest {
     }
 
     @Test
-    @Ignore
     public void testReadSimpleCrossRoadsWithTurnRestriction() throws IOException {
         final boolean turnRestrictionsImport = true;
         final boolean is3D = false;
@@ -303,7 +299,6 @@ public class OsItnReaderTest extends AbstractOsItnReaderTest {
     }
 
     @Test
-    @Ignore
     public void testRegex() {
         final String s1 = "123,123 123,123";
         final String s2 = " 123,123 123,123";
