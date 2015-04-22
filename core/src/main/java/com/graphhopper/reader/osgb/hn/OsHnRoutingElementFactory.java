@@ -20,7 +20,6 @@ public class OsHnRoutingElementFactory extends AbstractRoutingElementFactory<Rou
 
     @Override
     public RoutingElement create(String name, String idStr, XMLStreamReader parser) throws MismatchedDimensionException, XMLStreamException, FactoryException, TransformException {
-        //        idStr = idStr.substring(4);
         //      <highway:ResponsibleAuthority gml:id="LOCAL_ID_29378">
         //        <highway:identifier>114</highway:identifier>
         //        <highway:authorityName>Bath And North East Somerset</highway:authorityName>
@@ -29,9 +28,8 @@ public class OsHnRoutingElementFactory extends AbstractRoutingElementFactory<Rou
         if (name.equals("ResponsibleAuthority")||name.equals("LineString")||name.equals("Point")||name.equals("Street")||name.equals("TimePeriod")) {
             return null;
         }
-        if (!idStr.startsWith("4000")&&!idStr.startsWith("5000")&&!idStr.startsWith("9999")&&!idStr.startsWith("9998")) {
-            logger.error(idStr + "  :  " + name);
-        }
+        // Strip of the osgb prefix
+        idStr = idStr.substring(4);
         long id;
         try {
             id = Long.parseLong(idStr);
@@ -41,12 +39,12 @@ public class OsHnRoutingElementFactory extends AbstractRoutingElementFactory<Rou
         }
         switch (name) {
         case "RoadNode": {
-            //            System.out.println(">>>>>>>>>>>> RoadNode " + id);
+            logger.error(">>>>>>>>>>>> RoadNode " + id);
             //            return OSITNNode.create(id, parser);
             //            new OsHnRoadLink(id, parser);
         }
         case "RoadLink": {
-            //            System.out.println(">>>>>>>>>>>> RoadLink " + id);
+            logger.error(">>>>>>>>>>>> RoadLink " + id);
             //            return OSITNWay.create(id, parser);
             //            new OsHnRoadLink(id, parser);
         }

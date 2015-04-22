@@ -41,12 +41,17 @@ abstract public class AbstractOsInputFile<T extends RoutingElement>  implements 
     private boolean binary = false;
     private final BlockingQueue<RoutingElement> itemQueue;
     private final String name;
+    private String idKey;
     /**
      * The factory to use to create RoutingElements. eg Itn, Dpn or Hn
      */
     private AbstractRoutingElementFactory<T> abstractFactory;
 
     public AbstractOsInputFile(File file, AbstractRoutingElementFactory<T> abstractFactory) throws IOException {
+        this(file, abstractFactory, "id");
+    }
+    public AbstractOsInputFile(File file, AbstractRoutingElementFactory<T> abstractFactory, String idKey) throws IOException {
+        this.idKey = idKey;
         this.abstractFactory = abstractFactory;
         name = file.getAbsolutePath();
         bis = decode(file);
@@ -179,10 +184,10 @@ abstract public class AbstractOsInputFile<T extends RoutingElement>  implements 
         int event = parser.next();
         while (event != XMLStreamConstants.END_DOCUMENT) {
             if (event == XMLStreamConstants.START_ELEMENT) {
-                String idStr = parser.getAttributeValue(null, "fid");
+                String idStr = parser.getAttributeValue(null, idKey);
                 if (idStr != null) {
                     String name = parser.getLocalName();
-                    idStr = idStr.substring(4);
+                    //                    idStr = idStr.substring(4);
                     result = abstractFactory.create(name, idStr, parser);
                     if (result!=null) {
                         return result;

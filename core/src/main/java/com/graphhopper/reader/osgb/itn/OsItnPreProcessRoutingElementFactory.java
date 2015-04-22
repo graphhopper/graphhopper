@@ -25,7 +25,8 @@ public class OsItnPreProcessRoutingElementFactory extends AbstractRoutingElement
 
     @Override
     public OSITNElement create(String name, String idStr, XMLStreamReader parser) throws MismatchedDimensionException, XMLStreamException, FactoryException, TransformException {
-        //        idStr = idStr.substring(4);
+        // Strip of the osgb prefix
+        idStr = idStr.substring(4);
         logger.info(idStr + ":" + name + ":");
 
         long id;
@@ -43,6 +44,9 @@ public class OsItnPreProcessRoutingElementFactory extends AbstractRoutingElement
         case "RoadLinkInformation":
         case "RoadRouteInformation": {
             return OSITNRelation.create(id, parser);
+        }
+        case "Road": {
+            return OsItnMetaData.create(id, parser);
         }
         }
         return null;

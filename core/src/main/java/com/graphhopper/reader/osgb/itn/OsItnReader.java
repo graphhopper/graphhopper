@@ -49,8 +49,9 @@ import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.Way;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.osgb.AbstractOsReader;
-import com.graphhopper.reader.osgb.hn.OsHnReader;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.NodeAccess;
@@ -291,7 +292,7 @@ public class OsItnReader extends AbstractOsReader<Long> {
     }
 
     private void preProcessSingleFile(OsItnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
-        System.out.println("==== preProcessSingleFile");
+        logger.error("==== preProcessSingleFile");
         long tmpWayCounter = 1;
         long tmpRelationCounter = 1;
         RoutingElement item;
@@ -649,7 +650,7 @@ public class OsItnReader extends AbstractOsReader<Long> {
     }
 
     private void processStageOne(ProcessData processData, OsItnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
-        System.out.println("==== processStageOne");
+        logger.error("==== processStageOne");
         RoutingElement item;
         LongIntMap nodeFilter = getNodeMap();
         // Limit the number of xml nodes we process to speed up ingestion
@@ -690,20 +691,35 @@ public class OsItnReader extends AbstractOsReader<Long> {
     private void decorateItnDataWithHighwaysNetworkData() {
         if (commandLineArguments != null) {
             String hnPath = commandLineArguments.get("hn.data", null);
-            if (hnPath != null) {
-                System.out.println("=================================================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-                System.out.println("==== decorateItnDataWithHighwaysNetworkData from " + hnPath);
-                GraphHopper hnGraphHopper = new GraphHopper();
-                hnGraphHopper.load(hnPath);
-                OsHnReader hnReader = new OsHnReader(hnGraphHopper.getGraph());
-                System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=================================================");
+            String hnGraphLocation = commandLineArguments.get("hn.graph.location", null);
+            if (hnPath != null && hnGraphLocation!= null) {
+                logger.error("=================================================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+                logger.error("==== decorateItnDataWithHighwaysNetworkData from " + hnPath);
+                FlagEncoder carEncoder = new CarFlagEncoder(5, 5, 3);
+                EncodingManager encodingManager = new EncodingManager(carEncoder);
+                GraphHopper hnGraphHopper = new GraphHopper(){
+                    @Override
+                    protected void postProcessing()
+                    {
+                        System.out.println("DON'T DO postProcessing()");
+                    }
+                    @Override
+                    protected void flush()
+                    {
+                        //                fullyLoaded = true;
+                    }
+
+                }.setOSMFile(hnPath).setGraphHopperLocation(hnGraphLocation).setEncodingManager(encodingManager).setCHEnable(false).setAsHnReader();
+                hnGraphHopper.importOrLoad();
+                //                OsHnReader hnReader = new OsHnReader(hnGraphHopper.getGraph());
+                logger.error("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=================================================");
 
             }
         }
     }
 
     private void processStageTwo(ProcessData processData, OsItnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
-        System.out.println("==== processStageTwo");
+        logger.error("==== processStageTwo");
         RoutingElement item;
         LongIntMap nodeFilter = getNodeMap();
         // Limit the number of xml nodes we process to speed up ingestion
@@ -741,7 +757,7 @@ public class OsItnReader extends AbstractOsReader<Long> {
     }
 
     private void processStageThree(ProcessData processData, OsItnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
-        System.out.println("==== processStageThree");
+        logger.error("==== processStageThree");
         RoutingElement item;
         // Limit the number of xml nodes we process to speed up ingestion
         in.setAbstractFactory(new OsItnProcessStageThreeRoutingElementFactory());
@@ -884,7 +900,7 @@ public class OsItnReader extends AbstractOsReader<Long> {
         int graphIndex = getNodeMap().get(nodeId);
         if (graphIndex < TOWER_NODE) {
             OSITNNode newNode = addBarrierNode(nodeId, true);
-            // System.out.println("Add Node at start of way from " + nodeId +
+            // logger.error("Add Node at start of way from " + nodeId +
             // " to " + osmNodeIds.get(osmNodeIds.size()-1) + " lat lon is " +
             // newNode.getLat() + " " + newNode.getLon());
             long newNodeId = newNode.getId();
@@ -1277,13 +1293,13 @@ public class OsItnReader extends AbstractOsReader<Long> {
             // An index < TOWER_NODE means it is a tower node.
             boolean doInsertAdditionalTowerNodes = addAdditionalTowerNodes && (graphIndex < TOWER_NODE);
 
-            // System.out.println("doInsertAdditionalTowerNodes is " +
+            // logger.error("doInsertAdditionalTowerNodes is " +
             // doInsertAdditionalTowerNodes + " for lastNodeId "+ lastNodeId );
 
             // add end tower here
             if (doInsertAdditionalTowerNodes) {
                 OSITNNode newNode = addBarrierNode(lastNodeId, true);
-                // System.out.println("Add End shadow node between " +
+                // logger.error("Add End shadow node between " +
                 // nodeIdsToCreateWaysFor.get(0) + " and " + lastNodeId +
                 // " lat lon is " + newNode.getLat() + " " + newNode.getLon());
                 newNodeId = newNode.getId();
@@ -1703,7 +1719,7 @@ public class OsItnReader extends AbstractOsReader<Long> {
 
         if (graphIndex < TOWER_NODE || forceAsTower) {
             graphIndex = -graphIndex - 3;
-            // System.out.println("Create Tower node for nodeId " + nodeId +
+            // logger.error("Create Tower node for nodeId " + nodeId +
             // " graphIndex is " + graphIndex);
 
             newNode = new OSITNNode(createNewNodeId(), nodeAccess, graphIndex);

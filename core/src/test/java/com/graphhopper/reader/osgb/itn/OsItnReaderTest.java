@@ -329,12 +329,14 @@ public class OsItnReaderTest extends AbstractOsItnReaderTest {
 
         Map<String, String> args = new HashMap<>();
         args.put("hn.data", "/data/Development/highways_network/");
+        args.put("hn.graph.location", "./target/output/highways_network");
         args.put("graph.location", graphLoc);
+        args.put("osmreader.osm", inputFile);
         args.put("config", "../config.properties");
         CmdArgs commandLineArguments = new CmdArgs(args);
         commandLineArguments = CmdArgs.readFromConfigAndMerge(commandLineArguments, "config", "graphhopper.config");
 
-        GraphHopper graphHopper = new GraphHopper().setInMemory().setOSMFile(inputFile).setCHEnable(false).setEncodingManager(encodingManager).setAsItnReader().init(commandLineArguments);
+        GraphHopper graphHopper = new GraphHopper().setInMemory().setAsItnReader().init(commandLineArguments);
         graphHopper.importOrLoad();
         GraphStorage graph = graphHopper.getGraph();
 

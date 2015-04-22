@@ -85,9 +85,7 @@ public class OsHnReader extends AbstractOsReader<Long> {
     private void preProcessSingleFile(OsHnInputFile in)
             throws XMLStreamException, MismatchedDimensionException,
             FactoryException, TransformException {
-        System.out.println("==== preProcessSingleFile");
-        //        long tmpWayCounter = 1;
-        //        long tmpRelationCounter = 1;
+        logger.error("==== preProcessSingleFile");
         RoutingElement item;
         while ((item = in.getNext()) != null) {
             // Don't do anything different to the InputFile
