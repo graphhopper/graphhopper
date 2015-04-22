@@ -149,10 +149,10 @@ public class EncodingManager
 
             AbstractFlagEncoder fe;
             if (entry.equals(CAR))
-                fe = new OsCarFlagEncoder(entryVal);
+                fe = new CarFlagEncoder(entryVal);
 
             else if (entry.equals(BIKE))
-                fe = new OsBikeFlagEncoder(entryVal);
+                fe = new BikeFlagEncoder(entryVal);
 
             else if (entry.equals(BIKE2))
                 fe = new Bike2WeightFlagEncoder(entryVal);
