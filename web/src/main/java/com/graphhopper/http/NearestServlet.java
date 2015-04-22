@@ -61,6 +61,7 @@ public class NearestServlet extends GHBaseServlet
     void writeNearest( HttpServletRequest req, HttpServletResponse res ) throws Exception
     {
         String pointStr = getParam(req, "point", null);
+        boolean enableElevation = getBooleanParam(req, "elevation", false);
         
         JSONObject result = new JSONObject();
         if (pointStr != null && !pointStr.equalsIgnoreCase("")) {
@@ -82,6 +83,10 @@ public class NearestServlet extends GHBaseServlet
                 JSONArray coord = new JSONArray();
                 coord.put(snappedPoint.lon);
                 coord.put(snappedPoint.lat);
+                
+                if (hopper.hasElevation() && enableElevation) {
+                    coord.put(snappedPoint.ele);
+                }
 
                 result.put("coordinates", coord);
                 
