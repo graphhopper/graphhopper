@@ -296,8 +296,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             encoded = handleFerryTags(way, SLOW_SPEED, MEAN_SPEED, FERRY_SPEED);
             encoded |= directionBitMask;
         }
-
-        return encoded;
+        long anno = super.handleWayTags(way, allowed, relationFlags);
+        
+        return encoded |= anno;
     }
 
     @Override
