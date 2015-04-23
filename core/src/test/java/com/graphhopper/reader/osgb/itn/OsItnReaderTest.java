@@ -318,6 +318,7 @@ public class OsItnReaderTest extends AbstractOsItnReaderTest {
     }
 
     @Test
+    @Ignore
     public void testItnGraphHopperWithHighwaysNetworkData() {
         String graphLoc = "./target/output/os-itn-wickham-direction-error-gh";
         String inputFile = "./src/test/resources/com/graphhopper/reader/os-itn-wickham-direction-error.xml";
