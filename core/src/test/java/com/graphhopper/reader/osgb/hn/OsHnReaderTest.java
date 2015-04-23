@@ -1,6 +1,7 @@
 package com.graphhopper.reader.osgb.hn;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.graphhopper.GraphHopper;
@@ -26,6 +27,7 @@ public class OsHnReaderTest {
         encodingManager = new EncodingManager(footEncoder, carEncoder, bikeEncoder);
     }
     @Test
+    @Ignore
     public void testReader() {
         String graphLoc = "./target/output/hn-gh";
         String inputFile = "/data/Development/highways_network";
