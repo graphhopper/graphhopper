@@ -8,63 +8,69 @@ import com.graphhopper.reader.Way;
 public class OsAvoidanceDecorator extends AbstractAvoidanceDecorator {
 
 	protected enum AvoidanceType implements EdgeAttribute {
-		Boulders(1) {
+		ARoad(1) {
+			@Override
+			public boolean isValidForWay(Way way) {
+				return hasTag(way, "highway", "primary");
+			}
+		},
+		Boulders(2) {
 			@Override
 			public boolean isValidForWay(Way way) {
 				return hasTag(way, "natural", "boulder");
 			}
 		},
-		Cliff(2) {
+		Cliff(4) {
 			@Override
 			public boolean isValidForWay(Way way) {
 				return hasTag(way, "natural", "cliff");
 			}
 		},
-		InlandWater(4) {
+		InlandWater(8) {
 			@Override
 			public boolean isValidForWay(Way way) {
 				return hasTag(way, "natural", "water")
 						&& way.hasTag("tidal", "no");
 			}
 		},
-		Marsh(8) {
+		Marsh(16) {
 			@Override
 			public boolean isValidForWay(Way way) {
 				return way.hasTag("wetland", "marsh");
 			}
 		},
-		QuarryOrPit(16) {
+		QuarryOrPit(32) {
 			@Override
 			public boolean isValidForWay(Way way) {
 				return hasTag(way, "natural", "excavation");
 			}
 		},
-		Scree(32) {
+		Scree(64) {
 			@Override
 			public boolean isValidForWay(Way way) {
 				return hasTag(way, "natural", "scree");
 			}
 		},
-		Rock(64) {
+		Rock(128) {
 			@Override
 			public boolean isValidForWay(Way way) {
 				return hasTag(way, "natural", "rock");
 			}
 		},
-		Mud(128) {
+		Mud(256) {
 			@Override
 			public boolean isValidForWay(Way way) {
 				return hasTag(way, "natural", "mud");
 			}
 		},
-		Sand(256) {
+		Sand(512) {
 			@Override
 			public boolean isValidForWay(Way way) {
 				return hasTag(way, "natural", "sand");
 			}
 		},
 
-		Shingle(512) {
+		Shingle(1024) {
 			@Override
 			public boolean isValidForWay(Way way) {
 				return hasTag(way, "natural", "shingle");
@@ -130,7 +136,7 @@ public class OsAvoidanceDecorator extends AbstractAvoidanceDecorator {
 	}
 
 	protected void defineEncoder(int shift) {
-		wayTypeEncoder = new EncodedValue("WayType", shift, 11, 1, 0, 1024,
+		wayTypeEncoder = new EncodedValue("WayType", shift, 12, 1, 0, 2048,
 				true);
 	}
 

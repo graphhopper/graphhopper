@@ -44,23 +44,23 @@ public class OsAvoidanceDecoratorTest {
 
     }
 
-//    @Test
-//    public void testMudAttributeStorage() {
-//        Way way = new OSITNWay(1L);
-//        way.setTag("natural", "mud");
-//        long wayFlag = osAvoidances.handleWayTags(way,0);
-//        assertEquals(OsAvoidanceDecorator.AvoidanceType.Mud.getValue(), wayFlag);
-//
-//    }
+    @Test
+    public void testMudAttributeStorage() {
+        Way way = new OSITNWay(1L);
+        way.setTag("natural", "mud");
+        long wayFlag = osAvoidances.handleWayTags(way,0);
+        assertEquals(OsAvoidanceDecorator.AvoidanceType.Mud.getValue(), wayFlag);
 
-//    @Test
-//    public void testSandAttributeStorage() {
-//        Way way = new OSITNWay(1L);
-//        way.setTag("natural", "sand");
-//        long wayFlag = osAvoidances.handleWayTags(way,0);
-//        assertEquals(OsAvoidanceDecorator.AvoidanceType.Sand.getValue(), wayFlag);
-//
-//    }
+    }
+
+    @Test
+    public void testSandAttributeStorage() {
+        Way way = new OSITNWay(1L);
+        way.setTag("natural", "sand");
+        long wayFlag = osAvoidances.handleWayTags(way,0);
+        assertEquals(OsAvoidanceDecorator.AvoidanceType.Sand.getValue(), wayFlag);
+
+    }
 
     @Test
     public void testScreeAttributeStorage() {
@@ -71,14 +71,14 @@ public class OsAvoidanceDecoratorTest {
 
     }
 
-//    @Test
-//    public void testShingleAttributeStorage() {
-//        Way way = new OSITNWay(1L);
-//        way.setTag("natural", "shingle");
-//        long wayFlag = osAvoidances.handleWayTags(way,0);
-//        assertEquals(OsAvoidanceDecorator.AvoidanceType.Shingle.getValue(), wayFlag);
-//
-//    }
+    @Test
+    public void testShingleAttributeStorage() {
+        Way way = new OSITNWay(1L);
+        way.setTag("natural", "shingle");
+        long wayFlag = osAvoidances.handleWayTags(way,0);
+        assertEquals(OsAvoidanceDecorator.AvoidanceType.Shingle.getValue(), wayFlag);
+
+    }
 
 //    @Test
 //    public void testSpoilAttributeStorage() {
@@ -108,6 +108,15 @@ public class OsAvoidanceDecoratorTest {
         assertEquals(OsAvoidanceDecorator.AvoidanceType.InlandWater.getValue(), wayFlag);
 
     }
+   
+   @Test
+   public void testARoadAttributeStorage() {
+       Way way = new OSITNWay(1L);
+       way.setTag("highway", "primary");
+       long wayFlag = osAvoidances.handleWayTags(way,0);
+       assertEquals(OsAvoidanceDecorator.AvoidanceType.ARoad.getValue(), wayFlag);
+
+   }
 
     @Test
     public void testQuarryOrPitAttributeStorage() {
