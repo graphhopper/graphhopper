@@ -119,10 +119,7 @@ public class OsAvoidanceDecorator extends AbstractAvoidanceDecorator {
 		}
 
 		public boolean representedIn(String[] attributes) {
-			System.err.println("REPRESENT:" + this.toString());
 			for (String attribute : attributes) {
-				System.err.println("SEEKING:" + attribute);
-
 				if (attribute.equals(this.toString())) {
 					return true;
 				}
