@@ -50,7 +50,7 @@ public class OsVehicleAvoidanceDecorator extends AbstractAvoidanceDecorator {
 
     @Override
 	protected void defineEncoder(int shift) {
-		wayTypeEncoder = new EncodedValue("WayType", shift, 3, 1, 0, 4, true);
+		wayTypeEncoder = new EncodedValue("HazardType", shift, 3, 1, 0, 4, true);
 	}
     
     protected EdgeAttribute[] getEdgeAttributesOfInterest() {

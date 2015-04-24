@@ -136,7 +136,7 @@ public class OsAvoidanceDecorator extends AbstractAvoidanceDecorator {
 	}
 
 	protected void defineEncoder(int shift) {
-		wayTypeEncoder = new EncodedValue("WayType", shift, 12, 1, 0, 2048,
+		wayTypeEncoder = new EncodedValue("HazardType", shift, 12, 1, 0, 2048,
 				true);
 	}
 
