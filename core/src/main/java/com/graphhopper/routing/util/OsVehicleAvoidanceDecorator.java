@@ -1,17 +1,12 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.Way;
-import com.graphhopper.util.InstructionAnnotation;
-import com.graphhopper.util.Translation;
 
 /**
  * Created by sadam on 4/15/15.
  */
-public class OsVehicleAvoidanceDecorator implements EncoderDecorator {
-    private EncodedValue wayTypeEncoder;
-
-
-    protected enum AvoidanceType
+public class OsVehicleAvoidanceDecorator extends AbstractAvoidanceDecorator {
+    protected enum AvoidanceType implements EdgeAttribute
     {
         MOTORWAYS(1) {
             @Override
@@ -42,45 +37,24 @@ public class OsVehicleAvoidanceDecorator implements EncoderDecorator {
         public boolean isValidForWay(Way way) {
             return false;
         }
-
-
-
+        
+        public boolean representedIn(String[] attributes) {
+			for (String attribute : attributes) {
+				if(attribute.equals(this.toString())) {
+					return true;
+				}
+			}
+			return false;
+		}
     }
 
-    public int defineWayBits(int shift) {
-        wayTypeEncoder = new EncodedValue("WayType", shift, 3, 1, 0, 4, true);
-        shift += wayTypeEncoder.getBits();
-        return shift;
-    }
-
-    public long handleWayTags(Way way, long encoded) {
-        long avoidanceValue=0;
-
-        for (AvoidanceType aType: AvoidanceType.values()) {
-            if(aType.isValidForWay(way)) {
-                avoidanceValue += aType.getValue();
-            }
-        }
-        return wayTypeEncoder.setValue(encoded, avoidanceValue);
-    }
-
-    public InstructionAnnotation getAnnotation( long flags, Translation tr )
-    {
-        long wayType = wayTypeEncoder.getValue(flags);
-        String wayName = getWayName(wayType, tr);
-        return new InstructionAnnotation(0, wayName);
-    }
-
-    private String getWayName(long wayType, Translation tr) {
-        String wayName="";
-        for (AvoidanceType aType: AvoidanceType.values()) {
-            if ((wayType & aType.getValue()) == aType.getValue()) {
-                wayName += " ";
-                wayName += aType.name();
-            }
-        }
-
-        return wayName;
-    }
+    @Override
+	protected void defineEncoder(int shift) {
+		wayTypeEncoder = new EncodedValue("WayType", shift, 3, 1, 0, 4, true);
+	}
+    
+    protected EdgeAttribute[] getEdgeAttributesOfInterest() {
+		return AvoidanceType.values();
+	}
 
 }

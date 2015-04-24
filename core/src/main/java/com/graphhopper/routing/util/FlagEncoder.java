@@ -121,4 +121,6 @@ public interface FlagEncoder extends TurnCostEncoder
      * @return additional cost or warning information for an instruction like ferry or road charges.
      */
     InstructionAnnotation getAnnotation( long flags, Translation tr );
+
+	long getBitMask(String[] avoidances, int key);
 }

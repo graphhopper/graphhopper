@@ -1,16 +1,13 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.Way;
-import com.graphhopper.util.InstructionAnnotation;
-import com.graphhopper.util.Translation;
 
 /**
  * Created by sadam on 4/15/15.
  */
-public class OsAvoidanceDecorator implements EncoderDecorator {
-	private EncodedValue wayTypeEncoder;
+public class OsAvoidanceDecorator extends AbstractAvoidanceDecorator {
 
-	protected enum AvoidanceType {
+	protected enum AvoidanceType implements EdgeAttribute {
 		Boulders(1) {
 			@Override
 			public boolean isValidForWay(Way way) {
@@ -37,10 +34,10 @@ public class OsAvoidanceDecorator implements EncoderDecorator {
 			}
 		},
 		QuarryOrPit(16) {
-			 @Override
-			 public boolean isValidForWay(Way way) {
-				 return hasTag(way, "natural", "excavation");
-			 }
+			@Override
+			public boolean isValidForWay(Way way) {
+				return hasTag(way, "natural", "excavation");
+			}
 		},
 		Scree(32) {
 			@Override
@@ -53,8 +50,7 @@ public class OsAvoidanceDecorator implements EncoderDecorator {
 			public boolean isValidForWay(Way way) {
 				return hasTag(way, "natural", "rock");
 			}
-		}
-		,
+		},
 		Mud(128) {
 			@Override
 			public boolean isValidForWay(Way way) {
@@ -67,29 +63,33 @@ public class OsAvoidanceDecorator implements EncoderDecorator {
 				return hasTag(way, "natural", "sand");
 			}
 		},
-		
+
 		Shingle(512) {
 			@Override
 			public boolean isValidForWay(Way way) {
 				return hasTag(way, "natural", "shingle");
 			}
 		}
-//		,
-//		Spoil(1024) {
-//			@Override
-//			public boolean isValidForWay(Way way) {
-//				return hasTag(way, "natural", "spoil");
-//			}
-//		},
-//		
-//		TidalWater(2048) {
-//			@Override
-//			public boolean isValidForWay(Way way) {
-//				return hasTag(way, "natural", "water")
-//						&& way.hasTag("tidal", "yes");
-//			}
-//		}
-	;
+		// ,
+		// Spoil(1024) {
+		// @Override
+		// public boolean isValidForWay(Way way) {
+		// return hasTag(way, "natural", "spoil");
+		// }
+		// },
+		//
+		// TidalWater(2048) {
+		// @Override
+		// public boolean isValidForWay(Way way) {
+		// return hasTag(way, "natural", "water")
+		// && way.hasTag("tidal", "yes");
+		// }
+		// }
+		;
+
+		public String toString() {
+			return super.toString().toLowerCase();
+		}
 
 		private static boolean hasTag(Way way, String key, String value) {
 			String wayTag = way.getTag(key);
@@ -118,42 +118,27 @@ public class OsAvoidanceDecorator implements EncoderDecorator {
 			return false;
 		}
 
+		public boolean representedIn(String[] attributes) {
+			System.err.println("REPRESENT:" + this.toString());
+			for (String attribute : attributes) {
+				System.err.println("SEEKING:" + attribute);
+
+				if (attribute.equals(this.toString())) {
+					return true;
+				}
+			}
+			return false;
+		}
+
 	}
 
-	public int defineWayBits(int shift) {
+	protected void defineEncoder(int shift) {
 		wayTypeEncoder = new EncodedValue("WayType", shift, 11, 1, 0, 1024,
 				true);
-		shift += wayTypeEncoder.getBits();
-		return shift;
 	}
 
-	public long handleWayTags(Way way, long encoded) {
-		long avoidanceValue = 0;
-
-		for (AvoidanceType aType : AvoidanceType.values()) {
-			if (aType.isValidForWay(way)) {
-				avoidanceValue += aType.getValue();
-			}
-		}
-		return wayTypeEncoder.setValue(encoded, avoidanceValue);
-	}
-
-	public InstructionAnnotation getAnnotation(long flags, Translation tr) {
-		long wayType = wayTypeEncoder.getValue(flags);
-		String wayName = getWayName(wayType, tr);
-		return new InstructionAnnotation(1, wayName);
-	}
-
-	private String getWayName(long wayType, Translation tr) {
-		String wayName = "";
-		for (AvoidanceType aType : AvoidanceType.values()) {
-			if ((wayType & aType.getValue()) == aType.getValue()) {
-				wayName += " ";
-				wayName += aType.name();
-			}
-		}
-
-		return wayName;
+	protected EdgeAttribute[] getEdgeAttributesOfInterest() {
+		return AvoidanceType.values();
 	}
 
 }
