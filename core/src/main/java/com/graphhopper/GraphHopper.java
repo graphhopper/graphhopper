@@ -903,13 +903,15 @@ public class GraphHopper implements GraphHopperAPI {
 			else
 				result = new FastestWeighting(encoder);
 		} else if ("fastavoid".equalsIgnoreCase(weighting)) {
-			String avoidances = weightingMap.get("avoidances", "cliff");
+			String avoidanceString = weightingMap.get("avoidances", "cliff");
+			String[] avoidances = avoidanceString.split(",");
 			if (encoder.supports(PriorityWeighting.class))
 				result = new PriorityWithAvoidancesWeighting(encoder, avoidances);
 			else
 				result = new FastestWithAvoidancesWeighting(encoder, avoidances);
 		} else if ("shortavoid".equalsIgnoreCase(weighting)) {
-			String avoidances = weightingMap.get("avoidances", "cliff");
+			String avoidanceString = weightingMap.get("avoidances", "cliff");
+			String[] avoidances = avoidanceString.split(",");
 			result = new ShortestWithAvoidancesWeighting(encoder, avoidances);
 		} else {
 			throw new UnsupportedOperationException("weighting " + weighting
