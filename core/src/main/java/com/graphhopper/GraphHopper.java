@@ -917,7 +917,6 @@ public class GraphHopper implements GraphHopperAPI {
 			throw new UnsupportedOperationException("weighting " + weighting
 					+ " not supported");
 		}
-		System.err.println("WEIGHTING:" + result.getClass());
 		return result;
 	}
 
