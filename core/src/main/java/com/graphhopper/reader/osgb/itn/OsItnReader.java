@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
+import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.ITurnCostTableEntry;
 import com.graphhopper.reader.Node;
 import com.graphhopper.reader.OSMElement;
@@ -49,6 +50,7 @@ import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.Way;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.osgb.AbstractOsReader;
+import com.graphhopper.reader.osgb.hn.OsHnReader;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -216,6 +218,7 @@ public class OsItnReader extends AbstractOsReader<Long> {
 
     private TLongObjectMap<String> edgeNameMap;
     private TLongObjectMap<String> edgeRoadTypeMap;
+    private TLongObjectMap<String> edgeEnvironmentMap;
     private TLongObjectMap<String> edgeRoadDirectionMap;
 
     private TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>> edgeIdToXToYToNodeFlagsMap;
@@ -299,7 +302,7 @@ public class OsItnReader extends AbstractOsReader<Long> {
         // Limit the number of xml nodes we process to speed up ingestion
         in.setAbstractFactory(new OsItnPreProcessRoutingElementFactory());
         while ((item = in.getNext()) != null) {
-            logger.error(OS_ITN_READER_PRE_PROCESS_FORMAT, item.getType());
+            logger.debug(OS_ITN_READER_PRE_PROCESS_FORMAT, item.getType());
             if (item.isType(OSMElement.WAY)) {
                 final OSITNWay way = (OSITNWay) item;
                 boolean valid = filterWay(way);
@@ -530,6 +533,13 @@ public class OsItnReader extends AbstractOsReader<Long> {
         return edgeRoadTypeMap;
     }
 
+    private TLongObjectMap<String> getEdgeEnvironmentMap() {
+        if (edgeEnvironmentMap == null)
+            edgeEnvironmentMap = new TLongObjectHashMap<String>(getOsmIdStoreRequiredSet().size());
+
+        return edgeEnvironmentMap;
+    }
+
     private TLongObjectMap<String> getEdgeRoadDirectionMap() {
         if (edgeRoadDirectionMap == null)
             edgeRoadDirectionMap = new TLongObjectHashMap<String>(getOsmIdStoreRequiredSet().size());
@@ -709,6 +719,12 @@ public class OsItnReader extends AbstractOsReader<Long> {
                         //                fullyLoaded = true;
                     }
 
+                    @Override
+                    protected DataReader createReader(GraphStorage tmpGraph) {
+                        DataReader reader = new OsHnReader(tmpGraph, getEdgeEnvironmentMap() );
+                        return initReader(reader);
+                    }
+
                 }.setOSMFile(hnPath).setGraphHopperLocation(hnGraphLocation).setEncodingManager(encodingManager).setCHEnable(false).setAsHnReader();
                 hnGraphHopper.importOrLoad();
                 //                OsHnReader hnReader = new OsHnReader(hnGraphHopper.getGraph());
@@ -840,6 +856,18 @@ public class OsItnReader extends AbstractOsReader<Long> {
         String wayType = getWayRoadType(way.getId());
         if (null != wayType && !way.hasTag("highway")) {
             way.setTag("highway", wayType);
+        }
+        String wayEnvironment = getWayEnvironment(way.getId());
+        if (null != wayEnvironment && !way.hasTag("environment")) {
+
+            String nature = way.getTag("nature");
+            if (!Helper.isEmpty(nature))
+            {
+                wayEnvironment += ":"+nature;
+            }
+
+            System.out.println(">>>>>>>>>>>>>>>> Way " + wayOsmId + " is in environment " + wayEnvironment );
+            way.setTag("environment", wayEnvironment);
         }
 
         String wayDirection = getWayRoadDirection(way.getId());
@@ -1331,6 +1359,9 @@ public class OsItnReader extends AbstractOsReader<Long> {
     private String getWayRoadType(long id) {
         return getEdgeRoadTypeMap().remove(id);
     }
+    private String getWayEnvironment(long id) {
+        return getEdgeEnvironmentMap().remove(id);
+    }
 
     private String getWayRoadDirection(long id) {
         return getEdgeRoadDirectionMap().remove(id);
@@ -1448,7 +1479,7 @@ public class OsItnReader extends AbstractOsReader<Long> {
             // logger.warn(MISSING_FROM_MAP_FORMAT, node.getId());
             return false;
         }
-        logger.warn(ADDING_NODE_AS_FORMAT, node.getId(), nodeType);
+        logger.debug(ADDING_NODE_AS_FORMAT, node.getId(), nodeType);
         double lat = node.getLat();
         double lon = node.getLon();
         double ele = getElevation(node);

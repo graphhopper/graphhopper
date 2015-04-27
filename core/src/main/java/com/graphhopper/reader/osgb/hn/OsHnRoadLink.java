@@ -10,16 +10,20 @@ import org.opengis.referencing.operation.TransformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class OsHnRoadLink {
-    private final long id;
+import com.graphhopper.reader.OSMElement;
+
+public class OsHnRoadLink extends OSMElement {
     private static final Logger logger = LoggerFactory.getLogger(OsHnRoadLink.class);
 
+    private String environment;
+
     public OsHnRoadLink(long id, XMLStreamReader parser) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
-        this.id = id;
+        super(id, WAY);
         parser.nextTag();
         readTags(parser);
     }
-    protected void readTags(XMLStreamReader parser) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+    @Override
+    protected void readTags(XMLStreamReader parser) throws XMLStreamException {
         int event = parser.getEventType();
         while (event != XMLStreamConstants.END_DOCUMENT && (event != XMLStreamConstants.END_ELEMENT || !exitElement(parser))) {
             if (event == XMLStreamConstants.CHARACTERS) {
@@ -32,7 +36,9 @@ public class OsHnRoadLink {
                     case "environment": {
                         //                        event = handleCoordinates(parser);
                         String elementText = parser.getElementText();
-                        System.out.println("Environment " + elementText);
+                        environment = elementText;
+                        //                        System.out.println("Environment " + environment);
+
                         event = parser.getEventType();
                         break;
                     }
@@ -47,10 +53,10 @@ public class OsHnRoadLink {
                 }
             }
         }
-        System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+        //        System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
     }
     private boolean exitElement(XMLStreamReader parser) {
-        System.out.println("exitElement  " + parser.getLocalName());
+        //        System.out.println("exitElement  " + parser.getLocalName());
         switch (parser.getLocalName()) {
         case "RoadLink":
         case "RoadNode":
@@ -58,5 +64,10 @@ public class OsHnRoadLink {
         }
         return false;
     }
-
+    public String getEnvironment() {
+        return environment;
+    }
+    public void setEnvironment(String environment) {
+        this.environment = environment;
+    }
 }

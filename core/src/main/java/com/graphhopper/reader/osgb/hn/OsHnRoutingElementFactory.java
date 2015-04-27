@@ -39,14 +39,14 @@ public class OsHnRoutingElementFactory extends AbstractRoutingElementFactory<Rou
         }
         switch (name) {
         case "RoadNode": {
-            logger.error(">>>>>>>>>>>> RoadNode " + id);
+            //            logger.error(">>>>>>>>>>>> RoadNode " + id);
             //            return OSITNNode.create(id, parser);
-            //            new OsHnRoadLink(id, parser);
+            return new OsHnRoadLink(id, parser);
         }
         case "RoadLink": {
-            logger.error(">>>>>>>>>>>> RoadLink " + id);
+            //            logger.error(">>>>>>>>>>>> RoadLink " + id);
             //            return OSITNWay.create(id, parser);
-            //            new OsHnRoadLink(id, parser);
+            return new OsHnRoadLink(id, parser);
         }
 
         }

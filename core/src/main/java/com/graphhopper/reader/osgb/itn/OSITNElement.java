@@ -177,17 +177,18 @@ public abstract class OSITNElement implements RoutingElement {
     }
 
     private int handleRoadNature(XMLStreamReader parser) throws XMLStreamException {
-//        String nature = resolveNature(parser.getElementText());
-//        String highwayType = getTag("highway");
-//        if (null != nature && null != highwayType) {
-//            highwayType = highwayType + "-";
-//            highwayType = highwayType + nature;
-//            setTag("highway", highwayType);
-//        }
-    	if(parser.getElementText().equals("Roundabout")) {
-    		setTag("junction", "roundabout");
+        String elementText = parser.getElementText();
+        String nature = resolveNature(elementText);
+        //        String highwayType = getTag("highway");
+        if (null != nature && !hasTag("nature")) {
+            //            highwayType = highwayType + "-";
+            //            highwayType = highwayType + nature;
+            setTag("nature", nature);
+        }
+        else if(elementText.equals("Roundabout")) {
+            setTag("junction", "roundabout");
             setTag("direction", "clockwise");
-    	}
+        }
         return parser.getEventType();
     }
 

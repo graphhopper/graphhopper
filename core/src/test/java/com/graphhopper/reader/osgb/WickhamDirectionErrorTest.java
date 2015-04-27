@@ -5,13 +5,10 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Locale;
 
-import org.junit.Test;
 import org.junit.Ignore;
+import org.junit.Test;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -20,9 +17,6 @@ import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.Translation;
-import com.graphhopper.util.TranslationMap;
-import com.graphhopper.util.shapes.GHPoint;
 
 public class WickhamDirectionErrorTest extends AbstractOsItnReaderTest {
 
@@ -91,29 +85,6 @@ public class WickhamDirectionErrorTest extends AbstractOsItnReaderTest {
 
     }
 
-    private InstructionList route(GraphHopper graphHopper, double lat1, double lon1, double lat2, double lon2) {
-        GHPoint start = new GHPoint(lat1, lon1);
-        GHPoint end = new GHPoint(lat2, lon2);
-        System.out.println("Route from " + start + " to " + end);
-        GHRequest ghRequest = new GHRequest(start, end);
-        ghRequest.setVehicle("car");
-        GHResponse ghResponse = graphHopper.route(ghRequest);
-        //        System.err.println("ghResponse.getPoints() " + ghResponse.getPoints());
-        InstructionList instructionList = ghResponse.getInstructions();
-        //        outputInstructionList(instructionList);
-        return instructionList;
-    }
-    private void outputInstructionList(InstructionList instructionList) {
-        //        System.err.println("ghResponse.getInstructions() " + ghResponse.getInstructions());
-        //        System.err.println("ghResponse.getDebugInfo() " + ghResponse.getDebugInfo());
-        System.out.println("Turn Descriptions:");
-        Translation tr = new TranslationMap().doImport().getWithFallBack(Locale.US);
-        for (Instruction instruction : instructionList) {
-            System.out.println("\t" + instruction.getName() + "\t" + instruction.getDistance() + "\t" + instruction.getSign() + "\t" + instruction.getTime() + "\t" + instruction.getTurnDescription(tr));
-        }
-        System.out.println("End Turn Descriptions");
-
-    }
     private EdgeExplorer printNodes(GraphStorage graph) {
         final EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
         printNodes(explorer, 9);

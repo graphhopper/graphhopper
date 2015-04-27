@@ -1,6 +1,8 @@
 package com.graphhopper.reader.osgb.hn;
 
 
+import gnu.trove.map.TLongObjectMap;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -22,8 +24,14 @@ public class OsHnReader extends AbstractOsReader<Long> {
 
     private static final Logger logger = LoggerFactory.getLogger(OsHnReader.class.getName());
 
+    private TLongObjectMap<String> edgeEnvironmentMap;
+
     public OsHnReader(GraphStorage storage) {
+        this(storage, null);
+    }
+    public OsHnReader(GraphStorage storage, TLongObjectMap<String> edgeEnvironmentMap) {
         super(storage);
+        this.edgeEnvironmentMap = edgeEnvironmentMap;
     }
 
     @Override
@@ -88,8 +96,18 @@ public class OsHnReader extends AbstractOsReader<Long> {
         logger.error("==== preProcessSingleFile");
         RoutingElement item;
         while ((item = in.getNext()) != null) {
-            // Don't do anything different to the InputFile
+            // Look for this road (or is a road link) in the itn data and add additional tags based on environment
+            if (edgeEnvironmentMap!=null) {
+                // No instanceof check required yet as only OsHnRoadLink are returned
+                //if (item instanceof OsHnRoadLink) {
+                OsHnRoadLink osHnRoadLink = (OsHnRoadLink)item;
+                String environment = osHnRoadLink.getEnvironment();
+                long id = osHnRoadLink.getId();
+                edgeEnvironmentMap.put(id, environment);
+                //}
+            }
         }
+        System.out.println("=====================> We have found environments for " + edgeEnvironmentMap.size() + " ways");
     }
 
 

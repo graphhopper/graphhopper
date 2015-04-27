@@ -318,13 +318,14 @@ public class OsItnReaderTest extends AbstractOsItnReaderTest {
     }
 
     @Test
-    @Ignore
+    //    @Ignore
     public void testItnGraphHopperWithHighwaysNetworkData() {
-        String graphLoc = "./target/output/os-itn-wickham-direction-error-gh";
-        String inputFile = "./src/test/resources/com/graphhopper/reader/os-itn-wickham-direction-error.xml";
+        String graphLoc = "./target/output/modified-exeter-gh";
+        String inputFile = "/media/sf_/media/shared/modified-exeter/58096-SX9192-modified.xml";
+        //        String inputFile = "./src/test/resources/com/graphhopper/reader/os-itn-wickham-direction-error.xml";
 
         Map<String, String> args = new HashMap<>();
-        args.put("hn.data", "/data/Development/highways_network/");
+        args.put("hn.data", "/data/Development/highways_network_full/");
         args.put("hn.graph.location", "./target/output/highways_network");
         args.put("graph.location", graphLoc);
         args.put("osmreader.osm", inputFile);
