@@ -85,6 +85,10 @@ $(document).ready(function (e) {
         e.preventDefault();
         exportGPX();
     });
+    
+    $('#settings-btn').click(function(e){
+        $('.collapse').collapse('toggle');
+    });
 
     var urlParams = parseUrlWithHisto();
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())

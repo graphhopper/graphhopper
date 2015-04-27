@@ -43,7 +43,6 @@
         <script type="text/javascript" src="js/jquery.autocomplete.js"></script>
         <script type="text/javascript" src="js/ghrequest.js?v=0.4.4"></script>
         <link rel="stylesheet" type="text/css" href="css/style.css" />
-
     </head>
     <body>
         <div id="input">
@@ -57,6 +56,46 @@
                     <span id="vehicles">
 
                     </span>
+                    <div id="advanced">
+                    <button title="Settings" id="settings-btn">
+                        <img src="img/settings.png" alt="Settings">
+                    </button>
+                    </div>
+                     <div class="collapse">
+                    <form>
+                        <table>
+                            <tr>
+                                <th>Avoid Hazards</th>
+                            </tr> 
+                            <tr><td><input type="checkbox" name="avoidances[]" value="aroad" >A Road  
+                            </td></tr><tr><td><input type="checkbox" name="avoidances[]" value="boulders" >Boulders
+                            </td></tr><tr><td><input type="checkbox" name="avoidances[]" value="cliff" >Cliff
+                            </td></tr><tr><td><input type="checkbox" name="avoidances[]" value="inlandwater" >Inland Water
+                            </td></tr><tr><td><input type="checkbox" name="avoidances[]" value="marsh" >Marsh
+                            </td></tr><tr><td><input type="checkbox" name="avoidances[]" value="quarryorpit" >Quarry Or Pit
+                            </td></tr><tr><td><input type="checkbox" name="avoidances[]" value="scree" >Scree
+                            </td></tr><tr><td><input type="checkbox" name="avoidances[]" value="rock" >Rock
+                            </td></tr><tr><td><input type="checkbox" name="avoidances[]" value="mud" >Mud
+                            </td></tr><tr><td><input type="checkbox" name="avoidances[]" value="sand">Sand
+                            </td></tr><tr><td><input type="checkbox" name="avoidances[]" value="shingle" >Shingle
+                            </td></tr>
+                        </table>
+                    <!--
+                    - Traffic Signals now operate between 0 and 3 (4 variations)
+                        The default value is 3, permitting traffic lights
+                        2 is weak avoidance
+                        1 is medium avoidance
+                        0 is strong avoidance
+
+                    - Road Preference (Default: 0, Main:1 Residential:2 )
+
+                    - Motorway Preference (Default: 0, Avoid: 1 Prefer: 2)
+
+                    Then add an extra button to choose (or get) shortest way
+                    Note: If user choose shortest way, it will ignore other factors(traffic Signals, main road, motorway)
+                    -->
+                </form>
+                </div>
                 </div>
                 <form id="locationform">
                     <div id="locationpoints">
@@ -102,7 +141,6 @@
   
         <script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
         <script type="text/javascript" src="js/jquery-ui-1.10.4.custom.min.js" defer></script>      
-        <script type="text/javascript" src="js/jquery.history.js" defer></script>
 <!--         <script type="text/javascript" src="js/jquery.autocomplete.min.js"></script> -->
         <script type="text/javascript" src="js/jquery.autocomplete.js"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
