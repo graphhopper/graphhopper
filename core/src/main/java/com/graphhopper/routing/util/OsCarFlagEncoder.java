@@ -23,7 +23,7 @@ public class OsCarFlagEncoder extends CarFlagEncoder {
 		if (null == encoderDecorators) {
 			encoderDecorators = new ArrayList<EncoderDecorator>(2);
 		}
-		encoderDecorators.add(new OsAvoidanceDecorator());
+		encoderDecorators.add(new OsVehicleAvoidanceDecorator());
 	}
 
 }

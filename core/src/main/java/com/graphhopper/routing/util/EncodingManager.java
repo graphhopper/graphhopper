@@ -74,7 +74,7 @@ public class EncodingManager
      */
     public EncodingManager( String flagEncodersStr )
     {
-        this(flagEncodersStr, 4);
+        this(flagEncodersStr, 8);
     }
 
     public EncodingManager( String flagEncodersStr, int bytesForFlags )
@@ -145,10 +145,10 @@ public class EncodingManager
 
             AbstractFlagEncoder fe;
             if (entry.equals(CAR))
-                fe = new CarFlagEncoder(entryVal);
+                fe = new OsCarFlagEncoder(entryVal);
 
             else if (entry.equals(BIKE))
-                fe = new BikeFlagEncoder(entryVal);
+                fe = new OsBikeFlagEncoder(entryVal);
 
             else if (entry.equals(BIKE2))
                 fe = new Bike2WeightFlagEncoder(entryVal);
@@ -160,7 +160,7 @@ public class EncodingManager
                 fe = new MountainBikeFlagEncoder(entryVal);
 
             else if (entry.equals(FOOT))
-                fe = new FootFlagEncoder(entryVal);
+                fe = new OsFootFlagEncoder(entryVal);
 
             else if (entry.equals(MOTORCYCLE))
                 fe = new MotorcycleFlagEncoder(entryVal);
