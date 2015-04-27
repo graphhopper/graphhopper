@@ -7,9 +7,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.Before;
 
+import com.graphhopper.GHRequest;
+import com.graphhopper.GHResponse;
+import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -24,6 +28,12 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.Instruction;
+import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.Translation;
+import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.shapes.GHPoint;
 
 public abstract class AbstractOsDpnReaderTest {
 
@@ -142,5 +152,34 @@ public abstract class AbstractOsDpnReaderTest {
                 System.out.println(i + " Adj node is " + iter.getAdjNode());
             }
         }
+    }
+    
+    protected InstructionList route(GraphHopper graphHopper, double lat1, double lon1, double lat2, double lon2, String avoid) {
+        GHPoint start = new GHPoint(lat1, lon1);
+        GHPoint end = new GHPoint(lat2, lon2);
+        System.out.println("Route from " + start + " to " + end);
+        GHRequest ghRequest = new GHRequest(start, end);
+        ghRequest.setVehicle("foot");
+        if(null!=avoid  && !Helper.isEmpty(avoid)) {
+        	ghRequest.setWeighting("fastavoid");
+        	ghRequest.getHints().put("avoidances", avoid);
+        }
+        GHResponse ghResponse = graphHopper.route(ghRequest);
+        //        System.err.println("ghResponse.getPoints() " + ghResponse.getPoints());
+        InstructionList instructionList = ghResponse.getInstructions();
+        //        outputInstructionList(instructionList);
+        return instructionList;
+    }
+    
+    protected void outputInstructionList(InstructionList instructionList) {
+        //        System.err.println("ghResponse.getInstructions() " + ghResponse.getInstructions());
+        //        System.err.println("ghResponse.getDebugInfo() " + ghResponse.getDebugInfo());
+        System.out.println("Turn Descriptions:");
+        Translation tr = new TranslationMap().doImport().getWithFallBack(Locale.US);
+        for (Instruction instruction : instructionList) {
+            System.out.println("\t" + instruction.getName() + "\t" + instruction.getDistance() + "\t" + instruction.getSign() + "\t" + instruction.getTime() + "\t" + instruction.getTurnDescription(tr));
+        }
+        System.out.println("End Turn Descriptions");
+
     }
 }

@@ -20,7 +20,7 @@ public class OsAvoidanceDecoratorTest {
     @Test
     public void testBoulderAttributeStorage() {
         Way way = new OSITNWay(1L);
-        way.setTag("natural", "boulder");
+        way.setTag("natural", "boulders");
         long wayFlag = osAvoidances.handleWayTags(way,0);
         assertEquals(OsAvoidanceDecorator.AvoidanceType.Boulders.getValue(), wayFlag);
 

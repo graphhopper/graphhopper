@@ -533,8 +533,9 @@ public class GraphHopper implements GraphHopperAPI {
 	 * "graphhopper.config")
 	 */
 	public GraphHopper init(CmdArgs args) {
-		this.args = CmdArgs.readFromConfigAndMerge(args, "config",
+		args = CmdArgs.readFromConfigAndMerge(args, "config",
 				"graphhopper.config");
+		this.args=args;
 		String tmpOsmFile = args.get("osmreader.osm", "");
 		if (!Helper.isEmpty(tmpOsmFile))
 			osmFile = tmpOsmFile;
