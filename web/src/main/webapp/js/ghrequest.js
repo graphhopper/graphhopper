@@ -446,10 +446,21 @@ GHRequest.prototype.createPath = function (url) {
                checkedValue += inputElements[i].value;
           }
     }
+    if(document.routeoptions.weighting[1].checked == true){
+    	this.weighting = "shortest";
+    } else {
+    	this.weighting = "fastest";
+    }
     if(checkedValue.length>0) {
-    	this.weighting = "fastavoid";
+    	if(this.weighting==="fastest") {
+    		this.weighting = "fastavoid";
+    	}
+    	else {
+    		this.weighting="shortavoid";
+    	}
     	url += "&avoidances=" + checkedValue;
     }
+    
     if (this.weighting && this.weighting !== "fastest")
         url += "&weighting=" + this.weighting;
     if (this.locale && this.locale !== "en")
