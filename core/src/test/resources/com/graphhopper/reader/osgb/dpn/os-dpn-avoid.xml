@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gml:FeatureCollection xmlns:gml="http://www.opengis.net/gml/3.2"
+	xsi:schemaLocation="http://namespaces.ordnancesurvey.co.uk/networks/detailedPathNetwork/1.0 detailedPathNetwork.xsd http://www.opengis.net/gml/3.2 gml/3.2.1/gml.xsd"
+	gml:id="DPN" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:dpn="http://namespaces.ordnancesurvey.co.uk/networks/detailedPathNetwork/1.0"
+	xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gco="http://www.isotc211.org/2005/gco"
+	xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:gss="http://www.isotc211.org/2005/gss"
+	xmlns:gts="http://www.isotc211.org/2005/gts" xmlns:gsr="http://www.isotc211.org/2005/gsr"
+	xmlns:gmlxbt="http://www.opengis.net/gml/3.3/xbt">
+	<gml:featureMember>
+		<dpn:RouteNode gml:id='osgb4000000025277879'>
+			<dpn:versionID>2</dpn:versionID>
+			<dpn:versionDate>2005-09-13</dpn:versionDate>
+			<dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteNodeDescriptiveTermValue#Junction">Junction</dpn:descriptiveTerm>
+			<dpn:geometry>
+				<gml:Point srsName='dpn:BNG'>
+					<gml:pos>295000.000 90000.000 362.62</gml:pos>
+				</gml:Point>
+			</dpn:geometry>
+		</dpn:RouteNode>
+	</gml:featureMember>
+	<gml:featureMember>
+		<dpn:RouteNode gml:id='osgb4000000025277880'>
+			<dpn:versionID>2</dpn:versionID>
+			<dpn:versionDate>2005-09-13</dpn:versionDate>
+			<dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteNodeDescriptiveTermValue#Junction">Junction</dpn:descriptiveTerm>
+			<dpn:geometry>
+				<gml:Point srsName='dpn:BNG'>
+					<gml:pos>290000.000 90000.000 362.62</gml:pos>
+				</gml:Point>
+			</dpn:geometry>
+		</dpn:RouteNode>
+	</gml:featureMember>
+	<gml:featureMember>
+		<dpn:RouteNode gml:id='osgb4000000025277882'>
+			<dpn:versionID>2</dpn:versionID>
+			<dpn:versionDate>2005-09-13</dpn:versionDate>
+			   <dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteNodeDescriptiveTermValue#Junction">Junction</dpn:descriptiveTerm>
+			<dpn:geometry>
+				<gml:Point srsName='dpn:BNG'>
+					<gml:pos>270000.000 90000.000 362.62</gml:pos>
+				</gml:Point>
+			</dpn:geometry>
+		</dpn:RouteNode>
+	</gml:featureMember>
+	<gml:featureMember>
+		<dpn:RouteNode gml:id='osgb4000000025277883'>
+			<dpn:versionID>2</dpn:versionID>
+			<dpn:versionDate>2005-09-13</dpn:versionDate>
+			   <dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteNodeDescriptiveTermValue#Junction">Junction</dpn:descriptiveTerm>
+			<dpn:geometry>
+				<gml:Point srsName='dpn:BNG'>
+					<gml:pos>280000.000 80000.000 362.62</gml:pos>
+				</gml:Point>
+			</dpn:geometry>
+		</dpn:RouteNode>
+	</gml:featureMember>
+	<gml:featureMember>
+		<dpn:RouteNode gml:id='osgb4000000025277884'>
+			<dpn:versionID>2</dpn:versionID>
+			<dpn:versionDate>2005-09-13</dpn:versionDate>
+			<dpn:theme>Road Network</dpn:theme>
+			   <dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteNodeDescriptiveTermValue#Junction">Junction</dpn:descriptiveTerm>
+			<dpn:geometry>
+				<gml:Point srsName='dpn:BNG'>
+					<gml:pos>280000.000 95000.000 362.62</gml:pos>
+				</gml:Point>
+			</dpn:geometry>
+		</dpn:RouteNode>
+	</gml:featureMember>
+	<gml:featureMember>
+		<dpn:RouteNode gml:id='osgb4000000025277885'>
+			<dpn:versionID>2</dpn:versionID>
+			<dpn:versionDate>2005-09-13</dpn:versionDate>
+			   <dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteNodeDescriptiveTermValue#Junction">Junction</dpn:descriptiveTerm>
+			<dpn:geometry>
+				<gml:Point srsName='dpn:BNG'>
+					<gml:pos>265000.000 90000.000 362.62</gml:pos>
+				</gml:Point>
+			</dpn:geometry>
+		</dpn:RouteNode>
+	</gml:featureMember>
+	<gml:featureMember>
+		<dpn:RouteLink gml:id="osgb4000000025288016">
+			<dpn:versionID>4</dpn:versionID>
+			<dpn:versionDate>2006-02-03</dpn:versionDate>
+			<dpn:startNode xlink:href="#4000000025277879" />
+			<dpn:endNode xlink:href="#4000000025277880" />
+			<dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteLinkDescriptiveTermValue#NoPhysicalManifestation">No Physical Manifestation</dpn:descriptiveTerm>
+			<dpn:rightOfUse codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RightOfWayValue#Footpath">Footpath</dpn:rightOfUse>
+			<dpn:geometry>
+				<gml:LineString srsName="dpn:BNG">
+					<gml:posList srsDimension="3" count="2">295000.000 90000.000 362.62 290000.000 90000.000 362.62</gml:posList>
+				</gml:LineString>
+			</dpn:geometry>
+		</dpn:RouteLink>
+	</gml:featureMember>
+	<gml:featureMember>
+		<dpn:RouteLink gml:id="osgb4000000025288017">
+			<dpn:versionID>4</dpn:versionID>
+			<dpn:versionDate>2006-02-03</dpn:versionDate>
+			<dpn:startNode xlink:href="#4000000025277880" />
+			<dpn:endNode xlink:href="#4000000025277884" />
+			<dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteLinkDescriptiveTermValue#NoPhysicalManifestation">No Physical Manifestation</dpn:descriptiveTerm>
+			<dpn:rightOfUse codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RightOfWayValue#Footpath">Footpath</dpn:rightOfUse>
+			<dpn:geometry>
+				<gml:LineString srsName="dpn:BNG">
+					<gml:posList srsDimension="3" count="2">290000.000 90000.000 362.62 280000.000 95000.000 362.62</gml:posList>
+				</gml:LineString>
+			</dpn:geometry>
+		</dpn:RouteLink>
+	</gml:featureMember>
+	<gml:featureMember>
+		<dpn:RouteLink gml:id="osgb4000000025288018">
+			<dpn:versionID>4</dpn:versionID>
+			<dpn:versionDate>2006-02-03</dpn:versionDate>
+			<dpn:startNode xlink:href="#4000000025277884" />
+			<dpn:endNode xlink:href="#4000000025277882" />
+			<dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteLinkDescriptiveTermValue#NoPhysicalManifestation">No Physical Manifestation</dpn:descriptiveTerm>
+			<dpn:potentialHazardCrossed>Boulders</dpn:potentialHazardCrossed>
+			<dpn:rightOfUse codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RightOfWayValue#Footpath">Footpath</dpn:rightOfUse>
+			<dpn:geometry>
+				<gml:LineString srsName="dpn:BNG">
+					<gml:posList srsDimension="3" count="2">280000.000 95000.000 362.62 270000.000 90000.000 362.62</gml:posList>
+				</gml:LineString>
+			</dpn:geometry>
+		</dpn:RouteLink>
+	</gml:featureMember>
+	<gml:featureMember>
+		<dpn:RouteLink gml:id="osgb4000000025288019">
+			<dpn:versionID>4</dpn:versionID>
+			<dpn:versionDate>2006-02-03</dpn:versionDate>
+			<dpn:startNode xlink:href="#4000000025277880" />
+			<dpn:endNode xlink:href="#4000000025277883" />
+			<dpn:descriptiveTerm	codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteLinkDescriptiveTermValue#NoPhysicalManifestation">No Physical Manifestation</dpn:descriptiveTerm>
+			<dpn:rightOfUse codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RightOfWayValue#Footpath">Footpath</dpn:rightOfUse>
+			<dpn:geometry>
+				<gml:LineString srsName="dpn:BNG">
+					<gml:posList srsDimension="3" count="2">290000.000 90000.000 362.62 280000.000 80000.000 362.62</gml:posList>
+				</gml:LineString>
+			</dpn:geometry>
+		</dpn:RouteLink>
+	</gml:featureMember>
+	<gml:featureMember>
+		<dpn:RouteLink gml:id="osgb4000000025288020">
+			<dpn:versionID>4</dpn:versionID>
+			<dpn:versionDate>2006-02-03</dpn:versionDate>
+			<dpn:startNode xlink:href="#4000000025277883" />
+			<dpn:endNode xlink:href="#4000000025277882" />
+			<dpn:descriptiveTerm	codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteLinkDescriptiveTermValue#NoPhysicalManifestation">No Physical Manifestation</dpn:descriptiveTerm>
+			<dpn:rightOfUse codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RightOfWayValue#Footpath">Footpath</dpn:rightOfUse>
+			<dpn:geometry>
+				<gml:LineString srsName="dpn:BNG">
+					<gml:posList srsDimension="3" count="2">280000.000 80000.000 362.62 270000.000 90000.000 362.62</gml:posList>
+				</gml:LineString>
+			</dpn:geometry>
+		</dpn:RouteLink>
+	</gml:featureMember>
+	<gml:featureMember>
+		<dpn:RouteLink gml:id="osgb4000000025288021">
+			<dpn:versionID>4</dpn:versionID>
+			<dpn:versionDate>2006-02-03</dpn:versionDate>
+			<dpn:startNode xlink:href="#4000000025277882" />
+			<dpn:endNode xlink:href="#4000000025277885" />
+			<dpn:descriptiveTerm	codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteLinkDescriptiveTermValue#NoPhysicalManifestation">No Physical Manifestation</dpn:descriptiveTerm>
+			<dpn:rightOfUse codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RightOfWayValue#Footpath">Footpath</dpn:rightOfUse>
+			<dpn:geometry>
+				<gml:LineString srsName="dpn:BNG">
+					<gml:posList srsDimension="3" count="2">265000.000 90000.000 362.62 270000.000 90000.000 362.62</gml:posList>
+				</gml:LineString>
+			</dpn:geometry>
+		</dpn:RouteLink>
+	</gml:featureMember>
+</gml:FeatureCollection>

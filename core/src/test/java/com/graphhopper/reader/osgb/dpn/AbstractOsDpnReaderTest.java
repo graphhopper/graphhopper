@@ -5,16 +5,19 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Before;
 
 import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.BikeFlagEncoder;
-import com.graphhopper.routing.util.BusFlagEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.routing.util.OsFootFlagEncoder;
 import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
@@ -24,19 +27,13 @@ import com.graphhopper.util.EdgeIterator;
 
 public abstract class AbstractOsDpnReaderTest {
 
-    protected EncodingManager encodingManager;// = new
-    // EncodingManager("CAR");//"car:com.graphhopper.routing.util.RelationCarFlagEncoder");
-    protected BusFlagEncoder busEncoder;
-    // encodingManager
-    // .getEncoder("CAR");
-    protected EdgeFilter carOutEdges;// = new DefaultEdgeFilter(
-    // carEncoder, false, true);
-    protected EdgeFilter carInEdges;
-    protected boolean turnCosts = true;
-    protected EdgeExplorer carOutExplorer;
-    protected EdgeExplorer explorer;
+	protected EncodingManager encodingManager;
+    protected EdgeFilter footOutEdges;
+    protected EdgeFilter footInEdges;
+    protected boolean turnCosts = false;
     protected BikeFlagEncoder bikeEncoder;
     protected FootFlagEncoder footEncoder;
+	protected EdgeExplorer footOutExplorer;
 
     // RoadNode 880
     protected static double node0Lat = 50.6992070044d;
@@ -66,7 +63,7 @@ public abstract class AbstractOsDpnReaderTest {
             bikeEncoder = new BikeFlagEncoder();
         }
 
-        footEncoder = new FootFlagEncoder();
+        footEncoder = new OsFootFlagEncoder();
         encodingManager = createEncodingManager();
     }
 
@@ -76,7 +73,10 @@ public abstract class AbstractOsDpnReaderTest {
      * @return
      */
     protected EncodingManager createEncodingManager() {
-        return new EncodingManager(footEncoder, bikeEncoder);
+    	List<FlagEncoder> list = new ArrayList<FlagEncoder>();
+    	list.add(footEncoder);
+    	list.add(bikeEncoder);
+        return new EncodingManager(list, 8);
     }
 
     protected OsDpnReader readGraphFile(GraphHopperStorage graph, File file)
@@ -95,11 +95,12 @@ public abstract class AbstractOsDpnReaderTest {
         GraphExtension extendedStorage = turnRestrictionsImport ? new TurnCostExtension() : new GraphExtension.NoExtendedStorage();
         GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(
                 directory, false), encodingManager, is3D, extendedStorage);
+        footOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, false, true));
         return graph;
     }
 
     protected int getEdge(int from, int to) {
-        EdgeIterator iter = carOutExplorer.setBaseNode(from);
+        EdgeIterator iter = footOutExplorer.setBaseNode(from);
         while (iter.next()) {
             if (iter.getAdjNode() == to) {
                 return iter.getEdge();

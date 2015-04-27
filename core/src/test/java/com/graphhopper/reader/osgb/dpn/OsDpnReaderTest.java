@@ -28,14 +28,14 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
 
 	assertEquals(5, graph.getNodes());
 
-	assertEquals(4, count(explorer.setBaseNode(0))); // Central Tower
-	assertEquals(1, count(explorer.setBaseNode(1))); // Cross Road Vertex
-	assertEquals(1, count(explorer.setBaseNode(2))); // Cross Road Vertex
-	assertEquals(1, count(explorer.setBaseNode(3))); // Cross Road Vertex
-	assertEquals(1, count(explorer.setBaseNode(4))); // Cross Road Vertex
+	assertEquals(4, count(footOutExplorer.setBaseNode(0))); // Central Tower
+	assertEquals(1, count(footOutExplorer.setBaseNode(1))); // Cross Road Vertex
+	assertEquals(1, count(footOutExplorer.setBaseNode(2))); // Cross Road Vertex
+	assertEquals(1, count(footOutExplorer.setBaseNode(3))); // Cross Road Vertex
+	assertEquals(1, count(footOutExplorer.setBaseNode(4))); // Cross Road Vertex
 
 	// Assert that this is true
-	EdgeIterator iter = explorer.setBaseNode(0);
+	EdgeIterator iter = footOutExplorer.setBaseNode(0);
 	assertTrue(iter.next());
 	assertEquals(4, iter.getAdjNode());
 	assertTrue(iter.next());
@@ -46,22 +46,22 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
 	assertEquals(1, iter.getAdjNode());
 	assertFalse(iter.next());
 
-	iter = explorer.setBaseNode(1);
+	iter = footOutExplorer.setBaseNode(1);
 	assertTrue(iter.next());
 	assertEquals(0, iter.getAdjNode());
 	assertFalse(iter.next());
 
-	iter = explorer.setBaseNode(2);
+	iter = footOutExplorer.setBaseNode(2);
 	assertTrue(iter.next());
 	assertEquals(0, iter.getAdjNode());
 	assertFalse(iter.next());
 
-	iter = explorer.setBaseNode(3);
+	iter = footOutExplorer.setBaseNode(3);
 	assertTrue(iter.next());
 	assertEquals(0, iter.getAdjNode());
 	assertFalse(iter.next());
 
-	iter = explorer.setBaseNode(4);
+	iter = footOutExplorer.setBaseNode(4);
 	assertTrue(iter.next());
 	assertEquals(0, iter.getAdjNode());
 	assertFalse(iter.next());
@@ -73,7 +73,7 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
 	final GraphHopperStorage graph = readGraph();
 	configureExplorer(graph);
 
-	EdgeIterator iter = explorer.setBaseNode(0);
+	EdgeIterator iter = footOutExplorer.setBaseNode(0);
 	assertTrue(iter.next());
 	assertTrue(iter.next());
 	assertTrue(iter.next());
@@ -87,7 +87,7 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
 	final GraphHopperStorage graph = readGraph();
 	configureExplorer(graph);
 
-	EdgeIterator iter = explorer.setBaseNode(0);
+	EdgeIterator iter = footOutExplorer.setBaseNode(0);
 	assertTrue(iter.next());
 	assertTrue(iter.next());
 	assertTrue(iter.next());
@@ -101,7 +101,7 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
 	final GraphHopperStorage graph = readGraph();
 	configureExplorer(graph);
 
-	EdgeIterator iter = explorer.setBaseNode(0);
+	EdgeIterator iter = footOutExplorer.setBaseNode(0);
 	assertTrue(iter.next());
 	assertEquals("No Name field available so should report track type", "Alley", iter.getName());
     }
@@ -113,7 +113,7 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
 	final GraphHopperStorage graph = readGraph();
 	configureExplorer(graph);
 
-	EdgeIterator iter = explorer.setBaseNode(0);
+	EdgeIterator iter = footOutExplorer.setBaseNode(0);
 	assertTrue(iter.next());
 	assertTrue(iter.next());
 	assertEquals("No Name field available so should be report track type", "Route",
@@ -122,7 +122,7 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
 
     private void configureExplorer(final GraphHopperStorage graph)
     {
-	explorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, true, true));
+    	footOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, true, true));
     }
 
     private GraphHopperStorage readGraph() throws IOException
