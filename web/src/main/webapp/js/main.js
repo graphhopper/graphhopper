@@ -319,7 +319,7 @@ function initMap(selectLayer) {
         subdomains: ['a', 'b', 'c']
     });
         
-    var omniscale = L.tileLayer.wms('http://{s}.maps.omniscale.net/v1/peter-d693a656/tile', {
+    var omniscale = L.tileLayer.wms('https://maps.omniscale.net/v1/peter-d693a656/tile', {
             layers: 'osm',
         attribution: osmAttr + ', &copy; <a href="http://maps.omniscale.com/">Omniscale</a>'
     });
