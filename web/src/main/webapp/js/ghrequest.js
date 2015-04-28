@@ -437,6 +437,30 @@ GHRequest.prototype.createPath = function (url) {
     if (this.vehicle && this.vehicle !== "car")
         url += "&vehicle=" + this.vehicle;
     // fastest or shortest
+    var checkedValue = ""; 
+    var inputElements = document.getElementsByClassName('hazCheck');
+    for(var i=0; inputElements[i]; ++i){
+          if(inputElements[i].checked){
+        	  if(checkedValue.length>0) 
+        		    checkedValue += ","
+               checkedValue += inputElements[i].value;
+          }
+    }
+    if(document.routeoptions.weighting[1].checked == true){
+    	this.weighting = "shortest";
+    } else {
+    	this.weighting = "fastest";
+    }
+    if(checkedValue.length>0) {
+    	if(this.weighting==="fastest") {
+    		this.weighting = "fastavoid";
+    	}
+    	else {
+    		this.weighting="shortavoid";
+    	}
+    	url += "&avoidances=" + checkedValue;
+    }
+    
     if (this.weighting && this.weighting !== "fastest")
         url += "&weighting=" + this.weighting;
     if (this.locale && this.locale !== "en")
@@ -459,6 +483,7 @@ GHRequest.prototype.createPath = function (url) {
     for (var key in this.api_params) {
         url += "&" + key + "=" + this.api_params[key];
     }
+    
     return url;
 };
 
