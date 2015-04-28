@@ -173,7 +173,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 50.724777,-3.520811 | 50.724394,-3.520953 | car       |
 
-  @Routing
+  @Routing @KnownIssues
   Scenario Outline: Verify  Mandatory Turn at Exeter area(COLLEGE ROAD)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
