@@ -18,9 +18,11 @@
 package com.graphhopper.reader.osgb.dpn;
 
 import com.graphhopper.reader.Way;
+
 import gnu.trove.map.TDoubleLongMap;
 import gnu.trove.map.TDoubleObjectMap;
 import gnu.trove.map.TLongObjectMap;
+
 import org.opengis.geometry.MismatchedDimensionException;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.operation.TransformException;
@@ -29,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,7 +43,6 @@ import java.util.List;
  * @author Nop
  */
 public class OsDpnWay extends OsDpnElement implements Way {
-    private static final long WAY_NODE_PREFIX_MOD = 100000000000000000L;
     protected final List<String> nodes = new ArrayList<String>(5);
     private String endNode;
     protected String startCoord;
@@ -69,7 +71,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
         logger.info(way.toString());
         return way;
     }
-
+    
     public OsDpnWay(String id)
     {
         super(id, WAY);
@@ -244,10 +246,10 @@ public class OsDpnWay extends OsDpnElement implements Way {
         for (int i = 0; i < wayCoords.length; i++) {
             String wayCoord = wayCoords[i];
 
-            long idPrefix = (i + 1) * WAY_NODE_PREFIX_MOD;
+            long idPrefix = (i + 1);
             String id = idPrefix + getId();
             OsDpnNode wayNode = new OsDpnNode(id);
-            wayNode.parseCoords(wayCoord);
+            wayNode.parseCoordinateString(wayCoord, ",");
 
             logger.info("Node " + getId() + " coords: " + wayCoord + " tags: ");
             for (String tagKey : wayNode.getTags().keySet()) {
@@ -286,6 +288,11 @@ public class OsDpnWay extends OsDpnElement implements Way {
             String elementSeparator) {
         throw new UnsupportedOperationException();
 
+    }
+    
+    @Override
+    public String toString() {
+    	return super.toString() + " id:" + getId() + " start:" + nodes.get(0) + " end:" + nodes.get(nodes.size()-1) + " NAME:" + getTag("name");
     }
 
 }
