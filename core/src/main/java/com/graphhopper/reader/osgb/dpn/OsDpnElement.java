@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ import com.graphhopper.reader.RoutingElement;
 /**
  * Base class for all OSM objects
  * <p/>
- * 
+ *
  * @author Nop
  * @author Peter
  */
@@ -178,7 +178,7 @@ public abstract class OsDpnElement implements RoutingElement
     {
         return parser.next();
     }
-    
+
     protected int handlePotentialHazard(XMLStreamReader parser) throws XMLStreamException
     {
         return parser.next();
@@ -215,7 +215,7 @@ public abstract class OsDpnElement implements RoutingElement
 	    return "Route";
 	return roadType;
     }
-    
+
     private String getOsmMappedTypeName(String roadType)
     {
     	String typeName = roadType;
@@ -348,7 +348,8 @@ public abstract class OsDpnElement implements RoutingElement
     @Override
     public String getTag(String name)
     {
-	return (String) properties.get(name);
+        Object object = properties.get(name);
+        return (null != object) ? (String) object.toString() : null;
     }
 
     @Override

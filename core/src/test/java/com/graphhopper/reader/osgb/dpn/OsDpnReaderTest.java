@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -19,12 +20,18 @@ import com.graphhopper.util.GHUtility;
 public class OsDpnReaderTest extends AbstractOsDpnReaderTest
 {
 
+    private GraphHopperStorage graph;
+
+    @Before
+    public void setUp() throws IOException {
+        graph = readGraph();
+        GHUtility.printInfo(graph, 0, 30, EdgeFilter.ALL_EDGES);
+        configureExplorer(graph);
+    }
+
     @Test
     public void testReadDpnSampleLayout() throws IOException
     {
-	final GraphHopperStorage graph = readGraph();
-	GHUtility.printInfo(graph, 0, 30, EdgeFilter.ALL_EDGES);
-	configureExplorer(graph);
 
 	assertEquals(5, graph.getNodes());
 
@@ -67,11 +74,10 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
 	assertFalse(iter.next());
     }
 
+
     @Test
     public void testReadDpnSampleName() throws IOException
     {
-	final GraphHopperStorage graph = readGraph();
-	configureExplorer(graph);
 
 	EdgeIterator iter = footOutExplorer.setBaseNode(0);
 	assertTrue(iter.next());
@@ -84,8 +90,6 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
     @Test
     public void testReadDpnSampleNameWithAlternate() throws IOException
     {
-	final GraphHopperStorage graph = readGraph();
-	configureExplorer(graph);
 
 	EdgeIterator iter = footOutExplorer.setBaseNode(0);
 	assertTrue(iter.next());
@@ -98,8 +102,6 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
     @Test
     public void testReadDpnSampleNameDefaultToTrackType() throws IOException
     {
-	final GraphHopperStorage graph = readGraph();
-	configureExplorer(graph);
 
 	EdgeIterator iter = footOutExplorer.setBaseNode(0);
 	assertTrue(iter.next());
@@ -110,14 +112,30 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
     public void testReadDpnSampleNameDefaultToTrackFriendlyNameWhenNoPhysicalManifestation()
 		    throws IOException
     {
-	final GraphHopperStorage graph = readGraph();
-	configureExplorer(graph);
-
 	EdgeIterator iter = footOutExplorer.setBaseNode(0);
 	assertTrue(iter.next());
 	assertTrue(iter.next());
 	assertEquals("No Name field available so should be report track type", "Route",
 			iter.getName());
+    }
+
+    @Test
+    public void testFetchWayGeometry()
+    {
+        EdgeIterator iter = footOutExplorer.setBaseNode(0);
+        iter.next();
+//        assertEquals("", 1, iter.fetchWayGeometry(0).getSize());
+        assertFalse(0 == iter.fetchWayGeometry(0).getSize());
+        iter.next();
+//        assertEquals("", 1, iter.fetchWayGeometry(0).getSize());
+        assertFalse(0 == iter.fetchWayGeometry(0).getSize());
+        iter.next();
+//        assertEquals("", 5, iter.fetchWayGeometry(0).getSize());
+        assertFalse(0 == iter.fetchWayGeometry(0).getSize());
+        iter.next();
+//        assertEquals("", 8, iter.fetchWayGeometry(0).getSize());
+        assertFalse(0 == iter.fetchWayGeometry(0).getSize());
+
     }
 
     private void configureExplorer(final GraphHopperStorage graph)
