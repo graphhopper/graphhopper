@@ -9,7 +9,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                      | azimuth | direction | time  | distance |
-      | 2             | 50.719156,-3.537811 | Continue onto A3015 (FROG STREET) | 41.0    | NE        | 14517 | 221.8    |
+      | 2             | 50.719156,-3.537811 | Continue onto A3015 (FROG STREET) | 41.0    | NE        | 13259 | 221.8    |
 
     Examples: 
       | pointA              | pointB              | routetype |
@@ -21,7 +21,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco         | waypointdesc               | azimuth | direction | time | distance |
-      | 2             | 50.717806,-3.54264 | Turn left onto BULLER ROAD | 137.0   | SE        | 5744 | 55.8     |
+      | 2             | 50.717806,-3.54264 | Turn left onto BULLER ROAD | 137.0   | SE        | 4467 | 55.8     |
 
     Examples: 
       | pointA              | pointB              | routetype |
@@ -32,7 +32,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                    | azimuth | direction | time  | distance |
-      | 4             | 50.718462,-3.541302 | Turn left onto CLEVELAND STREET | 232.0   | SW        | 12258 | 119.2    |
+      | 4             | 50.718462,-3.541302 | Turn left onto CLEVELAND STREET | 232.0   | SW        | 9534 | 119.2    |
 
     Examples: 
       | pointA              | pointB              | routetype |
@@ -43,7 +43,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco         | waypointdesc                    | azimuth | direction | time | distance |
-      | 4             | 50.726689,-3.52712 | Turn left onto LONGBROOK STREET | 190.0   | S         | 8057 | 78.3     |
+      | 4             | 50.726689,-3.52712 | Turn left onto LONGBROOK STREET | 190.0   | S         | 6267 | 78.3     |
 
     Examples: 
       | pointA              | pointB               | routetype |
@@ -77,7 +77,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco         | waypointdesc                                 | azimuth | direction | time  | distance |
-      | 2             | 50.725549,-3.52693 | Turn slight left onto NEW NORTH ROAD (B3183) | 285.0   | W         | 74986 | 729.1    |
+      | 2             | 50.725549,-3.52693 | Turn slight left onto NEW NORTH ROAD (B3183) | 285.0   | W         | 57545 | 729.1    |
 
     Examples: 
       | pointA              | pointB             | routetype |
@@ -88,7 +88,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                     | azimuth | direction | time | distance |
-      | 2             | 50.727244,-3.522476 | Turn left onto SUMMERLAND STREET | 313.0   | NW        | 6716 | 65.3     |
+      | 2             | 50.727244,-3.522476 | Turn left onto SUMMERLAND STREET | 313.0   | NW        | 5223 | 65.3     |
 
     Examples: 
       | pointA              | pointB             | routetype |
@@ -99,7 +99,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco         | waypointdesc                           | azimuth | direction | time  | distance |
-      | 4             | 50.726418,-3.52381 | Turn slight left onto BAMPFYLDE STREET | 45.0    | NE        | 13514 | 131.4    |
+      | 4             | 50.726418,-3.52381 | Turn slight left onto BAMPFYLDE STREET | 45.0    | NE        | 10510 | 131.4    |
 
     Examples: 
       | pointA              | pointB             | routetype |
@@ -111,7 +111,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                                   | azimuth | direction | time  | distance |
-      | 2             | 50.728509,-3.520647 | At roundabout, take exit 1 onto SIDWELL STREET | 282.0   | W         | 21850 | 212.5    |
+      | 2             | 50.728509,-3.520647 | At roundabout, take exit 1 onto SIDWELL STREET | 282.0   | W         | 16437 | 212.5    |
 
     Examples: 
       | pointA              | pointB              | routetype |
@@ -122,7 +122,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                  | azimuth | direction | time  | distance |
-      | 3             | 50.725002,-3.520632 | Turn left onto RUSSELL STREET | 303.0   | NW        | 25597 | 248.9    |
+      | 3             | 50.725002,-3.520632 | Turn left onto RUSSELL STREET | 303.0   | NW        | 19909 | 248.9    |
 
     Examples: 
       | pointA              | pointB              | routetype |
@@ -156,7 +156,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                | azimuth | direction | time | distance |
-      | 2             | 50.726462,-3.523882 | Continue onto CHEEKE STREET | 133.0   | SE        | 725  | 7.1      |
+      | 2             | 50.726462,-3.523882 | Continue onto CHEEKE STREET | 133.0   | SE        | 564  | 7.1      |
 
     Examples: 
       | pointA              | pointB              | routetype |
@@ -167,7 +167,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                  | azimuth | direction | time  | distance |
-      | 2             | 50.725002,-3.520632 | Turn left onto RUSSELL STREET | 303.0   | NW        | 25597 | 248.9    |
+      | 2             | 50.725002,-3.520632 | Turn left onto RUSSELL STREET | 303.0   | NW        | 19909 | 248.9    |
 
     Examples: 
       | pointA              | pointB              | routetype |
@@ -201,7 +201,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco       | waypointdesc               | azimuth | direction | time  | distance |
-      | 2             | 50.72258,-3.5326 | Continue onto SOUTH STREET | 135.0   | SE        | 38986 | 379.1    |
+      | 2             | 50.72258,-3.5326 | Continue onto SOUTH STREET | 135.0   | SE        | 15537 | 194.2    |
 
     Examples: 
       | pointA              | pointB              | routetype |
@@ -212,7 +212,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco         | waypointdesc                           | azimuth | direction | time  | distance |
-      | 5             | 50.726418,-3.52381 | Turn slight left onto BAMPFYLDE STREET | 45.0    | NE        | 13514 | 131.4    |
+      | 5             | 50.726418,-3.52381 | Turn slight left onto BAMPFYLDE STREET | 45.0    | NE        | 10510 | 131.4    |
 
     Examples: 
       | pointA              | pointB              | routetype |
@@ -224,7 +224,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco         | waypointdesc                   | azimuth | direction | time  | distance |
-      | 2             | 50.724661,-3.53639 | Turn left onto ST DAVID'S HILL | 310.0   | NW        | 45198 | 439.4    |
+      | 2             | 50.724661,-3.53639 | Turn left onto ST DAVID'S HILL | 310.0   | NW        | 35154 | 439.4    |
 
     Examples: 
       | pointA             | pointB              | routetype |
@@ -247,7 +247,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                    | azimuth | direction | time  | distance |
-      | 4             | 50.727823,-3.540036 | Turn slight left onto HELE ROAD | 85.0    | E         | 15789 | 153.5    |
+      | 4             | 50.727823,-3.540036 | Turn slight left onto HELE ROAD | 85.0    | E         | 12281 | 153.5    |
 
     Examples: 
       | pointA             | pointB              | routetype |
@@ -258,7 +258,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc               | azimuth | direction | time  | distance |
-      | 2             | 50.730716,-3.530028 | Turn left onto HORSEGUARDS | 189.0   | S         | 28148 | 273.7    |
+      | 2             | 50.730716,-3.530028 | Turn left onto HORSEGUARDS | 189.0   | S         | 21893 | 273.7    |
 
     Examples: 
       | pointA             | pointB              | routetype |
@@ -270,7 +270,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                     | azimuth | direction | time  | distance |
-      | 3             | 50.722198,-3.526704 | Turn right onto SOUTHERNHAY EAST | 202.0   | SW        | 26318 | 255.9    |
+      | 3             | 50.722198,-3.526704 | Turn right onto SOUTHERNHAY EAST | 202.0   | SW        | 20129 | 255.9    |
 
     Examples: 
       | pointA              | pointB             | routetype |
@@ -281,7 +281,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc        | azimuth | direction | time  | distance |
-      | 2             | 50.722081,-3.539012 | Turn left onto A377 | 166.0   | S         | 25882 | 395.5    |
+      | 2             | 50.722081,-3.539012 | Turn left onto A377 | 166.0   | S         | 29003 | 395.5    |
 
     Examples: 
       | pointA            | pointB              | routetype |
@@ -293,7 +293,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco         | waypointdesc                    | azimuth | direction | time  | distance |
-      | 2             | 50.732011,-3.53798 | Turn right onto STREATHAM DRIVE | 2.0     | N         | 17156 | 166.8    |
+      | 2             | 50.732011,-3.53798 | Turn right onto STREATHAM DRIVE | 2.0     | N         | 13195 | 166.8    |
 
     Examples: 
       | pointA              | pointB              | routetype |
@@ -305,7 +305,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                                           | azimuth | direction | time  | distance |
-      | 2             | 50.727397,-3.535531 | At roundabout, take exit 3 onto NEW NORTH ROAD (B3183) | 295.0   | NW        | 18644 | 181.3    |
+      | 2             | 50.727397,-3.535531 | At roundabout, take exit 3 onto NEW NORTH ROAD (B3183) | 295.0   | NW        | 14023 | 181.3    |
 
     Examples: 
       | pointA              | pointB              | routetype |
@@ -316,7 +316,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco         | waypointdesc                      | azimuth | direction | time | distance |
-      | 1             | 50.72593,-3.521909 | Continue onto B3212 (WESTERN WAY) | 38.0    | NE        | 3985 | 38.7     |
+      | 1             | 50.72593,-3.521909 | Continue onto B3212 (WESTERN WAY) | 38.0    | NE        | 3099 | 38.7     |
 
     Examples: 
       | pointA              | pointB             | routetype |
@@ -339,7 +339,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                                   | azimuth | direction | time  | distance |
-      | 2             | 50.728793,-3.520273 | At roundabout, take exit 2 onto SIDWELL STREET | 178.0   | S         | 26654 | 259.2    |
+      | 2             | 50.728793,-3.520273 | At roundabout, take exit 2 onto SIDWELL STREET | 178.0   | S         | 19800 | 259.2    |
 
     Examples: 
       | pointA              | pointB              | routetype |
@@ -350,7 +350,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                                        | azimuth | direction | time  | distance |
-      | 2             | 50.725096,-3.522378 | At roundabout, take exit 4 onto B3212 (WESTERN WAY) | 239.0   | SW        | 26306 | 255.8    |
+      | 2             | 50.725096,-3.522378 | At roundabout, take exit 4 onto B3212 (WESTERN WAY) | 239.0   | SW        | 19384 | 255.8    |
 
     Examples: 
       | pointA              | pointB              | routetype |
