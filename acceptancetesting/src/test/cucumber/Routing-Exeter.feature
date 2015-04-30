@@ -356,3 +356,50 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 50.724137,-3.518937 | 50.728366,-3.524132 | car       |
       
+     # Quickest route
+  # Motorways (Victoria Street, Union Road ,Blackhall Road ,Well Street ,Devon Shire Place, Culverland Road).These roads are converted into motorways in Exeter
+      
+      @Routing
+  Scenario Outline: Verify  a quickest route  on a Route (Springfield Road-Exeter)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                    | azimuth | direction | time | distance |
+      | 2             | 50.733764,-3.523212 | Turn right onto VICTORIA STREET | 150.0   | SE        | 7689 | 213.6    |
+
+    Examples: 
+      | pointA             | pointB            | routetype |
+      | 50.733719,-3.52332 | 50.732556,-3.5211 | car       |
+
+  @Routing
+  Scenario Outline: Verify  a quickest route  on a Route (DEVON SHIRE PLACE-Exeter)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                      | azimuth | direction | time | distance |
+      | 3             | 50.733574,-3.524027 | Turn right onto DEVON SHIRE PLACE | 162.0   | S         | 8490 | 235.9    |
+
+    Examples: 
+      | pointA              | pointB             | routetype |
+      | 50.734095,-3.524696 | 50.72809,-3.524451 | car       |
+
+  @Routing
+  Scenario Outline: Verify  a quickest route  on a Route (BLACKALL ROAD-Exeter)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                                | azimuth | direction | time  | distance |
+      | 3             | 50.727984,-3.530548 | Turn sharp left onto NEW NORTH ROAD (B3183) | 117.0   | SE        | 22108 | 276.4    |
+
+    Examples: 
+      | pointA              | pointB             | routetype |
+      | 50.729887,-3.526896 | 50.726279,-3.52780 | car       |
+
+  @Routing
+  Scenario Outline: Verify  a quickest route  on a Route (VICTORIA STREET-Exeter)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                    | azimuth | direction | time | distance |
+      | 2             | 50.733764,-3.523212 | Turn right onto VICTORIA STREET | 150.0   | SE        | 7689 | 213.6    |
+
+    Examples: 
+      | pointA              | pointB              | routetype |
+      | 50.733648,-3.523662 | 50.732844,-3.521332 | car       |
+      
