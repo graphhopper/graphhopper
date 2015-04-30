@@ -84,8 +84,7 @@ public class EncodingManagerTest
             assertTrue(false);
         } catch (Exception ex)
         {
-            assertEquals("Encoders are requesting more than 32 bits of way flags. Decrease the number of vehicles or increase the flags to take long.",
-                    ex.getMessage());
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoders are requesting more than 32 bits of way flags. Decrease the"));
         }
     }
 
