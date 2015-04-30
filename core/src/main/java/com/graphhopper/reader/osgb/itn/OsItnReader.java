@@ -137,7 +137,6 @@ public class OsItnReader extends AbstractOsReader<Long> {
     private static final String OS_ITN_READER_PRE_PROCESS_FORMAT = "OsItnReader.preProcess( {} )";
     private static final String WAY_ADDS_EDGES_FORMAT = "Way {} adds edges: {}";
     private static final String WAY_ADDS_BARRIER_EDGES_FORMAT = "Way {} adds barrier edges: {}";
-    private static final String WE_HAVE_EVALUATED_WAY_NODES_FORMAT = "We have evaluated {} way nodes.";
     private static final String WAY_FORMAT = "WAY: {} : {}";
     private static final String NODEITEMID_FORMAT = "NODEITEMID: {}";
     private static final String PROCESS_FORMAT = "PROCESS: {}";
@@ -1878,20 +1877,20 @@ public class OsItnReader extends AbstractOsReader<Long> {
      * Specify the type of the path calculation (car, bike, ...).
      */
     @Override
-    public OsItnReader setEncodingManager(EncodingManager acceptWay) {
+    public AbstractOsReader<Long> setEncodingManager(EncodingManager acceptWay) {
         this.encodingManager = acceptWay;
         return this;
     }
 
     @Override
-    public OsItnReader setWayPointMaxDistance(double maxDist) {
+    public AbstractOsReader<Long> setWayPointMaxDistance(double maxDist) {
         doSimplify = maxDist > 0;
         simplifyAlgo.setMaxDistance(maxDist);
         return this;
     }
 
     @Override
-    public OsItnReader setWorkerThreads(int numOfWorkers) {
+    public AbstractOsReader<Long> setWorkerThreads(int numOfWorkers) {
         this.workerThreads = numOfWorkers;
         return this;
     }

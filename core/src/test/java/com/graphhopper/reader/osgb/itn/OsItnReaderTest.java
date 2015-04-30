@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.osgb.AbstractOsItnReaderTest;
+import com.graphhopper.reader.osgb.AbstractOsReader;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -290,7 +291,7 @@ public class OsItnReaderTest extends AbstractOsItnReaderTest {
         final boolean is3D = false;
         final GraphHopperStorage graph = configureStorage(turnRestrictionsImport, is3D);
 
-        final OsItnReader osItnReader = new OsItnReader(graph);
+        final AbstractOsReader<Long> osItnReader = new OsItnReader(graph);
         final File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-sample.xml");
         osItnReader.setOSMFile(file);
         osItnReader.setEncodingManager(new EncodingManager("CAR,FOOT"));
