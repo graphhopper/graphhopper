@@ -89,14 +89,23 @@ public abstract class AbstractOsDpnReaderTest {
         return new EncodingManager(list, 8);
     }
 
-    protected OsDpnReader readGraphFile(GraphHopperStorage graph, File file)
+    /**
+     * 
+     * @param graph
+     * @param file
+     * @param maxWayPointDistance 0 disables DouglasPeuker simplification 1 = default
+     * @return
+     * @throws IOException
+     */
+    protected OsDpnReader readGraphFile(GraphHopperStorage graph, File file, int maxWayPointDistance)
             throws IOException {
-        OsDpnReader osItnReader = new OsDpnReader(graph);
+        OsDpnReader osDpnReader = new OsDpnReader(graph);
         System.out.println("Read " + file.getAbsolutePath());
-        osItnReader.setOSMFile(file);
-        osItnReader.setEncodingManager(encodingManager);
-        osItnReader.readGraph();
-        return osItnReader;
+        osDpnReader.setOSMFile(file);
+        osDpnReader.setWayPointMaxDistance(maxWayPointDistance);
+        osDpnReader.setEncodingManager(encodingManager);
+        osDpnReader.readGraph();
+        return osDpnReader;
     }
 
     protected GraphHopperStorage configureStorage(

@@ -8,7 +8,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -19,19 +18,12 @@ import com.graphhopper.util.GHUtility;
 
 public class OsDpnReaderTest extends AbstractOsDpnReaderTest
 {
-
-    private GraphHopperStorage graph;
-
-    @Before
-    public void setUp() throws IOException {
-        graph = readGraph();
-        GHUtility.printInfo(graph, 0, 30, EdgeFilter.ALL_EDGES);
-        configureExplorer(graph);
-    }
+	private GraphHopperStorage graph;
 
     @Test
     public void testReadDpnSampleLayout() throws IOException
     {
+	configure(0);
 
 	assertEquals(5, graph.getNodes());
 
@@ -74,11 +66,10 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
 	assertFalse(iter.next());
     }
 
-
     @Test
     public void testReadDpnSampleName() throws IOException
     {
-
+	configure(0);
 	EdgeIterator iter = footOutExplorer.setBaseNode(0);
 	assertTrue(iter.next());
 	assertTrue(iter.next());
@@ -90,7 +81,7 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
     @Test
     public void testReadDpnSampleNameWithAlternate() throws IOException
     {
-
+	configure(0);
 	EdgeIterator iter = footOutExplorer.setBaseNode(0);
 	assertTrue(iter.next());
 	assertTrue(iter.next());
@@ -102,7 +93,7 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
     @Test
     public void testReadDpnSampleNameDefaultToTrackType() throws IOException
     {
-
+	configure(0);
 	EdgeIterator iter = footOutExplorer.setBaseNode(0);
 	assertTrue(iter.next());
 	assertEquals("No Name field available so should report track type", "Alley", iter.getName());
@@ -112,30 +103,57 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
     public void testReadDpnSampleNameDefaultToTrackFriendlyNameWhenNoPhysicalManifestation()
 		    throws IOException
     {
+	configure(0);
 	EdgeIterator iter = footOutExplorer.setBaseNode(0);
 	assertTrue(iter.next());
 	assertTrue(iter.next());
 	assertEquals("No Name field available so should be report track type", "Route",
 			iter.getName());
     }
-
+    
     @Test
-    public void testFetchWayGeometry()
+    public void testReadDpnWayGeometry() throws IOException
     {
-        EdgeIterator iter = footOutExplorer.setBaseNode(0);
-        iter.next();
-//        assertEquals("", 1, iter.fetchWayGeometry(0).getSize());
-        assertFalse(0 == iter.fetchWayGeometry(0).getSize());
-        iter.next();
-//        assertEquals("", 1, iter.fetchWayGeometry(0).getSize());
-        assertFalse(0 == iter.fetchWayGeometry(0).getSize());
-        iter.next();
-//        assertEquals("", 5, iter.fetchWayGeometry(0).getSize());
-        assertFalse(0 == iter.fetchWayGeometry(0).getSize());
-        iter.next();
-//        assertEquals("", 8, iter.fetchWayGeometry(0).getSize());
-        assertFalse(0 == iter.fetchWayGeometry(0).getSize());
-
+	configure(0);
+	EdgeIterator iter = footOutExplorer.setBaseNode(0);
+	assertTrue(iter.next());
+	assertEquals(1, iter.fetchWayGeometry(0).size());
+	assertTrue(iter.next());
+	assertEquals(1, iter.fetchWayGeometry(0).size());
+	assertTrue(iter.next());
+	assertEquals(5, iter.fetchWayGeometry(0).size());
+	assertTrue(iter.next());
+	assertEquals(8, iter.fetchWayGeometry(0).size());
+	assertFalse(iter.next());
+		
+    }
+    
+    @Test
+    public void testReadDpnWayGeometryWithSimplifiedWayGeometry() throws IOException
+    {
+	configure(1);
+	EdgeIterator iter = footOutExplorer.setBaseNode(0);
+	assertTrue(iter.next());
+	assertEquals(1, iter.fetchWayGeometry(0).size());
+	assertTrue(iter.next());
+	assertEquals(1, iter.fetchWayGeometry(0).size());
+	assertTrue(iter.next());
+	assertEquals(4, iter.fetchWayGeometry(0).size());
+	assertTrue(iter.next());
+	assertEquals(5, iter.fetchWayGeometry(0).size());
+	assertFalse(iter.next());
+		
+    }
+    
+    /**
+     * 
+     * @param maxWayPointDistance 0 disables DouglasPeuker simplification 1 = graphhopper default 1 metre
+     * @throws IOException
+     */
+    private void configure(int maxWayPointDistance) throws IOException {
+        graph = readGraph(maxWayPointDistance);
+        GHUtility.printInfo(graph, 0, 30, EdgeFilter.ALL_EDGES);
+        configureExplorer(graph);
     }
 
     private void configureExplorer(final GraphHopperStorage graph)
@@ -143,7 +161,7 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
     	footOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, true, true));
     }
 
-    private GraphHopperStorage readGraph() throws IOException
+    private GraphHopperStorage readGraph(int maxWayPointDistance) throws IOException
     {
 	final boolean turnRestrictionsImport = false;
 	final boolean is3D = false;
@@ -151,7 +169,7 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
 
 	final File file = new File(
 			"./src/test/resources/com/graphhopper/reader/osgb/dpn/os-dpn-sample.xml");
-	readGraphFile(graph, file);
+	readGraphFile(graph, file, maxWayPointDistance);
 	return graph;
     }
 

@@ -66,7 +66,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
         logger.trace("OsDpnWay.create()");
         OsDpnWay way = new OsDpnWay(idStr);
         parser.nextTag();
-        way.setTag("highway", "track");
+//        way.setTag("highway", "track");
         way.readTags(parser);
         logger.info(way.toString());
         return way;
@@ -164,16 +164,19 @@ public class OsDpnWay extends OsDpnElement implements Way {
                 + ((wayCoords.length == 0) ? "0" : wayCoords[0]));
     }
 
+    /**
+     * Ignores first and last coordinate set as they are also the start and end node coordinates and therefore already captured as towers
+     */
     @Override
     protected void parseCoords(int dimensions, String lineDefinition) {
         String[] lineSegments = lineDefinition.split(" ");
-        wayCoords = new String[lineSegments.length / dimensions];
+        wayCoords = new String[lineSegments.length / dimensions -2];
         StringBuilder curString = null;
-        for (int i = 0; i < lineSegments.length; i++) {
+        for (int i = dimensions; i < lineSegments.length - dimensions; i++) {
             String string = lineSegments[i];
             switch (i % dimensions) {
                 case 0: {
-                    int coordNumber = i / dimensions;
+                    int coordNumber = (i / dimensions) -1;
                     if (coordNumber > 0) {
                         wayCoords[coordNumber - 1] = curString.toString();
                     }
@@ -184,7 +187,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
 
                 case 1:
                 case 2: {
-                    curString.append(',');
+                    curString.append(' ');
                     curString.append(string);
                 }
             }
@@ -249,7 +252,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
             long idPrefix = (i + 1);
             String id = idPrefix + getId();
             OsDpnNode wayNode = new OsDpnNode(id);
-            wayNode.parseCoordinateString(wayCoord, ",");
+            wayNode.parseCoords(wayCoord);
 
             logger.info("Node " + getId() + " coords: " + wayCoord + " tags: ");
             for (String tagKey : wayNode.getTags().keySet()) {
