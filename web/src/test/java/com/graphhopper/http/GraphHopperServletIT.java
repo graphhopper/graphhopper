@@ -89,7 +89,7 @@ public class GraphHopperServletIT extends BaseServletTester
     public void testGraphHopperWeb() throws Exception
     {
         GraphHopperAPI hopper = new GraphHopperWeb();
-        assertTrue(hopper.load(getTestAPIUrl()));
+        assertTrue(hopper.load(getTestRouteAPIUrl()));
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128));
         assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
         assertTrue("distance wasn't correct:" + rsp.getDistance(), rsp.getDistance() > 9000);
@@ -116,7 +116,7 @@ public class GraphHopperServletIT extends BaseServletTester
         Throwable ex;
 
         GraphHopperAPI hopper = new GraphHopperWeb();
-        assertTrue(hopper.load(getTestAPIUrl()));
+        assertTrue(hopper.load(getTestRouteAPIUrl()));
 
         // IllegalStateException (Wrong Request)
         rsp = hopper.route(new GHRequest());
