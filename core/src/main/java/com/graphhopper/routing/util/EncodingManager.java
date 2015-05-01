@@ -174,7 +174,7 @@ public class EncodingManager
     }
 
     private static final String ERR = "Encoders are requesting more than %s bits of %s flags. ";
-    private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long.";
+    private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long via osmreader.bytesForFlags=8";
 
     private void registerEncoder( AbstractFlagEncoder encoder )
     {
