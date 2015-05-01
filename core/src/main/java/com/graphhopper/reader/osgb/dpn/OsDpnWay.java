@@ -73,7 +73,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
 		logger.trace("OsDpnWay.create()");
 		OsDpnWay way = new OsDpnWay(idStr);
 		parser.nextTag();
-		// way.setTag("highway", "track");
+		way.setTag("highway", "track");
 		way.readTags(parser);
 		logger.info(way.toString());
 		return way;
