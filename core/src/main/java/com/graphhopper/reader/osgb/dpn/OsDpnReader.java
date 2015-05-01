@@ -308,6 +308,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
                     }
                     prepareWaysNodes(dpnWay, getNodeMap());
                     processWay(dpnWay);
+                    dpnWay.clearStoredCoords();
                     break;
                 case OSMElement.RELATION:
                     if (relationStart < 0) {
