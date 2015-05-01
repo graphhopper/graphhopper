@@ -53,6 +53,7 @@ public class EncodingManager
     public static final String RACINGBIKE = "racingbike";
     public static final String MOUNTAINBIKE = "mtb";
     public static final String FOOT = "foot";
+    public static final String FOOT2 = "foot2";
     public static final String MOTORCYCLE = "motorcycle";
 
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<AbstractFlagEncoder>();
@@ -160,6 +161,9 @@ public class EncodingManager
                 fe = new MountainBikeFlagEncoder(entryVal);
 
             else if (entry.equals(FOOT))
+                fe = new FootFlagEncoder(entryVal);
+
+            else if (entry.equals(FOOT2))
                 fe = new OsFootFlagEncoder(entryVal);
 
             else if (entry.equals(MOTORCYCLE))
