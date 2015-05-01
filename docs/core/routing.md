@@ -35,7 +35,7 @@ if(!rsp.isFound()) {
 // points, distance in meters and time in millis of the full path
 PointList pointList = rsp.getPoints();
 double distance = rsp.getDistance();
-long millis = rsp.getMillis();
+long timeInMs = rsp.getTime();
 
 // get the turn instructions for the path
 InstructionList il = rsp.getInstructions();
