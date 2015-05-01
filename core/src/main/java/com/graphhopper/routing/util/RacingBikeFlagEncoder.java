@@ -40,6 +40,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
         this((int) parseLong(propertiesStr, "speedBits", 4),
                 parseDouble(propertiesStr, "speedFactor", 2),
                 parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+        this.setBlockFords(parseBoolean(propertiesStr, "blockFords", true));
     }
 
     public RacingBikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
