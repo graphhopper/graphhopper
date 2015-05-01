@@ -60,8 +60,7 @@ public class EncodingManager
 
     /**
      * Instantiate manager with the given list of encoders. The manager knows the default encoders:
-     * CAR, FOOT and BIKE (ignoring the case). Custom encoders can be specified by giving a full
-     * class name e.g. "car:com.graphhopper.myproject.MyCarEncoder"
+     * CAR, FOOT and BIKE (ignoring the case).
      * <p/>
      * @param flagEncodersStr comma delimited list of encoders. The order does not matter.
      */
