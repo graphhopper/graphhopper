@@ -87,7 +87,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         if (endNode >= 0)
             p.setWeight(weights[endNode]);
         p.setFromNode(fromNode);
-        if (endNode < 0 || isWeightLimitReached())
+        if (endNode < 0 || isWeightLimitExceeded())
             return p;
 
         return p.setEndNode(endNode).extract();
@@ -185,7 +185,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
                 }
             }
 
-            if (heap.isEmpty() || visitedNodes >= limitVisitedNodes || isWeightLimitReached())
+            if (heap.isEmpty() || visitedNodes >= limitVisitedNodes || isWeightLimitExceeded())
                 return NOT_FOUND;
 
             // calling just peek and not poll is important if the next query is cached
@@ -203,9 +203,10 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         return currNode == to;
     }
 
-    protected boolean isWeightLimitReached()
+    @Override
+    protected boolean isWeightLimitExceeded()
     {
-        return weights[currNode] >= weightLimit;
+        return weights[currNode] > weightLimit;
     }
 
     public void close()
