@@ -75,7 +75,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
 		parser.nextTag();
 		way.setTag("highway", "track");
 		way.readTags(parser);
-		logger.info(way.toString());
+		logger.trace(way.toString());
 		return way;
 	}
 
@@ -199,7 +199,6 @@ public class OsDpnWay extends OsDpnElement implements Way {
 			}
 			wayCoords[wayCoords.length - 1] = curString.toString();
 			addWayNodes();
-			nodes.add(endNode);
 			logger.info("parsecoord2" + toString() + " "
 					+ ((wayCoords.length == 0) ? "0" : wayCoords[0]));
 		}
@@ -207,6 +206,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
 		{
 			wayCoords = null;
 		}
+		nodes.add(endNode);
 	}
 
 	@Override
