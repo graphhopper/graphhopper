@@ -41,5 +41,5 @@ paved=pavat
 unpaved=nepavat
 stopover=escala %1$s
 roundaboutEnter=Intrați în giratoriu 
-roundaboutExit=La giratoriu folosiți ieșirea %1$
-roundaboutExitOnto=La giratoriu folosiți ieșirea %1$ către %2$
+roundaboutExit=La giratoriu folosiți ieșirea %1$s
+roundaboutExitOnto=La giratoriu folosiți ieșirea %1$s către %2$s
