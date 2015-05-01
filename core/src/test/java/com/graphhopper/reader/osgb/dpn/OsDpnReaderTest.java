@@ -18,24 +18,23 @@ import com.graphhopper.util.GHUtility;
 
 public class OsDpnReaderTest extends AbstractOsDpnReaderTest
 {
+	private GraphHopperStorage graph;
 
     @Test
     public void testReadDpnSampleLayout() throws IOException
     {
-	final GraphHopperStorage graph = readGraph();
-	GHUtility.printInfo(graph, 0, 30, EdgeFilter.ALL_EDGES);
-	configureExplorer(graph);
+	configure(0);
 
 	assertEquals(5, graph.getNodes());
 
-	assertEquals(4, count(explorer.setBaseNode(0))); // Central Tower
-	assertEquals(1, count(explorer.setBaseNode(1))); // Cross Road Vertex
-	assertEquals(1, count(explorer.setBaseNode(2))); // Cross Road Vertex
-	assertEquals(1, count(explorer.setBaseNode(3))); // Cross Road Vertex
-	assertEquals(1, count(explorer.setBaseNode(4))); // Cross Road Vertex
+	assertEquals(4, count(footOutExplorer.setBaseNode(0))); // Central Tower
+	assertEquals(1, count(footOutExplorer.setBaseNode(1))); // Cross Road Vertex
+	assertEquals(1, count(footOutExplorer.setBaseNode(2))); // Cross Road Vertex
+	assertEquals(1, count(footOutExplorer.setBaseNode(3))); // Cross Road Vertex
+	assertEquals(1, count(footOutExplorer.setBaseNode(4))); // Cross Road Vertex
 
 	// Assert that this is true
-	EdgeIterator iter = explorer.setBaseNode(0);
+	EdgeIterator iter = footOutExplorer.setBaseNode(0);
 	assertTrue(iter.next());
 	assertEquals(4, iter.getAdjNode());
 	assertTrue(iter.next());
@@ -46,22 +45,22 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
 	assertEquals(1, iter.getAdjNode());
 	assertFalse(iter.next());
 
-	iter = explorer.setBaseNode(1);
+	iter = footOutExplorer.setBaseNode(1);
 	assertTrue(iter.next());
 	assertEquals(0, iter.getAdjNode());
 	assertFalse(iter.next());
 
-	iter = explorer.setBaseNode(2);
+	iter = footOutExplorer.setBaseNode(2);
 	assertTrue(iter.next());
 	assertEquals(0, iter.getAdjNode());
 	assertFalse(iter.next());
 
-	iter = explorer.setBaseNode(3);
+	iter = footOutExplorer.setBaseNode(3);
 	assertTrue(iter.next());
 	assertEquals(0, iter.getAdjNode());
 	assertFalse(iter.next());
 
-	iter = explorer.setBaseNode(4);
+	iter = footOutExplorer.setBaseNode(4);
 	assertTrue(iter.next());
 	assertEquals(0, iter.getAdjNode());
 	assertFalse(iter.next());
@@ -70,10 +69,8 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
     @Test
     public void testReadDpnSampleName() throws IOException
     {
-	final GraphHopperStorage graph = readGraph();
-	configureExplorer(graph);
-
-	EdgeIterator iter = explorer.setBaseNode(0);
+	configure(0);
+	EdgeIterator iter = footOutExplorer.setBaseNode(0);
 	assertTrue(iter.next());
 	assertTrue(iter.next());
 	assertTrue(iter.next());
@@ -84,10 +81,8 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
     @Test
     public void testReadDpnSampleNameWithAlternate() throws IOException
     {
-	final GraphHopperStorage graph = readGraph();
-	configureExplorer(graph);
-
-	EdgeIterator iter = explorer.setBaseNode(0);
+	configure(0);
+	EdgeIterator iter = footOutExplorer.setBaseNode(0);
 	assertTrue(iter.next());
 	assertTrue(iter.next());
 	assertTrue(iter.next());
@@ -98,10 +93,8 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
     @Test
     public void testReadDpnSampleNameDefaultToTrackType() throws IOException
     {
-	final GraphHopperStorage graph = readGraph();
-	configureExplorer(graph);
-
-	EdgeIterator iter = explorer.setBaseNode(0);
+	configure(0);
+	EdgeIterator iter = footOutExplorer.setBaseNode(0);
 	assertTrue(iter.next());
 	assertEquals("No Name field available so should report track type", "Alley", iter.getName());
     }
@@ -110,22 +103,65 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
     public void testReadDpnSampleNameDefaultToTrackFriendlyNameWhenNoPhysicalManifestation()
 		    throws IOException
     {
-	final GraphHopperStorage graph = readGraph();
-	configureExplorer(graph);
-
-	EdgeIterator iter = explorer.setBaseNode(0);
+	configure(0);
+	EdgeIterator iter = footOutExplorer.setBaseNode(0);
 	assertTrue(iter.next());
 	assertTrue(iter.next());
 	assertEquals("No Name field available so should be report track type", "Route",
 			iter.getName());
     }
+    
+    @Test
+    public void testReadDpnWayGeometry() throws IOException
+    {
+	configure(0);
+	EdgeIterator iter = footOutExplorer.setBaseNode(0);
+	assertTrue(iter.next());
+	assertEquals(1, iter.fetchWayGeometry(0).size());
+	assertTrue(iter.next());
+	assertEquals(1, iter.fetchWayGeometry(0).size());
+	assertTrue(iter.next());
+	assertEquals(5, iter.fetchWayGeometry(0).size());
+	assertTrue(iter.next());
+	assertEquals(8, iter.fetchWayGeometry(0).size());
+	assertFalse(iter.next());
+		
+    }
+    
+    @Test
+    public void testReadDpnWayGeometryWithSimplifiedWayGeometry() throws IOException
+    {
+	configure(1);
+	EdgeIterator iter = footOutExplorer.setBaseNode(0);
+	assertTrue(iter.next());
+	assertEquals(1, iter.fetchWayGeometry(0).size());
+	assertTrue(iter.next());
+	assertEquals(1, iter.fetchWayGeometry(0).size());
+	assertTrue(iter.next());
+	assertEquals(4, iter.fetchWayGeometry(0).size());
+	assertTrue(iter.next());
+	assertEquals(5, iter.fetchWayGeometry(0).size());
+	assertFalse(iter.next());
+		
+    }
+    
+    /**
+     * 
+     * @param maxWayPointDistance 0 disables DouglasPeuker simplification 1 = graphhopper default 1 metre
+     * @throws IOException
+     */
+    private void configure(int maxWayPointDistance) throws IOException {
+        graph = readGraph(maxWayPointDistance);
+        GHUtility.printInfo(graph, 0, 30, EdgeFilter.ALL_EDGES);
+        configureExplorer(graph);
+    }
 
     private void configureExplorer(final GraphHopperStorage graph)
     {
-	explorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, true, true));
+    	footOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, true, true));
     }
 
-    private GraphHopperStorage readGraph() throws IOException
+    private GraphHopperStorage readGraph(int maxWayPointDistance) throws IOException
     {
 	final boolean turnRestrictionsImport = false;
 	final boolean is3D = false;
@@ -133,7 +169,7 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
 
 	final File file = new File(
 			"./src/test/resources/com/graphhopper/reader/osgb/dpn/os-dpn-sample.xml");
-	readGraphFile(graph, file);
+	readGraphFile(graph, file, maxWayPointDistance);
 	return graph;
     }
 

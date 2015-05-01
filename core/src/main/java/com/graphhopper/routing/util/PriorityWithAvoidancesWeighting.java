@@ -20,8 +20,6 @@ public class PriorityWithAvoidancesWeighting extends PriorityWeighting {
     {
         long wayType = edge.getFlags();
         wayType = encoder.getLong(wayType, AbstractAvoidanceDecorator.KEY);
-        System.err.println("BITMASK:" + bitMask + " BITWEIGHT:" + wayType);
-        
         if(bitMask!=0 && ((wayType & bitMask) == bitMask))
             return Double.POSITIVE_INFINITY;
         return super.calcWeight(edge, reverse, prevOrNextEdgeId);

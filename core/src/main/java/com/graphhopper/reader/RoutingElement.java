@@ -7,7 +7,7 @@ public interface RoutingElement {
 
     void setTag(String name, Object value);
 
-    String getTag(String string);
+    String getTag(String name);
 
     <T> T getTag(String key, T defaultValue);
 

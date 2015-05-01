@@ -10,7 +10,7 @@ public class Boulders extends AbstractOsDpnOsmAttibuteMappingVisitor {
     @Override
     protected void applyAttributes(Way way)
     {
-        way.setTag("natural", "rocks");
+        way.setTag("natural", "boulders");
     }
 
 }

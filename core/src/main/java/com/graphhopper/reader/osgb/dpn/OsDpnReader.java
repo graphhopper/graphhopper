@@ -18,6 +18,9 @@ import java.util.List;
 
 import javax.xml.stream.XMLStreamException;
 
+import org.opengis.geometry.MismatchedDimensionException;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.operation.TransformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -303,7 +306,9 @@ public class OsDpnReader extends AbstractOsReader<String> {
                         logger.info(nf(counter) + ", now parsing ways");
                         wayStart = counter;
                     }
+                    prepareWaysNodes(dpnWay, getNodeMap());
                     processWay(dpnWay);
+                    dpnWay.clearStoredCoords();
                     break;
                 case OSMElement.RELATION:
                     if (relationStart < 0) {
@@ -332,6 +337,16 @@ public class OsDpnReader extends AbstractOsReader<String> {
         if (graphStorage.getNodes() == 0)
             throw new IllegalStateException("dpn must not be empty. read "
                     + counter + " lines and " + locations + " locations");
+    }
+
+    private List<OsDpnNode> prepareWaysNodes(RoutingElement item, TObjectIntMap<String> nodeFilter) throws MismatchedDimensionException, FactoryException, TransformException {
+        List<OsDpnNode> evaluateWayNodes = ((OsDpnWay) item).evaluateWayNodes(null);
+        for (OsDpnNode osdpnNode : evaluateWayNodes) {
+            nodeFilter.put(osdpnNode.getId(), PILLAR_NODE);
+            processNode(osdpnNode);
+        }
+        logger.info(WE_HAVE_EVALUATED_WAY_NODES_FORMAT, evaluateWayNodes.size());
+        return evaluateWayNodes;
     }
 
     /**

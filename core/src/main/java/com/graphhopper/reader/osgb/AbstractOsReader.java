@@ -30,6 +30,7 @@ abstract public class AbstractOsReader<E> implements DataReader<E> {
 
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractOsReader.class.getName());
+    protected static final String WE_HAVE_EVALUATED_WAY_NODES_FORMAT = "We have evaluated {} way nodes.";
 
     public AbstractOsReader(GraphStorage storage) {
         this.graphStorage = storage;

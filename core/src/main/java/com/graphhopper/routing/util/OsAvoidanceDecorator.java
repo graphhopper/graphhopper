@@ -17,7 +17,7 @@ public class OsAvoidanceDecorator extends AbstractAvoidanceDecorator {
 		Boulders(2) {
 			@Override
 			public boolean isValidForWay(Way way) {
-				return hasTag(way, "natural", "boulder");
+				return hasTag(way, "natural", "boulders");
 			}
 		},
 		Cliff(4) {

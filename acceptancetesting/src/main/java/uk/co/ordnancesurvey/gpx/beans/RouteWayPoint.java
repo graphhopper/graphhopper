@@ -58,6 +58,11 @@ public class RouteWayPoint {
 									.replaceAll("[^\\w]", "");
 							isEqual = thisValueAsString
 									.equalsIgnoreCase((thatValueAsString));
+							
+							if (!isEqual)
+							{
+								LOG.info("Way point Description "+thisValueAsString+" is not matching with "+thatValueAsString);
+							}
 						}
 
 						catch (Exception e) {
