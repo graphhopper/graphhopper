@@ -22,6 +22,8 @@ import java.util.Set;
 
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.util.PMap;
+
 import static com.graphhopper.routing.util.PriorityCode.*;
 import java.util.*;
 
@@ -54,11 +56,18 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         this(4, 1);
     }
 
-    public FootFlagEncoder( String propertiesStr )
+    public FootFlagEncoder(PMap properties) {
+        this(
+                (int)properties.getLong("speedBits", 4),
+                properties.getDouble("speedFactor", 1)
+        );
+        this.properties = properties;
+        this.setBlockFords(properties.getBool("blockFords", true));
+    }
+
+    public FootFlagEncoder(String propertiesStr )
     {
-        this((int) parseLong(propertiesStr, "speedBits", 4),
-                parseDouble(propertiesStr, "speedFactor", 1));
-        this.setBlockFords(parseBoolean(propertiesStr, "blockFords", true));
+        this(new PMap(propertiesStr));
     }
 
     public FootFlagEncoder( int speedBits, double speedFactor )
@@ -119,6 +128,12 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         hikingNetworkToCode.put("lwn", VERY_NICE.getValue());
         
         maxPossibleSpeed = FERRY_SPEED;
+    }
+
+    @Override
+    public short getVersion()
+    {
+        return 1;
     }
 
     @Override

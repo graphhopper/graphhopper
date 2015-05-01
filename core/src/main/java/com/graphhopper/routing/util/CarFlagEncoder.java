@@ -25,6 +25,8 @@ import java.util.Set;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
+
 import java.util.*;
 
 /**
@@ -52,12 +54,19 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         this(5, 5, 0);
     }
 
-    public CarFlagEncoder( String propertiesStr )
+    public CarFlagEncoder(PMap properties) {
+        this(
+                (int)properties.getLong("speedBits", 5),
+                properties.getDouble("speedFactor", 5),
+                properties.getBool("turnCosts", false) ? 3 : 0
+        );
+        this.properties = properties;
+        this.setBlockFords(properties.getBool("blockFords", true));
+    }
+
+    public CarFlagEncoder(String propertiesStr )
     {
-        this((int) parseLong(propertiesStr, "speedBits", 5),
-                parseDouble(propertiesStr, "speedFactor", 5),
-                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
-        this.setBlockFords(parseBoolean(propertiesStr, "blockFords", true));
+        this(new PMap(propertiesStr));
     }
 
     public CarFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
@@ -129,6 +138,12 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         defaultSpeedMap.put("road", 20);
         // forestry stuff
         defaultSpeedMap.put("track", 15);
+    }
+
+    @Override
+    public short getVersion()
+    {
+        return 1;
     }
 
     /**

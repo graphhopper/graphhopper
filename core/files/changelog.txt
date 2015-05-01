@@ -1,5 +1,6 @@
 0.5
     made GHResponse.getMillis, Path.getMillis, GPXEntry.getMillis deprecated, use getTime instead
+    in AbstractFlagEncoder, parse*() and getStr() are now deprecated, use properties.get* instead
 
 0.4
     translation key turn changed and merged with left etc into turn_left, turn_right etc

@@ -44,6 +44,22 @@ public class PMap
         this.map = map;
     }
 
+    public PMap(String propertiesString)
+    {
+        // five chosen as arbitrary initial capacity
+        this.map = new HashMap<String, String>(5);
+
+        for (String s : propertiesString.split("\\|"))
+        {
+            s = s.trim();
+            int index = s.indexOf("=");
+            if (index < 0)
+                continue;
+
+            this.map.put(s.substring(0, index).toLowerCase(), s.substring(index + 1));
+        }
+    }
+
     public PMap put( String key, Object str )
     {
         if (str == null)

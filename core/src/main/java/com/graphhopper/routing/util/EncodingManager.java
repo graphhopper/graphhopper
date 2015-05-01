@@ -29,6 +29,8 @@ import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
+
 import java.util.*;
 
 /**
@@ -134,31 +136,39 @@ public class EncodingManager
                 entryVal = entry;
                 entry = entry.split("\\|")[0];
             }
+            PMap configuration = new PMap(entryVal);
 
             AbstractFlagEncoder fe;
             if (entry.equals(CAR))
-                fe = new CarFlagEncoder(entryVal);
+                fe = new CarFlagEncoder(configuration);
 
             else if (entry.equals(BIKE))
-                fe = new BikeFlagEncoder(entryVal);
+                fe = new BikeFlagEncoder(configuration);
 
             else if (entry.equals(BIKE2))
-                fe = new Bike2WeightFlagEncoder(entryVal);
+                fe = new Bike2WeightFlagEncoder(configuration);
 
             else if (entry.equals(RACINGBIKE))
-                fe = new RacingBikeFlagEncoder(entryVal);
+                fe = new RacingBikeFlagEncoder(configuration);
 
             else if (entry.equals(MOUNTAINBIKE))
-                fe = new MountainBikeFlagEncoder(entryVal);
+                fe = new MountainBikeFlagEncoder(configuration);
 
             else if (entry.equals(FOOT))
-                fe = new FootFlagEncoder(entryVal);
+                fe = new FootFlagEncoder(configuration);
 
             else if (entry.equals(MOTORCYCLE))
-                fe = new MotorcycleFlagEncoder(entryVal);
+                fe = new MotorcycleFlagEncoder(configuration);
 
             else
                 throw new IllegalArgumentException("entry in encoder list not supported " + entry);
+
+            if (configuration.has("version")) {
+                if (fe.getVersion() != configuration.getLong("version", -1)) {
+                    throw new IllegalArgumentException("Encoder " + entry + " was used in version "
+                            + configuration.getLong("version", -1) + ", but current version is " + fe.getVersion());
+                }
+            }
 
             resultEncoders.add(fe);
         }
@@ -289,9 +299,11 @@ public class EncodingManager
             if (str.length() > 0)
                 str.append(",");
 
-            str.append(encoder.toString());
-            str.append("|");
-            str.append(encoder.getPropertiesString());
+            str.append(encoder.toString())
+                    .append("|")
+                    .append(encoder.getPropertiesString())
+                    .append("|version=")
+                    .append(encoder.getVersion());
         }
 
         return str.toString();

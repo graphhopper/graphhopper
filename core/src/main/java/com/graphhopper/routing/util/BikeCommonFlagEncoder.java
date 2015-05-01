@@ -192,6 +192,12 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
+    public short getVersion()
+    {
+        return 1;
+    }
+
+    @Override
     public int defineWayBits( int index, int shift )
     {
         // first two bits are reserved for route handling in superclass
