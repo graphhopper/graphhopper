@@ -36,8 +36,7 @@ import com.graphhopper.util.GHUtility;
  * Calculates best path in bidirectional way.
  * <p/>
  * 'Ref' stands for reference implementation and is using the normal Java-'reference'-way.
- * <p/>
- * @see DijkstraBidirection for an array based but more complicated version
+ * <p>
  * @author Peter Karich
  */
 public class DijkstraBidirectionRef extends AbstractBidirAlgo
@@ -129,10 +128,10 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     @Override
     protected Path extractPath()
     {
-        if (isWeightLimitReached())
-            return bestPath;
+        if (finished())
+            return bestPath.extract();
 
-        return bestPath.extract();
+        return bestPath;
     }
 
     @Override
@@ -181,9 +180,9 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     }
 
     @Override
-    protected boolean isWeightLimitReached()
+    protected boolean isWeightLimitExceeded()
     {
-        return currFrom.weight + currTo.weight >= weightLimit;
+        return currFrom.weight + currTo.weight > weightLimit;
     }
 
     void fillEdges( EdgeEntry currEdge, PriorityQueue<EdgeEntry> prioQueue,

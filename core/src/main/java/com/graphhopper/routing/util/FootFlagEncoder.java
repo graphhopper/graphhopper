@@ -58,6 +58,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     {
         this((int) parseLong(propertiesStr, "speedBits", 4),
                 parseDouble(propertiesStr, "speedFactor", 1));
+        this.setBlockFords(parseBoolean(propertiesStr, "blockFords", true));
     }
 
     public FootFlagEncoder( int speedBits, double speedFactor )
@@ -67,6 +68,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         restrictedValues.add("private");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
+        restrictedValues.add("military");
 
         intendedValues.add("yes");
         intendedValues.add("designated");
@@ -81,7 +83,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         setBlockByDefault(false);
         potentialBarriers.add("gate");
 
-        acceptedRailways.add("station");
         acceptedRailways.add("platform");
 
         safeHighwayTags.add("footway");
@@ -99,10 +100,12 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         avoidHighwayTags.add("primary_link");
         avoidHighwayTags.add("tertiary");
         avoidHighwayTags.add("tertiary_link");
-        avoidHighwayTags.add("cycleway");
+        // for now no explicit avoiding #257
+        //avoidHighwayTags.add("cycleway"); 
 
         allowedHighwayTags.addAll(safeHighwayTags);
         allowedHighwayTags.addAll(avoidHighwayTags);
+        allowedHighwayTags.add("cycleway");
         allowedHighwayTags.add("secondary");
         allowedHighwayTags.add("secondary_link");
         allowedHighwayTags.add("unclassified");
@@ -114,6 +117,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         hikingNetworkToCode.put("nwn", BEST.getValue());
         hikingNetworkToCode.put("rwn", VERY_NICE.getValue());
         hikingNetworkToCode.put("lwn", VERY_NICE.getValue());
+        
+        maxPossibleSpeed = FERRY_SPEED;
     }
 
     @Override
@@ -122,7 +127,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
         // larger value required - ferries are faster than pedestrians
-        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, MEAN_SPEED, FERRY_SPEED);
+        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, MEAN_SPEED, maxPossibleSpeed);
         shift += speedEncoder.getBits();
 
         preferWayEncoder = new EncodedValue("PreferWay", shift, 3, 1, 0, 7);
@@ -191,6 +196,11 @@ public class FootFlagEncoder extends AbstractFlagEncoder
                 if (footTag == null || "yes".equals(footTag))
                     return acceptBit | ferryBit;
             }
+
+            // special case not for all acceptedRailways, only platform
+            if (way.hasTag("railway", "platform"))
+                return acceptBit;
+
             return 0;
         }
 
@@ -279,6 +289,12 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
             encoded = setLong(encoded, PriorityWeighting.KEY, handlePriority(way, priorityFromRelation));
 
+            boolean isRoundabout = way.hasTag("junction", "roundabout");
+            if (isRoundabout)
+            {
+                encoded = setBool(encoded, K_ROUNDABOUT, true);
+            }
+
         } else
         {
             encoded = handleFerryTags(way, SLOW_SPEED, MEAN_SPEED, FERRY_SPEED);
@@ -353,16 +369,24 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             weightToPrioMap.put(100d, PREFER.getValue());
 
         double maxSpeed = getMaxSpeed(way);
-        if (safeHighwayTags.contains(highway) || maxSpeed > 0 && maxSpeed <= 20
-                || way.hasTag("sidewalk", sidewalks))
+        if (safeHighwayTags.contains(highway) || maxSpeed > 0 && maxSpeed <= 20)
         {
             weightToPrioMap.put(40d, PREFER.getValue());
-
             if (way.hasTag("tunnel", intendedValues))
                 weightToPrioMap.put(40d, UNCHANGED.getValue());
         }
 
-        if (avoidHighwayTags.contains(highway) || maxSpeed > 50 || way.hasTag("bicycle", "official"))
+        if (way.hasTag("bicycle", "official") || way.hasTag("bicycle", "designated"))
+        {
+            weightToPrioMap.put(44d, AVOID_IF_POSSIBLE.getValue());
+        }
+
+        if (way.hasTag("sidewalk", sidewalks))
+        {
+            weightToPrioMap.put(45d, PREFER.getValue());
+        }
+
+        if (avoidHighwayTags.contains(highway) || maxSpeed > 50)
         {
             weightToPrioMap.put(50d, REACH_DEST.getValue());
 

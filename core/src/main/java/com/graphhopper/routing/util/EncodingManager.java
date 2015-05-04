@@ -26,6 +26,7 @@ import com.graphhopper.reader.OSMWay;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.StorableProperties;
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import java.util.*;
@@ -100,19 +101,13 @@ public class EncodingManager
             throw new IllegalStateException("For 'edge flags' currently only 4 or 8 bytes supported");
 
         this.bitsForEdgeFlags = bytesForEdgeFlags * 8;
-
-        Collections.sort(flagEncoders, new Comparator<FlagEncoder>()
-        {
-            @Override
-            public int compare( FlagEncoder o1, FlagEncoder o2 )
-            {
-                return o1.toString().compareTo(o2.toString());
-            }
-        });
         for (FlagEncoder flagEncoder : flagEncoders)
         {
             registerEncoder((AbstractFlagEncoder) flagEncoder);
         }
+
+        if (edgeEncoders.isEmpty())
+            throw new IllegalStateException("No vehicles found");
     }
 
     public int getBytesForFlags()
@@ -172,7 +167,7 @@ public class EncodingManager
     }
 
     private static final String ERR = "Encoders are requesting more than %s bits of %s flags. ";
-    private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long.";
+    private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long via osmreader.bytesForFlags=8";
 
     private void registerEncoder( AbstractFlagEncoder encoder )
     {
@@ -272,11 +267,6 @@ public class EncodingManager
         return flags;
     }
 
-    public int getVehicleCount()
-    {
-        return edgeEncoders.size();
-    }
-
     @Override
     public String toString()
     {
@@ -306,17 +296,6 @@ public class EncodingManager
         }
 
         return str.toString();
-    }
-
-    public FlagEncoder getSingle()
-    {
-        if (getVehicleCount() > 1)
-            throw new IllegalStateException("Multiple encoders are active. cannot return one:" + toString());
-
-        if (getVehicleCount() == 0)
-            throw new IllegalStateException("No encoder is active!");
-
-        return edgeEncoders.get(0);
     }
 
     public long flagsDefault( boolean forward, boolean backward )
@@ -415,6 +394,9 @@ public class EncodingManager
         }
     }
 
+    /**
+     * The returned list is never empty.
+     */
     public List<FlagEncoder> fetchEdgeEncoders()
     {
         List<FlagEncoder> list = new ArrayList<FlagEncoder>();

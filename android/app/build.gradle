@@ -1,0 +1,51 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 19
+    buildToolsVersion "21.1.2"
+
+    defaultConfig {
+        applicationId "com.graphhopper.android"
+        minSdkVersion 8
+        targetSdkVersion 19
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+
+    lintOptions {
+        /* CGIARProvider refers to java.awt
+         * Helper7 refers to java.lang.management
+         * HeightTile refers to javax.imageio and java.awt
+         * OSMElement refers to javax.xml.stream
+         */
+        disable 'InvalidPackage'
+    }
+}
+
+/** only necessary if you need to use latest SNAPSHOT
+configurations.all {
+    // check for updates every build
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+ **/
+
+dependencies {
+    compile(group: 'com.graphhopper', name: 'graphhopper', version: '0.4-SNAPSHOT') {
+       exclude group: 'com.google.protobuf', module: 'protobuf-java'
+       exclude group: 'org.openstreetmap.osmosis', module: 'osmosis-osm-binary'
+       exclude group: 'org.apache.xmlgraphics', module: 'xmlgraphics-commons'
+    }
+
+    compile group: 'org.mapsforge', name: 'mapsforge-core', version: '0.5.1'
+    compile group: 'org.mapsforge', name: 'mapsforge-map', version: '0.5.1'
+    compile group: 'org.mapsforge', name: 'mapsforge-map-android', version: '0.5.1'
+    compile group: 'org.mapsforge', name: 'mapsforge-map-reader', version: '0.5.1'
+
+    compile group: 'org.slf4j', name: 'slf4j-android', version: '1.7.10'
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.10'
+}

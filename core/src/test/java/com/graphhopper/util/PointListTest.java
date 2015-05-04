@@ -18,6 +18,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -85,6 +86,21 @@ public class PointListTest
         for (int i = 0; i < toAdd.size(); i++)
         {
             assertEquals(toAdd.getLatitude(i), instance.getLatitude(7 + i), 1e-1);
+        }
+    }
+
+    @Test
+    public void testIterable()
+    {
+        PointList toAdd = new PointList();
+        toAdd.add(1, 1);
+        toAdd.add(2, 2);
+        toAdd.add(3, 3);
+        int counter = 0;
+        for (GHPoint point : toAdd)
+        {
+            counter++;
+            assertEquals(counter, point.getLat(), 0.1);
         }
     }
 }

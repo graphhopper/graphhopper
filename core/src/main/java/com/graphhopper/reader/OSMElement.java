@@ -197,4 +197,10 @@ public abstract class OSMElement
     {
         return this.type == type;
     }
+
+    @Override
+    public String toString()
+    {
+        return properties.toString();
+    }        
 }

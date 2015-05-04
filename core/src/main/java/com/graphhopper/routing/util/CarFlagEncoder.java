@@ -57,6 +57,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         this((int) parseLong(propertiesStr, "speedBits", 5),
                 parseDouble(propertiesStr, "speedFactor", 5),
                 parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+        this.setBlockFords(parseBoolean(propertiesStr, "blockFords", true));
     }
 
     public CarFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
@@ -69,6 +70,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         restrictedValues.add("no");
         restrictedValues.add("restricted");
         restrictedValues.add("delivery");
+        restrictedValues.add("military");
 
         intendedValues.add("yes");
         intendedValues.add("permissive");
@@ -100,6 +102,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         badSurfaceSpeedMap.add("ground");
         badSurfaceSpeedMap.add("grass");
 
+        maxPossibleSpeed = 100;
+        
         // autobahn
         defaultSpeedMap.put("motorway", 100);
         defaultSpeedMap.put("motorway_link", 70);
@@ -135,7 +139,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     {
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
-        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, defaultSpeedMap.get("secondary"), defaultSpeedMap.get("motorway"));
+        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, defaultSpeedMap.get("secondary"), 
+                                              maxPossibleSpeed);
         return shift + speedEncoder.getBits();
     }
 
@@ -144,7 +149,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         String highwayValue = way.getTag("highway");
         Integer speed = defaultSpeedMap.get(highwayValue);
         if (speed == null)
-            throw new IllegalStateException(toString() + ", no speed found for:" + highwayValue);
+            throw new IllegalStateException(toString() + ", no speed found for: " + highwayValue + ", tags: " + way);
 
         if (highwayValue.equals("track"))
         {
@@ -236,9 +241,18 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             if (isRoundabout)
                 encoded = setBool(encoded, K_ROUNDABOUT, true);
 
-            if (way.hasTag("oneway", oneways) || isRoundabout)
+            boolean isOneway = way.hasTag("oneway", oneways)
+                    || way.hasTag("vehicle:backward")
+                    || way.hasTag("vehicle:forward")
+                    || way.hasTag("motor_vehicle:backward")
+                    || way.hasTag("motor_vehicle:forward");
+
+            if (isOneway || isRoundabout)
             {
-                if (way.hasTag("oneway", "-1"))
+                boolean isBackward = way.hasTag("oneway", "-1")
+                        || way.hasTag("vehicle:forward", "no")
+                        || way.hasTag("motor_vehicle:forward", "no");
+                if (isBackward)
                     encoded |= backwardBit;
                 else
                     encoded |= forwardBit;

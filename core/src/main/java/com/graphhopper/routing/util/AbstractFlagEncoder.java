@@ -17,18 +17,12 @@
  */
 package com.graphhopper.routing.util;
 
-import java.util.Collection;
-import java.util.HashSet;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.graphhopper.reader.OSMNode;
-import com.graphhopper.reader.OSMReader;
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.util.*;
 import java.util.*;
 
@@ -44,7 +38,7 @@ import java.util.*;
 public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncoder
 {
     private final static Logger logger = LoggerFactory.getLogger(AbstractFlagEncoder.class);
-
+    private final static int K_FORWARD = 0, K_BACKWARD = 1;
     /* Edge Flag Encoder fields */
     private long nodeBitMask;
     private long wayBitMask;
@@ -57,6 +51,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     // bit to signal that way is accepted
     protected long acceptBit;
     protected long ferryBit;
+
+    // This value determines the maximal possible speed of any road regardless the maxspeed value
+    // lower values allow more compact representation of the routing graph
+    protected int maxPossibleSpeed;
 
     private EncodedValue turnCostEncoder;
     private long turnRestrictionBit;
@@ -230,10 +228,15 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                 return directionBitMask;
         }
 
+        // In case explicit flag ford=no, don't block
         if (blockFords
                 && (node.hasTag("highway", "ford") || node.hasTag("ford"))
-                && !node.hasTag(restrictions, intendedValues))
+                && !node.hasTag(restrictions, intendedValues)
+                && !node.hasTag("ford", "no"))
+        {
             return directionBitMask;
+
+        }
 
         return 0;
     }
@@ -644,6 +647,18 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     @Override
+    public boolean isBackward( long flags )
+    {
+        return (flags & backwardBit) != 0;
+    }
+
+    @Override
+    public boolean isForward( long flags )
+    {
+        return (flags & forwardBit) != 0;
+    }
+
+    @Override
     public long setBool( long flags, int key, boolean value )
     {
         switch (key)
@@ -665,9 +680,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         switch (key)
         {
             case K_FORWARD:
-                return (flags & forwardBit) != 0;
+                return isForward(flags);
             case K_BACKWARD:
-                return (flags & backwardBit) != 0;
+                return isBackward(flags);
             case K_ROUNDABOUT:
                 return (flags & roundaboutBit) != 0;
             default:

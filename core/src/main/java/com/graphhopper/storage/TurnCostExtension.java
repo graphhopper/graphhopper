@@ -65,7 +65,7 @@ public class TurnCostExtension implements GraphExtension
 
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
-        this.turnCosts = this.graph.getDirectory().find("turnCosts");
+        this.turnCosts = this.graph.getDirectory().find("turn_costs");
     }
 
     private int nextTurnCostEntryIndex()
@@ -81,9 +81,10 @@ public class TurnCostExtension implements GraphExtension
     }
 
     @Override
-    public void create( long initBytes )
+    public TurnCostExtension create( long initBytes )
     {
         turnCosts.create((long) initBytes * turnCostsEntryBytes);
+        return this;
     }
 
     @Override
@@ -247,6 +248,12 @@ public class TurnCostExtension implements GraphExtension
         clonedTC.turnCostsCount = turnCostsCount;
 
         return clonedStorage;
+    }
+
+    @Override
+    public boolean isClosed()
+    {
+        return turnCosts.isClosed();
     }
 
     @Override

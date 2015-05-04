@@ -119,7 +119,7 @@ public class GHResponse
         return distance;
     }
 
-    public GHResponse setMillis( long timeInMillis )
+    public GHResponse setTime( long timeInMillis )
     {
         this.time = timeInMillis;
         return this;
@@ -127,9 +127,20 @@ public class GHResponse
 
     /**
      * @return time in millis
+     * @deprecated use getTime instead
      */
     public long getMillis()
     {
+        check("getMillis");
+        return time;
+    }
+
+    /**
+     * @return time in millis
+     */
+    public long getTime()
+    {
+        check("getTimes");
         return time;
     }
 
@@ -156,7 +167,7 @@ public class GHResponse
     public BBox calcRouteBBox( BBox _fallback )
     {
         check("calcRouteBBox");
-        BBox bounds = BBox.INVERSE.clone();
+        BBox bounds = BBox.createInverse(_fallback.hasElevation());
         int len = list.getSize();
         if (len == 0)
             return _fallback;
@@ -165,17 +176,14 @@ public class GHResponse
         {
             double lat = list.getLatitude(i);
             double lon = list.getLongitude(i);
-            if (lat > bounds.maxLat)
-                bounds.maxLat = lat;
-
-            if (lat < bounds.minLat)
-                bounds.minLat = lat;
-
-            if (lon > bounds.maxLon)
-                bounds.maxLon = lon;
-
-            if (lon < bounds.minLon)
-                bounds.minLon = lon;
+            if (bounds.hasElevation())
+            {
+                double ele = list.getEle(i);
+                bounds.update(lat, lon, ele);
+            } else
+            {
+                bounds.update(lat, lon);
+            }
         }
         return bounds;
     }

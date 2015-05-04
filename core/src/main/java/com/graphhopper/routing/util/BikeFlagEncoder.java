@@ -37,6 +37,7 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
         this((int) parseLong(propertiesStr, "speedBits", 4),
                 parseDouble(propertiesStr, "speedFactor", 2),
                 parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+        this.setBlockFords(parseBoolean(propertiesStr, "blockFords", true));
     }
 
     public BikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
@@ -68,6 +69,7 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
         String highway = way.getTag("highway");
         String trackType = way.getTag("tracktype");
         return way.hasTag("highway", pushingSections)
+                || way.hasTag("railway", "platform")
                 || "track".equals(highway) && trackType != null && !"grade1".equals(trackType);
     }
 

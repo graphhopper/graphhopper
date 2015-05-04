@@ -28,7 +28,7 @@ import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TestAlgoCollector.OneRun;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.LocationIndexTreeSC;
+import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
@@ -92,6 +92,57 @@ public class RoutingAlgorithmIT
 
         assertEquals(43.736989, g.getNodeAccess().getLat(10), 1e-6);
         assertEquals(7.429758, g.getNodeAccess().getLon(201), 1e-6);
+    }
+
+    @Test
+    public void testMonacoAllAlgorithmsWithBaseGraph()
+    {
+        String vehicle = "car";
+        String graphFile = "target/monaco-gh";
+        String osmFile = "files/monaco.osm.gz";
+        String importVehicles = vehicle;
+
+        Helper.removeDir(new File(graphFile));
+        GraphHopper hopper = new GraphHopper().
+                // avoid that path.getDistance is too different to path.getPoint.calcDistance
+                setWayPointMaxDistance(0).
+                setOSMFile(osmFile).
+                setCHEnable(false).
+                setGraphHopperLocation(graphFile).
+                setEncodingManager(new EncodingManager(importVehicles));
+
+        hopper.importOrLoad();
+
+        FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
+        Weighting weighting = hopper.createWeighting(new WeightingMap("shortest"), encoder);
+
+        List<AlgoHelperEntry> prepares = createAlgos(hopper.getGraph(), hopper.getLocationIndex(),
+                encoder, true, TraversalMode.NODE_BASED, weighting, hopper.getEncodingManager());
+        AlgoHelperEntry chPrepare = prepares.get(prepares.size() - 1);
+        if (!(chPrepare.getQueryGraph() instanceof LevelGraph))
+            throw new IllegalStateException("Last prepared queryGraph has to be a levelGraph");
+
+        // set all normal algorithms to baseGraph of already prepared to see if all algorithms still work
+        Graph baseGraphOfCHPrepared = chPrepare.getQueryGraph().getBaseGraph();
+        for (AlgoHelperEntry ahe : prepares)
+        {
+            if (!(ahe.getQueryGraph() instanceof LevelGraph))
+            {
+                ahe.setQueryGraph(baseGraphOfCHPrepared);
+            }
+        }
+
+        List<OneRun> forEveryAlgo = createMonacoCar();
+        EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
+        for (AlgoHelperEntry entry : prepares)
+        {
+            LocationIndex idx = entry.getIdx();
+            for (OneRun oneRun : forEveryAlgo)
+            {
+                List<QueryResult> list = oneRun.getList(idx, edgeFilter);
+                testCollector.assertDistance(entry, list, oneRun);
+            }
+        }
     }
 
     @Test
@@ -191,10 +242,10 @@ public class RoutingAlgorithmIT
                 createMonacoFoot(), "FOOT", true, "FOOT", "shortest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
-        // see testMonaco for similar ID test
-        assertEquals(GHUtility.asSet(2, 906, 570), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
-        assertEquals(GHUtility.asSet(443, 952, 739), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(440)));
-        assertEquals(GHUtility.asSet(909, 580, 912), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(911)));
+        // see testMonaco for a similar ID test
+        assertEquals(GHUtility.asSet(2, 908, 570), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
+        assertEquals(GHUtility.asSet(443, 954, 739), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(440)));
+        assertEquals(GHUtility.asSet(910, 403, 122, 913), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(911)));
 
         assertEquals(43.743705, g.getNodeAccess().getLat(100), 1e-6);
         assertEquals(7.426362, g.getNodeAccess().getLon(701), 1e-6);
@@ -609,7 +660,7 @@ public class RoutingAlgorithmIT
         hopper.close();
     }
 
-    public static Collection<AlgoHelperEntry> createAlgos( Graph g,
+    static List<AlgoHelperEntry> createAlgos( Graph g,
             LocationIndex idx, final FlagEncoder encoder, boolean withCh,
             final TraversalMode tMode, final Weighting weighting, final EncodingManager manager )
     {
@@ -628,9 +679,10 @@ public class RoutingAlgorithmIT
         {
             final LevelGraph graphCH = (LevelGraph) ((GraphStorage) g).copyTo(new GraphBuilder(manager).
                     set3D(g.getNodeAccess().is3D()).levelGraphCreate());
-            final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(graphCH, encoder, weighting, tMode);
+            final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT), 
+                    graphCH, encoder, weighting, tMode);
             prepareCH.doWork();
-            LocationIndex idxCH = new LocationIndexTreeSC(graphCH, new RAMDirectory()).prepareIndex();
+            LocationIndex idxCH = new LocationIndexTree(graphCH.getBaseGraph(), new RAMDirectory()).prepareIndex();
             prepare.add(new AlgoHelperEntry(graphCH, dijkstrabiOpts, idxCH)
             {
                 @Override

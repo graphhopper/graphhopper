@@ -36,12 +36,15 @@ import org.junit.Before;
  */
 public class QueryGraphTest
 {
-    private final EncodingManager encodingManager = new EncodingManager("CAR");
+    private EncodingManager encodingManager;
+    private FlagEncoder carEncoder;
     private GraphStorage g;
 
     @Before
     public void setUp()
     {
+        carEncoder = new CarFlagEncoder();
+        encodingManager = new EncodingManager(carEncoder);
         g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
     }
 
@@ -325,8 +328,7 @@ public class QueryGraphTest
         // | x
         // 0<-\
         // |
-        // 1
-        FlagEncoder carEncoder = encodingManager.getSingle();
+        // 1        
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 0);
         na.setNode(1, 0, -0.001);
@@ -349,12 +351,12 @@ public class QueryGraphTest
         assertEquals(2, GHUtility.count(ee.setBaseNode(qr.getClosestNode())));
         EdgeIterator iter = ee.setBaseNode(qr.getClosestNode());
         iter.next();
-        assertTrue(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
-        assertFalse(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
+        assertTrue(iter.toString(), carEncoder.isForward(iter.getFlags()));
+        assertFalse(iter.toString(), carEncoder.isBackward(iter.getFlags()));
 
         iter.next();
-        assertFalse(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
-        assertTrue(iter.toString(), carEncoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
+        assertFalse(iter.toString(), carEncoder.isForward(iter.getFlags()));
+        assertTrue(iter.toString(), carEncoder.isBackward(iter.getFlags()));
     }
 
     @Test
@@ -520,13 +522,13 @@ public class QueryGraphTest
         QueryGraph qGraph = new QueryGraph(graphWithTurnCosts);
         FastestWeighting weighting = new FastestWeighting(encoder);
         TurnWeighting turnWeighting = new TurnWeighting(weighting, encoder, (TurnCostExtension) qGraph.getExtension());
-        
+
         assertEquals(0, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
 
         // now use turn costs and QueryGraph
         turnExt.addTurnInfo(edge0.getEdge(), 1, edge1.getEdge(), encoder.getTurnFlags(false, 10));
         assertEquals(10, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
-        
+
         QueryResult res1 = createLocationResult(0.000, 0.005, edge0, 0, QueryResult.Position.EDGE);
         QueryResult res2 = createLocationResult(0.005, 0.010, edge1, 0, QueryResult.Position.EDGE);
 

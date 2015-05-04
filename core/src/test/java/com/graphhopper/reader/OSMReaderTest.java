@@ -172,8 +172,8 @@ public class OSMReaderTest
         assertEquals(n50, iter.getAdjNode());
         AbstractGraphStorageTester.assertPList(Helper.createPointList(51.25, 9.43), iter.fetchWayGeometry(0));
         FlagEncoder flags = carEncoder;
-        assertTrue(flags.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
-        assertTrue(flags.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
+        assertTrue(flags.isForward(iter.getFlags()));
+        assertTrue(flags.isBackward(iter.getFlags()));
 
         assertTrue(iter.next());
         assertEquals("route 666", iter.getName());
@@ -185,8 +185,8 @@ public class OSMReaderTest
         assertEquals(n10, iter.getAdjNode());
         assertEquals(88643, iter.getDistance(), 1);
 
-        assertTrue(flags.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
-        assertTrue(flags.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
+        assertTrue(flags.isForward(iter.getFlags()));
+        assertTrue(flags.isBackward(iter.getFlags()));
         assertFalse(iter.next());
 
         // get third added location id=30
@@ -292,27 +292,27 @@ public class OSMReaderTest
         iter = carAllExplorer.setBaseNode(n20);
         assertTrue(iter.next());
         assertEquals(n23, iter.getAdjNode());
-        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
-        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
+        assertTrue(encoder.isForward(iter.getFlags()));
+        assertFalse(encoder.isBackward(iter.getFlags()));
 
         assertTrue(iter.next());
         assertEquals(n22, iter.getAdjNode());
-        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
-        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
+        assertFalse(encoder.isForward(iter.getFlags()));
+        assertTrue(encoder.isBackward(iter.getFlags()));
 
         assertTrue(iter.next());
-        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
-        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
+        assertFalse(encoder.isForward(iter.getFlags()));
+        assertTrue(encoder.isBackward(iter.getFlags()));
 
         assertTrue(iter.next());
         assertEquals(n30, iter.getAdjNode());
-        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
-        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
+        assertTrue(encoder.isForward(iter.getFlags()));
+        assertFalse(encoder.isBackward(iter.getFlags()));
 
         assertTrue(iter.next());
         assertEquals(n10, iter.getAdjNode());
-        assertFalse(encoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD));
-        assertTrue(encoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD));
+        assertFalse(encoder.isForward(iter.getFlags()));
+        assertTrue(encoder.isBackward(iter.getFlags()));
     }
 
     @Test

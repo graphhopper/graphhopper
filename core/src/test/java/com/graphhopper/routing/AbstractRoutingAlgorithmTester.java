@@ -21,12 +21,12 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.LocationIndexTreeSC;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
 import java.util.Random;
 import static org.junit.Assert.*;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -38,9 +38,18 @@ public abstract class AbstractRoutingAlgorithmTester
     // problem is: matrix graph is expensive to create to cache it in a static variable
     private static Graph matrixGraph;
     protected static final EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
-    protected FlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
-    protected FlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
-    protected AlgorithmOptions defaultOpts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(new ShortestWeighting()).build();
+    protected FlagEncoder carEncoder;
+    protected FlagEncoder footEncoder;
+    protected AlgorithmOptions defaultOpts;
+
+    @Before
+    public void setUp()
+    {
+        carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
+        footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
+        defaultOpts = AlgorithmOptions.start().flagEncoder(carEncoder).
+                weighting(new ShortestWeighting()).build();
+    }
 
     protected Graph createGraph( EncodingManager em, boolean is3D )
     {
@@ -75,7 +84,7 @@ public abstract class AbstractRoutingAlgorithmTester
     }
 
     @Test
-    public void testCalcShortestPathWithLimit()
+    public void testWeightLimit()
     {
         Graph graph = createTestGraph();
         RoutingAlgorithm algo = createAlgo(graph);
@@ -86,26 +95,43 @@ public abstract class AbstractRoutingAlgorithmTester
         assertEquals(p.toString(), Helper.createTList(), p.calcNodes());
     }
 
+    @Test
+    public void testWeightLimit_issue380()
+    {
+        Graph graph = createGraph(false);
+        initGraphWeightLimit(graph);
+        RoutingAlgorithm algo = createAlgo(graph);
+        algo.setWeightLimit(3);
+        Path p = algo.calcPath(0, 4);
+        assertTrue(p.isFound());
+        assertEquals(3.0, p.getWeight(), 1e-6);
+
+        algo = createAlgo(graph);
+        algo.setWeightLimit(3);
+        p = algo.calcPath(0, 3);
+        assertTrue(p.isFound());
+        assertEquals(3.0, p.getWeight(), 1e-6);
+    }
+
     // see calc-fastest-graph.svg
     @Test
     public void testCalcFastestPath()
     {
         Graph graphShortest = createGraph(false);
-        initDirectedAndDiffSpeed(graphShortest);
-        Path p1 = createAlgo(graphShortest, defaultOpts).
-                calcPath(0, 3);
+        initDirectedAndDiffSpeed(graphShortest, carEncoder);
+        Path p1 = createAlgo(graphShortest, defaultOpts).calcPath(0, 3);
         assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(p1.toString(), 402.293, p1.getDistance(), 1e-6);
-        assertEquals(p1.toString(), 144823, p1.getMillis());
+        assertEquals(p1.toString(), 144823, p1.getTime());
 
         Graph graphFastest = createGraph(false);
-        initDirectedAndDiffSpeed(graphFastest);
+        initDirectedAndDiffSpeed(graphFastest, carEncoder);
         Path p2 = createAlgo(graphFastest,
                 AlgorithmOptions.start().flagEncoder(carEncoder).weighting(new FastestWeighting(carEncoder)).build()).
                 calcPath(0, 3);
         assertEquals(Helper.createTList(0, 4, 6, 7, 5, 3), p2.calcNodes());
         assertEquals(p2.toString(), 1261.714, p2.getDistance(), 1e-6);
-        assertEquals(p2.toString(), 111437, p2.getMillis());
+        assertEquals(p2.toString(), 111437, p2.getTime());
     }
 
     // 0-1-2-3
@@ -113,28 +139,28 @@ public abstract class AbstractRoutingAlgorithmTester
     // 4-5-- |
     // |/ \--7
     // 6----/
-    void initDirectedAndDiffSpeed( Graph graph )
+    protected void initDirectedAndDiffSpeed( Graph graph, FlagEncoder enc )
     {
-        graph.edge(0, 1).setFlags(carEncoder.setProperties(10, true, false));
-        graph.edge(0, 4).setFlags(carEncoder.setProperties(100, true, false));
+        graph.edge(0, 1).setFlags(enc.setProperties(10, true, false));
+        graph.edge(0, 4).setFlags(enc.setProperties(100, true, false));
 
-        graph.edge(1, 4).setFlags(carEncoder.setProperties(10, true, true));
-        graph.edge(1, 5).setFlags(carEncoder.setProperties(10, true, true));
-        EdgeIteratorState edge12 = graph.edge(1, 2).setFlags(carEncoder.setProperties(10, true, true));
+        graph.edge(1, 4).setFlags(enc.setProperties(10, true, true));
+        graph.edge(1, 5).setFlags(enc.setProperties(10, true, true));
+        EdgeIteratorState edge12 = graph.edge(1, 2).setFlags(enc.setProperties(10, true, true));
 
-        graph.edge(5, 2).setFlags(carEncoder.setProperties(10, true, false));
-        graph.edge(2, 3).setFlags(carEncoder.setProperties(10, true, false));
+        graph.edge(5, 2).setFlags(enc.setProperties(10, true, false));
+        graph.edge(2, 3).setFlags(enc.setProperties(10, true, false));
 
-        EdgeIteratorState edge53 = graph.edge(5, 3).setFlags(carEncoder.setProperties(20, true, false));
-        graph.edge(3, 7).setFlags(carEncoder.setProperties(10, true, false));
+        EdgeIteratorState edge53 = graph.edge(5, 3).setFlags(enc.setProperties(20, true, false));
+        graph.edge(3, 7).setFlags(enc.setProperties(10, true, false));
 
-        graph.edge(4, 6).setFlags(carEncoder.setProperties(100, true, false));
-        graph.edge(5, 4).setFlags(carEncoder.setProperties(10, true, false));
+        graph.edge(4, 6).setFlags(enc.setProperties(100, true, false));
+        graph.edge(5, 4).setFlags(enc.setProperties(10, true, false));
 
-        graph.edge(5, 6).setFlags(carEncoder.setProperties(10, true, false));
-        graph.edge(7, 5).setFlags(carEncoder.setProperties(100, true, false));
+        graph.edge(5, 6).setFlags(enc.setProperties(10, true, false));
+        graph.edge(7, 5).setFlags(enc.setProperties(100, true, false));
 
-        graph.edge(6, 7).setFlags(carEncoder.setProperties(100, true, true));
+        graph.edge(6, 7).setFlags(enc.setProperties(100, true, true));
 
         updateDistancesFor(graph, 0, 0.002, 0);
         updateDistancesFor(graph, 1, 0.002, 0.001);
@@ -154,14 +180,15 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         Graph graphShortest = createGraph(false);
         initFootVsCar(graphShortest);
-        Path p1 = createAlgo(graphShortest, AlgorithmOptions.start().flagEncoder(footEncoder).weighting(new ShortestWeighting()).build()).
+        Path p1 = createAlgo(graphShortest, AlgorithmOptions.start().flagEncoder(footEncoder).
+                weighting(new ShortestWeighting()).build()).
                 calcPath(0, 7);
         assertEquals(p1.toString(), 17000, p1.getDistance(), 1e-6);
-        assertEquals(p1.toString(), 12240 * 1000, p1.getMillis());
+        assertEquals(p1.toString(), 12240 * 1000, p1.getTime());
         assertEquals(Helper.createTList(0, 4, 5, 7), p1.calcNodes());
     }
 
-    void initFootVsCar( Graph graph )
+    protected void initFootVsCar( Graph graph )
     {
         graph.edge(0, 1).setDistance(7000).setFlags(footEncoder.setProperties(5, true, true) | carEncoder.setProperties(10, true, false));
         graph.edge(0, 4).setDistance(5000).setFlags(footEncoder.setProperties(5, true, true) | carEncoder.setProperties(20, true, false));
@@ -591,7 +618,7 @@ public abstract class AbstractRoutingAlgorithmTester
     public void testQueryGraphAndFastest()
     {
         Graph graph = createGraph(false);
-        initDirectedAndDiffSpeed(graph);
+        initDirectedAndDiffSpeed(graph, carEncoder);
         Path p = calcPathViaQuery("fastest", graph, 0.002, 0.0005, 0.0017, 0.0031);
         assertEquals(Helper.createTList(9, 1, 5, 3, 8), p.calcNodes());
         assertEquals(602.98, p.getDistance(), 1e-1);
@@ -605,12 +632,7 @@ public abstract class AbstractRoutingAlgorithmTester
 
     Path calcPathViaQuery( String weighting, Graph graph, double fromLat, double fromLon, double toLat, double toLon )
     {
-        LocationIndex index;
-        if (graph instanceof LevelGraph)
-            index = new LocationIndexTreeSC((LevelGraph) graph, new RAMDirectory());
-        else
-            index = new LocationIndexTree(graph, new RAMDirectory());
-
+        LocationIndex index = new LocationIndexTree(graph.getBaseGraph(), new RAMDirectory());
         index.prepareIndex();
         QueryResult from = index.findClosest(fromLat, fromLon, EdgeFilter.ALL_EDGES);
         QueryResult to = index.findClosest(toLat, toLon, EdgeFilter.ALL_EDGES);
@@ -673,7 +695,7 @@ public abstract class AbstractRoutingAlgorithmTester
         // of the speed and read 0 => infinity weight => overflow of millis => negative millis!
         Path p = createAlgo(graph, AlgorithmOptions.start().flagEncoder(encoder).weighting(new FastestWeighting(encoder)).build()).calcPath(0, 10);
 //        assertEquals(Helper.createTList(13, 0, 1, 2, 11, 7, 10, 12), p.calcNodes());
-        assertEquals(85124371, p.getMillis());
+        assertEquals(85124371, p.getTime());
         assertEquals(425622, p.getDistance(), 1);
         assertEquals(85124.4, p.getWeight(), 1);
     }
@@ -747,7 +769,7 @@ public abstract class AbstractRoutingAlgorithmTester
         QueryGraph qGraph = new QueryGraph(graph).lookup(from, to);
         p = factory.createAlgo(qGraph, opts).calcPath(from.getClosestNode(), to.getClosestNode());
         assertEquals(Helper.createTList(13, 0, 1, 2, 11, 7, 10, 12), p.calcNodes());
-        assertEquals(37009621, p.getMillis());
+        assertEquals(37009621, p.getTime());
         assertEquals(616827, p.getDistance(), 1);
         assertEquals(493462, p.getWeight(), 1);
     }
@@ -792,6 +814,30 @@ public abstract class AbstractRoutingAlgorithmTester
         updateDistancesFor(g, 11, 2, 2);
         updateDistancesFor(g, 7, 1, 2);
         updateDistancesFor(g, 10, 0, 2);
+        return g;
+    }
+
+    public static Graph initGraphWeightLimit( Graph g )
+    {
+        //      0----1
+        //     /     |
+        //    7--    |
+        //   /   |   |
+        //   6---5   |
+        //   |   |   |
+        //   4---3---2
+
+        g.edge(0, 1, 1, true);
+        g.edge(1, 2, 1, true);
+
+        g.edge(3, 2, 1, true);
+        g.edge(3, 5, 1, true);
+        g.edge(5, 7, 1, true);
+        g.edge(3, 4, 1, true);
+        g.edge(4, 6, 1, true);
+        g.edge(6, 7, 1, true);
+        g.edge(6, 5, 1, true);
+        g.edge(0, 7, 1, true);
         return g;
     }
 

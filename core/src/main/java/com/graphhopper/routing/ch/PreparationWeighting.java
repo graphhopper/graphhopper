@@ -37,13 +37,13 @@ public class PreparationWeighting implements Weighting
     }
 
     @Override
-    public double getMinWeight( double distance )
+    public final double getMinWeight( double distance )
     {
         return userWeighting.getMinWeight(distance);
     }
 
     @Override
-    public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId)
+    public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId )
     {
         if (edgeState instanceof EdgeSkipIterState)
         {
@@ -59,10 +59,5 @@ public class PreparationWeighting implements Weighting
     public String toString()
     {
         return "PREPARE+" + userWeighting.toString();
-    }
-
-    Weighting getUserWeighting()
-    {
-        return userWeighting;
     }
 }

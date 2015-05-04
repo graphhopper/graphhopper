@@ -1,15 +1,14 @@
 # do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
 
-sharp_left=scharf links
-sharp_right=scharf rechts
-left=links
-right=rechts
-slight_left=leicht links
-slight_right=leicht rechts
 continue=geradeaus
 continue_onto=geradeaus auf %1$s
-turn=%1$s abbiegen
-turn_onto=%1$s abbiegen auf %2$s
+turn_left=links abbiegen
+turn_right=rechts abbiegen
+turn_slight_left=leicht links abbiegen
+turn_slight_right=leicht rechts abbiegen
+turn_sharp_left=scharf links abbiegen
+turn_sharp_right=scharf rechts abbiegen
+turn_onto=%1$s auf %2$s
 web.searchButton=Suche
 web.fromHint=Von
 web.viaHint=Über
@@ -41,9 +40,6 @@ way=Weg
 paved=befestigt
 unpaved=unbefestigt
 stopover=Zwischenziel %1$s
-roundaboutInstruction=In den Kreisverkehr einfahren und Ausfahrt %1$s nehmen
-roundaboutInstructionWithDir=In den Kreisverkehr einfahren und Ausfahrt %1$s in Richtung %2$s nehmen
-roundaboutInstructionOnto=In den Kreisverkehr einfahren und Ausfahrt %1$s auf %2$s nehmen
 roundaboutEnter=In den Kreisverkehr einfahren
 roundaboutExit=Im Kreisverkehr Ausfahrt %1$s nehmen
 roundaboutExitOnto=Im Kreisverkehr Ausfahrt %1$s auf %2$s nehmen

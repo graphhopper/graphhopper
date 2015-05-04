@@ -40,7 +40,7 @@ graph.flush();
 ...
 GraphStorage graph = gb.load();
 // Load index
-LocationIndex index = new LocationIndexTree(graph, new RAMDirectory("graphhopper-folder", true));
+LocationIndex index = new LocationIndexTree(graph.getBaseGraph(), new RAMDirectory("graphhopper-folder", true));
 if (!index.loadExisting())
     throw new IllegalStateException("location index cannot be loaded!");
 ```
@@ -50,7 +50,9 @@ if (!index.loadExisting())
 ```java
 QueryResult fromQR = index.findClosest(latitudeFrom, longituteFrom, EdgeFilter.ALL_EDGES);
 QueryResult toQR = index.findID(latitudeTo, longituteTo, EdgeFilter.ALL_EDGES);
-Path path = new Dijkstra(graph, encoder).calcPath(fromQR, toQR);
+QueryGraph queryGraph = new QueryGraph(graph);
+queryGraph.lookup(fromQR, toQR);
+Path path = new Dijkstra(queryGraph, encoder).calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
 ```
 
 ### Calculate Path without LocationIndex
@@ -69,13 +71,14 @@ GraphBuilder gb = new GraphBuilder(em).
     setStore(true).
     setLevelGraph(true);
 GraphStorage graph = gb.create();
-// Make a weighted edge between two nodes.
+// Create a new edge between two nodes, set access, distance, speed, geometry, ..
 EdgeIteratorState edge = graph.edge(fromId, toId);
 ...
 
 // Prepare the graph for fast querying ...
-PrepareContractionHierarchies pch = new PrepareContractionHierarchies();
-pch.setGraph(graph).doWork();
+TraversalMode tMode = TraversalMode.NODE_BASED;
+PrepareContractionHierarchies pch = new PrepareContractionHierarchies(graph, encoder, weighting, tMode);
+pch.doWork();
 
 // flush after preparation!
 graph.flush();
@@ -84,15 +87,20 @@ graph.flush();
 GraphStorage graph = gb.load();
 
  // Load index
-Location2IDIndex index = new LocationIndexTreeSC(graph, new RAMDirectory("graphhopper-folder", true));
+LocationIndex index = new LocationIndexTree(graph.getBaseGraph(), new RAMDirectory("graphhopper-folder", true));
 if (!index.loadExisting())
     throw new IllegalStateException("location2id index cannot be loaded!");
-
-// create the algorithm using the PrepareContractionHierarchies object
-RoutingAlgorithm algorithm = pch.createAlgo();
 
 // calculate path is identical
 QueryResult fromQR = index.findClosest(latitudeFrom, longituteFrom, EdgeFilter.ALL_EDGES);
 QueryResult toQR = index.findID(latitudeTo, longituteTo, EdgeFilter.ALL_EDGES);
-Path path = new Dijkstra(graph, encoder).calcPath(fromQR, toQR);
+QueryGraph queryGraph = new QueryGraph(graph);
+queryGraph.lookup(fromQR, toQR);
+
+// create the algorithm using the PrepareContractionHierarchies object
+AlgorithmOptions algoOpts = AlgorithmOptions.start().
+   algorithm(AlgorithmOptions.DIJKSTRA_BI).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).
+   build();
+RoutingAlgorithm algorithm = pch.createAlgo(queryGraph, algoOpts);
+Path path = algorithm.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
 ```

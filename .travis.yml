@@ -9,3 +9,6 @@ script: ./core/files/travis-build.sh
 notifications:
   email:
     - github@graphhopper.com
+
+# enable container-based stack
+sudo: false

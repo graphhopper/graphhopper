@@ -22,7 +22,10 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.shapes.GHPoint;
 import java.io.File;
+import java.util.List;
+import java.util.Map;
 import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -70,7 +73,7 @@ public class GraphHopperServletIT extends BaseServletTester
     {
         JSONObject json = query("point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false");
         JSONObject cson = json.getJSONArray("paths").getJSONObject(0).getJSONObject("points");
-        assertTrue("unexpected precision!", cson.toString().indexOf("[1.536374,42.554839]") >= 0);
+        assertTrue("unexpected precision!", cson.toString().contains("[1.536374,42.554839]"));
     }
 
     @Test
@@ -86,11 +89,24 @@ public class GraphHopperServletIT extends BaseServletTester
     public void testGraphHopperWeb() throws Exception
     {
         GraphHopperAPI hopper = new GraphHopperWeb();
-        assertTrue(hopper.load(getTestAPIUrl()));
+        assertTrue(hopper.load(getTestRouteAPIUrl()));
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128));
         assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
         assertTrue("distance wasn't correct:" + rsp.getDistance(), rsp.getDistance() > 9000);
         assertTrue("distance wasn't correct:" + rsp.getDistance(), rsp.getDistance() < 9500);
+
+        rsp = hopper.route(new GHRequest().
+                addPoint(new GHPoint(42.554851, 1.536198)).
+                addPoint(new GHPoint(42.531896, 1.553278)).
+                addPoint(new GHPoint(42.510071, 1.548128)));
+        assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
+        assertTrue("distance wasn't correct:" + rsp.getDistance(), rsp.getDistance() > 20000);
+        assertTrue("distance wasn't correct:" + rsp.getDistance(), rsp.getDistance() < 21000);
+
+        List<Map<String, Object>> instructions = rsp.getInstructions().createJson();
+        assertEquals(23, instructions.size());
+        assertEquals("Continue onto la Callisa", instructions.get(0).get("text"));
+        assertEquals("At roundabout, take exit 2", instructions.get(3).get("text"));
     }
 
     @Test
@@ -100,7 +116,7 @@ public class GraphHopperServletIT extends BaseServletTester
         Throwable ex;
 
         GraphHopperAPI hopper = new GraphHopperWeb();
-        assertTrue(hopper.load(getTestAPIUrl()));
+        assertTrue(hopper.load(getTestRouteAPIUrl()));
 
         // IllegalStateException (Wrong Request)
         rsp = hopper.route(new GHRequest());
@@ -108,7 +124,7 @@ public class GraphHopperServletIT extends BaseServletTester
 
         ex = rsp.getErrors().get(0);
         assertTrue("Wrong Exception found: " + ex.getClass().getName()
-            + ", IllegalStateException expected.", ex instanceof IllegalStateException);
+                + ", IllegalStateException expected.", ex instanceof IllegalStateException);
 
         // IllegalArgumentException (Wrong Points)
         rsp = hopper.route(new GHRequest(0.0, 0.0, 0.0, 0.0));

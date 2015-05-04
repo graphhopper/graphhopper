@@ -45,7 +45,7 @@ public class Path
     protected double distance;
     // we go upwards (via EdgeEntry.parent) from the goal node to the origin node
     protected boolean reverseOrder = true;
-    protected long millis;
+    protected long time;
     private boolean found;
     protected EdgeEntry edgeEntry;
     final StopWatch extractSW = new StopWatch("extract");
@@ -142,10 +142,19 @@ public class Path
 
     /**
      * @return time in millis
+     * @deprecated use getTime instead
      */
     public long getMillis()
     {
-        return millis;
+        return time;
+    }
+
+    /**
+     * @return time in millis
+     */
+    public long getTime()
+    {
+        return time;
     }
 
     /**
@@ -206,7 +215,7 @@ public class Path
         EdgeIteratorState iter = graph.getEdgeProps(edgeId, adjNode);
         double dist = iter.getDistance();
         distance += dist;
-        millis += calcMillis(dist, iter.getFlags(), false);
+        time += calcMillis(dist, iter.getFlags(), false);
         addEdge(edgeId);
     }
 
@@ -216,10 +225,10 @@ public class Path
      */
     protected long calcMillis( double distance, long flags, boolean revert )
     {
-        if (revert && !encoder.isBool(flags, FlagEncoder.K_BACKWARD)
-                || !revert && !encoder.isBool(flags, FlagEncoder.K_FORWARD))
+        if (revert && !encoder.isBackward(flags)
+                || !revert && !encoder.isForward(flags))
             throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. "
-                    + "Reverse:" + revert + ", fwd:" + encoder.isBool(flags, FlagEncoder.K_FORWARD) + ", bwd:" + encoder.isBool(flags, FlagEncoder.K_BACKWARD));
+                    + "Reverse:" + revert + ", fwd:" + encoder.isForward(flags) + ", bwd:" + encoder.isBackward(flags));
 
         double speed = revert ? encoder.getReverseSpeed(flags) : encoder.getSpeed(flags);
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
@@ -258,7 +267,7 @@ public class Path
                         + ", array index:" + i + ", edges:" + edgeIds.size());
 
             tmpNode = edgeBase.getBaseNode();
-            // later: more efficient swap
+            // more efficient swap, currently not implemented for virtual edges: visitor.next(edgeBase.detach(true), i);
             edgeBase = graph.getEdgeProps(edgeBase.getEdge(), tmpNode);
             visitor.next(edgeBase, i);
         }
@@ -387,6 +396,7 @@ public class Path
             private double prevLat = nodeAccess.getLatitude(tmpNode);
             private double prevLon = nodeAccess.getLongitude(tmpNode);
             private double doublePrevLat, doublePrevLong; // Lat and Lon of node t-2
+            private int prevNode = -1;
             private double prevOrientation;
             private Instruction prevInstruction;
             private boolean prevInRoundabout = false;
@@ -434,15 +444,27 @@ public class Path
                 } else
                 {
                     if (isRoundabout)
-                        // remark: names and annotations within roundabout are ignored
+                    // remark: names and annotations within roundabout are ignored
                     {
                         if (!prevInRoundabout) //just entered roundabout
                         {
                             int sign = Instruction.USE_ROUNDABOUT;
                             RoundaboutInstruction roundaboutInstruction = new RoundaboutInstruction(sign, name,
-                                                                annotation, new PointList(10, nodeAccess.is3D()));
+                                    annotation, new PointList(10, nodeAccess.is3D()));
                             if (prevName != null)
                             {
+                                // check if there is an exit at the same node the roundabout was entered
+                                EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
+                                while (edgeIter.next())
+                                {
+                                    if ((edgeIter.getAdjNode() != prevNode)
+                                            && !encoder.isBool(edgeIter.getFlags(), FlagEncoder.K_ROUNDABOUT))
+                                    {
+                                        roundaboutInstruction.increaseExitNumber();
+                                        break;
+                                    }
+                                }
+
                                 // previous orientation is last orientation before entering roundabout
                                 prevOrientation = ac.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
 
@@ -463,12 +485,17 @@ public class Path
                             ways.add(prevInstruction);
                         }
 
-                        // Add passed exits to instruction. There is an exit if there are
-                        // at least 2 out-going edges (one continuing in the roundabout)
-                        // This could lead to problems if there are non-complete roundabouts!
+                        // Add passed exits to instruction. A node is countet if there is at least one outgoing edge
+                        // out of the roundabout
                         EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(adjNode);
-                        edgeIter.next();
-                        if (edgeIter.next()) {((RoundaboutInstruction) prevInstruction).increaseExitNumber();}
+                        while (edgeIter.next())
+                        {
+                            if (!encoder.isBool(edgeIter.getFlags(), encoder.K_ROUNDABOUT))
+                            {
+                                ((RoundaboutInstruction) prevInstruction).increaseExitNumber();
+                                break;
+                            }
+                        }
 
                     } else if (prevInRoundabout) //previously in roundabout but not anymore
                     {
@@ -487,9 +514,9 @@ public class Path
                         double deltaOut = (orientation - recentOrientation);
 
                         prevInstruction = ((RoundaboutInstruction) prevInstruction)
-                            .setRadian(deltaInOut)
-                            .setDirOfRotation(deltaOut)
-                            .setExited();
+                                .setRadian(deltaInOut)
+                                .setDirOfRotation(deltaOut)
+                                .setExited();
 
                         prevName = name;
                         prevAnnotation = annotation;
@@ -532,7 +559,7 @@ public class Path
                                 sign = Instruction.TURN_SHARP_RIGHT;
 
                         }
-                        prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()) );
+                        prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
                         ways.add(prevInstruction);
                         prevName = name;
                         prevAnnotation = annotation;
@@ -545,14 +572,15 @@ public class Path
                 {
                     doublePrevLat = prevLat;
                     doublePrevLong = prevLon;
-                }
-                else
+                } else
                 {
                     int beforeLast = wayGeo.getSize() - 2;
                     doublePrevLat = wayGeo.getLatitude(beforeLast);
-                    doublePrevLong =  wayGeo.getLongitude(beforeLast);
+                    doublePrevLong = wayGeo.getLongitude(beforeLast);
                 }
+
                 prevInRoundabout = isRoundabout;
+                prevNode = baseNode;
                 prevLat = adjLat;
                 prevLon = adjLon;
 

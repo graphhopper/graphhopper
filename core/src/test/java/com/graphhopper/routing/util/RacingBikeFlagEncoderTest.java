@@ -74,8 +74,24 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     {
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "service");
+        way.setTag("sac_scale", "mountain_hiking");
+        // disallow
+        assertEquals(0, encoder.acceptWay(way));
+        
+        way.setTag("highway", "path");
         way.setTag("sac_scale", "hiking");
         // disallow
+        assertEquals(0, encoder.acceptWay(way));
+        
+        way.setTag("highway", "cycleway");
+        way.setTag("sac_scale", "hiking");
+        // but allow this as there is no reason for not allowing it
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        // This looks to be tagging error:
+        way.setTag("highway", "cycleway");
+        way.setTag("sac_scale", "mountain_hiking");
+        // we are coutious and disallow this
         assertEquals(0, encoder.acceptWay(way));
     }
 

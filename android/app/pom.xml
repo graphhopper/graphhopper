@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.graphhopper</groupId>
+    <artifactId>graphhopper-android</artifactId>
+    <version>0.5-SNAPSHOT</version>
+    <name>GraphHopper Android</name>
+    <packaging>apk</packaging>    
+    <organization>
+        <name>GraphHopper</name>
+        <url>http://graphhopper.com</url>
+    </organization>
+    
+    <parent>
+        <relativePath>../..</relativePath>
+        <groupId>com.graphhopper</groupId>
+        <artifactId>graphhopper-parent</artifactId>    	
+        <version>0.5-SNAPSHOT</version>
+    </parent>
+    <properties>
+        <mapsforge.version>0.5.1</mapsforge.version>
+        <!-- do not put the properties here as it differs from dev to dev <android.sdk.path>/home/peterk/Programme/android-sdk-linux_x86</android.sdk.path>
+        instead use your IDE to set it up or specify android sdk via command line
+        using -Dandroid.sdk.path=... or by setting environment variable ANDROID_HOME
+        https://github.com/rgladwell/m2e-android/issues/52 -->
+    </properties>    
+    
+    <dependencies>        
+        <dependency>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper</artifactId>
+            <version>${project.parent.version}</version>            
+            <type>jar</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.protobuf</groupId>
+                    <artifactId>protobuf-java</artifactId>                    
+                </exclusion>
+                <exclusion>
+                    <groupId>org.openstreetmap.osmosis</groupId>
+                    <artifactId>osmosis-osm-binary</artifactId>                    
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.xmlgraphics</groupId>
+                    <artifactId>xmlgraphics-commons</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>        
+          
+        <!-- see scripts/maven-install-mapsforge.sh if downloading from
+             maven central does not work (it should). 
+             if we would use system dep it doesn't work (classnotfound). See also script for more infos.
+        -->          
+        <dependency>
+            <groupId>org.mapsforge</groupId>            
+            <artifactId>mapsforge-core</artifactId>
+            <version>${mapsforge.version}</version>
+        </dependency>    
+        <dependency>
+            <groupId>org.mapsforge</groupId>            
+            <artifactId>mapsforge-map</artifactId>
+            <version>${mapsforge.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mapsforge</groupId>            
+            <artifactId>mapsforge-map-android</artifactId>
+            <version>${mapsforge.version}</version>
+        </dependency>        
+        <dependency>
+            <groupId>org.mapsforge</groupId>            
+            <artifactId>mapsforge-map-reader</artifactId>
+            <version>${mapsforge.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-android</artifactId>
+            <version>1.7.10</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.10</version>
+        </dependency>
+
+        <!-- Make sure this is above (!) the android dependencies -->
+        <!--
+        <dependency>
+            <groupId>com.pivotallabs</groupId>
+            <artifactId>robolectric</artifactId>
+            <version>1.1</version>
+            <scope>test</scope>
+        </dependency>
+        -->
+        <dependency>
+            <groupId>com.google.android</groupId>
+            <artifactId>android</artifactId>
+            <version>2.2.1</version>
+            <scope>provided</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>        
+        
+        <plugins>     
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- <compilerArgument>-Xlint:unchecked</compilerArgument>
+                    -->
+                    <source>1.7</source>
+                    <target>1.7</target>
+                </configuration>
+            </plugin>       
+            <plugin>
+                <!-- See http://code.google.com/p/maven-android-plugin/ -->
+                <groupId>com.jayway.maven.plugins.android.generation2</groupId>
+                <artifactId>android-maven-plugin</artifactId>
+                <version>4.0.0-rc.2</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <sdk>
+                        <!-- platform or api level (api level 8 = platform 2.2) -->                        
+                        <platform>10</platform>
+                    </sdk>
+                    <deleteConflictingFiles>true</deleteConflictingFiles>
+                    <undeployBeforeDeploy>true</undeployBeforeDeploy>
+		    
+                    <!--
+                    bug in maven plugin I think
+                    <extractDuplicates>true</extractDuplicates>
+                    -->
+                </configuration>                
+            </plugin>            
+        </plugins>
+    </build>
+    
+    <repositories>        		
+        <!-- Android is in maven central! To install android sdk in a continuos integration environment see http://stackoverflow.com/q/4681697/194609
+        For mapsforge see scripts/maven-install-mapsforge.sh  -->
+    </repositories>
+    
+</project>

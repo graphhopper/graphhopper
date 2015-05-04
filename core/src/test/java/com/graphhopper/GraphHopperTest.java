@@ -74,8 +74,9 @@ public class GraphHopperTest
         assertEquals(3, rsp.getPoints().getSize());
 
         closableInstance.close();
-        closableInstance = new GraphHopper().setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("CAR"));
+
+        // no encoding manager necessary
+        closableInstance = new GraphHopper().setStoreOnFlush(true);
         assertTrue(closableInstance.load(ghLoc));
         rsp = closableInstance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertFalse(rsp.hasErrors());
@@ -230,7 +231,7 @@ public class GraphHopperTest
         GHResponse rsp = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).
                 setAlgorithm(AlgorithmOptions.DIJKSTRA_BI));
         assertFalse(rsp.hasErrors());
-        assertEquals("(51.24921503475044,9.431716451757769), (52.0,9.0), (51.199999850988384,9.39999970197677)", rsp.getPoints().toString());
+        assertEquals(Helper.createPointList(51.249215, 9.431716, 52.0, 9.0, 51.2, 9.4), rsp.getPoints());
         assertEquals(3, rsp.getPoints().getSize());
     }
 
@@ -321,31 +322,36 @@ public class GraphHopperTest
         assertEquals(5, instance.getGraph().getNodes());
         instance.close();
 
-        instance = new GraphHopper().init(
-                new CmdArgs().
-                put("osmreader.osm", testOsm3).
-                put("osmreader.dataaccess", "RAM").
-                put("graph.flagEncoders", "FOOT").
-                put("prepare.chWeighting", "no")).
-                setOSMFile(testOsm3);
+        // different config (flagEncoder list)
         try
         {
-            instance.load(ghLoc);
+            GraphHopper tmpGH = new GraphHopper().init(
+                    new CmdArgs().
+                    put("osmreader.osm", testOsm3).
+                    put("osmreader.dataaccess", "RAM").
+                    put("graph.flagEncoders", "FOOT").
+                    put("prepare.chWeighting", "no")).
+                    setOSMFile(testOsm3);
+            tmpGH.load(ghLoc);
             assertTrue(false);
         } catch (Exception ex)
         {
         }
 
-        // different order should be ok
-        instance = new GraphHopper().init(
-                new CmdArgs().
-                put("osmreader.osm", testOsm3).
-                put("osmreader.dataaccess", "RAM").
-                put("prepare.chWeighting", "no").
-                put("graph.flagEncoders", "CAR,FOOT")).
-                setOSMFile(testOsm3);
-        assertTrue(instance.load(ghLoc));
-        assertEquals(5, instance.getGraph().getNodes());
+        // different order is no longer okay, see #350
+        try
+        {
+            GraphHopper tmpGH = new GraphHopper().init(new CmdArgs().
+                    put("osmreader.osm", testOsm3).
+                    put("osmreader.dataaccess", "RAM").
+                    put("prepare.chWeighting", "no").
+                    put("graph.flagEncoders", "CAR,FOOT")).
+                    setOSMFile(testOsm3);
+            tmpGH.load(ghLoc);
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+        }
     }
 
     @Test
@@ -499,7 +505,7 @@ public class GraphHopperTest
                 init(new CmdArgs().
                         put("osmreader.osm", testOsm3).
                         put("prepare.minNetworkSize", "1").
-                        put("graph.acceptWay", "CAR")).
+                        put("graph.flagEncoders", "CAR")).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
 

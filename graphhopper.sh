@@ -3,13 +3,13 @@
 GH_CLASS=com.graphhopper.tools.Import
 GH_HOME=$(dirname "$0")
 JAVA=$JAVA_HOME/bin/java
-if [ "x$JAVA_HOME" = "x" ]; then
+if [ "$JAVA_HOME" = "" ]; then
  JAVA=java
 fi
 
 vers=$($JAVA -version 2>&1 | grep "java version" | awk '{print $3}' | tr -d \")
 bit64=$($JAVA -version 2>&1 | grep "64-Bit")
-if [ "x$bit64" != "x" ]; then
+if [ "$bit64" != "" ]; then
   vers="$vers (64bit)"
 fi
 echo "## using java $vers from $JAVA_HOME"
@@ -38,13 +38,13 @@ function printUsage {
  echo "  extract     calls the overpass API to easily grab any area as .osm file"
 }
 
-if [ "x$ACTION" = "x" ]; then
+if [ "$ACTION" = "" ]; then
  echo "## action $ACTION not found. try" 
  printUsage
 fi
 
 function ensureOsmXml { 
-  if [ "x$OSM_FILE" = "x" ]; then
+  if [ "$OSM_FILE" = "" ]; then
     # skip
     return
   elif [ ! -s "$OSM_FILE" ]; then
@@ -77,10 +77,10 @@ function ensureOsmXml {
 
 function ensureMaven {
   # maven home existent?
-  if [ "x$MAVEN_HOME" = "x" ]; then
+  if [ "$MAVEN_HOME" = "" ]; then
     # not existent but probably is maven in the path?
     MAVEN_HOME=$(mvn -v | grep "Maven home" | cut -d' ' -f3)
-    if [ "x$MAVEN_HOME" = "x" ]; then
+    if [ "$MAVEN_HOME" = "" ]; then
       # try to detect previous downloaded version
       MAVEN_HOME="$GH_HOME/maven"
       if [ ! -f "$MAVEN_HOME/bin/mvn" ]; then
@@ -127,37 +127,37 @@ function packageCoreJar {
 function prepareEclipse {
  ensureMaven   
  packageCoreJar
- cp core/target/graphhopper-*-android.jar android/libs/   
+ # cp core/target/graphhopper-*-android.jar android/libs/   
 }
 
 
 ## now handle actions which do not take an OSM file
-if [ "x$ACTION" = "xclean" ]; then
+if [ "$ACTION" = "clean" ]; then
  rm -rf ./*/target
  exit
 
-elif [ "x$ACTION" = "xeclipse" ]; then
+elif [ "$ACTION" = "eclipse" ]; then
  prepareEclipse
  exit
 
-elif [ "x$ACTION" = "xbuild" ]; then
+elif [ "$ACTION" = "build" ]; then
  prepareEclipse
  exit  
  
-elif [ "x$ACTION" = "xextract" ]; then
+elif [ "$ACTION" = "extract" ]; then
  echo use "./graphhopper.sh extract \"left,bottom,right,top\""
  URL="http://overpass-api.de/api/map?bbox=$2"
  #echo "$URL"
  wget -O extract.osm "$URL"
  exit
  
-elif [ "x$ACTION" = "xandroid" ]; then
+elif [ "$ACTION" = "android" ]; then
  prepareEclipse
  "$MAVEN_HOME/bin/mvn" -P include-android --projects android install android:deploy android:run
  exit
 fi
 
-if [ "x$FILE" = "x" ]; then
+if [ "$FILE" = "" ]; then
   echo -e "no file specified? try"
   printUsage
   exit
@@ -166,7 +166,7 @@ fi
 # NAME = file without extension if any
 NAME="${FILE%.*}"
 
-if [ "x$FILE" == "x-" ]; then
+if [ "$FILE" == "-" ]; then
    OSM_FILE=
 elif [ ${FILE: -4} == ".osm" ]; then
    OSM_FILE="$FILE"
@@ -192,7 +192,7 @@ VERSION=$(grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<'
 JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
 
 LINK=$(echo $NAME | tr '_' '/')
-if [ "x$FILE" == "x-" ]; then
+if [ "$FILE" == "-" ]; then
    LINK=
 elif [ ${FILE: -4} == ".osm" ]; then 
    LINK="http://download.geofabrik.de/$LINK-latest.osm.bz2"
@@ -205,7 +205,7 @@ else
    LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
 fi
 
-if [ "x$JAVA_OPTS" = "x" ]; then
+if [ "$JAVA_OPTS" = "" ]; then
   JAVA_OPTS="-Xmx1000m -Xms1000m -server"
 fi
 
@@ -216,9 +216,9 @@ packageCoreJar
 
 echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 
-if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
+if [ "$ACTION" = "ui" ] || [ "$ACTION" = "web" ]; then
   export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
-  if [ "x$JETTY_PORT" = "x" ]; then  
+  if [ "$JETTY_PORT" = "" ]; then  
     JETTY_PORT=8989
   fi
   WEB_JAR="$GH_HOME/web/target/graphhopper-web-$VERSION-with-dep.jar"
@@ -234,7 +234,7 @@ if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
 
   RC_BASE=./web/src/main/webapp
 
-  if [ "x$GH_FOREGROUND" = "x" ]; then
+  if [ "$GH_FOREGROUND" = "" ]; then
     exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.resourcebase=$RC_BASE \
 	jetty.port=$JETTY_PORT jetty.host=$JETTY_HOST \
     	config=$CONFIG $GH_WEB_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE"
@@ -243,30 +243,29 @@ if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
     exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.resourcebase=$RC_BASE \
     	jetty.port=$JETTY_PORT jetty.host=$JETTY_HOST \
     	config=$CONFIG $GH_WEB_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE" <&- &
-    if [ "x$GH_PID_FILE" != "x" ]; then
+    if [ "$GH_PID_FILE" != "" ]; then
        echo $! > $GH_PID_FILE
     fi
     exit $?                    
   fi
 
-elif [ "x$ACTION" = "ximport" ]; then
- "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS printVersion=true \
-      config=$CONFIG \
+elif [ "$ACTION" = "import" ]; then
+ "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS config=$CONFIG \
       $GH_IMPORT_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE"
 
 
-elif [ "x$ACTION" = "xtorture" ]; then
+elif [ "$ACTION" = "torture" ]; then
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.QueryTorture $3 $4 $5 $6 $7 $8 $9
 
 
-elif [ "x$ACTION" = "xminiui" ]; then
- "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/tools/pom.xml" -DskipTests clean install assembly:single
+elif [ "$ACTION" = "miniui" ]; then
+ "$MAVEN_HOME/bin/mvn" --projects tools -DskipTests clean install assembly:single
  JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar   
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI osmreader.osm="$OSM_FILE" printVersion=true config=$CONFIG \
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI osmreader.osm="$OSM_FILE" config=$CONFIG \
               graph.location="$GRAPH"
 
 
-elif [ "x$ACTION" = "xmeasurement" ]; then
+elif [ "$ACTION" = "measurement" ]; then
  ARGS="config=$CONFIG graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chWeighting=fastest graph.flagEncoders=CAR"
  echo -e "\ncreate graph via $ARGS, $JAR"
  START=$(date +%s)
@@ -287,9 +286,9 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
  # use all <last_commits> versions starting from HEAD
  last_commits=$3
   
- if [ "x$last_commits" = "x" ]; then
+ if [ "$last_commits" = "" ]; then
    # use current version
-   "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests clean install assembly:single
+   "$MAVEN_HOME/bin/mvn" --projects core,tools -DskipTests clean install assembly:single
    startMeasurement
    exit
  fi
@@ -302,7 +301,7 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
    M_FILE_NAME="measurement$M_FILE_NAME.properties"
    echo -e "\nusing commit $commit and $M_FILE_NAME"
    
-   "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests clean install assembly:single
+   "$MAVEN_HOME/bin/mvn" --projects core,tools -DskipTests clean install assembly:single
    startMeasurement
    echo -e "\nmeasurement.commit=$commit\n" >> "$M_FILE_NAME"
  done

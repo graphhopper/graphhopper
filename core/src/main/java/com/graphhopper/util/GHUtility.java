@@ -139,8 +139,8 @@ public class GHUtility
                 AllEdgesSkipIterator aeSkip = (AllEdgesSkipIterator) iter;
                 sc = aeSkip.isShortcut() ? "sc" : "  ";
             }
-            String fwdStr = encoder.isBool(iter.getFlags(), FlagEncoder.K_FORWARD) ? "fwd" : "   ";
-            String bckStr = encoder.isBool(iter.getFlags(), FlagEncoder.K_BACKWARD) ? "bckwd" : "";
+            String fwdStr = encoder.isForward(iter.getFlags()) ? "fwd" : "   ";
+            String bckStr = encoder.isBackward(iter.getFlags()) ? "bckwd" : "";
             System.out.println(sc + " " + iter + " " + fwdStr + " " + bckStr);
         }
     }
@@ -231,7 +231,7 @@ public class GHUtility
                 @Override
                 protected boolean goFurther( int nodeId )
                 {
-                    list.set(nodeId, ref.incrementAndGet());                    
+                    list.set(nodeId, ref.incrementAndGet());
                     return super.goFurther(nodeId);
                 }
             }.start(explorer, startNode);

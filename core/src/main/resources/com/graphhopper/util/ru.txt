@@ -1,15 +1,14 @@
 # do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
 
-sharp_left=резко налево
-sharp_right=резко направо
-left=налево
-right=направо
-slight_left=немного левее
-slight_right=немного правее
 continue=продолжайте
 continue_onto=продолжайте по %1$s
-turn=Поверните %1$s
-turn_onto=Поверните %1$s на %2$s
+turn_left=Поверните налево
+turn_right=Поверните направо
+turn_slight_left=Поверните немного левее
+turn_slight_right=Поверните немного правее
+turn_sharp_left=Поверните резко налево
+turn_sharp_right=Поверните резко направо
+turn_onto=%1$s на %2$s
 web.searchButton=Поиск
 web.fromHint=От
 web.viaHint=Через
@@ -41,9 +40,6 @@ way=путь
 paved=с покрытием
 unpaved=без покрытия
 stopover=остановка %1$s
-roundaboutInstruction=Въезжайте на кольцо и используйте съезд %1$s
-roundaboutInstructionWithDir=Въезжайте на кольцо и используйте съезд %1$s в направлении %2$s
-roundaboutInstructionOnto=
-roundaboutEnter=
-roundaboutExit=
-roundaboutExitOnto=
+roundaboutEnter=Въезжайте на кольцо
+roundaboutExit=У кольца используйте съезд %1$s
+roundaboutExitOnto=У кольца используйте съезд %1$s на %2$s

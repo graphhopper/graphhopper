@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-parent</artifactId>
     <name>GraphHopper Parent Project</name>
-    <version>0.4-SNAPSHOT</version>
+    <version>0.5-SNAPSHOT</version>
     <packaging>pom</packaging> 
     <url>http://graphhopper.com</url> 
     <inceptionYear>2012</inceptionYear>
@@ -23,7 +23,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <slf4j.version>1.7.7</slf4j.version>
+        <slf4j.version>1.7.10</slf4j.version>
         <log4j.version>1.2.17</log4j.version>
         
         <!-- netbeans formatting rules -->
@@ -57,6 +57,11 @@
             <name>Peter Karich</name>
             <email>my.name@graphhopper.com</email>
         </developer>
+        <developer>
+            <id>jansoe</id>
+            <name>Jan Sölter</name>
+            <email>my.name@graphhopper.com</email>
+        </developer>
     </developers>
     
     <mailingLists>
@@ -86,11 +91,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
+                <version>3.2</version>
                 <configuration>
                     <!--
                     <compilerArgument>-Xlint:unchecked</compilerArgument>
                     -->
+                    
+                    <!-- suppress warning about Unsafe functionality -->
                     <compilerArgument>-XDignore.symbol.file</compilerArgument>
                     <fork>true</fork>
                     <source>1.6</source>
@@ -102,7 +109,7 @@
             <plugin>                
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.17</version>
+                <version>2.18.1</version>
                 <configuration>
                     <argLine>-Xmx100m -Xms100m</argLine>
                 </configuration>
@@ -111,7 +118,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.17</version>
+                <version>2.18.1</version>
                 <executions>
                     <execution>
                         <goals>
@@ -130,13 +137,27 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10</version>
+                <version>2.10.1</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>2.3</version>
+                <version>2.4</version>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.5.3</version>                    
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.5</version>
+            </plugin>
+            <plugin>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>2.6</version>                
+            </plugin>            
         </plugins>
     </build>    
     
@@ -144,7 +165,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.11</version>
+            <version>4.12</version>
             <scope>test</scope>
         </dependency>        
     </dependencies>
@@ -185,7 +206,7 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <modules>
-                <module>android</module>
+                <module>android/app</module>
             </modules>
         </profile>
     </profiles>

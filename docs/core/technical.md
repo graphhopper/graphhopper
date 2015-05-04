@@ -54,14 +54,12 @@ For [_Contraction Hierarchies_](http://ad-wiki.informatik.uni-freiburg.de/teachi
  we use the _LevelGraph_ which additionally holds shortcuts. While path extraction we need to identify those
  shortcuts and get the edges recursivly, this is done in Path4CH.
 
-## 3.1 OriginalGraph
-
-See issue [#116](https://github.com/graphhopper/graphhopper/issues/116) for the progress of this feature.
+## 3.1 Base Graph
 
 In order to traverse the _LevelGraph_ like a normal _Graph_ one needs to hide the shortcuts, which
-is done automatically for you if you call graph.getOriginalGraph(). This is necessary in a 
-_LocationIndex_ and partially in the _Path_ class in order to identify how many streets leave a junction
-or similar. See #116 for more information.
+is done automatically for you if you call graph.getBaseGraph(). This is necessary in a 
+_LocationIndex_ and in the _Path_ class in order to identify how many streets leave a junction
+or similar. See issue #116 for more information.
 
 
 ### 4. Connecting the Real World to the Graph

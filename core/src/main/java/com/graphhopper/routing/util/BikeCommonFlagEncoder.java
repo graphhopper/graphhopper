@@ -65,6 +65,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         restrictedValues.add("private");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
+        restrictedValues.add("military");
 
         intendedValues.add("yes");
         intendedValues.add("designated");
@@ -83,6 +84,9 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         absoluteBarriers.add("kissing_gate");
         absoluteBarriers.add("stile");
         absoluteBarriers.add("turnstile");
+
+        // make intermodal connections possible but mark as pushing section
+        acceptedRailways.add("platform");
 
         unpavedSurfaceTags.add("unpaved");
         unpavedSurfaceTags.add("gravel");
@@ -112,6 +116,8 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         roadValues.add("secondary_link");
         roadValues.add("tertiary");
         roadValues.add("tertiary_link");
+        
+        maxPossibleSpeed = 30;
 
         setTrackTypeSpeed("grade1", 18); // paved
         setTrackTypeSpeed("grade2", 12); // now unpaved ...
@@ -190,7 +196,8 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     {
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
-        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, highwaySpeed.get("cycleway"), 30);
+        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, highwaySpeed.get("cycleway"),
+                                              maxPossibleSpeed);
         shift += speedEncoder.getBits();
 
         unpavedBit = 1L << shift++;
@@ -224,6 +231,11 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                 if (bikeTag == null && !way.hasTag("foot") || "yes".equals(bikeTag))
                     return acceptBit | ferryBit;
             }
+
+            // special case not for all acceptedRailways, only platform
+            if (way.hasTag("railway", "platform"))
+                return acceptBit;
+
             return 0;
         }
 
@@ -256,6 +268,9 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         String sacScale = way.getTag("sac_scale");
         if (sacScale != null)
         {
+            if ((way.hasTag("highway", "cycleway"))
+                    && (way.hasTag("sac_scale", "hiking")))
+                return acceptBit;
             if (!allowedSacScale(sacScale))
                 return 0;
         }
@@ -264,8 +279,8 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
 
     boolean allowedSacScale( String sacScale )
     {
-        // other scales are nearly impossible by bike, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
-        return "hiking".equals(sacScale) || "mountain_hiking".equals(sacScale);
+        // other scales are nearly impossible by an ordinary bike, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
+        return "hiking".equals(sacScale);
     }
 
     @Override
@@ -308,6 +323,12 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             speed = applyMaxSpeed(way, speed, false);
             encoded = handleSpeed(way, speed, encoded);
             encoded = handleBikeRelated(way, encoded, relationFlags > UNCHANGED.getValue());
+
+            boolean isRoundabout = way.hasTag("junction", "roundabout");
+            if (isRoundabout)
+            {
+                encoded = setBool(encoded, K_ROUNDABOUT, true);
+            }
 
         } else
         {
@@ -458,8 +479,12 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                 weightToPrioMap.put(40d, UNCHANGED.getValue());
         }
 
-        if (pushingSections.contains(highway) || "parking_aisle".equals(service))
+        if (pushingSections.contains(highway)
+                || way.hasTag("bicycle", "use_sidepath")
+                || "parking_aisle".equals(service))
+        {
             weightToPrioMap.put(50d, AVOID_IF_POSSIBLE.getValue());
+        }
 
         if (avoidHighwayTags.contains(highway) || maxSpeed > 80)
         {
@@ -574,19 +599,26 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
 
     boolean isPushingSection( OSMWay way )
     {
-        return way.hasTag("highway", pushingSections);
+        return way.hasTag("highway", pushingSections) || way.hasTag("railway", "platform");
     }
 
     protected long handleSpeed( OSMWay way, double speed, long encoded )
     {
         encoded = setSpeed(encoded, speed);
 
-        // handle oneways
-        if ((way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))
+        // handle oneways        
+        boolean isOneway = way.hasTag("oneway", oneways)
+                || way.hasTag("vehicle:backward")
+                || way.hasTag("vehicle:forward");
+
+        if ((isOneway || way.hasTag("junction", "roundabout"))
                 && !way.hasTag("oneway:bicycle", "no")
+                && !way.hasTag("bicycle:backward")
                 && !way.hasTag("cycleway", oppositeLanes))
         {
-            if (way.hasTag("oneway", "-1"))
+            boolean isBackward = way.hasTag("oneway", "-1")
+                    || way.hasTag("vehicle:forward", "no");
+            if (isBackward)
                 encoded |= backwardBit;
             else
                 encoded |= forwardBit;

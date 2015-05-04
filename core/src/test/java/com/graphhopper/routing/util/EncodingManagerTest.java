@@ -22,18 +22,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import org.junit.Test;
 
-import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.BitUtil;
-import java.util.*;
 
 /**
  *
@@ -91,8 +84,7 @@ public class EncodingManagerTest
             assertTrue(false);
         } catch (Exception ex)
         {
-            assertEquals("Encoders are requesting more than 32 bits of way flags. Decrease the number of vehicles or increase the flags to take long.",
-                    ex.getMessage());
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoders are requesting more than 32 bits of way flags. Decrease the"));
         }
     }
 
@@ -198,7 +190,7 @@ public class EncodingManagerTest
         osmWay.setTag("highway", "footway");
         osmWay.setTag("name", "test");
 
-        BikeFlagEncoder singleBikeEnc = (BikeFlagEncoder) manager2.getSingle();
+        BikeFlagEncoder singleBikeEnc = (BikeFlagEncoder) manager2.getEncoder("bike2");
         long flags = manager2.handleWayTags(osmWay, singleBikeEnc.acceptBit, 0);
         double singleSpeed = singleBikeEnc.getSpeed(flags);
         assertEquals(4, singleSpeed, 1e-3);
@@ -215,5 +207,33 @@ public class EncodingManagerTest
 
         assertEquals(5, foot.getSpeed(flags), 1e-2);
         assertEquals(5, foot.getReverseSpeed(flags), 1e-2);
+    }
+
+    @Test
+    public void testSupportFords()
+    {
+        // 1) no encoder crossing fords
+        String flagEncodersStr = "car,bike,foot";
+        EncodingManager manager = new EncodingManager(flagEncodersStr, 8);
+
+        assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
+        assertTrue(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
+        assertTrue(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
+
+        // 2) two encoders crossing fords
+        flagEncodersStr = "car,bike|blockFords=false,foot|blockFords=false";
+        manager = new EncodingManager(flagEncodersStr, 8);
+
+        assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
+        assertFalse(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
+        assertFalse(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
+
+        // 2) Try combined with another tag
+        flagEncodersStr = "car|turnCosts=true|blockFords=true,bike,foot|blockFords=false";
+        manager = new EncodingManager(flagEncodersStr, 8);
+
+        assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
+        assertTrue(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
+        assertFalse(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
     }
 }

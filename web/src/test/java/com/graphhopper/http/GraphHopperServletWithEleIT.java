@@ -66,6 +66,10 @@ public class GraphHopperServletWithEleIT extends BaseServletTester
 
         JSONObject cson = path.getJSONObject("points");
         assertTrue("no elevation?", cson.toString().contains("[7.421392,43.7307,66]"));
+
+        // Although we include elevation DO NOT include it in the bbox as bbox.toGeoJSON messes up when reading
+        // or reading with and without elevation would be too complex for the client with no real use
+        assertEquals(4, path.getJSONArray("bbox").length());
     }
 
     @Test
@@ -80,7 +84,7 @@ public class GraphHopperServletWithEleIT extends BaseServletTester
         assertTrue("distance wasn't correct:" + distance, distance > 2500);
         assertTrue("distance wasn't correct:" + distance, distance < 2700);
         JSONObject cson = path.getJSONObject("points");
-        assertTrue("Elevation should not be included!", cson.toString().indexOf("[7.421392,43.7307]") >= 0);
+        assertTrue("Elevation should not be included!", cson.toString().contains("[7.421392,43.7307]"));
 
         // disable elevation
         json = query("point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=false");
@@ -88,6 +92,6 @@ public class GraphHopperServletWithEleIT extends BaseServletTester
         assertFalse(infoJson.has("errors"));
         path = json.getJSONArray("paths").getJSONObject(0);
         cson = path.getJSONObject("points");
-        assertTrue("Elevation should not be included!", cson.toString().indexOf("[7.421392,43.7307]") >= 0);
+        assertTrue("Elevation should not be included!", cson.toString().contains("[7.421392,43.7307]"));
     }
 }

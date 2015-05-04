@@ -120,9 +120,15 @@ public class GraphHopperStorage implements GraphStorage
         this.wayGeometry = dir.find("geometry");
         this.nameIndex = new NameIndex(dir);
         this.properties = new StorableProperties(dir);
-        this.bounds = BBox.INVERSE.clone();
+        this.bounds = BBox.createInverse(withElevation);
         this.nodeAccess = new GHNodeAccess(this, withElevation);
         extendedStorage.init(this);
+    }
+
+    @Override
+    public Graph getBaseGraph()
+    {
+        return this;
     }
 
     void checkInit()
@@ -142,7 +148,7 @@ public class GraphHopperStorage implements GraphStorage
     protected final int nextNodeEntryIndex( int sizeInBytes )
     {
         int tmp = nodeEntryIndex;
-        nodeEntryIndex += 4;
+        nodeEntryIndex += sizeInBytes;
         return tmp;
     }
 
@@ -799,13 +805,13 @@ public class GraphHopperStorage implements GraphStorage
                 adjNode = getOtherNode(baseNode, edgePointer);
                 reverse = baseNode > adjNode;
 
-                // position to next edge
+                // position to next edge                
                 nextEdge = edges.getInt(getLinkPosInEdgeArea(baseNode, adjNode, edgePointer));
                 if (nextEdge == edgeId)
                     throw new AssertionError("endless loop detected for " + baseNode + ", " + adjNode
                             + ", " + edgePointer + ", " + edgeId);
 
-                foundNext = filter == null || filter.accept(this);
+                foundNext = filter.accept(this);
                 if (foundNext)
                     break;
             }
@@ -903,7 +909,7 @@ public class GraphHopperStorage implements GraphStorage
             if (edgeId == nextEdge)
                 throw new IllegalStateException("call next before detaching");
 
-            EdgeIterable iter = iter = new EdgeIterable(filter);
+            EdgeIterable iter = new EdgeIterable(filter);
             iter.setBaseNode(baseNode);
             iter.setEdgeId(edgeId);
             iter.next();
@@ -1484,6 +1490,13 @@ public class GraphHopperStorage implements GraphStorage
         bounds.maxLon = Helper.intToDegree(nodes.getHeader(4 * 4));
         bounds.minLat = Helper.intToDegree(nodes.getHeader(5 * 4));
         bounds.maxLat = Helper.intToDegree(nodes.getHeader(6 * 4));
+
+        if (bounds.hasElevation())
+        {
+            bounds.minEle = Helper.intToEle(nodes.getHeader(7 * 4));
+            bounds.maxEle = Helper.intToEle(nodes.getHeader(8 * 4));
+        }
+
         return 7;
     }
 
@@ -1496,6 +1509,12 @@ public class GraphHopperStorage implements GraphStorage
         nodes.setHeader(4 * 4, Helper.degreeToInt(bounds.maxLon));
         nodes.setHeader(5 * 4, Helper.degreeToInt(bounds.minLat));
         nodes.setHeader(6 * 4, Helper.degreeToInt(bounds.maxLat));
+        if (bounds.hasElevation())
+        {
+            nodes.setHeader(7 * 4, Helper.eleToInt(bounds.minEle));
+            nodes.setHeader(8 * 4, Helper.eleToInt(bounds.maxEle));
+        }
+
         return 7;
     }
 

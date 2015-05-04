@@ -77,7 +77,7 @@ public class GraphHopper implements GraphHopperAPI
     // for CH prepare    
     private boolean doPrepare = true;
     private boolean chEnabled = true;
-    private String chWeighting = "fastest";
+    private String chWeightingStr = "fastest";
     private int periodicUpdates = -1;
     private int lazyUpdates = -1;
     private int neighborUpdates = -1;
@@ -119,6 +119,16 @@ public class GraphHopper implements GraphHopperAPI
             traversalMode = TraversalMode.EDGE_BASED_2DIR;
 
         return this;
+    }
+
+    FlagEncoder getDefaultVehicle()
+    {
+        if (encodingManager == null)
+        {
+            throw new IllegalStateException("No encoding manager specified or loaded");
+        }
+
+        return encodingManager.fetchEdgeEncoders().get(0);
     }
 
     public EncodingManager getEncodingManager()
@@ -272,15 +282,6 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Disables "CH-preparation". Use only if you know what you do.
-     */
-    public GraphHopper setDoPrepare( boolean doPrepare )
-    {
-        this.doPrepare = doPrepare;
-        return this;
-    }
-
-    /**
      * Enables the use of contraction hierarchies to reduce query times. Enabled by default.
      * <p/>
      * @param weighting can be "fastest", "shortest" or your own weight-calculation type.
@@ -289,18 +290,29 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setCHWeighting( String weighting )
     {
         ensureNotLoaded();
-        chWeighting = weighting;
+        chWeightingStr = weighting;
         return this;
     }
 
     public String getCHWeighting()
     {
-        return chWeighting;
+        return chWeightingStr;
     }
 
     /**
-     * Enables or disables contraction hierarchies. Enabled by default. Disabling CH is only
-     * recommended for a small area or in combination with setDefaultWeightLimit
+     * Disables the "CH-preparation" preparation only. Use only if you know what you do. To disable
+     * the full usage of CH use setCHEnable(false) instead.
+     */
+    public GraphHopper setDoPrepare( boolean doPrepare )
+    {
+        this.doPrepare = doPrepare;
+        return this;
+    }
+
+    /**
+     * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
+     * Disabling CH is only recommended for short routes or in combination with
+     * setDefaultWeightLimit and called flexibility mode
      * <p>
      * @see #setDefaultWeightLimit(double)
      */
@@ -556,9 +568,10 @@ public class GraphHopper implements GraphHopperAPI
 
         // osm import
         osmReaderWayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", osmReaderWayPointMaxDistance);
-        String flagEncoders = args.get("graph.flagEncoders", "CAR");
+        String flagEncoders = args.get("graph.flagEncoders", "");
+        if (!flagEncoders.isEmpty())
+            setEncodingManager(new EncodingManager(flagEncoders, bytesForFlags));
 
-        setEncodingManager(new EncodingManager(flagEncoders, bytesForFlags));
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
 
@@ -713,7 +726,7 @@ public class GraphHopper implements GraphHopperAPI
         setGraphHopperLocation(graphHopperFolder);
 
         if (encodingManager == null)
-            encodingManager = EncodingManager.create(ghLocation);
+            setEncodingManager(EncodingManager.create(ghLocation));
 
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;
@@ -772,7 +785,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     protected void postProcessing()
     {
-        encodingManager = graph.getEncodingManager();
+        initLocationIndex();
         if (chEnabled)
             algoFactory = createPrepare();
         else
@@ -780,7 +793,6 @@ public class GraphHopper implements GraphHopperAPI
 
         if (!isPrepared())
             prepare();
-        initLocationIndex();
     }
 
     private boolean isPrepared()
@@ -790,9 +802,10 @@ public class GraphHopper implements GraphHopperAPI
 
     protected RoutingAlgorithmFactory createPrepare()
     {
-        FlagEncoder encoder = encodingManager.getSingle();
-        PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies((LevelGraph) graph, encoder,
-                createWeighting(new WeightingMap(chWeighting), encoder), traversalMode);
+        FlagEncoder defaultVehicle = getDefaultVehicle();
+        Weighting weighting = createWeighting(new WeightingMap(chWeightingStr), defaultVehicle);
+        PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
+                (LevelGraph) graph, defaultVehicle, weighting, traversalMode);
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                 setLazyUpdates(lazyUpdates).
                 setNeighborUpdates(neighborUpdates).
@@ -806,15 +819,15 @@ public class GraphHopper implements GraphHopperAPI
      * created. Note that all URL parameters are available in the weightingParameters as String if
      * you use the GraphHopper Web module.
      * <p>
-     * @see Weighting.Params.create
-     * @param wMap all parameters influencing the weighting. E.g. URL parameters coming via
-     * GHRequest
+     * @see WeightingMap
+     * @param weightingMap all parameters influencing the weighting. E.g. parameters coming via
+     * GHRequest.getHints or directly via "&api.xy=" from the URL of the web UI
      * @param encoder the required vehicle
      * @return the weighting to be used for route calculation
      */
-    public Weighting createWeighting( WeightingMap wMap, FlagEncoder encoder )
+    public Weighting createWeighting( WeightingMap weightingMap, FlagEncoder encoder )
     {
-        String weighting = wMap.getWeighting();
+        String weighting = weightingMap.getWeighting();
         Weighting result;
 
         if ("shortest".equalsIgnoreCase(weighting))
@@ -876,7 +889,7 @@ public class GraphHopper implements GraphHopperAPI
 
         String vehicle = request.getVehicle();
         if (vehicle.isEmpty())
-            vehicle = encodingManager.getSingle().toString();
+            vehicle = getDefaultVehicle().toString();
 
         if (!encodingManager.supports(vehicle))
         {
@@ -924,7 +937,19 @@ public class GraphHopper implements GraphHopperAPI
             return Collections.emptyList();
 
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
-        QueryGraph queryGraph = new QueryGraph(graph);
+
+        QueryGraph queryGraph;
+        RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory();
+        if (chEnabled && !vehicle.equalsIgnoreCase(getDefaultVehicle().toString()))
+        {
+            // fall back to normal traversing
+            tmpAlgoFactory = new RoutingAlgorithmFactorySimple();
+            queryGraph = new QueryGraph(graph.getBaseGraph());
+        } else
+        {
+            queryGraph = new QueryGraph(graph);
+        }
+
         queryGraph.lookup(qResults);
 
         List<Path> paths = new ArrayList<Path>(points.size() - 1);
@@ -934,19 +959,21 @@ public class GraphHopper implements GraphHopperAPI
 
         double weightLimit = request.getHints().getDouble("defaultWeightLimit", defaultWeightLimit);
         String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
-        AlgorithmOptions algoOpts = AlgorithmOptions.start().algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).build();
+        AlgorithmOptions algoOpts = AlgorithmOptions.start().
+                algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).
+                build();
 
         for (int placeIndex = 1; placeIndex < points.size(); placeIndex++)
         {
             QueryResult toQResult = qResults.get(placeIndex);
             sw = new StopWatch().start();
-            RoutingAlgorithm algo = getAlgorithmFactory().createAlgo(queryGraph, algoOpts);
+            RoutingAlgorithm algo = tmpAlgoFactory.createAlgo(queryGraph, algoOpts);
             algo.setWeightLimit(weightLimit);
             debug += ", algoInit:" + sw.stop().getSeconds() + "s";
 
             sw = new StopWatch().start();
             Path path = algo.calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode());
-            if (path.getMillis() < 0)
+            if (path.getTime() < 0)
                 throw new RuntimeException("Time was negative. Please report as bug and include:" + request);
 
             paths.add(path);
@@ -968,17 +995,9 @@ public class GraphHopper implements GraphHopperAPI
 
     protected LocationIndex createLocationIndex( Directory dir )
     {
-        LocationIndex tmpIndex;
-        if (graph instanceof LevelGraph)
-        {
-            tmpIndex = new LocationIndexTreeSC((LevelGraph) graph, dir);
-        } else
-        {
-            tmpIndex = new LocationIndexTree(graph, dir);
-        }
+        LocationIndexTree tmpIndex = new LocationIndexTree(graph.getBaseGraph(), dir);
         tmpIndex.setResolution(preciseIndexResolution);
-        ((LocationIndexTree) tmpIndex).setMaxRegionSearch(maxRegionSearch);
-
+        tmpIndex.setMaxRegionSearch(maxRegionSearch);
         if (!tmpIndex.loadExisting())
         {
             ensureWriteAccess();
@@ -989,10 +1008,7 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Initializes the location index. Currently this has to be done after the ch-preparation!
-     * Because - to improve performance - certain edges won't be available in a ch-graph and the
-     * index needs to know this and selects the correct nodes which still see the correct neighbors.
-     * See #116
+     * Initializes the location index after the import is done.
      */
     protected void initLocationIndex()
     {
@@ -1028,11 +1044,7 @@ public class GraphHopper implements GraphHopperAPI
         if (tmpPrepare)
         {
             ensureWriteAccess();
-            if (encodingManager.getVehicleCount() > 1)
-                throw new IllegalArgumentException("Contraction hierarchies preparation "
-                        + "requires (at the moment) only one vehicle. But was:" + encodingManager);
-
-            logger.info("calling prepare.doWork for " + encodingManager.toString() + " ... (" + Helper.getMemInfo() + ")");
+            logger.info("calling prepare.doWork for " + getDefaultVehicle() + " ... (" + Helper.getMemInfo() + ")");
             ((PrepareContractionHierarchies) algoFactory).doWork();
             graph.getProperties().put("prepare.date", formatDateTime(new Date()));
         }
@@ -1118,7 +1130,7 @@ public class GraphHopper implements GraphHopperAPI
      * Returns the current sum of the visited nodes while routing. Mainly for statistic and
      * debugging purposes.
      */
-    public long getVisitedSum()
+    long getVisitedSum()
     {
         return visitedSum.get();
     }
