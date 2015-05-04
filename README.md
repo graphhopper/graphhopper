@@ -15,13 +15,19 @@ Apache License 2.0
 
 ### Installation and Usage
 
-Install Java and Maven. Then import the area you want to do map-matching on:
+Java and Maven are required. 
+
+Then you need to import the area you want to do map-matching on:
 
 ```bash
 ./map-matching.sh action=import datasource=./some-dir/osm-file.pbf [vehicle=car]
 ```
 
-and then do these matches:
+The parameter vehicle defines the routing profile like `bike`, `motorcycle` or `foot`. For all supported values see the variables in the EncodingManager class of GraphHopper. 
+
+If you have already imported a datasource with a specific profile, you need to remove the folder graph-cache in your map-matching-master directory.
+
+Now you can do these matches:
 ```bash
 ./map-matching.sh action=match gpx=./track-data/.*gpx
 ```
