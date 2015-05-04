@@ -1,6 +1,7 @@
 [Members](https://github.com/graphhopper?tab=members) and [Contributors](https://github.com/graphhopper/graphhopper/contributors)
 
  * AnahitaS, docs for Android, Android, Tomcat
+ * andreaswolf, flag encoder versioning and more
  * agouge, discussion and API refactoring
  * b3nn0, Android improvements
  * cgarreau, increase of routing success rate via subnetwork cleanup
