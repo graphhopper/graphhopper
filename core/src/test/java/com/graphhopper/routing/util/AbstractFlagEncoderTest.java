@@ -51,11 +51,4 @@ public class AbstractFlagEncoderTest
         assertEquals(60 * 20, AbstractFlagEncoder.parseDuration("0:20:00"));
         assertEquals(60 * 24 * 2 + 60 * 20 + 2, AbstractFlagEncoder.parseDuration("02:20:02"));
     }
-    
-    @Test
-    public void testParseProperties()
-    {
-        assertEquals(10, AbstractFlagEncoder.parseDouble("car|x", "prop", 10), .1);
-        assertEquals(12.2, AbstractFlagEncoder.parseDouble("car|x|prop=12.2", "prop", 10), .1);
-    }
 }

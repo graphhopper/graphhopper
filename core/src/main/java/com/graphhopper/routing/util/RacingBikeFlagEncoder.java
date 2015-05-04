@@ -18,6 +18,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.util.PMap;
+
 import static com.graphhopper.routing.util.PriorityCode.*;
 import java.util.TreeMap;
 
@@ -34,13 +36,21 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
         this(4, 2, 0);
     }
 
-    public RacingBikeFlagEncoder( String propertiesStr )
-    {
-        this((int) parseLong(propertiesStr, "speedBits", 4),
-                parseDouble(propertiesStr, "speedFactor", 2),
-                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
-        this.setBlockFords(parseBoolean(propertiesStr, "blockFords", true));
+    public RacingBikeFlagEncoder(PMap properties) {
+        this(
+                (int)properties.getLong("speedBits", 4),
+                properties.getDouble("speedFactor", 2),
+                properties.getBool("turnCosts", false) ? 3 : 0
+        );
+        this.properties = properties;
+        this.setBlockFords(properties.getBool("blockFords", true));
     }
+
+    public RacingBikeFlagEncoder(String propertiesStr )
+    {
+        this(new PMap(propertiesStr));
+    }
+
 
     public RacingBikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
     {
@@ -115,6 +125,12 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
         setCyclingNetworkPreference("rcn", PriorityCode.VERY_NICE.getValue());
         setCyclingNetworkPreference("lcn", PriorityCode.UNCHANGED.getValue());
         setCyclingNetworkPreference("mtb", PriorityCode.UNCHANGED.getValue());
+    }
+
+    @Override
+    public short getVersion()
+    {
+        return 1;
     }
 
     @Override

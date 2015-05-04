@@ -19,6 +19,8 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.PMap;
+
 import static com.graphhopper.routing.util.PriorityCode.*;
 import java.util.HashSet;
 
@@ -34,12 +36,19 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     private final HashSet<String> avoidSet = new HashSet<String>();
     private final HashSet<String> preferSet = new HashSet<String>();
 
-    public MotorcycleFlagEncoder( String propertiesStr )
+    public MotorcycleFlagEncoder(PMap properties) {
+        this(
+                (int)properties.getLong("speedBits", 5),
+                properties.getDouble("speedFactor", 5),
+                properties.getBool("turnCosts", false) ? 3 : 0
+        );
+        this.properties = properties;
+        this.setBlockFords(properties.getBool("blockFords", true));
+    }
+
+    public MotorcycleFlagEncoder(String propertiesStr )
     {
-        this((int) parseLong(propertiesStr, "speedBits", 5),
-                parseDouble(propertiesStr, "speedFactor", 5),
-                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
-        this.setBlockFords(parseBoolean(propertiesStr, "blockFords", true));
+        this(new PMap(propertiesStr));
     }
 
     public MotorcycleFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
@@ -91,6 +100,12 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         defaultSpeedMap.put("road", 20);
         // forestry stuff
         defaultSpeedMap.put("track", 15);
+    }
+
+    @Override
+    public short getVersion()
+    {
+        return 1;
     }
 
     /**

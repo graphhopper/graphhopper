@@ -21,6 +21,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 import static com.graphhopper.util.Helper.*;
 
@@ -40,12 +41,23 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
 
     public Bike2WeightFlagEncoder( String propertiesStr )
     {
-        super(propertiesStr);
+        super(new PMap(propertiesStr));
+    }
+
+    public Bike2WeightFlagEncoder(PMap properties)
+    {
+        super(properties);
     }
 
     public Bike2WeightFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
     {
         super(speedBits, speedFactor, maxTurnCosts);
+    }
+
+    @Override
+    public short getVersion()
+    {
+        return 1;
     }
 
     @Override

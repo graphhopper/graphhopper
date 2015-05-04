@@ -26,6 +26,7 @@ import java.util.TreeMap;
 
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.util.PMap;
 
 /**
  * Specifies the settings for mountain biking
@@ -40,12 +41,19 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
         this(4, 2, 0);
     }
 
-    public MountainBikeFlagEncoder( String propertiesStr )
+    public MountainBikeFlagEncoder(PMap properties) {
+        this(
+                (int)properties.getLong("speedBits", 4),
+                properties.getDouble("speedFactor", 2),
+                properties.getBool("turnCosts", false) ? 3 : 0
+        );
+        this.properties = properties;
+        this.setBlockFords(properties.getBool("blockFords", true));
+    }
+
+    public MountainBikeFlagEncoder(String propertiesStr )
     {
-        this((int) parseLong(propertiesStr, "speedBits", 4),
-                parseDouble(propertiesStr, "speedFactor", 2),
-                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
-        this.setBlockFords(parseBoolean(propertiesStr, "blockFords", true));
+        this(new PMap(propertiesStr));
     }
 
     public MountainBikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
@@ -133,6 +141,12 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
         preferHighwayTags.add("tertiary_link");
         preferHighwayTags.add("residential");
         preferHighwayTags.add("unclassified");
+    }
+
+    @Override
+    public short getVersion()
+    {
+        return 1;
     }
 
     @Override

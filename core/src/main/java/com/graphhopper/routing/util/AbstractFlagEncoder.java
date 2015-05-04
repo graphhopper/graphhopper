@@ -52,6 +52,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected long acceptBit;
     protected long ferryBit;
 
+    protected PMap properties;
+
     // This value determines the maximal possible speed of any road regardless the maxspeed value
     // lower values allow more compact representation of the routing graph
     protected int maxPossibleSpeed;
@@ -78,6 +80,15 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     private boolean blockFords = true;
     protected final int speedBits;
     protected final double speedFactor;
+
+    public AbstractFlagEncoder(PMap properties) {
+        throw new RuntimeException("This method must be overridden in derived classes");
+    }
+
+    public AbstractFlagEncoder(String propertiesStr)
+    {
+        this(new PMap(propertiesStr));
+    }
 
     /**
      * @param speedBits specify the number of bits used for speed
@@ -714,6 +725,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         throw new UnsupportedOperationException("Unknown key " + key + " for double value.");
     }
 
+    @Deprecated
     protected static double parseDouble( String str, String key, double defaultD )
     {
         String val = getStr(str, key);
@@ -722,6 +734,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         return Double.parseDouble(val);
     }
 
+    @Deprecated
     protected static long parseLong( String str, String key, long defaultL )
     {
         String val = getStr(str, key);
@@ -730,6 +743,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         return Long.parseLong(val);
     }
 
+    @Deprecated
     protected static boolean parseBoolean( String str, String key, boolean defaultB )
     {
         String val = getStr(str, key);
@@ -738,6 +752,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         return Boolean.parseBoolean(val);
     }
 
+    @Deprecated
     protected static String getStr( String str, String key )
     {
         key = key.toLowerCase();
