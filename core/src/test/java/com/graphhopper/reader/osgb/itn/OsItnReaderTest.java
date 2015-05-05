@@ -25,15 +25,12 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.osgb.AbstractOsItnReaderTest;
 import com.graphhopper.reader.osgb.AbstractOsReader;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -41,9 +38,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.AbstractGraphStorageTester;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.TurnCostExtension;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
@@ -269,17 +264,17 @@ public class OsItnReaderTest extends AbstractOsItnReaderTest {
         final EdgeIterator iter = explorer.setBaseNode(0);
         assertTrue(iter.next());
         assertEquals("OTHER ROAD (A337)", iter.getName());
-        assertEquals(55, carEncoder.getSpeed(iter.getFlags()), 1e-1);
+        assertEquals(95, carEncoder.getSpeed(iter.getFlags()), 1e-1);
         iter.next();
         assertEquals("OTHER ROAD (A337)", iter.getName());
-        assertEquals(55, carEncoder.getSpeed(iter.getFlags()), 1e-1);
+        assertEquals(95, carEncoder.getSpeed(iter.getFlags()), 1e-1);
         iter.next();
         assertEquals("BONHAY ROAD (A337)", iter.getName());
-        assertEquals(55, carEncoder.getSpeed(iter.getFlags()), 1e-1);
+        assertEquals(95, carEncoder.getSpeed(iter.getFlags()), 1e-1);
         iter.next();
         assertEquals("BONHAY ROAD (A337)", iter.getName());
         final long flags = iter.getFlags();
-        assertEquals(55.0, carEncoder.getSpeed(flags), 1e-1);
+        assertEquals(95.0, carEncoder.getSpeed(flags), 1e-1);
         assertFalse(iter.next());
     }
 
@@ -315,28 +310,6 @@ public class OsItnReaderTest extends AbstractOsItnReaderTest {
         assertEquals("123,123", parsed[1]);
 
         assertEquals(2, s4.trim().split(" ").length);
-
-    }
-
-    @Test
-    //    @Ignore
-    public void testItnGraphHopperWithHighwaysNetworkData() {
-        String graphLoc = "./target/output/modified-exeter-gh";
-        String inputFile = "/media/sf_/media/shared/modified-exeter/58096-SX9192-modified.xml";
-        //        String inputFile = "./src/test/resources/com/graphhopper/reader/os-itn-wickham-direction-error.xml";
-
-        Map<String, String> args = new HashMap<>();
-        args.put("hn.data", "/data/Development/highways_network_full/");
-        args.put("hn.graph.location", "./target/output/highways_network");
-        args.put("graph.location", graphLoc);
-        args.put("osmreader.osm", inputFile);
-        args.put("config", "../config.properties");
-        CmdArgs commandLineArguments = new CmdArgs(args);
-        commandLineArguments = CmdArgs.readFromConfigAndMerge(commandLineArguments, "config", "graphhopper.config");
-
-        GraphHopper graphHopper = new GraphHopper().setInMemory().setAsItnReader().init(commandLineArguments);
-        graphHopper.importOrLoad();
-        GraphStorage graph = graphHopper.getGraph();
 
     }
 }

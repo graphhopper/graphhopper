@@ -43,7 +43,7 @@ public abstract class AbstractOsDpnReaderTest {
     protected boolean turnCosts = false;
     protected BikeFlagEncoder bikeEncoder;
     protected FootFlagEncoder footEncoder;
-	protected EdgeExplorer footOutExplorer;
+	protected EdgeExplorer footExplorer;
 
     // RoadNode 880
     protected static double node0Lat = 50.6992070044d;
@@ -89,14 +89,23 @@ public abstract class AbstractOsDpnReaderTest {
         return new EncodingManager(list, 8);
     }
 
-    protected OsDpnReader readGraphFile(GraphHopperStorage graph, File file)
+    /**
+     * 
+     * @param graph
+     * @param file
+     * @param maxWayPointDistance 0 disables DouglasPeuker simplification 1 = default
+     * @return
+     * @throws IOException
+     */
+    protected OsDpnReader readGraphFile(GraphHopperStorage graph, File file, int maxWayPointDistance)
             throws IOException {
-        OsDpnReader osItnReader = new OsDpnReader(graph);
+        OsDpnReader osDpnReader = new OsDpnReader(graph);
         System.out.println("Read " + file.getAbsolutePath());
-        osItnReader.setOSMFile(file);
-        osItnReader.setEncodingManager(encodingManager);
-        osItnReader.readGraph();
-        return osItnReader;
+        osDpnReader.setOSMFile(file);
+        osDpnReader.setWayPointMaxDistance(maxWayPointDistance);
+        osDpnReader.setEncodingManager(encodingManager);
+        osDpnReader.readGraph();
+        return osDpnReader;
     }
 
     protected GraphHopperStorage configureStorage(
@@ -105,12 +114,12 @@ public abstract class AbstractOsDpnReaderTest {
         GraphExtension extendedStorage = turnRestrictionsImport ? new TurnCostExtension() : new GraphExtension.NoExtendedStorage();
         GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(
                 directory, false), encodingManager, is3D, extendedStorage);
-        footOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, false, true));
+        footExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, false, true));
         return graph;
     }
 
     protected int getEdge(int from, int to) {
-        EdgeIterator iter = footOutExplorer.setBaseNode(from);
+        EdgeIterator iter = footExplorer.setBaseNode(from);
         while (iter.next()) {
             if (iter.getAdjNode() == to) {
                 return iter.getEdge();

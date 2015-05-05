@@ -262,7 +262,7 @@ elif [ "$ACTION" = "torture" ]; then
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.QueryTorture $3 $4 $5 $6 $7 $8 $9
 
 
-elif [ "$ACTION" = "xminiui" ]; then
+elif [ "$ACTION" = "miniui" ]; then
  "$MAVEN_HOME/bin/mvn" --projects tools -DskipTests clean install assembly:single
  JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar   
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI osmreader.osm="$OSM_FILE" config=$CONFIG \

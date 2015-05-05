@@ -29,7 +29,7 @@ var defaultTranslationMap = null;
 var enTranslationMap = null;
 var routeSegmentPopup = null;
 var elevationControl = null;
-var activeLayer = 'Lyrk';
+var activeLayer = '';
 var i18nIsInitialized;
 
 var iconFrom = L.icon({
@@ -318,7 +318,12 @@ function initMap(selectLayer) {
         attribution: osmAttr + ', <a href="https://geodienste.lyrk.de/">Lyrk</a>',
         subdomains: ['a', 'b', 'c']
     });
-
+        
+    var omniscale = L.tileLayer.wms('https://maps.omniscale.net/v1/mapsgraph-bf48cc0b/tile', {
+            layers: 'osm',
+        attribution: osmAttr + ', &copy; <a href="http://maps.omniscale.com/">Omniscale</a>'
+    });
+            
     var mapquest = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
         attribution: osmAttr + ', <a href="http://open.mapquest.co.uk" target="_blank">MapQuest</a>',
         subdomains: ['otile1', 'otile2', 'otile3', 'otile4']
@@ -331,6 +336,15 @@ function initMap(selectLayer) {
 
     var openMapSurfer = L.tileLayer('http://openmapsurfer.uni-hd.de/tiles/roads/x={x}&y={y}&z={z}', {
         attribution: osmAttr + ', <a href="http://openmapsurfer.uni-hd.de/contact.html">GIScience Heidelberg</a>'
+    });
+
+    // not an option as too fast over limit
+//    var mapbox= L.tileLayer('https://{s}.tiles.mapbox.com/v4/peterk.map-vkt0kusv/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoicGV0ZXJrIiwiYSI6IkdFc2FJd2MifQ.YUd7dS_gOpT3xrQnB8_K-w', {
+//        attribution: osmAttr + ', <a href="https://www.mapbox.com/about/maps/">&copy; MapBox</a>'
+//    });
+
+    var sorbianLang = L.tileLayer('http://map.dgpsonline.eu/osmsb/{z}/{x}/{y}.png', {
+        attribution: osmAttr + ', <a href="http://www.alberding.eu/">&copy; Alberding GmbH, CC-BY-SA</a>'
     });
 
     var thunderTransport = L.tileLayer('http://{s}.tile.thunderforest.com/transport/{z}/{x}/{y}.png', {
@@ -371,6 +385,7 @@ function initMap(selectLayer) {
 
     var baseMaps = {
         "Lyrk": lyrk,
+        "Omniscale" : omniscale,
         "MapQuest": mapquest,
         "MapQuest Aerial": mapquestAerial,
         "Esri Aerial": esriAerial,
@@ -380,7 +395,8 @@ function initMap(selectLayer) {
         "TF Outdoors": thunderOutdoors,
         "WanderReitKarte": wrk,
         "OpenStreetMap": osm,
-        "OpenStreetMap.de": osmde
+        "OpenStreetMap.de": osmde,
+        "Sorbian Language": sorbianLang
     };
 
     var defaultLayer = baseMaps[selectLayer];
@@ -457,8 +473,12 @@ function initMap(selectLayer) {
     L.control.layers(baseMaps/*, overlays*/).addTo(map);
 
     map.on('baselayerchange', function (a) {
-        if (a.name)
+        if (a.name) {
             activeLayer = a.name;
+            $("#export-link a").attr('href', function (i, v) {
+                return v.replace(/(layer=)([\w\s]+)/, '$1' + activeLayer);
+            });
+        }
     });
 
     L.control.scale().addTo(map);

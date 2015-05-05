@@ -155,13 +155,13 @@ public class FootFlagEncoderTest
         way.setTag("railway", "platform");
         long flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
         assertNotEquals(0, flags);
-        
+
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("railway", "platform");
         flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
         assertNotEquals(0, flags);
-        
+
         way.clearTags();
         // only tram, no highway => no access
         way.setTag("railway", "tram");
@@ -285,5 +285,28 @@ public class FootFlagEncoderTest
         way.setTag("highway", "tertiary");
         long flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
         assertTrue(footEncoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
+    }
+
+    public void testFord()
+    {
+        // by default deny access through fords!
+        OSMNode node = new OSMNode(1, -1, -1);
+        node.setTag("ford", "no");
+        assertTrue(footEncoder.handleNodeTags(node) == 0);
+
+        node = new OSMNode(1, -1, -1);
+        node.setTag("ford", "yes");
+        assertTrue(footEncoder.handleNodeTags(node) > 0);
+
+        // Now let's allow fords for foot
+        footEncoder.setBlockFords(Boolean.FALSE);
+
+        node = new OSMNode(1, -1, -1);
+        node.setTag("ford", "no");
+        assertTrue(footEncoder.handleNodeTags(node) == 0);
+
+        node = new OSMNode(1, -1, -1);
+        node.setTag("ford", "yes");
+        assertTrue(footEncoder.handleNodeTags(node) == 0);
     }
 }

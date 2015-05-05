@@ -173,7 +173,6 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 	public void getRouteFromService(String routeType, String... points) {
 
-		System.err.println(IntegrationTestProperties.getTestProperty("apiKey"));
 		if (IntegrationTestProperties.getTestProperty("routeType")
 				.equals("gpx")) {
 			GPHService.parseRoute("gpx", routeType, points);
@@ -225,8 +224,8 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 						azimuth, direction, time, distance);
 				Assert.assertTrue(GPHService.isWayPointOnGPXRoutes(wp));
 			} else {
-				wp = GPHJsonService.buildWayPointForJson(wayPointDescription,
-						time, distance);
+				wp = GPHJsonService.buildWayPointForJson(wayPoint_Coordinates,
+						wayPointDescription, time, distance);
 
 				Assert.assertTrue(GPHJsonService.isWayPointinPath(wp));
 			}
@@ -242,8 +241,8 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 						azimuth, direction, time, distance);
 				Assert.assertTrue(GPHService.isWayPointOnGPXRoutes(wp));
 			} else {
-				wp = GPHJsonService.buildWayPointForJson(wayPointDescription,
-						time, distance);
+				wp = GPHJsonService.buildWayPointForJson(wayPoint_Coordinates,
+						wayPointDescription, time, distance);
 
 				Assert.assertTrue(GPHJsonService.isWayPointinPath(wp));
 			}

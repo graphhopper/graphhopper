@@ -423,12 +423,20 @@ public class CarFlagEncoderTest
         EncodingManager em = new EncodingManager(instance);
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "motorway_link");
-        way.setTag("maxspeed", "70 mph");
+        way.setTag("maxspeed", "60 mph");
         long flags = instance.handleWayTags(way, 1, 0);
 
-        // double speed = AbstractFlagEncoder.parseSpeed("70 mph");
-        // => 112.654 * 0.9 => 101
+        // double speed = AbstractFlagEncoder.parseSpeed("60 mph");
+        // => 96.56 * 0.9 => 86.9
+        assertEquals(86.9, instance.getSpeed(flags), 1e-1);
         flags = instance.reverseFlags(flags);
+        assertEquals(86.9, instance.getSpeed(flags), 1e-1);
+        
+        // test that maxPossibleValue  is not exceeded
+        way = new OSMWay(2);
+        way.setTag("highway", "motorway_link");
+        way.setTag("maxspeed", "70 mph");
+        flags = instance.handleWayTags(way, 1, 0);
         assertEquals(100, instance.getSpeed(flags), 1e-1);
     }
 

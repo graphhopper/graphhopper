@@ -95,12 +95,18 @@ public class BaseServletTester
         server = null;
     }
 
-    protected String getTestAPIUrl()
+    protected String getTestRouteAPIUrl()
     {
         String host = "localhost";
         return "http://" + host + ":" + port + "/route";
     }
-
+    
+    protected String getTestNearestAPIUrl()
+    {
+        String host = "localhost";
+        return "http://" + host + ":" + port + "/nearest";
+    }
+    
     protected JSONObject query( String query ) throws Exception
     {
         String resQuery = "";
@@ -114,8 +120,26 @@ public class BaseServletTester
 
             resQuery += "&";
         }
-        String url = getTestAPIUrl() + "?" + resQuery;
+        String url = getTestRouteAPIUrl() + "?" + resQuery;
         Downloader downloader = new Downloader("web integration tester");
         return new JSONObject(downloader.downloadAsString(url));
-    }    
+    } 
+    
+    protected JSONObject nearestQuery( String query ) throws Exception
+    {
+        String resQuery = "";
+        for (String q : query.split("\\&"))
+        {
+            int index = q.indexOf("=");
+            if (index > 0)
+                resQuery += q.substring(0, index + 1) + WebHelper.encodeURL(q.substring(index + 1));
+            else
+                resQuery += WebHelper.encodeURL(q);
+
+            resQuery += "&";
+        }
+        String url = getTestNearestAPIUrl() + "?" + resQuery;
+        Downloader downloader = new Downloader("web integration tester");
+        return new JSONObject(downloader.downloadAsString(url));
+    } 
 }

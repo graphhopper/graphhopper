@@ -41,6 +41,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         this((int) parseLong(propertiesStr, "speedBits", 5),
                 parseDouble(propertiesStr, "speedFactor", 5),
                 parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+        this.setBlockFords(parseBoolean(propertiesStr, "blockFords", true));
     }
 
     public MotorcycleFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
@@ -64,6 +65,8 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         avoidSet.add("motorroad");
         preferSet.add("primary");
         preferSet.add("secondary");
+        
+        maxPossibleSpeed = 100;
 
         // autobahn
         defaultSpeedMap.put("motorway", 100);
@@ -100,7 +103,8 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     {
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
-        reverseSpeedEncoder = new EncodedDoubleValue("Reverse Speed", shift, speedBits, speedFactor, defaultSpeedMap.get("secondary"), defaultSpeedMap.get("motorway"));
+        reverseSpeedEncoder = new EncodedDoubleValue("Reverse Speed", shift, speedBits, speedFactor, 
+                                                     defaultSpeedMap.get("secondary"), maxPossibleSpeed);
         shift += reverseSpeedEncoder.getBits();
 
         preferWayEncoder = new EncodedValue("PreferWay", shift, 3, 1, 3, 7);

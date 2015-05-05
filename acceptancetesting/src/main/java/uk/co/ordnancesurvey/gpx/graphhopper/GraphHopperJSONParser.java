@@ -32,7 +32,6 @@ public class GraphHopperJSONParser {
 		jsonString = responseString;
 	}
 
-
 	public GraphHopperJSONParser() {
 		// TODO Auto-generated constructor stub
 	}
@@ -56,19 +55,40 @@ public class GraphHopperJSONParser {
 			JsonPrimitive time = instruction.getAsJsonPrimitive("time");
 			JsonPrimitive distance = instruction.getAsJsonPrimitive("distance");
 			JsonPrimitive azimuth = instruction.getAsJsonPrimitive("azimuth");
+			JsonArray interval = instruction.getAsJsonArray("interval");
+			int coordinateIndex = Integer.parseInt(interval.get(0).toString());
+			JsonElement s = getJSONCoordinates(paths, coordinateIndex);
+			Double longitude = Double.parseDouble(s.getAsJsonArray().get(0)
+					.toString());
+			Double latitude = Double.parseDouble(s.getAsJsonArray().get(1)
+					.toString());
+			w.setLongitude(longitude);
+			w.setLatitude(latitude);
 			w.setDescription(description.toString());
 			w.addExtensionData(ExtensionConstants.DISTANCE, distance.toString());
 			w.addExtensionData(ExtensionConstants.TIME, time.toString());
-			// w.addExtensionData("azimuth",azimuth.toString());
-			System.out.println("azimuth :" + azimuth);
-			System.out.println("descritption: " + description);
-			System.out.println("time :" + time);
-			System.out.println("distance :" + distance);
+			LOG.info("azimuth :" + azimuth);
+			LOG.info("descritption: " + description);
+			LOG.info("time :" + time);
+			LOG.info("distance :" + distance);
+			LOG.info("Coordinates : " + w.getLatitude()+","+ w.getLongitude());
+			
+			
 			json.addWayPoint(w);
 		}
 
 		return json;
 
+	}
+
+	public JsonElement getJSONCoordinates(JsonArray paths, int coordinateIndex) {
+
+		JsonObject points = paths.get(0).getAsJsonObject()
+				.getAsJsonObject("points");
+		JsonArray coordinates = points.getAsJsonObject().getAsJsonArray(
+				"coordinates");
+
+		return coordinates.get(coordinateIndex);
 	}
 
 	public void parse(String routeType, String vehicle, String[] string) {
@@ -92,7 +112,7 @@ public class GraphHopperJSONParser {
 					.getTestProperty("graphHopperWebUrlViaApigee");
 		}
 
-		String apikey= IntegrationTestProperties.getTestProperty("apiKey");
+		String apikey = IntegrationTestProperties.getTestProperty("apiKey");
 		StringBuilder sb = new StringBuilder();
 		sb.append(graphHopperUrl);
 		sb.append("route?");
@@ -105,6 +125,7 @@ public class GraphHopperJSONParser {
 		sb.append(coordinateString);
 		sb.append("&apikey=");
 		sb.append(apikey);
+		sb.append("&points_encoded=false");
 		GraphHopperGPXParserRouteTest GPHService = new GraphHopperGPXParserRouteTest();
 		try {
 			CloseableHttpResponse httpResponse = GPHService
@@ -123,25 +144,23 @@ public class GraphHopperJSONParser {
 
 	}
 
-
 	/**
 	 * verifies if the waypoint is present in the JSON string.
+	 * 
 	 * @param Waypoint
-	 * @return true if Waypoint is found in the JSON string and
-	 * otherwise false is returned
+	 * @return true if Waypoint is found in the JSON string and otherwise false
+	 *         is returned
 	 */
 	public boolean isWayPointinPath(Waypoint w) {
 		boolean iswaypointinPath = false;
-		
 
 		for (Waypoint wp : json.getInstructions()) {
-			
-			RouteWayPoint k= new RouteWayPoint(wp);
-			iswaypointinPath=k.equals(new RouteWayPoint(w));
-		if (iswaypointinPath)
-		{
-			break;
-		}
+
+			RouteWayPoint k = new RouteWayPoint(wp);
+			iswaypointinPath = k.equals(new RouteWayPoint(w));
+			if (iswaypointinPath) {
+				break;
+			}
 		}
 
 		return iswaypointinPath;
@@ -149,15 +168,19 @@ public class GraphHopperJSONParser {
 	}
 
 	/**
-	 *Creates a Waypoint with  below attributes
+	 * Creates a Waypoint with below attributes
+	 * 
 	 * @param wayPointDescription
 	 * @param time
 	 * @param distance
 	 * @return Waypoint
 	 */
-	public Waypoint buildWayPointForJson(String wayPointDescription,
-			String time, String distance) {
+	public Waypoint buildWayPointForJson(String wayPoint_Coordinates,
+			String wayPointDescription, String time, String distance) {
 		Waypoint w = new Waypoint();
+		String waypoint[] = wayPoint_Coordinates.split(",");
+		w.setLatitude(new Double(waypoint[0]));
+		w.setLongitude(new Double(waypoint[1]));
 		w.setDescription(wayPointDescription);
 		w.addExtensionData(ExtensionConstants.DISTANCE, distance);
 		w.addExtensionData(ExtensionConstants.TIME, time);

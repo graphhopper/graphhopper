@@ -22,6 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ public class GraphHopperWeb implements GraphHopperAPI
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private Downloader downloader = new Downloader("GraphHopper Java Client");
-    private String serviceUrl = "https://graphhopper.com/api/1/route";
+    private String routeServiceUrl = "https://graphhopper.com/api/1/route";
     private String key = "";
     private boolean instructions = true;
     private boolean calcPoints = true;
@@ -54,7 +55,7 @@ public class GraphHopperWeb implements GraphHopperAPI
     @Override
     public boolean load( String serviceUrl )
     {
-        this.serviceUrl = serviceUrl;
+        this.routeServiceUrl = serviceUrl;
         return true;
     }
 
@@ -108,7 +109,7 @@ public class GraphHopperWeb implements GraphHopperAPI
             boolean tmpElevation = request.getHints().getBool("elevation", elevation);
             String tmpKey = request.getHints().get("key", key);
 
-            String url = serviceUrl
+            String url = routeServiceUrl
                     + "?"
                     + places
                     + "&type=json"
@@ -127,36 +128,16 @@ public class GraphHopperWeb implements GraphHopperAPI
 
             String str = downloader.downloadAsString(url);
             JSONObject json = new JSONObject(str);
+
+            if (json.has("message"))
+                throw new RuntimeException(json.getString("message") + ", code:" + json.getInt("code"));
+
             GHResponse res = new GHResponse();
 
             if (json.getJSONObject("info").has("errors"))
             {
                 JSONArray errors = json.getJSONObject("info").getJSONArray("errors");
-
-                for (int i = 0; i < errors.length(); i++)
-                {
-                    JSONObject error = errors.getJSONObject(i);
-                    String exClass = error.getString("details");
-                    String exMessage = error.getString("message");
-
-                    if (exClass.equals(UnsupportedOperationException.class.getName()))
-                    {
-                        res.addError(new UnsupportedOperationException(exMessage));
-                    } else if (exClass.equals(IllegalStateException.class.getName()))
-                    {
-                        res.addError(new IllegalStateException(exMessage));
-                    } else if (exClass.equals(RuntimeException.class.getName()))
-                    {
-                        res.addError(new RuntimeException(exMessage));
-                    } else if (exClass.equals(IllegalArgumentException.class.getName()))
-                    {
-                        res.addError(new IllegalArgumentException(exMessage));
-                    } else
-                    {
-                        res.addError(new Exception(exClass + " " + exMessage));
-                    }
-                }
-
+                readErrors(res.getErrors(), errors);
                 return res;
 
             } else
@@ -164,71 +145,8 @@ public class GraphHopperWeb implements GraphHopperAPI
                 took = json.getJSONObject("info").getDouble("took");
                 JSONArray paths = json.getJSONArray("paths");
                 JSONObject firstPath = paths.getJSONObject(0);
-                double distance = firstPath.getDouble("distance");
-                int time = firstPath.getInt("time");
-                if (tmpCalcPoints)
-                {
-                    String pointStr = firstPath.getString("points");
-                    PointList pointList = WebHelper.decodePolyline(pointStr, 100, tmpElevation);
-                    res.setPoints(pointList);
-
-                    if (tmpInstructions)
-                    {
-                        JSONArray instrArr = firstPath.getJSONArray("instructions");
-
-                        InstructionList il = new InstructionList(null);
-                        int viaCount = 1;
-                        for (int instrIndex = 0; instrIndex < instrArr.length(); instrIndex++)
-                        {
-                            JSONObject jsonObj = instrArr.getJSONObject(instrIndex);
-                            double instDist = jsonObj.getDouble("distance");
-                            String text = jsonObj.getString("text");
-                            long instTime = jsonObj.getLong("time");
-                            int sign = jsonObj.getInt("sign");
-                            JSONArray iv = jsonObj.getJSONArray("interval");
-                            int from = iv.getInt(0);
-                            int to = iv.getInt(1);
-                            PointList instPL = new PointList(to - from, tmpElevation);
-                            for (int j = from; j <= to; j++)
-                            {
-                                instPL.add(pointList, j);
-                            }
-
-                            InstructionAnnotation ia = InstructionAnnotation.EMPTY;
-                            if (jsonObj.has("annotation_importance") && jsonObj.has("annotation_text"))
-                            {
-                                ia = new InstructionAnnotation(jsonObj.getInt("annotation_importance"), jsonObj.getString("annotation_text"));
-                            }
-
-                            Instruction instr;
-                            if (sign == Instruction.USE_ROUNDABOUT || sign == Instruction.LEAVE_ROUNDABOUT)
-                            {
-                                instr = new RoundaboutInstruction(sign, text, ia, instPL);
-                            } else if (sign == Instruction.REACHED_VIA)
-                            {
-                                ViaInstruction tmpInstr = new ViaInstruction(text, ia, instPL);
-                                tmpInstr.setViaCount(viaCount);
-                                viaCount++;
-                                instr = tmpInstr;
-                            } else if (sign == Instruction.FINISH)
-                            {
-                                instr = new FinishInstruction(instPL, 0);
-                            } else
-                            {
-                                instr = new Instruction(sign, text, ia, instPL);
-                            }
-
-                            // The translation is done from the routing service so just use the provided string
-                            // instead of creating a combination with sign and name etc
-                            instr.setUseRawName();
-
-                            instr.setDistance(instDist).setTime(instTime);
-                            il.add(instr);
-                        }
-                        res.setInstructions(il);
-                    }
-                }
-                return res.setDistance(distance).setMillis(time);
+                readPath(res, firstPath, tmpCalcPoints, tmpInstructions, tmpElevation);
+                return res;
             }
         } catch (Exception ex)
         {
@@ -236,6 +154,112 @@ public class GraphHopperWeb implements GraphHopperAPI
         } finally
         {
             logger.debug("Full request took:" + sw.stop().getSeconds() + ", API took:" + took);
+        }
+    }
+
+    public static void readPath( GHResponse res, JSONObject firstPath,
+            boolean tmpCalcPoints,
+            boolean tmpInstructions,
+            boolean tmpElevation )
+    {
+        double distance = firstPath.getDouble("distance");
+        long time = firstPath.getLong("time");
+        if (tmpCalcPoints)
+        {
+            String pointStr = firstPath.getString("points");
+            PointList pointList = WebHelper.decodePolyline(pointStr, 100, tmpElevation);
+            res.setPoints(pointList);
+
+            if (tmpInstructions)
+            {
+                JSONArray instrArr = firstPath.getJSONArray("instructions");
+
+                InstructionList il = new InstructionList(null);
+                int viaCount = 1;
+                for (int instrIndex = 0; instrIndex < instrArr.length(); instrIndex++)
+                {
+                    JSONObject jsonObj = instrArr.getJSONObject(instrIndex);
+                    double instDist = jsonObj.getDouble("distance");
+                    String text = jsonObj.getString("text");
+                    long instTime = jsonObj.getLong("time");
+                    int sign = jsonObj.getInt("sign");
+                    JSONArray iv = jsonObj.getJSONArray("interval");
+                    int from = iv.getInt(0);
+                    int to = iv.getInt(1);
+                    PointList instPL = new PointList(to - from, tmpElevation);
+                    for (int j = from; j <= to; j++)
+                    {
+                        instPL.add(pointList, j);
+                    }
+
+                    InstructionAnnotation ia = InstructionAnnotation.EMPTY;
+                    if (jsonObj.has("annotation_importance") && jsonObj.has("annotation_text"))
+                    {
+                        ia = new InstructionAnnotation(jsonObj.getInt("annotation_importance"), jsonObj.getString("annotation_text"));
+                    }
+
+                    Instruction instr;
+                    if (sign == Instruction.USE_ROUNDABOUT || sign == Instruction.LEAVE_ROUNDABOUT)
+                    {
+                        instr = new RoundaboutInstruction(sign, text, ia, instPL);
+                    } else if (sign == Instruction.REACHED_VIA)
+                    {
+                        ViaInstruction tmpInstr = new ViaInstruction(text, ia, instPL);
+                        tmpInstr.setViaCount(viaCount);
+                        viaCount++;
+                        instr = tmpInstr;
+                    } else if (sign == Instruction.FINISH)
+                    {
+                        instr = new FinishInstruction(instPL, 0);
+                    } else
+                    {
+                        instr = new Instruction(sign, text, ia, instPL);
+                    }
+
+                    // The translation is done from the routing service so just use the provided string
+                    // instead of creating a combination with sign and name etc
+                    instr.setUseRawName();
+
+                    instr.setDistance(instDist).setTime(instTime);
+                    il.add(instr);
+                }
+                res.setInstructions(il);
+            }
+        }
+        res.setDistance(distance).setTime(time);
+    }
+
+    public static void readErrors( List<Throwable> errors, JSONArray errorJson )
+    {
+        for (int i = 0; i < errorJson.length(); i++)
+        {
+            JSONObject error = errorJson.getJSONObject(i);
+            String exClass = "";
+            if (error.has("details"))
+            {
+                exClass = error.getString("details");
+            }
+            String exMessage = error.getString("message");
+
+            if (exClass.equals(UnsupportedOperationException.class.getName()))
+            {
+                errors.add(new UnsupportedOperationException(exMessage));
+            } else if (exClass.equals(IllegalStateException.class.getName()))
+            {
+                errors.add(new IllegalStateException(exMessage));
+            } else if (exClass.equals(RuntimeException.class.getName()))
+            {
+                errors.add(new RuntimeException(exMessage));
+            } else if (exClass.equals(IllegalArgumentException.class.getName()))
+            {
+                errors.add(new IllegalArgumentException(exMessage));
+            } else if (exClass.isEmpty())
+            {
+                errors.add(new Exception(exMessage));
+            } else
+            {
+                errors.add(new Exception(exClass + " " + exMessage));
+            }
         }
     }
 }

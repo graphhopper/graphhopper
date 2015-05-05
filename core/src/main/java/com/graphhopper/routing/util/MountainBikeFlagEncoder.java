@@ -18,9 +18,16 @@
 package com.graphhopper.routing.util;
 
 import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PUSHING_SECTION_SPEED;
-import static com.graphhopper.routing.util.PriorityCode.*;
+
+import static com.graphhopper.routing.util.PriorityCode.BEST;
+import static com.graphhopper.routing.util.PriorityCode.PREFER;
+import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
+import static com.graphhopper.routing.util.PriorityCode.VERY_NICE;
 
 import java.util.TreeMap;
+
+import com.graphhopper.reader.OSMRelation;
+import com.graphhopper.reader.OSMWay;
 
 import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.Way;
@@ -43,6 +50,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
         this((int) parseLong(propertiesStr, "speedBits", 4),
                 parseDouble(propertiesStr, "speedFactor", 2),
                 parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+        this.setBlockFords(parseBoolean(propertiesStr, "blockFords", true));
     }
 
     public MountainBikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
