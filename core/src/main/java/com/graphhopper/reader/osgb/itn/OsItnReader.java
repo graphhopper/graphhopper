@@ -865,7 +865,7 @@ public class OsItnReader extends AbstractOsReader<Long> {
                 wayEnvironment += ":"+nature;
             }
 
-            System.out.println(">>>>>>>>>>>>>>>> Way " + wayOsmId + " is in environment " + wayEnvironment );
+            //            System.out.println(">>>>>>>>>>>>>>>> Way " + wayOsmId + " is in environment " + wayEnvironment );
             way.setTag("environment", wayEnvironment);
         }
 

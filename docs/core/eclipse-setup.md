@@ -3,7 +3,8 @@ Getting started with GraphHopper in Eclipse
 This manual covers step by step instructions on setting up a development and run environment for GraphHopper (web App only) using Eclipse. The instructions and tools used are platform independent and should be applicable for windows, Linux and Mac operating systems. 
 Instructions for Android branch will be provided in future.
 
-The first part of this document covers configuring Eclipse for cloning and importing GraphHopper repository. Setting up Apache Tomcat server and configuring it to run GraphHopper will be covered in subsequent documents.
+The first part of this document covers configuring Eclipse for cloning and importing GraphHopper repository. 
+Setting up Apache Tomcat server and configuring it to run GraphHopper is covered in [Setting up Apache Tomcat Server](./eclipse-tomcat-setup.md).
 
 ###1. Download Eclipse
 

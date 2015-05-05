@@ -308,6 +308,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
                     }
                     prepareWaysNodes(dpnWay, getNodeMap());
                     processWay(dpnWay);
+                    dpnWay.clearStoredCoords();
                     break;
                 case OSMElement.RELATION:
                     if (relationStart < 0) {
@@ -528,6 +529,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
     }
 
     private void processNode(OsDpnNode node) {
+    	logger.trace("PROCESSING:" + node.getId());
         if (isInBounds(node)) {
             addNode(node);
 
@@ -555,6 +557,8 @@ public class OsDpnReader extends AbstractOsReader<String> {
         if (nodeType == TOWER_NODE) {
             addTowerNode(node.getId(), lat, lon, ele);
         } else if (nodeType == PILLAR_NODE) {
+        	logger.trace("OsDpnReader.addPillarNode(" + nextPillarId
+        			+ ")");
             pillarInfo.setNode(nextPillarId, lat, lon, ele);
             getNodeMap().put(node.getId(), nextPillarId + 3);
             nextPillarId++;
@@ -607,6 +611,8 @@ public class OsDpnReader extends AbstractOsReader<String> {
     }
 
     int addTowerNode(String osmId, double lat, double lon, double ele) {
+    	logger.trace("OsDpnReader.addTowerNode(" + osmId
+    			+ ")");
         if (nodeAccess.is3D())
             nodeAccess.setNode(nextTowerId, lat, lon, ele);
         else

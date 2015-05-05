@@ -18,6 +18,10 @@
 package com.graphhopper.routing.util;
 
 import org.junit.Test;
+
+import com.graphhopper.reader.Relation;
+import com.graphhopper.reader.Way;
+
 import static org.junit.Assert.*;
 
 /**
@@ -58,4 +62,5 @@ public class AbstractFlagEncoderTest
         assertEquals(10, AbstractFlagEncoder.parseDouble("car|x", "prop", 10), .1);
         assertEquals(12.2, AbstractFlagEncoder.parseDouble("car|x|prop=12.2", "prop", 10), .1);
     }
+    
 }

@@ -41,7 +41,7 @@ public class TranslationMapTest
 
         Translation ruMap = SINGLETON.getWithFallBack(new Locale("ru"));
         assertEquals("Пешком", ruMap.tr("web.FOOT"));
-        
+
         Translation zhMap = SINGLETON.getWithFallBack(new Locale("vi", "VI"));
         assertEquals("Đi bộ", zhMap.tr("web.FOOT"));
 
@@ -60,5 +60,12 @@ public class TranslationMapTest
         assertEquals("רגל", trMap.tr("web.FOOT"));
 
         // indonesia assertEquals("in", new Locale("id").getLanguage());
+    }
+
+    @Test
+    public void testToRoundaboutString()
+    {
+        Translation ptMap = SINGLETON.get("pt");
+        assertTrue(ptMap.tr("roundaboutExitOnto", "1", "somestreet").contains("somestreet"));
     }
 }

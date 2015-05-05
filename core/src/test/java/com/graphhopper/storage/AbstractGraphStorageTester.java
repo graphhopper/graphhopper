@@ -17,19 +17,22 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.*;
-import com.graphhopper.util.*;
-import static com.graphhopper.util.GHUtility.*;
-import com.graphhopper.util.shapes.BBox;
+import static com.graphhopper.util.GHUtility.count;
+import static org.junit.Assert.*;
+
 import java.io.Closeable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import static org.junit.Assert.*;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.graphhopper.routing.util.*;
+import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.BBox;
 
 /**
  * Abstract test class to be extended for implementations of the Graph interface. Graphs
