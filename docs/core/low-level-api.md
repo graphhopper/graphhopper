@@ -49,7 +49,7 @@ if (!index.loadExisting())
 
 ```java
 QueryResult fromQR = index.findClosest(latitudeFrom, longituteFrom, EdgeFilter.ALL_EDGES);
-QueryResult toQR = index.findID(latitudeTo, longituteTo, EdgeFilter.ALL_EDGES);
+QueryResult toQR = index.findClosest(latitudeTo, longituteTo, EdgeFilter.ALL_EDGES);
 QueryGraph queryGraph = new QueryGraph(graph);
 queryGraph.lookup(fromQR, toQR);
 Path path = new Dijkstra(queryGraph, encoder).calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
@@ -93,7 +93,7 @@ if (!index.loadExisting())
 
 // calculate path is identical
 QueryResult fromQR = index.findClosest(latitudeFrom, longituteFrom, EdgeFilter.ALL_EDGES);
-QueryResult toQR = index.findID(latitudeTo, longituteTo, EdgeFilter.ALL_EDGES);
+QueryResult toQR = index.findClosest(latitudeTo, longituteTo, EdgeFilter.ALL_EDGES);
 QueryGraph queryGraph = new QueryGraph(graph);
 queryGraph.lookup(fromQR, toQR);
 
