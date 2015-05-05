@@ -38,11 +38,12 @@ import org.slf4j.LoggerFactory;
 
 import uk.co.ordnancesurvey.gpx.extensions.ExtensionConstants;
 import uk.co.ordnancesurvey.gpx.graphhopper.GraphHopperGPXParserRouteTest;
-import uk.co.ordnancesurvey.webtests.IntegrationTestProperties;
+import uk.co.ordnancesurvey.gpx.graphhopper.GraphHopperJSONParser;
 import uk.co.ordnancesurvey.webtests.base.ComponentID;
 import uk.co.ordnancesurvey.webtests.base.ImageComparison;
 import uk.co.ordnancesurvey.webtests.multiplatform.MultiplatformTest;
 import uk.co.ordnancesurvey.webtests.platforms.BrowserPlatformOptions;
+import uk.co.ordnancesurvey.gpx.graphhopper.IntegrationTestProperties;
 
 public class GraphHopperUIUtil extends MultiplatformTest {
 
@@ -50,6 +51,8 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 	private String routeStepNumber;
 	String testOn = IntegrationTestProperties.getTestProperty("testON");
 	GraphHopperGPXParserRouteTest GPHService = new GraphHopperGPXParserRouteTest();
+	GraphHopperJSONParser GPHJsonService = new GraphHopperJSONParser();
+	GraphHopperJSONParser JSONService = new GraphHopperJSONParser();
 
 	JavascriptExecutor js = (JavascriptExecutor) driver;
 	WebElement we;
@@ -170,7 +173,16 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 	public void getRouteFromService(String routeType, String... points) {
 
-		GPHService.parseRoute("gpx", routeType, points);
+		System.err.println(IntegrationTestProperties.getTestProperty("apiKey"));
+		if (IntegrationTestProperties.getTestProperty("routeType")
+				.equals("gpx")) {
+			GPHService.parseRoute("gpx", routeType, points);
+		}
+
+		else {
+
+			GPHJsonService.parse("json", routeType, points);
+		}
 
 	}
 
@@ -207,18 +219,34 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 			break;
 		case "SERVICE":
-			wp = buildWayPoint(wayPoint_Coordinates, wayPointDescription,
-					azimuth, direction, time, distance);
-			Assert.assertTrue(GPHService.isWayPointOnGPXRoutes(wp));
+			if (IntegrationTestProperties.getTestProperty("routeType").equals(
+					"gpx")) {
+				wp = buildWayPoint(wayPoint_Coordinates, wayPointDescription,
+						azimuth, direction, time, distance);
+				Assert.assertTrue(GPHService.isWayPointOnGPXRoutes(wp));
+			} else {
+				wp = GPHJsonService.buildWayPointForJson(wayPointDescription,
+						time, distance);
+
+				Assert.assertTrue(GPHJsonService.isWayPointinPath(wp));
+			}
 
 			break;
 
 		default:
 			verifyInstructionThroughUI(wayPointIndex, wayPointDescription);
 
-			wp = buildWayPoint(wayPoint_Coordinates, wayPointDescription,
-					azimuth, direction, time, distance);
-			Assert.assertTrue(GPHService.isWayPointOnGPXRoutes(wp));
+			if (IntegrationTestProperties.getTestProperty("routeType").equals(
+					"gpx")) {
+				wp = buildWayPoint(wayPoint_Coordinates, wayPointDescription,
+						azimuth, direction, time, distance);
+				Assert.assertTrue(GPHService.isWayPointOnGPXRoutes(wp));
+			} else {
+				wp = GPHJsonService.buildWayPointForJson(wayPointDescription,
+						time, distance);
+
+				Assert.assertTrue(GPHJsonService.isWayPointinPath(wp));
+			}
 			break;
 		}
 
@@ -293,6 +321,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 				verifyInstructionThroughUI(wayPointIndex, waypointdesc);
 
 			}
+
 		}
 
 	}
@@ -464,4 +493,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 	}
 
+	public void verifyWayPointsThroughService() {
+
+	}
 }
