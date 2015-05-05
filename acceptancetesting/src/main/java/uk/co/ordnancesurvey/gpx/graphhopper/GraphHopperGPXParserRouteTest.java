@@ -86,7 +86,7 @@ public class GraphHopperGPXParserRouteTest {
 		}
 	}
 
-	private CloseableHttpResponse doSendAndGetResponse(String serviceUrl)
+	CloseableHttpResponse doSendAndGetResponse(String serviceUrl)
 			throws IOException, ClientProtocolException {
 		CloseableHttpClient httpClient = HttpClientUtils.createClient();
 		HttpGet httpget = new HttpGet(serviceUrl);
@@ -243,7 +243,7 @@ public class GraphHopperGPXParserRouteTest {
 		return routeContainsTurn;
 	}
 
-	private CloseableHttpResponse sendAndGetResponse(String requestUrl)
+	CloseableHttpResponse sendAndGetResponse(String requestUrl)
 			throws IOException {
 		String serviceUrl = requestUrl;
 		if (IntegrationTestProperties.getTestPropertyBool("viaApigee")) {
