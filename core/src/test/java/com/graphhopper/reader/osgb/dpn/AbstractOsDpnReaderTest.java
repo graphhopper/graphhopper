@@ -43,7 +43,7 @@ public abstract class AbstractOsDpnReaderTest {
     protected boolean turnCosts = false;
     protected BikeFlagEncoder bikeEncoder;
     protected FootFlagEncoder footEncoder;
-	protected EdgeExplorer footOutExplorer;
+	protected EdgeExplorer footExplorer;
 
     // RoadNode 880
     protected static double node0Lat = 50.6992070044d;
@@ -114,12 +114,12 @@ public abstract class AbstractOsDpnReaderTest {
         GraphExtension extendedStorage = turnRestrictionsImport ? new TurnCostExtension() : new GraphExtension.NoExtendedStorage();
         GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(
                 directory, false), encodingManager, is3D, extendedStorage);
-        footOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, false, true));
+        footExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, false, true));
         return graph;
     }
 
     protected int getEdge(int from, int to) {
-        EdgeIterator iter = footOutExplorer.setBaseNode(from);
+        EdgeIterator iter = footExplorer.setBaseNode(from);
         while (iter.next()) {
             if (iter.getAdjNode() == to) {
                 return iter.getEdge();

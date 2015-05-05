@@ -264,17 +264,17 @@ public class OsItnReaderTest extends AbstractOsItnReaderTest {
         final EdgeIterator iter = explorer.setBaseNode(0);
         assertTrue(iter.next());
         assertEquals("OTHER ROAD (A337)", iter.getName());
-        assertEquals(55, carEncoder.getSpeed(iter.getFlags()), 1e-1);
+        assertEquals(95, carEncoder.getSpeed(iter.getFlags()), 1e-1);
         iter.next();
         assertEquals("OTHER ROAD (A337)", iter.getName());
-        assertEquals(55, carEncoder.getSpeed(iter.getFlags()), 1e-1);
+        assertEquals(95, carEncoder.getSpeed(iter.getFlags()), 1e-1);
         iter.next();
         assertEquals("BONHAY ROAD (A337)", iter.getName());
-        assertEquals(55, carEncoder.getSpeed(iter.getFlags()), 1e-1);
+        assertEquals(95, carEncoder.getSpeed(iter.getFlags()), 1e-1);
         iter.next();
         assertEquals("BONHAY ROAD (A337)", iter.getName());
         final long flags = iter.getFlags();
-        assertEquals(55.0, carEncoder.getSpeed(flags), 1e-1);
+        assertEquals(95.0, carEncoder.getSpeed(flags), 1e-1);
         assertFalse(iter.next());
     }
 

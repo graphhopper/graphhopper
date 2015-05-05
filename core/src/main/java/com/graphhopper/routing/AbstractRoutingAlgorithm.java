@@ -63,7 +63,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     {
         this.weightLimit = weight;
     }
-       
+
     public RoutingAlgorithm setEdgeFilter( EdgeFilter additionalEdgeFilter )
     {
         this.additionalEdgeFilter = additionalEdgeFilter;
@@ -110,6 +110,8 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
      * @return true if finished.
      */
     protected abstract Path extractPath();
+
+    protected abstract boolean isWeightLimitExceeded();
 
     protected Path createEmptyPath()
     {

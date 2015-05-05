@@ -130,7 +130,7 @@ public class GHResponse
         return distance;
     }
 
-    public GHResponse setMillis( long timeInMillis )
+    public GHResponse setTime( long timeInMillis )
     {
         this.time = timeInMillis;
         return this;
@@ -138,10 +138,20 @@ public class GHResponse
 
     /**
      * @return time in millis
+     * @deprecated use getTime instead
      */
     public long getMillis()
     {
         check("getMillis");
+        return time;
+    }
+
+    /**
+     * @return time in millis
+     */
+    public long getTime()
+    {
+        check("getTimes");
         return time;
     }
 
