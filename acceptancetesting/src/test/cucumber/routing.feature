@@ -317,6 +317,7 @@ Feature: Verify a route from A to B
       | pointA                           | pointB                                | routetype |
       | 5, OXFORD LANE, KINGTON, HR5 3ED | 64, TOWER MILL ROAD, LONDON, SE15 6BZ | car       |
 
+@Routing
   Scenario Outline: Verify a Roundabout(Charles Watts Way)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
