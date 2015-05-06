@@ -261,6 +261,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 				wp = GPHJsonService.buildWayPointForJson(wayPoint_Coordinates,
 						wayPointDescription, time, distance);
 				isWayPointonRouteMap = GPHJsonService.isWayPointinPath(wp);
+
 			}
 			break;
 		}
