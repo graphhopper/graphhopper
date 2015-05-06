@@ -55,6 +55,8 @@ public class GraphHopperJSONParser {
 			JsonPrimitive time = instruction.getAsJsonPrimitive("time");
 			JsonPrimitive distance = instruction.getAsJsonPrimitive("distance");
 			JsonPrimitive azimuth = instruction.getAsJsonPrimitive("azimuth");
+			JsonPrimitive annotation_text = instruction
+					.getAsJsonPrimitive("annotation_text");
 			JsonArray interval = instruction.getAsJsonArray("interval");
 			int coordinateIndex = Integer.parseInt(interval.get(0).toString());
 			JsonElement s = getJSONCoordinates(paths, coordinateIndex);
@@ -67,13 +69,22 @@ public class GraphHopperJSONParser {
 			w.setDescription(description.toString());
 			w.addExtensionData(ExtensionConstants.DISTANCE, distance.toString());
 			w.addExtensionData(ExtensionConstants.TIME, time.toString());
+	
+				
+
+			
 			LOG.info("azimuth :" + azimuth);
 			LOG.info("descritption: " + description);
 			LOG.info("time :" + time);
 			LOG.info("distance :" + distance);
-			LOG.info("Coordinates : " + w.getLatitude()+","+ w.getLongitude());
-			
-			
+			if(null!=annotation_text)
+			{
+			w.setAnnotation_text(annotation_text.toString());
+			LOG.info("annotation_text: " + annotation_text.toString());
+			}
+			LOG.info("Coordinates : " + w.getLatitude() + ","
+					+ w.getLongitude());
+
 			json.addWayPoint(w);
 		}
 
@@ -91,7 +102,7 @@ public class GraphHopperJSONParser {
 		return coordinates.get(coordinateIndex);
 	}
 
-	public void parse(String routeType, String vehicle, String[] string) {
+	public void parse(String routeType,String avoidance, String vehicle, String[] string) {
 
 		// Set up the URL
 		String jsonResponse = "";
@@ -126,6 +137,8 @@ public class GraphHopperJSONParser {
 		sb.append("&apikey=");
 		sb.append(apikey);
 		sb.append("&points_encoded=false");
+		sb.append("&avoidances="+avoidance);
+		sb.append("&weighting=fastavoid");
 		GraphHopperGPXParserRouteTest GPHService = new GraphHopperGPXParserRouteTest();
 		try {
 			CloseableHttpResponse httpResponse = GPHService

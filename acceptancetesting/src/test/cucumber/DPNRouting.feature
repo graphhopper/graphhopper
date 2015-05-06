@@ -203,3 +203,26 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA              | pointB              | pointC              | pointD             | routetype |
       | 53.206965,-1.839021 | 53.203607,-1.857557 | 53.149631,-1.867364 | 53.11417,-1.895082 | foot      |
+
+  # Avoidances : A Road,Boulders,Cliff,Inland Water,Marsh,Quarry Or Pit,Scree,Rock,Mud,Sand,Shingle
+  @Routing
+  Scenario Outline: Verify  Road Names on a Walking Route  (Mill lane-BUXTON)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI and avoid "<avoidance>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc        | azimuth | direction | time   | distance |
+      | 4             | 53.251736,-1.845811 | Turn left onto Path | 173.0   | S         | 656592 | 911.934  |
+
+    Examples: 
+      | pointA              | pointB              | routetype | avoidance |
+      | 53.267104,-1.818304 | 53.131858,-1.661941 | foot      | scree     |
+
+  @Routing
+  Scenario Outline: Verify  Road Names on a Walking Route  (Mill lane-BUXTON)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI and avoid "<avoidance>"
+    Then I should be able to verify the waypoints not on the route map:
+      | wayPointIndex | waypointco          | waypointdesc        | azimuth | direction | time   | distance |
+      | 4             | 53.251736,-1.845811 | Turn left onto Path | 173.0   | S         | 656592 | 911.934  |
+
+    Examples: 
+      | pointA              | pointB              | routetype | avoidance |
+      | 53.267104,-1.818304 | 53.131858,-1.661941 | foot      |           |
