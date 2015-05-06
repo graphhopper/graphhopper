@@ -40,7 +40,7 @@ public abstract class AbstractAvoidanceDecorator implements EncoderDecorator {
 		return avoidanceType;
 	}
 
-	public long handleWayTags(Way way, long encoded) {
+	public long handleWayTags(Way way) {
 		long avoidanceValue = 0;
 	
 		for (EdgeAttribute aType : getEdgeAttributesOfInterest()) {
@@ -48,7 +48,7 @@ public abstract class AbstractAvoidanceDecorator implements EncoderDecorator {
 				avoidanceValue += aType.getValue();
 			}
 		}
-		return wayTypeEncoder.setValue(encoded, avoidanceValue);
+		return wayTypeEncoder.setValue(0L, avoidanceValue);
 	}
 
 	private String getWayName(long wayType, Translation tr) {

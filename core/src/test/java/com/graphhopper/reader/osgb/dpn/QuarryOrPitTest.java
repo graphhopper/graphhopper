@@ -27,7 +27,6 @@ public class QuarryOrPitTest {
 	    }
 
 	    @Test
-        @Ignore
 	    public void testVisitWayAttribute() throws Exception {
 	        visitor.visitWayAttribute("quarryorpit", way);
 	        verify(way).setTag("natural", "excavation");
