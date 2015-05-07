@@ -209,20 +209,20 @@ Feature: Verify a route from A to B
   Scenario Outline: Verify  Road Names on a Walking Route  (Mill lane-BUXTON)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI and avoid "<avoidance>"
     Then I should be able to verify the waypoints on the route map:
-      | wayPointIndex | waypointco          | waypointdesc        | azimuth | direction | time   | distance |
-      | 4             | 53.251736,-1.845811 | Turn left onto Path | 173.0   | S         | 656592 | 911.934  |
+      | wayPointIndex | waypointco          | waypointdesc       | azimuth | direction | time  | distance |
+      | 4             | 53.252061,-1.826618 | continue onto Path | 97.0    | E         | 24386 | 33.87    |
 
     Examples: 
       | pointA              | pointB              | routetype | avoidance |
-      | 53.267104,-1.818304 | 53.131858,-1.661941 | foot      | scree     |
+      | 53.267104,-1.818304 | 53.131858,-1.661941 | foot      |           |
 
   @Routing
   Scenario Outline: Verify  Road Names on a Walking Route  (Mill lane-BUXTON)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI and avoid "<avoidance>"
     Then I should be able to verify the waypoints not on the route map:
-      | wayPointIndex | waypointco          | waypointdesc        | azimuth | direction | time   | distance |
-      | 4             | 53.251736,-1.845811 | Turn left onto Path | 173.0   | S         | 656592 | 911.934  |
+      | wayPointIndex | waypointco          | waypointdesc       | azimuth | direction | time  | distance |
+      | 4             | 53.252061,-1.826618 | continue onto Path | 97.0    | E         | 24386 | 33.87    |
 
     Examples: 
       | pointA              | pointB              | routetype | avoidance |
-      | 53.267104,-1.818304 | 53.131858,-1.661941 | foot      |           |
+      | 53.267104,-1.818304 | 53.131858,-1.661941 | foot      |  scree    |

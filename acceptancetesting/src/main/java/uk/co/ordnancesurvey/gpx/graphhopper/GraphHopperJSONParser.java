@@ -1,14 +1,10 @@
 package uk.co.ordnancesurvey.gpx.graphhopper;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
 
 import org.alternativevision.gpx.beans.Waypoint;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +50,13 @@ public class GraphHopperJSONParser {
 			JsonPrimitive description = instruction.getAsJsonPrimitive("text");
 			JsonPrimitive time = instruction.getAsJsonPrimitive("time");
 			JsonPrimitive distance = instruction.getAsJsonPrimitive("distance");
+			
+		double distance_rounding=Double.parseDouble(distance.toString());
+		
+		distance_rounding=Math.round(distance_rounding*10)/10.0;
+		
+		
+			
 			JsonPrimitive azimuth = instruction.getAsJsonPrimitive("azimuth");
 			JsonPrimitive annotation_text = instruction
 					.getAsJsonPrimitive("annotation_text");
@@ -67,10 +70,9 @@ public class GraphHopperJSONParser {
 			w.setLongitude(longitude);
 			w.setLatitude(latitude);
 			w.setDescription(description.toString());
-			w.addExtensionData(ExtensionConstants.DISTANCE, distance.toString());
+			w.addExtensionData(ExtensionConstants.DISTANCE, String.valueOf(distance_rounding));
 			w.addExtensionData(ExtensionConstants.TIME, time.toString());
 	
-				
 
 			
 			LOG.info("azimuth :" + azimuth);
