@@ -15,6 +15,10 @@ public class S6GraphHopper
     @Override
     public Weighting createWeighting( WeightingMap wMap, FlagEncoder encoder )
     {
+        if (encoder instanceof TruckFlagEncoder) {
+            return new TruckWeighting();
+        }
+        
         Weighting defaultWeighting = super.createWeighting(wMap, encoder);
         
         //
@@ -46,7 +50,7 @@ public class S6GraphHopper
         private Set<Integer> avoidEdges;
        
         public AvoidEdgeWeighting(final Weighting weighting,
-                                final Set<Integer> avoidEdges)
+                                  final Set<Integer> avoidEdges)
         {
             this.weighting = weighting;
             this.avoidEdges = avoidEdges;
@@ -77,6 +81,32 @@ public class S6GraphHopper
             }
             
             return weighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+        }
+    }
+    
+    
+    public static class TruckWeighting
+        implements
+            Weighting
+    {
+        @Override
+        public double getMinWeight(final double distance)
+        {
+            return 0;
+        }
+
+        @Override
+        public double calcWeight(final EdgeIteratorState edgeState,
+                                 final boolean reverse,
+                                 final int prevOrNextEdgeId)
+        {
+            long flags = edgeState.getFlags();
+            //
+            // TODO: If flags contain the hgv=designated then make this very favorable (zero);
+            // if hgv=destination then make it quite
+            // unfavorable. Otherwise, make it a midland value.
+            //
+            return 0;
         }
     }
 }
