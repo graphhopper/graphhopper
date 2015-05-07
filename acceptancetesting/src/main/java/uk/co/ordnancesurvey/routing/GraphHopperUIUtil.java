@@ -147,7 +147,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 			}
 		}
 
-		if (avoidance != "") {
+		if (!avoidance.equals("")) {
 
 			clickElement(settingsButton);
 			switch (avoidance.toLowerCase().trim()) {
@@ -221,7 +221,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 		if (IntegrationTestProperties.getTestProperty("routeType")
 				.equals("gpx")) {
-			GPHService.parseRoute("gpx", routeType, points);
+			GPHService.parseRoute("gpx",avoidance, routeType, points);
 		}
 
 		else {
@@ -235,7 +235,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 		if (IntegrationTestProperties.getTestProperty("routeType")
 				.equals("gpx")) {
-			GPHService.parseRoute("gpx", routeType, points);
+			GPHService.parseRoute("gpx", "",routeType, points);
 		}
 
 		else {

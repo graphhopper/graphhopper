@@ -122,7 +122,7 @@ public class GraphHopperJSONParser {
 					.getTestProperty("graphHopperWebUrlViaApigee");
 		} else {
 			graphHopperUrl = IntegrationTestProperties
-					.getTestProperty("graphHopperWebUrlViaApigee");
+					.getTestProperty("graphHopperWebUrl");
 		}
 
 		String apikey = IntegrationTestProperties.getTestProperty("apiKey");
@@ -139,8 +139,10 @@ public class GraphHopperJSONParser {
 		sb.append("&apikey=");
 		sb.append(apikey);
 		sb.append("&points_encoded=false");
-		sb.append("&avoidances="+avoidance);
-		sb.append("&weighting=fastavoid");
+		
+		if (!avoidance.equals("")){
+			sb.append("&avoidances="+avoidance);
+		sb.append("&weighting=fastavoid");}
 		GraphHopperGPXParserRouteTest GPHService = new GraphHopperGPXParserRouteTest();
 		try {
 			CloseableHttpResponse httpResponse = GPHService
