@@ -41,7 +41,7 @@ public class GraphHopperHooks {
 		switch (testON.toUpperCase()) {
 		case "WEB":
 
-			graphUiUtil.getRouteFromUI(routeType, pointA, pointB);
+			graphUiUtil.getRouteFromUI(routeType, "",pointA, pointB);
 			break;
 		case "SERVICE":
 			graphUiUtil.getRouteFromService(routeType, pointA, pointB);
@@ -50,9 +50,9 @@ public class GraphHopperHooks {
 
 			if (pointA.split(",").length == 2) {
 				graphUiUtil.getRouteFromService(routeType, pointA, pointB);
-				graphUiUtil.getRouteFromUI(routeType, pointA, pointB);
+				graphUiUtil.getRouteFromUI(routeType,"", pointA, pointB);
 			} else {
-				graphUiUtil.getRouteFromUI(routeType, pointA, pointB);
+				graphUiUtil.getRouteFromUI(routeType, "",pointA, pointB);
 			}
 
 			break;
@@ -81,7 +81,7 @@ public class GraphHopperHooks {
 		switch (testON.toUpperCase()) {
 		case "WEB":
 
-			graphUiUtil.getRouteFromUI(routeType, pointA, pointB);
+			graphUiUtil.getRouteFromUI(routeType,avoidance, pointA, pointB);
 			break;
 		case "SERVICE":
 			graphUiUtil.getRouteFromServiceWithAvoidance(routeType, avoidance, pointA,
@@ -93,7 +93,7 @@ public class GraphHopperHooks {
 				graphUiUtil.getRouteFromServiceWithAvoidance(routeType, avoidance,pointA, pointB);
 				graphUiUtil.getRouteFromUI(routeType, pointA, pointB);
 			} else {
-				graphUiUtil.getRouteFromUI(routeType, pointA, pointB);
+				graphUiUtil.getRouteFromUI(routeType,avoidance, pointA, pointB);
 			}
 
 			break;
@@ -122,7 +122,7 @@ public class GraphHopperHooks {
 		switch (testON.toUpperCase()) {
 		case "WEB":
 
-			graphUiUtil.getRouteFromUI(routeType, pointA, pointB, pointC);
+			graphUiUtil.getRouteFromUI(routeType,"",pointA, pointB, pointC);
 			break;
 		case "SERVICE":
 			graphUiUtil.getRouteFromService(routeType, pointA, pointB, pointC);
@@ -134,7 +134,7 @@ public class GraphHopperHooks {
 						pointC);
 				graphUiUtil.getRouteFromUI(routeType, pointA, pointB, pointC);
 			} else {
-				graphUiUtil.getRouteFromUI(routeType, pointA, pointB, pointC);
+				graphUiUtil.getRouteFromUI(routeType,"", pointA, pointB, pointC);
 			}
 
 			break;
@@ -155,7 +155,7 @@ public class GraphHopperHooks {
 		switch (testON.toUpperCase()) {
 		case "WEB":
 
-			graphUiUtil.getRouteFromUI(routeType, pointA, pointB, pointC,
+			graphUiUtil.getRouteFromUI(routeType, "",pointA, pointB, pointC,
 					pointD);
 			break;
 		case "SERVICE":
@@ -167,10 +167,10 @@ public class GraphHopperHooks {
 			if (pointA.split(",").length == 2) {
 				graphUiUtil.getRouteFromService(routeType, pointA, pointB,
 						pointC, pointD);
-				graphUiUtil.getRouteFromUI(routeType, pointA, pointB, pointC,
+				graphUiUtil.getRouteFromUI(routeType,"", pointA, pointB, pointC,
 						pointD);
 			} else {
-				graphUiUtil.getRouteFromUI(routeType, pointA, pointB, pointC,
+				graphUiUtil.getRouteFromUI(routeType, "",pointA, pointB, pointC,
 						pointD);
 			}
 
