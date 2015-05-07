@@ -2,15 +2,8 @@ package uk.co.ordnancesurvey.routing;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ADD_WAYPOINT;
-import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.INSTRUCTIONS;
-import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ROUTE_SEARCH;
-import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ROUTE_TYPE_BIKE;
-import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ROUTE_TYPE_CAR;
-import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.ROUTE_TYPE_WALK;
-import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.TOTAL_ROUTE_TIME;
-import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.dropDown;
-import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.waypoint;
+
+import static uk.co.ordnancesurvey.routing.GraphHopperComponentIdentification.*;
 
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -94,18 +87,22 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 	/**
 	 * <p>
+	 * getRouteFromUI is to get a route from web interface using the provided
+	 * start, end and intermediate waypoints.
 	 * <p>
-	 * <p>
+	 * all avoidances will be considered while generating a route.
 	 * 
-	 * @param pointA
-	 * @param pointB
 	 * @param routeType
-	 *            <p>
-	 *            Route type can be Car, walk or Cycle.
+	 *            can be car/bike/foot
+	 * @param avoidance
+	 *            can be aroad,cliff.. etc and it can be "" if no avoidance is
+	 *            need to be set
+	 * @param points
+	 *            start and end points along with any intermediate points
 	 * @throws InterruptedException
 	 */
-	public void getRouteFromUI(String routeType, String... points)
-			throws InterruptedException {
+	public void getRouteFromUI(String routeType, String avoidance,
+			String... points) throws InterruptedException {
 
 		switch (routeType) {
 		case "car":
@@ -149,6 +146,10 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 			}
 		}
 
+		if (avoidance != "") {
+			clickElement(settingsButton);
+			clickElement(avoidance_ARoad);
+		}
 		clickElement(ROUTE_SEARCH);
 		waitFor(INSTRUCTIONS);
 
@@ -230,7 +231,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		case "WEB":
 
 			verifyInstructionThroughUI(wayPointIndex, wayPointDescription);
-			isWayPointonRouteMap=true;
+			isWayPointonRouteMap = true;
 			break;
 		case "SERVICE":
 			if (IntegrationTestProperties.getTestProperty("routeType").equals(
