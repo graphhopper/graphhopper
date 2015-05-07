@@ -178,7 +178,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 				clickElement(avoidance_Rock);
 				break;
 			case "mud":
-				clickElement(avoidance_Mud);
+			clickElement(avoidance_Mud);
 				break;
 
 			case "sand":
