@@ -13,8 +13,8 @@ public class TruckFlagEncoder
     extends
         CarFlagEncoder
 {
-    public static final int K_DESIGNATED = 101;
-    public static final int K_DESTINATION = 102;
+    public static final int K_DESIGNATED = 100;
+    public static final int K_DESTINATION = 101;
     private long designatedbit = 0;
     private long destinationbit = 0;
     
@@ -67,15 +67,16 @@ public class TruckFlagEncoder
     @Override
     public long handleWayTags( OSMWay way, long allowed, long relationFlags )
     {
+        long encoded = 0;
         if (way.hasTag("hgv", "designated")) {
-            return setBool(0, K_DESIGNATED, true);
+            encoded = setBool(0, K_DESIGNATED, true);
         }
         
         if (way.hasTag("hgv", "destination")) {
-            return setBool(0, K_DESTINATION, true);
+            encoded = setBool(0, K_DESTINATION, true);
         }
         
-        return 0;
+        return encoded;
     }
     
     @Override
