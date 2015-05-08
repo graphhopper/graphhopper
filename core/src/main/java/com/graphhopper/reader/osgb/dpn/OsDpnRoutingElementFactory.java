@@ -18,7 +18,7 @@ public class OsDpnRoutingElementFactory extends AbstractRoutingElementFactory<Ro
 
     @Override
     public RoutingElement create(String name, String idStr, XMLStreamReader parser) throws MismatchedDimensionException, XMLStreamException, FactoryException, TransformException {
-    	idStr = idStr.substring(4);
+    	idStr = idStr.substring(3);
         logger.info(":" + name + ":");
         switch (name) {
         case "RouteNode": {
