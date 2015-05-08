@@ -56,7 +56,7 @@ hopper.importOrLoad();
 
 // create MapMatching object, can and should be shared accross threads
 
-Graph graph = hopper.getGraph();
+GraphStorage graph = hopper.getGraph();
 LocationIndexMatch locationIndex = new LocationIndexMatch(graph, new RAMDirectory());
 locationIndex.prepareIndex();
 MapMatching mapMatching = new MapMatching(graph, locationIndex, encoder);
