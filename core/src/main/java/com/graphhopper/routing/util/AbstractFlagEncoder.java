@@ -735,11 +735,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 
 	@Override
 	public long getLong(long flags, int key) {
-		for (EncoderDecorator decorator : encoderDecorators) {
-			if (decorator.supports(key)) {
-				return decorator.getLong(flags);
-			}
-		}
+        if(null!=encoderDecorators) {
+            for (EncoderDecorator decorator : encoderDecorators) {
+                if (decorator.supports(key)) {
+                    return decorator.getLong(flags);
+                }
+            }
+        }
 		throw new UnsupportedOperationException("Unknown key " + key
 				+ " for long value.");
 	}
