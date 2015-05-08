@@ -1,5 +1,5 @@
 eclipse.preferences.version=1
-editor_save_participant_org.eclipse.jdt.ui.postsavelistener.cleanup=false
+editor_save_participant_org.eclipse.jdt.ui.postsavelistener.cleanup=true
 org.eclipse.jdt.ui.ignorelowercasenames=true
 org.eclipse.jdt.ui.importorder=java;javax;org;com;
 org.eclipse.jdt.ui.ondemandthreshold=8
@@ -36,7 +36,7 @@ sp_cleanup.qualify_static_member_accesses_through_subtypes_with_declaring_class=
 sp_cleanup.qualify_static_member_accesses_with_declaring_class=false
 sp_cleanup.qualify_static_method_accesses_with_declaring_class=false
 sp_cleanup.remove_private_constructors=true
-sp_cleanup.remove_trailing_whitespaces=false
+sp_cleanup.remove_trailing_whitespaces=true
 sp_cleanup.remove_trailing_whitespaces_all=true
 sp_cleanup.remove_trailing_whitespaces_ignore_empty=false
 sp_cleanup.remove_unnecessary_casts=true

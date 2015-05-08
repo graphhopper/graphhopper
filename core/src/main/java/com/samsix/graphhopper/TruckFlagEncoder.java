@@ -1,13 +1,8 @@
 package com.samsix.graphhopper;
 
-import static com.graphhopper.util.Helper.keepIn;
-
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodedDoubleValue;
-import com.graphhopper.routing.util.EncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PointList;
 
 public class TruckFlagEncoder
     extends
@@ -17,24 +12,24 @@ public class TruckFlagEncoder
     public static final int K_DESTINATION = 101;
     private long designatedbit = 0;
     private long destinationbit = 0;
-    
+
     public TruckFlagEncoder()
     {
         super();
-        
+
         //
         // Allow our service vehicles to take private roads
         // to get to the equipment they need to get to.
         //
         restrictedValues.remove("private");
     }
-    
-    
+
+
     @Override
     public long acceptWay(final OSMWay way)
     {
         String hgv = way.getTag("hgv");
-    
+
         //
         // hgv=no seems to be the way to say that trucks can't go here.
         // hgv = Heavy Goods Vehicle
@@ -45,7 +40,7 @@ public class TruckFlagEncoder
         {
             return 0;
         }
-        
+
         return super.acceptWay( way );
     }
 
@@ -54,43 +49,44 @@ public class TruckFlagEncoder
     {
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
-        
+
         designatedbit = 1L << shift++;
         destinationbit = 1L << shift++;
 
         return shift;
     }
 
-    //
-    // TODO: Is this necessary? Is this correct? Do I use zeros here and save zeros?
-    //
     @Override
     public long handleWayTags( OSMWay way, long allowed, long relationFlags )
     {
-        long encoded = 0;
+        long encoded = super.handleWayTags(way, allowed, relationFlags);
+        if (encoded == 0) {
+            return 0;
+        }
+
         if (way.hasTag("hgv", "designated")) {
-            encoded = setBool(0, K_DESIGNATED, true);
+            encoded = setBool(encoded, K_DESIGNATED, true);
         }
-        
+
         if (way.hasTag("hgv", "destination")) {
-            encoded = setBool(0, K_DESTINATION, true);
+            encoded = setBool(encoded, K_DESTINATION, true);
         }
-        
+
         return encoded;
     }
-    
+
     @Override
     public void applyWayTags(final OSMWay way,
                              final EdgeIteratorState edge)
     {
         long flags = edge.getFlags();
-        
+
         if (way.hasTag("hgv", "designated")) {
             flags = setBool(flags, K_DESIGNATED, true);
         }
-        
+
         if (way.hasTag("hgv", "destination")) {
-            flags = setBool(flags, K_DESIGNATED, true);
+            flags = setBool(flags, K_DESTINATION, true);
         }
 
         edge.setFlags(flags);
@@ -123,7 +119,7 @@ public class TruckFlagEncoder
             return super.isBool(flags, key);
         }
     }
-    
+
     @Override
     public String toString()
     {

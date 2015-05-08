@@ -13,8 +13,8 @@ public class S6GHUtils
     {
         // prevent instantiation
     }
-    
-    
+
+
     public static EncodingManager getS6EncodingManager()
     {
         List<FlagEncoder> encoders = new ArrayList<FlagEncoder>();
@@ -23,7 +23,7 @@ public class S6GHUtils
         encoders.add(new S6CarFlagEncoder());
         encoders.add(new TruckFlagEncoder());
         encoders.add(new BikeFlagEncoder());
-        
+
         return new EncodingManager(encoders, 8);
     }
 }
