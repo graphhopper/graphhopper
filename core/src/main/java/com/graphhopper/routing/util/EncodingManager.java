@@ -53,6 +53,7 @@ public class EncodingManager
     public static final String RACINGBIKE = "racingbike";
     public static final String MOUNTAINBIKE = "mtb";
     public static final String FOOT = "foot";
+    public static final String FOOT2 = "foot2";
     public static final String MOTORCYCLE = "motorcycle";
 
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<AbstractFlagEncoder>();
@@ -74,7 +75,7 @@ public class EncodingManager
      */
     public EncodingManager( String flagEncodersStr )
     {
-        this(flagEncodersStr, 8);
+        this(flagEncodersStr, 4);
     }
 
     public EncodingManager( String flagEncodersStr, int bytesForFlags )
@@ -145,10 +146,10 @@ public class EncodingManager
 
             AbstractFlagEncoder fe;
             if (entry.equals(CAR))
-                fe = new OsCarFlagEncoder(entryVal);
+                fe = new CarFlagEncoder(entryVal);
 
             else if (entry.equals(BIKE))
-                fe = new OsBikeFlagEncoder(entryVal);
+                fe = new BikeFlagEncoder(entryVal);
 
             else if (entry.equals(BIKE2))
                 fe = new Bike2WeightFlagEncoder(entryVal);
@@ -160,6 +161,9 @@ public class EncodingManager
                 fe = new MountainBikeFlagEncoder(entryVal);
 
             else if (entry.equals(FOOT))
+                fe = new FootFlagEncoder(entryVal);
+
+            else if (entry.equals(FOOT2))
                 fe = new OsFootFlagEncoder(entryVal);
 
             else if (entry.equals(MOTORCYCLE))
@@ -174,7 +178,7 @@ public class EncodingManager
     }
 
     private static final String ERR = "Encoders are requesting more than %s bits of %s flags. ";
-    private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long.";
+    private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long via osmreader.bytesForFlags=8";
 
     private void registerEncoder( AbstractFlagEncoder encoder )
     {

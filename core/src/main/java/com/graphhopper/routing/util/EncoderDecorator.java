@@ -6,7 +6,7 @@ import com.graphhopper.util.Translation;
 
 public interface EncoderDecorator {
 	int defineWayBits(int shift);
-	long handleWayTags(Way way, long encoded);
+	long handleWayTags(Way way);
 	public InstructionAnnotation getAnnotation(long flags, Translation tr);
 	long getBitMask(String[] attributes);
 	double getDouble(long flags);

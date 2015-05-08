@@ -40,8 +40,6 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
 
     protected abstract Path createAndInitPath();
 
-    protected abstract boolean isWeightLimitReached();
-
     abstract void checkState( int fromBase, int fromAdj, int toBase, int toAdj );
 
     abstract boolean fillEdgesFrom();
@@ -66,7 +64,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
 
     protected void runAlgo()
     {
-        while (!finished() && !isWeightLimitReached())
+        while (!finished() && !isWeightLimitExceeded())
         {
             if (!finishedFrom)
                 finishedFrom = !fillEdgesFrom();

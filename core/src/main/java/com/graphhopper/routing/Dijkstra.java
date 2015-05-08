@@ -76,7 +76,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
         while (true)
         {
             visitedNodes++;
-            if (isWeightLimitReached() || finished())
+            if (isWeightLimitExceeded() || finished())
                 break;
 
             int startNode = currEdge.adjNode;
@@ -129,7 +129,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     @Override
     protected Path extractPath()
     {
-        if (currEdge == null || isWeightLimitReached() || !finished())
+        if (currEdge == null || isWeightLimitExceeded() || !finished())
             return createEmptyPath();
 
         return new Path(graph, flagEncoder).setWeight(currEdge.weight).setEdgeEntry(currEdge).extract();
@@ -141,9 +141,10 @@ public class Dijkstra extends AbstractRoutingAlgorithm
         return visitedNodes;
     }
 
-    protected boolean isWeightLimitReached()
+    @Override
+    protected boolean isWeightLimitExceeded()
     {
-        return currEdge.weight >= weightLimit;
+        return currEdge.weight > weightLimit;
     }
 
     @Override

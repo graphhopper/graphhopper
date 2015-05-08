@@ -86,7 +86,7 @@ public class GraphHopperGPXParserRouteTest {
 		}
 	}
 
-	private CloseableHttpResponse doSendAndGetResponse(String serviceUrl)
+	CloseableHttpResponse doSendAndGetResponse(String serviceUrl)
 			throws IOException, ClientProtocolException {
 		CloseableHttpClient httpClient = HttpClientUtils.createClient();
 		HttpGet httpget = new HttpGet(serviceUrl);
@@ -95,7 +95,7 @@ public class GraphHopperGPXParserRouteTest {
 		return httpClient.execute(httpget);
 	}
 
-	public String parseRoute(String routeType, String vehicle, String[] points) {
+	public String parseRoute(String routeType, String avoidance,String vehicle, String[] points) {
 		LOG.debug("Here we are");
 		// Set up the URL
 		String xmlResponse = "";
@@ -130,6 +130,11 @@ public class GraphHopperGPXParserRouteTest {
 		sb.append("&vehicle=");
 		sb.append(vehicle);
 		sb.append(coordinateString);
+		if(!avoidance.equals(""))
+		{
+		sb.append("&weighting=fastavoid");
+		sb.append("&avoidances="+avoidance);
+		}
 
 		try {
 			CloseableHttpResponse httpResponse = sendAndGetResponse(sb
@@ -243,7 +248,7 @@ public class GraphHopperGPXParserRouteTest {
 		return routeContainsTurn;
 	}
 
-	private CloseableHttpResponse sendAndGetResponse(String requestUrl)
+	CloseableHttpResponse sendAndGetResponse(String requestUrl)
 			throws IOException {
 		String serviceUrl = requestUrl;
 		if (IntegrationTestProperties.getTestPropertyBool("viaApigee")) {

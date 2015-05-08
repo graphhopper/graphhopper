@@ -76,21 +76,21 @@ public class OsAvoidanceDecorator extends AbstractAvoidanceDecorator {
 				return hasTag(way, "natural", "shingle");
 			}
 		}
-		// ,
-		// Spoil(1024) {
-		// @Override
-		// public boolean isValidForWay(Way way) {
-		// return hasTag(way, "natural", "spoil");
-		// }
-		// },
-		//
-		// TidalWater(2048) {
-		// @Override
-		// public boolean isValidForWay(Way way) {
-		// return hasTag(way, "natural", "water")
-		// && way.hasTag("tidal", "yes");
-		// }
-		// }
+		 ,
+		 Spoil(2048) {
+		 @Override
+		 public boolean isValidForWay(Way way) {
+		 return hasTag(way, "natural", "spoil");
+		 }
+		 },
+		
+		 TidalWater(4096) {
+		 @Override
+		 public boolean isValidForWay(Way way) {
+		 return hasTag(way, "natural", "water")
+		 && way.hasTag("tidal", "yes");
+		 }
+		 }
 		;
 
 		public String toString() {
@@ -136,7 +136,7 @@ public class OsAvoidanceDecorator extends AbstractAvoidanceDecorator {
 	}
 
 	protected void defineEncoder(int shift) {
-		wayTypeEncoder = new EncodedValue("HazardType", shift, 12, 1, 0, 2048,
+		wayTypeEncoder = new EncodedValue("HazardType", shift, 14, 1, 0, 8191,
 				true);
 	}
 

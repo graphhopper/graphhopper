@@ -1,4 +1,7 @@
-0.4.0    
+0.5
+    made GHResponse.getMillis, Path.getMillis, GPXEntry.getMillis deprecated, use getTime instead
+
+0.4
     translation key turn changed and merged with left etc into turn_left, turn_right etc
     create location index before preparation in the GraphHopper class
     encodingManager.getSingle() is removed and flagEncoder list is no longer sorted, the first vehicle is used for CH preparation    

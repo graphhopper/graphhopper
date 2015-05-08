@@ -68,6 +68,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 	// bit to signal that way is accepted
 	protected long acceptBit;
 	protected long ferryBit;
+	
+	// This value determines the maximal possible speed of any road regardless the maxspeed value
+	// lower values allow more compact representation of the routing graph
+	protected int maxPossibleSpeed;
 
 	private EncodedValue turnCostEncoder;
 	private long turnRestrictionBit;
@@ -238,13 +242,17 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 	 * Analyze properties of a way and create the routing flags. This method is
 	 * called in the second parsing step.
 	 */
-	public long handleWayTags(Way way, long allowed, long relationFlags) {
+	public abstract long handleWayTags( Way way, long allowed, long relationFlags );
+	
+	
+	public long handleWayTagsDecorators(Way way) {
+		long flags = 0;
 		if (null != encoderDecorators) {
 			for (EncoderDecorator decorator : encoderDecorators) {
-				relationFlags = decorator.handleWayTags(way, relationFlags);
+				flags |= decorator.handleWayTags(way);
 			}
 		}
-		return relationFlags;
+		return flags;
 	};
 
 	/**

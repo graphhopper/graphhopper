@@ -45,7 +45,7 @@ public class Path
     protected double distance;
     // we go upwards (via EdgeEntry.parent) from the goal node to the origin node
     protected boolean reverseOrder = true;
-    protected long millis;
+    protected long time;
     private boolean found;
     protected EdgeEntry edgeEntry;
     final StopWatch extractSW = new StopWatch("extract");
@@ -142,10 +142,19 @@ public class Path
 
     /**
      * @return time in millis
+     * @deprecated use getTime instead
      */
     public long getMillis()
     {
-        return millis;
+        return time;
+    }
+
+    /**
+     * @return time in millis
+     */
+    public long getTime()
+    {
+        return time;
     }
 
     /**
@@ -206,7 +215,7 @@ public class Path
         EdgeIteratorState iter = graph.getEdgeProps(edgeId, adjNode);
         double dist = iter.getDistance();
         distance += dist;
-        millis += calcMillis(dist, iter.getFlags(), false);
+        time += calcMillis(dist, iter.getFlags(), false);
         addEdge(edgeId);
     }
 

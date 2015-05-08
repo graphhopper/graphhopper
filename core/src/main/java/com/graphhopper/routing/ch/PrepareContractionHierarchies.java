@@ -785,15 +785,17 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     if (finishedFrom && finishedTo)
                         return true;
 
-                    if (currFrom.weight + currTo.weight > weightLimit)
-                        return true;
-
                     // changed finish condition for CH
                     return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
                 }
 
                 @Override
+                protected boolean isWeightLimitExceeded()
+                {
+                    return currFrom.weight > weightLimit && currTo.weight > weightLimit;
+                }
 
+                @Override
                 protected Path createAndInitPath()
                 {
                     bestPath = new Path4CH(graph, graph.getBaseGraph(), flagEncoder);
@@ -832,11 +834,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     if (finishedFrom && finishedTo)
                         return true;
 
-                    if (currFrom.weight + currTo.weight > weightLimit)
-                        return true;
-
                     // changed also the final finish condition for CH                
                     return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
+                }
+
+                @Override
+                protected boolean isWeightLimitExceeded()
+                {
+                    return currFrom.weight > weightLimit && currTo.weight > weightLimit;
                 }
 
                 @Override

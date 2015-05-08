@@ -136,7 +136,7 @@ public class PrepareContractionHierarchiesTest
         int old = g.getAllEdges().getCount();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, carEncoder, weighting, tMode);
         prepare.doWork();
-        assertEquals(old + 10, g.getAllEdges().getCount());
+        assertEquals(old + 7, g.getAllEdges().getCount());
     }
 
     @Test
@@ -286,7 +286,7 @@ public class PrepareContractionHierarchiesTest
         int old = g.getAllEdges().getCount();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, carEncoder, weighting, tMode);
         prepare.doWork();
-        assertEquals(old + 22, g.getAllEdges().getCount());
+        assertEquals(old + 23, g.getAllEdges().getCount());
         RoutingAlgorithm algo = prepare.createAlgo(g, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, carEncoder, weighting, tMode));
         Path p = algo.calcPath(4, 7);
         assertEquals(Helper.createTList(4, 5, 6, 7), p.calcNodes());

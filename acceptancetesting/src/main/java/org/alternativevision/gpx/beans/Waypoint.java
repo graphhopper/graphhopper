@@ -101,8 +101,10 @@ lon="longitudeType [1] ?">
 	private Double pdop;
 	private Double ageOfGPSData;
 	private Integer dgpsid;
+	private String  Annotation_text;
 	
 	
+
 	/**
 	 * Returns the latitude of this waypoint.
 	 * @return a Double value representing the latitude of this waypoint.
@@ -406,6 +408,19 @@ lon="longitudeType [1] ?">
 	public void setDgpsid(Integer dgpsid) {
 		this.dgpsid = dgpsid;
 	}
+	
+	
+	public String getAnnotation_text() {
+		return Annotation_text;
+	}
+
+	/**Setter for the waypoint annotation_text/avoidance. This maps to annotation_text in json route string
+	 * @param annotation_text an avoidance String
+	 */
+	public void setAnnotation_text(String Annotation_text) {
+		this.Annotation_text = Annotation_text;
+	}
+
 	
 	/**
 	 * Returns a String representation of this waypoint.

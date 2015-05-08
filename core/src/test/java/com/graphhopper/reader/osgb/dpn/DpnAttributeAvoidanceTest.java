@@ -21,7 +21,7 @@ public class DpnAttributeAvoidanceTest extends AbstractOsDpnReaderTest {
 		File file = new File("./src/test/resources/com/graphhopper/reader/osgb/dpn/os-dpn-avoid.xml");
 		GraphHopper hopper = new GraphHopper();
 		Map<String, String> map = new HashMap<String, String>();
-		map.put("graph.flagencoders", "foot");
+		map.put("graph.flagencoders", "foot2");
 		map.put("osmreader.osm", file.getAbsolutePath());
 		map.put("reader.implementation", "OSDPN");
 		map.put("prepare.chweighting", "none");

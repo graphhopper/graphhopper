@@ -115,8 +115,8 @@ public class GraphHopperIT
 
         List<GPXEntry> list = rsp.getInstructions().createGPXList();
         assertEquals(89, list.size());
-        final long lastEntryMillis = list.get(list.size() - 1).getMillis();
-        final long totalResponseMillis = rsp.getMillis();
+        final long lastEntryMillis = list.get(list.size() - 1).getTime();
+        final long totalResponseMillis = rsp.getTime();
         assertEquals(totalResponseMillis, lastEntryMillis);
     }
 
@@ -230,7 +230,7 @@ public class GraphHopperIT
 
         List<GPXEntry> list = rsp.getInstructions().createGPXList();
         assertEquals(60, list.size());
-        final long lastEntryMillis = list.get(list.size() - 1).getMillis();
+        final long lastEntryMillis = list.get(list.size() - 1).getTime();
         assertEquals(new GPXEntry(43.73068455771767, 7.421283689825812, 62.0, 0), list.get(0));
         assertEquals(new GPXEntry(43.727680946587874, 7.4191987684222065, 11.0, lastEntryMillis), list.get(list.size() - 1));
 
@@ -335,12 +335,12 @@ public class GraphHopperIT
 
         GHResponse rsp = tmpHopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setVehicle("car"));
-        assertEquals(207, rsp.getMillis() / 1000f, 1);
+        assertEquals(207, rsp.getTime() / 1000f, 1);
         assertEquals(2838, rsp.getDistance(), 1);
 
         rsp = tmpHopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setVehicle("bike"));
-        assertEquals(494, rsp.getMillis() / 1000f, 1);
+        assertEquals(494, rsp.getTime() / 1000f, 1);
         assertEquals(2192, rsp.getDistance(), 1);
 
         rsp = tmpHopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)

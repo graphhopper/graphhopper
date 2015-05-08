@@ -2,13 +2,13 @@
 
 continue=neem 
 continue_onto=blijf op %1$s
-turn_left=links afbuigen
-turn_right=rechts afbuigen
-turn_slight_left=houd links aan afbuigen
-turn_slight_right=houd rechts aan afbuigen
-turn_sharp_left=ga linksaf afbuigen
-turn_sharp_right=ga rechtsaf afbuigen
-turn_onto=%1$s af naar %2$s
+turn_left=linksaf
+turn_right=rechtsaf
+turn_slight_left=houd links aan
+turn_slight_right=houd rechts aan
+turn_sharp_left=ga linksaf
+turn_sharp_right=ga rechtsaf
+turn_onto=%1$s naar %2$s
 web.searchButton=zoek
 web.fromHint=van
 web.viaHint=via

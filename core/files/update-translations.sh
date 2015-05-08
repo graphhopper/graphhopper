@@ -3,11 +3,11 @@ cd $HOME/..
 
 destination=src/main/resources/com/graphhopper/util/
 
-translations="en_US SKIP bg ca de_DE el es fa fil fi fr gl he it ja ne nl pt_BR pt_PT ro ru si sk sv_SE tr uk vi_VI zh_CN"
+translations="en_US SKIP bg ca cz de_DE el es fa fil fi fr gl he hu_HU it ja ne nl pl_PL pt_BR pt_PT ro ru si sk sv_SE tr uk vi_VI zh_CN"
 file=$1
 
 # You can execute the following
-# curl "https://docs.google.com/spreadsheet/pub?key=0AmukcXek0JP6dGM4R1VTV2d3TkRSUFVQakhVeVBQRHc&single=true&gid=0&output=txt" > tmp.tsv
+# curl 'https://docs.google.com/spreadsheets/d/10HKSFmxGVEIO92loVQetVmjXT0qpf3EA2jxuQSSYTdU/export?format=tsv&id=10HKSFmxGVEIO92loVQetVmjXT0qpf3EA2jxuQSSYTdU&gid=0' > tmp.tsv
 # ./files/update-translations.sh tmp.tsv && rm tmp.tsv
 
 INDEX=1

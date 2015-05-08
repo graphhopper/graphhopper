@@ -118,6 +118,8 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         roadValues.add("secondary_link");
         roadValues.add("tertiary");
         roadValues.add("tertiary_link");
+        
+        maxPossibleSpeed = 30;
 
         setTrackTypeSpeed("grade1", 18); // paved
         setTrackTypeSpeed("grade2", 12); // now unpaved ...
@@ -196,7 +198,8 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     {
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
-        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, highwaySpeed.get("cycleway"), 30);
+        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, highwaySpeed.get("cycleway"),
+                                              maxPossibleSpeed);
         shift += speedEncoder.getBits();
 
         unpavedBit = 1L << shift++;

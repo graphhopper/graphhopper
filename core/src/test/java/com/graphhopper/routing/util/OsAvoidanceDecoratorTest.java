@@ -21,7 +21,7 @@ public class OsAvoidanceDecoratorTest {
     public void testBoulderAttributeStorage() {
         Way way = new OSITNWay(1L);
         way.setTag("natural", "boulders");
-        long wayFlag = osAvoidances.handleWayTags(way,0);
+        long wayFlag = osAvoidances.handleWayTags(way);
         assertEquals(OsAvoidanceDecorator.AvoidanceType.Boulders.getValue(), wayFlag);
 
     }
@@ -30,7 +30,7 @@ public class OsAvoidanceDecoratorTest {
     public void testCliffAttributeStorage() {
         Way way = new OSITNWay(1L);
         way.setTag("natural", "cliff");
-        long wayFlag = osAvoidances.handleWayTags(way,0);
+        long wayFlag = osAvoidances.handleWayTags(way);
         assertEquals(OsAvoidanceDecorator.AvoidanceType.Cliff.getValue(), wayFlag);
 
     }
@@ -39,7 +39,7 @@ public class OsAvoidanceDecoratorTest {
     public void testMarshAttributeStorage() {
         Way way = new OSITNWay(1L);
         way.setTag("wetland", "marsh");
-        long wayFlag = osAvoidances.handleWayTags(way,0);
+        long wayFlag = osAvoidances.handleWayTags(way);
         assertEquals(OsAvoidanceDecorator.AvoidanceType.Marsh.getValue(), wayFlag);
 
     }
@@ -48,7 +48,7 @@ public class OsAvoidanceDecoratorTest {
     public void testMudAttributeStorage() {
         Way way = new OSITNWay(1L);
         way.setTag("natural", "mud");
-        long wayFlag = osAvoidances.handleWayTags(way,0);
+        long wayFlag = osAvoidances.handleWayTags(way);
         assertEquals(OsAvoidanceDecorator.AvoidanceType.Mud.getValue(), wayFlag);
 
     }
@@ -57,7 +57,7 @@ public class OsAvoidanceDecoratorTest {
     public void testSandAttributeStorage() {
         Way way = new OSITNWay(1L);
         way.setTag("natural", "sand");
-        long wayFlag = osAvoidances.handleWayTags(way,0);
+        long wayFlag = osAvoidances.handleWayTags(way);
         assertEquals(OsAvoidanceDecorator.AvoidanceType.Sand.getValue(), wayFlag);
 
     }
@@ -66,7 +66,7 @@ public class OsAvoidanceDecoratorTest {
     public void testScreeAttributeStorage() {
         Way way = new OSITNWay(1L);
         way.setTag("natural", "scree");
-        long wayFlag = osAvoidances.handleWayTags(way,0);
+        long wayFlag = osAvoidances.handleWayTags(way);
         assertEquals(OsAvoidanceDecorator.AvoidanceType.Scree.getValue(), wayFlag);
 
     }
@@ -75,36 +75,36 @@ public class OsAvoidanceDecoratorTest {
     public void testShingleAttributeStorage() {
         Way way = new OSITNWay(1L);
         way.setTag("natural", "shingle");
-        long wayFlag = osAvoidances.handleWayTags(way,0);
+        long wayFlag = osAvoidances.handleWayTags(way);
         assertEquals(OsAvoidanceDecorator.AvoidanceType.Shingle.getValue(), wayFlag);
 
     }
 
-//    @Test
-//    public void testSpoilAttributeStorage() {
-//        Way way = new OSITNWay(1L);
-//        way.setTag("natural", "spoil");
-//        long wayFlag = osAvoidances.handleWayTags(way,0);
-//        assertEquals(OsAvoidanceDecorator.AvoidanceType.Spoil.getValue(), wayFlag);
-//
-//    }
+    @Test
+    public void testSpoilAttributeStorage() {
+        Way way = new OSITNWay(1L);
+        way.setTag("natural", "spoil");
+        long wayFlag = osAvoidances.handleWayTags(way);
+        assertEquals(OsAvoidanceDecorator.AvoidanceType.Spoil.getValue(), wayFlag);
 
-//    @Test
-//    public void testTidalWaterAttributeStorage() {
-//        Way way = new OSITNWay(1L);
-//        way.setTag("natural", "water");
-//        way.setTag("tidal", "yes");
-//        long wayFlag = osAvoidances.handleWayTags(way,0);
-//        assertEquals(OsAvoidanceDecorator.AvoidanceType.TidalWater.getValue(), wayFlag);
-//
-//    }
+    }
+
+    @Test
+    public void testTidalWaterAttributeStorage() {
+        Way way = new OSITNWay(1L);
+        way.setTag("natural", "water");
+        way.setTag("tidal", "yes");
+        long wayFlag = osAvoidances.handleWayTags(way);
+        assertEquals(OsAvoidanceDecorator.AvoidanceType.TidalWater.getValue(), wayFlag);
+
+    }
 
    @Test
     public void testInlandWaterAttributeStorage() {
         Way way = new OSITNWay(1L);
         way.setTag("natural", "water");
         way.setTag("tidal","no");
-        long wayFlag = osAvoidances.handleWayTags(way,0);
+        long wayFlag = osAvoidances.handleWayTags(way);
         assertEquals(OsAvoidanceDecorator.AvoidanceType.InlandWater.getValue(), wayFlag);
 
     }
@@ -113,7 +113,7 @@ public class OsAvoidanceDecoratorTest {
    public void testARoadAttributeStorage() {
        Way way = new OSITNWay(1L);
        way.setTag("highway", "primary");
-       long wayFlag = osAvoidances.handleWayTags(way,0);
+       long wayFlag = osAvoidances.handleWayTags(way);
        assertEquals(OsAvoidanceDecorator.AvoidanceType.ARoad.getValue(), wayFlag);
 
    }
@@ -122,7 +122,7 @@ public class OsAvoidanceDecoratorTest {
     public void testQuarryOrPitAttributeStorage() {
         Way way = new OSITNWay(1L);
         way.setTag("natural", "excavation");
-        long wayFlag = osAvoidances.handleWayTags(way,0);
+        long wayFlag = osAvoidances.handleWayTags(way);
         assertEquals(OsAvoidanceDecorator.AvoidanceType.QuarryOrPit.getValue(), wayFlag);
 
     }
@@ -132,7 +132,7 @@ public class OsAvoidanceDecoratorTest {
         Way way = new OSITNWay(1L);
         way.setTag("wetland", "marsh");
         way.setTag("natural", "excavation");
-        long wayFlag = osAvoidances.handleWayTags(way,0);
+        long wayFlag = osAvoidances.handleWayTags(way);
         //BITMASK test?
         assertEquals(OsAvoidanceDecorator.AvoidanceType.QuarryOrPit.getValue(), wayFlag - OsAvoidanceDecorator.AvoidanceType.Marsh.getValue());
         assertEquals(OsAvoidanceDecorator.AvoidanceType.Marsh.getValue(), wayFlag  - OsAvoidanceDecorator.AvoidanceType.QuarryOrPit.getValue() );
@@ -143,7 +143,7 @@ public class OsAvoidanceDecoratorTest {
     public void testMultiEqualAttributeStorage() {
         Way way = new OSITNWay(1L);
         way.setTag("natural", "scree,excavation");
-        long wayFlag = osAvoidances.handleWayTags(way,0);
+        long wayFlag = osAvoidances.handleWayTags(way);
         //BITMASK test?
         assertEquals(OsAvoidanceDecorator.AvoidanceType.QuarryOrPit.getValue(), wayFlag - OsAvoidanceDecorator.AvoidanceType.Scree.getValue());
         assertEquals(OsAvoidanceDecorator.AvoidanceType.Scree.getValue(), wayFlag  - OsAvoidanceDecorator.AvoidanceType.QuarryOrPit.getValue() );
@@ -154,7 +154,7 @@ public class OsAvoidanceDecoratorTest {
     public void testMultiEqualAttributeRetrieval() {
         Way way = new OSITNWay(1L);
         way.setTag("natural", "scree,excavation");
-        long wayFlag = osAvoidances.handleWayTags(way,0);
+        long wayFlag = osAvoidances.handleWayTags(way);
         //BITMASK test?
         assertEquals(OsAvoidanceDecorator.AvoidanceType.QuarryOrPit.getValue(), wayFlag - OsAvoidanceDecorator.AvoidanceType.Scree.getValue());
         assertEquals(OsAvoidanceDecorator.AvoidanceType.Scree.getValue(), wayFlag  - OsAvoidanceDecorator.AvoidanceType.QuarryOrPit.getValue() );
