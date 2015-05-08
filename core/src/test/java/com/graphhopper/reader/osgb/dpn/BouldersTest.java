@@ -11,24 +11,24 @@ import org.mockito.MockitoAnnotations;
 import com.graphhopper.reader.Way;
 
 public class BouldersTest {
-	 static OsDpnOsmAttributeMappingVisitor visitor;
-	    @Mock
-	    Way way;
+    static OsDpnOsmAttributeMappingVisitor visitor;
+    @Mock
+    Way way;
 
-	    @BeforeClass
-	    public static void createVisitor() {
-	        visitor = new Boulders();
-	    }
+    @BeforeClass
+    public static void createVisitor() {
+        visitor = new Boulders();
+    }
 
-	    @Before
-	    public void init() {
-	        MockitoAnnotations.initMocks(this);
-	    }
+    @Before
+    public void init() {
+        MockitoAnnotations.initMocks(this);
+    }
 
-	    @Test
-	    public void testVisitWayAttribute() throws Exception {
-	        visitor.visitWayAttribute("boulders", way);
-	        verify(way).setTag("natural", "boulders");  // Not an osm tag but what makes sense for dpn
-	    }
+    @Test
+    public void testVisitWayAttribute() throws Exception {
+        visitor.visitWayAttribute("boulders", way);
+        verify(way).setTag("natural", "boulders");  // Not an osm tag but what makes sense for dpn
+    }
 
 }
