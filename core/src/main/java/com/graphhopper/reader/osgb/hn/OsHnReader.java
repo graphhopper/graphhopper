@@ -1,6 +1,5 @@
 package com.graphhopper.reader.osgb.hn;
 
-
 import gnu.trove.map.TLongObjectMap;
 
 import java.io.File;
@@ -21,14 +20,14 @@ import com.graphhopper.util.Helper;
 
 public class OsHnReader extends AbstractOsReader<Long> {
 
-
-    private static final Logger logger = LoggerFactory.getLogger(OsHnReader.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(OsHnReader.class);
 
     private TLongObjectMap<String> edgeEnvironmentMap;
 
     public OsHnReader(GraphStorage storage) {
         this(storage, null);
     }
+
     public OsHnReader(GraphStorage storage, TLongObjectMap<String> edgeEnvironmentMap) {
         super(storage);
         this.edgeEnvironmentMap = edgeEnvironmentMap;
@@ -46,37 +45,11 @@ public class OsHnReader extends AbstractOsReader<Long> {
         return null;
     }
 
-    @Override
-    protected void preProcess(File itnFile) {
-        try {
-            preProcessDirOrFile(itnFile);
-        } catch (Exception ex) {
-            throw new RuntimeException("Problem while parsing file", ex);
-        }
-    }
-
-    private void preProcessDirOrFile(File osmFile) throws XMLStreamException,
-    IOException, MismatchedDimensionException, FactoryException,
-    TransformException {
-        if (osmFile.isDirectory()) {
-            String absolutePath = osmFile.getAbsolutePath();
-            String[] list = osmFile.list();
-            for (String file : list) {
-                File nextFile = new File(absolutePath + File.separator + file);
-                preProcessDirOrFile(nextFile);
-            }
-        } else {
-            preProcessSingleFile(osmFile);
-        }
-    }
-
-    private void preProcessSingleFile(File osmFile) throws XMLStreamException,
-    IOException, MismatchedDimensionException, FactoryException,
-    TransformException {
+    protected void preProcessSingleFile(File hnFile) throws XMLStreamException, IOException, MismatchedDimensionException, FactoryException, TransformException {
         OsHnInputFile in = null;
         try {
-            logger.error(PREPROCESS_FORMAT, osmFile.getName());
-            in = new OsHnInputFile(osmFile);
+            logger.error(PREPROCESS_FORMAT, hnFile.getName());
+            in = new OsHnInputFile(hnFile);
             in.setWorkerThreads(workerThreads).open();
             preProcessSingleFile(in);
         } finally {
@@ -90,25 +63,24 @@ public class OsHnReader extends AbstractOsReader<Long> {
 
     }
 
-    private void preProcessSingleFile(OsHnInputFile in)
-            throws XMLStreamException, MismatchedDimensionException,
-            FactoryException, TransformException {
+    protected void preProcessSingleFile(OsHnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
         logger.error("==== preProcessSingleFile");
         RoutingElement item;
         while ((item = in.getNext()) != null) {
-            // Look for this road (or is a road link) in the itn data and add additional tags based on environment
-            if (edgeEnvironmentMap!=null) {
-                // No instanceof check required yet as only OsHnRoadLink are returned
-                //if (item instanceof OsHnRoadLink) {
-                OsHnRoadLink osHnRoadLink = (OsHnRoadLink)item;
+            // Look for this road (or is a road link) in the itn data and add
+            // additional tags based on environment
+            if (edgeEnvironmentMap != null) {
+                // No instanceof check required yet as only OsHnRoadLink are
+                // returned
+                // if (item instanceof OsHnRoadLink) {
+                OsHnRoadLink osHnRoadLink = (OsHnRoadLink) item;
                 String environment = osHnRoadLink.getEnvironment();
                 long id = osHnRoadLink.getId();
                 edgeEnvironmentMap.put(id, environment);
-                //}
+                // }
             }
         }
         System.out.println("=====================> We have found environments for " + edgeEnvironmentMap.size() + " ways");
     }
-
 
 }

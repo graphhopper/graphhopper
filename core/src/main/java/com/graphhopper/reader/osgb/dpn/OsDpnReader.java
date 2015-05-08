@@ -41,7 +41,6 @@ import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 
 /*
@@ -129,7 +128,8 @@ public class OsDpnReader extends AbstractOsReader<String> {
     // negative but increasing to avoid clash with custom created OSM files
     private long newUniqueOsmId = -Long.MAX_VALUE;
     private final boolean exitOnlyPillarNodeException = true;
-    private File routingFile;
+    private static final String PROCESS_FORMAT = "PROCESS: {}";
+    private static final String STORAGE_NODES_FORMAT = "storage nodes: {}";
 
     public OsDpnReader(GraphStorage storage) {
         super(storage);
@@ -137,45 +137,26 @@ public class OsDpnReader extends AbstractOsReader<String> {
         osmNodeIdToInternalNodeMap = new TObjectIntHashMap<String>(200, .5f, -1);
         osmNodeIdToNodeFlagsMap = new TObjectLongHashMap<String>(200, .5f, 0);
         osmWayIdToRouteWeightMap = new TObjectLongHashMap<String>(200, .5f, 0);
-        pillarInfo = new PillarInfo(nodeAccess.is3D(),
-                graphStorage.getDirectory());
+        pillarInfo = new PillarInfo(nodeAccess.is3D(), graphStorage.getDirectory());
+    }
+
+    public class ProcessVisitor {
+        public void process(ProcessData processData, OsDpnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+        }
+    }
+
+    public class ProcessData {
+        long wayStart = -1;
+        long relationStart = -1;
+        long counter = 1;
+
     }
 
     @Override
-    public void readGraph() throws IOException {
-        if (encodingManager == null)
-            throw new IllegalStateException("Encoding manager was not set.");
-
-        if (routingFile == null)
-            throw new IllegalStateException("No OS DPN file specified");
-
-        if (!routingFile.exists())
-            throw new IllegalStateException(
-                    "Your specified OS DPN file does not exist:"
-                            + routingFile.getAbsolutePath());
-
-        StopWatch sw1 = new StopWatch().start();
-        preProcess(routingFile);
-        sw1.stop();
-
-        StopWatch sw2 = new StopWatch().start();
-        writeOsm2Graph(routingFile);
-        sw2.stop();
-
-        logger.info("time(pass1): " + (int) sw1.getSeconds() + " pass2: "
-                + (int) sw2.getSeconds() + " total:"
-                + ((int) (sw1.getSeconds() + sw2.getSeconds())));
-    }
-
-    /**
-     * Preprocessing of OSM file to select nodes which are used for highways.
-     * This allows a more compact graph data structure.
-     */
-    @Override
-    protected void preProcess(File osmFile) {
+    protected void preProcessSingleFile(File dpnFile) {
         OsDpnInputFile in = null;
         try {
-            in = new OsDpnInputFile(osmFile);
+            in = new OsDpnInputFile(dpnFile);
             in.setWorkerThreads(workerThreads).open();
 
             long tmpWayCounter = 1;
@@ -204,23 +185,6 @@ public class OsDpnReader extends AbstractOsReader<String> {
                         }
                     }
                 }
-                // if (item.isType(OSMElement.RELATION)) {
-                // final OSMRelation relation = (OSMRelation) item;
-                // if (!relation.isMetaRelation()
-                // && relation.hasTag("type", "route"))
-                // prepareWaysWithRelationInfo(relation);
-                //
-                // if (relation.hasTag("type", "restriction"))
-                // prepareRestrictionRelation(relation);
-                //
-                // if (++tmpRelationCounter % 50000 == 0) {
-                // logger.info(nf(tmpRelationCounter)
-                // + " (preprocess), osmWayMap:"
-                // + nf(getRelFlagsMap().size()) + " "
-                // + Helper.getMemInfo());
-                // }
-                //
-                // }
             }
         } catch (Exception ex) {
             throw new RuntimeException("Problem while parsing file", ex);
@@ -228,14 +192,6 @@ public class OsDpnReader extends AbstractOsReader<String> {
             Helper.close(in);
         }
     }
-
-    /*
-     * private void prepareRestrictionRelation(OSMRelation relation) {
-     * TurnRelation turnRelation = createTurnRelation(relation); if
-     * (turnRelation != null) {
-     * getOsmIdStoreRequiredSet().add(turnRelation.getOsmIdFrom());
-     * getOsmIdStoreRequiredSet().add(turnRelation.getOsmIdTo()); } }
-     */
 
     private THashSet<String> getOsmIdStoreRequiredSet() {
         return osmIdStoreRequiredSet;
@@ -271,73 +227,80 @@ public class OsDpnReader extends AbstractOsReader<String> {
 
     /**
      * Creates the edges and nodes files from the specified osm file.
+     * @throws TransformException
+     * @throws FactoryException
+     * @throws IOException
+     * @throws XMLStreamException
+     * @throws MismatchedDimensionException
      */
     @Override
-    protected void writeOsm2Graph(File osmFile) {
+    protected void writeOsm2Graph(File osmFile) throws MismatchedDimensionException, XMLStreamException, IOException, FactoryException, TransformException {
         int tmp = Math.max(getNodeMap().size() / 50, 100);
-        logger.info("creating graph. Found nodes (pillar+tower):"
-                + nf(getNodeMap().size()) + ", " + Helper.getMemInfo());
         graphStorage.create(tmp);
-        long wayStart = -1;
-        long relationStart = -1;
-        long counter = 1;
-        OsDpnInputFile in = null;
+        ProcessData processData = new ProcessData();
         try {
-            in = new OsDpnInputFile(osmFile);
-            in.setWorkerThreads(workerThreads).open();
-            TObjectIntMap<String> nodeFilter = getNodeMap();
-
-            RoutingElement item;
-            while ((item = in.getNext()) != null) {
-                switch (item.getType()) {
-                case OSMElement.NODE:
-                    OsDpnNode dpnNode = (OsDpnNode) item;
-                    String id = dpnNode.getId();
-                    logger.info("NODEITEMID:" + id);
-                    if (nodeFilter.get(id) != -1) {
-                        processNode(dpnNode);
-                    }
-                    break;
-
-                case OSMElement.WAY:
-                    OsDpnWay dpnWay = (OsDpnWay) item;
-                    logger.info("WAY:" + dpnWay.getId() + ":" + wayStart);
-                    if (wayStart < 0) {
-                        logger.info(nf(counter) + ", now parsing ways");
-                        wayStart = counter;
-                    }
-                    prepareWaysNodes(dpnWay, getNodeMap());
-                    processWay(dpnWay);
-                    dpnWay.clearStoredCoords();
-                    break;
-                case OSMElement.RELATION:
-                    if (relationStart < 0) {
-                        logger.info(nf(counter) + ", now parsing relations");
-                        relationStart = counter;
-                    }
-                    processRelation((Relation) item);
-                    break;
+            ProcessVisitor processVisitor = new ProcessVisitor() {
+                @Override
+                public void process(ProcessData processData, OsDpnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+                    logger.info("PROCESS STAGE 1");
+                    processStageOne(in);
                 }
-                if (++counter % 5000000 == 0) {
-                    logger.info(nf(counter) + ", locs:" + nf(locations) + " ("
-                            + skippedLocations + ") " + Helper.getMemInfo());
+            };
+            logger.info("PROCESS NODES");
+            writeOsm2GraphFromDirOrFile(osmFile, processData, processVisitor);
+            processVisitor = new ProcessVisitor() {
+                @Override
+                public void process(ProcessData processData, OsDpnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+                    logger.info("PROCESS STAGE 2");
+                    processStageTwo(processData, in);
                 }
-            }
+            };
+            logger.info("PROCESS WAY");
+            writeOsm2GraphFromDirOrFile(osmFile, processData, processVisitor);
+            processVisitor = new ProcessVisitor() {
+                @Override
+                public void process(ProcessData processData, OsDpnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+                    logger.info("PROCESS STAGE 3");
+                    processStageThree(processData, in);
+                }
+            };
+            logger.info("PROCESS RELATION");
+            writeOsm2GraphFromDirOrFile(osmFile, processData, processVisitor);
 
-            // logger.info("storage nodes:" + graphStorage.getNodes());
         } catch (Exception ex) {
-            System.out.println(ex.getClass());
-            // throw new RuntimeException("Couldn't process file " + osmFile,
-            // ex);
-        } finally {
-            Helper.close(in);
+            throw new RuntimeException("Couldn't process file " + osmFile, ex);
         }
 
         finishedReading();
-        if (graphStorage.getNodes() == 0)
-            throw new IllegalStateException("dpn must not be empty. read "
-                    + counter + " lines and " + locations + " locations");
+
     }
+
+    private void writeOsm2GraphFromDirOrFile(File osmFile, ProcessData processData, ProcessVisitor processVisitor) throws XMLStreamException, IOException, MismatchedDimensionException, FactoryException, TransformException {
+        if (osmFile.isDirectory()) {
+            String absolutePath = osmFile.getAbsolutePath();
+            String[] list = osmFile.list();
+            for (String file : list) {
+                File nextFile = new File(absolutePath + File.separator + file);
+                writeOsm2GraphFromDirOrFile(nextFile, processData, processVisitor);
+            }
+        } else {
+            writeOsm2GraphFromSingleFile(osmFile, processData, processVisitor);
+        }
+    }
+
+    private void writeOsm2GraphFromSingleFile(File osmFile, ProcessData processData, ProcessVisitor processVisitor) throws XMLStreamException, IOException, MismatchedDimensionException, FactoryException, TransformException {
+        OsDpnInputFile in = null;
+        try {
+            logger.info(PROCESS_FORMAT, osmFile.getName());
+            in = new OsDpnInputFile(osmFile);
+            in.setWorkerThreads(workerThreads).open();
+            processVisitor.process(processData, in);
+            logger.info(STORAGE_NODES_FORMAT, graphStorage.getNodes());
+        } finally {
+            Helper.close(in);
+        }
+    }
+
 
     private List<OsDpnNode> prepareWaysNodes(RoutingElement item, TObjectIntMap<String> nodeFilter) throws MismatchedDimensionException, FactoryException, TransformException {
         List<OsDpnNode> evaluateWayNodes = ((OsDpnWay) item).evaluateWayNodes(null);
@@ -567,12 +530,12 @@ public class OsDpnReader extends AbstractOsReader<String> {
     }
 
     private double getElevation(Node node) {
-        if(null==eleProvider)
+        if(null==elevationProvider)
         {
             String eleString = node.getTag("ele");
             return Double.valueOf(eleString);
         }
-        return eleProvider.getEle(node.getLat(), node.getLon());
+        return elevationProvider.getEle(node.getLat(), node.getLon());
     }
 
     /*
@@ -816,9 +779,9 @@ public class OsDpnReader extends AbstractOsReader<String> {
     protected void finishedReading() {
         printInfo("way");
         pillarInfo.clear();
-        eleProvider.release();
-        osmNodeIdToInternalNodeMap = null;
-        osmNodeIdToNodeFlagsMap = null;
+        elevationProvider.release();
+        // osmNodeIdToInternalNodeMap = null;
+        // osmNodeIdToNodeFlagsMap = null;
         osmWayIdToRouteWeightMap = null;
         osmIdStoreRequiredSet = null;
         edgeIdToOsmIdMap = null;
@@ -917,11 +880,6 @@ public class OsDpnReader extends AbstractOsReader<String> {
         return osmWayIdToRouteWeightMap;
     }
 
-    @Override
-    public OsDpnReader setOSMFile(File osmFile) {
-        this.routingFile = osmFile;
-        return this;
-    }
 
     private void printInfo(String str) {
         LoggerFactory.getLogger(getClass()).info(
@@ -931,5 +889,54 @@ public class OsDpnReader extends AbstractOsReader<String> {
                         + ", nodeFlagsMap.size:" + getNodeFlagsMap().size()
                         + ", relFlagsMap.size:" + getRelFlagsMap().size() + " "
                         + Helper.getMemInfo());
+    }
+
+    private void processStageOne(OsDpnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+        RoutingElement item;
+        while ((item = in.getNext()) != null) {
+            switch (item.getType()) {
+            case OSMElement.NODE:
+                OsDpnNode dpnNode = (OsDpnNode) item;
+                String id = dpnNode.getId();
+                logger.info("NODEITEMID:" + id);
+                if (getNodeMap().get(id) != -1) {
+                    processNode(dpnNode);
+                }
+            }
+        }
+    }
+
+    private void processStageTwo(ProcessData processData, OsDpnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+        RoutingElement item;
+        while ((item = in.getNext()) != null) {
+            switch (item.getType()) {
+            case OSMElement.WAY:
+            OsDpnWay dpnWay = (OsDpnWay) item;
+            logger.info("WAY:" + dpnWay.getId() + ":" + processData.wayStart);
+            if (processData.wayStart < 0) {
+                logger.info(nf(processData.counter) + ", now parsing ways");
+                processData.wayStart = processData.counter;
+            }
+            prepareWaysNodes(dpnWay, getNodeMap());
+            processWay(dpnWay);
+            dpnWay.clearStoredCoords();
+        }}
+    }
+
+    private void processStageThree(ProcessData processData, OsDpnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+        RoutingElement item;
+        if (processData.relationStart < 0) {
+            logger.info(nf(processData.counter) + ", now parsing relations");
+            processData.relationStart = processData.counter;
+        }
+        while ((item = in.getNext()) != null) {
+            switch (item.getType()) {
+            case OSMElement.RELATION:
+                processRelation((Relation) item);
+                if (++processData.counter % 5000000 == 0) {
+                    logger.info(nf(processData.counter) + ", locs:" + nf(locations) + " (" + skippedLocations + ") " + Helper.getMemInfo());
+                }
+            }
+        }
     }
 }

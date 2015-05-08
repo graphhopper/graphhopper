@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><gml:FeatureCollection xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://namespaces.ordnancesurvey.co.uk/networks/detailedPathNetwork/1.0 detailedPathNetwork.xsd http://www.opengis.net/gml/3.2 gml/3.2.1/gml.xsd" gml:id="DPN" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:dpn="http://namespaces.ordnancesurvey.co.uk/networks/detailedPathNetwork/1.0" xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:gss="http://www.isotc211.org/2005/gss" xmlns:gts="http://www.isotc211.org/2005/gts" xmlns:gsr="http://www.isotc211.org/2005/gsr" xmlns:gmlxbt="http://www.opengis.net/gml/3.3/xbt">
+  <gml:featureMember>
+    <dpn:RouteNode gml:id="osgb39e9eba8-4500-44cb-88c8-4f450bf7da14">
+      <dpn:featureID>39e9eba8-4500-44cb-88c8-4f450bf7da14</dpn:featureID>
+      <dpn:versionID>1</dpn:versionID>
+      <dpn:versionDate>2014-12-12</dpn:versionDate>
+      <dpn:descriptiveGroup codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteDescriptiveGroupValue#NonMotorisedVehicularRouteNetwork">Non Motorised Vehicular Route Network</dpn:descriptiveGroup>
+      <dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteNodeDescriptiveTermValue#Junction">Junction</dpn:descriptiveTerm>
+      <dpn:geometry>
+        <gml:Point srsName="urn:ogc:def:crs:EPSG::7405" gml:id="LOCAL_ID_3">
+          <gml:pos>427759.043 380573.641000001 375.8</gml:pos>
+        </gml:Point>
+      </dpn:geometry>
+    </dpn:RouteNode>
+  </gml:featureMember>
+  <gml:featureMember>
+    <dpn:RouteNode gml:id="osgb56dc4c0b-0586-4849-b3e2-1e00ee149429">
+      <dpn:featureID>56dc4c0b-0586-4849-b3e2-1e00ee149429</dpn:featureID>
+      <dpn:versionID>1</dpn:versionID>
+      <dpn:versionDate>2014-12-12</dpn:versionDate>
+      <dpn:descriptiveGroup codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteDescriptiveGroupValue#NonMotorisedVehicularRouteNetwork">Non Motorised Vehicular Route Network</dpn:descriptiveGroup>
+      <dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteNodeDescriptiveTermValue#Junction">Junction</dpn:descriptiveTerm>
+      <dpn:geometry>
+        <gml:Point srsName="urn:ogc:def:crs:EPSG::7405" gml:id="LOCAL_ID_4">
+          <gml:pos>427272.14 380580.807 379.03</gml:pos>
+        </gml:Point>
+      </dpn:geometry>
+    </dpn:RouteNode>
+  </gml:featureMember>
+  <gml:featureMember>
+    <dpn:RouteLink gml:id="osgb35cff694-c2a8-461e-9540-730e3ae11a7a">
+      <dpn:featureID>35cff694-c2a8-461e-9540-730e3ae11a7a</dpn:featureID>
+      <dpn:versionID>1</dpn:versionID>
+      <dpn:versionDate>2014-12-12</dpn:versionDate>
+      <dpn:startNode xlink:href="#df162dd8-c284-469b-81d6-d63105a39c7f"/>
+      <dpn:endNode xlink:href="#56dc4c0b-0586-4849-b3e2-1e00ee149429"/>
+      <dpn:descriptiveGroup codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteDescriptiveGroupValue#NonMotorisedVehicularRouteNetwork">Non Motorised Vehicular Route Network</dpn:descriptiveGroup>
+      <dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteLinkDescriptiveTermValue#NoPhysicalManifestation">No Physical Manifestation</dpn:descriptiveTerm>
+      <dpn:surfaceType codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/SurfaceTypeValue#Unmade">Unmade</dpn:surfaceType>
+      <dpn:physicalLevel codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/LevelCodeValue#BelowSurfaceLevelTunnel">Below Surface Level Tunnel</dpn:physicalLevel>
+      <dpn:name>Named Road</dpn:name>
+        <dpn:rightOfUse codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RightOfWayValue#Footpath">Footpath</dpn:rightOfUse>
+      <dpn:adoptedByNationalCycleRoute>false</dpn:adoptedByNationalCycleRoute>
+      <dpn:adoptedByRecreationalRoute>false</dpn:adoptedByRecreationalRoute>
+      <dpn:adoptedByOtherCycleRoute>false</dpn:adoptedByOtherCycleRoute>
+      <dpn:withinAccessLand>true</dpn:withinAccessLand>
+      <dpn:crossesDangerArea>false</dpn:crossesDangerArea>
+      <dpn:verticalGain>
+        <dpn:VerticalGainType>
+          <dpn:inDirection uom="m">9</dpn:inDirection>
+          <dpn:againstDirection uom="m">2</dpn:againstDirection>
+        </dpn:VerticalGainType>
+      </dpn:verticalGain>
+      <dpn:planimetricLength uom="m">85</dpn:planimetricLength>
+      <dpn:surfaceLength uom="m">86</dpn:surfaceLength>
+      <dpn:geometry>
+        <gml:LineString srsName="urn:ogc:def:crs:EPSG::7405" gml:id="LOCAL_ID_29519">
+          <gml:posList srsDimension="3" count="10">428672.241 380372.608999999 299.7 428653.822 380372.229 302.5 428647.49 380373.239 303.29 428645.296 380374.958000001 303.36 428638.156 380386.505000001 302.3 428635.625 380389.073999999 301.89 428631.214 380390.913000001 301.39 428628.625 380390.854 301.44 428622.598 380388.684 302.44 428598.489 380377.006999999 306.36</gml:posList>
+        </gml:LineString>
+      </dpn:geometry>
+    </dpn:RouteLink>
+  </gml:featureMember>
+  <gml:featureMember>
+    <dpn:RouteLink gml:id="osgb34dd4b18-ade0-48ea-9a34-e567107bd061">
+      <dpn:featureID>34dd4b18-ade0-48ea-9a34-e567107bd061</dpn:featureID>
+      <dpn:versionID>1</dpn:versionID>
+      <dpn:versionDate>2014-12-12</dpn:versionDate>
+      <dpn:startNode xlink:href="#2357d994-6688-44b1-8769-6466ffdd69dd"/>
+      <dpn:endNode xlink:href="#56dc4c0b-0586-4849-b3e2-1e00ee149429"/>
+      <dpn:descriptiveGroup codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteDescriptiveGroupValue#NonMotorisedVehicularRouteNetwork">Non Motorised Vehicular Route Network</dpn:descriptiveGroup>
+      <dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteLinkDescriptiveTermValue#Cableway">Cableway</dpn:descriptiveTerm>
+      <dpn:surfaceType codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/SurfaceTypeValue#"/>
+      <dpn:physicalLevel codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/LevelCodeValue#SurfaceLevel">Surface Level</dpn:physicalLevel>
+      <dpn:name>Named Road Two</dpn:name>
+      <dpn:alternativeName>With Alternate</dpn:alternativeName>
+      <dpn:rightOfUse codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RightOfWayValue#Footpath">Footpath</dpn:rightOfUse>
+      <dpn:adoptedByNationalCycleRoute>false</dpn:adoptedByNationalCycleRoute>
+      <dpn:adoptedByRecreationalRoute>false</dpn:adoptedByRecreationalRoute>
+      <dpn:adoptedByOtherCycleRoute>false</dpn:adoptedByOtherCycleRoute>
+      <dpn:withinAccessLand>true</dpn:withinAccessLand>
+      <dpn:crossesDangerArea>false</dpn:crossesDangerArea>
+      <dpn:verticalGain>
+        <dpn:VerticalGainType>
+          <dpn:inDirection uom="m">0</dpn:inDirection>
+          <dpn:againstDirection uom="m">13</dpn:againstDirection>
+        </dpn:VerticalGainType>
+      </dpn:verticalGain>
+      <dpn:planimetricLength uom="m">146</dpn:planimetricLength>
+      <dpn:surfaceLength uom="m">146</dpn:surfaceLength>
+      <dpn:geometry>
+        <gml:LineString srsName="urn:ogc:def:crs:EPSG::7405" gml:id="LOCAL_ID_29520">
+          <gml:posList srsDimension="3" count="7">428599.756 379896.501 328.75 428601.06 379899.210999999 328.64 428607.078 379918.685000001 328.36 428614.969 379924.207 327.59 428645.017 379945.234999999 323.68 428705.048 379981.904999999 315.9 428709.584 379985.062999999 315.34</gml:posList>
+        </gml:LineString>
+      </dpn:geometry>
+    </dpn:RouteLink>
+  </gml:featureMember>
+</gml:FeatureCollection>

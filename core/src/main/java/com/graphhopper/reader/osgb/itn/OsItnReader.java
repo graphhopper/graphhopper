@@ -255,37 +255,12 @@ public class OsItnReader extends AbstractOsReader<Long> {
         pillarInfo = new PillarInfo(nodeAccess.is3D(), graphStorage.getDirectory());
     }
 
-    /**
-     * Preprocessing of ITN file to select nodes which are used for highways.
-     * This allows a more compact graph data structure.
-     */
-    @Override
-    protected void preProcess(File itnFile) {
-        try {
-            preProcessDirOrFile(itnFile);
-        } catch (Exception ex) {
-            throw new RuntimeException("Problem while parsing file", ex);
-        }
-    }
 
-    private void preProcessDirOrFile(File osmFile) throws XMLStreamException, IOException, MismatchedDimensionException, FactoryException, TransformException {
-        if (osmFile.isDirectory()) {
-            String absolutePath = osmFile.getAbsolutePath();
-            String[] list = osmFile.list();
-            for (String file : list) {
-                File nextFile = new File(absolutePath + File.separator + file);
-                preProcessDirOrFile(nextFile);
-            }
-        } else {
-            preProcessSingleFile(osmFile);
-        }
-    }
-
-    private void preProcessSingleFile(File osmFile) throws XMLStreamException, IOException, MismatchedDimensionException, FactoryException, TransformException {
+    protected void preProcessSingleFile(File itnFile) throws XMLStreamException, IOException, MismatchedDimensionException, FactoryException, TransformException {
         OsItnInputFile in = null;
         try {
-            logger.error(PREPROCESS_FORMAT, osmFile.getName());
-            in = new OsItnInputFile(osmFile);
+            logger.error(PREPROCESS_FORMAT, itnFile.getName());
+            in = new OsItnInputFile(itnFile);
             in.setWorkerThreads(workerThreads).open();
             preProcessSingleFile(in);
         } finally {

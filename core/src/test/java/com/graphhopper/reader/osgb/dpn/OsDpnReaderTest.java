@@ -13,19 +13,66 @@ import org.junit.Test;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
 public class OsDpnReaderTest extends AbstractOsDpnReaderTest
 {
-    private GraphHopperStorage graph;
+    private GraphStorage graphStorage;
 
     @Test
     public void testReadDpnSampleLayout() throws IOException
     {
         configure(0);
 
-        assertEquals(5, graph.getNodes());
+        assertEquals(5, graphStorage.getNodes());
+
+        assertEquals(4, count(footExplorer.setBaseNode(0))); // Central Tower
+        assertEquals(1, count(footExplorer.setBaseNode(1))); // Cross Road Vertex
+        assertEquals(1, count(footExplorer.setBaseNode(2))); // Cross Road Vertex
+        assertEquals(1, count(footExplorer.setBaseNode(3))); // Cross Road Vertex
+        assertEquals(1, count(footExplorer.setBaseNode(4))); // Cross Road Vertex
+
+        // Assert that this is true
+        EdgeIterator iter = footExplorer.setBaseNode(0);
+        assertTrue(iter.next());
+        assertEquals(4, iter.getAdjNode());
+        assertTrue(iter.next());
+        assertEquals(3, iter.getAdjNode());
+        assertTrue(iter.next());
+        assertEquals(2, iter.getAdjNode());
+        assertTrue(iter.next());
+        assertEquals(1, iter.getAdjNode());
+        assertFalse(iter.next());
+
+        iter = footExplorer.setBaseNode(1);
+        assertTrue(iter.next());
+        assertEquals(0, iter.getAdjNode());
+        assertFalse(iter.next());
+
+        iter = footExplorer.setBaseNode(2);
+        assertTrue(iter.next());
+        assertEquals(0, iter.getAdjNode());
+        assertFalse(iter.next());
+
+        iter = footExplorer.setBaseNode(3);
+        assertTrue(iter.next());
+        assertEquals(0, iter.getAdjNode());
+        assertFalse(iter.next());
+
+        iter = footExplorer.setBaseNode(4);
+        assertTrue(iter.next());
+        assertEquals(0, iter.getAdjNode());
+        assertFalse(iter.next());
+    }
+
+    @Test
+    public void testDirectoryIngestion() throws IOException
+    {
+        configure(0, "directory_ingestion");
+
+        assertEquals(5, graphStorage.getNodes());
 
         assertEquals(4, count(footExplorer.setBaseNode(0))); // Central Tower
         assertEquals(1, count(footExplorer.setBaseNode(1))); // Cross Road Vertex
@@ -152,26 +199,37 @@ public class OsDpnReaderTest extends AbstractOsDpnReaderTest
      * @throws IOException
      */
     private void configure(int maxWayPointDistance) throws IOException {
-        graph = readGraph(maxWayPointDistance);
-        GHUtility.printInfo(graph, 0, 30, EdgeFilter.ALL_EDGES);
-        configureExplorer(graph);
+        graphStorage = readGraph(maxWayPointDistance);
+        GHUtility.printInfo(graphStorage, 0, 30, EdgeFilter.ALL_EDGES);
+        configureExplorer(graphStorage);
     }
 
-    private void configureExplorer(final GraphHopperStorage graph)
+    private void configure(int maxWayPointDistance, String filename) throws IOException {
+        graphStorage = readGraph(maxWayPointDistance, filename);
+        GHUtility.printInfo(graphStorage, 0, 30, EdgeFilter.ALL_EDGES);
+        configureExplorer(graphStorage);
+    }
+
+    private void configureExplorer(final GraphStorage graphStorage)
     {
-        footExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, true, true));
+        footExplorer = graphStorage.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, true, true));
     }
 
-    private GraphHopperStorage readGraph(int maxWayPointDistance) throws IOException
+    private GraphStorage readGraph(int maxWayPointDistance) throws IOException
+    {
+        return readGraph(maxWayPointDistance, "os-dpn-sample.xml");
+    }
+
+    private GraphStorage readGraph(int maxWayPointDistance, String filename) throws IOException
     {
         final boolean turnRestrictionsImport = false;
         final boolean is3D = false;
-        final GraphHopperStorage graph = configureStorage(turnRestrictionsImport, is3D);
+        final GraphHopperStorage graphStorage = configureStorage(turnRestrictionsImport, is3D);
 
         final File file = new File(
-                "./src/test/resources/com/graphhopper/reader/osgb/dpn/os-dpn-sample.xml");
-        readGraphFile(graph, file, maxWayPointDistance);
-        return graph;
+                "./src/test/resources/com/graphhopper/reader/osgb/dpn/" + filename);
+        readGraphFile(graphStorage, file, maxWayPointDistance);
+        return graphStorage;
     }
 
 }

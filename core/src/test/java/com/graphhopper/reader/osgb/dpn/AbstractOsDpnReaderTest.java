@@ -37,13 +37,13 @@ import com.graphhopper.util.shapes.GHPoint;
 
 public abstract class AbstractOsDpnReaderTest {
 
-	protected EncodingManager encodingManager;
+    protected EncodingManager encodingManager;
     protected EdgeFilter footOutEdges;
     protected EdgeFilter footInEdges;
     protected boolean turnCosts = false;
     protected BikeFlagEncoder bikeEncoder;
     protected FootFlagEncoder footEncoder;
-	protected EdgeExplorer footExplorer;
+    protected EdgeExplorer footExplorer;
 
     // RoadNode 880
     protected static double node0Lat = 50.6992070044d;
@@ -83,14 +83,14 @@ public abstract class AbstractOsDpnReaderTest {
      * @return
      */
     protected EncodingManager createEncodingManager() {
-    	List<FlagEncoder> list = new ArrayList<FlagEncoder>();
-    	list.add(footEncoder);
-    	list.add(bikeEncoder);
+        List<FlagEncoder> list = new ArrayList<FlagEncoder>();
+        list.add(footEncoder);
+        list.add(bikeEncoder);
         return new EncodingManager(list, 8);
     }
 
     /**
-     * 
+     *
      * @param graph
      * @param file
      * @param maxWayPointDistance 0 disables DouglasPeuker simplification 1 = default
@@ -162,7 +162,7 @@ public abstract class AbstractOsDpnReaderTest {
             }
         }
     }
-    
+
     protected InstructionList route(GraphHopper graphHopper, double lat1, double lon1, double lat2, double lon2, String avoid) {
         GHPoint start = new GHPoint(lat1, lon1);
         GHPoint end = new GHPoint(lat2, lon2);
@@ -170,8 +170,8 @@ public abstract class AbstractOsDpnReaderTest {
         GHRequest ghRequest = new GHRequest(start, end);
         ghRequest.setVehicle("foot");
         if(null!=avoid  && !Helper.isEmpty(avoid)) {
-        	ghRequest.setWeighting("fastavoid");
-        	ghRequest.getHints().put("avoidances", avoid);
+            ghRequest.setWeighting("fastavoid");
+            ghRequest.getHints().put("avoidances", avoid);
         }
         GHResponse ghResponse = graphHopper.route(ghRequest);
         //        System.err.println("ghResponse.getPoints() " + ghResponse.getPoints());
@@ -179,7 +179,7 @@ public abstract class AbstractOsDpnReaderTest {
         //        outputInstructionList(instructionList);
         return instructionList;
     }
-    
+
     protected void outputInstructionList(InstructionList instructionList) {
         //        System.err.println("ghResponse.getInstructions() " + ghResponse.getInstructions());
         //        System.err.println("ghResponse.getDebugInfo() " + ghResponse.getDebugInfo());
