@@ -65,7 +65,7 @@ public class GraphHopperHooks {
 	public void getRouteWithAvoidance(String pointA, String pointB,
 			String routeType, String avoidance) throws InterruptedException {
 		String graphHopperWebUrl;
-
+		avoidance= avoidance.toLowerCase().trim();
 		if (IntegrationTestProperties.getTestPropertyBool("viaApigee")) {
 			graphHopperWebUrl = IntegrationTestProperties
 					.getTestProperty("graphHopperWebUrlViaApigee");
@@ -91,7 +91,7 @@ public class GraphHopperHooks {
 
 			if (pointA.split(",").length == 2) {
 				graphUiUtil.getRouteFromServiceWithAvoidance(routeType, avoidance,pointA, pointB);
-				graphUiUtil.getRouteFromUI(routeType, pointA, pointB);
+				graphUiUtil.getRouteFromUI(routeType,avoidance, pointA, pointB);
 			} else {
 				graphUiUtil.getRouteFromUI(routeType,avoidance, pointA, pointB);
 			}
@@ -142,6 +142,47 @@ public class GraphHopperHooks {
 		}
 
 	}
+	
+	
+	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI and avoid \"([^\"]*)\" via \"([^\"]*)\"$")
+	public void getRouteWithAvoidances(String pointA, String pointB, String routeType,String avoidance,
+			String pointC) throws InterruptedException {
+		String graphHopperWebUrl;
+
+		if (IntegrationTestProperties.getTestPropertyBool("viaApigee")) {
+			graphHopperWebUrl = IntegrationTestProperties
+					.getTestProperty("graphHopperWebUrlViaApigee");
+		} else {
+			graphHopperWebUrl = IntegrationTestProperties
+					.getTestProperty("graphHopperWebUrl");
+		}
+
+		graphUiUtil = new GraphHopperUIUtil(graphHopperWebUrl);
+
+		String testON = IntegrationTestProperties.getTestProperty("testON");
+
+		switch (testON.toUpperCase()) {
+		case "WEB":
+
+			graphUiUtil.getRouteFromUI(routeType,"",pointA, pointB, pointC);
+			break;
+		case "SERVICE":
+			graphUiUtil.getRouteFromServiceWithAvoidance(routeType, avoidance,pointA, pointB, pointC);
+			break;
+		default:
+
+			if (pointA.split(",").length == 2) {
+				graphUiUtil.getRouteFromServiceWithAvoidance(routeType, avoidance,pointA, pointB, pointC);
+				graphUiUtil.getRouteFromUI(routeType, pointA, pointB, pointC);
+			} else {
+				graphUiUtil.getRouteFromUI(routeType,"", pointA, pointB, pointC);
+			}
+
+			break;
+
+		}
+
+	}
 
 	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI via \"([^\"]*)\" and \"([^\"]*)\"$")
 	public void getRoute(String pointA, String pointB, String routeType,
@@ -179,6 +220,44 @@ public class GraphHopperHooks {
 		}
 
 	}
+	
+	
+	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI and avoid \"([^\"]*)\" via \"([^\"]*)\" and \"([^\"]*)\"$")
+	public void getRouteWithAvoidances(String pointA, String pointB, String routeType,String avoidance,
+			String pointC, String pointD) throws InterruptedException {
+
+		graphUiUtil = new GraphHopperUIUtil(
+				IntegrationTestProperties.getTestProperty("graphHopperWebUrl"));
+
+		String testON = IntegrationTestProperties.getTestProperty("testON");
+
+		switch (testON.toUpperCase()) {
+		case "WEB":
+
+			graphUiUtil.getRouteFromUI(routeType, "",pointA, pointB, pointC,
+					pointD);
+			break;
+		case "SERVICE":
+			graphUiUtil.getRouteFromServiceWithAvoidance(routeType,avoidance, pointA, pointB, pointC,
+					pointD);
+			break;
+		default:
+
+			if (pointA.split(",").length == 2) {
+				graphUiUtil.getRouteFromServiceWithAvoidance(routeType,avoidance, pointA, pointB, pointC,
+						pointD);
+				graphUiUtil.getRouteFromUI(routeType,"", pointA, pointB, pointC,
+						pointD);
+			} else {
+				graphUiUtil.getRouteFromUI(routeType, "",pointA, pointB, pointC,
+						pointD);
+			}
+
+			break;
+
+		}
+
+	}
 
 	@Then("^I should be able to verify the \"([^\"]*)\" waypoint \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" on the route map$")
 	public void I_should_be_able_to_verify_the_waypoint_on_the_route_map(
@@ -187,9 +266,12 @@ public class GraphHopperHooks {
 			String time, String distance) {
 
 		graphUiUtil.isWayPointonRouteMap(wayPointIndex, wayPoint_Coordinates,
-				wayPointDescription, azimuth, direction, time, distance);
+				wayPointDescription, azimuth, direction, time, distance,"");
 
 	}
+	
+	
+	
 
 	@Then("^I should be able to verify the waypoints on the route map:")
 	public void I_should_be_able_to_verify_the_waypoints_on_the_route_map(

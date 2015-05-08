@@ -178,7 +178,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 				clickElement(avoidance_Rock);
 				break;
 			case "mud":
-			clickElement(avoidance_Mud);
+				clickElement(avoidance_Mud);
 				break;
 
 			case "sand":
@@ -204,15 +204,31 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		driver.navigate().to(baseUrl);
 	}
 
-	public void verifyInstructionThroughUI(String routeStepNumber,
-			String stepInstruction) {
+	public boolean verifyInstructionThroughUI(String routeStepNumber,
+			String stepInstruction, String avoidance) {
 		this.routeStepNumber = routeStepNumber;
 		List<WebElement> WAY_POINTS = driver.findElements(By
 				.xpath("//*[@id='instructions']/tbody/tr[*]/td[2]"));
-		WAY_POINTS.get(Integer.parseInt(routeStepNumber) - 1).click();
+		try {
+			WAY_POINTS.get(Integer.parseInt(routeStepNumber) - 1).click();
+		} catch (Exception e) {
+			LOG.info(e.getMessage());
+			return false;
+		}
+		if (null!=avoidance)
+		{
+		if (!avoidance.isEmpty()) {
+			avoidance = ",  " + avoidance;
+		}
+		}
+		else
+		{
+			avoidance="";
+		}
 
-		checkTableRow(INSTRUCTIONS, Integer.parseInt(this.routeStepNumber),
-				stepInstruction);
+		return getTableRowStatus(INSTRUCTIONS,
+				Integer.parseInt(this.routeStepNumber), stepInstruction
+						+ avoidance);
 
 	}
 
@@ -221,7 +237,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 		if (IntegrationTestProperties.getTestProperty("routeType")
 				.equals("gpx")) {
-			GPHService.parseRoute("gpx",avoidance, routeType, points);
+			GPHService.parseRoute("gpx", avoidance, routeType, points);
 		}
 
 		else {
@@ -235,7 +251,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 		if (IntegrationTestProperties.getTestProperty("routeType")
 				.equals("gpx")) {
-			GPHService.parseRoute("gpx", "",routeType, points);
+			GPHService.parseRoute("gpx", "", routeType, points);
 		}
 
 		else {
@@ -267,15 +283,16 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 	public boolean isWayPointonRouteMap(String wayPointIndex,
 			String wayPoint_Coordinates, String wayPointDescription,
-			String azimuth, String direction, String time, String distance) {
+			String azimuth, String direction, String time, String distance,
+			String avoidance) {
 		boolean isWayPointonRouteMap = false;
 		Waypoint wp;
 
 		switch (testOn.toUpperCase()) {
 		case "WEB":
 
-			verifyInstructionThroughUI(wayPointIndex, wayPointDescription);
-			isWayPointonRouteMap = true;
+			isWayPointonRouteMap = verifyInstructionThroughUI(wayPointIndex,
+					wayPointDescription, avoidance);
 			break;
 		case "SERVICE":
 			if (IntegrationTestProperties.getTestProperty("routeType").equals(
@@ -294,7 +311,8 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 			break;
 
 		default:
-			verifyInstructionThroughUI(wayPointIndex, wayPointDescription);
+			verifyInstructionThroughUI(wayPointIndex, wayPointDescription,
+					avoidance);
 
 			if (IntegrationTestProperties.getTestProperty("routeType").equals(
 					"gpx")) {
@@ -355,9 +373,12 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 						.get("direction");
 				String time = (String) waypointList.get(i).get("time");
 				String distance = (String) waypointList.get(i).get("distance");
+				String avoidance = (String) waypointList.get(i)
+						.get("avoidance");
+
 				isWayPointonRouteMap = isWayPointonRouteMap(wayPointIndex,
 						waypointco, waypointdesc, azimuth, direction, time,
-						distance);
+						distance, avoidance);
 			}
 
 			else
@@ -368,8 +389,8 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 						"wayPointIndex");
 				String waypointdesc = (String) waypointList.get(i).get(
 						"waypointdesc");
-				verifyInstructionThroughUI(wayPointIndex, waypointdesc);
-				isWayPointonRouteMap = true;
+				isWayPointonRouteMap = verifyInstructionThroughUI(
+						wayPointIndex, waypointdesc, "");
 
 			}
 
