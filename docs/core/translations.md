@@ -2,7 +2,7 @@
 
 You can help improve GraphHopper by adding your language!
 
-See [this spreadsheet](https://docs.google.com/spreadsheets/d/10HKSFmxGVEIO92loVQetVmjXT0qpf3EA2jxuQSSYTdU/pub)
+See [this spreadsheet](https://docs.google.com/spreadsheets/d/10HKSFmxGVEIO92loVQetVmjXT0qpf3EA2jxuQSSYTdU/edit?pli=1#gid=0)
 and add a column for your language. Revisit it regularly to update or add new items. And see your language live at GraphHopper Maps e.g. explicitely specify the locale via:
 
 [https://graphhopper.com/maps/?point=40.979898%2C-3.164062&point=39.909736%2C-2.8125&locale=de](https://graphhopper.com/maps/?point=40.979898%2C-3.164062&point=39.909736%2C-2.8125&locale=de) 
