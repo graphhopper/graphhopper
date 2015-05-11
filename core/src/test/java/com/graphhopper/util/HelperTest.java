@@ -69,6 +69,7 @@ public class HelperTest
         assertEquals(Locale.GERMANY, Helper.getLocale("de-DE"));
         assertEquals(Locale.ENGLISH, Helper.getLocale("en"));
         assertEquals(Locale.US, Helper.getLocale("en_US"));
+        assertEquals(Locale.US, Helper.getLocale("en_US.UTF-8"));
     }
 
     @Test

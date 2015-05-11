@@ -62,6 +62,10 @@ public class Helper
 
     public static Locale getLocale( String param )
     {
+        int pointIndex = param.indexOf('.');
+        if (pointIndex > 0)
+            param = param.substring(0, pointIndex);
+
         param = param.replace("-", "_");
         int index = param.indexOf("_");
         if (index < 0)
