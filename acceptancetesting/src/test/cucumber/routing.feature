@@ -425,13 +425,14 @@ Feature: Verify a route from A to B
   Scenario Outline: Verify  Route using 2 intermediate waypoints (Perth to Edinburgh via Stirling and Glasgow )
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI via "<pointC>" and "<pointD>"
     Then I should be able to verify the waypoints on the route map:
-      | wayPointIndex | waypointco          | waypointdesc                         | azimuth | direction | time   | distance |
-      | 5             | 56.170837,-3.970499 | At roundabout, take exit 3 onto M9   | 91.0    | E         | 148299 | 3961.4   |
-      | 11            | 55.874151,-4.184032 | Continue onto GARTLOCH ROAD (B765)   | 98.0    | E         | 1145   | 11.1     |
-      | 20            | 55.924663,-3.31288  | At roundabout, take exit 3 onto A720 | 358.0   | N         | 58713  | 897.1    |
-      | 30            | 55.948658,-3.212478 | Turn left onto WALKER STREET         | 321.0   | NW        | 16074  | 156.3    |
+      | wayPointIndex | waypointco          | waypointdesc                                           | azimuth | direction | time   | distance |
+      | 5             | 56.170837,-3.970499 | At roundabout, take exit 3 onto M9                     | 91.0    | E         | 142970 | 3961.4   |
+      | 11            | 55.917381,-4.067178 | At roundabout, take exit 2 onto CUMBERNAULD ROAD (A80) | 156.0   | SE        | 175684 | 4636.2   |
+      | 20            | 55.938772,-3.402452 | At roundabout, take exit 4 onto A8 (GLASGOW ROAD)      | 302.0   | NW        | 266985 | 7046.2   |
+      | 30            | 55.949621,-3.214174 | Turn right onto MELVILLE STREET (MELVILLE CRESCENT     | 51.0    | NE        | 2218   | 30.8     |
 
     Examples: 
       | pointA             | pointB              | pointC              | pointD              | routetype |
       | 56.38721,-3.466273 | 56.136656,-3.970408 | 55.871665,-4.195067 | 55.950467,-3.208924 | car       |
+
 
