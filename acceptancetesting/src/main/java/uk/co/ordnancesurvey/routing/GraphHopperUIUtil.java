@@ -147,7 +147,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 			}
 		}
 
-		if (!avoidance.equals("")) {
+		if (!avoidance.isEmpty()) {
 
 			clickElement(settingsButton);
 			switch (avoidance.toLowerCase().trim()) {
@@ -195,6 +195,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 		}
 		clickElement(ROUTE_SEARCH);
+		
 		waitFor(INSTRUCTIONS);
 
 	}

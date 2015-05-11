@@ -132,7 +132,7 @@ public class GraphHopperHooks {
 			if (pointA.split(",").length == 2) {
 				graphUiUtil.getRouteFromService(routeType, pointA, pointB,
 						pointC);
-				graphUiUtil.getRouteFromUI(routeType, pointA, pointB, pointC);
+				graphUiUtil.getRouteFromUI(routeType,"", pointA, pointB, pointC);
 			} else {
 				graphUiUtil.getRouteFromUI(routeType,"", pointA, pointB, pointC);
 			}
