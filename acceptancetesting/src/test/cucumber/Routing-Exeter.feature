@@ -230,7 +230,7 @@ Feature: Verify a route from A to B
       | pointA             | pointB              | routetype |
       | 50.72458,-3.536493 | 50.723442,-3.534131 | car       |
 
-  @Routing
+  @Routing @KnownIssues
   Scenario Outline: Verify  Access Prohibited To  Restrictions on a Route (Upper Paul Street-Exeter)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
