@@ -216,7 +216,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
 
 	@Override
 	protected void addNode(String nodeId) {
-		String idStr = nodeId.substring(1);
+		String idStr = nodeId.substring(4);
 		if (0 == nodes.size()) {
 			nodes.add(idStr);
 		} else {
