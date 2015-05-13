@@ -22,9 +22,9 @@ public class ShortestWithAvoidancesWeighting extends ShortestWeighting {
     {
         long wayType = edge.getFlags();
         wayType = encoder.getLong(wayType, AbstractAvoidanceDecorator.KEY);
-        
-        if((wayType & bitMask) == bitMask)
+        if(bitMask!=0 && ((wayType & bitMask) > 0)) {
             return Double.POSITIVE_INFINITY;
+        }
         return super.calcWeight(edge, reverse, prevOrNextEdgeId);
     }
 
