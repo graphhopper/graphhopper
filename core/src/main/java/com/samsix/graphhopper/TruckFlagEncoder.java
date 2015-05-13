@@ -56,21 +56,42 @@ public class TruckFlagEncoder
         return shift;
     }
 
+    private long setWayTags(long flags, final OSMWay way)
+    {
+        //
+        // It seems that hgv = "yes" *might* be sometimes used instead of "designated".
+        // Figure I might as well check for that?
+        // Also, it seems that in New York City (all 5 boroughs) they have a designation
+        // of local which is intended for trucks to use if the start and end their routes
+        // inside of the borough. They use "designated" to mean truck routes that are
+        // through routes. I think for routing purposes it feels safe to consider these
+        // one and the same. But not sure.
+        //
+        if (way.hasTag("hgv", "designated") || way.hasTag("hgv", "yes") || way.hasTag("hgv", "local")) {
+            flags = setBool(flags, K_DESIGNATED, true);
+        }
+
+        //
+        // It appears that destination and delivery are used interchangeably
+        // Both meaning that the route should be for deliveries only.
+        //
+        if (way.hasTag("hgv", "destination") || way.hasTag("hgv", "delivery")) {
+            flags = setBool(flags, K_DESTINATION, true);
+        }
+
+        return flags;
+    }
+
     @Override
     public long handleWayTags( OSMWay way, long allowed, long relationFlags )
     {
         long encoded = super.handleWayTags(way, allowed, relationFlags);
+
         if (encoded == 0) {
             return 0;
         }
 
-        if (way.hasTag("hgv", "designated")) {
-            encoded = setBool(encoded, K_DESIGNATED, true);
-        }
-
-        if (way.hasTag("hgv", "destination")) {
-            encoded = setBool(encoded, K_DESTINATION, true);
-        }
+        encoded = setWayTags(encoded, way);
 
         return encoded;
     }
@@ -79,15 +100,7 @@ public class TruckFlagEncoder
     public void applyWayTags(final OSMWay way,
                              final EdgeIteratorState edge)
     {
-        long flags = edge.getFlags();
-
-        if (way.hasTag("hgv", "designated")) {
-            flags = setBool(flags, K_DESIGNATED, true);
-        }
-
-        if (way.hasTag("hgv", "destination")) {
-            flags = setBool(flags, K_DESTINATION, true);
-        }
+        long flags = setWayTags(edge.getFlags(), way);
 
         edge.setFlags(flags);
     }
