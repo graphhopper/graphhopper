@@ -298,3 +298,31 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA              | pointB              | routetype | avoidance |
       | 53.311217,-1.629849 | 53.156465,-1.908797 | foot      | Boulders  |
+      
+      
+      
+      
+  #Multiple Avoidance
+  @Routing @Avoidance
+  Scenario Outline: Verify DPN Route without boulders avoidance -(boulders)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI and avoid "<avoidance>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc        | azimuth | direction | time  | distance | avoidance |
+      | 6             | 53.545217,-1.986871 | Continue onto Route | 106.0    | E         | 1660 | 2.3    | Cliff  |
+      | 9             | 53.545038,-1.986338 | Continue onto Route | 130.0    | SE         | 178328 |247.7    | Boulders  |
+ 
+ Examples: 
+      | pointA              | pointB              | routetype | avoidance |
+      | 53.5534,-1.983177|53.490733,-1.977715 | foot      |           |
+
+  @Routing @Avoidance
+  Scenario Outline: Verify DPN Route with boulders avoidance -(boulders)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI and avoid "<avoidance>"
+    Then I should be able to verify the waypoints not on the route map:
+      | wayPointIndex | waypointco          | waypointdesc        | azimuth | direction | time  | distance | avoidance |
+      | 6             | 53.545217,-1.986871 | Continue onto Route | 106.0    | E         | 1660 | 2.3    | Cliff  |
+      | 9             | 53.545038,-1.986338 | Continue onto Route | 130.0    | SE         | 178328 |247.7    | Boulders  |
+
+    Examples: 
+      | pointA              | pointB              | routetype | avoidance |
+      | 53.5534,-1.983177|53.490733,-1.977715 | foot      | Boulders,Cliff  |

@@ -138,7 +138,8 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA             | pointB             | routetype |
       | 50.72148,-3.532485 | 50.721888,-3.53182 | car       |
-
+      
+# The below issue is a data issue and been reported into jira as route-67
   @KnownIssues
   Scenario Outline: Verify No  Turn Restrictions(Except Bus)  on a Route (BELGROVE ROAD -Exeter ROUTE-67)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI

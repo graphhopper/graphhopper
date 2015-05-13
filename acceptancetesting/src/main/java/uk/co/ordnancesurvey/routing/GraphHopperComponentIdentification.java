@@ -36,6 +36,8 @@ public class GraphHopperComponentIdentification implements
 	public static final ComponentIdentifier avoidance_Mud=new ComponentByXPATH("//*[@name='avoidances[]'][@value='mud']");
 	public static final ComponentIdentifier avoidance_Sand=new ComponentByXPATH("//*[@name='avoidances[]'][@value='sand']");
 	public static final ComponentIdentifier avoidance_Shingle=new ComponentByXPATH("//*[@name='avoidances[]'][@value='shingle']");
+	public static final ComponentIdentifier fastest_RButton=new ComponentByXPATH("//input[@value='fastest']");
+	public static final ComponentIdentifier shortest_RButton=new ComponentByXPATH("//input[@value='shortest']");
 	
 	
 }
