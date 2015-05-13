@@ -115,7 +115,6 @@ public class GraphHopper implements GraphHopperAPI {
 	private double defaultWeightLimit = Double.MAX_VALUE;
 	private boolean simplifyResponse = true;
 	private TraversalMode traversalMode = TraversalMode.NODE_BASED;
-	private String defaultVehicleStr;
 	private RoutingAlgorithmFactory algoFactory;
 	// for index
 	private LocationIndex locationIndex;
@@ -1056,7 +1055,7 @@ public class GraphHopper implements GraphHopperAPI {
 			sw = new StopWatch().start();
 			Path path = algo.calcPath(fromQResult.getClosestNode(),
 					toQResult.getClosestNode());
-			if (path.getMillis() < 0)
+			if (path.getTime() < 0)
 				throw new RuntimeException(
 						"Time was negative. Please report as bug and include:"
 								+ request);
