@@ -1,7 +1,6 @@
-package com.graphhopper.reader.osgb.dpn;
+package com.graphhopper.reader.osgb.dpn.rightOfWay;
 
-import com.graphhopper.reader.Way;
-import com.graphhopper.reader.osgb.dpn.rightOfWay.OtherRouteWithPublicAccess;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -9,16 +8,17 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.mockito.Mockito.verify;
+import com.graphhopper.reader.Way;
+import com.graphhopper.reader.osgb.dpn.OsDpnOsmAttributeMappingVisitor;
 
-public class OtherRouteWithPublicAccessTest {
+public class CorePathTest {
     static OsDpnOsmAttributeMappingVisitor visitor;
     @Mock
     Way way;
 
     @BeforeClass
     public static void createVisitor() {
-        visitor = new OtherRouteWithPublicAccess();
+        visitor = new BridleWay();
     }
 
     @Before
@@ -28,8 +28,8 @@ public class OtherRouteWithPublicAccessTest {
 
     @Test
     public void testVisitWayAttribute() {
-        visitor.visitWayAttribute("otherroutewithpublicaccess", way);
-        verify(way).setTag("foot", "yes");
+        visitor.visitWayAttribute("corepath", way);
+        verifyNoMoreInteractions(way);
     }
 
 }

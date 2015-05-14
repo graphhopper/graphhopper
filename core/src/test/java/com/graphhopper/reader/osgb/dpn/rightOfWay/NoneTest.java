@@ -1,7 +1,7 @@
-package com.graphhopper.reader.osgb.dpn;
+package com.graphhopper.reader.osgb.dpn.rightOfWay;
 
-import com.graphhopper.reader.Way;
-import com.graphhopper.reader.osgb.dpn.rightOfWay.None;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -9,8 +9,8 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.verify;
+import com.graphhopper.reader.Way;
+import com.graphhopper.reader.osgb.dpn.OsDpnOsmAttributeMappingVisitor;
 
 public class NoneTest {
     static OsDpnOsmAttributeMappingVisitor visitor;
@@ -33,6 +33,7 @@ public class NoneTest {
         verify(way).setTag("foot", "no");
         verify(way).setTag("bicycle", "no");
         verify(way).setTag("horse", "no");
+        verifyNoMoreInteractions(way);
     }
 
 }

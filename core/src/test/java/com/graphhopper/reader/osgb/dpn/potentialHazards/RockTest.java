@@ -1,6 +1,7 @@
-package com.graphhopper.reader.osgb.dpn;
+package com.graphhopper.reader.osgb.dpn.potentialHazards;
 
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -9,17 +10,16 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.graphhopper.reader.Way;
-import com.graphhopper.reader.osgb.dpn.rightOfWay.BywayOpenToAllTraffic;
+import com.graphhopper.reader.osgb.dpn.OsDpnOsmAttributeMappingVisitor;
 
-public class BywayOpenToAllTrafficTest {
-
+public class RockTest {
     static OsDpnOsmAttributeMappingVisitor visitor;
     @Mock
     Way way;
 
     @BeforeClass
     public static void createVisitor() {
-        visitor = new BywayOpenToAllTraffic();
+        visitor = new Rock();
     }
 
     @Before
@@ -29,11 +29,9 @@ public class BywayOpenToAllTrafficTest {
 
     @Test
     public void testVisitWayAttribute() throws Exception {
-        visitor.visitWayAttribute("bywayopentoalltraffic", way);
-        verify(way).setTag("designation", "byway_open_to_all_traffic");
-        verify(way).setTag("highway", "track");
-        verify(way).setTag("foot", "yes");
-        verify(way).setTag("horse", "yes");
-        verify(way).setTag("bicycle", "yes");
+        visitor.visitWayAttribute("rock", way);
+        verify(way).setTag("natural", "rocks");
+        verifyNoMoreInteractions(way);
     }
+
 }

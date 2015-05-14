@@ -1,6 +1,7 @@
-package com.graphhopper.reader.osgb.dpn;
+package com.graphhopper.reader.osgb.dpn.potentialHazards;
 
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -9,16 +10,16 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.graphhopper.reader.Way;
-import com.graphhopper.reader.osgb.dpn.potentialHazards.Boulders;
+import com.graphhopper.reader.osgb.dpn.OsDpnOsmAttributeMappingVisitor;
 
-public class BouldersTest {
+public class ShingleTest {
     static OsDpnOsmAttributeMappingVisitor visitor;
     @Mock
     Way way;
 
     @BeforeClass
     public static void createVisitor() {
-        visitor = new Boulders();
+        visitor = new Shingle();
     }
 
     @Before
@@ -28,8 +29,9 @@ public class BouldersTest {
 
     @Test
     public void testVisitWayAttribute() throws Exception {
-        visitor.visitWayAttribute("boulders", way);
-        verify(way).setTag("natural", "boulders");  // Not an osm tag but what makes sense for dpn
+        visitor.visitWayAttribute("shingle", way);
+        verify(way).setTag("natural", "shingle");
+        verifyNoMoreInteractions(way);
     }
 
 }

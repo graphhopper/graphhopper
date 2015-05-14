@@ -1,6 +1,7 @@
-package com.graphhopper.reader.osgb.dpn;
+package com.graphhopper.reader.osgb.dpn.potentialHazards;
 
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -9,16 +10,16 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.graphhopper.reader.Way;
-import com.graphhopper.reader.osgb.dpn.potentialHazards.Cliff;
+import com.graphhopper.reader.osgb.dpn.OsDpnOsmAttributeMappingVisitor;
 
-public class CliffTest {
+public class InlandWaterTest {
     static OsDpnOsmAttributeMappingVisitor visitor;
     @Mock
     Way way;
 
     @BeforeClass
     public static void createVisitor() {
-        visitor = new Cliff();
+        visitor = new InlandWater();
     }
 
     @Before
@@ -28,7 +29,9 @@ public class CliffTest {
 
     @Test
     public void testVisitWayAttribute() throws Exception {
-        visitor.visitWayAttribute("cliff", way);
-        verify(way).setTag("natural", "cliff");
+        visitor.visitWayAttribute("inlandwater", way);
+        verify(way).setTag("natural", "water");
+        verifyNoMoreInteractions(way);
     }
+
 }

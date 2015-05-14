@@ -4,6 +4,10 @@ import com.graphhopper.reader.Way;
 import com.graphhopper.reader.osgb.dpn.AbstractOsDpnOsmAttibuteMappingVisitor;
 
 /**
+ * Description: A highway open to all traffic
+ *
+ * Confirmed Allowable users: Pedestrians, Horses, Cyclists, Motorised Vehicles
+ *
  * Created by sadam on 13/02/15.
  */
 public class BywayOpenToAllTraffic extends AbstractOsDpnOsmAttibuteMappingVisitor {
@@ -15,6 +19,7 @@ public class BywayOpenToAllTraffic extends AbstractOsDpnOsmAttibuteMappingVisito
         way.setTag("foot", "yes");
         way.setTag("horse", "yes");
         way.setTag("bicycle", "yes");
+        way.setTag("motor_vehicle", "yes");
     }
 
 }

@@ -35,6 +35,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.graphhopper.reader.Way;
+import com.graphhopper.reader.osgb.dpn.additionalRights.AdoptedByNationalCycleRoute;
+import com.graphhopper.reader.osgb.dpn.additionalRights.AdoptedByOtherCycleRoute;
+import com.graphhopper.reader.osgb.dpn.additionalRights.AdoptedByRecreationalRoute;
+import com.graphhopper.reader.osgb.dpn.additionalRights.WithinAccessLand;
 import com.graphhopper.reader.osgb.dpn.potentialHazards.Boulders;
 import com.graphhopper.reader.osgb.dpn.potentialHazards.Cliff;
 import com.graphhopper.reader.osgb.dpn.potentialHazards.Foreshore;
@@ -50,8 +54,10 @@ import com.graphhopper.reader.osgb.dpn.potentialHazards.Spoil;
 import com.graphhopper.reader.osgb.dpn.potentialHazards.TidalWater;
 import com.graphhopper.reader.osgb.dpn.rightOfWay.BridleWay;
 import com.graphhopper.reader.osgb.dpn.rightOfWay.BywayOpenToAllTraffic;
+import com.graphhopper.reader.osgb.dpn.rightOfWay.CorePath;
 import com.graphhopper.reader.osgb.dpn.rightOfWay.Footpath;
 import com.graphhopper.reader.osgb.dpn.rightOfWay.None;
+import com.graphhopper.reader.osgb.dpn.rightOfWay.NormalPermissibleUses;
 import com.graphhopper.reader.osgb.dpn.rightOfWay.OtherRouteWithPublicAccess;
 import com.graphhopper.reader.osgb.dpn.rightOfWay.PermissiveBridleWay;
 import com.graphhopper.reader.osgb.dpn.rightOfWay.PermissivePath;
@@ -69,17 +75,15 @@ public class OsDpnWay extends OsDpnElement implements Way {
     protected String startCoord;
     protected String endCoord;
     private String[] wayCoords;
-    private static final Logger logger = LoggerFactory
-            .getLogger(OsDpnWay.class);
-    private static OsDpnOsmAttributeMappingVisitor[] rightOfWayVisitors = {
-        new BridleWay(), new PermissiveBridleWay(),
-        new BywayOpenToAllTraffic(), new None(),
-        new OtherRouteWithPublicAccess(), new Footpath(),
-        new PermissivePath(), new RestrictedByway() };
-    private static OsDpnOsmAttributeMappingVisitor[] potentialHazardVisitors = {
-        new Boulders(), new Cliff(), new Marsh(), new Mud(), new Sand(),
-        new Scree(), new Shingle(), new Spoil(), new Rock(),
-        new TidalWater(), new QuarryOrPit(), new InlandWater(), new Foreshore() };
+    private static final Logger logger = LoggerFactory.getLogger(OsDpnWay.class);
+    private static OsDpnOsmAttributeMappingVisitor[] RIGHT_OF_WAY_VISITORS = { new BridleWay(),
+        new BywayOpenToAllTraffic(), new CorePath(), new Footpath(), new None(), new NormalPermissibleUses(),
+        new OtherRouteWithPublicAccess(), new PermissiveBridleWay(), new PermissivePath(), new RestrictedByway() };
+    private static OsDpnOsmAttributeMappingVisitor[] POTENTIAL_HAZARD_VISITORS = { new Boulders(), new Cliff(),
+        new Marsh(), new Mud(), new Sand(), new Scree(), new Shingle(), new Spoil(), new Rock(), new TidalWater(),
+        new QuarryOrPit(), new InlandWater(), new Foreshore() };
+    private static OsDpnOsmAttributeMappingVisitor[] ADDITIONAL_RIGHTS_VISITORS = { new AdoptedByNationalCycleRoute(),
+            new AdoptedByOtherCycleRoute(), new AdoptedByRecreationalRoute(), new WithinAccessLand() };
 
     /**
      * Constructor for XML Parser
@@ -88,9 +92,8 @@ public class OsDpnWay extends OsDpnElement implements Way {
      * @throws FactoryException
      * @throws MismatchedDimensionException
      */
-    public static OsDpnWay create(String idStr, XMLStreamReader parser)
-            throws XMLStreamException, MismatchedDimensionException,
-            FactoryException, TransformException {
+    public static OsDpnWay create(String idStr, XMLStreamReader parser) throws XMLStreamException,
+    MismatchedDimensionException, FactoryException, TransformException {
         logger.trace("OsDpnWay.create()");
         OsDpnWay way = new OsDpnWay(idStr);
         parser.nextTag();
@@ -109,28 +112,18 @@ public class OsDpnWay extends OsDpnElement implements Way {
     }
 
     @Override
-    protected int handleCycleRoute(XMLStreamReader parser)
-            throws XMLStreamException {
+    protected int handleAdditionalRights(XMLStreamReader parser) throws XMLStreamException {
         String access = parser.getElementText();
         if ("true".equals(access)) {
-            setTag("bicycle", "yes");
+            for (OsDpnOsmAttributeMappingVisitor visitor : ADDITIONAL_RIGHTS_VISITORS) {
+                visitor.visitWayAttribute(parser.getLocalName().toLowerCase(), this);
+            }
         }
         return parser.getEventType();
     }
 
     @Override
-    protected int handleAccessLand(XMLStreamReader parser)
-            throws XMLStreamException {
-        String access = parser.getElementText();
-        if ("true".equals(access)) {
-            setTag("foot", "yes");
-        }
-        return parser.getEventType();
-    }
-
-    @Override
-    protected int handleSurfaceType(XMLStreamReader parser)
-            throws XMLStreamException {
+    protected int handleSurfaceType(XMLStreamReader parser) throws XMLStreamException {
         String surface;
         String surfaceType = parser.getElementText();
         if ("Made Sealed".equals(surfaceType)) {
@@ -145,8 +138,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
     }
 
     @Override
-    protected int handlePhysicalLevel(XMLStreamReader parser)
-            throws XMLStreamException {
+    protected int handlePhysicalLevel(XMLStreamReader parser) throws XMLStreamException {
         String text = parser.getElementText();
         if ("Below Surface Level Tunnel".equals(text)) {
             setTag("tunnel", "yes");
@@ -157,23 +149,19 @@ public class OsDpnWay extends OsDpnElement implements Way {
     }
 
     @Override
-    protected int handleRightOfUse(XMLStreamReader parser)
-            throws XMLStreamException {
-        String attributeValue = parser.getElementText().replaceAll(" ", "")
-                .toLowerCase();
-        for (OsDpnOsmAttributeMappingVisitor rightOfWayVisitor : rightOfWayVisitors) {
-            rightOfWayVisitor.visitWayAttribute(attributeValue, this);
+    protected int handleRightOfUse(XMLStreamReader parser) throws XMLStreamException {
+        String attributeValue = parser.getElementText().replaceAll(" ", "").toLowerCase();
+        for (OsDpnOsmAttributeMappingVisitor visitor : RIGHT_OF_WAY_VISITORS) {
+            visitor.visitWayAttribute(attributeValue, this);
         }
         return parser.getEventType();
     }
 
     @Override
-    protected int handlePotentialHazard(XMLStreamReader parser)
-            throws XMLStreamException {
-        String attributeValue = parser.getElementText().replaceAll(" ", "")
-                .toLowerCase();
-        for (OsDpnOsmAttributeMappingVisitor potentialHazzardVisitor : potentialHazardVisitors) {
-            potentialHazzardVisitor.visitWayAttribute(attributeValue, this);
+    protected int handlePotentialHazard(XMLStreamReader parser) throws XMLStreamException {
+        String attributeValue = parser.getElementText().replaceAll(" ", "").toLowerCase();
+        for (OsDpnOsmAttributeMappingVisitor visitor : POTENTIAL_HAZARD_VISITORS) {
+            visitor.visitWayAttribute(attributeValue, this);
         }
         return parser.getEventType();
     }
@@ -181,10 +169,8 @@ public class OsDpnWay extends OsDpnElement implements Way {
     @Override
     protected void parseCoords(String lineDefinition) {
         String[] lineSegments = lineDefinition.split(" ");
-        wayCoords = Arrays
-                .copyOfRange(lineSegments, 1, lineSegments.length - 1);
-        logger.info("parseCoords1" + toString() + " "
-                + ((wayCoords.length == 0) ? "0" : wayCoords[0]));
+        wayCoords = Arrays.copyOfRange(lineSegments, 1, lineSegments.length - 1);
+        logger.info("parseCoords1" + toString() + " " + ((wayCoords.length == 0) ? "0" : wayCoords[0]));
     }
 
     /**
@@ -220,11 +206,8 @@ public class OsDpnWay extends OsDpnElement implements Way {
             }
             wayCoords[wayCoords.length - 1] = curString.toString();
             addWayNodes();
-            logger.info("parsecoord2" + toString() + " "
-                    + ((wayCoords.length == 0) ? "0" : wayCoords[0]));
-        }
-        else
-        {
+            logger.info("parsecoord2" + toString() + " " + ((wayCoords.length == 0) ? "0" : wayCoords[0]));
+        } else {
             wayCoords = null;
         }
         nodes.add(endNode);
@@ -272,8 +255,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
      * @throws MismatchedDimensionException
      */
     public List<OsDpnNode> evaluateWayNodes(TLongObjectMap<TDoubleObjectMap<TDoubleLongMap>> edgeIdToXToYToNodeFlagsMap)
-            throws MismatchedDimensionException, FactoryException, TransformException
-            {
+            throws MismatchedDimensionException, FactoryException, TransformException {
         List<OsDpnNode> wayNodes = new ArrayList<OsDpnNode>();
 
         if (null != wayCoords) {
@@ -285,8 +267,7 @@ public class OsDpnWay extends OsDpnElement implements Way {
                 OsDpnNode wayNode = new OsDpnNode(id);
                 wayNode.parseCoords(wayCoord);
 
-                logger.info("Node " + getId() + " coords: " + wayCoord
-                        + " tags: ");
+                logger.info("Node " + getId() + " coords: " + wayCoord + " tags: ");
                 for (String tagKey : wayNode.getTags().keySet()) {
                     logger.info("\t " + tagKey + " : " + wayNode.getTag(tagKey));
                 }
@@ -294,15 +275,14 @@ public class OsDpnWay extends OsDpnElement implements Way {
             }
         }
         return wayNodes;
-            }
+    }
 
     /**
      * Memory management method. Once a way is processed the stored string
      * coordinates are no longer required so set them to null so they can be
      * garbage collected
      */
-    public void clearStoredCoords()
-    {
+    public void clearStoredCoords() {
         wayCoords = null;
         startCoord = null;
         endCoord = null;
@@ -320,17 +300,15 @@ public class OsDpnWay extends OsDpnElement implements Way {
         return endCoord;
     }
 
-    protected void parseCoordinateString(String elementText,
-            String elementSeparator) {
+    protected void parseCoordinateString(String elementText, String elementSeparator) {
         throw new UnsupportedOperationException();
 
     }
 
     @Override
     public String toString() {
-        return super.toString() + " id:" + getId() + " start:" + nodes.get(0)
-                + " end:" + nodes.get(nodes.size() - 1) + " NAME:"
-                + getTag("name");
+        return super.toString() + " id:" + getId() + " start:" + nodes.get(0) + " end:" + nodes.get(nodes.size() - 1)
+                + " NAME:" + getTag("name");
     }
 
 }
