@@ -421,18 +421,18 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | pointC             | pointD              | routetype |
       | 51.746075,-1.263972 | 52.289962,-1.604752 | 52.202814,0.051429 | 51.491412,-0.610276 | car       |
 
-  @Routing
+  @Routing @Current
   Scenario Outline: Verify  Route using 2 intermediate waypoints (Perth to Edinburgh via Stirling and Glasgow )
-    Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI via "<pointC>" and "<pointD>"
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI via "<pointC>" and "<pointD>"
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                                           | azimuth | direction | time   | distance |
       | 5             | 56.170837,-3.970499 | At roundabout, take exit 3 onto M9                     | 91.0    | E         | 142970 | 3961.4   |
       | 11            | 55.917381,-4.067178 | At roundabout, take exit 2 onto CUMBERNAULD ROAD (A80) | 156.0   | SE        | 175684 | 4636.2   |
       | 20            | 55.938772,-3.402452 | At roundabout, take exit 4 onto A8 (GLASGOW ROAD)      | 302.0   | NW        | 266985 | 7046.2   |
-      | 30            | 55.949621,-3.214174 | Turn right onto MELVILLE STREET (MELVILLE CRESCENT     | 51.0    | NE        | 2218   | 30.8     |
+      | 30            | 55.949621,-3.214174 | Turn right onto MELVILLE STREET (MELVILLE CRESCENT)     | 51.0    | NE        | 2218   | 30.8     |
 
     Examples: 
-      | pointA             | pointB              | pointC              | pointD              | routetype |
-      | 56.38721,-3.466273 | 56.136656,-3.970408 | 55.871665,-4.195067 | 55.950467,-3.208924 | car       |
+      | pointA             | pointB              | pointC              | pointD              | routeOptions |
+      | 56.38721,-3.466273 | 56.136656,-3.970408 | 55.871665,-4.195067 | 55.950467,-3.208924 | car,shortest       |
 
 

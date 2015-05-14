@@ -41,7 +41,7 @@ public class GraphHopperHooks {
 		switch (testON.toUpperCase()) {
 		case "WEB":
 
-			graphUiUtil.getRouteFromUI(routeType, "",pointA, pointB);
+			graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB);
 			break;
 		case "SERVICE":
 			graphUiUtil.getRouteFromService(routeType, pointA, pointB);
@@ -50,9 +50,9 @@ public class GraphHopperHooks {
 
 			if (pointA.split(",").length == 2) {
 				graphUiUtil.getRouteFromService(routeType, pointA, pointB);
-				graphUiUtil.getRouteFromUI(routeType,"", pointA, pointB);
+				graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB);
 			} else {
-				graphUiUtil.getRouteFromUI(routeType, "",pointA, pointB);
+				graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB);
 			}
 
 			break;
@@ -65,7 +65,7 @@ public class GraphHopperHooks {
 	public void getRouteWithAvoidance(String pointA, String pointB,
 			String routeType, String avoidance) throws InterruptedException {
 		String graphHopperWebUrl;
-		avoidance= avoidance.toLowerCase().trim();
+		avoidance = avoidance.toLowerCase().trim();
 		if (IntegrationTestProperties.getTestPropertyBool("viaApigee")) {
 			graphHopperWebUrl = IntegrationTestProperties
 					.getTestProperty("graphHopperWebUrlViaApigee");
@@ -81,19 +81,22 @@ public class GraphHopperHooks {
 		switch (testON.toUpperCase()) {
 		case "WEB":
 
-			graphUiUtil.getRouteFromUI(routeType,avoidance, pointA, pointB);
+			graphUiUtil.getRouteFromUI(routeType, avoidance, pointA, pointB);
 			break;
 		case "SERVICE":
-			graphUiUtil.getRouteFromServiceWithAvoidance(routeType, avoidance, pointA,
-					pointB);
+			graphUiUtil.getRouteFromServiceWithAvoidance(routeType, avoidance,
+					pointA, pointB);
 			break;
 		default:
 
 			if (pointA.split(",").length == 2) {
-				graphUiUtil.getRouteFromServiceWithAvoidance(routeType, avoidance,pointA, pointB);
-				graphUiUtil.getRouteFromUI(routeType,avoidance, pointA, pointB);
+				graphUiUtil.getRouteFromServiceWithAvoidance(routeType,
+						avoidance, pointA, pointB);
+				graphUiUtil
+						.getRouteFromUI(routeType, avoidance, pointA, pointB);
 			} else {
-				graphUiUtil.getRouteFromUI(routeType,avoidance, pointA, pointB);
+				graphUiUtil
+						.getRouteFromUI(routeType, avoidance, pointA, pointB);
 			}
 
 			break;
@@ -122,7 +125,7 @@ public class GraphHopperHooks {
 		switch (testON.toUpperCase()) {
 		case "WEB":
 
-			graphUiUtil.getRouteFromUI(routeType,"",pointA, pointB, pointC);
+			graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB, pointC);
 			break;
 		case "SERVICE":
 			graphUiUtil.getRouteFromService(routeType, pointA, pointB, pointC);
@@ -132,9 +135,11 @@ public class GraphHopperHooks {
 			if (pointA.split(",").length == 2) {
 				graphUiUtil.getRouteFromService(routeType, pointA, pointB,
 						pointC);
-				graphUiUtil.getRouteFromUI(routeType,"", pointA, pointB, pointC);
+				graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB,
+						pointC);
 			} else {
-				graphUiUtil.getRouteFromUI(routeType,"", pointA, pointB, pointC);
+				graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB,
+						pointC);
 			}
 
 			break;
@@ -142,11 +147,11 @@ public class GraphHopperHooks {
 		}
 
 	}
-	
-	
+
 	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI and avoid \"([^\"]*)\" via \"([^\"]*)\"$")
-	public void getRouteWithAvoidances(String pointA, String pointB, String routeType,String avoidance,
-			String pointC) throws InterruptedException {
+	public void getRouteWithAvoidances(String pointA, String pointB,
+			String routeType, String avoidance, String pointC)
+			throws InterruptedException {
 		String graphHopperWebUrl;
 
 		if (IntegrationTestProperties.getTestPropertyBool("viaApigee")) {
@@ -164,18 +169,21 @@ public class GraphHopperHooks {
 		switch (testON.toUpperCase()) {
 		case "WEB":
 
-			graphUiUtil.getRouteFromUI(routeType,"",pointA, pointB, pointC);
+			graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB, pointC);
 			break;
 		case "SERVICE":
-			graphUiUtil.getRouteFromServiceWithAvoidance(routeType, avoidance,pointA, pointB, pointC);
+			graphUiUtil.getRouteFromServiceWithAvoidance(routeType, avoidance,
+					pointA, pointB, pointC);
 			break;
 		default:
 
 			if (pointA.split(",").length == 2) {
-				graphUiUtil.getRouteFromServiceWithAvoidance(routeType, avoidance,pointA, pointB, pointC);
+				graphUiUtil.getRouteFromServiceWithAvoidance(routeType,
+						avoidance, pointA, pointB, pointC);
 				graphUiUtil.getRouteFromUI(routeType, pointA, pointB, pointC);
 			} else {
-				graphUiUtil.getRouteFromUI(routeType,"", pointA, pointB, pointC);
+				graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB,
+						pointC);
 			}
 
 			break;
@@ -184,8 +192,7 @@ public class GraphHopperHooks {
 
 	}
 
-	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI via \"([^\"]*)\" and \"([^\"]*)\"$")
-	public void getRoute(String pointA, String pointB, String routeType,
+	public void getRoute(String pointA, String pointB, String routeOptions,
 			String pointC, String pointD) throws InterruptedException {
 
 		graphUiUtil = new GraphHopperUIUtil(
@@ -196,23 +203,23 @@ public class GraphHopperHooks {
 		switch (testON.toUpperCase()) {
 		case "WEB":
 
-			graphUiUtil.getRouteFromUI(routeType, "",pointA, pointB, pointC,
-					pointD);
+			graphUiUtil.getRouteFromUI(routeOptions, "", pointA, pointB,
+					pointC, pointD);
 			break;
 		case "SERVICE":
-			graphUiUtil.getRouteFromService(routeType, pointA, pointB, pointC,
-					pointD);
+			graphUiUtil.getRouteFromService(routeOptions, pointA, pointB,
+					pointC, pointD);
 			break;
 		default:
 
 			if (pointA.split(",").length == 2) {
-				graphUiUtil.getRouteFromService(routeType, pointA, pointB,
+				graphUiUtil.getRouteFromService(routeOptions, pointA, pointB,
 						pointC, pointD);
-				graphUiUtil.getRouteFromUI(routeType,"", pointA, pointB, pointC,
-						pointD);
+				graphUiUtil.getRouteFromUI(routeOptions, "", pointA, pointB,
+						pointC, pointD);
 			} else {
-				graphUiUtil.getRouteFromUI(routeType, "",pointA, pointB, pointC,
-						pointD);
+				graphUiUtil.getRouteFromUI(routeOptions, "", pointA, pointB,
+						pointC, pointD);
 			}
 
 			break;
@@ -220,11 +227,11 @@ public class GraphHopperHooks {
 		}
 
 	}
-	
-	
+
 	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI and avoid \"([^\"]*)\" via \"([^\"]*)\" and \"([^\"]*)\"$")
-	public void getRouteWithAvoidances(String pointA, String pointB, String routeType,String avoidance,
-			String pointC, String pointD) throws InterruptedException {
+	public void getRouteWithAvoidances(String pointA, String pointB,
+			String routeType, String avoidance, String pointC, String pointD)
+			throws InterruptedException {
 
 		graphUiUtil = new GraphHopperUIUtil(
 				IntegrationTestProperties.getTestProperty("graphHopperWebUrl"));
@@ -234,23 +241,23 @@ public class GraphHopperHooks {
 		switch (testON.toUpperCase()) {
 		case "WEB":
 
-			graphUiUtil.getRouteFromUI(routeType, "",pointA, pointB, pointC,
+			graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB, pointC,
 					pointD);
 			break;
 		case "SERVICE":
-			graphUiUtil.getRouteFromServiceWithAvoidance(routeType,avoidance, pointA, pointB, pointC,
-					pointD);
+			graphUiUtil.getRouteFromServiceWithAvoidance(routeType, avoidance,
+					pointA, pointB, pointC, pointD);
 			break;
 		default:
 
 			if (pointA.split(",").length == 2) {
-				graphUiUtil.getRouteFromServiceWithAvoidance(routeType,avoidance, pointA, pointB, pointC,
-						pointD);
-				graphUiUtil.getRouteFromUI(routeType,"", pointA, pointB, pointC,
-						pointD);
+				graphUiUtil.getRouteFromServiceWithAvoidance(routeType,
+						avoidance, pointA, pointB, pointC, pointD);
+				graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB,
+						pointC, pointD);
 			} else {
-				graphUiUtil.getRouteFromUI(routeType, "",pointA, pointB, pointC,
-						pointD);
+				graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB,
+						pointC, pointD);
 			}
 
 			break;
@@ -266,17 +273,16 @@ public class GraphHopperHooks {
 			String time, String distance) {
 
 		graphUiUtil.isWayPointonRouteMap(wayPointIndex, wayPoint_Coordinates,
-				wayPointDescription, azimuth, direction, time, distance,"");
+				wayPointDescription, azimuth, direction, time, distance, "");
 
 	}
-	
-	
-	
 
 	@Then("^I should be able to verify the waypoints on the route map:")
 	public void I_should_be_able_to_verify_the_waypoints_on_the_route_map(
 			List<Map<String, String>> wayPointList) {
-		Assert.assertTrue("Waypoint not found on the route where it was expected",graphUiUtil.isWayPointonRouteMap(wayPointList));
+		Assert.assertTrue(
+				"Waypoint not found on the route where it was expected",
+				graphUiUtil.isWayPointonRouteMap(wayPointList));
 
 	}
 
@@ -284,7 +290,9 @@ public class GraphHopperHooks {
 	public void I_should_be_able_to_verify_the_not_waypoints_on_the_route_map(
 			List<Map<String, String>> wayPointList) {
 
-		Assert.assertFalse("Waypoint found on the route where it was not expected",graphUiUtil.isWayPointonRouteMap(wayPointList));
+		Assert.assertFalse(
+				"Waypoint found on the route where it was not expected",
+				graphUiUtil.isWayPointonRouteMap(wayPointList));
 		// graphUiUtil.isWayPointNotonRouteMap(wayPointList);
 
 	}
