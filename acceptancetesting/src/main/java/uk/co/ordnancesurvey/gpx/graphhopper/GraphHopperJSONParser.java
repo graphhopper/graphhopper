@@ -185,6 +185,7 @@ public class GraphHopperJSONParser {
 		}
 
 		String apikey = IntegrationTestProperties.getTestProperty("apiKey");
+
 		StringBuilder sb = new StringBuilder();
 		sb.append(graphHopperUrl);
 		sb.append("route?");

@@ -5,7 +5,6 @@ Feature: Verify a route from A to B
 
   @Routing
   Scenario Outline: Verify  waypoints on a Route
- 
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                 | azimuth | direction | time | distance | avoidance |
@@ -44,7 +43,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB             | routeOptions | avoidances |
       | 50.896617,-1.400465 | 55.861284,-4.24996 | car          |            |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  waypoints on a Route from London to Birmingham
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints on the route map:
@@ -59,7 +58,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routeOptions | avoidances |
       | 51.507229,-0.127581 | 52.481875,-1.898743 | car          |            |
 
-@Routing
+  @Routing
   Scenario Outline: Verify  waypoints on a Route from London to Birmingham and the total route time estimate
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then The total route time should be not more than "<totalRouteTime>"
@@ -77,7 +76,7 @@ Feature: Verify a route from A to B
       | pointA             | pointB              | routeOptions | avoidances | totalRouteTime |
       | 51.475161,-0.39591 | 51.536292,-0.656802 | car          |            | 0h30min        |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  waypoints on a Route from Southampton to Glasgow
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the trackPoints on the route map:
@@ -91,7 +90,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB             | routeOptions | avoidances |
       | 50.896617,-1.400465 | 55.861284,-4.24996 | car          |            |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  oneway Restrictions on a Route (Burmingham Route with one way restriction-WSPIP-74)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the trackPoints not on the route map:
@@ -102,7 +101,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routeOptions | avoidances |
       | 52.446823,-1.929077 | 52.446604,-1.930043 | car          |            |
 
-  @KnownIssues @Routing 
+  @KnownIssues @Routing
   Scenario Outline: Verify  No Turn Restrictions  on a Route (Birmingham WSPIP-77)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the trackPoints not on the route map:
@@ -124,7 +123,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routeOptions | avoidances |
       | 52.446823,-1.929077 | 52.446672,-1.929691 | car          |            |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  under pass still finds route  from top road (Southampton- Charle WattsWay)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the trackPoints on the route map:
@@ -134,8 +133,8 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA              | pointB              | routeOptions | avoidances |
       | 50.917598,-1.317992 | 50.919748,-1.310342 | car          |            |
- 
-  @Routing 
+
+  @Routing
   Scenario Outline: Verify  under pass still finds route from bottom road  (Southampton- Charle WattsWay)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the trackPoints on the route map:
@@ -201,7 +200,7 @@ Feature: Verify a route from A to B
       | pointA             | pointB              | routeOptions | avoidances |
       | 51.47118,-0.363609 | 51.470254,-0.363412 | car          |            |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  Private Road Restricted Access (Warwick Road-Carlisle)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the trackPoints not on the route map:
@@ -354,7 +353,7 @@ Feature: Verify a route from A to B
 
   @Routing
   Scenario Outline: Verify  Route using one intermediate waypoint (Hounslow to Reading via Staines )
-   Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>" via "<pointC>"
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>" via "<pointC>"
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                         | azimuth | direction | time   | distance | avoidance |
       | 1             | 51.472387,-0.361788 | Continue onto ELLINGTON ROAD         | 286.0   | W         | 10789  | 104.9    |           |
@@ -420,7 +419,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | pointC             | pointD              | routeOptions | avoidances |
       | 51.746075,-1.263972 | 52.289962,-1.604752 | 52.202814,0.051429 | 51.491412,-0.610276 | car          |            |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  Route using 2 intermediate waypoints (Perth to Edinburgh via Stirling and Glasgow )
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>" via "<pointC>" and "<pointD>"
     Then I should be able to verify the waypoints on the route map:
@@ -432,7 +431,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA             | pointB              | pointC              | pointD              | routeOptions | avoidances |
-      | 56.38721,-3.466273 | 56.136656,-3.970408 | 55.871665,-4.195067 | 55.950467,-3.208924 | car,fastest |            |
+      | 56.38721,-3.466273 | 56.136656,-3.970408 | 55.871665,-4.195067 | 55.950467,-3.208924 | car,fastest  |            |
 
   @Routing
   Scenario Outline: Verify  nearest point on a Route
@@ -442,3 +441,32 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA              | pointB                                 | distance          |
       | 51.878966,-0.903849 | 51.875144098888576,-0.9107481891829116 | 636.3215777261629 |
+
+  
+  # Fastest and Shortest Route Scenarios
+  
+  @Routing @Current
+  Scenario Outline: Verify  waypoints on a Route from Hounslow to Reading
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                        | azimuth | direction | time   | distance | avoidance |
+      | 1             | 51.472387,-0.361788 | Continue onto ELLINGTON ROAD        | 286.0   | W         | 8390   | 104.9    |           |
+      | 9             | 51.468674,-0.370905 | Turn right onto BATH ROAD (A3006)   | 280.0   | W         | 134212 | 1758.0   |           |
+      | 17            | 51.483218,-0.583061 | Turn right onto WINDSOR ROAD (B470) | 321.0   | NW        | 60059  | 750.7    |           |
+
+    Examples: 
+      | pointA                                 | pointB                                 | routeOptions | avoidances |
+      | 51.471546541834144,-0.3618621826171875 | 51.45914115860512,-0.96679687499999995 | car,shortest |            |
+
+  @Routing @Current
+  Scenario Outline: Verify  waypoints on a Route from Hounslow to Reading
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                           | azimuth | direction | time    | distance | avoidance |
+      | 1             | 51.472387,-0.361788 | Continue onto ELLINGTON ROAD           | 286.0   | W         | 8390    | 104.9    |           |
+      | 8             | 51.491316,-0.41082  | At roundabout, take exit 2 onto M4     | 339.0   | N         | 1300443 | 36121.5  |           |
+      | 16            | 51.453903,-0.961826 | Continue onto WATLINGTON STREET (A329) | 341.0   | N         | 8584    | 132.7    |           |
+
+    Examples: 
+      | pointA                                 | pointB                                 | routeOptions | avoidances |
+      | 51.471546541834144,-0.3618621826171875 | 51.45914115860512,-0.96679687499999995 | car,fastest  |            |

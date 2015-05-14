@@ -132,7 +132,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		}
 		clickElement(settingsButton);
 
-		if (!avoidances.isEmpty()) {
+		if (!avoidances.equals("")) {
 			for (int i = 0; i < avoidances.split(",").length; i++) {
 				String avoidance = avoidances.split(",")[i];
 				switch (avoidance.toLowerCase().trim()) {
@@ -178,8 +178,25 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 					break;
 				}
 			}
+/*switch (routeOption) {
+case "shortavoid":
+	clickElement(shortest_RButton);
+	break;
+case "fastavoid":
+	clickElement(fastest_RButton);
+	break;
+case "fastest":
+	
+	clickElement(fastest_RButton);
+	break;
+case "shortest":
+	clickElement(shortest_RButton);
+	break;
 
-			if (routeOptions.equalsIgnoreCase("shortavoid")) {
+default:
+	break;
+}
+		*/	if (routeOption.equalsIgnoreCase("shortavoid")) {
 				clickElement(shortest_RButton);
 			}
 
@@ -190,7 +207,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		}
 
 		else {
-			if (routeOptions.equalsIgnoreCase("shortest")) {
+			if (routeOption.equalsIgnoreCase("shortest")) {
 				clickElement(shortest_RButton);
 			}
 
