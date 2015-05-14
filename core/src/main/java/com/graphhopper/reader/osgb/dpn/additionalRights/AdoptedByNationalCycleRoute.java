@@ -3,6 +3,14 @@ package com.graphhopper.reader.osgb.dpn.additionalRights;
 import com.graphhopper.reader.Way;
 import com.graphhopper.reader.osgb.dpn.AbstractOsDpnOsmAttibuteMappingVisitor;
 
+/**
+ * Description: A link part of the National Cycle Network
+ *
+ * Confirmed Allowable users: Pedestrians, Cyclists
+ *
+ * @author phopkins
+ *
+ */
 public class AdoptedByNationalCycleRoute extends AbstractOsDpnOsmAttibuteMappingVisitor {
 
     @Override
