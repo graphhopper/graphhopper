@@ -110,7 +110,7 @@ public interface FlagEncoder extends TurnCostEncoder
     long setLong( long flags, int key, long value );
 
     /**
-     * Returns arbitrary long value identified by the specified key. E.g. can be used to return the
+     * Returns arbitrary double value identified by the specified key. E.g. can be used to return the
      * maximum width or height allowed for an edge.
      */
     double getDouble( long flags, int key );
