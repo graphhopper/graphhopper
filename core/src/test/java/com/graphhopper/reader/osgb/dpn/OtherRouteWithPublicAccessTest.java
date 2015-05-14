@@ -1,6 +1,8 @@
 package com.graphhopper.reader.osgb.dpn;
 
 import com.graphhopper.reader.Way;
+import com.graphhopper.reader.osgb.dpn.rightOfWay.OtherRouteWithPublicAccess;
+
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;

@@ -1,6 +1,7 @@
-package com.graphhopper.reader.osgb.dpn;
+package com.graphhopper.reader.osgb.dpn.rightOfWay;
 
 import com.graphhopper.reader.Way;
+import com.graphhopper.reader.osgb.dpn.AbstractOsDpnOsmAttibuteMappingVisitor;
 
 /**
  * Created by sadam on 16/02/15.

@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.graphhopper.reader.Way;
+import com.graphhopper.reader.osgb.dpn.potentialHazards.Scree;
 
 public class ScreeTest {
 	 static OsDpnOsmAttributeMappingVisitor visitor;

@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.graphhopper.reader.Way;
+import com.graphhopper.reader.osgb.dpn.potentialHazards.Rock;
 
 public class RockTest {
 	 static OsDpnOsmAttributeMappingVisitor visitor;
