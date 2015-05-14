@@ -21,6 +21,7 @@ import javax.imageio.ImageIO;
 
 import org.alternativevision.gpx.beans.Route;
 import org.alternativevision.gpx.beans.Waypoint;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.junit.Assert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -589,4 +590,19 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 	public void verifyWayPointsThroughService() {
 
 	}
+	
+	public String nearestPointService(String pointA) {
+		
+		return GPHJsonService.getNearestPoint(pointA);
+		
+		
+	}
+
+	public String nearestPointDistance() {
+		
+		return GPHJsonService.getNearestPointDistance();
+		
+		
+	}
+
 }

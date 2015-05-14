@@ -1,10 +1,13 @@
 package uk.co.ordnancesurvey.gpx.graphhopper;
 
+import gherkin.JSONParser;
+
 import java.io.IOException;
 
 import org.alternativevision.gpx.beans.Waypoint;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,13 +53,11 @@ public class GraphHopperJSONParser {
 			JsonPrimitive description = instruction.getAsJsonPrimitive("text");
 			JsonPrimitive time = instruction.getAsJsonPrimitive("time");
 			JsonPrimitive distance = instruction.getAsJsonPrimitive("distance");
-			
-		double distance_rounding=Double.parseDouble(distance.toString());
-		
-		distance_rounding=Math.round(distance_rounding*10)/10.0;
-		
-		
-			
+
+			double distance_rounding = Double.parseDouble(distance.toString());
+
+			distance_rounding = Math.round(distance_rounding * 10) / 10.0;
+
 			JsonPrimitive azimuth = instruction.getAsJsonPrimitive("azimuth");
 			JsonPrimitive annotation_text = instruction
 					.getAsJsonPrimitive("annotation_text");
@@ -70,19 +71,17 @@ public class GraphHopperJSONParser {
 			w.setLongitude(longitude);
 			w.setLatitude(latitude);
 			w.setDescription(description.toString());
-			w.addExtensionData(ExtensionConstants.DISTANCE, String.valueOf(distance_rounding));
+			w.addExtensionData(ExtensionConstants.DISTANCE,
+					String.valueOf(distance_rounding));
 			w.addExtensionData(ExtensionConstants.TIME, time.toString());
-	
 
-			
 			LOG.info("azimuth :" + azimuth);
 			LOG.info("descritption: " + description);
 			LOG.info("time :" + time);
 			LOG.info("distance :" + distance);
-			if(null!=annotation_text)
-			{
-			w.setAnnotation_text(annotation_text.toString());
-			LOG.info("annotation_text: " + annotation_text.toString());
+			if (null != annotation_text) {
+				w.setAnnotation_text(annotation_text.toString());
+				LOG.info("annotation_text: " + annotation_text.toString());
 			}
 			LOG.info("Coordinates : " + w.getLatitude() + ","
 					+ w.getLongitude());
@@ -104,7 +103,8 @@ public class GraphHopperJSONParser {
 		return coordinates.get(coordinateIndex);
 	}
 
-	public void parse(String routeType,String avoidance, String vehicle, String[] string) {
+	public void parse(String routeType, String avoidance, String vehicle,
+			String[] string) {
 
 		
 		String route="";
@@ -150,10 +150,11 @@ public class GraphHopperJSONParser {
 		sb.append("&apikey=");
 		sb.append(apikey);
 		sb.append("&points_encoded=false");
-		
-		if (!avoidance.equals("")){
-			sb.append("&avoidances="+avoidance);
-		sb.append("&weighting=fastavoid");}
+
+		if (!avoidance.equals("")) {
+			sb.append("&avoidances=" + avoidance);
+			sb.append("&weighting=fastavoid");
+		}
 		GraphHopperGPXParserRouteTest GPHService = new GraphHopperGPXParserRouteTest();
 		try {
 			CloseableHttpResponse httpResponse = GPHService
@@ -214,6 +215,55 @@ public class GraphHopperJSONParser {
 		w.addExtensionData(ExtensionConstants.TIME, time);
 		return w;
 
+	}
+
+	// nearest point
+	public String getNearestPoint(String pointA) {
+
+		String nearestpoint = "";
+		StringBuffer sb = new StringBuffer();
+		if (Boolean.parseBoolean(IntegrationTestProperties
+				.getTestProperty("viaApagee"))) {
+			sb.append(IntegrationTestProperties
+					.getTestProperty("graphHopperWebUrlViaApigee"));
+		} else {
+			sb.append(IntegrationTestProperties
+					.getTestProperty("graphHopperWebUrl"));
+		}
+
+		sb.append("nearest?point=");
+		sb.append(pointA);
+		GraphHopperGPXParserRouteTest GPHService = new GraphHopperGPXParserRouteTest();
+
+		try {
+			CloseableHttpResponse httpResponse = GPHService
+					.sendAndGetResponse(sb.toString());
+
+			jsonString = IOUtils.toString(httpResponse.getEntity()
+					.getContent(), "UTF-8");
+
+			JsonParser jp = new JsonParser();
+			JsonElement je = jp.parse(jsonString);
+			JsonArray jo = je.getAsJsonObject().getAsJsonArray("coordinates");
+
+			nearestpoint = jo.get(1).getAsString() + ","
+					+ jo.get(0).getAsString();
+
+		} catch (IOException e) {
+			LOG.info("Exception raised whilst attempting to call graphhopper server "
+					+ e.getMessage());
+		}
+
+		return nearestpoint;
+
+	}
+	
+	public String getNearestPointDistance()
+	{
+		JsonParser jp = new JsonParser();
+		JsonElement je = jp.parse(jsonString);
+		JsonPrimitive distance = je.getAsJsonObject().getAsJsonPrimitive("distance");
+		return distance.toString();
 	}
 
 }

@@ -43,7 +43,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB             | routetype |
       | 50.896617,-1.400465 | 55.861284,-4.24996 | car       |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  waypoints on a Route from London to Birmingham
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -51,14 +51,14 @@ Feature: Verify a route from A to B
       | 1             | 51.507234,-0.127584 | At roundabout, take exit 2 onto CHARING CROSS (A4) | 253.0   | W         | 4202  | 111.0    |
       | 7             | 51.517207,-0.142804 | Turn slight left onto A4201                        | 307.0   | NW        | 1628  | 43.0     |
       | 21            | 51.577774,-0.220823 | Continue onto A41 (HENDON WAY)                     | 301.0   | NW        | 28342 | 748.0    |
-      | 22            | 51.582726,-0.227154 | Continue onto A41 (WATFORD WAY)            | 340.0   | N        | 88373 | 2332.3    |
-      | 23            | 51.601209,-0.234509 | Continue onto A1 (WATFORD WAY (BARNET BY-PASS))                     | 325.0   | NW        | 72410 | 1911.0    |
+      | 22            | 51.582726,-0.227154 | Continue onto A41 (WATFORD WAY)                    | 340.0   | N         | 88373 | 2332.3   |
+      | 23            | 51.601209,-0.234509 | Continue onto A1 (WATFORD WAY (BARNET BY-PASS))    | 325.0   | NW        | 72410 | 1911.0   |
 
     Examples: 
       | pointA              | pointB              | routetype |
       | 51.507229,-0.127581 | 52.481875,-1.898743 | car       |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  waypoints on a Route from London to Birmingham and the total route time estimate
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then The total route time should be not more than "<totalRouteTime>"
@@ -67,7 +67,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype | totalRouteTime |
       | 51.507229,-0.127581 | 52.481875,-1.898743 | car       | 03h00min       |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  waypoints on a Route from Hounslow to Burnham and the total route time estimate
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then The total route time should be not more than "<totalRouteTime>"
@@ -76,21 +76,21 @@ Feature: Verify a route from A to B
       | pointA             | pointB              | routetype | totalRouteTime |
       | 51.475161,-0.39591 | 51.536292,-0.656802 | car       | 0h30min        |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  waypoints on a Route from Southampton to Glasgow
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the trackPoints on the route map:
       | trackPointco        |
-      | 52.52355,-1.902136 |
+      | 52.52355,-1.902136  |
       | 53.779418,-2.647821 |
       | 54.304996,-2.646641 |
-      |55.802602,-4.053713|
+      | 55.802602,-4.053713 |
 
     Examples: 
       | pointA              | pointB             | routetype |
       | 50.896617,-1.400465 | 55.861284,-4.24996 | car       |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  oneway Restrictions on a Route (Burmingham Route with one way restriction-WSPIP-74)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the trackPoints not on the route map:
@@ -101,7 +101,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 52.446823,-1.929077 | 52.446604,-1.930043 | car       |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  No Turn Restrictions  on a Route (Birmingham WSPIP-77)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the trackPoints not on the route map:
@@ -123,7 +123,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 52.446823,-1.929077 | 52.446672,-1.929691 | car       |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  under pass still finds route  from top road (Southampton- Charle WattsWay)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the trackPoints on the route map:
@@ -156,7 +156,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 50.972281,-1.350942 | 50.972212,-1.351183 | car       |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  No Turn   (WSPIP-76:Eastley- Station Hill Road)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -167,7 +167,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB             | routetype |
       | 50.970024,-1.350267 | 50.97008,-1.350521 | car       |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  No Turn   (Treaty Center-Hounslow- Fairfields Road)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -189,18 +189,18 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype |
       | 51.470198,-0.356036 | 51.470352,-0.357388 | car       |
 
-  @Routing  
+  @Routing
   Scenario Outline: Verify  Mandatory Turn   (Alexandra Road-Hounslow- Fairfields Road)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
-      | wayPointIndex | waypointco          | waypointdesc                   | azimuth | direction | time  | distance |
+      | wayPointIndex | waypointco          | waypointdesc                   | azimuth | direction | time | distance |
       | 2             | 51.470846,-0.363527 | Turn right onto LANSDOWNE ROAD | 259.0   | W         | 9934 | 124.2    |
 
     Examples: 
       | pointA             | pointB              | routetype |
       | 51.47118,-0.363609 | 51.470254,-0.363412 | car       |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  Private Road Restricted Access (Warwick Road-Carlisle)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the trackPoints not on the route map:
@@ -233,16 +233,16 @@ Feature: Verify a route from A to B
       | pointA             | pointB              | routetype |
       | 50.78222,-1.059975 | 50.779123,-1.080019 | car       |
 
-  @Routing @WebOnly 
+  @Routing @WebOnly
   Scenario Outline: Verify  Route using Full UK Address (Southampton to London)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointdesc                                  |
       | 3             | At roundabout, take exit 2 onto BROWNHILL WAY |
-      | 18            | Continue onto PICCADILLY (A4)  |
+      | 18            | Continue onto PICCADILLY (A4)                 |
 
     Examples: 
-      | pointA                                           | pointB                                 | routetype |
+      | pointA                                                            | pointB                                 | routetype |
       | ORDNANCE SURVEY, 4, ADANAC DRIVE, NURSLING, SOUTHAMPTON, SO16 0AS | 1, PICCADILLY ARCADE, LONDON, SW1Y 6NH | car       |
 
   @Routing @WebOnly
@@ -257,25 +257,25 @@ Feature: Verify a route from A to B
       | pointA                              | pointB                                      | routetype |
       | 131, TIVOLI ROAD, HOUNSLOW, TW4 6AS | 40, CHILTERN ROAD, BURNHAM, SLOUGH, SL1 7NH | car       |
 
-  @Routing   @WebOnly
+  @Routing @WebOnly
   Scenario Outline: Verify  Route using Full UK Address (Southampton to London)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
-      | wayPointIndex | waypointdesc                   |
+      | wayPointIndex | waypointdesc                            |
       | 2             | Turn sharp left onto A35 (TEBOURBA WAY) |
-      | 20            | Turn slight left onto PALL MALL (A4)              |
+      | 20            | Turn slight left onto PALL MALL (A4)    |
 
     Examples: 
-      | pointA                                                      | pointB                                                                                | routetype |
+      | pointA                                                     | pointB                                              | routetype |
       | SOUTHAMPTON MEGABOWL, AUCKLAND ROAD, SOUTHAMPTON, SO15 0SD | CANARY WHARF LTD, 1, CANADA SQUARE, LONDON, E14 5AB | car       |
 
-  @Routing  @WebOnly
+  @Routing @WebOnly
   Scenario Outline: Verify  Route using Full UK Address (Birmingham to reading)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
-      | wayPointIndex | waypointdesc                   |
-      | 2             | Turn left onto MONTAGUE STREET |
-      | 19            | At roundabout, take exit 2 onto A34 (STRATFORD ROAD)             |
+      | wayPointIndex | waypointdesc                                         |
+      | 2             | Turn left onto MONTAGUE STREET                       |
+      | 19            | At roundabout, take exit 2 onto A34 (STRATFORD ROAD) |
 
     Examples: 
       | pointA                                                      | pointB                                                                                | routetype |
@@ -285,8 +285,8 @@ Feature: Verify a route from A to B
   Scenario Outline: Verify  Route using Full UK Address (Southhampton to London)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
-      | wayPointIndex | waypointdesc                                |
-      | 3             | Continue onto ENDLE STREET |
+      | wayPointIndex | waypointdesc                        |
+      | 3             | Continue onto ENDLE STREET          |
       | 21            | At roundabout, take exit 3 onto A30 |
 
     Examples: 
@@ -297,28 +297,28 @@ Feature: Verify a route from A to B
   Scenario Outline: Verify  Route using Full UK Address (Coventry)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
-      | wayPointIndex | waypointdesc                        |
-      | 3             | Turn right onto HOWES LANE (B4115)  |
+      | wayPointIndex | waypointdesc                         |
+      | 3             | Turn right onto HOWES LANE (B4115)   |
       | 6             | At roundabout, take exit 2 onto A444 |
-      | 16            | Turn right onto PENNY PARK LANE          |
+      | 16            | Turn right onto PENNY PARK LANE      |
 
     Examples: 
       | pointA                                                         | pointB                              | routetype |
       | 3 BROMLEIGH VILLAS, COVENTRY ROAD, BAGINTON, COVENTRY, CV8 3AS | 2, PAXMEAD CLOSE, COVENTRY, CV6 2NJ | car       |
 
-  @Routing  @WebOnly
+  @Routing @WebOnly
   Scenario Outline: Verify  Route using Full UK Address (Kington to London )
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
-      | wayPointIndex | waypointdesc                        |
-      | 6             | Turn slight left onto HEADBROOK |
-      | 16            | At roundabout, take exit 3 onto A49 (VICTORIA STREET)                |
+      | wayPointIndex | waypointdesc                                          |
+      | 6             | Turn slight left onto HEADBROOK                       |
+      | 16            | At roundabout, take exit 3 onto A49 (VICTORIA STREET) |
 
     Examples: 
       | pointA                           | pointB                                | routetype |
       | 5, OXFORD LANE, KINGTON, HR5 3ED | 64, TOWER MILL ROAD, LONDON, SE15 6BZ | car       |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify a Roundabout(Charles Watts Way)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -329,7 +329,7 @@ Feature: Verify a route from A to B
       | pointA             | pointB              | routetype |
       | 50.915416,-1.31902 | 50.915551,-1.294049 | car       |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify a Roundabout(A30)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -340,7 +340,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB             | routetype |
       | 50.729071,-3.732732 | 50.72813,-3.730887 | car       |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify a Roundabout(The City Of Edinburgh By-pass)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI
     Then I should be able to verify the waypoints on the route map:
@@ -364,7 +364,7 @@ Feature: Verify a route from A to B
       | pointA                                 | pointB              | pointC                                 | routetype |
       | 51.471546541834144,-0.3618621826171875 | 51.433882,-0.537904 | 51.45914115860512,-0.96679687499999995 | car       |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify  Route using one intermediate waypoint (Wentworth to Ascot via Windsor Park )
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI via "<pointC>"
     Then I should be able to verify the waypoints on the route map:
@@ -377,37 +377,35 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | pointC             | routetype |
       | 51.409426,-0.591727 | 51.407904,-0.617237 | 51.41855,-0.672385 | car       |
 
-  @Routing  
-    Scenario Outline: Verify  Route using one intermediate waypoint ( Chelsea to Winchester via Windlesham)
+  @Routing
+  Scenario Outline: Verify  Route using one intermediate waypoint ( Chelsea to Winchester via Windlesham)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI via "<pointC>"
     Then I should be able to verify the waypoints on the route map:
-      | wayPointIndex | waypointco          | waypointdesc                       | azimuth | direction | time    | distance |
-      | 4             | 51.489964,-0.172906 | Turn left onto DOVEHOUSE STREET | 321.0   | NW         | 7600  | 95.0   |
-      | 9             | 51.493673,-0.174548  | Turn right onto PELHAM STREET (A3218)                  | 0.0   | N        | 2446 | 55.7  |
-      | 13            | 51.486844,-0.252027 | At roundabout, take exit 3 onto A4  | 189.0   | S        | 69313   |1829.3   |
+      | wayPointIndex | waypointco          | waypointdesc                          | azimuth | direction | time  | distance |
+      | 4             | 51.489964,-0.172906 | Turn left onto DOVEHOUSE STREET       | 321.0   | NW        | 7600  | 95.0     |
+      | 9             | 51.493673,-0.174548 | Turn right onto PELHAM STREET (A3218) | 0.0     | N         | 2446  | 55.7     |
+      | 13            | 51.486844,-0.252027 | At roundabout, take exit 3 onto A4    | 189.0   | S         | 69313 | 1829.3   |
 
     Examples: 
       | pointA             | pointB             | pointC              | routetype |
       | 51.48676,-0.170426 | 51.36166,-0.645979 | 51.070889,-1.315293 | car       |
 
-  @Routing  @yogi
+  @Routing
   Scenario Outline: Verify  Route using 2 intermediate waypoints (Hounslow to Reading via Staines and Bracknell )
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI via "<pointC>" and "<pointD>"
     Then I should be able to verify the waypoints on the route map:
-      | wayPointIndex | waypointco          | waypointdesc                            | azimuth | direction | time   | distance |
-      | 1             | 51.472387,-0.361788 | Continue onto ELLINGTON ROAD            | 286.0   | W         | 8390  | 104.9    |
-      | 9             | 51.406127,-0.539808 | Continue onto M3 | 162.0    | S         | 445073   | 12363.5    |
-      | 16            |51.414151,-0.747502 |Continue onto CHURCH ROAD (A3095)   | 28.0  | NE         | 12891 |340.2   |
-      | 27            | 51.451397,-0.960099 | Turn right onto WATLINGTON STREET   | 333.0   | NW        | 11978  | 149.7    |
-      | 55            | 51.440767,-0.531845 | Continue onto A30                       | 17.0    | N         | 14025 | 370.1  |
-
+      | wayPointIndex | waypointco          | waypointdesc                      | azimuth | direction | time   | distance |
+      | 1             | 51.472387,-0.361788 | Continue onto ELLINGTON ROAD      | 286.0   | W         | 8390   | 104.9    |
+      | 9             | 51.406127,-0.539808 | Continue onto M3                  | 162.0   | S         | 445073 | 12363.5  |
+      | 16            | 51.414151,-0.747502 | Continue onto CHURCH ROAD (A3095) | 28.0    | NE        | 12891  | 340.2    |
+      | 27            | 51.451397,-0.960099 | Turn right onto WATLINGTON STREET | 333.0   | NW        | 11978  | 149.7    |
+      | 55            | 51.440767,-0.531845 | Continue onto A30                 | 17.0    | N         | 14025  | 370.1    |
 
     Examples: 
       | pointA                                 | pointB              | pointC                                 | pointD              | routetype |
       | 51.471546541834144,-0.3618621826171875 | 51.414152,-0.747504 | 51.45914115860512,-0.96679687499999995 | 51.433882,-0.537904 | car       |
 
-
-@Routing
+  @Routing
   Scenario Outline: Verify  Route using 2 intermediate waypoints (Oxford to Eaton via Warwick and Cambridge )
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI via "<pointC>" and "<pointD>"
     Then I should be able to verify the waypoints on the route map:
@@ -421,7 +419,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | pointC             | pointD              | routetype |
       | 51.746075,-1.263972 | 52.289962,-1.604752 | 52.202814,0.051429 | 51.491412,-0.610276 | car       |
 
-  @Routing @Current
+  @Routing 
   Scenario Outline: Verify  Route using 2 intermediate waypoints (Perth to Edinburgh via Stirling and Glasgow )
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI via "<pointC>" and "<pointD>"
     Then I should be able to verify the waypoints on the route map:
@@ -436,3 +434,12 @@ Feature: Verify a route from A to B
       | 56.38721,-3.466273 | 56.136656,-3.970408 | 55.871665,-4.195067 | 55.950467,-3.208924 | car,shortest       |
 
 
+  @Routing
+  Scenario Outline: Verify  nearest point on a Route
+    Given I request a nearest point from  "<pointA>" from Nearest Point API
+    Then I should be able to verify the nearest point to be "<pointB>" at a distance of "<distance>" and type "type"
+
+    Examples: 
+      | pointA              | pointB                                 | distance          | type |
+      | 51.878966,-0.903849 | 51.875144098888576,-0.9107481891829116 | 636.3215777261629 | type |
+     

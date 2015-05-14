@@ -20,6 +20,8 @@ public class GraphHopperHooks {
 	GraphHopperUIUtil graphUiUtil;
 
 	String instruction;
+	String nearestPoint="";
+	String Distance="";
 
 	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI$")
 	public void getRoute(String pointA, String pointB, String routeType)
@@ -264,6 +266,31 @@ public class GraphHopperHooks {
 
 		}
 
+	}
+
+	@Given("^I request a nearest point from  \"([^\"]*)\" from Nearest Point API$")
+	public void I_request_a_nearest_point_from_from_Nearest_Point_API(String pointA) {
+		
+		
+		graphUiUtil=(IntegrationTestProperties.getTestPropertyBool("viaApigee")==true)?new GraphHopperUIUtil(
+				IntegrationTestProperties.getTestProperty("graphHopperWebUrlViaApigee")):
+					new GraphHopperUIUtil(
+							IntegrationTestProperties.getTestProperty("graphHopperWebUrl"));
+		
+
+			
+		if (IntegrationTestProperties.getTestProperty("testON").equalsIgnoreCase("Service"))
+		nearestPoint=graphUiUtil.nearestPointService(pointA);
+		Distance=graphUiUtil.nearestPointDistance();
+
+	}
+
+	@Then("^I should be able to verify the nearest point to be \"([^\"]*)\" at a distance of \"([^\"]*)\"$")
+	public void I_should_be_able_to_verify_the_nearest_point_to_be(String pointB,String distance) {
+	  
+		Assert.assertTrue("******Expected nearest Point "+pointB+" is not matching with "+ nearestPoint+"********",pointB.equals(nearestPoint));
+		Assert.assertTrue("******Expected nearest Point distance " +distance+" is not matcching with " +Distance,Distance.equals(distance));
+	   
 	}
 
 	@Then("^I should be able to verify the \"([^\"]*)\" waypoint \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" on the route map$")
