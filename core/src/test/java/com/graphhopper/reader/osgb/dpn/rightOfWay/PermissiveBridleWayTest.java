@@ -1,6 +1,7 @@
-package com.graphhopper.reader.osgb.dpn;
+package com.graphhopper.reader.osgb.dpn.rightOfWay;
 
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -9,7 +10,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.graphhopper.reader.Way;
-import com.graphhopper.reader.osgb.dpn.rightOfWay.PermissiveBridleWay;
+import com.graphhopper.reader.osgb.dpn.OsDpnOsmAttributeMappingVisitor;
 
 public class PermissiveBridleWayTest {
     static OsDpnOsmAttributeMappingVisitor visitor;
@@ -17,25 +18,23 @@ public class PermissiveBridleWayTest {
     Way way;
 
     @BeforeClass
-    public static void createVisitor()
-    {
+    public static void createVisitor() {
         visitor = new PermissiveBridleWay();
     }
 
     @Before
-    public void init()
-    {
+    public void init() {
         MockitoAnnotations.initMocks(this);
     }
 
     @Test
-    public void testVisitWayAttribute()
-    {
+    public void testVisitWayAttribute() {
         visitor.visitWayAttribute("permissivebridleway", way);
         verify(way).setTag("highway", "bridleway");
         verify(way).setTag("horse", "permissive");
         verify(way).setTag("bicycle", "permissive");
         verify(way).setTag("foot", "permissive");
+        verifyNoMoreInteractions(way);
     }
 
 }
