@@ -104,8 +104,19 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 	 */
 	public void getRouteFromUI(String routeType, String avoidance,
 			String... points) throws InterruptedException {
+		String vehicle="";
+		String route="";
+		if (routeType.split(",").length>1)
+		{
+		 vehicle=routeType.split(",")[0];
+		 route=routeType.split(",")[1];
+		}
+		else
+		{
+			vehicle=routeType;
+		}
 
-		switch (routeType) {
+		switch (vehicle) {
 		case "car":
 			clickElement(ROUTE_TYPE_CAR);
 
@@ -122,6 +133,13 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 
 		}
 
+		clickElement(settingsButton);
+		
+		if (route.equalsIgnoreCase("shortest"))
+		{
+			clickElement(shortest_RButton);
+		}
+		
 		for (int i = 0; i < points.length - 2; i++)
 
 		{
@@ -256,6 +274,7 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		}
 
 		else {
+
 
 			GPHJsonService.parse("json", "", routeType, points);
 		}

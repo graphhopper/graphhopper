@@ -106,6 +106,17 @@ public class GraphHopperJSONParser {
 
 	public void parse(String routeType,String avoidance, String vehicle, String[] string) {
 
+		
+		String route="";
+		if (routeType.split(",").length>1)
+		{
+		 vehicle=routeType.split(",")[0];
+		 route=routeType.split(",")[1];
+		}
+		else
+		{
+			vehicle=routeType;
+		}
 		// Set up the URL
 		String jsonResponse = "";
 		String coordinateString = "";
