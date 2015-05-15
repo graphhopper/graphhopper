@@ -84,8 +84,8 @@ public class GraphHopperJSONParser {
 			LOG.info("time :" + time);
 			LOG.info("distance :" + distance);
 			if (null != annotation_text) {
-				w.setAnnotation_text(annotation_text.toString());
-				LOG.info("annotation_text: " + annotation_text.toString());
+				w.addExtensionData("Annotation_text",annotation_text.getAsString().trim());
+				LOG.info("annotation_text: " + annotation_text.getAsString().trim());
 			}
 			LOG.info("Coordinates : " + w.getLatitude() + ","
 					+ w.getLongitude());
@@ -273,7 +273,7 @@ public class GraphHopperJSONParser {
 	 * @return Waypoint
 	 */
 	public Waypoint buildWayPointForJson(String wayPoint_Coordinates,
-			String wayPointDescription, String time, String distance) {
+			String wayPointDescription, String time, String distance,String avoidance) {
 		Waypoint w = new Waypoint();
 		String waypoint[] = wayPoint_Coordinates.split(",");
 		w.setLatitude(new Double(waypoint[0]));
@@ -281,6 +281,7 @@ public class GraphHopperJSONParser {
 		w.setDescription(wayPointDescription);
 		w.addExtensionData(ExtensionConstants.DISTANCE, distance);
 		w.addExtensionData(ExtensionConstants.TIME, time);
+		w.addExtensionData("Annotation_text", avoidance.trim());
 		return w;
 
 	}

@@ -272,7 +272,7 @@ public class GraphHopperHooks {
 
 	}
 
-	@After({ "@Routing" })
+	@After
 	public void closeBrowser(Scenario sc) {
 
 		if (sc.isFailed()) {

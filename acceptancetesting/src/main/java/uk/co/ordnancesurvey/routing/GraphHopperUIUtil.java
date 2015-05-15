@@ -348,7 +348,7 @@ default:
 
 			} else {
 				wp = GPHJsonService.buildWayPointForJson(wayPoint_Coordinates,
-						wayPointDescription, time, distance);
+						wayPointDescription, time, distance,avoidance);
 				isWayPointonRouteMap = GPHJsonService.isWayPointinPath(wp);
 
 			}
@@ -367,7 +367,7 @@ default:
 
 			} else {
 				wp = GPHJsonService.buildWayPointForJson(wayPoint_Coordinates,
-						wayPointDescription, time, distance);
+						wayPointDescription, time, distance,avoidance);
 				isWayPointonRouteMap = GPHJsonService.isWayPointinPath(wp);
 
 			}
