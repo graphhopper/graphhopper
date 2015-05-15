@@ -281,7 +281,7 @@ default:
 			String avoidances, String... points) {
 
 		if (IntegrationTestProperties.getTestProperty("routeType")
-				.equals("gpx")) {
+				.equalsIgnoreCase("gpx")) {
 			GPHService.parseRoute("gpx", avoidances, routeOptions, points);
 		}
 
@@ -348,7 +348,7 @@ default:
 
 			} else {
 				wp = GPHJsonService.buildWayPointForJson(wayPoint_Coordinates,
-						wayPointDescription, time, distance);
+						wayPointDescription, time, distance,avoidance);
 				isWayPointonRouteMap = GPHJsonService.isWayPointinPath(wp);
 
 			}
@@ -367,7 +367,7 @@ default:
 
 			} else {
 				wp = GPHJsonService.buildWayPointForJson(wayPoint_Coordinates,
-						wayPointDescription, time, distance);
+						wayPointDescription, time, distance,avoidance);
 				isWayPointonRouteMap = GPHJsonService.isWayPointinPath(wp);
 
 			}

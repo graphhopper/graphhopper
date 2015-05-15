@@ -434,18 +434,26 @@ Feature: Verify a route from A to B
       | 56.38721,-3.466273 | 56.136656,-3.970408 | 55.871665,-4.195067 | 55.950467,-3.208924 | car,fastest  |            |
 
   @Routing
-  Scenario Outline: Verify  nearest point on a Route
+  Scenario Outline: Verify  nearest point of point using NearestPoint API
     Given I request a nearest point from  "<pointA>" from Nearest Point API
     Then I should be able to verify the nearest point to be "<pointB>" at a distance of "<distance>"
 
     Examples: 
-      | pointA              | pointB                                 | distance          |
-      | 51.878966,-0.903849 | 51.875144098888576,-0.9107481891829116 | 636.3215777261629 |
+      | pointA                                 | pointB                                 | distance           |
+      | 51.878966,-0.903849                    | 51.875144098888576,-0.9107481891829116 | 636.3215777261629  |
+      | 53.101756,-1.954888                    | 53.10043020792586,-1.961414745138117 | 460.0011625834564  |
+      | 53.065293927002806,-1.9071498141906338 | 53.065293927002806,-1.9071498141906338 | 0                  |
+      | 52.784893,-1.84522                     | 52.79515894789604,-1.8521510478589918  | 1233.001210212637   |
+      | 52.79515894789604,-1.8521510478589918  | 52.79515894789604,-1.8521510478589918  | 0                  |
+      | 54.094977,-2.006081                    | 54.09420551570219,-2.0283477834242833  | 1454.551799711362  |
+      | 54.115309,-2.111881                    | 54.133065323525635,-2.131028334744908  | 2335.612435123903  |
+      | 54.095897,-2.144795                    | 54.08689388826998,-2.1488754559056935  | 1035.8644445463867 |
+      | 50.658849,-1.386463                    | 50.65520130477257,-1.4000444889283343  | 1039.7773305822475 |
+      | 56.025277,-4.917874                    | 56.02196904113215,-4.906092518708935   | 819.3253424080308  |
+      | 50.664175,-1.358463                    | 50.66192580003871,-1.3486298102579224  | 736.8284619868352  |
 
-  
   # Fastest and Shortest Route Scenarios
-  
-  @Routing @Current
+  @Routing
   Scenario Outline: Verify  waypoints on a Route from Hounslow to Reading
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints on the route map:
@@ -458,7 +466,7 @@ Feature: Verify a route from A to B
       | pointA                                 | pointB                                 | routeOptions | avoidances |
       | 51.471546541834144,-0.3618621826171875 | 51.45914115860512,-0.96679687499999995 | car,shortest |            |
 
-  @Routing @Current
+  @Routing
   Scenario Outline: Verify  waypoints on a Route from Hounslow to Reading
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints on the route map:

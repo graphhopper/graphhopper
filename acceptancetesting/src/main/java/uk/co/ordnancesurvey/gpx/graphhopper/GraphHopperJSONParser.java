@@ -40,7 +40,7 @@ public class GraphHopperJSONParser {
 	}
 
 	public JSONWayPoints parseJSONFromString(String jsonString) {
-		this.jsonString=jsonString;
+		this.jsonString = jsonString;
 		JsonParser parser = new JsonParser();
 		JsonElement je = parser.parse(jsonString);
 		JsonObject jo = je.getAsJsonObject();
@@ -84,8 +84,10 @@ public class GraphHopperJSONParser {
 			LOG.info("time :" + time);
 			LOG.info("distance :" + distance);
 			if (null != annotation_text) {
-				w.setAnnotation_text(annotation_text.toString());
-				LOG.info("annotation_text: " + annotation_text.toString());
+				w.addExtensionData("Annotation_text", annotation_text
+						.getAsString().trim());
+				LOG.info("annotation_text: "
+						+ annotation_text.getAsString().trim());
 			}
 			LOG.info("Coordinates : " + w.getLatitude() + ","
 					+ w.getLongitude());
@@ -93,17 +95,12 @@ public class GraphHopperJSONParser {
 			json.addWayPoint(w);
 		}
 
-		
-		
-
 		return json;
 
 	}
 
-	
-	public JSONWayPoints parseCoordinatesFromJson(String jsonString)
-	{
-		this.jsonString=jsonString;
+	public JSONWayPoints parseCoordinatesFromJson(String jsonString) {
+		this.jsonString = jsonString;
 		JsonParser parser = new JsonParser();
 		JsonElement je = parser.parse(jsonString);
 		JsonObject jo = je.getAsJsonObject();
@@ -112,33 +109,29 @@ public class GraphHopperJSONParser {
 				.getAsJsonObject("points");
 		JsonArray coordinates = points.getAsJsonObject().getAsJsonArray(
 				"coordinates");
-		
 
 		for (JsonElement jsonElement : coordinates) {
 			Waypoint w = new Waypoint();
-			Double longitude = Double.parseDouble(jsonElement.getAsJsonArray().get(0)
-					.toString());
-			Double latitude = Double.parseDouble(jsonElement.getAsJsonArray().get(1)
-					.toString());
+			Double longitude = Double.parseDouble(jsonElement.getAsJsonArray()
+					.get(0).toString());
+			Double latitude = Double.parseDouble(jsonElement.getAsJsonArray()
+					.get(1).toString());
 			w.setLongitude(longitude);
 			w.setLatitude(latitude);
 			json.addWayPoint(w);
-			
-			}
 
-		
+		}
+
 		return json;
-		
+
 	}
-	
-	
-	public HashSet<Waypoint> getJsonCoordinatesAsHashSet()
-	{
-		
+
+	public HashSet<Waypoint> getJsonCoordinatesAsHashSet() {
+
 		parseCoordinatesFromJson(jsonString);
 		return json.getInstructions();
 	}
-	
+
 	public JsonElement getJSONCoordinates(JsonArray paths, int coordinateIndex) {
 
 		JsonObject points = paths.get(0).getAsJsonObject()
@@ -149,21 +142,17 @@ public class GraphHopperJSONParser {
 		return coordinates.get(coordinateIndex);
 	}
 
-	
 	public void parse(String routeType, String avoidances, String routeOptions,
 			String[] string) {
 
-		String vehicle="";
-		String routeOption="";
-		
-		if (routeOptions.split(",").length>1)
-		{
-		 vehicle=routeOptions.split(",")[0];
-		 routeOption=routeOptions.split(",")[1];
-		}
-		else
-		{
-			vehicle=routeOptions;
+		String vehicle = "";
+		String routeOption = "";
+
+		if (routeOptions.split(",").length > 1) {
+			vehicle = routeOptions.split(",")[0];
+			routeOption = routeOptions.split(",")[1];
+		} else {
+			vehicle = routeOptions;
 		}
 		// Set up the URL
 		String jsonResponse = "";
@@ -195,8 +184,7 @@ public class GraphHopperJSONParser {
 		}
 		sb.append("&vehicle=");
 		sb.append(vehicle);
-		sb.append("&weighting=");
-		sb.append(routeOption);
+
 		sb.append(coordinateString);
 		sb.append("&apikey=");
 		sb.append(apikey);
@@ -204,7 +192,23 @@ public class GraphHopperJSONParser {
 
 		if (!avoidances.equals("")) {
 			sb.append("&avoidances=" + avoidances);
-					}
+
+			if (routeOption.isEmpty()) {
+				routeOption = "fastavoid";
+			}
+		}
+
+		else {
+
+			if (routeOption.isEmpty()) {
+				routeOption = "fastest";
+			}
+
+		}
+
+		sb.append("&weighting=");
+
+		sb.append(routeOption);
 		GraphHopperGPXParserRouteTest GPHService = new GraphHopperGPXParserRouteTest();
 		try {
 			CloseableHttpResponse httpResponse = GPHService
@@ -244,26 +248,25 @@ public class GraphHopperJSONParser {
 
 		return iswaypointinPath;
 
-				
 	}
 
-	public boolean isWayPointinPath(Waypoint we,HashSet<Waypoint> wa) {
+	public boolean isWayPointinPath(Waypoint we, HashSet<Waypoint> wa) {
 		boolean iswaypointinPath = false;
 
 		for (Waypoint waypoint : wa) {
-			
-			if( new RouteWayPoint(we).equals(new RouteWayPoint(waypoint)))
-			{
-				iswaypointinPath=true;
+
+			if (new RouteWayPoint(we).equals(new RouteWayPoint(waypoint))) {
+				iswaypointinPath = true;
 				LOG.info("WayPoint " + we + " Found In a Path");
 			}
 			if (iswaypointinPath) {
 				break;
 			}
 		}
-		
+
 		return iswaypointinPath;
 	}
+
 	/**
 	 * Creates a Waypoint with below attributes
 	 * 
@@ -273,7 +276,8 @@ public class GraphHopperJSONParser {
 	 * @return Waypoint
 	 */
 	public Waypoint buildWayPointForJson(String wayPoint_Coordinates,
-			String wayPointDescription, String time, String distance) {
+			String wayPointDescription, String time, String distance,
+			String avoidance) {
 		Waypoint w = new Waypoint();
 		String waypoint[] = wayPoint_Coordinates.split(",");
 		w.setLatitude(new Double(waypoint[0]));
@@ -281,6 +285,7 @@ public class GraphHopperJSONParser {
 		w.setDescription(wayPointDescription);
 		w.addExtensionData(ExtensionConstants.DISTANCE, distance);
 		w.addExtensionData(ExtensionConstants.TIME, time);
+		w.addExtensionData("Annotation_text", avoidance.trim());
 		return w;
 
 	}
@@ -307,8 +312,8 @@ public class GraphHopperJSONParser {
 			CloseableHttpResponse httpResponse = GPHService
 					.sendAndGetResponse(sb.toString());
 
-			jsonString = IOUtils.toString(httpResponse.getEntity()
-					.getContent(), "UTF-8");
+			jsonString = IOUtils.toString(
+					httpResponse.getEntity().getContent(), "UTF-8");
 
 			JsonParser jp = new JsonParser();
 			JsonElement je = jp.parse(jsonString);
@@ -325,12 +330,12 @@ public class GraphHopperJSONParser {
 		return nearestpoint;
 
 	}
-	
-	public String getNearestPointDistance()
-	{
+
+	public String getNearestPointDistance() {
 		JsonParser jp = new JsonParser();
 		JsonElement je = jp.parse(jsonString);
-		JsonPrimitive distance = je.getAsJsonObject().getAsJsonPrimitive("distance");
+		JsonPrimitive distance = je.getAsJsonObject().getAsJsonPrimitive(
+				"distance");
 		return distance.toString();
 	}
 
@@ -339,12 +344,9 @@ public class GraphHopperJSONParser {
 		JsonElement je = parser.parse(jsonString);
 		JsonObject jo = je.getAsJsonObject();
 		JsonArray paths = jo.getAsJsonArray("paths");
-		JsonPrimitive totalTime = paths.get(0).getAsJsonObject().getAsJsonPrimitive("time");
+		JsonPrimitive totalTime = paths.get(0).getAsJsonObject()
+				.getAsJsonPrimitive("time");
 		return Long.parseLong(totalTime.toString());
 	}
-
-
-
-
 
 }

@@ -59,12 +59,13 @@ Feature: Verify a route from A to B
       | pointA              | pointB             | routetype | avoidances |
       | 53.122676,-1.909914 | 53.088159,-1.87142 | foot      |            |
 
-  @Routing
+ @Routing 
   Scenario Outline: Verify  Road Names on a Walking Route (Martin's Low)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc          | azimuth | direction | time  | distance | avoidance |
-      | 3             | 53.066198,-1.905401 | Turn right onto Track | 105.0   | E         | 38678 | 53.7     |           |
+      | 3             | 53.071624,-1.914417 | Turn right onto Path | 356.0  | N         | 425697 | 591.2     |           |
+
 
     Examples: 
       | pointA             | pointB              | routetype | avoidances |
@@ -228,23 +229,23 @@ Feature: Verify a route from A to B
       | 53.267104,-1.818304 | 53.131858,-1.661941 | foot      | Scree      |
 
   #cliff
-  @Routing
+  ##############
+  @Routing  @Current
   Scenario Outline: Verify DPN Route without cliff avoidance -(cliff)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc        | azimuth | direction | time   | distance | avoidance |
-      | 4             | 53.312731,-1.627617 | Continue onto Route | 164.0   | S         | 264332 | 367.1    | Cliff     |
-
-    Examples: 
+      | 5             | 53.311409,-1.627165 | Continue onto Route | 178.0  | S         | 2655 | 3.7   | Cliff     |
+   Examples: 
       | pointA             | pointB              | routetype | avoidances |
       | 53.31676,-1.631903 | 53.156465,-1.908797 | foot      |            |
 
-  @Routing
+ @Routing @Current
   Scenario Outline: Verify DPN Route with cliff avoidance -(cliff)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints not on the route map:
       | wayPointIndex | waypointco          | waypointdesc        | azimuth | direction | time   | distance | avoidance |
-      | 4             | 53.312731,-1.627617 | Continue onto Route | 164.0   | S         | 264332 | 367.1    | Cliff     |
+        | 5             | 53.311409,-1.627165 | Continue onto Route | 178.0  | S         | 2655 | 3.7   | Cliff     |
 
     Examples: 
       | pointA             | pointB              | routetype | avoidances |
@@ -263,7 +264,7 @@ Feature: Verify a route from A to B
       | pointA            | pointB              | routetype | avoidances |
       | 53.5534,-1.983177 | 53.540061,-1.978324 | foot      |            |
 
-  @Routing
+  @Current
   Scenario Outline: Verify DPN Route with cliff avoidance -(cliff)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints not on the route map:
@@ -288,7 +289,7 @@ Feature: Verify a route from A to B
       | pointA              | pointB              | routetype | avoidances |
       | 53.311217,-1.629849 | 53.156465,-1.908797 | foot      |            |
 
-  @Routing
+  @Current
   Scenario Outline: Verify DPN Route with boulders avoidance -(boulders)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routetype>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints not on the route map:
