@@ -402,3 +402,70 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA              | pointB              | routeOptions | avoidances |
       | 50.733648,-3.523662 | 50.732844,-3.521332 | car          |            |
+
+  # Shortest and Fastest Routes
+  @Routing
+  Scenario Outline: Verify  a shortest route  on a Route (St DAVID's-Exeter)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco         | waypointdesc                        | azimuth | direction | time  | distance | avoidance |
+      | 6             | 50.725549,-3.52693 | Turn sharp left onto SIDWELL STREET | 47.0    | NE        | 17774 | 226.1    |           |
+
+    Examples: 
+      | pointA              | pointB             | routeOptions | avoidances |
+      | 50.729373,-3.540902 | 50.725564,-3.51809 | car,shortest |            |
+
+  @Routing
+  Scenario Outline: Verify  a fastest route  on a Route (St DAVID's-Exeter)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                 | azimuth | direction | time  | distance | avoidance |
+      | 6             | 50.727984,-3.530548 | Turn left onto BLACKALL ROAD | 34.0    | NE        | 13596 | 377.7    |           |
+
+    Examples: 
+      | pointA              | pointB             | routeOptions | avoidances |
+      | 50.729373,-3.540902 | 50.725564,-3.51809 | car,fastest  |            |
+
+  @Routing
+  Scenario Outline: Verify  a shortest route  on a Route (Prince Of Wales Road-Exeter)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco         | waypointdesc                          | azimuth | direction | time  | distance | avoidance |
+      | 2             | 50.732011,-3.53798 | Turn slight left onto STREATHAM DRIVE | 234.0   | SW        | 11955 | 152.2    |           |
+
+    Examples: 
+      | pointA              | pointB             | routeOptions | avoidances |
+      | 50.729373,-3.540902 | 50.725564,-3.51809 | car,shortest |            |
+
+  @Routing
+  Scenario Outline: Verify  a fastest route  on a Route (Prince Of Wales Road-Exeter)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc             | azimuth | direction | time | distance | avoidance |
+      | 2             | 50.733417,-3.524972 | Continue onto UNION ROAD | 77.0    | E         | 5507 | 68.8     |           |
+
+    Examples: 
+      | pointA              | pointB             | routeOptions | avoidances |
+      | 50.732019,-3.537145 | 50.725564,-3.51809 | car,fastest  |            |
+
+  @Routing
+  Scenario Outline: Verify  a shortest route  on a Route (Blackall Road - Exeter)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                                | azimuth | direction | time  | distance | avoidance |
+      | 2             | 50.727984,-3.530548 | Turn sharp left onto NEW NORTH ROAD (B3183) | 117.0   | SE        | 29739 | 378.4    |           |
+
+    Examples: 
+      | pointA              | pointB              | routeOptions | avoidances |
+      | 50.728119,-3.530372 | 50.723788,-3.517289 | car,shortest |            |
+
+  @Routing
+  Scenario Outline: Verify  a fastest route  on a Route (Blackall Road - Exeter)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco         | waypointdesc                      | azimuth | direction | time | distance | avoidance |
+      | 2             | 50.729609,-3.52599 | Turn right onto PENNSYLVANIA ROAD | 193.0   | S         | 4106 | 51.3     |           |
+
+    Examples: 
+      | pointA              | pointB              | routeOptions | avoidances |
+      | 50.728119,-3.530372 | 50.723788,-3.517289 | car,fastest  |            |
