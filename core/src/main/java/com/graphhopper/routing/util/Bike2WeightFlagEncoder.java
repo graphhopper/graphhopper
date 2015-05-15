@@ -92,25 +92,14 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
     public long handleSpeed( OSMWay way, double speed, long encoded )
     {
         // handle oneways
-        if ((way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))
-                && !way.hasTag("oneway:bicycle", "no")
-                && !way.hasTag("cycleway", oppositeLanes))
+        encoded = super.handleSpeed(way, speed, encoded);
+        if (isBackward(encoded))
         {
-
-            if (way.hasTag("oneway", "-1"))
-            {
-                encoded |= backwardBit;
-                encoded = setReverseSpeed(encoded, speed);
-            } else
-            {
-                encoded |= forwardBit;
-                encoded = setSpeed(encoded, speed);
-            }
-        } else
-        {
-            encoded |= directionBitMask;
-            encoded = setSpeed(encoded, speed);
             encoded = setReverseSpeed(encoded, speed);
+        }
+        if (isForward(encoded))
+        {   
+            encoded = setSpeed(encoded, speed);
         }
         return encoded;
     }
