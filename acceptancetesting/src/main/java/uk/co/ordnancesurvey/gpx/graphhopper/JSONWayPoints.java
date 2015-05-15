@@ -9,7 +9,7 @@ public class JSONWayPoints {
 	
 	
 	String JSONString;
-	ArrayList<Waypoint> instructions= new ArrayList<Waypoint>();
+	HashSet<Waypoint> instructions= new HashSet<Waypoint>();
 
 	
 	/**
@@ -26,11 +26,12 @@ public class JSONWayPoints {
 /**
  * @return List of WayPoints in a JSON Route String
  */
-public   ArrayList<Waypoint> getInstructions()
+public   HashSet<Waypoint> getInstructions()
 {
 	return instructions;
 }
 	
+
 	
 	
 	

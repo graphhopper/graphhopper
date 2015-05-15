@@ -20,54 +20,14 @@ public class GraphHopperHooks {
 	GraphHopperUIUtil graphUiUtil;
 
 	String instruction;
-	String nearestPoint="";
-	String Distance="";
-
-	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI$")
-	public void getRoute(String pointA, String pointB, String routeType)
-			throws InterruptedException {
-		String graphHopperWebUrl;
-
-		if (IntegrationTestProperties.getTestPropertyBool("viaApigee")) {
-			graphHopperWebUrl = IntegrationTestProperties
-					.getTestProperty("graphHopperWebUrlViaApigee");
-		} else {
-			graphHopperWebUrl = IntegrationTestProperties
-					.getTestProperty("graphHopperWebUrl");
-		}
-
-		graphUiUtil = new GraphHopperUIUtil(graphHopperWebUrl);
-
-		String testON = IntegrationTestProperties.getTestProperty("testON");
-
-		switch (testON.toUpperCase()) {
-		case "WEB":
-
-			graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB);
-			break;
-		case "SERVICE":
-			graphUiUtil.getRouteFromService(routeType, pointA, pointB);
-			break;
-		default:
-
-			if (pointA.split(",").length == 2) {
-				graphUiUtil.getRouteFromService(routeType, pointA, pointB);
-				graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB);
-			} else {
-				graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB);
-			}
-
-			break;
-
-		}
-
-	}
+	String nearestPoint = "";
+	String Distance = "";
 
 	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI and avoid \"([^\"]*)\"$")
 	public void getRouteWithAvoidance(String pointA, String pointB,
-			String routeType, String avoidance) throws InterruptedException {
+			String routeOptions, String avoidances) throws InterruptedException {
 		String graphHopperWebUrl;
-		avoidance = avoidance.toLowerCase().trim();
+		avoidances = avoidances.toLowerCase().trim();
 		if (IntegrationTestProperties.getTestPropertyBool("viaApigee")) {
 			graphHopperWebUrl = IntegrationTestProperties
 					.getTestProperty("graphHopperWebUrlViaApigee");
@@ -83,65 +43,23 @@ public class GraphHopperHooks {
 		switch (testON.toUpperCase()) {
 		case "WEB":
 
-			graphUiUtil.getRouteFromUI(routeType, avoidance, pointA, pointB);
+			graphUiUtil
+					.getRouteFromUI(routeOptions, avoidances, pointA, pointB);
 			break;
 		case "SERVICE":
-			graphUiUtil.getRouteFromServiceWithAvoidance(routeType, avoidance,
-					pointA, pointB);
+			graphUiUtil.getRouteFromServiceWithAvoidance(routeOptions,
+					avoidances, pointA, pointB);
 			break;
 		default:
 
 			if (pointA.split(",").length == 2) {
-				graphUiUtil.getRouteFromServiceWithAvoidance(routeType,
-						avoidance, pointA, pointB);
-				graphUiUtil
-						.getRouteFromUI(routeType, avoidance, pointA, pointB);
+				graphUiUtil.getRouteFromServiceWithAvoidance(routeOptions,
+						avoidances, pointA, pointB);
+				graphUiUtil.getRouteFromUI(routeOptions, avoidances, pointA,
+						pointB);
 			} else {
-				graphUiUtil
-						.getRouteFromUI(routeType, avoidance, pointA, pointB);
-			}
-
-			break;
-
-		}
-
-	}
-
-	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI via \"([^\"]*)\"$")
-	public void getRoute(String pointA, String pointB, String routeType,
-			String pointC) throws InterruptedException {
-		String graphHopperWebUrl;
-
-		if (IntegrationTestProperties.getTestPropertyBool("viaApigee")) {
-			graphHopperWebUrl = IntegrationTestProperties
-					.getTestProperty("graphHopperWebUrlViaApigee");
-		} else {
-			graphHopperWebUrl = IntegrationTestProperties
-					.getTestProperty("graphHopperWebUrl");
-		}
-
-		graphUiUtil = new GraphHopperUIUtil(graphHopperWebUrl);
-
-		String testON = IntegrationTestProperties.getTestProperty("testON");
-
-		switch (testON.toUpperCase()) {
-		case "WEB":
-
-			graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB, pointC);
-			break;
-		case "SERVICE":
-			graphUiUtil.getRouteFromService(routeType, pointA, pointB, pointC);
-			break;
-		default:
-
-			if (pointA.split(",").length == 2) {
-				graphUiUtil.getRouteFromService(routeType, pointA, pointB,
-						pointC);
-				graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB,
-						pointC);
-			} else {
-				graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB,
-						pointC);
+				graphUiUtil.getRouteFromUI(routeOptions, avoidances, pointA,
+						pointB);
 			}
 
 			break;
@@ -152,7 +70,7 @@ public class GraphHopperHooks {
 
 	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI and avoid \"([^\"]*)\" via \"([^\"]*)\"$")
 	public void getRouteWithAvoidances(String pointA, String pointB,
-			String routeType, String avoidance, String pointC)
+			String routeOptions, String avoidance, String pointC)
 			throws InterruptedException {
 		String graphHopperWebUrl;
 
@@ -171,20 +89,22 @@ public class GraphHopperHooks {
 		switch (testON.toUpperCase()) {
 		case "WEB":
 
-			graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB, pointC);
+			graphUiUtil
+					.getRouteFromUI(routeOptions, "", pointA, pointB, pointC);
 			break;
 		case "SERVICE":
-			graphUiUtil.getRouteFromServiceWithAvoidance(routeType, avoidance,
-					pointA, pointB, pointC);
+			graphUiUtil.getRouteFromServiceWithAvoidance(routeOptions,
+					avoidance, pointA, pointB, pointC);
 			break;
 		default:
 
 			if (pointA.split(",").length == 2) {
-				graphUiUtil.getRouteFromServiceWithAvoidance(routeType,
+				graphUiUtil.getRouteFromServiceWithAvoidance(routeOptions,
 						avoidance, pointA, pointB, pointC);
-				graphUiUtil.getRouteFromUI(routeType, pointA, pointB, pointC);
+				graphUiUtil
+						.getRouteFromUI(routeOptions, pointA, pointB, pointC);
 			} else {
-				graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB,
+				graphUiUtil.getRouteFromUI(routeOptions, "", pointA, pointB,
 						pointC);
 			}
 
@@ -232,7 +152,7 @@ public class GraphHopperHooks {
 
 	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI and avoid \"([^\"]*)\" via \"([^\"]*)\" and \"([^\"]*)\"$")
 	public void getRouteWithAvoidances(String pointA, String pointB,
-			String routeType, String avoidance, String pointC, String pointD)
+			String routeOptions, String avoidance, String pointC, String pointD)
 			throws InterruptedException {
 
 		graphUiUtil = new GraphHopperUIUtil(
@@ -243,22 +163,22 @@ public class GraphHopperHooks {
 		switch (testON.toUpperCase()) {
 		case "WEB":
 
-			graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB, pointC,
-					pointD);
+			graphUiUtil.getRouteFromUI(routeOptions, "", pointA, pointB,
+					pointC, pointD);
 			break;
 		case "SERVICE":
-			graphUiUtil.getRouteFromServiceWithAvoidance(routeType, avoidance,
-					pointA, pointB, pointC, pointD);
+			graphUiUtil.getRouteFromServiceWithAvoidance(routeOptions,
+					avoidance, pointA, pointB, pointC, pointD);
 			break;
 		default:
 
 			if (pointA.split(",").length == 2) {
-				graphUiUtil.getRouteFromServiceWithAvoidance(routeType,
+				graphUiUtil.getRouteFromServiceWithAvoidance(routeOptions,
 						avoidance, pointA, pointB, pointC, pointD);
-				graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB,
+				graphUiUtil.getRouteFromUI(routeOptions, "", pointA, pointB,
 						pointC, pointD);
 			} else {
-				graphUiUtil.getRouteFromUI(routeType, "", pointA, pointB,
+				graphUiUtil.getRouteFromUI(routeOptions, "", pointA, pointB,
 						pointC, pointD);
 			}
 
@@ -269,28 +189,33 @@ public class GraphHopperHooks {
 	}
 
 	@Given("^I request a nearest point from  \"([^\"]*)\" from Nearest Point API$")
-	public void I_request_a_nearest_point_from_from_Nearest_Point_API(String pointA) {
-		
-		
-		graphUiUtil=(IntegrationTestProperties.getTestPropertyBool("viaApigee")==true)?new GraphHopperUIUtil(
-				IntegrationTestProperties.getTestProperty("graphHopperWebUrlViaApigee")):
-					new GraphHopperUIUtil(
-							IntegrationTestProperties.getTestProperty("graphHopperWebUrl"));
-		
+	public void I_request_a_nearest_point_from_from_Nearest_Point_API(
+			String pointA) {
 
-			
-		if (IntegrationTestProperties.getTestProperty("testON").equalsIgnoreCase("Service"))
-		nearestPoint=graphUiUtil.nearestPointService(pointA);
-		Distance=graphUiUtil.nearestPointDistance();
+		graphUiUtil = (IntegrationTestProperties
+				.getTestPropertyBool("viaApigee") == true) ? new GraphHopperUIUtil(
+				IntegrationTestProperties
+						.getTestProperty("graphHopperWebUrlViaApigee"))
+				: new GraphHopperUIUtil(
+						IntegrationTestProperties
+								.getTestProperty("graphHopperWebUrl"));
+
+		nearestPoint = graphUiUtil.nearestPointService(pointA);
+		Distance = graphUiUtil.nearestPointDistance();
 
 	}
 
 	@Then("^I should be able to verify the nearest point to be \"([^\"]*)\" at a distance of \"([^\"]*)\"$")
-	public void I_should_be_able_to_verify_the_nearest_point_to_be(String pointB,String distance) {
-	  
-		Assert.assertTrue("******Expected nearest Point "+pointB+" is not matching with "+ nearestPoint+"********",pointB.equals(nearestPoint));
-		Assert.assertTrue("******Expected nearest Point distance " +distance+" is not matcching with " +Distance,Distance.equals(distance));
-	   
+	public void I_should_be_able_to_verify_the_nearest_point_to_be(
+			String pointB, String distance) {
+
+		Assert.assertTrue("******Expected nearest Point " + pointB
+				+ " is not matching with " + nearestPoint + "********",
+				pointB.equals(nearestPoint));
+		Assert.assertTrue("******Expected nearest Point distance " + distance
+				+ " is not matcching with " + Distance,
+				Distance.equals(distance));
+
 	}
 
 	@Then("^I should be able to verify the \"([^\"]*)\" waypoint \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" on the route map$")

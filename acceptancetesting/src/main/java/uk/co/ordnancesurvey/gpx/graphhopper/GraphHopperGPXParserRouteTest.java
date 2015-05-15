@@ -95,12 +95,25 @@ public class GraphHopperGPXParserRouteTest {
 		return httpClient.execute(httpget);
 	}
 
-	public String parseRoute(String routeType, String avoidance,String vehicle, String[] points) {
+	public String parseRoute(String routeType, String avoidances,String routeOptions, String[] points) {
 		LOG.debug("Here we are");
 		// Set up the URL
 		String xmlResponse = "";
 		String coordinateString = "";
 		String graphHopperUrl;
+		
+		String vehicle="";
+		String routeOption="";
+		
+		if (routeOptions.split(",").length>1)
+		{
+		 vehicle=routeOptions.split(",")[0];
+		 routeOption=routeOptions.split(",")[1];
+		}
+		else
+		{
+			vehicle=routeOptions;
+		}
 
 		for (int i = 0; i < points.length; i++) {
 
@@ -119,6 +132,7 @@ public class GraphHopperGPXParserRouteTest {
 		}
 		
 				
+		String apikey = IntegrationTestProperties.getTestProperty("apiKey");
 
 		StringBuilder sb = new StringBuilder();
 		sb.append(graphHopperUrl);
@@ -129,13 +143,14 @@ public class GraphHopperGPXParserRouteTest {
 		}
 		sb.append("&vehicle=");
 		sb.append(vehicle);
+		sb.append("&weighting=");
+		sb.append(routeOption);
 		sb.append(coordinateString);
-		if(!avoidance.equals(""))
-		{
-		sb.append("&weighting=fastavoid");
-		sb.append("&avoidances="+avoidance);
-		}
-
+		sb.append("&apikey=");
+		sb.append(apikey);
+		if (!avoidances.equals("")) {
+			sb.append("&avoidances=" + avoidances);
+					}
 		try {
 			CloseableHttpResponse httpResponse = sendAndGetResponse(sb
 					.toString());
