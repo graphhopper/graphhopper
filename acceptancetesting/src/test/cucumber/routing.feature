@@ -442,7 +442,6 @@ Feature: Verify a route from A to B
       | pointA              | pointB                                 | distance          |
       | 51.878966,-0.903849 | 51.875144098888576,-0.9107481891829116 | 636.3215777261629 |
 
-  
   # Fastest and Shortest Route Scenarios
   @Routing
   Scenario Outline: Verify  waypoints on a Route from Hounslow to Reading
@@ -580,7 +579,7 @@ Feature: Verify a route from A to B
       | 50.270096,-5.052681 | 50.399429,-4.132644 | car,fastest  |            |
 
   @Routing
-  Scenario Outline: Verify  waypoints on a Route from Turbo to PlymouthCurrent
+  Scenario Outline: Verify  waypoints on a Route from Turbo to Plymouth
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                         | azimuth | direction | time   | distance | avoidance |
