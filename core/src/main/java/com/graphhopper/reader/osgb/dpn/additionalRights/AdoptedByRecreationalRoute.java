@@ -16,6 +16,8 @@ public class AdoptedByRecreationalRoute extends AbstractOsDpnOsmAttibuteMappingV
 
     @Override
     protected void applyAttributes(Way way) {
+        // Assign value to use for priority
+        way.setTag("network", "lwn");
         way.setTag("foot", "yes");
     }
 

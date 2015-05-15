@@ -30,6 +30,7 @@ public class AdoptedByNationalCycleRouteTest {
     @Test
     public void testVisitWayAttribute() {
         visitor.visitWayAttribute("adoptedbynationalcycleroute", way);
+        verify(way).setTag("network", "ncn");
         verify(way).setTag("foot", "yes");
         verify(way).setTag("bicycle", "yes");
         verifyNoMoreInteractions(way);

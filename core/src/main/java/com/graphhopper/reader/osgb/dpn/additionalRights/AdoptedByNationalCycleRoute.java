@@ -15,6 +15,9 @@ public class AdoptedByNationalCycleRoute extends AbstractOsDpnOsmAttibuteMapping
 
     @Override
     protected void applyAttributes(Way way) {
+        // Assign value to use for priority
+        way.setTag("network", "ncn");
+
         way.setTag("bicycle", "yes");
         way.setTag("foot", "yes");
     }
