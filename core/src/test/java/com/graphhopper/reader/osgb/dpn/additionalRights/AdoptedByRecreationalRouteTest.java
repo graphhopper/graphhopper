@@ -30,6 +30,7 @@ public class AdoptedByRecreationalRouteTest {
     @Test
     public void testVisitWayAttribute() {
         visitor.visitWayAttribute("adoptedbyrecreationalroute", way);
+        verify(way).setTag("network", "lwn");
         verify(way).setTag("foot", "yes");
         verifyNoMoreInteractions(way);
     }

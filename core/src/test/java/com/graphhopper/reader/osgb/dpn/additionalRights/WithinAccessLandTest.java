@@ -31,7 +31,6 @@ public class WithinAccessLandTest {
     public void testVisitWayAttribute() {
         visitor.visitWayAttribute("withinaccessland", way);
         verify(way).setTag("foot", "yes");
-        verify(way).setTag("bicycle", "yes");
         verifyNoMoreInteractions(way);
     }
 
