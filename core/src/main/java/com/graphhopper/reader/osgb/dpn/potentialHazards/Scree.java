@@ -9,9 +9,8 @@ import com.graphhopper.reader.osgb.dpn.AbstractOsDpnOsmAttibuteMappingVisitor;
 public class Scree extends AbstractOsDpnOsmAttibuteMappingVisitor {
 
     @Override
-    protected void applyAttributes(Way way)
-    {
-        way.setTag("natural", "scree");
+    protected void applyAttributes(Way way) {
+        setOrAppendTag(way, "natural", "scree");
     }
 
 }

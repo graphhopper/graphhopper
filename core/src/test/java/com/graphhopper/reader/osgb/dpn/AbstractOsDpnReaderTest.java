@@ -93,13 +93,14 @@ public abstract class AbstractOsDpnReaderTest {
      *
      * @param graph
      * @param file
-     * @param maxWayPointDistance 0 disables DouglasPeuker simplification 1 = default
+     * @param maxWayPointDistance
+     *            0 disables DouglasPeuker simplification 1 = default
      * @return
      * @throws IOException
      */
     protected OsDpnReader readGraphFile(GraphHopperStorage graph, File file, int maxWayPointDistance)
             throws IOException {
-        OsDpnReader osDpnReader = new OsDpnReader(graph);
+        OsDpnReader osDpnReader = new OsDpnReader(graph, null);
         System.out.println("Read " + file.getAbsolutePath());
         osDpnReader.setOSMFile(file);
         osDpnReader.setWayPointMaxDistance(maxWayPointDistance);
@@ -108,12 +109,12 @@ public abstract class AbstractOsDpnReaderTest {
         return osDpnReader;
     }
 
-    protected GraphHopperStorage configureStorage(
-            boolean turnRestrictionsImport, boolean is3D) {
+    protected GraphHopperStorage configureStorage(boolean turnRestrictionsImport, boolean is3D) {
         String directory = "/tmp";
-        GraphExtension extendedStorage = turnRestrictionsImport ? new TurnCostExtension() : new GraphExtension.NoExtendedStorage();
-        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(
-                directory, false), encodingManager, is3D, extendedStorage);
+        GraphExtension extendedStorage = turnRestrictionsImport ? new TurnCostExtension()
+                : new GraphExtension.NoExtendedStorage();
+        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, is3D,
+                extendedStorage);
         footExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, false, true));
         return graph;
     }
@@ -128,20 +129,16 @@ public abstract class AbstractOsDpnReaderTest {
         return EdgeIterator.NO_EDGE;
     }
 
-    protected void evaluateRouting(final EdgeIterator iter, final int node,
-            final boolean forward, final boolean backward,
-            final boolean finished) {
+    protected void evaluateRouting(final EdgeIterator iter, final int node, final boolean forward,
+            final boolean backward, final boolean finished) {
         evaluateRouting(iter, node, forward, backward, finished, footEncoder);
     }
 
-    protected void evaluateRouting(final EdgeIterator iter, final int node,
-            final boolean forward, final boolean backward,
-            final boolean finished, AbstractFlagEncoder flagEncoder) {
+    protected void evaluateRouting(final EdgeIterator iter, final int node, final boolean forward,
+            final boolean backward, final boolean finished, AbstractFlagEncoder flagEncoder) {
         assertEquals("Incorrect adjacent node", node, iter.getAdjNode());
-        assertEquals("Incorrect forward instructions", forward,
-                flagEncoder.isForward(iter.getFlags()));
-        assertEquals("Incorrect backward instructions", backward,
-                flagEncoder.isBackward(iter.getFlags()));
+        assertEquals("Incorrect forward instructions", forward, flagEncoder.isForward(iter.getFlags()));
+        assertEquals("Incorrect backward instructions", backward, flagEncoder.isBackward(iter.getFlags()));
         assertEquals(!finished, iter.next());
     }
 
@@ -149,8 +146,7 @@ public abstract class AbstractOsDpnReaderTest {
         for (int i = 0; i < numNodes; i++) {
             // logger.info("Node " + i + " " +
             // count(outExplorer.setBaseNode(i)));
-            System.out.println("Node " + i + " "
-                    + count(outExplorer.setBaseNode(i)));
+            System.out.println("Node " + i + " " + count(outExplorer.setBaseNode(i)));
         }
 
         EdgeIterator iter = null;
@@ -163,30 +159,35 @@ public abstract class AbstractOsDpnReaderTest {
         }
     }
 
-    protected InstructionList route(GraphHopper graphHopper, double lat1, double lon1, double lat2, double lon2, String avoid) {
+    protected InstructionList route(GraphHopper graphHopper, double lat1, double lon1, double lat2, double lon2,
+            String avoid) {
         GHPoint start = new GHPoint(lat1, lon1);
         GHPoint end = new GHPoint(lat2, lon2);
         System.out.println("Route from " + start + " to " + end);
         GHRequest ghRequest = new GHRequest(start, end);
         ghRequest.setVehicle("foot");
-        if(null!=avoid  && !Helper.isEmpty(avoid)) {
+        if (null != avoid && !Helper.isEmpty(avoid)) {
             ghRequest.setWeighting("fastavoid");
             ghRequest.getHints().put("avoidances", avoid);
         }
         GHResponse ghResponse = graphHopper.route(ghRequest);
-        //        System.err.println("ghResponse.getPoints() " + ghResponse.getPoints());
+        // System.err.println("ghResponse.getPoints() " +
+        // ghResponse.getPoints());
         InstructionList instructionList = ghResponse.getInstructions();
-        //        outputInstructionList(instructionList);
+        // outputInstructionList(instructionList);
         return instructionList;
     }
 
     protected void outputInstructionList(InstructionList instructionList) {
-        //        System.err.println("ghResponse.getInstructions() " + ghResponse.getInstructions());
-        //        System.err.println("ghResponse.getDebugInfo() " + ghResponse.getDebugInfo());
+        // System.err.println("ghResponse.getInstructions() " +
+        // ghResponse.getInstructions());
+        // System.err.println("ghResponse.getDebugInfo() " +
+        // ghResponse.getDebugInfo());
         System.out.println("Turn Descriptions:");
         Translation tr = new TranslationMap().doImport().getWithFallBack(Locale.US);
         for (Instruction instruction : instructionList) {
-            System.out.println("\t" + instruction.getName() + "\t" + instruction.getDistance() + "\t" + instruction.getSign() + "\t" + instruction.getTime() + "\t" + instruction.getTurnDescription(tr));
+            System.out.println("\t" + instruction.getName() + "\t" + instruction.getDistance() + "\t"
+                    + instruction.getSign() + "\t" + instruction.getTime() + "\t" + instruction.getTurnDescription(tr));
         }
         System.out.println("End Turn Descriptions");
 

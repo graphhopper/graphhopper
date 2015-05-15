@@ -30,7 +30,10 @@ public class InlandWaterTest {
     @Test
     public void testVisitWayAttribute() throws Exception {
         visitor.visitWayAttribute("inlandwater", way);
+        verify(way).getTag("natural");
         verify(way).setTag("natural", "water");
+        verify(way).getTag("tidal");
+        verify(way).setTag("tidal", "no");
         verifyNoMoreInteractions(way);
     }
 

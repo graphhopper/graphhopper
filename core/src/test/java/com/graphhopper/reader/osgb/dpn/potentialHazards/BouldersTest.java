@@ -30,8 +30,9 @@ public class BouldersTest {
     @Test
     public void testVisitWayAttribute() throws Exception {
         visitor.visitWayAttribute("boulders", way);
+        verify(way).getTag("natural");
         verify(way).setTag("natural", "boulders"); // Not an osm tag but what
-                                                   // makes sense for dpn
+        // makes sense for dpn
         verifyNoMoreInteractions(way);
     }
 

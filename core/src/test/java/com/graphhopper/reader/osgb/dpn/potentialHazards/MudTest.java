@@ -30,6 +30,7 @@ public class MudTest {
     @Test
     public void testVisitWayAttribute() throws Exception {
         visitor.visitWayAttribute("mud", way);
+        verify(way).getTag("natural");
         verify(way).setTag("natural", "mud");
         verifyNoMoreInteractions(way);
     }

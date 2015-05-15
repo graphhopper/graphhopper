@@ -30,6 +30,7 @@ public class ShingleTest {
     @Test
     public void testVisitWayAttribute() throws Exception {
         visitor.visitWayAttribute("shingle", way);
+        verify(way).getTag("natural");
         verify(way).setTag("natural", "shingle");
         verifyNoMoreInteractions(way);
     }

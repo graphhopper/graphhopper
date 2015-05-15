@@ -30,6 +30,7 @@ public class ScreeTest {
     @Test
     public void testVisitWayAttribute() throws Exception {
         visitor.visitWayAttribute("scree", way);
+        verify(way).getTag("natural");
         verify(way).setTag("natural", "scree");
         verifyNoMoreInteractions(way);
     }

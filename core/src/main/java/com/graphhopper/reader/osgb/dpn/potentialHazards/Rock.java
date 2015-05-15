@@ -9,9 +9,8 @@ import com.graphhopper.reader.osgb.dpn.AbstractOsDpnOsmAttibuteMappingVisitor;
 public class Rock extends AbstractOsDpnOsmAttibuteMappingVisitor {
 
     @Override
-    protected void applyAttributes(Way way)
-    {
-        way.setTag("natural", "rocks");
+    protected void applyAttributes(Way way) {
+        setOrAppendTag(way, "natural", "rocks");
     }
 
 }

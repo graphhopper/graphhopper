@@ -30,6 +30,7 @@ public class ForeshoreTest {
     @Test
     public void testVisitWayAttribute() throws Exception {
         visitor.visitWayAttribute("foreshore", way);
+        verify(way).getTag("water");
         verify(way).setTag("water", "tidal");
         verifyNoMoreInteractions(way);
     }
