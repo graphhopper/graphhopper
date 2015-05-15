@@ -30,6 +30,7 @@ public class SpoilTest {
     @Test
     public void testVisitWayAttribute() throws Exception {
         visitor.visitWayAttribute("spoil", way);
+        verify(way).getTag("man_made");
         verify(way).setTag("man_made", "spoil_heap");
         verifyNoMoreInteractions(way);
     }

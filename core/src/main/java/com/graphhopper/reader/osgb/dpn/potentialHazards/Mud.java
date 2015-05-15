@@ -9,9 +9,8 @@ import com.graphhopper.reader.osgb.dpn.AbstractOsDpnOsmAttibuteMappingVisitor;
 public class Mud extends AbstractOsDpnOsmAttibuteMappingVisitor {
 
     @Override
-    protected void applyAttributes(Way way)
-    {
-        way.setTag("natural", "mud");
+    protected void applyAttributes(Way way) {
+        setOrAppendTag(way, "natural", "mud");
     }
 
 }

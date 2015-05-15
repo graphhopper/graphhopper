@@ -43,6 +43,7 @@ import com.graphhopper.reader.osgb.dpn.potentialHazards.Boulders;
 import com.graphhopper.reader.osgb.dpn.potentialHazards.Cliff;
 import com.graphhopper.reader.osgb.dpn.potentialHazards.Foreshore;
 import com.graphhopper.reader.osgb.dpn.potentialHazards.InlandWater;
+import com.graphhopper.reader.osgb.dpn.potentialHazards.InvalidPotentialHazardException;
 import com.graphhopper.reader.osgb.dpn.potentialHazards.Marsh;
 import com.graphhopper.reader.osgb.dpn.potentialHazards.Mud;
 import com.graphhopper.reader.osgb.dpn.potentialHazards.QuarryOrPit;
@@ -83,7 +84,9 @@ public class OsDpnWay extends OsDpnElement implements Way {
         new Marsh(), new Mud(), new Sand(), new Scree(), new Shingle(), new Spoil(), new Rock(), new TidalWater(),
         new QuarryOrPit(), new InlandWater(), new Foreshore() };
     private static OsDpnOsmAttributeMappingVisitor[] ADDITIONAL_RIGHTS_VISITORS = { new AdoptedByNationalCycleRoute(),
-            new AdoptedByOtherCycleRoute(), new AdoptedByRecreationalRoute(), new WithinAccessLand() };
+        new AdoptedByOtherCycleRoute(), new AdoptedByRecreationalRoute(), new WithinAccessLand() };
+
+    public static boolean THROW_EXCEPTION_ON_INVALID_HAZARD = false;
 
     /**
      * Constructor for XML Parser
@@ -160,10 +163,38 @@ public class OsDpnWay extends OsDpnElement implements Way {
     @Override
     protected int handlePotentialHazard(XMLStreamReader parser) throws XMLStreamException {
         String attributeValue = parser.getElementText().replaceAll(" ", "").toLowerCase();
-        for (OsDpnOsmAttributeMappingVisitor visitor : POTENTIAL_HAZARD_VISITORS) {
-            visitor.visitWayAttribute(attributeValue, this);
+        // DPN data has a defect where potential hazards are currently comma
+        // delimited rather than having multiple elements
+        if (attributeValue.indexOf(",") > -1) {
+            for (String subValue : attributeValue.split(",")) {
+                visitPotentialHazards(subValue);
+            }
+        } else {
+            visitPotentialHazards(attributeValue);
         }
         return parser.getEventType();
+    }
+
+    private void visitPotentialHazards(String attributeValue) throws XMLStreamException {
+        // Code to handle error in beta DPN data such that multiple potential
+        // hazards are not specified as multiple elements such as:
+        // <dpn:potentialHazardCrossed>Boulders</dpn:potentialHazardCrossed>
+        // <dpn:potentialHazardCrossed>Inland Water</dpn:potentialHazardCrossed>
+        // but a single element comma-space delimited. Such as:
+        // <dpn:potentialHazardCrossed>Boulders, Inland
+        // Wat</dpn:potentialHazardCrossed>
+        boolean handled = false;
+        for (OsDpnOsmAttributeMappingVisitor visitor : POTENTIAL_HAZARD_VISITORS) {
+            handled |= visitor.visitWayAttribute(attributeValue, this);
+        }
+        if (!handled) {
+            System.err.println(">>>>>>> Unsupported <dpn:potentialHazardCrossed> value in : " + attributeValue);
+            if (THROW_EXCEPTION_ON_INVALID_HAZARD) {
+                throw new InvalidPotentialHazardException("Unsupported <dpn:potentialHazardCrossed> value in : "
+                        + attributeValue);
+            }
+        }
+
     }
 
     @Override
