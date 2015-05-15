@@ -30,6 +30,8 @@ public class TidalWaterTest {
     @Test
     public void testVisitWayAttribute() throws Exception {
         visitor.visitWayAttribute("tidalwater", way);
+        verify(way).getTag("natural");
+        verify(way).getTag("tidal");
         verify(way).setTag("natural", "water");
         verify(way).setTag("tidal", "yes");
         verifyNoMoreInteractions(way);

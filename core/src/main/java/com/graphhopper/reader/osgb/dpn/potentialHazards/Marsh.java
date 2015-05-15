@@ -9,9 +9,8 @@ import com.graphhopper.reader.osgb.dpn.AbstractOsDpnOsmAttibuteMappingVisitor;
 public class Marsh extends AbstractOsDpnOsmAttibuteMappingVisitor {
 
     @Override
-    protected void applyAttributes(Way way)
-    {
-        way.setTag("wetland", "marsh");
+    protected void applyAttributes(Way way) {
+        setOrAppendTag(way, "wetland", "marsh");
     }
 
 }

@@ -9,9 +9,8 @@ import com.graphhopper.reader.osgb.dpn.AbstractOsDpnOsmAttibuteMappingVisitor;
 public class Spoil extends AbstractOsDpnOsmAttibuteMappingVisitor {
 
     @Override
-    protected void applyAttributes(Way way)
-    {
-        way.setTag("man_made", "spoil_heap");
+    protected void applyAttributes(Way way) {
+        setOrAppendTag(way, "man_made", "spoil_heap");
     }
 
 }

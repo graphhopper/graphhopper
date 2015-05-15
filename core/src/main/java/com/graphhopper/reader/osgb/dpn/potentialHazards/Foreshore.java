@@ -9,9 +9,8 @@ import com.graphhopper.reader.osgb.dpn.AbstractOsDpnOsmAttibuteMappingVisitor;
 public class Foreshore extends AbstractOsDpnOsmAttibuteMappingVisitor {
 
     @Override
-    protected void applyAttributes(Way way)
-    {
-        way.setTag("water", "tidal");
+    protected void applyAttributes(Way way) {
+        setOrAppendTag(way, "water", "tidal");
     }
 
 }

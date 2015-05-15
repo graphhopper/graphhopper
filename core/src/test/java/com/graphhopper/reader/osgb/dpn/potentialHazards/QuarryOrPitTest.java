@@ -30,6 +30,7 @@ public class QuarryOrPitTest {
     @Test
     public void testVisitWayAttribute() throws Exception {
         visitor.visitWayAttribute("quarryorpit", way);
+        verify(way).getTag("natural");
         verify(way).setTag("natural", "excavation");
         verifyNoMoreInteractions(way);
     }

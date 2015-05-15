@@ -9,10 +9,9 @@ import com.graphhopper.reader.osgb.dpn.AbstractOsDpnOsmAttibuteMappingVisitor;
 public class TidalWater extends AbstractOsDpnOsmAttibuteMappingVisitor {
 
     @Override
-    protected void applyAttributes(Way way)
-    {
-    	way.setTag("natural", "water");
-        way.setTag("tidal", "yes");
+    protected void applyAttributes(Way way) {
+        setOrAppendTag(way, "natural", "water");
+        setOrAppendTag(way, "tidal", "yes");
     }
 
 }
