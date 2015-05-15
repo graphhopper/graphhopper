@@ -196,6 +196,10 @@ public class GraphHopperJSONParser {
 		sb.append("&vehicle=");
 		sb.append(vehicle);
 		sb.append("&weighting=");
+		if (routeOption.isEmpty())
+		{
+			routeOption="fastavoid";
+		}
 		sb.append(routeOption);
 		sb.append(coordinateString);
 		sb.append("&apikey=");
