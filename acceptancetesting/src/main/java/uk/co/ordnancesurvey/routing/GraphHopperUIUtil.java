@@ -281,7 +281,7 @@ default:
 			String avoidances, String... points) {
 
 		if (IntegrationTestProperties.getTestProperty("routeType")
-				.equals("gpx")) {
+				.equalsIgnoreCase("gpx")) {
 			GPHService.parseRoute("gpx", avoidances, routeOptions, points);
 		}
 
