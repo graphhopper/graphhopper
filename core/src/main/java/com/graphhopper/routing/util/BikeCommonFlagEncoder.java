@@ -614,6 +614,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
 
         // handle oneways        
         boolean isOneway = way.hasTag("oneway", oneways)
+                || way.hasTag("oneway:bicycle", oneways)
                 || way.hasTag("vehicle:backward")
                 || way.hasTag("vehicle:forward")
                 || way.hasTag("bicycle:forward");
@@ -624,6 +625,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                 && !way.hasTag("cycleway", oppositeLanes))
         {
             boolean isBackward = way.hasTag("oneway", "-1")
+                    || way.hasTag("oneway:bicycle", "-1")
                     || way.hasTag("vehicle:forward", "no")
                     || way.hasTag("bicycle:forward", "no");
             if (isBackward)
