@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
 import static com.graphhopper.routing.util.PriorityCode.*;
@@ -399,4 +400,23 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertTrue(encoder.isTurnRestricted(flags_r220));
         assertFalse(encoder.isTurnRestricted(flags_126));
     }
+
+    // Issue 407 : Always block kissing_gate execpt for mountainbikes
+    @Test
+    public void testBarrierAccess()
+    {
+        // kissing_gate without bicycle tag
+        OSMNode node = new OSMNode(1, -1, -1);
+        node.setTag("barrier", "kissing_gate");
+        // barrier!
+        assertFalse(encoder.handleNodeTags(node) == 0);
+        
+        // kissing_gate with bicycle tag
+        node = new OSMNode(1, -1, -1);
+        node.setTag("barrier", "kissing_gate");
+        node.setTag("bicycle", "yes");
+        // barrier!
+        assertFalse(encoder.handleNodeTags(node) == 0);
+    }
+
 }

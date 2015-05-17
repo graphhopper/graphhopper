@@ -68,6 +68,8 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
         preferHighwayTags.add("tertiary_link");
         preferHighwayTags.add("residential");
         preferHighwayTags.add("unclassified");
+
+        absoluteBarriers.add("kissing_gate");
     }
 
     @Override
