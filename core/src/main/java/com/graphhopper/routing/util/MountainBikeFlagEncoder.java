@@ -141,6 +141,8 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
         preferHighwayTags.add("tertiary_link");
         preferHighwayTags.add("residential");
         preferHighwayTags.add("unclassified");
+
+        potentialBarriers.add("kissing_gate");
     }
 
     @Override
