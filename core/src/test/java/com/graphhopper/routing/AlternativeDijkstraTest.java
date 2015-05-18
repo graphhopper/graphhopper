@@ -23,8 +23,8 @@ import static org.junit.Assert.assertTrue;
  */
 public class AlternativeDijkstraTest
 {
-    private FlagEncoder carFE = new CarFlagEncoder();
-    private EncodingManager em = new EncodingManager(carFE);
+    private final FlagEncoder carFE = new CarFlagEncoder();
+    private final EncodingManager em = new EncodingManager(carFE);
 
     Graph createTestGraph()
     {
@@ -69,7 +69,6 @@ public class AlternativeDijkstraTest
 
         Path bestAlt = pathInfos.get(0).getPath();
         Path secondAlt = pathInfos.get(1).getPath();
-
 
         assertEquals(bestPath.calcNodes(), bestAlt.calcNodes());
 

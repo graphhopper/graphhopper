@@ -94,7 +94,7 @@ public class AlternativeDijkstra extends DijkstraBidirectionRef
                     finishedFrom = !fillEdgesFrom();
                 else
                     finishedTo = !fillEdgesTo();
-            } else if (finishedFrom)
+            } else if (!finishedFrom)
             {
                 finishedFrom = !fillEdgesFrom();
             } else

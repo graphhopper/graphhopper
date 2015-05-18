@@ -85,12 +85,14 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     {
         PathNative p = new PathNative(graph, flagEncoder, parents, edgeIds);
         if (endNode >= 0)
-            p.setWeight(weights[endNode]);
-
-        p.setFromEdge(edgeIds[fromNode]);
+            p.setWeight(weights[endNode]);        
+        
         p.setFromNode(fromNode);
         if (endNode < 0 || isWeightLimitReached())
             return p;
+        
+        if (fromNode >= 0)
+            p.setFromEdge(edgeIds[fromNode]);
 
         p.setEndEdge(edgeIds[endNode]);
         return p.setEndNode(endNode).extract();
