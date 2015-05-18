@@ -53,12 +53,13 @@ public class OsHnReaderTest extends AbstractOsItnReaderTest {
      */
     @Test
     public void testMotorwayARoadNetwork_NoHighwaysNetworkData() {
+        System.out.println("===>>> testMotorwayARoadNetwork_NoHighwaysNetworkData()");
         String graphLoc = "./target/output/testMotorwayARoadNetwork_NoHighwaysNetworkData/os-itn-hn-test-network-gh";
         String inputFile = "./src/test/resources/com/graphhopper/reader/os-itn-hn-test-network.xml";
         GraphHopper graphHopper = new GraphHopper().setInMemory().setOSMFile(inputFile).setGraphHopperLocation(graphLoc).setCHEnable(false).setEncodingManager(encodingManager).setAsItnReader();
         graphHopper.importOrLoad();
         GraphStorage graph = graphHopper.getGraph();
-        printNodes(graph.createEdgeExplorer(carOutEdges), 6);
+        //        printNodes(graph.createEdgeExplorer(carOutEdges), 6);
         testNodes(graph);
         // 79 => 295000.000 90000.000 = -3.49   50.70
         // 80 => 290000.000,90000.000 = -3.56   50.70
@@ -88,6 +89,7 @@ public class OsHnReaderTest extends AbstractOsItnReaderTest {
      */
     @Test
     public void testMotorwayARoadNetwork_WithHighwaysNetworkData() {
+        System.out.println("===>>> testMotorwayARoadNetwork_WithHighwaysNetworkData()");
         String graphLoc = "./target/output/testMotorwayARoadNetwork_WithHighwaysNetworkData/os-itn-hn-test-network-gh";
         String inputFile = "./src/test/resources/com/graphhopper/reader/os-itn-hn-test-network.xml";
 
@@ -105,7 +107,7 @@ public class OsHnReaderTest extends AbstractOsItnReaderTest {
         graphHopper.importOrLoad();
         GraphStorage graph = graphHopper.getGraph();
 
-        printNodes(graph.createEdgeExplorer(carOutEdges), 6);
+        //        printNodes(graph.createEdgeExplorer(carOutEdges), 6);
         testNodes(graph);
         // 79 => 295000.000 90000.000 = -3.49   50.70
         // 80 => 290000.000,90000.000 = -3.56   50.70

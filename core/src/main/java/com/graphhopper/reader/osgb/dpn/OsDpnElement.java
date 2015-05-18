@@ -42,8 +42,7 @@ import com.graphhopper.reader.RoutingElement;
  * @author Nop
  * @author Peter
  */
-public abstract class OsDpnElement implements RoutingElement
-{
+public abstract class OsDpnElement implements RoutingElement {
     public static final int NODE = 0;
     public static final int WAY = 1;
     public static final int RELATION = 2;
@@ -54,28 +53,25 @@ public abstract class OsDpnElement implements RoutingElement
 
     private boolean nameSet = false;
 
-    protected OsDpnElement(String id, int type)
-    {
-	this.id = id;
-	this.type = type;
+    protected OsDpnElement(String id, int type) {
+        this.id = id;
+        this.type = type;
     }
 
-    public String getId()
-    {
-	return id;
+    public String getId() {
+        return id;
     }
 
-    protected void readTags(XMLStreamReader parser) throws XMLStreamException,
-		    MismatchedDimensionException, FactoryException, TransformException
-    {
-	int event = parser.getEventType();
-	while (event != XMLStreamConstants.END_DOCUMENT
-			&& (event != XMLStreamConstants.END_ELEMENT || !exitElement(parser)))
-	    if (event == XMLStreamConstants.CHARACTERS)
-            event = parser.next();
-	    else if (event == XMLStreamConstants.START_ELEMENT)
-            // logger.info("LOCALNAME: {}", parser.getLocalName());
-            switch (parser.getLocalName()) {
+    protected void readTags(XMLStreamReader parser) throws XMLStreamException, MismatchedDimensionException,
+    FactoryException, TransformException {
+        int event = parser.getEventType();
+        while (event != XMLStreamConstants.END_DOCUMENT
+                && (event != XMLStreamConstants.END_ELEMENT || !exitElement(parser)))
+            if (event == XMLStreamConstants.CHARACTERS)
+                event = parser.next();
+            else if (event == XMLStreamConstants.START_ELEMENT)
+                // logger.info("LOCALNAME: {}", parser.getLocalName());
+                switch (parser.getLocalName()) {
                 case "pos":
                 case "coordinates": {
                     event = handleCoordinates(parser);
@@ -112,183 +108,160 @@ public abstract class OsDpnElement implements RoutingElement
                     break;
                 }
                 case "name":
-                case "alternativeName":
-                {
+                case "alternativeName": {
                     event = handleName(parser);
                     break;
                 }
-                case "physicalLevel":
-                {
+                case "physicalLevel": {
                     event = handlePhysicalLevel(parser);
                     break;
                 }
-                case "rightOfUse":
-                {
+                case "rightOfUse": {
                     event = handleRightOfUse(parser);
                     break;
                 }
-                case "potentialHazardCrossed":
-                {
+                case "potentialHazardCrossed": {
                     event = handlePotentialHazard(parser);
                     break;
                 }
 
-                case "withinAccessLand" :
-                {
-                    event = handleAccessLand(parser);
-                    break;
-                }
-
-                case "adoptedByNationalCycleRoute" :
-                case "adoptedByOtherCycleRoute" :
-                {
-                    event = handleCycleRoute(parser);
+                case "adoptedByNationalCycleRoute":
+                case "adoptedByOtherCycleRoute":
+                case "adoptedByRecreationalRoute":
+                case "withinAccessLand": {
+                    event = handleAdditionalRights(parser);
                     break;
                 }
                 default: {
                     event = parser.next();
                 }
-            }
-	    else
-            // logger.trace("EVENT:" + event);
-            event = parser.next();
+                }
+            else
+                // logger.trace("EVENT:" + event);
+                event = parser.next();
     }
 
-    protected int handleCycleRoute(XMLStreamReader parser) throws XMLStreamException
-    {
+    protected int handleAdditionalRights(XMLStreamReader parser) throws XMLStreamException {
         return parser.next();
     }
 
-    protected int handleAccessLand(XMLStreamReader parser) throws XMLStreamException
-    {
+    //
+    // protected int handleAccessLand(XMLStreamReader parser) throws
+    // XMLStreamException
+    // {
+    // return parser.next();
+    // }
+
+    protected int handleSurfaceType(XMLStreamReader parser) throws XMLStreamException {
         return parser.next();
     }
 
-    protected int handleSurfaceType(XMLStreamReader parser) throws XMLStreamException
-    {
+    protected int handlePhysicalLevel(XMLStreamReader parser) throws XMLStreamException {
         return parser.next();
     }
 
-    protected int handlePhysicalLevel(XMLStreamReader parser) throws XMLStreamException
-    {
+    protected int handleRightOfUse(XMLStreamReader parser) throws XMLStreamException {
         return parser.next();
     }
 
-    protected int handleRightOfUse(XMLStreamReader parser) throws XMLStreamException
-    {
+    protected int handlePotentialHazard(XMLStreamReader parser) throws XMLStreamException {
         return parser.next();
     }
 
-    protected int handlePotentialHazard(XMLStreamReader parser) throws XMLStreamException
-    {
+    private int handleName(XMLStreamReader parser) throws XMLStreamException {
+        StringBuilder nameString = new StringBuilder();
+        if (nameSet) {
+            nameString.append(getTag("name"));
+            nameString.append(" (");
+        }
+        nameString.append(parser.getElementText());
+        if (nameSet)
+            nameString.append(")");
+        nameSet = true;
+        setTag("name", nameString.toString());
+        return parser.getEventType();
+    }
+
+    private int handleDescriptiveTerm(XMLStreamReader parser) throws XMLStreamException {
+        String roadType = parser.getElementText();
+        setTag("type", "route");
+        setTag("highway", getOsmMappedTypeName(roadType));
+        setTag("name", getTypeBasedName(roadType));
+        return parser.getEventType();
+    }
+
+    private String getTypeBasedName(String roadType) {
+        if (roadType.equals("No Physical Manifestation"))
+            return "Route";
+        return roadType;
+    }
+
+    private String getOsmMappedTypeName(String roadType) {
+        String typeName = roadType;
+        switch (roadType) {
+        case "A Road":
+            typeName = "primary";
+            break;
+        case "B Road":
+            typeName = "secondary";
+            break;
+        case "Alley":
+            typeName = "service";
+            setTag("service", "alley");
+            break;
+        case "Private Road":
+            typeName = "private";
+            break;
+        case "Path":
+            typeName = "path";
+            break;
+        default:
+            break;
+        }
+        return typeName;
+    }
+
+    private int handleDirectedLink(XMLStreamReader parser) throws XMLStreamException {
+        String orientation = parser.getAttributeValue(null, "orientation");
+        String nodeId = parser.getAttributeValue("http://www.w3.org/1999/xlink", "href");
+        addDirectedLink(nodeId, orientation);
         return parser.next();
     }
 
-    private int handleName(XMLStreamReader parser) throws XMLStreamException
-    {
-	StringBuilder nameString = new StringBuilder();
-	if (nameSet)
-	{
-	    nameString.append(getTag("name"));
-	    nameString.append(" (");
-	}
-	nameString.append(parser.getElementText());
-	if (nameSet)
-	    nameString.append(")");
-	nameSet = true;
-	setTag("name", nameString.toString());
-	return parser.getEventType();
+    private int handleNode(XMLStreamReader parser) throws XMLStreamException {
+        String nodeId = parser.getAttributeValue("http://www.w3.org/1999/xlink", "href");
+        addNode(nodeId);
+        return parser.next();
     }
 
-    private int handleDescriptiveTerm(XMLStreamReader parser) throws XMLStreamException
-    {
-	String roadType = parser.getElementText();
-	setTag("type", "route");
-	setTag("highway", getOsmMappedTypeName(roadType));
-	setTag("name", getTypeBasedName(roadType));
-	return parser.getEventType();
+    private int handleTag(String key, XMLStreamReader parser) throws XMLStreamException {
+        properties.put(key, parser.getElementText());
+        return parser.getEventType();
     }
 
-    private String getTypeBasedName(String roadType)
-    {
-	if (roadType.equals("No Physical Manifestation"))
-	    return "Route";
-	return roadType;
+    private int handleNetworkMember(XMLStreamReader parser) throws XMLStreamException {
+        String elementText = parser.getAttributeValue("http://www.w3.org/1999/xlink", "href");
+        parseNetworkMember(elementText);
+        return parser.next();
     }
 
-    private String getOsmMappedTypeName(String roadType)
-    {
-    	String typeName = roadType;
-    	switch (roadType) {
-		case "A Road":
-			typeName = "primary";
-			break;
-		case "B Road":
-			typeName = "secondary";
-			break;
-		case "Alley":
-			typeName="service";
-			setTag("service", "alley");
-			break;
-		case "Private Road":
-			typeName="private";
-			break;
-		case "Path":
-			typeName="path";
-			break;
-		default:
-			break;
-		}
-    	return typeName;
+    private int handleCoordinates(XMLStreamReader parser) throws XMLStreamException, MismatchedDimensionException,
+    FactoryException, TransformException {
+        String elementText = parser.getElementText();
+        parseCoords(elementText);
+        return parser.getEventType();
     }
 
-    private int handleDirectedLink(XMLStreamReader parser) throws XMLStreamException
-    {
-	String orientation = parser.getAttributeValue(null, "orientation");
-	String nodeId = parser.getAttributeValue("http://www.w3.org/1999/xlink", "href");
-	addDirectedLink(nodeId, orientation);
-	return parser.next();
+    private int handleMultiDimensionCoords(XMLStreamReader parser) throws XMLStreamException {
+        String dimensionality = parser.getAttributeValue(null, "srsDimension");
+        logger.info("Dimensions:" + dimensionality);
+        String elementText = parser.getElementText();
+        parseCoords(Integer.valueOf(dimensionality), elementText);
+        return parser.getEventType();
     }
 
-    private int handleNode(XMLStreamReader parser) throws XMLStreamException
-    {
-	String nodeId = parser.getAttributeValue("http://www.w3.org/1999/xlink", "href");
-	addNode(nodeId);
-	return parser.next();
-    }
-
-    private int handleTag(String key, XMLStreamReader parser) throws XMLStreamException
-    {
-	properties.put(key, parser.getElementText());
-	return parser.getEventType();
-    }
-
-    private int handleNetworkMember(XMLStreamReader parser) throws XMLStreamException
-    {
-	String elementText = parser.getAttributeValue("http://www.w3.org/1999/xlink", "href");
-	parseNetworkMember(elementText);
-	return parser.next();
-    }
-
-    private int handleCoordinates(XMLStreamReader parser) throws XMLStreamException,
-		    MismatchedDimensionException, FactoryException, TransformException
-    {
-	String elementText = parser.getElementText();
-	parseCoords(elementText);
-	return parser.getEventType();
-    }
-
-    private int handleMultiDimensionCoords(XMLStreamReader parser) throws XMLStreamException
-    {
-	String dimensionality = parser.getAttributeValue(null, "srsDimension");
-	logger.info("Dimensions:" + dimensionality);
-	String elementText = parser.getElementText();
-	parseCoords(Integer.valueOf(dimensionality), elementText);
-	return parser.getEventType();
-    }
-
-    protected abstract void parseCoords(String coordinates) throws MismatchedDimensionException,
-		    FactoryException, TransformException;
+    protected abstract void parseCoords(String coordinates) throws MismatchedDimensionException, FactoryException,
+    TransformException;
 
     protected abstract void parseCoords(int dimensions, String lineDefinition);
 
@@ -298,147 +271,129 @@ public abstract class OsDpnElement implements RoutingElement
 
     protected abstract void parseNetworkMember(String elementText);
 
-    private boolean exitElement(XMLStreamReader parser)
-    {
-	switch (parser.getLocalName())
-	{
-	case "RouteNode":
-	case "RouteLink":
-	case "Route":
-	    return true;
-	}
-	return false;
+    private boolean exitElement(XMLStreamReader parser) {
+        switch (parser.getLocalName()) {
+        case "RouteNode":
+        case "RouteLink":
+        case "Route":
+            return true;
+        }
+        return false;
     }
 
-    protected String tagsToString()
-    {
-	if (properties.isEmpty())
-	    return "<empty>";
+    protected String tagsToString() {
+        if (properties.isEmpty())
+            return "<empty>";
 
-	StringBuilder tagTxt = new StringBuilder();
-	for (Map.Entry<String, Object> entry : properties.entrySet())
-	{
-	    tagTxt.append(entry.getKey());
-	    tagTxt.append("=");
-	    tagTxt.append(entry.getValue());
-	    tagTxt.append("\n");
-	}
-	return tagTxt.toString();
+        StringBuilder tagTxt = new StringBuilder();
+        for (Map.Entry<String, Object> entry : properties.entrySet()) {
+            tagTxt.append(entry.getKey());
+            tagTxt.append("=");
+            tagTxt.append(entry.getValue());
+            tagTxt.append("\n");
+        }
+        return tagTxt.toString();
     }
 
-    protected Map<String, Object> getTags()
-    {
-	return properties;
+    protected Map<String, Object> getTags() {
+        return properties;
     }
 
-    public void setTags(Map<String, String> newTags)
-    {
-	properties.clear();
-	if (newTags != null)
-	    for (Entry<String, String> e : newTags.entrySet())
-		setTag(e.getKey(), e.getValue());
+    public void setTags(Map<String, String> newTags) {
+        properties.clear();
+        if (newTags != null)
+            for (Entry<String, String> e : newTags.entrySet())
+                setTag(e.getKey(), e.getValue());
     }
 
     @Override
-    public boolean hasTags()
-    {
-	return !properties.isEmpty();
+    public boolean hasTags() {
+        return !properties.isEmpty();
     }
 
     @Override
-    public String getTag(String name)
-    {
+    public String getTag(String name) {
         Object object = properties.get(name);
         return (null != object) ? (String) object.toString() : null;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T getTag(String key, T defaultValue)
-    {
-	T val = (T) properties.get(key);
-	if (val == null)
-	    return defaultValue;
-	return val;
+    public <T> T getTag(String key, T defaultValue) {
+        T val = (T) properties.get(key);
+        if (val == null)
+            return defaultValue;
+        return val;
     }
 
     @Override
-    public void setTag(String name, Object value)
-    {
-	properties.put(name, value);
+    public void setTag(String name, Object value) {
+        properties.put(name, value);
     }
 
     /**
      * Chaeck that the object has a given tag with a given value.
      */
     @Override
-    public boolean hasTag(String key, Object value)
-    {
-	return value.equals(properties.get(key));
+    public boolean hasTag(String key, Object value) {
+        return value.equals(properties.get(key));
     }
 
     /**
-     * Check that a given tag has one of the specified values. If no values are given, just checks
-     * for presence of the tag
+     * Check that a given tag has one of the specified values. If no values are
+     * given, just checks for presence of the tag
      */
     @Override
-    public boolean hasTag(String key, String... values)
-    {
-	Object osmValue = properties.get(key);
-	if (osmValue == null)
-	    return false;
+    public boolean hasTag(String key, String... values) {
+        Object osmValue = properties.get(key);
+        if (osmValue == null)
+            return false;
 
-	// tag present, no values given: success
-	if (values.length == 0)
-	    return true;
+        // tag present, no values given: success
+        if (values.length == 0)
+            return true;
 
-	for (String val : values)
-	    if (val.equals(osmValue))
-		return true;
-	return false;
+        for (String val : values)
+            if (val.equals(osmValue))
+                return true;
+        return false;
     }
 
     /**
      * Check that a given tag has one of the specified values.
      */
     @Override
-    public final boolean hasTag(String key, Set<String> values)
-    {
-	return values.contains(properties.get(key));
+    public final boolean hasTag(String key, Set<String> values) {
+        return values.contains(properties.get(key));
     }
 
     /**
-     * Check a number of tags in the given order for the any of the given values. Used to parse
-     * hierarchical access restrictions
+     * Check a number of tags in the given order for the any of the given
+     * values. Used to parse hierarchical access restrictions
      */
     @Override
-    public boolean hasTag(List<String> keyList, Set<String> values)
-    {
-	for (String key : keyList)
-	    if (values.contains(properties.get(key)))
-		return true;
-	return false;
+    public boolean hasTag(List<String> keyList, Set<String> values) {
+        for (String key : keyList)
+            if (values.contains(properties.get(key)))
+                return true;
+        return false;
     }
 
-    public void removeTag(String name)
-    {
-	properties.remove(name);
+    public void removeTag(String name) {
+        properties.remove(name);
     }
 
-    public void clearTags()
-    {
-	properties.clear();
+    public void clearTags() {
+        properties.clear();
     }
 
     @Override
-    public int getType()
-    {
-	return type;
+    public int getType() {
+        return type;
     }
 
     @Override
-    public boolean isType(int type)
-    {
-	return this.type == type;
+    public boolean isType(int type) {
+        return this.type == type;
     }
 }

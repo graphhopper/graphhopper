@@ -35,6 +35,7 @@ import com.graphhopper.reader.TurnRelation;
 import com.graphhopper.reader.osgb.AbstractOsReader;
 import com.graphhopper.reader.osgb.itn.OSITNTurnRelation;
 import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalc3D;
 import com.graphhopper.util.DistanceCalcEarth;
@@ -95,8 +96,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
     protected static final int PILLAR_NODE = 1;
     // tower node is <= -3
     protected static final int TOWER_NODE = -2;
-    private static final Logger logger = LoggerFactory
-            .getLogger(OsDpnReader.class);
+    private static final Logger logger = LoggerFactory.getLogger(OsDpnReader.class);
     private long locations;
     private long skippedLocations;
     protected long zeroCounter = 0;
@@ -131,9 +131,11 @@ public class OsDpnReader extends AbstractOsReader<String> {
     private static final String PROCESS_FORMAT = "PROCESS: {}";
     private static final String STORAGE_NODES_FORMAT = "storage nodes: {}";
 
-    public OsDpnReader(GraphStorage storage) {
+    public OsDpnReader(GraphStorage storage, CmdArgs commandLineArguments) {
         super(storage);
-
+        // Not as clean as I would like. Might use Guice.
+        OsDpnWay.THROW_EXCEPTION_ON_INVALID_HAZARD = commandLineArguments != null ? commandLineArguments.getBool(
+                "fail.on.invalid.potentialHazard", false) : false;
         osmNodeIdToInternalNodeMap = new TObjectIntHashMap<String>(200, .5f, -1);
         osmNodeIdToNodeFlagsMap = new TObjectLongHashMap<String>(200, .5f, 0);
         osmWayIdToRouteWeightMap = new TObjectLongHashMap<String>(200, .5f, 0);
@@ -141,7 +143,8 @@ public class OsDpnReader extends AbstractOsReader<String> {
     }
 
     public class ProcessVisitor {
-        public void process(ProcessData processData, OsDpnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+        public void process(ProcessData processData, OsDpnInputFile in) throws XMLStreamException,
+        MismatchedDimensionException, FactoryException, TransformException {
         }
     }
 
@@ -163,8 +166,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
             long tmpRelationCounter = 1;
             RoutingElement item;
             while ((item = in.getNext()) != null) {
-                logger.trace("OsDpnReader.preProcess( " + item.getType()
-                        + " )");
+                logger.trace("OsDpnReader.preProcess( " + item.getType() + " )");
                 if (item.isType(OSMElement.WAY)) {
                     final OsDpnWay way = (OsDpnWay) item;
                     boolean valid = filterWay(way);
@@ -178,9 +180,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
                         }
 
                         if (++tmpWayCounter % 500000 == 0) {
-                            logger.info(nf(tmpWayCounter)
-                                    + " (preprocess), osmIdMap:"
-                                    + nf(getNodeMap().size())
+                            logger.info(nf(tmpWayCounter) + " (preprocess), osmIdMap:" + nf(getNodeMap().size())
                                     + Helper.getMemInfo());
                         }
                     }
@@ -199,8 +199,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
 
     private TLongObjectMap<String> getEdgeIdToOsmidMap() {
         if (edgeIdToOsmIdMap == null)
-            edgeIdToOsmIdMap = new TLongObjectHashMap<String>(
-                    getOsmIdStoreRequiredSet().size());
+            edgeIdToOsmIdMap = new TLongObjectHashMap<String>(getOsmIdStoreRequiredSet().size());
 
         return edgeIdToOsmIdMap;
     }
@@ -219,14 +218,15 @@ public class OsDpnReader extends AbstractOsReader<String> {
             return false;
 
         // ignore multipolygon geometry
-        //if (!way.hasTags())
-        //    return false;
+        // if (!way.hasTags())
+        // return false;
 
         return encodingManager.acceptWay(way) > 0;
     }
 
     /**
      * Creates the edges and nodes files from the specified osm file.
+     *
      * @throws TransformException
      * @throws FactoryException
      * @throws IOException
@@ -234,14 +234,16 @@ public class OsDpnReader extends AbstractOsReader<String> {
      * @throws MismatchedDimensionException
      */
     @Override
-    protected void writeOsm2Graph(File osmFile) throws MismatchedDimensionException, XMLStreamException, IOException, FactoryException, TransformException {
+    protected void writeOsm2Graph(File osmFile) throws MismatchedDimensionException, XMLStreamException, IOException,
+    FactoryException, TransformException {
         int tmp = Math.max(getNodeMap().size() / 50, 100);
         graphStorage.create(tmp);
         ProcessData processData = new ProcessData();
         try {
             ProcessVisitor processVisitor = new ProcessVisitor() {
                 @Override
-                public void process(ProcessData processData, OsDpnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+                public void process(ProcessData processData, OsDpnInputFile in) throws XMLStreamException,
+                MismatchedDimensionException, FactoryException, TransformException {
                     logger.info("PROCESS STAGE 1");
                     processStageOne(in);
                 }
@@ -250,7 +252,8 @@ public class OsDpnReader extends AbstractOsReader<String> {
             writeOsm2GraphFromDirOrFile(osmFile, processData, processVisitor);
             processVisitor = new ProcessVisitor() {
                 @Override
-                public void process(ProcessData processData, OsDpnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+                public void process(ProcessData processData, OsDpnInputFile in) throws XMLStreamException,
+                MismatchedDimensionException, FactoryException, TransformException {
                     logger.info("PROCESS STAGE 2");
                     processStageTwo(processData, in);
                 }
@@ -259,7 +262,8 @@ public class OsDpnReader extends AbstractOsReader<String> {
             writeOsm2GraphFromDirOrFile(osmFile, processData, processVisitor);
             processVisitor = new ProcessVisitor() {
                 @Override
-                public void process(ProcessData processData, OsDpnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+                public void process(ProcessData processData, OsDpnInputFile in) throws XMLStreamException,
+                MismatchedDimensionException, FactoryException, TransformException {
                     logger.info("PROCESS STAGE 3");
                     processStageThree(processData, in);
                 }
@@ -275,7 +279,8 @@ public class OsDpnReader extends AbstractOsReader<String> {
 
     }
 
-    private void writeOsm2GraphFromDirOrFile(File osmFile, ProcessData processData, ProcessVisitor processVisitor) throws XMLStreamException, IOException, MismatchedDimensionException, FactoryException, TransformException {
+    private void writeOsm2GraphFromDirOrFile(File osmFile, ProcessData processData, ProcessVisitor processVisitor)
+            throws XMLStreamException, IOException, MismatchedDimensionException, FactoryException, TransformException {
         if (osmFile.isDirectory()) {
             String absolutePath = osmFile.getAbsolutePath();
             String[] list = osmFile.list();
@@ -288,7 +293,8 @@ public class OsDpnReader extends AbstractOsReader<String> {
         }
     }
 
-    private void writeOsm2GraphFromSingleFile(File osmFile, ProcessData processData, ProcessVisitor processVisitor) throws XMLStreamException, IOException, MismatchedDimensionException, FactoryException, TransformException {
+    private void writeOsm2GraphFromSingleFile(File osmFile, ProcessData processData, ProcessVisitor processVisitor)
+            throws XMLStreamException, IOException, MismatchedDimensionException, FactoryException, TransformException {
         OsDpnInputFile in = null;
         try {
             logger.info(PROCESS_FORMAT, osmFile.getName());
@@ -301,8 +307,8 @@ public class OsDpnReader extends AbstractOsReader<String> {
         }
     }
 
-
-    private List<OsDpnNode> prepareWaysNodes(RoutingElement item, TObjectIntMap<String> nodeFilter) throws MismatchedDimensionException, FactoryException, TransformException {
+    private List<OsDpnNode> prepareWaysNodes(RoutingElement item, TObjectIntMap<String> nodeFilter)
+            throws MismatchedDimensionException, FactoryException, TransformException {
         List<OsDpnNode> evaluateWayNodes = ((OsDpnWay) item).evaluateWayNodes(null);
         for (OsDpnNode osdpnNode : evaluateWayNodes) {
             nodeFilter.put(osdpnNode.getId(), PILLAR_NODE);
@@ -340,18 +346,14 @@ public class OsDpnReader extends AbstractOsReader<String> {
             int last = getNodeMap().get(osmNodeIds.get(osmNodeIds.size() - 1));
             double firstLat = getTmpLatitude(first), firstLon = getTmpLongitude(first);
             double lastLat = getTmpLatitude(last), lastLon = getTmpLongitude(last);
-            if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon)
-                    && !Double.isNaN(lastLat) && !Double.isNaN(lastLon)) {
-                double estimatedDist = distCalc.calcDist(firstLat, firstLon,
-                        lastLat, lastLon);
+            if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon) && !Double.isNaN(lastLat) && !Double.isNaN(lastLon)) {
+                double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
                 way.setTag("estimated_distance", estimatedDist);
-                way.setTag("estimated_center", new GHPoint(
-                        (firstLat + lastLat) / 2, (firstLon + lastLon) / 2));
+                way.setTag("estimated_center", new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2));
             }
         }
 
-        long wayFlags = encodingManager.handleWayTags(way, includeWay,
-                relationFlags);
+        long wayFlags = encodingManager.handleWayTags(way, includeWay, relationFlags);
         if (wayFlags == 0)
             return;
 
@@ -379,19 +381,15 @@ public class OsDpnReader extends AbstractOsReader<String> {
 
                         // add way up to barrier shadow node
                         String transfer[] = { "" };
-                        transfer = osmNodeIds.subList(lastBarrier,
-                                i - lastBarrier + 1).toArray(transfer);
+                        transfer = osmNodeIds.subList(lastBarrier, i - lastBarrier + 1).toArray(transfer);
                         transfer[transfer.length - 1] = newNodeId;
-                        createdEdges.addAll(addOSMWay(transfer, wayFlags,
-                                wayOsmId));
+                        createdEdges.addAll(addOSMWay(transfer, wayFlags, wayOsmId));
 
                         // create zero length edge for barrier
-                        createdEdges.addAll(addBarrierEdge(newNodeId, nodeId,
-                                wayFlags, nodeFlags, wayOsmId));
+                        createdEdges.addAll(addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId));
                     } else {
                         // run edge from real first node to shadow node
-                        createdEdges.addAll(addBarrierEdge(nodeId, newNodeId,
-                                wayFlags, nodeFlags, wayOsmId));
+                        createdEdges.addAll(addBarrierEdge(nodeId, newNodeId, wayFlags, nodeFlags, wayOsmId));
 
                         // exchange first node for created barrier node
                         osmNodeIds.set(0, newNodeId);
@@ -406,8 +404,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
         if (lastBarrier >= 0) {
             if (lastBarrier < size - 1) {
                 String transfer[] = { "" };
-                transfer = osmNodeIds.subList(lastBarrier, size - lastBarrier)
-                        .toArray(transfer);
+                transfer = osmNodeIds.subList(lastBarrier, size - lastBarrier).toArray(transfer);
                 createdEdges.addAll(addOSMWay(transfer, wayFlags, wayOsmId));
             }
         } else {
@@ -492,7 +489,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
     }
 
     private void processNode(OsDpnNode node) {
-    	logger.trace("PROCESSING:" + node.getId());
+        logger.trace("PROCESSING:" + node.getId());
         if (isInBounds(node)) {
             addNode(node);
 
@@ -520,8 +517,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
         if (nodeType == TOWER_NODE) {
             addTowerNode(node.getId(), lat, lon, ele);
         } else if (nodeType == PILLAR_NODE) {
-        	logger.trace("OsDpnReader.addPillarNode(" + nextPillarId
-        			+ ")");
+            logger.trace("OsDpnReader.addPillarNode(" + nextPillarId + ")");
             pillarInfo.setNode(nextPillarId, lat, lon, ele);
             getNodeMap().put(node.getId(), nextPillarId + 3);
             nextPillarId++;
@@ -530,8 +526,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
     }
 
     private double getElevation(Node node) {
-        if(null==elevationProvider)
-        {
+        if (null == elevationProvider) {
             String eleString = node.getTag("ele");
             return Double.valueOf(eleString);
         }
@@ -574,8 +569,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
     }
 
     int addTowerNode(String osmId, double lat, double lon, double ele) {
-    	logger.trace("OsDpnReader.addTowerNode(" + osmId
-    			+ ")");
+        logger.trace("OsDpnReader.addTowerNode(" + osmId + ")");
         if (nodeAccess.is3D())
             nodeAccess.setNode(nextTowerId, lat, lon, ele);
         else
@@ -591,10 +585,8 @@ public class OsDpnReader extends AbstractOsReader<String> {
      * This method creates from an OSM way (via the osm ids) one or more edges
      * in the graph.
      */
-    Collection<EdgeIteratorState> addOSMWay(String[] osmNodeIds, long flags,
-            String wayOsmId) {
-        PointList pointList = new PointList(osmNodeIds.length,
-                nodeAccess.is3D());
+    Collection<EdgeIteratorState> addOSMWay(String[] osmNodeIds, long flags, String wayOsmId) {
+        PointList pointList = new PointList(osmNodeIds.length, nodeAccess.is3D());
         List<EdgeIteratorState> newEdges = new ArrayList<EdgeIteratorState>(5);
         int firstNode = -1;
         int lastIndex = osmNodeIds.length - 1;
@@ -618,16 +610,14 @@ public class OsDpnReader extends AbstractOsReader<String> {
                     // current file.
                     // => if the node before was a pillar node then convert into
                     // to tower node (as it is also end-standing).
-                    if (!pointList.isEmpty()
-                            && lastInBoundsPillarNode > -TOWER_NODE) {
+                    if (!pointList.isEmpty() && lastInBoundsPillarNode > -TOWER_NODE) {
                         // transform the pillar node to a tower node
                         tmpNode = lastInBoundsPillarNode;
                         tmpNode = handlePillarNode(tmpNode, osmId, null, true);
                         tmpNode = -tmpNode - 3;
                         if (pointList.getSize() > 1 && firstNode >= 0) {
                             // TOWER node
-                            newEdges.add(addEdge(firstNode, tmpNode, pointList,
-                                    flags, wayOsmId));
+                            newEdges.add(addEdge(firstNode, tmpNode, pointList, flags, wayOsmId));
                             pointList.clear();
                             pointList.add(nodeAccess, tmpNode);
                         }
@@ -638,9 +628,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
                 }
 
                 if (tmpNode <= -TOWER_NODE && tmpNode >= TOWER_NODE)
-                    throw new AssertionError(
-                            "Mapped index not in correct bounds " + tmpNode
-                            + ", " + osmId);
+                    throw new AssertionError("Mapped index not in correct bounds " + tmpNode + ", " + osmId);
 
                 if (tmpNode > -TOWER_NODE) {
                     boolean convertToTowerNode = i == 0 || i == lastIndex;
@@ -649,8 +637,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
                     }
 
                     // PILLAR node, but convert to towerNode if end-standing
-                    tmpNode = handlePillarNode(tmpNode, osmId, pointList,
-                            convertToTowerNode);
+                    tmpNode = handlePillarNode(tmpNode, osmId, pointList, convertToTowerNode);
                 }
 
                 if (tmpNode < TOWER_NODE) {
@@ -658,8 +645,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
                     tmpNode = -tmpNode - 3;
                     pointList.add(nodeAccess, tmpNode);
                     if (firstNode >= 0) {
-                        newEdges.add(addEdge(firstNode, tmpNode, pointList,
-                                flags, wayOsmId));
+                        newEdges.add(addEdge(firstNode, tmpNode, pointList, flags, wayOsmId));
                         pointList.clear();
                         pointList.add(nodeAccess, tmpNode);
                     }
@@ -667,35 +653,28 @@ public class OsDpnReader extends AbstractOsReader<String> {
                 }
             }
         } catch (RuntimeException ex) {
-            logger.error("Couldn't properly add edge with osm ids:"
-                    + osmNodeIds, ex);
+            logger.error("Couldn't properly add edge with osm ids:" + osmNodeIds, ex);
             if (exitOnlyPillarNodeException)
                 throw ex;
         }
         return newEdges;
     }
 
-    EdgeIteratorState addEdge(int fromIndex, int toIndex, PointList pointList,
-            long flags, String wayOsmId) {
+    EdgeIteratorState addEdge(int fromIndex, int toIndex, PointList pointList, long flags, String wayOsmId) {
         // sanity checks
         if (fromIndex < 0 || toIndex < 0)
-            throw new AssertionError(
-                    "to or from index is invalid for this edge " + fromIndex
-                    + "->" + toIndex + ", points:" + pointList);
+            throw new AssertionError("to or from index is invalid for this edge " + fromIndex + "->" + toIndex
+                    + ", points:" + pointList);
         if (pointList.getDimension() != nodeAccess.getDimension())
-            throw new AssertionError(
-                    "Dimension does not match for pointList vs. nodeAccess "
-                            + pointList.getDimension() + " <-> "
-                            + nodeAccess.getDimension());
+            throw new AssertionError("Dimension does not match for pointList vs. nodeAccess "
+                    + pointList.getDimension() + " <-> " + nodeAccess.getDimension());
 
         double towerNodeDistance = 0;
         double prevLat = pointList.getLatitude(0);
         double prevLon = pointList.getLongitude(0);
-        double prevEle = pointList.is3D() ? pointList.getElevation(0)
-                : Double.NaN;
+        double prevEle = pointList.is3D() ? pointList.getElevation(0) : Double.NaN;
         double lat, lon, ele = Double.NaN;
-        PointList pillarNodes = new PointList(pointList.getSize() - 2,
-                nodeAccess.is3D());
+        PointList pillarNodes = new PointList(pointList.getSize() - 2, nodeAccess.is3D());
         int nodes = pointList.getSize();
         for (int i = 1; i < nodes; i++) {
             // we could save some lines if we would use
@@ -704,12 +683,10 @@ public class OsDpnReader extends AbstractOsReader<String> {
             lon = pointList.getLongitude(i);
             if (pointList.is3D()) {
                 ele = pointList.getElevation(i);
-                towerNodeDistance += distCalc3D.calcDist(prevLat, prevLon,
-                        prevEle, lat, lon, ele);
+                towerNodeDistance += distCalc3D.calcDist(prevLat, prevLon, prevEle, lat, lon, ele);
                 prevEle = ele;
             } else
-                towerNodeDistance += distCalc.calcDist(prevLat, prevLon, lat,
-                        lon);
+                towerNodeDistance += distCalc.calcDist(prevLat, prevLon, lat, lon);
             prevLat = lat;
             prevLon = lon;
             if (nodes > 2 && i < nodes - 1) {
@@ -727,8 +704,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
             towerNodeDistance = 0.0001;
         }
 
-        EdgeIteratorState iter = graphStorage.edge(fromIndex, toIndex)
-                .setDistance(towerNodeDistance).setFlags(flags);
+        EdgeIteratorState iter = graphStorage.edge(fromIndex, toIndex).setDistance(towerNodeDistance).setFlags(flags);
         if (nodes > 2) {
             if (doSimplify)
                 simplifyAlgo.simplify(pillarNodes);
@@ -748,23 +724,19 @@ public class OsDpnReader extends AbstractOsReader<String> {
     /**
      * @return converted tower node
      */
-    private int handlePillarNode(int tmpNode, String osmId,
-            PointList pointList, boolean convertToTowerNode) {
-        logger.info("Converting Pillar " + osmId, " to pillar? "
-                + convertToTowerNode);
+    private int handlePillarNode(int tmpNode, String osmId, PointList pointList, boolean convertToTowerNode) {
+        logger.info("Converting Pillar " + osmId, " to pillar? " + convertToTowerNode);
         tmpNode = tmpNode - 3;
         double lat = pillarInfo.getLatitude(tmpNode);
         double lon = pillarInfo.getLongitude(tmpNode);
         double ele = pillarInfo.getElevation(tmpNode);
         if (lat == Double.MAX_VALUE || lon == Double.MAX_VALUE)
-            throw new RuntimeException(
-                    "Conversion pillarNode to towerNode already happended!? "
-                            + "osmId:" + osmId + " pillarIndex:" + tmpNode);
+            throw new RuntimeException("Conversion pillarNode to towerNode already happended!? " + "osmId:" + osmId
+                    + " pillarIndex:" + tmpNode);
 
         if (convertToTowerNode) {
             // convert pillarNode type to towerNode, make pillar values invalid
-            pillarInfo.setNode(tmpNode, Double.MAX_VALUE, Double.MAX_VALUE,
-                    Double.MAX_VALUE);
+            pillarInfo.setNode(tmpNode, Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
             tmpNode = addTowerNode(osmId, lat, lon, ele);
         } else {
             if (pointList.is3D())
@@ -814,8 +786,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
     /**
      * Add a zero length edge with reduced routing options to the graph.
      */
-    Collection<EdgeIteratorState> addBarrierEdge(String fromId, String toId,
-            long flags, long nodeFlags, String wayOsmId) {
+    Collection<EdgeIteratorState> addBarrierEdge(String fromId, String toId, long flags, long nodeFlags, String wayOsmId) {
         // clear barred directions from routing flags
         flags &= ~nodeFlags;
         // add edge
@@ -831,8 +802,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
      *         relation
      */
     TurnRelation createTurnRelation(Relation relation) {
-        OSMTurnRelation.Type type = OSITNTurnRelation
-                .getRestrictionType(relation.getTag("restriction"));
+        OSMTurnRelation.Type type = OSITNTurnRelation.getRestrictionType(relation.getTag("restriction"));
         if (type != OSMTurnRelation.Type.UNSUPPORTED) {
             long fromWayID = -1;
             long viaNodeID = -1;
@@ -845,13 +815,11 @@ public class OsDpnReader extends AbstractOsReader<String> {
                     } else if ("to".equals(member.role())) {
                         toWayID = member.ref();
                     }
-                } else if (OSMElement.NODE == member.type()
-                        && "via".equals(member.role())) {
+                } else if (OSMElement.NODE == member.type() && "via".equals(member.role())) {
                     viaNodeID = member.ref();
                 }
             }
-            if (type != OSMTurnRelation.Type.UNSUPPORTED && fromWayID >= 0
-                    && toWayID >= 0 && viaNodeID >= 0) {
+            if (type != OSMTurnRelation.Type.UNSUPPORTED && fromWayID >= 0 && toWayID >= 0 && viaNodeID >= 0) {
                 return new OSMTurnRelation(fromWayID, viaNodeID, toWayID, type);
             }
         }
@@ -880,18 +848,15 @@ public class OsDpnReader extends AbstractOsReader<String> {
         return osmWayIdToRouteWeightMap;
     }
 
-
     private void printInfo(String str) {
         LoggerFactory.getLogger(getClass()).info(
-                "finished " + str + " processing." + " nodes: "
-                        + graphStorage.getNodes() + ", osmIdMap.size:"
-                        + getNodeMap().size() + ", osmIdMap:"
-                        + ", nodeFlagsMap.size:" + getNodeFlagsMap().size()
-                        + ", relFlagsMap.size:" + getRelFlagsMap().size() + " "
-                        + Helper.getMemInfo());
+                "finished " + str + " processing." + " nodes: " + graphStorage.getNodes() + ", osmIdMap.size:"
+                        + getNodeMap().size() + ", osmIdMap:" + ", nodeFlagsMap.size:" + getNodeFlagsMap().size()
+                        + ", relFlagsMap.size:" + getRelFlagsMap().size() + " " + Helper.getMemInfo());
     }
 
-    private void processStageOne(OsDpnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+    private void processStageOne(OsDpnInputFile in) throws XMLStreamException, MismatchedDimensionException,
+    FactoryException, TransformException {
         RoutingElement item;
         while ((item = in.getNext()) != null) {
             switch (item.getType()) {
@@ -906,24 +871,27 @@ public class OsDpnReader extends AbstractOsReader<String> {
         }
     }
 
-    private void processStageTwo(ProcessData processData, OsDpnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+    private void processStageTwo(ProcessData processData, OsDpnInputFile in) throws XMLStreamException,
+    MismatchedDimensionException, FactoryException, TransformException {
         RoutingElement item;
         while ((item = in.getNext()) != null) {
             switch (item.getType()) {
             case OSMElement.WAY:
-            OsDpnWay dpnWay = (OsDpnWay) item;
-            logger.info("WAY:" + dpnWay.getId() + ":" + processData.wayStart);
-            if (processData.wayStart < 0) {
-                logger.info(nf(processData.counter) + ", now parsing ways");
-                processData.wayStart = processData.counter;
+                OsDpnWay dpnWay = (OsDpnWay) item;
+                logger.info("WAY:" + dpnWay.getId() + ":" + processData.wayStart);
+                if (processData.wayStart < 0) {
+                    logger.info(nf(processData.counter) + ", now parsing ways");
+                    processData.wayStart = processData.counter;
+                }
+                prepareWaysNodes(dpnWay, getNodeMap());
+                processWay(dpnWay);
+                dpnWay.clearStoredCoords();
             }
-            prepareWaysNodes(dpnWay, getNodeMap());
-            processWay(dpnWay);
-            dpnWay.clearStoredCoords();
-        }}
+        }
     }
 
-    private void processStageThree(ProcessData processData, OsDpnInputFile in) throws XMLStreamException, MismatchedDimensionException, FactoryException, TransformException {
+    private void processStageThree(ProcessData processData, OsDpnInputFile in) throws XMLStreamException,
+    MismatchedDimensionException, FactoryException, TransformException {
         RoutingElement item;
         if (processData.relationStart < 0) {
             logger.info(nf(processData.counter) + ", now parsing relations");
@@ -934,7 +902,8 @@ public class OsDpnReader extends AbstractOsReader<String> {
             case OSMElement.RELATION:
                 processRelation((Relation) item);
                 if (++processData.counter % 5000000 == 0) {
-                    logger.info(nf(processData.counter) + ", locs:" + nf(locations) + " (" + skippedLocations + ") " + Helper.getMemInfo());
+                    logger.info(nf(processData.counter) + ", locs:" + nf(locations) + " (" + skippedLocations + ") "
+                            + Helper.getMemInfo());
                 }
             }
         }
