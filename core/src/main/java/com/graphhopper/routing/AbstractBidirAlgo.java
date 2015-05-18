@@ -22,6 +22,8 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 
+import gnu.trove.procedure.TIntProcedure;
+
 /**
  * Common subclass for bidirectional algorithms.
  * <p/>
@@ -43,6 +45,17 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
     protected abstract boolean isWeightLimitReached();
 
     abstract void checkState( int fromBase, int fromAdj, int toBase, int toAdj );
+
+    protected abstract double getCurrentFromWeight();
+
+    protected abstract double getCurrentToWeight();
+
+    /**
+     * Iterates through all edgeIds of the shortest path tree in forward and/or reverse direction.
+     *
+     * @edgeSelection -1 for reverse direction, +1 for forward direction and 0 if edge has to be in both trees
+     */
+    public abstract void iterateTree(final int edgeSelection, final TIntProcedure proc);
 
     abstract boolean fillEdgesFrom();
 
@@ -68,11 +81,19 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
     {
         while (!finished() && !isWeightLimitReached())
         {
-            if (!finishedFrom)
+            if (!finishedFrom && !finishedTo)
+            {
+                if (getCurrentFromWeight() < getCurrentToWeight())
+                    finishedFrom = !fillEdgesFrom();
+                else
+                    finishedTo = !fillEdgesTo();
+            } else if (!finishedFrom)
+            {
                 finishedFrom = !fillEdgesFrom();
-
-            if (!finishedTo)
+            } else
+            {
                 finishedTo = !fillEdgesTo();
+            }
         }
     }
 

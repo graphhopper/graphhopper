@@ -20,10 +20,13 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.*;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.procedure.TIntObjectProcedure;
+import gnu.trove.procedure.TIntProcedure;
 
 import java.util.PriorityQueue;
 
 import com.graphhopper.routing.AStar.AStarEdge;
+import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 
@@ -296,6 +299,39 @@ public class AStarBidirection extends AbstractBidirAlgo
             bestPath.edgeTo = entryOther;
             bestPath.setWeight(newWeight);
         }
+    }
+
+    @Override
+    public void iterateTree(final int edgeSelection, final TIntProcedure proc)
+    {
+        TIntObjectMap<AStarEdge> tree = edgeSelection < 0 ? bestWeightMapTo : bestWeightMapFrom;
+        tree.forEachEntry(new TIntObjectProcedure<EdgeEntry>()
+        {
+            @Override
+            public boolean execute(int key, EdgeEntry b)
+            {
+                if (b.edge >= 0)
+                {
+                    if (edgeSelection == 0 && bestWeightMapTo.get(key) == null)
+                        return true;
+
+                    return proc.execute(b.edge);
+                }
+                return true;
+            }
+        });
+    }
+
+    @Override
+    protected double getCurrentFromWeight()
+    {
+        return currFrom.weight;
+    }
+
+    @Override
+    protected double getCurrentToWeight()
+    {
+        return currTo.weight;
     }
 
     @Override

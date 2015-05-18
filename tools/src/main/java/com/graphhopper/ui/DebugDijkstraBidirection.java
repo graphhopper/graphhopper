@@ -52,7 +52,7 @@ public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements 
     {
         if (g2 != null)
         {
-            mg.plotNode(g2, currLoc, Color.BLUE);
+            mg.plotNode(g2, currLoc, Color.BLUE, 4);
         }
         // System.out.println("new node:" + currLoc);
         super.updateBestPath(es, bestEE, currLoc);

@@ -80,9 +80,11 @@ public class PathBidirRef extends Path
         while (EdgeIterator.Edge.isValid(currEdge.edge))
         {
             processEdge(currEdge.edge, currEdge.adjNode);
+            setFromEdge(currEdge.edge);
             currEdge = currEdge.parent;
         }
         setFromNode(currEdge.adjNode);
+
         reverseOrder();
         currEdge = edgeTo;
         int tmpEdge = currEdge.edge;
@@ -90,9 +92,11 @@ public class PathBidirRef extends Path
         {
             currEdge = currEdge.parent;
             processEdge(tmpEdge, currEdge.adjNode);
+            setEndEdge(tmpEdge);
             tmpEdge = currEdge.edge;
         }
         setEndNode(currEdge.adjNode);
+
         extractSW.stop();
         return setFound(true);
     }

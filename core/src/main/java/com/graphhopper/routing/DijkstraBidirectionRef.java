@@ -17,11 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-
-import java.util.PriorityQueue;
-
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
@@ -32,33 +27,41 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
+import java.util.PriorityQueue;
+
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.procedure.TIntObjectProcedure;
+import gnu.trove.procedure.TIntProcedure;
+
 /**
  * Calculates best path in bidirectional way.
  * <p/>
  * 'Ref' stands for reference implementation and is using the normal Java-'reference'-way.
  * <p/>
- * @see DijkstraBidirection for an array based but more complicated version
+ *
  * @author Peter Karich
+ * @see DijkstraBidirection for an array based but more complicated version
  */
 public class DijkstraBidirectionRef extends AbstractBidirAlgo
 {
     private PriorityQueue<EdgeEntry> openSetFrom;
     private PriorityQueue<EdgeEntry> openSetTo;
-    private TIntObjectMap<EdgeEntry> bestWeightMapFrom;
-    private TIntObjectMap<EdgeEntry> bestWeightMapTo;
+    protected TIntObjectMap<EdgeEntry> bestWeightMapFrom;
+    protected TIntObjectMap<EdgeEntry> bestWeightMapTo;
     protected TIntObjectMap<EdgeEntry> bestWeightMapOther;
     protected EdgeEntry currFrom;
     protected EdgeEntry currTo;
     protected PathBidirRef bestPath;
     private boolean updateBestPath = true;
 
-    public DijkstraBidirectionRef( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
+    public DijkstraBidirectionRef(Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode)
     {
         super(graph, encoder, weighting, tMode);
         initCollections(1000);
     }
 
-    protected void initCollections( int nodes )
+    protected void initCollections(int nodes)
     {
         openSetFrom = new PriorityQueue<EdgeEntry>(nodes / 10);
         bestWeightMapFrom = new TIntObjectHashMap<EdgeEntry>(nodes / 10);
@@ -68,7 +71,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     }
 
     @Override
-    public void initFrom( int from, double dist )
+    public void initFrom(int from, double dist)
     {
         currFrom = createEdgeEntry(from, dist);
         openSetFrom.add(currFrom);
@@ -94,7 +97,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     }
 
     @Override
-    public void initTo( int to, double dist )
+    public void initTo(int to, double dist)
     {
         currTo = createEdgeEntry(to, dist);
         openSetTo.add(currTo);
@@ -136,7 +139,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     }
 
     @Override
-    void checkState( int fromBase, int fromAdj, int toBase, int toAdj )
+    void checkState(int fromBase, int fromAdj, int toBase, int toAdj)
     {
         if (bestWeightMapFrom.isEmpty() || bestWeightMapTo.isEmpty())
             throw new IllegalStateException("Either 'from'-edge or 'to'-edge is inaccessible. From:" + bestWeightMapFrom + ", to:" + bestWeightMapTo);
@@ -186,8 +189,8 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         return currFrom.weight + currTo.weight >= weightLimit;
     }
 
-    void fillEdges( EdgeEntry currEdge, PriorityQueue<EdgeEntry> prioQueue,
-            TIntObjectMap<EdgeEntry> shortestWeightMap, EdgeExplorer explorer, boolean reverse )
+    void fillEdges(EdgeEntry currEdge, PriorityQueue<EdgeEntry> prioQueue,
+                   TIntObjectMap<EdgeEntry> shortestWeightMap, EdgeExplorer explorer, boolean reverse)
     {
         int currNode = currEdge.adjNode;
         EdgeIterator iter = explorer.setBaseNode(currNode);
@@ -224,7 +227,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     }
 
     @Override
-    protected void updateBestPath( EdgeIteratorState edgeState, EdgeEntry entryCurrent, int traversalId )
+    protected void updateBestPath(EdgeIteratorState edgeState, EdgeEntry entryCurrent, int traversalId)
     {
         EdgeEntry entryOther = bestWeightMapOther.get(traversalId);
         if (entryOther == null)
@@ -261,6 +264,39 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         }
     }
 
+    @Override
+    public void iterateTree(final int edgeSelection, final TIntProcedure proc)
+    {
+        TIntObjectMap<EdgeEntry> tree = edgeSelection < 0 ? bestWeightMapTo : bestWeightMapFrom;
+        tree.forEachEntry(new TIntObjectProcedure<EdgeEntry>()
+        {
+            @Override
+            public boolean execute(int key, EdgeEntry b)
+            {
+                if (b.edge >= 0)
+                {
+                    if (edgeSelection == 0 && bestWeightMapTo.get(key) == null)
+                        return true;
+
+                    return proc.execute(b.edge);
+                }
+                return true;
+            }
+        });
+    }
+
+    @Override
+    protected double getCurrentFromWeight()
+    {
+        return currFrom.weight;
+    }
+
+    @Override
+    protected double getCurrentToWeight()
+    {
+        return currTo.weight;
+    }
+
     TIntObjectMap<EdgeEntry> getBestFromMap()
     {
         return bestWeightMapFrom;
@@ -271,12 +307,12 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         return bestWeightMapTo;
     }
 
-    void setBestOtherMap( TIntObjectMap<EdgeEntry> other )
+    void setBestOtherMap(TIntObjectMap<EdgeEntry> other)
     {
         bestWeightMapOther = other;
     }
 
-    void setFromDataStructures( DijkstraBidirectionRef dijkstra )
+    void setFromDataStructures(DijkstraBidirectionRef dijkstra)
     {
         openSetFrom = dijkstra.openSetFrom;
         bestWeightMapFrom = dijkstra.bestWeightMapFrom;
@@ -286,7 +322,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         // outEdgeExplorer
     }
 
-    void setToDataStructures( DijkstraBidirectionRef dijkstra )
+    void setToDataStructures(DijkstraBidirectionRef dijkstra)
     {
         openSetTo = dijkstra.openSetTo;
         bestWeightMapTo = dijkstra.bestWeightMapTo;
@@ -296,12 +332,12 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         // inEdgeExplorer
     }
 
-    void setUpdateBestPath( boolean b )
+    void setUpdateBestPath(boolean b)
     {
         updateBestPath = b;
     }
 
-    void setBestPath( PathBidirRef bestPath )
+    void setBestPath(PathBidirRef bestPath)
     {
         this.bestPath = bestPath;
     }

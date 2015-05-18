@@ -47,15 +47,18 @@ public class PathNative extends Path
         if (endNode < 0)
             return this;
 
+        setEndEdge(parentEdges[endNode]);
         while (true)
         {
             int edgeId = parentEdges[endNode];
             if (!EdgeIterator.Edge.isValid(edgeId))
                 break;
 
+            setFromEdge(edgeId);
             processEdge(edgeId, endNode);
             endNode = parentNodes[endNode];
         }
+
         reverseOrder();
         return setFound(true);
     }

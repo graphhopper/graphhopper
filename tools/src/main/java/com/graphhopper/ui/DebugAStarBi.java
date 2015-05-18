@@ -52,7 +52,7 @@ public class DebugAStarBi extends AStarBidirection implements DebugAlgo
     {
         if (g2 != null)
         {
-            mg.plotNode(g2, currLoc, Color.YELLOW);
+            mg.plotNode(g2, currLoc, Color.YELLOW, 4);
         }
         super.updateBestPath(es, bestEE, currLoc);
     }

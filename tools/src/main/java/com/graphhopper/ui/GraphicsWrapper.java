@@ -105,7 +105,7 @@ public class GraphicsWrapper
         return 90 - (y * scaleY - offsetY);
     }
 
-    public void plotNode( Graphics2D g2, int loc, Color c )
+    public void plotNode( Graphics2D g2, int loc, Color c, int width )
     {
         double lat = na.getLatitude(loc);
         double lon = na.getLongitude(loc);
@@ -116,7 +116,7 @@ public class GraphicsWrapper
 
         Color old = g2.getColor();
         g2.setColor(c);
-        plot(g2, lat, lon, 4);
+        plot(g2, lat, lon, width);
         g2.setColor(old);
     }
 

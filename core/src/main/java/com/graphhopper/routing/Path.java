@@ -21,17 +21,29 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
-import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
+import com.graphhopper.util.AngleCalc;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FinishInstruction;
+import com.graphhopper.util.Instruction;
+import com.graphhopper.util.InstructionAnnotation;
+import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.PointList;
+import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.Translation;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TIntArrayList;
 
 /**
  * Stores the nodes for the found path of an algorithm. It additionally needs the edgeIds to make
  * edge determination faster and less complex as there could be several edges (u,v) especially for
  * graphs with shortcuts.
  * <p/>
+ *
  * @author Peter Karich
  * @author Ottavio Campana
  */
@@ -49,11 +61,13 @@ public class Path
     final StopWatch extractSW = new StopWatch("extract");
     private int fromNode = -1;
     protected int endNode = -1;
+    private int fromEdge = -1;
+    private int endEdge = -1;
     private TIntList edgeIds;
     private double weight;
     private NodeAccess nodeAccess;
 
-    public Path( Graph graph, FlagEncoder encoder )
+    public Path(Graph graph, FlagEncoder encoder)
     {
         this.weight = Double.MAX_VALUE;
         this.graph = graph;
@@ -65,7 +79,7 @@ public class Path
     /**
      * Populates an unextracted path instances from the specified path p.
      */
-    Path( Path p )
+    Path(Path p)
     {
         this(p.graph, p.encoder);
         weight = p.weight;
@@ -73,18 +87,18 @@ public class Path
         edgeEntry = p.edgeEntry;
     }
 
-    public Path setEdgeEntry( EdgeEntry edgeEntry )
+    public Path setEdgeEntry(EdgeEntry edgeEntry)
     {
         this.edgeEntry = edgeEntry;
         return this;
     }
 
-    protected void addEdge( int edge )
+    protected void addEdge(int edge)
     {
         edgeIds.add(edge);
     }
 
-    protected Path setEndNode( int end )
+    protected Path setEndNode(int end)
     {
         endNode = end;
         return this;
@@ -93,7 +107,7 @@ public class Path
     /**
      * We need to remember fromNode explicitely as its not saved in one edgeId of edgeIds.
      */
-    protected Path setFromNode( int from )
+    protected Path setFromNode(int from)
     {
         fromNode = from;
         return this;
@@ -110,12 +124,32 @@ public class Path
         return fromNode;
     }
 
+    protected final void setEndEdge(int endEdge)
+    {
+        this.endEdge = endEdge;
+    }
+
+    public int getEndEdge()
+    {
+        return endEdge;
+    }
+
+    protected final void setFromEdge(int fromEdge)
+    {
+        this.fromEdge = fromEdge;
+    }
+
+    public int getFromEdge()
+    {
+        return fromEdge;
+    }
+
     public boolean isFound()
     {
         return found;
     }
 
-    public Path setFound( boolean found )
+    public Path setFound(boolean found)
     {
         this.found = found;
         return this;
@@ -154,7 +188,7 @@ public class Path
         return weight;
     }
 
-    public Path setWeight( double w )
+    public Path setWeight(double w)
     {
         this.weight = w;
         return this;
@@ -171,13 +205,17 @@ public class Path
         extractSW.start();
         EdgeEntry goalEdge = edgeEntry;
         setEndNode(goalEdge.adjNode);
+        setEndEdge(goalEdge.edge);
+
         while (EdgeIterator.Edge.isValid(goalEdge.edge))
         {
             processEdge(goalEdge.edge, goalEdge.adjNode);
+            setFromEdge(goalEdge.edge);
             goalEdge = goalEdge.parent;
         }
 
         setFromNode(goalEdge.adjNode);
+
         reverseOrder();
         extractSW.stop();
         return setFound(true);
@@ -199,7 +237,7 @@ public class Path
     /**
      * Calls getDistance and adds the edgeId.
      */
-    protected void processEdge( int edgeId, int adjNode )
+    protected void processEdge(int edgeId, int adjNode)
     {
         EdgeIteratorState iter = graph.getEdgeProps(edgeId, adjNode);
         double dist = iter.getDistance();
@@ -212,7 +250,7 @@ public class Path
      * Calculates the time in millis for the specified distance in meter and speed (in km/h) via
      * flags.
      */
-    protected long calcMillis( double distance, long flags, boolean revert )
+    protected long calcMillis(double distance, long flags, boolean revert)
     {
         if (revert && !encoder.isBool(flags, FlagEncoder.K_BACKWARD)
                 || !revert && !encoder.isBool(flags, FlagEncoder.K_FORWARD))
@@ -234,17 +272,18 @@ public class Path
      */
     private static interface EdgeVisitor
     {
-        void next( EdgeIteratorState edgeBase, int index );
+        void next(EdgeIteratorState edgeBase, int index);
     }
 
     /**
      * Iterates over all edges in this path sorted from start to end and calls the visitor callback
      * for every edge.
-     * <p>
+     * <p/>
+     *
      * @param visitor callback to handle every edge. The edge is decoupled from the iterator and can
-     * be stored.
+     *                be stored.
      */
-    private void forEveryEdge( EdgeVisitor visitor )
+    private void forEveryEdge(EdgeVisitor visitor)
     {
         int tmpNode = getFromNode();
         int len = edgeIds.size();
@@ -274,7 +313,7 @@ public class Path
         forEveryEdge(new EdgeVisitor()
         {
             @Override
-            public void next( EdgeIteratorState eb, int i )
+            public void next(EdgeIteratorState eb, int i)
             {
                 edges.add(eb);
             }
@@ -302,7 +341,7 @@ public class Path
         forEveryEdge(new EdgeVisitor()
         {
             @Override
-            public void next( EdgeIteratorState eb, int i )
+            public void next(EdgeIteratorState eb, int i)
             {
                 nodes.add(eb.getAdjNode());
             }
@@ -312,7 +351,8 @@ public class Path
 
     /**
      * This method calculated a list of points for this path
-     * <p>
+     * <p/>
+     *
      * @return this path its geometry
      */
     public PointList calcPoints()
@@ -332,7 +372,7 @@ public class Path
         forEveryEdge(new EdgeVisitor()
         {
             @Override
-            public void next( EdgeIteratorState eb, int index )
+            public void next(EdgeIteratorState eb, int index)
             {
                 PointList pl = eb.fetchWayGeometry(2);
                 for (int j = 0; j < pl.getSize(); j++)
@@ -347,7 +387,7 @@ public class Path
     /**
      * @return the list of instructions for this path.
      */
-    public InstructionList calcInstructions( final Translation tr )
+    public InstructionList calcInstructions(final Translation tr)
     {
         final InstructionList ways = new InstructionList(edgeIds.size() / 4, tr);
         if (edgeIds.isEmpty())
@@ -391,7 +431,7 @@ public class Path
             private InstructionAnnotation annotation;
 
             @Override
-            public void next( EdgeIteratorState edge, int index )
+            public void next(EdgeIteratorState edge, int index)
             {
                 // baseNode is the current node and adjNode is the next
                 int adjNode = edge.getAdjNode();
@@ -490,7 +530,7 @@ public class Path
                     ways.add(new FinishInstruction(nodeAccess, adjNode));
             }
 
-            private void updatePointsAndInstruction( EdgeIteratorState edge, PointList pl )
+            private void updatePointsAndInstruction(EdgeIteratorState edge, PointList pl)
             {
                 // skip adjNode
                 int len = pl.size() - 1;

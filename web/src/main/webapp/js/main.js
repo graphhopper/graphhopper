@@ -963,6 +963,7 @@ function routeLatLng(request, doQuery) {
             }
             return;
         }
+
         var path = json.paths[0];
         var geojsonFeature = {
             "type": "Feature",
@@ -1004,6 +1005,16 @@ function routeLatLng(request, doQuery) {
         }
 
         routingLayer.addData(geojsonFeature);
+
+        // TODO less ugly alternative display, where selectable path and elevation & instructions also change
+        for(var i = 1; i < json.paths.length; i++) {
+            var tmpPath = json.paths[i];
+            routingLayer.addData({
+                 "type": "Feature",
+                 "geometry": tmpPath.points
+            });
+        }
+
         if (path.bbox && doZoom) {
             var minLon = path.bbox[0];
             var minLat = path.bbox[1];
