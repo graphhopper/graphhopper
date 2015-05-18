@@ -15,6 +15,7 @@ import org.junit.Test;
 
 import java.util.List;
 
+import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -25,6 +26,8 @@ public class AlternativeDijkstraTest
 {
     private final FlagEncoder carFE = new CarFlagEncoder();
     private final EncodingManager em = new EncodingManager(carFE);
+    // TODO TraversalMode tMode = TraversalMode.EDGE_BASED_2DIR;
+    private final TraversalMode tMode = TraversalMode.NODE_BASED;
 
     Graph createTestGraph()
     {
@@ -32,9 +35,9 @@ public class AlternativeDijkstraTest
         graph.create(1000);
 
         /*   9
-             /\
-            1 2-3-4
-            |  /  |
+            _/\
+           1  2-3-4
+            \  /  |
             5-6-7-8
          */
         graph.edge(1, 9, 1, true);
@@ -49,18 +52,27 @@ public class AlternativeDijkstraTest
         graph.edge(1, 5, 2, true);
         graph.edge(6, 3, 1, true);
         graph.edge(4, 8, 1, true);
+
+        updateDistancesFor(graph, 5, 0.00, 0.05);
+        updateDistancesFor(graph, 6, 0.00, 0.10);
+        updateDistancesFor(graph, 7, 0.00, 0.15);
+        updateDistancesFor(graph, 8, 0.00, 0.25);
+
+        updateDistancesFor(graph, 1, 0.05, 0.00);
+        updateDistancesFor(graph, 9, 0.10, 0.05);
+        updateDistancesFor(graph, 2, 0.05, 0.10);
+        updateDistancesFor(graph, 3, 0.05, 0.15);
+        updateDistancesFor(graph, 4, 0.05, 0.25);
         return graph;
     }
 
     @Test
-    public void testCalcPaths() throws Exception
+    public void testCalcAlternatives() throws Exception
     {
-        // TODO TraversalMode tMode = TraversalMode.EDGE_BASED_2DIR;
-        TraversalMode tMode = TraversalMode.NODE_BASED;
         Weighting weighting = new FastestWeighting(carFE);
         Graph g = createTestGraph();
         AlternativeDijkstra altDijkstra = new AlternativeDijkstra(g, carFE, weighting, tMode);
-        List<AlternativeDijkstra.AlternativeInfo> pathInfos = altDijkstra.calcPaths(5, 4, 2, 0.3, 2);
+        List<AlternativeDijkstra.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 4, 2, 0.3, 2);
         checkAlternatives(pathInfos);
         assertEquals(2, pathInfos.size());
 
@@ -80,7 +92,7 @@ public class AlternativeDijkstraTest
         assertEquals(Helper.createTList(5, 6, 7, 8, 4), secondAlt.calcNodes());
 
         altDijkstra = new AlternativeDijkstra(g, carFE, weighting, tMode);
-        pathInfos = altDijkstra.calcPaths(5, 4, 3, 0.3, 2);
+        pathInfos = altDijkstra.calcAlternatives(5, 4, 3, 0.3, 2);
         checkAlternatives(pathInfos);
         assertEquals(3, pathInfos.size());
 
@@ -88,6 +100,22 @@ public class AlternativeDijkstraTest
         assertEquals(Helper.createTList(5, 6, 3, 4), pathInfos.get(0).getPath().calcNodes());
         assertEquals(Helper.createTList(5, 6, 7, 8, 4), pathInfos.get(1).getPath().calcNodes());
         assertEquals(Helper.createTList(5, 1, 9, 2, 3, 4), pathInfos.get(2).getPath().calcNodes());
+    }
+
+    @Test
+    public void testCalcRoundTrip() throws Exception
+    {
+        Weighting weighting = new FastestWeighting(carFE);
+        Graph g = createTestGraph();
+        AlternativeDijkstra altDijkstra = new AlternativeDijkstra(g, carFE, weighting, tMode);
+        double maxDist = Helper.DIST_EARTH.calcDist(0, 0, 0.05, 0.25) * 2;
+        List<Path> paths = altDijkstra.calcRoundTrips(5, maxDist, 2);
+        assertEquals(2, paths.size());
+        assertEquals(Helper.createTList(5, 6, 3, 4), paths.get(0).calcNodes());
+
+        // no plateau filter => prefer the longer path
+        // assertEquals(Helper.createTList(4, 8, 7, 6, 5), paths.get(1).calcNodes());
+        assertEquals(Helper.createTList(4, 3, 2, 9, 1, 5), paths.get(1).calcNodes());
     }
 
     void checkAlternatives(List<AlternativeDijkstra.AlternativeInfo> alternativeInfos)

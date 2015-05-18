@@ -20,6 +20,9 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.Helper;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,11 +35,16 @@ import gnu.trove.procedure.TIntObjectProcedure;
  * This class implements the alternative paths search using the plateau method discribed in
  * <p/>
  * <ul>
- * <li>Choice Routing Explanation - Camvit http://www.camvit.com/camvit-technical-english/Camvit-Choice-Routing-Explanation-english.pdf</li>
- * <li>and refined in: Alternative Routes in Road Networks http://www.cs.princeton.edu/~rwerneck/papers/ADGW10-alternatives-sea.pdf</li>
- * <li>other ideas 'Improved Alternative Route Planning', 2013: https://hal.inria.fr/hal-00871739/document</li>
- * <li>via point 'storage' idea 'Candidate Sets for Alternative Routes in Road Networks', 2013: https://algo2.iti.kit.edu/download/s-csarrn-12.pdf</li>
+ * <li>Choice Routing Explanation - Camvit
+ * http://www.camvit.com/camvit-technical-english/Camvit-Choice-Routing-Explanation-english.pdf</li>
+ * <li>and refined in: Alternative Routes in Road Networks
+ * http://www.cs.princeton.edu/~rwerneck/papers/ADGW10-alternatives-sea.pdf</li>
+ * <li>other ideas 'Improved Alternative Route Planning', 2013:
+ * https://hal.inria.fr/hal-00871739/document</li>
+ * <li>via point 'storage' idea 'Candidate Sets for Alternative Routes in Road Networks', 2013:
+ * https://algo2.iti.kit.edu/download/s-csarrn-12.pdf</li>
  * </ul>
+ * <p/>
  *
  * @author Peter Karich
  */
@@ -47,7 +55,8 @@ public class AlternativeDijkstra extends DijkstraBidirectionRef
         super(graph, encoder, weighting, tMode);
     }
 
-    public boolean alternativeFinished()
+    @Override
+    public boolean finished()
     {
         // we need to finish BOTH searches identical to CH
         if (finishedFrom && finishedTo)
@@ -60,6 +69,83 @@ public class AlternativeDijkstra extends DijkstraBidirectionRef
         return currFrom.weight > bestPath.getWeight() && currTo.weight > bestPath.getWeight();
     }
 
+    /**
+     * @param from            the node where the round trip should start and end
+     * @param maxFullDistance the maximum distance for the whole round trip
+     * @param maxWeightFactor the weight until the search is expanded - used for alternative calculation
+     * @return currently no path at all or two paths (one forward and one backward path)
+     */
+    public List<Path> calcRoundTrips(int from, double maxFullDistance, double maxWeightFactor)
+    {
+        beforeAlgo(from);
+        NodeAccess na = graph.getNodeAccess();
+        DistanceCalc distanceCalc = Helper.DIST_PLANE;
+        // get the 'to' via exploring the graph and select the node which reaches the maxWeight radius the fastest!
+        // '/2' because we need just one direction
+        double maxDistance = distanceCalc.calcNormalizedDist(maxFullDistance / 2);
+        double lat1 = na.getLatitude(from), lon1 = na.getLongitude(from);
+        double lastNormedDistance = -1;
+        boolean tmpFinishedFrom = false;
+        while (!tmpFinishedFrom)
+        {
+            tmpFinishedFrom = !fillEdgesFrom();
+
+            double lat2 = na.getLatitude(currFrom.adjNode), lon2 = na.getLongitude(currFrom.adjNode);
+            lastNormedDistance = distanceCalc.calcNormalizedDist(lat1, lon1, lat2, lon2);
+            if (lastNormedDistance > maxDistance)
+                break;
+        }
+
+        // TODO is this okay? 
+        // if no path found close to the weight do not return anything!
+        if (tmpFinishedFrom && lastNormedDistance > 0 && lastNormedDistance < distanceCalc.calcNormalizedDist(maxFullDistance / 2 / 4))
+            return Collections.emptyList();
+
+        // Assume that the first node breaking through the maxWeight circle is the best connected leading hopefully to good alternatives
+        // TODO select more than one 'to'-node?
+        int to = currFrom.adjNode;
+
+        // TODO do not extract yet use the plateau start of the alternative as new 'to', then extract
+        Path tmpBestPath = new Path(graph, flagEncoder);
+        tmpBestPath.setEdgeEntry(currFrom);
+        tmpBestPath.setWeight(currFrom.weight);
+        Path bestForward = tmpBestPath.extract();
+
+        List<Path> paths = new ArrayList<Path>();
+        // add best path BUT FOR FORWARD direction directly to result in every case
+        paths.add(bestForward);
+
+        // reset collections and use REVERSE path
+        initCollections(1000);
+        createAndInitPath();
+        initFrom(to, 0);
+        initTo(from, 0);
+        // init collections and bestPath.getWeight properly
+        runAlgo();
+
+        List<AlternativeInfo> infos = this.calcAlternatives(2, maxWeightFactor, 0, 0.05);
+        if (infos.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+
+        if (infos.size() == 1)
+        {
+            // fallback to same path for backward direction (or at least VERY similar path as optimal)
+            paths.add(infos.get(0).getPath());
+        } else
+        {
+            paths.add(infos.get(1).getPath());
+        }
+        return paths;
+    }
+
+    private void beforeAlgo(int from)
+    {
+        checkAlreadyRun();
+        createAndInitPath();
+        initFrom(from, 0);
+    }
 
     /**
      * This method calculates best paths (alternatives) between 'from' and 'to', where maxPaths-1
@@ -67,48 +153,28 @@ public class AlternativeDijkstra extends DijkstraBidirectionRef
      * the best path.
      * <p/>
      *
-     * @param maxShare        a number between 0 and 1, where 0 means no similarity is accepted and 1
-     *                        means even different paths with identical weight are accepted
+     * @param maxShare        a number between 0 and 1, where 0 means no similarity is accepted and 1 means
+     *                        even different paths with identical weight are accepted
      * @param maxWeightFactor a number of at least 1, which stands for a filter throwing away all
      *                        alternatives with a weight higher than weight*maxWeightFactor
      */
-    public List<AlternativeInfo> calcPaths(int from, int to, int maxPaths,
-                                           double maxShare, double maxWeightFactor)
+    public List<AlternativeInfo> calcAlternatives(int from, int to, int maxPaths,
+                                                  double maxShare, double maxWeightFactor)
     {
-        checkAlreadyRun();
-        createAndInitPath();
-        initFrom(from, 0);
+        beforeAlgo(from);
         initTo(to, 0);
+        runAlgo();
 
-        final int maxAlt = maxPaths - 1;
+        List<AlternativeInfo> alternatives = this.calcAlternatives(maxPaths, maxWeightFactor, 2, 0.1);
+        return alternatives;
+    }
 
-        // TODO improve performance and make several destinations possible via:
-        // 1. do a normal bidir search
-        // 2. expand one tree alone
-        // 3. expand the second tree and search for alternatives at the same time        
-        while (!alternativeFinished() && !isWeightLimitReached())
-        {
-            if (!finishedFrom && !finishedTo)
-            {
-                if (currFrom.weight < currTo.weight)
-                    finishedFrom = !fillEdgesFrom();
-                else
-                    finishedTo = !fillEdgesTo();
-            } else if (!finishedFrom)
-            {
-                finishedFrom = !fillEdgesFrom();
-            } else
-            {
-                finishedTo = !fillEdgesTo();
-            }
-        }
-
+    private List<AlternativeInfo> calcAlternatives(final int maxPaths, double maxWeightFactor,
+                                                   final double weightInfluence, final double minPlateauRatio)
+    {
         final double maxWeight = maxWeightFactor * bestPath.getWeight();
         final List<AlternativeInfo> alternatives = new ArrayList<AlternativeInfo>(maxPaths);
 
-        bestPath.extract();
-
-        final double weightInfluence = 2;
         bestWeightMapFrom.forEachEntry(new TIntObjectProcedure<EdgeEntry>()
         {
             double getWorstSortBy()
@@ -129,7 +195,6 @@ public class AlternativeDijkstra extends DijkstraBidirectionRef
                 if (fromEdgeEntry.adjNode != toEdgeEntry.adjNode)
                     return true;
 
-                // is this check necessary as the alternativeFinished method stops already early. But early enough?
                 final double weight = toEdgeEntry.weight + fromEdgeEntry.weight;
                 if (weight > maxWeight)
                     return true;
@@ -158,7 +223,6 @@ public class AlternativeDijkstra extends DijkstraBidirectionRef
                 // that the from-EdgeEntry is the start of the plateau or there is no plateau at all
                 //
                 double plateauWeight = 0;
-                boolean containsGuttauer = false;
                 while (prevToEdgeEntry.parent != null)
                 {
                     int nextTraversalId = traversalMode.createTraversalId(prevToEdgeEntry.parent.adjNode, prevToEdgeEntry.adjNode,
@@ -177,32 +241,25 @@ public class AlternativeDijkstra extends DijkstraBidirectionRef
                 if (plateauWeight <= 0)
                     return true;
 
-                // TODO do we need to calculate the share (like in the paper?) with the optimal path to improve the quality?
-
+                // TODO probably we also need to calculate the share with the optimal path to improve the quality (like in the paper)
                 // weight and plateauWeight should be minimized
-                // TODO use weightInfluence=0 for the round trip as this gives better detours (more 'round')
                 double sortBy = weightInfluence * weight - plateauWeight;
                 double worstSortBy = getWorstSortBy();
 
-                int plateauFromEdge = toEdgeEntry.edge;
-                int plateauEndEdge = prevToEdgeEntry.edge;
-
                 if (// avoid short plateaus which would lead to small detours
-                        plateauWeight / weight > 0.1
-                                // avoid adding optimum twice -> TODO should we better avoid adding it in the first place?
-                                && bestPath.getFromEdge() != plateauFromEdge && bestPath.getEndEdge() != plateauEndEdge
+                       (plateauWeight / weight > minPlateauRatio)
                                 && (// better alternative
                                 sortBy >= worstSortBy
                                         // more alternatives
-                                        || alternatives.size() < maxAlt))
+                                        || alternatives.size() < maxPaths))
                 {
                     Path path = new PathBidirRef(graph, flagEncoder).
                             setEdgeEntryTo(toEdgeEntry).setEdgeEntry(fromEdgeEntry).setWeight(weight);
-                    alternatives.add(new AlternativeInfo(sortBy, path, plateauFromEdge, plateauEndEdge, plateauWeight));
+                    alternatives.add(new AlternativeInfo(sortBy, path, toEdgeEntry, prevToEdgeEntry, plateauWeight));
 
                     Collections.sort(alternatives, ALT_COMPARATOR);
-                    if (alternatives.size() > maxAlt)
-                        alternatives.subList(maxAlt, alternatives.size()).clear();
+                    if (alternatives.size() > maxPaths)
+                        alternatives.subList(maxPaths, alternatives.size()).clear();
                 }
 
                 return true;
@@ -212,12 +269,7 @@ public class AlternativeDijkstra extends DijkstraBidirectionRef
         for (AlternativeInfo a : alternatives)
         {
             a.getPath().extract();
-            // System.out.println("weight:" + a.getPath().getWeight() + ", plateau weight:" + a.plateauWeight + ", sortby:" + a.getSortBy());
         }
-
-        alternatives.add(0, new AlternativeInfo((weightInfluence - 1) * bestPath.getWeight(), bestPath, bestPath.getFromEdge(), bestPath.getEndEdge(), bestPath.getWeight()));
-        // System.out.println("best weight:" + bestPath.getWeight() + ", plateau weight:" + alternatives.get(0).getPlateauWeight() + ", sortby:" + alternatives.get(0).getSortBy());
-
         return alternatives;
     }
 
@@ -234,16 +286,16 @@ public class AlternativeDijkstra extends DijkstraBidirectionRef
     {
         private final double sortBy;
         private final Path path;
-        private final int plateauStartEdgeId;
-        private final int plateauEndEdgeId;
+        private final EdgeEntry plateauStart;
+        private final EdgeEntry plateauEnd;
         private final double plateauWeight;
 
-        public AlternativeInfo(double sortBy, Path path, int plateauStartEdgeId, int plateauEndEdgeId, double plateauWeight)
+        public AlternativeInfo(double sortBy, Path path, EdgeEntry plateauStart, EdgeEntry plateauEnd, double plateauWeight)
         {
             this.sortBy = sortBy;
             this.path = path;
-            this.plateauStartEdgeId = plateauStartEdgeId;
-            this.plateauEndEdgeId = plateauEndEdgeId;
+            this.plateauStart = plateauStart;
+            this.plateauEnd = plateauEnd;
             this.plateauWeight = plateauWeight;
         }
 
@@ -252,14 +304,14 @@ public class AlternativeDijkstra extends DijkstraBidirectionRef
             return path;
         }
 
-        public int getPlateauEndEdgeId()
+        public EdgeEntry getPlateauEnd()
         {
-            return plateauEndEdgeId;
+            return plateauEnd;
         }
 
-        public int getPlateauStartEdgeId()
+        public EdgeEntry getPlateauStart()
         {
-            return plateauStartEdgeId;
+            return plateauStart;
         }
 
         public double getPlateauWeight()

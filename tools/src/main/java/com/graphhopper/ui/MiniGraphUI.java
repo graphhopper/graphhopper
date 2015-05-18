@@ -290,7 +290,7 @@ public class MiniGraphUI
                 // path = algo.calcPath(fromRes.getClosestNode(), toRes.getClosestNode());
 
 
-                algo.calcPaths(fromRes.getClosestNode(), toRes.getClosestNode(), 3, 0.3, 1.4);
+                algo.calcAlternatives(fromRes.getClosestNode(), toRes.getClosestNode(), 3, 0.3, 1.4);
                 sw.stop();
 
                 // if directed edges

@@ -41,7 +41,6 @@ import gnu.trove.procedure.TIntProcedure;
  * <p/>
  *
  * @author Peter Karich
- * @see DijkstraBidirection for an array based but more complicated version
  */
 public class DijkstraBidirectionRef extends AbstractBidirAlgo
 {
