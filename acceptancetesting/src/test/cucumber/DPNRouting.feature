@@ -12,7 +12,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB             | routeOptions | avoidances |
-      | 53.176062,-1.871472 | 53.154773,-1.77272 | foot      |            |
+      | 53.176062,-1.871472 | 53.154773,-1.77272 | foot         |            |
 
   @Routing
   Scenario Outline: Verify  Road Names on a Walking Route  (Chatswoth Park)
@@ -24,7 +24,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB              | routeOptions | avoidances |
-      | 53.211013,-1.619393 | 53.185757,-1.611969 | foot      |            |
+      | 53.211013,-1.619393 | 53.185757,-1.611969 | foot         |            |
 
   @Routing
   Scenario Outline: Verify  Road Names on a Walking Route (Musden Low)
@@ -35,7 +35,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB              | routeOptions | avoidances |
-      | 53.049589,-1.823866 | 53.076372,-1.853379 | foot      |            |
+      | 53.049589,-1.823866 | 53.076372,-1.853379 | foot         |            |
 
   @Routing
   Scenario Outline: Verify  Road Names on a Walking Route (A54)
@@ -46,7 +46,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB              | routeOptions | avoidances |
-      | 53.173064,-2.060321 | 53.214387,-2.017271 | foot      |            |
+      | 53.173064,-2.060321 | 53.214387,-2.017271 | foot         |            |
 
   @Routing
   Scenario Outline: Verify  Road Names on a Walking Route (Townhead )
@@ -57,19 +57,18 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB             | routeOptions | avoidances |
-      | 53.122676,-1.909914 | 53.088159,-1.87142 | foot      |            |
+      | 53.122676,-1.909914 | 53.088159,-1.87142 | foot         |            |
 
- @Routing 
+  @Routing
   Scenario Outline: Verify  Road Names on a Walking Route (Martin's Low)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints on the route map:
-      | wayPointIndex | waypointco          | waypointdesc          | azimuth | direction | time  | distance | avoidance |
-      | 3             | 53.071624,-1.914417 | Turn right onto Path | 356.0  | N         | 425697 | 591.2     |           |
-
+      | wayPointIndex | waypointco          | waypointdesc         | azimuth | direction | time   | distance | avoidance |
+      | 3             | 53.071624,-1.914417 | Turn right onto Path | 356.0   | N         | 425697 | 591.2    |           |
 
     Examples: 
       | pointA             | pointB              | routeOptions | avoidances |
-      | 53.06535,-1.906169 | 53.100994,-1.956274 | foot      |            |
+      | 53.06535,-1.906169 | 53.100994,-1.956274 | foot         |            |
 
   @Routing
   Scenario Outline: Verify  Road Names on a Walking Route (Castleton Road)
@@ -80,7 +79,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB              | routeOptions | avoidances |
-      | 53.348832,-1.761122 | 53.197338,-1.594157 | foot      |            |
+      | 53.348832,-1.761122 | 53.197338,-1.594157 | foot         |            |
 
   @Routing
   Scenario Outline: Verify  Road Names on a Walking Route (Hernstone Lane )
@@ -91,7 +90,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB              | routeOptions | avoidances |
-      | 53.300714,-1.786126 | 53.287803,-1.816746 | foot      |            |
+      | 53.300714,-1.786126 | 53.287803,-1.816746 | foot         |            |
 
   @Routing
   Scenario Outline: Verify  Road Names on a Walking Route (Monyash Road)
@@ -102,7 +101,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB              | routeOptions | avoidances |
-      | 53.194909,-1.710481 | 53.156696,-1.634947 | foot      |            |
+      | 53.194909,-1.710481 | 53.156696,-1.634947 | foot         |            |
 
   @Routing
   Scenario Outline: Verify  Road Names on a Walking Route (Whitfield lane)
@@ -113,7 +112,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB              | routeOptions | avoidances |
-      | 53.142876,-1.642599 | 53.163897,-1.714249 | foot      |            |
+      | 53.142876,-1.642599 | 53.163897,-1.714249 | foot         |            |
 
   @Routing
   Scenario Outline: Verify  Road Names on a Walking Route  (Cardlemere Lane)
@@ -124,7 +123,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB             | routeOptions | avoidances |
-      | 53.114295,-1.762789 | 53.086961,-1.69626 | foot      |            |
+      | 53.114295,-1.762789 | 53.086961,-1.69626 | foot         |            |
 
   @Routing
   Scenario Outline: Verify  Road Names on a Walking Route using one intermediate point ( Old Coalpit Lane)
@@ -137,7 +136,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB            | pointC              | routeOptions | avoidances |
-      | 53.238625,-1.794511 | 53.1651,-1.776435 | 53.125221,-1.871205 | foot      |            |
+      | 53.238625,-1.794511 | 53.1651,-1.776435 | 53.125221,-1.871205 | foot         |            |
 
   @Routing
   Scenario Outline: Verify  Road Names on a Walking Route using one intermediate point ( Newhouses Farm)
@@ -149,7 +148,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB             | pointC              | routeOptions | avoidances |
-      | 53.303058,-1.836061 | 53.28261,-1.761964 | 53.233207,-1.633878 | foot      |            |
+      | 53.303058,-1.836061 | 53.28261,-1.761964 | 53.233207,-1.633878 | foot         |            |
 
   @Routing
   Scenario Outline: Verify  Road Names on a Walking Route using one intermediate point ( Bakewell)
@@ -162,7 +161,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB              | pointC              | routeOptions | avoidances |
-      | 53.138247,-1.752507 | 53.195653,-1.762655 | 53.211574,-1.682278 | foot      |            |
+      | 53.138247,-1.752507 | 53.195653,-1.762655 | 53.211574,-1.682278 | foot         |            |
 
   @Routing
   Scenario Outline: Verify  Road Names on a Walking Route  using 2 intermediate waypoints (Mill Lane)
@@ -175,7 +174,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB              | pointC             | pointD              | routeOptions | avoidances |
-      | 53.139805,-1.803217 | 53.133646,-1.826223 | 53.14993,-1.868096 | 53.181298,-1.869034 | foot      |            |
+      | 53.139805,-1.803217 | 53.133646,-1.826223 | 53.14993,-1.868096 | 53.181298,-1.869034 | foot         |            |
 
   @Routing
   Scenario Outline: Verify  Road Names on a Walking Route  using 2 intermediate waypoints (Tag Lane)
@@ -189,7 +188,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB              | pointC              | pointD              | routeOptions | avoidances |
-      | 53.190346,-1.802704 | 53.239419,-1.818421 | 53.280601,-1.764495 | 53.233207,-1.633878 | foot      |            |
+      | 53.190346,-1.802704 | 53.239419,-1.818421 | 53.280601,-1.764495 | 53.233207,-1.633878 | foot         |            |
 
   @Routing
   Scenario Outline: Verify  Road Names on a Walking Route  using 2 intermediate waypoints (Dowlow Farm)
@@ -202,7 +201,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB              | pointC              | pointD             | routeOptions | avoidances |
-      | 53.206965,-1.839021 | 53.203607,-1.857557 | 53.149631,-1.867364 | 53.11417,-1.895082 | foot      |            |
+      | 53.206965,-1.839021 | 53.203607,-1.857557 | 53.149631,-1.867364 | 53.11417,-1.895082 | foot         |            |
 
   # Avoidances : A Road,Boulders,Cliff,Inland Water,Marsh,Quarry Or Pit,Scree,Rock,Mud,Sand,Shingle
   #scree
@@ -215,7 +214,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB              | routeOptions | avoidances |
-      | 53.267104,-1.818304 | 53.131858,-1.661941 | foot      |            |
+      | 53.267104,-1.818304 | 53.131858,-1.661941 | foot         |            |
 
   @Routing
   Scenario Outline: Verify DPN Route with Scree avoidance -(scree)
@@ -226,30 +225,31 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB              | routeOptions | avoidances |
-      | 53.267104,-1.818304 | 53.131858,-1.661941 | foot      | Scree      |
+      | 53.267104,-1.818304 | 53.131858,-1.661941 | foot         | Scree      |
 
   #cliff
   ##############
-  @Routing  
+  @Routing
   Scenario Outline: Verify DPN Route without cliff avoidance -(cliff)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints on the route map:
-      | wayPointIndex | waypointco          | waypointdesc        | azimuth | direction | time   | distance | avoidance |
-      | 5             | 53.311409,-1.627165 | Continue onto Route | 178.0  | S         | 2655 | 3.7   | Cliff     |
-   Examples: 
-      | pointA             | pointB              | routeOptions | avoidances |
-      | 53.31676,-1.631903 | 53.156465,-1.908797 | foot      |            |
-
- @Routing 
-  Scenario Outline: Verify DPN Route with cliff avoidance -(cliff)
-    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
-    Then I should be able to verify the waypoints not on the route map:
-      | wayPointIndex | waypointco          | waypointdesc        | azimuth | direction | time   | distance | avoidance |
-        | 5             | 53.311409,-1.627165 | Continue onto Route | 178.0  | S         | 2655 | 3.7   | Cliff     |
+      | wayPointIndex | waypointco          | waypointdesc        | azimuth | direction | time | distance | avoidance |
+      | 5             | 53.311409,-1.627165 | Continue onto Route | 178.0   | S         | 2655 | 3.7      | Cliff     |
 
     Examples: 
       | pointA             | pointB              | routeOptions | avoidances |
-      | 53.31676,-1.631903 | 53.156465,-1.908797 | foot      | Cliff      |
+      | 53.31676,-1.631903 | 53.156465,-1.908797 | foot         |            |
+
+  @Routing
+  Scenario Outline: Verify DPN Route with cliff avoidance -(cliff)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints not on the route map:
+      | wayPointIndex | waypointco          | waypointdesc        | azimuth | direction | time | distance | avoidance |
+      | 5             | 53.311409,-1.627165 | Continue onto Route | 178.0   | S         | 2655 | 3.7      | Cliff     |
+
+    Examples: 
+      | pointA             | pointB              | routeOptions | avoidances |
+      | 53.31676,-1.631903 | 53.156465,-1.908797 | foot         | Cliff      |
 
   @Routing
   Scenario Outline: Verify DPN Route with cliff avoidance -(cliff)
@@ -262,9 +262,8 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA            | pointB              | routeOptions | avoidances |
-      | 53.5534,-1.983177 | 53.540061,-1.978324 | foot      |            |
+      | 53.5534,-1.983177 | 53.540061,-1.978324 | foot         |            |
 
-  
   Scenario Outline: Verify DPN Route with cliff avoidance -(cliff)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints not on the route map:
@@ -275,7 +274,7 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA            | pointB              | routeOptions | avoidances |
-      | 53.5534,-1.983177 | 53.540061,-1.978324 | foot      | Cliff      |
+      | 53.5534,-1.983177 | 53.540061,-1.978324 | foot         | Cliff      |
 
   #boulders
   @Routing
@@ -287,9 +286,8 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB              | routeOptions | avoidances |
-      | 53.311217,-1.629849 | 53.156465,-1.908797 | foot      |            |
+      | 53.311217,-1.629849 | 53.156465,-1.908797 | foot         |            |
 
-  
   Scenario Outline: Verify DPN Route with boulders avoidance -(boulders)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints not on the route map:
@@ -298,10 +296,10 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA              | pointB              | routeOptions | avoidances |
-      | 53.311217,-1.629849 | 53.156465,-1.908797 | foot      | Boulders   |
+      | 53.311217,-1.629849 | 53.156465,-1.908797 | foot         | Boulders   |
 
   #Multiple Avoidance
-  @Routing 
+  @Routing
   Scenario Outline: Verify DPN Route without boulders avoidance -(boulders)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints on the route map:
@@ -311,9 +309,9 @@ Feature: Verify a route from A to B
 
     Examples: 
       | pointA            | pointB              | routeOptions | avoidances |
-      | 53.5534,-1.983177 | 53.490733,-1.977715 | foot      |            |
+      | 53.5534,-1.983177 | 53.490733,-1.977715 | foot         |            |
 
-  @Routing 
+  @Routing
   Scenario Outline: Verify DPN Route with boulders avoidance -(boulders)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints not on the route map:
@@ -322,5 +320,16 @@ Feature: Verify a route from A to B
       | 9             | 53.545038,-1.986338 | Continue onto Route | 130.0   | SE        | 178328 | 247.7    | Boulders  |
 
     Examples: 
-      | pointA            | pointB              | routeOptions      | avoidances     |
+      | pointA            | pointB              | routeOptions   | avoidances     |
       | 53.5534,-1.983177 | 53.490733,-1.977715 | foot,fastavoid | Boulders,Cliff |
+
+  @Current
+  Scenario Outline: Verify DPN Route with boulders avoidance -()
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                        | azimuth | direction | time  | distance | avoidance         |
+      | 1             | 53.297007,-1.679015 | Continue onto Sir William Hill Road | 79.0    | E         | 61737 | 308.7    | cycleway, unpaved |
+
+    Examples: 
+      | pointA              | pointB              | routeOptions | avoidances |
+      | 53.298525,-1.679533 | 53.203145,-1.799292 | mountainbike |            |
