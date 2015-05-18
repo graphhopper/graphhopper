@@ -47,7 +47,7 @@ public class AlternativeDijkstra extends DijkstraBidirectionRef
         super(graph, encoder, weighting, tMode);
     }
 
-    public boolean alternativeFinished(double maxWeightFactor)
+    public boolean alternativeFinished()
     {
         // we need to finish BOTH searches identical to CH
         if (finishedFrom && finishedTo)
@@ -56,7 +56,8 @@ public class AlternativeDijkstra extends DijkstraBidirectionRef
         if (currFrom.weight + currTo.weight > weightLimit)
             return true;
 
-        return currFrom.weight + currTo.weight >= maxWeightFactor * bestPath.getWeight();
+        // TODO reduce search space via the paper 'Improved Alternative Route Planning'
+        return currFrom.weight > bestPath.getWeight() && currTo.weight > bestPath.getWeight();
     }
 
 
@@ -84,8 +85,8 @@ public class AlternativeDijkstra extends DijkstraBidirectionRef
         // TODO improve performance and make several destinations possible via:
         // 1. do a normal bidir search
         // 2. expand one tree alone
-        // 3. expand the second tree and search for alternatives at the same time
-        while (!alternativeFinished(maxWeightFactor) && !isWeightLimitReached())
+        // 3. expand the second tree and search for alternatives at the same time        
+        while (!alternativeFinished() && !isWeightLimitReached())
         {
             if (!finishedFrom && !finishedTo)
             {

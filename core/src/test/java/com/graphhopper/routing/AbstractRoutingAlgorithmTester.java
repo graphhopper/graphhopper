@@ -95,7 +95,7 @@ public abstract class AbstractRoutingAlgorithmTester
         Path p1 = createAlgo(graphShortest, defaultOpts).
                 calcPath(0, 3);
         assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.calcNodes());
-        assertEquals(p1.toString(), 402.293, p1.getDistance(), 1e-6);
+        assertEquals(p1.toString(), 402.3, p1.getDistance(), .1);
         assertEquals(p1.toString(), 144823, p1.getMillis());
 
         Graph graphFastest = createGraph(false);
@@ -104,8 +104,8 @@ public abstract class AbstractRoutingAlgorithmTester
                 AlgorithmOptions.start().flagEncoder(carEncoder).weighting(new FastestWeighting(carEncoder)).build()).
                 calcPath(0, 3);
         assertEquals(Helper.createTList(0, 4, 6, 7, 5, 3), p2.calcNodes());
-        assertEquals(p2.toString(), 1261.714, p2.getDistance(), 1e-6);
-        assertEquals(p2.toString(), 111437, p2.getMillis());
+        assertEquals(p2.toString(), 1261.7, p2.getDistance(), 0.1);
+        assertEquals(p2.toString(), 111442, p2.getMillis());
     }
 
     // 0-1-2-3
@@ -326,10 +326,7 @@ public abstract class AbstractRoutingAlgorithmTester
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(node);
         while (iter.next())
         {
-            int adj = iter.getAdjNode();
-            double adjLat = na.getLatitude(adj);
-            double adjLon = na.getLongitude(adj);
-            iter.setDistance(distCalc.calcDist(lat, lon, adjLat, adjLon));
+            iter.setDistance(iter.fetchWayGeometry(3).calcDistance(distCalc));
             // System.out.println(node + "->" + adj + ": " + iter.getDistance());
         }
     }
@@ -344,12 +341,12 @@ public abstract class AbstractRoutingAlgorithmTester
         Path p = createAlgo(graph).calcPath(0, 4);
         // PrepareTowerNodesShortcutsTest.printEdges((LevelGraph) graph);
         assertEquals(p.toString(), Helper.createTList(0, 7, 6, 8, 3, 4), p.calcNodes());
-        assertEquals(p.toString(), 335.77, p.getDistance(), 1e-2);
+        assertEquals(p.toString(), 335.8, p.getDistance(), .1);
 
         p = createAlgo(graph).calcPath(1, 2);
         // the other way around is even larger as 0-1 is already 11008.452
         assertEquals(p.toString(), Helper.createTList(1, 2), p.calcNodes());
-        assertEquals(p.toString(), 10007.679, p.getDistance(), 1e-4);
+        assertEquals(p.toString(), 10007.7, p.getDistance(), .1);
     }
 
     // 1-2-3-4-5
@@ -462,21 +459,22 @@ public abstract class AbstractRoutingAlgorithmTester
     public void testWithCoordinates()
     {
         Graph graph = createGraph(false);
-        NodeAccess na = graph.getNodeAccess();
-        na.setNode(0, 0, 2);
-        na.setNode(1, 0, 3.5);
-        na.setNode(2, 1, 1);
-        na.setNode(3, 1.5, 2.5);
-        na.setNode(4, 0.5, 4.5);
 
-        graph.edge(0, 1, 2, true).setWayGeometry(Helper.createPointList(0, 3));
+        graph.edge(0, 1, 2, true).setWayGeometry(Helper.createPointList(1.5, 3));
         graph.edge(2, 3, 2, true);
         graph.edge(3, 4, 2, true).setWayGeometry(Helper.createPointList(1, 3.5));
 
-        graph.edge(0, 2, 0.8, true).setWayGeometry(Helper.createPointList(0, 1.6, 0, 0, 1, 0));
-        graph.edge(0, 2, 1.2, true);
-        graph.edge(1, 3, 1.3, true);
+        graph.edge(0, 2, 0.8, true).setWayGeometry(Helper.createPointList(1.5, 2));
+        // duplicate but longer edge
+        graph.edge(0, 2, 1.2, true).setWayGeometry(Helper.createPointList(0.5, 1));
+        graph.edge(1, 3, 1.3, true).setWayGeometry(Helper.createPointList(1.5, 1.5));
         graph.edge(1, 4, 1, true);
+        
+        updateDistancesFor(graph, 0, 0, 2);
+        updateDistancesFor(graph, 1, 0, 3.5);
+        updateDistancesFor(graph, 2, 1, 1);
+        updateDistancesFor(graph, 3, 1.5, 2.5);
+        updateDistancesFor(graph, 4, 0.5, 4.5);
 
         AlgorithmOptions opts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, carEncoder, new ShortestWeighting());
         RoutingAlgorithmFactory prepare = createFactory(graph, opts);
@@ -489,7 +487,7 @@ public abstract class AbstractRoutingAlgorithmTester
         p = prepare.createAlgo(graph, opts).calcPath(2, 1);
         // System.out.println(p.toDetailsString());
         assertEquals(Helper.createTList(2, 0, 1), p.calcNodes());
-        assertEquals(Helper.createPointList(1, 1, 1, 0, 0, 0, 0, 1.6, 0, 2, 0, 3, 0, 3.5), p.calcPoints());
+        assertEquals(Helper.createPointList(1, 1, 1.5, 2, 0, 2, 0, 3, 0, 3.5), p.calcPoints());
         assertEquals(611555, p.calcPoints().calcDistance(new DistanceCalcEarth()), 1);
     }
 
