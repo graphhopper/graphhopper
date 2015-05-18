@@ -431,8 +431,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco         | waypointdesc                          | azimuth | direction | time  | distance | avoidance |
-      | 2             | 50.732011,-3.53798 | Turn slight left onto STREATHAM DRIVE | 234.0   | SW        | 11955 | 152.2    |           |
-
+      | 2             | 50.727823,-3.540036 | Turn slight left onto HELE ROAD | 85.0   | E        | 12281 | 153.5    |           |
     Examples: 
       | pointA              | pointB             | routeOptions | avoidances |
       | 50.729373,-3.540902 | 50.725564,-3.51809 | car,shortest |            |
@@ -442,7 +441,7 @@ Feature: Verify a route from A to B
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc             | azimuth | direction | time | distance | avoidance |
-      | 2             | 50.733417,-3.524972 | Continue onto UNION ROAD | 77.0    | E         | 5507 | 68.8     |           |
+      | 2             | 50.733417,-3.524972 | Continue onto UNION ROAD | 77.0    | E         | 2478 | 68.8     |           |
 
     Examples: 
       | pointA              | pointB             | routeOptions | avoidances |
