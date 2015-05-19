@@ -36,7 +36,7 @@ public class AlternativeDijkstraTest
 
         /*   9
             _/\
-           1  2-3-4
+           1  2-3-4-10
             \  /  |
             5-6-7-8
          */
@@ -44,6 +44,7 @@ public class AlternativeDijkstraTest
         graph.edge(9, 2, 1, true);
         graph.edge(2, 3, 1, true);
         graph.edge(3, 4, 1, true);
+        graph.edge(4, 10, 1, true);
 
         graph.edge(5, 6, 1, true);
         graph.edge(6, 7, 1, true);
@@ -63,6 +64,7 @@ public class AlternativeDijkstraTest
         updateDistancesFor(graph, 2, 0.05, 0.10);
         updateDistancesFor(graph, 3, 0.05, 0.15);
         updateDistancesFor(graph, 4, 0.05, 0.25);
+        updateDistancesFor(graph, 10, 0.05, 0.30);
         return graph;
     }
 
@@ -111,11 +113,11 @@ public class AlternativeDijkstraTest
         double maxDist = Helper.DIST_EARTH.calcDist(0, 0, 0.05, 0.25) * 2;
         List<Path> paths = altDijkstra.calcRoundTrips(5, maxDist, 2);
         assertEquals(2, paths.size());
-        assertEquals(Helper.createTList(5, 6, 3, 4), paths.get(0).calcNodes());
+        assertEquals(Helper.createTList(5, 6, 3), paths.get(0).calcNodes());
 
         // no plateau filter => prefer the longer path
-        // assertEquals(Helper.createTList(4, 8, 7, 6, 5), paths.get(1).calcNodes());
-        assertEquals(Helper.createTList(4, 3, 2, 9, 1, 5), paths.get(1).calcNodes());
+        // assertEquals(Helper.createTList(10, 4, 8, 7, 6, 5), paths.get(1).calcNodes());
+        assertEquals(Helper.createTList(3, 2, 9, 1, 5), paths.get(1).calcNodes());
     }
 
     void checkAlternatives(List<AlternativeDijkstra.AlternativeInfo> alternativeInfos)

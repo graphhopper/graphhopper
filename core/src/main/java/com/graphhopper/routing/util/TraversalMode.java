@@ -95,7 +95,7 @@ public enum TraversalMode
     /**
      * If you have an EdgeIteratorState the other createTraversalId is preferred!
      */
-    public final int createTraversalId( int adjNode, int baseNode, int edgeId, boolean reverse )
+    public final int createTraversalId(int baseNode, int adjNode, int edgeId, boolean reverse)
     {
         if (edgeBased)
         {
