@@ -79,7 +79,7 @@ public class EncodedValue
         checkValue(value);
         // scale value
         value /= factor;
-        value <<= shift;
+        value <<<= shift;
 
         // clear value bits
         flags &= ~mask;
@@ -92,7 +92,7 @@ public class EncodedValue
     {
         // find value
         flags &= mask;
-        flags >>= shift;
+        flags >>>= shift;
         return Math.round(flags * factor);
     }
 
