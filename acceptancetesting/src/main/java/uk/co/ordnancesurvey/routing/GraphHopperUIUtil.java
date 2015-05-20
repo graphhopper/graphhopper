@@ -396,12 +396,59 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 	}
 
 	public boolean isWayPointNotonRouteMap(
-			List<Map<String, String>> wayPointList) {
-		boolean isWayPointonRouteMap = isWayPointonRouteMap(wayPointList);
-		return isWayPointonRouteMap;
+			List<Map<String, String>> waypointList) {
+		
+		boolean isWayPointNotonsRouteMap = true;
+		boolean isWayPointNotonRouteMap=true;
+		for (int i = 0; i < waypointList.size(); i++) {
+
+			if (waypointList.get(i).size() > 2) {
+				String wayPointIndex = (String) waypointList.get(i).get(
+						"wayPointIndex");
+				String waypointco = (String) waypointList.get(i).get(
+						"waypointco");
+				String waypointdesc = (String) waypointList.get(i).get(
+						"waypointdesc");
+				String azimuth = (String) waypointList.get(i).get("azimuth");
+				String direction = (String) waypointList.get(i)
+						.get("direction");
+				String time = (String) waypointList.get(i).get("time");
+				String distance = (String) waypointList.get(i).get("distance");
+				String avoidance = (String) waypointList.get(i)
+						.get("avoidance");
+
+				isWayPointNotonRouteMap = isWayPointonRouteMap(wayPointIndex,
+						waypointco, waypointdesc, azimuth, direction, time,
+						distance, avoidance);
+				
+				isWayPointNotonsRouteMap=(isWayPointNotonsRouteMap&&isWayPointNotonRouteMap);
+					
+			}
+
+			else
+
+			{
+
+				String wayPointIndex = (String) waypointList.get(i).get(
+						"wayPointIndex");
+				String waypointdesc = (String) waypointList.get(i).get(
+						"waypointdesc");
+				isWayPointNotonRouteMap = verifyInstructionThroughUI(
+						wayPointIndex, waypointdesc, "");
+				
+				isWayPointNotonsRouteMap=(isWayPointNotonsRouteMap||isWayPointNotonRouteMap);
+				
+
+			}
+
+		}
+		return isWayPointNotonsRouteMap;
+
+
 	}
 
 	public boolean isWayPointonRouteMap(List<Map<String, String>> waypointList) {
+		boolean isWayPointsonRouteMap = true;
 		boolean isWayPointonRouteMap = false;
 		for (int i = 0; i < waypointList.size(); i++) {
 
@@ -423,6 +470,10 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 				isWayPointonRouteMap = isWayPointonRouteMap(wayPointIndex,
 						waypointco, waypointdesc, azimuth, direction, time,
 						distance, avoidance);
+				
+				isWayPointsonRouteMap=isWayPointsonRouteMap&&isWayPointonRouteMap;
+
+					
 			}
 
 			else
@@ -435,13 +486,20 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 						"waypointdesc");
 				isWayPointonRouteMap = verifyInstructionThroughUI(
 						wayPointIndex, waypointdesc, "");
+				
+				isWayPointsonRouteMap=isWayPointsonRouteMap&&isWayPointonRouteMap;
+				
 
 			}
 
 		}
-		return isWayPointonRouteMap;
+		return isWayPointsonRouteMap;
 
 	}
+	
+	
+
+	
 
 	public void verifyTotalRouteTime(String totalRouteTime)
 			throws ParseException {

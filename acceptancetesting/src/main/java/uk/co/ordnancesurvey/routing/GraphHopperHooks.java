@@ -241,7 +241,7 @@ public class GraphHopperHooks {
 
 		Assert.assertFalse(
 				"Waypoint found on the route where it was not expected",
-				graphUiUtil.isWayPointonRouteMap(wayPointList));
+				graphUiUtil.isWayPointNotonRouteMap(wayPointList));
 		// graphUiUtil.isWayPointNotonRouteMap(wayPointList);
 
 	}
