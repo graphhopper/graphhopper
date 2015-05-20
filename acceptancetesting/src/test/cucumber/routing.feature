@@ -434,23 +434,13 @@ Feature: Verify a route from A to B
       | 56.38721,-3.466273 | 56.136656,-3.970408 | 55.871665,-4.195067 | 55.950467,-3.208924 | car,fastest  |            |
 
   @Routing
-  Scenario Outline: Verify  nearest point of point using NearestPoint API
+  Scenario Outline: Verify  nearest point on a Route
     Given I request a nearest point from  "<pointA>" from Nearest Point API
     Then I should be able to verify the nearest point to be "<pointB>" at a distance of "<distance>"
 
     Examples: 
-      | pointA                                 | pointB                                 | distance           |
-      | 51.878966,-0.903849                    | 51.875144098888576,-0.9107481891829116 | 636.3215777261629  |
-      | 53.101756,-1.954888                    | 53.10043020792586,-1.961414745138117 | 460.0011625834564  |
-      | 53.065293927002806,-1.9071498141906338 | 53.065293927002806,-1.9071498141906338 | 0                  |
-      | 52.784893,-1.84522                     | 52.79515894789604,-1.8521510478589918  | 1233.001210212637   |
-      | 52.79515894789604,-1.8521510478589918  | 52.79515894789604,-1.8521510478589918  | 0                  |
-      | 54.094977,-2.006081                    | 54.09420551570219,-2.0283477834242833  | 1454.551799711362  |
-      | 54.115309,-2.111881                    | 54.133065323525635,-2.131028334744908  | 2335.612435123903  |
-      | 54.095897,-2.144795                    | 54.08689388826998,-2.1488754559056935  | 1035.8644445463867 |
-      | 50.658849,-1.386463                    | 50.65520130477257,-1.4000444889283343  | 1039.7773305822475 |
-      | 56.025277,-4.917874                    | 56.02196904113215,-4.906092518708935   | 819.3253424080308  |
-      | 50.664175,-1.358463                    | 50.66192580003871,-1.3486298102579224  | 736.8284619868352  |
+      | pointA              | pointB                                 | distance          |
+      | 51.878966,-0.903849 | 51.875144098888576,-0.9107481891829116 | 636.3215777261629 |
 
   # Fastest and Shortest Route Scenarios
   @Routing
@@ -478,3 +468,124 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA                                 | pointB                                 | routeOptions | avoidances |
       | 51.471546541834144,-0.3618621826171875 | 51.45914115860512,-0.96679687499999995 | car,fastest  |            |
+
+  @Routing
+  Scenario Outline: Verify  waypoints on a Route from London to Liverpool
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                                      | azimuth | direction | time    | distance | avoidance |
+      | 9             | 53.47091,-2.632536  | Turn slight left onto M6                          | 186.0   | S         | 6600018 | 183338.0 |           |
+      | 11            | 51.632754,-0.299837 | Continue onto A41 (EDGWARE WAY (WATFORD BY-PASS)) | 156.0   | SE        | 48011   | 1267.0   |           |
+
+    Examples: 
+      | pointA              | pointB              | routeOptions | avoidances |
+      | 53.432923,-2.971511 | 51.505165,-0.147902 | car,fastest  |            |
+
+  @Routing
+  Scenario Outline: Verify  waypoints on a Route from London to Liverpool
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                                        | azimuth | direction | time  | distance | avoidance |
+      | 30            | 53.340148,-2.735071 | Turn slight left onto A533 (BRIDGEWATER EXPRESSWAY) | 96.0    | E         | 34015 | 897.7    |           |
+      | 41            | 53.291868,-2.591888 | Turn slight right onto A49 (WARRINGTON ROAD)        | 162.0   | S         | 99801 | 2633.8   |           |
+      | 80            | 53.101356,-2.286824 | Turn slight left onto LINLEY LANE (A50)             | 174.0   | S         | 6872  | 85.9     |           |
+
+    Examples: 
+      | pointA              | pointB              | routeOptions | avoidances |
+      | 53.432923,-2.971511 | 51.505165,-0.147902 | car,shortest |            |
+
+  @Routing
+  Scenario Outline: Verify  waypoints on a Route in Isle of Wight
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                          | azimuth | direction | time   | distance | avoidance |
+      | 5             | 50.705368,-1.324668 | Turn right onto GUNVILLE ROAD         | 161.0   | S         | 119526 | 1494.1   |           |
+      | 9             | 50.687826,-1.320457 | Turn right onto BOWCOMBE ROAD (B3323) | 200.0   | S         | 274969 | 3715.5   |           |
+
+    Examples: 
+      | pointA             | pointB              | routeOptions | avoidances |
+      | 50.690318,-1.38526 | 50.664175,-1.358463 | car,fastest  |            |
+
+  @Routing
+  Scenario Outline: Verify  waypoints on a Route in Isle of Wight
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                               | azimuth | direction | time  | distance | avoidance |
+      | 6             | 50.643066,-1.391581 | Turn left onto LIMERSTONE ROAD (B3399)     | 77.0    | E         | 74475 | 1034.4   |           |
+      | 10            | 50.64454,-1.354991  | Turn slight left onto FARRIERS WAY (B3323) | 11.0    | N         | 22784 | 284.8    |           |
+
+    Examples: 
+      | pointA             | pointB              | routeOptions | avoidances |
+      | 50.690318,-1.38526 | 50.664175,-1.358463 | car,shortest |            |
+
+  @Routing
+  Scenario Outline: Verify  waypoints on a Route  from Stronchullin to Admore
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                           | azimuth | direction | time  | distance | avoidance |
+      | 10            | 56.005209,-4.750748 | Continue onto WEST CLYDE STREET (A814) | 97.0    | E         | 40914 | 1079.8   |           |
+      | 16            | 55.986711,-4.666085 | Continue onto STONEYMOLLAN ROAD        | 2.0     | N         | 44867 | 623.2    |           |
+
+    Examples: 
+      | pointA              | pointB              | routeOptions | avoidances |
+      | 56.025277,-4.917874 | 55.992355,-4.636534 | car,fastest  |            |
+
+  @Routing
+  Scenario Outline: Verify  waypoints on a Route from Stronchullin to Admore
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                         | azimuth | direction | time   | distance | avoidance |
+      | 5             | 56.09353,-4.836554  | At roundabout, take exit 1 onto A814 | 86.0    | E         | 76206  | 2011.0   |           |
+      | 15            | 55.975811,-4.678383 | Turn left onto RED ROAD              | 42.0    | NE        | 120144 | 1668.7   |           |
+
+    Examples: 
+      | pointA              | pointB              | routeOptions | avoidances |
+      | 56.025277,-4.917874 | 55.992355,-4.636534 | car,shortest |            |
+
+  @Routing
+  Scenario Outline: Verify  waypoints on a Route from Swansea to Bath
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                         | azimuth | direction | time  | distance | avoidance |
+      | 7             | 51.624622,-3.857058 | At roundabout, take exit 3 onto A483 | 5.0     | N         | 52856 | 1394.9   |           |
+      | 15            | 51.387526,-2.346317 | Turn right onto WARMINSTER ROAD      | 161.0   | S         | 759   | 9.5      |           |
+
+    Examples: 
+      | pointA              | pointB              | routeOptions | avoidances |
+      | 51.630586,-3.943108 | 51.386345,-2.344899 | car,fastest  |            |
+
+  @Routing
+  Scenario Outline: Verify  waypoints on a Route from Swansea to Bath
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                                         | azimuth | direction | time   | distance | avoidance |
+      | 15            | 51.531866,-3.681224 | Turn left onto BRIDGE STREET (B4281)                 | 50.0    | NE        | 780    | 9.8      |           |
+      | 32            | 51.567867,-3.022101 | At roundabout, take exit 1 onto CARDIFF ROAD (B4237) | 36.0    | NE        | 203767 | 2710.8   |           |
+
+    Examples: 
+      | pointA              | pointB              | routeOptions | avoidances |
+      | 51.630586,-3.943108 | 51.386345,-2.344899 | car,shortest |            |
+
+  @Routing
+  Scenario Outline: Verify  waypoints on a Route from Turbo to Plymouth
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                  | azimuth | direction | time | distance | avoidance |
+      | 10            | 50.413722,-4.328221 | Continue onto A38 (MILL ROAD) | 74.0    | E         | 5105 | 134.8    |           |
+      | 19            | 50.398962,-4.133073 | Turn left onto MAITLAND DRIVE | 36.0    | NE        | 4813 | 60.2     |           |
+
+    Examples: 
+      | pointA              | pointB              | routeOptions | avoidances |
+      | 50.270096,-5.052681 | 50.399429,-4.132644 | car,fastest  |            |
+
+  @Routing
+  Scenario Outline: Verify  waypoints on a Route from Turbo to Plymouth
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                         | azimuth | direction | time   | distance | avoidance |
+      | 15            | 50.292674,-4.941538 | At roundabout, take exit 1 onto A390 | 87.0    | E         | 604536 | 12232.4  |           |
+      | 42            | 50.440131,-4.411407 | Turn slight left onto EAST ROAD      | 87.0    | E         | 24268  | 303.4    |           |
+
+    Examples: 
+      | pointA              | pointB              | routeOptions | avoidances |
+      | 50.270096,-5.052681 | 50.399429,-4.132644 | car,shortest |            |

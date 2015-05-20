@@ -174,7 +174,9 @@ public class GraphHopperJSONParser {
 		}
 
 		String apikey = IntegrationTestProperties.getTestProperty("apiKey");
-
+		if (vehicle.equalsIgnoreCase("mountainbike")) {
+			vehicle = "mtb";
+		}
 		StringBuilder sb = new StringBuilder();
 		sb.append(graphHopperUrl);
 		sb.append("route?");
