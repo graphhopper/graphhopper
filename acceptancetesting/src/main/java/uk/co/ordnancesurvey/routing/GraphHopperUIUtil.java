@@ -67,7 +67,6 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 		}
 	}
 
-
 	private void init() throws InterruptedException {
 		// baseUrl = IntegrationTestProperties
 		// .getTestProperty("graphHopperWebUrl");
@@ -178,25 +177,16 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 					break;
 				}
 			}
-/*switch (routeOption) {
-case "shortavoid":
-	clickElement(shortest_RButton);
-	break;
-case "fastavoid":
-	clickElement(fastest_RButton);
-	break;
-case "fastest":
-	
-	clickElement(fastest_RButton);
-	break;
-case "shortest":
-	clickElement(shortest_RButton);
-	break;
-
-default:
-	break;
-}
-		*/	if (routeOption.equalsIgnoreCase("shortavoid")) {
+			/*
+			 * switch (routeOption) { case "shortavoid":
+			 * clickElement(shortest_RButton); break; case "fastavoid":
+			 * clickElement(fastest_RButton); break; case "fastest":
+			 * 
+			 * clickElement(fastest_RButton); break; case "shortest":
+			 * clickElement(shortest_RButton); break;
+			 * 
+			 * default: break; }
+			 */if (routeOption.equalsIgnoreCase("shortavoid")) {
 				clickElement(shortest_RButton);
 			}
 
@@ -332,6 +322,8 @@ default:
 			String avoidance) {
 		boolean isWayPointonRouteMap = false;
 		Waypoint wp;
+		boolean isWayPointonRouteMapUI = false;
+		boolean isWayPointonRouteMapService = false;
 
 		switch (testOn.toUpperCase()) {
 		case "WEB":
@@ -348,7 +340,7 @@ default:
 
 			} else {
 				wp = GPHJsonService.buildWayPointForJson(wayPoint_Coordinates,
-						wayPointDescription, time, distance,avoidance);
+						wayPointDescription, time, distance, avoidance);
 				isWayPointonRouteMap = GPHJsonService.isWayPointinPath(wp);
 
 			}
@@ -356,24 +348,30 @@ default:
 			break;
 
 		default:
-			verifyInstructionThroughUI(wayPointIndex, wayPointDescription,
-					avoidance);
+
+			isWayPointonRouteMapUI = verifyInstructionThroughUI(wayPointIndex,
+					wayPointDescription, avoidance);
 
 			if (IntegrationTestProperties.getTestProperty("routeType").equals(
 					"gpx")) {
 				wp = buildWayPoint(wayPoint_Coordinates, wayPointDescription,
 						azimuth, direction, time, distance);
-				isWayPointonRouteMap = GPHService.isWayPointOnGPXRoutes(wp);
+
+				isWayPointonRouteMapService = GPHService
+						.isWayPointOnGPXRoutes(wp);
 
 			} else {
-				wp = GPHJsonService.buildWayPointForJson(wayPoint_Coordinates,
-						wayPointDescription, time, distance,avoidance);
-				isWayPointonRouteMap = GPHJsonService.isWayPointinPath(wp);
 
+				wp = GPHJsonService.buildWayPointForJson(wayPoint_Coordinates,
+						wayPointDescription, time, distance, avoidance);
+				isWayPointonRouteMapService = GPHJsonService
+						.isWayPointinPath(wp);
 			}
+
 			break;
 		}
-		return isWayPointonRouteMap;
+
+		return (isWayPointonRouteMapUI) && (isWayPointonRouteMapService);
 
 	}
 
@@ -535,8 +533,8 @@ default:
 			}
 
 			else {
-				assertTrue(GPHJsonService.isWayPointinPath(trackPoint,GPHJsonService
-						.getJsonCoordinatesAsHashSet()));
+				assertTrue(GPHJsonService.isWayPointinPath(trackPoint,
+						GPHJsonService.getJsonCoordinatesAsHashSet()));
 
 			}
 
@@ -561,8 +559,8 @@ default:
 			}
 
 			else {
-				assertTrue(!GPHJsonService.isWayPointinPath(trackPoint,GPHJsonService
-						.getJsonCoordinatesAsHashSet()));
+				assertTrue(!GPHJsonService.isWayPointinPath(trackPoint,
+						GPHJsonService.getJsonCoordinatesAsHashSet()));
 
 			}
 
