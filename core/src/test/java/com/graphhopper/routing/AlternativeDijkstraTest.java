@@ -8,6 +8,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
 
@@ -29,11 +30,12 @@ public class AlternativeDijkstraTest
     // TODO TraversalMode tMode = TraversalMode.EDGE_BASED_2DIR;
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
 
-    Graph createTestGraph()
+    GraphStorage createTestGraph(boolean fullGraph)
     {
         GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), em, false);
         graph.create(1000);
 
+        // fullGraph=false => only 3-8
         /*   9
             _/\
            1  2-3-4-10
@@ -42,15 +44,19 @@ public class AlternativeDijkstraTest
          */
         graph.edge(1, 9, 1, true);
         graph.edge(9, 2, 1, true);
-        graph.edge(2, 3, 1, true);
+        if (fullGraph)
+            graph.edge(2, 3, 1, true);
         graph.edge(3, 4, 1, true);
-        graph.edge(4, 10, 1, true);
+        if (fullGraph)
+            graph.edge(4, 10, 1, true);
 
         graph.edge(5, 6, 1, true);
+
         graph.edge(6, 7, 1, true);
         graph.edge(7, 8, 1, true);
 
-        graph.edge(1, 5, 2, true);
+        if (fullGraph)
+            graph.edge(1, 5, 2, true);
         graph.edge(6, 3, 1, true);
         graph.edge(4, 8, 1, true);
 
@@ -72,7 +78,7 @@ public class AlternativeDijkstraTest
     public void testCalcAlternatives() throws Exception
     {
         Weighting weighting = new FastestWeighting(carFE);
-        Graph g = createTestGraph();
+        Graph g = createTestGraph(true);
         AlternativeDijkstra altDijkstra = new AlternativeDijkstra(g, carFE, weighting, tMode);
         List<AlternativeDijkstra.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 4, 2, 0.3, 2);
         checkAlternatives(pathInfos);
@@ -108,7 +114,7 @@ public class AlternativeDijkstraTest
     public void testCalcRoundTrip() throws Exception
     {
         Weighting weighting = new FastestWeighting(carFE);
-        Graph g = createTestGraph();
+        Graph g = createTestGraph(true);
         AlternativeDijkstra altDijkstra = new AlternativeDijkstra(g, carFE, weighting, tMode);
         double maxDist = Helper.DIST_EARTH.calcDist(0, 0, 0.05, 0.25) * 2;
         List<Path> paths = altDijkstra.calcRoundTrips(5, maxDist, 2);
@@ -118,6 +124,22 @@ public class AlternativeDijkstraTest
         // no plateau filter => prefer the longer path
         // assertEquals(Helper.createTList(10, 4, 8, 7, 6, 5), paths.get(1).calcNodes());
         assertEquals(Helper.createTList(3, 2, 9, 1, 5), paths.get(1).calcNodes());
+    }
+
+    @Test
+    public void testCalcRoundTripWhereAlreadyPlateauStartIsDifferentToBestRoute() throws Exception
+    {
+        // exception occured for 51.074194,13.705444
+        Weighting weighting = new FastestWeighting(carFE);
+
+        // now force that start of plateau of alternative is already different edge than optimal route
+        GraphStorage g = createTestGraph(false);
+        AlternativeDijkstra altDijkstra = new AlternativeDijkstra(g, carFE, weighting, tMode);
+        double maxDist = Helper.DIST_EARTH.calcDist(0, 0, 0.05, 0.25) * 2;
+        List<Path> paths = altDijkstra.calcRoundTrips(5, maxDist, 2);
+        assertEquals(2, paths.size());
+        assertEquals(Helper.createTList(5, 6, 3, 4), paths.get(0).calcNodes());
+        assertEquals(Helper.createTList(4, 8, 7, 6, 5), paths.get(1).calcNodes());
     }
 
     void checkAlternatives(List<AlternativeDijkstra.AlternativeInfo> alternativeInfos)

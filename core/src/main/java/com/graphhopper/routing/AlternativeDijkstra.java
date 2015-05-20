@@ -139,6 +139,11 @@ public class AlternativeDijkstra extends DijkstraBidirectionRef
         // init collections and bestPath.getWeight properly
         runAlgo();
 
+
+        // path not found -> TODO try with another 'to' point
+        if(Double.isInfinite(bestPath.getWeight()))
+            return Collections.emptyList();
+
         List<AlternativeInfo> infos = this.calcAlternatives(2, maxWeightFactor, -0.1, 0.05);
         if (infos.isEmpty())
             return Collections.emptyList();
@@ -146,7 +151,7 @@ public class AlternativeDijkstra extends DijkstraBidirectionRef
         if (infos.size() == 1)
         {
             // fallback to same path for backward direction (or at least VERY similar path as optimal)
-            paths.add(bestForward);
+            paths.add(bestForward.extract());
             paths.add(infos.get(0).getPath().extract());
         } else
         {
@@ -180,7 +185,7 @@ public class AlternativeDijkstra extends DijkstraBidirectionRef
                 EdgeEntry tmpFromEdgeEntry = tmpFromMap.get(tKey);
 
                 // if (tmpFromEdgeEntry.parent != null) tmpFromEdgeEntry = tmpFromEdgeEntry.parent;
-                bestForward = new Path(graph, flagEncoder).setEdgeEntry(tmpFromEdgeEntry).setWeight(tmpFromEdgeEntry.weight);
+                bestForward = new Path(graph, flagEncoder).setEdgeEntry(tmpFromEdgeEntry).setWeight(tmpFromEdgeEntry.weight).extract();
 
                 newTo = newTo.parent;
                 // force new 'to'
@@ -188,7 +193,7 @@ public class AlternativeDijkstra extends DijkstraBidirectionRef
                 secondBest.getPath().setWeight(secondBest.getPath().getWeight() - newTo.weight);
             }
 
-            paths.add(bestForward.extract());
+            paths.add(bestForward);
             paths.add(secondBest.getPath().extract());
         }
         return paths;
