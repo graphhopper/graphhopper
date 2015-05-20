@@ -1,7 +1,5 @@
 package uk.co.ordnancesurvey.routing;
 
-import gherkin.formatter.model.Feature;
-
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.List;
@@ -12,7 +10,6 @@ import org.junit.Assert;
 import uk.co.ordnancesurvey.gpx.graphhopper.IntegrationTestProperties;
 import cucumber.api.Scenario;
 import cucumber.api.java.After;
-import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 
@@ -90,7 +87,7 @@ public class GraphHopperHooks {
 		case "WEB":
 
 			graphUiUtil
-					.getRouteFromUI(routeOptions, "", pointA, pointB, pointC);
+					.getRouteFromUI(routeOptions, avoidance, pointA, pointB, pointC);
 			break;
 		case "SERVICE":
 			graphUiUtil.getRouteFromServiceWithAvoidance(routeOptions,
@@ -102,9 +99,9 @@ public class GraphHopperHooks {
 				graphUiUtil.getRouteFromServiceWithAvoidance(routeOptions,
 						avoidance, pointA, pointB, pointC);
 				graphUiUtil
-						.getRouteFromUI(routeOptions, pointA, pointB, pointC);
+						.getRouteFromUI(routeOptions, avoidance,pointA, pointB, pointC);
 			} else {
-				graphUiUtil.getRouteFromUI(routeOptions, "", pointA, pointB,
+				graphUiUtil.getRouteFromUI(routeOptions, avoidance, pointA, pointB,
 						pointC);
 			}
 
@@ -113,7 +110,7 @@ public class GraphHopperHooks {
 		}
 
 	}
-
+/*
 	public void getRoute(String pointA, String pointB, String routeOptions,
 			String pointC, String pointD) throws InterruptedException {
 
@@ -148,7 +145,7 @@ public class GraphHopperHooks {
 
 		}
 
-	}
+	}*/
 
 	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI and avoid \"([^\"]*)\" via \"([^\"]*)\" and \"([^\"]*)\"$")
 	public void getRouteWithAvoidances(String pointA, String pointB,

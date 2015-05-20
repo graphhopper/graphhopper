@@ -367,11 +367,12 @@ public class GraphHopperUIUtil extends MultiplatformTest {
 				isWayPointonRouteMapService = GPHJsonService
 						.isWayPointinPath(wp);
 			}
+			isWayPointonRouteMap=(isWayPointonRouteMapUI) && (isWayPointonRouteMapService);
 
 			break;
 		}
 
-		return (isWayPointonRouteMapUI) && (isWayPointonRouteMapService);
+		return isWayPointonRouteMap;
 
 	}
 
