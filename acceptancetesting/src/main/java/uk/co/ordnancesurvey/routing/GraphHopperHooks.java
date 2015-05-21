@@ -2,12 +2,15 @@ package uk.co.ordnancesurvey.routing;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
 
 import uk.co.ordnancesurvey.gpx.graphhopper.IntegrationTestProperties;
+import cucumber.api.DataTable;
 import cucumber.api.Scenario;
 import cucumber.api.java.After;
 import cucumber.api.java.en.Given;
@@ -288,4 +291,51 @@ public class GraphHopperHooks {
 
 	}
 
+
+
+
+
+@Given("^I request a route between pointA and pointB as a \"([^\"]*)\" from RoutingAPI and avoid \"([^\"]*)\" via$")
+public void getRouteWithAvoidancesintermediatepoints(String routeOptions,String avoidances,DataTable dt)
+		throws InterruptedException {
+	
+	List<List<String>> data =dt.raw();
+   
+   
+String[] points= new String[data.get(1).size()];
+   points= data.get(1).toArray(points);
+
+
+	
+	graphUiUtil = new GraphHopperUIUtil(
+			IntegrationTestProperties.getTestProperty("graphHopperWebUrl"));
+
+	String testON = IntegrationTestProperties.getTestProperty("testON");
+
+	switch (testON.toUpperCase()) {
+	case "WEB":
+
+		graphUiUtil.getRouteFromUI(routeOptions, avoidances, points);
+		break;
+	case "SERVICE":
+		graphUiUtil.getRouteFromServiceWithAvoidance(routeOptions,
+				avoidances, points);
+		break;
+	default:
+
+		if (points[0].split(",").length == 2) {
+			graphUiUtil.getRouteFromServiceWithAvoidance(routeOptions,
+					avoidances, points);
+			graphUiUtil.getRouteFromUI(routeOptions, avoidances, points);
+		} else {
+			graphUiUtil.getRouteFromUI(routeOptions, avoidances, points);
+		}
+
+		break;
+
+	}
+
+
+
+}
 }

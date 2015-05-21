@@ -405,7 +405,7 @@ Feature: Verify a route from A to B
       | pointA                                 | pointB              | pointC                                 | pointD              | routeOptions | avoidances |
       | 51.471546541834144,-0.3618621826171875 | 51.414152,-0.747504 | 51.45914115860512,-0.96679687499999995 | 51.433882,-0.537904 | car          |            |
 
-  @Routing
+  @Routing 
   Scenario Outline: Verify  Route using 2 intermediate waypoints (Oxford to Eaton via Warwick and Cambridge )
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>" via "<pointC>" and "<pointD>"
     Then I should be able to verify the waypoints on the route map:
@@ -589,3 +589,23 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA              | pointB              | routeOptions | avoidances |
       | 50.270096,-5.052681 | 50.399429,-4.132644 | car,shortest |            |
+
+  @Routing 
+  Scenario Outline: Verify  Route using 2 intermediate waypoints (Perth to Edinburgh via Stirling and Glasgow )
+    Given I request a route between pointA and pointB as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>" via
+      | pointA              | pointB              | pointC             | pointD              |
+      | 51.746075,-1.263972 | 52.289962,-1.604752 | 52.202814,0.051429 | 51.491412,-0.610276 |
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                                         | azimuth | direction | time   | distance | avoidance |
+      | 5             | 51.748432,-1.261457 | Turn left onto THAMES STREET (A420)                  | 275.0   | W         | 5517   | 145.6    |           |
+      | 21            | 52.289769,-1.60905  | At roundabout, take exit 3 onto A46                  | 249.0   | W         | 481412 | 12704.3  |           |
+      | 32            | 52.256925,-0.123683 | At roundabout, take exit 3 onto ST IVES ROAD (A1198) | 95.0    | E         | 57226  | 1510.2   |           |
+      | 68            | 51.560087,-0.496049 | At roundabout, take exit 2 onto A412 (DENHAM ROAD)   | 98.0    | E         | 31561  | 832.9    |           |
+
+    Examples: 
+      | routeOptions | avoidances |
+      | car |            |
+      
+      
+      
+      
