@@ -430,8 +430,9 @@ Feature: Verify a route from A to B
   Scenario Outline: Verify  a shortest route  on a Route (Prince Of Wales Road-Exeter)
     Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>"
     Then I should be able to verify the waypoints on the route map:
-      | wayPointIndex | waypointco         | waypointdesc                          | azimuth | direction | time  | distance | avoidance |
-      | 2             | 50.727823,-3.540036 | Turn slight left onto HELE ROAD | 85.0   | E        | 12281 | 153.5    |           |
+      | wayPointIndex | waypointco          | waypointdesc                    | azimuth | direction | time  | distance | avoidance |
+      | 2             | 50.727823,-3.540036 | Turn slight left onto HELE ROAD | 85.0    | E         | 12281 | 153.5    |           |
+
     Examples: 
       | pointA              | pointB             | routeOptions | avoidances |
       | 50.729373,-3.540902 | 50.725564,-3.51809 | car,shortest |            |
@@ -468,3 +469,54 @@ Feature: Verify a route from A to B
     Examples: 
       | pointA              | pointB              | routeOptions | avoidances |
       | 50.728119,-3.530372 | 50.723788,-3.517289 | car,fastest  |            |
+
+  # Intermediate waypoints
+  @Routing
+  Scenario Outline: Verify  Route using one intermediate waypoint (Sidwell-Street and Western Way )
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>" via "<pointC>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                         | azimuth | direction | time  | distance | avoidance |
+      | 2             | 50.725549,-3.52693  | Turn sharp left onto SIDWELL STREET  | 47.0    | NE        | 17774 | 226.1    |           |
+      | 12            | 50.729424,-3.518763 | Turn left onto B3212 (BLACKBOY ROAD) | 252.0   | W         | 9435  | 128.5    |           |
+
+    Examples: 
+      | pointA             | pointB              | pointC              | routeOptions | avoidances |
+      | 50.726537,-3.52799 | 50.729285,-3.518781 | 50.724236,-3.523403 | car          |            |
+
+  @Routing
+  Scenario Outline: Verify  Route using one intermediate waypoint (Southern Way and Paris-Street)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>" via "<pointC>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                                         | azimuth | direction | time  | distance | avoidance |
+      | 6             | 50.720037,-3.528958 | Continue onto B3212 (MAGDALEN STREET)                | 64.0    | NE        | 3438  | 45.4     |           |
+      | 15            | 50.725108,-3.52286  | At roundabout, take exit 1 onto PARIS STREET (B3183) | 321.0   | NW        | 24607 | 319.7    |           |
+
+    Examples: 
+      | pointA              | pointB              | pointC              | routeOptions | avoidances |
+      | 50.722314,-3.539121 | 50.721886,-3.527393 | 50.727346,-3.529876 | car          |            |
+
+  @Routing
+  Scenario Outline: Verify  Route using (2 intermediate waypoints)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>" via "<pointC>" and "<pointD>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                   | azimuth | direction | time  | distance | avoidance |
+      | 5             | 50.719971,-3.529196 | Continue onto A3015            | 65.0    | NE        | 1466  | 18.3     |           |
+      | 10            | 50.721881,-3.52737  | Continue onto SOUTHERNHAY WEST | 19.0    | N         | 3779  | 47.2     |           |
+      | 21            | 50.726462,-3.523882 | Continue onto CHEEKE STREET    | 128.0   | SE        | 10960 | 139.9    |           |
+
+    Examples: 
+      | pointA              | pointB              | pointC              | pointD            | routeOptions | avoidances |
+      | 50.722314,-3.539121 | 50.721886,-3.527393 | 50.727346,-3.529876 | 50.72373,-3.51756 | car          |            |
+
+  @Routing
+  Scenario Outline: Verify  Route using 2 intermediate waypoints via (Western way and Paris Street)
+    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>" via "<pointC>" and "<pointD>"
+    Then I should be able to verify the waypoints on the route map:
+      | wayPointIndex | waypointco          | waypointdesc                                         | azimuth | direction | time  | distance | avoidance |
+      | 1             | 50.721075,-3.519573 | Continue onto ST LEONARD'S ROAD                      | 1.0     | N         | 421   | 5.3      |           |
+      | 6             | 50.725096,-3.522378 | At roundabout, take exit 2 onto PARIS STREET (B3183) | 239.0   | SW        | 27224 | 356.1    |           |
+      | 10            | 50.725549,-3.52693  | Turn sharp left onto SIDWELL STREET                  | 47.0    | NE        | 17774 | 226.1    |           |
+
+    Examples: 
+      | pointA              | pointB              | pointC              | pointD            | routeOptions | avoidances |
+      | 50.721075,-3.519606 | 50.724423,-3.519888 | 50.727505,-3.529782 | 50.72373,-3.51756 | car          |            |
