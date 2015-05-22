@@ -411,7 +411,6 @@ Feature: Verify a route from A to B
       | routeOptions | avoidances |
       | car          |            |
 
-  @Routing
   Scenario Outline: Verify  Route using one intermediate waypoint (Hounslow to Reading via Staines )
     Given I request a route between pointA and pointB as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>" via
       | pointA                                 | pointB              | pointC                                 |
