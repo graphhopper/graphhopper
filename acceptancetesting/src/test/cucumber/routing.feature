@@ -432,7 +432,7 @@ Feature: Verify a route from A to B
       | 51.409426,-0.591727 | 51.407904,-0.617237 | 51.41855,-0.672385 |
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                          | azimuth | direction | time   | distance | avoidance |
-      | 2             | 51.40643,-0.596399  | Turn right onto BLACKNEST ROAD (A329) | 289.0   | W         | 73038  | 1115.9   |           |
+      | 2             | 51.40643,-0.596399  | Turn right onto BLACKNEST ROAD (A329) | 289.0   | W         | 88113  | 1115.9   |           |
       | 5             | 51.407984,-0.617235 | Continue onto LONDON ROAD (A329)      | 274.0   | W         | 162619 | 2540.3   |           |
       | 7             | 51.410306,-0.668737 | Turn right onto WINKFIELD ROAD (A330) | 7.0     | N         | 46532  | 955.5    |           |
 
