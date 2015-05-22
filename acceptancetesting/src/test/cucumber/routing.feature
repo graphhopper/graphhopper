@@ -41,7 +41,7 @@ Feature: Verify a route from A to B
       | 1             | 50.896796,-1.400544 | Continue onto PLATFORM ROAD (A33)                        | 254.0   | W         | 3192    | 84.3     |           |
       | 16            | 50.951921,-1.404239 | At roundabout, take exit 1 onto A33                      | 318.0   | NW        | 7083    | 187.0    |           |
       | 17            | 50.953446,-1.403571 | Turn slight right onto M3                                | 28.0    | NE        | 566900  | 15747.6  |           |
-      | 18            | 51.07086,-1.292917  | At roundabout, take exit 2 onto A34 (WINCHESTER BY-PASS) | 284.0   | NE        | 55129   | 1454.8   |           |
+      | 18            | 51.07086,-1.292917  | At roundabout, take exit 2 onto A34 (WINCHESTER BY-PASS) | 284.0   | W         | 55129   | 1454.8   |           |
       | 20            | 51.868385,-1.199845 | At roundabout, take exit 1 onto M40                      | 357.0   | N         | 2636747 | 73242.2  |           |
       | 24            | 52.381175,-1.790061 | At roundabout, take exit 1 onto A34 (STRATFORD ROAD)     | 301.0   | NW        | 46514   | 1227.5   |           |
 
@@ -411,16 +411,15 @@ Feature: Verify a route from A to B
       | routeOptions | avoidances |
       | car          |            |
 
-  @Routing
   Scenario Outline: Verify  Route using one intermediate waypoint (Hounslow to Reading via Staines )
     Given I request a route between pointA and pointB as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>" via
       | pointA                                 | pointB              | pointC                                 |
       | 51.471546541834144,-0.3618621826171875 | 51.433882,-0.537904 | 51.45914115860512,-0.96679687499999995 |
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                         | azimuth | direction | time   | distance | avoidance |
-      | 1             | 51.472387,-0.361788 | Continue onto ELLINGTON ROAD         | 286.0   | W         | 10789  | 104.9    |           |
-      | 9             | 51.477555,-0.403923 | At roundabout, take exit 3 onto A312 | 238.0   | SW        | 115905 | 1770.8   |           |
-      | 15            | 51.355407,-0.679946 | At roundabout, take exit 3 onto A322 | 184.0   | S         | 224937 | 5936.2   |           |
+      | 1             | 51.472387,-0.361788 | Continue onto ELLINGTON ROAD         | 286.0   | W         | 8390   | 104.9    |           |
+      | 8             | 51.440696,-0.53089  | Continue onto M25                    | 204.0   | SW        | 32673  | 907.6    |           |
+      | 12            | 51.355407,-0.679946 | At roundabout, take exit 3 onto A322 | 184.0   | S         | 224937 | 5936.2   |           |
 
     Examples: 
       | routeOptions | avoidances |
@@ -434,7 +433,7 @@ Feature: Verify a route from A to B
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                          | azimuth | direction | time   | distance | avoidance |
       | 2             | 51.40643,-0.596399  | Turn right onto BLACKNEST ROAD (A329) | 289.0   | W         | 73038  | 1115.9   |           |
-      | 5             | 51.407984,-0.617235 | Continue onto LONDON ROAD (A329)      | 274.0   | W         | 166263 | 2540.3   |           |
+      | 5             | 51.407984,-0.617235 | Continue onto LONDON ROAD (A329)      | 274.0   | W         | 162619 | 2540.3   |           |
       | 7             | 51.410306,-0.668737 | Turn right onto WINKFIELD ROAD (A330) | 7.0     | N         | 46532  | 955.5    |           |
 
     Examples: 

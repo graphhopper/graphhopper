@@ -23,7 +23,7 @@ public class GraphHopperHooks {
 	String nearestPoint = "";
 	String Distance = "";
 
-	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI and avoid \"([^\"]*)\"$")
+/*	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI and avoid \"([^\"]*)\"$")
 	public void getRouteWithAvoidance(String pointA, String pointB,
 			String routeOptions, String avoidances) throws InterruptedException {
 		String graphHopperWebUrl;
@@ -148,7 +148,9 @@ public class GraphHopperHooks {
 
 		}
 
-	}*/
+	}*
+	
+	/*
 
 	@Given("^I request a route between \"([^\"]*)\" and \"([^\"]*)\" as a \"([^\"]*)\" from RoutingAPI and avoid \"([^\"]*)\" via \"([^\"]*)\" and \"([^\"]*)\"$")
 	public void getRouteWithAvoidances(String pointA, String pointB,
@@ -187,7 +189,7 @@ public class GraphHopperHooks {
 		}
 
 	}
-
+*/
 	@Given("^I request a nearest point from  \"([^\"]*)\" from Nearest Point API$")
 	public void I_request_a_nearest_point_from_from_Nearest_Point_API(
 			String pointA) {
