@@ -119,9 +119,10 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         Graph graphShortest = createGraph(false);
         initDirectedAndDiffSpeed(graphShortest, carEncoder);
-        Path p1 = createAlgo(graphShortest, defaultOpts).calcPath(0, 3);
+        Path p1 = createAlgo(graphShortest, defaultOpts).
+                calcPath(0, 3);
         assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.calcNodes());
-        assertEquals(p1.toString(), 402.293, p1.getDistance(), 1e-6);
+        assertEquals(p1.toString(), 402.3, p1.getDistance(), .1);
         assertEquals(p1.toString(), 144823, p1.getTime());
 
         Graph graphFastest = createGraph(false);
@@ -130,8 +131,8 @@ public abstract class AbstractRoutingAlgorithmTester
                 AlgorithmOptions.start().flagEncoder(carEncoder).weighting(new FastestWeighting(carEncoder)).build()).
                 calcPath(0, 3);
         assertEquals(Helper.createTList(0, 4, 6, 7, 5, 3), p2.calcNodes());
-        assertEquals(p2.toString(), 1261.714, p2.getDistance(), 1e-6);
-        assertEquals(p2.toString(), 111437, p2.getTime());
+        assertEquals(p2.toString(), 1261.7, p2.getDistance(), 0.1);
+        assertEquals(p2.toString(), 111442, p2.getMillis());
     }
 
     // 0-1-2-3
@@ -353,10 +354,7 @@ public abstract class AbstractRoutingAlgorithmTester
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(node);
         while (iter.next())
         {
-            int adj = iter.getAdjNode();
-            double adjLat = na.getLatitude(adj);
-            double adjLon = na.getLongitude(adj);
-            iter.setDistance(distCalc.calcDist(lat, lon, adjLat, adjLon));
+            iter.setDistance(iter.fetchWayGeometry(3).calcDistance(distCalc));
             // System.out.println(node + "->" + adj + ": " + iter.getDistance());
         }
     }
@@ -371,12 +369,12 @@ public abstract class AbstractRoutingAlgorithmTester
         Path p = createAlgo(graph).calcPath(0, 4);
         // PrepareTowerNodesShortcutsTest.printEdges((LevelGraph) graph);
         assertEquals(p.toString(), Helper.createTList(0, 7, 6, 8, 3, 4), p.calcNodes());
-        assertEquals(p.toString(), 335.77, p.getDistance(), 1e-2);
+        assertEquals(p.toString(), 335.8, p.getDistance(), .1);
 
         p = createAlgo(graph).calcPath(1, 2);
         // the other way around is even larger as 0-1 is already 11008.452
         assertEquals(p.toString(), Helper.createTList(1, 2), p.calcNodes());
-        assertEquals(p.toString(), 10007.679, p.getDistance(), 1e-4);
+        assertEquals(p.toString(), 10007.7, p.getDistance(), .1);
     }
 
     // 1-2-3-4-5
@@ -489,35 +487,36 @@ public abstract class AbstractRoutingAlgorithmTester
     public void testWithCoordinates()
     {
         Graph graph = createGraph(false);
-        NodeAccess na = graph.getNodeAccess();
-        na.setNode(0, 0, 2);
-        na.setNode(1, 0, 3.5);
-        na.setNode(2, 1, 1);
-        na.setNode(3, 1.5, 2.5);
-        na.setNode(4, 0.5, 4.5);
 
-        graph.edge(0, 1, 2, true).setWayGeometry(Helper.createPointList(0, 3));
-        graph.edge(2, 3, 2, true);
-        graph.edge(3, 4, 2, true).setWayGeometry(Helper.createPointList(1, 3.5));
+        graph.edge(0, 1, 2, true).setWayGeometry(Helper.createPointList(1.5, 1));
+        graph.edge(2, 3, 2, true).setWayGeometry(Helper.createPointList(0, 1.5));
+        graph.edge(3, 4, 2, true).setWayGeometry(Helper.createPointList(0, 2));
 
-        graph.edge(0, 2, 0.8, true).setWayGeometry(Helper.createPointList(0, 1.6, 0, 0, 1, 0));
+        // duplicate but one is longer
         graph.edge(0, 2, 1.2, true);
-        graph.edge(1, 3, 1.3, true);
+        graph.edge(0, 2, 1.5, true).setWayGeometry(Helper.createPointList(0.5, 0));
+
+        graph.edge(1, 3, 1.3, true).setWayGeometry(Helper.createPointList(0.5, 1.5));
         graph.edge(1, 4, 1, true);
+
+        updateDistancesFor(graph, 0, 1, 0.6);
+        updateDistancesFor(graph, 1, 1, 1.5);
+        updateDistancesFor(graph, 2, 0, 0);
+        updateDistancesFor(graph, 3, 0, 1);
+        updateDistancesFor(graph, 4, 0, 2);
 
         AlgorithmOptions opts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, carEncoder, new ShortestWeighting());
         RoutingAlgorithmFactory prepare = createFactory(graph, opts);
         Path p = prepare.createAlgo(graph, opts).calcPath(4, 0);
         assertEquals(Helper.createTList(4, 1, 0), p.calcNodes());
-        assertEquals(Helper.createPointList(0.5, 4.5, 0, 3.5, 0, 3, 0, 2), p.calcPoints());
-        assertEquals(291110, p.calcPoints().calcDistance(new DistanceCalcEarth()), 1);
+        assertEquals(Helper.createPointList(0, 2, 1, 1.5, 1.5, 1, 1, 0.6), p.calcPoints());
+        assertEquals(274128, p.calcPoints().calcDistance(new DistanceCalcEarth()), 1);
 
         // PrepareTowerNodesShortcutsTest.printEdges((LevelGraph) graph);
         p = prepare.createAlgo(graph, opts).calcPath(2, 1);
-        // System.out.println(p.toDetailsString());
         assertEquals(Helper.createTList(2, 0, 1), p.calcNodes());
-        assertEquals(Helper.createPointList(1, 1, 1, 0, 0, 0, 0, 1.6, 0, 2, 0, 3, 0, 3.5), p.calcPoints());
-        assertEquals(611555, p.calcPoints().calcDistance(new DistanceCalcEarth()), 1);
+        assertEquals(Helper.createPointList(0, 0, 1, 0.6, 1.5, 1, 1, 1.5), p.calcPoints());
+        assertEquals(279482, p.calcPoints().calcDistance(new DistanceCalcEarth()), 1);
     }
 
     @Test
@@ -694,7 +693,6 @@ public abstract class AbstractRoutingAlgorithmTester
         // for two weights per edge it happened that Path (and also the Weighting) read the wrong side 
         // of the speed and read 0 => infinity weight => overflow of millis => negative millis!
         Path p = createAlgo(graph, AlgorithmOptions.start().flagEncoder(encoder).weighting(new FastestWeighting(encoder)).build()).calcPath(0, 10);
-//        assertEquals(Helper.createTList(13, 0, 1, 2, 11, 7, 10, 12), p.calcNodes());
         assertEquals(85124371, p.getTime());
         assertEquals(425622, p.getDistance(), 1);
         assertEquals(85124.4, p.getWeight(), 1);
@@ -733,7 +731,7 @@ public abstract class AbstractRoutingAlgorithmTester
             @Override
             public double getMinWeight( double distance )
             {
-                return distance;
+                return 0.8 * distance;
             }
 
             @Override

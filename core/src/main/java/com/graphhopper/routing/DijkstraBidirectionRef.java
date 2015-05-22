@@ -135,6 +135,18 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     }
 
     @Override
+    protected double getCurrentFromWeight()
+    {
+        return currFrom.weight;
+    }
+
+    @Override
+    protected double getCurrentToWeight()
+    {
+        return currTo.weight;
+    }
+
+    @Override
     void checkState( int fromBase, int fromAdj, int toBase, int toAdj )
     {
         if (bestWeightMapFrom.isEmpty() || bestWeightMapTo.isEmpty())
