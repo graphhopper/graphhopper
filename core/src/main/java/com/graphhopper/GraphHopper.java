@@ -23,7 +23,7 @@ import com.graphhopper.reader.dem.CGIARProvider;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.AlternativeDijkstra;
+import com.graphhopper.routing.AlternativeRoute;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.RoutingAlgorithm;
@@ -965,8 +965,7 @@ public class GraphHopper implements GraphHopperAPI
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
         QueryGraph queryGraph = new QueryGraph(graph);
         queryGraph.lookup(qResults);
-
-        QueryResult fromQResult = qResults.get(0);
+        
         Weighting weighting = createWeighting(request.getHints(), encoder);
         weighting = createTurnWeighting(weighting, queryGraph, encoder);
 
@@ -993,8 +992,9 @@ public class GraphHopper implements GraphHopperAPI
 //            }
 
             // use time in seconds
+            QueryResult fromQResult = qResults.get(0);
             double maxDistance = rtApproxTime / 3.6 * 60;
-            AlternativeDijkstra altDijkstra = new AlternativeDijkstra(queryGraph, algoOpts.getFlagEncoder(), algoOpts.getWeighting(), algoOpts.getTraversalMode());
+            AlternativeRoute altDijkstra = new AlternativeRoute(queryGraph, algoOpts.getFlagEncoder(), algoOpts.getWeighting(), algoOpts.getTraversalMode());
             paths = altDijkstra.calcRoundTrips(fromQResult.getClosestNode(), maxDistance, rtMaxWeightFactor);
 
         } else if (!chEnabled && altMax > 0)
@@ -1004,10 +1004,11 @@ public class GraphHopper implements GraphHopperAPI
                 rsp.addError(new IllegalArgumentException("Currently alternative paths can be calculated only without via-points"));
                 return Collections.emptyList();
             }
+            QueryResult fromQResult = qResults.get(0);
             QueryResult toQResult = qResults.get(1);
-            AlternativeDijkstra altDijkstra = new AlternativeDijkstra(queryGraph, algoOpts.getFlagEncoder(), algoOpts.getWeighting(), algoOpts.getTraversalMode());
-            paths = new ArrayList<Path>(1 + altMax);
-            for (AlternativeDijkstra.AlternativeInfo ai : altDijkstra.calcAlternatives(fromQResult.getClosestNode(), toQResult.getClosestNode(), altMax + 1, altMaxShare, altMaxWeightFactor))
+            AlternativeRoute altDijkstra = new AlternativeRoute(queryGraph, algoOpts.getFlagEncoder(), algoOpts.getWeighting(), algoOpts.getTraversalMode());
+            paths = new ArrayList<Path>(1 + altMax);            
+            for (AlternativeRoute.AlternativeInfo ai : altDijkstra.calcAlternatives(fromQResult.getClosestNode(), toQResult.getClosestNode(), altMax + 1, altMaxShare, altMaxWeightFactor))
             {
                 paths.add(ai.getPath());
             }
@@ -1018,6 +1019,7 @@ public class GraphHopper implements GraphHopperAPI
                 rsp.addError(new IllegalStateException("At least 2 points has to be specified, but was:" + points.size()));
                 return Collections.emptyList();
             }
+            QueryResult fromQResult = qResults.get(0);
             paths = new ArrayList<Path>(points.size() - 1);
             for (int placeIndex = 1; placeIndex < points.size(); placeIndex++)
             {

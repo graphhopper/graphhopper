@@ -21,7 +21,8 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.AlternativeDijkstra;
+import com.graphhopper.routing.AlternativeRoute;
+import com.graphhopper.routing.AlternativeRoute.AltDijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.RoutingAlgorithm;
@@ -77,7 +78,7 @@ import gnu.trove.procedure.TIntProcedure;
  */
 public class MiniGraphUI
 {
-    public static void main(String[] strs) throws Exception
+    public static void main( String[] strs ) throws Exception
     {
         CmdArgs args = CmdArgs.read(strs);
         GraphHopper hopper = new GraphHopper().init(args).importOrLoad();
@@ -102,7 +103,7 @@ public class MiniGraphUI
     private final FlagEncoder encoder;
     private AlgorithmOptions algoOpts;
 
-    public MiniGraphUI(GraphHopper hopper, boolean debug)
+    public MiniGraphUI( GraphHopper hopper, boolean debug )
     {
         this.graph = hopper.getGraph();
         this.na = graph.getNodeAccess();
@@ -126,7 +127,7 @@ public class MiniGraphUI
         infoPanel = new JPanel()
         {
             @Override
-            protected void paintComponent(Graphics g)
+            protected void paintComponent( Graphics g )
             {
                 g.setColor(Color.WHITE);
                 Rectangle b = infoPanel.getBounds();
@@ -151,7 +152,7 @@ public class MiniGraphUI
             Random rand = new Random();
 
             @Override
-            public void paintComponent(Graphics2D g2)
+            public void paintComponent( Graphics2D g2 )
             {
                 clearGraphics(g2);
                 int locs = graph.getNodes();
@@ -252,7 +253,7 @@ public class MiniGraphUI
         mainPanel.addLayer(pathLayer = new DefaultMapLayer()
         {
             @Override
-            public void paintComponent(final Graphics2D g2)
+            public void paintComponent( final Graphics2D g2 )
             {
                 if (fromRes == null || toRes == null)
                     return;
@@ -260,10 +261,10 @@ public class MiniGraphUI
                 makeTransparent(g2);
                 final QueryGraph qGraph = new QueryGraph(graph).lookup(fromRes, toRes);
 
-                if(!fromRes.isValid() || !toRes.isValid())
+                if (!fromRes.isValid() || !toRes.isValid())
                     return;
 
-                AlternativeDijkstra algo = new AlternativeDijkstra(qGraph,
+                AltDijkstraBidirectionRef algo = new AltDijkstraBidirectionRef(qGraph,
                         algoOpts.getFlagEncoder(), algoOpts.getWeighting(), algoOpts.getTraversalMode());
                 if (algo instanceof DebugAlgo)
                 {
@@ -288,9 +289,8 @@ public class MiniGraphUI
 //                    mg.plotNode(g2, nodeId, Color.red);
 //                }
                 // path = algo.calcPath(fromRes.getClosestNode(), toRes.getClosestNode());
-
-
-                algo.calcAlternatives(fromRes.getClosestNode(), toRes.getClosestNode(), 3, 0.3, 1.4);
+                algo.searchBest(fromRes.getClosestNode(), toRes.getClosestNode());
+                algo.calcAlternatives(2, 1.4, 2, 0.1);
                 sw.stop();
 
                 // if directed edges
@@ -302,7 +302,6 @@ public class MiniGraphUI
 //
 //                logger.info("found path in " + sw.getSeconds() + "s with nodes:"
 //                        + path.calcNodes().size() + ", millis: " + path.getMillis() + ", " + path);
-
                 final NodeAccess qna = qGraph.getNodeAccess();
                 g2.setColor(Color.GREEN.darker());
                 mg.plot(g2, qna.getLat(fromRes.getClosestNode()), qna.getLon(fromRes.getClosestNode()), 10);
@@ -312,13 +311,12 @@ public class MiniGraphUI
                 g2.setColor(Color.BLUE.darker());
 
                 // plotPath(path, g2, 2);
-
-                if (algo instanceof AlternativeDijkstra)
+                if (algo instanceof AltDijkstraBidirectionRef)
                 {
-                    ((AlternativeDijkstra) algo).iterateTree(0, new TIntProcedure()
+                    ((AltDijkstraBidirectionRef) algo).iterateTree(0, new TIntProcedure()
                     {
                         @Override
-                        public boolean execute(int edgeId)
+                        public boolean execute( int edgeId )
                         {
                             EdgeIteratorState edge = qGraph.getEdgeProps(edgeId, Integer.MIN_VALUE);
                             double lat1 = qna.getLat(edge.getAdjNode()), lon1 = qna.getLon(edge.getAdjNode());
@@ -340,7 +338,7 @@ public class MiniGraphUI
         }
     }
 
-    public Color[] generateColors(int n)
+    public Color[] generateColors( int n )
     {
         Color[] cols = new Color[n];
         for (int i = 0; i < n; i++)
@@ -351,7 +349,7 @@ public class MiniGraphUI
     }
 
     // for debugging
-    private Path calcPath(RoutingAlgorithm algo)
+    private Path calcPath( RoutingAlgorithm algo )
     {
 //        int from = index.findID(50.042, 10.19);
 //        int to = index.findID(50.049, 10.23);
@@ -364,14 +362,14 @@ public class MiniGraphUI
         return algo.calcPath(162810, 35120);
     }
 
-    void plotNodeName(Graphics2D g2, int node)
+    void plotNodeName( Graphics2D g2, int node )
     {
         double lat = na.getLatitude(node);
         double lon = na.getLongitude(node);
         mg.plotText(g2, lat, lon, "" + node);
     }
 
-    private Path plotPath(Path tmpPath, Graphics2D g2, int w)
+    private Path plotPath( Path tmpPath, Graphics2D g2, int w )
     {
         if (!tmpPath.isFound())
         {
@@ -434,7 +432,7 @@ public class MiniGraphUI
                     mainPanel.addMouseWheelListener(new MouseWheelListener()
                     {
                         @Override
-                        public void mouseWheelMoved(MouseWheelEvent e)
+                        public void mouseWheelMoved( MouseWheelEvent e )
                         {
                             mg.scale(e.getX(), e.getY(), e.getWheelRotation() < 0);
                             repaintRoads();
@@ -466,7 +464,7 @@ public class MiniGraphUI
                         boolean fromDone = false;
 
                         @Override
-                        public void mouseClicked(MouseEvent e)
+                        public void mouseClicked( MouseEvent e )
                         {
                             if (!fromDone)
                             {
@@ -493,7 +491,7 @@ public class MiniGraphUI
                         boolean dragging = false;
 
                         @Override
-                        public void mouseDragged(MouseEvent e)
+                        public void mouseDragged( MouseEvent e )
                         {
                             dragging = true;
                             fastPaint = true;
@@ -502,7 +500,7 @@ public class MiniGraphUI
                         }
 
                         @Override
-                        public void mouseReleased(MouseEvent e)
+                        public void mouseReleased( MouseEvent e )
                         {
                             if (dragging)
                             {
@@ -513,20 +511,20 @@ public class MiniGraphUI
                             }
                         }
 
-                        public void update(MouseEvent e)
+                        public void update( MouseEvent e )
                         {
                             mg.setNewOffset(e.getX() - currentPosX, e.getY() - currentPosY);
                             repaintRoads();
                         }
 
                         @Override
-                        public void mouseMoved(MouseEvent e)
+                        public void mouseMoved( MouseEvent e )
                         {
                             updateLatLon(e);
                         }
 
                         @Override
-                        public void mousePressed(MouseEvent e)
+                        public void mousePressed( MouseEvent e )
                         {
                             updateLatLon(e);
                         }
@@ -565,7 +563,7 @@ public class MiniGraphUI
     int currentPosX;
     int currentPosY;
 
-    void updateLatLon(MouseEvent e)
+    void updateLatLon( MouseEvent e )
     {
         latLon = mg.getLat(e.getY()) + "," + mg.getLon(e.getX());
         infoPanel.repaint();

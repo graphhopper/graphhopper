@@ -24,16 +24,32 @@ import com.graphhopper.routing.util.AllEdgesSkipIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.GHDirectory;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.LevelGraphStorage;
+import com.graphhopper.storage.MMapDirectory;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.RAMDirectory;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A helper class to avoid cluttering the Graph interface with all the common methods. Most of the
  * methods are useful for unit tests or debugging only.
  * <p/>
+ *
  * @author Peter Karich
  */
 public class GHUtility
@@ -231,7 +247,7 @@ public class GHUtility
                 @Override
                 protected boolean goFurther( int nodeId )
                 {
-                    list.set(nodeId, ref.incrementAndGet());                    
+                    list.set(nodeId, ref.incrementAndGet());
                     return super.goFurther(nodeId);
                 }
             }.start(explorer, startNode);
@@ -519,5 +535,13 @@ public class GHUtility
     public static boolean isSameEdgeKeys( int edgeKey1, int edgeKey2 )
     {
         return edgeKey1 / 2 == edgeKey2 / 2;
+    }
+
+    /**
+     * Returns the edgeKey of the opposite direction
+     */
+    public static int reverseEdgeKey( int edgeKey )
+    {
+        return edgeKey % 2 == 0 ? edgeKey + 1 : edgeKey - 1;
     }
 }

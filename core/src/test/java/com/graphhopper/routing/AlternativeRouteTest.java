@@ -23,14 +23,14 @@ import static org.junit.Assert.assertTrue;
 /**
  *
  */
-public class AlternativeDijkstraTest
+public class AlternativeRouteTest
 {
     private final FlagEncoder carFE = new CarFlagEncoder();
     private final EncodingManager em = new EncodingManager(carFE);
-    // TODO TraversalMode tMode = TraversalMode.EDGE_BASED_2DIR;
+    // TODO private final TraversalMode tMode = TraversalMode.EDGE_BASED_2DIR;
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
 
-    GraphStorage createTestGraph(boolean fullGraph)
+    GraphStorage createTestGraph( boolean fullGraph )
     {
         GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), em, false);
         graph.create(1000);
@@ -79,8 +79,8 @@ public class AlternativeDijkstraTest
     {
         Weighting weighting = new FastestWeighting(carFE);
         Graph g = createTestGraph(true);
-        AlternativeDijkstra altDijkstra = new AlternativeDijkstra(g, carFE, weighting, tMode);
-        List<AlternativeDijkstra.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 4, 2, 0.3, 2);
+        AlternativeRoute altDijkstra = new AlternativeRoute(g, carFE, weighting, tMode);
+        List<AlternativeRoute.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 4, 2, 0.3, 2);
         checkAlternatives(pathInfos);
         assertEquals(2, pathInfos.size());
 
@@ -91,6 +91,7 @@ public class AlternativeDijkstraTest
         Path secondAlt = pathInfos.get(1).getPath();
 
         assertEquals(bestPath.calcNodes(), bestAlt.calcNodes());
+        assertEquals(bestPath.getWeight(), bestAlt.getWeight(), 1e-3);
 
         assertEquals(Helper.createTList(5, 6, 3, 4), bestAlt.calcNodes());
 
@@ -98,9 +99,16 @@ public class AlternativeDijkstraTest
         // so which alternative is better? longer plateau.weight with bigger path.weight or smaller path.weight with smaller plateau.weight
         // assertEquals(Helper.createTList(5, 1, 9, 2, 3, 4), secondAlt.calcNodes());
         assertEquals(Helper.createTList(5, 6, 7, 8, 4), secondAlt.calcNodes());
+        assertEquals(1667.9, secondAlt.getWeight(), .1);
+    }
 
-        altDijkstra = new AlternativeDijkstra(g, carFE, weighting, tMode);
-        pathInfos = altDijkstra.calcAlternatives(5, 4, 3, 0.3, 2);
+    @Test
+    public void testCalcAlternatives2() throws Exception
+    {
+        Weighting weighting = new FastestWeighting(carFE);
+        Graph g = createTestGraph(true);
+        AlternativeRoute altDijkstra = new AlternativeRoute(g, carFE, weighting, tMode);
+        List<AlternativeRoute.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 4, 3, 0.3, 2);
         checkAlternatives(pathInfos);
         assertEquals(3, pathInfos.size());
 
@@ -108,6 +116,7 @@ public class AlternativeDijkstraTest
         assertEquals(Helper.createTList(5, 6, 3, 4), pathInfos.get(0).getPath().calcNodes());
         assertEquals(Helper.createTList(5, 6, 7, 8, 4), pathInfos.get(1).getPath().calcNodes());
         assertEquals(Helper.createTList(5, 1, 9, 2, 3, 4), pathInfos.get(2).getPath().calcNodes());
+        assertEquals(2416.0, pathInfos.get(2).getPath().getWeight(), .1);
     }
 
     @Test
@@ -115,7 +124,7 @@ public class AlternativeDijkstraTest
     {
         Weighting weighting = new FastestWeighting(carFE);
         Graph g = createTestGraph(true);
-        AlternativeDijkstra altDijkstra = new AlternativeDijkstra(g, carFE, weighting, tMode);
+        AlternativeRoute altDijkstra = new AlternativeRoute(g, carFE, weighting, tMode);
         double maxDist = Helper.DIST_EARTH.calcDist(0, 0, 0.05, 0.25) * 2;
         List<Path> paths = altDijkstra.calcRoundTrips(5, maxDist, 2);
         assertEquals(2, paths.size());
@@ -124,6 +133,12 @@ public class AlternativeDijkstraTest
         // no plateau filter => prefer the longer path
         // assertEquals(Helper.createTList(10, 4, 8, 7, 6, 5), paths.get(1).calcNodes());
         assertEquals(Helper.createTList(3, 2, 9, 1, 5), paths.get(1).calcNodes());
+
+        altDijkstra = new AlternativeRoute(g, carFE, weighting, tMode);
+        paths = altDijkstra.calcRoundTrips(6, maxDist, 2);
+        assertEquals(2, paths.size());
+        assertEquals(Helper.createTList(6, 3, 4), paths.get(0).calcNodes());
+        assertEquals(Helper.createTList(4, 8, 7, 6), paths.get(1).calcNodes());
     }
 
     @Test
@@ -134,7 +149,7 @@ public class AlternativeDijkstraTest
 
         // now force that start of plateau of alternative is already different edge than optimal route
         GraphStorage g = createTestGraph(false);
-        AlternativeDijkstra altDijkstra = new AlternativeDijkstra(g, carFE, weighting, tMode);
+        AlternativeRoute altDijkstra = new AlternativeRoute(g, carFE, weighting, tMode);
         double maxDist = Helper.DIST_EARTH.calcDist(0, 0, 0.05, 0.25) * 2;
         List<Path> paths = altDijkstra.calcRoundTrips(5, maxDist, 2);
         assertEquals(2, paths.size());
@@ -142,9 +157,9 @@ public class AlternativeDijkstraTest
         assertEquals(Helper.createTList(4, 8, 7, 6, 5), paths.get(1).calcNodes());
     }
 
-    void checkAlternatives(List<AlternativeDijkstra.AlternativeInfo> alternativeInfos)
+    void checkAlternatives( List<AlternativeRoute.AlternativeInfo> alternativeInfos )
     {
-        for (AlternativeDijkstra.AlternativeInfo a : alternativeInfos)
+        for (AlternativeRoute.AlternativeInfo a : alternativeInfos)
         {
             if (a.getPlateauWeight() > a.getPath().getWeight())
                 assertTrue("plateau or sortby incorrect -> " + a, false);
