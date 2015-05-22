@@ -993,7 +993,7 @@ public class GraphHopper implements GraphHopperAPI
 
             // use time in seconds
             QueryResult fromQResult = qResults.get(0);
-            double maxDistance = rtApproxTime / 3.6 * 60;
+            double maxDistance = rtApproxTime / 3.6 * 50;
             AlternativeRoute altDijkstra = new AlternativeRoute(queryGraph, algoOpts.getFlagEncoder(), algoOpts.getWeighting(), algoOpts.getTraversalMode());
             paths = altDijkstra.calcRoundTrips(fromQResult.getClosestNode(), maxDistance, rtMaxWeightFactor);
 

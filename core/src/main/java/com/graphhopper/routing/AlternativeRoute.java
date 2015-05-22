@@ -133,7 +133,7 @@ public class AlternativeRoute
         if (Double.isInfinite(bestBackwardPath.getWeight()))
             return Collections.emptyList();
 
-        List<AlternativeInfo> infos = altBidirDijktra.calcAlternatives(2, maxWeightFactor, -0.1, 0.05);
+        List<AlternativeInfo> infos = altBidirDijktra.calcAlternatives(2, maxWeightFactor, 0.05, 0.1);
         if (infos.isEmpty())
             return Collections.emptyList();
 
