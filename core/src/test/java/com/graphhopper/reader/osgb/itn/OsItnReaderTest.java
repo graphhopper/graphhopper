@@ -278,6 +278,21 @@ public class OsItnReaderTest extends AbstractOsItnReaderTest {
         assertFalse(iter.next());
     }
 
+    @Test
+    public void testPedestianisedStreetExclusion() throws IOException {
+
+        final File file = new File("./src/test/resources/com/graphhopper/reader/os-itn-exclude-pedestrianised-street.xml");
+        final boolean turnRestrictionsImport = false;
+        final boolean is3D = false;
+        final GraphHopperStorage graph = configureStorage(turnRestrictionsImport, is3D);
+        readGraphFile(graph, file);
+        carOutExplorer = graph.createEdgeExplorer(carOutEdges);
+        logger.info("Number of edges after Pedestrianised Street exclusion: " + count(carOutExplorer.setBaseNode(0)));
+        GHUtility.printInfo(graph, 0, 10, EdgeFilter.ALL_EDGES);
+        assertEquals(2, count(carOutExplorer.setBaseNode(0)));
+
+    }
+
 
     @Test
     @Ignore
