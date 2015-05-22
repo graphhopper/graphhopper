@@ -411,7 +411,7 @@ Feature: Verify a route from A to B
       | routeOptions | avoidances |
       | car          |            |
 
-  @Routing @Current
+  @Routing
   Scenario Outline: Verify  Route using one intermediate waypoint (Hounslow to Reading via Staines )
     Given I request a route between pointA and pointB as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>" via
       | pointA                                 | pointB              | pointC                                 |
@@ -434,7 +434,7 @@ Feature: Verify a route from A to B
     Then I should be able to verify the waypoints on the route map:
       | wayPointIndex | waypointco          | waypointdesc                          | azimuth | direction | time   | distance | avoidance |
       | 2             | 51.40643,-0.596399  | Turn right onto BLACKNEST ROAD (A329) | 289.0   | W         | 73038  | 1115.9   |           |
-      | 5             | 51.407984,-0.617235 | Continue onto LONDON ROAD (A329)      | 274.0   | W         | 166263 | 2540.3   |           |
+      | 5             | 51.407984,-0.617235 | Continue onto LONDON ROAD (A329)      | 274.0   | W         | 162619 | 2540.3   |           |
       | 7             | 51.410306,-0.668737 | Turn right onto WINKFIELD ROAD (A330) | 7.0     | N         | 46532  | 955.5    |           |
 
     Examples: 
