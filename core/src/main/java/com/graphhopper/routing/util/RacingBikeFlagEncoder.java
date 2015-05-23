@@ -127,6 +127,9 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
         setCyclingNetworkPreference("mtb", PriorityCode.UNCHANGED.getValue());
 
         absoluteBarriers.add("kissing_gate");
+
+        setAvoidSpeedLimit(81);
+
     }
 
     @Override

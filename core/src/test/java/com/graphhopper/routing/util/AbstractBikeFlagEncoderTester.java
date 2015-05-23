@@ -353,17 +353,12 @@ public abstract class AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testMaxAndMinSpeed()
+    public void testPreferenceForSlowSpeed()
     {
         OSMWay osmWay = new OSMWay(1);
         osmWay.setTag("highway", "tertiary");
         assertEquals(30, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(osmWay, 49, false))), 1e-1);
         assertPriority(PREFER.getValue(), osmWay);
-
-        osmWay.setTag("highway", "tertiary");
-        osmWay.setTag("maxspeed", "90");
-        assertEquals(20, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(osmWay, 20, false))), 1e-1);
-        assertPriority(REACH_DEST.getValue(), osmWay);
     }
 
     @Test
