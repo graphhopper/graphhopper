@@ -155,7 +155,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         setHighwaySpeed("steps", PUSHING_SECTION_SPEED / 2);
 
         setHighwaySpeed("cycleway", 18);
-        setHighwaySpeed("path", 18);
+        setHighwaySpeed("path", 12);
         setHighwaySpeed("footway", 6);
         setHighwaySpeed("pedestrian", 6);
         setHighwaySpeed("track", 12);
@@ -349,13 +349,35 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     int getSpeed( OSMWay way )
     {
         int speed = PUSHING_SECTION_SPEED;
+        Integer sInt = null;
+        Integer hwInt = null;
+        String highway = way.getTag("highway");
+        if (!Helper.isEmpty(highway))
+            {
+                hwInt = highwaySpeed.get(highway);
+            }
         String s = way.getTag("surface");
         if (!Helper.isEmpty(s))
         {
-            Integer sInt = surfaceSpeed.get(s);
-            if (sInt != null)
-                speed = sInt;
-        } else
+                sInt = surfaceSpeed.get(s);
+                if (sInt != null)
+                {
+                    speed = sInt;
+                    if (hwInt != null)
+                    // Boost handling for good surfaces
+                    if (sInt > hwInt)
+                    {
+                       // Avoid boosting of highway type footway by a fast surface
+                       if (highway == "footway")
+                       {
+                           speed = hwInt;
+                       }
+                       else
+                          speed = sInt;
+                    }
+                }
+        }
+        else
         {
             String tt = way.getTag("tracktype");
             if (!Helper.isEmpty(tt))
@@ -365,22 +387,19 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                     speed = tInt;
             } else
             {
-                String highway = way.getTag("highway");
-                if (!Helper.isEmpty(highway))
+                if (hwInt != null)
                 {
-                    Integer hwInt = highwaySpeed.get(highway);
-                    if (hwInt != null)
+                    if (way.getTag("service") == null)
                     {
-                        if (way.getTag("service") == null)
-                            speed = hwInt;
-                        else
-                            speed = highwaySpeed.get("living_street");
+                        speed = hwInt;
                     }
+                    else
+                        speed = highwaySpeed.get("living_street");
                 }
             }
         }
 
-        // Until now we assumed that the way is no pusing section
+        // Until now we assumed that the way is no pushing section
         // Now we check, but only in case that our speed is bigger compared to the PUSHING_SECTION_SPEED
         if ((speed > PUSHING_SECTION_SPEED)
                 && (!way.hasTag("bicycle", intendedValues) && way.hasTag("highway", pushingSections)))
@@ -488,7 +507,10 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                 || way.hasTag("bicycle", "use_sidepath")
                 || "parking_aisle".equals(service))
         {
-            weightToPrioMap.put(50d, AVOID_IF_POSSIBLE.getValue());
+            if (way.hasTag("bicycle", "yes"))
+               weightToPrioMap.put(100d, UNCHANGED.getValue());
+            else
+               weightToPrioMap.put(50d, AVOID_IF_POSSIBLE.getValue());
         }
 
         if (avoidHighwayTags.contains(highway) || maxSpeed > 80)

@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PUSHING_SECTION_SPEED;
 import static com.graphhopper.routing.util.PriorityCode.*;
 import org.junit.Test;
 
@@ -47,10 +48,53 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertEquals(18, encoder.getSpeed(way));
         assertPriority(REACH_DEST.getValue(), way);
 
+        // Pushing section !! This is fine as we obey the law!
+        way.clearTags();
         way.setTag("highway", "footway");
+        assertEquals(PUSHING_SECTION_SPEED, encoder.getSpeed(way));
+        assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
+
+        // Pushing section irrespective of the pavement
+        way.setTag("surface", "paved");
+        assertEquals(PUSHING_SECTION_SPEED, encoder.getSpeed(way));
+        assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
+
+        way.clearTags();
+        way.setTag("highway", "footway");
+        way.setTag("bicycle", "yes");        
+        assertEquals(6, encoder.getSpeed(way));
+        assertPriority(UNCHANGED.getValue(), way);
+
+        way.clearTags();
+        way.setTag("highway", "footway");
+        way.setTag("surface", "paved");
+        way.setTag("bicycle", "yes");
+        
+        assertEquals(6, encoder.getSpeed(way));
+        assertPriority(UNCHANGED.getValue(), way);
+
+        way.clearTags();
+        way.setTag("highway", "path");
+        way.setTag("bicycle", "yes");
+        assertEquals(12, encoder.getSpeed(way));
+        assertPriority(UNCHANGED.getValue(), way);
+
+
+        // Pushing section Ok !!
+        way.clearTags();
+        way.setTag("highway", "path");
+        way.setTag("surface", "paved");
         assertEquals(4, encoder.getSpeed(way));
         assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
 
+        way.clearTags();
+        way.setTag("highway", "footway");
+        way.setTag("surface", "paved");
+        way.setTag("bicycle", "designated");
+        assertEquals(6, encoder.getSpeed(way));
+        assertPriority(PREFER.getValue(), way);
+        
+        way.clearTags();
         way.setTag("highway", "track");
         assertEquals(12, encoder.getSpeed(way));
         assertPriority(UNCHANGED.getValue(), way);
@@ -84,7 +128,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.setTag("surface", "ground");
         assertEquals(4, encoder.getSpeed(way));
         assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
-
+        
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("bicycle", "yes");
@@ -92,7 +136,21 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertEquals(18, encoder.getSpeed(way));
 
         way.setTag("surface", "unknown_surface");
-        assertEquals(4, encoder.getSpeed(way));
+        assertEquals(PUSHING_SECTION_SPEED, encoder.getSpeed(way));
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("surface", "fine_gravel");
+        assertEquals(18, encoder.getSpeed(way));
+        
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("surface", "paved");
+        assertEquals(18, encoder.getSpeed(way));
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        assertEquals(18, encoder.getSpeed(way));
 
         way.clearTags();
         way.setTag("highway", "residential");

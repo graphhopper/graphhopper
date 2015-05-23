@@ -113,6 +113,21 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.clearTags();
         way.setTag("highway", "steps");
         assertEquals(2, getSpeedFromFlags(way), 1e-1);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        assertEquals(20, getSpeedFromFlags(way), 1e-1);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("surface", "paved");
+        assertEquals(20, getSpeedFromFlags(way), 1e-1);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("surface", "unknownpavement");
+        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 1e-1);
+        
     }
 
     @Test
