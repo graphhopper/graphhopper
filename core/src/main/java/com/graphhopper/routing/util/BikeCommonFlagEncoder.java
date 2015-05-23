@@ -57,6 +57,9 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     private EncodedValue wayTypeEncoder;
     private EncodedValue preferWayEncoder;
 
+    // Car speed limit which switches the preference from UNCHANGED to AVOID_IF_POSSIBLE
+    private int avoidSpeedLimit;
+
     protected BikeCommonFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
     {
         super(speedBits, speedFactor, maxTurnCosts);
@@ -188,6 +191,8 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         setCyclingNetworkPreference("mtb", PriorityCode.UNCHANGED.getValue());
 
         setCyclingNetworkPreference("deprecated", PriorityCode.AVOID_AT_ALL_COSTS.getValue());
+
+        setAvoidSpeedLimit(71);
     }
 
     @Override
@@ -488,9 +493,27 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         double maxSpeed = getMaxSpeed(way);
         if (preferHighwayTags.contains(highway) || maxSpeed > 0 && maxSpeed <= 30)
         {
-            weightToPrioMap.put(40d, PREFER.getValue());
-            if (way.hasTag("tunnel", intendedValues))
-                weightToPrioMap.put(40d, UNCHANGED.getValue());
+            if (maxSpeed<avoidSpeedLimit)
+            {
+                weightToPrioMap.put(40d, PREFER.getValue());
+                if (way.hasTag("tunnel", intendedValues))
+                    weightToPrioMap.put(40d, UNCHANGED.getValue());
+            }
+            else
+            {
+                weightToPrioMap.put(40d, AVOID_IF_POSSIBLE.getValue());
+                if (way.hasTag("tunnel", intendedValues))
+                    weightToPrioMap.put(40d, REACH_DEST.getValue());
+            }
+        }
+        else
+        {
+            if (avoidHighwayTags.contains(highway) || maxSpeed >= avoidSpeedLimit)
+            {
+                weightToPrioMap.put(50d, REACH_DEST.getValue());
+                if (way.hasTag("tunnel", intendedValues))
+                    weightToPrioMap.put(50d, AVOID_AT_ALL_COSTS.getValue());
+            }
         }
 
         if (pushingSections.contains(highway)
@@ -501,13 +524,6 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                 weightToPrioMap.put(100d, UNCHANGED.getValue());
             else
                 weightToPrioMap.put(50d, AVOID_IF_POSSIBLE.getValue());
-        }
-
-        if (avoidHighwayTags.contains(highway) || maxSpeed > 80)
-        {
-            weightToPrioMap.put(50d, REACH_DEST.getValue());
-            if (way.hasTag("tunnel", intendedValues))
-                weightToPrioMap.put(50d, AVOID_AT_ALL_COSTS.getValue());
         }
 
         if (way.hasTag("railway", "tram"))
@@ -708,5 +724,10 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             return true;
 
         return PriorityWeighting.class.isAssignableFrom(feature);
+    }
+
+    public void setAvoidSpeedLimit(  int limit  )
+    {
+        avoidSpeedLimit = limit;
     }
 }
