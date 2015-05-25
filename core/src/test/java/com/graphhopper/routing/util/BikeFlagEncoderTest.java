@@ -502,4 +502,31 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertFalse(encoder.handleNodeTags(node) == 0);
     }
 
+    @Test
+    public void testclassBicycle()
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "tertiary");
+        way.setTag("class:bicycle", "3");
+        assertPriority(BEST.getValue(), way);
+        way.setTag("class:bicycle", "2");
+        assertPriority(VERY_NICE.getValue(), way);
+        way.setTag("class:bicycle", "1");
+        assertPriority(PREFER.getValue(), way);
+        way.setTag("class:bicycle", "0");
+        assertPriority(UNCHANGED.getValue(), way);
+        way.setTag("class:bicycle", "invalidvalue");
+        assertPriority(UNCHANGED.getValue(), way);
+        way.setTag("class:bicycle", "-1");
+        assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
+        way.setTag("class:bicycle", "-2");
+        assertPriority(REACH_DEST.getValue(), way);
+        way.setTag("class:bicycle", "-3");
+        assertPriority(AVOID_AT_ALL_COSTS.getValue(), way);
+
+        // Now we test overriding by a specific class subtype
+        way.setTag("class:bicycle:touring", "2");
+        assertPriority(VERY_NICE.getValue(), way);
+    }
+
 }

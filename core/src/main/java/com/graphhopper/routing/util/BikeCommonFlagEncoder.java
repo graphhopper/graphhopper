@@ -60,6 +60,9 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     // Car speed limit which switches the preference from UNCHANGED to AVOID_IF_POSSIBLE
     private int avoidSpeedLimit;
 
+    // This is the specific bicycle class
+    private String specificBicycleClass; 
+
     protected BikeCommonFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
     {
         super(speedBits, speedFactor, maxTurnCosts);
@@ -476,6 +479,31 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         // pick priority with biggest order value
         return weightToPrioMap.lastEntry().getValue();
     }
+    
+    // Conversion of class value to priority. See http://wiki.openstreetmap.org/wiki/Class:bicycle
+    private PriorityCode convertCallValueToPriority(String tagvalue)
+    {
+        int classvalue;
+        try {
+             classvalue = Integer.parseInt(tagvalue);
+            } 
+        catch (NumberFormatException e) 
+        {
+             return PriorityCode.UNCHANGED;
+        }
+
+        switch (classvalue)
+        {
+            case 3: return PriorityCode.BEST;
+            case 2: return PriorityCode.VERY_NICE;
+            case 1: return PriorityCode.PREFER;
+            case 0: return PriorityCode.UNCHANGED;
+            case -1: return PriorityCode.AVOID_IF_POSSIBLE;
+            case -2: return PriorityCode.REACH_DEST;
+            case -3: return PriorityCode.AVOID_AT_ALL_COSTS;
+            default: return PriorityCode.UNCHANGED;
+        }
+    }
 
     /**
      * @param weightToPrioMap associate a weight with every priority. This sorted map allows
@@ -522,6 +550,22 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
 
         if (way.hasTag("railway", "tram"))
             weightToPrioMap.put(50d, AVOID_AT_ALL_COSTS.getValue());
+
+        String classBicycleSpecific = way.getTag(specificBicycleClass);
+        if (classBicycleSpecific!=null) 
+        {
+            // We assume that humans are better in classifying preferences compared to our algorithm above -> weight = 100
+            weightToPrioMap.put(100d, convertCallValueToPriority(classBicycleSpecific).getValue());
+        }
+        else
+        {
+            String classBicycle = way.getTag("class:bicycle");
+            if (classBicycle!=null) 
+            {
+                weightToPrioMap.put(100d, convertCallValueToPriority(classBicycle).getValue());
+            }
+        }
+
     }
 
     /**
@@ -724,4 +768,10 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     {
         avoidSpeedLimit = limit;
     }
+
+    public void setSpecificBicycleClass(  String subkey )
+    {
+        specificBicycleClass = "class:bicycle:" + subkey.toString();
+    }
+
 }
