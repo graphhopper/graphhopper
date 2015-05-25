@@ -263,4 +263,17 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertPriority(UNCHANGED.getValue(), osmWay);
         
     }
+
+    @Test
+    public void testclassBicycle()
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "tertiary");
+        way.setTag("class:bicycle:roadcycling", "3");
+        assertPriority(BEST.getValue(), way);
+        
+        way.setTag("class:bicycle", "-2");
+        assertPriority(BEST.getValue(), way);
+    }
+
 }

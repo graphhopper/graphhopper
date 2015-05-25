@@ -129,6 +129,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
         absoluteBarriers.add("kissing_gate");
 
         setAvoidSpeedLimit(81);
+        setSpecificBicycleClass("roadcycling");
 
     }
 

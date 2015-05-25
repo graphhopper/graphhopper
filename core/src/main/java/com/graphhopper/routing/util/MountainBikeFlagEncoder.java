@@ -143,6 +143,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
         preferHighwayTags.add("unclassified");
 
         potentialBarriers.add("kissing_gate");
+        setSpecificBicycleClass("mtb");
     }
 
     @Override
