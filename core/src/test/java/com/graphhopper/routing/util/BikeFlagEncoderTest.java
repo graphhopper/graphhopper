@@ -416,7 +416,13 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.setTag("highway", "tertiary");
         way.setTag("maxspeed", "90");
         assertEquals(20, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(way, 20, false))), 1e-1);
-        assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
+        assertPriority(UNCHANGED.getValue(), way);
+        
+        way = new OSMWay(1);
+        way.setTag("highway", "track");
+        way.setTag("maxspeed", "90");
+        assertEquals(20, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(way, 20, false))), 1e-1);
+        assertPriority(UNCHANGED.getValue(), way);
     }
 
     @Test
