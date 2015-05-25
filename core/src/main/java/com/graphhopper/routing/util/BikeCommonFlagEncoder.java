@@ -499,16 +499,10 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                 if (way.hasTag("tunnel", intendedValues))
                     weightToPrioMap.put(40d, UNCHANGED.getValue());
             }
-            else
-            {
-                weightToPrioMap.put(40d, AVOID_IF_POSSIBLE.getValue());
-                if (way.hasTag("tunnel", intendedValues))
-                    weightToPrioMap.put(40d, REACH_DEST.getValue());
-            }
         }
         else
         {
-            if (avoidHighwayTags.contains(highway) || maxSpeed >= avoidSpeedLimit)
+            if (avoidHighwayTags.contains(highway) || ( (maxSpeed >= avoidSpeedLimit)&&(highway!="track")))
             {
                 weightToPrioMap.put(50d, REACH_DEST.getValue());
                 if (way.hasTag("tunnel", intendedValues))
