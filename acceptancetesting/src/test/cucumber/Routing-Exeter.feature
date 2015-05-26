@@ -613,7 +613,7 @@ Feature: Verify a route from A to B
 
   @Routing
   Scenario Outline: Verify  Route using 3 intermediate waypoints via (Streathem drive ,Prince of wales Rd and Clifton Rd)
-    Given I request a route between "<pointA>" and "<pointB>" as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>" via
+    Given I request a route between pointA and pointB as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>" via
       | pointA              | pointB             | pointC              | pointD              | pointE              |
       | 50.718552,-3.518781 | 50.72703,-3.517964 | 50.733328,-3.524962 | 50.732093,-3.535139 | 50.732981,-3.541765 |
     Then I should be able to verify the waypoints on the route map:
