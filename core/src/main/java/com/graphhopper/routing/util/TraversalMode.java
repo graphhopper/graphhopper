@@ -79,7 +79,7 @@ public enum TraversalMode
      *
      * @param iterState the current {@link EdgeIteratorState}
      * @param reverse   <code>true</code>, if traversal in backward direction. Will be true only for
-     *                  backward searches in bidirectional algorithms.
+     * backward searches in bidirectional algorithms.
      * @return the identifier to access the shortest path tree
      */
     public final int createTraversalId( EdgeIteratorState iterState, boolean reverse )
@@ -89,7 +89,7 @@ public enum TraversalMode
             if (noOfStates == 1)
                 return iterState.getEdge();
 
-            return GHUtility.createEdgeKey(iterState.getAdjNode(), iterState.getBaseNode(), iterState.getEdge(), reverse);
+            return GHUtility.createEdgeKey(iterState.getBaseNode(), iterState.getAdjNode(), iterState.getEdge(), reverse);
         }
 
         return iterState.getAdjNode();
@@ -105,7 +105,7 @@ public enum TraversalMode
             if (noOfStates == 1)
                 return edgeId;
 
-            return GHUtility.createEdgeKey(adjNode, baseNode, edgeId, reverse);
+            return GHUtility.createEdgeKey(baseNode, adjNode, edgeId, reverse);
         }
 
         return adjNode;
