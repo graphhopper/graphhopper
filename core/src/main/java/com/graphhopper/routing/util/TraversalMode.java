@@ -86,10 +86,33 @@ public enum TraversalMode
             if (noOfStates == 1)
                 return iterState.getEdge();
 
-            return GHUtility.createEdgeKey(iterState.getAdjNode(), iterState.getBaseNode(), iterState.getEdge(), reverse);
+            return GHUtility.createEdgeKey(iterState.getBaseNode(), iterState.getAdjNode(), iterState.getEdge(), reverse);
         }
 
         return iterState.getAdjNode();
+    }
+
+    /**
+     * If you have an EdgeIteratorState the other createTraversalId is preferred!
+     */
+    public final int createTraversalId( int baseNode, int adjNode, int edgeId, boolean reverse )
+    {
+        if (edgeBased)
+        {
+            if (noOfStates == 1)
+                return edgeId;
+
+            return GHUtility.createEdgeKey(baseNode, adjNode, edgeId, reverse);
+        }
+
+        return adjNode;
+    }
+
+    public int reverseEdgeKey( int edgeKey )
+    {
+        if (edgeBased && noOfStates > 1)
+            return GHUtility.reverseEdgeKey(edgeKey);
+        return edgeKey;
     }
 
     public int getNoOfStates()

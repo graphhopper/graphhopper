@@ -17,12 +17,17 @@ package com.graphhopper.routing;
 
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeSkipIterState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PointList;
 
 /**
  * Creates an edge state decoupled from a graph where nodes, pointList, etc are kept in memory.
+ * <p>
+ * Note, this class is not suited for public use and can change with minor releases unexpectedly or
+ * even gets removed.
  */
-class VirtualEdgeIState implements EdgeIteratorState, EdgeSkipIterState {
+public class VirtualEdgeIteratorState implements EdgeIteratorState, EdgeSkipIterState
+{
     private final PointList pointList;
     private final int edgeId;
     private double distance;
@@ -30,9 +35,11 @@ class VirtualEdgeIState implements EdgeIteratorState, EdgeSkipIterState {
     private String name;
     private final int baseNode;
     private final int adjNode;
+    private final int originalTraversalKey;
 
-    public VirtualEdgeIState( int edgeId, int baseNode, int adjNode, double distance, long flags, String name, PointList pointList )
+    public VirtualEdgeIteratorState( int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance, long flags, String name, PointList pointList )
     {
+        this.originalTraversalKey = originalTraversalKey;
         this.edgeId = edgeId;
         this.baseNode = baseNode;
         this.adjNode = adjNode;
@@ -40,6 +47,17 @@ class VirtualEdgeIState implements EdgeIteratorState, EdgeSkipIterState {
         this.flags = flags;
         this.name = name;
         this.pointList = pointList;
+    }
+
+    /**
+     * This method returns the original edge via its traversal key. I.e. also the direction is
+     * already correctly encoded.
+     * <p>
+     * @see GHUtility#createEdgeKey(int, int, int, boolean)
+     */
+    public int getOriginalTraversalKey()
+    {
+        return originalTraversalKey;
     }
 
     @Override
@@ -191,5 +209,5 @@ class VirtualEdgeIState implements EdgeIteratorState, EdgeSkipIterState {
     {
         throw new UnsupportedOperationException("Not supported.");
     }
-    
+
 }

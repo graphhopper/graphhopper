@@ -347,10 +347,10 @@ public class QueryGraph implements Graph
         int virtEdgeId = mainEdges + virtualEdges.size();
 
         // edges between base and snapped point
-        VirtualEdgeIState baseEdge = new VirtualEdgeIState(virtEdgeId, prevNodeId, nodeId,
-                baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints);
-        VirtualEdgeIState baseReverseEdge = new VirtualEdgeIState(virtEdgeId, nodeId, prevNodeId,
-                baseDistance, reverseFlags, closestEdge.getName(), baseReversePoints);
+        VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(GHUtility.createEdgeKey(prevNodeId, nodeId, closestEdge.getEdge(), false),
+                virtEdgeId, prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints);
+        VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(GHUtility.createEdgeKey(prevNodeId, nodeId, closestEdge.getEdge(), true),
+                virtEdgeId, nodeId, prevNodeId, baseDistance, reverseFlags, closestEdge.getName(), baseReversePoints);
 
         virtualEdges.add(baseEdge);
         virtualEdges.add(baseReverseEdge);

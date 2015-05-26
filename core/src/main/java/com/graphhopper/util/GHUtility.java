@@ -520,4 +520,12 @@ public class GHUtility
     {
         return edgeKey1 / 2 == edgeKey2 / 2;
     }
+
+    /**
+     * Returns the edgeKey of the opposite direction
+     */
+    public static int reverseEdgeKey( int edgeKey )
+    {
+        return edgeKey % 2 == 0 ? edgeKey + 1 : edgeKey - 1;
+    }
 }
