@@ -42,6 +42,8 @@ forceRepair=false           # default=false, type=boolean
 
 This will produce gpx results similar named as the input files.
 
+#### Java usage
+
 Or use this Java snippet:
 
 ```java
