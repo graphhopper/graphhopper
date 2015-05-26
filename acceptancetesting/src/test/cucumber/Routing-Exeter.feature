@@ -617,11 +617,11 @@ Feature: Verify a route from A to B
       | pointA              | pointB             | pointC              | pointD              | pointE              |
       | 50.718552,-3.518781 | 50.72703,-3.517964 | 50.733328,-3.524962 | 50.732093,-3.535139 | 50.732981,-3.541765 |
     Then I should be able to verify the waypoints on the route map:
-      | wayPointIndex | waypointco          | waypointdesc                                      | azimuth | direction |
-      | 5             | 50.724453,-3.519949 | Turn right onto CLIFTON ROAD                      | 19.0    | N         |
-      | 10            | 50.728509,-3.520647 | At roundabout, take exit 2 onto OLD TIVERTON ROAD | 282.0   | W         |
-      | 17            | 50.733333,-3.524999 | Continue onto PENNSYLVANIA ROAD                   | 12.0    | N         |
-      | 20            | 50.732212,-3.535235 | Continue onto PRINCE OF WALES ROAD                | 252.0   | W         |
+      | wayPointIndex | waypointco          | waypointdesc                                      | azimuth | direction | time  | distance | avoidance |
+      | 5             | 50.724453,-3.519949 | Turn right onto CLIFTON ROAD                      | 19.0    | N         | 28231 | 352.9    |           |
+      | 10            | 50.728509,-3.520647 | At roundabout, take exit 2 onto OLD TIVERTON ROAD | 282.0   | W         | 11187 | 150.3    |           |
+      | 17            | 50.733333,-3.524999 | Continue onto PENNSYLVANIA ROAD                   | 12.0    | N         | 764   | 9.6      |           |
+      | 20            | 50.732212,-3.535235 | Continue onto PRINCE OF WALES ROAD                | 252.0   | W         | 15641 | 195.5    |           |
 
     Examples: 
       | routeOptions | avoidances |
@@ -629,7 +629,7 @@ Feature: Verify a route from A to B
 
   @Routing
   Scenario Outline: Verify  Route using (10 intermediate waypoints)
-        Given I request a route between pointA and pointB as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>" via
+    Given I request a route between pointA and pointB as a "<routeOptions>" from RoutingAPI and avoid "<avoidances>" via
       | pointA              | pointB              | pointC              | pointD              | pointE              | pointF              | pointG              | pointH              | pointI            | pointJ              |
       | 50.729961,-3.524853 | 50.723364,-3.523895 | 50.719078,-3.541011 | 50.720275,-3.526888 | 50.719826,-3.529631 | 50.729774,-3.519937 | 50.734471,-3.516965 | 50.732477,-3.517843 | 50.727248,-3.5205 | 50.719852,-3.544358 |
     Then I should be able to verify the waypoints on the route map:
@@ -646,5 +646,3 @@ Feature: Verify a route from A to B
     Examples: 
       | routeOptions | avoidances |
       | car          |            |
-      
-      
