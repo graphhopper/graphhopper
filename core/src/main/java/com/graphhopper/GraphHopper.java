@@ -965,7 +965,7 @@ public class GraphHopper implements GraphHopperAPI
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
         QueryGraph queryGraph = new QueryGraph(graph);
         queryGraph.lookup(qResults);
-        
+
         Weighting weighting = createWeighting(request.getHints(), encoder);
         weighting = createTurnWeighting(weighting, queryGraph, encoder);
 
@@ -974,6 +974,7 @@ public class GraphHopper implements GraphHopperAPI
         double altMaxWeightFactor = request.getHints().getDouble("alternatives.max_weight_factor", 1.4);
 
         double rtMaxWeightFactor = request.getHints().getDouble("round_trip.max_weight_factor", 2);
+        double rtPenaltyFactor = request.getHints().getDouble("round_trip.penalty_factor", 1.5);
         double rtApproxTime = request.getHints().getDouble("round_trip.approx_time", 3600);
         int rtMax = request.getHints().getInt("round_trip.max", 0);
 
@@ -995,7 +996,7 @@ public class GraphHopper implements GraphHopperAPI
             QueryResult fromQResult = qResults.get(0);
             double maxDistance = rtApproxTime / 3.6 * 50;
             AlternativeRoute altDijkstra = new AlternativeRoute(queryGraph, algoOpts.getFlagEncoder(), algoOpts.getWeighting(), algoOpts.getTraversalMode());
-            paths = altDijkstra.calcRoundTrips(fromQResult.getClosestNode(), maxDistance, rtMaxWeightFactor);
+            paths = altDijkstra.calcRoundTrips(fromQResult.getClosestNode(), maxDistance, rtMaxWeightFactor, rtPenaltyFactor);
 
         } else if (!chEnabled && altMax > 0)
         {
@@ -1007,7 +1008,7 @@ public class GraphHopper implements GraphHopperAPI
             QueryResult fromQResult = qResults.get(0);
             QueryResult toQResult = qResults.get(1);
             AlternativeRoute altDijkstra = new AlternativeRoute(queryGraph, algoOpts.getFlagEncoder(), algoOpts.getWeighting(), algoOpts.getTraversalMode());
-            paths = new ArrayList<Path>(1 + altMax);            
+            paths = new ArrayList<Path>(1 + altMax);
             for (AlternativeRoute.AlternativeInfo ai : altDijkstra.calcAlternatives(fromQResult.getClosestNode(), toQResult.getClosestNode(), altMax + 1, altMaxShare, altMaxWeightFactor))
             {
                 paths.add(ai.getPath());

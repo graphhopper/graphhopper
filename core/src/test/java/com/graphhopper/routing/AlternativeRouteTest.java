@@ -19,6 +19,7 @@ import java.util.List;
 import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import org.junit.Ignore;
 
 /**
  *
@@ -37,10 +38,10 @@ public class AlternativeRouteTest
 
         // fullGraph=false => only 3-8
         /*   9
-            _/\
-           1  2-3-4-10
-            \  /  |
-            5-6-7-8
+         _/\
+         1  2-3-4-10
+         \  /   \
+         5-6-7---8
          */
         graph.edge(1, 9, 1, true);
         graph.edge(9, 2, 1, true);
@@ -126,7 +127,7 @@ public class AlternativeRouteTest
         Graph g = createTestGraph(true);
         AlternativeRoute altDijkstra = new AlternativeRoute(g, carFE, weighting, tMode);
         double maxDist = Helper.DIST_EARTH.calcDist(0, 0, 0.05, 0.25) * 2;
-        List<Path> paths = altDijkstra.calcRoundTrips(5, maxDist, 2);
+        List<Path> paths = altDijkstra.calcRoundTrips(5, maxDist, 2, 1.2);
         assertEquals(2, paths.size());
         assertEquals(Helper.createTList(5, 6, 3), paths.get(0).calcNodes());
 
@@ -135,8 +136,29 @@ public class AlternativeRouteTest
         assertEquals(Helper.createTList(3, 2, 9, 1, 5), paths.get(1).calcNodes());
 
         altDijkstra = new AlternativeRoute(g, carFE, weighting, tMode);
-        paths = altDijkstra.calcRoundTrips(6, maxDist, 2);
+        paths = altDijkstra.calcRoundTrips(6, maxDist, 2, 1.2);
         assertEquals(2, paths.size());
+        assertEquals(Helper.createTList(6, 3), paths.get(0).calcNodes());
+        assertEquals(Helper.createTList(3, 2, 9, 1, 5, 6), paths.get(1).calcNodes());
+
+        altDijkstra = new AlternativeRoute(g, carFE, weighting, tMode);
+        paths = altDijkstra.calcRoundTrips(6, maxDist, 2, 1);
+        assertEquals(2, paths.size());
+        assertEquals(Helper.createTList(6, 3, 4), paths.get(0).calcNodes());
+        assertEquals(Helper.createTList(4, 8, 7, 6), paths.get(1).calcNodes());
+    }
+
+    // TODO how to select alternative when the second best is the 'bestForwardPath' backwards?
+    @Ignore
+    public void testCalcRoundTripWithBiggerPenalty() throws Exception
+    {
+        Weighting weighting = new FastestWeighting(carFE);
+        Graph g = createTestGraph(true);
+        double maxDist = Helper.DIST_EARTH.calcDist(0, 0, 0.05, 0.25) * 2;
+        AlternativeRoute altDijkstra = new AlternativeRoute(g, carFE, weighting, tMode);
+        List<Path> paths = altDijkstra.calcRoundTrips(6, maxDist, 2, 2);
+        assertEquals(2, paths.size());
+        // here we get 6,3,4,10 as best forward and 10,4,8,7,6 as best backward but 10,4,3,6 is selected as it looks like the 'alternative'
         assertEquals(Helper.createTList(6, 3, 4), paths.get(0).calcNodes());
         assertEquals(Helper.createTList(4, 8, 7, 6), paths.get(1).calcNodes());
     }
@@ -151,7 +173,7 @@ public class AlternativeRouteTest
         GraphStorage g = createTestGraph(false);
         AlternativeRoute altDijkstra = new AlternativeRoute(g, carFE, weighting, tMode);
         double maxDist = Helper.DIST_EARTH.calcDist(0, 0, 0.05, 0.25) * 2;
-        List<Path> paths = altDijkstra.calcRoundTrips(5, maxDist, 2);
+        List<Path> paths = altDijkstra.calcRoundTrips(5, maxDist, 2, 1);
         assertEquals(2, paths.size());
         assertEquals(Helper.createTList(5, 6, 3, 4), paths.get(0).calcNodes());
         assertEquals(Helper.createTList(4, 8, 7, 6, 5), paths.get(1).calcNodes());

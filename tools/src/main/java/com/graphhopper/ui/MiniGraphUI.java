@@ -21,7 +21,6 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.AlternativeRoute;
 import com.graphhopper.routing.AlternativeRoute.AltDijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.QueryGraph;

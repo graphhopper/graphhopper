@@ -78,7 +78,7 @@ public class AlternativeRoute
      * calculation
      * @return currently no path at all or two paths (one forward and one backward path)
      */
-    public List<Path> calcRoundTrips( int from, double maxFullDistance, double maxWeightFactor )
+    public List<Path> calcRoundTrips( int from, double maxFullDistance, double maxWeightFactor, final double penaltyFactor )
     {
         AltSingleDijkstra altDijkstra = new AltSingleDijkstra(graph, flagEncoder, weighting, traversalMode);
         altDijkstra.beforeRun(from);
@@ -111,8 +111,7 @@ public class AlternativeRoute
             return Collections.emptyList();
 
         List<Path> paths = new ArrayList<Path>();
-
-        // simple penalty method
+        // simple penalty method        
         Weighting altWeighting = new FastestWeighting(flagEncoder)
         {
             @Override
@@ -120,7 +119,7 @@ public class AlternativeRoute
             {
                 double factor = 1;
                 if (forwardEdgeSet.contains(edge.getEdge()))
-                    factor = 2;
+                    factor = penaltyFactor;
                 return factor * weighting.calcWeight(edge, reverse, prevOrNextEdgeId);
             }
         };
@@ -133,14 +132,14 @@ public class AlternativeRoute
         if (Double.isInfinite(bestBackwardPath.getWeight()))
             return Collections.emptyList();
 
-        List<AlternativeInfo> infos = altBidirDijktra.calcAlternatives(2, maxWeightFactor, 0.05, 0.1);
+        List<AlternativeInfo> infos = altBidirDijktra.calcAlternatives(2, penaltyFactor * maxWeightFactor, 0.05, 0.1);
         if (infos.isEmpty())
             return Collections.emptyList();
 
         if (infos.size() == 1)
         {
             // fallback to same path for backward direction (or at least VERY similar path as optimal)
-            paths.add(bestForwardPath.extract());
+            paths.add(bestForwardPath);
             paths.add(infos.get(0).getPath().extract());
         } else
         {
@@ -349,9 +348,9 @@ public class AlternativeRoute
                         if (tmpFromEntry == null || tmpFromEntry.parent == null)
                             return true;
 
-                        int nextTraversalId = traversalMode.createTraversalId(tmpFromEntry.adjNode, tmpFromEntry.parent.adjNode,
+                        int nextToTraversalId = traversalMode.createTraversalId(tmpFromEntry.adjNode, tmpFromEntry.parent.adjNode,
                                 tmpFromEntry.edge, true);
-                        EdgeEntry tmpNextToEdgeEntry = bestWeightMapTo.get(nextTraversalId);
+                        EdgeEntry tmpNextToEdgeEntry = bestWeightMapTo.get(nextToTraversalId);
 
                         if (tmpNextToEdgeEntry == null)
                             return true;
@@ -377,10 +376,10 @@ public class AlternativeRoute
                     EdgeEntry prevToEdgeEntry = toEdgeEntry;
                     while (prevToEdgeEntry.parent != null)
                     {
-                        int nextTraversalId = traversalMode.createTraversalId(prevToEdgeEntry.adjNode, prevToEdgeEntry.parent.adjNode,
+                        int nextFromTraversalId = traversalMode.createTraversalId(prevToEdgeEntry.adjNode, prevToEdgeEntry.parent.adjNode,
                                 prevToEdgeEntry.edge, false);
 
-                        EdgeEntry nextFromEdgeEntry = bestWeightMapFrom.get(nextTraversalId);
+                        EdgeEntry nextFromEdgeEntry = bestWeightMapFrom.get(nextFromTraversalId);
                         // end of a plateau
                         if (nextFromEdgeEntry == null)
                             break;
