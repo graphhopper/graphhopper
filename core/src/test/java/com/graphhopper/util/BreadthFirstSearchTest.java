@@ -25,10 +25,10 @@ import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Before;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class BreadthFirstSearchTest
@@ -79,7 +79,7 @@ public class BreadthFirstSearchTest
         assertEquals(g.getNodes(), counter);
         assertEquals("{0, 5, 3, 2, 1, 10, 8, 7, 6, 9, 4}", list.toString());
     }
-    
+
     @Test
     public void testBFS2()
     {
@@ -110,5 +110,5 @@ public class BreadthFirstSearchTest
         assertEquals("{1, 5, 2, 6, 3, 4}", list.toString());
     }
 
-    
+
 }

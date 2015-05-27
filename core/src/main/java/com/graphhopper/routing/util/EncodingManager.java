@@ -163,8 +163,10 @@ public class EncodingManager
             else
                 throw new IllegalArgumentException("entry in encoder list not supported " + entry);
 
-            if (configuration.has("version")) {
-                if (fe.getVersion() != configuration.getLong("version", -1)) {
+            if (configuration.has("version"))
+            {
+                if (fe.getVersion() != configuration.getLong("version", -1))
+                {
                     throw new IllegalArgumentException("Encoder " + entry + " was used in version "
                             + configuration.getLong("version", -1) + ", but current version is " + fe.getVersion());
                 }

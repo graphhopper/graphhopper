@@ -19,11 +19,12 @@ package com.graphhopper.reader;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class OSMElementTest

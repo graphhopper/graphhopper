@@ -27,6 +27,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
+
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -218,7 +219,7 @@ public class GHUtility
         final AtomicInteger ref = new AtomicInteger(-1);
         EdgeExplorer explorer = g.createEdgeExplorer();
         for (int startNode = 0; startNode >= 0 && startNode < nodes;
-                startNode = bitset.nextClear(startNode + 1))
+             startNode = bitset.nextClear(startNode + 1))
         {
             new DepthFirstSearch()
             {
@@ -483,7 +484,9 @@ public class GHUtility
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
-    };
+    }
+
+    ;
 
     /**
      * @return the <b>first</b> edge containing the specified nodes base and adj. Returns null if

@@ -24,7 +24,7 @@ import com.graphhopper.util.PointAccess;
  * This interface specifies how to access properties of the nodes in the graph. Similar to
  * EdgeExplorer as it needs multiple instances for different threads or loops but without the need
  * for an additional iterator.
- * <p>
+ * <p/>
  * @author Peter Karich
  */
 public interface NodeAccess extends PointAccess
@@ -38,7 +38,7 @@ public interface NodeAccess extends PointAccess
 
     /**
      * Sets the additional value at the specified node index
-     * <p>
+     * <p/>
      * @throws AssertionError if, and only if, the extendedStorage does not require an additional
      * node field
      */

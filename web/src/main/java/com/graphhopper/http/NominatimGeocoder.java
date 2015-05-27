@@ -21,11 +21,13 @@ import com.graphhopper.search.Geocoding;
 import com.graphhopper.search.ReverseGeocoding;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPlace;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -45,6 +47,7 @@ public class NominatimGeocoder implements Geocoding, ReverseGeocoding
         System.out.println("reverse " + new NominatimGeocoder().places2names(new GHPlace(49.9027606, 11.577197),
                 new GHPlace(52.5198535, 13.4385964)));
     }
+
     private String nominatimUrl;
     private String nominatimReverseUrl;
     private BBox bounds;
@@ -157,7 +160,8 @@ public class NominatimGeocoder implements Geocoding, ReverseGeocoding
 
     HttpURLConnection openConnection( String url ) throws IOException
     {
-        HttpURLConnection hConn = (HttpURLConnection) new URL(url).openConnection();;
+        HttpURLConnection hConn = (HttpURLConnection) new URL(url).openConnection();
+        ;
         hConn.setRequestProperty("User-Agent", userAgent);
         hConn.setRequestProperty("content-charset", "UTF-8");
         hConn.setConnectTimeout(timeoutInMillis);

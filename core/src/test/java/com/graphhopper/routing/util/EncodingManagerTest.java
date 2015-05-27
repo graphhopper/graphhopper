@@ -31,13 +31,12 @@ import com.graphhopper.util.BitUtil;
 import org.junit.rules.ExpectedException;
 
 /**
- *
  * @author Peter Karich
  */
 public class EncodingManagerTest
 {
     @Rule
-    public ExpectedException thrown= ExpectedException.none();
+    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void testCompatibility()
@@ -101,8 +100,9 @@ public class EncodingManagerTest
     }
 
     @Test
-    public void testToDetailsStringIncludesEncoderVersionNumber() {
-        FlagEncoder encoder = new AbstractFlagEncoder(1,2.0,3)
+    public void testToDetailsStringIncludesEncoderVersionNumber()
+    {
+        FlagEncoder encoder = new AbstractFlagEncoder(1, 2.0, 3)
         {
             @Override
             public short getVersion()
@@ -123,19 +123,19 @@ public class EncodingManagerTest
             }
 
             @Override
-            public long handleRelationTags(OSMRelation relation, long oldRelationFlags)
+            public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
             {
                 return 0;
             }
 
             @Override
-            public long acceptWay(OSMWay way)
+            public long acceptWay( OSMWay way )
             {
                 return 0;
             }
 
             @Override
-            public long handleWayTags(OSMWay way, long allowed, long relationFlags)
+            public long handleWayTags( OSMWay way, long allowed, long relationFlags )
             {
                 return 0;
             }

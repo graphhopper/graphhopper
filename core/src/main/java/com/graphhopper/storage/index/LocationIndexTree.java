@@ -33,7 +33,9 @@ import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
+
 import java.util.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +78,6 @@ public class LocationIndexTree implements LocationIndex
 
     /**
      * @param g the graph for which this index should do the lookup based on latitude,longitude.
-     * @param dir
      */
     public LocationIndexTree( Graph g, Directory dir )
     {
@@ -416,8 +417,8 @@ public class LocationIndexTree implements LocationIndex
         }
 
         void addNode( final int nodeA, final int nodeB,
-                final double lat1, final double lon1,
-                final double lat2, final double lon2 )
+                      final double lat1, final double lon1,
+                      final double lat2, final double lon2 )
         {
             PointEmitter pointEmitter = new PointEmitter()
             {
@@ -628,7 +629,7 @@ public class LocationIndexTree implements LocationIndex
     /**
      * calculate the distance to the nearest tile border for a given lat/lon coordinate in the
      * context of a spatial key tile.
-     * <p>
+     * <p/>
      */
     final double calculateRMin( double lat, double lon )
     {

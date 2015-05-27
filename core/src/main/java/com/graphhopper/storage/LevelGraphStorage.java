@@ -27,8 +27,8 @@ import com.graphhopper.util.*;
  * A Graph necessary for shortcut algorithms like Contraction Hierarchies. This class enables the
  * storage to hold the level of a node and a shortcut edge per edge.
  * <p/>
- * @see GraphBuilder
  * @author Peter Karich
+ * @see GraphBuilder
  */
 public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
 {
@@ -275,7 +275,7 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
     /**
      * Disconnects the edges (higher->lower node) via the specified edgeState pointing from lower to
      * higher node.
-     * <p>
+     * <p/>
      * @param edgeState the edge from lower to higher
      */
     public void disconnect( EdgeSkipExplorer explorer, EdgeIteratorState edgeState )

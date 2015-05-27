@@ -25,10 +25,13 @@ import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+
 import static org.junit.Assert.*;
 import static com.graphhopper.util.GHUtility.*;
+
 import java.util.Arrays;
 import java.util.Collection;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -56,13 +59,13 @@ public class EdgeBasedRoutingAlgorithmTest
     public static Collection<Object[]> configs()
     {
         return Arrays.asList(new Object[][]
-        {
-            { AlgorithmOptions.DIJKSTRA },
-            { AlgorithmOptions.DIJKSTRA_BI },
-            { AlgorithmOptions.ASTAR },
-            { AlgorithmOptions.ASTAR_BI }
-        // TODO { AlgorithmOptions.DIJKSTRA_ONE_TO_MANY }
-        });
+                {
+                        {AlgorithmOptions.DIJKSTRA},
+                        {AlgorithmOptions.DIJKSTRA_BI},
+                        {AlgorithmOptions.ASTAR},
+                        {AlgorithmOptions.ASTAR_BI}
+                        // TODO { AlgorithmOptions.DIJKSTRA_ONE_TO_MANY }
+                });
     }
 
     private final String algoStr;
@@ -186,7 +189,7 @@ public class EdgeBasedRoutingAlgorithmTest
                 flagEncoder(carEncoder).
                 weighting(createWeighting(carEncoder, tcs, 50)).
                 traversalMode(TraversalMode.EDGE_BASED_2DIR_UTURN).build();
-        Path p = createAlgo(g, opts).calcPath(7, 5);        
+        Path p = createAlgo(g, opts).calcPath(7, 5);
 
         assertEquals(Helper.createTList(7, 6, 3, 6, 5), p.calcNodes());
 

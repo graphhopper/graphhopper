@@ -20,10 +20,10 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class EncodedDoubleValueTest

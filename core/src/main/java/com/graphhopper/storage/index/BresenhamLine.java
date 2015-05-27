@@ -21,7 +21,7 @@ package com.graphhopper.storage.index;
  * We need the supercover line. The best algorithm is a 'voxel grid traversal algorithm' and
  * described in "A Fast Voxel Traversal Algorithm for Ray Tracing" by John Amanatides and Andrew Woo
  * (1987): http://www.cse.yorku.ca/~amana/research/grid.pdf
- * <p>
+ * <p/>
  * Other methods we used are Bresenham (only integer start and end values) and Xiaolin Wu (anti
  * aliasing). See some discussion here: http://stackoverflow.com/a/3234074/194609 and here
  * http://stackoverflow.com/q/24679963/194609
@@ -31,13 +31,13 @@ package com.graphhopper.storage.index;
 public class BresenhamLine
 {
     public static void calcPoints( int y1, int x1, int y2, int x2,
-            PointEmitter emitter )
+                                   PointEmitter emitter )
     {
         bresenham(y1, x1, y2, x2, emitter);
     }
 
     public static void voxelTraversal( double y1, double x1, double y2, double x2,
-            PointEmitter emitter )
+                                       PointEmitter emitter )
     {
         // edge case
         x1 = fix(x1);
@@ -115,7 +115,7 @@ public class BresenhamLine
     }
 
     public static void bresenham( int y1, int x1, int y2, int x2,
-            PointEmitter emitter )
+                                  PointEmitter emitter )
     {
         boolean latIncreasing = y1 < y2;
         boolean lonIncreasing = x1 < x2;
@@ -145,7 +145,7 @@ public class BresenhamLine
     }
 
     public static void xiaolinWu( double y1, double x1, double y2, double x2,
-            PointEmitter emitter )
+                                  PointEmitter emitter )
     {
         double dx = x2 - x1;
         double dy = y2 - y1;
@@ -238,10 +238,10 @@ public class BresenhamLine
     }
 
     public static void calcPoints( final double lat1, final double lon1,
-            final double lat2, final double lon2,
-            final PointEmitter emitter,
-            final double offsetLat, final double offsetLon,
-            final double deltaLat, final double deltaLon )
+                                   final double lat2, final double lon2,
+                                   final PointEmitter emitter,
+                                   final double offsetLat, final double offsetLon,
+                                   final double deltaLat, final double deltaLon )
     {
 //        double y1 = (lat1 - offsetLat) / deltaLat;
 //        double x1 = (lon1 - offsetLon) / deltaLon;

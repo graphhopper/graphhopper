@@ -25,6 +25,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -251,7 +252,7 @@ public class Path
     /**
      * Iterates over all edges in this path sorted from start to end and calls the visitor callback
      * for every edge.
-     * <p>
+     * <p/>
      * @param visitor callback to handle every edge. The edge is decoupled from the iterator and can
      * be stored.
      */
@@ -323,7 +324,7 @@ public class Path
 
     /**
      * This method calculated a list of points for this path
-     * <p>
+     * <p/>
      * @return this path its geometry
      */
     public PointList calcPoints()

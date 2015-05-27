@@ -23,7 +23,9 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeSkipIterState;
 import com.graphhopper.util.Helper;
+
 import static org.junit.Assert.*;
+
 import org.junit.Test;
 
 /**
@@ -114,7 +116,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
 
         ShortestWeighting weighting = new ShortestWeighting();
         AlgorithmOptions opts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting);
-        Path p = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT), 
+        Path p = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
                 g2, encoder, weighting, TraversalMode.NODE_BASED).
                 createAlgo(g2, opts).calcPath(0, 7);
 

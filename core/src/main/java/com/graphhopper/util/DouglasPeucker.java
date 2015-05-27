@@ -172,5 +172,5 @@ public class DouglasPeucker
         return counter;
     }
 
-    
+
 }

@@ -26,7 +26,7 @@ import java.util.Map.Entry;
  * https://docs.google.com/spreadsheet/ccc?key=0AmukcXek0JP6dGM4R1VTV2d3TkRSUFVQakhVeVBQRHc#gid=0
  * <p/>
  * See here for more information: ./docs/core/translations.md
- * <p>
+ * <p/>
  * @author Peter Karich
  */
 public class TranslationMap

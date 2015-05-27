@@ -25,6 +25,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import gnu.trove.list.array.TIntArrayList;
+
 import java.util.Arrays;
 
 /**

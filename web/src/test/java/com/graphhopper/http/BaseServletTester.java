@@ -100,13 +100,13 @@ public class BaseServletTester
         String host = "localhost";
         return "http://" + host + ":" + port + "/route";
     }
-    
+
     protected String getTestNearestAPIUrl()
     {
         String host = "localhost";
         return "http://" + host + ":" + port + "/nearest";
     }
-    
+
     protected JSONObject query( String query ) throws Exception
     {
         String resQuery = "";
@@ -123,8 +123,8 @@ public class BaseServletTester
         String url = getTestRouteAPIUrl() + "?" + resQuery;
         Downloader downloader = new Downloader("web integration tester");
         return new JSONObject(downloader.downloadAsString(url));
-    } 
-    
+    }
+
     protected JSONObject nearestQuery( String query ) throws Exception
     {
         String resQuery = "";
@@ -141,5 +141,5 @@ public class BaseServletTester
         String url = getTestNearestAPIUrl() + "?" + resQuery;
         Downloader downloader = new Downloader("web integration tester");
         return new JSONObject(downloader.downloadAsString(url));
-    } 
+    }
 }

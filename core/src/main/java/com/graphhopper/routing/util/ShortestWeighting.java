@@ -34,7 +34,7 @@ public class ShortestWeighting implements Weighting
     }
 
     @Override
-    public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId)
+    public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId )
     {
         return edgeState.getDistance();
     }

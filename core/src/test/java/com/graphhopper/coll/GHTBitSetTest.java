@@ -20,7 +20,6 @@ package com.graphhopper.coll;
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class GHTBitSetTest extends AbstractMyBitSetTest

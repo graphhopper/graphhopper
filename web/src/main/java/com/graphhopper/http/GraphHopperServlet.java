@@ -26,6 +26,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
@@ -34,13 +35,16 @@ import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import static javax.servlet.http.HttpServletResponse.*;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+
 import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -189,10 +193,10 @@ public class GraphHopperServlet extends GHBaseServlet
     }
 
     protected Map<String, Object> createJson( GHResponse rsp,
-            boolean calcPoints,
-            boolean pointsEncoded,
-            boolean includeElevation,
-            boolean enableInstructions )
+                                              boolean calcPoints,
+                                              boolean pointsEncoded,
+                                              boolean includeElevation,
+                                              boolean enableInstructions )
     {
         Map<String, Object> json = new HashMap<String, Object>();
         Map<String, Object> jsonInfo = new HashMap<String, Object>();

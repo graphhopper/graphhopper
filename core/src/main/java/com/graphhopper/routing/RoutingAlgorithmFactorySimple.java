@@ -25,14 +25,14 @@ import com.graphhopper.util.Helper;
 
 /**
  * A simple factory creating normal algorithms (RoutingAlgorithm) without preparation.
- * <p>
+ * <p/>
  * @author Peter Karich
  */
 public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
 {
     @Override
     public RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts )
-    {        
+    {
         AbstractRoutingAlgorithm algo;
         String algoStr = opts.getAlgorithm();
         if (AlgorithmOptions.DIJKSTRA_BI.equalsIgnoreCase(algoStr))

@@ -19,11 +19,17 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
+
 import static com.graphhopper.routing.util.PriorityCode.*;
+
 import com.graphhopper.util.Translation;
+
 import static com.graphhopper.util.TranslationMapTest.SINGLETON;
+
 import java.util.Locale;
+
 import static org.junit.Assert.*;
+
 import org.junit.Before;
 import org.junit.Test;
 

@@ -22,7 +22,7 @@ import java.util.Map;
 
 /**
  * A properties map with convenient accessors
- * <p>
+ * <p/>
  * @author Peter Karich
  */
 public class PMap
@@ -44,7 +44,7 @@ public class PMap
         this.map = map;
     }
 
-    public PMap(String propertiesString)
+    public PMap( String propertiesString )
     {
         // five chosen as arbitrary initial capacity
         this.map = new HashMap<String, String>(5);

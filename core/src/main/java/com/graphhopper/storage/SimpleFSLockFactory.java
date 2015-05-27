@@ -23,7 +23,7 @@ import java.io.IOException;
 
 /**
  * Creates a write lock file. Influenced by Lucene code
- * <p>
+ * <p/>
  * @author Peter Karich
  */
 public class SimpleFSLockFactory implements LockFactory

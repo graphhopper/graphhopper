@@ -22,9 +22,12 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies.Shortcut;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
+
 import java.util.Collection;
 import java.util.Iterator;
+
 import static org.junit.Assert.*;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -63,9 +66,10 @@ public class PrepareContractionHierarchiesTest
         g.edge(5, 1, 2, true);
         return g;
     }
-    
+
     @Before
-    public void setUp() {
+    public void setUp()
+    {
         dir = new GHDirectory("", DAType.RAM_INT);
     }
 
@@ -538,7 +542,7 @@ public class PrepareContractionHierarchiesTest
         return g;
     }
 
-//    public static void printEdges(LevelGraph g) {
+    //    public static void printEdges(LevelGraph g) {
 //        RawEdgeIterator iter = g.getAllEdges();
 //        while (iter.next()) {
 //            EdgeSkipIterator single = g.getEdgeProps(iter.edge(), iter.nodeB());

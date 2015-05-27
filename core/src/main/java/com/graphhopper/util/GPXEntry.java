@@ -64,7 +64,7 @@ public class GPXEntry extends GHPoint3D
 
     /**
      * The time relative to the start time in milli seconds.
-     * <p>
+     * <p/>
      * @deprecated use getTime instead
      */
     public long getMillis()

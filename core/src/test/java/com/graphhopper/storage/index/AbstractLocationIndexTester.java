@@ -31,11 +31,15 @@ import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
+
 import java.io.Closeable;
 import java.io.File;
 import java.util.Random;
+
 import org.junit.After;
+
 import static org.junit.Assert.*;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -193,8 +197,8 @@ public abstract class AbstractLocationIndexTester
             }
 
             assertTrue(i + " orig:" + (float) lat + "," + (float) lon
-                    + " full:" + fullLat + "," + fullLon + " fullDist:" + fullDist
-                    + " found:" + newLat + "," + newLon + " foundDist:" + newDist,
+                            + " full:" + fullLat + "," + fullLon + " fullDist:" + fullDist
+                            + " found:" + newLat + "," + newLon + " foundDist:" + newDist,
                     Math.abs(fullDist - newDist) < 50000);
         }
         fullIndex.close();

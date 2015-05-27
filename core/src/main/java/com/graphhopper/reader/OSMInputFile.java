@@ -240,6 +240,7 @@ public class OSMInputFile implements Sink, Closeable
                 pbfReaderThread.interrupt();
         }
     }
+
     Thread pbfReaderThread;
 
     private void openPBFReader( InputStream stream )

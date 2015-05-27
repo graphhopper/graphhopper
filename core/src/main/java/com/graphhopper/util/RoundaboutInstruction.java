@@ -69,7 +69,7 @@ public class RoundaboutInstruction extends Instruction
 
     /**
      * @return radian of angle -2PI < x < 2PI between roundabout entrance and exit
-     *         values > 0 are clockwise rotation, <0 counterclockwise, NaN if direction of rotation unclear
+     * values > 0 are clockwise rotation, <0 counterclockwise, NaN if direction of rotation unclear
      */
     public double getRadian()
     {

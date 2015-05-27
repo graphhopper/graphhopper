@@ -20,13 +20,16 @@ package com.graphhopper.http;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.Translation;
+
 import java.io.IOException;
 import java.util.Locale;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import static javax.servlet.http.HttpServletResponse.*;
+
 import org.json.JSONObject;
 
 /**

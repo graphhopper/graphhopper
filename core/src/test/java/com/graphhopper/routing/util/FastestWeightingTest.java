@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**

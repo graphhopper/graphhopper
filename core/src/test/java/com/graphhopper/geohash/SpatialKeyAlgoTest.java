@@ -21,10 +21,10 @@ import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class SpatialKeyAlgoTest
@@ -233,9 +233,10 @@ public class SpatialKeyAlgoTest
         algo.decode(1, coord);
         assertEquals(1, algo.encode(coord));
     }
-    
+
     @Test
-    public void testEdgeCases() {
+    public void testEdgeCases()
+    {
         double minLon = -1, maxLon = 1.6;
         double minLat = -1, maxLat = 0.5;
         int parts = 4;

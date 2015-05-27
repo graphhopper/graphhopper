@@ -26,12 +26,14 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.set.hash.TIntHashSet;
+
 import java.util.Arrays;
+
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class LocationIndexTreeTest extends AbstractLocationIndexTester
@@ -43,7 +45,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     public LocationIndexTree createIndex( Graph g, int resolution )
     {
         if (resolution < 0)
-            resolution = 500000;        
+            resolution = 500000;
         return (LocationIndexTree) createIndexNoPrepare(g, resolution).prepareIndex();
     }
 

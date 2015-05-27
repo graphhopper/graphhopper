@@ -16,7 +16,6 @@
 package com.graphhopper.util;
 
 /**
- *
  * @author Peter Karich
  */
 public class ViaInstruction extends Instruction

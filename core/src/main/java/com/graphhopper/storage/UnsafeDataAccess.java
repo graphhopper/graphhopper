@@ -18,6 +18,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.NotThreadSafe;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -28,11 +29,11 @@ import java.nio.ByteOrder;
  * This is a data structure which uses an unsafe access to native memory. The speed up compared to
  * RAMDataAccess is roughly 10% due to index calculations and BitUtil overhead in RAMDataAccess.
  * Notes:
- * <p>
+ * <p/>
  * 1. Highly experimental. Still some bugs and access through file/MMAP should work at some point
- * <p>
+ * <p/>
  * 2. Compared to MMAP no syncDAWrapper is need to make it read and write safe from multiple threads
- * <p>
+ * <p/>
  * 3. Cannot be used on Android as no memory allocation methods are available there
  * <p/>
  * @author Peter Karich
@@ -60,7 +61,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
     }
 
     private long address;
-    private long capacity;    
+    private long capacity;
 
     UnsafeDataAccess( String name, String location, ByteOrder order )
     {
@@ -78,7 +79,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
     }
 
     @Override
-    public final boolean ensureCapacity(long bytes)
+    public final boolean ensureCapacity( long bytes )
     {
         return ensureCapacity(bytes, true);
     }

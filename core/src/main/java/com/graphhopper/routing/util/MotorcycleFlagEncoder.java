@@ -22,11 +22,12 @@ import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.PMap;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
+
 import java.util.HashSet;
 
 /**
  * Defines bit layout for motorbikes
- * <p>
+ * <p/>
  * @author Peter Karich
  */
 public class MotorcycleFlagEncoder extends CarFlagEncoder
@@ -36,9 +37,10 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     private final HashSet<String> avoidSet = new HashSet<String>();
     private final HashSet<String> preferSet = new HashSet<String>();
 
-    public MotorcycleFlagEncoder(PMap properties) {
+    public MotorcycleFlagEncoder( PMap properties )
+    {
         this(
-                (int)properties.getLong("speedBits", 5),
+                (int) properties.getLong("speedBits", 5),
                 properties.getDouble("speedFactor", 5),
                 properties.getBool("turnCosts", false) ? 3 : 0
         );
@@ -46,7 +48,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         this.setBlockFords(properties.getBool("blockFords", true));
     }
 
-    public MotorcycleFlagEncoder(String propertiesStr )
+    public MotorcycleFlagEncoder( String propertiesStr )
     {
         this(new PMap(propertiesStr));
     }
@@ -72,7 +74,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         avoidSet.add("motorroad");
         preferSet.add("primary");
         preferSet.add("secondary");
-        
+
         maxPossibleSpeed = 120;
 
         // autobahn
@@ -116,8 +118,8 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     {
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
-        reverseSpeedEncoder = new EncodedDoubleValue("Reverse Speed", shift, speedBits, speedFactor, 
-                                                     defaultSpeedMap.get("secondary"), maxPossibleSpeed);
+        reverseSpeedEncoder = new EncodedDoubleValue("Reverse Speed", shift, speedBits, speedFactor,
+                defaultSpeedMap.get("secondary"), maxPossibleSpeed);
         shift += reverseSpeedEncoder.getBits();
 
         preferWayEncoder = new EncodedValue("PreferWay", shift, 3, 1, 3, 7);

@@ -41,9 +41,10 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
         this(4, 2, 0);
     }
 
-    public MountainBikeFlagEncoder(PMap properties) {
+    public MountainBikeFlagEncoder( PMap properties )
+    {
         this(
-                (int)properties.getLong("speedBits", 4),
+                (int) properties.getLong("speedBits", 4),
                 properties.getDouble("speedFactor", 2),
                 properties.getBool("turnCosts", false) ? 3 : 0
         );
@@ -51,7 +52,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
         this.setBlockFords(properties.getBool("blockFords", true));
     }
 
-    public MountainBikeFlagEncoder(String propertiesStr )
+    public MountainBikeFlagEncoder( String propertiesStr )
     {
         this(new PMap(propertiesStr));
     }
@@ -194,7 +195,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
 
     @Override
     public String toString()
-    {        
+    {
         return "mtb";
     }
 }

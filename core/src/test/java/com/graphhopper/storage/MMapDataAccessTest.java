@@ -18,6 +18,7 @@
 package com.graphhopper.storage;
 
 import static org.junit.Assert.*;
+
 import org.junit.Test;
 
 /**

@@ -20,8 +20,8 @@ package com.graphhopper.storage;
 /**
  * Manages memory mapped DataAccess objects.
  * <p/>
- * @see MMapDataAccess
  * @author Peter Karich
+ * @see MMapDataAccess
  */
 public class MMapDirectory extends GHDirectory
 {

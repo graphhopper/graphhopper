@@ -18,11 +18,12 @@
 package com.graphhopper.util;
 
 import java.util.Locale;
+
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class TranslationMapTest

@@ -18,11 +18,12 @@
 package com.graphhopper.util;
 
 import com.graphhopper.util.shapes.GHPoint;
+
 import static org.junit.Assert.*;
+
 import org.junit.Test;
 
 /**
- *
  * @author Peter Karich
  */
 public class DistanceCalcEarthTest

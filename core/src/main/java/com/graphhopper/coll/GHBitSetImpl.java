@@ -79,7 +79,7 @@ public class GHBitSetImpl extends BitSet implements GHBitSet
             int len = size();
             bs.ensureCapacity(len);
             for (int index = super.nextSetBit(0); index >= 0;
-                    index = super.nextSetBit(index + 1))
+                 index = super.nextSetBit(index + 1))
             {
                 bs.add(index);
             }

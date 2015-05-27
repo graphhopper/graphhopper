@@ -20,6 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
+
 import java.io.*;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
@@ -31,14 +32,15 @@ import java.security.PrivilegedExceptionAction;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.Map.Entry;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Several utility classes which are compatible with Java6 on Android.
  * <p/>
- * @see Helper7 for none-Android compatible methods.
  * @author Peter Karich
+ * @see Helper7 for none-Android compatible methods.
  */
 public class Helper
 {

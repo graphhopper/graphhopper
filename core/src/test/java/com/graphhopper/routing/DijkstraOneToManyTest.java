@@ -22,16 +22,18 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+
 import java.util.Arrays;
 import java.util.Collection;
+
 import static org.junit.Assert.*;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 /**
- *
  * @author Peter Karich
  */
 @RunWith(Parameterized.class)
@@ -44,14 +46,14 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     public static Collection<Object[]> configs()
     {
         return Arrays.asList(new Object[][]
-        {
-            {
-                TraversalMode.NODE_BASED
-            },
+                {
+                        {
+                                TraversalMode.NODE_BASED
+                        },
 //            TODO { TraversalMode.EDGE_BASED_1DIR },
 //            TODO { TraversalMode.EDGE_BASED_2DIR },
 //            TODO { TraversalMode.EDGE_BASED_2DIR_UTURN }
-        });
+                });
     }
 
     private final TraversalMode traversalMode;

@@ -26,7 +26,9 @@ import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+
 import static org.junit.Assert.*;
+
 import org.junit.Test;
 
 /**
@@ -225,7 +227,7 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         EdgeIteratorState edge1 = levelGraph.edge(0, 1);
         EdgeIteratorState edge2 = levelGraph.edge(1, 2);
         levelGraph.shortcut(0, 1);
-        
+
         QueryGraph qGraph = new QueryGraph(levelGraph);
         QueryResult fromRes = createQR(1.004, 1.01, 0, edge1);
         QueryResult toRes = createQR(1.019, 1.00, 0, edge1);

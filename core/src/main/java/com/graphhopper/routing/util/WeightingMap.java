@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.util.PMap;
 
 /**
- *
  * @author Peter Karich
  */
 public class WeightingMap extends PMap
@@ -31,8 +30,7 @@ public class WeightingMap extends PMap
 
     /**
      * Convenient constructor if only one parameter is provided
-     * <p>
-     * @param weighting
+     * <p/>
      */
     public WeightingMap( String weighting )
     {

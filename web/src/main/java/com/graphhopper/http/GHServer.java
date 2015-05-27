@@ -23,12 +23,15 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.servlet.GuiceFilter;
 import com.graphhopper.util.CmdArgs;
+
 import java.net.InetSocketAddress;
+
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
+
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
@@ -68,9 +71,9 @@ public class GHServer
         ResourceHandler resHandler = new ResourceHandler();
         resHandler.setDirectoriesListed(false);
         resHandler.setWelcomeFiles(new String[]
-        {
-            "index.html"
-        });
+                {
+                        "index.html"
+                });
         resHandler.setResourceBase(args.get("jetty.resourcebase", "./src/main/webapp"));
 
         server = new Server();
@@ -94,9 +97,9 @@ public class GHServer
 
         HandlerList handlers = new HandlerList();
         handlers.setHandlers(new Handler[]
-        {
-            resHandler, servHandler
-        });
+                {
+                        resHandler, servHandler
+                });
         server.setHandler(handlers);
         server.start();
         logger.info("Started server at HTTP " + host + ":" + httpPort);

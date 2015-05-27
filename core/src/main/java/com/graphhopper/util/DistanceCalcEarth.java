@@ -19,6 +19,7 @@ package com.graphhopper.util;
 
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+
 import static java.lang.Math.*;
 
 /**
@@ -111,21 +112,21 @@ public class DistanceCalcEarth implements DistanceCalc
 
     @Override
     public double calcNormalizedEdgeDistance( double r_lat_deg, double r_lon_deg,
-            double a_lat_deg, double a_lon_deg,
-            double b_lat_deg, double b_lon_deg )
+                                              double a_lat_deg, double a_lon_deg,
+                                              double b_lat_deg, double b_lon_deg )
     {
         return calcNormalizedEdgeDistanceNew(r_lat_deg, r_lon_deg, a_lat_deg, a_lon_deg, b_lat_deg, b_lon_deg, false);
     }
 
     /**
      * New edge distance calculation where no validEdgeDistance check would be necessary
-     * <p>
+     * <p/>
      * @return the normalized distance of the query point "r" to the project point "c" onto the line
      * segment a-b
      */
     public double calcNormalizedEdgeDistanceNew( double r_lat_deg, double r_lon_deg,
-            double a_lat_deg, double a_lon_deg,
-            double b_lat_deg, double b_lon_deg, boolean reduceToSegment )
+                                                 double a_lat_deg, double a_lon_deg,
+                                                 double b_lat_deg, double b_lon_deg, boolean reduceToSegment )
     {
         double shrinkFactor = cos(toRadians((a_lat_deg + b_lat_deg) / 2));
 
@@ -168,8 +169,8 @@ public class DistanceCalcEarth implements DistanceCalc
 
     @Override
     public GHPoint calcCrossingPointToEdge( double r_lat_deg, double r_lon_deg,
-            double a_lat_deg, double a_lon_deg,
-            double b_lat_deg, double b_lon_deg )
+                                            double a_lat_deg, double a_lon_deg,
+                                            double b_lat_deg, double b_lon_deg )
     {
         double shrinkFactor = cos(toRadians((a_lat_deg + b_lat_deg) / 2));
         double a_lat = a_lat_deg;
@@ -211,8 +212,8 @@ public class DistanceCalcEarth implements DistanceCalc
 
     @Override
     public boolean validEdgeDistance( double r_lat_deg, double r_lon_deg,
-            double a_lat_deg, double a_lon_deg,
-            double b_lat_deg, double b_lon_deg )
+                                      double a_lat_deg, double a_lon_deg,
+                                      double b_lat_deg, double b_lon_deg )
     {
         double shrinkFactor = cos(toRadians((a_lat_deg + b_lat_deg) / 2));
         double a_lat = a_lat_deg;

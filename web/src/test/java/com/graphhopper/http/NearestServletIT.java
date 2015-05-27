@@ -18,14 +18,18 @@
 package com.graphhopper.http;
 
 import static com.graphhopper.http.BaseServletTester.shutdownJetty;
+
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+
 import java.io.File;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**

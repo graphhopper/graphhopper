@@ -2,6 +2,7 @@
 package com.graphhopper.reader.pbf;
 
 import com.graphhopper.reader.OSMElement;
+
 import java.util.Date;
 
 import java.util.LinkedList;
@@ -37,7 +38,7 @@ public class PbfDecoder implements Runnable
      * @param sink The sink to send all decoded entities to.
      */
     public PbfDecoder( PbfStreamSplitter streamSplitter, ExecutorService executorService, int maxPendingBlobs,
-            Sink sink )
+                       Sink sink )
     {
         this.streamSplitter = streamSplitter;
         this.executorService = executorService;

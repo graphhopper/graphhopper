@@ -20,9 +20,11 @@ package com.graphhopper.ui;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.shapes.BBox;
+
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,6 +128,7 @@ public class GraphicsWrapper
         double y = getY(lat);
         g2.fillOval((int) x, (int) y, width, width);
     }
+
     private Logger logger = LoggerFactory.getLogger(getClass());
 
     void scale( int x, int y, boolean zoomIn )

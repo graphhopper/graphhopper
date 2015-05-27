@@ -25,11 +25,12 @@ import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.PMap;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
+
 import java.util.*;
 
 /**
  * Defines bit layout for pedestrians (speed, access, surface, ...).
- * <p>
+ * <p/>
  * @author Peter Karich
  * @author Nop
  * @author Karl Hübner
@@ -56,16 +57,17 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         this(4, 1);
     }
 
-    public FootFlagEncoder(PMap properties) {
+    public FootFlagEncoder( PMap properties )
+    {
         this(
-                (int)properties.getLong("speedBits", 4),
+                (int) properties.getLong("speedBits", 4),
                 properties.getDouble("speedFactor", 1)
         );
         this.properties = properties;
         this.setBlockFords(properties.getBool("blockFords", true));
     }
 
-    public FootFlagEncoder(String propertiesStr )
+    public FootFlagEncoder( String propertiesStr )
     {
         this(new PMap(propertiesStr));
     }
@@ -126,7 +128,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         hikingNetworkToCode.put("nwn", BEST.getValue());
         hikingNetworkToCode.put("rwn", VERY_NICE.getValue());
         hikingNetworkToCode.put("lwn", VERY_NICE.getValue());
-        
+
         maxPossibleSpeed = FERRY_SPEED;
     }
 
@@ -168,7 +170,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
     /**
      * Foot flag encoder does not provide any turn cost / restrictions
-     * <p>
+     * <p/>
      * @return <code>false</code>
      */
     @Override
@@ -179,7 +181,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
     /**
      * Foot flag encoder does not provide any turn cost / restrictions
-     * <p>
+     * <p/>
      * @return 0
      */
     @Override
@@ -197,7 +199,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     /**
      * Some ways are okay but not separate for pedestrians.
      * <p/>
-     * @param way
      */
     @Override
     public long acceptWay( OSMWay way )

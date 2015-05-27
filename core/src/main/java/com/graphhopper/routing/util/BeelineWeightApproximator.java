@@ -8,7 +8,7 @@ import com.graphhopper.util.Helper;
 /**
  * Approximates the distance to the goal node by weighting the beeline distance according to the
  * distance weighting
- * <p>
+ * <p/>
  * @author jansoe
  */
 public class BeelineWeightApproximator implements WeightApproximator

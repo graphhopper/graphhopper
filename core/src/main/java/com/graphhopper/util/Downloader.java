@@ -41,6 +41,7 @@ public class Downloader
                     }
                 });
     }
+
     private String referrer = "http://graphhopper.com";
     private final String userAgent;
     private String acceptEncoding = "gzip, deflate";

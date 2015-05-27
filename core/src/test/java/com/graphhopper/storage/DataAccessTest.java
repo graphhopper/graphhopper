@@ -19,15 +19,18 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
+
 import java.io.File;
 import java.nio.ByteOrder;
+
 import org.junit.After;
+
 import static org.junit.Assert.*;
+
 import org.junit.Before;
 import org.junit.Test;
 
 /**
- *
  * @author Peter Karich
  */
 public abstract class DataAccessTest

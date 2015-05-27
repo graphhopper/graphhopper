@@ -26,18 +26,21 @@ import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.shapes.GHPoint;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
 import org.junit.After;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
+
 import org.junit.Before;
 
 /**
- *
  * @author Peter Karich
  */
 public class GraphHopperTest
@@ -313,10 +316,10 @@ public class GraphHopperTest
     {
         instance = new GraphHopper().init(
                 new CmdArgs().
-                put("osmreader.osm", testOsm3).
-                put("osmreader.dataaccess", "RAM").
-                put("graph.flagEncoders", "FOOT,CAR").
-                put("prepare.chWeighting", "no")).
+                        put("osmreader.osm", testOsm3).
+                        put("osmreader.dataaccess", "RAM").
+                        put("graph.flagEncoders", "FOOT,CAR").
+                        put("prepare.chWeighting", "no")).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
         assertEquals(5, instance.getGraph().getNodes());
@@ -327,10 +330,10 @@ public class GraphHopperTest
         {
             GraphHopper tmpGH = new GraphHopper().init(
                     new CmdArgs().
-                    put("osmreader.osm", testOsm3).
-                    put("osmreader.dataaccess", "RAM").
-                    put("graph.flagEncoders", "FOOT").
-                    put("prepare.chWeighting", "no")).
+                            put("osmreader.osm", testOsm3).
+                            put("osmreader.dataaccess", "RAM").
+                            put("graph.flagEncoders", "FOOT").
+                            put("prepare.chWeighting", "no")).
                     setOSMFile(testOsm3);
             tmpGH.load(ghLoc);
             assertTrue(false);

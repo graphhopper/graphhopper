@@ -22,7 +22,7 @@ import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Special weighting for (motor)bike
- * <p>
+ * <p/>
  * @author Peter Karich
  */
 public class PriorityWeighting extends FastestWeighting

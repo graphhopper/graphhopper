@@ -19,6 +19,7 @@ package com.graphhopper.coll;
 
 import com.graphhopper.storage.VLongStorage;
 import com.graphhopper.util.Helper;
+
 import java.util.Arrays;
 
 /**

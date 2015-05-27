@@ -20,10 +20,10 @@ package com.graphhopper.storage.index;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class Location2IDFullWithEdgesIndexTest extends AbstractLocationIndexTester

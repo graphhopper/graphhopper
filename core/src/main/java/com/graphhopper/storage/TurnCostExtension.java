@@ -23,7 +23,7 @@ import com.graphhopper.util.EdgeIterator;
  * Holds turn cost tables for each node. The additional field of a node will be used to point
  * towards the first entry within a node cost table to identify turn restrictions, or later, turn
  * getCosts.
- * <p>
+ * <p/>
  * @author Karl Hübner
  * @author Peter Karich
  */

@@ -19,12 +19,14 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+
 import java.io.IOException;
+
 import static org.junit.Assert.*;
+
 import org.junit.Test;
 
 /**
- *
  * @author Peter Karich
  */
 public class GraphHopperStorageTest extends AbstractGraphStorageTester
@@ -106,7 +108,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
         NodeAccess na = g.getNodeAccess();
         assertTrue(na.is3D());
         assertTrue(g.getBounds().isValid());
-        
+
         assertEquals(new BBox(10, 20, 10, 12, 0, 1), g.getBounds());
         assertEquals(10, na.getLatitude(0), 1e-2);
         assertEquals(10, na.getLongitude(0), 1e-2);

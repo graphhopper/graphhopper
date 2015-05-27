@@ -23,14 +23,16 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.GHUtility;
 
 import gnu.trove.list.array.TIntArrayList;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
 import org.junit.*;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class PrepareRoutingSubnetworksTest
@@ -223,21 +225,21 @@ public class PrepareRoutingSubnetworksTest
 
         assertEquals(4, components.size());
         assertEquals(new TIntArrayList(new int[]
-        {
-            13, 5, 3, 7, 0
-        }), components.get(0));
+                {
+                        13, 5, 3, 7, 0
+                }), components.get(0));
         assertEquals(new TIntArrayList(new int[]
-        {
-            2, 4, 12, 11, 8, 1
-        }), components.get(1));
+                {
+                        2, 4, 12, 11, 8, 1
+                }), components.get(1));
         assertEquals(new TIntArrayList(new int[]
-        {
-            10, 14, 6
-        }), components.get(2));
+                {
+                        10, 14, 6
+                }), components.get(2));
         assertEquals(new TIntArrayList(new int[]
-        {
-            9
-        }), components.get(3));
+                {
+                        9
+                }), components.get(3));
     }
 
     // Previous two-pass implementation failed on 1 -> 2 -> 0

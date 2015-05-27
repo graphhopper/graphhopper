@@ -25,6 +25,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -45,7 +46,7 @@ public class TestAlgoCollector
     }
 
     public TestAlgoCollector assertDistance( AlgoHelperEntry algoEntry, List<QueryResult> queryList,
-            OneRun oneRun )
+                                             OneRun oneRun )
     {
         List<Path> viaPaths = new ArrayList<Path>();
         QueryGraph queryGraph = new QueryGraph(algoEntry.getQueryGraph());

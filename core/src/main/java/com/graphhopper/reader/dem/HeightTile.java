@@ -19,6 +19,7 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.storage.DataAccess;
+
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
@@ -29,7 +30,7 @@ import javax.imageio.ImageIO;
 
 /**
  * One rectangle of height data from Shuttle Radar Topography Mission.
- * <p>
+ * <p/>
  * @author Peter Karich
  */
 public class HeightTile

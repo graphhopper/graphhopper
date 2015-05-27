@@ -94,11 +94,11 @@ public interface DataAccess extends Storable<DataAccess>
     /**
      * Ensures that the capacity of this object is at least the specified bytes. The first time you
      * have to call 'create' instead.
-     * <p>
-     * @see #create(long)
+     * <p/>
      * @return true if size was increased
+     * @see #create(long)
      */
-    boolean ensureCapacity(long bytes);
+    boolean ensureCapacity( long bytes );
 
     /**
      * Reduces the allocate space to the specified bytes. Warning: it'll free the space even if it

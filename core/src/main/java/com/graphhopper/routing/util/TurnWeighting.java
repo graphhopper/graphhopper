@@ -23,7 +23,7 @@ import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Provides methods to retrieve turn costs for a specific turn.
- * <p>
+ * <p/>
  * @author Karl Hübner
  * @author Peter Karich
  */

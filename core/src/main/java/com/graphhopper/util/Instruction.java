@@ -156,11 +156,11 @@ public class Instruction
     /**
      * This method returns a list of gpx entries where the time (in time) is relative to the first
      * which is 0. It does NOT contain the last point which is the first of the next instruction.
-     * <p>
+     * <p/>
      * @return the time offset to add for the next instruction
      */
     long fillGPXList( List<GPXEntry> list, long time,
-            Instruction prevInstr, Instruction nextInstr, boolean firstInstr )
+                      Instruction prevInstr, Instruction nextInstr, boolean firstInstr )
     {
         checkOne();
         int len = points.size();

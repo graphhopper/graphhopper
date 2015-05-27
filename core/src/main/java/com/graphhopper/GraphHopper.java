@@ -42,8 +42,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Easy to use access point to configure import and (offline) routing.
  * <p/>
- * @see GraphHopperAPI
  * @author Peter Karich
+ * @see GraphHopperAPI
  */
 public class GraphHopper implements GraphHopperAPI
 {
@@ -248,7 +248,7 @@ public class GraphHopper implements GraphHopperAPI
      * Only valid option for in-memory graph and if you e.g. want to disable store on flush for unit
      * tests. Specify storeOnFlush to true if you want that existing data will be loaded FROM disc
      * and all in-memory data will be flushed TO disc after flush is called e.g. while OSM import.
-     * <p>
+     * <p/>
      * @param storeOnFlush true by default
      */
     public GraphHopper setStoreOnFlush( boolean storeOnFlush )
@@ -313,7 +313,7 @@ public class GraphHopper implements GraphHopperAPI
      * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
      * Disabling CH is only recommended for short routes or in combination with
      * setDefaultWeightLimit and called flexibility mode
-     * <p>
+     * <p/>
      * @see #setDefaultWeightLimit(double)
      */
     public GraphHopper setCHEnable( boolean enable )
@@ -426,7 +426,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * The underlying graph used in algorithms.
-     * <p>
+     * <p/>
      * @throws IllegalStateException if graph is not instantiated.
      */
     public GraphStorage getGraph()
@@ -449,7 +449,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * The location index created from the graph.
-     * <p>
+     * <p/>
      * @throws IllegalStateException if index is not initialized
      */
     public LocationIndex getLocationIndex()
@@ -818,12 +818,12 @@ public class GraphHopper implements GraphHopperAPI
      * Based on the weightingParameters and the specified vehicle a Weighting instance can be
      * created. Note that all URL parameters are available in the weightingParameters as String if
      * you use the GraphHopper Web module.
-     * <p>
-     * @see WeightingMap
+     * <p/>
      * @param weightingMap all parameters influencing the weighting. E.g. parameters coming via
      * GHRequest.getHints or directly via "&api.xy=" from the URL of the web UI
      * @param encoder the required vehicle
      * @return the weighting to be used for route calculation
+     * @see WeightingMap
      */
     public Weighting createWeighting( WeightingMap weightingMap, FlagEncoder encoder )
     {

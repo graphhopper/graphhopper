@@ -34,6 +34,7 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.MiniPerfTest;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -44,6 +45,7 @@ import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +58,7 @@ public class Measurement
     {
         new Measurement().start(CmdArgs.read(strs));
     }
+
     private static final Logger logger = LoggerFactory.getLogger(Measurement.class);
     private final Map<String, String> properties = new TreeMap<String, String>();
     private long seed;
@@ -196,7 +199,7 @@ public class Measurement
     }
 
     private void printTimeOfRouteQuery( final GraphHopper hopper, int count, String prefix,
-            final String vehicle, final boolean withInstructions )
+                                        final String vehicle, final boolean withInstructions )
     {
         final Graph g = hopper.getGraph();
         final AtomicLong maxDistance = new AtomicLong(0);

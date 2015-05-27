@@ -18,14 +18,18 @@
 package com.graphhopper.http;
 
 import static com.graphhopper.http.BaseServletTester.shutdownJetty;
+
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+
 import java.io.File;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
@@ -67,7 +71,7 @@ public class NearestServletWithEleIT extends BaseServletTester
         double ele = point.getDouble(2);
         assertTrue("nearest point wasn't correct: lat=" + lat + ", lon=" + lon + ", ele=" + ele, lat == 43.73070006215647 && lon == 7.421392181993846 && ele == 66.0);
     }
-    
+
     @Test
     public void testWithoutEleQuery() throws Exception
     {
@@ -78,7 +82,7 @@ public class NearestServletWithEleIT extends BaseServletTester
         double lon = point.getDouble(0);
         double lat = point.getDouble(1);
         assertTrue("nearest point wasn't correct: lat=" + lat + ", lon=" + lon, lat == 43.73070006215647 && lon == 7.421392181993846);
-        
+
         // Default elevation is false        
         json = nearestQuery("point=43.730864,7.420771");
         assertFalse(json.has("error"));

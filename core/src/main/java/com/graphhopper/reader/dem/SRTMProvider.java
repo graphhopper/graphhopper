@@ -23,20 +23,22 @@ import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
 import gnu.trove.map.hash.TIntObjectHashMap;
+
 import java.io.*;
 import java.net.SocketTimeoutException;
 import java.util.zip.ZipInputStream;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Elevation data from NASA (SRTM). Downloaded from http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/
- * <p>
+ * <p/>
  * Important information about SRTM: the coordinates of the lower-left corner of tile N40W118 are 40
  * degrees north latitude and 118 degrees west longitude. To be more exact, these coordinates refer
  * to the geometric center of the lower left sample, which in the case of SRTM3 data will be about
  * 90 meters in extent.
- * <p>
+ * <p/>
  * @author Peter Karich
  */
 public class SRTMProvider implements ElevationProvider
@@ -97,9 +99,9 @@ public class SRTMProvider implements ElevationProvider
         try
         {
             String strs[] =
-            {
-                "Africa", "Australia", "Eurasia", "Islands", "North_America", "South_America"
-            };
+                    {
+                            "Africa", "Australia", "Eurasia", "Islands", "North_America", "South_America"
+                    };
             for (String str : strs)
             {
                 InputStream is = getClass().getResourceAsStream(str + "_names.txt");

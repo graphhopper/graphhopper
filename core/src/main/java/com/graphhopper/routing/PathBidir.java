@@ -35,7 +35,7 @@ public class PathBidir extends Path
     private EdgeWrapper edgeWTo;
 
     public PathBidir( Graph g, FlagEncoder encoder,
-            EdgeWrapper edgesFrom, EdgeWrapper edgesTo )
+                      EdgeWrapper edgesFrom, EdgeWrapper edgesTo )
     {
         super(g, encoder);
         this.edgeWFrom = edgesFrom;

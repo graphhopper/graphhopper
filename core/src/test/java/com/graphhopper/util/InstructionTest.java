@@ -18,10 +18,10 @@
 package com.graphhopper.util;
 
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Johannes Pelzer
  */
 public class InstructionTest
@@ -32,7 +32,7 @@ public class InstructionTest
         InstructionAnnotation ea = InstructionAnnotation.EMPTY;
         PointList pl = new PointList();
         pl.add(49.942, 11.584);
-        
+
         PointList nextPl = new PointList();
         nextPl.add(49.942, 11.582);
         Instruction currI = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, pl);

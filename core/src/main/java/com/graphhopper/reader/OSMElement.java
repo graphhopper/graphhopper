@@ -202,5 +202,5 @@ public abstract class OSMElement
     public String toString()
     {
         return properties.toString();
-    }        
+    }
 }

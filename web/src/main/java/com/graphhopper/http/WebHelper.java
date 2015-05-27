@@ -18,6 +18,7 @@
 package com.graphhopper.http;
 
 import com.graphhopper.util.PointList;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -26,11 +27,11 @@ import java.net.URLEncoder;
 
 /**
  * Code which handles polyline encoding and other web stuff.
- * <p>
+ * <p/>
  * The necessary information for polyline encoding is in this answer:
  * http://stackoverflow.com/a/24510799/194609 with a link to official Java sources as well as to a
  * good explanation.
- * <p>
+ * <p/>
  * @author Peter Karich
  */
 public class WebHelper

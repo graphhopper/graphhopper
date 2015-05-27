@@ -329,8 +329,8 @@ public class QueryGraph implements Graph
     }
 
     private void createEdges( GHPoint3D prevSnapped, int prevWayIndex, GHPoint3D currSnapped, int wayIndex,
-            PointList fullPL, EdgeIteratorState closestEdge,
-            int prevNodeId, int nodeId, long reverseFlags )
+                              PointList fullPL, EdgeIteratorState closestEdge,
+                              int prevNodeId, int nodeId, long reverseFlags )
     {
         int max = wayIndex + 1;
         // basePoints must have at least the size of 2 to make sure fetchWayGeometry(3) returns at least 2
@@ -568,7 +568,7 @@ public class QueryGraph implements Graph
      * Creates a fake edge iterator pointing to multiple edge states.
      */
     private void addVirtualEdges( TIntObjectMap<VirtualEdgeIterator> node2EdgeMap, EdgeFilter filter, boolean base,
-            int node, int virtNode )
+                                  int node, int virtNode )
     {
         VirtualEdgeIterator existingIter = node2EdgeMap.get(node);
         if (existingIter == null)

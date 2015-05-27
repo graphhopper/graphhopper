@@ -7,7 +7,6 @@ package com.graphhopper.routing.util;
  * Mitoh, K. (1994). A fast algorithm for finding better routes by ai search techniques. In VNIS,
  * pages 291–296.
  * <p/>
- *
  * @author jansoe
  */
 public class ConsistentWeightApproximator

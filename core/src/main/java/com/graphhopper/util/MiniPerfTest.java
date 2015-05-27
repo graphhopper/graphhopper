@@ -18,6 +18,7 @@
 package com.graphhopper.util;
 
 import java.text.DecimalFormat;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

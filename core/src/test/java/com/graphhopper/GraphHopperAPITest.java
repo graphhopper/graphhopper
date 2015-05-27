@@ -22,10 +22,10 @@ import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.NodeAccess;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class GraphHopperAPITest

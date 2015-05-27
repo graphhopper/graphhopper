@@ -21,16 +21,20 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
+
 import static com.graphhopper.util.GHUtility.*;
+
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeExplorer;
+
 import java.io.IOException;
 import java.util.zip.GZIPInputStream;
+
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class PrinctonReaderTest

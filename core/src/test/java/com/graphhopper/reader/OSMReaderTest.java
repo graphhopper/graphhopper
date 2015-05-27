@@ -18,6 +18,7 @@
 package com.graphhopper.reader;
 
 import static org.junit.Assert.*;
+
 import gnu.trove.list.TLongList;
 
 import java.io.File;
@@ -45,6 +46,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
+
 import java.util.*;
 
 /**
@@ -722,7 +724,7 @@ public class OSMReaderTest
         {
             @Override
             public Collection<OSMTurnRelation.TurnCostTableEntry> analyzeTurnRelation( FlagEncoder encoder,
-                    OSMTurnRelation turnRelation )
+                                                                                       OSMTurnRelation turnRelation )
             {
                 // simulate by returning one turn cost entry directly
                 if (encoder.toString().equalsIgnoreCase("car"))

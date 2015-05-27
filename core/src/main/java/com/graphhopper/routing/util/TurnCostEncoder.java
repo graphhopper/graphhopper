@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 /**
  * Encodes and decodes a turn restriction and turn costs within a integer flag
- * <p>
+ * <p/>
  * @author Karl Hübner
  */
 public interface TurnCostEncoder

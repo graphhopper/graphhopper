@@ -20,6 +20,7 @@ package com.graphhopper.storage;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.NotThreadSafe;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -171,7 +172,7 @@ public class MMapDataAccess extends AbstractDataAccess
         ByteBuffer buf = null;
         IOException ioex = null;
         // One retry if it fails. It could fail e.g. if previously buffer wasn't yet unmapped from the jvm
-        for (int trial = 0; trial < 1;)
+        for (int trial = 0; trial < 1; )
         {
             try
             {

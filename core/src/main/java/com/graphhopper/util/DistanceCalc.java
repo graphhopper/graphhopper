@@ -69,12 +69,12 @@ public interface DistanceCalc
      *  .
      *    a-------b
      * </pre>
-     * <p>
+     * <p/>
      * @return true for case 1 which is "on edge" or the special case of 90° to the edge
      */
     boolean validEdgeDistance( double r_lat_deg, double r_lon_deg,
-            double a_lat_deg, double a_lon_deg,
-            double b_lat_deg, double b_lon_deg );
+                               double a_lat_deg, double a_lon_deg,
+                               double b_lat_deg, double b_lon_deg );
 
     /**
      * This method calculates the distance from r to edge (a, b) where the crossing point is c
@@ -82,13 +82,13 @@ public interface DistanceCalc
      * @return the distance in normalized meter
      */
     double calcNormalizedEdgeDistance( double r_lat_deg, double r_lon_deg,
-            double a_lat_deg, double a_lon_deg,
-            double b_lat_deg, double b_lon_deg );
+                                       double a_lat_deg, double a_lon_deg,
+                                       double b_lat_deg, double b_lon_deg );
 
     /**
      * @return the crossing point c of the vertical line from r to line (a, b)
      */
     GHPoint calcCrossingPointToEdge( double r_lat_deg, double r_lon_deg,
-            double a_lat_deg, double a_lon_deg,
-            double b_lat_deg, double b_lon_deg );
+                                     double a_lat_deg, double a_lon_deg,
+                                     double b_lat_deg, double b_lon_deg );
 }

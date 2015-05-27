@@ -20,11 +20,12 @@ package com.graphhopper.util;
 
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.Path;
+
 import java.util.List;
 
 /**
  * This class merges a list of points into one point recognizing the specified places.
- * <p>
+ * <p/>
  * @author Peter Karich
  * @author ratrun
  */

@@ -23,13 +23,16 @@ import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
+
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+
 import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**

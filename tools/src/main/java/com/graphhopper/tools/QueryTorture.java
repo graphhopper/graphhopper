@@ -24,6 +24,7 @@ import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
+
 import java.io.*;
 import java.net.URLEncoder;
 import java.util.*;
@@ -31,6 +32,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +47,7 @@ public class QueryTorture
     {
         new QueryTorture().start(CmdArgs.read(args));
     }
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private ExecutorService service;
     private BlockingQueue<Query> queryQueue;

@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -291,8 +292,8 @@ public class PbfBlobDecoder implements Runnable
     }
 
     private void buildRelationMembers( OSMRelation relation,
-            List<Long> memberIds, List<Integer> memberRoles, List<Osmformat.Relation.MemberType> memberTypes,
-            PbfFieldDecoder fieldDecoder )
+                                       List<Long> memberIds, List<Integer> memberRoles, List<Osmformat.Relation.MemberType> memberTypes,
+                                       PbfFieldDecoder fieldDecoder )
     {
 
         ArrayList<OSMRelation.Member> members = relation.getMembers();

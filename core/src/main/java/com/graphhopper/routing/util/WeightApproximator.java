@@ -11,9 +11,9 @@ public interface WeightApproximator
     /**
      * @return minimal weight fromNode to the goalNode
      */
-    double approximate(int fromNode);
+    double approximate( int fromNode );
 
-    void setGoalNode(int to);
+    void setGoalNode( int to );
 
     /**
      * makes a deep copy of itself

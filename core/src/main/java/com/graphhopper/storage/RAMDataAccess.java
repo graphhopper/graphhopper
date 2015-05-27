@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteOrder;
 import java.util.Arrays;
+
 import org.slf4j.LoggerFactory;
 
 /**
@@ -92,7 +93,7 @@ public class RAMDataAccess extends AbstractDataAccess
     }
 
     @Override
-    public boolean ensureCapacity(long bytes)
+    public boolean ensureCapacity( long bytes )
     {
         if (bytes < 0)
             throw new IllegalArgumentException("new capacity has to be strictly positive");

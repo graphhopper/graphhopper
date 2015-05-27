@@ -22,7 +22,9 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+
 import java.util.List;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -158,9 +160,9 @@ public class GraphHopperWeb implements GraphHopperAPI
     }
 
     public static void readPath( GHResponse res, JSONObject firstPath,
-            boolean tmpCalcPoints,
-            boolean tmpInstructions,
-            boolean tmpElevation )
+                                 boolean tmpCalcPoints,
+                                 boolean tmpInstructions,
+                                 boolean tmpElevation )
     {
         double distance = firstPath.getDouble("distance");
         long time = firstPath.getLong("time");

@@ -27,7 +27,7 @@ public interface GraphHopperAPI
     /**
      * Connects to the specified service (graphhopper URL) or loads a graph from the graphhopper
      * folder.
-     * <p>
+     * <p/>
      * @return true if successfully connected or loaded
      */
     boolean load( String urlOrFile );

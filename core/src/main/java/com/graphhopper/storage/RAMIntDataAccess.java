@@ -95,7 +95,7 @@ class RAMIntDataAccess extends AbstractDataAccess
     }
 
     @Override
-    public boolean ensureCapacity(long bytes)
+    public boolean ensureCapacity( long bytes )
     {
         if (bytes < 0)
             throw new IllegalArgumentException("new capacity has to be strictly positive");

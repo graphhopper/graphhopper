@@ -33,16 +33,15 @@ package com.graphhopper.util;
  *   int adjacentNodeId = iter.getAdjNode(); // this is the node where this edge state is "pointing to"
  *   ...
  * }
- *
+ * @author Peter Karich
  * @see EdgeIteratorState
  * @see EdgeExplorer
- * @author Peter Karich
  */
 public interface EdgeIterator extends EdgeIteratorState
 {
     /**
      * To be called to go to the next edge state.
-     * <p>
+     * <p/>
      * @return true if an edge state is available
      */
     boolean next();

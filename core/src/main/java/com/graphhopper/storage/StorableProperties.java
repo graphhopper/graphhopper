@@ -19,6 +19,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -113,7 +114,7 @@ public class StorableProperties implements Storable<StorableProperties>
     public boolean isClosed()
     {
         return da.isClosed();
-    }        
+    }
 
     @Override
     public StorableProperties create( long size )

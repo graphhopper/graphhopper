@@ -20,13 +20,15 @@ package com.graphhopper.http;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.util.Downloader;
+
 import java.io.IOException;
 import java.io.InputStream;
+
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class GraphHopperWebTest

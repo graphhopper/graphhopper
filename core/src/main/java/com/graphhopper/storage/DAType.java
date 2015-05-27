@@ -61,7 +61,9 @@ public class DAType
     {
         HEAP, MMAP, UNSAFE /*, DIRECT */
 
-    };
+    }
+
+    ;
     private final MemRef memRef;
     private final boolean storing;
     private final boolean integ;

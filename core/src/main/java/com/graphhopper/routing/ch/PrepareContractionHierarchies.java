@@ -27,7 +27,9 @@ import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
+
 import java.util.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -385,15 +387,16 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         sortedNodes = null;
         oldPriorities = null;
     }
+
     AddShortcutHandler addScHandler = new AddShortcutHandler();
     CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
 
     interface ShortcutHandler
     {
         void foundShortcut( int u_fromNode, int w_toNode,
-                double existingDirectWeight, double distance,
-                EdgeIterator outgoingEdges,
-                int skippedEdge1, int incomingEdgeOrigCount );
+                            double existingDirectWeight, double distance,
+                            EdgeIterator outgoingEdges,
+                            int skippedEdge1, int incomingEdgeOrigCount );
 
         int getNode();
     }
@@ -420,9 +423,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
         @Override
         public void foundShortcut( int u_fromNode, int w_toNode,
-                double existingDirectWeight, double distance,
-                EdgeIterator outgoingEdges,
-                int skippedEdge1, int incomingEdgeOrigCount )
+                                   double existingDirectWeight, double distance,
+                                   EdgeIterator outgoingEdges,
+                                   int skippedEdge1, int incomingEdgeOrigCount )
         {
             shortcuts++;
             originalEdgesCount += incomingEdgeOrigCount + getOrigEdgeCount(outgoingEdges.getEdge());
@@ -452,9 +455,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
         @Override
         public void foundShortcut( int u_fromNode, int w_toNode,
-                double existingDirectWeight, double existingDistSum,
-                EdgeIterator outgoingEdges,
-                int skippedEdge1, int incomingEdgeOrigCount )
+                                   double existingDirectWeight, double existingDistSum,
+                                   EdgeIterator outgoingEdges,
+                                   int skippedEdge1, int incomingEdgeOrigCount )
         {
             // FOUND shortcut 
             // but be sure that it is the only shortcut in the collection 

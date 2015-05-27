@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+
 import java.util.Arrays;
 
 /**
@@ -27,7 +28,7 @@ import java.util.Arrays;
  * Different options define how precise turn restrictions and costs are taken into account, but
  * still all are without via-way support. BTW: this would not be done at runtime, this would be a
  * pre-processing step to avoid performance penalities.
- * <p>
+ * <p/>
  * @author Peter Karich
  */
 public enum TraversalMode
@@ -73,7 +74,7 @@ public enum TraversalMode
      * Returns the identifier to access the map of the shortest path tree according to the traversal
      * mode. E.g. returning the adjacent node id in node-based behavior whilst returning the edge id
      * in edge-based behavior
-     * <p>
+     * <p/>
      * @param iterState the current {@link EdgeIteratorState}
      * @param reverse <code>true</code>, if traversal in backward direction. Will be true only for
      * backward searches in bidirectional algorithms.

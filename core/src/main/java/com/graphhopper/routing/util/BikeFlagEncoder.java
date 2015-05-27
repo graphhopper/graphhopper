@@ -33,12 +33,12 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
         this(4, 2, 0);
     }
 
-    public BikeFlagEncoder(String propertiesString)
+    public BikeFlagEncoder( String propertiesString )
     {
         this(new PMap(propertiesString));
     }
 
-    public BikeFlagEncoder(PMap properties)
+    public BikeFlagEncoder( PMap properties )
     {
         this((int) properties.getLong("speedBits", 4),
                 properties.getLong("speedFactor", 2),

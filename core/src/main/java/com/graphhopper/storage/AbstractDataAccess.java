@@ -19,6 +19,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -76,7 +77,7 @@ public abstract class AbstractDataAccess implements DataAccess
     public boolean isClosed()
     {
         return closed;
-    }        
+    }
 
     @Override
     public void setHeader( int bytePos, int value )

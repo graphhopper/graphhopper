@@ -19,7 +19,9 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.OSMRelation;
+
 import static com.graphhopper.routing.util.PriorityCode.*;
+
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionAnnotation;
 import com.graphhopper.util.Translation;
@@ -61,7 +63,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     private int avoidSpeedLimit;
 
     // This is the specific bicycle class
-    private String specificBicycleClass; 
+    private String specificBicycleClass;
 
     protected BikeCommonFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
     {
@@ -463,7 +465,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     /**
      * In this method we prefer cycleways or roads with designated bike access and avoid big roads
      * or roads with trams or pedestrian.
-     * <p>
+     * <p/>
      * @return new priority based on priorityFromRelation and on the tags in OSMWay.
      */
     protected int handlePriority( OSMWay way, int priorityFromRelation )
@@ -479,29 +481,37 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         // pick priority with biggest order value
         return weightToPrioMap.lastEntry().getValue();
     }
-    
+
     // Conversion of class value to priority. See http://wiki.openstreetmap.org/wiki/Class:bicycle
-    private PriorityCode convertCallValueToPriority(String tagvalue)
+    private PriorityCode convertCallValueToPriority( String tagvalue )
     {
         int classvalue;
-        try {
-             classvalue = Integer.parseInt(tagvalue);
-            } 
-        catch (NumberFormatException e) 
+        try
         {
-             return PriorityCode.UNCHANGED;
+            classvalue = Integer.parseInt(tagvalue);
+        } catch (NumberFormatException e)
+        {
+            return PriorityCode.UNCHANGED;
         }
 
         switch (classvalue)
         {
-            case 3: return PriorityCode.BEST;
-            case 2: return PriorityCode.VERY_NICE;
-            case 1: return PriorityCode.PREFER;
-            case 0: return PriorityCode.UNCHANGED;
-            case -1: return PriorityCode.AVOID_IF_POSSIBLE;
-            case -2: return PriorityCode.REACH_DEST;
-            case -3: return PriorityCode.AVOID_AT_ALL_COSTS;
-            default: return PriorityCode.UNCHANGED;
+            case 3:
+                return PriorityCode.BEST;
+            case 2:
+                return PriorityCode.VERY_NICE;
+            case 1:
+                return PriorityCode.PREFER;
+            case 0:
+                return PriorityCode.UNCHANGED;
+            case -1:
+                return PriorityCode.AVOID_IF_POSSIBLE;
+            case -2:
+                return PriorityCode.REACH_DEST;
+            case -3:
+                return PriorityCode.AVOID_AT_ALL_COSTS;
+            default:
+                return PriorityCode.UNCHANGED;
         }
     }
 
@@ -521,16 +531,15 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         double maxSpeed = getMaxSpeed(way);
         if (preferHighwayTags.contains(highway) || maxSpeed > 0 && maxSpeed <= 30)
         {
-            if (maxSpeed<avoidSpeedLimit)
+            if (maxSpeed < avoidSpeedLimit)
             {
                 weightToPrioMap.put(40d, PREFER.getValue());
                 if (way.hasTag("tunnel", intendedValues))
                     weightToPrioMap.put(40d, UNCHANGED.getValue());
             }
-        }
-        else
+        } else
         {
-            if (avoidHighwayTags.contains(highway) || ( (maxSpeed >= avoidSpeedLimit)&&(highway!="track")))
+            if (avoidHighwayTags.contains(highway) || ((maxSpeed >= avoidSpeedLimit) && (highway != "track")))
             {
                 weightToPrioMap.put(50d, REACH_DEST.getValue());
                 if (way.hasTag("tunnel", intendedValues))
@@ -552,15 +561,14 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             weightToPrioMap.put(50d, AVOID_AT_ALL_COSTS.getValue());
 
         String classBicycleSpecific = way.getTag(specificBicycleClass);
-        if (classBicycleSpecific!=null) 
+        if (classBicycleSpecific != null)
         {
             // We assume that humans are better in classifying preferences compared to our algorithm above -> weight = 100
             weightToPrioMap.put(100d, convertCallValueToPriority(classBicycleSpecific).getValue());
-        }
-        else
+        } else
         {
             String classBicycle = way.getTag("class:bicycle");
-            if (classBicycle!=null) 
+            if (classBicycle != null)
             {
                 weightToPrioMap.put(100d, convertCallValueToPriority(classBicycle).getValue());
             }
@@ -723,7 +731,9 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         {
             return value;
         }
-    };
+    }
+
+    ;
 
     protected void setHighwaySpeed( String highway, int speed )
     {
@@ -764,12 +774,12 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         return PriorityWeighting.class.isAssignableFrom(feature);
     }
 
-    public void setAvoidSpeedLimit(  int limit  )
+    public void setAvoidSpeedLimit( int limit )
     {
         avoidSpeedLimit = limit;
     }
 
-    public void setSpecificBicycleClass(  String subkey )
+    public void setSpecificBicycleClass( String subkey )
     {
         specificBicycleClass = "class:bicycle:" + subkey.toString();
     }

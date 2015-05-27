@@ -18,6 +18,7 @@
 package com.graphhopper.reader;
 
 import com.graphhopper.util.PointAccess;
+
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 

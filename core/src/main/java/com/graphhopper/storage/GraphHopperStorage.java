@@ -34,6 +34,7 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 
 import static com.graphhopper.util.Helper.nf;
+
 import java.io.UnsupportedEncodingException;
 
 /**
@@ -47,9 +48,9 @@ import java.io.UnsupportedEncodingException;
  * Life cycle: (1) object creation, (2) configuration via setters & getters, (3) create or
  * loadExisting, (4) usage, (5) flush, (6) close
  * <p/>
+ * @author Peter Karich
  * @see GraphBuilder Use the GraphBuilder class to create a (Level)GraphStorage easier.
  * @see LevelGraphStorage
- * @author Peter Karich
  */
 public class GraphHopperStorage implements GraphStorage
 {
@@ -105,7 +106,7 @@ public class GraphHopperStorage implements GraphStorage
     }
 
     public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation,
-            GraphExtension extendedStorage )
+                               GraphExtension extendedStorage )
     {
         if (encodingManager == null)
             throw new IllegalArgumentException("EncodingManager cannot be null in GraphHopperStorage since 0.4. "
@@ -320,7 +321,7 @@ public class GraphHopperStorage implements GraphStorage
 
     /**
      * Create edge between nodes a and b
-     * <p>
+     * <p/>
      * @return EdgeIteratorState of newly created edge
      */
     @Override
@@ -369,7 +370,7 @@ public class GraphHopperStorage implements GraphStorage
 
     /**
      * Determine next free edgeId and ensure byte capacity to store edge
-     * <p>
+     * <p/>
      * @return next free edgeId
      */
     private int nextEdge()
@@ -1215,8 +1216,8 @@ public class GraphHopperStorage implements GraphStorage
         EdgeExplorer delExplorer = createEdgeExplorer(EdgeFilter.ALL_EDGES);
         // create map of old node ids pointing to new ids        
         for (int removeNode = removedNodes.next(0);
-                removeNode >= 0;
-                removeNode = removedNodes.next(removeNode + 1))
+             removeNode >= 0;
+             removeNode = removedNodes.next(removeNode + 1))
         {
             EdgeIterator delEdgesIter = delExplorer.setBaseNode(removeNode);
             while (delEdgesIter.next())
@@ -1241,8 +1242,8 @@ public class GraphHopperStorage implements GraphStorage
         // now similar process to disconnectEdges but only for specific nodes
         // all deleted nodes could be connected to existing. remove the connections
         for (int removeNode = toRemoveSet.next(0);
-                removeNode >= 0;
-                removeNode = toRemoveSet.next(removeNode + 1))
+             removeNode >= 0;
+             removeNode = toRemoveSet.next(removeNode + 1))
         {
             // remove all edges connected to the deleted nodes
             adjNodesToDelIter.setBaseNode(removeNode);

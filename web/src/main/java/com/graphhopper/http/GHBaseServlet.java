@@ -23,9 +23,12 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import static javax.servlet.http.HttpServletResponse.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

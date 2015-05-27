@@ -20,10 +20,14 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
+
 import java.io.File;
+
 import org.junit.After;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -84,7 +88,7 @@ public abstract class AbstractLockFactoryTester
         // on windows we cannot forcefully remove an unreleased lock
         if (Constants.WINDOWS)
             lock.release();
-        
+
         instance.forceRemove(lock.getName(), true);
         assertFalse(lock.isLocked());
     }

@@ -102,7 +102,7 @@ public interface Graph
 
     /**
      * Copy this Graph into the specified Graph g.
-     * <p>
+     * <p/>
      * @return the specified GraphStorage g
      */
     Graph copyTo( Graph g );

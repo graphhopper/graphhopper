@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIteratorState;
+
 import java.awt.Color;
 import java.awt.Graphics2D;
 

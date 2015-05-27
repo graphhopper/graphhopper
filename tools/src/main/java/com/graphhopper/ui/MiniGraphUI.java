@@ -29,10 +29,12 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Random;
 import javax.swing.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +56,7 @@ public class MiniGraphUI
         boolean debug = args.getBool("minigraphui.debug", false);
         new MiniGraphUI(hopper, debug).visualize();
     }
+
     private Logger logger = LoggerFactory.getLogger(getClass());
     private Path path;
     private RoutingAlgorithmFactory algoFactory;
@@ -349,6 +352,7 @@ public class MiniGraphUI
         logger.info("dist:" + tmpPath.getDistance() + ", path points(" + list.getSize() + "):" + list + ", nodes:" + nodes);
         return tmpPath;
     }
+
     private QueryResult fromRes;
     private QueryResult toRes;
 
@@ -429,6 +433,7 @@ public class MiniGraphUI
 
                             fromDone = !fromDone;
                         }
+
                         boolean dragging = false;
 
                         @Override
@@ -499,6 +504,7 @@ public class MiniGraphUI
             throw new RuntimeException(ex);
         }
     }
+
     // for moving
     int currentPosX;
     int currentPosY;

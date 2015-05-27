@@ -19,10 +19,10 @@
 package com.graphhopper.reader;
 
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class OSMNodeTest

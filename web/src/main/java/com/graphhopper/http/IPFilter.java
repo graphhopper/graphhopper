@@ -5,16 +5,17 @@ import java.util.HashSet;
 import java.util.Set;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletResponse;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * This IP filter class accepts a list of IPs for blacklisting OR for whitelisting (but not both).
- * <p>
+ * <p/>
  * Additionally to exact match a simple wildcard expression ala 1.2.3* or 1.*.3.4 is allowed.
- * <p>
+ * <p/>
  * The internal ip filter from jetty did not work (NP exceptions)
- * <p>
+ * <p/>
  * @author Peter Karich
  */
 public class IPFilter implements Filter

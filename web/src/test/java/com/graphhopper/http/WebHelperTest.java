@@ -20,10 +20,10 @@ package com.graphhopper.http;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class WebHelperTest

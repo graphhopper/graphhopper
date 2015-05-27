@@ -30,7 +30,7 @@ import com.graphhopper.util.PMap;
  *        weighting(weighting).
  *        build();
  * </pre>
- * <p>
+ * <p/>
  * @author Peter Karich
  */
 public class AlgorithmOptions

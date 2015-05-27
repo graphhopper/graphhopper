@@ -19,10 +19,10 @@ package com.graphhopper.tools;
 
 import com.graphhopper.tools.QueryTorture.Query;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class QueryTortureTest

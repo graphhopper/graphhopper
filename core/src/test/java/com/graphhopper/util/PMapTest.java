@@ -38,21 +38,24 @@ public class PMapTest
     }
 
     @Test
-    public void numericPropertyCanBeRetrievedAsLong() {
+    public void numericPropertyCanBeRetrievedAsLong()
+    {
         PMap subject = new PMap("foo=1234|bar=5678");
 
         assertEquals(1234L, subject.getLong("foo", 0));
     }
 
     @Test
-    public void numericPropertyCanBeRetrievedAsDouble() {
+    public void numericPropertyCanBeRetrievedAsDouble()
+    {
         PMap subject = new PMap("foo=123.45|bar=56.78");
 
         assertEquals(123.45, subject.getDouble("foo", 0), 1e-4);
     }
 
     @Test
-    public void hasReturnsCorrectResult() {
+    public void hasReturnsCorrectResult()
+    {
         PMap subject = new PMap("foo=123.45|bar=56.78");
 
         assertTrue(subject.has("foo"));

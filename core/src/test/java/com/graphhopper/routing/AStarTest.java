@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.*;
+
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -40,12 +41,12 @@ public class AStarTest extends AbstractRoutingAlgorithmTester
     public static Collection<Object[]> configs()
     {
         return Arrays.asList(new Object[][]
-        {
-            { TraversalMode.NODE_BASED },
-            { TraversalMode.EDGE_BASED_1DIR },
-            { TraversalMode.EDGE_BASED_2DIR },
-            { TraversalMode.EDGE_BASED_2DIR_UTURN }
-        });
+                {
+                        {TraversalMode.NODE_BASED},
+                        {TraversalMode.EDGE_BASED_1DIR},
+                        {TraversalMode.EDGE_BASED_2DIR},
+                        {TraversalMode.EDGE_BASED_2DIR_UTURN}
+                });
     }
 
     private final TraversalMode traversalMode;

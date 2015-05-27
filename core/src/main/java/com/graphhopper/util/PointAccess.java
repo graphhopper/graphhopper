@@ -42,7 +42,7 @@ public interface PointAccess
     /**
      * This method ensures that the node with the specified index exists and prepares access to it.
      * The index goes from 0 (inclusive) to graph.getNodes() (exclusive)
-     * <p>
+     * <p/>
      * This methods sets the latitude, longitude and elevation to the specified value.
      */
     void setNode( int nodeId, double lat, double lon );
@@ -50,7 +50,7 @@ public interface PointAccess
     /**
      * This method ensures that the node with the specified index exists and prepares access to it.
      * The index goes from 0 (inclusive) to graph.getNodes() (exclusive)
-     * <p>
+     * <p/>
      * This methods sets the latitude, longitude and elevation to the specified value.
      */
     void setNode( int nodeId, double lat, double lon, double ele );

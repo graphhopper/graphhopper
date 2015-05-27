@@ -33,12 +33,15 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
+
 import static org.junit.Assert.*;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -105,7 +108,7 @@ public class RoutingAlgorithmIT
         Helper.removeDir(new File(graphFile));
         GraphHopper hopper = new GraphHopper().
                 // avoid that path.getDistance is too different to path.getPoint.calcDistance
-                setWayPointMaxDistance(0).
+                        setWayPointMaxDistance(0).
                 setOSMFile(osmFile).
                 setCHEnable(false).
                 setGraphHopperLocation(graphFile).
@@ -490,8 +493,8 @@ public class RoutingAlgorithmIT
      * takes a bit longer
      */
     Graph runAlgo( TestAlgoCollector testCollector, String osmFile,
-            String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
-            boolean testAlsoCH, String vehicle, String weightStr, boolean is3D )
+                   String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
+                   boolean testAlsoCH, String vehicle, String weightStr, boolean is3D )
     {
         AlgoHelperEntry algoEntry = null;
         OneRun tmpOneRun = null;
@@ -501,7 +504,7 @@ public class RoutingAlgorithmIT
             GraphHopper hopper = new GraphHopper().
                     setStoreOnFlush(true).
                     // avoid that path.getDistance is too different to path.getPoint.calcDistance
-                    setWayPointMaxDistance(0).
+                            setWayPointMaxDistance(0).
                     setOSMFile(osmFile).
                     setCHEnable(false).
                     setGraphHopperLocation(graphFile).
@@ -619,9 +622,9 @@ public class RoutingAlgorithmIT
             for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++)
             {
                 String[] algos = new String[]
-                {
-                    "astar", "dijkstrabi"
-                };
+                        {
+                                "astar", "dijkstrabi"
+                        };
                 for (final String algoStr : algos)
                 {
                     // an algorithm is not thread safe! reuse via clear() is ONLY appropriated if used from same thread!
@@ -661,8 +664,8 @@ public class RoutingAlgorithmIT
     }
 
     static List<AlgoHelperEntry> createAlgos( Graph g,
-            LocationIndex idx, final FlagEncoder encoder, boolean withCh,
-            final TraversalMode tMode, final Weighting weighting, final EncodingManager manager )
+                                              LocationIndex idx, final FlagEncoder encoder, boolean withCh,
+                                              final TraversalMode tMode, final Weighting weighting, final EncodingManager manager )
     {
         List<AlgoHelperEntry> prepare = new ArrayList<AlgoHelperEntry>();
         prepare.add(new AlgoHelperEntry(g, new AlgorithmOptions(AlgorithmOptions.ASTAR, encoder, weighting, tMode), idx));
@@ -679,7 +682,7 @@ public class RoutingAlgorithmIT
         {
             final LevelGraph graphCH = (LevelGraph) ((GraphStorage) g).copyTo(new GraphBuilder(manager).
                     set3D(g.getNodeAccess().is3D()).levelGraphCreate());
-            final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT), 
+            final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
                     graphCH, encoder, weighting, tMode);
             prepareCH.doWork();
             LocationIndex idxCH = new LocationIndexTree(graphCH.getBaseGraph(), new RAMDirectory()).prepareIndex();

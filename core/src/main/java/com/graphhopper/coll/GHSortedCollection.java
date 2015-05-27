@@ -19,6 +19,7 @@ package com.graphhopper.coll;
 
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.set.hash.TIntHashSet;
+
 import java.util.Map.Entry;
 import java.util.TreeMap;
 

@@ -24,6 +24,7 @@ import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.util.*;
+
 import java.util.*;
 
 /**
@@ -142,7 +143,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     /**
      * Defines the bits for the node flags, which are currently used for barriers only.
-     * <p>
+     * <p/>
      * @return incremented shift value pointing behind the last used bit
      */
     public int defineNodeBits( int index, int shift )
@@ -153,7 +154,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     /**
      * Defines bits used for edge flags used for access, speed etc.
      * <p/>
-     * @param index
      * @param shift bit offset for the first bit used by this encoder
      * @return incremented shift value pointing behind the last used bit
      */
@@ -180,7 +180,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     /**
      * Defines the bits which are used for relation flags.
-     * <p>
+     * <p/>
      * @return incremented shift value pointing behind the last used bit
      */
     public int defineRelationBits( int index, int shift )
@@ -294,7 +294,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative: " + speed
                     + ", flags:" + BitUtil.LITTLE.toBitString(flags));
-        
+
         if (speed < speedEncoder.factor / 2)
             return setLowSpeed(flags, speed, false);
 
@@ -577,7 +577,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     /**
      * Defines the bits reserved for storing turn restriction and turn cost
-     * <p>
+     * <p/>
      * @param shift bit offset for the first bit used by this encoder
      * @return incremented shift value pointing behind the last used bit
      */
@@ -586,7 +586,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (maxTurnCosts == 0)
             return shift;
 
-        // optimization for turn restrictions only 
+            // optimization for turn restrictions only
         else if (maxTurnCosts == 1)
         {
             turnRestrictionBit = 1L << shift;

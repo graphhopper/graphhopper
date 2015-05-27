@@ -18,9 +18,11 @@
 package com.graphhopper.tools;
 
 import com.graphhopper.util.Helper;
+
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 
 /**

@@ -20,6 +20,7 @@ package com.graphhopper;
 import com.graphhopper.routing.util.WeightingMap;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;

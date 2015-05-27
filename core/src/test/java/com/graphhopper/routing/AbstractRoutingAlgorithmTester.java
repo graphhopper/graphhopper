@@ -24,13 +24,15 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
+
 import java.util.Random;
+
 import static org.junit.Assert.*;
+
 import org.junit.Before;
 import org.junit.Test;
 
 /**
- *
  * @author Peter Karich
  */
 public abstract class AbstractRoutingAlgorithmTester

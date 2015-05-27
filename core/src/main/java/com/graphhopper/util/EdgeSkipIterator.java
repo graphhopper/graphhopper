@@ -22,8 +22,8 @@ import com.graphhopper.storage.LevelGraph;
 /**
  * Support for skipped edge
  * <p/>
- * @see LevelGraph
  * @author Peter Karich
+ * @see LevelGraph
  */
 public interface EdgeSkipIterator extends EdgeIterator, EdgeSkipIterState
 {

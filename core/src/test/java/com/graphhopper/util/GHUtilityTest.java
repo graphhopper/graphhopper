@@ -22,11 +22,12 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.NodeAccess;
+
 import static org.junit.Assert.*;
+
 import org.junit.Test;
 
 /**
- *
  * @author Peter Karich
  */
 public class GHUtilityTest

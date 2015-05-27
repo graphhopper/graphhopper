@@ -18,6 +18,7 @@
 package com.graphhopper.reader;
 
 import static com.graphhopper.util.Helper.nf;
+
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.TIntLongMap;
@@ -48,6 +49,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
+
 import java.util.*;
 
 /**
@@ -57,7 +59,7 @@ import java.util.*;
  * 1. a) Reads ways from OSM file and stores all associated node ids in osmNodeIdToIndexMap. If a
  * node occurs once it is a pillar node and if more it is a tower node, otherwise
  * osmNodeIdToIndexMap returns EMPTY.
- * <p>
+ * <p/>
  * 1. b) Reads relations from OSM file. In case that the relation is a route relation, it stores
  * specific relation attributes required for routing into osmWayIdToRouteWeigthMap for all the ways
  * of the relation.
@@ -893,7 +895,7 @@ public class OSMReader implements DataReader
 
     /**
      * Creates an OSM turn relation out of an unspecified OSM relation
-     * <p>
+     * <p/>
      * @return the OSM turn relation, <code>null</code>, if unsupported turn relation
      */
     OSMTurnRelation createTurnRelation( OSMRelation relation )
@@ -999,8 +1001,8 @@ public class OSMReader implements DataReader
     {
         LoggerFactory.getLogger(getClass()).info(
                 "finished " + str + " processing." + " nodes: " + graphStorage.getNodes() + ", osmIdMap.size:" + getNodeMap().getSize()
-                + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB" + ", nodeFlagsMap.size:" + getNodeFlagsMap().size()
-                + ", relFlagsMap.size:" + getRelFlagsMap().size() + " " + Helper.getMemInfo());
+                        + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB" + ", nodeFlagsMap.size:" + getNodeFlagsMap().size()
+                        + ", relFlagsMap.size:" + getRelFlagsMap().size() + " " + Helper.getMemInfo());
     }
 
     @Override

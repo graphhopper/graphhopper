@@ -20,6 +20,7 @@ package com.graphhopper.ui;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,9 +37,9 @@ public abstract class DefaultMapLayer implements MapLayer
     // a bit transparent:
 //    private RescaleOp op = new RescaleOp(new float[]{1f, 1f, 1f, 0.5f}, new float[4], null);
     private RescaleOp op = new RescaleOp(new float[]
-    {
-        1f, 1f, 1f, 1f
-    }, new float[4], null);
+            {
+                    1f, 1f, 1f, 1f
+            }, new float[4], null);
 
     protected abstract void paintComponent( Graphics2D createGraphics );
 

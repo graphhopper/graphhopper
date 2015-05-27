@@ -19,7 +19,6 @@
 package com.graphhopper.storage;
 
 /**
- *
  * @author Peter Karich
  */
 public class SimpleFSLockFactoryTest extends AbstractLockFactoryTester

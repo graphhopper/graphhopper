@@ -20,18 +20,23 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
+
 import static com.graphhopper.storage.index.QueryResult.Position.*;
+
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.map.TIntObjectMap;
+
 import java.util.Arrays;
+
 import org.junit.After;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
+
 import org.junit.Before;
 
 /**
- *
  * @author Peter Karich
  */
 public class QueryGraphTest
@@ -428,7 +433,7 @@ public class QueryGraphTest
     }
 
     public QueryResult createLocationResult( double lat, double lon,
-            EdgeIteratorState edge, int wayIndex, QueryResult.Position pos )
+                                             EdgeIteratorState edge, int wayIndex, QueryResult.Position pos )
     {
         if (edge == null)
             throw new IllegalStateException("Specify edge != null");

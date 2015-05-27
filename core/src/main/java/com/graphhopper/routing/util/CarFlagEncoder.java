@@ -31,7 +31,7 @@ import java.util.*;
 
 /**
  * Defines bit layout for cars. (speed, access, ferries, ...)
- * <p>
+ * <p/>
  * @author Peter Karich
  * @author Nop
  */

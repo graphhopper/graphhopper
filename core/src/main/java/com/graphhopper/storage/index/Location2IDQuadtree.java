@@ -27,7 +27,9 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+
 import java.util.Arrays;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,10 +38,10 @@ import org.slf4j.LoggerFactory;
  * implementation is the a very memory efficient representation for areas with lots of node and
  * edges, but lacks precision. No edge distances are measured.
  * <p/>
+ * @author Peter Karich
  * @see LocationIndexTree which is more precise but more complicated and also slightly slower
  * implementation of LocationIndex.
  * <p/>
- * @author Peter Karich
  */
 class Location2IDQuadtree implements LocationIndex
 {
@@ -316,7 +318,7 @@ class Location2IDQuadtree implements LocationIndex
 
     @Override
     public QueryResult findClosest( final double queryLat, final double queryLon,
-            final EdgeFilter edgeFilter )
+                                    final EdgeFilter edgeFilter )
     {
         if (isClosed())
             throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");

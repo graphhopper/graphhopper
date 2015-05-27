@@ -15,6 +15,7 @@
 package com.graphhopper.util;
 
 import static com.graphhopper.util.Helper.readFile;
+
 import java.io.InputStreamReader;
 import java.util.List;
 

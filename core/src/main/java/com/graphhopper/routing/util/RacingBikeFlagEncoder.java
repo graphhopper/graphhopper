@@ -21,6 +21,7 @@ import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.PMap;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
+
 import java.util.TreeMap;
 
 /**
@@ -36,9 +37,10 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
         this(4, 2, 0);
     }
 
-    public RacingBikeFlagEncoder(PMap properties) {
+    public RacingBikeFlagEncoder( PMap properties )
+    {
         this(
-                (int)properties.getLong("speedBits", 4),
+                (int) properties.getLong("speedBits", 4),
                 properties.getDouble("speedFactor", 2),
                 properties.getBool("turnCosts", false) ? 3 : 0
         );
@@ -46,7 +48,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
         this.setBlockFords(properties.getBool("blockFords", true));
     }
 
-    public RacingBikeFlagEncoder(String propertiesStr )
+    public RacingBikeFlagEncoder( String propertiesStr )
     {
         this(new PMap(propertiesStr));
     }

@@ -20,7 +20,7 @@ package com.graphhopper.storage;
 
 /**
  * A write lock. Influenced by Lucene code
- * <p>
+ * <p/>
  * @author Peter Karich
  */
 public interface Lock
@@ -32,6 +32,6 @@ public interface Lock
     boolean isLocked();
 
     void release();
-    
+
     Exception getObtainFailedReason();
 }

@@ -31,10 +31,13 @@ import com.graphhopper.util.Helper;
 import gnu.trove.list.TIntList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**

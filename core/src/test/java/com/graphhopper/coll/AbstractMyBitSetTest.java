@@ -18,10 +18,10 @@
 package com.graphhopper.coll;
 
 import static org.junit.Assert.*;
+
 import org.junit.Test;
 
 /**
- *
  * @author Peter Karich
  */
 public abstract class AbstractMyBitSetTest

@@ -27,6 +27,7 @@ import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
+
 import java.io.*;
 import java.util.*;
 import javax.xml.XMLConstants;
@@ -38,12 +39,13 @@ import javax.xml.validation.Validator;
 
 import org.json.JSONObject;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
+
 import org.junit.Before;
 import org.xml.sax.SAXException;
 
 /**
- *
  * @author Peter Karich
  */
 public class InstructionListTest
@@ -53,9 +55,10 @@ public class InstructionListTest
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private EncodingManager carManager;
     private FlagEncoder carEncoder;
-    
+
     @Before
-    public void setUp() {
+    public void setUp()
+    {
         carEncoder = new CarFlagEncoder();
         carManager = new EncodingManager(carEncoder);
     }
@@ -63,7 +66,7 @@ public class InstructionListTest
     @SuppressWarnings("unchecked")
     @Test
     public void testWayList()
-    {                
+    {
         Graph g = new GraphBuilder(carManager).create();
         // 0-1-2
         // | | |
@@ -113,13 +116,13 @@ public class InstructionListTest
         InstructionList wayList = p.calcInstructions(usTR);
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Continue onto 4-7",
-                "Turn left onto 7-8", "Continue onto 8-9", "Turn right", "Finish!"),
+                        "Turn left onto 7-8", "Continue onto 8-9", "Turn right", "Finish!"),
                 tmpList);
 
         wayList = p.calcInstructions(trMap.getWithFallBack(Locale.GERMAN));
         tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Geradeaus auf 0-1", "Rechts abbiegen auf 1-4", "Geradeaus auf 4-7",
-                "Links abbiegen auf 7-8", "Geradeaus auf 8-9", "Rechts abbiegen", "Ziel erreicht!"),
+                        "Links abbiegen auf 7-8", "Geradeaus auf 8-9", "Rechts abbiegen", "Ziel erreicht!"),
                 tmpList);
 
         assertEquals(70000.0, sumDistances(wayList), 1e-1);
@@ -136,7 +139,7 @@ public class InstructionListTest
         assertEquals(1.16, gpxes.get(5).getLon(), 1e-6);
 
         compare(Arrays.asList(asL(1.2d, 1.0d), asL(1.2d, 1.1), asL(1.1d, 1.1), asL(1.0, 1.1),
-                asL(1.0, 1.2), asL(1.1, 1.3), asL(1.1, 1.4)),
+                        asL(1.0, 1.2), asL(1.1, 1.3), asL(1.1, 1.4)),
                 wayList.createStartPoints());
 
         p = new Dijkstra(g, carEncoder, new ShortestWeighting(), tMode).calcPath(6, 2);
@@ -462,7 +465,7 @@ public class InstructionListTest
 
     @Test
     public void testEmptyList()
-    {        
+    {
         Graph g = new GraphBuilder(carManager).create();
         Path p = new Dijkstra(g, carEncoder, new ShortestWeighting(), tMode).calcPath(0, 1);
         InstructionList il = p.calcInstructions(usTR);

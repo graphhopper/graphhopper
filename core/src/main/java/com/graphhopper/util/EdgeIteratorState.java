@@ -20,9 +20,9 @@ package com.graphhopper.util;
 /**
  * This interface represents an edge and is one possible state of an EdgeIterator.
  * <p/>
+ * @author Peter Karich
  * @see EdgeIterator
  * @see EdgeExplorer
- * @author Peter Karich
  */
 public interface EdgeIteratorState
 {
@@ -94,7 +94,7 @@ public interface EdgeIteratorState
 
     /**
      * Clones this EdgeIteratorState.
-     * <p>
+     * <p/>
      * @param reverse if true a detached edgeState with reversed properties is created where base
      * and adjacent nodes, flags and wayGeometry are in reversed order. See #162 for more details
      * about why we need the new reverse parameter.
@@ -103,7 +103,7 @@ public interface EdgeIteratorState
 
     /**
      * Copies the properties of this edge into the specified edge. Does not change nodes!
-     * <p>
+     * <p/>
      * @return the specified edge e
      */
     EdgeIteratorState copyPropertiesTo( EdgeIteratorState e );
