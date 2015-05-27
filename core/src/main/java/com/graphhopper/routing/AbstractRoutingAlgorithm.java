@@ -90,9 +90,9 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         alreadyRun = true;
     }
 
-    protected EdgeEntry createEdgeEntry( int node, double dist )
+    protected EdgeEntry createEdgeEntry( int node, double weight )
     {
-        return new EdgeEntry(EdgeIterator.NO_EDGE, node, dist);
+        return new EdgeEntry(EdgeIterator.NO_EDGE, node, weight);
     }
 
     /**

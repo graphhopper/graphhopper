@@ -159,9 +159,9 @@ public class AStar extends AbstractRoutingAlgorithm
     }
 
     @Override
-    protected AStarEdge createEdgeEntry( int node, double dist )
+    protected AStarEdge createEdgeEntry( int node, double weight )
     {
-        return new AStarEdge(EdgeIterator.NO_EDGE, node, dist, dist);
+        return new AStarEdge(EdgeIterator.NO_EDGE, node, weight, weight);
     }
 
     @Override
