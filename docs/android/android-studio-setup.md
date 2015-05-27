@@ -4,7 +4,8 @@ Get the [GraphHopper sources and demo](./index.md) before you proceed.
 
 ## Setup
 
-[Download](http://developer.android.com/sdk/index.html) and start android studio
+[Download](http://developer.android.com/sdk/index.html) and start android studio. 
+Now you need to import the code formatting settings (File|Import Settings). Load them from core/files/intellij-settings.jar
 
 Open existing Android studio project and then open 'graphhopper/android' not the parent 'graphhopper'
 
