@@ -20,6 +20,7 @@ see Bike2WeightFlagEncoder for an example. You'll have to overwrite the followin
  * flagsDefault 
  * setProperties
  * reverseFlags
+ * setLowSpeed
 
 To incorporate or precalculate values based on the elevation data you can hook into applyWayTags
 and call edge.fetchWayGeometry(3) or again, see Bike2WeightFlagEncoder.

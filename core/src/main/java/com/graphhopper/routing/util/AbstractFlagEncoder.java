@@ -38,7 +38,7 @@ import java.util.*;
 public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncoder
 {
     private final static Logger logger = LoggerFactory.getLogger(AbstractFlagEncoder.class);
-    private final static int K_FORWARD = 0, K_BACKWARD = 1;
+    protected final static int K_FORWARD = 0, K_BACKWARD = 1;
     /* Edge Flag Encoder fields */
     private long nodeBitMask;
     private long wayBitMask;
@@ -294,10 +294,18 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative: " + speed
                     + ", flags:" + BitUtil.LITTLE.toBitString(flags));
+        
+        if (speed < speedEncoder.factor / 2)
+            return setLowSpeed(flags, speed, false);
 
         if (speed > getMaxSpeed())
             speed = getMaxSpeed();
         return speedEncoder.setDoubleValue(flags, speed);
+    }
+
+    protected long setLowSpeed( long flags, double speed, boolean reverse )
+    {
+        return setAccess(speedEncoder.setDoubleValue(flags, 0), false, false);
     }
 
     @Override

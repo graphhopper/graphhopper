@@ -44,7 +44,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
         super(new PMap(propertiesStr));
     }
 
-    public Bike2WeightFlagEncoder(PMap properties)
+    public Bike2WeightFlagEncoder( PMap properties )
     {
         super(properties);
     }
@@ -64,8 +64,8 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
     public int defineWayBits( int index, int shift )
     {
         shift = super.defineWayBits(index, shift);
-        reverseSpeed = new EncodedDoubleValue("Reverse Speed", shift, speedBits, speedFactor, 
-                                               getHighwaySpeed("cycleway"), maxPossibleSpeed);
+        reverseSpeed = new EncodedDoubleValue("Reverse Speed", shift, speedBits, speedFactor,
+                getHighwaySpeed("cycleway"), maxPossibleSpeed);
         shift += reverseSpeed.getBits();
         return shift;
     }
@@ -82,6 +82,9 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative: " + speed + ", flags:" + BitUtil.LITTLE.toBitString(flags));
 
+        if (speed < speedEncoder.factor / 2)
+            return setLowSpeed(flags, speed, true);
+
         if (speed > getMaxSpeed())
             speed = getMaxSpeed();
 
@@ -89,19 +92,26 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
     }
 
     @Override
-    public long handleSpeed( OSMWay way, double speed, long encoded )
+    public long handleSpeed( OSMWay way, double speed, long flags )
     {
         // handle oneways
-        encoded = super.handleSpeed(way, speed, encoded);
-        if (isBackward(encoded))
-        {
-            encoded = setReverseSpeed(encoded, speed);
-        }
-        if (isForward(encoded))
-        {   
-            encoded = setSpeed(encoded, speed);
-        }
-        return encoded;
+        flags = super.handleSpeed(way, speed, flags);
+        if (isBackward(flags))
+            flags = setReverseSpeed(flags, speed);
+
+        if (isForward(flags))
+            flags = setSpeed(flags, speed);
+
+        return flags;
+    }
+
+    @Override
+    protected long setLowSpeed( long flags, double speed, boolean reverse )
+    {
+        if (reverse)
+            return setBool(reverseSpeed.setDoubleValue(flags, 0), K_BACKWARD, false);
+
+        return setBool(speedEncoder.setDoubleValue(flags, 0), K_FORWARD, false);
     }
 
     @Override

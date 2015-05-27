@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMWay;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -31,7 +29,6 @@ public class AbstractFlagEncoderTest
     @Test
     public void testAcceptsCar()
     {
-
         CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 0);
         assertEquals(40, encoder.parseSpeed("40 km/h"), 1e-3);
         assertEquals(40, encoder.parseSpeed("40km/h"), 1e-3);

@@ -239,6 +239,18 @@ public class CarFlagEncoderTest
     }
 
     @Test
+    public void testSetSpeed0_issue367()
+    {
+        long flags = encoder.setProperties(10, true, true);
+        flags = encoder.setSpeed(flags, encoder.speedFactor * 0.49);
+
+        assertEquals(0, encoder.getSpeed(flags), .1);
+        assertEquals(0, encoder.getReverseSpeed(flags), .1);
+        assertFalse(encoder.isForward(flags));
+        assertFalse(encoder.isBackward(flags));
+    }
+
+    @Test
     public void testRoundabout()
     {
         long flags = encoder.setAccess(0, true, true);
