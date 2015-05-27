@@ -281,10 +281,10 @@ public class LocationIndexTree implements LocationIndex
             return false;
 
         if (dataAccess.getHeader(0) != MAGIC_INT)
-            throw new IllegalStateException("incorrect location2id index version, expected:" + MAGIC_INT);
+            throw new IllegalStateException("incorrect location index version, expected:" + MAGIC_INT);
 
         if (dataAccess.getHeader(1 * 4) != calcChecksum())
-            throw new IllegalStateException("location2id index was opened with incorrect graph: "
+            throw new IllegalStateException("location index was opened with incorrect graph: "
                     + dataAccess.getHeader(1 * 4) + " vs. " + calcChecksum());
 
         setMinResolutionInMeter(dataAccess.getHeader(2 * 4));
@@ -296,7 +296,7 @@ public class LocationIndexTree implements LocationIndex
     @Override
     public void flush()
     {
-        dataAccess.setHeader(0, MAGIC_INT);        
+        dataAccess.setHeader(0, MAGIC_INT);
         dataAccess.setHeader(1 * 4, calcChecksum());
         dataAccess.setHeader(2 * 4, minResolutionInMeter);
 
