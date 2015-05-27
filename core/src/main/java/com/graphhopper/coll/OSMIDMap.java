@@ -104,6 +104,7 @@ public class OSMIDMap implements LongIntMap
         byte[] longBytes = new byte[8];
         while (high - low > 1)
         {
+            // use >>> for average or we could get an integer overflow. 
             guess = (high + low) >>> 1;
             long tmp = guess << 3;
             da.getBytes(tmp, longBytes, 8);

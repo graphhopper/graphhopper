@@ -299,7 +299,7 @@ public class MMapDataAccess extends AbstractDataAccess
     @Override
     public final void setInt( long bytePos, int value )
     {
-        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int bufferIndex = (int) (bytePos >> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         segments.get(bufferIndex).putInt(index, value);
     }
@@ -307,7 +307,7 @@ public class MMapDataAccess extends AbstractDataAccess
     @Override
     public final int getInt( long bytePos )
     {
-        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int bufferIndex = (int) (bytePos >> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         return segments.get(bufferIndex).getInt(index);
     }

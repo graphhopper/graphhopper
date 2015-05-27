@@ -92,7 +92,7 @@ public class EncodedValue
     {
         // find value
         flags &= mask;
-        flags >>= shift;
+        flags >>>= shift;
         return Math.round(flags * factor);
     }
 

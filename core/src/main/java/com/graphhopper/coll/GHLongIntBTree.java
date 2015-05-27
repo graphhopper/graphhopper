@@ -472,6 +472,7 @@ public class GHLongIntBTree implements LongIntMap
         int high = start + len, low = start - 1, guess;
         while (high - low > 1)
         {
+            // use >>> for average or we could get an integer overflow. 
             guess = (high + low) >>> 1;
             long guessedKey = keys[guess];
             if (guessedKey < key)

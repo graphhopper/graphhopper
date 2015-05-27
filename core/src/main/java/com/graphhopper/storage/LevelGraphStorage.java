@@ -417,7 +417,7 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
         if (!edge.isShortcut())
             throw new IllegalStateException("getWeight is only available for shortcuts");
 
-        double weight = (edge.getFlags() >> 2) / WEIGHT_FACTOR;
+        double weight = (edge.getFlags() >>> 2) / WEIGHT_FACTOR;
         if (weight >= MAX_WEIGHT)
             return Double.POSITIVE_INFINITY;
 

@@ -44,16 +44,16 @@ public class BitUtilLittle extends BitUtil
     @Override
     public void fromShort( byte[] bytes, short value, int offset )
     {
-        bytes[offset + 1] = (byte) (value >> 8);
+        bytes[offset + 1] = (byte) (value >>> 8);
         bytes[offset] = (byte) (value);
     }
 
     @Override
     public final void fromInt( byte[] bytes, int value, int offset )
     {
-        bytes[offset + 3] = (byte) (value >> 24);
-        bytes[offset + 2] = (byte) (value >> 16);
-        bytes[offset + 1] = (byte) (value >> 8);
+        bytes[offset + 3] = (byte) (value >>> 24);
+        bytes[offset + 2] = (byte) (value >>> 16);
+        bytes[offset + 1] = (byte) (value >>> 8);
         bytes[offset] = (byte) (value);
     }
 

@@ -580,7 +580,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             {
                 // find value
                 flags &= mask;
-                flags >>= shift;
+                flags >>>= shift;
                 return flags;
             }
         };

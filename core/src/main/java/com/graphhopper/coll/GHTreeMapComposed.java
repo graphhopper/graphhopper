@@ -67,7 +67,7 @@ public class GHTreeMapComposed
     public int peekValue()
     {
         long key = map.firstEntry().getKey();
-        return (int) (key >>> 32);
+        return (int) (key >> 32);
     }
 
     public int peekKey()

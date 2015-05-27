@@ -64,4 +64,12 @@ public class EncodedDoubleValueTest
         flags = carEncoder.reverseFlags(flags);
         assertEquals(100, carEncoder.getSpeed(flags), 1e-1);
     }
+
+    @Test
+    public void testUnsignedRightShift_issue417()
+    {
+        EncodedDoubleValue speedEncoder = new EncodedDoubleValue("Speed", 56, 8, 1, 30, 255);
+        Long flags = -72057594037927936L;
+        assertEquals(255, speedEncoder.getDoubleValue(flags), 0.01);
+    }
 }

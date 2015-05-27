@@ -396,7 +396,8 @@ public class SparseIntIntArray
         int high = start + len, low = start - 1, guess;
         while (high - low > 1)
         {
-            guess = (high + low) / 2;
+            // use >>> for average or we could get an integer overflow. 
+            guess = (high + low) >>> 1;
 
             if (a[guess] < key)
             {

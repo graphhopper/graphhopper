@@ -254,7 +254,7 @@ public abstract class BitUtil
     public final long reverse( long value, int maxBits )
     {
         long res = 0;
-        for (; maxBits > 0; value >>= 1)
+        for (; maxBits > 0; value >>>= 1)
         {
             res <<= 1;
             res |= value & 1;

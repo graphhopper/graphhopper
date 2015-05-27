@@ -88,12 +88,6 @@ public class DistanceCalcEarth implements DistanceCalc
         return 2 * PI * R * cos(toRadians(lat));
     }
 
-    public double calcSpatialKeyMaxDist( int bit )
-    {
-        bit = bit / 2 + 1;
-        return (int) C >> bit;
-    }
-
     public boolean isDateLineCrossOver( double lon1, double lon2 )
     {
         return abs(lon1 - lon2) > 180.0;

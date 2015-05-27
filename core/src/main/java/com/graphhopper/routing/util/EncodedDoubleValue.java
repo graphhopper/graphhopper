@@ -71,7 +71,7 @@ public class EncodedDoubleValue extends EncodedValue
     {
         // find value
         flags &= mask;
-        flags >>= shift;
+        flags >>>= shift;
         return flags * factor;
     }
 

@@ -36,18 +36,6 @@ public class DistanceCalcEarthTest
     }
 
     @Test
-    public void testGeohashMaxDist()
-    {
-        DistanceCalcEarth dce = new DistanceCalcEarth();
-        assertEquals(DistanceCalcEarth.C / 2, dce.calcSpatialKeyMaxDist(0), 1);
-        assertEquals(DistanceCalcEarth.C / 2, dce.calcSpatialKeyMaxDist(1), 1);
-        assertEquals(DistanceCalcEarth.C / 4, dce.calcSpatialKeyMaxDist(2), 1);
-        assertEquals(DistanceCalcEarth.C / 4, dce.calcSpatialKeyMaxDist(3), 1);
-        assertEquals(DistanceCalcEarth.C / 8, dce.calcSpatialKeyMaxDist(4), 1);
-        assertEquals(DistanceCalcEarth.C / 8, dce.calcSpatialKeyMaxDist(5), 1);
-    }
-
-    @Test
     public void testDistance()
     {
         float lat = 24.235f;
