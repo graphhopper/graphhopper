@@ -79,8 +79,10 @@ public class AStar extends AbstractRoutingAlgorithm
     {
         checkAlreadyRun();
         to1 = to;
+
         weightApprox.setGoalNode(to);
-        currEdge = createEdgeEntry(from, 0);
+        double weightToGoal = weightApprox.approximate(from);
+        currEdge = new AStarEdge(EdgeIterator.NO_EDGE, from, 0 + weightToGoal, 0);
         if (!traversalMode.isEdgeBased())
         {
             fromMap.put(from, currEdge);
@@ -159,9 +161,9 @@ public class AStar extends AbstractRoutingAlgorithm
     }
 
     @Override
-    protected AStarEdge createEdgeEntry( int node, double weight )
+    protected EdgeEntry createEdgeEntry( int node, double weight )
     {
-        return new AStarEdge(EdgeIterator.NO_EDGE, node, weight, weight);
+        throw new IllegalStateException("use AStarEdge constructor directly");
     }
 
     @Override
