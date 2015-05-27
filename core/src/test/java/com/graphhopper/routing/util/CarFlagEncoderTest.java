@@ -164,7 +164,7 @@ public class CarFlagEncoderTest
         way.setTag("maxspeed", "500");
         long allowed = encoder.acceptWay(way);
         long encoded = encoder.handleWayTags(way, allowed, 0);
-        assertEquals(100, encoder.getSpeed(encoded), 1e-1);
+        assertEquals(140, encoder.getSpeed(encoded), 1e-1);
 
         way = new OSMWay(1);
         way.setTag("highway", "primary");
@@ -184,6 +184,12 @@ public class CarFlagEncoderTest
         way.setTag("maxspeed:backward", "20");
         encoded = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertEquals(20, encoder.getSpeed(encoded), 1e-1);
+
+        way = new OSMWay(1);
+        way.setTag("highway", "motorway");
+        way.setTag("maxspeed", "none");
+        encoded = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertEquals(125, encoder.getSpeed(encoded), .1);
     }
 
     @Test
@@ -419,7 +425,7 @@ public class CarFlagEncoderTest
     @Test
     public void testMaxValue()
     {
-        CarFlagEncoder instance = new CarFlagEncoder(8, 0.5, 0);
+        CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
         EncodingManager em = new EncodingManager(instance);
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "motorway_link");
@@ -431,19 +437,19 @@ public class CarFlagEncoderTest
         assertEquals(86.9, instance.getSpeed(flags), 1e-1);
         flags = instance.reverseFlags(flags);
         assertEquals(86.9, instance.getSpeed(flags), 1e-1);
-        
+
         // test that maxPossibleValue  is not exceeded
         way = new OSMWay(2);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "70 mph");
         flags = instance.handleWayTags(way, 1, 0);
-        assertEquals(100, instance.getSpeed(flags), 1e-1);
+        assertEquals(101.5, instance.getSpeed(flags), .1);
     }
 
     @Test
     public void testRegisterOnlyOnceAllowed()
     {
-        CarFlagEncoder instance = new CarFlagEncoder(8, 0.5, 0);
+        CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
         EncodingManager em = new EncodingManager(instance);
         try
         {
@@ -494,7 +500,7 @@ public class CarFlagEncoderTest
     {
         OSMWay way = new OSMWay(123);
         way.setTag("highway", "cycleway");
-        way.setTag("sac_scale", "hiking");        
+        way.setTag("sac_scale", "hiking");
 
         long flags = em.acceptWay(way);
         long edgeFlags = em.handleWayTags(way, flags, 0);

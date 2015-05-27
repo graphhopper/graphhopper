@@ -73,7 +73,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         preferSet.add("primary");
         preferSet.add("secondary");
         
-        maxPossibleSpeed = 100;
+        maxPossibleSpeed = 120;
 
         // autobahn
         defaultSpeedMap.put("motorway", 100);

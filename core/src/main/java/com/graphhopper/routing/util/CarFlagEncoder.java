@@ -54,17 +54,16 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         this(5, 5, 0);
     }
 
-    public CarFlagEncoder(PMap properties) {
-        this(
-                (int)properties.getLong("speedBits", 5),
+    public CarFlagEncoder( PMap properties )
+    {
+        this((int) properties.getLong("speedBits", 5),
                 properties.getDouble("speedFactor", 5),
-                properties.getBool("turnCosts", false) ? 3 : 0
-        );
+                properties.getBool("turnCosts", false) ? 3 : 0);
         this.properties = properties;
         this.setBlockFords(properties.getBool("blockFords", true));
     }
 
-    public CarFlagEncoder(String propertiesStr )
+    public CarFlagEncoder( String propertiesStr )
     {
         this(new PMap(propertiesStr));
     }
@@ -111,8 +110,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         badSurfaceSpeedMap.add("ground");
         badSurfaceSpeedMap.add("grass");
 
-        maxPossibleSpeed = 100;
-        
+        maxPossibleSpeed = 140;
+
         // autobahn
         defaultSpeedMap.put("motorway", 100);
         defaultSpeedMap.put("motorway_link", 70);
@@ -154,8 +153,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     {
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
-        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, defaultSpeedMap.get("secondary"), 
-                                              maxPossibleSpeed);
+        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, defaultSpeedMap.get("secondary"),
+                maxPossibleSpeed);
         return shift + speedEncoder.getBits();
     }
 

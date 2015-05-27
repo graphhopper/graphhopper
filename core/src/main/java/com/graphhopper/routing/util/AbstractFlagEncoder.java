@@ -81,11 +81,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected final int speedBits;
     protected final double speedFactor;
 
-    public AbstractFlagEncoder(PMap properties) {
+    public AbstractFlagEncoder( PMap properties )
+    {
         throw new RuntimeException("This method must be overridden in derived classes");
     }
 
-    public AbstractFlagEncoder(String propertiesStr)
+    public AbstractFlagEncoder( String propertiesStr )
     {
         this(new PMap(propertiesStr));
     }
@@ -378,10 +379,23 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     /**
      * @return the speed in km/h
      */
-    protected static double parseSpeed( String str )
+    protected double parseSpeed( String str )
     {
         if (Helper.isEmpty(str))
             return -1;
+
+        // on some German autobahns and a very few other places
+        if ("none".equals(str))
+            return 140;
+
+        if (str.endsWith(":rural") || str.endsWith(":trunk"))
+            return 80;
+
+        if (str.endsWith(":urban"))
+            return 50;
+
+        if (str.equals("walk") || str.endsWith(":living_street"))
+            return 6;
 
         try
         {
