@@ -411,6 +411,10 @@ public class GraphHopperStorage implements GraphStorage
             nextEdgeOther = tmp;
         }
 
+        if (edge < 0 || edge == EdgeIterator.NO_EDGE)
+            throw new IllegalStateException("Cannot write edge with illegal ID:" + edge
+                    + "; nodeThis:" + nodeThis + ", nodeOther:" + nodeOther);
+
         long edgePointer = (long) edge * edgeEntryBytes;
         edges.setInt(edgePointer + E_NODEA, nodeThis);
         edges.setInt(edgePointer + E_NODEB, nodeOther);
