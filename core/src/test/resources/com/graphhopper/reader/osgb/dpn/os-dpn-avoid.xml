@@ -9,7 +9,7 @@
 	xmlns:gts="http://www.isotc211.org/2005/gts" xmlns:gsr="http://www.isotc211.org/2005/gsr"
 	xmlns:gmlxbt="http://www.opengis.net/gml/3.3/xbt">
 	<gml:featureMember>
-		<dpn:RouteNode gml:id='4000000025277879'>
+		<dpn:RouteNode gml:id='ID_4000000025277879'>
 			<dpn:versionID>2</dpn:versionID>
 			<dpn:versionDate>2005-09-13</dpn:versionDate>
 			<dpn:descriptiveTerm codeSpace="http://www.ordnancesurvey.co.uk/xml/codelists/RouteNodeDescriptiveTermValue#Junction">Junction</dpn:descriptiveTerm>
