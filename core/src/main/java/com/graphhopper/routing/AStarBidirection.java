@@ -181,13 +181,6 @@ public class AStarBidirection extends AbstractBidirAlgo
     }
 
     @Override
-    void checkState( int fromBase, int fromAdj, int toBase, int toAdj )
-    {
-        if (bestWeightMapFrom.isEmpty() || bestWeightMapTo.isEmpty())
-            throw new IllegalStateException("Either 'from'-edge or 'to'-edge is inaccessible. From:" + bestWeightMapFrom + ", to:" + bestWeightMapTo);
-    }
-
-    @Override
     protected boolean finished()
     {
         if (finishedFrom || finishedTo)

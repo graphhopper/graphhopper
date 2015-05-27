@@ -44,8 +44,6 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
 
     protected abstract double getCurrentToWeight();
 
-    abstract void checkState( int fromBase, int fromAdj, int toBase, int toAdj );
-
     abstract boolean fillEdgesFrom();
 
     abstract boolean fillEdgesTo();
