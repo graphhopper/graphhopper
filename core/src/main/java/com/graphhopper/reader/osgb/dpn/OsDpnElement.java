@@ -198,26 +198,26 @@ public abstract class OsDpnElement implements RoutingElement {
 
     private String getOsmMappedTypeName(String roadType) {
         String typeName = roadType;
-        switch (roadType) {
-        case "A Road":
-            typeName = "primary";
-            break;
-        case "B Road":
-            typeName = "secondary";
-            break;
-        case "Alley":
-            typeName = "service";
-            setTag("service", "alley");
-            break;
-        case "Private Road":
-            typeName = "private";
-            break;
-        case "Path":
-            typeName = "path";
-            break;
-        default:
-            break;
-        }
+//        switch (roadType) {
+//        case "A Road":
+//            typeName = "primary";
+//            break;
+//        case "B Road":
+//            typeName = "secondary";
+//            break;
+//        case "Alley":
+//            typeName = "service";
+//            setTag("service", "alley");
+//            break;
+//        case "Private Road":
+//            typeName = "private";
+//            break;
+//        case "Path":
+//            typeName = "path";
+//            break;
+//        default:
+//            break;
+//        }
         return typeName;
     }
 
