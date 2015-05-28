@@ -300,6 +300,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
         if (speed > getMaxSpeed())
             speed = getMaxSpeed();
+
         return speedEncoder.setDoubleValue(flags, speed);
     }
 
@@ -586,7 +587,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (maxTurnCosts == 0)
             return shift;
 
-            // optimization for turn restrictions only
+        // optimization for turn restrictions only
         else if (maxTurnCosts == 1)
         {
             turnRestrictionBit = 1L << shift;

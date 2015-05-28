@@ -33,7 +33,7 @@ import static com.graphhopper.util.Helper.*;
  */
 public class Bike2WeightFlagEncoder extends BikeFlagEncoder
 {
-    private EncodedDoubleValue reverseSpeed;
+    private EncodedDoubleValue reverseSpeedEncoder;
 
     public Bike2WeightFlagEncoder()
     {
@@ -65,16 +65,16 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
     public int defineWayBits( int index, int shift )
     {
         shift = super.defineWayBits(index, shift);
-        reverseSpeed = new EncodedDoubleValue("Reverse Speed", shift, speedBits, speedFactor,
+        reverseSpeedEncoder = new EncodedDoubleValue("Reverse Speed", shift, speedBits, speedFactor,
                 getHighwaySpeed("cycleway"), maxPossibleSpeed);
-        shift += reverseSpeed.getBits();
+        shift += reverseSpeedEncoder.getBits();
         return shift;
     }
 
     @Override
     public double getReverseSpeed( long flags )
     {
-        return reverseSpeed.getDoubleValue(flags);
+        return reverseSpeedEncoder.getDoubleValue(flags);
     }
 
     @Override
@@ -89,7 +89,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
         if (speed > getMaxSpeed())
             speed = getMaxSpeed();
 
-        return reverseSpeed.setDoubleValue(flags, speed);
+        return reverseSpeedEncoder.setDoubleValue(flags, speed);
     }
 
     @Override
@@ -110,7 +110,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
     protected long setLowSpeed( long flags, double speed, boolean reverse )
     {
         if (reverse)
-            return setBool(reverseSpeed.setDoubleValue(flags, 0), K_BACKWARD, false);
+            return setBool(reverseSpeedEncoder.setDoubleValue(flags, 0), K_BACKWARD, false);
 
         return setBool(speedEncoder.setDoubleValue(flags, 0), K_FORWARD, false);
     }
@@ -120,7 +120,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
     {
         long flags = super.flagsDefault(forward, backward);
         if (backward)
-            return reverseSpeed.setDefaultValue(flags);
+            return reverseSpeedEncoder.setDefaultValue(flags);
 
         return flags;
     }
@@ -142,7 +142,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
         flags = super.reverseFlags(flags);
 
         // swap speeds 
-        double otherValue = reverseSpeed.getDoubleValue(flags);
+        double otherValue = reverseSpeedEncoder.getDoubleValue(flags);
         flags = setReverseSpeed(flags, speedEncoder.getDoubleValue(flags));
         return setSpeed(flags, otherValue);
     }

@@ -241,10 +241,22 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative: " + speed + ", flags:" + BitUtil.LITTLE.toBitString(flags));
 
+        if (speed < speedEncoder.factor / 2)
+            return setLowSpeed(flags, speed, true);
+        
         if (speed > getMaxSpeed())
             speed = getMaxSpeed();
 
         return reverseSpeedEncoder.setDoubleValue(flags, speed);
+    }
+
+    @Override
+    protected long setLowSpeed( long flags, double speed, boolean reverse )
+    {
+        if (reverse)
+            return setBool(reverseSpeedEncoder.setDoubleValue(flags, 0), K_BACKWARD, false);
+
+        return setBool(speedEncoder.setDoubleValue(flags, 0), K_FORWARD, false);
     }
 
     @Override

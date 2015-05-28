@@ -41,4 +41,16 @@ public class MotorcycleFlagEncoderTest
         assertEquals(20, encoder.getSpeed(result), .1);
         assertEquals(20, encoder.getReverseSpeed(result), .1);
     }
+
+    @Test
+    public void testSetSpeed0_issue367()
+    {
+        long flags = encoder.setProperties(10, true, true);
+        flags = encoder.setSpeed(flags, 0);
+
+        assertEquals(0, encoder.getSpeed(flags), .1);
+        assertEquals(10, encoder.getReverseSpeed(flags), .1);
+        assertFalse(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
+    }
 }

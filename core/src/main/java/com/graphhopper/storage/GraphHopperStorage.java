@@ -1205,7 +1205,7 @@ public class GraphHopperStorage implements GraphStorage
     private void inPlaceNodeRemove( int removeNodeCount )
     {
         // Prepare edge-update of nodes which are connected to deleted nodes        
-        int toMoveNode = getNodes();
+        int toMoveNodes = getNodes();
         int itemsToMove = 0;
 
         // sorted map when we access it via keyAt and valueAt - see below!
@@ -1216,8 +1216,8 @@ public class GraphHopperStorage implements GraphStorage
         EdgeExplorer delExplorer = createEdgeExplorer(EdgeFilter.ALL_EDGES);
         // create map of old node ids pointing to new ids        
         for (int removeNode = removedNodes.next(0);
-             removeNode >= 0;
-             removeNode = removedNodes.next(removeNode + 1))
+                removeNode >= 0;
+                removeNode = removedNodes.next(removeNode + 1))
         {
             EdgeIterator delEdgesIter = delExplorer.setBaseNode(removeNode);
             while (delEdgesIter.next())
@@ -1225,15 +1225,15 @@ public class GraphHopperStorage implements GraphStorage
                 toRemoveSet.add(delEdgesIter.getAdjNode());
             }
 
-            toMoveNode--;
-            for (; toMoveNode >= 0; toMoveNode--)
+            toMoveNodes--;
+            for (; toMoveNodes >= 0; toMoveNodes--)
             {
-                if (!removedNodes.contains(toMoveNode))
+                if (!removedNodes.contains(toMoveNodes))
                     break;
             }
 
-            if (toMoveNode >= removeNode)
-                oldToNewMap.put(toMoveNode, removeNode);
+            if (toMoveNodes >= removeNode)
+                oldToNewMap.put(toMoveNodes, removeNode);
 
             itemsToMove++;
         }
@@ -1242,8 +1242,8 @@ public class GraphHopperStorage implements GraphStorage
         // now similar process to disconnectEdges but only for specific nodes
         // all deleted nodes could be connected to existing. remove the connections
         for (int removeNode = toRemoveSet.next(0);
-             removeNode >= 0;
-             removeNode = toRemoveSet.next(removeNode + 1))
+                removeNode >= 0;
+                removeNode = toRemoveSet.next(removeNode + 1))
         {
             // remove all edges connected to the deleted nodes
             adjNodesToDelIter.setBaseNode(removeNode);
@@ -1330,6 +1330,9 @@ public class GraphHopperStorage implements GraphStorage
             if (updatedA < updatedB != nodeA < nodeB)
                 setWayGeometry(fetchWayGeometry(edgePointer, true, 0, -1, -1), edgePointer, false);
         }
+
+        if (removeNodeCount >= nodeCount)
+            throw new IllegalStateException("graph is empty after in-place removal but was " + removeNodeCount);
 
         // we do not remove the invalid edges => edgeCount stays the same!
         nodeCount -= removeNodeCount;

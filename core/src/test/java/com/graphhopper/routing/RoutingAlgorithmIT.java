@@ -98,6 +98,22 @@ public class RoutingAlgorithmIT
     }
 
     @Test
+    public void testMonacoMotorcycle()
+    {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(43.730729, 7.42135, 43.727697, 7.419199, 2697, 117));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3749, 170));
+        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.4277, 3164, 165));
+        list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 2423, 141));
+        list.add(new OneRun(43.730949, 7.412338, 43.739643, 7.424542, 2253, 120));
+        list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
+        runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-mc-gh",
+                list, "motorcycle", true, "motorcycle", "fastest", true);
+
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
     public void testMonacoAllAlgorithmsWithBaseGraph()
     {
         String vehicle = "car";
@@ -108,7 +124,7 @@ public class RoutingAlgorithmIT
         Helper.removeDir(new File(graphFile));
         GraphHopper hopper = new GraphHopper().
                 // avoid that path.getDistance is too different to path.getPoint.calcDistance
-                        setWayPointMaxDistance(0).
+                setWayPointMaxDistance(0).
                 setOSMFile(osmFile).
                 setCHEnable(false).
                 setGraphHopperLocation(graphFile).
@@ -504,7 +520,7 @@ public class RoutingAlgorithmIT
             GraphHopper hopper = new GraphHopper().
                     setStoreOnFlush(true).
                     // avoid that path.getDistance is too different to path.getPoint.calcDistance
-                            setWayPointMaxDistance(0).
+                    setWayPointMaxDistance(0).
                     setOSMFile(osmFile).
                     setCHEnable(false).
                     setGraphHopperLocation(graphFile).
@@ -622,9 +638,9 @@ public class RoutingAlgorithmIT
             for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++)
             {
                 String[] algos = new String[]
-                        {
-                                "astar", "dijkstrabi"
-                        };
+                {
+                    "astar", "dijkstrabi"
+                };
                 for (final String algoStr : algos)
                 {
                     // an algorithm is not thread safe! reuse via clear() is ONLY appropriated if used from same thread!
