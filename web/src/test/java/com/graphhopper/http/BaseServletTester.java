@@ -22,9 +22,14 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Downloader;
+import com.graphhopper.util.Helper;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.HttpURLConnection;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
@@ -107,7 +112,7 @@ public class BaseServletTester
         return "http://" + host + ":" + port + "/nearest";
     }
 
-    protected JSONObject query( String query ) throws Exception
+    protected String queryString( String query, int code ) throws Exception
     {
         String resQuery = "";
         for (String q : query.split("\\&"))
@@ -121,8 +126,16 @@ public class BaseServletTester
             resQuery += "&";
         }
         String url = getTestRouteAPIUrl() + "?" + resQuery;
-        Downloader downloader = new Downloader("web integration tester");
-        return new JSONObject(downloader.downloadAsString(url));
+        Downloader downloader = new Downloader("web integration tester").setTimeout(1000);
+        HttpURLConnection conn = downloader.createConnection(url);
+        conn.connect();
+        assertEquals(code, conn.getResponseCode());
+        return Helper.isToString(downloader.fetch(conn));
+    }
+
+    protected JSONObject query( String query, int code ) throws Exception
+    {
+        return new JSONObject(queryString(query, code));
     }
 
     protected JSONObject nearestQuery( String query ) throws Exception

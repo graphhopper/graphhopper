@@ -62,7 +62,7 @@ public class GraphHopperServletIT extends BaseServletTester
     @Test
     public void testBasicQuery() throws Exception
     {
-        JSONObject json = query("point=42.554851,1.536198&point=42.510071,1.548128");
+        JSONObject json = query("point=42.554851,1.536198&point=42.510071,1.548128", 200);
         JSONObject infoJson = json.getJSONObject("info");
         assertFalse(infoJson.has("errors"));
         JSONObject path = json.getJSONArray("paths").getJSONObject(0);
@@ -74,7 +74,7 @@ public class GraphHopperServletIT extends BaseServletTester
     @Test
     public void testJsonRounding() throws Exception
     {
-        JSONObject json = query("point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false");
+        JSONObject json = query("point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false", 200);
         JSONObject cson = json.getJSONArray("paths").getJSONObject(0).getJSONObject("points");
         assertTrue("unexpected precision!", cson.toString().contains("[1.536374,42.554839]"));
     }
@@ -82,10 +82,10 @@ public class GraphHopperServletIT extends BaseServletTester
     @Test
     public void testFailIfElevationRequestedButNotIncluded() throws Exception
     {
-        JSONObject json = query("point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false&elevation=true");
-        JSONObject infoJson = json.getJSONObject("info");
-        assertTrue(infoJson.has("errors"));
-        assertEquals("Elevation not supported!", infoJson.getJSONArray("errors").getJSONObject(0).getString("message"));
+        JSONObject json = query("point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false&elevation=true", 400);
+        assertTrue(json.has("message"));
+        assertEquals("Elevation not supported!", json.get("message"));
+        assertEquals("Elevation not supported!", json.getJSONArray("hints").getJSONObject(0).getString("message"));
     }
 
     @Test
@@ -115,17 +115,14 @@ public class GraphHopperServletIT extends BaseServletTester
     @Test
     public void testGraphHopperWebRealExceptions()
     {
-        GHResponse rsp;
-        Throwable ex;
-
         GraphHopperAPI hopper = new GraphHopperWeb();
         assertTrue(hopper.load(getTestRouteAPIUrl()));
 
         // IllegalStateException (Wrong Request)
-        rsp = hopper.route(new GHRequest());
+        GHResponse rsp = hopper.route(new GHRequest());
         assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
 
-        ex = rsp.getErrors().get(0);
+        Throwable ex = rsp.getErrors().get(0);
         assertTrue("Wrong Exception found: " + ex.getClass().getName()
                 + ", IllegalStateException expected.", ex instanceof IllegalStateException);
 
@@ -148,5 +145,23 @@ public class GraphHopperServletIT extends BaseServletTester
         // UnsupportedOperationException
         // RuntimeException
         // Exception
+    }
+
+    @Test
+    public void testGPX() throws Exception
+    {
+        String str = queryString("point=42.554851,1.536198&point=42.510071,1.548128&type=gpx", 200);
+        assertTrue(str.contains("<gh:distance>115.1</gh:distance>"));
+        assertTrue(str.contains("<trkpt lat=\"42.554839\" lon=\"1.536374\"><time>"));
+    }
+
+    @Test
+    public void testGPXWithError() throws Exception
+    {
+        String str = queryString("point=42.554851,1.536198&type=gpx", 400);
+        assertFalse(str, str.contains("<html>"));
+        assertFalse(str, str.contains("{"));
+        assertTrue("Expected error but was: " + str, str.contains("<message>At least 2 points has to be specified, but was:1</message>"));
+        assertTrue("Expected error but was: " + str, str.contains("<hints><error details=\"java"));
     }
 }

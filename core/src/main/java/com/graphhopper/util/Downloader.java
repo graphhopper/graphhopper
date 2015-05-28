@@ -66,16 +66,26 @@ public class Downloader
 
     public InputStream fetch( HttpURLConnection conn ) throws IOException
     {
-        // create connection but before reading get the correct inputstream based on the compression
+        // create connection but before reading get the correct inputstream based on the compression and if error
         conn.connect();
-        String encoding = conn.getContentEncoding();
+
         InputStream is;
-        if (encoding != null && encoding.equalsIgnoreCase("gzip"))
-            is = new GZIPInputStream(conn.getInputStream());
-        else if (encoding != null && encoding.equalsIgnoreCase("deflate"))
-            is = new InflaterInputStream(conn.getInputStream(), new Inflater(true));
+        if (conn.getResponseCode() >= 400 && conn.getErrorStream() != null)
+            is = conn.getErrorStream();
         else
             is = conn.getInputStream();
+
+        // wrap
+        try
+        {
+            String encoding = conn.getContentEncoding();
+            if (encoding != null && encoding.equalsIgnoreCase("gzip"))
+                is = new GZIPInputStream(is);
+            else if (encoding != null && encoding.equalsIgnoreCase("deflate"))
+                is = new InflaterInputStream(is, new Inflater(true));
+        } catch (IOException ex)
+        {
+        }
 
         return is;
     }
@@ -142,6 +152,8 @@ public class Downloader
 
     public String downloadAsString( String url ) throws IOException
     {
+        HttpURLConnection conn = createConnection(url);
+        conn.connect();
         return Helper.isToString(fetch(url));
     }
 }

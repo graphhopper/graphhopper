@@ -17,27 +17,27 @@
  */
 package com.graphhopper.http;
 
-import java.io.IOException;
-import javax.inject.Named;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import static javax.servlet.http.HttpServletResponse.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import static javax.servlet.http.HttpServletResponse.SC_OK;
 
 /**
  * @author Peter Karich
  */
 public class GHBaseServlet extends HttpServlet
 {
-    protected Logger logger = LoggerFactory.getLogger(getClass());
+    protected static Logger logger = LoggerFactory.getLogger(GHBaseServlet.class);
     @Inject
     @Named("jsonpAllowed")
     private boolean jsonpAllowed;
@@ -52,40 +52,53 @@ public class GHBaseServlet extends HttpServlet
             res.setContentType("application/javascript");
             if (!jsonpAllowed)
             {
-                res.sendError(SC_BAD_REQUEST, "Server is not configured to allow jsonp!");
+                writeError(res, SC_BAD_REQUEST, "Server is not configured to allow jsonp!");
                 return;
             }
 
             String callbackName = getParam(req, "callback", null);
             if (callbackName == null)
             {
-                res.sendError(SC_BAD_REQUEST, "No callback provided, necessary if type=jsonp");
+                writeError(res, SC_BAD_REQUEST, "No callback provided, necessary if type=jsonp");
                 return;
             }
 
             if (debug)
-            {
                 writeResponse(res, callbackName + "(" + json.toString(2) + ")");
-            } else
-            {
+            else
                 writeResponse(res, callbackName + "(" + json.toString() + ")");
-            }
+
         } else
         {
             res.setContentType("application/json");
             if (debug)
-            {
                 writeResponse(res, json.toString(2));
-            } else
-            {
+            else
                 writeResponse(res, json.toString());
-            }
         }
     }
 
-    void returnError( HttpServletResponse res, String errorMessage ) throws IOException
+    protected void writeError( HttpServletResponse res, int code, String message )
     {
-        res.sendError(SC_BAD_REQUEST, errorMessage);
+        JSONObject json = new JSONObject();
+        json.put("message", message);
+        writeJsonError(res, code, json);
+    }
+
+    protected void writeJsonError( HttpServletResponse res, int code, JSONObject json )
+    {
+        try
+        {
+            // no type parameter check here as jsonp does not work if an error
+            // also no debug parameter yet
+            res.setContentType("application/json");
+            res.setCharacterEncoding("UTF-8");
+            res.setStatus(code);
+            res.getWriter().append(json.toString(2));
+        } catch (IOException ex)
+        {
+            logger.error("Cannot write error " + ex.getMessage());
+        }
     }
 
     protected String getParam( HttpServletRequest req, String string, String _default )
@@ -137,17 +150,6 @@ public class GHBaseServlet extends HttpServlet
         } catch (Exception ex)
         {
             return _default;
-        }
-    }
-
-    public void writeError( HttpServletResponse res, int code, String str )
-    {
-        try
-        {
-            res.sendError(code, str);
-        } catch (IOException ex)
-        {
-            logger.error("Cannot write error " + code + " message:" + str, ex);
         }
     }
 

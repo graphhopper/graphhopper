@@ -147,13 +147,11 @@ import_date         | [optional] The date time at which the OSM import was done
 prepare_date        | [optional] The date time at which the preparation (contraction hierarchies) was done. If nothing was done this is empty
 supported_vehicles  | [deprecated] An array of strings for all supported vehicles
 
-### Output if expected error(s) while routing:
+### Error Output
 ```json
 {
-  "info": {"errors": [{
-    "details": "java.lang.IllegalArgumentException",
-    "message": "Cannot find point 2: 2248.224673, 3.867187"
-  }]}
+  "message": "Cannot find point 2: 2248.224673, 3.867187",
+  "hints": [{"message": "something", ...}]
 }
 ```
 
@@ -162,9 +160,8 @@ indicate a bug in the routing engine and is expected to a certain degree if too 
 
 JSON path/attribute    | Description
 :----------------------|:------------
-info.errors            | A list of error messages
-info.errors[0].details | E.g. to see the underlying exception, if any
-info.errors[0].message | Not intended to be displayed to the user as it is currently not translated
+message                | Not intended to be displayed to the user as it is not translated
+hints                  | An optional list of details regarding the error message e.g. `[{"message": "first error message in hints"}]`
 
 
 ### HTTP Error codes

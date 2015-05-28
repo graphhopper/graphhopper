@@ -47,21 +47,6 @@ public class InfoServlet extends GHBaseServlet
     @Override
     public void doGet( HttpServletRequest req, HttpServletResponse res ) throws ServletException, IOException
     {
-        try
-        {
-            writeInfos(req, res);
-        } catch (IllegalArgumentException ex)
-        {
-            writeError(res, SC_BAD_REQUEST, ex.getMessage());
-        } catch (Exception ex)
-        {
-            logger.error("Error while executing request: " + req.getQueryString(), ex);
-            writeError(res, SC_INTERNAL_SERVER_ERROR, "Problem occured:" + ex.getMessage());
-        }
-    }
-
-    void writeInfos( HttpServletRequest req, HttpServletResponse res ) throws Exception
-    {
         BBox bb = hopper.getGraph().getBounds();
         List<Double> list = new ArrayList<Double>(4);
         list.add(bb.minLon);

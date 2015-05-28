@@ -318,12 +318,12 @@ function initMap(selectLayer) {
         attribution: osmAttr + ', <a href="https://geodienste.lyrk.de/">Lyrk</a>',
         subdomains: ['a', 'b', 'c']
     });
-        
+
     var omniscale = L.tileLayer.wms('https://maps.omniscale.net/v1/mapsgraph-bf48cc0b/tile', {
-            layers: 'osm',
+        layers: 'osm',
         attribution: osmAttr + ', &copy; <a href="http://maps.omniscale.com/">Omniscale</a>'
     });
-            
+
     var mapquest = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
         attribution: osmAttr + ', <a href="http://open.mapquest.co.uk" target="_blank">MapQuest</a>',
         subdomains: ['otile1', 'otile2', 'otile3', 'otile4']
@@ -385,7 +385,7 @@ function initMap(selectLayer) {
 
     var baseMaps = {
         "Lyrk": lyrk,
-        "Omniscale" : omniscale,
+        "Omniscale": omniscale,
         "MapQuest": mapquest,
         "MapQuest Aerial": mapquestAerial,
         "Esri Aerial": esriAerial,
@@ -977,12 +977,13 @@ function routeLatLng(request, doQuery) {
     descriptionDiv.html('<img src="img/indicator.gif"/> Search Route ...');
     request.doRequest(urlForAPI, function (json) {
         descriptionDiv.html("");
-        if (json.info.errors) {
-            var tmpErrors = json.info.errors;
+        if (json.message) {
+            var tmpErrors = json.message;
             log(tmpErrors);
-            for (var m = 0; m < tmpErrors.length; m++) {
-                descriptionDiv.append("<div class='error'>" + tmpErrors[m].message + "</div>");
-            }
+            if (json.hints)
+                for (var m = 0; m < json.hints.length; m++) {
+                    descriptionDiv.append("<div class='error'>" + json.hints[m].message + "</div>");
+                }
             return;
         }
         var path = json.paths[0];

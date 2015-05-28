@@ -1,4 +1,5 @@
 0.5
+    breaking change in HTTP API: error JSON format changed to be message:"" instead of within info.errors, see updated api documentation
     made GHResponse.getMillis, Path.getMillis, GPXEntry.getMillis deprecated, use getTime instead
     in AbstractFlagEncoder, parse*() and getStr() are now deprecated, use properties.get* instead
 
