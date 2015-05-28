@@ -201,7 +201,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public short getVersion()
+    public int getVersion()
     {
         return 1;
     }

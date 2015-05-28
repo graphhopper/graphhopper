@@ -105,7 +105,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     }
 
     @Override
-    public short getVersion()
+    public int getVersion()
     {
         return 1;
     }

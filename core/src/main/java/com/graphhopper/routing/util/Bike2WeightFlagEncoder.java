@@ -56,7 +56,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
     }
 
     @Override
-    public short getVersion()
+    public int getVersion()
     {
         return 1;
     }

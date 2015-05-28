@@ -105,7 +105,7 @@ public class EncodingManagerTest
         FlagEncoder encoder = new AbstractFlagEncoder(1, 2.0, 3)
         {
             @Override
-            public short getVersion()
+            public int getVersion()
             {
                 return 10;
             }

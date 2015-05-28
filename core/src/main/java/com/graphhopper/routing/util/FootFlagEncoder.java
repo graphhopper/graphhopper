@@ -133,7 +133,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public short getVersion()
+    public int getVersion()
     {
         return 1;
     }

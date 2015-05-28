@@ -26,7 +26,6 @@ import com.graphhopper.reader.OSMWay;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.StorableProperties;
-import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -165,7 +164,7 @@ public class EncodingManager
 
             if (configuration.has("version"))
             {
-                if (fe.getVersion() != configuration.getLong("version", -1))
+                if (fe.getVersion() != configuration.getInt("version", -1))
                 {
                     throw new IllegalArgumentException("Encoder " + entry + " was used in version "
                             + configuration.getLong("version", -1) + ", but current version is " + fe.getVersion());

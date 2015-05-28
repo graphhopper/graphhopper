@@ -29,9 +29,9 @@ import com.graphhopper.util.Translation;
 public interface FlagEncoder extends TurnCostEncoder
 {
     /**
-     * @return short
+     * @return the version of this FlagEncoder to enforce none-compatibility when new attributes are introduced
      */
-    short getVersion();
+    int getVersion();
 
     /**
      * @return the maximum speed in km/h
