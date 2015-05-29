@@ -311,14 +311,17 @@ GHRequest.prototype.init = function (params) {
         if (val === "false")
             val = false;
         else if (val === "true")
-            val = true;        
+            val = true;
 
         // todo
         // this[key] = val;
 
         if (key.indexOf('api.') === 0) {
-            // comes already as array
-            this.api_params[key.substring(4)] = val;            
+            key = key.substring(4);
+            if (GHroute.isArray(val))
+                this.api_params[key] = val;
+            else
+                this.api_params[key] = [val];
         }
     }
 
