@@ -77,6 +77,7 @@ public class MainActivity extends Activity
     private String downloadURL;
     private File mapsFolder;
     private TileCache tileCache;
+    private TileRendererLayer tileRendererLayer;
 
     protected boolean onMapTap( LatLong tapLatLong, Point layerXY, Point tapXY )
     {
@@ -177,6 +178,14 @@ public class MainActivity extends Activity
         hopper = null;
         // necessary?
         System.gc();
+
+        // Cleanup Mapsforge
+        this.mapView.getLayerManager().getLayers().remove(this.tileRendererLayer);
+        this.tileRendererLayer.onDestroy();
+        this.tileCache.destroy();
+        this.mapView.getModel().mapViewPosition.destroy();
+        this.mapView.destroy();
+        AndroidGraphicFactory.clearResourceMemoryCache();
     }
 
     boolean isReady()
@@ -403,7 +412,7 @@ public class MainActivity extends Activity
 
         mapView.getLayerManager().getLayers().clear();
 
-        TileRendererLayer tileRendererLayer = new TileRendererLayer(tileCache, mapDataStore,
+        tileRendererLayer = new TileRendererLayer(tileCache, mapDataStore,
                 mapView.getModel().mapViewPosition, false, true, AndroidGraphicFactory.INSTANCE)
         {
             @Override
