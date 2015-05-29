@@ -70,12 +70,12 @@ describe("utils", function() {
     });
 
     it("should parse URL correctly", function() {
-        var params = parseUrl("localhost:8989?test=pest&test2=true&test3=false&test4=2&test5=1.1");
+        var params = parseUrl("localhost:8989?test=pest&test2=true&test3=false&test4=2&test5=1.1&test5=2.7");
         expect("pest").toEqual(params.test);
         expect(true).toEqual(params.test2);
         expect(false).toEqual(params.test3);
-        expect(2).toEqual(params.test4);
-        expect(1.1).toEqual(params.test5);
+        expect("2").toEqual(params.test4);
+        expect(["1.1", "2.7"]).toEqual(params.test5);
         
         params = parseUrl("blup?point=49.946505%2C11.571232&point=&");        
         expect(params.point).toEqual("49.946505,11.571232");        

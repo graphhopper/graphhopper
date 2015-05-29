@@ -1249,25 +1249,22 @@ function parseUrl(query) {
         if (value === "")
             continue;
 
-        if (key === "point" && !res[key]) {
-            res[key] = [value];
-        } else if (typeof res[key] === "string") {
-            var arr = [res[key], value];
-            res[key] = arr;
-        } else if (typeof res[key] === "undefined") {
-            if (value === 'true') {
-                res[key] = true;
-            } else if (value === 'false') {
-                res[key] = false;
-            } else {
-                var tmp = Number(value);
-                if (isNaN(tmp))
-                    res[key] = value;
-                else
-                    res[key] = Number(value);
-            }
+        if (typeof res[key] === "undefined") {
+            if (value === 'true')
+                value = true;
+            else if (value === 'false')
+                value = false;
+
+            res[key] = value;
         } else {
-            res[key].push(value);
+            var tmpVal = res[key];
+            if (GHroute.isArray(tmpVal)) {
+                tmpVal.push(value);
+            } else if (tmpVal) {
+                res[key] = [tmpVal, value];
+            } else {
+                res[key] = [value];
+            }
         }
     }
     return res;

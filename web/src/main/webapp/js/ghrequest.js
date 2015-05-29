@@ -311,17 +311,14 @@ GHRequest.prototype.init = function (params) {
         if (val === "false")
             val = false;
         else if (val === "true")
-            val = true;
-        else {
-            if (parseFloat(val) != NaN)
-                val = parseFloat(val)
-        }
+            val = true;        
 
         // todo
         // this[key] = val;
 
         if (key.indexOf('api.') === 0) {
-            this.api_params[key.substring(4)] = val;
+            // comes already as array
+            this.api_params[key.substring(4)] = val;            
         }
     }
 
@@ -459,7 +456,12 @@ GHRequest.prototype.createPath = function (url) {
         url += "&debug=true";
 
     for (var key in this.api_params) {
-        url += "&" + key + "=" + this.api_params[key];
+        // entries in api_params are all arrays
+        var arr = this.api_params[key];
+        if (GHroute.isArray(arr))
+            for (var keyIndex in arr) {
+                url += "&" + key + "=" + arr[keyIndex];
+            }
     }
     return url;
 };
