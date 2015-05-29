@@ -152,8 +152,6 @@ public class Downloader
 
     public String downloadAsString( String url ) throws IOException
     {
-        HttpURLConnection conn = createConnection(url);
-        conn.connect();
         return Helper.isToString(fetch(url));
     }
 }
