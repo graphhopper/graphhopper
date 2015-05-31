@@ -12,7 +12,6 @@ import gnu.trove.list.TLongList;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.logging.Level;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -86,13 +85,11 @@ public class PbfBlobDecoder implements Runnable
 
         // Build the list of active and unsupported features in the file.
         List<String> supportedFeatures = Arrays.asList("OsmSchema-V0.6", "DenseNodes");
-        List<String> activeFeatures = new ArrayList<String>();
         List<String> unsupportedFeatures = new ArrayList<String>();
         for (String feature : header.getRequiredFeaturesList())
         {
             if (supportedFeatures.contains(feature))
             {
-                activeFeatures.add(feature);
             } else
             {
                 unsupportedFeatures.add(feature);
@@ -141,7 +138,7 @@ public class PbfBlobDecoder implements Runnable
         Iterator<Integer> valueIterator = values.iterator();
         if (keyIterator.hasNext())
         {
-            Map<String, String> tags = new HashMap<String, String>();
+            Map<String, String> tags = new HashMap<String, String>(keys.size());
             while (keyIterator.hasNext())
             {
                 String key = fieldDecoder.decodeString(keyIterator.next());
@@ -254,7 +251,7 @@ public class PbfBlobDecoder implements Runnable
 
                 if (tags == null)
                 {
-                    tags = new HashMap<String, String>();
+                    tags = new HashMap<String, String>(nodes.getKeysValsList().size());
                 }
 
                 tags.put(fieldDecoder.decodeString(keyIndex), fieldDecoder.decodeString(valueIndex));
