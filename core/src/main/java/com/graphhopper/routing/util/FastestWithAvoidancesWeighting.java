@@ -1,13 +1,17 @@
 package com.graphhopper.routing.util;
 
+import com.graphhopper.storage.AvoidanceAttributeExtension;
 import com.graphhopper.util.EdgeIteratorState;
 
 public class FastestWithAvoidancesWeighting extends FastestWeighting {
 
 	private long bitMask;
+	private AvoidanceAttributeExtension extension;
 
-	public FastestWithAvoidancesWeighting(FlagEncoder encoder, String... avoidances) {
+
+	public FastestWithAvoidancesWeighting(FlagEncoder encoder, AvoidanceAttributeExtension extension, String... avoidances) {
 		super(encoder);
+		this.extension = extension;
 		configureAvoidances(avoidances);
 	}
 
@@ -18,11 +22,15 @@ public class FastestWithAvoidancesWeighting extends FastestWeighting {
 	@Override
     public double calcWeight( EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId )
     {
-        long wayType = edge.getFlags();
-        wayType = encoder.getLong(wayType, AbstractAvoidanceDecorator.KEY);
-        if(bitMask!=0 && ((wayType & bitMask) > 0)) {
-            return Double.POSITIVE_INFINITY;
-        }
+		try {
+			long extensionPointer = edge.getAdditionalField();
+			long wayType = extension.getAvoidanceFlags(extensionPointer);
+			if(bitMask!=0 && ((wayType & bitMask) > 0)) {
+				return Double.POSITIVE_INFINITY;
+			}
+		} catch (UnsupportedOperationException onse) {
+			System.err.println(onse);
+		}
         return super.calcWeight(edge, reverse, prevOrNextEdgeId);
     }
 

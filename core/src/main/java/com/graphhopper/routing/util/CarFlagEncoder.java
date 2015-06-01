@@ -369,8 +369,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             encoded = handleFerryTags(way, defaultSpeedMap.get("living_street"), defaultSpeedMap.get("service"), defaultSpeedMap.get("residential"));
             encoded |= directionBitMask;
         }
-        long anno = super.handleWayTagsDecorators(way);
-        return encoded |= anno;
+        return encoded;
     }
 
     public String getWayInfo(Way way )

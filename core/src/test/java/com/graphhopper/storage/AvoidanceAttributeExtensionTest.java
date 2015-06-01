@@ -46,8 +46,8 @@ public class AvoidanceAttributeExtensionTest {
 		extension.create(4);
 		extension.addEdgeInfo(0, 1, 100);
 		extension.addEdgeInfo(1, 5, 200);
-		assertEquals("Retrieved value should match stored", 200, extension.getAvoidanceFlags(1, 5));
-		assertEquals("Retrieved value should match stored", 100, extension.getAvoidanceFlags(0, 1));
+		assertEquals("Retrieved value should match stored", 200, extension.getAvoidanceFlags(edgeTwo.getAdditionalField()));
+		assertEquals("Retrieved value should match stored", 100, extension.getAvoidanceFlags(edgeOne.getAdditionalField()));
 		extension.close();
 	}
 

@@ -21,10 +21,13 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
+
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,6 +57,7 @@ public class Path
     private TIntList edgeIds;
     private double weight;
     private NodeAccess nodeAccess;
+	private GraphExtension extraInfo;
 
     public Path( Graph graph, FlagEncoder encoder )
     {
@@ -62,6 +66,7 @@ public class Path
         this.nodeAccess = graph.getNodeAccess();
         this.encoder = encoder;
         this.edgeIds = new TIntArrayList();
+        this.extraInfo = graph.getExtension();
     }
 
     /**
@@ -415,13 +420,17 @@ public class Path
                 // we will skip zero length edges. Unfortunately there is a loss
                 // of precision in Lat/Lon calculations in GHNodeAccess so we
                 // have to handle <=0.1 as zero length.
-//                if (edge.getDistance() > 0.1) {
+                if (edge.getDistance() > 0.1) {
                     // baseNode is the current node and adjNode is the next
                     int adjNode = edge.getAdjNode();
                     int baseNode = edge.getBaseNode();
+                    
                     long flags = edge.getFlags();
                     double adjLat = nodeAccess.getLatitude(adjNode);
                     double adjLon = nodeAccess.getLongitude(adjNode);
+                    if(nodeAccess.getDimension()==1) {
+                    	
+                    }
                     double latitude, longitude;
 
                     PointList wayGeo = edge.fetchWayGeometry(3);
@@ -438,8 +447,18 @@ public class Path
                     }
 
                     name = edge.getName();
-                    annotation = encoder.getAnnotation(flags, tr);
-
+                    
+                    try {
+                    	if(graph.getExtension().isRequireEdgeField()) {
+                    		int additionalField = edge.getAdditionalField();
+                    		annotation = encoder.getAnnotation(flags, tr, additionalField, extraInfo);
+                    	}
+                    	else {
+                    		annotation = encoder.getAnnotation(flags, tr);
+                    	}
+                    } catch (UnsupportedOperationException uoe) {
+                    	annotation = encoder.getAnnotation(flags, tr);
+                    }
                     if ((prevName == null) && (!isRoundabout)) // very first instruction (if not in Roundabout)
                     {
                         int sign = Instruction.CONTINUE_ON_STREET;
@@ -590,7 +609,7 @@ public class Path
                         }
                         ways.add(new FinishInstruction(nodeAccess, adjNode));
                     }
-//                }
+                }
             }
 
             private void updatePointsAndInstruction( EdgeIteratorState edge, PointList pl )

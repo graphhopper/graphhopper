@@ -32,8 +32,12 @@ import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.RelationMember;
 import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.TurnRelation;
+import com.graphhopper.reader.Way;
 import com.graphhopper.reader.osgb.AbstractOsReader;
 import com.graphhopper.reader.osgb.itn.OSITNTurnRelation;
+import com.graphhopper.routing.util.EncoderDecorator;
+import com.graphhopper.storage.AvoidanceAttributeExtension;
+import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.DistanceCalc;
@@ -356,7 +360,7 @@ public class OsDpnReader extends AbstractOsReader<String> {
         long wayFlags = encodingManager.handleWayTags(way, includeWay, relationFlags);
         if (wayFlags == 0)
             return;
-
+       
         List<EdgeIteratorState> createdEdges = new ArrayList<EdgeIteratorState>();
         // look for barriers along the way
         final int size = osmNodeIds.size();
@@ -414,10 +418,33 @@ public class OsDpnReader extends AbstractOsReader<String> {
             createdEdges.addAll(addOSMWay(transfer, wayFlags, wayOsmId));
         }
 
-        for (EdgeIteratorState edge : createdEdges) {
-            encodingManager.applyWayTags(way, edge);
-        }
+        long configureEdgeAvoidance = configureEdgeAvoidance(way);
+        applyAvoidanceAttributes(way, createdEdges, configureEdgeAvoidance);
     }
+
+	private void applyAvoidanceAttributes(OsDpnWay way, List<EdgeIteratorState> createdEdges,
+			long configureEdgeAvoidance) {
+		for (EdgeIteratorState edge : createdEdges) {
+            encodingManager.applyWayTags(way, edge);
+            if(0<configureEdgeAvoidance) {
+            	AvoidanceAttributeExtension avoidanceExtension = (AvoidanceAttributeExtension)graphStorage.getExtension();
+            	avoidanceExtension.addEdgeInfo(edge.getEdge(), edge.getAdjNode(), configureEdgeAvoidance);
+            }
+        }
+	}
+
+	private long configureEdgeAvoidance(Way way) {
+		 GraphExtension extendedStorage = graphStorage.getExtension();
+		 long handleWayTags=0;
+         if (extendedStorage instanceof AvoidanceAttributeExtension)
+         {
+        	 List<EncoderDecorator> decorators = encodingManager.getDecorators();
+        	 for (EncoderDecorator encoderDecorator : decorators) {
+        		 handleWayTags += encoderDecorator.handleWayTags(way);
+        	 }
+         }
+         return handleWayTags;
+	}
 
     public void processRelation(Relation relation) throws XMLStreamException {
         // if (relation.hasTag("type", "restriction")) {

@@ -25,5 +25,13 @@ public class OsCarFlagEncoder extends CarFlagEncoder {
 		}
 		encoderDecorators.add(new OsVehicleAvoidanceDecorator());
 	}
+	
+	@Override
+	public boolean supports(Class<?> feature) {
+		 if (super.supports(feature))
+	            return true;
+		 
+		 return (PriorityWithAvoidancesWeighting.class.isAssignableFrom(feature));
+	}
 
 }

@@ -33,6 +33,8 @@ import com.graphhopper.reader.Relation;
 import com.graphhopper.reader.RoutingElement;
 import com.graphhopper.reader.TurnRelation;
 import com.graphhopper.reader.Way;
+import com.graphhopper.storage.AvoidanceAttributeExtension;
+import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeExplorer;
@@ -51,10 +53,8 @@ import com.graphhopper.util.Translation;
  * @author Nop
  * @see EncodingManager
  */
-public abstract class AbstractFlagEncoder implements FlagEncoder,
-		TurnCostEncoder {
-	private final static Logger logger = LoggerFactory
-			.getLogger(AbstractFlagEncoder.class);
+public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncoder {
+	private final static Logger logger = LoggerFactory.getLogger(AbstractFlagEncoder.class);
 	private final static int K_FORWARD = 0, K_BACKWARD = 1;
 	/* Edge Flag Encoder fields */
 	private long nodeBitMask;
@@ -68,8 +68,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 	// bit to signal that way is accepted
 	protected long acceptBit;
 	protected long ferryBit;
-	
-	// This value determines the maximal possible speed of any road regardless the maxspeed value
+
+	// This value determines the maximal possible speed of any road regardless
+	// the maxspeed value
 	// lower values allow more compact representation of the routing graph
 	protected int maxPossibleSpeed;
 
@@ -95,10 +96,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 	/**
 	 * Used to hold type exclusions
 	 */
-	protected final List<String> vehicleQualifierTypeExclusions = new ArrayList<String>(
-			5);
-	protected final List<String> vehicleQualifierTypeInclusions = new ArrayList<String>(
-			5);
+	protected final List<String> vehicleQualifierTypeExclusions = new ArrayList<String>(5);
+	protected final List<String> vehicleQualifierTypeInclusions = new ArrayList<String>(5);
 	private boolean blockByDefault = true;
 	private boolean blockFords = true;
 	protected final int speedBits;
@@ -116,8 +115,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 	 *            is reached a turn is forbidden and results in costs of
 	 *            positive infinity.
 	 */
-	protected AbstractFlagEncoder(int speedBits, double speedFactor,
-			int maxTurnCosts) {
+	protected AbstractFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
 		this.maxTurnCosts = maxTurnCosts <= 0 ? 0 : maxTurnCosts;
 		this.speedBits = speedBits;
 		this.speedFactor = speedFactor;
@@ -162,6 +160,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 		return blockFords;
 	}
 
+	public List<EncoderDecorator> getEncoderDecorators() {
+		return encoderDecorators;
+	}
+
+	public void setEncoderDecorators(List<EncoderDecorator> encoderDecorators) {
+		this.encoderDecorators = encoderDecorators;
+	}
+
 	/**
 	 * Defines the bits for the node flags, which are currently used for
 	 * barriers only.
@@ -184,9 +190,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 	 */
 	public int defineWayBits(int index, int shift) {
 		if (forwardBit != 0)
-			throw new IllegalStateException(
-					"You must not register a FlagEncoder (" + toString()
-							+ ") twice!");
+			throw new IllegalStateException("You must not register a FlagEncoder (" + toString()
+					+ ") twice!");
 
 		// define the first 2 speedBits in flags for routing
 		forwardBit = 1L << shift;
@@ -225,8 +230,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 	 * determine the useful relation tags.
 	 * <p/>
 	 */
-	public abstract long handleRelationTags(Relation relation,
-			long oldRelationFlags);
+	public abstract long handleRelationTags(Relation relation, long oldRelationFlags);
 
 	/**
 	 * Decide whether a way is routable for a given mode of travel. This skips
@@ -242,18 +246,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 	 * Analyze properties of a way and create the routing flags. This method is
 	 * called in the second parsing step.
 	 */
-	public abstract long handleWayTags( Way way, long allowed, long relationFlags );
-	
-	
-	public long handleWayTagsDecorators(Way way) {
-		long flags = 0;
-		if (null != encoderDecorators) {
-			for (EncoderDecorator decorator : encoderDecorators) {
-				flags |= decorator.handleWayTags(way);
-			}
-		}
-		return flags;
-	};
+	public abstract long handleWayTags(Way way, long allowed, long relationFlags);
 
 	/**
 	 * Parse tags on nodes. Node tags can add to speed (like traffic_signals)
@@ -284,8 +277,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 				return directionBitMask;
 		}
 
-		if (blockFords
-				&& (node.hasTag("highway", "ford") || node.hasTag("ford"))
+		if (blockFords && (node.hasTag("highway", "ford") || node.hasTag("ford"))
 				&& !node.hasTag(restrictions, intendedValues))
 			return directionBitMask;
 
@@ -294,15 +286,22 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 
 	@Override
 	public InstructionAnnotation getAnnotation(long flags, Translation tr) {
-		if (null != encoderDecorators) {
+		return InstructionAnnotation.EMPTY;
+	}
+
+	@Override
+	public InstructionAnnotation getAnnotation(long flags, Translation tr, int extraField, GraphExtension extraInfo) {
+		//TODO composite annotations (Raise importance to highest value, append message if newest message is higher importance prepend)
+		if (extraField > -1 && null != encoderDecorators) {
+			long avoidanceFlags = ((AvoidanceAttributeExtension)extraInfo).getAvoidanceFlags(extraField);
 			for (EncoderDecorator decorator : encoderDecorators) {
-				InstructionAnnotation anno = decorator.getAnnotation(flags, tr);
+				InstructionAnnotation anno = decorator.getAnnotation(avoidanceFlags, tr);
 				if (!anno.isEmpty()) {
 					return anno;
 				}
 			}
 		}
-		return InstructionAnnotation.EMPTY;
+		return getAnnotation(flags, tr);
 	}
 
 	/**
@@ -335,8 +334,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 	@Override
 	public long setSpeed(long flags, double speed) {
 		if (speed < 0)
-			throw new IllegalArgumentException("Speed cannot be negative: "
-					+ speed + ", flags:" + BitUtil.LITTLE.toBitString(flags));
+			throw new IllegalArgumentException("Speed cannot be negative: " + speed + ", flags:"
+					+ BitUtil.LITTLE.toBitString(flags));
 
 		if (speed > getMaxSpeed())
 			speed = getMaxSpeed();
@@ -512,8 +511,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 	/**
 	 * Special handling for ferry ways.
 	 */
-	protected long handleFerryTags(Way way, double unknownSpeed,
-			double shortTripsSpeed, double longTripsSpeed) {
+	protected long handleFerryTags(Way way, double unknownSpeed, double shortTripsSpeed,
+			double longTripsSpeed) {
 		// to hours
 		double durationInHours = parseDuration(way.getTag("duration")) / 60d;
 		if (durationInHours > 0)
@@ -591,8 +590,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 		}
 
 		int turnBits = Helper.countBitValue(maxTurnCosts);
-		turnCostEncoder = new EncodedValue("TurnCost", shift, turnBits, 1, 0,
-				maxTurnCosts) {
+		turnCostEncoder = new EncodedValue("TurnCost", shift, turnBits, 1, 0, maxTurnCosts) {
 			// override to avoid expensive Math.round
 			@Override
 			public final long getValue(long flags) {
@@ -622,8 +620,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 			return 0;
 
 		else if (maxTurnCosts == 1)
-			return ((flags & turnRestrictionBit) == 0) ? 0
-					: Double.POSITIVE_INFINITY;
+			return ((flags & turnRestrictionBit) == 0) ? 0 : Double.POSITIVE_INFINITY;
 
 		long cost = turnCostEncoder.getValue(flags);
 		if (cost == maxTurnCosts)
@@ -639,8 +636,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 
 		else if (maxTurnCosts == 1) {
 			if (costs != 0)
-				throw new IllegalArgumentException(
-						"Only restrictions are supported");
+				throw new IllegalArgumentException("Only restrictions are supported");
 
 			return restricted ? turnRestrictionBit : 0;
 		}
@@ -663,8 +659,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 		return turnCostEncoder.setValue(0L, (int) costs);
 	}
 
-	public Collection<ITurnCostTableEntry> analyzeTurnRelation(
-			TurnRelation turnRelation, DataReader osmReader) {
+	public Collection<ITurnCostTableEntry> analyzeTurnRelation(TurnRelation turnRelation,
+			DataReader osmReader) {
 		if (!supports(TurnWeighting.class))
 			return Collections.emptyList();
 
@@ -674,8 +670,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 			edgeInExplorer = osmReader.getGraphStorage().createEdgeExplorer(
 					new DefaultEdgeFilter(this, true, false));
 		}
-		return turnRelation.getRestrictionAsEntries(this, edgeOutExplorer,
-				edgeInExplorer, osmReader);
+		return turnRelation.getRestrictionAsEntries(this, edgeOutExplorer, edgeInExplorer,
+				osmReader);
 	}
 
 	protected boolean isFerry(long internalFlags) {
@@ -699,15 +695,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 	@Override
 	public long setBool(long flags, int key, boolean value) {
 		switch (key) {
-		case K_FORWARD:
-			return value ? flags | forwardBit : flags & ~forwardBit;
-		case K_BACKWARD:
-			return value ? flags | backwardBit : flags & ~backwardBit;
-		case K_ROUNDABOUT:
-			return value ? flags | roundaboutBit : flags & ~roundaboutBit;
-		default:
-			throw new IllegalArgumentException("Unknown key " + key
-					+ " for boolean value");
+			case K_FORWARD:
+				return value ? flags | forwardBit : flags & ~forwardBit;
+			case K_BACKWARD:
+				return value ? flags | backwardBit : flags & ~backwardBit;
+			case K_ROUNDABOUT:
+				return value ? flags | roundaboutBit : flags & ~roundaboutBit;
+			default:
+				throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
 		}
 	}
 
@@ -715,41 +710,37 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 	public boolean isBool(long flags, int key) {
 		switch (key) {
 
-		case K_FORWARD:
-			return isForward(flags);
-		case K_BACKWARD:
-			return isBackward(flags);
-		case K_ROUNDABOUT:
-			return (flags & roundaboutBit) != 0;
-		default:
-			throw new IllegalArgumentException("Unknown key " + key
-					+ " for boolean value");
+			case K_FORWARD:
+				return isForward(flags);
+			case K_BACKWARD:
+				return isBackward(flags);
+			case K_ROUNDABOUT:
+				return (flags & roundaboutBit) != 0;
+			default:
+				throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
 		}
 	}
 
 	@Override
 	public long setLong(long flags, int key, long value) {
-		throw new UnsupportedOperationException("Unknown key " + key
-				+ " for long value.");
+		throw new UnsupportedOperationException("Unknown key " + key + " for long value.");
 	}
 
 	@Override
 	public long getLong(long flags, int key) {
-        if(null!=encoderDecorators) {
-            for (EncoderDecorator decorator : encoderDecorators) {
-                if (decorator.supports(key)) {
-                    return decorator.getLong(flags);
-                }
-            }
-        }
-		throw new UnsupportedOperationException("Unknown key " + key
-				+ " for long value.");
+		if (null != encoderDecorators) {
+			for (EncoderDecorator decorator : encoderDecorators) {
+				if (decorator.supports(key)) {
+					return decorator.getLong(flags);
+				}
+			}
+		}
+		throw new UnsupportedOperationException("Unknown key " + key + " for long value.");
 	}
 
 	@Override
 	public long setDouble(long flags, int key, double value) {
-		throw new UnsupportedOperationException("Unknown key " + key
-				+ " for double value.");
+		throw new UnsupportedOperationException("Unknown key " + key + " for double value.");
 	}
 
 	@Override
@@ -759,8 +750,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 				return decorator.getDouble(flags);
 			}
 		}
-		throw new UnsupportedOperationException("Unknown key " + key
-				+ " for double value.");
+		throw new UnsupportedOperationException("Unknown key " + key + " for double value.");
 	}
 
 	protected static double parseDouble(String str, String key, double defaultD) {
@@ -777,8 +767,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 		return Long.parseLong(val);
 	}
 
-	protected static boolean parseBoolean(String str, String key,
-			boolean defaultB) {
+	protected static boolean parseBoolean(String str, String key, boolean defaultB) {
 		String val = getStr(str, key);
 		if (val.isEmpty())
 			return defaultB;
@@ -817,8 +806,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 	}
 
 	protected String getPropertiesString() {
-		return "speedFactor=" + speedFactor + "|speedBits=" + speedBits
-				+ "|turnCosts=" + (maxTurnCosts > 0);
+		return "speedFactor=" + speedFactor + "|speedBits=" + speedBits + "|turnCosts="
+				+ (maxTurnCosts > 0);
 	}
 
 	@Override
@@ -837,8 +826,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 	 * @return
 	 */
 	public boolean isVehicleQualifierTypeIncluded(RoutingElement routingElement) {
-		if (routingElement.hasTag(vehicleQualifierTypeInclusions,
-				intendedValues)) {
+		if (routingElement.hasTag(vehicleQualifierTypeInclusions, intendedValues)) {
 			// It is specifically included
 			return true;
 		}
@@ -853,8 +841,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 	 * @return
 	 */
 	public boolean isVehicleQualifierTypeExcluded(RoutingElement routingElement) {
-		if (routingElement.hasTag(vehicleQualifierTypeExclusions,
-				excludedValues)) {
+		if (routingElement.hasTag(vehicleQualifierTypeExclusions, excludedValues)) {
 			// It is specifically excluded
 			return true;
 		}
@@ -866,7 +853,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder,
 		long bitMask = 0;
 		if (null != encoderDecorators) {// BIT SHIFT FIRST
 			for (EncoderDecorator decorator : encoderDecorators) {
-				if(decorator.supports(key)) {
+				if (decorator.supports(key)) {
 					return decorator.getBitMask(attributes);
 				}
 			}

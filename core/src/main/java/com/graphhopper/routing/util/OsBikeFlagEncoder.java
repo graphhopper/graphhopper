@@ -28,4 +28,12 @@ public class OsBikeFlagEncoder extends BikeFlagEncoder {
 			}
 			encoderDecorators.add(new OsAvoidanceDecorator());
 		}
+		
+		@Override
+		public boolean supports(Class<?> feature) {
+			 if (super.supports(feature))
+		            return true;
+			 
+			 return (PriorityWithAvoidancesWeighting.class.isAssignableFrom(feature));
+		}
 }

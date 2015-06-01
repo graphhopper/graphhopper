@@ -146,28 +146,19 @@ public class AvoidanceAttributeExtension implements GraphExtension
 	private void setAttributeEntry(long attributeFlag, int newEntryIndex) {
 		avoidanceFlags.setInt(newEntryIndex, (int)attributeFlag);
 	}
-
-    /**
-     * @return avoidance flags of the specified node and edge properties.
-     */
-    public long getAvoidanceFlags( int edgeId, int adjNode)
-    {
-        if (edgeId == EdgeIterator.NO_EDGE)
-            throw new IllegalArgumentException("from and to edge cannot be NO_EDGE");
-        if (adjNode < 0)
-            throw new IllegalArgumentException("via node cannot be negative");
-
-        return nextCostFlags(edgeId, adjNode);
-    }
+    
+    public long getAvoidanceFlags(long extensionPointer) {
+    	if (extensionPointer > NO_TURN_ENTRY) {
+        	return avoidanceFlags.getInt(extensionPointer);
+        }
+        return EMPTY_FLAGS;
+	}
 
     private long nextCostFlags( int edgeId, int adjNode)
     {
     	EdgeIteratorState edgeProps = graph.getEdgeProps(edgeId, adjNode);
-        int flagIndex = edgeProps.getAdditionalField();
-        if (flagIndex > NO_TURN_ENTRY) {
-        	return avoidanceFlags.getInt(flagIndex);
-        }
-        return EMPTY_FLAGS;
+        int extensionPointer = edgeProps.getAdditionalField();
+        return getAvoidanceFlags(extensionPointer);
     }
 
     private void ensureAttributeIndex( int nodeIndex )
@@ -232,4 +223,5 @@ public class AvoidanceAttributeExtension implements GraphExtension
     {
         return "avoidance";
     }
+
 }
