@@ -2,7 +2,7 @@ package com.graphhopper.routing.util;
 
 import java.util.ArrayList;
 
-public class OsBikeFlagEncoder extends BikeFlagEncoder {
+public class OsBikeFlagEncoder extends MountainBikeFlagEncoder {
 	
 		public OsBikeFlagEncoder() {
 	        super(4, 2, 0);
