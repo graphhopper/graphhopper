@@ -77,6 +77,8 @@ public class DefaultModule extends AbstractModule
                 logger.info("jsonp disabled");
 
             bind(Boolean.class).annotatedWith(Names.named("jsonpAllowed")).toInstance(jsonpAllowed);
+
+            bind(RouteSerializer.class).toInstance(new SimpleRouteSerializer(graphHopper.getGraph().getBounds()));
         } catch (Exception ex)
         {
             throw new IllegalStateException("Couldn't load graph", ex);

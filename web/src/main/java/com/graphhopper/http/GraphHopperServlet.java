@@ -22,11 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightingMap;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.json.JSONObject;
 import org.w3c.dom.Document;
@@ -60,6 +56,8 @@ public class GraphHopperServlet extends GHBaseServlet
 {
     @Inject
     private GraphHopper hopper;
+    @Inject
+    private RouteSerializer routeSerializer;
 
     @Override
     public void doGet( HttpServletRequest httpReq, HttpServletResponse httpRes ) throws ServletException, IOException
@@ -128,7 +126,9 @@ public class GraphHopperServlet extends GHBaseServlet
                 writeResponse(httpRes, xml);
         } else
         {
-            Map<String, Object> map = createJson(ghRsp, calcPoints, pointsEncoded, enableElevation, enableInstructions);
+            Map<String, Object> map = routeSerializer.toJSON(ghRsp, calcPoints, pointsEncoded,
+                    enableElevation, enableInstructions);
+
             Object infoMap = map.get("info");
             if (infoMap != null)
                 ((Map) infoMap).put("took", Math.round(took * 1000));
@@ -196,70 +196,6 @@ public class GraphHopperServlet extends GHBaseServlet
         {
             throw new RuntimeException(ex);
         }
-    }
-
-    protected Map<String, Object> createJson( GHResponse rsp,
-                                              boolean calcPoints, boolean pointsEncoded,
-                                              boolean includeElevation, boolean enableInstructions )
-    {
-        Map<String, Object> json = new HashMap<String, Object>();
-
-        if (rsp.hasErrors())
-        {
-            json.put("message", rsp.getErrors().get(0).getMessage());
-            List<Map<String, String>> list = new ArrayList<Map<String, String>>();
-            for (Throwable t : rsp.getErrors())
-            {
-                Map<String, String> map = new HashMap<String, String>();
-                map.put("message", t.getMessage());
-                map.put("details", t.getClass().getName());
-                list.add(map);
-            }
-            json.put("hints", list);
-        } else
-        {
-            Map<String, Object> jsonInfo = new HashMap<String, Object>();
-            json.put("info", jsonInfo);
-            jsonInfo.put("copyrights", Arrays.asList("GraphHopper", "OpenStreetMap contributors"));
-            Map<String, Object> jsonPath = new HashMap<String, Object>();
-            jsonPath.put("distance", Helper.round(rsp.getDistance(), 3));
-            jsonPath.put("weight", Helper.round6(rsp.getDistance()));
-            jsonPath.put("time", rsp.getTime());
-
-            if (calcPoints)
-            {
-                jsonPath.put("points_encoded", pointsEncoded);
-
-                PointList points = rsp.getPoints();
-                if (points.getSize() >= 2)
-                {
-                    BBox maxBounds = hopper.getGraph().getBounds();
-                    BBox maxBounds2D = new BBox(maxBounds.minLon, maxBounds.maxLon, maxBounds.minLat, maxBounds.maxLat);
-                    jsonPath.put("bbox", rsp.calcRouteBBox(maxBounds2D).toGeoJson());
-                }
-
-                jsonPath.put("points", createPoints(points, pointsEncoded, includeElevation));
-
-                if (enableInstructions)
-                {
-                    InstructionList instructions = rsp.getInstructions();
-                    jsonPath.put("instructions", instructions.createJson());
-                }
-            }
-            json.put("paths", Collections.singletonList(jsonPath));
-        }
-        return json;
-    }
-
-    protected Object createPoints( PointList points, boolean pointsEncoded, boolean includeElevation )
-    {
-        if (pointsEncoded)
-            return WebHelper.encodePolyline(points, includeElevation);
-
-        Map<String, Object> jsonPoints = new HashMap<String, Object>();
-        jsonPoints.put("type", "LineString");
-        jsonPoints.put("coordinates", points.toGeoJson(includeElevation));
-        return jsonPoints;
     }
 
     protected List<GHPoint> getPoints( HttpServletRequest req, String key )
