@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
 import gnu.trove.list.array.TIntArrayList;
@@ -259,30 +258,5 @@ public class PrepareRoutingSubnetworksTest
         int removed = instance.removeDeadEndUnvisitedNetworks(em.getEncoder("car"));
 
         assertEquals(3, removed);
-    }
-
-    @Test
-    public void testIssue432()
-    {
-        FlagEncoder encoder = new Bike2WeightFlagEncoder();
-        EncodingManager tmpEM = new EncodingManager(encoder);
-        GraphStorage g = new GraphBuilder(tmpEM).set3D(true).create();
-        //
-        // 0<-1<-2<-3
-        // \-/|  |
-        //    4--5
-        //
-        g.edge(3, 2, 1, false);
-        g.edge(2, 1, 1, false);
-        EdgeIteratorState edge = g.edge(1, 0, 1, false);
-        edge.setFlags(encoder.setAccess(edge.getFlags(), false, false));
-        g.edge(0, 1, 1, true);
-        g.edge(1, 4, 1, true);
-        g.edge(4, 5, 1, true);
-        g.edge(5, 2, 1, true);
-
-        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, tmpEM);
-        Map<Integer, Integer> map = instance.findSubnetworks();
-        assertEquals(1, map.size());
     }
 }
