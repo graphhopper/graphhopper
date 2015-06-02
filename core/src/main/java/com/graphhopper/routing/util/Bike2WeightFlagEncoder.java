@@ -169,9 +169,12 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
             double decEleSum = 0, decDist2DSum = 0;
             // double prevLat = pl.getLatitude(0), prevLon = pl.getLongitude(0);
             double prevEle = pl.getElevation(0);
-            double fullDist2D = 0;
+            double fullDist2D = edge.getDistance();
+            
+            // for short edges an incline makes no sense and for 0 distances could lead to NaN values for speed, see #432
+            if (fullDist2D < 1)
+                return;
 
-            fullDist2D = edge.getDistance();
             double eleDelta = pl.getElevation(pl.size() - 1) - prevEle;
             if (eleDelta > 0.1)
             {

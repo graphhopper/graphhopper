@@ -223,9 +223,9 @@ public class PrepareRoutingSubnetworks
         }.start(explorer, start);
 
         if (entries != removed.get())
-            throw new IllegalStateException("Did not expect " + removed.get() + " removed nodes."
-                    + " Expected:" + entries + ", all nodes:" + g.getNodes()
-                    + toString(explorer.setBaseNode(start))
+            throw new IllegalStateException("Did not expect " + removed.get() + " removed nodes; "
+                    + " Expected:" + entries + ", all nodes:" + g.getNodes() + "; "
+                    + " Neighbours:" + toString(explorer.setBaseNode(start)) + "; "
                     + " Start:" + start + "  (" + g.getNodeAccess().getLat(start) + "," + g.getNodeAccess().getLon(start) + ")");
 
         return removed.get();
@@ -238,8 +238,9 @@ public class PrepareRoutingSubnetworks
         {
             int adjNode = iter.getAdjNode();
             str += adjNode + " (" + g.getNodeAccess().getLat(adjNode) + "," + g.getNodeAccess().getLon(adjNode) + "), ";
-            str += "speed  fwd:" + singleEncoder.getSpeed(iter.getFlags()) + ", rev:" + singleEncoder.getReverseSpeed(iter.getFlags()) + ", ";
-            str += "access fwd:" + singleEncoder.isForward(iter.getFlags()) + ", rev:" + singleEncoder.isBackward(iter.getFlags()) + ", ";
+            str += "speed  (fwd:" + singleEncoder.getSpeed(iter.getFlags()) + ", rev:" + singleEncoder.getReverseSpeed(iter.getFlags()) + "), ";
+            str += "access (fwd:" + singleEncoder.isForward(iter.getFlags()) + ", rev:" + singleEncoder.isBackward(iter.getFlags()) + "), ";
+            str += "distance:" + iter.getDistance();
             str += ";\n ";
         }
         return str;

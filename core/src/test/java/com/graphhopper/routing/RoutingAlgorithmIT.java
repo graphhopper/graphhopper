@@ -114,6 +114,19 @@ public class RoutingAlgorithmIT
     }
 
     @Test
+    public void testBike2_issue432()
+    {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(52.349969, 8.013813, 52.349713, 8.013293, 56, 7));
+        // reverse route avoids the location
+        list.add(new OneRun(52.349713, 8.013293, 52.349969, 8.013813, 293, 21));
+        runAlgo(testCollector, "files/map-bug432.osm.gz", "target/map-bug432-gh",
+                list, "bike2", true, "bike2", "fastest", true);
+
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
     public void testMonacoAllAlgorithmsWithBaseGraph()
     {
         String vehicle = "car";

@@ -660,7 +660,7 @@ public class OSMReader implements DataReader
     /**
      * This method creates from an OSM way (via the osm ids) one or more edges in the graph.
      */
-    Collection<EdgeIteratorState> addOSMWay( TLongList osmNodeIds, long flags, long wayOsmId )
+    Collection<EdgeIteratorState> addOSMWay( final TLongList osmNodeIds, final long flags, final long wayOsmId )
     {
         PointList pointList = new PointList(osmNodeIds.size(), nodeAccess.is3D());
         List<EdgeIteratorState> newEdges = new ArrayList<EdgeIteratorState>(5);
@@ -782,7 +782,7 @@ public class OSMReader implements DataReader
         if (towerNodeDistance == 0)
         {
             // As investigation shows often two paths should have crossed via one identical point 
-            // but end up in two very release points.
+            // but end up in two very close points.
             zeroCounter++;
             towerNodeDistance = 0.0001;
         }
@@ -999,10 +999,11 @@ public class OSMReader implements DataReader
 
     private void printInfo( String str )
     {
-        LoggerFactory.getLogger(getClass()).info(
-                "finished " + str + " processing." + " nodes: " + graphStorage.getNodes() + ", osmIdMap.size:" + getNodeMap().getSize()
-                        + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB" + ", nodeFlagsMap.size:" + getNodeFlagsMap().size()
-                        + ", relFlagsMap.size:" + getRelFlagsMap().size() + " " + Helper.getMemInfo());
+        logger.info("finished " + str + " processing." + " nodes: " + graphStorage.getNodes()
+                + ", osmIdMap.size:" + getNodeMap().getSize() + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB"
+                + ", nodeFlagsMap.size:" + getNodeFlagsMap().size() + ", relFlagsMap.size:" + getRelFlagsMap().size()
+                + ", zeroCounter:" + zeroCounter
+                + " " + Helper.getMemInfo());
     }
 
     @Override

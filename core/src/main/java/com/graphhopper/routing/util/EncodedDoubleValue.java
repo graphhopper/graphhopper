@@ -55,7 +55,10 @@ public class EncodedDoubleValue extends EncodedValue
 
     public long setDoubleValue( long flags, double value )
     {
-        // scale value        
+        if (Double.isNaN(value))
+            throw new IllegalStateException("Value cannot be NaN");
+
+        // scale value
         long tmpValue = Math.round(value / factor);
         checkValue(Math.round(tmpValue * factor));
         tmpValue <<= shift;
