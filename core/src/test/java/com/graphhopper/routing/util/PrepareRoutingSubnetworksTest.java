@@ -56,6 +56,7 @@ public class PrepareRoutingSubnetworksTest
         g.edge(8, 11, 1, true);
         g.edge(12, 11, 1, true);
         g.edge(9, 12, 1, false);
+        g.edge(9, 15, 1, true);
 
         // large network
         g.edge(0, 13, 1, true);
@@ -82,7 +83,7 @@ public class PrepareRoutingSubnetworksTest
         // start is at 0 => large network
         assertEquals(5, (int) map.get(0));
         // next smallest and unvisited node is 1 => big network
-        assertEquals(7, (int) map.get(1));
+        assertEquals(8, (int) map.get(1));
         assertEquals(3, (int) map.get(6));
     }
 
@@ -95,11 +96,11 @@ public class PrepareRoutingSubnetworksTest
         instance.keepLargeNetworks(map);
         g.optimize();
 
-        assertEquals(7, g.getNodes());
+        assertEquals(8, g.getNodes());
         assertEquals(Arrays.<String>asList(), GHUtility.getProblems(g));
         map = instance.findSubnetworks();
         assertEquals(1, map.size());
-        assertEquals(7, (int) map.get(0));
+        assertEquals(8, (int) map.get(0));
     }
 
     GraphStorage createSubnetworkTestGraph2( EncodingManager em )
@@ -110,6 +111,8 @@ public class PrepareRoutingSubnetworksTest
         g.edge(1, 3, 1, true);
         g.edge(0, 2, 1, true);
         g.edge(2, 3, 1, true);
+        g.edge(3, 7, 1, true);
+        g.edge(7, 8, 1, true);
 
         // connecting both but do not allow CAR!
         g.edge(3, 4).setDistance(1);
@@ -129,10 +132,10 @@ public class PrepareRoutingSubnetworksTest
         instance.setMinNetworkSize(4);
         instance.doWork();
         g.optimize();
-        assertEquals(4, g.getNodes());
+        assertEquals(6, g.getNodes());
         assertEquals(Arrays.<String>asList(), GHUtility.getProblems(g));
         EdgeExplorer explorer = g.createEdgeExplorer();
-        assertEquals(GHUtility.asSet(2, 1), GHUtility.getNeighbors(explorer.setBaseNode(3)));
+        assertEquals(GHUtility.asSet(2, 1, 5), GHUtility.getNeighbors(explorer.setBaseNode(3)));
 
         // do not remove because small network is big enough
         g = createSubnetworkTestGraph2(em);
@@ -140,7 +143,7 @@ public class PrepareRoutingSubnetworksTest
         instance.setMinNetworkSize(3);
         instance.doWork();
         g.optimize();
-        assertEquals(7, g.getNodes());
+        assertEquals(9, g.getNodes());
 
         // do not remove because two two vehicles
         EncodingManager em2 = new EncodingManager("CAR,BIKE");
@@ -149,7 +152,7 @@ public class PrepareRoutingSubnetworksTest
         instance.setMinNetworkSize(3);
         instance.doWork();
         g.optimize();
-        assertEquals(7, g.getNodes());
+        assertEquals(9, g.getNodes());
     }
 
     GraphStorage createDeadEndUnvisitedNetworkGraph( EncodingManager em )
@@ -225,21 +228,21 @@ public class PrepareRoutingSubnetworksTest
 
         assertEquals(4, components.size());
         assertEquals(new TIntArrayList(new int[]
-                {
-                        13, 5, 3, 7, 0
-                }), components.get(0));
+        {
+            13, 5, 3, 7, 0
+        }), components.get(0));
         assertEquals(new TIntArrayList(new int[]
-                {
-                        2, 4, 12, 11, 8, 1
-                }), components.get(1));
+        {
+            2, 4, 12, 11, 8, 1
+        }), components.get(1));
         assertEquals(new TIntArrayList(new int[]
-                {
-                        10, 14, 6
-                }), components.get(2));
+        {
+            10, 14, 6
+        }), components.get(2));
         assertEquals(new TIntArrayList(new int[]
-                {
-                        9
-                }), components.get(3));
+        {
+            15, 9
+        }), components.get(3));
     }
 
     // Previous two-pass implementation failed on 1 -> 2 -> 0

@@ -1053,22 +1053,24 @@ public class GraphHopper implements GraphHopperAPI
 
     protected void cleanUp()
     {
-        int prev = graph.getNodes();
+        int prevNodeCount = graph.getNodes();
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(graph, encodingManager);
         preparation.setMinNetworkSize(minNetworkSize);
         preparation.setMinOneWayNetworkSize(minOneWayNetworkSize);
         logger.info("start finding subnetworks, " + Helper.getMemInfo());
         preparation.doWork();
-        int n = graph.getNodes();
-        // calculate remaining subnetworks
+        int currNodeCount = graph.getNodes();        
         int remainingSubnetworks = preparation.findSubnetworks().size();
-        logger.info("edges: " + graph.getAllEdges().getCount() + ", nodes " + n + ", there were " + preparation.getSubNetworks()
-                + " subnetworks. removed them => " + (prev - n) + " less nodes. Remaining subnetworks:" + remainingSubnetworks);
+        logger.info("edges: " + graph.getAllEdges().getCount() + ", nodes " + currNodeCount
+                + ", there were " + preparation.getSubNetworks()
+                + " subnetworks. removed them => " + (prevNodeCount - currNodeCount)
+                + " less nodes. Remaining subnetworks:" + remainingSubnetworks);
     }
 
     protected void flush()
     {
-        logger.info("flushing graph " + graph.toString() + ", details:" + graph.toDetailsString() + ", " + Helper.getMemInfo() + ")");
+        logger.info("flushing graph " + graph.toString() + ", details:" + graph.toDetailsString() + ", "
+                + Helper.getMemInfo() + ")");
         graph.flush();
         fullyLoaded = true;
     }
