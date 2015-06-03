@@ -41,9 +41,18 @@ public class GHErrorHandler extends ErrorHandler
         if (throwable != null)
         {
             String message = throwable.getMessage();
-            logger.error(message, throwable);
+            logger.error(message + ", via:" + httpReq.getRequestURL(), throwable);
         } else
-            logger.error("Internal error, throwable not known!");
+        {
+            String message = (String) httpReq.getAttribute("javax.servlet.error.message");
+            if (message != null)
+            {
+                logger.error("Internal error " + message + "! Via:" + httpReq.getRequestURL());
+            } else
+            {
+                logger.error("Internal error " + str + ", throwable not known! Via:" + httpReq.getRequestURL());
+            }
+        }
 
         // you can't call sendError( 500, "Server Error" ) without triggering Jetty's DefaultErrorHandler
         httpRes.setStatus(SC_INTERNAL_SERVER_ERROR);
