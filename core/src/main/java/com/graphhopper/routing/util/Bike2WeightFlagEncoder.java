@@ -170,7 +170,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
             // double prevLat = pl.getLatitude(0), prevLon = pl.getLongitude(0);
             double prevEle = pl.getElevation(0);
             double fullDist2D = edge.getDistance();
-            
+
             // for short edges an incline makes no sense and for 0 distances could lead to NaN values for speed, see #432
             if (fullDist2D < 1)
                 return;
@@ -215,27 +215,38 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
             double fwdDecline = decDist2DSum > 1 ? decEleSum / decDist2DSum : 0;
             double restDist2D = fullDist2D - incDist2DSum - decDist2DSum;
             double maxSpeed = getHighwaySpeed("cycleway");
-            if (isForward(flags))
+            try
             {
-                // use weighted mean so that longer incline infuences speed more than shorter
-                double speed = getSpeed(flags);
-                double fwdFaster = 1 + 2 * keepIn(fwdDecline, 0, 0.2);
-                fwdFaster = fwdFaster * fwdFaster;
-                double fwdSlower = 1 - 5 * keepIn(fwdIncline, 0, 0.2);
-                fwdSlower = fwdSlower * fwdSlower;
-                speed = speed * (fwdSlower * incDist2DSum + fwdFaster * decDist2DSum + 1 * restDist2D) / fullDist2D;
-                flags = this.setSpeed(flags, keepIn(speed, PUSHING_SECTION_SPEED / 2, maxSpeed));
-            }
+                if (isForward(flags))
+                {
+                    // use weighted mean so that longer incline infuences speed more than shorter
+                    double speed = getSpeed(flags);
+                    double fwdFaster = 1 + 2 * keepIn(fwdDecline, 0, 0.2);
+                    fwdFaster = fwdFaster * fwdFaster;
+                    double fwdSlower = 1 - 5 * keepIn(fwdIncline, 0, 0.2);
+                    fwdSlower = fwdSlower * fwdSlower;
+                    speed = speed * (fwdSlower * incDist2DSum + fwdFaster * decDist2DSum + 1 * restDist2D) / fullDist2D;
+                    flags = this.setSpeed(flags, keepIn(speed, PUSHING_SECTION_SPEED / 2, maxSpeed));
+                }
 
-            if (isBackward(flags))
+                if (isBackward(flags))
+                {
+                    double speedReverse = getReverseSpeed(flags);
+                    double bwFaster = 1 + 2 * keepIn(fwdIncline, 0, 0.2);
+                    bwFaster = bwFaster * bwFaster;
+                    double bwSlower = 1 - 5 * keepIn(fwdDecline, 0, 0.2);
+                    bwSlower = bwSlower * bwSlower;
+                    speedReverse = speedReverse * (bwFaster * incDist2DSum + bwSlower * decDist2DSum + 1 * restDist2D) / fullDist2D;
+                    flags = this.setReverseSpeed(flags, keepIn(speedReverse, PUSHING_SECTION_SPEED / 2, maxSpeed));
+                }
+            } catch (Exception ex)
             {
-                double speedReverse = getReverseSpeed(flags);
-                double bwFaster = 1 + 2 * keepIn(fwdIncline, 0, 0.2);
-                bwFaster = bwFaster * bwFaster;
-                double bwSlower = 1 - 5 * keepIn(fwdDecline, 0, 0.2);
-                bwSlower = bwSlower * bwSlower;
-                speedReverse = speedReverse * (bwFaster * incDist2DSum + bwSlower * decDist2DSum + 1 * restDist2D) / fullDist2D;
-                flags = this.setReverseSpeed(flags, keepIn(speedReverse, PUSHING_SECTION_SPEED / 2, maxSpeed));
+                // temporary workaround to find out when speed is NaN
+                System.err.println("speed:" + getSpeed(flags) + ",revspeed:" + getReverseSpeed(flags)
+                        + ", fwdDecline:" + fwdDecline + ", fwdIncline:" + fwdIncline
+                        + ", incDist2DSum:" + incDist2DSum + ", decDist2DSum:" + decDist2DSum
+                        + ", restDist2D:" + restDist2D + ", fullDist2D:" + fullDist2D);
+                return;
             }
         }
         edge.setFlags(flags);
