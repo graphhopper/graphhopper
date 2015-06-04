@@ -779,12 +779,18 @@ public class OSMReader implements DataReader
                     pillarNodes.add(lat, lon);
             }
         }
-        if (towerNodeDistance == 0)
+        if (towerNodeDistance < 0.0001)
         {
             // As investigation shows often two paths should have crossed via one identical point 
             // but end up in two very close points.
             zeroCounter++;
             towerNodeDistance = 0.0001;
+        }
+
+        if (Double.isInfinite(towerNodeDistance) || Double.isNaN(towerNodeDistance))
+        {
+            logger.warn("Bug in OSM or GraphHopper. Illegal tower node distance " + towerNodeDistance + " reset to 1m, osm way " + wayOsmId);
+            towerNodeDistance = 1;
         }
 
         EdgeIteratorState iter = graphStorage.edge(fromIndex, toIndex).setDistance(towerNodeDistance).setFlags(flags);
