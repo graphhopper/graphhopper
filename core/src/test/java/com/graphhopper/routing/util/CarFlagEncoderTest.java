@@ -58,12 +58,6 @@ public class CarFlagEncoderTest
 
         way.clearTags();
         way.setTag("highway", "service");
-        way.setTag("access", "no");
-        way.setTag("motorcar", "yes");
-        assertTrue(encoder.acceptWay(way) > 0);
-
-        way.clearTags();
-        way.setTag("highway", "service");
         way.setTag("access", "delivery");
         assertFalse(encoder.acceptWay(way) > 0);
 
@@ -86,6 +80,54 @@ public class CarFlagEncoderTest
         way.setTag("foot", "yes");
         assertFalse(encoder.acceptWay(way) > 0);
         assertFalse(encoder.isFerry(encoder.acceptWay(way)));
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("access", "yes");
+        way.setTag("motor_vehicle", "no");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("access", "no");
+        way.setTag("motorcar", "yes");
+        assertTrue(encoder.acceptWay(way) > 0);
+    }
+
+    @Test
+    public void testMilitaryAccess()
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "track");
+        way.setTag("access", "military");
+        assertFalse(encoder.acceptWay(way) > 0);
+    }
+
+    @Test
+    public void testFordAccess()
+    {
+        OSMNode node = new OSMNode(0, 0.0, 0.0);
+        node.setTag("ford", "yes");
+
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "unclassified");
+        way.setTag("ford", "yes");
+
+        // Node and way are initially blocking
+        assertTrue(encoder.isBlockFords());
+        assertFalse(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.handleNodeTags(node) > 0);
+
+        try
+        {
+            // Now they are passable
+            encoder.setBlockFords(false);
+            assertTrue(encoder.acceptWay(way) > 0);
+            assertFalse(encoder.handleNodeTags(node) > 0);
+        } finally
+        {
+            encoder.setBlockFords(true);
+        }
     }
 
     @Test
@@ -121,15 +163,6 @@ public class CarFlagEncoderTest
         assertTrue(encoder.isForward(flags));
         assertFalse(encoder.isBackward(flags));
         way.clearTags();
-    }
-
-    @Test
-    public void testMilitaryAccess()
-    {
-        OSMWay way = new OSMWay(1);
-        way.setTag("highway", "track");
-        way.setTag("access", "military");
-        assertFalse(encoder.acceptWay(way) > 0);
     }
 
     @Test
@@ -478,33 +511,6 @@ public class CarFlagEncoderTest
         OSMWay way = new OSMWay(12);
         way.setTag("maxspeed", "90");
         assertEquals(90, encoder.getMaxSpeed(way), 1e-2);
-    }
-
-    @Test
-    public void testFordAccess()
-    {
-        OSMNode node = new OSMNode(0, 0.0, 0.0);
-        node.setTag("ford", "yes");
-
-        OSMWay way = new OSMWay(1);
-        way.setTag("highway", "unclassified");
-        way.setTag("ford", "yes");
-
-        // Node and way are initially blocking
-        assertTrue(encoder.isBlockFords());
-        assertFalse(encoder.acceptWay(way) > 0);
-        assertTrue(encoder.handleNodeTags(node) > 0);
-
-        try
-        {
-            // Now they are passable
-            encoder.setBlockFords(false);
-            assertTrue(encoder.acceptWay(way) > 0);
-            assertFalse(encoder.handleNodeTags(node) > 0);
-        } finally
-        {
-            encoder.setBlockFords(true);
-        }
     }
 
     @Test

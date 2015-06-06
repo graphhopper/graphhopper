@@ -159,13 +159,17 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
             return 0;
 
-        // do not drive street cars into fords
-        boolean carsAllowed = way.hasTag(restrictions, intendedValues);
-        if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")) && !carsAllowed)
-            return 0;
+        String firstValue = way.getFirstPriorityTag(restrictions);
+        if (!firstValue.isEmpty())
+        {
+            if (restrictedValues.contains(firstValue))
+                return 0;
+            if (intendedValues.contains(firstValue))
+                return acceptBit;
+        }
 
-        // check access restrictions
-        if (way.hasTag(restrictions, restrictedValues) && !carsAllowed)
+        // do not drive street cars into fords
+        if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return 0;
 
         // do not drive cars over railways (sometimes incorrectly mapped!)
@@ -243,7 +247,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
 
         if (speed < speedEncoder.factor / 2)
             return setLowSpeed(flags, speed, true);
-        
+
         if (speed > getMaxSpeed())
             speed = getMaxSpeed();
 

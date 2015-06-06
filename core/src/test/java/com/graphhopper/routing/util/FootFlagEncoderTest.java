@@ -133,6 +133,14 @@ public class FootFlagEncoderTest
         assertTrue(footEncoder.acceptWay(way) > 0);
         way.setTag("foot", "no");
         assertFalse(footEncoder.acceptWay(way) > 0);
+        way.setTag("access", "yes");
+        assertFalse(footEncoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("foot", "yes");
+        way.setTag("access", "no");
+        assertTrue(footEncoder.acceptWay(way) > 0);
 
         way.clearTags();
         way.setTag("highway", "track");

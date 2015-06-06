@@ -69,14 +69,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     /* restriction definitions where order is important */
     protected final List<String> restrictions = new ArrayList<String>(5);
-    protected final HashSet<String> intendedValues = new HashSet<String>(5);
-    protected final HashSet<String> restrictedValues = new HashSet<String>(5);
-    protected final HashSet<String> ferries = new HashSet<String>(5);
-    protected final HashSet<String> oneways = new HashSet<String>(5);
-    protected final HashSet<String> acceptedRailways = new HashSet<String>(5);
+    protected final Set<String> intendedValues = new HashSet<String>(5);
+    protected final Set<String> restrictedValues = new HashSet<String>(5);
+    protected final Set<String> ferries = new HashSet<String>(5);
+    protected final Set<String> oneways = new HashSet<String>(5);
+    protected final Set<String> acceptedRailways = new HashSet<String>(5);
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
-    protected final HashSet<String> absoluteBarriers = new HashSet<String>(5);
-    protected final HashSet<String> potentialBarriers = new HashSet<String>(5);
+    protected final Set<String> absoluteBarriers = new HashSet<String>(5);
+    protected final Set<String> potentialBarriers = new HashSet<String>(5);
     private boolean blockByDefault = true;
     private boolean blockFords = true;
     protected final int speedBits;
