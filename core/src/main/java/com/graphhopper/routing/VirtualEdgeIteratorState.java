@@ -15,10 +15,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.EdgeSkipIterState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 
 /**
  * Creates an edge state decoupled from a graph where nodes, pointList, etc are kept in memory.
@@ -36,6 +33,10 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, EdgeSkipIter
     private final int baseNode;
     private final int adjNode;
     private final int originalTraversalKey;
+    // indication if edges are dispreferred as start/stop edge 
+    private boolean unfavoredReverseEdge;
+    private boolean unfavored;
+
 
     public VirtualEdgeIteratorState( int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance, long flags, String name, PointList pointList )
     {
@@ -143,7 +144,33 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, EdgeSkipIter
         this.name = name;
         return this;
     }
+    
+    @Override
+    public boolean getBoolean(int key, boolean reverse, boolean _default )
+    {
+        if (key == EdgeIteratorState.K_UNFAVORED_EDGE)
+        {
+            if (reverse)
+                return unfavoredReverseEdge;
+            else
+                return unfavored;
+        }
+        // for non-existent keys return default
+        return _default;
+    }
 
+    /**
+     * set edge to unfavored status for routing from/to start/stop points
+     * @param reverse indicates if forward or backward direction is affected
+     */
+    public void setVirtualEdgePreference( boolean unfavored, boolean reverse )
+    {
+        if (reverse)
+              unfavoredReverseEdge = unfavored;
+        else
+            this.unfavored = unfavored;
+    }
+    
     @Override
     public String toString()
     {

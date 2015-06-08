@@ -196,6 +196,14 @@ public class Path
     }
 
     /**
+     * Yields the final edge of the path
+     */
+    public EdgeIteratorState getFinalEdge()
+    {
+        return graph.getEdgeProps(edgeIds.get(edgeIds.size() - 1), endNode);
+    }
+
+    /**
      * @return the time it took to extract the path in nano (!) seconds
      */
     public long getExtractTime()

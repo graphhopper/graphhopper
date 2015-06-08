@@ -28,6 +28,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
@@ -101,18 +104,18 @@ public class GHBaseServlet extends HttpServlet
         }
     }
 
-    protected String getParam( HttpServletRequest req, String string, String _default )
+    protected String getParam( HttpServletRequest req, String key, String _default )
     {
-        String[] l = req.getParameterMap().get(string);
+        String[] l = req.getParameterMap().get(key);
         if (l != null && l.length > 0)
             return l[0];
 
         return _default;
     }
 
-    protected String[] getParams( HttpServletRequest req, String string )
+    protected String[] getParams( HttpServletRequest req, String key )
     {
-        String[] l = req.getParameterMap().get(string);
+        String[] l = req.getParameterMap().get(key);
         if (l != null && l.length > 0)
         {
             return l;
@@ -120,33 +123,48 @@ public class GHBaseServlet extends HttpServlet
         return new String[0];
     }
 
-    protected long getLongParam( HttpServletRequest req, String string, long _default )
+    protected List<Double> getDoubleParamList( HttpServletRequest req, String key )
+    {
+        String[] l = req.getParameterMap().get(key);
+        if (l != null && l.length > 0)
+        {
+            ArrayList<Double> doubleList = new ArrayList<Double>(l.length);
+            for (String s : l)
+            {
+                doubleList.add(Double.valueOf(s));
+            }
+            return doubleList;
+        }
+        return Collections.emptyList();
+    }
+
+    protected long getLongParam( HttpServletRequest req, String key, long _default )
     {
         try
         {
-            return Long.parseLong(getParam(req, string, "" + _default));
+            return Long.parseLong(getParam(req, key, "" + _default));
         } catch (Exception ex)
         {
             return _default;
         }
     }
 
-    protected boolean getBooleanParam( HttpServletRequest req, String string, boolean _default )
+    protected boolean getBooleanParam( HttpServletRequest req, String key, boolean _default )
     {
         try
         {
-            return Boolean.parseBoolean(getParam(req, string, "" + _default));
+            return Boolean.parseBoolean(getParam(req, key, "" + _default));
         } catch (Exception ex)
         {
             return _default;
         }
     }
 
-    protected double getDoubleParam( HttpServletRequest req, String string, double _default )
+    protected double getDoubleParam( HttpServletRequest req, String key, double _default )
     {
         try
         {
-            return Double.parseDouble(getParam(req, string, "" + _default));
+            return Double.parseDouble(getParam(req, key, "" + _default));
         } catch (Exception ex)
         {
             return _default;

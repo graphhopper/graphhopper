@@ -68,6 +68,16 @@ GHRequest req = new GHRequest(latFrom, lonFrom, latTo, lonTo).
 GHResponse res = hopper.route(req);
 ```
 
+In the flexibility mode it is also possible to add a desired heading (north based azimuth between 0 and 360 degree)
+to any point,
+```java
+GHRequest req = new GHRequest().addPoint(new GHPoint (latFrom, lonFrom), favoredHeading).addPoint(new GHPoint (latTo, lonTo));
+```
+or to avoid u-turns at via points
+```java
+req.getHints().put("pass_through", true);
+```
+ 
 In case you need a web access in a Java or an Android application the GraphHopperWeb class comes handy,
  see the 'web' sub module.
 

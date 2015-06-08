@@ -24,13 +24,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.search.NameIndex;
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import static com.graphhopper.util.Helper.nf;
@@ -635,6 +629,13 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
+        public boolean getBoolean(int key, boolean reverse, boolean _default )
+        {
+            // for non-existent keys return default
+            return _default;
+        }
+
+        @Override
         public EdgeIteratorState detach( boolean reverseArg )
         {
             if (edgePointer < 0)
@@ -897,6 +898,13 @@ public class GraphHopperStorage implements GraphStorage
             return nameIndex.get(nameIndexRef);
         }
 
+        @Override
+        public boolean getBoolean(int key, boolean reverse, boolean _default )
+        {
+            // for non-existent keys return default
+            return _default;
+        }
+        
         @Override
         public EdgeIteratorState setName( String name )
         {
