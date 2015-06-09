@@ -74,6 +74,7 @@ public class QueryGraphTest
         g.edge(0, 1, 10, true).setWayGeometry(Helper.createPointList(1.5, 1, 1.5, 1.5));
     }
 
+
     @Test
     public void testOneVirtualNode()
     {
@@ -545,5 +546,120 @@ public class QueryGraphTest
         assertEquals(10, turnWeighting.calcTurnWeight(fromQueryEdge, 1, toQueryEdge), .1);
 
         graphWithTurnCosts.close();
+    }
+
+    private void initHorseshoeGraph( Graph g )
+    {
+        // setup graph
+        //   ____
+        //  |    |
+        //  |    |
+        //  0    1
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 0, 0);
+        na.setNode(1, 0, 2);
+        g.edge(0, 1, 10, true).setWayGeometry(Helper.createPointList(2, 0, 2, 2));
+    }
+
+    private QueryResult fakeEdgeQueryResult( EdgeIteratorState edge, double lat, double lon, int wayIndex )
+    {
+        QueryResult qr = new QueryResult(lat, lon);
+        qr.setClosestEdge(edge);
+        qr.setWayIndex(wayIndex);
+        qr.setSnappedPosition(EDGE);
+        qr.calcSnappedPoint(new DistanceCalc2D());
+        return qr;
+    }
+
+    private boolean getEdgePreference( QueryGraph queryGraph, int virtualEdgeTypeId, boolean reverse, boolean _default )
+    {
+        boolean edgeUnfavored = queryGraph.virtualEdges.get(virtualEdgeTypeId).getBoolean(
+                EdgeIteratorState.K_UNFAVORED_EDGE, reverse, _default);
+        return edgeUnfavored;
+    }
+
+    @Test
+    public void testEnforceHeading()
+    {
+
+        initHorseshoeGraph(g);
+        EdgeIteratorState edge = GHUtility.getEdge(g, 0, 1);
+
+        // query result on first vertical part of way (upward)
+        QueryResult qr = fakeEdgeQueryResult(edge, 1.5, 0, 0);
+        QueryGraph queryGraph = new QueryGraph(g);
+        queryGraph.lookup(Arrays.asList(qr));
+
+        // enforce going out north
+        queryGraph.enforceHeading(qr.getClosestNode(), 0., false);
+        // test penalized south
+        boolean expect = true;
+        assertEquals(expect, getEdgePreference(queryGraph, QueryGraph.VE_BASE_REV, false, !expect));
+        assertEquals(expect, getEdgePreference(queryGraph, QueryGraph.VE_BASE, true, !expect));
+
+        queryGraph.clearUnfavoredStatus();
+        // test cleared edges south
+        expect = false;
+        assertEquals(expect, getEdgePreference(queryGraph, QueryGraph.VE_BASE_REV, false, !expect));
+        assertEquals(expect, getEdgePreference(queryGraph, QueryGraph.VE_BASE, true, !expect));
+
+        // enforce coming in north
+        queryGraph.enforceHeading(qr.getClosestNode(), 180., true);
+        // test penalized south
+        expect = true;
+        assertEquals(expect, getEdgePreference(queryGraph, QueryGraph.VE_BASE_REV, true, !expect));
+        assertEquals(expect, getEdgePreference(queryGraph, QueryGraph.VE_BASE, false, !expect));
+
+
+        // query result on second vertical part of way (downward)
+        qr = fakeEdgeQueryResult(edge, 1.5, 2, 2);
+        queryGraph = new QueryGraph(g);
+        queryGraph.lookup(Arrays.asList(qr));
+
+        // enforce going north
+        queryGraph.enforceHeading(qr.getClosestNode(), 0., false);
+        // test penalized south
+        expect = true;
+        assertEquals(expect, getEdgePreference(queryGraph, QueryGraph.VE_ADJ, false, !expect));
+        assertEquals(expect, getEdgePreference(queryGraph, QueryGraph.VE_ADJ_REV, true, !expect));
+
+        queryGraph.clearUnfavoredStatus();
+        // enforce coming in north
+        queryGraph.enforceHeading(qr.getClosestNode(), 180., true);
+        // test penalized south
+        expect = true;
+        assertEquals(expect, getEdgePreference(queryGraph, QueryGraph.VE_ADJ, true, !expect));
+        assertEquals(expect, getEdgePreference(queryGraph, QueryGraph.VE_ADJ_REV, false, !expect));
+    }
+
+    @Test
+    public void testEnforceHeadingByEdgeId()
+    {
+
+        initHorseshoeGraph(g);
+        EdgeIteratorState edge = GHUtility.getEdge(g, 0, 1);
+
+        // query result on first vertical part of way (upward)
+        QueryResult qr = fakeEdgeQueryResult(edge, 1.5, 0, 0);
+        QueryGraph queryGraph = new QueryGraph(g);
+        queryGraph.lookup(Arrays.asList(qr));
+
+        // enforce coming in north
+        queryGraph.enforceHeadingByEdgeId(2, 1, false);
+        // test penalized south
+        boolean expect = true;
+        VirtualEdgeIteratorState incomingEdge = (VirtualEdgeIteratorState) queryGraph.getEdgeProps(1, 2);
+        
+        VirtualEdgeIteratorState incomingEdgeReverse = (VirtualEdgeIteratorState) queryGraph.getEdgeProps(1, incomingEdge.getBaseNode());
+        // expect incoming edge in reverse direction to be unfavored
+        assertEquals(expect, incomingEdge.getBoolean(EdgeIteratorState.K_UNFAVORED_EDGE, true, !expect));
+        // expect reverse incoming edge to be unfavored
+        assertEquals(expect, incomingEdgeReverse.getBoolean(EdgeIteratorState.K_UNFAVORED_EDGE, false, !expect));
+
+        queryGraph.clearUnfavoredStatus();
+        expect = false;
+        assertEquals(expect, incomingEdge.getBoolean(EdgeIteratorState.K_UNFAVORED_EDGE, true, !expect));
+        // expect reverse incoming edge to be unfavored
+        assertEquals(expect, incomingEdgeReverse.getBoolean(EdgeIteratorState.K_UNFAVORED_EDGE, false, !expect));
     }
 }

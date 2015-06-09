@@ -26,6 +26,8 @@ package com.graphhopper.util;
  */
 public interface EdgeIteratorState
 {
+    final static int K_UNFAVORED_EDGE = -1;
+    
     /**
      * @return the edge id of the current edge. Do not make any assumptions about the concrete
      * values, except that for an implemention it is recommended that they'll be contiguous.
@@ -83,6 +85,13 @@ public interface EdgeIteratorState
      */
     int getAdditionalField();
 
+    /**
+     * get additional boolean edge information
+     * @param reverse  if property of reverse edge direction should be returned
+     * @param _default default value if key is not found
+     */
+    boolean getBoolean( int key, boolean reverse, boolean _default);
+    
     /**
      * Updates the additional field value for this edge
      */

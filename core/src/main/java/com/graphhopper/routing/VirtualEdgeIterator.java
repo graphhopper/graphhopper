@@ -15,10 +15,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.EdgeSkipIterState;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -132,6 +129,12 @@ class VirtualEdgeIterator implements EdgeIterator, EdgeSkipIterState
     public EdgeIteratorState setName( String name )
     {
         return edges.get(current).setName(name);
+    }
+
+    @Override
+    public boolean getBoolean(int key, boolean reverse, boolean _default)
+    {
+        return edges.get(current).getBoolean(key, reverse, _default);
     }
 
     @Override

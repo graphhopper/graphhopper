@@ -23,15 +23,14 @@ import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
-
-import java.io.File;
-import java.util.List;
-import java.util.Map;
-
 import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.File;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -70,6 +69,34 @@ public class GraphHopperServletIT extends BaseServletTester
         assertTrue("distance wasn't correct:" + distance, distance > 9000);
         assertTrue("distance wasn't correct:" + distance, distance < 9500);
     }
+
+    @Test
+    public void testQuerywithDirections() throws Exception
+    {
+        // Note, in general specifying directions does not work with CH, but this is an example where it works
+        JSONObject json = query("point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240", 200);
+        JSONObject infoJson = json.getJSONObject("info");
+        assertFalse(infoJson.has("errors"));
+        JSONObject path = json.getJSONArray("paths").getJSONObject(0);
+        double distance = path.getDouble("distance");
+        assertTrue("distance wasn't correct:" + distance, distance > 960);
+        assertTrue("distance wasn't correct:" + distance, distance < 970);
+    }
+
+    @Test
+    public void testQuerywithStraightVia() throws Exception
+    {
+        // Note, in general specifying straightvia does not work with CH, but this is an example where it works
+        JSONObject json = query(
+                "point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true", 200);
+        JSONObject infoJson = json.getJSONObject("info");
+        assertFalse(infoJson.has("errors"));
+        JSONObject path = json.getJSONArray("paths").getJSONObject(0);
+        double distance = path.getDouble("distance");
+        assertTrue("distance wasn't correct:" + distance, distance > 320);
+        assertTrue("distance wasn't correct:" + distance, distance < 325);
+    }
+
 
     @Test
     public void testJsonRounding() throws Exception
