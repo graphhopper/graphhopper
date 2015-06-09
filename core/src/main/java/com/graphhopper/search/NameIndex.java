@@ -56,7 +56,7 @@ public class NameIndex implements Storable<NameIndex>
     {
         if (names.loadExisting())
         {
-            bytePointer = BitUtil.LITTLE.combineIntsToLong(names.getHeader(0), names.getHeader(1));
+            bytePointer = BitUtil.LITTLE.combineIntsToLong(names.getHeader(0), names.getHeader(4));
             return true;
         }
 
