@@ -52,7 +52,7 @@ astar as algorithm:
 
 ```java
 GraphHopper hopper = new GraphHopper().forServer();
-hopper.disableCHShortcuts();
+hopper.setCHEnable(false);
 hopper.setInMemory(true);
 hopper.setOSMFile(osmFile);
 hopper.setGraphHopperLocation(graphFolder);
