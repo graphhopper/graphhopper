@@ -313,6 +313,8 @@ public class InstructionList implements Iterable<Instruction>
                         } else
                         {
                             distance = distCalc.calcNormalizedDist(lat, lon, currLat, currLon);
+                            if (pointIndex > 0)
+                                index++;
                         }
 
                         if (distance < foundMinDistance)
@@ -321,7 +323,6 @@ public class InstructionList implements Iterable<Instruction>
                             foundInstruction = index;
                         }
                     }
-
                     prevLat = currLat;
                     prevLon = currLon;
                 }

@@ -496,4 +496,45 @@ public class InstructionListTest
             throw new RuntimeException(e);
         }
     }
+    
+    @Test
+    public void testFind()
+    {
+        Graph g = new GraphBuilder(carManager).create();
+        //   n-4-5   (n: pillar node)
+        //   |
+        //   3-2
+        //     |
+        //     1
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(1, 15.0, 10);
+        na.setNode(2, 15.1, 10);
+        na.setNode(3, 15.1, 9.9);
+        PointList waypoint = new PointList();
+        waypoint.add(15.2, 9.9);
+        na.setNode(4, 15.2, 10);
+        na.setNode(5, 15.2, 10.1);
+
+        g.edge(1, 2, 10000, true).setName("1-2");
+        g.edge(2, 3, 10000, true).setName("2-3");
+        g.edge(3, 4, 10000, true).setName("3-4").setWayGeometry(waypoint);
+        g.edge(4, 5, 10000, true).setName("4-5");
+
+
+        Path p = new Dijkstra(g, carEncoder, new ShortestWeighting(), tMode).calcPath(1, 5);
+        InstructionList wayList = p.calcInstructions(usTR);
+        
+        // query on first edge, get instruction for second edge
+        assertEquals("2-3", wayList.find(15.05, 10, 1000).getName());
+        
+        // query east of first edge, get instruction for second edge
+        assertEquals("2-3", wayList.find(15.05, 10.001, 1000).getName());
+
+        // query south-west of node 3, get instruction for third edge
+        assertEquals("3-4", wayList.find(15.099, 9.9, 1000).getName());
+
+        // query north-west of pillar node n , get instruction for fourth edge
+        assertEquals("4-5", wayList.find(15.21, 9.85, 100000).getName());
+
+    }
 }
