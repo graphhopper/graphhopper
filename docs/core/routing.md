@@ -55,7 +55,7 @@ Then pick one vehicle and optionally the algorithm like 'bidirectional astar' as
 
 ```java
 GraphHopper hopper = new GraphHopper().forServer();
-hopper.disableCHShortcuts();
+hopper.setCHEnable(false);
 hopper.setInMemory(true);
 hopper.setOSMFile(osmFile);
 hopper.setGraphHopperLocation(graphFolder);
