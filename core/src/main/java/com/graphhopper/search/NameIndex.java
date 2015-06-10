@@ -87,7 +87,7 @@ public class NameIndex implements Storable<NameIndex>
         bytePointer++;
         names.setBytes(bytePointer, bytes, bytes.length);
         bytePointer += bytes.length;
-        if (bytePointer < 0)
+        if (bytePointer >= Integer.MAX_VALUE)
         {
             throw new IllegalStateException("Way index is too large. Cannot contain more than 2GB");
         }
