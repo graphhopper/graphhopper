@@ -694,13 +694,13 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
 
         if ((isOneway || way.hasTag("junction", "roundabout"))
                 && !way.hasTag("oneway:bicycle", "no")
-                && !way.hasTag("bicycle:backward")
-                && !way.hasTag("cycleway", oppositeLanes))
+                && !way.hasTag("bicycle:backward"))
         {
             boolean isBackward = way.hasTag("oneway", "-1")
                     || way.hasTag("oneway:bicycle", "-1")
                     || way.hasTag("vehicle:forward", "no")
-                    || way.hasTag("bicycle:forward", "no");
+                    || way.hasTag("bicycle:forward", "no")
+                    || way.hasTag("cycleway", oppositeLanes);
             if (isBackward)
                 encoded |= backwardBit;
             else
@@ -731,9 +731,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         {
             return value;
         }
-    }
-
-    ;
+    };
 
     protected void setHighwaySpeed( String highway, int speed )
     {
