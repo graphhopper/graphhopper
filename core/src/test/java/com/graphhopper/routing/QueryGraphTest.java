@@ -520,13 +520,13 @@ public class QueryGraphTest
         QueryGraph qGraph = new QueryGraph(graphWithTurnCosts);
         FastestWeighting weighting = new FastestWeighting(encoder);
         TurnWeighting turnWeighting = new TurnWeighting(weighting, encoder, (TurnCostExtension) qGraph.getExtension());
-        
+
         assertEquals(0, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
 
         // now use turn costs and QueryGraph
         turnExt.addTurnInfo(edge0.getEdge(), 1, edge1.getEdge(), encoder.getTurnFlags(false, 10));
         assertEquals(10, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
-        
+
         QueryResult res1 = createLocationResult(0.000, 0.005, edge0, 0, QueryResult.Position.EDGE);
         QueryResult res2 = createLocationResult(0.005, 0.010, edge1, 0, QueryResult.Position.EDGE);
 
@@ -538,5 +538,34 @@ public class QueryGraphTest
         assertEquals(10, turnWeighting.calcTurnWeight(fromQueryEdge, 1, toQueryEdge), .1);
 
         graphWithTurnCosts.close();
+    }
+
+    @Test
+    public void testInternalAPIOriginalTraversalKey()
+    {
+        initGraph(g);
+
+        EdgeExplorer explorer = g.createEdgeExplorer();
+        QueryGraph queryGraph = new QueryGraph(g);
+        EdgeIterator iter = explorer.setBaseNode(1);
+        assertTrue(iter.next());
+        int origEdgeId = iter.getEdge();
+        QueryResult res = createLocationResult(2, 1.5, iter, 1, PILLAR);
+        queryGraph.lookup(Arrays.asList(res));
+
+        assertEquals(new GHPoint(1.5, 1.5), res.getSnappedPoint());
+        assertEquals(3, res.getClosestNode());
+
+        EdgeExplorer qGraphExplorer = queryGraph.createEdgeExplorer();
+        iter = qGraphExplorer.setBaseNode(3);
+        assertTrue(iter.next());
+        assertEquals(0, iter.getAdjNode());
+        assertEquals(GHUtility.createEdgeKey(1, 0, origEdgeId, false),
+                ((VirtualEdgeIteratorState) queryGraph.getEdgeProps(iter.getEdge(), 0)).getOriginalTraversalKey());
+
+        assertTrue(iter.next());
+        assertEquals(1, iter.getAdjNode());
+        assertEquals(GHUtility.createEdgeKey(0, 1, origEdgeId, false),
+                ((VirtualEdgeIteratorState) queryGraph.getEdgeProps(iter.getEdge(), 1)).getOriginalTraversalKey());
     }
 }
