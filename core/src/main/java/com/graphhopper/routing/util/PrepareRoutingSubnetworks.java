@@ -109,11 +109,6 @@ public class PrepareRoutingSubnetworks
             if (g.isNodeRemoved(start) || bs.contains(start))
                 continue;
 
-            if (start == 1599634)
-            {
-                locs = g.getNodes();
-            }
-
             new BreadthFirstSearch()
             {
                 int tmpCounter = 0;
