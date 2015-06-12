@@ -80,9 +80,9 @@ public class NameIndex implements Storable<NameIndex>
         long oldPointer = bytePointer;
         names.ensureCapacity(bytePointer + 1 + bytes.length);
         byte[] sizeBytes = new byte[]
-                {
-                        (byte) bytes.length
-                };
+        {
+            (byte) bytes.length
+        };
         names.setBytes(bytePointer, sizeBytes, sizeBytes.length);
         bytePointer++;
         names.setBytes(bytePointer, bytes, bytes.length);
@@ -119,13 +119,12 @@ public class NameIndex implements Storable<NameIndex>
     public String get( long pointer )
     {
         if (pointer < 0)
-        {
-            throw new IllegalStateException("pointer cannot be negative:" + pointer);
-        }
+            throw new IllegalStateException("Pointer to access NameIndex cannot be negative:" + pointer);
+
+        // default
         if (pointer == 0)
-        {
             return "";
-        }
+
         byte[] sizeBytes = new byte[1];
         names.getBytes(pointer, sizeBytes, 1);
         int size = sizeBytes[0] & 0xFF;

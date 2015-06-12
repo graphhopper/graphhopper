@@ -620,16 +620,12 @@ public class GraphHopperStorage implements GraphStorage
         @Override
         public EdgeIteratorState setName( String name )
         {
-            long nameIndexRef = nameIndex.put(name);
-            if (nameIndexRef < 0)
-                throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
-
-            edges.setInt(edgePointer + E_NAME, (int) nameIndexRef);
+            GraphHopperStorage.this.setName(edgePointer, name);
             return this;
         }
 
         @Override
-        public boolean getBoolean(int key, boolean reverse, boolean _default )
+        public boolean getBoolean( int key, boolean reverse, boolean _default )
         {
             // for non-existent keys return default
             return _default;
@@ -899,20 +895,16 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         @Override
-        public boolean getBoolean(int key, boolean reverse, boolean _default )
+        public boolean getBoolean( int key, boolean reverse, boolean _default )
         {
             // for non-existent keys return default
             return _default;
         }
-        
+
         @Override
         public EdgeIteratorState setName( String name )
         {
-            long nameIndexRef = nameIndex.put(name);
-            if (nameIndexRef < 0)
-                throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
-
-            edges.setInt(edgePointer + E_NAME, (int) nameIndexRef);
+            GraphHopperStorage.this.setName(edgePointer, name);
             return this;
         }
 
@@ -1070,6 +1062,15 @@ public class GraphHopperStorage implements GraphStorage
         }
 
         return pillarNodes;
+    }
+
+    private void setName( long edgePointer, String name )
+    {
+        long nameIndexRef = nameIndex.put(name);
+        if (nameIndexRef < 0)
+            throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
+
+        edges.setInt(edgePointer + E_NAME, (int) nameIndexRef);
     }
 
     @Override
