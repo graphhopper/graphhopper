@@ -138,7 +138,7 @@ public class QueryGraph implements Graph
 
             EdgeIteratorState closestEdge = res.getClosestEdge();
             if (closestEdge == null)
-                 throw new IllegalStateException("Do not call QueryGraph.lookup with invalid QueryResult " + res);
+                throw new IllegalStateException("Do not call QueryGraph.lookup with invalid QueryResult " + res);
 
             int base = closestEdge.getBaseNode();
 
@@ -220,6 +220,8 @@ public class QueryGraph implements Graph
 
                 GHPoint3D prevPoint = fullPL.toGHPoint(0);
                 int adjNode = closestEdge.getAdjNode();
+                int origTraversalKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), false);
+                int origRevTraversalKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), true);
                 long reverseFlags = closestEdge.detach(true).getFlags();
                 int prevWayIndex = 1;
                 int prevNodeId = baseNode;
@@ -245,7 +247,8 @@ public class QueryGraph implements Graph
                     }
 
                     queryResults.add(res);
-                    createEdges(prevPoint, prevWayIndex,
+                    createEdges(origTraversalKey, origRevTraversalKey,
+                            prevPoint, prevWayIndex,
                             res.getSnappedPoint(), res.getWayIndex(),
                             fullPL, closestEdge, prevNodeId, virtNodeId, reverseFlags);
 
@@ -268,7 +271,9 @@ public class QueryGraph implements Graph
 
                 // two edges between last result and adjacent node are still missing if not all points skipped
                 if (addedEdges)
-                    createEdges(prevPoint, prevWayIndex, fullPL.toGHPoint(fullPL.getSize() - 1), fullPL.getSize() - 2,
+                    createEdges(origTraversalKey, origRevTraversalKey,
+                            prevPoint, prevWayIndex,
+                            fullPL.toGHPoint(fullPL.getSize() - 1), fullPL.getSize() - 2,
                             fullPL, closestEdge, virtNodeId - 1, adjNode, reverseFlags);
 
                 return true;
@@ -329,7 +334,8 @@ public class QueryGraph implements Graph
         }
     }
 
-    private void createEdges( GHPoint3D prevSnapped, int prevWayIndex, GHPoint3D currSnapped, int wayIndex,
+    private void createEdges( int origTraversalKey, int origRevTraversalKey,
+                              GHPoint3D prevSnapped, int prevWayIndex, GHPoint3D currSnapped, int wayIndex,
                               PointList fullPL, EdgeIteratorState closestEdge,
                               int prevNodeId, int nodeId, long reverseFlags )
     {
@@ -348,9 +354,9 @@ public class QueryGraph implements Graph
         int virtEdgeId = mainEdges + virtualEdges.size();
 
         // edges between base and snapped point
-        VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(GHUtility.createEdgeKey(prevNodeId, nodeId, closestEdge.getEdge(), false),
+        VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origTraversalKey,
                 virtEdgeId, prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints);
-        VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(GHUtility.createEdgeKey(prevNodeId, nodeId, closestEdge.getEdge(), true),
+        VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevTraversalKey,
                 virtEdgeId, nodeId, prevNodeId, baseDistance, reverseFlags, closestEdge.getName(), baseReversePoints);
 
         virtualEdges.add(baseEdge);
@@ -359,10 +365,10 @@ public class QueryGraph implements Graph
 
     /**
      * set edges at virtual node unfavored which require at least a turn of 100° from favoredHeading
-     *
-     * @param nodeId         VirtualNode at which edges get unfavored
+     * <p>
+     * @param nodeId VirtualNode at which edges get unfavored
      * @param favoredHeading north based azimuth of favored heading between 0 and 360
-     * @param incoming       if true, incoming edges are unfavored, else outgoing edges
+     * @param incoming if true, incoming edges are unfavored, else outgoing edges
      * @return boolean indicating if enforcement took place
      */
     public boolean enforceHeading( int nodeId, Double favoredHeading, boolean incoming )
@@ -372,7 +378,7 @@ public class QueryGraph implements Graph
 
         if (Double.isNaN(favoredHeading))
             return false;
-        
+
         if (!isVirtualNode(nodeId))
             return false;
 
@@ -419,9 +425,9 @@ public class QueryGraph implements Graph
 
     /**
      * set specific edge at virtual node unfavored, to enforce routing along other edges
-     *
-     * @param nodeId   VirtualNode at which edges get unfavored
-     * @param edgeId   edge to become unfavored
+     * <p>
+     * @param nodeId VirtualNode at which edges get unfavored
+     * @param edgeId edge to become unfavored
      * @param incoming if true, incoming edge is unfavored, else outgoing edge
      * @return boolean indicating if enforcement took place
      */
@@ -451,7 +457,6 @@ public class QueryGraph implements Graph
         }
 
     }
-
 
     @Override
     public int getNodes()
@@ -586,7 +591,7 @@ public class QueryGraph implements Graph
             edgeId++;
         else
             edgeId--;
-        
+
         return edgeId;
     }
 

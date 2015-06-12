@@ -74,7 +74,6 @@ public class QueryGraphTest
         g.edge(0, 1, 10, true).setWayGeometry(Helper.createPointList(1.5, 1, 1.5, 1.5));
     }
 
-
     @Test
     public void testOneVirtualNode()
     {
@@ -610,7 +609,6 @@ public class QueryGraphTest
         assertEquals(expect, getEdgePreference(queryGraph, QueryGraph.VE_BASE_REV, true, !expect));
         assertEquals(expect, getEdgePreference(queryGraph, QueryGraph.VE_BASE, false, !expect));
 
-
         // query result on second vertical part of way (downward)
         qr = fakeEdgeQueryResult(edge, 1.5, 2, 2);
         queryGraph = new QueryGraph(g);
@@ -649,7 +647,7 @@ public class QueryGraphTest
         // test penalized south
         boolean expect = true;
         VirtualEdgeIteratorState incomingEdge = (VirtualEdgeIteratorState) queryGraph.getEdgeProps(1, 2);
-        
+
         VirtualEdgeIteratorState incomingEdgeReverse = (VirtualEdgeIteratorState) queryGraph.getEdgeProps(1, incomingEdge.getBaseNode());
         // expect incoming edge in reverse direction to be unfavored
         assertEquals(expect, incomingEdge.getBoolean(EdgeIteratorState.K_UNFAVORED_EDGE, true, !expect));
@@ -661,5 +659,34 @@ public class QueryGraphTest
         assertEquals(expect, incomingEdge.getBoolean(EdgeIteratorState.K_UNFAVORED_EDGE, true, !expect));
         // expect reverse incoming edge to be unfavored
         assertEquals(expect, incomingEdgeReverse.getBoolean(EdgeIteratorState.K_UNFAVORED_EDGE, false, !expect));
+    }
+
+    @Test
+    public void testInternalAPIOriginalTraversalKey()
+    {
+        initGraph(g);
+
+        EdgeExplorer explorer = g.createEdgeExplorer();
+        QueryGraph queryGraph = new QueryGraph(g);
+        EdgeIterator iter = explorer.setBaseNode(1);
+        assertTrue(iter.next());
+        int origEdgeId = iter.getEdge();
+        QueryResult res = createLocationResult(2, 1.5, iter, 1, PILLAR);
+        queryGraph.lookup(Arrays.asList(res));
+
+        assertEquals(new GHPoint(1.5, 1.5), res.getSnappedPoint());
+        assertEquals(3, res.getClosestNode());
+
+        EdgeExplorer qGraphExplorer = queryGraph.createEdgeExplorer();
+        iter = qGraphExplorer.setBaseNode(3);
+        assertTrue(iter.next());
+        assertEquals(0, iter.getAdjNode());
+        assertEquals(GHUtility.createEdgeKey(1, 0, origEdgeId, false),
+                ((VirtualEdgeIteratorState) queryGraph.getEdgeProps(iter.getEdge(), 0)).getOriginalTraversalKey());
+
+        assertTrue(iter.next());
+        assertEquals(1, iter.getAdjNode());
+        assertEquals(GHUtility.createEdgeKey(0, 1, origEdgeId, false),
+                ((VirtualEdgeIteratorState) queryGraph.getEdgeProps(iter.getEdge(), 1)).getOriginalTraversalKey());
     }
 }
