@@ -699,6 +699,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         {
             boolean isBackward = way.hasTag("oneway", "-1")
                     || way.hasTag("oneway:bicycle", "-1")
+                    || way.hasTag("oneway:bicycle", "no")
                     || way.hasTag("vehicle:forward", "no")
                     || way.hasTag("bicycle:forward", "no");
             if (isBackward)
