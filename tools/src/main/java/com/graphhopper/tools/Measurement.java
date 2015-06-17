@@ -21,11 +21,8 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.DistanceCalc;
@@ -82,12 +79,12 @@ public class Measurement
         {
             // re-create index to avoid bug as pickNode in locationIndex.prepare could be wrong while indexing if level is not taken into account and assumed to be 0 for pre-initialized graph            
             StopWatch sw = new StopWatch().start();
-            int edges = getGraph().getAllEdges().getCount();
+            int edges = getGraphHopperStorage().getAllEdges().getCount();
             setAlgorithmFactory(createPrepare());
             super.prepare();
             setLocationIndex(createLocationIndex(new RAMDirectory()));
             put("prepare.time", sw.stop().getTime());
-            put("prepare.shortcuts", getGraph().getAllEdges().getCount() - edges);
+            put("prepare.shortcuts", getGraphHopperStorage().getAllEdges().getCount() - edges);
         }
     }
 
@@ -115,7 +112,7 @@ public class Measurement
         if (!hopper.load(graphLocation))
             throw new IllegalStateException("Cannot load existing levelgraph at " + graphLocation);
 
-        GraphStorage g = hopper.getGraph();
+        GraphHopperStorage g = hopper.getGraphHopperStorage();
         if ("true".equals(g.getProperties().get("prepare.done")))
             throw new IllegalStateException("Graph has to be unprepared but wasn't!");
 
@@ -123,7 +120,7 @@ public class Measurement
         StopWatch sw = new StopWatch().start();
         try
         {
-            maxNode = g.getNodes();
+            maxNode = hopper.getGraphHopperStorage().getNodes();
             printGraphDetails(g, vehicleStr);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
 
@@ -164,7 +161,7 @@ public class Measurement
         }
     }
 
-    private void printGraphDetails( GraphStorage g, String vehicleStr )
+    private void printGraphDetails( GraphHopperStorage g, String vehicleStr )
     {
         // graph size (edge, node and storage size)
         put("graph.nodes", g.getNodes());
@@ -201,7 +198,7 @@ public class Measurement
     private void printTimeOfRouteQuery( final GraphHopper hopper, int count, String prefix,
                                         final String vehicle, final boolean withInstructions )
     {
-        final Graph g = hopper.getGraph();
+        final Graph g = hopper.getGraphHopperStorage();
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);
         final AtomicLong distSum = new AtomicLong(0);

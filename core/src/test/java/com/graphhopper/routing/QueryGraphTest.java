@@ -43,7 +43,7 @@ public class QueryGraphTest
 {
     private EncodingManager encodingManager;
     private FlagEncoder carEncoder;
-    private GraphStorage g;
+    private GraphHopperStorage g;
 
     @Before
     public void setUp()
@@ -513,7 +513,7 @@ public class QueryGraphTest
         TurnCostExtension turnExt = new TurnCostExtension();
         FlagEncoder encoder = new CarFlagEncoder(5, 5, 15);
 
-        GraphStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(),
+        GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(false, new RAMDirectory(),
                 new EncodingManager(encoder), false, turnExt).
                 create(100);
         NodeAccess na = graphWithTurnCosts.getNodeAccess();

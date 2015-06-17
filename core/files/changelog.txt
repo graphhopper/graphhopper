@@ -1,4 +1,9 @@
 0.5
+    method GraphHopper.getGraph() changed to getGraphHopperStorage
+    the interface GraphStorage does no longer extend from the Graph interface. Use GraphHopperStorage (which implements the Graph interface via the base graph) or only Graph instead
+    now it is necessary to call baseGraph/chGraph.freeze in order to use the chGraph (to simply determine when an edgeId is a shortcut)
+    rename of NoGraphExtension to NoOpExtension
+    all access to any graph happens now on the base graph, call GraphHopperStorage.getBaseGraph(). To do routing with potentially shortcuts you call GraphHopperStorage.getGraph(encoder)
     breaking change in HTTP API: error JSON format changed to be message:"" instead of within info.errors, see updated api documentation
     made GHResponse.getMillis, Path.getMillis, GPXEntry.getMillis deprecated, use getTime instead
     in AbstractFlagEncoder, parse*() and getStr() are now deprecated, use properties.get* instead

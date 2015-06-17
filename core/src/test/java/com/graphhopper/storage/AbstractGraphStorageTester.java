@@ -53,20 +53,20 @@ public abstract class AbstractGraphStorageTester
     EdgeExplorer carOutExplorer;
     EdgeExplorer carInExplorer;
     EdgeExplorer carAllExplorer;
-    protected GraphStorage graph;
+    protected GraphHopperStorage graph;
 
-    protected GraphStorage createGraph()
+    protected GraphHopperStorage createGHStorage()
     {
-        GraphStorage g = createGraph(defaultGraphLoc, false);
+        GraphHopperStorage g = AbstractGraphStorageTester.this.createGHStorage(defaultGraphLoc, false);
         carOutExplorer = g.createEdgeExplorer(carOutFilter);
         carInExplorer = g.createEdgeExplorer(carInFilter);
         carAllExplorer = g.createEdgeExplorer();
         return g;
     }
 
-    abstract GraphStorage createGraph( String location, boolean is3D );
+    abstract GraphHopperStorage createGHStorage( String location, boolean is3D );
 
-    protected GraphStorage newRAMGraph()
+    protected final GraphHopperStorage newRAMGHStorage()
     {
         return new GraphHopperStorage(new RAMDirectory(), encodingManager, false);
     }
@@ -87,7 +87,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testInfinityWeight()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         EdgeIteratorState edge = graph.edge(0, 1);
         edge.setDistance(Double.POSITIVE_INFINITY);
         assertTrue(Double.isInfinite(edge.getDistance()));
@@ -96,7 +96,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testSetNodes()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         for (int i = 0; i < defaultSize * 2; i++)
         {
@@ -110,7 +110,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testPropertiesWithNoInit()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         assertEquals(0, graph.edge(0, 1).getFlags());
         assertEquals(0, graph.edge(0, 2).getDistance(), 1e-6);
     }
@@ -118,7 +118,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testCreateLocation()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(3, 1, 50, true);
         assertEquals(1, count(carOutExplorer.setBaseNode(1)));
 
@@ -129,7 +129,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testEdges()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(2, 1, 12, true);
         assertEquals(1, count(carOutExplorer.setBaseNode(2)));
 
@@ -142,7 +142,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testUnidirectional()
     {
-        graph = createGraph();
+        graph = createGHStorage();
 
         graph.edge(1, 2, 12, false);
         graph.edge(1, 11, 12, false);
@@ -176,7 +176,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testUnidirectionalEdgeFilter()
     {
-        graph = createGraph();
+        graph = createGHStorage();
 
         graph.edge(1, 2, 12, false);
         graph.edge(1, 11, 12, false);
@@ -212,7 +212,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testUpdateUnidirectional()
     {
-        graph = createGraph();
+        graph = createGHStorage();
 
         graph.edge(1, 2, 12, false);
         graph.edge(3, 2, 112, false);
@@ -236,7 +236,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testClone()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(1, 2, 10, true);
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 12, 23);
@@ -245,7 +245,7 @@ public abstract class AbstractGraphStorageTester
         na.setNode(3, 5, 9);
         graph.edge(1, 3, 10, true);
 
-        Graph clone = graph.copyTo(createGraph(locationParent + "/clone", false));
+        Graph clone = graph.copyTo(AbstractGraphStorageTester.this.createGHStorage(locationParent + "/clone", false));
         assertEquals(graph.getNodes(), clone.getNodes());
         assertEquals(count(carOutExplorer.setBaseNode(1)), count(clone.createEdgeExplorer(carOutFilter).setBaseNode(1)));
         clone.edge(1, 4, 10, true);
@@ -257,7 +257,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testCopyProperties()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         EdgeIteratorState edge = graph.edge(1, 3, 10, false).setName("testing").setWayGeometry(Helper.createPointList(1, 2));
 
         EdgeIteratorState newEdge = graph.edge(1, 3, 10, false);
@@ -271,7 +271,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testGetLocations()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 12, 23);
         na.setNode(1, 22, 23);
@@ -284,16 +284,16 @@ public abstract class AbstractGraphStorageTester
         assertEquals(3, graph.getNodes());
         Helper.close((Closeable) graph);
 
-        graph = createGraph();
+        graph = createGHStorage();
         assertEquals(0, graph.getNodes());
     }
 
     @Test
     public void testCopyTo()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         initExampleGraph(graph);
-        GraphStorage gs = newRAMGraph();
+        GraphHopperStorage gs = newRAMGHStorage();
         gs.setSegmentSize(8000);
         gs.create(10);
         try
@@ -309,7 +309,7 @@ public abstract class AbstractGraphStorageTester
         try
         {
             Helper.close((Closeable) graph);
-            graph = createGraph();
+            graph = createGHStorage();
             gs.copyTo(graph);
             checkExampleGraph(graph);
         } catch (Exception ex)
@@ -323,7 +323,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testAddLocation()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         initExampleGraph(graph);
         checkExampleGraph(graph);
     }
@@ -374,7 +374,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testDirectional()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(1, 2, 12, true);
         graph.edge(2, 3, 12, false);
         graph.edge(3, 4, 12, false);
@@ -405,7 +405,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testDozendEdges()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(1, 2, 12, true);
         assertEquals(1, count(carAllExplorer.setBaseNode(1)));
 
@@ -438,7 +438,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testCheckFirstNode()
     {
-        graph = createGraph();
+        graph = createGHStorage();
 
         assertEquals(0, count(carAllExplorer.setBaseNode(1)));
         graph.edge(0, 1, 12, true);
@@ -448,7 +448,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testDeleteNodeForUnidir()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(10, 10, 1);
         na.setNode(6, 6, 1);
@@ -491,7 +491,7 @@ public abstract class AbstractGraphStorageTester
 
     public void testDeleteNodes( int fillToSize )
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 12, 23);
         na.setNode(1, 38.33f, 135.3f);
@@ -563,7 +563,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testSimpleDelete()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 12, 23);
         na.setNode(1, 38.33f, 135.3f);
@@ -594,7 +594,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testSimpleDelete2()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         assertEquals(-1, getIdOf(graph, 12));
         na.setNode(9, 9, 1);
@@ -643,7 +643,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testSimpleDelete3()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(7, 7, 1);
         na.setNode(8, 8, 1);
@@ -675,7 +675,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testDeleteAndOptimize()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(20, 10, 10);
         na.setNode(21, 10, 11);
@@ -687,7 +687,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testBounds()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         BBox b = graph.getBounds();
         assertEquals(BBox.createInverse(false).maxLat, b.maxLat, 1e-6);
 
@@ -706,7 +706,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testFlags()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(0, 1).setDistance(10).setFlags(carEncoder.setProperties(100, true, true));
         graph.edge(2, 3).setDistance(10).setFlags(carEncoder.setProperties(10, true, false));
 
@@ -730,7 +730,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testEdgeProperties()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         EdgeIteratorState iter1 = graph.edge(0, 1, 10, true);
         EdgeIteratorState iter2 = graph.edge(0, 2, 20, true);
 
@@ -773,7 +773,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testCreateDuplicateEdges()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(2, 1, 12, true);
         graph.edge(2, 3, 12, true);
         graph.edge(2, 3, 13, false);
@@ -819,7 +819,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testIdenticalNodes()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(0, 0, 100, true);
         assertEquals(1, GHUtility.count(carAllExplorer.setBaseNode(0)));
     }
@@ -827,7 +827,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testIdenticalNodes2()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(0, 0, 100, false);
         graph.edge(0, 0, 100, false);
         assertEquals(2, GHUtility.count(carAllExplorer.setBaseNode(0)));
@@ -836,7 +836,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testEdgeReturn()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         EdgeIteratorState iter = graph.edge(4, 10).setDistance(100).setFlags(carEncoder.setProperties(10, true, false));
         assertEquals(4, iter.getBaseNode());
         assertEquals(10, iter.getAdjNode());
@@ -848,7 +848,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testPillarNodes()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 0.01, 0.01);
         na.setNode(4, 0.4, 0.4);
@@ -898,7 +898,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testFootMix()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(0, 1).setDistance(10).setFlags(footEncoder.setProperties(10, true, true));
         graph.edge(0, 2).setDistance(10).setFlags(carEncoder.setProperties(10, true, true));
         graph.edge(0, 3).setDistance(10).setFlags(footEncoder.setProperties(10, true, true) | carEncoder.setProperties(10, true, true));
@@ -910,7 +910,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testGetAllEdges()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(0, 1, 2, true);
         graph.edge(3, 1, 1, false);
         graph.edge(3, 2, 1, false);
@@ -938,7 +938,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testGetAllEdgesWithDelete()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 0, 5);
         na.setNode(1, 1, 5);
@@ -1013,7 +1013,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testNameIndex()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         EdgeIteratorState iter1 = graph.edge(0, 1, 10, true);
         iter1.setName("named street1");
 
@@ -1063,7 +1063,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testEnabledElevation()
     {
-        graph = createGraph(defaultGraphLoc, true);
+        graph = AbstractGraphStorageTester.this.createGHStorage(defaultGraphLoc, true);
         NodeAccess na = graph.getNodeAccess();
         assertTrue(na.is3D());
         na.setNode(0, 10, 20, -10);
@@ -1080,7 +1080,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testDetachEdge()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(0, 1, 2, true);
         long flags = carEncoder.setProperties(10, true, false);
         graph.edge(0, 2, 2, true).setWayGeometry(Helper.createPointList(1, 2, 3, 4)).setFlags(flags);

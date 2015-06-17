@@ -27,10 +27,10 @@ import com.graphhopper.util.Helper;
  */
 class GHNodeAccess implements NodeAccess
 {
-    private final GraphHopperStorage that;
+    private final BaseGraph that;
     private final boolean elevation;
 
-    public GHNodeAccess( GraphHopperStorage that, boolean withElevation )
+    public GHNodeAccess( BaseGraph that, boolean withElevation )
     {
         this.that = that;
         this.elevation = withElevation;

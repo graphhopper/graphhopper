@@ -34,24 +34,23 @@ import org.junit.Test;
 /**
  * @author Peter Karich
  */
-public class LevelGraphStorageTest extends GraphHopperStorageTest
+public class GraphHopperStorageCHTest extends GraphHopperStorageTest
 {
-    @Override
-    protected LevelGraphStorage createGraph()
+    protected LevelGraph getGraph( GraphHopperStorage ghStorage )
     {
-        return (LevelGraphStorage) super.createGraph();
+        return ghStorage.getGraph(LevelGraph.class);
     }
 
     @Override
-    public GraphStorage newGraph( Directory dir, boolean is3D )
+    public GraphHopperStorage newGHStorage( Directory dir, boolean is3D )
     {
-        return new LevelGraphStorage(dir, encodingManager, is3D);
+        return new GraphHopperStorage(true, dir, encodingManager, is3D, new GraphExtension.NoOpExtension());
     }
 
     @Test
     public void testCannotBeLoadedWithNormalGraphHopperStorageClass()
     {
-        GraphStorage g = newGraph(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
+        GraphHopperStorage g = newGHStorage(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
         g.flush();
         g.close();
 
@@ -64,7 +63,7 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         {
         }
 
-        g = newGraph(new RAMDirectory(defaultGraphLoc, true), false);
+        g = newGHStorage(new RAMDirectory(defaultGraphLoc, true), false);
         assertTrue(g.loadExisting());
         // empty graph still has invalid bounds
         assertEquals(g.getBounds(), BBox.createInverse(false));
@@ -73,22 +72,25 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
     @Test
     public void testPriosWhileDeleting()
     {
-        LevelGraphStorage g = createGraph();
+        GraphHopperStorage storage = createGHStorage();
+        LevelGraph g = getGraph(storage);
         g.getNodeAccess().ensureNode(19);
         for (int i = 0; i < 20; i++)
         {
             g.setLevel(i, i);
         }
-        g.markNodeRemoved(10);
-        g.optimize();
+        storage.markNodeRemoved(10);
+        storage.optimize();
         assertEquals(9, g.getLevel(9));
         assertNotSame(10, g.getLevel(10));
+        storage.close();
     }
 
     @Test
     public void testPrios()
     {
-        LevelGraph g = createGraph();
+        GraphHopperStorage storage = createGHStorage();
+        LevelGraph g = getGraph(storage);
         g.getNodeAccess().ensureNode(30);
 
         assertEquals(0, g.getLevel(10));
@@ -103,7 +105,8 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
     @Test
     public void testEdgeFilter()
     {
-        LevelGraph g = createGraph();
+        GraphHopperStorage storage = createGHStorage();
+        LevelGraph g = getGraph(storage);
         g.edge(0, 1, 10, true);
         g.edge(0, 2, 20, true);
         g.edge(2, 3, 30, true);
@@ -125,7 +128,8 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
     @Test
     public void testDisconnectEdge()
     {
-        LevelGraphStorage g = (LevelGraphStorage) createGraph();
+        GraphHopperStorage storage = createGHStorage();
+        LevelGraphImpl g = (LevelGraphImpl) getGraph(storage);
         // only remove edges
         long flags = carEncoder.setProperties(60, true, true);
         long flags2 = carEncoder.setProperties(60, true, false);
@@ -163,7 +167,8 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
     @Test
     public void testGetWeight()
     {
-        LevelGraphStorage g = (LevelGraphStorage) createGraph();
+        GraphHopperStorage storage = createGHStorage();
+        LevelGraphImpl g = (LevelGraphImpl) getGraph(storage);
         assertFalse(g.edge(0, 1).isShortcut());
         assertFalse(g.edge(1, 2).isShortcut());
 
@@ -196,19 +201,22 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
     public void testGetWeightIfAdvancedEncoder()
     {
         FlagEncoder customEncoder = new Bike2WeightFlagEncoder();
-        LevelGraphStorage g = new GraphBuilder(new EncodingManager(customEncoder)).levelGraphCreate();
+        LevelGraphImpl lg = (LevelGraphImpl) new GraphBuilder(new EncodingManager(customEncoder)).
+                setLevelGraph(true).create().getGraph(LevelGraph.class);
 
-        EdgeSkipIterState sc1 = g.shortcut(0, 1);
+        lg.edge(0, 2);
+        lg.freeze();
+        EdgeSkipIterState sc1 = lg.shortcut(0, 1);
         long flags = customEncoder.setProperties(10, false, true);
         sc1.setFlags(flags);
         sc1.setWeight(100.123);
 
-        assertEquals(100.123, g.getEdgeProps(sc1.getEdge(), sc1.getAdjNode()).getWeight(), 1e-3);
-        assertEquals(100.123, g.getEdgeProps(sc1.getEdge(), sc1.getBaseNode()).getWeight(), 1e-3);
-        assertEquals(100.123, ((EdgeSkipIterState) GHUtility.getEdge(g, sc1.getBaseNode(), sc1.getAdjNode())).getWeight(), 1e-3);
-        assertEquals(100.123, ((EdgeSkipIterState) GHUtility.getEdge(g, sc1.getAdjNode(), sc1.getBaseNode())).getWeight(), 1e-3);
+        assertEquals(100.123, lg.getEdgeProps(sc1.getEdge(), sc1.getAdjNode()).getWeight(), 1e-3);
+        assertEquals(100.123, lg.getEdgeProps(sc1.getEdge(), sc1.getBaseNode()).getWeight(), 1e-3);
+        assertEquals(100.123, ((EdgeSkipIterState) GHUtility.getEdge(lg, sc1.getBaseNode(), sc1.getAdjNode())).getWeight(), 1e-3);
+        assertEquals(100.123, ((EdgeSkipIterState) GHUtility.getEdge(lg, sc1.getAdjNode(), sc1.getBaseNode())).getWeight(), 1e-3);
 
-        sc1 = g.shortcut(1, 0);
+        sc1 = lg.shortcut(1, 0);
         assertTrue(sc1.isShortcut());
         sc1.setFlags(PrepareEncoder.getScDirMask());
         sc1.setWeight(1.011011);
@@ -218,7 +226,8 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
     @Test
     public void testQueryGraph()
     {
-        LevelGraph levelGraph = createGraph();
+        GraphHopperStorage storage = createGHStorage();
+        LevelGraph levelGraph = getGraph(storage);
         NodeAccess na = levelGraph.getNodeAccess();
         na.setNode(0, 1.00, 1.00);
         na.setNode(1, 1.02, 1.00);
@@ -233,11 +242,10 @@ public class LevelGraphStorageTest extends GraphHopperStorageTest
         QueryResult toRes = createQR(1.019, 1.00, 0, edge1);
         qGraph.lookup(fromRes, toRes);
 
-        Graph oGraph = qGraph.getBaseGraph();
-        EdgeExplorer explorer = oGraph.createEdgeExplorer();
+        EdgeExplorer explorer = storage.createEdgeExplorer();
 
         assertTrue(levelGraph.getNodes() < qGraph.getNodes());
-        assertTrue(oGraph.getNodes() == qGraph.getNodes());
+        assertTrue(storage.getNodes() < qGraph.getNodes());
 
         // traverse virtual edges and normal edges but no shortcuts!
         assertEquals(GHUtility.asSet(fromRes.getClosestNode()), GHUtility.getNeighbors(explorer.setBaseNode(0)));

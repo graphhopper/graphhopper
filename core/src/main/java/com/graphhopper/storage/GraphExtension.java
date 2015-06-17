@@ -44,9 +44,9 @@ public interface GraphExtension extends Storable<GraphExtension>
     int getDefaultEdgeFieldValue();
 
     /**
-     * initializes the extended storage by giving the graph storage
+     * initializes the extended storage by giving the base graph
      */
-    void init( GraphStorage graph );
+    void init( Graph graph, Directory dir );
 
     /**
      * sets the segment size in all additional data storages
@@ -62,7 +62,7 @@ public interface GraphExtension extends Storable<GraphExtension>
      * default implementation defines no additional fields or any logic. there's like nothing , like
      * the default behavior.
      */
-    public class NoExtendedStorage implements GraphExtension
+    public class NoOpExtension implements GraphExtension
     {
 
         @Override
@@ -90,7 +90,7 @@ public interface GraphExtension extends Storable<GraphExtension>
         }
 
         @Override
-        public void init( GraphStorage grap )
+        public void init( Graph grap, Directory dir )
         {
             // noop
         }

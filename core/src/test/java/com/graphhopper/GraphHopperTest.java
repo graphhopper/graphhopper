@@ -278,8 +278,8 @@ public class GraphHopperTest
                 setOSMFile(testOsm3);
         instance.importOrLoad();
 
-        assertEquals(5, instance.getGraph().getNodes());
-        assertEquals(8, instance.getGraph().getAllEdges().getCount());
+        assertEquals(5, instance.getGraphHopperStorage().getNodes());
+        assertEquals(8, instance.getGraphHopperStorage().getAllEdges().getCount());
 
         // A to D
         GHResponse rsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setVehicle(EncodingManager.CAR));
@@ -322,7 +322,7 @@ public class GraphHopperTest
                         put("prepare.chWeighting", "no")).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
-        assertEquals(5, instance.getGraph().getNodes());
+        assertEquals(5, instance.getGraphHopperStorage().getNodes());
         instance.close();
 
         // different config (flagEncoder list)
@@ -455,8 +455,8 @@ public class GraphHopperTest
                 setOSMFile(testOsm3);
         instance.importOrLoad();
 
-        assertEquals(2, instance.getGraph().getNodes());
-        assertEquals(2, instance.getGraph().getAllEdges().getCount());
+        assertEquals(2, instance.getGraphHopperStorage().getNodes());
+        assertEquals(2, instance.getGraphHopperStorage().getAllEdges().getCount());
 
         // A to E only for foot
         GHResponse res = instance.route(new GHRequest(11.1, 50, 11.2, 52).setVehicle(EncodingManager.FOOT));

@@ -23,7 +23,7 @@ import com.graphhopper.routing.EdgeBasedRoutingAlgorithmTest;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeExplorer;
 
 import java.util.Collection;
@@ -52,9 +52,9 @@ public class OSMTurnRelationTest
         internalToOSMEdge.put(3, 3L);
         internalToOSMEdge.put(4, 4L);
 
-        GraphStorage graph = new GraphBuilder(new EncodingManager(encoder)).create();
-        EdgeBasedRoutingAlgorithmTest.initGraph(graph);
-        OSMReader osmReader = new OSMReader(graph)
+        GraphHopperStorage ghStorage = new GraphBuilder(new EncodingManager(encoder)).create();
+        EdgeBasedRoutingAlgorithmTest.initGraph(ghStorage);
+        OSMReader osmReader = new OSMReader(ghStorage)
         {
 
             @Override
@@ -73,7 +73,7 @@ public class OSMTurnRelationTest
             }
         };
 
-        EdgeExplorer edgeExplorer = graph.createEdgeExplorer();
+        EdgeExplorer edgeExplorer = ghStorage.createEdgeExplorer();
 
         // TYPE == ONLY
         OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, Type.ONLY);

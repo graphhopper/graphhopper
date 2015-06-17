@@ -22,7 +22,6 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.AllEdgesSkipIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
 import gnu.trove.list.TIntList;
@@ -314,32 +313,17 @@ public class GHUtility
         return outdir;
     }
 
-    static GraphStorage guessStorage( Graph g, Directory outdir, EncodingManager encodingManager )
-    {
-        GraphStorage store;
-        boolean is3D = g.getNodeAccess().is3D();
-        if (g instanceof LevelGraphStorage)
-            store = new LevelGraphStorage(outdir, encodingManager, is3D);
-        else
-            store = new GraphHopperStorage(outdir, encodingManager, is3D);
-
-        return store;
-    }
-
     /**
      * Create a new storage from the specified one without copying the data.
      */
-    public static GraphStorage newStorage( GraphStorage store )
+    public static GraphHopperStorage newStorage( GraphHopperStorage store )
     {
-        return guessStorage(store, guessDirectory(store), store.getEncodingManager()).create(store.getNodes());
-    }
+        Directory outdir = guessDirectory(store);
+        boolean is3D = store.getNodeAccess().is3D();
 
-    /**
-     * @return the graph outGraph
-     */
-    public static Graph clone( Graph g, GraphStorage outGraph )
-    {
-        return g.copyTo(outGraph.create(g.getNodes()));
+        return new GraphHopperStorage(store.isCHPossible(), outdir, store.getEncodingManager(),
+                is3D, store.getExtension()).
+                create(store.getNodes());
     }
 
     public static int getAdjNode( Graph g, int edge, int adjNode )

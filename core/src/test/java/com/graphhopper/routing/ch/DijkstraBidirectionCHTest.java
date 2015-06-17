@@ -37,40 +37,41 @@ import org.junit.Test;
 public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
 {
     // matrix graph is expensive to create and to prepare!
-    private static Graph preparedMatrixGraph;
+    private static GraphHopperStorage preparedMatrixGraph;
 
     @Override
-    public Graph getMatrixGraph()
+    public GraphHopperStorage getMatrixGraph()
     {
         if (preparedMatrixGraph == null)
         {
-            LevelGraph lg = (LevelGraph) createGraph(false);
-            getMatrixAlikeGraph().copyTo(lg);
-            createFactory(lg, defaultOpts);
-            preparedMatrixGraph = lg;
+            GraphHopperStorage ghStorage = createGHStorage(false);
+            getMatrixAlikeGraph().copyTo(ghStorage);
+            createFactory(ghStorage, defaultOpts);
+            preparedMatrixGraph = ghStorage;
         }
         return preparedMatrixGraph;
     }
 
     @Override
-    protected LevelGraph createGraph( EncodingManager em, boolean is3D )
+    protected LevelGraph getGraph( GraphHopperStorage ghStorage )
     {
-        return new GraphBuilder(em).set3D(is3D).levelGraphCreate();
+        return ghStorage.getGraph(LevelGraph.class);
     }
 
     @Override
-    public RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts )
+    protected GraphHopperStorage createGHStorage( EncodingManager em, boolean is3D )
     {
-        return createFactory(g, opts).createAlgo(g, opts);
+        return new GraphBuilder(em).set3D(is3D).setLevelGraph(true).create();
     }
 
     @Override
-    public RoutingAlgorithmFactory createFactory( Graph g, AlgorithmOptions opts )
+    public RoutingAlgorithmFactory createFactory( GraphHopperStorage ghStorage, AlgorithmOptions opts )
     {
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
-                (LevelGraph) g, opts.getFlagEncoder(), opts.getWeighting(), TraversalMode.NODE_BASED);
+                ghStorage, getGraph(ghStorage),
+                opts.getFlagEncoder(), opts.getWeighting(), TraversalMode.NODE_BASED);
         // hack: prepare matrixGraph only once
-        if (g != preparedMatrixGraph)
+        if (ghStorage != preparedMatrixGraph)
             ch.doWork();
 
         return ch;
@@ -82,7 +83,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         // use an encoder where it is possible to store 2 weights per edge
         FlagEncoder encoder = new Bike2WeightFlagEncoder();
         EncodingManager em = new EncodingManager(encoder);
-        LevelGraphStorage g2 = (LevelGraphStorage) createGraph(em, false);
+        GraphHopperStorage ghStorage = createGHStorage(em, false);
+        LevelGraphImpl g2 = (LevelGraphImpl) ghStorage.getGraph(LevelGraph.class);
         g2.edge(0, 1, 1, true);
         EdgeIteratorState iter1_1 = g2.edge(0, 2, 1.4, false);
         EdgeIteratorState iter1_2 = g2.edge(2, 5, 1.4, false);
@@ -117,7 +119,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         ShortestWeighting weighting = new ShortestWeighting();
         AlgorithmOptions opts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting);
         Path p = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
-                g2, encoder, weighting, TraversalMode.NODE_BASED).
+                ghStorage, g2, encoder, weighting, TraversalMode.NODE_BASED).
                 createAlgo(g2, opts).calcPath(0, 7);
 
         assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());
@@ -152,14 +154,14 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     public void testBaseGraph()
     {
         CarFlagEncoder carFE = new CarFlagEncoder();
-        Graph g = createGraph(new EncodingManager(carFE), false);
-        initDirectedAndDiffSpeed(g, carFE);
+        GraphHopperStorage ghStorage = createGHStorage(new EncodingManager(carFE), false);
+        initDirectedAndDiffSpeed(ghStorage, carFE);
 
         // do CH preparation for car
-        createFactory(g, defaultOpts);
+        createFactory(ghStorage, defaultOpts);
 
         // use base graph for solving normal Dijkstra
-        Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(g, defaultOpts).calcPath(0, 3);
+        Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(ghStorage, defaultOpts).calcPath(0, 3);
         assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(p1.toString(), 402.29, p1.getDistance(), 1e-2);
         assertEquals(p1.toString(), 144823, p1.getTime());
@@ -168,7 +170,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     @Test
     public void testBaseGraphMultipleVehicles()
     {
-        Graph g = createGraph(encodingManager, false);
+        GraphHopperStorage g = createGHStorage(encodingManager, false);
         initFootVsCar(g);
 
         AlgorithmOptions footOptions = AlgorithmOptions.start().flagEncoder(footEncoder).
@@ -180,18 +182,18 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         RoutingAlgorithmFactory contractedFactory = createFactory(g, carOptions);
 
         // use contracted graph
-        Path p1 = contractedFactory.createAlgo(g, carOptions).calcPath(0, 7);
+        Path p1 = contractedFactory.createAlgo(getGraph(g), carOptions).calcPath(0, 7);
         assertEquals(Helper.createTList(0, 4, 6, 7), p1.calcNodes());
         assertEquals(p1.toString(), 15000, p1.getDistance(), 1e-6);
 
         // use base graph for solving normal Dijkstra via car
-        Path p2 = new RoutingAlgorithmFactorySimple().createAlgo(g.getBaseGraph(), carOptions).calcPath(0, 7);
+        Path p2 = new RoutingAlgorithmFactorySimple().createAlgo(g, carOptions).calcPath(0, 7);
         assertEquals(Helper.createTList(0, 4, 6, 7), p2.calcNodes());
         assertEquals(p2.toString(), 15000, p2.getDistance(), 1e-6);
         assertEquals(p2.toString(), 2700 * 1000, p2.getTime());
 
         // use base graph for solving normal Dijkstra via foot
-        Path p3 = new RoutingAlgorithmFactorySimple().createAlgo(g.getBaseGraph(), footOptions).calcPath(0, 7);
+        Path p3 = new RoutingAlgorithmFactorySimple().createAlgo(g, footOptions).calcPath(0, 7);
         assertEquals(p3.toString(), 17000, p3.getDistance(), 1e-6);
         assertEquals(p3.toString(), 12240 * 1000, p3.getTime());
         assertEquals(Helper.createTList(0, 4, 5, 7), p3.calcNodes());

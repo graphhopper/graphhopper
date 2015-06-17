@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.*;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -150,12 +151,14 @@ public class TestAlgoCollector
     public static class AlgoHelperEntry
     {
         private Graph queryGraph;
+        private final Graph baseGraph;
         private final LocationIndex idx;
         private AlgorithmOptions opts;
 
-        public AlgoHelperEntry( Graph g, AlgorithmOptions opts, LocationIndex idx )
+        public AlgoHelperEntry( Graph g, Graph baseGraph, AlgorithmOptions opts, LocationIndex idx )
         {
             this.queryGraph = g;
+            this.baseGraph = baseGraph;
             this.opts = opts;
             this.idx = idx;
         }
@@ -168,6 +171,11 @@ public class TestAlgoCollector
         public void setQueryGraph( Graph queryGraph )
         {
             this.queryGraph = queryGraph;
+        }
+
+        public Graph getBaseGraph()
+        {
+            return baseGraph;
         }
 
         public void setAlgorithmOptions( AlgorithmOptions opts )
@@ -188,7 +196,7 @@ public class TestAlgoCollector
         @Override
         public String toString()
         {
-            return opts.getAlgorithm();
+            return opts.getAlgorithm() + (queryGraph instanceof LevelGraph ? "CH" : "");
         }
     }
 

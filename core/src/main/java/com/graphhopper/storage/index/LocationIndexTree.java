@@ -82,7 +82,7 @@ public class LocationIndexTree implements LocationIndex
     public LocationIndexTree( Graph g, Directory dir )
     {
         if (g instanceof LevelGraph)
-            throw new IllegalArgumentException("Call LevelGraph.getBaseGraph() instead of using the LevelGraph itself");
+            throw new IllegalArgumentException("Use base graph for LocationIndexTree instead of LevelGraph");
 
         MAGIC_INT = Integer.MAX_VALUE / 22316;
         this.graph = g;

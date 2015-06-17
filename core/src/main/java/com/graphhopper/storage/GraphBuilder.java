@@ -30,7 +30,7 @@ public class GraphBuilder
     private String location;
     private boolean mmap;
     private boolean store;
-    private boolean level;
+    private boolean levelGraph;
     private boolean elevation;
     private long byteCapacity = 100;
 
@@ -46,7 +46,7 @@ public class GraphBuilder
      */
     public GraphBuilder setLevelGraph( boolean level )
     {
-        this.level = level;
+        this.levelGraph = level;
         return this;
     }
 
@@ -85,17 +85,17 @@ public class GraphBuilder
         return elevation;
     }
 
-    public LevelGraphStorage levelGraphBuild()
+    public LevelGraph levelGraphBuild()
     {
-        return (LevelGraphStorage) setLevelGraph(true).build();
+        return setLevelGraph(true).build().getGraph(LevelGraph.class);
     }
 
     /**
-     * Creates a LevelGraphStorage
+     * Creates a LevelGraph
      */
-    public LevelGraphStorage levelGraphCreate()
+    public LevelGraph levelGraphCreate()
     {
-        return (LevelGraphStorage) setLevelGraph(true).create();
+        return setLevelGraph(true).create().getGraph(LevelGraph.class);
     }
 
     /**
@@ -103,7 +103,7 @@ public class GraphBuilder
      * Afterwards you'll need to call GraphStorage.create to have a useable object. Better use
      * create.
      */
-    public GraphStorage build()
+    public GraphHopperStorage build()
     {
         Directory dir;
         if (mmap)
@@ -111,16 +111,11 @@ public class GraphBuilder
         else
             dir = new RAMDirectory(location, store);
 
-        GraphStorage graph;
-        if (level)
-            graph = new LevelGraphStorage(dir, encodingManager, elevation);
+        GraphHopperStorage graph;
+        if (encodingManager.needsTurnCostsSupport())
+            graph = new GraphHopperStorage(false, dir, encodingManager, elevation, new TurnCostExtension());
         else
-        {
-            if (encodingManager.needsTurnCostsSupport())
-                graph = new GraphHopperStorage(dir, encodingManager, elevation, new TurnCostExtension());
-            else
-                graph = new GraphHopperStorage(dir, encodingManager, elevation);
-        }
+            graph = new GraphHopperStorage(levelGraph, dir, encodingManager, elevation, new TurnCostExtension.NoOpExtension());
 
         return graph;
     }
@@ -128,7 +123,7 @@ public class GraphBuilder
     /**
      * Default graph is a GraphStorage with an in memory directory and disabled storing on flush.
      */
-    public GraphStorage create()
+    public GraphHopperStorage create()
     {
         return build().create(byteCapacity);
     }
@@ -136,9 +131,9 @@ public class GraphBuilder
     /**
      * @throws IllegalStateException if not loadable.
      */
-    public GraphStorage load()
+    public GraphHopperStorage load()
     {
-        GraphStorage gs = build();
+        GraphHopperStorage gs = build();
         if (!gs.loadExisting())
         {
             throw new IllegalStateException("Cannot load graph " + location);

@@ -35,23 +35,17 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
     private TurnCostExtension turnCostStorage;
 
     @Override
-    protected GraphStorage newGraph( Directory dir, boolean is3D )
+    protected GraphHopperStorage newGHStorage( Directory dir, boolean is3D )
     {
         turnCostStorage = new TurnCostExtension();
-        return new GraphHopperStorage(dir, encodingManager, is3D, turnCostStorage);
-    }
-
-    @Override
-    protected GraphStorage newRAMGraph()
-    {
-        return newGraph(new RAMDirectory(), false);
+        return new GraphHopperStorage(false, dir, encodingManager, is3D, turnCostStorage);
     }
 
     @Override
     @Test
     public void testSave_and_fileFormat() throws IOException
     {
-        graph = newGraph(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
+        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
         assertTrue(na.is3D());
         na.setNode(0, 10, 10, 0);
@@ -77,7 +71,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
         graph.flush();
         graph.close();
 
-        graph = newGraph(new MMapDirectory(defaultGraphLoc), true);
+        graph = newGHStorage(new MMapDirectory(defaultGraphLoc), true);
         assertTrue(graph.loadExisting());
 
         assertEquals(12, graph.getNodes());
@@ -98,7 +92,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
     @Test
     public void testEnsureCapacity() throws IOException
     {
-        graph = newGraph(new MMapDirectory(defaultGraphLoc), false);
+        graph = newGHStorage(new MMapDirectory(defaultGraphLoc), false);
         graph.setSegmentSize(128);
         graph.create(100); // 100 is the minimum size
 
