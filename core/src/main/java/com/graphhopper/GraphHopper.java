@@ -26,9 +26,13 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
-import com.graphhopper.storage.index.*;
+import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,12 +40,10 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Easy to use access point to configure import and (offline) routing.
  * <p/>
+ *
  * @author Peter Karich
  * @see GraphHopperAPI
  */
@@ -87,7 +89,8 @@ public class GraphHopper implements GraphHopperAPI
     private double osmReaderWayPointMaxDistance = 1;
     private int workerThreads = -1;
     private boolean calcPoints = true;
-    // utils    
+    // utils
+    private static final AngleCalc ac = new AngleCalc();
     private final TranslationMap trMap = new TranslationMap().doImport();
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private final AtomicLong visitedSum = new AtomicLong(0);
@@ -124,9 +127,7 @@ public class GraphHopper implements GraphHopperAPI
     FlagEncoder getDefaultVehicle()
     {
         if (encodingManager == null)
-        {
             throw new IllegalStateException("No encoding manager specified or loaded");
-        }
 
         return encodingManager.fetchEdgeEncoders().get(0);
     }
@@ -249,6 +250,7 @@ public class GraphHopper implements GraphHopperAPI
      * tests. Specify storeOnFlush to true if you want that existing data will be loaded FROM disc
      * and all in-memory data will be flushed TO disc after flush is called e.g. while OSM import.
      * <p/>
+     *
      * @param storeOnFlush true by default
      */
     public GraphHopper setStoreOnFlush( boolean storeOnFlush )
@@ -284,6 +286,7 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Enables the use of contraction hierarchies to reduce query times. Enabled by default.
      * <p/>
+     *
      * @param weighting can be "fastest", "shortest" or your own weight-calculation type.
      * @see #setCHEnable(boolean)
      */
@@ -314,6 +317,7 @@ public class GraphHopper implements GraphHopperAPI
      * Disabling CH is only recommended for short routes or in combination with
      * setDefaultWeightLimit and called flexibility mode
      * <p/>
+     *
      * @see #setDefaultWeightLimit(double)
      */
     public GraphHopper setCHEnable( boolean enable )
@@ -427,6 +431,7 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * The underlying graph used in algorithms.
      * <p/>
+     *
      * @throws IllegalStateException if graph is not instantiated.
      */
     public GraphHopperStorage getGraphHopperStorage()
@@ -450,6 +455,7 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * The location index created from the graph.
      * <p/>
+     *
      * @throws IllegalStateException if index is not initialized
      */
     public LocationIndex getLocationIndex()
@@ -685,8 +691,9 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Opens existing graph.
      * <p/>
+     *
      * @param graphHopperFolder is the folder containing graphhopper files (which can be compressed
-     * too)
+     *                          too)
      */
     @Override
     public boolean load( String graphHopperFolder )
@@ -817,9 +824,10 @@ public class GraphHopper implements GraphHopperAPI
      * created. Note that all URL parameters are available in the weightingParameters as String if
      * you use the GraphHopper Web module.
      * <p/>
+     *
      * @param weightingMap all parameters influencing the weighting. E.g. parameters coming via
-     * GHRequest.getHints or directly via "&api.xy=" from the URL of the web UI
-     * @param encoder the required vehicle
+     *                     GHRequest.getHints or directly via "&api.xy=" from the URL of the web UI
+     * @param encoder      the required vehicle
      * @return the weighting to be used for route calculation
      * @see WeightingMap
      */
@@ -834,9 +842,9 @@ public class GraphHopper implements GraphHopperAPI
         } else if ("fastest".equalsIgnoreCase(weighting) || weighting.isEmpty())
         {
             if (encoder.supports(PriorityWeighting.class))
-                result = new PriorityWeighting(encoder);
+                result = new PriorityWeighting(encoder, weightingMap);
             else
-                result = new FastestWeighting(encoder);
+                result = new FastestWeighting(encoder, weightingMap);
         } else
         {
             throw new UnsupportedOperationException("weighting " + weighting + " not supported");
@@ -964,9 +972,26 @@ public class GraphHopper implements GraphHopperAPI
                 algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).
                 build();
 
+        boolean viaTurnPenalty = request.getHints().getBool("pass_through", false);
         for (int placeIndex = 1; placeIndex < points.size(); placeIndex++)
         {
+
+            if (placeIndex == 1)
+            {
+                // enforce start direction
+                queryGraph.enforceHeading(fromQResult.getClosestNode(), request.getFavoredHeading(0), false);
+            } else if (viaTurnPenalty)
+            {
+                // enforce straight start after via stop
+                EdgeIteratorState incomingVirtualEdge = paths.get(placeIndex - 2).getFinalEdge();
+                queryGraph.enforceHeadingByEdgeId(fromQResult.getClosestNode(), incomingVirtualEdge.getEdge(), false);
+            }
+
             QueryResult toQResult = qResults.get(placeIndex);
+
+            // enforce end direction
+            queryGraph.enforceHeading(toQResult.getClosestNode(), request.getFavoredHeading(placeIndex), true);
+
             sw = new StopWatch().start();
             RoutingAlgorithm algo = tmpAlgoFactory.createAlgo(queryGraph, algoOpts);
             algo.setWeightLimit(weightLimit);
@@ -980,12 +1005,15 @@ public class GraphHopper implements GraphHopperAPI
             paths.add(path);
             debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
 
+            // reset all direction enforcements in queryGraph to avoid influencing next path
+            queryGraph.clearUnfavoredStatus();
+
             visitedSum.addAndGet(algo.getVisitedNodes());
             fromQResult = toQResult;
         }
 
         if (rsp.hasErrors())
-            return Collections.emptyList();
+             return Collections.emptyList();
 
         if (points.size() - 1 != paths.size())
             throw new RuntimeException("There should be exactly one more places than paths. places:" + points.size() + ", paths:" + paths.size());

@@ -20,15 +20,14 @@ package com.graphhopper;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+import org.junit.*;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
-
-import org.junit.*;
 
 import static org.junit.Assert.*;
 
@@ -190,6 +189,36 @@ public class GraphHopperIT
         assertEquals(Instruction.REACHED_VIA, rsp.getInstructions().createJson().get(0).get("sign"));
         assertEquals(Instruction.FINISH, rsp.getInstructions().createJson().get(1).get("sign"));
     }
+
+    @Test
+    public void testMonacoEnforcedDirection()
+    {
+        GHRequest req = new GHRequest().
+                addPoint(new GHPoint(43.741069, 7.426854), 0.).
+                addPoint(new GHPoint(43.744445, 7.429483), 190.).
+                setVehicle(vehicle).setWeighting("fastest");
+        req.getHints().put("heading_penalty", "300");
+        GHResponse rsp = hopper.route(req);
+
+        assertEquals(873., rsp.getDistance(), 10.);
+        assertEquals(33, rsp.getPoints().getSize());
+    }
+
+    @Test
+    public void testMonacoStraightVia()
+    {
+        GHRequest rq = new GHRequest().
+                addPoint(new GHPoint(43.741069, 7.426854)).
+                addPoint(new GHPoint(43.740371, 7.426946)).
+                addPoint(new GHPoint(43.740794, 7.427294)).
+                setVehicle(vehicle).setWeighting("fastest");
+        rq.getHints().put("pass_through", true);
+        GHResponse rsp = hopper.route(rq);
+
+        assertEquals(297, rsp.getDistance(), 5.);
+        assertEquals(27, rsp.getPoints().getSize());
+    }
+
 
     @Test
     public void testSRTMWithInstructions() throws Exception

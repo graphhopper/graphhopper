@@ -19,26 +19,27 @@ package com.graphhopper;
 
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.shapes.GHPoint;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.After;
-import org.junit.Test;
-
 import static org.junit.Assert.*;
-
-import org.junit.Before;
 
 /**
  * @author Peter Karich
@@ -316,10 +317,10 @@ public class GraphHopperTest
     {
         instance = new GraphHopper().init(
                 new CmdArgs().
-                        put("osmreader.osm", testOsm3).
-                        put("osmreader.dataaccess", "RAM").
-                        put("graph.flagEncoders", "FOOT,CAR").
-                        put("prepare.chWeighting", "no")).
+                put("osmreader.osm", testOsm3).
+                put("osmreader.dataaccess", "RAM").
+                put("graph.flagEncoders", "FOOT,CAR").
+                put("prepare.chWeighting", "no")).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
         assertEquals(5, instance.getGraphHopperStorage().getNodes());
@@ -330,10 +331,10 @@ public class GraphHopperTest
         {
             GraphHopper tmpGH = new GraphHopper().init(
                     new CmdArgs().
-                            put("osmreader.osm", testOsm3).
-                            put("osmreader.dataaccess", "RAM").
-                            put("graph.flagEncoders", "FOOT").
-                            put("prepare.chWeighting", "no")).
+                    put("osmreader.osm", testOsm3).
+                    put("osmreader.dataaccess", "RAM").
+                    put("graph.flagEncoders", "FOOT").
+                    put("prepare.chWeighting", "no")).
                     setOSMFile(testOsm3);
             tmpGH.load(ghLoc);
             assertTrue(false);
@@ -531,5 +532,207 @@ public class GraphHopperTest
         assertEquals(5, rsp.getPoints().getSize());
         assertEquals(5, rsp.getInstructions().size());
         assertEquals(Instruction.REACHED_VIA, rsp.getInstructions().get(1).getSign());
+    }
+
+    @Test
+    public void testGetPathsDirectionEnforcement1()
+    {
+        // Test enforce start direction
+        // Note: This Test does not pass for CH enabled    
+
+        GraphHopper instance = initSquareGraphInstance(false);
+
+        // Start in middle of edge 4-5 
+        GHPoint start = new GHPoint(0.0015, 0.002);
+        // End at middle of edge 2-3
+        GHPoint end = new GHPoint(0.002, 0.0005);
+
+        // Test enforce south start direction; expected nodes (9)-5-8-3-(10)
+        GHRequest req = new GHRequest().addPoint(start, 180.).addPoint(end);
+        GHResponse response = new GHResponse();
+        List<Path> paths = instance.getPaths(req, response);
+        assertArrayEquals(new int[]
+        {
+            9, 5, 8, 3, 10
+        }, paths.get(0).calcNodes().toArray());
+    }
+
+    @Test
+    public void testGetPathsDirectionEnforcement2()
+    {
+        // Test enforce start & end direction
+
+        GraphHopper instance = initSquareGraphInstance(false);
+
+        // Start in middle of edge 4-5 
+        GHPoint start = new GHPoint(0.0015, 0.002);
+        // End at middle of edge 2-3
+        GHPoint end = new GHPoint(0.002, 0.0005);
+
+        // Test enforce south start direction and east end direction ; expected nodes (9)-5-8-1-2-(10)
+        GHRequest req = new GHRequest().addPoint(start, 180.).addPoint(end, 90.);
+        GHResponse response = new GHResponse();
+        List<Path> paths = instance.getPaths(req, response);
+        assertArrayEquals(new int[]
+        {
+            9, 5, 8, 1, 2, 10
+        }, paths.get(0).calcNodes().toArray());
+
+        // Test uni-directional case
+        req.setAlgorithm(AlgorithmOptions.DIJKSTRA);
+        response = new GHResponse();
+        paths = instance.getPaths(req, response);
+        assertArrayEquals(new int[]
+        {
+            9, 5, 8, 1, 2, 10
+        }, paths.get(0).calcNodes().toArray());
+    }
+
+    @Test
+    public void testGetPathsDirectionEnforcement3()
+    {
+        // Test enforce via direction
+
+        GraphHopper instance = initSquareGraphInstance(false);
+
+        // Start in middle of edge 4-5 
+        GHPoint start = new GHPoint(0.0015, 0.002);
+        // End at middle of edge 2-3
+        GHPoint end = new GHPoint(0.002, 0.0005);
+        // Via Point betweeen 8-7
+        GHPoint via = new GHPoint(0.0005, 0.001);
+
+        GHRequest req = new GHRequest().addPoint(start).addPoint(via, 0.).addPoint(end);
+        GHResponse response = new GHResponse();
+        List<Path> paths = instance.getPaths(req, response);
+        assertArrayEquals(new int[]
+        {
+            10, 5, 6, 7, 11
+        }, paths.get(0).calcNodes().toArray());
+    }
+
+    @Test
+    public void testGetPathsDirectionEnforcement4()
+    {
+        // Test straight via routing
+
+        GraphHopper instance = initSquareGraphInstance(false);
+
+        // Start in middle of edge 4-5 
+        GHPoint start = new GHPoint(0.0015, 0.002);
+        // End at middle of edge 2-3
+        GHPoint end = new GHPoint(0.002, 0.0005);
+        // Via Point betweeen 8-3
+        GHPoint via = new GHPoint(0.0015, 0.001);
+        GHRequest req = new GHRequest().addPoint(start).addPoint(via).addPoint(end);
+        req.getHints().put("pass_through", true);
+        GHResponse response = new GHResponse();
+        List<Path> paths = instance.getPaths(req, response);
+        assertArrayEquals(new int[]
+        {
+            10, 4, 3, 11
+        }, paths.get(0).calcNodes().toArray());
+        assertArrayEquals(new int[]
+        {
+            11, 8, 1, 2, 9
+        }, paths.get(1).calcNodes().toArray());
+    }
+
+    @Test
+    public void testGetPathsDirectionEnforcement5()
+    {
+        // Test independence of previous enforcement for subsequent pathes
+
+        GraphHopper instance = initSquareGraphInstance(false);
+
+        // Start in middle of edge 4-5 
+        GHPoint start = new GHPoint(0.0015, 0.002);
+        // End at middle of edge 2-3
+        GHPoint end = new GHPoint(0.002, 0.0005);
+        // First go south and than come from west to via-point at 7-6. Then go back over previously punished (11)-4 edge
+        GHPoint via = new GHPoint(0.000, 0.0015);
+        GHRequest req = new GHRequest().addPoint(start, 0.).addPoint(via, 3.14 / 2).addPoint(end);
+        req.getHints().put("pass_through", true);
+        GHResponse response = new GHResponse();
+        List<Path> paths = instance.getPaths(req, response);
+        assertArrayEquals(new int[]
+        {
+            10, 4, 3, 8, 7, 9
+        }, paths.get(0).calcNodes().toArray());
+        assertArrayEquals(new int[]
+        {
+            9, 6, 5, 10, 4, 3, 11
+        }, paths.get(1).calcNodes().toArray());
+    }
+
+    @Test
+    public void testGetPathsDirectionEnforcement6()
+    {
+        // Test if query results at tower nodes are ignored
+
+        GraphHopper instance = initSquareGraphInstance(false);
+
+        // QueryPoints directly on TowerNodes 
+        GHPoint start = new GHPoint(0, 0);
+        GHPoint via = new GHPoint(0.002, 0.000);
+        GHPoint end = new GHPoint(0.002, 0.002);
+
+        GHRequest req = new GHRequest().addPoint(start, 90.).addPoint(via, 270.).addPoint(end, 270.);
+        GHResponse response = new GHResponse();
+        List<Path> paths = instance.getPaths(req, response);
+        assertArrayEquals(new int[]
+        {
+            0, 1, 2
+        }, paths.get(0).calcNodes().toArray());
+        assertArrayEquals(new int[]
+        {
+            2, 3, 4
+        }, paths.get(1).calcNodes().toArray());
+    }
+
+    private GraphHopper initSquareGraphInstance( boolean withCH )
+    {
+        EncodingManager encodingManager = new EncodingManager("car");
+
+        GraphHopperStorage g = new GraphHopperStorage(withCH, new RAMDirectory(), encodingManager,
+                false, new GraphExtension.NoOpExtension()).
+                create(20);
+
+        //   2---3---4
+        //  /    |    \
+        //  1----8----5
+        //  /    |    /
+        //  0----7---6
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 0.000, 0.000);
+        na.setNode(1, 0.001, 0.000);
+        na.setNode(2, 0.002, 0.000);
+        na.setNode(3, 0.002, 0.001);
+        na.setNode(4, 0.002, 0.002);
+        na.setNode(5, 0.001, 0.002);
+        na.setNode(6, 0.000, 0.002);
+        na.setNode(7, 0.000, 0.001);
+        na.setNode(8, 0.001, 0.001);
+
+        g.edge(0, 1, 100, true);
+        g.edge(1, 2, 100, true);
+        g.edge(2, 3, 100, true);
+        g.edge(3, 4, 100, true);
+        g.edge(4, 5, 100, true);
+        g.edge(5, 6, 100, true);
+        g.edge(6, 7, 100, true);
+        g.edge(7, 0, 100, true);
+
+        g.edge(1, 8, 110, true);
+        g.edge(3, 8, 110, true);
+        g.edge(5, 8, 110, true);
+        g.edge(7, 8, 110, true);
+
+        instance = new GraphHopper().setCHEnable(withCH).setCHWeighting("fastest").setEncodingManager(encodingManager);
+        instance.setGraphHopperStorage(g);
+        instance.postProcessing();
+        instance.flush();
+
+        return instance;
     }
 }

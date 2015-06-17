@@ -50,6 +50,7 @@ import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
  * is json it returns the points in GeoJson format (longitude,latitude) unlike the format "lat,lon"
  * used otherwise. See the full API response format in docs/web/api-doc.md
  * <p/>
+ *
  * @author Peter Karich
  */
 public class GraphHopperServlet extends GHBaseServlet
@@ -63,6 +64,7 @@ public class GraphHopperServlet extends GHBaseServlet
     public void doGet( HttpServletRequest httpReq, HttpServletResponse httpRes ) throws ServletException, IOException
     {
         List<GHPoint> infoPoints = getPoints(httpReq, "point");
+        GHResponse ghRsp = new GHResponse();
 
         // we can reduce the path length based on the maximum differences to the original coordinates
         double minPathPrecision = getDoubleParam(httpReq, "way_point_max_distance", 1d);
@@ -76,19 +78,49 @@ public class GraphHopperServlet extends GHBaseServlet
         String weighting = getParam(httpReq, "weighting", "fastest");
         String algoStr = getParam(httpReq, "algorithm", "");
         String localeStr = getParam(httpReq, "locale", "en");
+        List<Double> favoredHeadings = Collections.EMPTY_LIST;
+        try
+        {
+            favoredHeadings = getDoubleParamList(httpReq, "heading");
+
+        } catch (java.lang.NumberFormatException e)
+        {
+            throw new RuntimeException(e);
+        }
 
         StopWatch sw = new StopWatch().start();
-        GHResponse ghRsp;
         if (!hopper.getEncodingManager().supports(vehicleStr))
         {
-            ghRsp = new GHResponse().addError(new IllegalArgumentException("Vehicle not supported: " + vehicleStr));
+            ghRsp.addError(new IllegalArgumentException("Vehicle not supported: " + vehicleStr));
         } else if (enableElevation && !hopper.hasElevation())
         {
-            ghRsp = new GHResponse().addError(new IllegalArgumentException("Elevation not supported!"));
-        } else
+            ghRsp.addError(new IllegalArgumentException("Elevation not supported!"));
+        } else if (favoredHeadings.size() > 1 && favoredHeadings.size() != infoPoints.size())
+        {
+            ghRsp.addError(new IllegalArgumentException("number of headings must be <= 1 or equal number of points"));
+        }
+        if (!ghRsp.hasErrors())
         {
             FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
-            GHRequest request = new GHRequest(infoPoints);
+
+            GHRequest request;
+            if (favoredHeadings.size() > 0)
+            {
+                // if only one favored heading is specified take as start heading
+                if (favoredHeadings.size() == 1)
+                {
+                    List<Double> paddedHeadings = new ArrayList<Double>(Collections.nCopies(infoPoints.size(),
+                            Double.NaN));
+                    paddedHeadings.set(0, favoredHeadings.get(0));
+                    request = new GHRequest(infoPoints, paddedHeadings);
+                } else
+                {
+                    request = new GHRequest(infoPoints, favoredHeadings);
+                }
+            } else
+            {
+                request = new GHRequest(infoPoints);
+            }
 
             initHints(request, httpReq.getParameterMap());
             request.setVehicle(algoVehicle.toString()).
@@ -123,7 +155,9 @@ public class GraphHopperServlet extends GHBaseServlet
                 httpRes.setStatus(SC_BAD_REQUEST);
                 httpRes.getWriter().append(xml);
             } else
+            {
                 writeResponse(httpRes, xml);
+            }
         } else
         {
             Map<String, Object> map = routeSerializer.toJSON(ghRsp, calcPoints, pointsEncoded,
@@ -134,9 +168,8 @@ public class GraphHopperServlet extends GHBaseServlet
                 ((Map) infoMap).put("took", Math.round(took * 1000));
 
             if (ghRsp.hasErrors())
-            {
                 writeJsonError(httpRes, SC_BAD_REQUEST, new JSONObject(map));
-            } else
+            else
                 writeJson(httpReq, httpRes, new JSONObject(map));
         }
     }
@@ -209,9 +242,7 @@ public class GraphHopperServlet extends GHBaseServlet
             {
                 GHPoint point = GHPoint.parse(str);
                 if (point != null)
-                {
                     infoPoints.add(point);
-                }
             }
         }
 

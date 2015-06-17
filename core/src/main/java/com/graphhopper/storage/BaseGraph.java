@@ -633,12 +633,15 @@ class BaseGraph implements Graph
         @Override
         public EdgeIteratorState setName( String name )
         {
-            long nameIndexRef = baseGraph.nameIndex.put(name);
-            if (nameIndexRef < 0)
-                throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
-
-            baseGraph.edges.setInt(edgePointer + baseGraph.E_NAME, (int) nameIndexRef);
+            baseGraph.setName(edgePointer, name);
             return this;
+        }
+
+        @Override
+        public boolean getBoolean( int key, boolean reverse, boolean _default )
+        {
+            // for non-existent keys return default
+            return _default;
         }
 
         @Override
@@ -1325,6 +1328,15 @@ class BaseGraph implements Graph
         return pillarNodes;
     }
 
+    private void setName( long edgePointer, String name )
+    {
+        int nameIndexRef = (int) nameIndex.put(name);
+        if (nameIndexRef < 0)
+            throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
+
+        edges.setInt(edgePointer + E_NAME, nameIndexRef);
+    }
+
     GHBitSet getRemovedNodes()
     {
         if (removedNodes == null)
@@ -1493,12 +1505,15 @@ class BaseGraph implements Graph
         @Override
         public EdgeIteratorState setName( String name )
         {
-            long nameIndexRef = baseGraph.nameIndex.put(name);
-            if (nameIndexRef < 0)
-                throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
-
-            baseGraph.edges.setInt(edgePointer + baseGraph.E_NAME, (int) nameIndexRef);
+            baseGraph.setName(edgePointer, name);
             return this;
+        }
+
+        @Override
+        public boolean getBoolean( int key, boolean reverse, boolean _default )
+        {
+            // for non-existent keys return default
+            return _default;
         }
 
         @Override

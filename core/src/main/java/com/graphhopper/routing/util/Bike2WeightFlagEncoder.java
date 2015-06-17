@@ -170,7 +170,12 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
             // double prevLat = pl.getLatitude(0), prevLon = pl.getLongitude(0);
             double prevEle = pl.getElevation(0);
             double fullDist2D = edge.getDistance();
-            
+
+            if (Double.isInfinite(fullDist2D))
+            {
+                System.err.println("infinity distance? for way:" + way.getId());
+                return;
+            }
             // for short edges an incline makes no sense and for 0 distances could lead to NaN values for speed, see #432
             if (fullDist2D < 1)
                 return;

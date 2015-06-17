@@ -441,6 +441,12 @@ public class GHUtility
         }
 
         @Override
+        public boolean getBoolean(int key, boolean reverse, boolean _default )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+        
+        @Override
         public int getAdditionalField()
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");

@@ -92,4 +92,30 @@ public class AngleCalcTest
         assertEquals(90, Math.atan2(1, 0) * 180 / Math.PI, 1e-2);
         assertEquals(90, AngleCalc.atan2(1, 0) * 180 / Math.PI, 1e-2);
     }
+    
+    @Test
+    public void testConvertAzimuth2xaxisAngle()
+    {
+        assertEquals(Math.PI/2, ac.convertAzimuth2xaxisAngle(0), 1E-6);
+        assertEquals(Math.PI/2, Math.abs(ac.convertAzimuth2xaxisAngle(360)), 1E-6);
+        assertEquals(0, ac.convertAzimuth2xaxisAngle(90), 1E-6);
+        assertEquals(-Math.PI/2, ac.convertAzimuth2xaxisAngle(180), 1E-6);
+        assertEquals(Math.PI, Math.abs(ac.convertAzimuth2xaxisAngle(270)), 1E-6);
+        assertEquals(-3*Math.PI/4, ac.convertAzimuth2xaxisAngle(225), 1E-6);
+        assertEquals(3*Math.PI/4, ac.convertAzimuth2xaxisAngle(315), 1E-6);
+    }
+    
+    @Test
+    public void checkAzimuthConsitency()
+    {
+        double azimuthDegree =  ac.calcAzimuth(0, 0, 1, 1);
+        double radianXY = ac.calcOrientation(0, 0, 1, 1);
+        double radian2 = ac.convertAzimuth2xaxisAngle(azimuthDegree);
+        assertEquals(radianXY, radian2, 1E-3);
+
+        azimuthDegree =  ac.calcAzimuth(0, 4, 1, 3);
+        radianXY = ac.calcOrientation(0, 4, 1, 3);
+        radian2 = ac.convertAzimuth2xaxisAngle(azimuthDegree);
+        assertEquals(radianXY, radian2, 1E-3);
+    }
 }

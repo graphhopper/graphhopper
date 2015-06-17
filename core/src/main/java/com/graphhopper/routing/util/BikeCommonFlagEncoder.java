@@ -731,9 +731,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         {
             return value;
         }
-    }
-
-    ;
+    };
 
     protected void setHighwaySpeed( String highway, int speed )
     {
