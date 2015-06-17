@@ -166,7 +166,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     @Test
     public void testDifferentEdgeFilter()
     {
-        GraphHopperStorage g = new GraphBuilder(encodingManager).setLevelGraph(true).create();
+        GraphHopperStorage g = new GraphBuilder(encodingManager).setCHGraph(true).create();
         g.edge(4, 3, 10, true);
         g.edge(3, 6, 10, true);
 

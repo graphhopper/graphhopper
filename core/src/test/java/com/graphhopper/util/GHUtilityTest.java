@@ -20,7 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.NodeAccess;
 
 import static org.junit.Assert.*;
@@ -109,7 +109,7 @@ public class GHUtilityTest
         Graph g = initUnsorted(createGraph());
         EdgeIteratorState eb = g.edge(0, 0, 11, true);
 
-        LevelGraph lg = new GraphBuilder(encodingManager).levelGraphCreate();
+        CHGraph lg = new GraphBuilder(encodingManager).chGraphCreate();
         GHUtility.copyTo(g, lg);
 
         assertEquals(g.getAllEdges().getCount(), lg.getAllEdges().getCount());
@@ -121,7 +121,7 @@ public class GHUtilityTest
         Graph g = initUnsorted(createGraph());
         EdgeIteratorState eb = g.edge(6, 5, 11, true);
         eb.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
-        LevelGraph lg = new GraphBuilder(encodingManager).levelGraphCreate();
+        CHGraph lg = new GraphBuilder(encodingManager).chGraphCreate();
         GHUtility.copyTo(g, lg);
 
         eb = GHUtility.getEdge(lg, 5, 6);

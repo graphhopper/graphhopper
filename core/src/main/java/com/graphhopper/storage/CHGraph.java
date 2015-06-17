@@ -23,12 +23,13 @@ import com.graphhopper.util.EdgeSkipExplorer;
 import com.graphhopper.util.EdgeSkipIterState;
 
 /**
- * Extended graph interface which supports storing and retrieving the level for a node and creating
- * shortcuts, which are additional 'artificial' edges to speedup traversal in certain cases.
+ * Extended graph interface which supports Contraction Hierarchies. Ie. storing and retrieving the
+ * levels for a node and creating shortcuts, which are additional 'artificial' edges to speedup
+ * traversal in certain cases.
  * <p/>
  * @author Peter Karich
  */
-public interface LevelGraph extends Graph
+public interface CHGraph extends Graph
 {
     /**
      * This methods sets the level of the specified node.

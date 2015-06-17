@@ -41,7 +41,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph
     private final StorableProperties properties;
     private final BaseGraph baseGraph;
     // same flush order etc
-    private LevelGraphImpl chGraph;
+    private CHGraphImpl chGraph;
 
     public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation )
     {
@@ -138,7 +138,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph
 
         if (enableCH)
             // name level graph according to first flag encoder and fastest?
-            chGraph = new LevelGraphImpl("ch", dir, this.baseGraph, chPropAccess);
+            chGraph = new CHGraphImpl("ch", dir, this.baseGraph, chPropAccess);
     }
 
     /**

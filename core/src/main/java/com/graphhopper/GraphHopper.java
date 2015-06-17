@@ -693,7 +693,7 @@ public class GraphHopper implements GraphHopperAPI
      * <p/>
      *
      * @param graphHopperFolder is the folder containing graphhopper files (which can be compressed
-     *                          too)
+     * too)
      */
     @Override
     public boolean load( String graphHopperFolder )
@@ -808,8 +808,7 @@ public class GraphHopper implements GraphHopperAPI
         FlagEncoder defaultVehicle = getDefaultVehicle();
         Weighting weighting = createWeighting(new WeightingMap(chWeightingStr), defaultVehicle);
         PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
-                new GHDirectory("", DAType.RAM_INT),
-                ghStorage, ghStorage.getGraph(LevelGraph.class),
+                new GHDirectory("", DAType.RAM_INT), ghStorage.getGraph(CHGraph.class),
                 defaultVehicle, weighting, traversalMode);
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                 setLazyUpdates(lazyUpdates).
@@ -826,8 +825,8 @@ public class GraphHopper implements GraphHopperAPI
      * <p/>
      *
      * @param weightingMap all parameters influencing the weighting. E.g. parameters coming via
-     *                     GHRequest.getHints or directly via "&api.xy=" from the URL of the web UI
-     * @param encoder      the required vehicle
+     * GHRequest.getHints or directly via "&api.xy=" from the URL of the web UI
+     * @param encoder the required vehicle
      * @return the weighting to be used for route calculation
      * @see WeightingMap
      */
@@ -954,7 +953,7 @@ public class GraphHopper implements GraphHopperAPI
                 tmpAlgoFactory = new RoutingAlgorithmFactorySimple();
             } else
             {
-                routingGraph = ghStorage.getGraph(LevelGraph.class);
+                routingGraph = ghStorage.getGraph(CHGraph.class);
             }
         }
 
@@ -1013,7 +1012,7 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         if (rsp.hasErrors())
-             return Collections.emptyList();
+            return Collections.emptyList();
 
         if (points.size() - 1 != paths.size())
             throw new RuntimeException("There should be exactly one more places than paths. places:" + points.size() + ", paths:" + paths.size());
@@ -1058,7 +1057,7 @@ public class GraphHopper implements GraphHopperAPI
         if (sortGraph)
         {
             if (ghStorage.isCHPossible() && isPrepared())
-                throw new IllegalArgumentException("Sorting a prepared LevelGraph is not possible yet. See #12");
+                throw new IllegalArgumentException("Sorting a prepared CHGraph is not possible yet. See #12");
 
             GraphHopperStorage newGraph = GHUtility.newStorage(ghStorage);
             GHUtility.sortDFS(ghStorage.getBaseGraph(), newGraph);

@@ -151,14 +151,14 @@ public class RoutingAlgorithmIT
         List<AlgoHelperEntry> prepares = createAlgos(hopper.getGraphHopperStorage(), hopper.getLocationIndex(),
                 encoder, true, TraversalMode.NODE_BASED, weighting, hopper.getEncodingManager());
         AlgoHelperEntry chPrepare = prepares.get(prepares.size() - 1);
-        if (!(chPrepare.getQueryGraph() instanceof LevelGraph))
-            throw new IllegalStateException("Last prepared queryGraph has to be a levelGraph");
+        if (!(chPrepare.getQueryGraph() instanceof CHGraph))
+            throw new IllegalStateException("Last prepared QueryGraph has to be a CHGraph");
 
         // set all normal algorithms to baseGraph of already prepared to see if all algorithms still work
         Graph baseGraphOfCHPrepared = chPrepare.getBaseGraph();
         for (AlgoHelperEntry ahe : prepares)
         {
-            if (!(ahe.getQueryGraph() instanceof LevelGraph))
+            if (!(ahe.getQueryGraph() instanceof CHGraph))
             {
                 ahe.setQueryGraph(baseGraphOfCHPrepared);
             }
@@ -711,13 +711,12 @@ public class RoutingAlgorithmIT
         if (withCh)
         {
             GraphHopperStorage storageCopy = new GraphBuilder(manager).
-                    set3D(ghStorage.getNodeAccess().is3D()).
-                    setLevelGraph(true).
+                    set3D(ghStorage.getNodeAccess().is3D()).setCHGraph(true).
                     create();
             ghStorage.copyTo(storageCopy);
-            final LevelGraph graphCH = storageCopy.getGraph(LevelGraph.class);
+            final CHGraph graphCH = storageCopy.getGraph(CHGraph.class);
             final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(
-                    new GHDirectory("", DAType.RAM_INT), storageCopy, graphCH, encoder, weighting, tMode);
+                    new GHDirectory("", DAType.RAM_INT), graphCH, encoder, weighting, tMode);
             prepareCH.doWork();
             LocationIndex idxCH = new LocationIndexTree(storageCopy, new RAMDirectory()).prepareIndex();
             prepare.add(new AlgoHelperEntry(graphCH, storageCopy, dijkstrabiOpts, idxCH)

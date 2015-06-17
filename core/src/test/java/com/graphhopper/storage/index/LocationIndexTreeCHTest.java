@@ -38,7 +38,7 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class LocationIndexTreeForLevelGraphTest extends LocationIndexTreeTest
+public class LocationIndexTreeCHTest extends LocationIndexTreeTest
 {
     @Override
     public LocationIndexTree createIndex( Graph g, int resolution )
@@ -65,10 +65,10 @@ public class LocationIndexTreeForLevelGraphTest extends LocationIndexTreeTest
     }
 
     @Test
-    public void testLevelGraph()
+    public void testCHGraph()
     {
         GraphHopperStorage g = createGHStorage(new RAMDirectory(), encodingManager, false);
-        LevelGraph lg = g.getGraph(LevelGraph.class);
+        CHGraph lg = g.getGraph(CHGraph.class);
         // 0
         // 1
         // 2
@@ -107,7 +107,7 @@ public class LocationIndexTreeForLevelGraphTest extends LocationIndexTreeTest
     public void testSortHighLevelFirst()
     {
         GraphHopperStorage g = createGHStorage(new RAMDirectory(), encodingManager, false);
-        final LevelGraph lg = g.getGraph(LevelGraph.class);
+        final CHGraph lg = g.getGraph(CHGraph.class);
         lg.getNodeAccess().ensureNode(4);
         lg.setLevel(1, 10);
         lg.setLevel(2, 30);
@@ -130,7 +130,7 @@ public class LocationIndexTreeForLevelGraphTest extends LocationIndexTreeTest
     }
 
     @Test
-    public void testLevelGraphBug()
+    public void testCHGraphBug()
     {
         // 0
         // |
@@ -147,7 +147,7 @@ public class LocationIndexTreeForLevelGraphTest extends LocationIndexTreeTest
         EdgeIteratorState iter1 = g.edge(1, 0, 100, true);
         g.edge(2, 3, 100, true);
 
-        LevelGraphImpl lg = (LevelGraphImpl) g.getGraph(LevelGraph.class);
+        CHGraphImpl lg = (CHGraphImpl) g.getGraph(CHGraph.class);
         lg.freeze();
         lg.setLevel(0, 11);
         lg.setLevel(1, 10);

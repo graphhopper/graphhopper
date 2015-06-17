@@ -58,7 +58,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private EdgeSkipExplorer calcPrioAllExplorer;
     private final LevelEdgeFilter levelFilter;
     private int maxLevel;
-    private final LevelGraphImpl prepareGraph;
+    private final CHGraphImpl prepareGraph;
 
     // the most important nodes comes last
     private GHTreeMapComposed sortedNodes;
@@ -79,14 +79,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private int neighborUpdatePercentage = 20;
     private int initialCollectionSize = 5000;
     private double nodesContractedPercentage = 100;
-    private double logMessagesPercentage = 20;
-    private final Graph baseGraph;
+    private double logMessagesPercentage = 20;    
 
-    public PrepareContractionHierarchies( Directory dir, Graph baseGraph, LevelGraph levelGraph,
+    public PrepareContractionHierarchies( Directory dir, CHGraph chGraph,
                                           FlagEncoder encoder, Weighting weighting, TraversalMode traversalMode )
     {
-        this.baseGraph = baseGraph;
-        this.prepareGraph = (LevelGraphImpl) levelGraph;
+        this.prepareGraph = (CHGraphImpl) chGraph;
         this.traversalMode = traversalMode;
         this.prepareFlagEncoder = encoder;
         long scFwdDir = encoder.setAccess(0, true, false);
@@ -731,9 +729,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     {
         int avoidNode;
         int maxLevel;
-        LevelGraph graph;
+        CHGraph graph;
 
-        public IgnoreNodeFilter( LevelGraph g, int maxLevel )
+        public IgnoreNodeFilter( CHGraph g, int maxLevel )
         {
             this.graph = g;
             this.maxLevel = maxLevel;

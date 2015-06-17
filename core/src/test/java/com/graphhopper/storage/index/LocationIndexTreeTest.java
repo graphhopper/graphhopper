@@ -134,7 +134,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         // The optimization if(dist > normedHalf) => feed nodeA or nodeB
         // although this reduces chance of nodes outside of the tile
         // in practice it even increases file size!?
-        // Is this due to the LevelGraph disconnect problem?
+        // Is this due to the CHGraph disconnect problem?
 //        set.clear();
 //        set.add(4);
 //        assertEquals(set, index.findNetworkEntries(-0.7, 1.5));

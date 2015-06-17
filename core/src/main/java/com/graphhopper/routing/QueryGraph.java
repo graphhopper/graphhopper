@@ -284,7 +284,7 @@ public class QueryGraph implements Graph
     @Override
     public Graph getBaseGraph()
     {
-        // Note: if the mainGraph of this QueryGraph is a LevelGraph then ignoring the shortcuts will produce a 
+        // Note: if the mainGraph of this QueryGraph is a CHGraph then ignoring the shortcuts will produce a 
         // huge gap of edgeIds between base and virtual edge ids. The only solution would be to move virtual edges
         // directly after normal edge ids which is ugly as we limit virtual edges to N edges and waste memory or make everything more complex.        
         return baseGraph;

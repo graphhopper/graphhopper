@@ -36,9 +36,9 @@ import org.junit.Test;
  */
 public class GraphHopperStorageCHTest extends GraphHopperStorageTest
 {
-    protected LevelGraph getGraph( GraphHopperStorage ghStorage )
+    protected CHGraph getGraph( GraphHopperStorage ghStorage )
     {
-        return ghStorage.getGraph(LevelGraph.class);
+        return ghStorage.getGraph(CHGraph.class);
     }
 
     @Override
@@ -73,7 +73,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     public void testPriosWhileDeleting()
     {
         GraphHopperStorage storage = createGHStorage();
-        LevelGraph g = getGraph(storage);
+        CHGraph g = getGraph(storage);
         g.getNodeAccess().ensureNode(19);
         for (int i = 0; i < 20; i++)
         {
@@ -90,7 +90,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     public void testPrios()
     {
         GraphHopperStorage storage = createGHStorage();
-        LevelGraph g = getGraph(storage);
+        CHGraph g = getGraph(storage);
         g.getNodeAccess().ensureNode(30);
 
         assertEquals(0, g.getLevel(10));
@@ -106,7 +106,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     public void testEdgeFilter()
     {
         GraphHopperStorage storage = createGHStorage();
-        LevelGraph g = getGraph(storage);
+        CHGraph g = getGraph(storage);
         g.edge(0, 1, 10, true);
         g.edge(0, 2, 20, true);
         g.edge(2, 3, 30, true);
@@ -129,7 +129,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     public void testDisconnectEdge()
     {
         GraphHopperStorage storage = createGHStorage();
-        LevelGraphImpl g = (LevelGraphImpl) getGraph(storage);
+        CHGraphImpl g = (CHGraphImpl) getGraph(storage);
         // only remove edges
         long flags = carEncoder.setProperties(60, true, true);
         long flags2 = carEncoder.setProperties(60, true, false);
@@ -168,7 +168,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     public void testGetWeight()
     {
         GraphHopperStorage storage = createGHStorage();
-        LevelGraphImpl g = (LevelGraphImpl) getGraph(storage);
+        CHGraphImpl g = (CHGraphImpl) getGraph(storage);
         assertFalse(g.edge(0, 1).isShortcut());
         assertFalse(g.edge(1, 2).isShortcut());
 
@@ -201,8 +201,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     public void testGetWeightIfAdvancedEncoder()
     {
         FlagEncoder customEncoder = new Bike2WeightFlagEncoder();
-        LevelGraphImpl lg = (LevelGraphImpl) new GraphBuilder(new EncodingManager(customEncoder)).
-                setLevelGraph(true).create().getGraph(LevelGraph.class);
+        CHGraphImpl lg = (CHGraphImpl) new GraphBuilder(new EncodingManager(customEncoder)).setCHGraph(true).create().getGraph(CHGraph.class);
 
         lg.edge(0, 2);
         lg.freeze();
@@ -227,24 +226,24 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     public void testQueryGraph()
     {
         GraphHopperStorage storage = createGHStorage();
-        LevelGraph levelGraph = getGraph(storage);
-        NodeAccess na = levelGraph.getNodeAccess();
+        CHGraph chGraph = getGraph(storage);
+        NodeAccess na = chGraph.getNodeAccess();
         na.setNode(0, 1.00, 1.00);
         na.setNode(1, 1.02, 1.00);
         na.setNode(2, 1.04, 1.00);
 
-        EdgeIteratorState edge1 = levelGraph.edge(0, 1);
-        EdgeIteratorState edge2 = levelGraph.edge(1, 2);
-        levelGraph.shortcut(0, 1);
+        EdgeIteratorState edge1 = chGraph.edge(0, 1);
+        EdgeIteratorState edge2 = chGraph.edge(1, 2);
+        chGraph.shortcut(0, 1);
 
-        QueryGraph qGraph = new QueryGraph(levelGraph);
+        QueryGraph qGraph = new QueryGraph(chGraph);
         QueryResult fromRes = createQR(1.004, 1.01, 0, edge1);
         QueryResult toRes = createQR(1.019, 1.00, 0, edge1);
         qGraph.lookup(fromRes, toRes);
 
         EdgeExplorer explorer = storage.createEdgeExplorer();
 
-        assertTrue(levelGraph.getNodes() < qGraph.getNodes());
+        assertTrue(chGraph.getNodes() < qGraph.getNodes());
         assertTrue(storage.getNodes() < qGraph.getNodes());
 
         // traverse virtual edges and normal edges but no shortcuts!

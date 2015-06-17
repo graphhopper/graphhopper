@@ -20,7 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.*;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -196,7 +196,7 @@ public class TestAlgoCollector
         @Override
         public String toString()
         {
-            return opts.getAlgorithm() + (queryGraph instanceof LevelGraph ? "CH" : "");
+            return opts.getAlgorithm() + (queryGraph instanceof CHGraph ? "CH" : "");
         }
     }
 

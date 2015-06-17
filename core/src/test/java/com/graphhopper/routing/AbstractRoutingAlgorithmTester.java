@@ -373,9 +373,9 @@ public abstract class AbstractRoutingAlgorithmTester
         GraphHopperStorage graph = createGHStorage(false);
         initBiGraph(graph);
 
-        // PrepareTowerNodesShortcutsTest.printEdges((LevelGraph) graph);
+        // PrepareTowerNodesShortcutsTest.printEdges((CHGraph) graph);
         Path p = createAlgo(graph).calcPath(0, 4);
-        // PrepareTowerNodesShortcutsTest.printEdges((LevelGraph) graph);
+        // PrepareTowerNodesShortcutsTest.printEdges((CHGraph) graph);
         assertEquals(p.toString(), Helper.createTList(0, 7, 6, 8, 3, 4), p.calcNodes());
         assertEquals(p.toString(), 335.8, p.getDistance(), .1);
 
@@ -520,7 +520,7 @@ public abstract class AbstractRoutingAlgorithmTester
         assertEquals(Helper.createPointList(0, 2, 1, 1.5, 1.5, 1, 1, 0.6), p.calcPoints());
         assertEquals(274128, p.calcPoints().calcDistance(new DistanceCalcEarth()), 1);
 
-        // PrepareTowerNodesShortcutsTest.printEdges((LevelGraph) graph);
+        // PrepareTowerNodesShortcutsTest.printEdges((CHGraph) graph);
         p = prepare.createAlgo(getGraph(graph), opts).calcPath(2, 1);
         assertEquals(Helper.createTList(2, 0, 1), p.calcNodes());
         assertEquals(Helper.createPointList(0, 0, 1, 0.6, 1.5, 1, 1, 1.5), p.calcPoints());

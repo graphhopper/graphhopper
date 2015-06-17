@@ -165,7 +165,7 @@ public class GHUtility
         }.start(g.createEdgeExplorer(), startNode);
     }
 
-    public static String getNodeInfo( LevelGraph g, int nodeId, EdgeFilter filter )
+    public static String getNodeInfo( CHGraph g, int nodeId, EdgeFilter filter )
     {
         EdgeSkipExplorer ex = g.createEdgeExplorer(filter);
         EdgeSkipIterator iter = ex.setBaseNode(nodeId);

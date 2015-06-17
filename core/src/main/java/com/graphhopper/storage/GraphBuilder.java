@@ -30,7 +30,7 @@ public class GraphBuilder
     private String location;
     private boolean mmap;
     private boolean store;
-    private boolean levelGraph;
+    private boolean chGraph;
     private boolean elevation;
     private long byteCapacity = 100;
 
@@ -40,13 +40,13 @@ public class GraphBuilder
     }
 
     /**
-     * If true builder will create a LevelGraph
+     * If true builder will create a CHGraph
      * <p/>
-     * @see LevelGraph
+     * @see CHGraph
      */
-    public GraphBuilder setLevelGraph( boolean level )
+    public GraphBuilder setCHGraph( boolean isCHGraph )
     {
-        this.levelGraph = level;
+        this.chGraph = isCHGraph;
         return this;
     }
 
@@ -85,17 +85,12 @@ public class GraphBuilder
         return elevation;
     }
 
-    public LevelGraph levelGraphBuild()
-    {
-        return setLevelGraph(true).build().getGraph(LevelGraph.class);
-    }
-
     /**
-     * Creates a LevelGraph
+     * Creates a CHGraph
      */
-    public LevelGraph levelGraphCreate()
+    public CHGraph chGraphCreate()
     {
-        return setLevelGraph(true).create().getGraph(LevelGraph.class);
+        return setCHGraph(true).create().getGraph(CHGraph.class);
     }
 
     /**
@@ -115,7 +110,7 @@ public class GraphBuilder
         if (encodingManager.needsTurnCostsSupport())
             graph = new GraphHopperStorage(false, dir, encodingManager, elevation, new TurnCostExtension());
         else
-            graph = new GraphHopperStorage(levelGraph, dir, encodingManager, elevation, new TurnCostExtension.NoOpExtension());
+            graph = new GraphHopperStorage(chGraph, dir, encodingManager, elevation, new TurnCostExtension.NoOpExtension());
 
         return graph;
     }

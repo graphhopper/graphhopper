@@ -62,22 +62,22 @@ Path path = new Dijkstra(queryGraph, encoder).calcPath(fromQR.getClosestNode(), 
 Path path = new Dijkstra(graph, encoder).calcPath(fromId, toId);
 ```
 
-### Use LevelGraph to make queries faster
+### Use CHGraph to make queries faster
 
 ```java
 // Creating and saving the graph
 GraphBuilder gb = new GraphBuilder(em).
     setLocation("graphhopper-folder").
     setStore(true).
-    setLevelGraph(true);
-GraphStorage graph = gb.create();
+    setCHGraph(true);
+GraphHopperStorage graph = gb.create();
 // Create a new edge between two nodes, set access, distance, speed, geometry, ..
 EdgeIteratorState edge = graph.edge(fromId, toId);
 ...
 
 // Prepare the graph for fast querying ...
 TraversalMode tMode = TraversalMode.NODE_BASED;
-PrepareContractionHierarchies pch = new PrepareContractionHierarchies(graph, encoder, weighting, tMode);
+PrepareContractionHierarchies pch = new PrepareContractionHierarchies(ghStorage, encoder, weighting, tMode);
 pch.doWork();
 
 // flush after preparation!

@@ -32,7 +32,7 @@ import com.graphhopper.util.shapes.BBox;
  * <p/>
  * @author Peter Karich
  */
-public class LevelGraphImpl implements LevelGraph, Storable<LevelGraph>
+public class CHGraphImpl implements CHGraph, Storable<CHGraph>
 {
     private static final double WEIGHT_FACTOR = 1000f;
     // 2 bits for access, for now only 32bit => not Long.MAX
@@ -49,7 +49,7 @@ public class LevelGraphImpl implements LevelGraph, Storable<LevelGraph>
 //    private final DataAccess nodesCH;
 //    private final int nodeCHEntryBytes;
 
-    LevelGraphImpl( String name, Directory dir, BaseGraph baseGraph, InternalGraphPropertyAccess propAccess )
+    CHGraphImpl( String name, Directory dir, BaseGraph baseGraph, InternalGraphPropertyAccess propAccess )
     {
         this.baseGraph = baseGraph;
         this.propAccess = propAccess;
@@ -225,14 +225,14 @@ public class LevelGraphImpl implements LevelGraph, Storable<LevelGraph>
         @Override
         public final EdgeSkipIterState setWeight( double weight )
         {
-            LevelGraphImpl.this.setWeight(this, weight);
+            CHGraphImpl.this.setWeight(this, weight);
             return this;
         }
 
         @Override
         public final double getWeight()
         {
-            return LevelGraphImpl.this.getWeight(this);
+            return CHGraphImpl.this.getWeight(this);
         }
 
         @Override
@@ -363,14 +363,14 @@ public class LevelGraphImpl implements LevelGraph, Storable<LevelGraph>
         @Override
         public final EdgeSkipIterState setWeight( double weight )
         {
-            LevelGraphImpl.this.setWeight(this, weight);
+            CHGraphImpl.this.setWeight(this, weight);
             return this;
         }
 
         @Override
         public final double getWeight()
         {
-            return LevelGraphImpl.this.getWeight(this);
+            return CHGraphImpl.this.getWeight(this);
         }
     }
 
@@ -416,14 +416,14 @@ public class LevelGraphImpl implements LevelGraph, Storable<LevelGraph>
         @Override
         public final EdgeSkipIterState setWeight( double weight )
         {
-            LevelGraphImpl.this.setWeight(this, weight);
+            CHGraphImpl.this.setWeight(this, weight);
             return this;
         }
 
         @Override
         public final double getWeight()
         {
-            return LevelGraphImpl.this.getWeight(this);
+            return CHGraphImpl.this.getWeight(this);
         }
     }
 
@@ -506,7 +506,7 @@ public class LevelGraphImpl implements LevelGraph, Storable<LevelGraph>
     }
 
     @Override
-    public LevelGraph create( long bytes )
+    public CHGraph create( long bytes )
     {
         // nodesCH.create(bytes);
         return this;

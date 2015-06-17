@@ -53,22 +53,22 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     }
 
     @Override
-    protected LevelGraph getGraph( GraphHopperStorage ghStorage )
+    protected CHGraph getGraph( GraphHopperStorage ghStorage )
     {
-        return ghStorage.getGraph(LevelGraph.class);
+        return ghStorage.getGraph(CHGraph.class);
     }
 
     @Override
     protected GraphHopperStorage createGHStorage( EncodingManager em, boolean is3D )
     {
-        return new GraphBuilder(em).set3D(is3D).setLevelGraph(true).create();
+        return new GraphBuilder(em).set3D(is3D).setCHGraph(true).create();
     }
 
     @Override
     public RoutingAlgorithmFactory createFactory( GraphHopperStorage ghStorage, AlgorithmOptions opts )
     {
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
-                ghStorage, getGraph(ghStorage),
+                getGraph(ghStorage),
                 opts.getFlagEncoder(), opts.getWeighting(), TraversalMode.NODE_BASED);
         // hack: prepare matrixGraph only once
         if (ghStorage != preparedMatrixGraph)
@@ -84,7 +84,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         FlagEncoder encoder = new Bike2WeightFlagEncoder();
         EncodingManager em = new EncodingManager(encoder);
         GraphHopperStorage ghStorage = createGHStorage(em, false);
-        LevelGraphImpl g2 = (LevelGraphImpl) ghStorage.getGraph(LevelGraph.class);
+        CHGraphImpl g2 = (CHGraphImpl) ghStorage.getGraph(CHGraph.class);
         g2.edge(0, 1, 1, true);
         EdgeIteratorState iter1_1 = g2.edge(0, 2, 1.4, false);
         EdgeIteratorState iter1_2 = g2.edge(2, 5, 1.4, false);
@@ -119,7 +119,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         ShortestWeighting weighting = new ShortestWeighting();
         AlgorithmOptions opts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting);
         Path p = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
-                ghStorage, g2, encoder, weighting, TraversalMode.NODE_BASED).
+                g2, encoder, weighting, TraversalMode.NODE_BASED).
                 createAlgo(g2, opts).calcPath(0, 7);
 
         assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());
