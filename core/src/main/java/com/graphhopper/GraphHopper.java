@@ -641,7 +641,6 @@ public class GraphHopper implements GraphHopperAPI
                 throw new RuntimeException("Cannot parse OSM file " + getOSMFile(), ex);
             }
             cleanUp();
-            optimize();
             postProcessing();
             flush();
         } finally
@@ -788,6 +787,19 @@ public class GraphHopper implements GraphHopperAPI
      */
     protected void postProcessing()
     {
+        // Later: move this into the GraphStorage.optimize method
+        // Or: Doing it after preparation to optimize shortcuts too. But not possible yet #12
+        if (sortGraph)
+        {
+            if (ghStorage.isCHPossible() && isPrepared())
+                throw new IllegalArgumentException("Sorting a prepared CHGraph is not possible yet. See #12");
+
+            GraphHopperStorage newGraph = GHUtility.newStorage(ghStorage);
+            GHUtility.sortDFS(ghStorage.getBaseGraph(), newGraph);
+            logger.info("graph sorted (" + Helper.getMemInfo() + ")");
+            ghStorage = newGraph;
+        }
+
         initLocationIndex();
         if (chEnabled)
             algoFactory = createPrepare();
@@ -808,7 +820,7 @@ public class GraphHopper implements GraphHopperAPI
         FlagEncoder defaultVehicle = getDefaultVehicle();
         Weighting weighting = createWeighting(new WeightingMap(chWeightingStr), defaultVehicle);
         PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
-                new GHDirectory("", DAType.RAM_INT), ghStorage.getGraph(CHGraph.class),
+                new GHDirectory("", DAType.RAM_INT), ghStorage, ghStorage.getGraph(CHGraph.class),
                 defaultVehicle, weighting, traversalMode);
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                 setLazyUpdates(lazyUpdates).
@@ -1046,26 +1058,6 @@ public class GraphHopper implements GraphHopperAPI
         locationIndex = createLocationIndex(ghStorage.getDirectory());
     }
 
-    protected void optimize()
-    {
-        logger.info("optimizing ... (" + Helper.getMemInfo() + ")");
-        ghStorage.optimize();
-        logger.info("finished optimize (" + Helper.getMemInfo() + ")");
-
-        // Later: move this into the GraphStorage.optimize method
-        // Or: Doing it after preparation to optimize shortcuts too. But not possible yet #12
-        if (sortGraph)
-        {
-            if (ghStorage.isCHPossible() && isPrepared())
-                throw new IllegalArgumentException("Sorting a prepared CHGraph is not possible yet. See #12");
-
-            GraphHopperStorage newGraph = GHUtility.newStorage(ghStorage);
-            GHUtility.sortDFS(ghStorage.getBaseGraph(), newGraph);
-            logger.info("graph sorted (" + Helper.getMemInfo() + ")");
-            ghStorage = newGraph;
-        }
-    }
-
     protected void prepare()
     {
         boolean tmpPrepare = doPrepare && algoFactory instanceof PrepareContractionHierarchies;
@@ -1073,6 +1065,7 @@ public class GraphHopper implements GraphHopperAPI
         {
             ensureWriteAccess();
             logger.info("calling prepare.doWork for " + getDefaultVehicle() + " ... (" + Helper.getMemInfo() + ")");
+            ghStorage.freeze();
             ((PrepareContractionHierarchies) algoFactory).doWork();
             ghStorage.getProperties().put("prepare.date", formatDateTime(new Date()));
         }

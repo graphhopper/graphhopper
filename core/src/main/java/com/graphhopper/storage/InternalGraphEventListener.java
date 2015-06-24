@@ -21,11 +21,7 @@ package com.graphhopper.storage;
  * @author Peter Karich
  */
 public interface InternalGraphEventListener
-{
-    void ensureEdgeIndex( int edgeIndex );
-
-    void ensureNodeIndex( int nodeIndex );
-    
+{    
     void freeze();
 
     void initStorage();           

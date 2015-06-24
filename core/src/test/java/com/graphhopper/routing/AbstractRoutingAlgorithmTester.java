@@ -267,6 +267,9 @@ public abstract class AbstractRoutingAlgorithmTester
         graph.edge(100, 101);
         assertFalse(createAlgo(graph).calcPath(0, 1).isFound());
 
+        graph = createGHStorage(false);
+        graph.edge(100, 101);
+
         // two disconnected areas
         graph.edge(0, 1, 7, true);
 
@@ -648,7 +651,7 @@ public abstract class AbstractRoutingAlgorithmTester
             w = new FastestWeighting(carEncoder);
 
         // correct order for CH: in factory do prepare and afterwards wrap in query graph
-        AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(w).build();        
+        AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(w).build();
         RoutingAlgorithmFactory factory = createFactory(ghStorage, opts);
         QueryGraph qGraph = new QueryGraph(getGraph(ghStorage)).lookup(from, to);
         return factory.createAlgo(qGraph, opts).

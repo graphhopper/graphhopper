@@ -18,10 +18,7 @@
 package com.graphhopper.util;
 
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.*;
 
 import static org.junit.Assert.*;
 
@@ -121,8 +118,11 @@ public class GHUtilityTest
         Graph g = initUnsorted(createGraph());
         EdgeIteratorState eb = g.edge(6, 5, 11, true);
         eb.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
-        CHGraph lg = new GraphBuilder(encodingManager).chGraphCreate();
+
+        GraphHopperStorage newStore = new GraphBuilder(encodingManager).setCHGraph(true).create();
+        CHGraph lg = newStore.getGraph(CHGraph.class);
         GHUtility.copyTo(g, lg);
+        newStore.freeze();
 
         eb = GHUtility.getEdge(lg, 5, 6);
         assertEquals(Helper.createPointList(-1, 3, 12, 10), eb.fetchWayGeometry(0));

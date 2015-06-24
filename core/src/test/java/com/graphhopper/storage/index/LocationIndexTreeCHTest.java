@@ -67,26 +67,27 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest
     @Test
     public void testCHGraph()
     {
-        GraphHopperStorage g = createGHStorage(new RAMDirectory(), encodingManager, false);
-        CHGraph lg = g.getGraph(CHGraph.class);
+        GraphHopperStorage ghStorage = createGHStorage(new RAMDirectory(), encodingManager, false);
+        CHGraph lg = ghStorage.getGraph(CHGraph.class);
         // 0
         // 1
         // 2
         //  3
         //   4
-        NodeAccess na = g.getNodeAccess();
+        NodeAccess na = ghStorage.getNodeAccess();
         na.setNode(0, 1, 0);
         na.setNode(1, 0.5, 0);
         na.setNode(2, 0, 0);
         na.setNode(3, -1, 1);
         na.setNode(4, -2, 2);
 
-        EdgeIteratorState iter1 = g.edge(0, 1, 10, true);
-        EdgeIteratorState iter2 = g.edge(1, 2, 10, true);
-        EdgeIteratorState iter3 = g.edge(2, 3, 14, true);
-        EdgeIteratorState iter4 = g.edge(3, 4, 14, true);
+        EdgeIteratorState iter1 = ghStorage.edge(0, 1, 10, true);
+        EdgeIteratorState iter2 = ghStorage.edge(1, 2, 10, true);
+        EdgeIteratorState iter3 = ghStorage.edge(2, 3, 14, true);
+        EdgeIteratorState iter4 = ghStorage.edge(3, 4, 14, true);
 
         // create shortcuts
+        ghStorage.freeze();
         FlagEncoder car = encodingManager.getEncoder("CAR");
         long flags = car.setProperties(60, true, true);
         EdgeSkipIterState iter5 = lg.shortcut(0, 2);
@@ -99,7 +100,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest
         tmp.setDistance(40).setFlags(flags);
         tmp.setSkippedEdges(iter5.getEdge(), iter6.getEdge());
 
-        LocationIndex index = createIndex(g, -1);
+        LocationIndex index = createIndex(ghStorage, -1);
         assertEquals(2, index.findID(0, 0.5));
     }
 
@@ -148,7 +149,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest
         g.edge(2, 3, 100, true);
 
         CHGraphImpl lg = (CHGraphImpl) g.getGraph(CHGraph.class);
-        lg.freeze();
+        g.freeze();
         lg.setLevel(0, 11);
         lg.setLevel(1, 10);
         // disconnect higher 0 from lower 1

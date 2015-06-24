@@ -118,7 +118,7 @@ public class PathMerger
 
         if (!allFound)
         {
-            rsp.addError(new RuntimeException("Not found"));
+            rsp.addError(new RuntimeException("Connection between locations not found"));
         }
 
         rsp.setPoints(fullPoints).

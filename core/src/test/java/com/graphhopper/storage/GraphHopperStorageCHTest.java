@@ -26,6 +26,7 @@ import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+import java.io.IOException;
 
 import static org.junit.Assert.*;
 
@@ -70,28 +71,12 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     }
 
     @Test
-    public void testPriosWhileDeleting()
-    {
-        GraphHopperStorage storage = createGHStorage();
-        CHGraph g = getGraph(storage);
-        g.getNodeAccess().ensureNode(19);
-        for (int i = 0; i < 20; i++)
-        {
-            g.setLevel(i, i);
-        }
-        storage.markNodeRemoved(10);
-        storage.optimize();
-        assertEquals(9, g.getLevel(9));
-        assertNotSame(10, g.getLevel(10));
-        storage.close();
-    }
-
-    @Test
     public void testPrios()
     {
         GraphHopperStorage storage = createGHStorage();
         CHGraph g = getGraph(storage);
         g.getNodeAccess().ensureNode(30);
+        storage.freeze();
 
         assertEquals(0, g.getLevel(10));
 
@@ -105,11 +90,14 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     @Test
     public void testEdgeFilter()
     {
-        GraphHopperStorage storage = createGHStorage();
-        CHGraph g = getGraph(storage);
+        GraphHopperStorage ghStorage = createGHStorage();
+        CHGraph g = getGraph(ghStorage);
         g.edge(0, 1, 10, true);
         g.edge(0, 2, 20, true);
         g.edge(2, 3, 30, true);
+        g.edge(10, 11, 1, true);
+        
+        ghStorage.freeze();
         EdgeSkipIterState tmpIter = g.shortcut(3, 4);
         tmpIter.setDistance(40).setFlags(carEncoder.setAccess(0, true, true));
         assertEquals(EdgeIterator.NO_EDGE, tmpIter.getSkippedEdge1());
@@ -128,12 +116,17 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     @Test
     public void testDisconnectEdge()
     {
-        GraphHopperStorage storage = createGHStorage();
-        CHGraphImpl g = (CHGraphImpl) getGraph(storage);
+        GraphHopperStorage ghStorage = createGHStorage();
+        CHGraphImpl g = (CHGraphImpl) getGraph(ghStorage);
+
+        EdgeExplorer tmpCarOutExplorer = g.createEdgeExplorer(carOutFilter);
+        EdgeExplorer tmpCarInExplorer = g.createEdgeExplorer(carInFilter);
+
         // only remove edges
         long flags = carEncoder.setProperties(60, true, true);
         long flags2 = carEncoder.setProperties(60, true, false);
         g.edge(4, 1, 30, true);
+        ghStorage.freeze();
         EdgeSkipIterState tmp = g.shortcut(1, 2);
         tmp.setDistance(10).setFlags(flags);
         tmp.setSkippedEdges(10, 11);
@@ -143,34 +136,37 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
         tmp = g.shortcut(3, 1);
         tmp.setDistance(30).setFlags(flags2);
         tmp.setSkippedEdges(14, 15);
+        // create everytime a new independent iterator for disconnect method
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(1);
         iter.next();
         assertEquals(3, iter.getAdjNode());
-        assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(3)));
+        assertEquals(1, GHUtility.count(tmpCarOutExplorer.setBaseNode(3)));
         g.disconnect(g.createEdgeExplorer(), iter);
-        assertEquals(0, GHUtility.count(carOutExplorer.setBaseNode(3)));
+        assertEquals(0, GHUtility.count(tmpCarOutExplorer.setBaseNode(3)));
 
         // even directed ways change!
         assertTrue(iter.next());
         assertEquals(0, iter.getAdjNode());
-        assertEquals(1, GHUtility.count(carInExplorer.setBaseNode(0)));
+        assertEquals(1, GHUtility.count(tmpCarInExplorer.setBaseNode(0)));
         g.disconnect(g.createEdgeExplorer(), iter);
-        assertEquals(0, GHUtility.count(carInExplorer.setBaseNode(0)));
+        assertEquals(0, GHUtility.count(tmpCarInExplorer.setBaseNode(0)));
 
         iter.next();
         assertEquals(2, iter.getAdjNode());
-        assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(2)));
+        assertEquals(1, GHUtility.count(tmpCarOutExplorer.setBaseNode(2)));
         g.disconnect(g.createEdgeExplorer(), iter);
-        assertEquals(0, GHUtility.count(carOutExplorer.setBaseNode(2)));
+        assertEquals(0, GHUtility.count(tmpCarOutExplorer.setBaseNode(2)));
     }
 
     @Test
     public void testGetWeight()
     {
-        GraphHopperStorage storage = createGHStorage();
-        CHGraphImpl g = (CHGraphImpl) getGraph(storage);
+        GraphHopperStorage ghStorage = createGHStorage();
+        CHGraphImpl g = (CHGraphImpl) getGraph(ghStorage);
         assertFalse(g.edge(0, 1).isShortcut());
         assertFalse(g.edge(1, 2).isShortcut());
+        
+        ghStorage.freeze();
 
         // only remove edges
         long flags = carEncoder.setProperties(10, true, true);
@@ -201,10 +197,11 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     public void testGetWeightIfAdvancedEncoder()
     {
         FlagEncoder customEncoder = new Bike2WeightFlagEncoder();
-        CHGraphImpl lg = (CHGraphImpl) new GraphBuilder(new EncodingManager(customEncoder)).setCHGraph(true).create().getGraph(CHGraph.class);
+        GraphHopperStorage ghStorage = new GraphBuilder(new EncodingManager(customEncoder)).setCHGraph(true).create();
+        ghStorage.edge(0, 2);
+        ghStorage.freeze();
 
-        lg.edge(0, 2);
-        lg.freeze();
+        CHGraphImpl lg = (CHGraphImpl) ghStorage.getGraph(CHGraph.class);
         EdgeSkipIterState sc1 = lg.shortcut(0, 1);
         long flags = customEncoder.setProperties(10, false, true);
         sc1.setFlags(flags);
@@ -225,15 +222,16 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     @Test
     public void testQueryGraph()
     {
-        GraphHopperStorage storage = createGHStorage();
-        CHGraph chGraph = getGraph(storage);
+        GraphHopperStorage ghStorage = createGHStorage();
+        CHGraph chGraph = getGraph(ghStorage);
         NodeAccess na = chGraph.getNodeAccess();
         na.setNode(0, 1.00, 1.00);
         na.setNode(1, 1.02, 1.00);
         na.setNode(2, 1.04, 1.00);
 
         EdgeIteratorState edge1 = chGraph.edge(0, 1);
-        EdgeIteratorState edge2 = chGraph.edge(1, 2);
+        chGraph.edge(1, 2);
+        ghStorage.freeze();
         chGraph.shortcut(0, 1);
 
         QueryGraph qGraph = new QueryGraph(chGraph);
@@ -241,10 +239,11 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
         QueryResult toRes = createQR(1.019, 1.00, 0, edge1);
         qGraph.lookup(fromRes, toRes);
 
-        EdgeExplorer explorer = storage.createEdgeExplorer();
+        Graph baseGraph = qGraph.getBaseGraph();
+        EdgeExplorer explorer = baseGraph.createEdgeExplorer();
 
         assertTrue(chGraph.getNodes() < qGraph.getNodes());
-        assertTrue(storage.getNodes() < qGraph.getNodes());
+        assertTrue(baseGraph.getNodes() == qGraph.getNodes());
 
         // traverse virtual edges and normal edges but no shortcuts!
         assertEquals(GHUtility.asSet(fromRes.getClosestNode()), GHUtility.getNeighbors(explorer.setBaseNode(0)));
@@ -263,5 +262,42 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
         res.setSnappedPosition(QueryResult.Position.EDGE);
         res.calcSnappedPoint(Helper.DIST_PLANE);
         return res;
+    }
+
+    @Test
+    @Override
+    public void testSave_and_Freeze() throws IOException
+    {
+        // belongs to each other
+        super.testSave_and_Freeze();
+
+        // test freeze and shortcut creation & loading
+        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).
+                create(defaultSize);
+        graph.edge(1, 0);
+        graph.edge(8, 9);
+        graph.freeze();
+        CHGraph chGraph = getGraph(graph);
+        
+        assertEquals(1, GHUtility.count(graph.createEdgeExplorer().setBaseNode(1)));
+        assertEquals(1, GHUtility.count(chGraph.createEdgeExplorer().setBaseNode(1)));
+        
+        chGraph.shortcut(2, 3);
+        
+        // TODO should throw exception for base graph as it is out of bounds
+        assertEquals(0, GHUtility.count(graph.createEdgeExplorer().setBaseNode(2)));
+        assertEquals(1, GHUtility.count(chGraph.createEdgeExplorer().setBaseNode(2)));
+        
+        graph.flush();
+        graph.close();
+
+        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true);
+        assertTrue(graph.loadExisting());
+        assertTrue(graph.isFreezed());
+
+        chGraph = getGraph(graph);
+        assertEquals(10, chGraph.getNodes());
+        assertEquals(3, chGraph.getAllEdges().getCount());
+        assertEquals(1, GHUtility.count(chGraph.createEdgeExplorer().setBaseNode(2)));
     }
 }

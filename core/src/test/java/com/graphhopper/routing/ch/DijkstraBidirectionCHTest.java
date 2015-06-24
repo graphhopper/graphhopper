@@ -68,7 +68,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     public RoutingAlgorithmFactory createFactory( GraphHopperStorage ghStorage, AlgorithmOptions opts )
     {
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
-                getGraph(ghStorage),
+                ghStorage, getGraph(ghStorage),
                 opts.getFlagEncoder(), opts.getWeighting(), TraversalMode.NODE_BASED);
         // hack: prepare matrixGraph only once
         if (ghStorage != preparedMatrixGraph)
@@ -100,6 +100,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         EdgeIteratorState iter2_2 = g2.edge(5, 7);
         iter2_2.setDistance(1.4).setFlags(encoder.setProperties(10, true, false));
 
+        ghStorage.freeze();
         // simulate preparation
         EdgeSkipIterState iter2_1 = g2.shortcut(0, 5);
         iter2_1.setDistance(2.8).setFlags(encoder.setProperties(10, true, false));
@@ -119,7 +120,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         ShortestWeighting weighting = new ShortestWeighting();
         AlgorithmOptions opts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting);
         Path p = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
-                g2, encoder, weighting, TraversalMode.NODE_BASED).
+                ghStorage, g2, encoder, weighting, TraversalMode.NODE_BASED).
                 createAlgo(g2, opts).calcPath(0, 7);
 
         assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());

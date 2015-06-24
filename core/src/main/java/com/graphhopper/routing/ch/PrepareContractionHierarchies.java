@@ -58,6 +58,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private EdgeSkipExplorer calcPrioAllExplorer;
     private final LevelEdgeFilter levelFilter;
     private int maxLevel;
+    private final GraphHopperStorage ghStorage;
     private final CHGraphImpl prepareGraph;
 
     // the most important nodes comes last
@@ -79,11 +80,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private int neighborUpdatePercentage = 20;
     private int initialCollectionSize = 5000;
     private double nodesContractedPercentage = 100;
-    private double logMessagesPercentage = 20;    
+    private double logMessagesPercentage = 20;
 
-    public PrepareContractionHierarchies( Directory dir, CHGraph chGraph,
+    public PrepareContractionHierarchies( Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph,
                                           FlagEncoder encoder, Weighting weighting, TraversalMode traversalMode )
     {
+        this.ghStorage = ghStorage;
         this.prepareGraph = (CHGraphImpl) chGraph;
         this.traversalMode = traversalMode;
         this.prepareFlagEncoder = encoder;
@@ -196,7 +198,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         initFromGraph();
         if (!prepareEdges())
             return;
-        
+
         if (!prepareNodes())
             return;
 
@@ -236,7 +238,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     void contractNodes()
-    {        
+    {
         meanDegree = prepareGraph.getAllEdges().getCount() / prepareGraph.getNodes();
         int level = 1;
         counter = 0;
@@ -271,7 +273,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         if (neighborUpdatePercentage == 0)
             neighborUpdate = false;
 
-        StopWatch neighborSW = new StopWatch();        
+        StopWatch neighborSW = new StopWatch();
         while (!sortedNodes.isEmpty())
         {
             // periodically update priorities of ALL nodes            
@@ -685,6 +687,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     PrepareContractionHierarchies initFromGraph()
     {
+        ghStorage.freeze();
         vehicleInExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
         vehicleOutExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
         final EdgeFilter allFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, true);
@@ -716,7 +719,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         sortedNodes = new GHTreeMapComposed();
         oldPriorities = new int[prepareGraph.getNodes()];
         prepareAlgo = new DijkstraOneToMany(prepareGraph, prepareFlagEncoder, prepareWeighting, traversalMode);
-        prepareGraph.freeze();
         return this;
     }
 

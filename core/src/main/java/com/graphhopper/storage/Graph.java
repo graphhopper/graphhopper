@@ -25,7 +25,7 @@ import com.graphhopper.util.shapes.BBox;
 
 /**
  * An interface to represent a (geo) graph - suited for efficient storage as it can be requested via
- * indices called node IDs. To get the lat,lon point you need to set up a Location2IDIndex instance.
+ * indices called node IDs. To get the lat,lon point you need to set up a LocationIndex instance.
  * <p/>
  * @author Peter Karich
  */
@@ -110,5 +110,5 @@ public interface Graph
     /**
      * @return the graph extension like a TurnCostExtension
      */
-    GraphExtension getExtension();
+    GraphExtension getExtension();   
 }

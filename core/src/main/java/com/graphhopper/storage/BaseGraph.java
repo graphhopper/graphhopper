@@ -89,8 +89,9 @@ class BaseGraph implements Graph
     private final Directory dir;
     final EncodingManager encodingManager;
     private final InternalGraphEventListener listener;
-    private final InternalGraphPropertyAccess propAccess;
+    final InternalGraphPropertyAccess propAccess;
     private boolean freezed = false;
+    final EdgeAccess edgeAccess;
 
     public BaseGraph( Directory dir, EncodingManager encodingManager, boolean withElevation,
                       InternalGraphEventListener listener, InternalGraphPropertyAccess internalPropAccess,
@@ -109,6 +110,7 @@ class BaseGraph implements Graph
         this.nodeAccess = new GHNodeAccess(this, withElevation);
         this.extStorage = extendedStorage;
         this.extStorage.init(this, dir);
+        this.edgeAccess = new EdgeAccess(edges, propAccess, this);
     }
 
     @Override
@@ -144,7 +146,8 @@ class BaseGraph implements Graph
             bounds.maxEle = Helper.intToEle(nodes.getHeader(8 * 4));
         }
 
-        return 7;
+        freezed = nodes.getHeader(9 * 4) == 1;
+        return 10;
     }
 
     protected int setNodesHeader()
@@ -162,14 +165,15 @@ class BaseGraph implements Graph
             nodes.setHeader(8 * 4, Helper.eleToInt(bounds.maxEle));
         }
 
-        return 7;
+        nodes.setHeader(9 * 4, isFreezed() ? 1 : 0);
+        return 10;
     }
 
     protected int loadEdgesHeader()
     {
         edgeEntryBytes = edges.getHeader(0 * 4);
         edgeCount = edges.getHeader(1 * 4);
-        return 4;
+        return 5;
     }
 
     protected int setEdgesHeader()
@@ -178,7 +182,7 @@ class BaseGraph implements Graph
         edges.setHeader(1 * 4, edgeCount);
         edges.setHeader(2 * 4, encodingManager.hashCode());
         edges.setHeader(3 * 4, extStorage.hashCode());
-        return 4;
+        return 5;
     }
 
     protected int loadWayGeometryHeader()
@@ -245,12 +249,6 @@ class BaseGraph implements Graph
                 nodes.setInt(pointer, extStorage.getDefaultNodeFieldValue());
             }
         }
-    }
-
-    private void ensureEdgeIndex( int edgeIndex )
-    {
-        edges.ensureCapacity(((long) edgeIndex + 1) * edgeEntryBytes);
-        listener.ensureEdgeIndex(edgeIndex);
     }
 
     protected final int nextEdgeEntryIndex( int sizeInBytes )
@@ -326,7 +324,6 @@ class BaseGraph implements Graph
             if (removedNodes != null)
                 getRemovedNodes().ensureCapacity((int) (newBytesCapacity / nodeEntryBytes));
         }
-        listener.ensureNodeIndex(nodeIndex);
     }
 
     @Override
@@ -363,13 +360,10 @@ class BaseGraph implements Graph
         extStorage.setSegmentSize(bytes);
     }
 
-    /**
-     * Avoid that edges and nodes are further modified. Calling multiple times results in exception.
-     */
     void freeze()
     {
         if (isFreezed())
-            throw new IllegalStateException("Already freeze base graph");
+            throw new IllegalStateException("base graph already freezed");
 
         freezed = true;
         listener.freeze();
@@ -382,7 +376,7 @@ class BaseGraph implements Graph
 
     public void checkFreeze()
     {
-        if (freezed)
+        if (isFreezed())
             throw new IllegalStateException("Cannot add edge or node after baseGraph.freeze was called");
     }
 
@@ -405,7 +399,7 @@ class BaseGraph implements Graph
     {
         return "edges:" + nf(edgeCount) + "(" + edges.getCapacity() / Helper.MB + "), "
                 + "nodes:" + nf(getNodes()) + "(" + nodes.getCapacity() / Helper.MB + "), "
-                + "name: /(" + nameIndex.getCapacity() / Helper.MB + "), "
+                + "name: -(" + nameIndex.getCapacity() / Helper.MB + "), "
                 + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "), "
                 + "bounds:" + bounds;
     }
@@ -510,8 +504,7 @@ class BaseGraph implements Graph
         @Override
         public EdgeIterator setBaseNode( int baseNode )
         {
-            int edge = baseGraph.nodes.getInt((long) baseNode * baseGraph.nodeEntryBytes + baseGraph.N_EDGE_REF);
-            setEdgeId(edge);
+            setEdgeId(propAccess.getEdgeRef(baseNode));
             this.baseNode = baseNode;
             return this;
         }
@@ -546,8 +539,8 @@ class BaseGraph implements Graph
                 // position to next edge                
                 nextEdge = baseGraph.edges.getInt(baseGraph.getLinkPosInEdgeArea(baseNode, adjNode, edgePointer));
                 if (nextEdge == edgeId)
-                    throw new AssertionError("endless loop detected for " + baseNode + ", " + adjNode
-                            + ", " + edgePointer + ", " + edgeId);
+                    throw new AssertionError("endless loop detected for base node: " + baseNode + ", adj node: " + adjNode
+                            + ", edge pointer: " + edgePointer + ", edge: " + edgeId);
 
                 foundNext = filter.accept(this);
                 if (foundNext)
@@ -725,31 +718,19 @@ class BaseGraph implements Graph
     @Override
     public EdgeIteratorState edge( int a, int b )
     {
+        if (isFreezed())
+            throw new IllegalStateException("Cannot create edge if graph is already freezed");
+
         ensureNodeIndex(Math.max(a, b));
-        int edge = internalEdgeAdd(a, b);
+        int edge = edgeAccess.internalEdgeAdd(a, b);
         EdgeIterable iter = new EdgeIterable(this, propAccess, EdgeFilter.ALL_EDGES);
         iter.setBaseNode(a);
         iter.setEdgeId(edge);
-        if (extStorage.isRequireEdgeField())
-        {
-            iter.setAdditionalField(extStorage.getDefaultEdgeFieldValue());
-        }
         iter.next();
+        if (extStorage.isRequireEdgeField())
+            iter.setAdditionalField(extStorage.getDefaultEdgeFieldValue());
+
         return iter;
-    }
-
-    /**
-     * Write new edge between nodes fromNodeId, and toNodeId both to nodes index and edges index
-     */
-    int internalEdgeAdd( int fromNodeId, int toNodeId )
-    {
-        int newEdgeId = nextEdge();
-        writeEdge(newEdgeId, fromNodeId, toNodeId, EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
-        connectNewEdge(fromNodeId, newEdgeId);
-        if (fromNodeId != toNodeId)
-            connectNewEdge(toNodeId, newEdgeId);
-
-        return newEdgeId;
     }
 
     // for test only
@@ -758,60 +739,87 @@ class BaseGraph implements Graph
         edgeCount = cnt;
     }
 
-    /**
-     * Determine next free edgeId and ensure byte capacity to store edge
-     * <p/>
-     * @return next free edgeId
-     */
-    private int nextEdge()
+    static class EdgeAccess
     {
-        int nextEdge = edgeCount;
-        edgeCount++;
-        if (edgeCount < 0)
-            throw new IllegalStateException("too many edges. new edge id would be negative. " + toString());
+        final DataAccess edges;
+        final InternalGraphPropertyAccess propAccess;
+        final BaseGraph baseGraph;
 
-        ensureEdgeIndex(edgeCount);
-        return nextEdge;
-    }
-
-    private void connectNewEdge( int fromNode, int newOrExistingEdge )
-    {
-        long nodePointer = (long) fromNode * nodeEntryBytes;
-        int edge = nodes.getInt(nodePointer + N_EDGE_REF);
-        if (edge > EdgeIterator.NO_EDGE)
+        EdgeAccess( DataAccess edges, InternalGraphPropertyAccess propAccess, BaseGraph baseGraph )
         {
-            long edgePointer = (long) newOrExistingEdge * edgeEntryBytes;
-            int otherNode = getOtherNode(fromNode, edgePointer);
-            long lastLink = getLinkPosInEdgeArea(fromNode, otherNode, edgePointer);
-            edges.setInt(lastLink, edge);
+            this.edges = edges;
+            this.propAccess = propAccess;
+            this.baseGraph = baseGraph;
         }
 
-        nodes.setInt(nodePointer + N_EDGE_REF, newOrExistingEdge);
-    }
-
-    private long writeEdge( int edge, int nodeThis, int nodeOther, int nextEdge, int nextEdgeOther )
-    {
-        if (nodeThis > nodeOther)
+        /**
+         * Write new edge between nodes fromNodeId, and toNodeId both to nodes index and edges index
+         */
+        int internalEdgeAdd( int fromNodeId, int toNodeId )
         {
-            int tmp = nodeThis;
-            nodeThis = nodeOther;
-            nodeOther = tmp;
+            int newEdgeId = nextEdge();
+            writeEdge(newEdgeId, fromNodeId, toNodeId, EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
+            connectNewEdge(fromNodeId, newEdgeId);
+            if (fromNodeId != toNodeId)
+                connectNewEdge(toNodeId, newEdgeId);
 
-            tmp = nextEdge;
-            nextEdge = nextEdgeOther;
-            nextEdgeOther = tmp;
+            return newEdgeId;
         }
 
-        if (edge < 0 || edge == EdgeIterator.NO_EDGE)
-            throw new IllegalStateException("Cannot write edge with illegal ID:" + edge
-                    + "; nodeThis:" + nodeThis + ", nodeOther:" + nodeOther);
+        /**
+         * Determine next free edgeId and ensure byte capacity to store edge
+         * <p/>
+         * @return next free edgeId
+         */
+        final int nextEdge()
+        {
+            int nextEdge = baseGraph.edgeCount;
+            baseGraph.edgeCount++;
+            if (baseGraph.edgeCount < 0)
+                throw new IllegalStateException("too many edges. new edge id would be negative. " + toString());
 
-        long edgePointer = (long) edge * edgeEntryBytes;
-        edges.setInt(edgePointer + E_NODEA, nodeThis);
-        edges.setInt(edgePointer + E_NODEB, nodeOther);
-        edges.setInt(edgePointer + E_LINKA, nextEdge);
-        edges.setInt(edgePointer + E_LINKB, nextEdgeOther);
-        return edgePointer;
+            edges.ensureCapacity(((long) baseGraph.edgeCount + 1) * baseGraph.edgeEntryBytes);
+            return nextEdge;
+        }
+
+        private void connectNewEdge( int fromNode, int newOrExistingEdge )
+        {
+            int edge = propAccess.getEdgeRef(fromNode);
+            if (edge > EdgeIterator.NO_EDGE)
+            {
+                long edgePointer = (long) newOrExistingEdge * baseGraph.edgeEntryBytes;
+                int otherNode = baseGraph.getOtherNode(fromNode, edgePointer);
+                long lastLink = baseGraph.getLinkPosInEdgeArea(fromNode, otherNode, edgePointer);
+                edges.setInt(lastLink, edge);
+            }
+
+            propAccess.setEdgeRef(fromNode, newOrExistingEdge);
+        }
+
+        private long writeEdge( int edge, int nodeThis, int nodeOther, int nextEdge, int nextEdgeOther )
+        {
+            if (nodeThis > nodeOther)
+            {
+                int tmp = nodeThis;
+                nodeThis = nodeOther;
+                nodeOther = tmp;
+
+                tmp = nextEdge;
+                nextEdge = nextEdgeOther;
+                nextEdgeOther = tmp;
+            }
+
+            if (edge < 0 || edge == EdgeIterator.NO_EDGE)
+                throw new IllegalStateException("Cannot write edge with illegal ID:" + edge
+                        + "; nodeThis:" + nodeThis + ", nodeOther:" + nodeOther);
+
+            long edgePointer = (long) edge * baseGraph.edgeEntryBytes;
+            edges.setInt(edgePointer + baseGraph.E_NODEA, nodeThis);
+            edges.setInt(edgePointer + baseGraph.E_NODEB, nodeOther);
+            edges.setInt(edgePointer + baseGraph.E_LINKA, nextEdge);
+            edges.setInt(edgePointer + baseGraph.E_LINKB, nextEdgeOther);
+            return edgePointer;
+        }
     }
 
     protected final long getLinkPosInEdgeArea( int nodeThis, int nodeOther, long edgePointer )
@@ -944,7 +952,8 @@ class BaseGraph implements Graph
      * @param edgeToUpdatePointer if it is negative then the nextEdgeId will be saved to refToEdges
      * of nodes
      */
-    long internalEdgeDisconnect( int edgeToRemove, long edgeToUpdatePointer, int baseNode, int adjNode )
+    long internalEdgeDisconnect( InternalGraphPropertyAccess tmpPropAccess,
+                                 int edgeToRemove, long edgeToUpdatePointer, int baseNode, int adjNode )
     {
         long edgeToRemovePointer = (long) edgeToRemove * edgeEntryBytes;
         // an edge is shared across the two nodes even if the edge is not in both directions
@@ -952,7 +961,7 @@ class BaseGraph implements Graph
         int nextEdgeId = edges.getInt(getLinkPosInEdgeArea(baseNode, adjNode, edgeToRemovePointer));
         if (edgeToUpdatePointer < 0)
         {
-            nodes.setInt((long) baseNode * nodeEntryBytes, nextEdgeId);
+            tmpPropAccess.setEdgeRef(baseNode, nextEdgeId);
         } else
         {
             // adjNode is different for the edge we want to update with the new link
@@ -974,7 +983,7 @@ class BaseGraph implements Graph
         initialized = true;
         if (g.getClass().equals(getClass()))
         {
-            _copyTo((BaseGraph) g);
+            _copyTo((BaseGraph) g);            
             return g;
         } else
         {
@@ -1090,7 +1099,7 @@ class BaseGraph implements Graph
                 {
                     int edgeToRemove = adjNodesToDelIter.getEdge();
                     long edgeToRemovePointer = (long) edgeToRemove * edgeEntryBytes;
-                    internalEdgeDisconnect(edgeToRemove, prev, removeNode, nodeId);
+                    internalEdgeDisconnect(propAccess, edgeToRemove, prev, removeNode, nodeId);
                     invalidateEdge(edgeToRemovePointer);
                 } else
                 {
@@ -1159,7 +1168,7 @@ class BaseGraph implements Graph
             int linkA = edges.getInt(getLinkPosInEdgeArea(nodeA, nodeB, edgePointer));
             int linkB = edges.getInt(getLinkPosInEdgeArea(nodeB, nodeA, edgePointer));
             long flags = getFlags_(propAccess, edgePointer, false);
-            writeEdge(edge, updatedA, updatedB, linkA, linkB);
+            edgeAccess.writeEdge(edge, updatedA, updatedB, linkA, linkB);
             setFlags_(propAccess, edgePointer, updatedA > updatedB, flags);
             if (updatedA < updatedB != nodeA < nodeB)
                 setWayGeometry_(fetchWayGeometry_(edgePointer, true, 0, -1, -1), edgePointer, false);

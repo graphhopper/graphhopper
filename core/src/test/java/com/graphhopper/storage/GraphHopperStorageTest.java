@@ -85,7 +85,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
         graph.edge(1, 2, 120, false);
 
         iter1.setName("named street1");
-        iter2.setName("named street2");
+        iter2.setName("named street2");        
 
         checkGraph(graph);
         graph.flush();
@@ -101,6 +101,22 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
         assertEquals("named street2", graph.getEdgeProps(iter2.getEdge(), iter2.getAdjNode()).getName());
         graph.edge(3, 4, 123, true).setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
         checkGraph(graph);
+    }
+    
+    @Test
+    public void testSave_and_Freeze() throws IOException
+    {
+        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
+        graph.edge(1, 0);
+        graph.freeze();
+        
+        graph.flush();
+        graph.close();
+
+        graph = newGHStorage(new MMapDirectory(defaultGraphLoc), true);
+        assertTrue(graph.loadExisting());
+        assertEquals(2, graph.getNodes());
+        assertTrue(graph.isFreezed());        
     }
 
     protected void checkGraph( Graph g )
@@ -157,14 +173,16 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
         assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(explorer.setBaseNode(0)));
         assertEquals(GHUtility.asSet(2, 0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
         // remove edge "1-2" but only from 1 not from 2
-        graph.internalEdgeDisconnect(iter2.getEdge(), -1, iter2.getBaseNode(), iter2.getAdjNode());
+        graph.internalEdgeDisconnect(graph.propAccess, iter2.getEdge(), -1,
+                iter2.getBaseNode(), iter2.getAdjNode());
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
         assertEquals(GHUtility.asSet(1), GHUtility.getNeighbors(explorer.setBaseNode(2)));
         // let 0 unchanged -> no side effects
         assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(explorer.setBaseNode(0)));
 
         // remove edge "0-1" but only from 0
-        graph.internalEdgeDisconnect(iter0.getEdge(), (long) iter3.getEdge() * graph.edgeEntryBytes, iter0.getBaseNode(), iter0.getAdjNode());
+        graph.internalEdgeDisconnect(graph.propAccess, iter0.getEdge(), (long) iter3.getEdge() * graph.edgeEntryBytes,
+                iter0.getBaseNode(), iter0.getAdjNode());
         assertEquals(GHUtility.asSet(3), GHUtility.getNeighbors(explorer.setBaseNode(0)));
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(3)));
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));

@@ -31,7 +31,7 @@ import com.graphhopper.util.shapes.BBox;
  * identical behavour as the Graph instance from getGraph(Graph.class)
  * <p>
  * @author Peter Karich
- * @see GraphBuilder to create a (Level)Graph easier
+ * @see GraphBuilder to create a (CH)Graph easier
  * @see #getGraph(java.lang.Class)
  */
 public final class GraphHopperStorage implements GraphStorage, Graph
@@ -75,6 +75,24 @@ public final class GraphHopperStorage implements GraphStorage, Graph
             {
                 return baseGraph.createSingleEdge(edgeId, nodeId);
             }
+
+            @Override
+            public int getEdgeRef( int nodeId )
+            {
+                return baseGraph.nodes.getInt((long) nodeId * baseGraph.nodeEntryBytes + baseGraph.N_EDGE_REF);
+            }
+
+            @Override
+            public void setEdgeRef( int nodeId, int edgeId )
+            {
+                baseGraph.nodes.setInt((long) nodeId * baseGraph.nodeEntryBytes + baseGraph.N_EDGE_REF, edgeId);
+            }
+
+            @Override
+            public String toString()
+            {
+                return "property access";
+            }
         };
 
         InternalGraphPropertyAccess chPropAccess = new InternalGraphPropertyAccess()
@@ -100,25 +118,29 @@ public final class GraphHopperStorage implements GraphStorage, Graph
             {
                 return chGraph.createSingleEdge(edgeId, nodeId);
             }
+
+            @Override
+            public int getEdgeRef( int nodeId )
+            {
+                return chGraph.nodesCH.getInt((long) nodeId * chGraph.nodeCHEntryBytes + chGraph.N_CH_REF);
+            }
+
+            @Override
+            public void setEdgeRef( int nodeId, int edgeId )
+            {
+                chGraph.nodesCH.setInt((long) nodeId * chGraph.nodeCHEntryBytes + chGraph.N_CH_REF, edgeId);
+            }
+
+            @Override
+            public String toString()
+            {
+                return "ch property access";
+            }
         };
 
         // TODO create two listeners to avoid 'if'?
         InternalGraphEventListener listener = new InternalGraphEventListener()
         {
-            @Override
-            public void ensureEdgeIndex( int edgeIndex )
-            {
-                if (isCHPossible())
-                    chGraph.ensureEdgeIndex(edgeIndex);
-            }
-
-            @Override
-            public void ensureNodeIndex( int nodeIndex )
-            {
-                if (isCHPossible())
-                    chGraph.ensureNodeIndex(nodeIndex);
-            }
-
             @Override
             public void initStorage()
             {
@@ -130,7 +152,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph
             public void freeze()
             {
                 if (isCHPossible())
-                    chGraph.freeze();
+                    chGraph._freeze();
             }
         };
 
@@ -252,29 +274,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph
         baseGraph.trimToSize();
     }
 
-    // TODO unused
-    private GraphHopperStorage _copyTo( GraphHopperStorage clonedG )
-    {
-        baseGraph.copyTo(clonedG.baseGraph);
-        properties.copyTo(clonedG.properties);
-
-        clonedG.encodingManager = encodingManager;
-
-        if (isCHPossible())
-        {
-            if (!clonedG.isCHPossible())
-                throw new IllegalStateException("cannot copy CH-enabled storage into GraphHopperStorage without CH");
-
-            chGraph.copyTo(clonedG.chGraph);
-        }
-
-        return clonedG;
-    }
-
     @Override
     public boolean loadExisting()
     {
-        baseGraph.checkInit();        
+        baseGraph.checkInit();
         if (properties.loadExisting())
         {
             properties.checkVersions(false);
@@ -302,12 +305,12 @@ public final class GraphHopperStorage implements GraphStorage, Graph
                 throw new IllegalStateException("Configured byteOrder (" + byteOrder + ") is not equal to byteOrder of loaded graph (" + dir.getByteOrder() + ")");
 
             String dim = properties.get("graph.dimension");
-            baseGraph.loadExisting(dim);            
+            baseGraph.loadExisting(dim);
 
             if (isCHPossible())
             {
                 if (!chGraph.loadExisting())
-                    throw new IllegalStateException("Cannot load ch graph " + chGraph.toString());                
+                    throw new IllegalStateException("Cannot load ch graph " + chGraph.toString());
             }
 
             return true;
@@ -318,14 +321,14 @@ public final class GraphHopperStorage implements GraphStorage, Graph
     @Override
     public void flush()
     {
-        baseGraph.flush();
-        properties.flush();
-
         if (isCHPossible())
         {
             chGraph.setEdgesHeader();
             chGraph.flush();
         }
+
+        baseGraph.flush();
+        properties.flush();
     }
 
     @Override
@@ -354,6 +357,21 @@ public final class GraphHopperStorage implements GraphStorage, Graph
         return cnt;
     }
 
+    /**
+     * Avoid that edges and nodes of the base graph are further modified. Necessary as hook for e.g.
+     * ch graphs on top to initilize themself
+     */
+    public void freeze()
+    {
+        if (!baseGraph.isFreezed())
+            baseGraph.freeze();
+    }
+
+    boolean isFreezed()
+    {
+        return baseGraph.isFreezed();
+    }
+
     @Override
     public String toDetailsString()
     {
@@ -379,6 +397,12 @@ public final class GraphHopperStorage implements GraphStorage, Graph
     // GraphHopperStorage storage = ..;
     // Graph g = storage.getGraph(Graph.class);
     // instead directly the storage can be used to traverse the base graph
+    @Override
+    public Graph getBaseGraph()
+    {
+        return baseGraph;
+    }
+
     @Override
     public final int getNodes()
     {
@@ -443,11 +467,5 @@ public final class GraphHopperStorage implements GraphStorage, Graph
     public final GraphExtension getExtension()
     {
         return baseGraph.getExtension();
-    }
-
-    @Override
-    public Graph getBaseGraph()
-    {
-        return baseGraph;
     }
 }

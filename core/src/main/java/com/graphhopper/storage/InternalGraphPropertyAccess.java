@@ -23,7 +23,23 @@ package com.graphhopper.storage;
  */
 interface InternalGraphPropertyAccess
 {
+    /**
+     * This method reverses the flags at the specified place (edgePointer)
+     */
     long reverseFlags( long edgePointer, long flags );
 
+    /**
+     * This method creates an accessor to one edge
+     */
     BaseGraph.SingleEdge createSingleEdge( int edgeId, int nodeId );
+
+    /**
+     * This method returns the edgeId of the first edge in the linked list
+     */
+    int getEdgeRef( int nodeId );
+
+    /**
+     * This method sets the edgeId of the first edge in the insert-first linked list
+     */
+    void setEdgeRef( int nodeId, int edgeId );
 }
