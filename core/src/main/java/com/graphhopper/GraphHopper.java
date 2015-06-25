@@ -795,7 +795,7 @@ public class GraphHopper implements GraphHopperAPI
                 throw new IllegalArgumentException("Sorting a prepared CHGraph is not possible yet. See #12");
 
             GraphHopperStorage newGraph = GHUtility.newStorage(ghStorage);
-            GHUtility.sortDFS(ghStorage.getBaseGraph(), newGraph);
+            GHUtility.sortDFS(ghStorage, newGraph);
             logger.info("graph sorted (" + Helper.getMemInfo() + ")");
             ghStorage = newGraph;
         }
