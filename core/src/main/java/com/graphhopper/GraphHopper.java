@@ -90,7 +90,6 @@ public class GraphHopper implements GraphHopperAPI
     private int workerThreads = -1;
     private boolean calcPoints = true;
     // utils
-    private static final AngleCalc ac = new AngleCalc();
     private final TranslationMap trMap = new TranslationMap().doImport();
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private final AtomicLong visitedSum = new AtomicLong(0);
