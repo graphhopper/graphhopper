@@ -90,7 +90,6 @@ public class GraphHopper implements GraphHopperAPI
     private int workerThreads = -1;
     private boolean calcPoints = true;
     // utils
-    private static final AngleCalc ac = new AngleCalc();
     private final TranslationMap trMap = new TranslationMap().doImport();
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private final AtomicLong visitedSum = new AtomicLong(0);
@@ -445,6 +444,7 @@ public class GraphHopper implements GraphHopperAPI
     public void setGraphHopperStorage( GraphHopperStorage ghStorage )
     {
         this.ghStorage = ghStorage;
+        fullyLoaded = true;
     }
 
     protected void setLocationIndex( LocationIndex locationIndex )
@@ -802,9 +802,12 @@ public class GraphHopper implements GraphHopperAPI
 
         initLocationIndex();
         if (chEnabled)
+        {
+            if (algoFactory != null)
+                throw new IllegalStateException("Customizing of the routing algorithm factory is currently not supported");
+
             algoFactory = createPrepare();
-        else
-            algoFactory = new RoutingAlgorithmFactorySimple();
+        }
 
         if (!isPrepared())
             prepare();
@@ -1060,7 +1063,7 @@ public class GraphHopper implements GraphHopperAPI
 
     protected void prepare()
     {
-        boolean tmpPrepare = doPrepare && algoFactory instanceof PrepareContractionHierarchies;
+        boolean tmpPrepare = doPrepare && getAlgorithmFactory() instanceof PrepareContractionHierarchies;
         if (tmpPrepare)
         {
             ensureWriteAccess();

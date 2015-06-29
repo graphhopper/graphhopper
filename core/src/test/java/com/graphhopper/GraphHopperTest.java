@@ -20,6 +20,8 @@ package com.graphhopper;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithmFactory;
+import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
@@ -728,11 +730,28 @@ public class GraphHopperTest
         g.edge(5, 8, 110, true);
         g.edge(7, 8, 110, true);
 
-        instance = new GraphHopper().setCHEnable(withCH).setCHWeighting("fastest").setEncodingManager(encodingManager);
+        instance = new GraphHopper().
+                setCHEnable(withCH).
+                setCHWeighting("fastest").
+                setEncodingManager(encodingManager);
         instance.setGraphHopperStorage(g);
         instance.postProcessing();
-        instance.flush();
 
         return instance;
+    }
+
+    @Test
+    public void testCustomFactoryForNoneCH()
+    {
+        GraphHopper closableInstance = new GraphHopper().setStoreOnFlush(true).
+                setCHEnable(false).
+                setEncodingManager(new EncodingManager("CAR")).
+                setGraphHopperLocation(ghLoc).
+                setOSMFile(testOsm);
+        RoutingAlgorithmFactory af = new RoutingAlgorithmFactorySimple();
+        closableInstance.setAlgorithmFactory(af);
+        closableInstance.importOrLoad();
+
+        assertTrue(af == closableInstance.getAlgorithmFactory());
     }
 }
