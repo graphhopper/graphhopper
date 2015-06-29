@@ -29,7 +29,7 @@ if(rsp.hasErrors()) {
 // points, distance in meters and time in millis of the full path
 PointList pointList = rsp.getPoints();
 double distance = rsp.getDistance();
-long timeInMs = rsp.getMillis;
+long timeInMs = rsp.getMillis();
 
 InstructionList il = rsp.getInstructions();
 // iterate over every turn instruction
