@@ -128,7 +128,7 @@ public class GraphHopperWeb implements GraphHopperAPI
             if (!tmpKey.isEmpty())
                 url += "&key=" + tmpKey;
 
-            String str = downloader.downloadAsString(url);
+            String str = downloader.downloadAsString(url, true);
             JSONObject json = new JSONObject(str);
 
             GHResponse res = new GHResponse();
