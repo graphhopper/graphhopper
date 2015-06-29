@@ -445,6 +445,7 @@ public class GraphHopper implements GraphHopperAPI
     public void setGraph( GraphStorage graph )
     {
         this.graph = graph;
+        fullyLoaded = true;
     }
 
     protected void setLocationIndex( LocationIndex locationIndex )
@@ -693,7 +694,7 @@ public class GraphHopper implements GraphHopperAPI
      * <p/>
      *
      * @param graphHopperFolder is the folder containing graphhopper files (which can be compressed
-     *                          too)
+     * too)
      */
     @Override
     public boolean load( String graphHopperFolder )
@@ -794,9 +795,12 @@ public class GraphHopper implements GraphHopperAPI
     {
         initLocationIndex();
         if (chEnabled)
+        {
+            if (algoFactory != null)
+                throw new IllegalStateException("Customizing of the routing algorithm factory is currently not supported");
+
             algoFactory = createPrepare();
-        else
-            algoFactory = new RoutingAlgorithmFactorySimple();
+        }
 
         if (!isPrepared())
             prepare();
@@ -828,8 +832,8 @@ public class GraphHopper implements GraphHopperAPI
      * <p/>
      *
      * @param weightingMap all parameters influencing the weighting. E.g. parameters coming via
-     *                     GHRequest.getHints or directly via "&api.xy=" from the URL of the web UI
-     * @param encoder      the required vehicle
+     * GHRequest.getHints or directly via "&api.xy=" from the URL of the web UI
+     * @param encoder the required vehicle
      * @return the weighting to be used for route calculation
      * @see WeightingMap
      */
@@ -1012,7 +1016,7 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         if (rsp.hasErrors())
-             return Collections.emptyList();
+            return Collections.emptyList();
 
         if (points.size() - 1 != paths.size())
             throw new RuntimeException("There should be exactly one more places than paths. places:" + points.size() + ", paths:" + paths.size());
@@ -1068,12 +1072,12 @@ public class GraphHopper implements GraphHopperAPI
 
     protected void prepare()
     {
-        boolean tmpPrepare = doPrepare && algoFactory instanceof PrepareContractionHierarchies;
+        boolean tmpPrepare = doPrepare && getAlgorithmFactory() instanceof PrepareContractionHierarchies;
         if (tmpPrepare)
         {
             ensureWriteAccess();
             logger.info("calling prepare.doWork for " + getDefaultVehicle() + " ... (" + Helper.getMemInfo() + ")");
-            ((PrepareContractionHierarchies) algoFactory).doWork();
+            ((PrepareContractionHierarchies) getAlgorithmFactory()).doWork();
             graph.getProperties().put("prepare.date", formatDateTime(new Date()));
         }
         graph.getProperties().put("prepare.done", tmpPrepare);
@@ -1087,7 +1091,7 @@ public class GraphHopper implements GraphHopperAPI
         preparation.setMinOneWayNetworkSize(minOneWayNetworkSize);
         logger.info("start finding subnetworks, " + Helper.getMemInfo());
         preparation.doWork();
-        int currNodeCount = graph.getNodes();        
+        int currNodeCount = graph.getNodes();
         int remainingSubnetworks = preparation.findSubnetworks().size();
         logger.info("edges: " + graph.getAllEdges().getCount() + ", nodes " + currNodeCount
                 + ", there were " + preparation.getSubNetworks()
