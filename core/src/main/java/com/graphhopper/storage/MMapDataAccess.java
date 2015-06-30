@@ -33,7 +33,7 @@ import java.util.List;
 
 /**
  * This is a data structure which uses the operating system to synchronize between disc and memory.
- * Use SynchDAWrapper if you intent to use this from multiple threads!
+ * Use {@link SynchedDAWrapper} if you intent to use this from multiple threads!
  * <p/>
  * @author Peter Karich
  */
