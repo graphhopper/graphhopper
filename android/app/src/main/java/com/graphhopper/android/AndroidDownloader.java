@@ -17,12 +17,12 @@ import java.io.InputStream;
 
 public class AndroidDownloader extends Downloader
 {
-
     public AndroidDownloader()
     {
         super("GraphHopper Android");
     }
 
+    @Override
     public void downloadAndUnzip( String url, String toFolder, final ProgressListener progressListener ) throws IOException
     {
         HttpEntity entity = getEntity(url);
@@ -60,7 +60,7 @@ public class AndroidDownloader extends Downloader
     }
 
     @Override
-    public String downloadAsString( String url ) throws IOException
+    public String downloadAsString( String url, boolean readErrorStreamNoException ) throws IOException
     {
         return Helper.isToString(getEntity(url).getContent());
     }
