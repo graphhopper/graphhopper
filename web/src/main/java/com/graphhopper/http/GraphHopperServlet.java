@@ -139,8 +139,8 @@ public class GraphHopperServlet extends GHBaseServlet
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + infoPoints + ", took:"
                 + took + ", " + algoStr + ", " + weighting + ", " + vehicleStr;
-        httpRes.setHeader("Took", "" + Math.round(took * 1000));
-        
+        httpRes.setHeader("X-GH-Took", "" + Math.round(took * 1000));
+
         if (ghRsp.hasErrors())
             logger.error(logStr + ", errors:" + ghRsp.getErrors());
         else
