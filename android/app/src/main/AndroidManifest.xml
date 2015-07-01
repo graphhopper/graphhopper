@@ -14,8 +14,8 @@
         android:minSdkVersion="10"
         android:targetSdkVersion="22" />
 
-    <!-- android:hardwareAccelerated="false" not possible to specify with 10 -->
     <application
+        android:hardwareAccelerated="false"
         android:allowBackup="true"        
         android:icon="@drawable/logo"
         android:label="@string/app_name"
