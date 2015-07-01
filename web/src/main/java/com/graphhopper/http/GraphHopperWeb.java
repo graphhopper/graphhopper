@@ -91,8 +91,7 @@ public class GraphHopperWeb implements GraphHopperAPI
     @Override
     public GHResponse route( GHRequest request )
     {
-        StopWatch sw = new StopWatch().start();
-        double took = 0;
+        StopWatch sw = new StopWatch().start();        
         try
         {
             String places = "";
@@ -135,8 +134,7 @@ public class GraphHopperWeb implements GraphHopperAPI
             readErrors(res.getErrors(), json);
             if (res.hasErrors())
                 return res;
-
-            took = json.getJSONObject("info").getDouble("took");
+            
             JSONArray paths = json.getJSONArray("paths");
             JSONObject firstPath = paths.getJSONObject(0);
             readPath(res, firstPath, tmpCalcPoints, tmpInstructions, tmpElevation);
@@ -145,9 +143,6 @@ public class GraphHopperWeb implements GraphHopperAPI
         } catch (Exception ex)
         {
             throw new RuntimeException("Problem while fetching path " + request.getPoints() + ": " + ex.getMessage(), ex);
-        } finally
-        {
-            logger.debug("Full request took:" + sw.stop().getSeconds() + ", API took:" + took);
         }
     }
 

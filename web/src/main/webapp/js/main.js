@@ -1077,8 +1077,7 @@ function routeLatLng(request, doQuery) {
                 hiddenDiv.toggle();
             });
             $("#info").append(toggly);
-            var infoStr = "took: " + round(json.info.took / 1000, 1000) + "s"
-                    + ", points: " + path.points.coordinates.length;
+            var infoStr = "points: " + path.points.coordinates.length;
 
             hiddenDiv.append("<span>" + infoStr + "</span>");
 
