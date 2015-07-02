@@ -980,10 +980,13 @@ function routeLatLng(request, doQuery) {
         if (json.message) {
             var tmpErrors = json.message;
             log(tmpErrors);
-            if (json.hints)
+            if (json.hints) {
                 for (var m = 0; m < json.hints.length; m++) {
                     descriptionDiv.append("<div class='error'>" + json.hints[m].message + "</div>");
                 }
+            } else {
+                descriptionDiv.append("<div class='error'>" + tmpErrors + "</div>");
+            }
             return;
         }
         var path = json.paths[0];
