@@ -300,28 +300,28 @@ public class PrepareContractionHierarchiesTest
     public void testFindShortcuts_Roundabout()
     {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
-        EdgeIteratorState iter1_1 = g.edge(1, 3, 1, true);
-        EdgeIteratorState iter1_2 = g.edge(3, 4, 1, true);
-        EdgeIteratorState iter2_1 = g.edge(4, 5, 1, false);
-        EdgeIteratorState iter2_2 = g.edge(5, 6, 1, false);
-        EdgeIteratorState iter3_1 = g.edge(6, 7, 1, true);
-        EdgeIteratorState iter3_2 = g.edge(6, 8, 2, false);
-        g.edge(8, 4, 1, false);
+        EdgeIteratorState iter1_3 = g.edge(1, 3, 1, true);
+        EdgeIteratorState iter3_4 = g.edge(3, 4, 1, true);
+        EdgeIteratorState iter4_5 = g.edge(4, 5, 1, false);
+        EdgeIteratorState iter5_6 = g.edge(5, 6, 1, false);
+        EdgeIteratorState iter6_8 = g.edge(6, 8, 2, false);
+        EdgeIteratorState iter8_4 = g.edge(8, 4, 1, false);
+        g.edge(6, 7, 1, true);
 
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, carEncoder, weighting, tMode);
         EdgeSkipIterState tmp = g.shortcut(1, 4);
         tmp.setFlags(PrepareEncoder.getScDirMask());
         tmp.setWeight(2);
-        tmp.setSkippedEdges(iter1_1.getEdge(), iter1_2.getEdge());
+        tmp.setSkippedEdges(iter1_3.getEdge(), iter3_4.getEdge());
         long f = PrepareEncoder.getScFwdDir();
         tmp = g.shortcut(4, 6);
         tmp.setFlags(f);
         tmp.setWeight(2);
-        tmp.setSkippedEdges(iter2_1.getEdge(), iter2_2.getEdge());
+        tmp.setSkippedEdges(iter4_5.getEdge(), iter5_6.getEdge());
         tmp = g.shortcut(6, 4);
         tmp.setFlags(f);
         tmp.setWeight(3);
-        tmp.setSkippedEdges(iter3_1.getEdge(), iter3_2.getEdge());
+        tmp.setSkippedEdges(iter6_8.getEdge(), iter8_4.getEdge());
 
         prepare.initFromGraph();
         prepare.prepareNodes();
@@ -333,6 +333,18 @@ public class PrepareContractionHierarchiesTest
         // there should be two different shortcuts for both directions!
         Collection<Shortcut> sc = prepare.testFindShortcuts(4);
         assertEquals(2, sc.size());
+        Iterator<Shortcut> iter = sc.iterator();
+        Shortcut sc1 = iter.next();
+        Shortcut sc2 = iter.next();
+        if (sc1.from > sc2.from)
+        {
+            Shortcut tmpSc = sc1;
+            sc1 = sc2;
+            sc2 = tmpSc;
+        }
+
+        assertEquals("1->6, weight:4.0 (7,8)", sc1.toString());
+        assertEquals("6->1, weight:5.0 (9,7)", sc2.toString());
     }
 
     void initUnpackingGraph( LevelGraphStorage g, Weighting w )
