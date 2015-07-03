@@ -960,16 +960,16 @@ public abstract class AbstractGraphStorageTester
         assertEquals(4, iter.getCount());
 
         iter = graph.getAllEdges();
-        iter.next();
+        assertTrue(iter.next());
         EdgeIteratorState eState = iter.detach(false);
         assertEquals(iter.toString(), eState.toString());
-        iter.next();
+        assertTrue(iter.next());
         assertNotEquals(iter.toString(), eState.toString());
 
         EdgeIteratorState eState2 = iter.detach(true);
         assertEquals(iter.getAdjNode(), eState2.getBaseNode());
-        iter.next();
-        assertNotEquals(iter.getAdjNode(), eState2.getBaseNode());
+        assertEquals(iter.getBaseNode(), eState2.getAdjNode());
+        assertFalse(iter.next());
     }
 
     public static void assertPList( PointList expected, PointList list )

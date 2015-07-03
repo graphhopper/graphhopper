@@ -51,94 +51,12 @@ public final class GraphHopperStorage implements GraphStorage, Graph
     public GraphHopperStorage( boolean enableCH, Directory dir, final EncodingManager encodingManager,
                                boolean withElevation, GraphExtension extendedStorage )
     {
-        if (encodingManager == null)
-            throw new IllegalArgumentException("EncodingManager cannot be null in GraphHopperStorage since 0.4. "
-                    + "If you need to parse EncodingManager configuration from existing graph use EncodingManager.create");
-
         if (extendedStorage == null)
-            throw new IllegalArgumentException("GraphExtension cannot be null use NoOpExtension");
+            throw new IllegalArgumentException("GraphExtension cannot be null, use NoOpExtension");
 
         this.encodingManager = encodingManager;
         this.dir = dir;
         this.properties = new StorableProperties(dir);
-
-        final InternalGraphPropertyAccess baseGraphPropAccess = new InternalGraphPropertyAccess()
-        {
-            @Override
-            public final long reverseFlags( long edgePointer, long flags )
-            {
-                return encodingManager.reverseFlags(flags);
-            }
-
-            @Override
-            public final BaseGraph.SingleEdge createSingleEdge( int edgeId, int nodeId )
-            {
-                return baseGraph.createSingleEdge(edgeId, nodeId);
-            }
-
-            @Override
-            public int getEdgeRef( int nodeId )
-            {
-                return baseGraph.nodes.getInt((long) nodeId * baseGraph.nodeEntryBytes + baseGraph.N_EDGE_REF);
-            }
-
-            @Override
-            public void setEdgeRef( int nodeId, int edgeId )
-            {
-                baseGraph.nodes.setInt((long) nodeId * baseGraph.nodeEntryBytes + baseGraph.N_EDGE_REF, edgeId);
-            }
-
-            @Override
-            public String toString()
-            {
-                return "property access";
-            }
-        };
-
-        InternalGraphPropertyAccess chPropAccess = new InternalGraphPropertyAccess()
-        {
-            @Override
-            public final long reverseFlags( long edgePointer, long flags )
-            {
-                boolean isShortcut = edgePointer > (long) chGraph.lastEdgeIndex * baseGraph.edgeEntryBytes;
-                if (!isShortcut)
-                    return baseGraphPropAccess.reverseFlags(edgePointer, flags);
-
-                // we need a special swapping for level graph if it is a shortcut as we only store the weight and access flags then
-                long dir = flags & chGraph.scDirMask;
-                if (dir == chGraph.scDirMask || dir == 0)
-                    return flags;
-
-                // swap the last bits with this mask
-                return flags ^ chGraph.scDirMask;
-            }
-
-            @Override
-            public final BaseGraph.SingleEdge createSingleEdge( int edgeId, int nodeId )
-            {
-                return chGraph.createSingleEdge(edgeId, nodeId);
-            }
-
-            @Override
-            public int getEdgeRef( int nodeId )
-            {
-                return chGraph.nodesCH.getInt((long) nodeId * chGraph.nodeCHEntryBytes + chGraph.N_CH_REF);
-            }
-
-            @Override
-            public void setEdgeRef( int nodeId, int edgeId )
-            {
-                chGraph.nodesCH.setInt((long) nodeId * chGraph.nodeCHEntryBytes + chGraph.N_CH_REF, edgeId);
-            }
-
-            @Override
-            public String toString()
-            {
-                return "ch property access";
-            }
-        };
-
-        // TODO create two listeners to avoid 'if'?
         InternalGraphEventListener listener = new InternalGraphEventListener()
         {
             @Override
@@ -156,11 +74,13 @@ public final class GraphHopperStorage implements GraphStorage, Graph
             }
         };
 
-        this.baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, baseGraphPropAccess, extendedStorage);
+        this.baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, extendedStorage);
 
         if (enableCH)
+        {
             // name level graph according to first flag encoder and fastest?
-            chGraph = new CHGraphImpl("ch", dir, this.baseGraph, chPropAccess);
+            chGraph = new CHGraphImpl("ch", dir, this.baseGraph);
+        }
     }
 
     /**
@@ -363,13 +283,13 @@ public final class GraphHopperStorage implements GraphStorage, Graph
      */
     public void freeze()
     {
-        if (!baseGraph.isFreezed())
+        if (!baseGraph.isFrozen())
             baseGraph.freeze();
     }
 
-    boolean isFreezed()
+    boolean isFrozen()
     {
-        return baseGraph.isFreezed();
+        return baseGraph.isFrozen();
     }
 
     @Override

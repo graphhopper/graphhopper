@@ -23,9 +23,10 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeSkipIterState;
 
 /**
- * Used in CH preparation and therefor assumed that all edges are of type EdgeSkipIterState
+ * Used in CH preparation and therefor assumed that all edges are of type CHEdgeIteratorState
  * <p/>
  * @author Peter Karich
+ * @see PrepareContractionHierarchies
  */
 public class PreparationWeighting implements Weighting
 {

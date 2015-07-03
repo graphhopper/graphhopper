@@ -96,7 +96,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
         g.edge(0, 2, 20, true);
         g.edge(2, 3, 30, true);
         g.edge(10, 11, 1, true);
-        
+
         ghStorage.freeze();
         EdgeSkipIterState tmpIter = g.shortcut(3, 4);
         tmpIter.setDistance(40).setFlags(carEncoder.setAccess(0, true, true));
@@ -111,51 +111,63 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
         assertEquals(1, GHUtility.count(iter));
         iter = g.createEdgeExplorer().setBaseNode(2);
         assertEquals(2, GHUtility.count(iter));
+
+        tmpIter = g.shortcut(5, 6);
+        tmpIter.setSkippedEdges(1, 2);
+        assertEquals(1, tmpIter.getSkippedEdge1());
+        assertEquals(2, tmpIter.getSkippedEdge2());
     }
 
     @Test
     public void testDisconnectEdge()
     {
         GraphHopperStorage ghStorage = createGHStorage();
-        CHGraphImpl g = (CHGraphImpl) getGraph(ghStorage);
+        CHGraphImpl lg = (CHGraphImpl) getGraph(ghStorage);
 
-        EdgeExplorer tmpCarOutExplorer = g.createEdgeExplorer(carOutFilter);
-        EdgeExplorer tmpCarInExplorer = g.createEdgeExplorer(carInFilter);
+        EdgeExplorer chCarOutExplorer = lg.createEdgeExplorer(carOutFilter);
+        EdgeExplorer tmpCarInExplorer = lg.createEdgeExplorer(carInFilter);
+
+        EdgeExplorer baseCarOutExplorer = ghStorage.createEdgeExplorer(carOutFilter);
 
         // only remove edges
         long flags = carEncoder.setProperties(60, true, true);
         long flags2 = carEncoder.setProperties(60, true, false);
-        g.edge(4, 1, 30, true);
+        lg.edge(4, 1, 30, true);
         ghStorage.freeze();
-        EdgeSkipIterState tmp = g.shortcut(1, 2);
+        EdgeSkipIterState tmp = lg.shortcut(1, 2);
         tmp.setDistance(10).setFlags(flags);
         tmp.setSkippedEdges(10, 11);
-        tmp = g.shortcut(1, 0);
+        tmp = lg.shortcut(1, 0);
         tmp.setDistance(20).setFlags(flags2);
         tmp.setSkippedEdges(12, 13);
-        tmp = g.shortcut(3, 1);
+        tmp = lg.shortcut(3, 1);
         tmp.setDistance(30).setFlags(flags2);
         tmp.setSkippedEdges(14, 15);
         // create everytime a new independent iterator for disconnect method
-        EdgeIterator iter = g.createEdgeExplorer().setBaseNode(1);
+        EdgeIterator iter = lg.createEdgeExplorer().setBaseNode(1);
         iter.next();
         assertEquals(3, iter.getAdjNode());
-        assertEquals(1, GHUtility.count(tmpCarOutExplorer.setBaseNode(3)));
-        g.disconnect(g.createEdgeExplorer(), iter);
-        assertEquals(0, GHUtility.count(tmpCarOutExplorer.setBaseNode(3)));
+        assertEquals(1, GHUtility.count(chCarOutExplorer.setBaseNode(3)));
+        lg.disconnect(lg.createEdgeExplorer(), iter);
+        assertEquals(0, GHUtility.count(chCarOutExplorer.setBaseNode(3)));
+        // no shortcuts visible
+        assertEquals(0, GHUtility.count(baseCarOutExplorer.setBaseNode(3)));
 
         // even directed ways change!
         assertTrue(iter.next());
         assertEquals(0, iter.getAdjNode());
         assertEquals(1, GHUtility.count(tmpCarInExplorer.setBaseNode(0)));
-        g.disconnect(g.createEdgeExplorer(), iter);
+        lg.disconnect(lg.createEdgeExplorer(), iter);
         assertEquals(0, GHUtility.count(tmpCarInExplorer.setBaseNode(0)));
 
         iter.next();
         assertEquals(2, iter.getAdjNode());
-        assertEquals(1, GHUtility.count(tmpCarOutExplorer.setBaseNode(2)));
-        g.disconnect(g.createEdgeExplorer(), iter);
-        assertEquals(0, GHUtility.count(tmpCarOutExplorer.setBaseNode(2)));
+        assertEquals(1, GHUtility.count(chCarOutExplorer.setBaseNode(2)));
+        lg.disconnect(lg.createEdgeExplorer(), iter);
+        assertEquals(0, GHUtility.count(chCarOutExplorer.setBaseNode(2)));
+
+        assertEquals(GHUtility.asSet(0, 2, 4), GHUtility.getNeighbors(chCarOutExplorer.setBaseNode(1)));
+        assertEquals(GHUtility.asSet(4), GHUtility.getNeighbors(baseCarOutExplorer.setBaseNode(1)));
     }
 
     @Test
@@ -165,7 +177,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
         CHGraphImpl g = (CHGraphImpl) getGraph(ghStorage);
         assertFalse(g.edge(0, 1).isShortcut());
         assertFalse(g.edge(1, 2).isShortcut());
-        
+
         ghStorage.freeze();
 
         // only remove edges
@@ -278,25 +290,30 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
         graph.edge(8, 9);
         graph.freeze();
         CHGraph chGraph = getGraph(graph);
-        
+
         assertEquals(1, GHUtility.count(graph.createEdgeExplorer().setBaseNode(1)));
         assertEquals(1, GHUtility.count(chGraph.createEdgeExplorer().setBaseNode(1)));
-        
+
         chGraph.shortcut(2, 3);
-        
-        // TODO should throw exception for base graph as it is out of bounds
+
+        // should be identical to access without shortcut
+        assertEquals(1, GHUtility.count(graph.createEdgeExplorer().setBaseNode(1)));
+        assertEquals(1, GHUtility.count(chGraph.createEdgeExplorer().setBaseNode(1)));
+
+        // base graph does not see shortcut        
         assertEquals(0, GHUtility.count(graph.createEdgeExplorer().setBaseNode(2)));
         assertEquals(1, GHUtility.count(chGraph.createEdgeExplorer().setBaseNode(2)));
-        
+
         graph.flush();
         graph.close();
 
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true);
         assertTrue(graph.loadExisting());
-        assertTrue(graph.isFreezed());
+        assertTrue(graph.isFrozen());
 
         chGraph = getGraph(graph);
         assertEquals(10, chGraph.getNodes());
+        assertEquals(2, graph.getAllEdges().getCount());
         assertEquals(3, chGraph.getAllEdges().getCount());
         assertEquals(1, GHUtility.count(chGraph.createEdgeExplorer().setBaseNode(2)));
     }

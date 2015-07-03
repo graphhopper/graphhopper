@@ -71,9 +71,9 @@ public interface Graph
      * Returns a wrapper over the specified edgeId.
      * <p/>
      * @param adjNode is the node that will be returned via adjNode(). If adjNode is
-     * Integer.MIN_VALUE then the edge with undefined values for adjNode and baseNode will be
-     * returned.
-     * @return an edge iterator state
+     * Integer.MIN_VALUE then the edge with uncertain values for adjNode and baseNode (two
+     * possibilities) will be returned.
+     * @return an edge iterator state or potentially null if adjNode does not match
      * @throws IllegalStateException if edgeId is not valid
      */
     EdgeIteratorState getEdgeProps( int edgeId, int adjNode );
@@ -84,19 +84,17 @@ public interface Graph
     AllEdgesIterator getAllEdges();
 
     /**
-     * Returns an iterator which makes it possible to traverse all edges of the specified node if
-     * the filter accepts the edge. Reduce calling this method as much as possible, e.g. create it
-     * before a for loop!
+     * Returns an EdgeExplorer which makes it possible to traverse all filtered edges of a specific
+     * node. Reduce calling this method as much as possible, e.g. create an explorer before a for
+     * loop!
      * <p/>
+     * @see EdgeExplorer
      * @see Graph#createEdgeExplorer()
      */
     EdgeExplorer createEdgeExplorer( EdgeFilter filter );
 
     /**
-     * Returns all the edges reachable from the specified index. Same behaviour as
-     * graph.getEdges(index, EdgeFilter.ALL_EDGES);
-     * <p/>
-     * @return all edges regardless of the vehicle type or direction.
+     * @see Graph#createEdgeExplorer(com.graphhopper.routing.util.EdgeFilter)
      */
     EdgeExplorer createEdgeExplorer();
 
@@ -110,5 +108,5 @@ public interface Graph
     /**
      * @return the graph extension like a TurnCostExtension
      */
-    GraphExtension getExtension();   
+    GraphExtension getExtension();
 }
