@@ -60,10 +60,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         this.chEdgeAccess = new EdgeAccess(shortcuts, baseGraph.bitUtil)
         {
             @Override
-            final EdgeIterable createSingleEdge( int edgeId, int nodeId )
+            final EdgeIterable createSingleEdge( int edgeId )
             {
                 EdgeSkipIteratorImpl ei = new EdgeSkipIteratorImpl(baseGraph, this, EdgeFilter.ALL_EDGES);
-                ei.setBaseNode(nodeId);
                 ei.setEdgeId(edgeId);
                 ei.nextEdgeId = EdgeIterable.NO_EDGE;
                 return ei;
@@ -165,9 +164,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
 
         int scId = chEdgeAccess.internalEdgeAdd(nextShortcutId(), a, b);
         EdgeSkipIteratorImpl iter = new EdgeSkipIteratorImpl(baseGraph, chEdgeAccess, EdgeFilter.ALL_EDGES);
-        iter.setBaseNodeUnchecked(a);
         iter.setEdgeId(scId);
-        iter.next();
+        boolean ret = iter.initWithAdjNode(b);
+        assert ret;
         iter.setSkippedEdges(EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
         return iter;
     }
@@ -195,9 +194,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         baseGraph.ensureNodeIndex(Math.max(a, b));
         int edgeId = baseGraph.edgeAccess.internalEdgeAdd(baseGraph.nextEdgeId(), a, b);
         EdgeSkipIteratorImpl iter = new EdgeSkipIteratorImpl(baseGraph, baseGraph.edgeAccess, EdgeFilter.ALL_EDGES);
-        iter.setBaseNodeUnchecked(a);
         iter.setEdgeId(edgeId);
-        iter.next();
+        boolean ret = iter.initWithAdjNode(b);
+        assert ret;
         return iter;
     }
 
@@ -278,25 +277,22 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
             super(baseGraph, edgeAccess, filter);
         }
 
-        private EdgeSkipIterator setBaseNodeUnchecked( int baseNode )
-        {
-            super.setBaseNode(baseNode);
-            return this;
-        }
-
         @Override
         public final EdgeSkipIterator setBaseNode( int baseNode )
         {
             if (!baseGraph.isFrozen())
                 throw new IllegalStateException("Traversal CHGraph is only possible if BaseGraph is frozen");
 
-            super.setBaseNode(baseNode);
+            // always use ch edge access
+            setEdgeId(chEdgeAccess.getEdgeRef(baseNode));
+            _setBaseNode(baseNode);
             return this;
         }
 
         @Override
         public final void setSkippedEdges( int edge1, int edge2 )
         {
+            assert isShortcut() : "cannot access skipped edges if not a shortcut";
             if (EdgeIterator.Edge.isValid(edge1) != EdgeIterator.Edge.isValid(edge2))
             {
                 throw new IllegalStateException("Skipped edges of a shortcut needs "
@@ -309,12 +305,14 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         @Override
         public final int getSkippedEdge1()
         {
+            assert isShortcut() : "cannot access skipped edge if not a shortcut";
             return shortcuts.getInt(edgePointer + S_SKIP_EDGE1);
         }
 
         @Override
         public final int getSkippedEdge2()
         {
+            assert isShortcut() : "cannot access skipped edge if not a shortcut";
             return shortcuts.getInt(edgePointer + S_SKIP_EDGE2);
         }
 
@@ -354,17 +352,18 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         {
             if (edgeId == nextEdgeId)
                 throw new IllegalStateException("Call next() before detaching edge " + edgeId);
-            
+
             EdgeSkipIteratorImpl iter = new EdgeSkipIteratorImpl(baseGraph, edgeAccess, filter);
-            iter.setBaseNode(baseNode);
             iter.setEdgeId(edgeId);
-            iter.next();
+            boolean ret;
             if (reverseArg)
             {
-                iter.reverse = !this.reverse;
-                iter.adjNode = baseNode;
-                iter.baseNode = adjNode;
-            }
+                ret = iter.initWithAdjNode(baseNode);
+                // for #162
+                iter.reverse = !reverse;
+            } else
+                ret = iter.initWithAdjNode(adjNode);
+            assert ret;
             return iter;
         }
 
@@ -517,7 +516,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         if (!edge.isShortcut())
             throw new IllegalStateException("setWeight is only available for shortcuts");
         if (weight < 0)
-            throw new IllegalArgumentException("weight cannot be negative! but was " + weight);
+            throw new IllegalArgumentException("weight cannot be negative but was " + weight);
 
         long weightLong;
         if (weight > MAX_WEIGHT)

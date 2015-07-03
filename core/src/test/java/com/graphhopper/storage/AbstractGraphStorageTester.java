@@ -1097,35 +1097,37 @@ public abstract class AbstractGraphStorageTester
         }
 
         iter.next();
-        EdgeIteratorState edgeState2 = iter.detach(false);
+        EdgeIteratorState edgeState02 = iter.detach(false);
         assertEquals(2, iter.getAdjNode());
-        assertEquals(1, edgeState2.fetchWayGeometry(0).getLatitude(0), 1e-1);
-        assertEquals(2, edgeState2.getAdjNode());
-        assertTrue(carEncoder.isForward(edgeState2.getFlags()));
+        assertEquals(1, edgeState02.fetchWayGeometry(0).getLatitude(0), 1e-1);
+        assertEquals(2, edgeState02.getAdjNode());
+        assertTrue(carEncoder.isForward(edgeState02.getFlags()));
 
-        EdgeIteratorState edgeState3 = iter.detach(true);
-        assertEquals(0, edgeState3.getAdjNode());
-        assertEquals(2, edgeState3.getBaseNode());
-        assertEquals(3, edgeState3.fetchWayGeometry(0).getLatitude(0), 1e-1);
-        assertFalse(carEncoder.isForward(edgeState3.getFlags()));
-        assertEquals(GHUtility.getEdge(graph, 0, 2).getFlags(), edgeState2.getFlags());
-        assertEquals(GHUtility.getEdge(graph, 2, 0).getFlags(), edgeState3.getFlags());
+        EdgeIteratorState edgeState20 = iter.detach(true);
+        assertEquals(0, edgeState20.getAdjNode());
+        assertEquals(2, edgeState20.getBaseNode());
+        assertEquals(3, edgeState20.fetchWayGeometry(0).getLatitude(0), 1e-1);
+        assertFalse(carEncoder.isForward(edgeState20.getFlags()));
+        assertEquals(GHUtility.getEdge(graph, 0, 2).getFlags(), edgeState02.getFlags());
+        assertEquals(GHUtility.getEdge(graph, 2, 0).getFlags(), edgeState20.getFlags());
 
         iter.next();
         assertEquals(1, iter.getAdjNode());
-        assertEquals(2, edgeState2.getAdjNode());
-        assertEquals(2, edgeState3.getBaseNode());
+        assertEquals(2, edgeState02.getAdjNode());
+        assertEquals(2, edgeState20.getBaseNode());
 
         assertEquals(0, iter.fetchWayGeometry(0).size());
-        assertEquals(1, edgeState2.fetchWayGeometry(0).getLatitude(0), 1e-1);
-        assertEquals(3, edgeState3.fetchWayGeometry(0).getLatitude(0), 1e-1);
+        assertEquals(1, edgeState02.fetchWayGeometry(0).getLatitude(0), 1e-1);
+        assertEquals(3, edgeState20.fetchWayGeometry(0).getLatitude(0), 1e-1);
 
         // #162 a directed self referencing edge should be able to reverse its state too
         graph.edge(3, 3, 2, true).setFlags(flags);
-        EdgeIterator iter2 = graph.createEdgeExplorer().setBaseNode(3);
-        iter2.next();
-        assertEquals(edgeState2.getFlags(), iter2.detach(false).getFlags());
-        assertEquals(edgeState3.getFlags(), iter2.detach(true).getFlags());
+        EdgeIterator edgeState33 = graph.createEdgeExplorer().setBaseNode(3);
+        edgeState33.next();
+        assertEquals(3, edgeState33.getBaseNode());
+        assertEquals(3, edgeState33.getAdjNode());
+        assertEquals(edgeState02.getFlags(), edgeState33.detach(false).getFlags());
+        assertEquals(edgeState20.getFlags(), edgeState33.detach(true).getFlags());
     }
 
     static class TmpCarFlagEncoder extends CarFlagEncoder

@@ -102,10 +102,9 @@ class BaseGraph implements Graph
         this.edgeAccess = new EdgeAccess(edges, bitUtil)
         {
             @Override
-            final EdgeIterable createSingleEdge( int edgeId, int nodeId )
+            final EdgeIterable createSingleEdge( int edgeId )
             {
                 EdgeIterable ei = new EdgeIterable(BaseGraph.this, this, EdgeFilter.ALL_EDGES);
-                ei.setBaseNode(nodeId);
                 ei.setEdgeId(edgeId);
                 ei.nextEdgeId = EdgeIterable.NO_EDGE;
                 return ei;
@@ -512,11 +511,41 @@ class BaseGraph implements Graph
             }
         }
 
+        // TODO some duplicate code for the calling side
+        boolean initWithAdjNode( int expectedAdjNode )
+        {
+            // expect only edgePointer is properly initialized via setEdgeId            
+            baseNode = edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEA);
+            if (baseNode == EdgeAccess.NO_NODE)
+                throw new IllegalStateException("content of edgeId " + edgeId + " is marked as invalid - ie. the edge is already removed!");
+
+            adjNode = edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEB);
+            // a next() call should return false
+            nextEdgeId = EdgeIterator.NO_EDGE;
+            if (expectedAdjNode == adjNode || expectedAdjNode == Integer.MIN_VALUE)
+            {
+                reverse = false;
+                return true;
+            } else if (expectedAdjNode == baseNode)
+            {
+                reverse = true;
+                baseNode = adjNode;
+                adjNode = expectedAdjNode;
+                return true;
+            }
+            return false;
+        }
+
+        void _setBaseNode( int baseNode )
+        {
+            this.baseNode = baseNode;
+        }
+
         @Override
         public EdgeIterator setBaseNode( int baseNode )
         {
-            setEdgeId(edgeAccess.getEdgeRef(baseNode));
-            this.baseNode = baseNode;
+            setEdgeId(baseGraph.edgeAccess.getEdgeRef(baseNode));
+            _setBaseNode(baseNode);
             return this;
         }
 
@@ -656,19 +685,20 @@ class BaseGraph implements Graph
         @Override
         public EdgeIteratorState detach( boolean reverseArg )
         {
-            if (edgeId == nextEdgeId)
-                throw new IllegalStateException("call next before detaching");
+            if (edgeId == nextEdgeId || edgeId == EdgeIterator.NO_EDGE)
+                throw new IllegalStateException("call next before detaching or setEdgeId (edgeId:" + edgeId + " vs. next " + nextEdgeId + ")");
 
             EdgeIterable iter = new EdgeIterable(baseGraph, edgeAccess, filter);
-            iter.setBaseNode(baseNode);
             iter.setEdgeId(edgeId);
-            iter.next();
+            boolean ret;
             if (reverseArg)
             {
-                iter.reverse = !this.reverse;
-                iter.adjNode = baseNode;
-                iter.baseNode = adjNode;
-            }
+                ret = iter.initWithAdjNode(baseNode);
+                // for #162
+                iter.reverse = !reverse;
+            } else
+                ret = iter.initWithAdjNode(adjNode);
+            assert ret;
             return iter;
         }
 
@@ -714,9 +744,9 @@ class BaseGraph implements Graph
         ensureNodeIndex(Math.max(a, b));
         int edge = edgeAccess.internalEdgeAdd(nextEdgeId(), a, b);
         EdgeIterable iter = new EdgeIterable(this, edgeAccess, EdgeFilter.ALL_EDGES);
-        iter.setBaseNode(a);
         iter.setEdgeId(edge);
-        iter.next();
+        boolean ret = iter.initWithAdjNode(b);
+        assert ret;
         if (extStorage.isRequireEdgeField())
             iter.setAdditionalField(extStorage.getDefaultEdgeFieldValue());
 
@@ -762,26 +792,10 @@ class BaseGraph implements Graph
         if (adjNode < 0 && adjNode != Integer.MIN_VALUE || adjNode >= nodeCount)
             throw new IllegalStateException("adjNode " + adjNode + " out of bounds [0," + nf(nodeCount) + ")");
 
-        long edgePointer = tmpEdgeAccess.toPointer(edgeId);
-        int nodeA = tmpEdgeAccess.edges.getInt(edgePointer + tmpEdgeAccess.E_NODEA);
-        if (nodeA == EdgeAccess.NO_NODE)
-            throw new IllegalStateException("content of edgeId " + edgeId + " is marked as invalid - ie. the edge is already removed!");
+        EdgeIterable edge = tmpEdgeAccess.createSingleEdge(edgeId);
+        if (edge.initWithAdjNode(adjNode))
+            return edge;
 
-        int nodeB = tmpEdgeAccess.edges.getInt(edgePointer + tmpEdgeAccess.E_NODEB);
-        EdgeIterable edge;
-        if (adjNode == nodeB || adjNode == Integer.MIN_VALUE)
-        {
-            edge = tmpEdgeAccess.createSingleEdge(edgeId, nodeA);
-            edge.reverse = false;
-            edge.adjNode = nodeB;
-            return edge;
-        } else if (adjNode == nodeA)
-        {
-            edge = tmpEdgeAccess.createSingleEdge(edgeId, nodeB);
-            edge.adjNode = nodeA;
-            edge.reverse = true;
-            return edge;
-        }
         // if edgeId exists but adjacent nodes do not match
         return null;
     }
@@ -1263,7 +1277,8 @@ class BaseGraph implements Graph
             this.baseGraph = baseGraph;
             this.edgeAccess = edgeAccess;
             this.edgePointer = -edgeAccess.getEntryBytes();
-            this.maxBytes = (long) getCount() * edgeAccess.getEntryBytes();
+            // first iteration is always through base edges
+            this.maxBytes = (long) baseGraph.edgeCount * baseGraph.edgeEntryBytes;
         }
 
         @Override
@@ -1402,14 +1417,17 @@ class BaseGraph implements Graph
                 throw new IllegalStateException("call next before detaching");
 
             AllEdgeIterator iter = new AllEdgeIterator(baseGraph, edgeAccess);
-            iter.nodeA = nodeA;
-            iter.nodeB = nodeB;
             iter.edgePointer = edgePointer;
             if (reverseArg)
             {
                 iter.reverse = !this.reverse;
                 iter.nodeA = nodeB;
                 iter.nodeB = nodeA;
+            } else
+            {
+                iter.reverse = this.reverse;
+                iter.nodeA = nodeA;
+                iter.nodeB = nodeB;
             }
             return iter;
         }

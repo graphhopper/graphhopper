@@ -19,10 +19,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.LevelEdgeFilter;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -316,5 +313,22 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
         assertEquals(2, graph.getAllEdges().getCount());
         assertEquals(3, chGraph.getAllEdges().getCount());
         assertEquals(1, GHUtility.count(chGraph.createEdgeExplorer().setBaseNode(2)));
+    }
+
+    @Test
+    public void testSimpleShortcutCreationAndTraversal()
+    {
+        graph = createGHStorage();
+        graph.edge(1, 3, 10, true);
+        graph.edge(3, 4, 10, true);
+        graph.freeze();
+
+        CHGraph lg = graph.getGraph(CHGraph.class);
+        lg.shortcut(1, 4).setWeight(3).setFlags(carEncoder.setProperties(10, true, true));
+
+        EdgeExplorer vehicleOutExplorer = lg.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, false, true));
+        // iteration should result in same nodes even if reusing the iterator
+        assertEquals(GHUtility.asSet(3, 4), GHUtility.getNeighbors(vehicleOutExplorer.setBaseNode(1)));
+        assertEquals(GHUtility.asSet(3, 4), GHUtility.getNeighbors(vehicleOutExplorer.setBaseNode(1)));
     }
 }
