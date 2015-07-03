@@ -178,6 +178,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         if (shortcutCount < 0)
             throw new IllegalStateException("too many shortcuts. new shortcut id would be negative. " + toString());
 
+        shortcuts.ensureCapacity(((long) shortcutCount + 1) * shortcutEntryBytes);
         return nextSC + baseGraph.edgeCount;
     }
 
