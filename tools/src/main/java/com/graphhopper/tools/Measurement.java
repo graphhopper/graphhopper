@@ -79,12 +79,13 @@ public class Measurement
         {
             // re-create index to avoid bug as pickNode in locationIndex.prepare could be wrong while indexing if level is not taken into account and assumed to be 0 for pre-initialized graph            
             StopWatch sw = new StopWatch().start();
-            int edges = getGraphHopperStorage().getAllEdges().getCount();
             setAlgorithmFactory(createPrepare());
             super.prepare();
             setLocationIndex(createLocationIndex(new RAMDirectory()));
             put("prepare.time", sw.stop().getTime());
-            put("prepare.shortcuts", getGraphHopperStorage().getAllEdges().getCount() - edges);
+            int edges = getGraphHopperStorage().getAllEdges().getCount();
+            int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class).getAllEdges().getCount();
+            put("prepare.shortcuts", edgesAndShortcuts - edges);
         }
     }
 
