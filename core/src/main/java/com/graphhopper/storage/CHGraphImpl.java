@@ -541,7 +541,10 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         if (!edge.isShortcut())
             throw new IllegalStateException("getWeight is only available for shortcuts");
 
-        double weight = (edge.getFlags() >>> 2) / WEIGHT_FACTOR;
+        // Note: code duplication here but getWeight is very performance critical!
+        // we need to avoid reverseFlags call for getFlags and no need for 64bit
+        int flags32bit = chEdgeAccess.edges.getInt(((EdgeSkipIteratorImpl) edge).edgePointer + chEdgeAccess.E_FLAGS);
+        double weight = (flags32bit >>> 2) / WEIGHT_FACTOR;
         if (weight >= MAX_WEIGHT)
             return Double.POSITIVE_INFINITY;
 
