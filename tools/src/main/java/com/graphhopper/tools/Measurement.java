@@ -114,13 +114,13 @@ public class Measurement
             throw new IllegalStateException("Graph has to be unprepared but wasn't!");
 
         String vehicleStr = args.get("graph.flagEncoders", "");
+        FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicleStr);
         StopWatch sw = new StopWatch().start();
         try
         {
-
             maxNode = g.getNodes();
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
-            printMiscUnitPerfTests(hopper, vehicleStr, count * 100, allowedEdges);
+            printMiscUnitPerfTests(false, g, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
 
             // Route via dijkstrabi. Normal routing takes a lot of time => smaller query number than CH
@@ -133,6 +133,10 @@ public class Measurement
             // route via CH. do preparation before                        
             hopper.setCHEnable(true);
             hopper.doPostProcessing();
+
+            CHGraph lg = g.getGraph(CHGraph.class);
+            fillAllowedEdges(lg.getAllEdges(), allowedEdges);
+            printMiscUnitPerfTests(true, lg, encoder, count * 100, allowedEdges);
             printTimeOfRouteQuery(hopper, count, "routingCH", vehicleStr, true);
             printTimeOfRouteQuery(hopper, count, "routingCH_no_instr", vehicleStr, false);
             logger.info("store into " + propLocation);
@@ -160,6 +164,15 @@ public class Measurement
         }
     }
 
+    void fillAllowedEdges( AllEdgesIterator iter, GHBitSet bs )
+    {
+        bs.clear();
+        while (iter.next())
+        {
+            bs.add(iter.getEdge());
+        }
+    }
+
     private GHBitSet printGraphDetails( GraphHopperStorage g, String vehicleStr )
     {
         // graph size (edge, node and storage size)
@@ -171,10 +184,7 @@ public class Measurement
         AllEdgesIterator iter = g.getAllEdges();
         final int maxEdgesId = g.getAllEdges().getCount();
         final GHBitSet allowedEdges = new GHBitSetImpl(maxEdgesId);
-        while (iter.next())
-        {
-            allowedEdges.add(iter.getEdge());
-        }
+        fillAllowedEdges(iter, allowedEdges);
         put("graph.valid_edges", allowedEdges.getCardinality());
         return allowedEdges;
     }
@@ -204,13 +214,27 @@ public class Measurement
         print("location2id", miniPerf);
     }
 
-    private void printMiscUnitPerfTests( final GraphHopper hopper, String vehicle, int count,
-                                         final GHBitSet allowedEdges )
+    private void printMiscUnitPerfTests( boolean isCH, final Graph graph, final FlagEncoder encoder,
+                                         int count, final GHBitSet allowedEdges )
     {
         final Random rand = new Random(seed);
-        final GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        String description = "";
+        if (isCH)
+        {
+            description = "CH";
+            final EdgeExplorer chExplorer = graph.createEdgeExplorer(new LevelEdgeFilter((CHGraph) graph));
+            MiniPerfTest miniPerf = new MiniPerfTest()
+            {
+                @Override
+                public int doCalc( boolean warmup, int run )
+                {
+                    int nodeId = rand.nextInt(maxNode);
+                    return GHUtility.count(chExplorer.setBaseNode(nodeId));
+                }
+            }.setIterations(count).start();
+            print("unit_testsCH.level_edge_state_next", miniPerf);
+        }
 
-        FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
         EdgeFilter outFilter = new DefaultEdgeFilter(encoder, false, true);
         final EdgeExplorer outExplorer = graph.createEdgeExplorer(outFilter);
         MiniPerfTest miniPerf = new MiniPerfTest()
@@ -222,7 +246,7 @@ public class Measurement
                 return GHUtility.count(outExplorer.setBaseNode(nodeId));
             }
         }.setIterations(count).start();
-        print("unit_tests.out_edge_state_next", miniPerf);
+        print("unit_tests" + description + ".out_edge_state_next", miniPerf);
 
         final EdgeExplorer allExplorer = graph.createEdgeExplorer();
         miniPerf = new MiniPerfTest()
@@ -234,7 +258,7 @@ public class Measurement
                 return GHUtility.count(allExplorer.setBaseNode(nodeId));
             }
         }.setIterations(count).start();
-        print("unit_tests.all_edge_state_next", miniPerf);
+        print("unit_tests" + description + ".all_edge_state_next", miniPerf);
 
         final int maxEdgesId = graph.getAllEdges().getCount();
         miniPerf = new MiniPerfTest()
@@ -250,7 +274,7 @@ public class Measurement
                 }
             }
         }.setIterations(count).start();
-        print("unit_tests.get_edge_state", miniPerf);
+        print("unit_tests" + description + ".get_edge_state", miniPerf);
     }
 
     private void printTimeOfRouteQuery( final GraphHopper hopper, int count, String prefix,
