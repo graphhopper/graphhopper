@@ -78,7 +78,8 @@ public class AlternativeRoute
      * calculation
      * @return currently no path at all or two paths (one forward and one backward path)
      */
-    public List<Path> calcRoundTrips( int from, double maxFullDistance, double maxWeightFactor, final double penaltyFactor )
+    public List<Path> calcRoundTrips( int from, double maxFullDistance, double maxWeightFactor,
+            final double penaltyFactor )
     {
         AltSingleDijkstra altDijkstra = new AltSingleDijkstra(graph, flagEncoder, weighting, traversalMode);
         altDijkstra.beforeRun(from);
@@ -288,6 +289,11 @@ public class AlternativeRoute
                 return true;
 
             if (currFrom.weight + currTo.weight > weightLimit)
+                return true;
+
+            // The following condition is necessary to avoid traversing the full graph if areas are disconnected
+            // but it is only valid for none-CH e.g. for CH it can happen that finishedTo is true but the from-SPT could still reach 'to'
+            if (!bestPath.isFound() && (finishedFrom || finishedTo))
                 return true;
 
             // TODO reduce search space via the paper 'Improved Alternative Route Planning'

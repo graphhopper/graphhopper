@@ -17,8 +17,8 @@ import org.junit.Test;
 import java.util.List;
 
 import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import com.graphhopper.routing.AlternativeRoute.AltDijkstraBidirectionRef;
+import static org.junit.Assert.*;
 import org.junit.Ignore;
 
 /**
@@ -37,11 +37,13 @@ public class AlternativeRouteTest
         graph.create(1000);
 
         // fullGraph=false => only 3-8
-        /*   9
+        /* 9
          _/\
          1  2-3-4-10
          \  /   \
          5-6-7---8
+        
+         11
          */
         graph.edge(1, 9, 1, true);
         graph.edge(9, 2, 1, true);
@@ -186,5 +188,22 @@ public class AlternativeRouteTest
             if (a.getPlateauWeight() > a.getPath().getWeight())
                 assertTrue("plateau or sortby incorrect -> " + a, false);
         }
+    }
+
+    @Test
+    public void testDisconnectedAreas()
+    {
+        GraphStorage g = createTestGraph(true);
+
+        // one single disconnected node
+        updateDistancesFor(g, 20, 0.00, -0.01);
+
+        Weighting weighting = new FastestWeighting(carFE);
+        AltDijkstraBidirectionRef altDijkstra = new AltDijkstraBidirectionRef(g, carFE, weighting, tMode);
+        Path path = altDijkstra.calcPath(1, 20);
+        assertFalse(path.isFound());
+
+        // make sure not the full graph is traversed!
+        assertEquals(1, altDijkstra.getVisitedNodes());
     }
 }
