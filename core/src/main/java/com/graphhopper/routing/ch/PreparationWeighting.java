@@ -46,13 +46,11 @@ public class PreparationWeighting implements Weighting
     @Override
     public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId )
     {
-        if (edgeState instanceof EdgeSkipIterState)
-        {
-            EdgeSkipIterState tmp = (EdgeSkipIterState) edgeState;
-            if (tmp.isShortcut())
-                // if a shortcut is in both directions the weight is identical => no need for 'reverse'
-                return tmp.getWeight();
-        }
+        EdgeSkipIterState tmp = (EdgeSkipIterState) edgeState;
+        if (tmp.isShortcut())
+            // if a shortcut is in both directions the weight is identical => no need for 'reverse'
+            return tmp.getWeight();
+
         return userWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
     }
 

@@ -163,6 +163,7 @@ public class PrepareContractionHierarchiesTest
         g.edge(5, 2, 1, false);
         g.edge(3, 5, 1, false);
         g.edge(4, 3, 1, false);
+        g.freeze();
         int oldCount = GHUtility.count(lg.getAllEdges());
         assertEquals(6, oldCount);
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, carEncoder, weighting, tMode);
