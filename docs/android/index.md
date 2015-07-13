@@ -25,7 +25,7 @@ Download the [Android SDK](http://developer.android.com/sdk/installing/index.htm
 go to the Android SDK Manager and install at least 2.3 (API 9).
 
 ### Maven or NetBeans
- 1. Download [Maven SDK Deployer](https://github.com/mosabua/maven-android-sdk-deployer) and execute `mvn install -P 2.3` - it uses [Android Maven Plugin](http://code.google.com/p/maven-android-plugin/wiki/GettingStarted) under the hood where you need to set up ANDROID_HOME
+ 1. Download [Maven Android SDK Deployer](https://github.com/simpligility/maven-android-sdk-deployer) and execute `mvn install -P 5.1` - it uses [Android Maven Plugin](http://simpligility.github.io/android-maven-plugin/) under the hood where you need to set up ANDROID_HOME
  2. Now do `./graphhopper.sh android`
 
 ### Gradle

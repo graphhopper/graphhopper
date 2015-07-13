@@ -107,6 +107,11 @@ public class CGIARProvider implements ElevationProvider
         return this;
     }
 
+    protected File getCacheDir()
+    {
+        return cacheDir;
+    }        
+
     @Override
     public ElevationProvider setBaseURL( String baseUrl )
     {
@@ -212,7 +217,7 @@ public class CGIARProvider implements ElevationProvider
                     {
                         entry = zis.getNextEntry();
                     }
-
+                    
                     ss = SeekableStream.wrapInputStream(zis, true);
                     TIFFImageDecoder imageDecoder = new TIFFImageDecoder(ss, new TIFFDecodeParam());
                     raster = imageDecoder.decodeAsRaster();
@@ -317,6 +322,9 @@ public class CGIARProvider implements ElevationProvider
     public static void main( String[] args )
     {
         CGIARProvider provider = new CGIARProvider();
+        
+        System.out.println(provider.getEle(46, -20));
+        
         // 337.0
         System.out.println(provider.getEle(49.949784, 11.57517));
         // 453.0

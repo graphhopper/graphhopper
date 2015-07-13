@@ -1,7 +1,19 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
+ * 
+ *  GraphHopper licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
+ * 
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 package com.graphhopper.http;
 
@@ -14,7 +26,7 @@ import java.util.*;
 
 /**
  *
- * @author peterk
+ * @author Peter Karich
  */
 public class SimpleRouteSerializer implements RouteSerializer
 {
@@ -27,27 +39,28 @@ public class SimpleRouteSerializer implements RouteSerializer
 
     @Override
     public Map<String, Object> toJSON( GHResponse rsp,
-                                          boolean calcPoints, boolean pointsEncoded,
-                                          boolean includeElevation, boolean enableInstructions )
+                                       boolean calcPoints, boolean pointsEncoded,
+                                       boolean includeElevation, boolean enableInstructions )
     {
         Map<String, Object> json = new HashMap<String, Object>();
 
         if (rsp.hasErrors())
         {
             json.put("message", rsp.getErrors().get(0).getMessage());
-            List<Map<String, String>> list = new ArrayList<Map<String, String>>();
+            List<Map<String, String>> errorHintList = new ArrayList<Map<String, String>>();
             for (Throwable t : rsp.getErrors())
             {
                 Map<String, String> map = new HashMap<String, String>();
                 map.put("message", t.getMessage());
                 map.put("details", t.getClass().getName());
-                list.add(map);
+                errorHintList.add(map);
             }
-            json.put("hints", list);
+            json.put("hints", errorHintList);
         } else
         {
             Map<String, Object> jsonInfo = new HashMap<String, Object>();
             json.put("info", jsonInfo);
+            json.put("hints", rsp.getHints().toMap());
             jsonInfo.put("copyrights", Arrays.asList("GraphHopper", "OpenStreetMap contributors"));
             Map<String, Object> jsonPath = new HashMap<String, Object>();
             jsonPath.put("distance", Helper.round(rsp.getDistance(), 3));

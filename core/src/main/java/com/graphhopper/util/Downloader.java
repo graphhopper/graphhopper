@@ -64,13 +64,13 @@ public class Downloader
         return this;
     }
 
-    public InputStream fetch( HttpURLConnection conn ) throws IOException
+    public InputStream fetch( HttpURLConnection conn, boolean readErrorStreamNoException ) throws IOException
     {
         // create connection but before reading get the correct inputstream based on the compression and if error
         conn.connect();
 
         InputStream is;
-        if (conn.getResponseCode() >= 400 && conn.getErrorStream() != null)
+        if (readErrorStreamNoException && conn.getResponseCode() >= 400 && conn.getErrorStream() != null)
             is = conn.getErrorStream();
         else
             is = conn.getInputStream();
@@ -92,7 +92,7 @@ public class Downloader
 
     public InputStream fetch( String url ) throws IOException
     {
-        return fetch((HttpURLConnection) createConnection(url));
+        return fetch((HttpURLConnection) createConnection(url), false);
     }
 
     public HttpURLConnection createConnection( String urlStr ) throws IOException
@@ -115,7 +115,7 @@ public class Downloader
     public void downloadFile( String url, String toFile ) throws IOException
     {
         HttpURLConnection conn = createConnection(url);
-        InputStream iStream = fetch(conn);
+        InputStream iStream = fetch(conn, false);
         int size = 8 * 1024;
         BufferedOutputStream writer = new BufferedOutputStream(new FileOutputStream(toFile), size);
         InputStream in = new BufferedInputStream(iStream, size);
@@ -138,7 +138,7 @@ public class Downloader
     {
         HttpURLConnection conn = createConnection(url);
         final int length = conn.getContentLength();
-        InputStream iStream = fetch(conn);
+        InputStream iStream = fetch(conn, false);
 
         new Unzipper().unzip(iStream, new File(toFolder), new ProgressListener()
         {
@@ -147,11 +147,11 @@ public class Downloader
             {
                 progressListener.update((int) (100 * sumBytes / length));
             }
-        });
+        });    
     }
 
-    public String downloadAsString( String url ) throws IOException
+    public String downloadAsString( String url, boolean readErrorStreamNoException ) throws IOException
     {
-        return Helper.isToString(fetch(url));
+        return Helper.isToString(fetch((HttpURLConnection) createConnection(url), readErrorStreamNoException));
     }
 }

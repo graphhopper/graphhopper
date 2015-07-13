@@ -980,10 +980,13 @@ function routeLatLng(request, doQuery) {
         if (json.message) {
             var tmpErrors = json.message;
             log(tmpErrors);
-            if (json.hints)
+            if (json.hints) {
                 for (var m = 0; m < json.hints.length; m++) {
                     descriptionDiv.append("<div class='error'>" + json.hints[m].message + "</div>");
                 }
+            } else {
+                descriptionDiv.append("<div class='error'>" + tmpErrors + "</div>");
+            }
             return;
         }
         var path = json.paths[0];
@@ -1077,8 +1080,7 @@ function routeLatLng(request, doQuery) {
                 hiddenDiv.toggle();
             });
             $("#info").append(toggly);
-            var infoStr = "took: " + round(json.info.took / 1000, 1000) + "s"
-                    + ", points: " + path.points.coordinates.length;
+            var infoStr = "points: " + path.points.coordinates.length;
 
             hiddenDiv.append("<span>" + infoStr + "</span>");
 
@@ -1249,7 +1251,9 @@ function parseUrl(query) {
         if (value === "")
             continue;
 
-        if (typeof res[key] === "undefined") {
+        // force array for heading and point
+        if (typeof res[key] === "undefined"
+                && key !== "heading" && key !== "point") {
             if (value === 'true')
                 value = true;
             else if (value === 'false')

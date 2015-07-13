@@ -139,6 +139,7 @@ public class GraphHopperServlet extends GHBaseServlet
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + infoPoints + ", took:"
                 + took + ", " + algoStr + ", " + weighting + ", " + vehicleStr;
+        httpRes.setHeader("X-GH-Took", "" + Math.round(took * 1000));
 
         if (ghRsp.hasErrors())
             logger.error(logStr + ", errors:" + ghRsp.getErrors());
@@ -163,6 +164,7 @@ public class GraphHopperServlet extends GHBaseServlet
             Map<String, Object> map = routeSerializer.toJSON(ghRsp, calcPoints, pointsEncoded,
                     enableElevation, enableInstructions);
 
+            // deprecated - remove in 0.5
             Object infoMap = map.get("info");
             if (infoMap != null)
                 ((Map) infoMap).put("took", Math.round(took * 1000));

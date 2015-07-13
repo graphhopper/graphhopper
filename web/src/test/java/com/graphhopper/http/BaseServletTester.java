@@ -130,7 +130,7 @@ public class BaseServletTester
         HttpURLConnection conn = downloader.createConnection(url);
         conn.connect();
         assertEquals(code, conn.getResponseCode());
-        return Helper.isToString(downloader.fetch(conn));
+        return Helper.isToString(downloader.fetch(conn, true));
     }
 
     protected JSONObject query( String query, int code ) throws Exception
@@ -153,6 +153,6 @@ public class BaseServletTester
         }
         String url = getTestNearestAPIUrl() + "?" + resQuery;
         Downloader downloader = new Downloader("web integration tester");
-        return new JSONObject(downloader.downloadAsString(url));
+        return new JSONObject(downloader.downloadAsString(url, true));
     }
 }

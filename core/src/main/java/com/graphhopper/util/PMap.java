@@ -159,6 +159,14 @@ public class PMap
         return val;
     }
 
+    /**
+     * This method copies the underlying structur into a new Map object
+     */
+    public Map<String, String> toMap()
+    {
+        return new HashMap<String, String>(map);
+    }
+
     private Map<String, String> getMap()
     {
         return map;

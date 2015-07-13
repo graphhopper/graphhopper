@@ -179,7 +179,7 @@ public class QueryTorture
         try
         {
             String url = baseUrl + query.createQueryString();
-            String res = new Downloader("QueryTorture!").setTimeout(timeout).downloadAsString(url);
+            String res = new Downloader("QueryTorture!").setTimeout(timeout).downloadAsString(url, false);
             if (res.contains("errors"))
                 routingErrorCounter.incrementAndGet();
             else

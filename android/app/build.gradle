@@ -6,8 +6,8 @@ android {
 
     defaultConfig {
         applicationId "com.graphhopper.android"
-        minSdkVersion 8
-        targetSdkVersion 19
+        minSdkVersion 10
+        targetSdkVersion 22
     }
 
     buildTypes {
@@ -35,7 +35,7 @@ configurations.all {
  **/
 
 dependencies {
-    compile(group: 'com.graphhopper', name: 'graphhopper', version: '0.4-SNAPSHOT') {
+    compile(group: 'com.graphhopper', name: 'graphhopper', version: '0.5-SNAPSHOT') {
        exclude group: 'com.google.protobuf', module: 'protobuf-java'
        exclude group: 'org.openstreetmap.osmosis', module: 'osmosis-osm-binary'
        exclude group: 'org.apache.xmlgraphics', module: 'xmlgraphics-commons'
@@ -46,6 +46,6 @@ dependencies {
     compile group: 'org.mapsforge', name: 'mapsforge-map-android', version: '0.5.1'
     compile group: 'org.mapsforge', name: 'mapsforge-map-reader', version: '0.5.1'
 
-    compile group: 'org.slf4j', name: 'slf4j-android', version: '1.7.10'
-    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.10'
+    compile group: 'org.slf4j', name: 'slf4j-android', version: '1.7.12'
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.12'
 }
