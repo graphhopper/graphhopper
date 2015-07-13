@@ -149,8 +149,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
 
     final void checkNodeId( int nodeId )
     {
-        if (nodeId >= baseGraph.getNodes())
-            throw new IllegalStateException("node " + nodeId + " is invalid. Not in [0," + baseGraph.getNodes() + ")");
+        assert nodeId < baseGraph.getNodes() : "node " + nodeId + " is invalid. Not in [0," + baseGraph.getNodes() + ")";
     }
 
     @Override
