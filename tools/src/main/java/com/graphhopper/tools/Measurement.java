@@ -133,7 +133,6 @@ public class Measurement
             // route via CH. do preparation before                        
             hopper.setCHEnable(true);
             hopper.doPostProcessing();
-
             CHGraph lg = g.getGraph(CHGraph.class);
             fillAllowedEdges(lg.getAllEdges(), allowedEdges);
             printMiscUnitPerfTests(true, lg, encoder, count * 100, allowedEdges);
@@ -222,7 +221,8 @@ public class Measurement
         if (isCH)
         {
             description = "CH";
-            final EdgeExplorer chExplorer = graph.createEdgeExplorer(new LevelEdgeFilter((CHGraph) graph));
+            CHGraph lg = (CHGraph) graph;
+            final EdgeSkipExplorer chExplorer = lg.createEdgeExplorer(new LevelEdgeFilter(lg));
             MiniPerfTest miniPerf = new MiniPerfTest()
             {
                 @Override
@@ -233,6 +233,24 @@ public class Measurement
                 }
             }.setIterations(count).start();
             print("unit_testsCH.level_edge_state_next", miniPerf);
+
+            final EdgeSkipExplorer chExplorer2 = lg.createEdgeExplorer();
+            miniPerf = new MiniPerfTest()
+            {
+                @Override
+                public int doCalc( boolean warmup, int run )
+                {
+                    int nodeId = rand.nextInt(maxNode);
+                    EdgeSkipIterator iter = chExplorer2.setBaseNode(nodeId);
+                    while (iter.next())
+                    {
+                        if (iter.isShortcut())
+                            nodeId += (int) iter.getWeight();
+                    }
+                    return nodeId;
+                }
+            }.setIterations(count).start();
+            print("unit_testsCH.get_weight", miniPerf);
         }
 
         EdgeFilter outFilter = new DefaultEdgeFilter(encoder, false, true);
