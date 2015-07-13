@@ -18,6 +18,7 @@
 package com.graphhopper;
 
 import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 
@@ -37,7 +38,8 @@ public class GHResponse
     private double distance;
     private double routeWeight;
     private long time;
-    private InstructionList instructions = null;
+    private InstructionList instructions;
+    private final PMap hintsMap = new PMap();
 
     public GHResponse()
     {
@@ -214,5 +216,10 @@ public class GHResponse
             throw new IllegalArgumentException("To access instructions you need to enable creation before routing");
 
         return instructions;
+    }
+
+    public PMap getHints()
+    {
+        return hintsMap;
     }
 }

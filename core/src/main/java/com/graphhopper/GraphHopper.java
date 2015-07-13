@@ -92,7 +92,6 @@ public class GraphHopper implements GraphHopperAPI
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
-    private final AtomicLong visitedSum = new AtomicLong(0);
 
     public GraphHopper()
     {
@@ -927,8 +926,7 @@ public class GraphHopper implements GraphHopperAPI
             return Collections.emptyList();
         }
 
-        visitedSum.set(0);
-
+        long visitedNodesSum = 0;
         FlagEncoder encoder = encodingManager.getEncoder(vehicle);
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
 
@@ -1010,7 +1008,7 @@ public class GraphHopper implements GraphHopperAPI
             // reset all direction enforcements in queryGraph to avoid influencing next path
             queryGraph.clearUnfavoredStatus();
 
-            visitedSum.addAndGet(algo.getVisitedNodes());
+            visitedNodesSum += algo.getVisitedNodes();
             fromQResult = toQResult;
         }
 
@@ -1021,6 +1019,8 @@ public class GraphHopper implements GraphHopperAPI
             throw new RuntimeException("There should be exactly one more places than paths. places:" + points.size() + ", paths:" + paths.size());
 
         rsp.setDebugInfo(debug);
+        rsp.getHints().put("visited_nodes.sum", visitedNodesSum);
+        rsp.getHints().put("visited_nodes.average", (float) visitedNodesSum / (points.size() - 1));
         return paths;
     }
 
@@ -1157,14 +1157,5 @@ public class GraphHopper implements GraphHopperAPI
     {
         if (!allowWrites)
             throw new IllegalStateException("Writes are not allowed!");
-    }
-
-    /**
-     * Returns the current sum of the visited nodes while routing. Mainly for statistic and
-     * debugging purposes.
-     */
-    long getVisitedSum()
-    {
-        return visitedSum.get();
     }
 }

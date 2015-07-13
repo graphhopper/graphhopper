@@ -85,7 +85,7 @@ public class GraphHopperIT
                 setAlgorithm(AlgorithmOptions.ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
 
         // identify the number of counts to compare with CH foot route
-        assertEquals(698, hopper.getVisitedSum());
+        assertEquals(698, rsp.getHints().getLong("visited_nodes.sum", 0));
         assertEquals(3437.6, rsp.getDistance(), .1);
         assertEquals(89, rsp.getPoints().getSize());
 
@@ -219,7 +219,6 @@ public class GraphHopperIT
         assertEquals(27, rsp.getPoints().getSize());
     }
 
-
     @Test
     public void testSRTMWithInstructions() throws Exception
     {
@@ -246,17 +245,17 @@ public class GraphHopperIT
 
         String str = rsp.getPoints().toString();
         assertEquals("(43.73068455771767,7.421283689825812,62.0), (43.73067957305937,7.421382123709815,66.0), "
-                        + "(43.73109792316924,7.421546222751131,45.0), (43.73129908884985,7.421589994913116,45.0), "
-                        + "(43.731327028527716,7.421414533736137,45.0), (43.73125047381037,7.421366291225693,45.0), "
-                        + "(43.73125457162979,7.421274090288746,52.0), "
-                        + "(43.73128213877862,7.421115579183003,52.0), (43.731362232521825,7.421145381506057,52.0), "
-                        + "(43.731371359483255,7.421123216028286,52.0), (43.731485725897976,7.42117332118392,52.0), "
-                        + "(43.731575132867135,7.420868778695214,52.0), (43.73160605277731,7.420824820268709,52.0), "
-                        + "(43.7316401391843,7.420850152243305,52.0), (43.731674039326776,7.421050014072285,52.0)",
+                + "(43.73109792316924,7.421546222751131,45.0), (43.73129908884985,7.421589994913116,45.0), "
+                + "(43.731327028527716,7.421414533736137,45.0), (43.73125047381037,7.421366291225693,45.0), "
+                + "(43.73125457162979,7.421274090288746,52.0), "
+                + "(43.73128213877862,7.421115579183003,52.0), (43.731362232521825,7.421145381506057,52.0), "
+                + "(43.731371359483255,7.421123216028286,52.0), (43.731485725897976,7.42117332118392,52.0), "
+                + "(43.731575132867135,7.420868778695214,52.0), (43.73160605277731,7.420824820268709,52.0), "
+                + "(43.7316401391843,7.420850152243305,52.0), (43.731674039326776,7.421050014072285,52.0)",
                 str.substring(0, 662));
 
         assertEquals("(43.727778875703635,7.418772930326453,11.0), (43.72768239068275,7.419007064826944,11.0), "
-                        + "(43.727680946587874,7.419198768422206,11.0)",
+                + "(43.727680946587874,7.419198768422206,11.0)",
                 str.substring(str.length() - 132));
 
         List<GPXEntry> list = rsp.getInstructions().createGPXList();
@@ -407,7 +406,9 @@ public class GraphHopperIT
                 setVehicle(vehicle));
 
         // identify the number of counts to compare with none-CH foot route which had nearly 700 counts
-        assertTrue("Too many nodes visited " + tmpHopper.getVisitedSum(), tmpHopper.getVisitedSum() < 120);
+        long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        assertNotEquals(sum, 0);
+        assertTrue("Too many nodes visited " + sum, sum < 120);
         assertEquals(3437.6, rsp.getDistance(), .1);
         assertEquals(89, rsp.getPoints().getSize());
         tmpHopper.close();

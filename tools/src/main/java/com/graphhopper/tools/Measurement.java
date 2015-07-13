@@ -20,19 +20,15 @@ package com.graphhopper.tools;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.MiniPerfTest;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.FileWriter;
@@ -124,7 +120,8 @@ public class Measurement
         try
         {
             maxNode = g.getNodes();
-            printGraphDetails(g, vehicleStr);
+            GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
+            printMiscUnitPerfTests(hopper, vehicleStr, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
 
             // Route via dijkstrabi. Normal routing takes a lot of time => smaller query number than CH
@@ -164,13 +161,23 @@ public class Measurement
         }
     }
 
-    private void printGraphDetails( GraphStorage g, String vehicleStr )
+    private GHBitSet printGraphDetails( GraphStorage g, String vehicleStr )
     {
         // graph size (edge, node and storage size)
         put("graph.nodes", g.getNodes());
         put("graph.edges", g.getAllEdges().getCount());
         put("graph.sizeInMB", g.getCapacity() / Helper.MB);
         put("graph.encoder", vehicleStr);
+
+        AllEdgesIterator iter = g.getAllEdges();
+        final int maxEdgesId = g.getAllEdges().getCount();
+        final GHBitSet allowedEdges = new GHBitSetImpl(maxEdgesId);
+        while (iter.next())
+        {
+            allowedEdges.add(iter.getEdge());
+        }
+        put("graph.valid_edges", allowedEdges.getCardinality());
+        return allowedEdges;
     }
 
     private void printLocationIndexQuery( Graph g, final LocationIndex idx, int count )
@@ -198,6 +205,55 @@ public class Measurement
         print("location2id", miniPerf);
     }
 
+    private void printMiscUnitPerfTests( final GraphHopper hopper, String vehicle, int count,
+                                         final GHBitSet allowedEdges )
+    {
+        final Random rand = new Random(seed);
+        final GraphStorage graph = hopper.getGraph();
+
+        FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
+        EdgeFilter outFilter = new DefaultEdgeFilter(encoder, false, true);
+        final EdgeExplorer outExplorer = graph.createEdgeExplorer(outFilter);
+        MiniPerfTest miniPerf = new MiniPerfTest()
+        {
+            @Override
+            public int doCalc( boolean warmup, int run )
+            {
+                int nodeId = rand.nextInt(maxNode);
+                return GHUtility.count(outExplorer.setBaseNode(nodeId));
+            }
+        }.setIterations(count).start();
+        print("unit_tests.out_edge_state_next", miniPerf);
+
+        final EdgeExplorer allExplorer = graph.createEdgeExplorer();
+        miniPerf = new MiniPerfTest()
+        {
+            @Override
+            public int doCalc( boolean warmup, int run )
+            {
+                int nodeId = rand.nextInt(maxNode);
+                return GHUtility.count(allExplorer.setBaseNode(nodeId));
+            }
+        }.setIterations(count).start();
+        print("unit_tests.all_edge_state_next", miniPerf);
+
+        final int maxEdgesId = graph.getAllEdges().getCount();
+        miniPerf = new MiniPerfTest()
+        {
+            @Override
+            public int doCalc( boolean warmup, int run )
+            {
+                while (true)
+                {
+                    int edgeId = rand.nextInt(maxEdgesId);
+                    if (allowedEdges.contains(edgeId))
+                        return graph.getEdgeProps(edgeId, Integer.MIN_VALUE).getEdge();
+                }
+            }
+        }.setIterations(count).start();
+        print("unit_tests.get_edge_state", miniPerf);
+    }
+
     private void printTimeOfRouteQuery( final GraphHopper hopper, int count, String prefix,
                                         final String vehicle, final boolean withInstructions )
     {
@@ -209,6 +265,7 @@ public class Measurement
         final AtomicInteger failedCount = new AtomicInteger(0);
         final DistanceCalc distCalc = new DistanceCalcEarth();
 
+        final AtomicLong visitedNodesSum = new AtomicLong(0);
 //        final AtomicLong extractTimeSum = new AtomicLong(0);
 //        final AtomicLong calcPointsTimeSum = new AtomicLong(0);
 //        final AtomicLong calcDistTimeSum = new AtomicLong(0);
@@ -254,6 +311,7 @@ public class Measurement
 
                 if (!warmup)
                 {
+                    visitedNodesSum.addAndGet(res.getHints().getLong("visited_nodes.sum", 0));
                     long dist = (long) res.getDistance();
                     distSum.addAndGet(dist);
 
@@ -281,6 +339,7 @@ public class Measurement
         put(prefix + ".distanceMean", (float) distSum.get() / count);
         put(prefix + ".airDistanceMean", (float) airDistSum.get() / count);
         put(prefix + ".distanceMax", maxDistance.get());
+        put(prefix + ".visitedNodesMean", (float) visitedNodesSum.get() / count);
 
 //        put(prefix + ".extractTime", (float) extractTimeSum.get() / count / 1000000f);
 //        put(prefix + ".calcPointsTime", (float) calcPointsTimeSum.get() / count / 1000000f);
@@ -290,7 +349,7 @@ public class Measurement
 
     void print( String prefix, MiniPerfTest perf )
     {
-        logger.info(perf.getReport());
+        logger.info(prefix + ": " + perf.getReport());
         put(prefix + ".sum", perf.getSum());
 //        put(prefix+".rms", perf.getRMS());
         put(prefix + ".min", perf.getMin());

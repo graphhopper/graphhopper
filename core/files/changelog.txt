@@ -1,4 +1,6 @@
 0.5
+    removed visitedNodes method in GraphHopper replaced with per response information: response.getHints().getLong("visited_nodes.sum", 0)
+    added ability to store hints in GHResponse which will be forwarded to the json too
     breaking change in HTTP API: error JSON format changed to be message:"" instead of within info.errors, see updated api documentation
     made GHResponse.getMillis, Path.getMillis, GPXEntry.getMillis deprecated, use getTime instead
     in AbstractFlagEncoder, parse*() and getStr() are now deprecated, use properties.get* instead
