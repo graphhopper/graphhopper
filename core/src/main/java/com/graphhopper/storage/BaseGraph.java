@@ -1260,7 +1260,7 @@ class BaseGraph implements Graph
     protected static class AllEdgeIterator implements AllEdgesIterator
     {
         protected long edgePointer;
-        protected long maxBytes;
+        protected int edgeId = -1;        
         protected EdgeAccess edgeAccess;
         private int nodeA;
         private int nodeB;
@@ -1276,9 +1276,7 @@ class BaseGraph implements Graph
         {
             this.baseGraph = baseGraph;
             this.edgeAccess = edgeAccess;
-            this.edgePointer = -edgeAccess.getEntryBytes();
-            // first iteration is always through base edges
-            this.maxBytes = (long) baseGraph.edgeCount * baseGraph.edgeEntryBytes;
+            this.edgePointer = -1;
         }
 
         @Override
@@ -1292,7 +1290,8 @@ class BaseGraph implements Graph
         {
             while (true)
             {
-                edgePointer += edgeAccess.getEntryBytes();
+                edgeId++;
+                edgePointer = (long) edgeId * edgeAccess.getEntryBytes();
                 if (!checkRange())
                     return false;
 
@@ -1309,13 +1308,13 @@ class BaseGraph implements Graph
 
         protected boolean checkRange()
         {
-            return edgePointer < maxBytes;
+            return edgeId < baseGraph.edgeCount;
         }
 
         @Override
-        public final int getEdge()
+        public int getEdge()
         {
-            return (int) (edgePointer / edgeAccess.getEntryBytes());
+            return edgeId;
         }
 
         @Override
@@ -1417,6 +1416,7 @@ class BaseGraph implements Graph
                 throw new IllegalStateException("call next before detaching");
 
             AllEdgeIterator iter = new AllEdgeIterator(baseGraph, edgeAccess);
+            iter.edgeId = edgeId;
             iter.edgePointer = edgePointer;
             if (reverseArg)
             {

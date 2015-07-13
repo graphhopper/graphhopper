@@ -453,17 +453,17 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         @Override
         protected final boolean checkRange()
         {
-            if (edgeAccess == chEdgeAccess)
-                return super.checkRange();
+            if (isShortcut())
+                return edgeId < shortcutCount;
 
             if (super.checkRange())
                 return true;
 
             // iterate over shortcuts
             edgeAccess = chEdgeAccess;
-            this.edgePointer = 0;
-            this.maxBytes = (long) shortcutCount * shortcutEntryBytes;
-            return super.checkRange();
+            edgeId = 0;
+            edgePointer = (long) edgeId * shortcutEntryBytes;
+            return edgeId < shortcutCount;
         }
 
         @Override
@@ -495,7 +495,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         public final boolean isShortcut()
         {
             assert baseGraph.isFrozen() : "level graph not yet frozen";
-            return edgePointer / baseGraph.edgeEntryBytes >= baseGraph.edgeCount;
+            return edgeAccess == chEdgeAccess;
         }
 
         @Override
@@ -509,6 +509,14 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         public final double getWeight()
         {
             return CHGraphImpl.this.getWeight(this);
+        }
+
+        @Override
+        public int getEdge()
+        {
+            if (isShortcut())
+                return baseGraph.edgeCount + edgeId;
+            return super.getEdge();
         }
     }
 
