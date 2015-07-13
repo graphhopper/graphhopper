@@ -80,6 +80,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private int initialCollectionSize = 5000;
     private double nodesContractedPercentage = 100;
     private double logMessagesPercentage = 20;
+    private double dijkstraTime;
+    private double periodTime;
+    private double lazyTime;
+    private double neighborTime;
 
     public PrepareContractionHierarchies( Directory dir, LevelGraph g, FlagEncoder encoder, Weighting weighting, TraversalMode traversalMode )
     {
@@ -296,17 +300,20 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             if (counter % logSize == 0)
             {
+                dijkstraTime += dijkstraSW.getSeconds();
+                periodTime += periodSW.getSeconds();
+                lazyTime += lazySW.getSeconds();
+                neighborTime += neighborSW.getSeconds();
+
                 logger.info(Helper.nf(counter) + ", updates:" + updateCounter
                         + ", nodes: " + Helper.nf(sortedNodes.getSize())
                         + ", shortcuts:" + Helper.nf(newShortcuts)
                         + ", dijkstras:" + Helper.nf(dijkstraCount)
-                        + ", t(dijk):" + (int) dijkstraSW.getSeconds()
-                        + ", t(period):" + (int) periodSW.getSeconds()
-                        + ", t(lazy):" + (int) lazySW.getSeconds()
-                        + ", t(neighbor):" + (int) neighborSW.getSeconds()
+                        + ", " + getTimesAsString()
                         + ", meanDegree:" + (long) meanDegree
                         + ", algo:" + prepareAlgo.getMemoryUsageAsString()
                         + ", " + Helper.getMemInfo());
+
                 dijkstraSW = new StopWatch();
                 periodSW = new StopWatch();
                 lazySW = new StopWatch();
@@ -363,21 +370,48 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // Preparation works only once so we can release temporary data.
         // The preparation object itself has to be intact to create the algorithm.
         close();
+
+        dijkstraTime += dijkstraSW.getSeconds();
+        periodTime += periodSW.getSeconds();
+        lazyTime += lazySW.getSeconds();
+        neighborTime += neighborSW.getSeconds();
         logger.info("took:" + (int) allSW.stop().getSeconds()
                 + ", new shortcuts: " + newShortcuts
                 + ", " + prepareWeighting
                 + ", " + prepareFlagEncoder
                 + ", dijkstras:" + dijkstraCount
-                + ", t(dijk):" + (int) dijkstraSW.getSeconds()
-                + ", t(period):" + (int) periodSW.getSeconds()
-                + ", t(lazy):" + (int) lazySW.getSeconds()
-                + ", t(neighbor):" + (int) neighborSW.getSeconds()
+                + ", " + getTimesAsString()
                 + ", meanDegree:" + (long) meanDegree
                 + ", initSize:" + initSize
                 + ", periodic:" + periodicUpdatesPercentage
                 + ", lazy:" + lastNodesLazyUpdatePercentage
                 + ", neighbor:" + neighborUpdatePercentage
                 + ", " + Helper.getMemInfo());
+    }
+
+    public long getDijkstraCount()
+    {
+        return dijkstraCount;
+    }
+
+    public double getLazyTime()
+    {
+        return lazyTime;
+    }
+
+    public double getPeriodTime()
+    {
+        return periodTime;
+    }
+
+    public double getDijkstraTime()
+    {
+        return dijkstraTime;
+    }
+
+    public double getNeighborTime()
+    {
+        return neighborTime;
     }
 
     public void close()
@@ -390,6 +424,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     AddShortcutHandler addScHandler = new AddShortcutHandler();
     CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
+
+    private String getTimesAsString()
+    {
+        return "t(dijk):" + Helper.round2(dijkstraTime)
+                + ", t(period):" + Helper.round2(periodTime)
+                + ", t(lazy):" + Helper.round2(lazyTime)
+                + ", t(neighbor):" + Helper.round2(neighborTime);
+    }
 
     interface ShortcutHandler
     {
