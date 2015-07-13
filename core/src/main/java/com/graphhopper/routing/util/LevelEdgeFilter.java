@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeSkipIterState;
-import com.graphhopper.util.EdgeSkipIterator;
 
 /**
  * Only certain nodes are accepted and therefor the others are ignored.
