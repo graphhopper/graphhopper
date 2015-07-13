@@ -28,7 +28,7 @@ import com.graphhopper.util.shapes.BBox;
  * This class manages all storage related methods and delegates the calls to the associated graphs.
  * The associated graphs manage their own necessary data structures and are used to provide e.g.
  * different traversal methods. By default this class implements the graph interface and results in
- * identical behavour as the Graph instance from getGraph(Graph.class)
+ * identical behavior as the Graph instance from getGraph(Graph.class)
  * <p>
  * @author Peter Karich
  * @see GraphBuilder to create a (CH)Graph easier
