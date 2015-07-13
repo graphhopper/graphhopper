@@ -50,7 +50,7 @@ abstract class EdgeAccess
         this.flagsSizeIsLong = flagsSizeIsLong;
     }
 
-    abstract BaseGraph.EdgeIterable createSingleEdge( int edgeId );
+    abstract BaseGraph.EdgeIterable createSingleEdge();
 
     abstract long toPointer( int edgeOrShortcutId );
 
