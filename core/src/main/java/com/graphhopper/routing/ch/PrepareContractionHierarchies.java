@@ -372,6 +372,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // Preparation works only once so we can release temporary data.
         // The preparation object itself has to be intact to create the algorithm.
         close();
+
+        dijkstraTime += dijkstraSW.getSeconds();
+        periodTime += periodSW.getSeconds();
+        lazyTime += lazySW.getSeconds();
+        neighborTime += neighborSW.getSeconds();
         logger.info("took:" + (int) allSW.stop().getSeconds()
                 + ", new shortcuts: " + newShortcuts
                 + ", " + prepareWeighting
