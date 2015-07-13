@@ -494,6 +494,6 @@ public class Helper
 
     public static final double round2( double value )
     {
-        return Math.round(value * 100) / 100;
+        return Math.round(value * 100) / 100d;
     }
 }
