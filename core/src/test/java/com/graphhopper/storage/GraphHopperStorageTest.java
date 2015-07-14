@@ -85,7 +85,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
         graph.edge(1, 2, 120, false);
 
         iter1.setName("named street1");
-        iter2.setName("named street2");        
+        iter2.setName("named street2");
 
         checkGraph(graph);
         graph.flush();
@@ -102,21 +102,21 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
         graph.edge(3, 4, 123, true).setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
         checkGraph(graph);
     }
-    
+
     @Test
     public void testSave_and_Freeze() throws IOException
     {
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
         graph.edge(1, 0);
         graph.freeze();
-        
+
         graph.flush();
         graph.close();
 
         graph = newGHStorage(new MMapDirectory(defaultGraphLoc), true);
         assertTrue(graph.loadExisting());
         assertEquals(2, graph.getNodes());
-        assertTrue(graph.isFrozen());        
+        assertTrue(graph.isFrozen());
     }
 
     protected void checkGraph( Graph g )
@@ -236,5 +236,92 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
         GraphHopperStorage store = new GraphHopperStorage(new RAMDirectory(), encodingManager, true);
         assertEquals(store.getNodes(), store.getGraph(Graph.class).getNodes());
         assertEquals(store.getAllEdges().getCount(), store.getGraph(Graph.class).getAllEdges().getCount());
+    }
+
+    public void testAdditionalEdgeField()
+    {
+        GraphExtension extStorage = new GraphExtension()
+        {
+            @Override
+            public boolean isRequireNodeField()
+            {
+                return false;
+            }
+
+            @Override
+            public boolean isRequireEdgeField()
+            {
+                return true;
+            }
+
+            @Override
+            public int getDefaultNodeFieldValue()
+            {
+                throw new UnsupportedOperationException("Not supported.");
+            }
+
+            @Override
+            public int getDefaultEdgeFieldValue()
+            {
+                return 2;
+            }
+
+            @Override
+            public void init( Graph graph, Directory dir )
+            {
+            }
+
+            @Override
+            public void setSegmentSize( int bytes )
+            {
+
+            }
+
+            @Override
+            public GraphExtension copyTo( GraphExtension extStorage )
+            {
+                return this;
+            }
+
+            @Override
+            public boolean loadExisting()
+            {
+                return true;
+            }
+
+            @Override
+            public GraphExtension create( long byteCount )
+            {
+                return this;
+            }
+
+            @Override
+            public void flush()
+            {
+            }
+
+            @Override
+            public void close()
+            {
+            }
+
+            @Override
+            public boolean isClosed()
+            {
+                return false;
+            }
+
+            @Override
+            public long getCapacity()
+            {
+                return 0;
+            }
+        };
+
+        GraphHopperStorage storage = new GraphHopperStorage(false, new RAMDirectory(), encodingManager, false, extStorage);
+        storage.create(1000);
+        EdgeIteratorState iter = storage.edge(0, 1, 10, true);
+
+        assertEquals(extStorage.getDefaultEdgeFieldValue(), iter.getAdditionalField());
     }
 }

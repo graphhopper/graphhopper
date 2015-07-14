@@ -131,9 +131,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
     @Override
     public final void setLevel( int nodeIndex, int level )
     {
-        if (nodeIndex >= baseGraph.getNodes())
-            return;
-
+        checkNodeId(nodeIndex);
         nodesCH.setInt((long) nodeIndex * nodeCHEntryBytes + N_LEVEL, level);
     }
 

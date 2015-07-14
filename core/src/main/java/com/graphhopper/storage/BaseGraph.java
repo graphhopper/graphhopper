@@ -335,8 +335,6 @@ class BaseGraph implements Graph
         {
             long newBytesCapacity = nodes.getCapacity();
             initNodeRefs(oldNodes * nodeEntryBytes, newBytesCapacity);
-            if (removedNodes != null)
-                getRemovedNodes().ensureCapacity((int) (newBytesCapacity / nodeEntryBytes));
         }
     }
 
@@ -626,7 +624,7 @@ class BaseGraph implements Graph
 
         @Override
         public final EdgeIteratorState setFlags( long fl )
-        {            
+        {
             cachedFlags = fl;
             freshFlags = true;
             edgeAccess.setFlags_(edgePointer, reverse, fl);
@@ -1219,7 +1217,7 @@ class BaseGraph implements Graph
     GHBitSet getRemovedNodes()
     {
         if (removedNodes == null)
-            removedNodes = new GHBitSetImpl((int) (nodes.getCapacity() / 4));
+            removedNodes = new GHBitSetImpl(getNodes());
 
         return removedNodes;
     }
@@ -1266,6 +1264,7 @@ class BaseGraph implements Graph
         protected EdgeAccess edgeAccess;
         private int nodeA;
         private int nodeB;
+        // we need reverse if detach is called 
         private boolean reverse = false;
         private final BaseGraph baseGraph;
 
@@ -1303,7 +1302,8 @@ class BaseGraph implements Graph
                     continue;
 
                 nodeB = edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEB);
-                reverse = getBaseNode() > getAdjNode();
+                // this is always false because of 'getBaseNode() <= getAdjNode()'
+                reverse = false;
                 return true;
             }
         }

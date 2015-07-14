@@ -34,11 +34,6 @@ public interface GHBitSet
     void clear();
 
     /**
-     * Ensures that the specified index is valid and can be accessed.
-     */
-    void ensureCapacity( int index );
-
-    /**
      * Searches for a greater or equal entry and returns it.
      * <p/>
      * @return -1 if nothing found
