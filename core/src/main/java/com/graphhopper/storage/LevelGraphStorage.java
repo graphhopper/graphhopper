@@ -70,7 +70,7 @@ public class LevelGraphStorage extends GraphHopperStorage implements LevelGraph
     public final void setLevel( int nodeIndex, int level )
     {
         if (nodeIndex >= getNodes())
-            return;
+            throw new IllegalStateException("node " + nodeIndex + " is invalid. Not in [0," + getNodes() + ")");
 
         nodes.setInt((long) nodeIndex * nodeEntryBytes + I_LEVEL, level);
     }
