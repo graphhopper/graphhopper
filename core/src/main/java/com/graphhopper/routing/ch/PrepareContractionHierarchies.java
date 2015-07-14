@@ -84,10 +84,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private double periodTime;
     private double lazyTime;
     private double neighborTime;
+    private final int maxEdgesCount;
 
     public PrepareContractionHierarchies( Directory dir, LevelGraph g, FlagEncoder encoder, Weighting weighting, TraversalMode traversalMode )
     {
         this.prepareGraph = g;
+        maxEdgesCount = g.getAllEdges().getCount();
         this.traversalMode = traversalMode;
         this.prepareFlagEncoder = encoder;
         long scFwdDir = encoder.setAccess(0, true, false);
@@ -197,25 +199,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         super.doWork();
 
         initFromGraph();
-        if (!prepareEdges())
-            return;
-
         if (!prepareNodes())
             return;
 
         contractNodes();
-    }
-
-    boolean prepareEdges()
-    {
-        EdgeIterator iter = prepareGraph.getAllEdges();
-        int c = 0;
-        while (iter.next())
-        {
-            c++;
-            setOrigEdgeCount(iter.getEdge(), 1);
-        }
-        return c > 0;
     }
 
     boolean prepareNodes()
@@ -793,17 +780,30 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         }
     }
 
-    private void setOrigEdgeCount( int index, int value )
+    private void setOrigEdgeCount( int edgeId, int value )
     {
-        long tmp = (long) index * 4;
+        edgeId -= maxEdgesCount;
+        if (edgeId < 0)
+        {
+            if (value != 1)
+                throw new IllegalStateException("Trying to set original edge count for normal edge to a value != 1");
+
+            // ignore setting as every normal edge has original edge count of 1            
+            return;
+        }
+
+        long tmp = (long) edgeId * 4;
         originalEdges.ensureCapacity(tmp + 4);
         originalEdges.setInt(tmp, value);
     }
 
-    private int getOrigEdgeCount( int index )
+    private int getOrigEdgeCount( int edgeId )
     {
-        // TODO possible memory usage improvement: avoid storing the value 1 for normal edges (does not change)!
-        long tmp = (long) index * 4;
+        edgeId -= maxEdgesCount;
+        if (edgeId < 0)
+            return 1;
+
+        long tmp = (long) edgeId * 4;
         originalEdges.ensureCapacity(tmp + 4);
         return originalEdges.getInt(tmp);
     }
