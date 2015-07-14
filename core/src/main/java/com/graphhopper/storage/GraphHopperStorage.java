@@ -504,6 +504,7 @@ public class GraphHopperStorage implements GraphStorage
         private final long maxEdges = (long) edgeCount * edgeEntryBytes;
         private int nodeA;
         private int nodeB;
+        // we need reverse if detach is called
         private boolean reverse = false;
 
         public AllEdgeIterator()
@@ -524,7 +525,8 @@ public class GraphHopperStorage implements GraphStorage
                 edgePointer += edgeEntryBytes;
                 nodeA = edges.getInt(edgePointer + E_NODEA);
                 nodeB = edges.getInt(edgePointer + E_NODEB);
-                reverse = getBaseNode() > getAdjNode();
+                // this is always false because of 'getBaseNode() <= getAdjNode()'
+                reverse = false;
                 // some edges are deleted and have a negative node
             } while (nodeA == NO_NODE && edgePointer < maxEdges);
             return edgePointer < maxEdges;

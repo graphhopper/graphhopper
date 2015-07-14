@@ -299,4 +299,11 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
 
         assertEquals(extStorage.getDefaultEdgeFieldValue(), iter.getAdditionalField());
     }
+    
+    @Test
+    public void testAllEdgesIter() {
+        GraphStorage storage = createGraph();
+        
+        storage.getAllEdges();
+    }
 }
