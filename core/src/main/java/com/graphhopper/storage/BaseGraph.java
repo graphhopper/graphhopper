@@ -487,6 +487,8 @@ class BaseGraph implements Graph
         boolean reverse;
         final BaseGraph baseGraph;
         EdgeAccess edgeAccess;
+        private boolean freshFlags;
+        private long cachedFlags;
 
         public EdgeIterable( BaseGraph baseGraph, EdgeAccess edgeAccess, EdgeFilter filter )
         {
@@ -522,7 +524,7 @@ class BaseGraph implements Graph
             nextEdgeId = EdgeIterator.NO_EDGE;
             if (expectedAdjNode == adjNode || expectedAdjNode == Integer.MIN_VALUE)
             {
-                reverse = false;                
+                reverse = false;
                 return true;
             } else if (expectedAdjNode == baseNode)
             {
@@ -579,6 +581,7 @@ class BaseGraph implements Graph
                 edgeId = nextEdgeId;
                 adjNode = edgeAccess.getOtherNode(baseNode, edgePointer);
                 reverse = baseNode > adjNode;
+                freshFlags = false;
 
                 // position to next edge                
                 nextEdgeId = edgeAccess.edges.getInt(edgeAccess.getLinkPosInEdgeArea(baseNode, adjNode, edgePointer));
@@ -613,12 +616,19 @@ class BaseGraph implements Graph
         @Override
         public final long getFlags()
         {
-            return edgeAccess.getFlags_(edgePointer, reverse);
+            if (!freshFlags)
+            {
+                cachedFlags = edgeAccess.getFlags_(edgePointer, reverse);
+                freshFlags = true;
+            }
+            return cachedFlags;
         }
 
         @Override
         public final EdgeIteratorState setFlags( long fl )
-        {
+        {            
+            cachedFlags = fl;
+            freshFlags = true;
             edgeAccess.setFlags_(edgePointer, reverse, fl);
             return this;
         }

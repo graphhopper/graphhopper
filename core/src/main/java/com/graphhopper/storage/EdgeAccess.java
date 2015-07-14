@@ -121,7 +121,7 @@ abstract class EdgeAccess
         return resFlags;
     }
 
-    final void setFlags_( long edgePointer, boolean reverse, long flags )
+    final long setFlags_( long edgePointer, boolean reverse, long flags )
     {
         if (reverse)
             flags = reverseFlags(edgePointer, flags);
@@ -130,6 +130,8 @@ abstract class EdgeAccess
 
         if (flagsSizeIsLong)
             edges.setInt(edgePointer + E_FLAGS + 4, bitUtil.getIntHigh(flags));
+
+        return flags;
     }
 
     /**
