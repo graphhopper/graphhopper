@@ -717,7 +717,7 @@ public class RoutingAlgorithmIT
             storageCopy.freeze();
             final CHGraph graphCH = storageCopy.getGraph(CHGraph.class);
             final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(
-                    new GHDirectory("", DAType.RAM_INT), ghStorage, graphCH, encoder, weighting, tMode);
+                    new GHDirectory("", DAType.RAM_INT), storageCopy, graphCH, encoder, weighting, tMode);
             prepareCH.doWork();
             LocationIndex idxCH = new LocationIndexTree(storageCopy, new RAMDirectory()).prepareIndex();
             prepare.add(new AlgoHelperEntry(graphCH, storageCopy, dijkstrabiOpts, idxCH)
