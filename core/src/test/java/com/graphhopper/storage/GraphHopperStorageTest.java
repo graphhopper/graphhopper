@@ -211,4 +211,92 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
 
         }
     }
+
+    @Test
+    public void testAdditionalEdgeField()
+    {
+        GraphExtension extStorage = new GraphExtension()
+        {
+            @Override
+            public boolean isRequireNodeField()
+            {
+                return false;
+            }
+
+            @Override
+            public boolean isRequireEdgeField()
+            {
+                return true;
+            }
+
+            @Override
+            public int getDefaultNodeFieldValue()
+            {
+                throw new UnsupportedOperationException("Not supported.");
+            }
+
+            @Override
+            public int getDefaultEdgeFieldValue()
+            {
+                return 2;
+            }
+
+            @Override
+            public void init( GraphStorage graph )
+            {
+            }
+
+            @Override
+            public void setSegmentSize( int bytes )
+            {
+
+            }
+
+            @Override
+            public GraphExtension copyTo( GraphExtension extStorage )
+            {
+                return this;
+            }
+
+            @Override
+            public boolean loadExisting()
+            {
+                return true;
+            }
+
+            @Override
+            public GraphExtension create( long byteCount )
+            {
+                return this;
+            }
+
+            @Override
+            public void flush()
+            {
+            }
+
+            @Override
+            public void close()
+            {
+            }
+
+            @Override
+            public boolean isClosed()
+            {
+                return false;
+            }
+
+            @Override
+            public long getCapacity()
+            {
+                return 0;
+            }
+        };
+
+        GraphHopperStorage storage = new GraphHopperStorage(new RAMDirectory(), encodingManager, false, extStorage);
+        storage.create(1000);
+        EdgeIteratorState iter = storage.edge(0, 1, 10, true);
+
+        assertEquals(extStorage.getDefaultEdgeFieldValue(), iter.getAdditionalField());
+    }
 }

@@ -324,11 +324,10 @@ public class GraphHopperStorage implements GraphStorage
         EdgeIterable iter = new EdgeIterable(EdgeFilter.ALL_EDGES);
         iter.setBaseNode(a);
         iter.setEdgeId(edge);
-        if (extStorage.isRequireEdgeField())
-        {
-            iter.setAdditionalField(extStorage.getDefaultEdgeFieldValue());
-        }
         iter.next();
+
+        if (extStorage.isRequireEdgeField())
+            iter.setAdditionalField(extStorage.getDefaultEdgeFieldValue());
         return iter;
     }
 
