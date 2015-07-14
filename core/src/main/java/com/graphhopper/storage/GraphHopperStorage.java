@@ -273,8 +273,6 @@ public class GraphHopperStorage implements GraphStorage
         {
             long newBytesCapacity = nodes.getCapacity();
             initNodeRefs(oldNodes * nodeEntryBytes, newBytesCapacity);
-            if (removedNodes != null)
-                getRemovedNodes().ensureCapacity((int) (newBytesCapacity / nodeEntryBytes));
         }
 
     }
@@ -1135,7 +1133,7 @@ public class GraphHopperStorage implements GraphStorage
     private GHBitSet getRemovedNodes()
     {
         if (removedNodes == null)
-            removedNodes = new GHBitSetImpl((int) (nodes.getCapacity() / 4));
+            removedNodes = new GHBitSetImpl((int) getNodes());
 
         return removedNodes;
     }

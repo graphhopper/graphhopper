@@ -89,7 +89,7 @@ public abstract class AbstractMyBitSetTest
         } catch (Throwable ex)
         {
         }
-        bs.ensureCapacity(16);
+        
         bs.add(8);
         bs.add(9);
         assertFalse(bs.contains(6));

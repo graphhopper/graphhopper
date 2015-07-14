@@ -52,11 +52,6 @@ public class GHBitSetImpl extends BitSet implements GHBitSet
     }
 
     @Override
-    public void ensureCapacity( int size )
-    {
-    }
-
-    @Override
     public int next( int index )
     {
         return super.nextSetBit(index);
@@ -77,7 +72,6 @@ public class GHBitSetImpl extends BitSet implements GHBitSet
         } else
         {
             int len = size();
-            bs.ensureCapacity(len);
             for (int index = super.nextSetBit(0); index >= 0;
                  index = super.nextSetBit(index + 1))
             {

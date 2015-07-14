@@ -75,11 +75,6 @@ public class GHTBitSet implements GHBitSet
     }
 
     @Override
-    public void ensureCapacity( int index )
-    {
-    }
-
-    @Override
     public GHBitSet copyTo( GHBitSet bs )
     {
         bs.clear();
