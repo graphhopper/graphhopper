@@ -1512,7 +1512,7 @@ public class GraphHopperStorage implements GraphStorage
             bounds.maxEle = Helper.intToEle(nodes.getHeader(8 * 4));
         }
 
-        return 7;
+        return 9;
     }
 
     protected int setNodesHeader()
@@ -1530,7 +1530,7 @@ public class GraphHopperStorage implements GraphStorage
             nodes.setHeader(8 * 4, Helper.eleToInt(bounds.maxEle));
         }
 
-        return 7;
+        return 9;
     }
 
     protected int loadEdgesHeader()
