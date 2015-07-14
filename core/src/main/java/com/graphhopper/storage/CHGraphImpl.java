@@ -60,9 +60,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         this.chEdgeAccess = new EdgeAccess(shortcuts, baseGraph.bitUtil)
         {
             @Override
-            final EdgeIterable createSingleEdge()
+            final EdgeIterable createSingleEdge( EdgeFilter edgeFilter )
             {
-                return new EdgeSkipIteratorImpl(baseGraph, this, EdgeFilter.ALL_EDGES);                
+                return new EdgeSkipIteratorImpl(baseGraph, this, edgeFilter);
             }
 
             @Override
@@ -159,7 +159,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         checkNodeId(b);
 
         int scId = chEdgeAccess.internalEdgeAdd(nextShortcutId(), a, b);
-        EdgeSkipIteratorImpl iter = new EdgeSkipIteratorImpl(baseGraph, chEdgeAccess, EdgeFilter.ALL_EDGES);        
+        EdgeSkipIteratorImpl iter = new EdgeSkipIteratorImpl(baseGraph, chEdgeAccess, EdgeFilter.ALL_EDGES);
         boolean ret = iter.init(scId, b);
         assert ret;
         iter.setSkippedEdges(EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
@@ -189,7 +189,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         // increase edge array not for shortcuts
         baseGraph.ensureNodeIndex(Math.max(a, b));
         int edgeId = baseGraph.edgeAccess.internalEdgeAdd(baseGraph.nextEdgeId(), a, b);
-        EdgeSkipIteratorImpl iter = new EdgeSkipIteratorImpl(baseGraph, baseGraph.edgeAccess, EdgeFilter.ALL_EDGES);        
+        EdgeSkipIteratorImpl iter = new EdgeSkipIteratorImpl(baseGraph, baseGraph.edgeAccess, EdgeFilter.ALL_EDGES);
         boolean ret = iter.init(edgeId, b);
         assert ret;
         return iter;
@@ -339,32 +339,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
             else
                 // ... or shortcuts
                 edgeAccess = chEdgeAccess;
-        }
-
-        @Override
-        public final EdgeIteratorState detach( boolean reverseArg )
-        {
-            if (edgeId == nextEdgeId)
-                throw new IllegalStateException("Call next() before detaching edge " + edgeId);
-
-            EdgeSkipIteratorImpl iter = new EdgeSkipIteratorImpl(baseGraph, edgeAccess, filter);            
-            boolean ret;
-            if (reverseArg)
-            {
-                ret = iter.init(edgeId, baseNode);
-                // for #162
-                iter.reverse = !reverse;
-            } else
-                ret = iter.init(edgeId, adjNode);
-            assert ret;
-            return iter;
-        }
-
-        @Override
-        public final EdgeIteratorState copyPropertiesTo( EdgeIteratorState edge )
-        {
-            super.copyPropertiesTo(edge);
-            return edge;
         }
 
         @Override

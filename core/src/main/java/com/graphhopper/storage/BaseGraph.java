@@ -102,9 +102,9 @@ class BaseGraph implements Graph
         this.edgeAccess = new EdgeAccess(edges, bitUtil)
         {
             @Override
-            final EdgeIterable createSingleEdge()
+            final EdgeIterable createSingleEdge( EdgeFilter filter )
             {
-                return new EdgeIterable(BaseGraph.this, this, EdgeFilter.ALL_EDGES);
+                return new EdgeIterable(BaseGraph.this, this, filter);
             }
 
             @Override
@@ -522,7 +522,7 @@ class BaseGraph implements Graph
             nextEdgeId = EdgeIterator.NO_EDGE;
             if (expectedAdjNode == adjNode || expectedAdjNode == Integer.MIN_VALUE)
             {
-                reverse = false;
+                reverse = false;                
                 return true;
             } else if (expectedAdjNode == baseNode)
             {
@@ -682,7 +682,7 @@ class BaseGraph implements Graph
             if (edgeId == nextEdgeId || edgeId == EdgeIterator.NO_EDGE)
                 throw new IllegalStateException("call next before detaching or setEdgeId (edgeId:" + edgeId + " vs. next " + nextEdgeId + ")");
 
-            EdgeIterable iter = new EdgeIterable(baseGraph, edgeAccess, filter);
+            EdgeIterable iter = edgeAccess.createSingleEdge(filter);
             boolean ret;
             if (reverseArg)
             {
@@ -784,7 +784,7 @@ class BaseGraph implements Graph
         if (adjNode < 0 && adjNode != Integer.MIN_VALUE || adjNode >= nodeCount)
             throw new IllegalStateException("adjNode " + adjNode + " out of bounds [0," + nf(nodeCount) + ")");
 
-        EdgeIterable edge = tmpEdgeAccess.createSingleEdge();
+        EdgeIterable edge = tmpEdgeAccess.createSingleEdge(EdgeFilter.ALL_EDGES);
         if (edge.init(edgeId, adjNode))
             return edge;
 

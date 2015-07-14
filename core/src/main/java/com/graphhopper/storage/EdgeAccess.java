@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
 
@@ -50,7 +51,7 @@ abstract class EdgeAccess
         this.flagsSizeIsLong = flagsSizeIsLong;
     }
 
-    abstract BaseGraph.EdgeIterable createSingleEdge();
+    abstract BaseGraph.EdgeIterable createSingleEdge( EdgeFilter edgeFilter );
 
     abstract long toPointer( int edgeOrShortcutId );
 

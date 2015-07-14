@@ -245,13 +245,13 @@ public abstract class AbstractGraphStorageTester
         na.setNode(3, 5, 9);
         graph.edge(1, 3, 10, true);
 
-        Graph clone = graph.copyTo(AbstractGraphStorageTester.this.createGHStorage(locationParent + "/clone", false));
-        assertEquals(graph.getNodes(), clone.getNodes());
-        assertEquals(count(carOutExplorer.setBaseNode(1)), count(clone.createEdgeExplorer(carOutFilter).setBaseNode(1)));
-        clone.edge(1, 4, 10, true);
-        assertEquals(3, count(clone.createEdgeExplorer(carOutFilter).setBaseNode(1)));
-        assertEquals(graph.getBounds(), clone.getBounds());
-        Helper.close((Closeable) clone);
+        Graph cloneGraph = graph.copyTo(AbstractGraphStorageTester.this.createGHStorage(locationParent + "/clone", false));
+        assertEquals(graph.getNodes(), cloneGraph.getNodes());
+        assertEquals(count(carOutExplorer.setBaseNode(1)), count(cloneGraph.createEdgeExplorer(carOutFilter).setBaseNode(1)));
+        cloneGraph.edge(1, 4, 10, true);
+        assertEquals(3, count(cloneGraph.createEdgeExplorer(carOutFilter).setBaseNode(1)));
+        assertEquals(graph.getBounds(), cloneGraph.getBounds());
+        Helper.close((Closeable) cloneGraph);
     }
 
     @Test
