@@ -25,6 +25,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.search.NameIndex;
+import static com.graphhopper.storage.Test.NO_EDGE;
 import com.graphhopper.util.*;
 import static com.graphhopper.util.Helper.nf;
 import com.graphhopper.util.shapes.BBox;
@@ -566,6 +567,30 @@ class BaseGraph implements Graph
 
         @Override
         public final boolean next()
+        {
+            for (;;)
+            {
+                if (nextEdgeId == EdgeIterator.NO_EDGE)
+                    return false;
+
+                selectEdgeAccess();
+                edgePointer = edgeAccess.toPointer(nextEdgeId);
+                edgeId = nextEdgeId;
+                adjNode = edgeAccess.getOtherNode(baseNode, edgePointer);
+                reverse = baseNode > adjNode;
+                freshFlags = false;
+
+                // position to next edge                
+                nextEdgeId = edgeAccess.edges.getInt(edgeAccess.getLinkPosInEdgeArea(baseNode, adjNode, edgePointer));
+                assert nextEdgeId == edgeId : ("endless loop detected for base node: " + baseNode + ", adj node: " + adjNode
+                            + ", edge pointer: " + edgePointer + ", edge: " + edgeId);
+
+                if (filter.accept(this))
+                    return true;
+            }
+        }
+
+        public final boolean next_debug()
         {
             int i = 0;
             boolean foundNext = false;
