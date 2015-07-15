@@ -182,6 +182,9 @@ public final class GraphHopperStorage implements GraphStorage, Graph
     @Override
     public void optimize()
     {
+        if (isFrozen())
+            throw new IllegalStateException("do not optimize after graph was frozen");
+
         int delNodes = baseGraph.getRemovedNodes().getCardinality();
         if (delNodes <= 0)
             return;
