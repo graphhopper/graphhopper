@@ -780,24 +780,14 @@ class BaseGraph implements Graph
     {
         if (!edgeAccess.isInBounds(edgeId))
             throw new IllegalStateException("edgeId " + edgeId + " out of bounds");
-
-        return getEdgeProps(edgeAccess, edgeId, adjNode);
+        checkAdjNodeBounds(adjNode);
+        return edgeAccess.getEdgeProps(edgeId, adjNode);
     }
 
-    EdgeIteratorState getEdgeProps( EdgeAccess tmpEdgeAccess, int edgeId, int adjNode )
+    final void checkAdjNodeBounds( int adjNode )
     {
-        if (edgeId <= EdgeIterator.NO_EDGE)
-            throw new IllegalStateException("edgeId invalid " + edgeId + ", " + tmpEdgeAccess);
-
         if (adjNode < 0 && adjNode != Integer.MIN_VALUE || adjNode >= nodeCount)
             throw new IllegalStateException("adjNode " + adjNode + " out of bounds [0," + nf(nodeCount) + ")");
-
-        EdgeIterable edge = tmpEdgeAccess.createSingleEdge(EdgeFilter.ALL_EDGES);
-        if (edge.init(edgeId, adjNode))
-            return edge;
-
-        // if edgeId exists but adjacent nodes do not match
-        return null;
     }
 
     @Override
@@ -816,33 +806,6 @@ class BaseGraph implements Graph
     public AllEdgesIterator getAllEdges()
     {
         return new AllEdgeIterator(this, edgeAccess);
-    }
-
-    /**
-     * This method disconnects the specified edge from the list of edges of the specified node. It
-     * does not release the freed space to be reused.
-     * <p/>
-     * @param edgeToUpdatePointer if it is negative then the nextEdgeId will be saved to refToEdges
-     * of nodes
-     */
-    long internalEdgeDisconnect( EdgeAccess tmpEdgeAccess,
-                                 int edgeToRemove, long edgeToUpdatePointer, int baseNode, int adjNode )
-    {
-        long edgeToRemovePointer = tmpEdgeAccess.toPointer(edgeToRemove);
-        // an edge is shared across the two nodes even if the edge is not in both directions
-        // so we need to know two edge-pointers pointing to the edge before edgeToRemovePointer
-        int nextEdgeId = tmpEdgeAccess.edges.getInt(tmpEdgeAccess.getLinkPosInEdgeArea(baseNode, adjNode, edgeToRemovePointer));
-        if (edgeToUpdatePointer < 0)
-        {
-            tmpEdgeAccess.setEdgeRef(baseNode, nextEdgeId);
-        } else
-        {
-            // adjNode is different for the edge we want to update with the new link
-            long link = tmpEdgeAccess.edges.getInt(edgeToUpdatePointer + tmpEdgeAccess.E_NODEA) == baseNode
-                    ? edgeToUpdatePointer + tmpEdgeAccess.E_LINKA : edgeToUpdatePointer + tmpEdgeAccess.E_LINKB;
-            tmpEdgeAccess.edges.setInt(link, nextEdgeId);
-        }
-        return edgeToRemovePointer;
     }
 
     @Override
@@ -967,7 +930,7 @@ class BaseGraph implements Graph
                 {
                     int edgeToRemove = adjNodesToDelIter.getEdge();
                     long edgeToRemovePointer = edgeAccess.toPointer(edgeToRemove);
-                    internalEdgeDisconnect(edgeAccess, edgeToRemove, prev, removeNode, nodeId);
+                    edgeAccess.internalEdgeDisconnect(edgeToRemove, prev, removeNode, nodeId);
                     edgeAccess.invalidateEdge(edgeToRemovePointer);
                 } else
                 {

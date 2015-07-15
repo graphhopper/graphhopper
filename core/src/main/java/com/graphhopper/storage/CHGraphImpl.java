@@ -218,7 +218,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
                 throw new IllegalStateException("edgeId " + edgeId + " out of bounds");
         }
 
-        return (EdgeSkipIterState) baseGraph.getEdgeProps(chEdgeAccess, edgeId, endNode);
+        return (EdgeSkipIterState) chEdgeAccess.getEdgeProps(edgeId, endNode);
     }
 
     @Override
@@ -391,8 +391,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
                 // TODO this is ugly, move this somehow into the underlying iteration logic
                 long edgePointer = tmpPrevEdge == EdgeIterator.NO_EDGE ? -1
                         : isShortcut(tmpPrevEdge) ? chEdgeAccess.toPointer(tmpPrevEdge) : baseGraph.edgeAccess.toPointer(tmpPrevEdge);
-                baseGraph.internalEdgeDisconnect(chEdgeAccess,
-                        edgeState.getEdge(), edgePointer,
+                chEdgeAccess.internalEdgeDisconnect(edgeState.getEdge(), edgePointer,
                         edgeState.getAdjNode(), edgeState.getBaseNode());
                 break;
             }
