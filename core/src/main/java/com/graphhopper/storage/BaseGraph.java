@@ -25,7 +25,6 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.search.NameIndex;
-import static com.graphhopper.storage.Test.NO_EDGE;
 import com.graphhopper.util.*;
 import static com.graphhopper.util.Helper.nf;
 import com.graphhopper.util.shapes.BBox;
@@ -568,7 +567,7 @@ class BaseGraph implements Graph
         @Override
         public final boolean next()
         {
-            for (;;)
+            while (true)
             {
                 if (nextEdgeId == EdgeIterator.NO_EDGE)
                     return false;
@@ -581,9 +580,9 @@ class BaseGraph implements Graph
                 freshFlags = false;
 
                 // position to next edge                
-                nextEdgeId = edgeAccess.edges.getInt(edgeAccess.getLinkPosInEdgeArea(baseNode, adjNode, edgePointer));
-                assert nextEdgeId == edgeId : ("endless loop detected for base node: " + baseNode + ", adj node: " + adjNode
-                            + ", edge pointer: " + edgePointer + ", edge: " + edgeId);
+                nextEdgeId = edgeAccess.getEdgeRef(baseNode, adjNode, edgePointer);
+                assert nextEdgeId != edgeId : ("endless loop detected for base node: " + baseNode + ", adj node: " + adjNode
+                        + ", edge pointer: " + edgePointer + ", edge: " + edgeId);
 
                 if (filter.accept(this))
                     return true;
@@ -607,7 +606,7 @@ class BaseGraph implements Graph
                 freshFlags = false;
 
                 // position to next edge                
-                nextEdgeId = edgeAccess.edges.getInt(edgeAccess.getLinkPosInEdgeArea(baseNode, adjNode, edgePointer));
+                nextEdgeId = edgeAccess.getEdgeRef(baseNode, adjNode, edgePointer);
                 if (nextEdgeId == edgeId)
                     throw new AssertionError("endless loop detected for base node: " + baseNode + ", adj node: " + adjNode
                             + ", edge pointer: " + edgePointer + ", edge: " + edgeId);
@@ -1021,8 +1020,8 @@ class BaseGraph implements Graph
 
             int edgeId = iter.getEdge();
             long edgePointer = edgeAccess.toPointer(edgeId);
-            int linkA = edgeAccess.edges.getInt(edgeAccess.getLinkPosInEdgeArea(nodeA, nodeB, edgePointer));
-            int linkB = edgeAccess.edges.getInt(edgeAccess.getLinkPosInEdgeArea(nodeB, nodeA, edgePointer));
+            int linkA = edgeAccess.getEdgeRef(nodeA, nodeB, edgePointer);
+            int linkB = edgeAccess.getEdgeRef(nodeB, nodeA, edgePointer);
             long flags = edgeAccess.getFlags_(edgePointer, false);
             edgeAccess.writeEdge(edgeId, updatedA, updatedB, linkA, linkB);
             edgeAccess.setFlags_(edgePointer, updatedA > updatedB, flags);

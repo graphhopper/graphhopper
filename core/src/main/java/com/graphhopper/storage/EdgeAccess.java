@@ -158,9 +158,14 @@ abstract class EdgeAccess
         return nodeA;
     }
 
-    final long getLinkPosInEdgeArea( int nodeThis, int nodeOther, long edgePointer )
+    private long _getLinkPosInEdgeArea( int nodeThis, int nodeOther, long edgePointer )
     {
         return nodeThis <= nodeOther ? edgePointer + E_LINKA : edgePointer + E_LINKB;
+    }
+
+    final int getEdgeRef( int nodeThis, int nodeOther, long edgePointer )
+    {
+        return edges.getInt(_getLinkPosInEdgeArea(nodeThis, nodeOther, edgePointer));
     }
 
     final void connectNewEdge( int fromNode, int newOrExistingEdge )
@@ -170,7 +175,7 @@ abstract class EdgeAccess
         {
             long edgePointer = toPointer(newOrExistingEdge);
             int otherNode = getOtherNode(fromNode, edgePointer);
-            long lastLink = getLinkPosInEdgeArea(fromNode, otherNode, edgePointer);
+            long lastLink = _getLinkPosInEdgeArea(fromNode, otherNode, edgePointer);
             edges.setInt(lastLink, edge);
         }
         setEdgeRef(fromNode, newOrExistingEdge);
@@ -210,7 +215,7 @@ abstract class EdgeAccess
         long edgeToRemovePointer = toPointer(edgeToRemove);
         // an edge is shared across the two nodes even if the edge is not in both directions
         // so we need to know two edge-pointers pointing to the edge before edgeToRemovePointer
-        int nextEdgeId = edges.getInt(getLinkPosInEdgeArea(baseNode, adjNode, edgeToRemovePointer));
+        int nextEdgeId = getEdgeRef(baseNode, adjNode, edgeToRemovePointer);
         if (edgeToUpdatePointer < 0)
         {
             setEdgeRef(baseNode, nextEdgeId);
