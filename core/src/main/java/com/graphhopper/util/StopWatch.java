@@ -24,7 +24,6 @@ package com.graphhopper.util;
  */
 public class StopWatch
 {
-
     private long lastTime;
     private long nanoTime;
     private String name = "";

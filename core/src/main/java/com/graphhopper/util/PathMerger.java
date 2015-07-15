@@ -39,7 +39,6 @@ public class PathMerger
     public void doWork( GHResponse rsp, List<Path> paths, Translation tr )
     {
         int origPoints = 0;
-        StopWatch sw;
         long fullTimeInMillis = 0;
         double fullWeight = 0;
         double fullDistance = 0;
@@ -56,7 +55,6 @@ public class PathMerger
             if (enableInstructions)
             {
                 InstructionList il = path.calcInstructions(tr);
-                sw = new StopWatch().start();
 
                 if (!il.isEmpty())
                 {
@@ -77,7 +75,6 @@ public class PathMerger
                         fullInstructions.add(i);
                         fullPoints.add(i.getPoints());
                     }
-                    sw.stop();
 
                     // if not yet reached finish replace with 'reached via'
                     if (pathIndex + 1 < paths.size())
@@ -97,9 +94,7 @@ public class PathMerger
                 if (simplifyResponse)
                 {
                     origPoints = tmpPoints.getSize();
-                    sw = new StopWatch().start();
                     douglasPeucker.simplify(tmpPoints);
-                    sw.stop();
                 }
                 fullPoints.add(tmpPoints);
             }
