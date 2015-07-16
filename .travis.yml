@@ -6,3 +6,6 @@ jdk:
 notifications:
   email:
     - github@graphhopper.com
+
+# enable container-based stack
+sudo: false
