@@ -22,8 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -73,7 +72,7 @@ public class MapMatchingTest {
 
     @Test
     public void testDoWork() {
-        GraphStorage graph = hopper.getGraph();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
         LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
                 (LocationIndexTree) hopper.getLocationIndex());
 
@@ -92,8 +91,8 @@ public class MapMatchingTest {
         }
 
         // create street names
-        assertEquals(Arrays.asList("Platnerstraße:19163->20072", "Platnerstraße:20072->20071",
-                "Platnerstraße:20071->1551"),
+        assertEquals(Arrays.asList("Platnerstraße:19138->20044", "Platnerstraße:20044->20043",
+                "Platnerstraße:20043->1551"),
                 fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 1.5);
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis());
@@ -103,8 +102,8 @@ public class MapMatchingTest {
                 new GHPoint(51.330689, 12.380776));
         mr = mapMatching.doWork(inputGPXEntries);
 
-        assertEquals(Arrays.asList("Windmühlenstraße:22135->15546", "Windmühlenstraße:15546->22056",
-                "Bayrischer Platz:22056->2657", "Bayrischer Platz:2657->22046", "Bayrischer Platz:22046->22058"),
+        assertEquals(Arrays.asList("Windmühlenstraße:22106->15521", "Windmühlenstraße:15521->22027",
+                "Bayrischer Platz:22027->2657", "Bayrischer Platz:2657->22017", "Bayrischer Platz:22017->22029"),
                 fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), .1);
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis());
@@ -130,7 +129,7 @@ public class MapMatchingTest {
 
     @Test
     public void testSmallSeparatedSearchDistance() {
-        GraphStorage graph = hopper.getGraph();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
         LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
                 (LocationIndexTree) hopper.getLocationIndex());
 
@@ -142,8 +141,8 @@ public class MapMatchingTest {
         List<GPXEntry> inputGPXEntries = new GPXFile().doImport("./src/test/resources/tour3-with-long-edge.gpx").getEntries();
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
         // new GPXFile(mr).doExport("testSmallSeparatedSearchDistance.gpx");
-        assertEquals(Arrays.asList("Marbachstraße:5592->2195", "Weinligstraße:2195->2196",
-                "Weinligstraße:2196->5598", "Fechnerstraße:5598->5595", "Fechnerstraße:5595->16615"),
+        assertEquals(Arrays.asList("Marbachstraße:5587->2195", "Weinligstraße:2195->2196",
+                "Weinligstraße:2196->5593", "Fechnerstraße:5593->5590", "Fechnerstraße:5590->16591"),
                 fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 11);
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis(), 1000);
@@ -151,7 +150,7 @@ public class MapMatchingTest {
 
     @Test
     public void testLoop() {
-        GraphStorage graph = hopper.getGraph();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
         LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
                 (LocationIndexTree) hopper.getLocationIndex());
         MapMatching mapMatching = new MapMatching(graph, locationIndex, encoder);
@@ -174,7 +173,7 @@ public class MapMatchingTest {
 
     @Test
     public void testLoop2() {
-        GraphStorage graph = hopper.getGraph();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
         LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
                 (LocationIndexTree) hopper.getLocationIndex());
         MapMatching mapMatching = new MapMatching(graph, locationIndex, encoder);
@@ -184,17 +183,17 @@ public class MapMatchingTest {
         List<GPXEntry> inputGPXEntries = new GPXFile().doImport("./src/test/resources/tour-with-loop.gpx").getEntries();
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
 
-        // new GPXFile(mr).doExport("testLoop2-matched.gpx");
-        assertEquals(Arrays.asList("Jahnallee, B 87, B 181:16829->1394", "Jahnallee, B 87, B 181:1394->1680",
-                "Jahnallee, B 87, B 181:1680->21712", "Jahnallee, B 87, B 181:21712->207", "Funkenburgstraße:207->205",
+        // new GPXFile(mr).doExport("testLoop2-matched.gpx");        
+        assertEquals(Arrays.asList("Jahnallee, B 87, B 181:16805->1394", "Jahnallee, B 87, B 181:1394->1680",
+                "Jahnallee, B 87, B 181:1680->21683", "Jahnallee, B 87, B 181:21683->207", "Funkenburgstraße:207->205",
                 "Gustav-Adolf-Straße:205->1393", "Tschaikowskistraße:1393->1394", "Jahnallee, B 87, B 181:1394->1680",
-                "Lessingstraße:1680->21711", "Lessingstraße:21711->1679"),
+                "Lessingstraße:1680->21682", "Lessingstraße:21682->1679"),
                 fetchStreets(mr.getEdgeMatches()));
     }
 
     @Test
     public void testAvoidOffRoadUTurns() {
-        GraphStorage graph = hopper.getGraph();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
         LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
                 (LocationIndexTree) hopper.getLocationIndex());
         MapMatching mapMatching = new MapMatching(graph, locationIndex, encoder);
@@ -211,17 +210,17 @@ public class MapMatchingTest {
 
     @Test
     public void testCheckOrRepair() {
-        Graph graph = hopper.getGraph();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
         MapMatching mm = new MapMatching(graph, null, null);
         List<EdgeMatch> list = new ArrayList<EdgeMatch>();
 
         // System.out.println(GHUtility.getNeighbors(graph.createEdgeExplorer().setBaseNode(24627)));
-        list.add(new EdgeMatch(GHUtility.getEdge(graph, 0, 24627), Collections.<GPXExtension>emptyList()));
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, 0, 24596), Collections.<GPXExtension>emptyList()));
 
         // incorrect orientation
-        list.add(new EdgeMatch(GHUtility.getEdge(graph, 880, 24627), Collections.<GPXExtension>emptyList()));
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, 880, 24596), Collections.<GPXExtension>emptyList()));
         // duplicate edge        
-        list.add(new EdgeMatch(GHUtility.getEdge(graph, 880, 24627), Collections.<GPXExtension>emptyList()));
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, 880, 24596), Collections.<GPXExtension>emptyList()));
 
         try {
             mm.checkOrCleanup(list, false);
@@ -233,7 +232,7 @@ public class MapMatchingTest {
         // repair
         List<EdgeMatch> res = mm.checkOrCleanup(list, true);
         // dup edge is removed
-        assertEquals(Arrays.asList("A 9:0->24627", "A 9:24627->880"), fetchStreets(res));
+        assertEquals(Arrays.asList("A 9:0->24596", "A 9:24596->880"), fetchStreets(res));
 
         // now repaired list must not throw an exception
         mm.checkOrCleanup(res, false);
@@ -241,19 +240,19 @@ public class MapMatchingTest {
 
     @Test
     public void testRepairUTurn() {
-        Graph graph = hopper.getGraph();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
         MapMatching mm = new MapMatching(graph, null, null);
         List<EdgeMatch> list = new ArrayList<EdgeMatch>();
 
-        list.add(new EdgeMatch(GHUtility.getEdge(graph, 0, 24627), Collections.<GPXExtension>emptyList()));
-        list.add(new EdgeMatch(GHUtility.getEdge(graph, 24627, 880), Collections.<GPXExtension>emptyList()));
-        list.add(new EdgeMatch(GHUtility.getEdge(graph, 880, 24627), Collections.<GPXExtension>emptyList()));
-        list.add(new EdgeMatch(GHUtility.getEdge(graph, 24627, 880), Collections.<GPXExtension>emptyList()));
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, 0, 24596), Collections.<GPXExtension>emptyList()));
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, 24596, 880), Collections.<GPXExtension>emptyList()));
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, 880, 24596), Collections.<GPXExtension>emptyList()));
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, 24596, 880), Collections.<GPXExtension>emptyList()));
 
         // repair
         List<EdgeMatch> res = mm.checkOrCleanup(list, true);
         // two edges are removed
-        assertEquals(Arrays.asList("A 9:0->24627", "A 9:24627->880"), fetchStreets(res));
+        assertEquals(Arrays.asList("A 9:0->24596", "A 9:24596->880"), fetchStreets(res));
 
         // now repaired list must not throw an exception
         mm.checkOrCleanup(res, false);
@@ -285,7 +284,7 @@ public class MapMatchingTest {
         return hopper.getEdges(0);
     }
 
-    private void printOverview(GraphStorage graph, LocationIndex locationIndex,
+    private void printOverview(GraphHopperStorage graph, LocationIndex locationIndex,
             final double lat, final double lon, final double length) {
         final NodeAccess na = graph.getNodeAccess();
         int node = locationIndex.findClosest(lat, lon, EdgeFilter.ALL_EDGES).

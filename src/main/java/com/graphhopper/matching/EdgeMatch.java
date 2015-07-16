@@ -26,11 +26,16 @@ import java.util.List;
  */
 public class EdgeMatch {
 
-    private EdgeIteratorState edgeState;
+    private final EdgeIteratorState edgeState;
     private final List<GPXExtension> gpxExtensions;
 
     public EdgeMatch(EdgeIteratorState edgeState, List<GPXExtension> gpxExtension) {
         this.edgeState = edgeState;
+
+        if (edgeState == null) {
+            throw new IllegalStateException("Cannot fetch null EdgeState");
+        }
+
         this.gpxExtensions = gpxExtension;
         if (this.gpxExtensions == null) {
             throw new IllegalStateException("extension list cannot be null");
@@ -39,10 +44,6 @@ public class EdgeMatch {
 
     public boolean isEmpty() {
         return gpxExtensions.isEmpty();
-    }
-
-    void setEdgeState(EdgeIteratorState edgeState) {
-        this.edgeState = edgeState;
     }
 
     public EdgeIteratorState getEdgeState() {

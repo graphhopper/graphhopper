@@ -19,7 +19,7 @@ package com.graphhopper.matching;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
 import java.io.File;
@@ -61,7 +61,7 @@ public class MapMatchingMain {
             logger.info("loading graph from cache");
             hopper.load("./graph-cache");
             FlagEncoder firstEncoder = hopper.getEncodingManager().fetchEdgeEncoders().get(0);
-            GraphStorage graph = hopper.getGraph();
+            GraphHopperStorage graph = hopper.getGraphHopperStorage();
 
             int gpxAccuracy = args.getInt("gpxAccuracy", 15);
             logger.info("Setup lookup index. Accuracy filter is at " + gpxAccuracy + "m");

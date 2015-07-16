@@ -20,13 +20,11 @@ package com.graphhopper.matching;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
 import java.util.ArrayList;
@@ -50,11 +48,11 @@ public class LocationIndexMatch extends LocationIndexTree {
     private final double returnAllResultsWithin;
     private final LocationIndexTree index;
 
-    public LocationIndexMatch(GraphStorage graph, LocationIndexTree index) {
+    public LocationIndexMatch(GraphHopperStorage graph, LocationIndexTree index) {
         this(graph, index, 15);
     }
 
-    public LocationIndexMatch(GraphStorage graph, LocationIndexTree index, int gpxAccuracyInMetern) {
+    public LocationIndexMatch(GraphHopperStorage graph, LocationIndexTree index, int gpxAccuracyInMetern) {
         super(graph, graph.getDirectory());
         this.index = index;
 

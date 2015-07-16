@@ -43,8 +43,8 @@ public class LocationIndexMatchTest {
         RAMDirectory dir = new RAMDirectory();
         FlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = new EncodingManager(encoder);
-        GraphStorage graph = new GraphHopperStorage(dir, em, false);
-        graph.create(1000);
+        GraphHopperStorage ghStorage = new GraphHopperStorage(dir, em, false);
+        ghStorage.create(1000);
         // 0---1---2
         // |   |   |
         // |10 |   |
@@ -52,7 +52,7 @@ public class LocationIndexMatchTest {
         // 3-9-4---5
         // |   |   |
         // 6---7---8
-        NodeAccess na = graph.getNodeAccess();
+        NodeAccess na = ghStorage.getNodeAccess();
         na.setNode(0, 0.0010, 0.0000);
         na.setNode(1, 0.0010, 0.0005);
         na.setNode(2, 0.0010, 0.0010);
@@ -64,24 +64,24 @@ public class LocationIndexMatchTest {
         na.setNode(8, 0.0000, 0.0010);
         na.setNode(9, 0.0005, 0.0002);
         na.setNode(10, 0.0007, 0.0002);
-        graph.edge(0, 1);
-        graph.edge(1, 2);
-        graph.edge(0, 3);
-        EdgeIteratorState edge1_4 = graph.edge(1, 4);
-        graph.edge(2, 5);
-        graph.edge(3, 9);
-        EdgeIteratorState edge9_4 = graph.edge(9, 4);
-        EdgeIteratorState edge4_5 = graph.edge(4, 5);
-        graph.edge(10, 9);
-        graph.edge(3, 6);
-        EdgeIteratorState edge4_7 = graph.edge(4, 7);
-        graph.edge(5, 8);
-        graph.edge(6, 7);
-        graph.edge(7, 8);
+        ghStorage.edge(0, 1);
+        ghStorage.edge(1, 2);
+        ghStorage.edge(0, 3);
+        EdgeIteratorState edge1_4 = ghStorage.edge(1, 4);
+        ghStorage.edge(2, 5);
+        ghStorage.edge(3, 9);
+        EdgeIteratorState edge9_4 = ghStorage.edge(9, 4);
+        EdgeIteratorState edge4_5 = ghStorage.edge(4, 5);
+        ghStorage.edge(10, 9);
+        ghStorage.edge(3, 6);
+        EdgeIteratorState edge4_7 = ghStorage.edge(4, 7);
+        ghStorage.edge(5, 8);
+        ghStorage.edge(6, 7);
+        ghStorage.edge(7, 8);
 
-        LocationIndexTree tmpIndex = new LocationIndexTree(graph, new RAMDirectory());
+        LocationIndexTree tmpIndex = new LocationIndexTree(ghStorage, new RAMDirectory());
         tmpIndex.prepareIndex();
-        LocationIndexMatch index = new LocationIndexMatch(graph, tmpIndex);
+        LocationIndexMatch index = new LocationIndexMatch(ghStorage, tmpIndex);
 
         // query node 4 => get at least 4-5, 4-7
         List<QueryResult> result = index.findNClosest(0.0004, 0.0006, EdgeFilter.ALL_EDGES);
