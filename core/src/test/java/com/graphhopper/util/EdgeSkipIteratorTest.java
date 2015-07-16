@@ -22,7 +22,8 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.GraphHopperStorage;
 
 import static org.junit.Assert.*;
 
@@ -33,21 +34,17 @@ import org.junit.Test;
  */
 public class EdgeSkipIteratorTest
 {
-    private final EncodingManager encodingManager = new EncodingManager("CAR");
-    private CarFlagEncoder carFlagsEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
-    private EdgeFilter carOutFilter = new DefaultEdgeFilter(carFlagsEncoder, false, true);
-
-    LevelGraph createGraph()
-    {
-        return new GraphBuilder(encodingManager).levelGraphCreate();
-    }
-
     @Test
     public void testUpdateFlags()
     {
-        LevelGraph g = createGraph();
+        EncodingManager encodingManager = new EncodingManager("CAR");
+        CarFlagEncoder carFlagsEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
+        EdgeFilter carOutFilter = new DefaultEdgeFilter(carFlagsEncoder, false, true);
+        GraphHopperStorage ghStorage = new GraphBuilder(encodingManager).setCHGraph(true).create();
+        CHGraph g = ghStorage.getGraph(CHGraph.class);
         g.edge(0, 1).setDistance(12).setFlags(carFlagsEncoder.setProperties(10, true, true));
         g.edge(0, 2).setDistance(13).setFlags(carFlagsEncoder.setProperties(20, true, true));
+        ghStorage.freeze();
 
         assertEquals(2, GHUtility.count(g.getAllEdges()));
         assertEquals(1, GHUtility.count(g.createEdgeExplorer(carOutFilter).setBaseNode(1)));

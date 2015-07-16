@@ -27,6 +27,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphHopperStorage;
 
 /**
  * @author Peter Karich
@@ -57,7 +58,7 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
     }
 
     @Override
-    public RoutingAlgorithmFactory createFactory( Graph prepareGraph, AlgorithmOptions prepareOpts )
+    public RoutingAlgorithmFactory createFactory( GraphHopperStorage prepareGraph, AlgorithmOptions prepareOpts )
     {
         return new RoutingAlgorithmFactory()
         {

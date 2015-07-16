@@ -75,12 +75,13 @@ public class Measurement
         {
             // re-create index to avoid bug as pickNode in locationIndex.prepare could be wrong while indexing if level is not taken into account and assumed to be 0 for pre-initialized graph            
             StopWatch sw = new StopWatch().start();
-            int edges = getGraph().getAllEdges().getCount();
             setAlgorithmFactory(createPrepare());
             super.prepare();
             setLocationIndex(createLocationIndex(new RAMDirectory()));
             put("prepare.time", sw.stop().getTime());
-            put("prepare.shortcuts", getGraph().getAllEdges().getCount() - edges);
+            int edges = getGraphHopperStorage().getAllEdges().getCount();
+            int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class).getAllEdges().getCount();
+            put("prepare.shortcuts", edgesAndShortcuts - edges);
         }
     }
 
@@ -106,9 +107,9 @@ public class Measurement
         MeasureHopper hopper = new MeasureHopper();
         hopper.forDesktop();
         if (!hopper.load(graphLocation))
-            throw new IllegalStateException("Cannot load existing levelgraph at " + graphLocation);
+            throw new IllegalStateException("Cannot load existing graph at " + graphLocation);
 
-        GraphStorage g = hopper.getGraph();
+        GraphHopperStorage g = hopper.getGraphHopperStorage();
         if ("true".equals(g.getProperties().get("prepare.done")))
             throw new IllegalStateException("Graph has to be unprepared but wasn't!");
 
@@ -132,8 +133,7 @@ public class Measurement
             // route via CH. do preparation before                        
             hopper.setCHEnable(true);
             hopper.doPostProcessing();
-
-            LevelGraph lg = (LevelGraph) g;
+            CHGraph lg = g.getGraph(CHGraph.class);
             fillAllowedEdges(lg.getAllEdges(), allowedEdges);
             printMiscUnitPerfTests(true, lg, encoder, count * 100, allowedEdges);
             printTimeOfRouteQuery(hopper, count, "routingCH", vehicleStr, true);
@@ -172,7 +172,7 @@ public class Measurement
         }
     }
 
-    private GHBitSet printGraphDetails( GraphStorage g, String vehicleStr )
+    private GHBitSet printGraphDetails( GraphHopperStorage g, String vehicleStr )
     {
         // graph size (edge, node and storage size)
         put("graph.nodes", g.getNodes());
@@ -221,9 +221,8 @@ public class Measurement
         if (isCH)
         {
             description = "CH";
-            LevelGraph lg = (LevelGraph) graph;
-            final EdgeSkipExplorer chExplorer = lg.createEdgeExplorer(
-                    new LevelEdgeFilter((LevelGraph) graph));
+            CHGraph lg = (CHGraph) graph;
+            final EdgeSkipExplorer chExplorer = lg.createEdgeExplorer(new LevelEdgeFilter(lg));
             MiniPerfTest miniPerf = new MiniPerfTest()
             {
                 @Override
@@ -299,7 +298,7 @@ public class Measurement
     private void printTimeOfRouteQuery( final GraphHopper hopper, int count, String prefix,
                                         final String vehicle, final boolean withInstructions )
     {
-        final Graph g = hopper.getGraph();
+        final Graph g = hopper.getGraphHopperStorage();
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);
         final AtomicLong distSum = new AtomicLong(0);

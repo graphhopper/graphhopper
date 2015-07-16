@@ -42,7 +42,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest
 
     private Graph initExampleGraph()
     {
-        GraphStorage gs = new GraphHopperStorage(new RAMDirectory(), em, true).create(1000);
+        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), em, true).create(1000);
         NodeAccess na = gs.getNodeAccess();
         // 50--(0.0001)-->49--(0.0004)-->55--(0.0005)-->60
         na.setNode(0, 51.1, 12.001, 50);

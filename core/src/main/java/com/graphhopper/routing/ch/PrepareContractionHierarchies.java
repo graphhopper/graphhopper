@@ -58,7 +58,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private EdgeSkipExplorer calcPrioAllExplorer;
     private final LevelEdgeFilter levelFilter;
     private int maxLevel;
-    private final LevelGraph prepareGraph;
+    private final GraphHopperStorage ghStorage;
+    private final CHGraphImpl prepareGraph;
 
     // the most important nodes comes last
     private GHTreeMapComposed sortedNodes;
@@ -84,12 +85,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private double periodTime;
     private double lazyTime;
     private double neighborTime;
-    private final int maxEdgesCount;
+    private int maxEdgesCount;
 
-    public PrepareContractionHierarchies( Directory dir, LevelGraph g, FlagEncoder encoder, Weighting weighting, TraversalMode traversalMode )
+    public PrepareContractionHierarchies( Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph,
+                                          FlagEncoder encoder, Weighting weighting, TraversalMode traversalMode )
     {
-        this.prepareGraph = g;
-        maxEdgesCount = g.getAllEdges().getCount();
+        this.ghStorage = ghStorage;
+        this.prepareGraph = (CHGraphImpl) chGraph;
         this.traversalMode = traversalMode;
         this.prepareFlagEncoder = encoder;
         long scFwdDir = encoder.setAccess(0, true, false);
@@ -262,7 +264,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             neighborUpdate = false;
 
         StopWatch neighborSW = new StopWatch();
-        LevelGraphStorage levelGraphCast = ((LevelGraphStorage) prepareGraph);
         while (!sortedNodes.isEmpty())
         {
             // periodically update priorities of ALL nodes            
@@ -350,7 +351,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     neighborSW.stop();
                 }
 
-                levelGraphCast.disconnect(vehicleAllTmpExplorer, iter);
+                prepareGraph.disconnect(vehicleAllTmpExplorer, iter);
             }
         }
 
@@ -714,6 +715,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     PrepareContractionHierarchies initFromGraph()
     {
+        ghStorage.freeze();
+        maxEdgesCount = ghStorage.getAllEdges().getCount();
         vehicleInExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
         vehicleOutExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
         final EdgeFilter allFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, true);
@@ -757,9 +760,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     {
         int avoidNode;
         int maxLevel;
-        LevelGraph graph;
+        CHGraph graph;
 
-        public IgnoreNodeFilter( LevelGraph g, int maxLevel )
+        public IgnoreNodeFilter( CHGraph g, int maxLevel )
         {
             this.graph = g;
             this.maxLevel = maxLevel;
@@ -785,10 +788,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         edgeId -= maxEdgesCount;
         if (edgeId < 0)
         {
-            if (value != 1)
-                throw new IllegalStateException("Trying to set original edge count for normal edge to a value != 1");
-
             // ignore setting as every normal edge has original edge count of 1            
+            if (value != 1)
+                throw new IllegalStateException("Trying to set original edge count for normal edge to a value = " + value
+                        + ", edge:" + (edgeId + maxEdgesCount) + ", max:" + maxEdgesCount + ", graph.max:" + ghStorage.getAllEdges().getCount());
             return;
         }
 

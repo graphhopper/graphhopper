@@ -18,8 +18,14 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.storage.CHGraph;
+
 /**
+ * The state returned from the EdgeIterator of a CHGraph
+ * <p>
  * @author Peter Karich
+ * @see CHGraph
+ * @see CHEdgeIterator
  */
 public interface EdgeSkipIterState extends EdgeIteratorState
 {

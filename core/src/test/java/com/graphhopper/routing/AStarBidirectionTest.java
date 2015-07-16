@@ -28,6 +28,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphHopperStorage;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -72,7 +73,7 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
     }
 
     @Override
-    public RoutingAlgorithmFactory createFactory( Graph prepareGraph, AlgorithmOptions prepareOpts )
+    public RoutingAlgorithmFactory createFactory( GraphHopperStorage prepareGraph, AlgorithmOptions prepareOpts )
     {
         return new RoutingAlgorithmFactory()
         {
@@ -87,7 +88,7 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
     @Test
     public void testInitFromAndTo()
     {
-        Graph g = createGraph(false);
+        Graph g = createGHStorage(false);
         g.edge(0, 1, 1, true);
         updateDistancesFor(g, 0, 0.00, 0.00);
         updateDistancesFor(g, 1, 0.01, 0.01);

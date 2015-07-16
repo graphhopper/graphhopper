@@ -281,8 +281,8 @@ public class GraphHopperTest
                 setOSMFile(testOsm3);
         instance.importOrLoad();
 
-        assertEquals(5, instance.getGraph().getNodes());
-        assertEquals(8, instance.getGraph().getAllEdges().getCount());
+        assertEquals(5, instance.getGraphHopperStorage().getNodes());
+        assertEquals(8, instance.getGraphHopperStorage().getAllEdges().getCount());
 
         // A to D
         GHResponse rsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setVehicle(EncodingManager.CAR));
@@ -325,7 +325,7 @@ public class GraphHopperTest
                 put("prepare.chWeighting", "no")).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
-        assertEquals(5, instance.getGraph().getNodes());
+        assertEquals(5, instance.getGraphHopperStorage().getNodes());
         instance.close();
 
         // different config (flagEncoder list)
@@ -458,8 +458,8 @@ public class GraphHopperTest
                 setOSMFile(testOsm3);
         instance.importOrLoad();
 
-        assertEquals(2, instance.getGraph().getNodes());
-        assertEquals(2, instance.getGraph().getAllEdges().getCount());
+        assertEquals(2, instance.getGraphHopperStorage().getNodes());
+        assertEquals(2, instance.getGraphHopperStorage().getAllEdges().getCount());
 
         // A to E only for foot
         GHResponse res = instance.route(new GHRequest(11.1, 50, 11.2, 52).setVehicle(EncodingManager.FOOT));
@@ -690,21 +690,15 @@ public class GraphHopperTest
         {
             2, 3, 4
         }, paths.get(1).calcNodes().toArray());
-
     }
 
     private GraphHopper initSquareGraphInstance( boolean withCH )
     {
         EncodingManager encodingManager = new EncodingManager("car");
 
-        GraphStorage g;
-        if (withCH)
-        {
-            g = new LevelGraphStorage(new RAMDirectory(), encodingManager, false).create(20);
-        } else
-        {
-            g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(20);
-        }
+        GraphHopperStorage g = new GraphHopperStorage(withCH, new RAMDirectory(), encodingManager,
+                false, new GraphExtension.NoOpExtension()).
+                create(20);
 
         //   2---3---4
         //  /    |    \
@@ -740,8 +734,8 @@ public class GraphHopperTest
                 setCHEnable(withCH).
                 setCHWeighting("fastest").
                 setEncodingManager(encodingManager);
-        instance.setGraph(g);
-        instance.postProcessing();        
+        instance.setGraphHopperStorage(g);
+        instance.postProcessing();
 
         return instance;
     }

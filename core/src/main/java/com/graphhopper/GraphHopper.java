@@ -51,7 +51,7 @@ public class GraphHopper implements GraphHopperAPI
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     // for graph:
-    private GraphStorage graph;
+    private GraphHopperStorage ghStorage;
     private EncodingManager encodingManager;
     private int defaultSegmentSize = -1;
     private String ghLocation = "";
@@ -100,9 +100,9 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * For testing only
      */
-    protected GraphHopper loadGraph( GraphStorage g )
+    protected GraphHopper loadGraph( GraphHopperStorage g )
     {
-        this.graph = g;
+        this.ghStorage = g;
         fullyLoaded = true;
         initLocationIndex();
         return this;
@@ -432,17 +432,17 @@ public class GraphHopper implements GraphHopperAPI
      *
      * @throws IllegalStateException if graph is not instantiated.
      */
-    public GraphStorage getGraph()
+    public GraphHopperStorage getGraphHopperStorage()
     {
-        if (graph == null)
-            throw new IllegalStateException("Graph not initialized");
+        if (ghStorage == null)
+            throw new IllegalStateException("GraphHopper storage not initialized");
 
-        return graph;
+        return ghStorage;
     }
 
-    public void setGraph( GraphStorage graph )
+    public void setGraphHopperStorage( GraphHopperStorage ghStorage )
     {
-        this.graph = graph;
+        this.ghStorage = ghStorage;
         fullyLoaded = true;
     }
 
@@ -592,8 +592,8 @@ public class GraphHopper implements GraphHopperAPI
     private void printInfo()
     {
         logger.info("version " + Constants.VERSION + "|" + Constants.BUILD_DATE + " (" + Constants.getVersions() + ")");
-        if (graph != null)
-            logger.info("graph " + graph.toString() + ", details:" + graph.toDetailsString());
+        if (ghStorage != null)
+            logger.info("graph " + ghStorage.toString() + ", details:" + ghStorage.toDetailsString());
     }
 
     /**
@@ -623,7 +623,7 @@ public class GraphHopper implements GraphHopperAPI
         Lock lock = null;
         try
         {
-            if (graph.getDirectory().getDefaultType().isStoring())
+            if (ghStorage.getDirectory().getDefaultType().isStoring())
             {
                 lockFactory.setLockDir(new File(graphHopperLocation));
                 lock = lockFactory.create(fileLockName, true);
@@ -634,13 +634,12 @@ public class GraphHopper implements GraphHopperAPI
             try
             {
                 importData();
-                graph.getProperties().put("osmreader.import.date", formatDateTime(new Date()));
+                ghStorage.getProperties().put("osmreader.import.date", formatDateTime(new Date()));
             } catch (IOException ex)
             {
                 throw new RuntimeException("Cannot parse OSM file " + getOSMFile(), ex);
             }
             cleanUp();
-            optimize();
             postProcessing();
             flush();
         } finally
@@ -654,7 +653,7 @@ public class GraphHopper implements GraphHopperAPI
     protected DataReader importData() throws IOException
     {
         ensureWriteAccess();
-        if (graph == null)
+        if (ghStorage == null)
             throw new IllegalStateException("Load graph before importing OSM data");
 
         if (osmFile == null)
@@ -662,15 +661,15 @@ public class GraphHopper implements GraphHopperAPI
                     + " but also cannot import from OSM file as it wasn't specified!");
 
         encodingManager.setEnableInstructions(enableInstructions);
-        DataReader reader = createReader(graph);
-        logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
+        DataReader reader = createReader(ghStorage);
+        logger.info("using " + ghStorage.toString() + ", memory:" + Helper.getMemInfo());
         reader.readGraph();
         return reader;
     }
 
-    protected DataReader createReader( GraphStorage tmpGraph )
+    protected DataReader createReader( GraphHopperStorage ghStorage )
     {
-        return initOSMReader(new OSMReader(tmpGraph));
+        return initOSMReader(new OSMReader(ghStorage));
     }
 
     protected OSMReader initOSMReader( OSMReader reader )
@@ -738,21 +737,17 @@ public class GraphHopper implements GraphHopperAPI
             dataAccessType = DAType.MMAP_RO;
 
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
-        if (chEnabled)
-            graph = new LevelGraphStorage(dir, encodingManager, hasElevation());
-        else if (encodingManager.needsTurnCostsSupport())
-            graph = new GraphHopperStorage(dir, encodingManager, hasElevation(), new TurnCostExtension());
-        else
-            graph = new GraphHopperStorage(dir, encodingManager, hasElevation());
-
-        graph.setSegmentSize(defaultSegmentSize);
+        GraphExtension ext = encodingManager.needsTurnCostsSupport()
+                ? new TurnCostExtension() : new GraphExtension.NoOpExtension();
+        ghStorage = new GraphHopperStorage(chEnabled, dir, encodingManager, hasElevation(), ext);
+        ghStorage.setSegmentSize(defaultSegmentSize);
 
         Lock lock = null;
         try
         {
             // create locks only if writes are allowed, if they are not allowed a lock cannot be created 
             // (e.g. on a read only filesystem locks would fail)
-            if (graph.getDirectory().getDefaultType().isStoring() && isAllowWrites())
+            if (ghStorage.getDirectory().getDefaultType().isStoring() && isAllowWrites())
             {
                 lockFactory.setLockDir(new File(ghLocation));
                 lock = lockFactory.create(fileLockName, false);
@@ -760,7 +755,7 @@ public class GraphHopper implements GraphHopperAPI
                     throw new RuntimeException("To avoid reading partial data we need to obtain the read lock but it failed. In " + ghLocation, lock.getObtainFailedReason());
             }
 
-            if (!graph.loadExisting())
+            if (!ghStorage.loadExisting())
                 return false;
 
             postProcessing();
@@ -791,6 +786,19 @@ public class GraphHopper implements GraphHopperAPI
      */
     protected void postProcessing()
     {
+        // Later: move this into the GraphStorage.optimize method
+        // Or: Doing it after preparation to optimize shortcuts too. But not possible yet #12
+        if (sortGraph)
+        {
+            if (ghStorage.isCHPossible() && isPrepared())
+                throw new IllegalArgumentException("Sorting a prepared CHGraph is not possible yet. See #12");
+
+            GraphHopperStorage newGraph = GHUtility.newStorage(ghStorage);
+            GHUtility.sortDFS(ghStorage, newGraph);
+            logger.info("graph sorted (" + Helper.getMemInfo() + ")");
+            ghStorage = newGraph;
+        }
+
         initLocationIndex();
         if (chEnabled)
         {
@@ -806,15 +814,16 @@ public class GraphHopper implements GraphHopperAPI
 
     private boolean isPrepared()
     {
-        return "true".equals(graph.getProperties().get("prepare.done"));
+        return "true".equals(ghStorage.getProperties().get("prepare.done"));
     }
 
     protected RoutingAlgorithmFactory createPrepare()
     {
         FlagEncoder defaultVehicle = getDefaultVehicle();
         Weighting weighting = createWeighting(new WeightingMap(chWeightingStr), defaultVehicle);
-        PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
-                (LevelGraph) graph, defaultVehicle, weighting, traversalMode);
+        PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
+                new GHDirectory("", DAType.RAM_INT), ghStorage, ghStorage.getGraph(CHGraph.class),
+                defaultVehicle, weighting, traversalMode);
         tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                 setLazyUpdates(lazyUpdates).
                 setNeighborUpdates(neighborUpdates).
@@ -891,10 +900,10 @@ public class GraphHopper implements GraphHopperAPI
 
     protected List<Path> getPaths( GHRequest request, GHResponse rsp )
     {
-        if (graph == null || !fullyLoaded)
+        if (ghStorage == null || !fullyLoaded)
             throw new IllegalStateException("Call load or importOrLoad before routing");
 
-        if (graph.isClosed())
+        if (ghStorage.isClosed())
             throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
 
         String vehicle = request.getVehicle();
@@ -947,18 +956,21 @@ public class GraphHopper implements GraphHopperAPI
 
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
 
-        QueryGraph queryGraph;
+        Graph routingGraph = ghStorage;
         RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory();
-        if (chEnabled && !vehicle.equalsIgnoreCase(getDefaultVehicle().toString()))
+        if (chEnabled)
         {
-            // fall back to normal traversing
-            tmpAlgoFactory = new RoutingAlgorithmFactorySimple();
-            queryGraph = new QueryGraph(graph.getBaseGraph());
-        } else
-        {
-            queryGraph = new QueryGraph(graph);
+            if (!vehicle.equalsIgnoreCase(getDefaultVehicle().toString()))
+            {
+                // fall back to normal traversing
+                tmpAlgoFactory = new RoutingAlgorithmFactorySimple();
+            } else
+            {
+                routingGraph = ghStorage.getGraph(CHGraph.class);
+            }
         }
 
+        QueryGraph queryGraph = new QueryGraph(routingGraph);
         queryGraph.lookup(qResults);
 
         List<Path> paths = new ArrayList<Path>(points.size() - 1);
@@ -1026,7 +1038,7 @@ public class GraphHopper implements GraphHopperAPI
 
     protected LocationIndex createLocationIndex( Directory dir )
     {
-        LocationIndexTree tmpIndex = new LocationIndexTree(graph.getBaseGraph(), dir);
+        LocationIndexTree tmpIndex = new LocationIndexTree(ghStorage, dir);
         tmpIndex.setResolution(preciseIndexResolution);
         tmpIndex.setMaxRegionSearch(maxRegionSearch);
         if (!tmpIndex.loadExisting())
@@ -1046,27 +1058,7 @@ public class GraphHopper implements GraphHopperAPI
         if (locationIndex != null)
             throw new IllegalStateException("Cannot initialize locationIndex twice!");
 
-        locationIndex = createLocationIndex(graph.getDirectory());
-    }
-
-    protected void optimize()
-    {
-        logger.info("optimizing ... (" + Helper.getMemInfo() + ")");
-        graph.optimize();
-        logger.info("finished optimize (" + Helper.getMemInfo() + ")");
-
-        // Later: move this into the GraphStorage.optimize method
-        // Or: Doing it after preparation to optimize shortcuts too. But not possible yet #12
-        if (sortGraph)
-        {
-            if (graph instanceof LevelGraph && isPrepared())
-                throw new IllegalArgumentException("Sorting prepared LevelGraph is not possible yet. See #12");
-
-            GraphStorage newGraph = GHUtility.newStorage(graph);
-            GHUtility.sortDFS(graph, newGraph);
-            logger.info("graph sorted (" + Helper.getMemInfo() + ")");
-            graph = newGraph;
-        }
+        locationIndex = createLocationIndex(ghStorage.getDirectory());
     }
 
     protected void prepare()
@@ -1076,23 +1068,24 @@ public class GraphHopper implements GraphHopperAPI
         {
             ensureWriteAccess();
             logger.info("calling prepare.doWork for " + getDefaultVehicle() + " ... (" + Helper.getMemInfo() + ")");
-            ((PrepareContractionHierarchies) getAlgorithmFactory()).doWork();
-            graph.getProperties().put("prepare.date", formatDateTime(new Date()));
+            ghStorage.freeze();
+            ((PrepareContractionHierarchies) algoFactory).doWork();
+            ghStorage.getProperties().put("prepare.date", formatDateTime(new Date()));
         }
-        graph.getProperties().put("prepare.done", tmpPrepare);
+        ghStorage.getProperties().put("prepare.done", tmpPrepare);
     }
 
     protected void cleanUp()
     {
-        int prevNodeCount = graph.getNodes();
-        PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(graph, encodingManager);
+        int prevNodeCount = ghStorage.getNodes();
+        PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(ghStorage, encodingManager);
         preparation.setMinNetworkSize(minNetworkSize);
         preparation.setMinOneWayNetworkSize(minOneWayNetworkSize);
         logger.info("start finding subnetworks, " + Helper.getMemInfo());
         preparation.doWork();
-        int currNodeCount = graph.getNodes();
+        int currNodeCount = ghStorage.getNodes();
         int remainingSubnetworks = preparation.findSubnetworks().size();
-        logger.info("edges: " + graph.getAllEdges().getCount() + ", nodes " + currNodeCount
+        logger.info("edges: " + ghStorage.getAllEdges().getCount() + ", nodes " + currNodeCount
                 + ", there were " + preparation.getSubNetworks()
                 + " subnetworks. removed them => " + (prevNodeCount - currNodeCount)
                 + " less nodes. Remaining subnetworks:" + remainingSubnetworks);
@@ -1100,9 +1093,9 @@ public class GraphHopper implements GraphHopperAPI
 
     protected void flush()
     {
-        logger.info("flushing graph " + graph.toString() + ", details:" + graph.toDetailsString() + ", "
+        logger.info("flushing graph " + ghStorage.toString() + ", details:" + ghStorage.toDetailsString() + ", "
                 + Helper.getMemInfo() + ")");
-        graph.flush();
+        ghStorage.flush();
         fullyLoaded = true;
     }
 
@@ -1112,8 +1105,8 @@ public class GraphHopper implements GraphHopperAPI
      */
     public void close()
     {
-        if (graph != null)
-            graph.close();
+        if (ghStorage != null)
+            ghStorage.close();
 
         if (locationIndex != null)
             locationIndex.close();

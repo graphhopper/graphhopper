@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.GHUtility;
 
@@ -39,14 +39,14 @@ public class PrepareRoutingSubnetworksTest
 {
     private final EncodingManager em = new EncodingManager("car");
 
-    GraphStorage createGraph( EncodingManager eman )
+    GraphHopperStorage createStorage( EncodingManager eman )
     {
         return new GraphBuilder(eman).create();
     }
 
-    GraphStorage createSubnetworkTestGraph()
+    GraphHopperStorage createSubnetworkTestStorage()
     {
-        GraphStorage g = createGraph(em);
+        GraphHopperStorage g = createStorage(em);
         // big network
         g.edge(1, 2, 1, true);
         g.edge(1, 4, 1, false);
@@ -72,40 +72,9 @@ public class PrepareRoutingSubnetworksTest
         return g;
     }
 
-    @Test
-    public void testFindSubnetworks()
+    GraphHopperStorage createSubnetworkTestStorage2( EncodingManager em )
     {
-        GraphStorage g = createSubnetworkTestGraph();
-        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em);
-        Map<Integer, Integer> map = instance.findSubnetworks();
-
-        assertEquals(3, map.size());
-        // start is at 0 => large network
-        assertEquals(5, (int) map.get(0));
-        // next smallest and unvisited node is 1 => big network
-        assertEquals(8, (int) map.get(1));
-        assertEquals(3, (int) map.get(6));
-    }
-
-    @Test
-    public void testKeepLargestNetworks()
-    {
-        GraphStorage g = createSubnetworkTestGraph();
-        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em);
-        Map<Integer, Integer> map = instance.findSubnetworks();
-        instance.keepLargeNetworks(map);
-        g.optimize();
-
-        assertEquals(8, g.getNodes());
-        assertEquals(Arrays.<String>asList(), GHUtility.getProblems(g));
-        map = instance.findSubnetworks();
-        assertEquals(1, map.size());
-        assertEquals(8, (int) map.get(0));
-    }
-
-    GraphStorage createSubnetworkTestGraph2( EncodingManager em )
-    {
-        GraphStorage g = createGraph(em);
+        GraphHopperStorage g = createStorage(em);
         // large network
         g.edge(0, 1, 1, true);
         g.edge(1, 3, 1, true);
@@ -125,9 +94,40 @@ public class PrepareRoutingSubnetworksTest
     }
 
     @Test
+    public void testFindSubnetworks()
+    {
+        GraphHopperStorage g = createSubnetworkTestStorage();
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em);
+        Map<Integer, Integer> map = instance.findSubnetworks();
+
+        assertEquals(3, map.size());
+        // start is at 0 => large network
+        assertEquals(5, (int) map.get(0));
+        // next smallest and unvisited node is 1 => big network
+        assertEquals(8, (int) map.get(1));
+        assertEquals(3, (int) map.get(6));
+    }
+
+    @Test
+    public void testKeepLargestNetworks()
+    {
+        GraphHopperStorage g = createSubnetworkTestStorage();
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em);
+        Map<Integer, Integer> map = instance.findSubnetworks();
+        instance.keepLargeNetworks(map);
+        g.optimize();
+
+        assertEquals(8, g.getNodes());
+        assertEquals(Arrays.<String>asList(), GHUtility.getProblems(g));
+        map = instance.findSubnetworks();
+        assertEquals(1, map.size());
+        assertEquals(8, (int) map.get(0));
+    }
+
+    @Test
     public void testRemoveSubnetworkIfOnlyOneVehicle()
     {
-        GraphStorage g = createSubnetworkTestGraph2(em);
+        GraphHopperStorage g = createSubnetworkTestStorage2(em);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em);
         instance.setMinNetworkSize(4);
         instance.doWork();
@@ -138,7 +138,7 @@ public class PrepareRoutingSubnetworksTest
         assertEquals(GHUtility.asSet(2, 1, 5), GHUtility.getNeighbors(explorer.setBaseNode(3)));
 
         // do not remove because small network is big enough
-        g = createSubnetworkTestGraph2(em);
+        g = createSubnetworkTestStorage2(em);
         instance = new PrepareRoutingSubnetworks(g, em);
         instance.setMinNetworkSize(3);
         instance.doWork();
@@ -147,7 +147,7 @@ public class PrepareRoutingSubnetworksTest
 
         // do not remove because two two vehicles
         EncodingManager em2 = new EncodingManager("CAR,BIKE");
-        g = createSubnetworkTestGraph2(em2);
+        g = createSubnetworkTestStorage2(em2);
         instance = new PrepareRoutingSubnetworks(g, em2);
         instance.setMinNetworkSize(3);
         instance.doWork();
@@ -155,9 +155,9 @@ public class PrepareRoutingSubnetworksTest
         assertEquals(9, g.getNodes());
     }
 
-    GraphStorage createDeadEndUnvisitedNetworkGraph( EncodingManager em )
+    GraphHopperStorage createDeadEndUnvisitedNetworkStorage( EncodingManager em )
     {
-        GraphStorage g = createGraph(em);
+        GraphHopperStorage g = createStorage(em);
         // 0 <-> 1 <-> 2 <-> 3 <-> 4 <- 5 <-> 6
         g.edge(0, 1, 1, true);
         g.edge(1, 2, 1, true);
@@ -174,9 +174,9 @@ public class PrepareRoutingSubnetworksTest
         return g;
     }
 
-    GraphStorage createTarjanTestGraph()
+    GraphHopperStorage createTarjanTestStorage()
     {
-        GraphStorage g = createGraph(em);
+        GraphHopperStorage g = createStorage(em);
 
         g.edge(1, 2, 1, false);
         g.edge(2, 3, 1, false);
@@ -200,7 +200,7 @@ public class PrepareRoutingSubnetworksTest
     @Test
     public void testRemoveDeadEndUnvisitedNetworks()
     {
-        GraphStorage g = createDeadEndUnvisitedNetworkGraph(em);
+        GraphHopperStorage g = createDeadEndUnvisitedNetworkStorage(em);
         assertEquals(11, g.getNodes());
 
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em).
@@ -216,7 +216,7 @@ public class PrepareRoutingSubnetworksTest
     @Test
     public void testTarjan()
     {
-        GraphStorage g = createSubnetworkTestGraph();
+        GraphHopperStorage g = createSubnetworkTestStorage();
 
         // Requires a single vehicle type, otherwise we throw.
         final FlagEncoder flagEncoder = em.getEncoder("car");
@@ -250,7 +250,7 @@ public class PrepareRoutingSubnetworksTest
     public void testNodeOrderingRegression()
     {
         // 1 -> 2 -> 0
-        GraphStorage g = createGraph(em);
+        GraphHopperStorage g = createStorage(em);
         g.edge(1, 2, 1, false);
         g.edge(2, 0, 1, false);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em).

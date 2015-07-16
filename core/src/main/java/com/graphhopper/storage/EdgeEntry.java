@@ -59,7 +59,11 @@ public class EdgeEntry implements Cloneable, Comparable<EdgeEntry>
     @Override
     public int compareTo( EdgeEntry o )
     {
-        return Double.compare(weight, o.weight);
+        if (weight < o.weight)
+            return -1;
+
+        // assumption no NaN and no -0        
+        return weight > o.weight ? 1 : 0;
     }
 
     @Override

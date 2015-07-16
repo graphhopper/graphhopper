@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.*;
 
 import java.util.*;
@@ -41,7 +41,7 @@ import gnu.trove.list.array.TIntArrayList;
 public class PrepareRoutingSubnetworks
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final GraphStorage g;
+    private final GraphHopperStorage ghStorage;
     private final EdgeFilter edgeFilter;
     private int minNetworkSize = 200;
     private int minOneWayNetworkSize = 0;
@@ -49,9 +49,9 @@ public class PrepareRoutingSubnetworks
     private final AtomicInteger maxEdgesPerNode = new AtomicInteger(0);
     private FlagEncoder singleEncoder;
 
-    public PrepareRoutingSubnetworks( GraphStorage g, EncodingManager em )
+    public PrepareRoutingSubnetworks( GraphHopperStorage ghStorage, EncodingManager em )
     {
-        this.g = g;
+        this.ghStorage = ghStorage;
         List<FlagEncoder> encoders = em.fetchEdgeEncoders();
         if (encoders.size() > 1)
             edgeFilter = EdgeFilter.ALL_EDGES;
@@ -84,7 +84,7 @@ public class PrepareRoutingSubnetworks
         logger.info("optimize to remove subnetworks (" + map.size() + "), zero-degree-nodes (" + del + "), "
                 + "unvisited-dead-end-nodes(" + unvisitedDeadEnds + "), "
                 + "maxEdges/node (" + maxEdgesPerNode.get() + ")");
-        g.optimize();
+        ghStorage.optimize();
         subNetworks = map.size();
     }
 
@@ -95,18 +95,18 @@ public class PrepareRoutingSubnetworks
 
     public Map<Integer, Integer> findSubnetworks()
     {
-        return findSubnetworks(g.createEdgeExplorer(edgeFilter));
+        return findSubnetworks(ghStorage.createEdgeExplorer(edgeFilter));
     }
 
     private Map<Integer, Integer> findSubnetworks( final EdgeExplorer explorer )
     {
         final Map<Integer, Integer> map = new HashMap<Integer, Integer>();
         final AtomicInteger integ = new AtomicInteger(0);
-        int locs = g.getNodes();
+        int locs = ghStorage.getNodes();
         final GHBitSet bs = new GHBitSetImpl(locs);
         for (int start = 0; start < locs; start++)
         {
-            if (g.isNodeRemoved(start) || bs.contains(start))
+            if (ghStorage.isNodeRemoved(start) || bs.contains(start))
                 continue;
 
             new BreadthFirstSearch()
@@ -155,7 +155,7 @@ public class PrepareRoutingSubnetworks
         int biggestStart = -1;
         int maxCount = -1;
         int allRemoved = 0;
-        GHBitSetImpl bs = new GHBitSetImpl(g.getNodes());
+        GHBitSetImpl bs = new GHBitSetImpl(ghStorage.getNodes());
         for (Entry<Integer, Integer> e : map.entrySet())
         {
             if (biggestStart < 0)
@@ -179,12 +179,12 @@ public class PrepareRoutingSubnetworks
             }
 
             allRemoved += removed;
-            if (removed > g.getNodes() / 3)
-                throw new IllegalStateException("Too many nodes were removed: " + removed + ", all nodes:" + g.getNodes() + ", all removed:" + allRemoved);
+            if (removed > ghStorage.getNodes() / 3)
+                throw new IllegalStateException("Too many nodes were removed: " + removed + ", all nodes:" + ghStorage.getNodes() + ", all removed:" + allRemoved);
         }
 
-        if (allRemoved > g.getNodes() / 2)
-            throw new IllegalStateException("Too many total nodes were removed: " + allRemoved + ", all nodes:" + g.getNodes());
+        if (allRemoved > ghStorage.getNodes() / 2)
+            throw new IllegalStateException("Too many total nodes were removed: " + allRemoved + ", all nodes:" + ghStorage.getNodes());
     }
 
     /**
@@ -199,7 +199,7 @@ public class PrepareRoutingSubnetworks
         }
 
         final AtomicInteger removed = new AtomicInteger(0);
-        EdgeExplorer explorer = g.createEdgeExplorer(edgeFilter);
+        EdgeExplorer explorer = ghStorage.createEdgeExplorer(edgeFilter);
         new BreadthFirstSearch()
         {
             @Override
@@ -211,7 +211,7 @@ public class PrepareRoutingSubnetworks
             @Override
             protected boolean goFurther( int nodeId )
             {
-                g.markNodeRemoved(nodeId);
+                ghStorage.markNodeRemoved(nodeId);
                 removed.incrementAndGet();
                 return super.goFurther(nodeId);
             }
@@ -219,9 +219,9 @@ public class PrepareRoutingSubnetworks
 
         if (entries != removed.get())
             throw new IllegalStateException("Did not expect " + removed.get() + " removed nodes; "
-                    + " Expected:" + entries + ", all nodes:" + g.getNodes() + "; "
+                    + " Expected:" + entries + ", all nodes:" + ghStorage.getNodes() + "; "
                     + " Neighbours:" + toString(explorer.setBaseNode(start)) + "; "
-                    + " Start:" + start + "  (" + g.getNodeAccess().getLat(start) + "," + g.getNodeAccess().getLon(start) + ")");
+                    + " Start:" + start + "  (" + ghStorage.getNodeAccess().getLat(start) + "," + ghStorage.getNodeAccess().getLon(start) + ")");
 
         return removed.get();
     }
@@ -232,7 +232,7 @@ public class PrepareRoutingSubnetworks
         while (iter.next())
         {
             int adjNode = iter.getAdjNode();
-            str += adjNode + " (" + g.getNodeAccess().getLat(adjNode) + "," + g.getNodeAccess().getLon(adjNode) + "), ";
+            str += adjNode + " (" + ghStorage.getNodeAccess().getLat(adjNode) + "," + ghStorage.getNodeAccess().getLon(adjNode) + "), ";
             str += "speed  (fwd:" + singleEncoder.getSpeed(iter.getFlags()) + ", rev:" + singleEncoder.getReverseSpeed(iter.getFlags()) + "), ";
             str += "access (fwd:" + singleEncoder.isForward(iter.getFlags()) + ", rev:" + singleEncoder.isBackward(iter.getFlags()) + "), ";
             str += "distance:" + iter.getDistance();
@@ -249,15 +249,15 @@ public class PrepareRoutingSubnetworks
     int removeZeroDegreeNodes()
     {
         int removed = 0;
-        int locs = g.getNodes();
-        EdgeExplorer explorer = g.createEdgeExplorer();
+        int locs = ghStorage.getNodes();
+        EdgeExplorer explorer = ghStorage.createEdgeExplorer();
         for (int start = 0; start < locs; start++)
         {
             EdgeIterator iter = explorer.setBaseNode(start);
             if (!iter.next())
             {
                 removed++;
-                g.markNodeRemoved(start);
+                ghStorage.markNodeRemoved(start);
             }
         }
         return removed;
@@ -275,7 +275,7 @@ public class PrepareRoutingSubnetworks
     {
         // Partition g into strongly connected components using Tarjan's algorithm.
         final EdgeFilter filter = new DefaultEdgeFilter(encoder, false, true);
-        List<TIntArrayList> components = new TarjansStronglyConnectedComponentsAlgorithm(g, filter).findComponents();
+        List<TIntArrayList> components = new TarjansStronglyConnectedComponentsAlgorithm(ghStorage, filter).findComponents();
 
         // remove components less than minimum size
         int removedNodes = 0;
@@ -285,7 +285,7 @@ public class PrepareRoutingSubnetworks
             {
                 for (int i = 0; i < component.size(); i++)
                 {
-                    g.markNodeRemoved(component.get(i));
+                    ghStorage.markNodeRemoved(component.get(i));
                     removedNodes++;
                 }
             }

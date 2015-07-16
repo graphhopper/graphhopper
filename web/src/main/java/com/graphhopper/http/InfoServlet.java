@@ -31,8 +31,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
-import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 
 import org.json.JSONObject;
 
@@ -47,7 +45,7 @@ public class InfoServlet extends GHBaseServlet
     @Override
     public void doGet( HttpServletRequest req, HttpServletResponse res ) throws ServletException, IOException
     {
-        BBox bb = hopper.getGraph().getBounds();
+        BBox bb = hopper.getGraphHopperStorage().getBounds();
         List<Double> list = new ArrayList<Double>(4);
         list.add(bb.minLon);
         list.add(bb.minLat);
@@ -57,7 +55,7 @@ public class InfoServlet extends GHBaseServlet
         JSONObject json = new JSONObject();
         json.put("bbox", list);
 
-        String[] vehicles = hopper.getGraph().getEncodingManager().toString().split(",");
+        String[] vehicles = hopper.getGraphHopperStorage().getEncodingManager().toString().split(",");
         json.put("supported_vehicles", vehicles);
         JSONObject features = new JSONObject();
         for (String v : vehicles)
@@ -71,7 +69,7 @@ public class InfoServlet extends GHBaseServlet
         json.put("version", Constants.VERSION);
         json.put("build_date", Constants.BUILD_DATE);
 
-        StorableProperties props = hopper.getGraph().getProperties();
+        StorableProperties props = hopper.getGraphHopperStorage().getProperties();
         json.put("import_date", props.get("osmreader.import.date"));
 
         if (!Helper.isEmpty(props.get("prepare.date")))

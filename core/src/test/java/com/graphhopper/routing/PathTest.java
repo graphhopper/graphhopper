@@ -52,7 +52,7 @@ public class PathTest
     @Test
     public void testFound()
     {
-        GraphStorage g = new GraphBuilder(carManager).create();
+        GraphHopperStorage g = new GraphBuilder(carManager).create();
         Path p = new Path(g, encoder);
         assertFalse(p.isFound());
         assertEquals(0, p.getDistance(), 1e-7);
@@ -64,7 +64,7 @@ public class PathTest
     public void testTime()
     {
         FlagEncoder tmpEnc = new Bike2WeightFlagEncoder();
-        GraphStorage g = new GraphBuilder(new EncodingManager(tmpEnc)).create();
+        GraphHopperStorage g = new GraphBuilder(new EncodingManager(tmpEnc)).create();
         Path p = new Path(g, tmpEnc);
         long flags = tmpEnc.setSpeed(tmpEnc.setReverseSpeed(tmpEnc.setAccess(0, true, true), 10), 15);
         assertEquals(375 * 60 * 1000, p.calcMillis(100000, flags, false));
@@ -76,7 +76,7 @@ public class PathTest
     @Test
     public void testWayList()
     {
-        GraphStorage g = new GraphBuilder(carManager).create();
+        GraphHopperStorage g = new GraphBuilder(carManager).create();
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0.0, 0.1);
         na.setNode(1, 1.0, 0.1);

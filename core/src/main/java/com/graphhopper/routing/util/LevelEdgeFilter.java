@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.CHGraph;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeSkipIterState;
 
@@ -28,10 +28,10 @@ import com.graphhopper.util.EdgeSkipIterState;
  */
 public class LevelEdgeFilter implements EdgeFilter
 {
-    private final LevelGraph graph;
+    private final CHGraph graph;
     private final int maxNodes;
 
-    public LevelEdgeFilter( LevelGraph g )
+    public LevelEdgeFilter( CHGraph g )
     {
         graph = g;
         maxNodes = g.getNodes();

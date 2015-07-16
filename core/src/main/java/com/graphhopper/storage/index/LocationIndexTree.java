@@ -24,7 +24,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -81,8 +81,8 @@ public class LocationIndexTree implements LocationIndex
      */
     public LocationIndexTree( Graph g, Directory dir )
     {
-        if (g instanceof LevelGraph)
-            throw new IllegalArgumentException("Call LevelGraph.getBaseGraph() instead of using the LevelGraph itself");
+        if (g instanceof CHGraph)
+            throw new IllegalArgumentException("Use base graph for LocationIndexTree instead of CHGraph");
 
         MAGIC_INT = Integer.MAX_VALUE / 22316;
         this.graph = g;
@@ -342,7 +342,7 @@ public class LocationIndexTree implements LocationIndex
 
     int calcChecksum()
     {
-        // do not include the edges as we could get problem with LevelGraph due to shortcuts
+        // do not include the edges as we could get problem with CHGraph due to shortcuts
         // ^ graph.getAllEdges().count();
         return graph.getNodes();
     }

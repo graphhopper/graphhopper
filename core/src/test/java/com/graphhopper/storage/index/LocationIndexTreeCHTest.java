@@ -19,12 +19,7 @@ package com.graphhopper.storage.index;
 
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeSkipIterState;
 import com.graphhopper.util.Helper;
@@ -43,7 +38,7 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class LocationIndexTreeForLevelGraphTest extends LocationIndexTreeTest
+public class LocationIndexTreeCHTest extends LocationIndexTreeTest
 {
     @Override
     public LocationIndexTree createIndex( Graph g, int resolution )
@@ -57,59 +52,63 @@ public class LocationIndexTreeForLevelGraphTest extends LocationIndexTreeTest
     public LocationIndexTree createIndexNoPrepare( Graph g, int resolution )
     {
         Directory dir = new RAMDirectory(location);
-        LocationIndexTree tmpIdx = new LocationIndexTree(g.getBaseGraph(), dir);
+        LocationIndexTree tmpIdx = new LocationIndexTree(g, dir);
         tmpIdx.setResolution(resolution);
         return tmpIdx;
     }
 
     @Override
-    LevelGraph createGraph( Directory dir, EncodingManager encodingManager, boolean is3D )
+    GraphHopperStorage createGHStorage( Directory dir, EncodingManager encodingManager, boolean is3D )
     {
-        return new LevelGraphStorage(dir, encodingManager, is3D).create(100);
+        return new GraphHopperStorage(true, dir, encodingManager, is3D, new GraphExtension.NoOpExtension()).
+                create(100);
     }
 
     @Test
-    public void testLevelGraph()
+    public void testCHGraph()
     {
-        LevelGraph g = createGraph(new RAMDirectory(), encodingManager, false);
+        GraphHopperStorage ghStorage = createGHStorage(new RAMDirectory(), encodingManager, false);
+        CHGraph lg = ghStorage.getGraph(CHGraph.class);
         // 0
         // 1
         // 2
         //  3
         //   4
-        NodeAccess na = g.getNodeAccess();
+        NodeAccess na = ghStorage.getNodeAccess();
         na.setNode(0, 1, 0);
         na.setNode(1, 0.5, 0);
         na.setNode(2, 0, 0);
         na.setNode(3, -1, 1);
         na.setNode(4, -2, 2);
 
-        EdgeIteratorState iter1 = g.edge(0, 1, 10, true);
-        EdgeIteratorState iter2 = g.edge(1, 2, 10, true);
-        EdgeIteratorState iter3 = g.edge(2, 3, 14, true);
-        EdgeIteratorState iter4 = g.edge(3, 4, 14, true);
+        EdgeIteratorState iter1 = ghStorage.edge(0, 1, 10, true);
+        EdgeIteratorState iter2 = ghStorage.edge(1, 2, 10, true);
+        EdgeIteratorState iter3 = ghStorage.edge(2, 3, 14, true);
+        EdgeIteratorState iter4 = ghStorage.edge(3, 4, 14, true);
 
         // create shortcuts
+        ghStorage.freeze();
         FlagEncoder car = encodingManager.getEncoder("CAR");
         long flags = car.setProperties(60, true, true);
-        EdgeSkipIterState iter5 = g.shortcut(0, 2);
+        EdgeSkipIterState iter5 = lg.shortcut(0, 2);
         iter5.setDistance(20).setFlags(flags);
         iter5.setSkippedEdges(iter1.getEdge(), iter2.getEdge());
-        EdgeSkipIterState iter6 = g.shortcut(2, 4);
+        EdgeSkipIterState iter6 = lg.shortcut(2, 4);
         iter6.setDistance(28).setFlags(flags);
         iter6.setSkippedEdges(iter3.getEdge(), iter4.getEdge());
-        EdgeSkipIterState tmp = g.shortcut(0, 4);
+        EdgeSkipIterState tmp = lg.shortcut(0, 4);
         tmp.setDistance(40).setFlags(flags);
         tmp.setSkippedEdges(iter5.getEdge(), iter6.getEdge());
 
-        LocationIndex index = createIndex(g, -1);
+        LocationIndex index = createIndex(ghStorage, -1);
         assertEquals(2, index.findID(0, 0.5));
     }
 
     @Test
     public void testSortHighLevelFirst()
     {
-        final LevelGraph lg = createGraph(new RAMDirectory(), encodingManager, false);
+        GraphHopperStorage g = createGHStorage(new RAMDirectory(), encodingManager, false);
+        final CHGraph lg = g.getGraph(CHGraph.class);
         lg.getNodeAccess().ensureNode(4);
         lg.setLevel(1, 10);
         lg.setLevel(2, 30);
@@ -132,7 +131,7 @@ public class LocationIndexTreeForLevelGraphTest extends LocationIndexTreeTest
     }
 
     @Test
-    public void testLevelGraphBug()
+    public void testCHGraphBug()
     {
         // 0
         // |
@@ -140,15 +139,17 @@ public class LocationIndexTreeForLevelGraphTest extends LocationIndexTreeTest
         // |
         // 1
 
-        LevelGraphStorage lg = (LevelGraphStorage) createGraph(new RAMDirectory(), encodingManager, false);
-        NodeAccess na = lg.getNodeAccess();
+        GraphHopperStorage g = createGHStorage(new RAMDirectory(), encodingManager, false);
+        NodeAccess na = g.getNodeAccess();
         na.setNode(0, 1, 0);
         na.setNode(1, 0, 0);
         na.setNode(2, 0.5, 0.5);
         na.setNode(3, 0.5, 1);
-        EdgeIteratorState iter1 = lg.edge(1, 0, 100, true);
-        lg.edge(2, 3, 100, true);
+        EdgeIteratorState iter1 = g.edge(1, 0, 100, true);
+        g.edge(2, 3, 100, true);
 
+        CHGraphImpl lg = (CHGraphImpl) g.getGraph(CHGraph.class);
+        g.freeze();
         lg.setLevel(0, 11);
         lg.setLevel(1, 10);
         // disconnect higher 0 from lower 1
@@ -159,17 +160,18 @@ public class LocationIndexTreeForLevelGraphTest extends LocationIndexTreeTest
         // disconnect higher 3 from lower 2
         lg.disconnect(lg.createEdgeExplorer(), iter1);
 
-        LocationIndexTree index = createIndex(lg, 100000);
+        LocationIndexTree index = createIndex(g, 100000);
 
         // very close to 2, but should match the edge 0--1
         TIntHashSet set = index.findNetworkEntries(0.51, 0.2, index.maxRegionSearch);
-        assertEquals(0, index.findID(0.51, 0.2));
-        assertEquals(1, index.findID(0.1, 0.1));
-        assertEquals(2, index.findID(0.51, 0.51));
-        assertEquals(3, index.findID(0.51, 1.1));
         TIntSet expectedSet = new TIntHashSet();
         expectedSet.add(0);
         expectedSet.add(2);
         assertEquals(expectedSet, set);
+
+        assertEquals(0, index.findID(0.51, 0.2));
+        assertEquals(1, index.findID(0.1, 0.1));
+        assertEquals(2, index.findID(0.51, 0.51));
+        assertEquals(3, index.findID(0.51, 1.1));
     }
 }

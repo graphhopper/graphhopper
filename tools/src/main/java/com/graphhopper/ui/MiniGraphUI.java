@@ -76,7 +76,7 @@ public class MiniGraphUI
 
     public MiniGraphUI( GraphHopper hopper, boolean debug )
     {
-        this.graph = hopper.getGraph();
+        this.graph = hopper.getGraphHopperStorage();
         this.na = graph.getNodeAccess();
         algoFactory = hopper.getAlgorithmFactory();
         encoder = hopper.getEncodingManager().getEncoder("car");
