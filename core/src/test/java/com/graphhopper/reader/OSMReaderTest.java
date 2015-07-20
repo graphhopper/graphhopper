@@ -106,8 +106,8 @@ public class OSMReaderTest
 
             if (turnCosts)
             {
-                carEncoder = new CarFlagEncoder(5, 5, 3);
-                bikeEncoder = new BikeFlagEncoder(4, 2, 3);
+                carEncoder = new CarFlagEncoder(5, 5, 1);
+                bikeEncoder = new BikeFlagEncoder(4, 2, 1);
             } else
             {
                 carEncoder = new CarFlagEncoder();

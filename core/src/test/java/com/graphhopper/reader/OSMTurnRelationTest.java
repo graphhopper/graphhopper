@@ -43,7 +43,7 @@ public class OSMTurnRelationTest
     @Test
     public void testGetRestrictionAsEntries()
     {
-        CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 3);
+        CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
         final Map<Long, Integer> osmNodeToInternal = new HashMap<Long, Integer>();
         final Map<Integer, Long> internalToOSMEdge = new HashMap<Integer, Long>();
 
