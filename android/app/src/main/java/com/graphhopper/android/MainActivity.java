@@ -439,7 +439,7 @@ public class MainActivity extends Activity
             {
                 GraphHopper tmpHopp = new GraphHopper().forMobile();
                 tmpHopp.load(new File(mapsFolder, currentArea).getAbsolutePath());
-                log("found graph " + tmpHopp.getGraph().toString() + ", nodes:" + tmpHopp.getGraph().getNodes());
+                log("found graph " + tmpHopp.getGraphHopperStorage().toString() + ", nodes:" + tmpHopp.getGraphHopperStorage().getNodes());
                 hopper = tmpHopp;
                 return null;
             }
