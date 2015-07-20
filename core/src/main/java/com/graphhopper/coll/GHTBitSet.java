@@ -45,37 +45,37 @@ public class GHTBitSet implements GHBitSet
     }
 
     @Override
-    public boolean contains( int index )
+    public final boolean contains( int index )
     {
         return tHash.contains(index);
     }
 
     @Override
-    public void add( int index )
+    public final void add( int index )
     {
         tHash.add(index);
     }
 
     @Override
-    public String toString()
+    public final String toString()
     {
         return tHash.toString();
     }
 
     @Override
-    public int getCardinality()
+    public final int getCardinality()
     {
         return tHash.size();
     }
 
     @Override
-    public void clear()
+    public final void clear()
     {
         tHash.clear();
     }
 
     @Override
-    public GHBitSet copyTo( GHBitSet bs )
+    public final GHBitSet copyTo( GHBitSet bs )
     {
         bs.clear();
         if (bs instanceof GHTBitSet)

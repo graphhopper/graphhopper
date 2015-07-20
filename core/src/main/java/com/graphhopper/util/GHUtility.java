@@ -279,7 +279,7 @@ public class GHUtility
     {
         AllEdgesIterator eIter = fromGraph.getAllEdges();
         while (eIter.next())
-        {
+        {            
             int base = eIter.getBaseNode();
             int adj = eIter.getAdjNode();
             eIter.copyPropertiesTo(toGraph.edge(base, adj));

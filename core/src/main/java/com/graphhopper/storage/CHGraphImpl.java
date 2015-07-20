@@ -311,7 +311,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         @Override
         public final boolean isShortcut()
         {
-            // assert baseGraph.isFrozen() : "level graph not yet frozen";
+            // assert baseGraph.isFrozen() : "chgraph not yet frozen";
             return edgeId >= baseGraph.edgeCount;
         }
 
