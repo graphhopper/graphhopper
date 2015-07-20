@@ -200,7 +200,7 @@ public class Path
      */
     public EdgeIteratorState getFinalEdge()
     {
-        return graph.getEdgeProps(edgeIds.get(edgeIds.size() - 1), endNode);
+        return graph.getEdgeIteratorState(edgeIds.get(edgeIds.size() - 1), endNode);
     }
 
     /**
@@ -221,7 +221,7 @@ public class Path
      */
     protected void processEdge( int edgeId, int adjNode )
     {
-        EdgeIteratorState iter = graph.getEdgeProps(edgeId, adjNode);
+        EdgeIteratorState iter = graph.getEdgeIteratorState(edgeId, adjNode);
         double dist = iter.getDistance();
         distance += dist;
         time += calcMillis(dist, iter.getFlags(), false);
@@ -270,14 +270,14 @@ public class Path
         int len = edgeIds.size();
         for (int i = 0; i < len; i++)
         {
-            EdgeIteratorState edgeBase = graph.getEdgeProps(edgeIds.get(i), tmpNode);
+            EdgeIteratorState edgeBase = graph.getEdgeIteratorState(edgeIds.get(i), tmpNode);
             if (edgeBase == null)
                 throw new IllegalStateException("Edge " + edgeIds.get(i) + " was empty when requested with node " + tmpNode
                         + ", array index:" + i + ", edges:" + edgeIds.size());
 
             tmpNode = edgeBase.getBaseNode();
             // more efficient swap, currently not implemented for virtual edges: visitor.next(edgeBase.detach(true), i);
-            edgeBase = graph.getEdgeProps(edgeBase.getEdge(), tmpNode);
+            edgeBase = graph.getEdgeIteratorState(edgeBase.getEdge(), tmpNode);
             visitor.next(edgeBase, i);
         }
     }

@@ -735,25 +735,25 @@ public abstract class AbstractGraphStorageTester
         EdgeIteratorState iter2 = graph.edge(0, 2, 20, true);
 
         int edgeId = iter1.getEdge();
-        EdgeIteratorState iter = graph.getEdgeProps(edgeId, 0);
+        EdgeIteratorState iter = graph.getEdgeIteratorState(edgeId, 0);
         assertEquals(10, iter.getDistance(), 1e-5);
 
         edgeId = iter2.getEdge();
-        iter = graph.getEdgeProps(edgeId, 0);
+        iter = graph.getEdgeIteratorState(edgeId, 0);
         assertEquals(2, iter.getBaseNode());
         assertEquals(0, iter.getAdjNode());
         assertEquals(20, iter.getDistance(), 1e-5);
 
-        iter = graph.getEdgeProps(edgeId, 2);
+        iter = graph.getEdgeIteratorState(edgeId, 2);
         assertEquals(0, iter.getBaseNode());
         assertEquals(2, iter.getAdjNode());
         assertEquals(20, iter.getDistance(), 1e-5);
 
-        iter = graph.getEdgeProps(edgeId, Integer.MIN_VALUE);
+        iter = graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
         assertFalse(iter == null);
         assertEquals(0, iter.getBaseNode());
         assertEquals(2, iter.getAdjNode());
-        iter = graph.getEdgeProps(edgeId, 1);
+        iter = graph.getEdgeIteratorState(edgeId, 1);
         assertTrue(iter == null);
 
         // delete
@@ -763,7 +763,7 @@ public abstract class AbstractGraphStorageTester
         // throw exception if accessing deleted edge
         try
         {
-            graph.getEdgeProps(iter1.getEdge(), -1);
+            graph.getEdgeIteratorState(iter1.getEdge(), -1);
             assertTrue(false);
         } catch (Exception ex)
         {
@@ -780,19 +780,19 @@ public abstract class AbstractGraphStorageTester
         assertEquals(3, GHUtility.count(carOutExplorer.setBaseNode(2)));
 
         // no exception        
-        graph.getEdgeProps(1, 3);
+        graph.getEdgeIteratorState(1, 3);
 
         // raise exception
         try
         {
-            graph.getEdgeProps(4, 3);
+            graph.getEdgeIteratorState(4, 3);
             assertTrue(false);
         } catch (Exception ex)
         {
         }
         try
         {
-            graph.getEdgeProps(-1, 3);
+            graph.getEdgeIteratorState(-1, 3);
             assertTrue(false);
         } catch (Exception ex)
         {
@@ -800,13 +800,13 @@ public abstract class AbstractGraphStorageTester
 
         EdgeIterator iter = carOutExplorer.setBaseNode(2);
         assertTrue(iter.next());
-        EdgeIteratorState oneIter = graph.getEdgeProps(iter.getEdge(), 3);
+        EdgeIteratorState oneIter = graph.getEdgeIteratorState(iter.getEdge(), 3);
         assertEquals(13, oneIter.getDistance(), 1e-6);
         assertEquals(2, oneIter.getBaseNode());
         assertTrue(carEncoder.isForward(oneIter.getFlags()));
         assertFalse(carEncoder.isBackward(oneIter.getFlags()));
 
-        oneIter = graph.getEdgeProps(iter.getEdge(), 2);
+        oneIter = graph.getEdgeIteratorState(iter.getEdge(), 2);
         assertEquals(13, oneIter.getDistance(), 1e-6);
         assertEquals(3, oneIter.getBaseNode());
         assertFalse(carEncoder.isForward(oneIter.getFlags()));
@@ -1020,8 +1020,8 @@ public abstract class AbstractGraphStorageTester
         EdgeIteratorState iter2 = graph.edge(0, 1, 10, true);
         iter2.setName("named street2");
 
-        assertEquals("named street1", graph.getEdgeProps(iter1.getEdge(), iter1.getAdjNode()).getName());
-        assertEquals("named street2", graph.getEdgeProps(iter2.getEdge(), iter2.getAdjNode()).getName());
+        assertEquals("named street1", graph.getEdgeIteratorState(iter1.getEdge(), iter1.getAdjNode()).getName());
+        assertEquals("named street2", graph.getEdgeIteratorState(iter2.getEdge(), iter2.getAdjNode()).getName());
     }
 
     @Test

@@ -673,8 +673,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                                 + ", skipEdge1:" + sc.skippedEdge1 + ", skipEdge2:" + sc.skippedEdge2
                                 + ", edge " + iter + ":" + getCoords(iter, prepareGraph)
                                 + ", sc:" + sc
-                                + ", skippedEdge1: " + getCoords(prepareGraph.getEdgeProps(sc.skippedEdge1, sc.from), prepareGraph)
-                                + ", skippedEdge2: " + getCoords(prepareGraph.getEdgeProps(sc.skippedEdge2, sc.to), prepareGraph)
+                                + ", skippedEdge1: " + getCoords(prepareGraph.getEdgeIteratorState(sc.skippedEdge1, sc.from), prepareGraph)
+                                + ", skippedEdge2: " + getCoords(prepareGraph.getEdgeIteratorState(sc.skippedEdge2, sc.to), prepareGraph)
                                 + ", neighbors:" + GHUtility.getNeighbors(iter));
                     }
 

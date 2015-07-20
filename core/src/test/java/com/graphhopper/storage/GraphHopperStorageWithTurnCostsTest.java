@@ -77,8 +77,8 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
         assertEquals(12, graph.getNodes());
         checkGraph(graph);
 
-        assertEquals("named street1", graph.getEdgeProps(iter1.getEdge(), iter1.getAdjNode()).getName());
-        assertEquals("named street2", graph.getEdgeProps(iter2.getEdge(), iter2.getAdjNode()).getName());
+        assertEquals("named street1", graph.getEdgeIteratorState(iter1.getEdge(), iter1.getAdjNode()).getName());
+        assertEquals("named street2", graph.getEdgeIteratorState(iter2.getEdge(), iter2.getAdjNode()).getName());
 
         assertEquals(1337, turnCostStorage.getTurnCostFlags(iter1.getEdge(), 0, iter2.getEdge()));
         assertEquals(666, turnCostStorage.getTurnCostFlags(iter2.getEdge(), 0, iter1.getEdge()));

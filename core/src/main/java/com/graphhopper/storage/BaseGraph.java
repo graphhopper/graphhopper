@@ -800,7 +800,7 @@ class BaseGraph implements Graph
     }
 
     @Override
-    public EdgeIteratorState getEdgeProps( int edgeId, int adjNode )
+    public EdgeIteratorState getEdgeIteratorState( int edgeId, int adjNode )
     {
         if (!edgeAccess.isInBounds(edgeId))
             throw new IllegalStateException("edgeId " + edgeId + " out of bounds");

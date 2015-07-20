@@ -288,7 +288,7 @@ public class Measurement
                 {
                     int edgeId = rand.nextInt(maxEdgesId);
                     if (allowedEdges.contains(edgeId))
-                        return graph.getEdgeProps(edgeId, Integer.MIN_VALUE).getEdge();
+                        return graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE).getEdge();
                 }
             }
         }.setIterations(count).start();

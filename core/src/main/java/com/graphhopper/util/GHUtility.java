@@ -330,7 +330,7 @@ public class GHUtility
     {
         if (EdgeIterator.Edge.isValid(edge))
         {
-            EdgeIteratorState iterTo = g.getEdgeProps(edge, adjNode);
+            EdgeIteratorState iterTo = g.getEdgeIteratorState(edge, adjNode);
             return iterTo.getAdjNode();
         }
         return adjNode;

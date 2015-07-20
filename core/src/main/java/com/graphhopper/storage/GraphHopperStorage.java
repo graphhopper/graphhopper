@@ -357,9 +357,9 @@ public final class GraphHopperStorage implements GraphStorage, Graph
     }
 
     @Override
-    public final EdgeIteratorState getEdgeProps( int edgeId, int adjNode )
+    public final EdgeIteratorState getEdgeIteratorState( int edgeId, int adjNode )
     {
-        return baseGraph.getEdgeProps(edgeId, adjNode);
+        return baseGraph.getEdgeIteratorState(edgeId, adjNode);
     }
 
     @Override

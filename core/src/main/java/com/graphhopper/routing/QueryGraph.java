@@ -433,8 +433,8 @@ public class QueryGraph implements Graph
         if (!isVirtualNode(nodeId))
             return false;
 
-        VirtualEdgeIteratorState incomingEdge = (VirtualEdgeIteratorState) getEdgeProps(edgeId, nodeId);
-        VirtualEdgeIteratorState reverseEdge = (VirtualEdgeIteratorState) getEdgeProps(edgeId, incomingEdge.getBaseNode());
+        VirtualEdgeIteratorState incomingEdge = (VirtualEdgeIteratorState) getEdgeIteratorState(edgeId, nodeId);
+        VirtualEdgeIteratorState reverseEdge = (VirtualEdgeIteratorState) getEdgeIteratorState(edgeId, incomingEdge.getBaseNode());
         incomingEdge.setVirtualEdgePreference(true, !incoming);
         modifiedEdges.add(incomingEdge);
         reverseEdge.setVirtualEdgePreference(true, incoming);
@@ -563,10 +563,10 @@ public class QueryGraph implements Graph
     }
 
     @Override
-    public EdgeIteratorState getEdgeProps( int origEdgeId, int adjNode )
+    public EdgeIteratorState getEdgeIteratorState( int origEdgeId, int adjNode )
     {
         if (!isVirtualEdge(origEdgeId))
-            return mainGraph.getEdgeProps(origEdgeId, adjNode);
+            return mainGraph.getEdgeIteratorState(origEdgeId, adjNode);
 
         int edgeId = origEdgeId - mainEdges;
         EdgeIteratorState eis = virtualEdges.get(edgeId);

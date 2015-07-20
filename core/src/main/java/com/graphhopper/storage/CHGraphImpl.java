@@ -206,7 +206,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
     }
 
     @Override
-    public final CHEdgeIteratorState getEdgeProps( int edgeId, int endNode )
+    public final CHEdgeIteratorState getEdgeIteratorState( int edgeId, int endNode )
     {
         if (isShortcut(edgeId))
         {

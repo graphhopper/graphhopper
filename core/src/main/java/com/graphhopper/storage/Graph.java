@@ -76,7 +76,7 @@ public interface Graph
      * @return an edge iterator state or potentially null if adjNode does not match
      * @throws IllegalStateException if edgeId is not valid
      */
-    EdgeIteratorState getEdgeProps( int edgeId, int adjNode );
+    EdgeIteratorState getEdgeIteratorState( int edgeId, int adjNode );
 
     /**
      * @return all edges in this graph, where baseNode will be the smaller node.
