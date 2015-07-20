@@ -222,7 +222,7 @@ public class Measurement
         {
             description = "CH";
             CHGraph lg = (CHGraph) graph;
-            final EdgeSkipExplorer chExplorer = lg.createEdgeExplorer(new LevelEdgeFilter(lg));
+            final CHEdgeExplorer chExplorer = lg.createEdgeExplorer(new LevelEdgeFilter(lg));
             MiniPerfTest miniPerf = new MiniPerfTest()
             {
                 @Override
@@ -234,14 +234,14 @@ public class Measurement
             }.setIterations(count).start();
             print("unit_testsCH.level_edge_state_next", miniPerf);
 
-            final EdgeSkipExplorer chExplorer2 = lg.createEdgeExplorer();
+            final CHEdgeExplorer chExplorer2 = lg.createEdgeExplorer();
             miniPerf = new MiniPerfTest()
             {
                 @Override
                 public int doCalc( boolean warmup, int run )
                 {
                     int nodeId = rand.nextInt(maxNode);
-                    EdgeSkipIterator iter = chExplorer2.setBaseNode(nodeId);
+                    CHEdgeIterator iter = chExplorer2.setBaseNode(nodeId);
                     while (iter.next())
                     {
                         if (iter.isShortcut())

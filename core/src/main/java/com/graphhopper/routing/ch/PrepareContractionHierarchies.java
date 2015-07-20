@@ -51,11 +51,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private final PreparationWeighting prepareWeighting;
     private final FlagEncoder prepareFlagEncoder;
     private final TraversalMode traversalMode;
-    private EdgeSkipExplorer vehicleInExplorer;
-    private EdgeSkipExplorer vehicleOutExplorer;
-    private EdgeSkipExplorer vehicleAllExplorer;
-    private EdgeSkipExplorer vehicleAllTmpExplorer;
-    private EdgeSkipExplorer calcPrioAllExplorer;
+    private CHEdgeExplorer vehicleInExplorer;
+    private CHEdgeExplorer vehicleOutExplorer;
+    private CHEdgeExplorer vehicleAllExplorer;
+    private CHEdgeExplorer vehicleAllTmpExplorer;
+    private CHEdgeExplorer calcPrioAllExplorer;
     private final LevelEdgeFilter levelFilter;
     private int maxLevel;
     private final GraphHopperStorage ghStorage;
@@ -333,7 +333,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 // skipped nodes are already set to maxLevel
                 break;
 
-            EdgeSkipIterator iter = vehicleAllExplorer.setBaseNode(polledNode);
+            CHEdgeIterator iter = vehicleAllExplorer.setBaseNode(polledNode);
             while (iter.next())
             {
                 int nn = iter.getAdjNode();
@@ -552,7 +552,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // number of already contracted neighbors of v
         int contractedNeighbors = 0;
         int degree = 0;
-        EdgeSkipIterator iter = calcPrioAllExplorer.setBaseNode(v);
+        CHEdgeIterator iter = calcPrioAllExplorer.setBaseNode(v);
         while (iter.next())
         {
             degree++;
@@ -658,7 +658,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         {
             boolean updatedInGraph = false;
             // check if we need to update some existing shortcut in the graph
-            EdgeSkipIterator iter = vehicleOutExplorer.setBaseNode(sc.from);
+            CHEdgeIterator iter = vehicleOutExplorer.setBaseNode(sc.from);
             while (iter.next())
             {
                 if (iter.isShortcut() && iter.getAdjNode() == sc.to
@@ -691,7 +691,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             if (!updatedInGraph)
             {
-                EdgeSkipIterState edgeState = prepareGraph.shortcut(sc.from, sc.to);
+                CHEdgeIteratorState edgeState = prepareGraph.shortcut(sc.from, sc.to);
                 // note: flags overwrite weight => call first
                 edgeState.setFlags(sc.flags);
                 edgeState.setWeight(sc.weight);

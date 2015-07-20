@@ -23,7 +23,7 @@ import com.graphhopper.util.*;
  * Note, this class is not suited for public use and can change with minor releases unexpectedly or
  * even gets removed.
  */
-public class VirtualEdgeIteratorState implements EdgeIteratorState, EdgeSkipIterState
+public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIteratorState
 {
     private final PointList pointList;
     private final int edgeId;
@@ -226,7 +226,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, EdgeSkipIter
     }
 
     @Override
-    public EdgeSkipIterState setWeight( double weight )
+    public CHEdgeIteratorState setWeight( double weight )
     {
         throw new UnsupportedOperationException("Not supported.");
     }

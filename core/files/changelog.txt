@@ -1,4 +1,5 @@
 0.5
+    Several names have changed see #467
     GraphHopper.optimize removed use postProcessing instead
     method GraphHopper.getGraph() changed to getGraphHopperStorage()
     the interface GraphStorage does no longer extend from the Graph interface. Use GraphHopperStorage (which implements the Graph interface via the base graph) or only Graph instead

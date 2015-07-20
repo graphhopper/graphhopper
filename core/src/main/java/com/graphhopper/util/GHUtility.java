@@ -20,7 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.AllEdgesSkipIterator;
+import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
@@ -135,9 +135,9 @@ public class GHUtility
         while (iter.next())
         {
             String sc = "";
-            if (iter instanceof AllEdgesSkipIterator)
+            if (iter instanceof AllCHEdgesIterator)
             {
-                AllEdgesSkipIterator aeSkip = (AllEdgesSkipIterator) iter;
+                AllCHEdgesIterator aeSkip = (AllCHEdgesIterator) iter;
                 sc = aeSkip.isShortcut() ? "sc" : "  ";
             }
             String fwdStr = encoder.isForward(iter.getFlags()) ? "fwd" : "   ";
@@ -167,8 +167,8 @@ public class GHUtility
 
     public static String getNodeInfo( CHGraph g, int nodeId, EdgeFilter filter )
     {
-        EdgeSkipExplorer ex = g.createEdgeExplorer(filter);
-        EdgeSkipIterator iter = ex.setBaseNode(nodeId);
+        CHEdgeExplorer ex = g.createEdgeExplorer(filter);
+        CHEdgeIterator iter = ex.setBaseNode(nodeId);
         NodeAccess na = g.getNodeAccess();
         String str = nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n";
         while (iter.next())
@@ -336,7 +336,7 @@ public class GHUtility
         return adjNode;
     }
 
-    public static class DisabledEdgeIterator implements EdgeSkipIterator
+    public static class DisabledEdgeIterator implements CHEdgeIterator
     {
         @Override
         public EdgeIterator detach( boolean reverse )
@@ -471,7 +471,7 @@ public class GHUtility
         }
 
         @Override
-        public EdgeSkipIterState setWeight( double weight )
+        public CHEdgeIteratorState setWeight( double weight )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }

@@ -21,7 +21,7 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.EdgeSkipIterState;
+import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.Helper;
 
 import static org.junit.Assert.*;
@@ -102,10 +102,10 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
 
         ghStorage.freeze();
         // simulate preparation
-        EdgeSkipIterState iter2_1 = g2.shortcut(0, 5);
+        CHEdgeIteratorState iter2_1 = g2.shortcut(0, 5);
         iter2_1.setDistance(2.8).setFlags(encoder.setProperties(10, true, false));
         iter2_1.setSkippedEdges(iter1_1.getEdge(), iter1_2.getEdge());
-        EdgeSkipIterState tmp = g2.shortcut(0, 7);
+        CHEdgeIteratorState tmp = g2.shortcut(0, 7);
         tmp.setDistance(4.2).setFlags(encoder.setProperties(10, true, false));
         tmp.setSkippedEdges(iter2_1.getEdge(), iter2_2.getEdge());
         g2.setLevel(1, 0);

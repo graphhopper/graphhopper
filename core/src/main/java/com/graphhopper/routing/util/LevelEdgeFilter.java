@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.EdgeSkipIterState;
+import com.graphhopper.util.CHEdgeIteratorState;
 
 /**
  * Only certain nodes are accepted and therefor the others are ignored.
@@ -47,7 +47,7 @@ public class LevelEdgeFilter implements EdgeFilter
             return true;
 
         // minor performance improvement: shortcuts in wrong direction are disconnected, so no need to exclude them
-        if (((EdgeSkipIterState) edgeIterState).isShortcut())
+        if (((CHEdgeIteratorState) edgeIterState).isShortcut())
             return true;
 
         return graph.getLevel(base) <= graph.getLevel(adj);

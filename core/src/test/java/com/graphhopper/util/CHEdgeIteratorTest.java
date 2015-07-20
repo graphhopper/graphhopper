@@ -32,7 +32,7 @@ import org.junit.Test;
 /**
  * @author Peter Karich
  */
-public class EdgeSkipIteratorTest
+public class CHEdgeIteratorTest
 {
     @Test
     public void testUpdateFlags()

@@ -20,13 +20,11 @@ package com.graphhopper.util;
 import com.graphhopper.storage.CHGraph;
 
 /**
- * The edge explorer for CHGraph
+ * Support for CH edges
  * <p/>
  * @author Peter Karich
  * @see CHGraph
  */
-public interface EdgeSkipExplorer extends EdgeExplorer
+public interface CHEdgeIterator extends EdgeIterator, CHEdgeIteratorState
 {
-    @Override
-    EdgeSkipIterator setBaseNode( int baseNode );
 }

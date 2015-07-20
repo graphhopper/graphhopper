@@ -21,7 +21,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.EdgeSkipIterState;
+import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.Helper;
 import gnu.trove.list.TIntList;
 import gnu.trove.set.TIntSet;
@@ -90,13 +90,13 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest
         ghStorage.freeze();
         FlagEncoder car = encodingManager.getEncoder("CAR");
         long flags = car.setProperties(60, true, true);
-        EdgeSkipIterState iter5 = lg.shortcut(0, 2);
+        CHEdgeIteratorState iter5 = lg.shortcut(0, 2);
         iter5.setDistance(20).setFlags(flags);
         iter5.setSkippedEdges(iter1.getEdge(), iter2.getEdge());
-        EdgeSkipIterState iter6 = lg.shortcut(2, 4);
+        CHEdgeIteratorState iter6 = lg.shortcut(2, 4);
         iter6.setDistance(28).setFlags(flags);
         iter6.setSkippedEdges(iter3.getEdge(), iter4.getEdge());
-        EdgeSkipIterState tmp = lg.shortcut(0, 4);
+        CHEdgeIteratorState tmp = lg.shortcut(0, 4);
         tmp.setDistance(40).setFlags(flags);
         tmp.setSkippedEdges(iter5.getEdge(), iter6.getEdge());
 
