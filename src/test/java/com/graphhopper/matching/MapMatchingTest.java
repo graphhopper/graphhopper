@@ -51,8 +51,8 @@ import org.junit.Test;
  */
 public class MapMatchingTest {
 
-    // enable turn cost in encoder:
-    private static final CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 3);
+    // enable turn restrictions in encoder:
+    private static final CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
     private static final TestGraphHopper hopper = new TestGraphHopper();
 
     @BeforeClass
