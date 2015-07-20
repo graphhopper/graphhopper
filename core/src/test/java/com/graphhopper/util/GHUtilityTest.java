@@ -109,7 +109,7 @@ public class GHUtilityTest
         CHGraph lg = new GraphBuilder(encodingManager).chGraphCreate();
         GHUtility.copyTo(g, lg);
 
-        assertEquals(g.getAllEdges().getCount(), lg.getAllEdges().getCount());
+        assertEquals(g.getAllEdges().getMaxId(), lg.getAllEdges().getMaxId());
     }
 
     @Test

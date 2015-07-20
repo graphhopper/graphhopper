@@ -229,7 +229,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     void contractNodes()
     {
-        meanDegree = prepareGraph.getAllEdges().getCount() / prepareGraph.getNodes();
+        meanDegree = prepareGraph.getAllEdges().getMaxId() / prepareGraph.getNodes();
         int level = 1;
         counter = 0;
         int initSize = sortedNodes.getSize();
@@ -716,7 +716,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     PrepareContractionHierarchies initFromGraph()
     {
         ghStorage.freeze();
-        maxEdgesCount = ghStorage.getAllEdges().getCount();
+        maxEdgesCount = ghStorage.getAllEdges().getMaxId();
         vehicleInExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
         vehicleOutExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
         final EdgeFilter allFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, true);
@@ -791,7 +791,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             // ignore setting as every normal edge has original edge count of 1            
             if (value != 1)
                 throw new IllegalStateException("Trying to set original edge count for normal edge to a value = " + value
-                        + ", edge:" + (edgeId + maxEdgesCount) + ", max:" + maxEdgesCount + ", graph.max:" + ghStorage.getAllEdges().getCount());
+                        + ", edge:" + (edgeId + maxEdgesCount) + ", max:" + maxEdgesCount + ", graph.max:" + ghStorage.getAllEdges().getMaxId());
             return;
         }
 

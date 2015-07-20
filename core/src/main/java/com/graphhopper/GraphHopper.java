@@ -1085,7 +1085,7 @@ public class GraphHopper implements GraphHopperAPI
         preparation.doWork();
         int currNodeCount = ghStorage.getNodes();
         int remainingSubnetworks = preparation.findSubnetworks().size();
-        logger.info("edges: " + ghStorage.getAllEdges().getCount() + ", nodes " + currNodeCount
+        logger.info("edges: " + ghStorage.getAllEdges().getMaxId() + ", nodes " + currNodeCount
                 + ", there were " + preparation.getSubNetworks()
                 + " subnetworks. removed them => " + (prevNodeCount - currNodeCount)
                 + " less nodes. Remaining subnetworks:" + remainingSubnetworks);

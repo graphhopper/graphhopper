@@ -133,10 +133,10 @@ public class PrepareContractionHierarchiesTest
     {
         GraphHopperStorage g = createExampleGraph();
         CHGraph lg = g.getGraph(CHGraph.class);
-        int old = lg.getAllEdges().getCount();
+        int old = lg.getAllEdges().getMaxId();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, carEncoder, weighting, tMode);
         prepare.doWork();
-        assertEquals(old + 1, lg.getAllEdges().getCount());
+        assertEquals(old + 1, lg.getAllEdges().getMaxId());
     }
 
     @Test
@@ -145,11 +145,11 @@ public class PrepareContractionHierarchiesTest
         GraphHopperStorage g = createGHStorage();
         CHGraph lg = g.getGraph(CHGraph.class);
         initShortcutsGraph(lg);
-        int oldCount = g.getAllEdges().getCount();
+        int oldCount = g.getAllEdges().getMaxId();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, carEncoder, weighting, tMode);
         prepare.doWork();
-        assertEquals(oldCount, g.getAllEdges().getCount());
-        assertEquals(oldCount + 7, lg.getAllEdges().getCount());
+        assertEquals(oldCount, g.getAllEdges().getMaxId());
+        assertEquals(oldCount + 7, lg.getAllEdges().getMaxId());
     }
 
     @Test
@@ -187,11 +187,11 @@ public class PrepareContractionHierarchiesTest
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, carEncoder, weighting, tMode);
         prepare.doWork();
         // PrepareTowerNodesShortcutsTest.printEdges(g);
-        assertEquals(oldCount, g.getAllEdges().getCount());
+        assertEquals(oldCount, g.getAllEdges().getMaxId());
         assertEquals(oldCount, GHUtility.count(g.getAllEdges()));
 
         assertEquals(9, prepare.getShortcuts());
-        assertEquals(oldCount + 9, lg.getAllEdges().getCount());
+        assertEquals(oldCount + 9, lg.getAllEdges().getMaxId());
         assertEquals(oldCount + 9, GHUtility.count(lg.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, carEncoder, weighting, tMode));
         Path p = algo.calcPath(0, 10);
@@ -310,11 +310,11 @@ public class PrepareContractionHierarchiesTest
         GraphHopperStorage g = createGHStorage();
         CHGraph lg = g.getGraph(CHGraph.class);
         initRoundaboutGraph(g);
-        int oldCount = g.getAllEdges().getCount();
+        int oldCount = g.getAllEdges().getMaxId();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, carEncoder, weighting, tMode);
         prepare.doWork();
-        assertEquals(oldCount, g.getAllEdges().getCount());
-        assertEquals(oldCount + 23, lg.getAllEdges().getCount());
+        assertEquals(oldCount, g.getAllEdges().getMaxId());
+        assertEquals(oldCount + 23, lg.getAllEdges().getMaxId());
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, carEncoder, weighting, tMode));
         Path p = algo.calcPath(4, 7);
         assertEquals(Helper.createTList(4, 5, 6, 7), p.calcNodes());

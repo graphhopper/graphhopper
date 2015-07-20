@@ -70,7 +70,7 @@ public class QueryGraph implements Graph
         mainGraph = graph;
         mainNodeAccess = graph.getNodeAccess();
         mainNodes = graph.getNodes();
-        mainEdges = graph.getAllEdges().getCount();
+        mainEdges = graph.getAllEdges().getMaxId();
 
         if (mainGraph.getExtension() instanceof TurnCostExtension)
             wrappedExtension = new QueryGraphTurnExt(this);

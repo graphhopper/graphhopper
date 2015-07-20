@@ -79,8 +79,8 @@ public class Measurement
             super.prepare();
             setLocationIndex(createLocationIndex(new RAMDirectory()));
             put("prepare.time", sw.stop().getTime());
-            int edges = getGraphHopperStorage().getAllEdges().getCount();
-            int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class).getAllEdges().getCount();
+            int edges = getGraphHopperStorage().getAllEdges().getMaxId();
+            int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class).getAllEdges().getMaxId();
             put("prepare.shortcuts", edgesAndShortcuts - edges);
         }
     }
@@ -176,12 +176,12 @@ public class Measurement
     {
         // graph size (edge, node and storage size)
         put("graph.nodes", g.getNodes());
-        put("graph.edges", g.getAllEdges().getCount());
+        put("graph.edges", g.getAllEdges().getMaxId());
         put("graph.sizeInMB", g.getCapacity() / Helper.MB);
         put("graph.encoder", vehicleStr);
 
         AllEdgesIterator iter = g.getAllEdges();
-        final int maxEdgesId = g.getAllEdges().getCount();
+        final int maxEdgesId = g.getAllEdges().getMaxId();
         final GHBitSet allowedEdges = new GHBitSetImpl(maxEdgesId);
         fillAllowedEdges(iter, allowedEdges);
         put("graph.valid_edges", allowedEdges.getCardinality());
@@ -278,7 +278,7 @@ public class Measurement
         }.setIterations(count).start();
         print("unit_tests" + description + ".all_edge_state_next", miniPerf);
 
-        final int maxEdgesId = graph.getAllEdges().getCount();
+        final int maxEdgesId = graph.getAllEdges().getMaxId();
         miniPerf = new MiniPerfTest()
         {
             @Override

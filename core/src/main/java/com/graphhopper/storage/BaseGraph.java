@@ -1268,7 +1268,7 @@ class BaseGraph implements Graph
         }
 
         @Override
-        public int getCount()
+        public int getMaxId()
         {
             return baseGraph.edgeCount;
         }

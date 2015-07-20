@@ -130,7 +130,7 @@ public class GHUtility
 
     public static void printEdgeInfo( final Graph g, FlagEncoder encoder )
     {
-        System.out.println("-- Graph n:" + g.getNodes() + " e:" + g.getAllEdges().getCount() + " ---");
+        System.out.println("-- Graph n:" + g.getNodes() + " e:" + g.getAllEdges().getMaxId() + " ---");
         AllEdgesIterator iter = g.getAllEdges();
         while (iter.next())
         {

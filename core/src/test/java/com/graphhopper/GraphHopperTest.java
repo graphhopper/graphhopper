@@ -282,7 +282,7 @@ public class GraphHopperTest
         instance.importOrLoad();
 
         assertEquals(5, instance.getGraphHopperStorage().getNodes());
-        assertEquals(8, instance.getGraphHopperStorage().getAllEdges().getCount());
+        assertEquals(8, instance.getGraphHopperStorage().getAllEdges().getMaxId());
 
         // A to D
         GHResponse rsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setVehicle(EncodingManager.CAR));
@@ -459,7 +459,7 @@ public class GraphHopperTest
         instance.importOrLoad();
 
         assertEquals(2, instance.getGraphHopperStorage().getNodes());
-        assertEquals(2, instance.getGraphHopperStorage().getAllEdges().getCount());
+        assertEquals(2, instance.getGraphHopperStorage().getAllEdges().getMaxId());
 
         // A to E only for foot
         GHResponse res = instance.route(new GHRequest(11.1, 50, 11.2, 52).setVehicle(EncodingManager.FOOT));
