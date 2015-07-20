@@ -85,7 +85,7 @@ public class MapMatchingTest {
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
 
         // make sure no virtual edges are returned
-        int edgeCount = graph.getAllEdges().getCount();
+        int edgeCount = graph.getAllEdges().getMaxId();
         for (EdgeMatch em : mr.getEdgeMatches()) {
             assertTrue("result contains virtual edges:" + em.getEdgeState().toString(), em.getEdgeState().getEdge() < edgeCount);
         }
