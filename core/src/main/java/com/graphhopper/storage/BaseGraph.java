@@ -450,8 +450,8 @@ class BaseGraph implements Graph
             throw new IllegalStateException("Cannot load nodes. corrupt file or directory? " + dir);
 
         if (!dim.equalsIgnoreCase("" + nodeAccess.getDimension()))
-            throw new IllegalStateException("Configured dimension (" + dim + ") is not equal "
-                    + "to dimension of loaded graph (" + nodeAccess.getDimension() + ")");
+            throw new IllegalStateException("Configured dimension (" + nodeAccess.getDimension() + ") is not equal "
+                    + "to dimension of loaded graph (" + dim + ")");
 
         if (!edges.loadExisting())
             throw new IllegalStateException("Cannot load edges. corrupt file or directory? " + dir);
