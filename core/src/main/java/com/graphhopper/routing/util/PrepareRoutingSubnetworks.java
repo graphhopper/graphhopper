@@ -234,7 +234,7 @@ public class PrepareRoutingSubnetworks
             int adjNode = iter.getAdjNode();
             str += adjNode + " (" + ghStorage.getNodeAccess().getLat(adjNode) + "," + ghStorage.getNodeAccess().getLon(adjNode) + "), ";
             str += "speed  (fwd:" + singleEncoder.getSpeed(iter.getFlags()) + ", rev:" + singleEncoder.getReverseSpeed(iter.getFlags()) + "), ";
-            str += "access (fwd:" + singleEncoder.isForward(iter.getFlags()) + ", rev:" + singleEncoder.isBackward(iter.getFlags()) + "), ";
+            str += "access (fwd:" + iter.isForward(singleEncoder) + ", rev:" + iter.isBackward(singleEncoder) + "), ";
             str += "distance:" + iter.getDistance();
             str += ";\n ";
         }

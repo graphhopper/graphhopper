@@ -544,7 +544,7 @@ public abstract class AbstractRoutingAlgorithmTester
         GraphHopperStorage ghStorage = createTestStorage();
         Graph graph = getGraph(ghStorage);
         // identical tower nodes
-        Path p = calcPathViaQuery_(ghStorage, 0.001, 0.000, 0.001, 0.000);
+        Path p = calcPathViaQuery(ghStorage, 0.001, 0.000, 0.001, 0.000);
         assertTrue(p.isFound());
         assertEquals(Helper.createTList(0), p.calcNodes());
         // assertEquals(1, p.calcPoints().size());
@@ -558,7 +558,7 @@ public abstract class AbstractRoutingAlgorithmTester
         assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
 
         // very close
-        p = calcPathViaQuery_(ghStorage, 0.00092, 0, 0.00091, 0);
+        p = calcPathViaQuery(ghStorage, 0.00092, 0, 0.00091, 0);
         assertEquals(Helper.createTList(8, 9), p.calcNodes());
         assertEquals(p.toString(), 1.11, p.getDistance(), .1);
     }
@@ -570,12 +570,12 @@ public abstract class AbstractRoutingAlgorithmTester
         initBiGraph(graph);
 
         // 0-7 to 4-3        
-        Path p = calcPathViaQuery_(graph, 0.0009, 0, 0.001, 0.001105);
+        Path p = calcPathViaQuery(graph, 0.0009, 0, 0.001, 0.001105);
         assertEquals(p.toString(), Helper.createTList(10, 7, 6, 8, 3, 9), p.calcNodes());
         assertEquals(p.toString(), 324.11, p.getDistance(), 0.01);
 
         // 0-1 to 2-3
-        p = calcPathViaQuery_(graph, 0.001, 0.0001, 0.010, 0.0011);
+        p = calcPathViaQuery(graph, 0.001, 0.0001, 0.010, 0.0011);
         assertEquals(p.toString(), Helper.createTList(0, 7, 6, 8, 3, 9), p.calcNodes());
         assertEquals(p.toString(), 1335.35, p.getDistance(), 0.01);
     }
@@ -609,17 +609,17 @@ public abstract class AbstractRoutingAlgorithmTester
         updateDistancesFor(graph, 3, 0, 0.0001);
 
         // 0-1 to 3-4
-        Path p = calcPathViaQuery_(graph, 0.00010, 0.00001, 0, 0.00009);
+        Path p = calcPathViaQuery(graph, 0.00010, 0.00001, 0, 0.00009);
         assertEquals(Helper.createTList(6, 1, 2, 3, 5), p.calcNodes());
         assertEquals(p.toString(), 26.81, p.getDistance(), .1);
 
         // overlapping edges: 2-3 and 3-2
-        p = calcPathViaQuery_(graph, 0.000049, 0.00014, 0.00001, 0.0001);
+        p = calcPathViaQuery(graph, 0.000049, 0.00014, 0.00001, 0.0001);
         assertEquals(Helper.createTList(5, 6), p.calcNodes());
         assertEquals(p.toString(), 6.2, p.getDistance(), .1);
 
         // 'from' and 'to' edge share one node '2': 1-2 to 3-2
-        p = calcPathViaQuery_(graph, 0.00009, 0.00011, 0.00001, 0.00011);
+        p = calcPathViaQuery(graph, 0.00009, 0.00011, 0.00001, 0.00011);
         assertEquals(p.toString(), Helper.createTList(6, 2, 5), p.calcNodes());
         assertEquals(p.toString(), 12.57, p.getDistance(), .1);
     }
@@ -629,18 +629,17 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         GraphHopperStorage graph = createGHStorage(false);
         initDirectedAndDiffSpeed(graph, carEncoder);
-        Path p = calcPathViaQuery_("fastest", graph, 0.002, 0.0005, 0.0017, 0.0031);
+        Path p = AbstractRoutingAlgorithmTester.this.calcPathViaQuery("fastest", graph, 0.002, 0.0005, 0.0017, 0.0031);
         assertEquals(Helper.createTList(9, 1, 5, 3, 8), p.calcNodes());
         assertEquals(602.98, p.getDistance(), 1e-1);
     }
 
-    // Problem: for contraction hierarchy we cannot easily select egdes by nodes as some edges are skipped
-    Path calcPathViaQuery_( GraphHopperStorage ghStorage, double fromLat, double fromLon, double toLat, double toLon )
+    Path calcPathViaQuery( GraphHopperStorage ghStorage, double fromLat, double fromLon, double toLat, double toLon )
     {
-        return calcPathViaQuery_("shortest", ghStorage, fromLat, fromLon, toLat, toLon);
+        return AbstractRoutingAlgorithmTester.this.calcPathViaQuery("shortest", ghStorage, fromLat, fromLon, toLat, toLon);
     }
 
-    Path calcPathViaQuery_( String weighting, GraphHopperStorage ghStorage, double fromLat, double fromLon, double toLat, double toLon )
+    Path calcPathViaQuery( String weighting, GraphHopperStorage ghStorage, double fromLat, double fromLon, double toLat, double toLon )
     {
         LocationIndex index = new LocationIndexTree(ghStorage, new RAMDirectory());
         index.prepareIndex();
@@ -653,7 +652,7 @@ public abstract class AbstractRoutingAlgorithmTester
         // correct order for CH: in factory do prepare and afterwards wrap in query graph
         AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(w).build();
         RoutingAlgorithmFactory factory = createFactory(ghStorage, opts);
-        QueryGraph qGraph = new QueryGraph(getGraph(ghStorage)).lookup(from, to);
+        QueryGraph qGraph = new QueryGraph(getGraph(ghStorage)).lookup(from, to);        
         return factory.createAlgo(qGraph, opts).
                 calcPath(from.getClosestNode(), to.getClosestNode());
     }

@@ -191,15 +191,15 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
         sc1.setFlags(flags);
         sc1.setWeight(100.123);
         assertEquals(100.123, sc1.getWeight(), 1e-3);
-        assertTrue(carEncoder.isForward(sc1.getFlags()));
-        assertTrue(carEncoder.isBackward(sc1.getFlags()));
+        assertTrue(sc1.isForward(carEncoder));
+        assertTrue(sc1.isBackward(carEncoder));
 
         flags = carEncoder.setProperties(10, false, true);
         sc1.setFlags(flags);
         sc1.setWeight(100.123);
         assertEquals(100.123, sc1.getWeight(), 1e-3);
-        assertFalse(carEncoder.isForward(sc1.getFlags()));
-        assertTrue(carEncoder.isBackward(sc1.getFlags()));
+        assertFalse(sc1.isForward(carEncoder));
+        assertTrue(sc1.isBackward(carEncoder));
     }
 
     @Test

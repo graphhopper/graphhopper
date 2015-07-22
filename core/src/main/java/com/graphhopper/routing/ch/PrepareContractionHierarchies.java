@@ -661,8 +661,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             CHEdgeIterator iter = vehicleOutExplorer.setBaseNode(sc.from);
             while (iter.next())
             {
-                if (iter.isShortcut() && iter.getAdjNode() == sc.to
-                        && PrepareEncoder.canBeOverwritten(iter.getFlags(), sc.flags))
+                if (iter.isShortcut() && iter.getAdjNode() == sc.to && iter.canBeOverwritten(sc.flags))
                 {
                     if (sc.weight >= prepareWeighting.calcWeight(iter, false, EdgeIterator.NO_EDGE))
                         continue NEXT_SC;
