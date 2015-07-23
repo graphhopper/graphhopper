@@ -291,6 +291,9 @@ public class AlternativeRoute
             if (currFrom.weight + currTo.weight > weightLimit)
                 return true;
 
+            if (getVisitedNodes() > 2000000)
+                return true;
+
             // The following condition is necessary to avoid traversing the full graph if areas are disconnected
             // but it is only valid for none-CH e.g. for CH it can happen that finishedTo is true but the from-SPT could still reach 'to'
             if (!bestPath.isFound() && (finishedFrom || finishedTo))
