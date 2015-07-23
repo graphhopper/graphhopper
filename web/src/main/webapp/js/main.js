@@ -401,7 +401,7 @@ function initMap(selectLayer) {
 
     var defaultLayer = baseMaps[selectLayer];
     if (!defaultLayer)
-        defaultLayer = lyrk;
+        defaultLayer = omniscale;
 
     // default
     map = L.map('map', {
