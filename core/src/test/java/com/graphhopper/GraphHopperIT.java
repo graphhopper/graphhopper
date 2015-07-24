@@ -19,6 +19,7 @@ package com.graphhopper;
 
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
@@ -330,7 +331,12 @@ public class GraphHopperIT
                 importOrLoad();
 
         assertEquals(tmpVehicle, tmpHopper.getDefaultVehicle().toString());
-        assertFalse(RoutingAlgorithmFactorySimple.class.isAssignableFrom(tmpHopper.getAlgorithmFactory().getClass()));
+
+        assertEquals(2, tmpHopper.getAlgorithmFactories().size());
+        for (RoutingAlgorithmFactory raf : tmpHopper.getAlgorithmFactories())
+        {
+            assertFalse(RoutingAlgorithmFactorySimple.class.isAssignableFrom(raf.getClass()));
+        }
 
         GHResponse rsp = tmpHopper.route(new GHRequest(43.745084, 7.430513, 43.745247, 7.430347)
                 .setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));

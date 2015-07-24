@@ -21,6 +21,7 @@ import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.BaseGraph.AllEdgeIterator;
 import com.graphhopper.storage.BaseGraph.CommonEdgeIterator;
 import com.graphhopper.storage.BaseGraph.EdgeIterable;
@@ -53,12 +54,18 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
     final long scDirMask = PrepareEncoder.getScDirMask();
     private final BaseGraph baseGraph;
     private final EdgeAccess chEdgeAccess;
+    private final Weighting weighting;
 
-    CHGraphImpl( String name, Directory dir, final BaseGraph baseGraph )
+    CHGraphImpl( Weighting w, Directory dir, final BaseGraph baseGraph )
     {
+        if (w == null)
+            throw new IllegalStateException("Weighting for CHGraph cannot be null");
+        
+        this.weighting = w;
         this.baseGraph = baseGraph;
-        this.nodesCH = dir.find("nodes_ch");
-        this.shortcuts = dir.find("shortcuts");
+        String name = weightingToFileName(w);
+        this.nodesCH = dir.find("nodes_ch_" + name);
+        this.shortcuts = dir.find("shortcuts_" + name);
         this.chEdgeAccess = new EdgeAccess(shortcuts, baseGraph.bitUtil)
         {
             @Override
@@ -121,6 +128,19 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
                 return "ch edge access";
             }
         };
+    }
+
+    public final Weighting getWeighting()
+    {
+        return weighting;
+    }
+
+    /**
+     * Replaces all characters which are not numbers, characters or underscores with underscores
+     */
+    public String weightingToFileName( Weighting w )
+    {
+        return w.toString().toLowerCase().replaceAll("\\W+", "_");
     }
 
     @Override
@@ -466,12 +486,20 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         @Override
         public boolean isBackward( FlagEncoder encoder )
         {
+            if (isShortcut())
+                // TODO assert correct encoder
+                return (getDirectFlags() & PrepareEncoder.getScBwdDir()) != 0;
+
             return encoder.isBackward(getDirectFlags());
         }
 
         @Override
         public boolean isForward( FlagEncoder encoder )
         {
+            if (isShortcut())
+                // TODO assert correct encoder
+                return (getDirectFlags() & PrepareEncoder.getScFwdDir()) != 0;
+
             return encoder.isForward(getDirectFlags());
         }
 

@@ -50,7 +50,7 @@ public abstract class AbstractRoutingAlgorithmTester
         carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
         footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
         defaultOpts = AlgorithmOptions.start().flagEncoder(carEncoder).
-                weighting(new ShortestWeighting()).build();
+                weighting(new ShortestWeighting(carEncoder)).build();
     }
 
     protected Graph getGraph( GraphHopperStorage ghStorage )
@@ -190,7 +190,7 @@ public abstract class AbstractRoutingAlgorithmTester
         GraphHopperStorage ghStorage = createGHStorage(false);
         initFootVsCar(ghStorage);
         Path p1 = createAlgo(ghStorage, AlgorithmOptions.start().flagEncoder(footEncoder).
-                weighting(new ShortestWeighting()).build()).
+                weighting(new ShortestWeighting(footEncoder)).build()).
                 calcPath(0, 7);
         assertEquals(p1.toString(), 17000, p1.getDistance(), 1e-6);
         assertEquals(p1.toString(), 12240 * 1000, p1.getTime());
@@ -516,7 +516,7 @@ public abstract class AbstractRoutingAlgorithmTester
         updateDistancesFor(graph, 3, 0, 1);
         updateDistancesFor(graph, 4, 0, 2);
 
-        AlgorithmOptions opts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, carEncoder, new ShortestWeighting());
+        AlgorithmOptions opts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, carEncoder, new ShortestWeighting(carEncoder));
         RoutingAlgorithmFactory prepare = createFactory(graph, opts);
         Path p = prepare.createAlgo(getGraph(graph), opts).calcPath(4, 0);
         assertEquals(Helper.createTList(4, 1, 0), p.calcNodes());
@@ -645,7 +645,7 @@ public abstract class AbstractRoutingAlgorithmTester
         index.prepareIndex();
         QueryResult from = index.findClosest(fromLat, fromLon, EdgeFilter.ALL_EDGES);
         QueryResult to = index.findClosest(toLat, toLon, EdgeFilter.ALL_EDGES);
-        Weighting w = new ShortestWeighting();
+        Weighting w = new ShortestWeighting(carEncoder);
         if (weighting.equalsIgnoreCase("fastest"))
             w = new FastestWeighting(carEncoder);
 
@@ -743,6 +743,13 @@ public abstract class AbstractRoutingAlgorithmTester
         assertEquals(Helper.createTList(0, 4, 6, 10), p.calcNodes());
         Weighting fakeWeighting = new Weighting()
         {
+
+            @Override
+            public FlagEncoder getFlagEncoder()
+            {
+                return carEncoder;
+            }
+            
             @Override
             public double getMinWeight( double distance )
             {

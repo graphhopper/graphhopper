@@ -38,7 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Map.Entry;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -68,7 +68,7 @@ public class GraphHopper implements GraphHopperAPI
     private double defaultWeightLimit = Double.MAX_VALUE;
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
-    private RoutingAlgorithmFactory algoFactory;
+    private final Map<Weighting, RoutingAlgorithmFactory> algoFactories = new LinkedHashMap<Weighting, RoutingAlgorithmFactory>();
     // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
@@ -122,6 +122,9 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
+    /**
+     * @return the first flag encoder of the encoding manager
+     */
     FlagEncoder getDefaultVehicle()
     {
         if (encodingManager == null)
@@ -286,7 +289,6 @@ public class GraphHopper implements GraphHopperAPI
      * <p/>
      *
      * @param weighting can be "fastest", "shortest" or your own weight-calculation type.
-     * @see #setCHEnable(boolean)
      */
     public GraphHopper setCHWeighting( String weighting )
     {
@@ -321,7 +323,6 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setCHEnable( boolean enable )
     {
         ensureNotLoaded();
-        algoFactory = null;
         chEnabled = enable;
         return this;
     }
@@ -559,8 +560,11 @@ public class GraphHopper implements GraphHopperAPI
         minNetworkSize = args.getInt("prepare.minNetworkSize", minNetworkSize);
         minOneWayNetworkSize = args.getInt("prepare.minOneWayNetworkSize", minOneWayNetworkSize);
 
-        // prepare CH
+        // TODO deprecate, remove need in Measurement
+        // prepare CH        
         doPrepare = args.getBool("prepare.doPrepare", doPrepare);
+
+        // TODO rename to chWeightings
         String tmpCHWeighting = args.get("prepare.chWeighting", "fastest");
         chEnabled = "fastest".equals(tmpCHWeighting) || "shortest".equals(tmpCHWeighting);
         if (chEnabled)
@@ -739,7 +743,13 @@ public class GraphHopper implements GraphHopperAPI
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
         GraphExtension ext = encodingManager.needsTurnCostsSupport()
                 ? new TurnCostExtension() : new GraphExtension.NoOpExtension();
-        ghStorage = new GraphHopperStorage(chEnabled, dir, encodingManager, hasElevation(), ext);
+        if (chEnabled)
+        {
+            initCHAlgoFactories();
+            ghStorage = new GraphHopperStorage(algoFactories.keySet(), dir, encodingManager, hasElevation(), ext);
+        } else
+            ghStorage = new GraphHopperStorage(Collections.<Weighting>emptyList(), dir, encodingManager, hasElevation(), ext);
+
         ghStorage.setSegmentSize(defaultSegmentSize);
 
         Lock lock = null;
@@ -768,17 +778,56 @@ public class GraphHopper implements GraphHopperAPI
         }
     }
 
-    public RoutingAlgorithmFactory getAlgorithmFactory()
+    public RoutingAlgorithmFactory getAlgorithmFactory( Weighting weighting )
     {
-        if (algoFactory == null)
-            this.algoFactory = new RoutingAlgorithmFactorySimple();
+        RoutingAlgorithmFactory raf = algoFactories.get(weighting);
+        if (raf == null)
+            putAlgorithmFactory(weighting, raf = new RoutingAlgorithmFactorySimple());
 
-        return algoFactory;
+        return raf;
     }
 
-    public void setAlgorithmFactory( RoutingAlgorithmFactory algoFactory )
+    public Collection<RoutingAlgorithmFactory> getAlgorithmFactories()
     {
-        this.algoFactory = algoFactory;
+        return algoFactories.values();
+    }
+
+    public void putAlgorithmFactory( Weighting weighting, RoutingAlgorithmFactory algoFactory )
+    {
+        this.algoFactories.put(weighting, algoFactory);
+    }
+
+    private void initCHAlgoFactories()
+    {
+        if (algoFactories.isEmpty())
+            for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders())
+            {
+                Weighting weighting = createWeighting(new WeightingMap(chWeightingStr), encoder);
+                algoFactories.put(weighting, null);
+            }
+    }
+
+    protected void createCHPreparations()
+    {
+        if (algoFactories.isEmpty())
+            throw new IllegalStateException("No algorithm factories found. Call load before?");
+        
+        Set<Weighting> set = new LinkedHashSet<Weighting>(algoFactories.keySet());
+        algoFactories.clear();
+        for (Weighting weighting : set)
+        {
+            PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
+                    new GHDirectory("", DAType.RAM_INT), ghStorage, ghStorage.getGraph(CHGraph.class, weighting),
+                    weighting.getFlagEncoder(), weighting, traversalMode);
+            tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
+                    setLazyUpdates(lazyUpdates).
+                    setNeighborUpdates(neighborUpdates).
+                    setLogMessages(logMessages);
+
+            RoutingAlgorithmFactory old = this.algoFactories.put(weighting, tmpPrepareCH);
+            if (old != null)
+                throw new IllegalStateException("Old RoutingAlgorithmFactory cannot be implicitely overwritten by CH preparation " + old);
+        }
     }
 
     /**
@@ -802,10 +851,7 @@ public class GraphHopper implements GraphHopperAPI
         initLocationIndex();
         if (chEnabled)
         {
-            if (algoFactory != null)
-                throw new IllegalStateException("Customizing of the routing algorithm factory is currently not supported");
-
-            algoFactory = createPrepare();
+            createCHPreparations();
         }
 
         if (!isPrepared())
@@ -815,21 +861,6 @@ public class GraphHopper implements GraphHopperAPI
     private boolean isPrepared()
     {
         return "true".equals(ghStorage.getProperties().get("prepare.done"));
-    }
-
-    protected RoutingAlgorithmFactory createPrepare()
-    {
-        FlagEncoder defaultVehicle = getDefaultVehicle();
-        Weighting weighting = createWeighting(new WeightingMap(chWeightingStr), defaultVehicle);
-        PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
-                new GHDirectory("", DAType.RAM_INT), ghStorage, ghStorage.getGraph(CHGraph.class),
-                defaultVehicle, weighting, traversalMode);
-        tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
-                setLazyUpdates(lazyUpdates).
-                setNeighborUpdates(neighborUpdates).
-                setLogMessages(logMessages);
-
-        return tmpPrepareCH;
     }
 
     /**
@@ -846,23 +877,35 @@ public class GraphHopper implements GraphHopperAPI
      */
     public Weighting createWeighting( WeightingMap weightingMap, FlagEncoder encoder )
     {
-        String weighting = weightingMap.getWeighting();
-        Weighting result;
+        String weighting = weightingMap.getWeighting().toLowerCase();
 
         if ("shortest".equalsIgnoreCase(weighting))
         {
-            result = new ShortestWeighting();
+            return new ShortestWeighting(encoder);
         } else if ("fastest".equalsIgnoreCase(weighting) || weighting.isEmpty())
         {
             if (encoder.supports(PriorityWeighting.class))
-                result = new PriorityWeighting(encoder, weightingMap);
+                return new PriorityWeighting(encoder, weightingMap);
             else
-                result = new FastestWeighting(encoder, weightingMap);
-        } else
-        {
-            throw new UnsupportedOperationException("weighting " + weighting + " not supported");
+                return new FastestWeighting(encoder, weightingMap);
         }
-        return result;
+
+        throw new UnsupportedOperationException("weighting " + weighting + " not supported");
+    }
+
+    public Weighting getWeightingForCH( WeightingMap weightingMap, FlagEncoder encoder )
+    {
+        String encoderStr = encoder.toString();
+        String weightingStr = weightingMap.getWeighting().toLowerCase();
+        for (Weighting w : algoFactories.keySet())
+        {
+            // TODO too loose matching?
+            String str = w.toString().toLowerCase();
+            if (str.contains(weightingStr) && str.contains(encoderStr))
+                return w;
+        }
+
+        throw new IllegalStateException("No weighting found for request " + weightingMap + ", encoder:" + encoder + ", " + algoFactories);
     }
 
     /**
@@ -956,27 +999,23 @@ public class GraphHopper implements GraphHopperAPI
 
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
 
+        Weighting weighting;
         Graph routingGraph = ghStorage;
-        RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory();
+
         if (chEnabled)
         {
-            if (!vehicle.equalsIgnoreCase(getDefaultVehicle().toString()))
-            {
-                // fall back to normal traversing
-                tmpAlgoFactory = new RoutingAlgorithmFactorySimple();
-            } else
-            {
-                routingGraph = ghStorage.getGraph(CHGraph.class);
-            }
-        }
+            weighting = getWeightingForCH(request.getHints(), encoder);
+            routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
+        } else
+            weighting = createWeighting(request.getHints(), encoder);
 
+        RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(weighting);
         QueryGraph queryGraph = new QueryGraph(routingGraph);
         queryGraph.lookup(qResults);
+        weighting = createTurnWeighting(weighting, queryGraph, encoder);
 
         List<Path> paths = new ArrayList<Path>(points.size() - 1);
         QueryResult fromQResult = qResults.get(0);
-        Weighting weighting = createWeighting(request.getHints(), encoder);
-        weighting = createTurnWeighting(weighting, queryGraph, encoder);
 
         double weightLimit = request.getHints().getDouble("defaultWeightLimit", defaultWeightLimit);
         String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
@@ -1063,13 +1102,21 @@ public class GraphHopper implements GraphHopperAPI
 
     protected void prepare()
     {
-        boolean tmpPrepare = doPrepare && getAlgorithmFactory() instanceof PrepareContractionHierarchies;
+        boolean tmpPrepare = doPrepare && chEnabled;
         if (tmpPrepare)
         {
             ensureWriteAccess();
-            logger.info("calling prepare.doWork for " + getDefaultVehicle() + " ... (" + Helper.getMemInfo() + ")");
             ghStorage.freeze();
-            ((PrepareContractionHierarchies) algoFactory).doWork();
+
+            int counter = 0;
+            for (Entry<Weighting, RoutingAlgorithmFactory> entry : algoFactories.entrySet())
+            {
+                logger.info((++counter) + "/" + algoFactories.entrySet().size() + " calling prepare.doWork for " + entry.getKey() + " ... (" + Helper.getMemInfo() + ")");
+                if (!(entry.getValue() instanceof PrepareContractionHierarchies))
+                    throw new IllegalStateException("RoutingAlgorithmFactory is not suited for CH preparation " + entry.getValue());
+
+                ((PrepareContractionHierarchies) entry.getValue()).doWork();
+            }
             ghStorage.getProperties().put("prepare.date", formatDateTime(new Date()));
         }
         ghStorage.getProperties().put("prepare.done", tmpPrepare);
@@ -1081,14 +1128,15 @@ public class GraphHopper implements GraphHopperAPI
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(ghStorage, encodingManager);
         preparation.setMinNetworkSize(minNetworkSize);
         preparation.setMinOneWayNetworkSize(minOneWayNetworkSize);
-        logger.info("start finding subnetworks, " + Helper.getMemInfo());
-        preparation.doWork();
-        int currNodeCount = ghStorage.getNodes();
-        int remainingSubnetworks = preparation.findSubnetworks().size();
-        logger.info("edges: " + ghStorage.getAllEdges().getMaxId() + ", nodes " + currNodeCount
-                + ", there were " + preparation.getSubNetworks()
-                + " subnetworks. removed them => " + (prevNodeCount - currNodeCount)
-                + " less nodes. Remaining subnetworks:" + remainingSubnetworks);
+        // TODO disabled for now
+//        logger.info("start finding subnetworks, " + Helper.getMemInfo());
+//        preparation.doWork();
+//        int currNodeCount = ghStorage.getNodes();
+//        int remainingSubnetworks = preparation.findSubnetworks().size();
+//        logger.info("edges: " + ghStorage.getAllEdges().getMaxId() + ", nodes " + currNodeCount
+//                + ", there were " + preparation.getSubNetworks()
+//                + " subnetworks. removed them => " + (prevNodeCount - currNodeCount)
+//                + " less nodes. Remaining subnetworks:" + remainingSubnetworks);
     }
 
     protected void flush()

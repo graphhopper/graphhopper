@@ -117,7 +117,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         g2.setLevel(7, 6);
         g2.setLevel(0, 7);
 
-        ShortestWeighting weighting = new ShortestWeighting();
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
         AlgorithmOptions opts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting);
         Path p = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
                 ghStorage, g2, encoder, weighting, TraversalMode.NODE_BASED).

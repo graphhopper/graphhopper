@@ -22,9 +22,12 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies.Shortcut;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
+import gnu.trove.list.TIntList;
+import java.util.Arrays;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -36,9 +39,9 @@ import org.junit.Test;
  */
 public class PrepareContractionHierarchiesTest
 {
-    private final EncodingManager encodingManager = new EncodingManager("CAR");
-    private final CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
-    private final Weighting weighting = new ShortestWeighting();
+    private final CarFlagEncoder carEncoder = new CarFlagEncoder();
+    private final EncodingManager encodingManager = new EncodingManager(carEncoder);
+    private final Weighting weighting = new ShortestWeighting(carEncoder);
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private Directory dir;
 
@@ -559,12 +562,12 @@ public class PrepareContractionHierarchiesTest
     }
 
     // prepare-routing.svg
-    public static CHGraph initShortcutsGraph( CHGraph g )
+    public static Graph initShortcutsGraph( Graph g )
     {
         g.edge(0, 1, 1, true);
         g.edge(0, 2, 1, true);
         g.edge(1, 2, 1, true);
-        g.edge(2, 3, 1, true);
+        g.edge(2, 3, 1.5, true);
         g.edge(1, 4, 1, true);
         g.edge(2, 9, 1, true);
         g.edge(9, 3, 1, true);
@@ -607,5 +610,61 @@ public class PrepareContractionHierarchiesTest
         long edgeId = (long) fromNode << 32 | endNode;
         assertEquals((BitUtil.BIG.toBitString(edgeId)),
                 BitUtil.BIG.toLastBitString(fromNode, 32) + BitUtil.BIG.toLastBitString(endNode, 32));
+    }
+
+    @Test
+    public void testMultiplePreparationsIdenticalView()
+    {
+        CarFlagEncoder tmpCarEncoder = new CarFlagEncoder();
+        BikeFlagEncoder tmpBikeEncoder = new BikeFlagEncoder();
+        EncodingManager tmpEncodingManager = new EncodingManager(tmpCarEncoder, tmpBikeEncoder);
+
+        Weighting carWeighting = new FastestWeighting(tmpCarEncoder);
+        Weighting bikeWeighting = new FastestWeighting(tmpBikeEncoder);
+
+        List<Weighting> chWeightings = Arrays.asList(carWeighting, bikeWeighting);
+        GraphHopperStorage ghStorage = new GraphHopperStorage(chWeightings, dir, tmpEncodingManager, false, new GraphExtension.NoOpExtension()).create(1000);
+        initShortcutsGraph(ghStorage);
+
+        ghStorage.freeze();
+
+        for (Weighting w : chWeightings)
+        {
+            checkPath(ghStorage, w, 7, 5, Helper.createTList(3, 9, 14, 16, 13, 12));            
+        }
+    }
+
+    @Test
+    public void testMultiplePreparationsDifferentView()
+    {
+        CarFlagEncoder tmpCarEncoder = new CarFlagEncoder();
+        BikeFlagEncoder tmpBikeEncoder = new BikeFlagEncoder();
+        EncodingManager tmpEncodingManager = new EncodingManager(tmpCarEncoder, tmpBikeEncoder);
+
+        Weighting carWeighting = new FastestWeighting(tmpCarEncoder);
+        Weighting bikeWeighting = new FastestWeighting(tmpBikeEncoder);
+
+        List<Weighting> chWeightings = Arrays.asList(carWeighting, bikeWeighting);
+        GraphHopperStorage ghStorage = new GraphHopperStorage(chWeightings, dir, tmpEncodingManager, false, new GraphExtension.NoOpExtension()).create(1000);
+        initShortcutsGraph(ghStorage);
+        EdgeIteratorState edge = GHUtility.getEdge(ghStorage, 9, 14);
+        edge.setFlags(tmpBikeEncoder.setAccess(edge.getFlags(), false, false));
+
+        ghStorage.freeze();
+
+        checkPath(ghStorage, carWeighting, 7, 5, Helper.createTList(3, 9, 14, 16, 13, 12));
+        checkPath(ghStorage, bikeWeighting, 9, 5.5, Helper.createTList(3, 2, 1, 4, 11, 12));
+    }
+
+    void checkPath( GraphHopperStorage ghStorage, Weighting w, int expShortcuts, double expDistance, TIntList expNodes )
+    {
+        CHGraph lg = ghStorage.getGraph(CHGraph.class, w);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, ghStorage, lg, w.getFlagEncoder(), w, tMode);
+        prepare.doWork();
+        assertEquals(w.toString(), expShortcuts, prepare.getShortcuts());
+        RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, w.getFlagEncoder(), w, tMode));
+        Path p = algo.calcPath(3, 12);
+        assertEquals(w.toString(), expDistance, p.getDistance(), 1e-5);
+        assertEquals(w.toString(), expNodes, p.calcNodes());
     }
 }

@@ -17,12 +17,14 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This class manages all storage related methods and delegates the calls to the associated graphs.
@@ -41,14 +43,23 @@ public final class GraphHopperStorage implements GraphStorage, Graph
     private final StorableProperties properties;
     private final BaseGraph baseGraph;
     // same flush order etc
-    private CHGraphImpl chGraph;
+    private final Collection<CHGraphImpl> chGraphs = new ArrayList<CHGraphImpl>(5);
 
     public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation )
     {
-        this(false, dir, encodingManager, withElevation, new GraphExtension.NoOpExtension());
+        this(Collections.<Weighting>emptyList(), dir, encodingManager, withElevation, new GraphExtension.NoOpExtension());
     }
 
-    public GraphHopperStorage( boolean enableCH, Directory dir, final EncodingManager encodingManager,
+    /**
+     * This is a simplicity constructor to avoid knowledge of the CH Weighting before, but can be
+     * used for one CH graph only.
+     */
+    public GraphHopperStorage( boolean chEnable, Directory dir, EncodingManager encodingManager, boolean withElevation, GraphExtension extendedStorage )
+    {
+        this(Collections.singleton((Weighting) new SingletonWeighting(encodingManager)), dir, encodingManager, withElevation, extendedStorage);
+    }
+
+    public GraphHopperStorage( Collection<Weighting> chWeightings, Directory dir, final EncodingManager encodingManager,
                                boolean withElevation, GraphExtension extendedStorage )
     {
         if (extendedStorage == null)
@@ -62,24 +73,27 @@ public final class GraphHopperStorage implements GraphStorage, Graph
             @Override
             public void initStorage()
             {
-                if (isCHPossible())
-                    chGraph.initStorage();
+                for (CHGraphImpl cg : chGraphs)
+                {
+                    cg.initStorage();
+                }
             }
 
             @Override
             public void freeze()
             {
-                if (isCHPossible())
-                    chGraph._freeze();
+                for (CHGraphImpl cg : chGraphs)
+                {
+                    cg._freeze();
+                }
             }
         };
 
         this.baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, extendedStorage);
 
-        if (enableCH)
+        for (Weighting w : chWeightings)
         {
-            // name level graph according to first flag encoder and fastest?
-            chGraph = new CHGraphImpl("ch", dir, this.baseGraph);
+            chGraphs.add(new CHGraphImpl(w, dir, this.baseGraph));
         }
     }
 
@@ -87,22 +101,60 @@ public final class GraphHopperStorage implements GraphStorage, Graph
      * This method returns the routing graph for the specified weighting, could be potentially
      * filled with shortcuts.
      */
+    public <T extends Graph> T getGraph( Class<T> clazz, Weighting w )
+    {
+        if (clazz.equals(Graph.class))
+            return (T) baseGraph;
+
+        if (chGraphs.isEmpty())
+            throw new IllegalStateException("Cannot find graph implementation for " + clazz);
+
+        if (w == null)
+            throw new IllegalStateException("Cannot find CH graph with empty weighting");
+
+        if (w instanceof SingletonWeighting)
+            throw new IllegalStateException("Use the getGraph method without the weighting parameter if you used the simple constructor of GraphHopperStorage");
+
+        List<Weighting> existing = new ArrayList<Weighting>();
+        for (CHGraphImpl cg : chGraphs)
+        {
+            if (cg.getWeighting() == w)
+                return (T) cg;
+
+            existing.add(cg.getWeighting());
+        }
+
+        throw new IllegalStateException("Cannot find CH graph for specified weighting: " + w + ", existing:" + existing);
+    }
+
     public <T extends Graph> T getGraph( Class<T> clazz )
     {
         if (clazz.equals(Graph.class))
             return (T) baseGraph;
 
-        // currently only one ch graph        
-        if (chGraph == null)
-            throw new IllegalStateException("Cannot find implementation for " + clazz);
+        if (chGraphs.isEmpty())
+            throw new IllegalStateException("Cannot find graph implementation for " + clazz);
 
-        // TODO later: this method will also contain 'String weighting' to return the correct chGraph 
-        return (T) chGraph;
+        CHGraphImpl cg = chGraphs.iterator().next();
+        if (!(cg.getWeighting() instanceof SingletonWeighting))
+            throw new IllegalStateException("Use the getGraph method with the weighting parameter if you didn't used the simple constructor of GraphHopperStorage");
+
+        return (T) cg;
     }
 
     public boolean isCHPossible()
     {
-        return chGraph != null;
+        return !chGraphs.isEmpty();
+    }
+
+    public Collection<Weighting> getCHWeightings()
+    {
+        List<Weighting> list = new ArrayList<Weighting>();
+        for (CHGraphImpl cg : chGraphs)
+        {
+            list.add(cg.getWeighting());
+        }
+        return list;
     }
 
     /**
@@ -118,8 +170,11 @@ public final class GraphHopperStorage implements GraphStorage, Graph
     public void setSegmentSize( int bytes )
     {
         baseGraph.setSegmentSize(bytes);
-        if (isCHPossible())
-            chGraph.setSegmentSize(bytes);
+
+        for (CHGraphImpl cg : chGraphs)
+        {
+            cg.setSegmentSize(bytes);
+        }
     }
 
     /**
@@ -144,8 +199,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph
 
         baseGraph.create(initSize);
 
-        if (isCHPossible())
-            chGraph.create(byteCount);
+        for (CHGraphImpl cg : chGraphs)
+        {
+            cg.create(byteCount);
+        }
 
         return this;
     }
@@ -230,10 +287,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph
             String dim = properties.get("graph.dimension");
             baseGraph.loadExisting(dim);
 
-            if (isCHPossible())
+            for (CHGraphImpl cg : chGraphs)
             {
-                if (!chGraph.loadExisting())
-                    throw new IllegalStateException("Cannot load ch graph " + chGraph.toString());
+                if (!cg.loadExisting())
+                    throw new IllegalStateException("Cannot load ch graph " + cg.toString());
             }
 
             return true;
@@ -244,10 +301,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph
     @Override
     public void flush()
     {
-        if (isCHPossible())
+        for (CHGraphImpl cg : chGraphs)
         {
-            chGraph.setEdgesHeader();
-            chGraph.flush();
+            cg.setEdgesHeader();
+            cg.flush();
         }
 
         baseGraph.flush();
@@ -260,8 +317,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph
         properties.close();
         baseGraph.close();
 
-        if (isCHPossible())
-            chGraph.close();
+        for (CHGraphImpl cg : chGraphs)
+        {
+            cg.close();
+        }
     }
 
     @Override
@@ -275,8 +334,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph
     {
         long cnt = baseGraph.getCapacity() + properties.getCapacity();
 
-        if (isCHPossible())
-            cnt += chGraph.getCapacity();
+        for (CHGraphImpl cg : chGraphs)
+        {
+            cnt += cg.getCapacity();
+        }
         return cnt;
     }
 
@@ -299,8 +360,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph
     public String toDetailsString()
     {
         String str = baseGraph.toDetailsString();
-        if (isCHPossible())
-            str += ", " + chGraph.toDetailsString();
+        for (CHGraphImpl cg : chGraphs)
+        {
+            str += ", " + cg.toDetailsString();
+        }
 
         return str;
     }
@@ -390,5 +453,19 @@ public final class GraphHopperStorage implements GraphStorage, Graph
     public final GraphExtension getExtension()
     {
         return baseGraph.getExtension();
+    }
+
+    private static class SingletonWeighting extends FastestWeighting
+    {
+        public SingletonWeighting( EncodingManager encodingManager )
+        {
+            super(encodingManager.fetchEdgeEncoders().get(0));
+        }
+
+        @Override
+        public String toString()
+        {
+            return "SINGLETON|" + super.toString();
+        }
     }
 }

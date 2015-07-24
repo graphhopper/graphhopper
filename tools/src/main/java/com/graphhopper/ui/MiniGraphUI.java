@@ -78,9 +78,9 @@ public class MiniGraphUI
     {
         this.graph = hopper.getGraphHopperStorage();
         this.na = graph.getNodeAccess();
-        algoFactory = hopper.getAlgorithmFactory();
         encoder = hopper.getEncodingManager().getEncoder("car");
         weighting = hopper.createWeighting(new WeightingMap("fastest"), encoder);
+        algoFactory = hopper.getAlgorithmFactory(weighting);
         algoOpts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting);
 
         logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algoOpts:" + algoOpts);

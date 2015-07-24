@@ -22,8 +22,7 @@ import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.CmdArgs;
@@ -743,15 +742,18 @@ public class GraphHopperTest
     @Test
     public void testCustomFactoryForNoneCH()
     {
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        EncodingManager em = new EncodingManager(carEncoder);
+        Weighting weighting = new FastestWeighting(carEncoder);
         GraphHopper closableInstance = new GraphHopper().setStoreOnFlush(true).
                 setCHEnable(false).
-                setEncodingManager(new EncodingManager("CAR")).
+                setEncodingManager(em).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         RoutingAlgorithmFactory af = new RoutingAlgorithmFactorySimple();
-        closableInstance.setAlgorithmFactory(af);
+        closableInstance.putAlgorithmFactory(weighting, af);
         closableInstance.importOrLoad();
 
-        assertTrue(af == closableInstance.getAlgorithmFactory());
+        assertTrue(af == closableInstance.getAlgorithmFactory(weighting));
     }
 }

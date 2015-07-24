@@ -591,7 +591,7 @@ public class RoutingAlgorithmIT
         String bigFile = "10000EWD.txt.gz";
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile))).read();
         Collection<AlgoHelperEntry> prepares = createAlgos(graph, null, encoder, false, TraversalMode.NODE_BASED,
-                new ShortestWeighting(), eManager);
+                new ShortestWeighting(encoder), eManager);
         for (AlgoHelperEntry entry : prepares)
         {
             StopWatch sw = new StopWatch();
@@ -644,7 +644,7 @@ public class RoutingAlgorithmIT
         // testing if algorithms are independent. should be. so test only two algorithms. 
         // also the preparing is too costly to be called for every thread
         int algosLength = 2;
-        final Weighting weighting = new ShortestWeighting();
+        final Weighting weighting = new ShortestWeighting(encodingManager.getEncoder("CAR"));
         final EdgeFilter filter = new DefaultEdgeFilter(carEncoder);
         for (int no = 0; no < MAX; no++)
         {

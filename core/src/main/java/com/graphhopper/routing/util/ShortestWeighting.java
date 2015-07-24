@@ -27,6 +27,19 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public class ShortestWeighting implements Weighting
 {
+    private final FlagEncoder flagEncoder;
+
+    public ShortestWeighting( FlagEncoder flagEncoder )
+    {
+        this.flagEncoder = flagEncoder;
+    }
+
+    @Override
+    public FlagEncoder getFlagEncoder()
+    {
+        return flagEncoder;
+    }
+
     @Override
     public double getMinWeight( double currDistToGoal )
     {
@@ -42,6 +55,6 @@ public class ShortestWeighting implements Weighting
     @Override
     public String toString()
     {
-        return "SHORTEST";
+        return "SHORTEST|" + flagEncoder;
     }
 }

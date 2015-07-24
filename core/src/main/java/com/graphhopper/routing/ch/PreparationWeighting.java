@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.CHEdgeIteratorState;
@@ -52,6 +53,12 @@ public class PreparationWeighting implements Weighting
             return tmp.getWeight();
 
         return userWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+    }
+
+    @Override
+    public FlagEncoder getFlagEncoder()
+    {
+        return userWeighting.getFlagEncoder();
     }
 
     @Override

@@ -22,6 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
+import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -71,16 +72,20 @@ public class Measurement
             // skip check. we know what we are doing
         }
 
-        public void doPostProcessing()
+        public void doPostProcessing( Weighting w )
         {
-            // re-create index to avoid bug as pickNode in locationIndex.prepare could be wrong while indexing if level is not taken into account and assumed to be 0 for pre-initialized graph            
+            // re-create index to avoid bug as pickNode in locationIndex.prepare could be wrong while indexing if level is not taken into account and assumed to be 0 for pre-initialized graph
             StopWatch sw = new StopWatch().start();
-            setAlgorithmFactory(createPrepare());
+
+            // let algo routing factory convert simple to CH preparation
+            putAlgorithmFactory(w, null);
+            createCHPreparations();
             super.prepare();
+
             setLocationIndex(createLocationIndex(new RAMDirectory()));
             put("prepare.time", sw.stop().getTime());
             int edges = getGraphHopperStorage().getAllEdges().getMaxId();
-            int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class).getAllEdges().getMaxId();
+            int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, w).getAllEdges().getMaxId();
             put("prepare.shortcuts", edgesAndShortcuts - edges);
         }
     }
@@ -113,8 +118,10 @@ public class Measurement
         if ("true".equals(g.getProperties().get("prepare.done")))
             throw new IllegalStateException("Graph has to be unprepared but wasn't!");
 
-        String vehicleStr = args.get("graph.flagEncoders", "");
+        String chWeighting = args.get("prepare.chWeighting", "fastest");        
+        String vehicleStr = args.get("graph.flagEncoders", "car");
         FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicleStr);
+        Weighting weighting = hopper.getWeightingForCH(new WeightingMap(chWeighting), encoder);
         StopWatch sw = new StopWatch().start();
         try
         {
@@ -125,15 +132,16 @@ public class Measurement
 
             // Route via dijkstrabi. Normal routing takes a lot of time => smaller query number than CH
             // => values are not really comparable to routingCH as e.g. the mean distance etc is different            
-            hopper.setCHEnable(false);
+            hopper.setCHEnable(false);            
+            hopper.putAlgorithmFactory(weighting, new RoutingAlgorithmFactorySimple());
             printTimeOfRouteQuery(hopper, count / 20, "routing", vehicleStr, true);
 
             System.gc();
 
             // route via CH. do preparation before                        
-            hopper.setCHEnable(true);
-            hopper.doPostProcessing();
-            CHGraph lg = g.getGraph(CHGraph.class);
+            hopper.setCHEnable(true);            
+            hopper.doPostProcessing(weighting);
+            CHGraph lg = g.getGraph(CHGraph.class, weighting);
             fillAllowedEdges(lg.getAllEdges(), allowedEdges);
             printMiscUnitPerfTests(true, lg, encoder, count * 100, allowedEdges);
             printTimeOfRouteQuery(hopper, count, "routingCH", vehicleStr, true);
