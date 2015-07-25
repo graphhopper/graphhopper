@@ -397,17 +397,23 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             weightToPrioMap.put(44d, AVOID_IF_POSSIBLE.getValue());
         }
 
-        if (way.hasTag("sidewalk", sidewalks))
-        {
-            weightToPrioMap.put(45d, PREFER.getValue());
-        }
-
         if (avoidHighwayTags.contains(highway) || maxSpeed > 50)
         {
-            weightToPrioMap.put(50d, REACH_DEST.getValue());
-
-            if (way.hasTag("tunnel", intendedValues))
-                weightToPrioMap.put(50d, AVOID_AT_ALL_COSTS.getValue());
+            if (way.hasTag("sidewalk", sidewalks))
+            {
+               weightToPrioMap.put(45d, REACH_DEST.getValue());
+            }
+            else
+            {
+                weightToPrioMap.put(45d, AVOID_AT_ALL_COSTS.getValue());
+            }
+        }
+        else
+        {
+            if (way.hasTag("sidewalk", sidewalks))
+            {
+                weightToPrioMap.put(45d, PREFER.getValue());
+            }
         }
     }
 
