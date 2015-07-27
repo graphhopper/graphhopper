@@ -87,9 +87,14 @@ public interface EdgeIteratorState
      */
     int getAdditionalField();
 
-    // TODO add doc
+    /**
+     * @see FlagEncoder#isForward(long) and #472
+     */
     boolean isForward( FlagEncoder encoder );
 
+    /**
+     * @see FlagEncoder#isBackward(long) and #472
+     */
     boolean isBackward( FlagEncoder encoder );
 
     /**
