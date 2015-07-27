@@ -60,10 +60,10 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
     {
         if (w == null)
             throw new IllegalStateException("Weighting for CHGraph cannot be null");
-        
+
         this.weighting = w;
         this.baseGraph = baseGraph;
-        String name = weightingToFileName(w);
+        final String name = weightingToFileName(w);
         this.nodesCH = dir.find("nodes_ch_" + name);
         this.shortcuts = dir.find("shortcuts_" + name);
         this.chEdgeAccess = new EdgeAccess(shortcuts, baseGraph.bitUtil)
@@ -125,7 +125,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
             @Override
             public String toString()
             {
-                return "ch edge access";
+                return "ch edge access " + name;
             }
         };
     }
@@ -342,6 +342,26 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         {
             // assert baseGraph.isFrozen() : "chgraph not yet frozen";
             return edgeId >= baseGraph.edgeCount;
+        }
+
+        @Override
+        public boolean isBackward( FlagEncoder encoder )
+        {
+            if (isShortcut())
+                // TODO assert correct encoder
+                return (getDirectFlags() & PrepareEncoder.getScBwdDir()) != 0;
+
+            return encoder.isBackward(getDirectFlags());
+        }
+
+        @Override
+        public boolean isForward( FlagEncoder encoder )
+        {
+            if (isShortcut())
+                // TODO assert correct encoder
+                return (getDirectFlags() & PrepareEncoder.getScFwdDir()) != 0;
+
+            return encoder.isForward(getDirectFlags());
         }
 
         @Override

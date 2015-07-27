@@ -24,6 +24,8 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -318,11 +320,11 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
         assertTrue(iter.next());
         assertFalse(iter.isShortcut());
         assertEquals(0, iter.getEdge());
-        
+
         assertTrue(iter.next());
         assertFalse(iter.isShortcut());
         assertEquals(1, iter.getEdge());
-        
+
         assertTrue(iter.next());
         assertTrue(iter.isShortcut());
         assertEquals(2, iter.getEdge());
@@ -344,5 +346,46 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
         // iteration should result in same nodes even if reusing the iterator
         assertEquals(GHUtility.asSet(3, 4), GHUtility.getNeighbors(vehicleOutExplorer.setBaseNode(1)));
         assertEquals(GHUtility.asSet(3, 4), GHUtility.getNeighbors(vehicleOutExplorer.setBaseNode(1)));
+    }
+
+    @Test
+    public void testShortcutCreationAndAccessForManyVehicles()
+    {
+        FlagEncoder tmpCar = new CarFlagEncoder();
+        FlagEncoder tmpBike = new Bike2WeightFlagEncoder();
+        EncodingManager em = new EncodingManager(tmpCar, tmpBike);
+        List<Weighting> chWeightings = new ArrayList<Weighting>();
+        chWeightings.add(new FastestWeighting(tmpCar));
+        chWeightings.add(new FastestWeighting(tmpBike));
+
+        graph = new GraphHopperStorage(chWeightings, new RAMDirectory(), em, false, new GraphExtension.NoOpExtension()).create(1000);
+        graph.edge(0, 1).setDistance(10).setFlags(tmpCar.setProperties(100, true, true) | tmpBike.setProperties(10, true, true));
+        graph.edge(1, 2).setDistance(10).setFlags(tmpCar.setProperties(100, true, true) | tmpBike.setProperties(10, true, true));
+
+        graph.freeze();
+
+        CHGraph carCHGraph = graph.getGraph(CHGraph.class, chWeightings.get(0));
+        // enable forward directions for car
+        EdgeIteratorState carSC02 = carCHGraph.shortcut(0, 2).setWeight(10).setFlags(PrepareEncoder.getScFwdDir()).setDistance(20);
+
+        CHGraph bikeCHGraph = graph.getGraph(CHGraph.class, chWeightings.get(1));
+        // enable both directions for bike
+        EdgeIteratorState bikeSC02 = bikeCHGraph.shortcut(0, 2).setWeight(10).setFlags(PrepareEncoder.getScDirMask()).setDistance(20);
+
+        // assert car CH graph
+        assertTrue(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).isForward(tmpCar));
+        assertFalse(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).isBackward(tmpCar));
+        
+        // TODO throw exception for wrong encoder
+        // assertFalse(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).isForward(tmpBike));
+        // assertFalse(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).isBackward(tmpBike));
+
+        // assert bike CH graph
+        // TODO throw exception for wrong encoder
+        // assertFalse(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).isForward(tmpCar));
+        // assertFalse(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).isBackward(tmpCar));
+        
+        assertTrue(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).isForward(tmpBike));
+        assertTrue(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).isBackward(tmpBike));
     }
 }

@@ -811,7 +811,7 @@ public class GraphHopper implements GraphHopperAPI
     {
         if (algoFactories.isEmpty())
             throw new IllegalStateException("No algorithm factories found. Call load before?");
-        
+
         Set<Weighting> set = new LinkedHashSet<Weighting>(algoFactories.keySet());
         algoFactories.clear();
         for (Weighting weighting : set)
@@ -1122,21 +1122,23 @@ public class GraphHopper implements GraphHopperAPI
         ghStorage.getProperties().put("prepare.done", tmpPrepare);
     }
 
+    /**
+     * Internal method to clean up the graph.
+     */
     protected void cleanUp()
     {
         int prevNodeCount = ghStorage.getNodes();
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(ghStorage, encodingManager);
         preparation.setMinNetworkSize(minNetworkSize);
         preparation.setMinOneWayNetworkSize(minOneWayNetworkSize);
-        // TODO disabled for now
-//        logger.info("start finding subnetworks, " + Helper.getMemInfo());
-//        preparation.doWork();
-//        int currNodeCount = ghStorage.getNodes();
-//        int remainingSubnetworks = preparation.findSubnetworks().size();
-//        logger.info("edges: " + ghStorage.getAllEdges().getMaxId() + ", nodes " + currNodeCount
-//                + ", there were " + preparation.getSubNetworks()
-//                + " subnetworks. removed them => " + (prevNodeCount - currNodeCount)
-//                + " less nodes. Remaining subnetworks:" + remainingSubnetworks);
+        logger.info("start finding subnetworks, " + Helper.getMemInfo());
+        preparation.doWork();
+        int currNodeCount = ghStorage.getNodes();
+        int remainingSubnetworks = preparation.findSubnetworks().size();
+        logger.info("edges: " + ghStorage.getAllEdges().getMaxId() + ", nodes " + currNodeCount
+                + ", there were " + preparation.getSubNetworks()
+                + " subnetworks. removed them => " + (prevNodeCount - currNodeCount)
+                + " less nodes. Remaining subnetworks:" + remainingSubnetworks);
     }
 
     protected void flush()

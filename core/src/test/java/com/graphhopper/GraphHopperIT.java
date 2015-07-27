@@ -356,26 +356,44 @@ public class GraphHopperIT
     }
 
     @Test
-    public void testMultipleVehiclesAndDoCHForBike()
+    public void testMultipleVehiclesWithCH()
     {
         String tmpOsmFile = "files/monaco.osm.gz";
-        String tmpImportVehicles = "bike,car";
-
         GraphHopper tmpHopper = new GraphHopper().
                 setStoreOnFlush(true).
                 setOSMFile(tmpOsmFile).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager(tmpImportVehicles)).
+                setEncodingManager(new EncodingManager("bike,car")).
                 importOrLoad();
         assertEquals("bike", tmpHopper.getDefaultVehicle().toString());
+        checkMultiVehiclesWithCH(tmpHopper);
+        tmpHopper.close();
 
+        tmpHopper.clean();
+        // new instance, try different order, resulting only in different default vehicle
+        tmpHopper = new GraphHopper().
+                setStoreOnFlush(true).
+                setOSMFile(tmpOsmFile).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("car,bike")).
+                importOrLoad();
+        assertEquals("car", tmpHopper.getDefaultVehicle().toString());
+        checkMultiVehiclesWithCH(tmpHopper);
+        tmpHopper.close();
+    }
+
+    private void checkMultiVehiclesWithCH( GraphHopper tmpHopper )
+    {
+        String str = tmpHopper.getEncodingManager().toString();
         GHResponse rsp = tmpHopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setVehicle("car"));
+        assertFalse("car routing for " + str + " should not have errors:" + rsp.getErrors(), rsp.hasErrors());
         assertEquals(207, rsp.getTime() / 1000f, 1);
         assertEquals(2838, rsp.getDistance(), 1);
 
         rsp = tmpHopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setVehicle("bike"));
+        assertFalse("bike routing for " + str + " should not have errors:" + rsp.getErrors(), rsp.hasErrors());
         assertEquals(494, rsp.getTime() / 1000f, 1);
         assertEquals(2192, rsp.getDistance(), 1);
 

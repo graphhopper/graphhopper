@@ -619,8 +619,9 @@ public class PrepareContractionHierarchiesTest
         BikeFlagEncoder tmpBikeEncoder = new BikeFlagEncoder();
         EncodingManager tmpEncodingManager = new EncodingManager(tmpCarEncoder, tmpBikeEncoder);
 
-        Weighting carWeighting = new FastestWeighting(tmpCarEncoder);
-        Weighting bikeWeighting = new FastestWeighting(tmpBikeEncoder);
+        // FastestWeighting would lead to different shortcuts due to different default speeds for bike and car
+        Weighting carWeighting = new ShortestWeighting(tmpCarEncoder);
+        Weighting bikeWeighting = new ShortestWeighting(tmpBikeEncoder);
 
         List<Weighting> chWeightings = Arrays.asList(carWeighting, bikeWeighting);
         GraphHopperStorage ghStorage = new GraphHopperStorage(chWeightings, dir, tmpEncodingManager, false, new GraphExtension.NoOpExtension()).create(1000);
@@ -630,7 +631,7 @@ public class PrepareContractionHierarchiesTest
 
         for (Weighting w : chWeightings)
         {
-            checkPath(ghStorage, w, 7, 5, Helper.createTList(3, 9, 14, 16, 13, 12));            
+            checkPath(ghStorage, w, 7, 5, Helper.createTList(3, 9, 14, 16, 13, 12));
         }
     }
 
@@ -653,7 +654,8 @@ public class PrepareContractionHierarchiesTest
         ghStorage.freeze();
 
         checkPath(ghStorage, carWeighting, 7, 5, Helper.createTList(3, 9, 14, 16, 13, 12));
-        checkPath(ghStorage, bikeWeighting, 9, 5.5, Helper.createTList(3, 2, 1, 4, 11, 12));
+        // detour around blocked 9,14
+        checkPath(ghStorage, bikeWeighting, 9, 5, Helper.createTList(3, 10, 14, 16, 13, 12));
     }
 
     void checkPath( GraphHopperStorage ghStorage, Weighting w, int expShortcuts, double expDistance, TIntList expNodes )
