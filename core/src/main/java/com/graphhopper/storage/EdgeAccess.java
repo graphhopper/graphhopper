@@ -21,7 +21,6 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
-import static com.graphhopper.util.Helper.nf;
 
 /**
  * @author Peter Karich

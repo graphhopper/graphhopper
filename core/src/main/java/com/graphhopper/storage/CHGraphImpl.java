@@ -496,7 +496,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         else
             weightLong = ((long) (weight * WEIGHT_FACTOR)) << 2;
 
-        long accessFlags = edge.getFlags() & PrepareEncoder.getScDirMask();
+        long accessFlags = edge.getFlags() & scDirMask;
         edge.setFlags(weightLong | accessFlags);
     }
 

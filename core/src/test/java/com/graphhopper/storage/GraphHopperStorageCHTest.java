@@ -48,32 +48,32 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     @Test
     public void testCannotBeLoadedWithNormalGraphHopperStorageClass()
     {
-        GraphHopperStorage g = newGHStorage(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
-        g.flush();
-        g.close();
+        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
+        graph.flush();
+        graph.close();
 
-        g = new GraphBuilder(encodingManager).setLocation(defaultGraphLoc).setMmap(false).setStore(true).create();
+        graph = new GraphBuilder(encodingManager).setLocation(defaultGraphLoc).setMmap(false).setStore(true).create();
         try
         {
-            g.loadExisting();
+            graph.loadExisting();
             assertTrue(false);
         } catch (Exception ex)
         {
         }
 
-        g = newGHStorage(new RAMDirectory(defaultGraphLoc, true), false);
-        assertTrue(g.loadExisting());
+        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), false);
+        assertTrue(graph.loadExisting());
         // empty graph still has invalid bounds
-        assertEquals(g.getBounds(), BBox.createInverse(false));
+        assertEquals(graph.getBounds(), BBox.createInverse(false));
     }
 
     @Test
     public void testPrios()
     {
-        GraphHopperStorage storage = createGHStorage();
-        CHGraph g = getGraph(storage);
+        graph = createGHStorage();
+        CHGraph g = getGraph(graph);
         g.getNodeAccess().ensureNode(30);
-        storage.freeze();
+        graph.freeze();
 
         assertEquals(0, g.getLevel(10));
 
@@ -87,14 +87,14 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     @Test
     public void testEdgeFilter()
     {
-        GraphHopperStorage ghStorage = createGHStorage();
-        CHGraph g = getGraph(ghStorage);
+        graph = createGHStorage();
+        CHGraph g = getGraph(graph);
         g.edge(0, 1, 10, true);
         g.edge(0, 2, 20, true);
         g.edge(2, 3, 30, true);
         g.edge(10, 11, 1, true);
 
-        ghStorage.freeze();
+        graph.freeze();
         CHEdgeIteratorState tmpIter = g.shortcut(3, 4);
         tmpIter.setDistance(40).setFlags(carEncoder.setAccess(0, true, true));
         assertEquals(EdgeIterator.NO_EDGE, tmpIter.getSkippedEdge1());
@@ -118,19 +118,19 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     @Test
     public void testDisconnectEdge()
     {
-        GraphHopperStorage ghStorage = createGHStorage();
-        CHGraphImpl lg = (CHGraphImpl) getGraph(ghStorage);
+        graph = createGHStorage();
+        CHGraphImpl lg = (CHGraphImpl) getGraph(graph);
 
         EdgeExplorer chCarOutExplorer = lg.createEdgeExplorer(carOutFilter);
         EdgeExplorer tmpCarInExplorer = lg.createEdgeExplorer(carInFilter);
 
-        EdgeExplorer baseCarOutExplorer = ghStorage.createEdgeExplorer(carOutFilter);
+        EdgeExplorer baseCarOutExplorer = graph.createEdgeExplorer(carOutFilter);
 
         // only remove edges
         long flags = carEncoder.setProperties(60, true, true);
         long flags2 = carEncoder.setProperties(60, true, false);
         lg.edge(4, 1, 30, true);
-        ghStorage.freeze();
+        graph.freeze();
         CHEdgeIteratorState tmp = lg.shortcut(1, 2);
         tmp.setDistance(10).setFlags(flags);
         tmp.setSkippedEdges(10, 11);
@@ -170,12 +170,12 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     @Test
     public void testGetWeight()
     {
-        GraphHopperStorage ghStorage = createGHStorage();
-        CHGraphImpl g = (CHGraphImpl) getGraph(ghStorage);
+        graph = createGHStorage();
+        CHGraphImpl g = (CHGraphImpl) getGraph(graph);
         assertFalse(g.edge(0, 1).isShortcut());
         assertFalse(g.edge(1, 2).isShortcut());
 
-        ghStorage.freeze();
+        graph.freeze();
 
         // only remove edges
         long flags = carEncoder.setProperties(10, true, true);
@@ -206,11 +206,11 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     public void testGetWeightIfAdvancedEncoder()
     {
         FlagEncoder customEncoder = new Bike2WeightFlagEncoder();
-        GraphHopperStorage ghStorage = new GraphBuilder(new EncodingManager(customEncoder)).setCHGraph(true).create();
-        ghStorage.edge(0, 2);
-        ghStorage.freeze();
+        graph = new GraphBuilder(new EncodingManager(customEncoder)).setCHGraph(true).create();
+        graph.edge(0, 2);
+        graph.freeze();
 
-        CHGraphImpl lg = (CHGraphImpl) ghStorage.getGraph(CHGraph.class);
+        CHGraphImpl lg = (CHGraphImpl) graph.getGraph(CHGraph.class);
         CHEdgeIteratorState sc1 = lg.shortcut(0, 1);
         long flags = customEncoder.setProperties(10, false, true);
         sc1.setFlags(flags);
@@ -231,8 +231,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     @Test
     public void testQueryGraph()
     {
-        GraphHopperStorage ghStorage = createGHStorage();
-        CHGraph chGraph = getGraph(ghStorage);
+        graph = createGHStorage();
+        CHGraph chGraph = getGraph(graph);
         NodeAccess na = chGraph.getNodeAccess();
         na.setNode(0, 1.00, 1.00);
         na.setNode(1, 1.02, 1.00);
@@ -240,7 +240,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
 
         EdgeIteratorState edge1 = chGraph.edge(0, 1);
         chGraph.edge(1, 2);
-        ghStorage.freeze();
+        graph.freeze();
         chGraph.shortcut(0, 1);
 
         QueryGraph qGraph = new QueryGraph(chGraph);
@@ -279,7 +279,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     {
         // belongs to each other
         super.testSave_and_Freeze();
-
+        graph.close();
+        
         // test freeze and shortcut creation & loading
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).
                 create(defaultSize);

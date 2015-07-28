@@ -425,7 +425,7 @@ public class Path
                 double latitude, longitude;
 
                 PointList wayGeo = edge.fetchWayGeometry(3);
-                boolean isRoundabout = encoder.isBool(flags, encoder.K_ROUNDABOUT);
+                boolean isRoundabout = encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT);
 
                 if (wayGeo.getSize() <= 2)
                 {
@@ -499,7 +499,7 @@ public class Path
                         EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(adjNode);
                         while (edgeIter.next())
                         {
-                            if (!encoder.isBool(edgeIter.getFlags(), encoder.K_ROUNDABOUT))
+                            if (!encoder.isBool(edgeIter.getFlags(), FlagEncoder.K_ROUNDABOUT))
                             {
                                 ((RoundaboutInstruction) prevInstruction).increaseExitNumber();
                                 break;
