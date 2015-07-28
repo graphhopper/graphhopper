@@ -26,6 +26,7 @@ import com.graphhopper.storage.BaseGraph.AllEdgeIterator;
 import com.graphhopper.storage.BaseGraph.CommonEdgeIterator;
 import com.graphhopper.storage.BaseGraph.EdgeIterable;
 import com.graphhopper.util.*;
+import static com.graphhopper.util.Helper.nf;
 import com.graphhopper.util.shapes.BBox;
 
 /**
@@ -282,7 +283,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
 
     String toDetailsString()
     {
-        return toString() + ", shortcuts:" + shortcutCount + ", nodesCH:(" + nodesCH.getCapacity() / Helper.MB + "MB)";
+        return toString() + ", shortcuts:" + nf(shortcutCount) + ", nodesCH:(" + nodesCH.getCapacity() / Helper.MB + "MB)";
     }
 
     class CHEdgeIteratorImpl extends EdgeIterable implements CHEdgeExplorer, CHEdgeIterator
