@@ -114,6 +114,17 @@ describe("utils", function () {
         ghRequest.features = {"car": {elevation: false}};
         ghRequest.init(params);
         expect(ghRequest.elevation).toEqual(false);
+
+        ghRequest = new GHRequest("http://test.de");
+        var params = {point: [[4, 3], [2, 3]], test: "x", test_array: [1, 2]};
+        ghRequest.init(params);
+        
+        // skip point, layer etc
+        expect(ghRequest.api_params.point).toEqual(undefined);
+
+        // include all other parameters
+        expect(ghRequest.api_params.test).toEqual("x");
+        expect(ghRequest.api_params.test_array).toEqual([1, 2]);
     });
 
     it("ghrequest should init correctly from params", function () {

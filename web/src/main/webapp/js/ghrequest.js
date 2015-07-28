@@ -313,16 +313,13 @@ GHRequest.prototype.init = function (params) {
         else if (val === "true")
             val = true;
 
-        // todo
-        // this[key] = val;
+        if (key === "point" || key === "mathRandom" || key === "do_zoom" || key === "layer")
+            continue;
 
-        if (key.indexOf('api.') === 0) {
-            key = key.substring(4);
-            if (GHroute.isArray(val))
-                this.api_params[key] = val;
-            else
-                this.api_params[key] = [val];
-        }
+        // if (GHroute.isArray(val))
+        this.api_params[key] = val;
+//        else
+//            this.api_params[key] = [val];
     }
 
     if (params.minPathPrecision)
@@ -459,12 +456,14 @@ GHRequest.prototype.createPath = function (url) {
         url += "&debug=true";
 
     for (var key in this.api_params) {
-        // entries in api_params are all arrays
-        var arr = this.api_params[key];
-        if (GHroute.isArray(arr))
-            for (var keyIndex in arr) {
-                url += "&" + key + "=" + arr[keyIndex];
+        var val = this.api_params[key];
+        if (GHroute.isArray(val)) {
+            for (var keyIndex in val) {
+                url += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(val[keyIndex]);
             }
+        } else {
+            url += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(val);
+        }
     }
     return url;
 };
