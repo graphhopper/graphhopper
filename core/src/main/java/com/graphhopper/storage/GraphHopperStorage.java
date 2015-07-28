@@ -290,7 +290,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph
             for (CHGraphImpl cg : chGraphs)
             {
                 if (!cg.loadExisting())
-                    throw new IllegalStateException("Cannot load ch graph " + cg.toString());
+                    throw new IllegalStateException("Cannot load " + cg);
             }
 
             return true;

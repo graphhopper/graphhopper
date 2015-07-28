@@ -175,7 +175,6 @@ public class OSMReaderTest
         assertEquals("street 123, B 122", iter.getName());
         assertEquals(n50, iter.getAdjNode());
         AbstractGraphStorageTester.assertPList(Helper.createPointList(51.25, 9.43), iter.fetchWayGeometry(0));
-        FlagEncoder flags = carEncoder;
         assertTrue(iter.isForward(carEncoder));
         assertTrue(iter.isBackward(carEncoder));
 

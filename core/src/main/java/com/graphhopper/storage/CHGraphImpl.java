@@ -715,4 +715,10 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
     {
         return nodesCH.getCapacity() + shortcuts.getCapacity();
     }
+
+    @Override
+    public String toString()
+    {
+        return "CHGraph|" + getWeighting().toString();
+    }
 }
