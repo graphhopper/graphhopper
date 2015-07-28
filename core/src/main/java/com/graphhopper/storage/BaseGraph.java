@@ -410,10 +410,10 @@ class BaseGraph implements Graph
 
     String toDetailsString()
     {
-        return "edges:" + nf(edgeCount) + "(" + edges.getCapacity() / Helper.MB + "), "
-                + "nodes:" + nf(getNodes()) + "(" + nodes.getCapacity() / Helper.MB + "), "
-                + "name: -(" + nameIndex.getCapacity() / Helper.MB + "), "
-                + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "), "
+        return "edges:" + nf(edgeCount) + "(" + edges.getCapacity() / Helper.MB + "MB), "
+                + "nodes:" + nf(getNodes()) + "(" + nodes.getCapacity() / Helper.MB + "MB), "
+                + "name:(" + nameIndex.getCapacity() / Helper.MB + "MB), "
+                + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "MB), "
                 + "bounds:" + bounds;
     }
 
@@ -1126,7 +1126,7 @@ class BaseGraph implements Graph
                     continue;
 
                 freshFlags = false;
-                adjNode = edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEB);                
+                adjNode = edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEB);
                 // this is always false because of 'getBaseNode() <= getAdjNode()'
                 reverse = false;
                 return true;

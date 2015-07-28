@@ -282,7 +282,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
 
     String toDetailsString()
     {
-        return "shortcuts:" + shortcutCount + ", nodesCH: -(" + nodesCH.getCapacity() / Helper.MB + ")";
+        return toString() + ", shortcuts:" + shortcutCount + ", nodesCH:(" + nodesCH.getCapacity() / Helper.MB + "MB)";
     }
 
     class CHEdgeIteratorImpl extends EdgeIterable implements CHEdgeExplorer, CHEdgeIterator
