@@ -394,7 +394,6 @@ class BaseGraph implements Graph
 
     void create( long initSize )
     {
-
         nodes.create(initSize);
         edges.create(initSize);
         wayGeometry.create(initSize);

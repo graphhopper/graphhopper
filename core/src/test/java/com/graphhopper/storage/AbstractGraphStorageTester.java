@@ -57,7 +57,7 @@ public abstract class AbstractGraphStorageTester
 
     protected GraphHopperStorage createGHStorage()
     {
-        GraphHopperStorage g = AbstractGraphStorageTester.this.createGHStorage(defaultGraphLoc, false);
+        GraphHopperStorage g = createGHStorage(defaultGraphLoc, false);
         carOutExplorer = g.createEdgeExplorer(carOutFilter);
         carInExplorer = g.createEdgeExplorer(carInFilter);
         carAllExplorer = g.createEdgeExplorer();
@@ -283,7 +283,7 @@ public abstract class AbstractGraphStorageTester
         graph.edge(0, 2, 10, true);
         assertEquals(3, graph.getNodes());
         Helper.close((Closeable) graph);
-
+        
         graph = createGHStorage();
         assertEquals(0, graph.getNodes());
     }
@@ -1063,7 +1063,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testEnabledElevation()
     {
-        graph = AbstractGraphStorageTester.this.createGHStorage(defaultGraphLoc, true);
+        graph = createGHStorage(defaultGraphLoc, true);
         NodeAccess na = graph.getNodeAccess();
         assertTrue(na.is3D());
         na.setNode(0, 10, 20, -10);
