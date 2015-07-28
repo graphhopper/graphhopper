@@ -339,7 +339,7 @@ public class PathTest
             // Test Radian
             double delta = roundaboutGraph.getAngle(1, 2, 5, 8);
             RoundaboutInstruction instr = (RoundaboutInstruction) wayList.get(1);
-            assertEquals(delta, instr.getRadian(), 0.01);
+            assertEquals(delta, instr.getTurnAngle(), 0.01);
 
             // case of continuing a street through a roundabout
             p = new Dijkstra(roundaboutGraph.g, encoder, new ShortestWeighting(), TraversalMode.NODE_BASED).calcPath(1, 7);
@@ -352,7 +352,7 @@ public class PathTest
             // Test Radian
             delta = roundaboutGraph.getAngle(1, 2, 4, 7);
             instr = (RoundaboutInstruction) wayList.get(1);
-            assertEquals(delta, instr.getRadian(), 0.01);
+            assertEquals(delta, instr.getTurnAngle(), 0.01);
         }
     }
 
@@ -407,7 +407,7 @@ public class PathTest
         // Test Radian
         double delta = roundaboutGraph.getAngle(1, 2, 5, 8);
         RoundaboutInstruction instr = (RoundaboutInstruction) wayList.get(1);
-        assertEquals(delta, instr.getRadian(), 0.01);
+        assertEquals(delta, instr.getTurnAngle(), 0.01);
         roundaboutGraph.inverse3to6();
 
     }
@@ -505,7 +505,7 @@ public class PathTest
         // Test Radian
         double delta = roundaboutGraph.getAngle(1, 2, 5, 8);
         RoundaboutInstruction instr = (RoundaboutInstruction) wayList.get(1);
-        assertEquals(delta, instr.getRadian(), 0.01);
+        assertEquals(delta, instr.getTurnAngle(), 0.01);
     }
 
     List<String> pick( String key, List<Map<String, Object>> instructionJson )
