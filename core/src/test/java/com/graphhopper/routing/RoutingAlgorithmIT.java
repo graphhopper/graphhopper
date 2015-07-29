@@ -308,7 +308,7 @@ public class RoutingAlgorithmIT
         // prefer hiking route 'Teufelsloch Unterwaiz' and 'Rotmain-Wanderweg'        
         list.add(new OneRun(49.974972, 11.515657, 49.991022, 11.512299, 2365, 66));
         // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach'
-        list.add(new OneRun(49.986111, 11.550407, 50.023182, 11.555386, 5165, 133));
+        list.add(new OneRun(49.986111, 11.550407, 50.023182, 11.555386, 6429, 122));
         runAlgo(testCollector, "files/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
                 list, "FOOT", true, "FOOT", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
