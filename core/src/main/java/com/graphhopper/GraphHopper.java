@@ -38,7 +38,6 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -80,10 +79,11 @@ public class GraphHopper implements GraphHopperAPI
     private boolean doPrepare = true;
     private boolean chEnabled = true;
     private String chWeightingStr = "fastest";
-    private int periodicUpdates = -1;
-    private int lazyUpdates = -1;
-    private int neighborUpdates = -1;
-    private double logMessages = -1;
+    private int preparePeriodicUpdates = -1;
+    private int prepareLazyUpdates = -1;
+    private int prepareNeighborUpdates = -1;
+    private int prepareContractedNodes = -1;
+    private double prepareLogMessages = -1;
     // for OSM import
     private String osmFile;
     private double osmReaderWayPointMaxDistance = 1;
@@ -566,10 +566,11 @@ public class GraphHopper implements GraphHopperAPI
         if (chEnabled)
             setCHWeighting(tmpCHWeighting);
 
-        periodicUpdates = args.getInt("prepare.updates.periodic", periodicUpdates);
-        lazyUpdates = args.getInt("prepare.updates.lazy", lazyUpdates);
-        neighborUpdates = args.getInt("prepare.updates.neighbor", neighborUpdates);
-        logMessages = args.getDouble("prepare.logmessages", logMessages);
+        preparePeriodicUpdates = args.getInt("prepare.updates.periodic", preparePeriodicUpdates);
+        prepareLazyUpdates = args.getInt("prepare.updates.lazy", prepareLazyUpdates);
+        prepareNeighborUpdates = args.getInt("prepare.updates.neighbor", prepareNeighborUpdates);
+        prepareContractedNodes = args.getInt("prepare.contracted-nodes", prepareContractedNodes);
+        prepareLogMessages = args.getDouble("prepare.logmessages", prepareLogMessages);
 
         // osm import
         osmReaderWayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", osmReaderWayPointMaxDistance);
@@ -824,10 +825,11 @@ public class GraphHopper implements GraphHopperAPI
         PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
                 new GHDirectory("", DAType.RAM_INT), ghStorage, ghStorage.getGraph(CHGraph.class),
                 defaultVehicle, weighting, traversalMode);
-        tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
-                setLazyUpdates(lazyUpdates).
-                setNeighborUpdates(neighborUpdates).
-                setLogMessages(logMessages);
+        tmpPrepareCH.setPeriodicUpdates(preparePeriodicUpdates).
+                setLazyUpdates(prepareLazyUpdates).
+                setNeighborUpdates(prepareNeighborUpdates).
+                setContractedNodes(prepareContractedNodes).
+                setLogMessages(prepareLogMessages);
 
         return tmpPrepareCH;
     }

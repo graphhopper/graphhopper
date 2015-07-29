@@ -108,7 +108,7 @@ public class Measurement
         hopper.forDesktop();
         if (!hopper.load(graphLocation))
             throw new IllegalStateException("Cannot load existing graph at " + graphLocation);
-
+        
         GraphHopperStorage g = hopper.getGraphHopperStorage();
         if ("true".equals(g.getProperties().get("prepare.done")))
             throw new IllegalStateException("Graph has to be unprepared but wasn't!");
