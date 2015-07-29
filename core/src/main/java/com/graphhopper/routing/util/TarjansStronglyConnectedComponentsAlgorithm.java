@@ -45,7 +45,6 @@ public class TarjansStronglyConnectedComponentsAlgorithm
      */
     public List<TIntArrayList> findComponents()
     {
-
         int nodes = graph.getNodes();
         for (int start = 0; start < nodes; start++)
         {

@@ -74,12 +74,15 @@ public class PrepareRoutingSubnetworks
     public void doWork()
     {
         int del = removeZeroDegreeNodes();
-        Map<Integer, Integer> map = findSubnetworks();
-        keepLargeNetworks(map);
 
         int unvisitedDeadEnds = -1;
         if (minOneWayNetworkSize > 0 && singleEncoder != null)
+        {
             unvisitedDeadEnds = removeDeadEndUnvisitedNetworks(singleEncoder);
+        }
+
+        Map<Integer, Integer> map = findSubnetworks();
+        keepLargeNetworks(map);
 
         logger.info("optimize to remove subnetworks (" + map.size() + "), zero-degree-nodes (" + del + "), "
                 + "unvisited-dead-end-nodes(" + unvisitedDeadEnds + "), "
@@ -122,6 +125,9 @@ public class PrepareRoutingSubnetworks
                 @Override
                 protected final boolean goFurther( int nodeId )
                 {
+                    if (ghStorage.isNodeRemoved(nodeId))
+                        return false;
+
                     if (tmpCounter > maxEdgesPerNode.get())
                         maxEdgesPerNode.set(tmpCounter);
 
@@ -179,8 +185,6 @@ public class PrepareRoutingSubnetworks
             }
 
             allRemoved += removed;
-            if (removed > ghStorage.getNodes() / 3)
-                throw new IllegalStateException("Too many nodes were removed: " + removed + ", all nodes:" + ghStorage.getNodes() + ", all removed:" + allRemoved);
         }
 
         if (allRemoved > ghStorage.getNodes() / 2)
@@ -211,6 +215,9 @@ public class PrepareRoutingSubnetworks
             @Override
             protected boolean goFurther( int nodeId )
             {
+                if (ghStorage.isNodeRemoved(nodeId))
+                    return false;
+
                 ghStorage.markNodeRemoved(nodeId);
                 removed.incrementAndGet();
                 return super.goFurther(nodeId);

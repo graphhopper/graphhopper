@@ -259,4 +259,30 @@ public class PrepareRoutingSubnetworksTest
 
         assertEquals(3, removed);
     }
+
+    @Test
+    public void test481()
+    {
+        // 0->1->3->4->5->6
+        //  2        7<--/
+        GraphHopperStorage g = createStorage(em);
+        g.edge(0, 1, 1, false);
+        g.edge(1, 2, 1, false);
+        g.edge(2, 0, 1, false);
+
+        g.edge(1, 3, 1, false);
+        g.edge(3, 4, 1, false);
+        
+        g.edge(4, 5, 1, false);
+        g.edge(5, 6, 1, false);
+        g.edge(6, 7, 1, false);
+        g.edge(7, 4, 1, false);
+
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em).
+                setMinOneWayNetworkSize(2).
+                setMinNetworkSize(4);
+        instance.doWork();
+
+        assertEquals(4, g.getNodes());
+    }
 }
