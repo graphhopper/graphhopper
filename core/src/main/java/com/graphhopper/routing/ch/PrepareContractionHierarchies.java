@@ -168,14 +168,18 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     /**
      * Define how many nodes (percentage) should be contracted. Less nodes means slower query but
-     * faster contraction duration. Not yet ready for prime time.
+     * faster contraction duration.
      */
-    void setNodesContracted( double nodesContracted )
+    public PrepareContractionHierarchies setContractedNodes( double nodesContracted )
     {
+        if (nodesContracted < 0)
+            return this;
+
         if (nodesContracted > 100)
             throw new IllegalArgumentException("setNodesContracted can be 100% maximum");
 
         this.nodesContractedPercentage = nodesContracted;
+        return this;
     }
 
     /**
@@ -246,10 +250,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         if (periodicUpdatesPercentage == 0)
             periodicUpdate = false;
 
-        // disable as preparation is slower and query time does not benefit
-        long lastNodesLazyUpdates = lastNodesLazyUpdatePercentage == 0
-                ? 0L
-                : Math.round(sortedNodes.getSize() / 100d * lastNodesLazyUpdatePercentage);
+        // disable lazy updates for last x percentage of nodes as preparation is then a lot slower
+        // and query time does not really benefit
+        long lastNodesLazyUpdates = Math.round(sortedNodes.getSize() / 100d * lastNodesLazyUpdatePercentage);
 
         // according to paper "Polynomial-time Construction of Contraction Hierarchies for Multi-criteria Objectives" by Funke and Storandt
         // we don't need to wait for all nodes to be contracted
@@ -310,11 +313,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             counter++;
             int polledNode = sortedNodes.pollKey();
-            if (sortedNodes.getSize() < lastNodesLazyUpdates)
+            if (!sortedNodes.isEmpty() && sortedNodes.getSize() < lastNodesLazyUpdates)
             {
                 lazySW.start();
                 int priority = oldPriorities[polledNode] = calculatePriority(polledNode);
-                if (!sortedNodes.isEmpty() && priority > sortedNodes.peekValue())
+                if (priority > sortedNodes.peekValue())
                 {
                     // current node got more important => insert as new value and contract it later
                     sortedNodes.insert(polledNode, priority);
@@ -364,7 +367,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         lazyTime += lazySW.getSeconds();
         neighborTime += neighborSW.getSeconds();
         logger.info("took:" + (int) allSW.stop().getSeconds()
-                + ", new shortcuts: " + newShortcuts
+                + ", new shortcuts: " + Helper.nf(newShortcuts)
                 + ", " + prepareWeighting
                 + ", " + prepareFlagEncoder
                 + ", dijkstras:" + dijkstraCount
