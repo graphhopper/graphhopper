@@ -200,8 +200,8 @@ public class GraphHopperIT
         req.getHints().put("heading_penalty", "300");
         GHResponse rsp = hopper.route(req);
 
-        assertEquals(873., rsp.getDistance(), 10.);
-        assertEquals(33, rsp.getPoints().getSize());
+        assertEquals(921., rsp.getDistance(), 10.);
+        assertEquals(38, rsp.getPoints().getSize());
     }
 
     @Test
