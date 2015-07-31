@@ -34,10 +34,10 @@ Now you can do these matches:
 
 Possible arguments are:
 ```bash
-gpxAccuracy=15              # default=15, type=integer, unit=meter
-separatedSearchDistance=500 # default=500, type=integer, unit=meter
-maxSearchMultiplier=50      # default=50, type=integer
-forceRepair=false           # default=false, type=boolean
+gpxAccuracy=15              # default=15, type=integer, unit=meter, the precision of the used device
+separatedSearchDistance=500 # default=500, type=integer, unit=meter, we split the incoming list into smaller parts (hopefully) without loops. Later we'll detect loops and insert the correctly detected road recursivly, see #1
+maxSearchMultiplier=50      # default=50, type=integer, the limit we use to search a route from one gps entry to the other to avoid exploring the whole graph in case of disconnected subnetworks. See #15
+forceRepair=false           # default=false, type=boolean, when merging two path segments it can happen that edges seem illegal like two adjacent and parallel edges and the search will normally fail. Setting this to true tries to clean the illegal situation
 ```
 
 This will produce gpx results similar named as the input files.
