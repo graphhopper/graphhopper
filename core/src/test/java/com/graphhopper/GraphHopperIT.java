@@ -376,6 +376,14 @@ public class GraphHopperIT
         rsp = tmpHopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setVehicle("foot"));
         assertTrue("only bike and car were imported. foot request should fail", rsp.hasErrors());
+
+        GHRequest req = new GHRequest().
+                addPoint(new GHPoint(43.741069, 7.426854), 0.).
+                addPoint(new GHPoint(43.744445, 7.429483), 190.).
+                setVehicle("bike").setWeighting("fastest");
+
+        rsp = hopper.route(req);
+        assertTrue("heading not allowed for CH enabled graph", rsp.hasErrors());
     }
 
     @Test

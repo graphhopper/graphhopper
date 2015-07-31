@@ -969,6 +969,9 @@ public class GraphHopper implements GraphHopperAPI
             } else
             {
                 routingGraph = ghStorage.getGraph(CHGraph.class);
+
+                if (request.hasFavoredHeading(0))
+                    throw new IllegalStateException("Heading is not (fully) supported for CHGraph. See issue #483");
             }
         }
 
