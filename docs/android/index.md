@@ -47,6 +47,10 @@ Now that you have a running android app you need to copy somehow the routing and
  4. Copy berlin.map into the created berlin-gh folder
  5. Optional Compression Step: Bundle a graphhopper zip file via `cd berlin-gh; zip -r berlin.ghz *`
  6. Now copy the berlin-gh folder from step 4 (or the .ghz file from step 5) to your Android device. /[download-folder]/graphhopper/maps, where the download-folder can e.g. be /mnt/sdcard/download or /storage/sdcard/Download/ - e.g. use [SSHDroid](https://play.google.com/store/apps/details?id=berserker.android.apps.sshdroid): `scp -P 2222 berlin.ghz root@$URL:/mnt/sdcard/download/graphhopper/maps/`
+  
+## Locus Add-On
+
+The developer of Locus has create a routing plugin for [locus](http://www.locusmap.eu/) the source code for the add-on is available [here](https://bitbucket.org/asamm/locus-add-on-graphhopper). The discussion is happing [here](http://forum.locusmap.eu/index.php?topic=4036.0).
 
 ## Limitations
 
