@@ -52,6 +52,10 @@ Now that you have a running android app you need to copy somehow the routing and
 
 The developer of Locus has create a routing plugin for [locus](http://www.locusmap.eu/) the source code for the add-on is available [here](https://bitbucket.org/asamm/locus-add-on-graphhopper) and could be useful for other Map-apps too. The discussion is happing [here](http://forum.locusmap.eu/index.php?topic=4036.0).
 
+## Cruiser App
+
+The free offline map app [Cruiser](https://play.google.com/store/apps/details?id=gr.talent.cruiser) is using GraphHopper routing and allows also other things.
+
 ## Limitations
 
  * You have to create the graphhopper folder on your desktop and copy it to the Android storage.
