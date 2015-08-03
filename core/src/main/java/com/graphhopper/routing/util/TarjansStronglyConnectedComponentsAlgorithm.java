@@ -123,6 +123,7 @@ public class TarjansStronglyConnectedComponentsAlgorithm
                     onStack.clear(node);
                 }
                 component.add(start);                
+                component.trimToSize();
                 onStack.clear(start);
 
                 components.add(component);
