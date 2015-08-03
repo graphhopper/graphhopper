@@ -227,10 +227,11 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
-    public void setMinNetworkSize( int minNetworkSize, int minOneWayNetworkSize )
+    public GraphHopper setMinNetworkSize( int minNetworkSize, int minOneWayNetworkSize )
     {
         this.minNetworkSize = minNetworkSize;
         this.minOneWayNetworkSize = minOneWayNetworkSize;
+        return this;
     }
 
     /**
@@ -1082,17 +1083,17 @@ public class GraphHopper implements GraphHopperAPI
     protected void cleanUp()
     {
         int prevNodeCount = ghStorage.getNodes();
-        PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(ghStorage, encodingManager);
+        PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(ghStorage, encodingManager.fetchEdgeEncoders());
         preparation.setMinNetworkSize(minNetworkSize);
         preparation.setMinOneWayNetworkSize(minOneWayNetworkSize);
         logger.info("start finding subnetworks, " + Helper.getMemInfo());
         preparation.doWork();
         int currNodeCount = ghStorage.getNodes();
-        int remainingSubnetworks = preparation.findSubnetworks().size();
+        // int remainingSubnetworks = preparation.findSubnetworks().size();
         logger.info("edges: " + ghStorage.getAllEdges().getMaxId() + ", nodes " + currNodeCount
-                + ", there were " + preparation.getSubNetworks()
+                + ", there were " + preparation.getMaxSubnetworks()
                 + " subnetworks. removed them => " + (prevNodeCount - currNodeCount)
-                + " less nodes. Remaining subnetworks:" + remainingSubnetworks);
+                + " less nodes");
     }
 
     protected void flush()
