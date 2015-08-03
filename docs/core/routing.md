@@ -75,6 +75,9 @@ or to avoid u-turns at via points
 ```java
 req.getHints().put("pass_through", true);
 ```
+
+It is important to note that if you force the heading at via or end points the outgoing heading needs to be specified.
+I.e. if you want to force "coming from south" to a destination you need to specify the resulting "heading towards north" instead, which is 0.
  
 In case you need a web access in a Java or an Android application the GraphHopperWeb class comes handy,
  see the 'web' sub module or [the Java client for the GraphHopper Directions API](https://github.com/graphhopper/directions-api-java-client).

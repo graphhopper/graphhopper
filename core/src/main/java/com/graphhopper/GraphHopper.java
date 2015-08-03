@@ -970,6 +970,9 @@ public class GraphHopper implements GraphHopperAPI
             } else
             {
                 routingGraph = ghStorage.getGraph(CHGraph.class);
+                boolean forceCHHeading = request.getHints().getBool("force_heading_ch", false);
+                if (!forceCHHeading && request.hasFavoredHeading(0))
+                    throw new IllegalStateException("Heading is not (fully) supported for CHGraph. See issue #483");
             }
         }
 
@@ -990,7 +993,6 @@ public class GraphHopper implements GraphHopperAPI
         boolean viaTurnPenalty = request.getHints().getBool("pass_through", false);
         for (int placeIndex = 1; placeIndex < points.size(); placeIndex++)
         {
-
             if (placeIndex == 1)
             {
                 // enforce start direction

@@ -29,7 +29,7 @@ import com.graphhopper.util.PMap;
 public class PriorityWeighting extends FastestWeighting
 {
     /**
-     * For now used only in BikeCommonFlagEncoder and MotorcycleFlagEncoder
+     * For now used only in BikeCommonFlagEncoder, FootEncoder and MotorcycleFlagEncoder
      */
     public static final int KEY = 101;
 

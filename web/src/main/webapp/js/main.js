@@ -909,9 +909,7 @@ function doGeoCoding(input, limit, timeout) {
         type: "GET",
         dataType: "json",
         timeout: timeout
-    }).fail(
-            createCallback("[nominatim] Problem while looking up location " + input)
-            );
+    }).fail(createCallback("[nominatim] Problem while looking up location " + input));
 }
 
 function createCallback(errorFallback) {
@@ -971,7 +969,7 @@ function routeLatLng(request, doQuery) {
     map.contextmenu.setDisabled(menuIntermediate, false);
 
     $("#vehicles button").removeClass("selectvehicle");
-    $("button#" + request.vehicle.toLowerCase()).addClass("selectvehicle");
+    $("button#" + request.getVehicle().toLowerCase()).addClass("selectvehicle");
 
     var urlForAPI = request.createURL();
     descriptionDiv.html('<img src="img/indicator.gif"/> Search Route ...');
@@ -1089,10 +1087,11 @@ function routeLatLng(request, doQuery) {
             var osmRouteLink = $("<br/><a>view on OSM</a>");
 
             var osmVehicle = "bicycle";
-            if (request.vehicle.toUpperCase() === "FOOT") {
+            if (request.getVehicle().toUpperCase() === "FOOT") {
                 osmVehicle = "foot";
             }
-            osmRouteLink.attr("href", "http://www.openstreetmap.org/directions?engine=graphhopper_" + osmVehicle + "&route=" + encodeURIComponent(request.from.lat + "," + request.from.lng + ";" + request.to.lat + "," + request.to.lng));
+            osmRouteLink.attr("href", "http://www.openstreetmap.org/directions?engine=graphhopper_" 
+                    + osmVehicle + "&route=" + encodeURIComponent(request.from.lat + "," + request.from.lng + ";" + request.to.lat + "," + request.to.lng));
             hiddenDiv.append(osmRouteLink);
 
             var osrmLink = $("<a>OSRM</a>");
@@ -1102,11 +1101,11 @@ function routeLatLng(request, doQuery) {
             var googleLink = $("<a>Google</a> ");
             var addToGoogle = "";
             var addToBing = "";
-            if (request.vehicle.toUpperCase() === "FOOT") {
+            if (request.getVehicle().toUpperCase() === "FOOT") {
                 addToGoogle = "&dirflg=w";
                 addToBing = "&mode=W";
-            } else if ((request.vehicle.toUpperCase().indexOf("BIKE") >= 0) ||
-                    (request.vehicle.toUpperCase() === "MTB")) {
+            } else if ((request.getVehicle().toUpperCase().indexOf("BIKE") >= 0) ||
+                    (request.getVehicle().toUpperCase() === "MTB")) {
                 addToGoogle = "&dirflg=b";
                 // ? addToBing = "&mode=B";
             }

@@ -368,7 +368,7 @@ public class QueryGraph implements Graph
      * @param incoming if true, incoming edges are unfavored, else outgoing edges
      * @return boolean indicating if enforcement took place
      */
-    public boolean enforceHeading( int nodeId, Double favoredHeading, boolean incoming )
+    public boolean enforceHeading( int nodeId, double favoredHeading, boolean incoming )
     {
         if (!isInitialized())
             throw new IllegalStateException("QueryGraph.lookup has to be called in before heading enforcement");

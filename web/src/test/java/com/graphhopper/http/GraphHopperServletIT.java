@@ -74,7 +74,7 @@ public class GraphHopperServletIT extends BaseServletTester
     public void testQuerywithDirections() throws Exception
     {
         // Note, in general specifying directions does not work with CH, but this is an example where it works
-        JSONObject json = query("point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240", 200);
+        JSONObject json = query("point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240&force_heading_ch=true", 200);
         JSONObject infoJson = json.getJSONObject("info");
         assertFalse(infoJson.has("errors"));
         JSONObject path = json.getJSONArray("paths").getJSONObject(0);
