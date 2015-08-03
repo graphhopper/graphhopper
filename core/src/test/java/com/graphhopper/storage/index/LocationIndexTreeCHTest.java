@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
@@ -163,7 +164,9 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest
         LocationIndexTree index = createIndex(g, 100000);
 
         // very close to 2, but should match the edge 0--1
-        TIntHashSet set = index.findNetworkEntries(0.51, 0.2, index.maxRegionSearch);
+        TIntHashSet set = new TIntHashSet();
+        index.findNetworkEntries(0.51, 0.2, set, 0);
+        index.findNetworkEntries(0.51, 0.2, set, 1);
         TIntSet expectedSet = new TIntHashSet();
         expectedSet.add(0);
         expectedSet.add(2);

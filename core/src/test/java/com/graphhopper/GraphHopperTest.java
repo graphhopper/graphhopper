@@ -593,8 +593,6 @@ public class GraphHopperTest
     @Test
     public void testGetPathsDirectionEnforcement3()
     {
-        // Test enforce via direction
-
         GraphHopper instance = initSquareGraphInstance(false);
 
         // Start in middle of edge 4-5 
