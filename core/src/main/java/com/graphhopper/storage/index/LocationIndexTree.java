@@ -707,56 +707,54 @@ public class LocationIndexTree implements LocationIndex
      * This method collects the node indices from the quad tree data structure in a certain order
      * which makes sure not too many nodes are collected as well as no nodes will be missing. See
      * discussion at issue #221.
+     * <p>
+     * @return true if no further call of this method is required. False otherwise, ie. a next
+     * iteration is necessary and no early finish possible.
      */
-    public final TIntHashSet findNetworkEntries( double queryLat, double queryLon, int maxIteration )
+    public final boolean findNetworkEntries( double queryLat, double queryLon,
+                                             TIntHashSet foundEntries, int iteration )
     {
-        TIntHashSet foundEntries = new TIntHashSet();
-
-        for (int iteration = 0; iteration < maxIteration; iteration++)
+        // find entries in border of searchbox
+        for (int yreg = -iteration; yreg <= iteration; yreg++)
         {
-            // find entries in border of searchbox
-            for (int yreg = -iteration; yreg <= iteration; yreg++)
+            double subqueryLat = queryLat + yreg * deltaLat;
+            double subqueryLonA = queryLon - iteration * deltaLon;
+            double subqueryLonB = queryLon + iteration * deltaLon;
+            findNetworkEntriesSingleRegion(foundEntries, subqueryLat, subqueryLonA);
+
+            // minor optimization for iteration == 0
+            if (iteration > 0)
+                findNetworkEntriesSingleRegion(foundEntries, subqueryLat, subqueryLonB);
+        }
+
+        for (int xreg = -iteration + 1; xreg <= iteration - 1; xreg++)
+        {
+            double subqueryLon = queryLon + xreg * deltaLon;
+            double subqueryLatA = queryLat - iteration * deltaLat;
+            double subqueryLatB = queryLat + iteration * deltaLat;
+            findNetworkEntriesSingleRegion(foundEntries, subqueryLatA, subqueryLon);
+            findNetworkEntriesSingleRegion(foundEntries, subqueryLatB, subqueryLon);
+        }
+
+        if (iteration % 2 == 1)
+        {
+            // Check if something was found already...
+            if (!foundEntries.isEmpty())
             {
-                double subqueryLat = queryLat + yreg * deltaLat;
-                double subqueryLonA = queryLon - iteration * deltaLon;
-                double subqueryLonB = queryLon + iteration * deltaLon;
-                findNetworkEntriesSingleRegion(foundEntries, subqueryLat, subqueryLonA);
+                double rMin = calculateRMin(queryLat, queryLon, iteration);
+                double minDistance = calcMinDistance(queryLat, queryLon, foundEntries);
 
-                // minor optimization for iteration == 0
-                if (iteration > 0)
-                {
-                    findNetworkEntriesSingleRegion(foundEntries, subqueryLat, subqueryLonB);
-                }
-            }
-
-            for (int xreg = -iteration + 1; xreg <= iteration - 1; xreg++)
-            {
-                double subqueryLon = queryLon + xreg * deltaLon;
-                double subqueryLatA = queryLat - iteration * deltaLat;
-                double subqueryLatB = queryLat + iteration * deltaLat;
-                findNetworkEntriesSingleRegion(foundEntries, subqueryLatA, subqueryLon);
-                findNetworkEntriesSingleRegion(foundEntries, subqueryLatB, subqueryLon);
-            }
-
-            // see #232
-            if (iteration % 2 == 1)
-            {
-                // Check if something was found already...
-                if (foundEntries.size() > 0)
-                {
-                    double rMin = calculateRMin(queryLat, queryLon, iteration);
-                    double minDistance = calcMinDistance(queryLat, queryLon, foundEntries);
-
-                    if (minDistance < rMin)
-                    {   // resultEntries contains a nearest node for sure
-                        break;
-                    } // else: continue an undetected nearer node may sit in a neighbouring tile.
-                    // Now calculate how far we have to look outside to find any hidden nearest nodes
-                    // and repeat whole process with wider search area until this distance is covered.
-                }
+                if (minDistance < rMin)
+                    // early finish => foundEntries contains a nearest node for sure
+                    return true;
+                // else: continue as an undetected nearer node may sit in a neighbouring tile.
+                // Now calculate how far we have to look outside to find any hidden nearest nodes
+                // and repeat whole process with wider search area until this distance is covered.
             }
         }
-        return foundEntries;
+
+        // no early finish possible
+        return false;
     }
 
     final double calcMinDistance( double queryLat, double queryLon, TIntHashSet pointset )
@@ -789,50 +787,56 @@ public class LocationIndexTree implements LocationIndex
         if (isClosed())
             throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
 
-        final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon, maxRegionSearch);
+        TIntHashSet storedNetworkEntryIds = new TIntHashSet();
         final QueryResult closestMatch = new QueryResult(queryLat, queryLon);
-        if (storedNetworkEntryIds.isEmpty())
-            return closestMatch;
-
-        // clone storedIds to avoid interference with forEach
-        final GHBitSet checkBitset = new GHTBitSet(new TIntHashSet(storedNetworkEntryIds));
-        // find nodes from the network entries which are close to 'point'
-        final EdgeExplorer explorer = graph.createEdgeExplorer();
-        storedNetworkEntryIds.forEach(new TIntProcedure()
+        for (int iteration = 0; iteration < maxRegionSearch; iteration++)
         {
-            @Override
-            public boolean execute( int networkEntryNodeId )
+            boolean earlyFinish = findNetworkEntries(queryLat, queryLon, storedNetworkEntryIds, iteration);
+
+            // clone storedIds to avoid interference with forEach
+            final GHBitSet checkBitset = new GHTBitSet(new TIntHashSet(storedNetworkEntryIds));
+            // find nodes from the network entries which are close to 'point'
+            final EdgeExplorer explorer = graph.createEdgeExplorer();
+            storedNetworkEntryIds.forEach(new TIntProcedure()
             {
-                new XFirstSearchCheck(queryLat, queryLon, checkBitset, edgeFilter)
+                @Override
+                public boolean execute( int networkEntryNodeId )
                 {
-                    @Override
-                    protected double getQueryDistance()
+                    new XFirstSearchCheck(queryLat, queryLon, checkBitset, edgeFilter)
                     {
-                        return closestMatch.getQueryDistance();
-                    }
-
-                    @Override
-                    protected boolean check( int node, double normedDist, int wayIndex, EdgeIteratorState edge, QueryResult.Position pos )
-                    {
-                        if (normedDist < closestMatch.getQueryDistance())
+                        @Override
+                        protected double getQueryDistance()
                         {
-                            closestMatch.setQueryDistance(normedDist);
-                            closestMatch.setClosestNode(node);
-                            closestMatch.setClosestEdge(edge.detach(false));
-                            closestMatch.setWayIndex(wayIndex);
-                            closestMatch.setSnappedPosition(pos);
-                            return true;
+                            return closestMatch.getQueryDistance();
                         }
-                        return false;
-                    }
-                }.start(explorer, networkEntryNodeId);
-                return true;
-            }
-        });
 
+                        @Override
+                        protected boolean check( int node, double normedDist, int wayIndex, EdgeIteratorState edge, QueryResult.Position pos )
+                        {
+                            if (normedDist < closestMatch.getQueryDistance())
+                            {
+                                closestMatch.setQueryDistance(normedDist);
+                                closestMatch.setClosestNode(node);
+                                closestMatch.setClosestEdge(edge.detach(false));
+                                closestMatch.setWayIndex(wayIndex);
+                                closestMatch.setSnappedPosition(pos);
+                                return true;
+                            }
+                            return false;
+                        }
+                    }.start(explorer, networkEntryNodeId);
+                    return true;
+                }
+            });
+
+            // do early finish only if something was found (#318)
+            if (earlyFinish && closestMatch.isValid())
+                break;
+        }
+
+        // denormalize distance and calculate snapping point only if closed match was found
         if (closestMatch.isValid())
         {
-            // denormalize distance            
             closestMatch.setQueryDistance(distCalc.calcDenormalizedDist(closestMatch.getQueryDistance()));
             closestMatch.calcSnappedPoint(distCalc);
         }

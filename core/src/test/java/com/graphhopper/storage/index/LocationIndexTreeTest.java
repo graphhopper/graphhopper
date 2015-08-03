@@ -17,8 +17,7 @@
  */
 package com.graphhopper.storage.index;
 
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -38,7 +37,6 @@ import static org.junit.Assert.*;
  */
 public class LocationIndexTreeTest extends AbstractLocationIndexTester
 {
-
     protected final EncodingManager encodingManager = new EncodingManager("CAR");
 
     @Override
@@ -66,11 +64,11 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     //  0------\
     // /|       \
     // |1----3-\|
-    // |    /   4
-    // 2---/---/
-    Graph createTestGraph()
+    // |____/   4
+    // 2-------/
+    Graph createTestGraph( EncodingManager em )
     {
-        Graph graph = createGHStorage(new RAMDirectory(), encodingManager, false);
+        Graph graph = createGHStorage(new RAMDirectory(), em, false);
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 0.5, -0.5);
         na.setNode(1, -0.5, -0.5);
@@ -90,23 +88,27 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     @Test
     public void testSnappedPointAndGeometry()
     {
-        Graph graph = createTestGraph();
+        Graph graph = createTestGraph(encodingManager);
         LocationIndex index = createIndex(graph, -1);
         // query directly the tower node
         QueryResult res = index.findClosest(-0.4, 0.9, EdgeFilter.ALL_EDGES);
+        assertTrue(res.isValid());
         assertEquals(new GHPoint(-0.4, 0.9), res.getSnappedPoint());
         res = index.findClosest(-0.6, 1.6, EdgeFilter.ALL_EDGES);
+        assertTrue(res.isValid());
         assertEquals(new GHPoint(-0.6, 1.6), res.getSnappedPoint());
 
-        // query the edge (1,3)
+        // query the edge (1,3). The edge (0,4) has 27674 as distance
         res = index.findClosest(-0.2, 0.3, EdgeFilter.ALL_EDGES);
+        assertTrue(res.isValid());
+        assertEquals(26936, res.getQueryDistance(), 1);
         assertEquals(new GHPoint(-0.441624, 0.317259), res.getSnappedPoint());
     }
 
     @Test
     public void testInMemIndex()
     {
-        Graph graph = createTestGraph();
+        Graph graph = createTestGraph(encodingManager);
         LocationIndexTree index = createIndexNoPrepare(graph, 50000);
         index.prepareAlgo();
         LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
@@ -125,10 +127,17 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
 
         TIntHashSet set = new TIntHashSet();
         set.add(0);
-        assertEquals(set, index.findNetworkEntries(0.5, -0.5, 2));
+
+        TIntHashSet foundIds = new TIntHashSet();
+        index.findNetworkEntries(0.5, -0.5, foundIds, 0);
+        assertEquals(set, foundIds);
+
         set.add(1);
         set.add(2);
-        assertEquals(set, index.findNetworkEntries(-0.5, -0.9, 2));
+        foundIds.clear();
+        index.findNetworkEntries(-0.5, -0.9, foundIds, 0);
+        index.findNetworkEntries(-0.5, -0.9, foundIds, 1);
+        assertEquals(set, foundIds);
         assertEquals(2, index.findID(-0.5, -0.9));
 
         // The optimization if(dist > normedHalf) => feed nodeA or nodeB
@@ -179,13 +188,16 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         // For compaction see: https://github.com/graphhopper/graphhopper/blob/5594f7f9d98d932f365557dc37b4b2d3b7abf698/core/src/main/java/com/graphhopper/storage/index/Location2NodesNtree.java#L277
         TIntHashSet set = new TIntHashSet();
         set.addAll(Arrays.asList(28, 27, 26, 24, 23, 21, 19, 18, 16, 14, 6, 5, 4, 3, 2, 1, 0));
-        assertEquals(set, index.findNetworkEntries(49.950, 11.5732, 1));
+
+        TIntHashSet foundIds = new TIntHashSet();
+        index.findNetworkEntries(49.950, 11.5732, foundIds, 0);
+        assertEquals(set, foundIds);
     }
 
     @Test
     public void testInMemIndex3()
     {
-        LocationIndexTree index = createIndexNoPrepare(createTestGraph(), 10000);
+        LocationIndexTree index = createIndexNoPrepare(createTestGraph(encodingManager), 10000);
         index.prepareAlgo();
         LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
         assertEquals(Helper.createTList(64, 4), index.getEntries());
@@ -205,7 +217,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     @Test
     public void testReverseSpatialKey()
     {
-        LocationIndexTree index = createIndex(createTestGraph(), 200);
+        LocationIndexTree index = createIndex(createTestGraph(encodingManager), 200);
         assertEquals(Helper.createTList(64, 64, 64, 4), index.getEntries());
 
         // 10111110111110101010
@@ -290,7 +302,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     @Test
     public void testEdgeFilter()
     {
-        Graph graph = createTestGraph();
+        Graph graph = createTestGraph(encodingManager);
         LocationIndexTree index = createIndex(graph, -1);
 
         assertEquals(1, index.findClosest(-.6, -.6, EdgeFilter.ALL_EDGES).getClosestNode());
@@ -403,7 +415,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     @Test
     public void testRMin()
     {
-        Graph graph = createTestGraph();
+        Graph graph = createTestGraph(encodingManager);
         LocationIndexTree index = createIndex(graph, 50000);
 
         //query: 0.05 | -0.3
@@ -430,5 +442,57 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
          try {
          Thread.sleep(4000);
          } catch(InterruptedException ie) {}*/
+    }
+
+    @Test
+    public void testSearchWithFilter_issue318()
+    {
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
+
+        EncodingManager tmpEM = new EncodingManager(carEncoder, bikeEncoder);
+        Graph graph = createGHStorage(new RAMDirectory(), tmpEM, false);
+        NodeAccess na = graph.getNodeAccess();
+
+        // distance from point to point is roughly 1 km
+        int MAX = 5;
+        for (int latIdx = 0; latIdx < MAX; latIdx++)
+        {
+            for (int lonIdx = 0; lonIdx < MAX; lonIdx++)
+            {
+                int index = lonIdx * 10 + latIdx;
+                na.setNode(index, 0.01 * latIdx, 0.01 * lonIdx);
+                if (latIdx < MAX - 1)
+                    graph.edge(index, index + 1, 1000, true);
+
+                if (lonIdx < MAX - 1)
+                    graph.edge(index, index + 10, 1000, true);
+            }
+        }
+
+        // reduce access for bike to two edges only
+        AllEdgesIterator iter = graph.getAllEdges();
+        while (iter.next())
+        {
+            iter.setFlags(bikeEncoder.setAccess(iter.getFlags(), false, false));
+        }
+        for (EdgeIteratorState edge : Arrays.asList(GHUtility.getEdge(graph, 0, 1), GHUtility.getEdge(graph, 1, 2)))
+        {
+            edge.setFlags(bikeEncoder.setAccess(edge.getFlags(), true, true));
+        }
+
+        LocationIndexTree index = createIndexNoPrepare(graph, 500);
+        index.prepareIndex();
+        index.setMaxRegionSearch(8);
+
+        EdgeFilter carFilter = new DefaultEdgeFilter(carEncoder, true, true);
+        QueryResult qr = index.findClosest(0.03, 0.03, carFilter);
+        assertTrue(qr.isValid());
+        assertEquals(33, qr.getClosestNode());
+
+        EdgeFilter bikeFilter = new DefaultEdgeFilter(bikeEncoder, true, true);
+        qr = index.findClosest(0.03, 0.03, bikeFilter);
+        assertTrue(qr.isValid());
+        assertEquals(2, qr.getClosestNode());
     }
 }
