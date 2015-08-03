@@ -429,7 +429,10 @@ public class OSMReaderTest
     @Test
     public void testBarriers()
     {
-        GraphHopper hopper = new GraphHopperTest(fileBarriers).importOrLoad();
+        GraphHopper hopper = new GraphHopperTest(fileBarriers).
+                setMinNetworkSize(0, 0).
+                importOrLoad();
+
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(8, graph.getNodes());
 
@@ -464,7 +467,9 @@ public class OSMReaderTest
     @Test
     public void testBarriersOnTowerNodes()
     {
-        GraphHopper hopper = new GraphHopperTest(fileBarriers).importOrLoad();
+        GraphHopper hopper = new GraphHopperTest(fileBarriers).
+                setMinNetworkSize(0, 0).
+                importOrLoad();
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(8, graph.getNodes());
 
