@@ -40,7 +40,10 @@ public class FastestWeighting implements Weighting
     private final double maxSpeed;
 
     public FastestWeighting( FlagEncoder encoder, PMap pMap )
-    {        
+    {
+        if (!encoder.isRegistered())
+            throw new IllegalStateException("Make sure you add the FlagEncoder " + encoder + " to an EncodingManager before using it elsewhere");
+
         this.flagEncoder = encoder;
         heading_penalty = pMap.getDouble("heading_penalty", DEFAULT_HEADING_PENALTY);
         maxSpeed = encoder.getMaxSpeed() / SPEED_CONV;

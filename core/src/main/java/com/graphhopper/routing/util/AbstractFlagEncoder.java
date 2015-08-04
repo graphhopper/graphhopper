@@ -81,6 +81,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     private boolean blockFords = true;
     protected final int speedBits;
     protected final double speedFactor;
+    private boolean registered;
 
     public AbstractFlagEncoder( PMap properties )
     {
@@ -123,6 +124,17 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         acceptedRailways.add("obliterated");
     }
 
+    public void setRegistered( boolean registered )
+    {
+        this.registered = registered;
+    }
+
+    @Override
+    public boolean isRegistered()
+    {
+        return registered;
+    }
+
     /**
      * Should potential barriers block when no access limits are given?
      */
@@ -159,9 +171,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      */
     public int defineWayBits( int index, int shift )
     {
-        if (forwardBit != 0)
+        if (isRegistered())
             throw new IllegalStateException("You must not register a FlagEncoder (" + toString() + ") twice!");
 
+        setRegistered(true);
+        
         // define the first 2 speedBits in flags for routing
         forwardBit = 1L << shift;
         backwardBit = 2L << shift;

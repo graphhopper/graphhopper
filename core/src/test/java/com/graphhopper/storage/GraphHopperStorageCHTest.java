@@ -386,7 +386,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
         {
             assertFalse(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).isForward(tmpBike));
             assertTrue(false);
-        } catch (Exception ex)
+        } catch (AssertionError ex)
         {
         }
 
@@ -398,7 +398,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
         try
         {
             assertFalse(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).isBackward(tmpCar));
-        } catch (Exception ex)
+            assertTrue(false);
+        } catch (AssertionError ex)
         {
         }
     }

@@ -500,10 +500,10 @@ public class CarFlagEncoderTest
     public void testRegisterOnlyOnceAllowed()
     {
         CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
-        EncodingManager em = new EncodingManager(instance);
+        EncodingManager tmpEM = new EncodingManager(instance);
         try
         {
-            em = new EncodingManager(instance);
+            tmpEM = new EncodingManager(instance);
             assertTrue(false);
         } catch (IllegalStateException ex)
         {

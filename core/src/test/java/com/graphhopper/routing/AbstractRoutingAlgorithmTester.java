@@ -141,7 +141,7 @@ public abstract class AbstractRoutingAlgorithmTester
                 calcPath(0, 3);
         assertEquals(Helper.createTList(0, 4, 6, 7, 5, 3), p2.calcNodes());
         assertEquals(p2.toString(), 1261.7, p2.getDistance(), 0.1);
-        assertEquals(p2.toString(), 111442, p2.getMillis());
+        assertEquals(p2.toString(), 111442, p2.getTime());
     }
 
     // 0-1-2-3

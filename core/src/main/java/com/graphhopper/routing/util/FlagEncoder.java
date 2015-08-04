@@ -29,7 +29,8 @@ import com.graphhopper.util.Translation;
 public interface FlagEncoder extends TurnCostEncoder
 {
     /**
-     * @return the version of this FlagEncoder to enforce none-compatibility when new attributes are introduced
+     * @return the version of this FlagEncoder to enforce none-compatibility when new attributes are
+     * introduced
      */
     int getVersion();
 
@@ -73,7 +74,7 @@ public interface FlagEncoder extends TurnCostEncoder
      * @return created flags
      */
     long setProperties( double speed, boolean forward, boolean backward );
-    
+
     /**
      * Reports wether the edge is available in forward direction for a certain vehicle
      */
@@ -110,8 +111,8 @@ public interface FlagEncoder extends TurnCostEncoder
     long setLong( long flags, int key, long value );
 
     /**
-     * Returns arbitrary double value identified by the specified key. E.g. can be used to return the
-     * maximum width or height allowed for an edge.
+     * Returns arbitrary double value identified by the specified key. E.g. can be used to return
+     * the maximum width or height allowed for an edge.
      */
     double getDouble( long flags, int key );
 
@@ -126,4 +127,9 @@ public interface FlagEncoder extends TurnCostEncoder
      * @return additional cost or warning information for an instruction like ferry or road charges.
      */
     InstructionAnnotation getAnnotation( long flags, Translation tr );
+
+    /**
+     * @return true if already registered in an EncodingManager
+     */
+    boolean isRegistered();
 }
