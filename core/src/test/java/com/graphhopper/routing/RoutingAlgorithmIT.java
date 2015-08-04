@@ -711,11 +711,11 @@ public class RoutingAlgorithmIT
         if (withCh)
         {
             GraphHopperStorage storageCopy = new GraphBuilder(manager).
-                    set3D(ghStorage.getNodeAccess().is3D()).setCHGraph(true).
+                    set3D(ghStorage.getNodeAccess().is3D()).setCHGraph(weighting).
                     create();
             ghStorage.copyTo(storageCopy);            
             storageCopy.freeze();
-            final CHGraph graphCH = storageCopy.getGraph(CHGraph.class);
+            final CHGraph graphCH = storageCopy.getGraph(CHGraph.class, weighting);
             final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(
                     new GHDirectory("", DAType.RAM_INT), storageCopy, graphCH, encoder, weighting, tMode);
             prepareCH.doWork();

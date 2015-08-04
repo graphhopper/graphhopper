@@ -35,6 +35,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -693,9 +694,10 @@ public class GraphHopperTest
 
     private GraphHopper initSquareGraphInstance( boolean withCH )
     {
-        EncodingManager encodingManager = new EncodingManager("car");
-
-        GraphHopperStorage g = new GraphHopperStorage(withCH, new RAMDirectory(), encodingManager,
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        EncodingManager encodingManager = new EncodingManager(carEncoder);
+        Weighting weighting = new FastestWeighting(carEncoder);
+        GraphHopperStorage g = new GraphHopperStorage(Collections.singletonList(weighting), new RAMDirectory(), encodingManager,
                 false, new GraphExtension.NoOpExtension()).
                 create(20);
 
@@ -730,6 +732,7 @@ public class GraphHopperTest
         g.edge(7, 8, 110, true);
 
         instance = new GraphHopper().
+                putAlgorithmFactory(weighting, null).
                 setCHEnable(withCH).
                 setCHWeighting("fastest").
                 setEncodingManager(encodingManager);

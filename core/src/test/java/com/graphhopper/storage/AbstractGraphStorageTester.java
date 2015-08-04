@@ -68,7 +68,7 @@ public abstract class AbstractGraphStorageTester
 
     protected final GraphHopperStorage newRAMGHStorage()
     {
-        return new GraphHopperStorage(new RAMDirectory(), encodingManager, false);
+        return new GraphHopperStorage(new RAMDirectory(), encodingManager, false, new GraphExtension.NoOpExtension());
     }
 
     @Before
@@ -1032,7 +1032,7 @@ public abstract class AbstractGraphStorageTester
         list.add(new TmpCarFlagEncoder(29, 0.001, 0));
         list.add(new TmpCarFlagEncoder(29, 0.001, 0));
         EncodingManager manager = new EncodingManager(list, 8);
-        graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
+        graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
 
         EdgeIteratorState edge = graph.edge(0, 1);
         edge.setFlags(Long.MAX_VALUE / 3);
@@ -1040,7 +1040,7 @@ public abstract class AbstractGraphStorageTester
         assertEquals(Long.MAX_VALUE / 3, edge.getFlags());
         graph.close();
 
-        graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
+        graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
 
         edge = graph.edge(0, 1);
         edge.setFlags(list.get(0).setProperties(99.123, true, true));

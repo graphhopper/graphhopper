@@ -19,6 +19,7 @@ package com.graphhopper.util;
 
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FastestWeighting;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
 
@@ -116,7 +117,7 @@ public class GHUtilityTest
         Graph g = initUnsorted(createGraph());
         EdgeIteratorState eb = g.edge(0, 0, 11, true);
 
-        CHGraph lg = new GraphBuilder(encodingManager).chGraphCreate();
+        CHGraph lg = new GraphBuilder(encodingManager).chGraphCreate(new FastestWeighting(carEncoder));
         GHUtility.copyTo(g, lg);
 
         assertEquals(g.getAllEdges().getMaxId(), lg.getAllEdges().getMaxId());
@@ -129,7 +130,7 @@ public class GHUtilityTest
         EdgeIteratorState edgeState = g.edge(6, 5, 11, true);
         edgeState.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
 
-        GraphHopperStorage newStore = new GraphBuilder(encodingManager).setCHGraph(true).create();
+        GraphHopperStorage newStore = new GraphBuilder(encodingManager).setCHGraph(new FastestWeighting(carEncoder)).create();
         CHGraph lg = newStore.getGraph(CHGraph.class);
         GHUtility.copyTo(g, lg);
         newStore.freeze();

@@ -25,6 +25,8 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -44,7 +46,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     @Override
     public GraphHopperStorage newGHStorage( Directory dir, boolean is3D )
     {
-        return new GraphHopperStorage(true, dir, encodingManager, is3D, new GraphExtension.NoOpExtension());
+        return new GraphHopperStorage(Collections.singleton(new FastestWeighting(carEncoder)), dir, encodingManager, is3D, new GraphExtension.NoOpExtension());
     }
 
     @Test
@@ -208,11 +210,13 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     public void testGetWeightIfAdvancedEncoder()
     {
         FlagEncoder customEncoder = new Bike2WeightFlagEncoder();
-        GraphHopperStorage ghStorage = new GraphBuilder(new EncodingManager(customEncoder)).setCHGraph(true).create();
+        EncodingManager em = new EncodingManager(customEncoder);
+        FastestWeighting weighting = new FastestWeighting(customEncoder);
+        GraphHopperStorage ghStorage = new GraphBuilder(em).setCHGraph(weighting).create();
         ghStorage.edge(0, 2);
         ghStorage.freeze();
 
-        CHGraphImpl lg = (CHGraphImpl) ghStorage.getGraph(CHGraph.class);
+        CHGraphImpl lg = (CHGraphImpl) ghStorage.getGraph(CHGraph.class, weighting);
         CHEdgeIteratorState sc1 = lg.shortcut(0, 1);
         long flags = customEncoder.setProperties(10, false, true);
         sc1.setFlags(flags);
@@ -375,16 +379,14 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
         // assert car CH graph
         assertTrue(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).isForward(tmpCar));
         assertFalse(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).isBackward(tmpCar));
-        
+
         // TODO throw exception for wrong encoder
         // assertFalse(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).isForward(tmpBike));
         // assertFalse(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).isBackward(tmpBike));
-
         // assert bike CH graph
         // TODO throw exception for wrong encoder
         // assertFalse(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).isForward(tmpCar));
         // assertFalse(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).isBackward(tmpCar));
-        
         assertTrue(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).isForward(tmpBike));
         assertTrue(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).isBackward(tmpBike));
     }

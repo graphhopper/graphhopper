@@ -306,6 +306,7 @@ public class GraphHopper implements GraphHopperAPI
      * Disables the "CH-preparation" preparation only. Use only if you know what you do. To disable
      * the full usage of CH use setCHEnable(false) instead.
      */
+    @Deprecated
     public GraphHopper setDoPrepare( boolean doPrepare )
     {
         this.doPrepare = doPrepare;
@@ -560,11 +561,9 @@ public class GraphHopper implements GraphHopperAPI
         minNetworkSize = args.getInt("prepare.minNetworkSize", minNetworkSize);
         minOneWayNetworkSize = args.getInt("prepare.minOneWayNetworkSize", minOneWayNetworkSize);
 
-        // TODO deprecate, remove need in Measurement
         // prepare CH        
         doPrepare = args.getBool("prepare.doPrepare", doPrepare);
 
-        // TODO rename to chWeightings
         String tmpCHWeighting = args.get("prepare.chWeighting", "fastest");
         chEnabled = "fastest".equals(tmpCHWeighting) || "shortest".equals(tmpCHWeighting);
         if (chEnabled)
@@ -748,7 +747,7 @@ public class GraphHopper implements GraphHopperAPI
             initCHAlgoFactories();
             ghStorage = new GraphHopperStorage(algoFactories.keySet(), dir, encodingManager, hasElevation(), ext);
         } else
-            ghStorage = new GraphHopperStorage(Collections.<Weighting>emptyList(), dir, encodingManager, hasElevation(), ext);
+            ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), ext);
 
         ghStorage.setSegmentSize(defaultSegmentSize);
 
@@ -792,9 +791,12 @@ public class GraphHopper implements GraphHopperAPI
         return algoFactories.values();
     }
 
-    public void putAlgorithmFactory( Weighting weighting, RoutingAlgorithmFactory algoFactory )
+    public GraphHopper putAlgorithmFactory( Weighting weighting, RoutingAlgorithmFactory algoFactory )
     {
-        this.algoFactories.put(weighting, algoFactory);
+        RoutingAlgorithmFactory old = this.algoFactories.put(weighting, algoFactory);
+        if (old != null)
+            throw new IllegalStateException("Cannot overwrite old routing factory: " + old);
+        return this;
     }
 
     private void initCHAlgoFactories()
@@ -824,9 +826,7 @@ public class GraphHopper implements GraphHopperAPI
                     setNeighborUpdates(neighborUpdates).
                     setLogMessages(logMessages);
 
-            RoutingAlgorithmFactory old = this.algoFactories.put(weighting, tmpPrepareCH);
-            if (old != null)
-                throw new IllegalStateException("Old RoutingAlgorithmFactory cannot be implicitely overwritten by CH preparation " + old);
+            algoFactories.put(weighting, tmpPrepareCH);
         }
     }
 

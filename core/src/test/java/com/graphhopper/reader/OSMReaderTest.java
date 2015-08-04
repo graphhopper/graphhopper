@@ -84,8 +84,7 @@ public class OSMReaderTest
 
     GraphHopperStorage newGraph( String directory, EncodingManager encodingManager, boolean is3D, boolean turnRestrictionsImport )
     {
-        boolean ch = false;
-        return new GraphHopperStorage(ch, new RAMDirectory(directory, false), encodingManager, is3D,
+        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, is3D,
                 turnRestrictionsImport ? new TurnCostExtension() : new GraphExtension.NoOpExtension());
     }
 
@@ -486,7 +485,7 @@ public class OSMReaderTest
     public void testRelation()
     {
         EncodingManager manager = new EncodingManager("bike");
-        GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(), manager, false);
+        GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(), manager, false, new GraphExtension.NoOpExtension());
         OSMReader reader = new OSMReader(ghStorage).
                 setEncodingManager(manager);
         OSMRelation osmRel = new OSMRelation(1);

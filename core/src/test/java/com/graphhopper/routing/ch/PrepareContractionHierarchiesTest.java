@@ -47,7 +47,7 @@ public class PrepareContractionHierarchiesTest
 
     GraphHopperStorage createGHStorage()
     {
-        return new GraphBuilder(encodingManager).setCHGraph(true).create();
+        return new GraphBuilder(encodingManager).setCHGraph(weighting).create();
     }
 
     GraphHopperStorage createExampleGraph()

@@ -21,12 +21,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.MMapDirectory;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIterator;
@@ -60,7 +55,7 @@ public abstract class AbstractLocationIndexTester
 
     GraphHopperStorage createGHStorage( Directory dir, EncodingManager encodingManager, boolean is3D )
     {
-        return new GraphHopperStorage(dir, encodingManager, is3D).create(100);
+        return new GraphHopperStorage(dir, encodingManager, is3D, new GraphExtension.NoOpExtension()).create(100);
     }
 
     public boolean hasEdgeSupport()

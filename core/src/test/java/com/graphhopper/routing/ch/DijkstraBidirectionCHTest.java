@@ -23,6 +23,9 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.Helper;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 
 import static org.junit.Assert.*;
 
@@ -36,55 +39,39 @@ import org.junit.Test;
  */
 public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
 {
-    // matrix graph is expensive to create and to prepare!
-    private static GraphHopperStorage preparedMatrixGraph;
-
     @Override
-    public GraphHopperStorage getMatrixGraph()
+    protected CHGraph getGraph( GraphHopperStorage ghStorage, Weighting weighting )
     {
-        if (preparedMatrixGraph == null)
-        {
-            GraphHopperStorage ghStorage = createGHStorage(false);
-            getMatrixAlikeGraph().copyTo(ghStorage);
-            createFactory(ghStorage, defaultOpts);
-            preparedMatrixGraph = ghStorage;
-        }
-        return preparedMatrixGraph;
+        return ghStorage.getGraph(CHGraph.class, weighting);
     }
 
     @Override
-    protected CHGraph getGraph( GraphHopperStorage ghStorage )
+    protected GraphHopperStorage createGHStorage( EncodingManager em, Collection<Weighting> weightings, boolean is3D )
     {
-        return ghStorage.getGraph(CHGraph.class);
-    }
-
-    @Override
-    protected GraphHopperStorage createGHStorage( EncodingManager em, boolean is3D )
-    {
-        return new GraphBuilder(em).set3D(is3D).setCHGraph(true).create();
+        return new GraphHopperStorage(weightings, new RAMDirectory(),
+                em, is3D, new GraphExtension.NoOpExtension()).
+                create(1000);
     }
 
     @Override
     public RoutingAlgorithmFactory createFactory( GraphHopperStorage ghStorage, AlgorithmOptions opts )
     {
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
-                ghStorage, getGraph(ghStorage),
+                ghStorage, getGraph(ghStorage, opts.getWeighting()),
                 opts.getFlagEncoder(), opts.getWeighting(), TraversalMode.NODE_BASED);
-        // hack: prepare matrixGraph only once
-        if (ghStorage != preparedMatrixGraph)
-            ch.doWork();
-
+        ch.doWork();
         return ch;
     }
 
     @Test
     public void testPathRecursiveUnpacking()
     {
-        // use an encoder where it is possible to store 2 weights per edge
+        // use an encoder where it is possible to store 2 weights per edge        
         FlagEncoder encoder = new Bike2WeightFlagEncoder();
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
         EncodingManager em = new EncodingManager(encoder);
-        GraphHopperStorage ghStorage = createGHStorage(em, false);
-        CHGraphImpl g2 = (CHGraphImpl) ghStorage.getGraph(CHGraph.class);
+        GraphHopperStorage ghStorage = createGHStorage(em, Collections.<Weighting>singleton(weighting), false);
+        CHGraphImpl g2 = (CHGraphImpl) ghStorage.getGraph(CHGraph.class, weighting);
         g2.edge(0, 1, 1, true);
         EdgeIteratorState iter1_1 = g2.edge(0, 2, 1.4, false);
         EdgeIteratorState iter1_2 = g2.edge(2, 5, 1.4, false);
@@ -117,7 +104,6 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         g2.setLevel(7, 6);
         g2.setLevel(0, 7);
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
         AlgorithmOptions opts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting);
         Path p = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
                 ghStorage, g2, encoder, weighting, TraversalMode.NODE_BASED).
@@ -128,38 +114,18 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         assertEquals(4.2, p.getDistance(), 1e-5);
     }
 
-    @Override
-    public void testCalcFootPath()
-    {
-        // disable car encoder and move foot to first position => workaround as CH does not allow multiple vehicles
-        FlagEncoder tmpFootEncoder = footEncoder;
-        FlagEncoder tmpCarEncoder = carEncoder;
-        carEncoder = new CarFlagEncoder()
-        {
-            @Override
-            public long setProperties( double speed, boolean forward, boolean backward )
-            {
-                return 0;
-            }
-        };
-
-        footEncoder = new FootFlagEncoder();
-        new EncodingManager(footEncoder);
-
-        super.testCalcFootPath();
-        footEncoder = tmpFootEncoder;
-        carEncoder = tmpCarEncoder;
-    }
-
     @Test
     public void testBaseGraph()
     {
         CarFlagEncoder carFE = new CarFlagEncoder();
-        GraphHopperStorage ghStorage = createGHStorage(new EncodingManager(carFE), false);
+        AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carFE).
+                weighting(new ShortestWeighting(carFE)).build();
+        GraphHopperStorage ghStorage = createGHStorage(new EncodingManager(carFE),
+                Collections.singleton(opts.getWeighting()), false);
         initDirectedAndDiffSpeed(ghStorage, carFE);
 
-        // do CH preparation for car
-        createFactory(ghStorage, defaultOpts);
+        // do CH preparation for car        
+        createFactory(ghStorage, opts);
 
         // use base graph for solving normal Dijkstra
         Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(ghStorage, defaultOpts).calcPath(0, 3);
@@ -171,19 +137,20 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     @Test
     public void testBaseGraphMultipleVehicles()
     {
-        GraphHopperStorage g = createGHStorage(encodingManager, false);
-        initFootVsCar(g);
-
         AlgorithmOptions footOptions = AlgorithmOptions.start().flagEncoder(footEncoder).
                 weighting(new FastestWeighting(footEncoder)).build();
         AlgorithmOptions carOptions = AlgorithmOptions.start().flagEncoder(carEncoder).
                 weighting(new FastestWeighting(carEncoder)).build();
 
+        GraphHopperStorage g = createGHStorage(encodingManager,
+                Arrays.asList(footOptions.getWeighting(), carOptions.getWeighting()), false);
+        initFootVsCar(g);
+
         // do CH preparation for car
         RoutingAlgorithmFactory contractedFactory = createFactory(g, carOptions);
 
         // use contracted graph
-        Path p1 = contractedFactory.createAlgo(getGraph(g), carOptions).calcPath(0, 7);
+        Path p1 = contractedFactory.createAlgo(getGraph(g, carOptions.getWeighting()), carOptions).calcPath(0, 7);
         assertEquals(Helper.createTList(0, 4, 6, 7), p1.calcNodes());
         assertEquals(p1.toString(), 15000, p1.getDistance(), 1e-6);
 
@@ -198,5 +165,11 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         assertEquals(p3.toString(), 17000, p3.getDistance(), 1e-6);
         assertEquals(p3.toString(), 12240 * 1000, p3.getTime());
         assertEquals(Helper.createTList(0, 4, 5, 7), p3.calcNodes());
+    }
+
+    @Override
+    public void testRekeyBugOfIntBinHeap()
+    {
+        super.testRekeyBugOfIntBinHeap(); //To change body of generated methods, choose Tools | Templates.
     }
 }

@@ -45,21 +45,12 @@ public final class GraphHopperStorage implements GraphStorage, Graph
     // same flush order etc
     private final Collection<CHGraphImpl> chGraphs = new ArrayList<CHGraphImpl>(5);
 
-    public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation )
+    public GraphHopperStorage( Directory dir, EncodingManager encodingManager, boolean withElevation, GraphExtension extendedStorage )
     {
-        this(Collections.<Weighting>emptyList(), dir, encodingManager, withElevation, new GraphExtension.NoOpExtension());
+        this(Collections.<Weighting>emptyList(), dir, encodingManager, withElevation, extendedStorage);
     }
 
-    /**
-     * This is a simplicity constructor to avoid knowledge of the CH Weighting before, but can be
-     * used for one CH graph only.
-     */
-    public GraphHopperStorage( boolean chEnable, Directory dir, EncodingManager encodingManager, boolean withElevation, GraphExtension extendedStorage )
-    {
-        this(Collections.singleton((Weighting) new SingletonWeighting(encodingManager)), dir, encodingManager, withElevation, extendedStorage);
-    }
-
-    public GraphHopperStorage( Collection<Weighting> chWeightings, Directory dir, final EncodingManager encodingManager,
+    public GraphHopperStorage( Collection<? extends Weighting> chWeightings, Directory dir, final EncodingManager encodingManager,
                                boolean withElevation, GraphExtension extendedStorage )
     {
         if (extendedStorage == null)
@@ -101,7 +92,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph
      * This method returns the routing graph for the specified weighting, could be potentially
      * filled with shortcuts.
      */
-    public <T extends Graph> T getGraph( Class<T> clazz, Weighting w )
+    public <T extends Graph> T getGraph( Class<T> clazz, Weighting weighting )
     {
         if (clazz.equals(Graph.class))
             return (T) baseGraph;
@@ -109,22 +100,19 @@ public final class GraphHopperStorage implements GraphStorage, Graph
         if (chGraphs.isEmpty())
             throw new IllegalStateException("Cannot find graph implementation for " + clazz);
 
-        if (w == null)
-            throw new IllegalStateException("Cannot find CH graph with empty weighting");
-
-        if (w instanceof SingletonWeighting)
-            throw new IllegalStateException("Use the getGraph method without the weighting parameter if you used the simple constructor of GraphHopperStorage");
+        if (weighting == null)
+            throw new IllegalStateException("Cannot find CHGraph with null weighting");
 
         List<Weighting> existing = new ArrayList<Weighting>();
         for (CHGraphImpl cg : chGraphs)
         {
-            if (cg.getWeighting() == w)
+            if (cg.getWeighting() == weighting)
                 return (T) cg;
 
             existing.add(cg.getWeighting());
         }
 
-        throw new IllegalStateException("Cannot find CH graph for specified weighting: " + w + ", existing:" + existing);
+        throw new IllegalStateException("Cannot find CHGraph for specified weighting: " + weighting + ", existing:" + existing);
     }
 
     public <T extends Graph> T getGraph( Class<T> clazz )
@@ -135,10 +123,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph
         if (chGraphs.isEmpty())
             throw new IllegalStateException("Cannot find graph implementation for " + clazz);
 
-        CHGraphImpl cg = chGraphs.iterator().next();
-        if (!(cg.getWeighting() instanceof SingletonWeighting))
-            throw new IllegalStateException("Use the getGraph method with the weighting parameter if you didn't used the simple constructor of GraphHopperStorage");
-
+        CHGraph cg = chGraphs.iterator().next();
         return (T) cg;
     }
 
@@ -453,19 +438,5 @@ public final class GraphHopperStorage implements GraphStorage, Graph
     public final GraphExtension getExtension()
     {
         return baseGraph.getExtension();
-    }
-
-    private static class SingletonWeighting extends FastestWeighting
-    {
-        public SingletonWeighting( EncodingManager encodingManager )
-        {
-            super(encodingManager.fetchEdgeEncoders().get(0));
-        }
-
-        @Override
-        public String toString()
-        {
-            return "SINGLETON|" + super.toString();
-        }
     }
 }

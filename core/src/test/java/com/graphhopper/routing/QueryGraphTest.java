@@ -28,6 +28,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.map.TIntObjectMap;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import org.junit.After;
 import org.junit.Test;
@@ -50,7 +51,7 @@ public class QueryGraphTest
     {
         carEncoder = new CarFlagEncoder();
         encodingManager = new EncodingManager(carEncoder);
-        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
+        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false, new GraphExtension.NoOpExtension()).create(100);
     }
 
     @After
@@ -271,7 +272,7 @@ public class QueryGraphTest
     public void testUseMeanElevation()
     {
         g.close();
-        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, true).create(100);
+        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension()).create(100);
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 0, 0);
         na.setNode(1, 0, 0.0001, 20);
@@ -513,7 +514,7 @@ public class QueryGraphTest
         TurnCostExtension turnExt = new TurnCostExtension();
         FlagEncoder encoder = new CarFlagEncoder(5, 5, 15);
 
-        GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(false, new RAMDirectory(),
+        GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(),
                 new EncodingManager(encoder), false, turnExt).
                 create(100);
         NodeAccess na = graphWithTurnCosts.getNodeAccess();

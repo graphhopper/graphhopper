@@ -348,8 +348,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         @Override
         public boolean isBackward( FlagEncoder encoder )
         {
+            assert encoder == weighting.getFlagEncoder() : encoder + " vs. " + weighting.getFlagEncoder();
             if (isShortcut())
-                // TODO assert correct encoder
                 return (getDirectFlags() & PrepareEncoder.getScBwdDir()) != 0;
 
             return encoder.isBackward(getDirectFlags());
@@ -358,8 +358,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         @Override
         public boolean isForward( FlagEncoder encoder )
         {
+            assert encoder == weighting.getFlagEncoder() : encoder + " vs. " + weighting.getFlagEncoder();
             if (isShortcut())
-                // TODO assert correct encoder
                 return (getDirectFlags() & PrepareEncoder.getScFwdDir()) != 0;
 
             return encoder.isForward(getDirectFlags());
@@ -507,8 +507,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         @Override
         public boolean isBackward( FlagEncoder encoder )
         {
+            assert encoder == weighting.getFlagEncoder() : encoder + " vs. " + weighting.getFlagEncoder();
             if (isShortcut())
-                // TODO assert correct encoder
                 return (getDirectFlags() & PrepareEncoder.getScBwdDir()) != 0;
 
             return encoder.isBackward(getDirectFlags());
@@ -517,8 +517,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         @Override
         public boolean isForward( FlagEncoder encoder )
         {
+            assert encoder == weighting.getFlagEncoder() : encoder + " vs. " + weighting.getFlagEncoder();
             if (isShortcut())
-                // TODO assert correct encoder
                 return (getDirectFlags() & PrepareEncoder.getScFwdDir()) != 0;
 
             return encoder.isForward(getDirectFlags());
@@ -601,9 +601,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
 
     final double getWeight( CommonEdgeIterator edge )
     {
-        // Note: code duplication here but getWeight is very performance critical!
-        // we need to avoid reverseFlags call for getFlags and no need for 64bit
-        // TODO use cached flags from base class, merge into master
+        // no need for reverseFlags call (shortcut has identical weight if both dies) and also no need for 64bit        
         long flags32bit = edge.getDirectFlags();
         double weight = (flags32bit >>> 2) / WEIGHT_FACTOR;
         if (weight >= MAX_WEIGHT)
