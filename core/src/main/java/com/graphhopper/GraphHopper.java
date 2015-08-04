@@ -796,9 +796,7 @@ public class GraphHopper implements GraphHopperAPI
 
     public GraphHopper putAlgorithmFactory( Weighting weighting, RoutingAlgorithmFactory algoFactory )
     {
-        RoutingAlgorithmFactory old = this.algoFactories.put(weighting, algoFactory);
-        if (old != null)
-            throw new IllegalStateException("Cannot overwrite old routing factory: " + old);
+        algoFactories.put(weighting, algoFactory);        
         return this;
     }
 
