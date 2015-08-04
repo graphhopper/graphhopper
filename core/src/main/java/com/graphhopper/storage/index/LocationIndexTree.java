@@ -787,11 +787,14 @@ public class LocationIndexTree implements LocationIndex
         if (isClosed())
             throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
 
-        TIntHashSet storedNetworkEntryIds = new TIntHashSet();
+        TIntHashSet allCollectedEntryIds = new TIntHashSet();
         final QueryResult closestMatch = new QueryResult(queryLat, queryLon);
         for (int iteration = 0; iteration < maxRegionSearch; iteration++)
         {
+            TIntHashSet storedNetworkEntryIds = new TIntHashSet();
             boolean earlyFinish = findNetworkEntries(queryLat, queryLon, storedNetworkEntryIds, iteration);
+            storedNetworkEntryIds.removeAll(allCollectedEntryIds);
+            allCollectedEntryIds.addAll(storedNetworkEntryIds);
 
             // clone storedIds to avoid interference with forEach
             final GHBitSet checkBitset = new GHTBitSet(new TIntHashSet(storedNetworkEntryIds));
