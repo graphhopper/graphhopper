@@ -72,7 +72,7 @@ public class MainActivity extends Activity
     private volatile boolean prepareInProgress = false;
     private volatile boolean shortestPathRunning = false;
     private String currentArea = "berlin";
-    private String fileListURL = "https://graphhopper.com/public/maps/0.5/";
+    private String fileListURL = "https://graphhopper.com/public/maps/0.6/";
     private String prefixURL = fileListURL;
     private String downloadURL;
     private File mapsFolder;
