@@ -28,7 +28,7 @@ import java.util.Properties;
 
 /**
  * Stores command line options in a map. The capitalization of the key is ignored.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class CmdArgs extends PMap
@@ -115,7 +115,7 @@ public class CmdArgs extends PMap
 
     /**
      * Command line configuration overwrites the ones in the config file.
-     * <p/>
+     * <p>
      * @return a new CmdArgs object if necessary.
      */
     public static CmdArgs readFromConfigAndMerge( CmdArgs args, String configKey, String configSysAttr )

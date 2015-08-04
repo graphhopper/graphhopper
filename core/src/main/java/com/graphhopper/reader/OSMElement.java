@@ -28,7 +28,7 @@ import java.util.Set;
 
 /**
  * Base class for all OSM objects
- * <p/>
+ * <p>
  * @author Nop
  * @author Peter
  */

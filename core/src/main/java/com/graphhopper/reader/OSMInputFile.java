@@ -34,7 +34,7 @@ import java.util.zip.ZipInputStream;
 
 /**
  * A readable OSM file.
- * <p/>
+ * <p>
  * @author Nop
  */
 public class OSMInputFile implements Sink, Closeable

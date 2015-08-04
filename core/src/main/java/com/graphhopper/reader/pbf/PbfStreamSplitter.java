@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 /**
  * Parses a PBF data stream and extracts the raw data of each blob in sequence until the end of the
  * stream is reached.
- * <p/>
+ * <p>
  * @author Brett Henderson
  */
 public class PbfStreamSplitter implements Iterator<PbfRawBlob>
@@ -26,7 +26,7 @@ public class PbfStreamSplitter implements Iterator<PbfRawBlob>
 
     /**
      * Creates a new instance.
-     * <p/>
+     * <p>
      * @param pbfStream The PBF data stream to be parsed.
      */
     public PbfStreamSplitter( DataInputStream pbfStream )

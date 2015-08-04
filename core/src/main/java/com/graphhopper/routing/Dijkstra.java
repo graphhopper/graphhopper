@@ -33,7 +33,7 @@ import com.graphhopper.util.EdgeIterator;
 /**
  * Implements a single source shortest path algorithm
  * http://en.wikipedia.org/wiki/Dijkstra's_algorithm
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class Dijkstra extends AbstractRoutingAlgorithm

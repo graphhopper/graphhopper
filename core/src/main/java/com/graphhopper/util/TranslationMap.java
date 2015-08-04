@@ -24,7 +24,7 @@ import java.util.Map.Entry;
 /**
  * A class which manages the translations in-memory. See here for more information:
  * ./docs/core/translations.md
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class TranslationMap

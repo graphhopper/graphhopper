@@ -20,7 +20,7 @@ package com.graphhopper.coll;
 /**
  * Wrapper interface of an integer container for different implementations like OpenBitset, BitSet,
  * ...
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public interface GHBitSet
@@ -35,7 +35,7 @@ public interface GHBitSet
 
     /**
      * Searches for a greater or equal entry and returns it.
-     * <p/>
+     * <p>
      * @return -1 if nothing found
      */
     int next( int index );

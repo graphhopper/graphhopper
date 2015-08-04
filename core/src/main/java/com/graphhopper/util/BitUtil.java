@@ -21,17 +21,12 @@ import java.nio.ByteOrder;
 
 /**
  * Examples for BIG endianess (default for Java and computer network).
- * <p/>
- * byte array: 0=>0100 0001 , 1=>1110 1011, 2=>...
- * <p/>
- * long: highest=>0100 0001 , 1110 1011, ..., lowest=> ...
- * <p/>
- * bits to string 0100 0001 , 1110 1011, ...
- * <p/>
- * LITTLE endianess (default for GraphHopper and most microprocessors)
- * <p/>
- * byte array ..., 6=>1110 1011, 7=>0100 0001
- * <p/>
+ * <pre>
+ * 0=&gt;0100 0001
+ * 1=&gt;1110 1011
+ * 2=&gt;...
+ * </pre> LITTLE endianess is default for GraphHopper and most microprocessors.
+ * <p>
  * @author Peter Karich
  */
 public abstract class BitUtil
@@ -221,7 +216,7 @@ public abstract class BitUtil
 
     /**
      * Higher order bits comes first in the returned string.
-     * <p/>
+     * <p>
      * @param bits how many bits should be returned.
      */
     public String toBitString( long value, int bits )
@@ -248,7 +243,7 @@ public abstract class BitUtil
     /**
      * Reverses the bits in the specified long value and it removes the remaining higher bits. See
      * also http://graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
-     * <p/>
+     * <p>
      * @param maxBits the maximum number of recognized bits for reversal
      */
     public final long reverse( long value, int maxBits )

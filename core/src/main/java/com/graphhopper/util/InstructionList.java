@@ -132,7 +132,7 @@ public class InstructionList implements Iterable<Instruction>
     /**
      * @return This method returns a list of gpx entries where the time (in millis) is relative to
      * the first which is 0.
-     * <p/>
+     * <p>
      */
     public List<GPXEntry> createGPXList()
     {
@@ -162,7 +162,7 @@ public class InstructionList implements Iterable<Instruction>
     /**
      * Creates the standard GPX string out of the points according to the schema found here:
      * https://graphhopper.com/public/schema/gpx-1.1.xsd
-     * <p/>
+     * <p>
      * @return string to be stored as gpx file
      */
     public String createGPX()
@@ -271,7 +271,7 @@ public class InstructionList implements Iterable<Instruction>
     /**
      * This method is useful for navigation devices to find the next instruction for the specified
      * coordinate (e.g. the current position).
-     * <p/>
+     * <p>
      * @param maxDistance the maximum acceptable distance to the instruction (in meter)
      * @return the next Instruction or null if too far away.
      */

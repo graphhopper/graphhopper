@@ -36,9 +36,9 @@ import com.graphhopper.util.EdgeIterator;
 /**
  * This class implements the A* algorithm according to
  * http://en.wikipedia.org/wiki/A*_search_algorithm
- * <p/>
+ * <p>
  * Different distance calculations can be used via setApproximation.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class AStar extends AbstractRoutingAlgorithm

@@ -15,8 +15,8 @@ import java.util.Stack;
  * runs into stack overflow pretty quickly. Used for finding strongly connected components to detect
  * dead-ends.
  * <p>
- * @see http://en.wikipedia.org/wiki/Tarjan's_strongly_connected_components_algorithm
- * @see http://www.timl.id.au/?p=327 and http://homepages.ecs.vuw.ac.nz/~djp/files/P05.pdf
+ * See http://en.wikipedia.org/wiki/Tarjan's_strongly_connected_components_algorithm. See
+ * http://www.timl.id.au/?p=327 and http://homepages.ecs.vuw.ac.nz/~djp/files/P05.pdf
  */
 public class TarjansStronglyConnectedComponentsAlgorithm
 {
@@ -122,7 +122,7 @@ public class TarjansStronglyConnectedComponentsAlgorithm
                     component.add(node);
                     onStack.clear(node);
                 }
-                component.add(start);                
+                component.add(start);
                 component.trimToSize();
                 onStack.clear(start);
 

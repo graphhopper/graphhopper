@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Converts PBF block data into decoded entities ready to be passed into an Osmosis pipeline. This
  * class is designed to be passed into a pool of worker threads to allow multi-threaded decoding.
- * <p/>
+ * <p>
  * @author Brett Henderson
  */
 public class PbfBlobDecoder implements Runnable
@@ -35,7 +35,7 @@ public class PbfBlobDecoder implements Runnable
 
     /**
      * Creates a new instance.
-     * <p/>
+     * <p>
      * @param blobType The type of blob.
      * @param rawBlob The raw data of the blob.
      * @param listener The listener for receiving decoding results.

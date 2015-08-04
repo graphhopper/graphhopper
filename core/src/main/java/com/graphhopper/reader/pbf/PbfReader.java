@@ -8,7 +8,7 @@ import java.util.concurrent.Executors;
 
 /**
  * An OSM data source reading from a PBF file. The entire contents of the file are read.
- * <p/>
+ * <p>
  * @author Brett Henderson
  */
 public class PbfReader implements Runnable
@@ -19,7 +19,7 @@ public class PbfReader implements Runnable
 
     /**
      * Creates a new instance.
-     * <p/>
+     * <p>
      * @param in The file to read.
      * @param workers The number of worker threads for decoding PBF blocks.
      */

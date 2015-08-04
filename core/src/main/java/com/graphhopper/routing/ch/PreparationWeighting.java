@@ -25,7 +25,7 @@ import com.graphhopper.util.CHEdgeIteratorState;
 
 /**
  * Used in CH preparation and therefor assumed that all edges are of type CHEdgeIteratorState
- * <p/>
+ * <p>
  * @author Peter Karich
  * @see PrepareContractionHierarchies
  */

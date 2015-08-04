@@ -35,7 +35,7 @@ import gnu.trove.list.array.TIntArrayList;
  * Removes nodes which are not part of the largest network. Ie. mostly nodes with no edges at all
  * but also small subnetworks which are nearly always bugs in OSM data or indicate otherwise
  * disconnected areas e.g. via barriers - see #86.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class PrepareRoutingSubnetworks
@@ -215,7 +215,7 @@ public class PrepareRoutingSubnetworks
      * example, small areas like parking lots are sometimes connected to the whole network through a
      * one-way road. This is clearly an error - but is causes the routing to fail when a point gets
      * connected to this small area. This routine removes all these networks from the graph.
-     * <p/>
+     * <p>
      * @return number of removed edges
      */
     int removeDeadEndUnvisitedNetworks( final PrepEdgeFilter bothFilter )

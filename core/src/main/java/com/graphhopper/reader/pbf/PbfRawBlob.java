@@ -4,7 +4,7 @@ package com.graphhopper.reader.pbf;
 /**
  * Represents a single piece of raw blob data extracted from the PBF stream. It has not yet been
  * decoded into a PBF blob object.
- * <p/>
+ * <p>
  * @author Brett Henderson
  */
 public class PbfRawBlob
@@ -14,7 +14,7 @@ public class PbfRawBlob
 
     /**
      * Creates a new instance.
-     * <p/>
+     * <p>
      * @param type The type of data represented by this blob. This corresponds to the type field in
      * the blob header.
      * @param data The raw contents of the blob in binary undecoded form.
@@ -28,7 +28,7 @@ public class PbfRawBlob
     /**
      * Gets the type of data represented by this blob. This corresponds to the type field in the
      * blob header.
-     * <p/>
+     * <p>
      * @return The blob type.
      */
     public String getType()
@@ -38,7 +38,7 @@ public class PbfRawBlob
 
     /**
      * Gets the raw contents of the blob in binary undecoded form.
-     * <p/>
+     * <p>
      * @return The raw blob data.
      */
     public byte[] getData()

@@ -23,7 +23,7 @@ import java.util.List;
 
 /**
  * Interface to convert from points to place names or node ids.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public interface ReverseGeocoding

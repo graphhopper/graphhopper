@@ -49,7 +49,7 @@ import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
  * Servlet to use GraphHopper in a remote client application like mobile or browser. Note: If type
  * is json it returns the points in GeoJson format (longitude,latitude) unlike the format "lat,lon"
  * used otherwise. See the full API response format in docs/web/api-doc.md
- * <p/>
+ * <p>
  *
  * @author Peter Karich
  */

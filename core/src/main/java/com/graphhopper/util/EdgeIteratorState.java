@@ -21,7 +21,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 
 /**
  * This interface represents an edge and is one possible state of an EdgeIterator.
- * <p/>
+ * <p>
  * @author Peter Karich
  * @see EdgeIterator
  * @see EdgeExplorer
@@ -40,7 +40,7 @@ public interface EdgeIteratorState
      * Returns the node used to instantiate the EdgeIterator. Example: "EdgeIterator iter =
      * graph.getEdges(baseNode)". Often only used for convenience reasons. Do not confuse this with
      * a <i>source node</i> of a directed edge.
-     * <p/>
+     * <p>
      * @return the requested node itself
      * @see EdgeIterator
      */
@@ -57,7 +57,7 @@ public interface EdgeIteratorState
      * and are between tower nodes (which are used for routing), they are necessary to have a more
      * exact geometry. Updates to the returned list are not reflected in the graph, for that you've
      * to use setWayGeometry.
-     * <p/>
+     * <p>
      * @param mode can be <ul> <li>0 = only pillar nodes, no tower nodes</li> <li>1 = inclusive the
      * base tower node only</li> <li>2 = inclusive the adjacent tower node only</li> <li>3 =
      * inclusive the base and adjacent tower node</li> </ul>
@@ -116,7 +116,7 @@ public interface EdgeIteratorState
 
     /**
      * Clones this EdgeIteratorState.
-     * <p/>
+     * <p>
      * @param reverse if true a detached edgeState with reversed properties is created where base
      * and adjacent nodes, flags and wayGeometry are in reversed order. See #162 for more details
      * about why we need the new reverse parameter.
@@ -125,7 +125,7 @@ public interface EdgeIteratorState
 
     /**
      * Copies the properties of this edge into the specified edge. Does not change nodes!
-     * <p/>
+     * <p>
      * @return the specified edge e
      */
     EdgeIteratorState copyPropertiesTo( EdgeIteratorState e );

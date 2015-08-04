@@ -26,7 +26,7 @@ import javax.xml.stream.XMLStreamReader;
 
 /**
  * Represents an OSM Way
- * <p/>
+ * <p>
  * @author Nop
  */
 public class OSMWay extends OSMElement

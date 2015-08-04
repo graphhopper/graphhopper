@@ -41,10 +41,10 @@ import org.slf4j.LoggerFactory;
 /**
  * A rough graphical user interface for visualizing the OSM graph. Mainly for debugging algorithms
  * and spatial datastructures.
- * <p/>
+ * <p>
  * Use the project at https://github.com/graphhopper/graphhopper-web for a
  * better/faster/userfriendly/... alternative!
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class MiniGraphUI

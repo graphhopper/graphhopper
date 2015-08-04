@@ -23,7 +23,7 @@ import com.graphhopper.util.Translation;
 /**
  * This class provides methods to define how a value (like speed or direction) converts to a flag
  * (currently an integer value), which is stored in an edge .
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public interface FlagEncoder extends TurnCostEncoder
@@ -46,7 +46,7 @@ public interface FlagEncoder extends TurnCostEncoder
 
     /**
      * Sets the speed in km/h.
-     * <p/>
+     * <p>
      * @return modified setProperties
      */
     long setSpeed( long flags, double speed );
@@ -63,14 +63,14 @@ public interface FlagEncoder extends TurnCostEncoder
 
     /**
      * Sets the access of the edge.
-     * <p/>
+     * <p>
      * @return modified flags
      */
     long setAccess( long flags, boolean forward, boolean backward );
 
     /**
      * Sets speed and access properties.
-     * <p/>
+     * <p>
      * @return created flags
      */
     long setProperties( double speed, boolean forward, boolean backward );

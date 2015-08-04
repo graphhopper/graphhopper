@@ -21,7 +21,7 @@ import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Class used to traverse a graph.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public interface EdgeFilter

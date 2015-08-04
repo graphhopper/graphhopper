@@ -26,7 +26,7 @@ import java.util.TreeMap;
 /**
  * A priority queue implemented by a treemap to allow fast key update. Or should we use a standard
  * b-tree?
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class GHSortedCollection

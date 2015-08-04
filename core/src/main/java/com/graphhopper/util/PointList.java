@@ -28,7 +28,7 @@ import java.util.List;
 
 /**
  * Slim list to store several points (without the need for a point object).
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class PointList implements Iterable<GHPoint3D>, PointAccess

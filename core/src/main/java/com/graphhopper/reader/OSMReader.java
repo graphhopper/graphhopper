@@ -55,24 +55,24 @@ import java.util.*;
 /**
  * This class parses an OSM xml or pbf file and creates a graph from it. It does so in a two phase
  * parsing processes in order to reduce memory usage compared to a single parsing processing.
- * <p/>
+ * <p>
  * 1. a) Reads ways from OSM file and stores all associated node ids in osmNodeIdToIndexMap. If a
  * node occurs once it is a pillar node and if more it is a tower node, otherwise
  * osmNodeIdToIndexMap returns EMPTY.
- * <p/>
+ * <p>
  * 1. b) Reads relations from OSM file. In case that the relation is a route relation, it stores
  * specific relation attributes required for routing into osmWayIdToRouteWeigthMap for all the ways
  * of the relation.
- * <p/>
+ * <p>
  * 2.a) Reads nodes from OSM file and stores lat+lon information either into the intermediate
  * datastructure for the pillar nodes (pillarLats/pillarLons) or, if a tower node, directly into the
  * graphStorage via setLatitude/setLongitude. It can also happen that a pillar node needs to be
  * transformed into a tower node e.g. via barriers or different speed values for one way.
- * <p/>
+ * <p>
  * 2.b) Reads ways OSM file and creates edges while calculating the speed etc from the OSM tags.
  * When creating an edge the pillar node information from the intermediate datastructure will be
  * stored in the way geometry of that edge.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class OSMReader implements DataReader
@@ -249,7 +249,7 @@ public class OSMReader implements DataReader
     /**
      * Filter ways but do not analyze properties wayNodes will be filled with participating node
      * ids.
-     * <p/>
+     * <p>
      * @return true the current xml entry is a way entry and has nodes
      */
     boolean filterWay( OSMWay item )
@@ -904,7 +904,7 @@ public class OSMReader implements DataReader
 
     /**
      * Creates an OSM turn relation out of an unspecified OSM relation
-     * <p/>
+     * <p>
      * @return the OSM turn relation, <code>null</code>, if unsupported turn relation
      */
     OSMTurnRelation createTurnRelation( OSMRelation relation )

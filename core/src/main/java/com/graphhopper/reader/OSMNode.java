@@ -24,7 +24,7 @@ import javax.xml.stream.XMLStreamReader;
 
 /**
  * Represents an OSM Node
- * <p/>
+ * <p>
  * @author Nop
  */
 public class OSMNode extends OSMElement

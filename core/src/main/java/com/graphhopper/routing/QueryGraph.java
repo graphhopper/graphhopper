@@ -38,7 +38,7 @@ import java.util.*;
  * A class which is used to query the underlying graph with real GPS points. It does so by
  * introducing virtual nodes and edges. It is lightweight in order to be created every time a new
  * query comes in, which makes the behaviour thread safe.
- * <p/>
+ * <p>
  *
  * @author Peter Karich
  */

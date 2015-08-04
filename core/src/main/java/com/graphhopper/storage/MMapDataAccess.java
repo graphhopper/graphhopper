@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * This is a data structure which uses the operating system to synchronize between disc and memory.
  * Use {@link SynchedDAWrapper} if you intent to use this from multiple threads!
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 @NotThreadSafe
@@ -394,7 +394,7 @@ public class MMapDataAccess extends AbstractDataAccess
     /**
      * Cleans up MappedByteBuffers. Be sure you bring the segments list in a consistent state
      * afterwards.
-     * <p/>
+     * <p>
      * @param from inclusive
      * @param to exclusive
      */

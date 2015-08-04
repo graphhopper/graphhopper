@@ -25,7 +25,7 @@ import com.graphhopper.util.Helper;
 
 /**
  * A simple factory creating normal algorithms (RoutingAlgorithm) without preparation.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory

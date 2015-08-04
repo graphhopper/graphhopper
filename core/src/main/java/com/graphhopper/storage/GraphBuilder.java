@@ -24,7 +24,7 @@ import java.util.Collections;
 
 /**
  * For now this is just a helper class to quickly create a GraphStorage.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class GraphBuilder

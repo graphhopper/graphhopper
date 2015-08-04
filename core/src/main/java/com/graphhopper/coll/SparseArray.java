@@ -19,7 +19,7 @@ import com.graphhopper.util.Helper;
 
 /**
  * Copied from Android project: android.util.SparseArray.java
- * <p/>
+ * <p>
  * SparseArrays map integers to Objects. Unlike a normal array of Objects, there can be gaps in the
  * indices. It is intended to be more efficient than using a HashMap to map Integers to Objects.
  */

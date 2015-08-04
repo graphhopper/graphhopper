@@ -37,7 +37,7 @@ import com.graphhopper.util.shapes.BBox;
 /**
  * Abstract test class to be extended for implementations of the Graph interface. Graphs
  * implementing GraphStorage should extend GraphStorageTest instead.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public abstract class AbstractGraphStorageTester
@@ -283,7 +283,7 @@ public abstract class AbstractGraphStorageTester
         graph.edge(0, 2, 10, true);
         assertEquals(3, graph.getNodes());
         Helper.close((Closeable) graph);
-        
+
         graph = createGHStorage();
         assertEquals(0, graph.getNodes());
     }

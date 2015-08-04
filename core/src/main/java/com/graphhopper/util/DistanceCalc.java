@@ -23,9 +23,9 @@ import com.graphhopper.util.shapes.GHPoint;
 /**
  * Calculates the distance of two points or one point and an edge on earth via haversine formula.
  * Allows subclasses to implement less or more precise calculations.
- * <p/>
+ * <p>
  * See http://en.wikipedia.org/wiki/Haversine_formula
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public interface DistanceCalc
@@ -69,7 +69,7 @@ public interface DistanceCalc
      *  .
      *    a-------b
      * </pre>
-     * <p/>
+     * <p>
      * @return true for case 1 which is "on edge" or the special case of 90° to the edge
      */
     boolean validEdgeDistance( double r_lat_deg, double r_lon_deg,
@@ -78,7 +78,7 @@ public interface DistanceCalc
 
     /**
      * This method calculates the distance from r to edge (a, b) where the crossing point is c
-     * <p/>
+     * <p>
      * @return the distance in normalized meter
      */
     double calcNormalizedEdgeDistance( double r_lat_deg, double r_lon_deg,

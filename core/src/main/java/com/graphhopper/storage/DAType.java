@@ -19,7 +19,7 @@ package com.graphhopper.storage;
 
 /**
  * Defines how a DataAccess object is created.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class DAType

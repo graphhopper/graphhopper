@@ -30,7 +30,7 @@ import com.graphhopper.util.PMap;
 
 /**
  * Specifies the settings for mountain biking
- * <p/>
+ * <p>
  * @author ratrun
  * @author Peter Karich
  */

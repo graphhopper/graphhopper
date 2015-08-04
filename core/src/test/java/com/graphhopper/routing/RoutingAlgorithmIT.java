@@ -47,7 +47,7 @@ import org.junit.Test;
 
 /**
  * Try algorithms, indices and graph storages with real data
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class RoutingAlgorithmIT
@@ -694,7 +694,7 @@ public class RoutingAlgorithmIT
 
     static List<AlgoHelperEntry> createAlgos( GraphHopperStorage ghStorage,
                                               LocationIndex idx, final FlagEncoder encoder, boolean withCh,
-                                              final TraversalMode tMode, final Weighting weighting, 
+                                              final TraversalMode tMode, final Weighting weighting,
                                               final EncodingManager manager )
     {
         List<AlgoHelperEntry> prepare = new ArrayList<AlgoHelperEntry>();
@@ -713,7 +713,7 @@ public class RoutingAlgorithmIT
             GraphHopperStorage storageCopy = new GraphBuilder(manager).
                     set3D(ghStorage.getNodeAccess().is3D()).setCHGraph(weighting).
                     create();
-            ghStorage.copyTo(storageCopy);            
+            ghStorage.copyTo(storageCopy);
             storageCopy.freeze();
             final CHGraph graphCH = storageCopy.getGraph(CHGraph.class, weighting);
             final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(

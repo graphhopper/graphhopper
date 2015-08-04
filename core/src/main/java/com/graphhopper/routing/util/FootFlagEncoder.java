@@ -30,7 +30,7 @@ import java.util.*;
 
 /**
  * Defines bit layout for pedestrians (speed, access, surface, ...).
- * <p/>
+ * <p>
  * @author Peter Karich
  * @author Nop
  * @author Karl Hübner
@@ -170,7 +170,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
     /**
      * Foot flag encoder does not provide any turn cost / restrictions
-     * <p/>
+     * <p>
      * @return <code>false</code>
      */
     @Override
@@ -181,7 +181,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
     /**
      * Foot flag encoder does not provide any turn cost / restrictions
-     * <p/>
+     * <p>
      * @return 0
      */
     @Override
@@ -198,7 +198,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
     /**
      * Some ways are okay but not separate for pedestrians.
-     * <p/>
+     * <p>
      */
     @Override
     public long acceptWay( OSMWay way )

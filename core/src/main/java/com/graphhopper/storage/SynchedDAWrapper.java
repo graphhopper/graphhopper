@@ -19,7 +19,7 @@ package com.graphhopper.storage;
 
 /**
  * A simple wrapper to synchronize every DataAccess object.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 class SynchedDAWrapper implements DataAccess

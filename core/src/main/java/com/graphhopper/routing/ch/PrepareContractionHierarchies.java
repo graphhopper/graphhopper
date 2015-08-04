@@ -36,13 +36,13 @@ import org.slf4j.LoggerFactory;
 /**
  * This class prepares the graph for a bidirectional algorithm supporting contraction hierarchies
  * ie. an algorithm returned by createAlgo.
- * <p/>
+ * <p>
  * There are several description of contraction hierarchies available. The following is one of the
  * more detailed: http://web.cs.du.edu/~sturtevant/papers/highlevelpathfinding.pdf
- * <p/>
+ * <p>
  * The only difference is that we use two skipped edges instead of one skipped node for faster
  * unpacking.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class PrepareContractionHierarchies extends AbstractAlgoPreparation implements RoutingAlgorithmFactory
@@ -104,7 +104,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     /**
      * The higher the values are the longer the preparation takes but the less shortcuts are
      * produced.
-     * <p/>
+     * <p>
      * @param periodicUpdates specifies how often periodic updates will happen. Use something less
      * than 10.
      */

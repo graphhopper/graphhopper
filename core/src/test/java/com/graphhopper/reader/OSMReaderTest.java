@@ -51,7 +51,7 @@ import java.util.*;
 
 /**
  * Tests the OSMReader with the normal helper initialized.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class OSMReaderTest

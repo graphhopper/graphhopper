@@ -24,7 +24,7 @@ import java.util.ArrayList;
 
 /**
  * Represents an OSM Relation
- * <p/>
+ * <p>
  * @author Nop
  */
 public class OSMRelation extends OSMElement

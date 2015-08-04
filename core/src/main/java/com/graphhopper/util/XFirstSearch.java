@@ -22,7 +22,7 @@ import com.graphhopper.coll.GHBitSetImpl;
 
 /**
  * This abstract class defines commonalities for BFS and DFS
- * <p/>
+ * <p>
  * @author Jan Sölter
  */
 public abstract class XFirstSearch

@@ -30,7 +30,7 @@ public class WeightingMap extends PMap
 
     /**
      * Convenient constructor if only one parameter is provided
-     * <p/>
+     * <p>
      */
     public WeightingMap( String weighting )
     {

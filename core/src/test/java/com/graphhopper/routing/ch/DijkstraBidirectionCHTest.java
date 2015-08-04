@@ -34,7 +34,7 @@ import org.junit.Test;
 /**
  * Tests if a graph optimized by contraction hierarchies returns the same results as a none
  * optimized one. Additionally fine grained path unpacking is tested.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester

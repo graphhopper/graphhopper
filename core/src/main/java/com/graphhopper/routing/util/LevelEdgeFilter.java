@@ -23,7 +23,7 @@ import com.graphhopper.util.CHEdgeIteratorState;
 
 /**
  * Only certain nodes are accepted and therefor the others are ignored.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class LevelEdgeFilter implements EdgeFilter

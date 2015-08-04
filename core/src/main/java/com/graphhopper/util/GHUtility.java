@@ -33,13 +33,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * A helper class to avoid cluttering the Graph interface with all the common methods. Most of the
  * methods are useful for unit tests or debugging only.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class GHUtility
 {
     /**
-     * @throws could throw exception if uncatched problems like index out of bounds etc
+     * This method could throw exception if uncatched problems like index out of bounds etc
      */
     public static List<String> getProblems( Graph g )
     {

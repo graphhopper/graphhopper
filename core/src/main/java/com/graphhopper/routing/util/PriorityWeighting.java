@@ -23,7 +23,7 @@ import com.graphhopper.util.PMap;
 
 /**
  * Special weighting for (motor)bike
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class PriorityWeighting extends FastestWeighting

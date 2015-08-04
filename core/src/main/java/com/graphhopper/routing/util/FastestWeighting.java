@@ -23,7 +23,7 @@ import com.graphhopper.util.PMap;
 /**
  * Calculates the fastest route with the specified vehicle (VehicleEncoder). Calculates the weight
  * in seconds.
- * <p/>
+ * <p>
  *
  * @author Peter Karich
  */

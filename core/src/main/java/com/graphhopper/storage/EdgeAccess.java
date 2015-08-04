@@ -205,7 +205,7 @@ abstract class EdgeAccess
     /**
      * This method disconnects the specified edge from the list of edges of the specified node. It
      * does not release the freed space to be reused.
-     * <p/>
+     * <p>
      * @param edgeToUpdatePointer if it is negative then the nextEdgeId will be saved to refToEdges
      * of nodes
      */

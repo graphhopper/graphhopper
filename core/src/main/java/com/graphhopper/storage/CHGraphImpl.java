@@ -32,7 +32,7 @@ import com.graphhopper.util.shapes.BBox;
 /**
  * A Graph implementation necessary for Contraction Hierarchies. This class enables the storage to
  * hold the level of a node and shortcut edges per edge.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class CHGraphImpl implements CHGraph, Storable<CHGraph>
@@ -440,9 +440,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
     }
 
     /**
-     * Disconnects the edges (higher->lower node) via the specified edgeState pointing from lower to
+     * Disconnects the edges (higher to lower node) via the specified edgeState pointing from lower to
      * higher node.
-     * <p/>
+     * <p>
      * @param edgeState the edge from lower to higher
      */
     public void disconnect( CHEdgeExplorer explorer, EdgeIteratorState edgeState )

@@ -25,7 +25,7 @@ import com.graphhopper.util.PointAccess;
 
 /**
  * This class helps to store lat,lon,ele for every node parsed in OSMReader
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class PillarInfo implements PointAccess

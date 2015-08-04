@@ -22,7 +22,7 @@ import com.graphhopper.util.shapes.GHPoint;
 /**
  * Defines the mapping between a one dimensional 'number' and a point (lat, lon) which is limited to
  * a defined bounds.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public interface KeyAlgo

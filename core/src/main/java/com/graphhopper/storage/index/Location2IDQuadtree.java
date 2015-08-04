@@ -37,11 +37,11 @@ import org.slf4j.LoggerFactory;
  * This class implements map matching and returns a node index from lat,lon coordinate. This
  * implementation is the a very memory efficient representation for areas with lots of node and
  * edges, but lacks precision. No edge distances are measured.
- * <p/>
+ * <p>
  * @author Peter Karich
  * @see LocationIndexTree which is more precise but more complicated and also slightly slower
  * implementation of LocationIndex.
- * <p/>
+ * <p>
  */
 class Location2IDQuadtree implements LocationIndex
 {
@@ -83,7 +83,7 @@ class Location2IDQuadtree implements LocationIndex
     /**
      * Loads the index from disc if exists. Make sure you are using the identical graph which was
      * used while flusing this index.
-     * <p/>
+     * <p>
      * @return if loading from file was successfully.
      */
     @Override

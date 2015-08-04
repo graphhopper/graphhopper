@@ -30,7 +30,7 @@ import java.util.*;
 
 /**
  * Defines bit layout of bicycles (not motorcycles) for speed, access and relations (network).
- * <p/>
+ * <p>
  * @author Peter Karich
  * @author Nop
  * @author ratrun
@@ -465,7 +465,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     /**
      * In this method we prefer cycleways or roads with designated bike access and avoid big roads
      * or roads with trams or pedestrian.
-     * <p/>
+     * <p>
      * @return new priority based on priorityFromRelation and on the tags in OSMWay.
      */
     protected int handlePriority( OSMWay way, int priorityFromRelation )

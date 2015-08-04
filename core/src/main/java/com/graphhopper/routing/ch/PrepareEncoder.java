@@ -20,7 +20,7 @@ package com.graphhopper.routing.ch;
 
 /**
  * The flags are stored differently for shortcuts: just one weight and the direction flags.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class PrepareEncoder
@@ -48,7 +48,7 @@ public class PrepareEncoder
     /**
      * Returns true if flags1 can be overwritten in the edge by flags2 without restricting or
      * changing the directions of flags1.
-     * <p/>
+     * <p>
      * @return true if flags2 is enabled in both directions or if both flags are pointing into the
      * same direction.
      */

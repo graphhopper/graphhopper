@@ -22,7 +22,7 @@ import gnu.trove.set.hash.TIntHashSet;
 
 /**
  * Implements the bitset interface via a trove THashSet. More efficient for a few entries.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class GHTBitSet implements GHBitSet

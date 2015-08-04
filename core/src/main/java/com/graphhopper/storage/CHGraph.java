@@ -26,7 +26,7 @@ import com.graphhopper.util.CHEdgeIteratorState;
  * Extended graph interface which supports Contraction Hierarchies. Ie. storing and retrieving the
  * levels for a node and creating shortcuts, which are additional 'artificial' edges to speedup
  * traversal in certain cases.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public interface CHGraph extends Graph
