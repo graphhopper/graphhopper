@@ -41,7 +41,7 @@ public class DefaultEdgeFilter implements EdgeFilter
         this.encoder = encoder;
         this.in = in;
         this.out = out;
-    }    
+    }
 
     @Override
     public final boolean accept( EdgeIteratorState iter )

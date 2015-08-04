@@ -131,7 +131,7 @@ public class PrepareRoutingSubnetworksTest
         assertEquals(Arrays.<String>asList(), GHUtility.getProblems(g));
 
         components = instance.findSubnetworks(filter);
-        assertEquals(1, components.size());        
+        assertEquals(1, components.size());
     }
 
     @Test
@@ -166,6 +166,7 @@ public class PrepareRoutingSubnetworksTest
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em2.fetchEdgeEncoders());
 
         EdgeExplorer edgeExplorer = g.createEdgeExplorer();
+        assertFalse(instance.detectNodeRemovedForAllEncoders(edgeExplorer, 4));
         assertFalse(instance.detectNodeRemovedForAllEncoders(edgeExplorer, 5));
         assertFalse(instance.detectNodeRemovedForAllEncoders(edgeExplorer, 6));
 
@@ -186,8 +187,6 @@ public class PrepareRoutingSubnetworksTest
     @Test
     public void testRemoveSubnetworkWhenMultipleVehicles()
     {
-        // do not remove because of two vehicles with different subnetworks
-        // TODO create different access for bike and car
         FlagEncoder carEncoder = new CarFlagEncoder();
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
         EncodingManager em2 = new EncodingManager(carEncoder, bikeEncoder);
@@ -197,12 +196,20 @@ public class PrepareRoutingSubnetworksTest
         instance.setMinNetworkSize(5);
         instance.doWork();
         g.optimize();
+        // remove nothing because of two vehicles with different subnetworks
         assertEquals(9, g.getNodes());
 
-        EdgeExplorer explorer = g.createEdgeExplorer(new DefaultEdgeFilter(carEncoder));
-        assertEquals(GHUtility.asSet(7, 2, 1), GHUtility.getNeighbors(explorer.setBaseNode(3)));
-
-        // TODO remove only nodes which are removed for both vehicles        
+        EdgeExplorer carExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(carEncoder));
+        assertEquals(GHUtility.asSet(7, 2, 1), GHUtility.getNeighbors(carExplorer.setBaseNode(3)));
+        EdgeExplorer bikeExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(bikeEncoder));
+        assertEquals(GHUtility.asSet(7, 2, 1, 4), GHUtility.getNeighbors(bikeExplorer.setBaseNode(3)));
+        
+        GHUtility.getEdge(g, 3, 4).setFlags(carEncoder.setProperties(10, false, false) | bikeEncoder.setProperties(5, false, false));
+        instance = new PrepareRoutingSubnetworks(g, em2.fetchEdgeEncoders());
+        instance.setMinNetworkSize(5);
+        instance.doWork();
+        g.optimize();
+        assertEquals(6, g.getNodes());
     }
 
     GraphHopperStorage createDeadEndUnvisitedNetworkStorage( EncodingManager em )

@@ -211,17 +211,16 @@ public class PrepareRoutingSubnetworks
     }
 
     /**
-     * Clean small networks that will be never be visited by this explorer See #86 for example,
-     * small areas like parking lots are sometimes connected to the whole network through a one-way
-     * road. This is clearly an error - but is causes the routing to fail when a point gets
-     * connected to this small area. This routine removes all these points from the graph.
+     * This method removes networks that will be never be visited by this filter. See #235 for
+     * example, small areas like parking lots are sometimes connected to the whole network through a
+     * one-way road. This is clearly an error - but is causes the routing to fail when a point gets
+     * connected to this small area. This routine removes all these networks from the graph.
      * <p/>
      * @return number of removed edges
      */
     int removeDeadEndUnvisitedNetworks( final PrepEdgeFilter bothFilter )
     {
-        // Partition g into strongly connected components using Tarjan's algorithm.
-
+        // partition ghStorage into strongly connected components using Tarjan's algorithm
         final EdgeFilter outFilter = new DefaultEdgeFilter(bothFilter.getEncoder(), false, true);
         List<TIntArrayList> components = new TarjansStronglyConnectedComponentsAlgorithm(ghStorage, outFilter).
                 findComponents();

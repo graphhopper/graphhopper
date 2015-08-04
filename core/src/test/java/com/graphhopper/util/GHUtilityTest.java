@@ -78,7 +78,6 @@ public class GHUtilityTest
     {
         Graph g = initUnsorted(createGraph());
         Graph newG = GHUtility.sortDFS(g, createGraph());
-        // TODO does not handle subnetworks
         assertEquals(g.getNodes(), newG.getNodes());
         NodeAccess na = newG.getNodeAccess();
         assertEquals(0, na.getLatitude(0), 1e-4); // 0
