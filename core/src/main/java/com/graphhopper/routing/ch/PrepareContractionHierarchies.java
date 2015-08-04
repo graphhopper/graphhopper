@@ -94,15 +94,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         this.prepareGraph = (CHGraphImpl) chGraph;
         this.traversalMode = traversalMode;
         this.prepareFlagEncoder = encoder;
-        long scFwdDir = encoder.setAccess(0, true, false);
         levelFilter = new LevelEdgeFilter(prepareGraph);
 
-        // shortcuts store weight in flags where we assume bit 1 and 2 are used for access restriction
-        if ((scFwdDir & PrepareEncoder.getScFwdDir()) == 0)
-            throw new IllegalArgumentException("Enabling the speed-up mode is currently only supported for the first vehicle.");
-
         prepareWeighting = new PreparationWeighting(weighting);
-        originalEdges = dir.find("original_edges");
+        originalEdges = dir.find("original_edges_" + prepareGraph.weightingToFileName(weighting));
         originalEdges.create(1000);
     }
 
@@ -614,7 +609,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 if (Double.isNaN(existingDirectWeight))
                     throw new IllegalStateException("Weighting should never return NaN values"
                             + ", in:" + getCoords(incomingEdges, prepareGraph) + ", out:" + getCoords(outgoingEdges, prepareGraph)
-                            + ", dist:" + outgoingEdges.getDistance() + ", speed:" + prepareFlagEncoder.getSpeed(outgoingEdges.getFlags()));
+                            + ", dist:" + outgoingEdges.getDistance());
 
                 if (Double.isInfinite(existingDirectWeight))
                     continue;
@@ -664,8 +659,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             CHEdgeIterator iter = vehicleOutExplorer.setBaseNode(sc.from);
             while (iter.next())
             {
-                if (iter.isShortcut() && iter.getAdjNode() == sc.to
-                        && PrepareEncoder.canBeOverwritten(iter.getFlags(), sc.flags))
+                if (iter.isShortcut() && iter.getAdjNode() == sc.to && iter.canBeOverwritten(sc.flags))
                 {
                     if (sc.weight >= prepareWeighting.calcWeight(iter, false, EdgeIterator.NO_EDGE))
                         continue NEXT_SC;

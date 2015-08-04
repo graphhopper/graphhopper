@@ -20,9 +20,13 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.BaseGraph.AllEdgeIterator;
+import com.graphhopper.storage.BaseGraph.CommonEdgeIterator;
 import com.graphhopper.storage.BaseGraph.EdgeIterable;
 import com.graphhopper.util.*;
+import static com.graphhopper.util.Helper.nf;
 import com.graphhopper.util.shapes.BBox;
 
 /**
@@ -51,12 +55,18 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
     final long scDirMask = PrepareEncoder.getScDirMask();
     private final BaseGraph baseGraph;
     private final EdgeAccess chEdgeAccess;
+    private final Weighting weighting;
 
-    CHGraphImpl( String name, Directory dir, final BaseGraph baseGraph )
+    CHGraphImpl( Weighting w, Directory dir, final BaseGraph baseGraph )
     {
+        if (w == null)
+            throw new IllegalStateException("Weighting for CHGraph cannot be null");
+
+        this.weighting = w;
         this.baseGraph = baseGraph;
-        this.nodesCH = dir.find("nodes_ch");
-        this.shortcuts = dir.find("shortcuts");
+        final String name = weightingToFileName(w);
+        this.nodesCH = dir.find("nodes_ch_" + name);
+        this.shortcuts = dir.find("shortcuts_" + name);
         this.chEdgeAccess = new EdgeAccess(shortcuts, baseGraph.bitUtil)
         {
             @Override
@@ -116,9 +126,22 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
             @Override
             public String toString()
             {
-                return "ch edge access";
+                return "ch edge access " + name;
             }
         };
+    }
+
+    public final Weighting getWeighting()
+    {
+        return weighting;
+    }
+
+    /**
+     * Replaces all characters which are not numbers, characters or underscores with underscores
+     */
+    public String weightingToFileName( Weighting w )
+    {
+        return w.toString().toLowerCase().replaceAll("\\W+", "_");
     }
 
     @Override
@@ -260,7 +283,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
 
     String toDetailsString()
     {
-        return "shortcuts:" + shortcutCount + ", nodesCH: -(" + nodesCH.getCapacity() / Helper.MB + ")";
+        return toString() + ", shortcuts:" + nf(shortcutCount) + ", nodesCH:(" + nodesCH.getCapacity() / Helper.MB + "MB)";
     }
 
     class CHEdgeIteratorImpl extends EdgeIterable implements CHEdgeExplorer, CHEdgeIterator
@@ -268,6 +291,13 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         public CHEdgeIteratorImpl( BaseGraph baseGraph, EdgeAccess edgeAccess, EdgeFilter filter )
         {
             super(baseGraph, edgeAccess, filter);
+        }
+
+        @Override
+        public final long getFlags()
+        {
+            checkShortcut(false, "getFlags");
+            return super.getDirectFlags();
         }
 
         @Override
@@ -284,7 +314,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         @Override
         public final void setSkippedEdges( int edge1, int edge2 )
         {
-            assert isShortcut() : "cannot access skipped edges if not a shortcut";
+            checkShortcut(true, "setSkippedEdges");
             if (EdgeIterator.Edge.isValid(edge1) != EdgeIterator.Edge.isValid(edge2))
             {
                 throw new IllegalStateException("Skipped edges of a shortcut needs "
@@ -297,14 +327,14 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         @Override
         public final int getSkippedEdge1()
         {
-            assert isShortcut() : "cannot access skipped edge if not a shortcut";
+            checkShortcut(true, "getSkippedEdge1");
             return shortcuts.getInt(edgePointer + S_SKIP_EDGE1);
         }
 
         @Override
         public final int getSkippedEdge2()
         {
-            assert isShortcut() : "cannot access skipped edge if not a shortcut";
+            checkShortcut(true, "getSkippedEdge2");
             return shortcuts.getInt(edgePointer + S_SKIP_EDGE2);
         }
 
@@ -316,8 +346,29 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         }
 
         @Override
+        public boolean isBackward( FlagEncoder encoder )
+        {
+            assert encoder == weighting.getFlagEncoder() : encoder + " vs. " + weighting.getFlagEncoder();
+            if (isShortcut())
+                return (getDirectFlags() & PrepareEncoder.getScBwdDir()) != 0;
+
+            return encoder.isBackward(getDirectFlags());
+        }
+
+        @Override
+        public boolean isForward( FlagEncoder encoder )
+        {
+            assert encoder == weighting.getFlagEncoder() : encoder + " vs. " + weighting.getFlagEncoder();
+            if (isShortcut())
+                return (getDirectFlags() & PrepareEncoder.getScFwdDir()) != 0;
+
+            return encoder.isForward(getDirectFlags());
+        }
+
+        @Override
         public final CHEdgeIteratorState setWeight( double weight )
         {
+            checkShortcut(true, "setWeight");
             CHGraphImpl.this.setWeight(this, weight);
             return this;
         }
@@ -325,6 +376,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         @Override
         public final double getWeight()
         {
+            checkShortcut(true, "getWeight");
             return CHGraphImpl.this.getWeight(this);
         }
 
@@ -339,36 +391,51 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
                 edgeAccess = chEdgeAccess;
         }
 
+        public void checkShortcut( boolean shouldBeShortcut, String methodName )
+        {
+            if (isShortcut())
+            {
+                if (!shouldBeShortcut)
+                    throw new IllegalStateException("Cannot call " + methodName + " on shortcut " + getEdge());
+            } else
+            {
+                if (shouldBeShortcut)
+                    throw new IllegalStateException("Method " + methodName + " only for shortcuts " + getEdge());
+            }
+        }
+
         @Override
         public final String getName()
         {
-            if (isShortcut())
-                throw new IllegalStateException("Cannot call getName on shortcut " + getEdge());
+            checkShortcut(false, "getName");
             return super.getName();
         }
 
         @Override
         public final EdgeIteratorState setName( String name )
         {
-            if (isShortcut())
-                throw new IllegalStateException("Cannot call setName on shortcut " + getEdge());
+            checkShortcut(false, "setName");
             return super.setName(name);
         }
 
         @Override
         public final PointList fetchWayGeometry( int mode )
         {
-            if (isShortcut())
-                throw new IllegalStateException("Cannot call fetchWayGeometry on shortcut " + getEdge());
+            checkShortcut(false, "fetchWayGeometry");
             return super.fetchWayGeometry(mode);
         }
 
         @Override
         public final EdgeIteratorState setWayGeometry( PointList list )
         {
-            if (isShortcut())
-                throw new IllegalStateException("Cannot call setWayGeometry on shortcut " + getEdge());
+            checkShortcut(false, "setWayGeometry");
             return super.setWayGeometry(list);
+        }
+
+        @Override
+        public boolean canBeOverwritten( long flags )
+        {
+            return PrepareEncoder.canBeOverwritten(getDirectFlags(), flags);
         }
     }
 
@@ -430,6 +497,42 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         }
 
         @Override
+        public int getEdge()
+        {
+            if (isShortcut())
+                return baseGraph.edgeCount + edgeId;
+            return super.getEdge();
+        }
+
+        @Override
+        public boolean isBackward( FlagEncoder encoder )
+        {
+            assert encoder == weighting.getFlagEncoder() : encoder + " vs. " + weighting.getFlagEncoder();
+            if (isShortcut())
+                return (getDirectFlags() & PrepareEncoder.getScBwdDir()) != 0;
+
+            return encoder.isBackward(getDirectFlags());
+        }
+
+        @Override
+        public boolean isForward( FlagEncoder encoder )
+        {
+            assert encoder == weighting.getFlagEncoder() : encoder + " vs. " + weighting.getFlagEncoder();
+            if (isShortcut())
+                return (getDirectFlags() & PrepareEncoder.getScFwdDir()) != 0;
+
+            return encoder.isForward(getDirectFlags());
+        }
+
+        @Override
+        public final long getFlags()
+        {
+            if (isShortcut())
+                throw new IllegalStateException("Shortcut should not need to return raw flags!");
+            return getDirectFlags();
+        }
+
+        @Override
         public int getMaxId()
         {
             return super.getMaxId() + shortcutCount;
@@ -475,18 +578,14 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         }
 
         @Override
-        public int getEdge()
+        public boolean canBeOverwritten( long flags )
         {
-            if (isShortcut())
-                return baseGraph.edgeCount + edgeId;
-            return super.getEdge();
+            return PrepareEncoder.canBeOverwritten(getDirectFlags(), flags);
         }
     }
 
-    final void setWeight( CHEdgeIteratorState edge, double weight )
+    final void setWeight( CommonEdgeIterator edge, double weight )
     {
-        if (!edge.isShortcut())
-            throw new IllegalStateException("setWeight is only available for shortcuts");
         if (weight < 0)
             throw new IllegalArgumentException("weight cannot be negative but was " + weight);
 
@@ -496,18 +595,14 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         else
             weightLong = ((long) (weight * WEIGHT_FACTOR)) << 2;
 
-        long accessFlags = edge.getFlags() & scDirMask;
+        long accessFlags = edge.getDirectFlags() & scDirMask;
         edge.setFlags(weightLong | accessFlags);
     }
 
-    final double getWeight( CHEdgeIteratorState edge )
+    final double getWeight( CommonEdgeIterator edge )
     {
-        if (!edge.isShortcut())
-            throw new IllegalStateException("getWeight is only available for shortcuts");
-
-        // Note: code duplication here but getWeight is very performance critical!
-        // we need to avoid reverseFlags call for getFlags and no need for 64bit
-        int flags32bit = chEdgeAccess.edges.getInt(((CHEdgeIteratorImpl) edge).edgePointer + chEdgeAccess.E_FLAGS);
+        // no need for reverseFlags call (shortcut has identical weight if both dies) and also no need for 64bit        
+        long flags32bit = edge.getDirectFlags();
         double weight = (flags32bit >>> 2) / WEIGHT_FACTOR;
         if (weight >= MAX_WEIGHT)
             return Double.POSITIVE_INFINITY;
@@ -618,5 +713,11 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
     public long getCapacity()
     {
         return nodesCH.getCapacity() + shortcuts.getCapacity();
+    }
+
+    @Override
+    public String toString()
+    {
+        return "CHGraph|" + getWeighting().toString();
     }
 }

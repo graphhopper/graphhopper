@@ -18,6 +18,9 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.Weighting;
+import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * For now this is just a helper class to quickly create a GraphStorage.
@@ -30,9 +33,9 @@ public class GraphBuilder
     private String location;
     private boolean mmap;
     private boolean store;
-    private boolean chGraph;
     private boolean elevation;
     private long byteCapacity = 100;
+    private Weighting singleCHWeighting;
 
     public GraphBuilder( EncodingManager encodingManager )
     {
@@ -40,13 +43,11 @@ public class GraphBuilder
     }
 
     /**
-     * If true builder will create a CHGraph
-     * <p/>
-     * @see CHGraph
+     * This method enables creating a CHGraph with the specified weighting.
      */
-    public GraphBuilder setCHGraph( boolean isCHGraph )
+    public GraphBuilder setCHGraph( Weighting singleCHWeighting )
     {
-        this.chGraph = isCHGraph;
+        this.singleCHWeighting = singleCHWeighting;
         return this;
     }
 
@@ -88,9 +89,9 @@ public class GraphBuilder
     /**
      * Creates a CHGraph
      */
-    public CHGraph chGraphCreate()
+    public CHGraph chGraphCreate( Weighting singleCHWeighting )
     {
-        return setCHGraph(true).create().getGraph(CHGraph.class);
+        return setCHGraph(singleCHWeighting).create().getGraph(CHGraph.class, singleCHWeighting);
     }
 
     /**
@@ -107,10 +108,10 @@ public class GraphBuilder
             dir = new RAMDirectory(location, store);
 
         GraphHopperStorage graph;
-        if (encodingManager.needsTurnCostsSupport())
-            graph = new GraphHopperStorage(false, dir, encodingManager, elevation, new TurnCostExtension());
+        if (encodingManager.needsTurnCostsSupport() || singleCHWeighting == null)
+            graph = new GraphHopperStorage(dir, encodingManager, elevation, new TurnCostExtension());
         else
-            graph = new GraphHopperStorage(chGraph, dir, encodingManager, elevation, new TurnCostExtension.NoOpExtension());
+            graph = new GraphHopperStorage(Arrays.asList(singleCHWeighting), dir, encodingManager, elevation, new TurnCostExtension.NoOpExtension());
 
         return graph;
     }

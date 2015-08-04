@@ -19,6 +19,7 @@ package com.graphhopper.storage.index;
 
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FastestWeighting;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
@@ -61,7 +62,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest
     @Override
     GraphHopperStorage createGHStorage( Directory dir, EncodingManager encodingManager, boolean is3D )
     {
-        return new GraphHopperStorage(true, dir, encodingManager, is3D, new GraphExtension.NoOpExtension()).
+        return new GraphHopperStorage(Collections.singleton(new FastestWeighting(encodingManager.getEncoder("car"))), dir, encodingManager, is3D, new GraphExtension.NoOpExtension()).
                 create(100);
     }
 

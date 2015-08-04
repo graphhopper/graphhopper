@@ -73,7 +73,7 @@ public interface FlagEncoder extends TurnCostEncoder
      * @return created flags
      */
     long setProperties( double speed, boolean forward, boolean backward );
-
+    
     /**
      * Reports wether the edge is available in forward direction for a certain vehicle
      */

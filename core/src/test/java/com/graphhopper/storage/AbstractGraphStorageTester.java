@@ -68,7 +68,7 @@ public abstract class AbstractGraphStorageTester
 
     protected final GraphHopperStorage newRAMGHStorage()
     {
-        return new GraphHopperStorage(new RAMDirectory(), encodingManager, false);
+        return new GraphHopperStorage(new RAMDirectory(), encodingManager, false, new GraphExtension.NoOpExtension());
     }
 
     @Before
@@ -1032,7 +1032,7 @@ public abstract class AbstractGraphStorageTester
         list.add(new TmpCarFlagEncoder(29, 0.001, 0));
         list.add(new TmpCarFlagEncoder(29, 0.001, 0));
         EncodingManager manager = new EncodingManager(list, 8);
-        graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
+        graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
 
         EdgeIteratorState edge = graph.edge(0, 1);
         edge.setFlags(Long.MAX_VALUE / 3);
@@ -1040,24 +1040,26 @@ public abstract class AbstractGraphStorageTester
         assertEquals(Long.MAX_VALUE / 3, edge.getFlags());
         graph.close();
 
-        graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
+        graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
 
         edge = graph.edge(0, 1);
         edge.setFlags(list.get(0).setProperties(99.123, true, true));
         assertEquals(99.123, list.get(0).getSpeed(edge.getFlags()), 1e-3);
-        long flags = GHUtility.getEdge(graph, 1, 0).getFlags();
+        EdgeIteratorState edgeIter = GHUtility.getEdge(graph, 1, 0);
+        long flags = edgeIter.getFlags();
         assertEquals(99.123, list.get(0).getSpeed(flags), 1e-3);
-        assertTrue(list.get(0).isForward(flags));
-        assertTrue(list.get(0).isBackward(flags));
+        assertTrue(edgeIter.isForward(list.get(0)));
+        assertTrue(edgeIter.isBackward(list.get(0)));
         edge = graph.edge(2, 3);
         edge.setFlags(list.get(1).setProperties(44.123, true, false));
         assertEquals(44.123, list.get(1).getSpeed(edge.getFlags()), 1e-3);
 
-        flags = GHUtility.getEdge(graph, 3, 2).getFlags();
+        edgeIter = GHUtility.getEdge(graph, 3, 2);
+        flags = edgeIter.getFlags();
         assertEquals(44.123, list.get(1).getSpeed(flags), 1e-3);
         assertEquals(44.123, list.get(1).getReverseSpeed(flags), 1e-3);
-        assertFalse(list.get(1).isForward(flags));
-        assertTrue(list.get(1).isBackward(flags));
+        assertFalse(edgeIter.isForward(list.get(1)));
+        assertTrue(edgeIter.isBackward(list.get(1)));
     }
 
     @Test

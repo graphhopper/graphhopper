@@ -17,7 +17,10 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FastestWeighting;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
 
 import static org.junit.Assert.*;
@@ -29,13 +32,21 @@ import org.junit.Test;
  */
 public class GHUtilityTest
 {
-    private final EncodingManager encodingManager = new EncodingManager("CAR");
+    private final FlagEncoder carEncoder = new CarFlagEncoder();
+    private final EncodingManager encodingManager = new EncodingManager(carEncoder);
 
     Graph createGraph()
     {
         return new GraphBuilder(encodingManager).create();
     }
 
+    // 7      8\
+    // | \    | 2
+    // |  5   | |
+    // 3    4 | |
+    //   6     \1
+    //   ______/
+    // 0/
     Graph initUnsorted( Graph g )
     {
         NodeAccess na = g.getNodeAccess();
@@ -105,7 +116,7 @@ public class GHUtilityTest
         Graph g = initUnsorted(createGraph());
         EdgeIteratorState eb = g.edge(0, 0, 11, true);
 
-        CHGraph lg = new GraphBuilder(encodingManager).chGraphCreate();
+        CHGraph lg = new GraphBuilder(encodingManager).chGraphCreate(new FastestWeighting(carEncoder));
         GHUtility.copyTo(g, lg);
 
         assertEquals(g.getAllEdges().getMaxId(), lg.getAllEdges().getMaxId());
@@ -115,16 +126,16 @@ public class GHUtilityTest
     public void testCopy()
     {
         Graph g = initUnsorted(createGraph());
-        EdgeIteratorState eb = g.edge(6, 5, 11, true);
-        eb.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
+        EdgeIteratorState edgeState = g.edge(6, 5, 11, true);
+        edgeState.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
 
-        GraphHopperStorage newStore = new GraphBuilder(encodingManager).setCHGraph(true).create();
+        GraphHopperStorage newStore = new GraphBuilder(encodingManager).setCHGraph(new FastestWeighting(carEncoder)).create();
         CHGraph lg = newStore.getGraph(CHGraph.class);
         GHUtility.copyTo(g, lg);
         newStore.freeze();
 
-        eb = GHUtility.getEdge(lg, 5, 6);
-        assertEquals(Helper.createPointList(-1, 3, 12, 10), eb.fetchWayGeometry(0));
+        edgeState = GHUtility.getEdge(lg, 5, 6);
+        assertEquals(Helper.createPointList(-1, 3, 12, 10), edgeState.fetchWayGeometry(0));
 
         assertEquals(0, lg.getLevel(0));
         assertEquals(0, lg.getLevel(1));
@@ -137,10 +148,12 @@ public class GHUtilityTest
         EdgeIterator iter = lg.createEdgeExplorer().setBaseNode(8);
         iter.next();
         assertEquals(2.05, iter.getDistance(), 1e-6);
-        assertEquals("11", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));
+        assertTrue(iter.isBackward(carEncoder));
+        assertTrue(iter.isForward(carEncoder));
         iter.next();
         assertEquals(0.5, iter.getDistance(), 1e-6);
-        assertEquals("11", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));
+        assertTrue(iter.isBackward(carEncoder));
+        assertTrue(iter.isForward(carEncoder));
 
         iter = lg.createEdgeExplorer().setBaseNode(7);
         iter.next();
@@ -148,7 +161,8 @@ public class GHUtilityTest
 
         iter.next();
         assertEquals(2.1, iter.getDistance(), 1e-6);
-        assertEquals("01", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));
+        assertFalse(iter.isBackward(carEncoder));
+        assertTrue(iter.isForward(carEncoder));
         assertFalse(iter.next());
     }
 

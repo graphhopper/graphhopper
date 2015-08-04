@@ -18,6 +18,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.storage.CHGraph;
 
 /**
@@ -33,11 +34,30 @@ public interface CHEdgeIteratorState extends EdgeIteratorState
 
     int getSkippedEdge2();
 
+    /**
+     * Sets the edges that this shortcut skips. Those skipped edges can be shortcuts too.
+     */
     void setSkippedEdges( int edge1, int edge2 );
 
+    /**
+     * @return true if this edge is a shortcut, false otherwise.
+     */
     boolean isShortcut();
 
+    /**
+     * This method is only used on preparation.
+     * <p>
+     * @see PrepareEncoder#canBeOverwritten(long, long)
+     */
+    boolean canBeOverwritten( long flags );
+
+    /**
+     * Sets the weight calculated from Weighting.calcWeight, only applicable if isShortcut is true.
+     */
     CHEdgeIteratorState setWeight( double weight );
 
+    /**
+     * Returns the weight of this shortcut.
+     */
     double getWeight();
 }

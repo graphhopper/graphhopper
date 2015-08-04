@@ -37,7 +37,7 @@ import static org.junit.Assert.*;
  */
 public class LocationIndexTreeTest extends AbstractLocationIndexTester
 {
-    protected final EncodingManager encodingManager = new EncodingManager("CAR");
+    protected final EncodingManager encodingManager = new EncodingManager("car");
 
     @Override
     public LocationIndexTree createIndex( Graph g, int resolution )

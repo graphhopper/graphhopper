@@ -84,8 +84,7 @@ public class OSMReaderTest
 
     GraphHopperStorage newGraph( String directory, EncodingManager encodingManager, boolean is3D, boolean turnRestrictionsImport )
     {
-        boolean ch = false;
-        return new GraphHopperStorage(ch, new RAMDirectory(directory, false), encodingManager, is3D,
+        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, is3D,
                 turnRestrictionsImport ? new TurnCostExtension() : new GraphExtension.NoOpExtension());
     }
 
@@ -175,9 +174,8 @@ public class OSMReaderTest
         assertEquals("street 123, B 122", iter.getName());
         assertEquals(n50, iter.getAdjNode());
         AbstractGraphStorageTester.assertPList(Helper.createPointList(51.25, 9.43), iter.fetchWayGeometry(0));
-        FlagEncoder flags = carEncoder;
-        assertTrue(flags.isForward(iter.getFlags()));
-        assertTrue(flags.isBackward(iter.getFlags()));
+        assertTrue(iter.isForward(carEncoder));
+        assertTrue(iter.isBackward(carEncoder));
 
         assertTrue(iter.next());
         assertEquals("route 666", iter.getName());
@@ -189,8 +187,8 @@ public class OSMReaderTest
         assertEquals(n10, iter.getAdjNode());
         assertEquals(88643, iter.getDistance(), 1);
 
-        assertTrue(flags.isForward(iter.getFlags()));
-        assertTrue(flags.isBackward(iter.getFlags()));
+        assertTrue(iter.isForward(carEncoder));
+        assertTrue(iter.isBackward(carEncoder));
         assertFalse(iter.next());
 
         // get third added location id=30
@@ -295,27 +293,27 @@ public class OSMReaderTest
         iter = carAllExplorer.setBaseNode(n20);
         assertTrue(iter.next());
         assertEquals(n23, iter.getAdjNode());
-        assertTrue(encoder.isForward(iter.getFlags()));
-        assertFalse(encoder.isBackward(iter.getFlags()));
+        assertTrue(iter.isForward(encoder));
+        assertFalse(iter.isBackward(encoder));
 
         assertTrue(iter.next());
         assertEquals(n22, iter.getAdjNode());
-        assertFalse(encoder.isForward(iter.getFlags()));
-        assertTrue(encoder.isBackward(iter.getFlags()));
+        assertFalse(iter.isForward(encoder));
+        assertTrue(iter.isBackward(encoder));
 
         assertTrue(iter.next());
-        assertFalse(encoder.isForward(iter.getFlags()));
-        assertTrue(encoder.isBackward(iter.getFlags()));
+        assertFalse(iter.isForward(encoder));
+        assertTrue(iter.isBackward(encoder));
 
         assertTrue(iter.next());
         assertEquals(n30, iter.getAdjNode());
-        assertTrue(encoder.isForward(iter.getFlags()));
-        assertFalse(encoder.isBackward(iter.getFlags()));
+        assertTrue(iter.isForward(encoder));
+        assertFalse(iter.isBackward(encoder));
 
         assertTrue(iter.next());
         assertEquals(n10, iter.getAdjNode());
-        assertFalse(encoder.isForward(iter.getFlags()));
-        assertTrue(encoder.isBackward(iter.getFlags()));
+        assertFalse(iter.isForward(encoder));
+        assertTrue(iter.isBackward(encoder));
     }
 
     @Test
@@ -492,7 +490,7 @@ public class OSMReaderTest
     public void testRelation()
     {
         EncodingManager manager = new EncodingManager("bike");
-        GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(), manager, false);
+        GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(), manager, false, new GraphExtension.NoOpExtension());
         OSMReader reader = new OSMReader(ghStorage).
                 setEncodingManager(manager);
         OSMRelation osmRel = new OSMRelation(1);

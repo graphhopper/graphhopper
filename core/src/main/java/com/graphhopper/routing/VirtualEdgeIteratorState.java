@@ -15,6 +15,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.*;
 
 /**
@@ -36,7 +37,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     // indication if edges are dispreferred as start/stop edge 
     private boolean unfavoredReverseEdge;
     private boolean unfavored;
-
 
     public VirtualEdgeIteratorState( int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance, long flags, String name, PointList pointList )
     {
@@ -144,9 +144,9 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
         this.name = name;
         return this;
     }
-    
+
     @Override
-    public boolean getBoolean(int key, boolean reverse, boolean _default )
+    public boolean getBoolean( int key, boolean reverse, boolean _default )
     {
         if (key == EdgeIteratorState.K_UNFAVORED_EDGE)
         {
@@ -160,17 +160,18 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     /**
-     * set edge to unfavored status for routing from/to start/stop points
+     * This method sets edge to unfavored status for routing from or to the start/stop points.
+     * <p>
      * @param reverse indicates if forward or backward direction is affected
      */
     public void setVirtualEdgePreference( boolean unfavored, boolean reverse )
     {
         if (reverse)
-              unfavoredReverseEdge = unfavored;
+            unfavoredReverseEdge = unfavored;
         else
             this.unfavored = unfavored;
     }
-    
+
     @Override
     public String toString()
     {
@@ -184,7 +185,25 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
+    public boolean isForward( FlagEncoder encoder )
+    {
+        return encoder.isForward(getFlags());
+    }
+
+    @Override
+    public boolean isBackward( FlagEncoder encoder )
+    {
+        return encoder.isBackward(getFlags());
+    }
+
+    @Override
     public int getAdditionalField()
+    {
+        throw new UnsupportedOperationException("Not supported.");
+    }
+
+    @Override
+    public boolean canBeOverwritten( long flags )
     {
         throw new UnsupportedOperationException("Not supported.");
     }

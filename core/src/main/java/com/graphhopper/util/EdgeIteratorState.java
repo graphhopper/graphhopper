@@ -17,6 +17,8 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.routing.util.FlagEncoder;
+
 /**
  * This interface represents an edge and is one possible state of an EdgeIterator.
  * <p/>
@@ -27,7 +29,7 @@ package com.graphhopper.util;
 public interface EdgeIteratorState
 {
     final static int K_UNFAVORED_EDGE = -1;
-    
+
     /**
      * @return the edge id of the current edge. Do not make any assumptions about the concrete
      * values, except that for an implemention it is recommended that they'll be contiguous.
@@ -86,12 +88,23 @@ public interface EdgeIteratorState
     int getAdditionalField();
 
     /**
+     * @see FlagEncoder#isForward(long) and #472
+     */
+    boolean isForward( FlagEncoder encoder );
+
+    /**
+     * @see FlagEncoder#isBackward(long) and #472
+     */
+    boolean isBackward( FlagEncoder encoder );
+
+    /**
      * get additional boolean edge information
-     * @param reverse  if property of reverse edge direction should be returned
+     * <p>
+     * @param reverse if property of reverse edge direction should be returned
      * @param _default default value if key is not found
      */
-    boolean getBoolean( int key, boolean reverse, boolean _default);
-    
+    boolean getBoolean( int key, boolean reverse, boolean _default );
+
     /**
      * Updates the additional field value for this edge
      */

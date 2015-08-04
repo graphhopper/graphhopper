@@ -15,6 +15,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.*;
 
 import java.util.ArrayList;
@@ -132,7 +133,7 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState
     }
 
     @Override
-    public boolean getBoolean(int key, boolean reverse, boolean _default)
+    public boolean getBoolean( int key, boolean reverse, boolean _default )
     {
         return edges.get(current).getBoolean(key, reverse, _default);
     }
@@ -159,6 +160,18 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState
     public EdgeIteratorState copyPropertiesTo( EdgeIteratorState edge )
     {
         return edges.get(current).copyPropertiesTo(edge);
+    }
+
+    @Override
+    public boolean isBackward( FlagEncoder encoder )
+    {
+        return edges.get(current).isBackward(encoder);
+    }
+
+    @Override
+    public boolean isForward( FlagEncoder encoder )
+    {
+        return edges.get(current).isForward(encoder);
     }
 
     @Override
@@ -199,4 +212,9 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState
         throw new UnsupportedOperationException("Not supported.");
     }
 
+    @Override
+    public boolean canBeOverwritten( long flags )
+    {
+        throw new UnsupportedOperationException("Not supported.");
+    }
 }

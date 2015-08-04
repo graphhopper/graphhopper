@@ -22,8 +22,7 @@ import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.CmdArgs;
@@ -36,6 +35,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -692,9 +692,10 @@ public class GraphHopperTest
 
     private GraphHopper initSquareGraphInstance( boolean withCH )
     {
-        EncodingManager encodingManager = new EncodingManager("car");
-
-        GraphHopperStorage g = new GraphHopperStorage(withCH, new RAMDirectory(), encodingManager,
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        EncodingManager encodingManager = new EncodingManager(carEncoder);
+        Weighting weighting = new FastestWeighting(carEncoder);
+        GraphHopperStorage g = new GraphHopperStorage(Collections.singletonList(weighting), new RAMDirectory(), encodingManager,
                 false, new GraphExtension.NoOpExtension()).
                 create(20);
 
@@ -729,6 +730,7 @@ public class GraphHopperTest
         g.edge(7, 8, 110, true);
 
         instance = new GraphHopper().
+                putAlgorithmFactory(weighting, null).
                 setCHEnable(withCH).
                 setCHWeighting("fastest").
                 setEncodingManager(encodingManager);
@@ -741,15 +743,18 @@ public class GraphHopperTest
     @Test
     public void testCustomFactoryForNoneCH()
     {
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        EncodingManager em = new EncodingManager(carEncoder);
+        Weighting weighting = new FastestWeighting(carEncoder);
         GraphHopper closableInstance = new GraphHopper().setStoreOnFlush(true).
                 setCHEnable(false).
-                setEncodingManager(new EncodingManager("CAR")).
+                setEncodingManager(em).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         RoutingAlgorithmFactory af = new RoutingAlgorithmFactorySimple();
-        closableInstance.setAlgorithmFactory(af);
+        closableInstance.putAlgorithmFactory(weighting, af);
         closableInstance.importOrLoad();
 
-        assertTrue(af == closableInstance.getAlgorithmFactory());
+        assertTrue(af == closableInstance.getAlgorithmFactory(weighting));
     }
 }

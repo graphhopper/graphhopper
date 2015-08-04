@@ -87,8 +87,8 @@ public class UnsafeDataAccess extends AbstractDataAccess
     final boolean ensureCapacity( long bytes, boolean clearNewMem )
     {
         long oldCap = getCapacity();
-        long todoBytes = bytes - oldCap;
-        if (todoBytes <= 0)
+        long newBytes = bytes - oldCap;
+        if (newBytes <= 0)
             return false;
 
         // avoid frequent increase of allocation area, instead increase by segment size
@@ -103,7 +103,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
         } catch (OutOfMemoryError err)
         {
             throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Old capacity: "
-                    + oldCap + ", new bytes:" + todoBytes + ", segmentSizeIntsPower:" + segmentSizePower);
+                    + oldCap + ", new bytes:" + newBytes + ", segmentSizeIntsPower:" + segmentSizePower);
         }
 
         if (clearNewMem)
@@ -116,8 +116,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
     {
         if (da instanceof UnsafeDataAccess)
         {
-            // TODO
-            // unsafe.copyMemory(address, da.address, capacity);
+            // TODO unsafe.copyMemory(address, da.address, capacity);
             // return this;
         }
         return super.copyTo(da);

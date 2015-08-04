@@ -140,8 +140,8 @@ public class GHUtility
                 AllCHEdgesIterator aeSkip = (AllCHEdgesIterator) iter;
                 sc = aeSkip.isShortcut() ? "sc" : "  ";
             }
-            String fwdStr = encoder.isForward(iter.getFlags()) ? "fwd" : "   ";
-            String bckStr = encoder.isBackward(iter.getFlags()) ? "bckwd" : "";
+            String fwdStr = iter.isForward(encoder) ? "fwd" : "   ";
+            String bckStr = iter.isBackward(encoder) ? "bckwd" : "";
             System.out.println(sc + " " + iter + " " + fwdStr + " " + bckStr);
         }
     }
@@ -279,7 +279,7 @@ public class GHUtility
     {
         AllEdgesIterator eIter = fromGraph.getAllEdges();
         while (eIter.next())
-        {            
+        {
             int base = eIter.getBaseNode();
             int adj = eIter.getAdjNode();
             eIter.copyPropertiesTo(toGraph.edge(base, adj));
@@ -321,7 +321,7 @@ public class GHUtility
         Directory outdir = guessDirectory(store);
         boolean is3D = store.getNodeAccess().is3D();
 
-        return new GraphHopperStorage(store.isCHPossible(), outdir, store.getEncodingManager(),
+        return new GraphHopperStorage(store.getCHWeightings(), outdir, store.getEncodingManager(),
                 is3D, store.getExtension()).
                 create(store.getNodes());
     }
@@ -336,34 +336,14 @@ public class GHUtility
         return adjNode;
     }
 
+    /**
+     * This edge iterator can be used in tests to mock specific iterator behaviour via overloading
+     * certain methods.
+     */
     public static class DisabledEdgeIterator implements CHEdgeIterator
     {
         @Override
         public EdgeIterator detach( boolean reverse )
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public boolean isShortcut()
-        {
-            return false;
-        }
-
-        @Override
-        public int getSkippedEdge1()
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getSkippedEdge2()
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public void setSkippedEdges( int edge1, int edge2 )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -441,11 +421,23 @@ public class GHUtility
         }
 
         @Override
-        public boolean getBoolean(int key, boolean reverse, boolean _default )
+        public boolean getBoolean( int key, boolean reverse, boolean _default )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
-        
+
+        @Override
+        public boolean isBackward( FlagEncoder encoder )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public boolean isForward( FlagEncoder encoder )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
         @Override
         public int getAdditionalField()
         {
@@ -465,6 +457,30 @@ public class GHUtility
         }
 
         @Override
+        public boolean isShortcut()
+        {
+            return false;
+        }
+
+        @Override
+        public int getSkippedEdge1()
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public int getSkippedEdge2()
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public void setSkippedEdges( int edge1, int edge2 )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
         public double getWeight()
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
@@ -472,6 +488,12 @@ public class GHUtility
 
         @Override
         public CHEdgeIteratorState setWeight( double weight )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public boolean canBeOverwritten( long flags )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }

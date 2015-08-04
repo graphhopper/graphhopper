@@ -99,12 +99,12 @@ public class RAMDataAccess extends AbstractDataAccess
             throw new IllegalArgumentException("new capacity has to be strictly positive");
 
         long cap = getCapacity();
-        long todoBytes = bytes - cap;
-        if (todoBytes <= 0)
+        long newBytes = bytes - cap;
+        if (newBytes <= 0)
             return false;
 
-        int segmentsToCreate = (int) (todoBytes / segmentSizeInBytes);
-        if (todoBytes % segmentSizeInBytes != 0)
+        int segmentsToCreate = (int) (newBytes / segmentSizeInBytes);
+        if (newBytes % segmentSizeInBytes != 0)
             segmentsToCreate++;
 
         try
@@ -118,7 +118,7 @@ public class RAMDataAccess extends AbstractDataAccess
         } catch (OutOfMemoryError err)
         {
             throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Old capacity: "
-                    + cap + ", new bytes:" + todoBytes + ", segmentSizeIntsPower:" + segmentSizePower
+                    + cap + ", new bytes:" + newBytes + ", segmentSizeIntsPower:" + segmentSizePower
                     + ", new segments:" + segmentsToCreate + ", existing:" + segments.length);
         }
         return true;
