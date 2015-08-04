@@ -35,7 +35,7 @@ import java.util.*;
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders
  * during parsing.
- * <p/>
+ * <p>
  * @author Peter Karich
  * @author Nop
  */
@@ -62,7 +62,7 @@ public class EncodingManager
     /**
      * Instantiate manager with the given list of encoders. The manager knows the default encoders:
      * CAR, FOOT and BIKE (ignoring the case).
-     * <p/>
+     * <p>
      * @param flagEncodersStr comma delimited list of encoders. The order does not matter.
      */
     public EncodingManager( String flagEncodersStr )
@@ -77,7 +77,7 @@ public class EncodingManager
 
     /**
      * Instantiate manager with the given list of encoders.
-     * <p/>
+     * <p>
      * @param flagEncoders comma delimited list of encoders. The order does not matter.
      */
     public EncodingManager( FlagEncoder... flagEncoders )
@@ -87,7 +87,7 @@ public class EncodingManager
 
     /**
      * Instantiate manager with the given list of encoders.
-     * <p/>
+     * <p>
      * @param flagEncoders comma delimited list of encoders. The order does not matter.
      */
     public EncodingManager( List<? extends FlagEncoder> flagEncoders )
@@ -262,7 +262,7 @@ public class EncodingManager
     /**
      * Processes way properties of different kind to determine speed and direction. Properties are
      * directly encoded in 8 bytes.
-     * <p/>
+     * <p>
      * @param relationFlags The preprocessed relation flags is used to influence the way properties.
      * @return the encoded flags
      */

@@ -22,7 +22,7 @@ import gnu.trove.map.hash.TLongIntHashMap;
 
 /**
  * Segmented HashMap to make it possible to store more than Integer.MAX values.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class BigLongIntMap implements LongIntMap

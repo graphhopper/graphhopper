@@ -25,36 +25,36 @@ import com.graphhopper.util.shapes.GHPoint;
  * called 'spatial key'. The idea of mixing the latitude and longitude is also taken to allow
  * removing the insignificant (right side) bits to make a geo-query or the coordinate less precise.
  * E.g. for a 3 bit precision the spatial key would need 6 bits and look like:
- * <p/>
+ * <p>
  * lat0 lon0 | lat1 lon1 | lat2 lon2
- * <p/>
+ * <p>
  * This works similar to how BIG endianess works for bytes to int packing. Detailed information is
  * available in this blog post:
  * http://karussell.wordpress.com/2012/05/23/spatial-keys-memory-efficient-geohashes/
- * <p/>
+ * <p>
  * The bits are usable as key for hash tables like our SpatialKeyHashtable or for a spatial tree
  * like QuadTreeSimple. Also the binary form makes it relative simple for implementations using this
  * encoding scheme to expand to arbitrary dimension (e.g. shifting n-times if n would be the
  * dimension).
- * <p/>
+ * <p>
  * A 32 bit representation has a precision of approx 600 meters = 40000/2^16
- * <p/>
+ * <p>
  * There are different possibilities how to handle different precision and order of bits. Either:
- * <p/>
+ * <p>
  * lat0 lon0 | lat1 lon1 | lat2 lon2
- * <p/>
+ * <p>
  * 0 0 | lat0 lon0 | lat1 lon1
- * <p/>
+ * <p>
  * as it is done now. Advantage: A single shift is only necessary to make it less precise. Or:
- * <p/>
+ * <p>
  * lat2 lon2 | lat1 lon1 | lat0 lon0
- * <p/>
+ * <p>
  * 0 0 | lat1 lon1 | lat0 lon0
- * <p/>
+ * <p>
  * Advantage: the bit mask to get lat0 lon0 is simple: 000..0011 and independent of the precision!
  * But when stored e.g. as int one would need to (left) shift several times if precision is only
  * 3bits.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 // A 2 bit precision spatial key could look like
@@ -142,7 +142,7 @@ public class SpatialKeyAlgo implements KeyAlgo
 
     /**
      * Take latitude and longitude as input.
-     * <p/>
+     * <p>
      * @return the spatial key
      */
     @Override
@@ -202,7 +202,7 @@ public class SpatialKeyAlgo implements KeyAlgo
 
     /**
      * This method returns latitude and longitude via latLon - calculated from specified spatialKey
-     * <p/>
+     * <p>
      * @param spatialKey is the input
      */
     @Override

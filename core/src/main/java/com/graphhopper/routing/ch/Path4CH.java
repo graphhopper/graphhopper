@@ -24,7 +24,7 @@ import com.graphhopper.util.CHEdgeIteratorState;
 
 /**
  * Recursivly unpack shortcuts.
- * <p/>
+ * <p>
  * @author Peter Karich
  * @see PrepareContractionHierarchies
  */

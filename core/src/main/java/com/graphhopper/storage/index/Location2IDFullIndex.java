@@ -27,7 +27,7 @@ import com.graphhopper.util.shapes.Circle;
 
 /**
  * Very slow O(n) LocationIndex but no RAM/disc required.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class Location2IDFullIndex implements LocationIndex

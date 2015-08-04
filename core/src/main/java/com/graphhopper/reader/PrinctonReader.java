@@ -26,7 +26,7 @@ import java.io.InputStreamReader;
 
 /**
  * Data taken from here http://algs4.cs.princeton.edu/44sp/
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class PrinctonReader

@@ -21,7 +21,7 @@ import java.util.Arrays;
 
 /**
  * push to end, pop from beginning
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class SimpleIntDeque

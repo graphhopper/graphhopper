@@ -19,7 +19,7 @@ import com.graphhopper.util.Helper;
 
 /**
  * Copied from Android project. android.util.SparseArray.java
- * <p/>
+ * <p>
  * SparseArrays map ints to ints. Unlike a normal array of ints, there can be gaps in the indices.
  */
 public class SparseIntIntArray
@@ -67,7 +67,7 @@ public class SparseIntIntArray
 
     /**
      * Sets all supplied keys to the given unique value.
-     * <p/>
+     * <p>
      * @param keys Keys to set
      * @param uniqueValue Value to set all supplied keys to
      */

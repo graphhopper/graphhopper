@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 /**
  * Encapsulates a bit-encoded value.
- * <p/>
+ * <p>
  * @author Nop
  */
 public class EncodedDoubleValue extends EncodedValue
@@ -80,7 +80,7 @@ public class EncodedDoubleValue extends EncodedValue
 
     /**
      * Swap the contents controlled by this value encoder with the given value.
-     * <p/>
+     * <p>
      * @return the new flags
      */
     public long swap( long flags, EncodedDoubleValue otherEncoder )

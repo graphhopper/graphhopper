@@ -26,7 +26,7 @@ import com.graphhopper.util.shapes.BBox;
 /**
  * An interface to represent a (geo) graph - suited for efficient storage as it can be requested via
  * indices called node IDs. To get the lat,lon point you need to set up a LocationIndex instance.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public interface Graph
@@ -55,7 +55,7 @@ public interface Graph
     /**
      * Creates an edge between the nodes a and b. To set distance or access use the returned edge
      * and e.g. edgeState.setDistance
-     * <p/>
+     * <p>
      * @param a the index of the starting (tower) node of the edge
      * @param b the index of the ending (tower) node of the edge
      * @return the newly created edge
@@ -69,7 +69,7 @@ public interface Graph
 
     /**
      * Returns a wrapper over the specified edgeId.
-     * <p/>
+     * <p>
      * @param adjNode is the node that will be returned via adjNode(). If adjNode is
      * Integer.MIN_VALUE then the edge with uncertain values for adjNode and baseNode (two
      * possibilities) will be returned.
@@ -87,7 +87,7 @@ public interface Graph
      * Returns an EdgeExplorer which makes it possible to traverse all filtered edges of a specific
      * node. Reduce calling this method as much as possible, e.g. create an explorer before a for
      * loop!
-     * <p/>
+     * <p>
      * @see EdgeExplorer
      * @see Graph#createEdgeExplorer()
      */
@@ -100,7 +100,7 @@ public interface Graph
 
     /**
      * Copy this Graph into the specified Graph g.
-     * <p/>
+     * <p>
      * @return the specified Graph g
      */
     Graph copyTo( Graph g );

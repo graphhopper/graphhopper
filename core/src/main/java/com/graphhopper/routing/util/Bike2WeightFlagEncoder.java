@@ -28,7 +28,7 @@ import static com.graphhopper.util.Helper.*;
 
 /**
  * Stores two speed values into an edge to support avoiding too much incline
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class Bike2WeightFlagEncoder extends BikeFlagEncoder

@@ -26,7 +26,7 @@ import java.util.TreeMap;
 
 /**
  * Specifies the settings for racebikeing
- * <p/>
+ * <p>
  * @author ratrun
  * @author Peter Karich
  */

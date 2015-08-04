@@ -2,7 +2,7 @@ package com.graphhopper.routing.util;
 
 /**
  * Specifies a weight approximation between an node and the goalNode according to the specified weighting.
- * <p/>
+ * <p>
  * @author jansoe
  */
 public interface WeightApproximator

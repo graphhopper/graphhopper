@@ -19,7 +19,7 @@ package com.graphhopper.storage;
 
 /**
  * Manages memory mapped DataAccess objects.
- * <p/>
+ * <p>
  * @author Peter Karich
  * @see MMapDataAccess
  */

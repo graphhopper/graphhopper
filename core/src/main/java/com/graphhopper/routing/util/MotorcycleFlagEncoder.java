@@ -27,7 +27,7 @@ import java.util.HashSet;
 
 /**
  * Defines bit layout for motorbikes
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class MotorcycleFlagEncoder extends CarFlagEncoder

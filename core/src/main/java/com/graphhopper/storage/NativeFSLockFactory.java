@@ -28,7 +28,7 @@ import java.nio.channels.FileLock;
 
 /**
  * Creates a write lock file. Influenced by Lucene code
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class NativeFSLockFactory implements LockFactory

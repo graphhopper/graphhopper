@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Several utility classes which are compatible with Java6 on Android.
- * <p/>
+ * <p>
  * @author Peter Karich
  * @see Helper7 for none-Android compatible methods.
  */
@@ -357,7 +357,7 @@ public class Helper
      * Converts into an integer to be compatible with the still limited DataAccess class (accepts
      * only integer values). But this conversion also reduces memory consumption where the precision
      * loss is accceptable. As +- 180° and +-90° are assumed as maximum values.
-     * <p/>
+     * <p>
      * @return the integer of the specified degree
      */
     public static final int degreeToInt( double deg )
@@ -371,7 +371,7 @@ public class Helper
 
     /**
      * Converts back the integer value.
-     * <p/>
+     * <p>
      * @return the degree value of the specified integer
      */
     public static final double intToDegree( int storedInt )

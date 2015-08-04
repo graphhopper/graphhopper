@@ -21,14 +21,14 @@ import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Specifies how the best route is calculated. E.g. the fastest or shortest route.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public interface Weighting
 {
     /**
      * Used only for the heuristical estimation in A
-     * <p/>
+     * <p>
      * @return minimal weight. E.g. if you calculate the fastest way it is distance/maxVelocity
      */
     double getMinWeight( double distance );

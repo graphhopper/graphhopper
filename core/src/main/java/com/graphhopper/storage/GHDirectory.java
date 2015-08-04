@@ -27,7 +27,7 @@ import java.util.Map;
 
 /**
  * Implements some common methods for the subclasses.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class GHDirectory implements Directory

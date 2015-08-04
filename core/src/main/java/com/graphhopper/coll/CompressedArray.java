@@ -32,7 +32,7 @@ import java.util.zip.Inflater;
 /**
  * Stores the entries in compressed segments. The methods de(compress) are taken from lucene
  * CompressionTools. Before accessing the stored values be sure you called flush.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class CompressedArray

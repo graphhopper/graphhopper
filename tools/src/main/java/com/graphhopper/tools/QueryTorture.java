@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Reads log files and queries the live service
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class QueryTorture

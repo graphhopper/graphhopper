@@ -29,13 +29,13 @@ import java.nio.ByteOrder;
  * This is a data structure which uses an unsafe access to native memory. The speed up compared to
  * RAMDataAccess is roughly 10% due to index calculations and BitUtil overhead in RAMDataAccess.
  * Notes:
- * <p/>
+ * <p>
  * 1. Highly experimental. Still some bugs and access through file/MMAP should work at some point
- * <p/>
+ * <p>
  * 2. Compared to MMAP no syncDAWrapper is need to make it read and write safe from multiple threads
- * <p/>
+ * <p>
  * 3. Cannot be used on Android as no memory allocation methods are available there
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 @NotThreadSafe

@@ -27,7 +27,7 @@ import java.util.List;
 
 /**
  * Wrapper to simplify output of GraphHopper.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class GHResponse
@@ -113,7 +113,7 @@ public class GHResponse
     /**
      * This method returns the distance of the path. Always prefer this method over
      * getPoints().calcDistance
-     * <p/>
+     * <p>
      * @return distance in meter
      */
     public double getDistance()

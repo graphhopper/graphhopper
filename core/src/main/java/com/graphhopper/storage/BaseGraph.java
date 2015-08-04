@@ -35,10 +35,10 @@ import java.io.UnsupportedEncodingException;
  * The base graph handles nodes and edges file format. It can be used with different Directory
  * implementations like RAMDirectory for fast access or via MMapDirectory for virtual-memory and not
  * thread safe usage.
- * <p/>
+ * <p>
  * Note: A RAM DataAccess Object is thread-safe in itself but if used in this Graph implementation
  * it is not write thread safe.
- * <p/>
+ * <p>
  * Life cycle: (1) object creation, (2) configuration via setters & getters, (3) create or
  * loadExisting, (4) usage, (5) flush, (6) close
  */
@@ -491,7 +491,7 @@ class BaseGraph implements Graph
 
     /**
      * Create edge between nodes a and b
-     * <p/>
+     * <p>
      * @return EdgeIteratorState of newly created edge
      */
     @Override
@@ -519,7 +519,7 @@ class BaseGraph implements Graph
 
     /**
      * Determine next free edgeId and ensure byte capacity to store edge
-     * <p/>
+     * <p>
      * @return next free edgeId
      */
     protected int nextEdgeId()

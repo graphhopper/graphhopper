@@ -30,7 +30,7 @@ import javax.imageio.ImageIO;
 
 /**
  * One rectangle of height data from Shuttle Radar Topography Mission.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class HeightTile

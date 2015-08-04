@@ -26,7 +26,7 @@ import java.util.Arrays;
 /**
  * This is an in-memory data structure based on an integer array. With the possibility to be stored
  * on flush().
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 class RAMIntDataAccess extends AbstractDataAccess

@@ -28,7 +28,7 @@ import java.util.Map;
 
 /**
  * Writes an in-memory HashMap into a file on flush.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class StorableProperties implements Storable<StorableProperties>

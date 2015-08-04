@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 /**
  * An in-memory simple B-Tree. Later we'll use DataAccess to allow on-disc storage for very large
  * data sets. Delete not supported.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class GHLongIntBTree implements LongIntMap

@@ -24,7 +24,7 @@ import static java.lang.Math.toRadians;
 /**
  * Calculates the angle of a turn, defined by three points. The fast atan2 method is from Jim Shima,
  * 1999, http://www.dspguru.com/dsp/tricks/fixed-point-atan2-with-self-normalization
- * <p/>
+ * <p>
  * @author Johannes Pelzer
  * @author Peter Karich
  */
@@ -58,7 +58,7 @@ public class AngleCalc
 
     /**
      * Return orientation of line relative to east.
-     * <p/>
+     * <p>
      * @return Orientation in interval -pi to +pi where 0 is east
      */
     public double calcOrientation( double lat1, double lon1, double lat2, double lon2 )

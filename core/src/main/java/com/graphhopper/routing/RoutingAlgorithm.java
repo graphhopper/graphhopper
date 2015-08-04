@@ -21,7 +21,7 @@ import com.graphhopper.util.NotThreadSafe;
 
 /**
  * Calculates the shortest path from the specified node ids. Can be used only once.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 @NotThreadSafe
@@ -29,7 +29,7 @@ public interface RoutingAlgorithm
 {
     /**
      * Calculates the best path between the specified nodes.
-     * <p/>
+     * <p>
      * @return the path. Call the method found() to make sure that the path is valid.
      */
     Path calcPath( int from, int to );

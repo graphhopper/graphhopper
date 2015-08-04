@@ -19,7 +19,7 @@ package com.graphhopper.util.shapes;
 
 /**
  * A shape interface to implement circles or rectangles.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public interface Shape
@@ -36,7 +36,7 @@ public interface Shape
 
     /**
      * @return true if the specified shape is fully contained in this shape. Only iff
-     * s1.contains(s2) && && s2.contains(s1) then s1 is equal to s2
+     * <pre> s1.contains(s2) &amp;&amp; s2.contains(s1) </pre> then s1 is equal to s2
      */
     boolean contains( Shape s );
 

@@ -24,7 +24,7 @@ import java.util.TreeMap;
 /**
  * A priority queue implemented by a TreeMap. As the tree map does not allow duplicated we compose
  * the key via priority | nodeId.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class GHTreeMapComposed

@@ -24,7 +24,7 @@ import com.graphhopper.storage.Graph;
 
 /**
  * Common subclass for bidirectional algorithms.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm

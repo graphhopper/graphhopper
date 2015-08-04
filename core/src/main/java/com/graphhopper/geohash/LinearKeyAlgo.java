@@ -22,7 +22,7 @@ import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * This class maps lat,lon to a (tile)number unlike SpatialKeyAlgo.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 // A 4*3 precision linear key will look like
@@ -78,7 +78,7 @@ public class LinearKeyAlgo implements KeyAlgo
 
     /**
      * Take latitude and longitude as input.
-     * <p/>
+     * <p>
      * @return the linear key
      */
     @Override
@@ -94,7 +94,7 @@ public class LinearKeyAlgo implements KeyAlgo
 
     /**
      * This method returns latitude and longitude via latLon - calculated from specified linearKey
-     * <p/>
+     * <p>
      * @param linearKey is the input
      */
     @Override

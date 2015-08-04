@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Just to check if response is really gzipped
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class GHGZIPHook extends GzipFilter

@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 /**
  * Encapsulates a bit-encoded value.
- * <p/>
+ * <p>
  * @author Nop
  */
 public class EncodedValue
@@ -35,7 +35,7 @@ public class EncodedValue
 
     /**
      * Define a bit-encoded value
-     * <p/>
+     * <p>
      * @param name Description for debugging
      * @param shift bit index of this value
      * @param bits number of bits reserved
@@ -113,7 +113,7 @@ public class EncodedValue
 
     /**
      * Swap the contents controlled by this value encoder with the given value.
-     * <p/>
+     * <p>
      * @return the new flags
      */
     public long swap( long flags, EncodedValue otherEncoder )

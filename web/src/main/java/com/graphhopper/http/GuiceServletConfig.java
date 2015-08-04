@@ -25,9 +25,9 @@ import com.graphhopper.util.CmdArgs;
 
 /**
  * Replacement of web.xml used only for container deployment. Preferred method is to use GHServer.
- * <p/>
+ * <p>
  * http://code.google.com/p/google-guice/wiki/ServletModule
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class GuiceServletConfig extends GuiceServletContextListener

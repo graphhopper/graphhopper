@@ -21,7 +21,7 @@ import com.graphhopper.storage.CHGraph;
 
 /**
  * Support for CH edges
- * <p/>
+ * <p>
  * @author Peter Karich
  * @see CHGraph
  */

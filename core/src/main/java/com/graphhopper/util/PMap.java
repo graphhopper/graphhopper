@@ -22,7 +22,7 @@ import java.util.Map;
 
 /**
  * A properties map with convenient accessors
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class PMap

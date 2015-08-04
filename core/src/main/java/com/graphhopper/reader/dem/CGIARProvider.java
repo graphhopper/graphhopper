@@ -43,14 +43,14 @@ import org.slf4j.LoggerFactory;
  * Elevation data from CGIAR project http://srtm.csi.cgiar.org/ 'PROCESSED SRTM DATA VERSION 4.1'.
  * Every file covers a region of 5x5 degree. License granted for all people using GraphHopper:
  * http://graphhopper.com/public/license/CGIAR.txt
- * <p/>
+ * <p>
  * Every zip contains readme.txt with the necessary information e.g.:
  * <ol>
  * <li>
  * All GeoTiffs with 6000 x 6000 pixels.
  * </li>
  * </ol>
- * <p/>
+ * <p>
  * @author NopMap
  * @author Peter Karich
  */

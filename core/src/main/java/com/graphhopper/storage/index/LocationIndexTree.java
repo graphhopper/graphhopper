@@ -41,11 +41,11 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This implementation implements an n-tree to get the closest node or edge from GPS coordinates.
- * <p/>
+ * <p>
  * All leafs are at the same depth, otherwise it is quite complicated to calculate the bresenham
  * line for different resolutions, especially if a leaf node could be split into a tree-node and
  * resolution changes.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class LocationIndexTree implements LocationIndex
@@ -629,7 +629,7 @@ public class LocationIndexTree implements LocationIndex
     /**
      * calculate the distance to the nearest tile border for a given lat/lon coordinate in the
      * context of a spatial key tile.
-     * <p/>
+     * <p>
      */
     final double calculateRMin( double lat, double lon )
     {

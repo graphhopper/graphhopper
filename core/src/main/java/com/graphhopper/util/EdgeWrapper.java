@@ -25,7 +25,7 @@ import java.util.Arrays;
 /**
  * This class acts as a HashMap (nodes to weights) and is used to implement references from one edge
  * to its parent.
- * <p/>
+ * <p>
  * @author Peter Karich
  * @see PathBidir
  */

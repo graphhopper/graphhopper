@@ -22,7 +22,7 @@ import com.graphhopper.util.EdgeIteratorState;
 /**
  * Calculates the shortest route - independent of a vehicle as the calculation is based on the
  * distance only.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class ShortestWeighting implements Weighting

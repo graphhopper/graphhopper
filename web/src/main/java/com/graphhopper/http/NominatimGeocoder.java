@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Online request for (reverse) geocoding.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class NominatimGeocoder implements Geocoding, ReverseGeocoding

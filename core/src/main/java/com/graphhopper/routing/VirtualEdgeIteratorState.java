@@ -20,7 +20,7 @@ import com.graphhopper.util.*;
 
 /**
  * Creates an edge state decoupled from a graph where nodes, pointList, etc are kept in memory.
- * <p/>
+ * <p>
  * Note, this class is not suited for public use and can change with minor releases unexpectedly or
  * even gets removed.
  */
@@ -53,7 +53,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     /**
      * This method returns the original edge via its traversal key. I.e. also the direction is
      * already correctly encoded.
-     * <p/>
+     * <p>
      * @see GHUtility#createEdgeKey(int, int, int, boolean)
      */
     public int getOriginalTraversalKey()
