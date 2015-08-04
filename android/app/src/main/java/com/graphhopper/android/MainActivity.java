@@ -72,7 +72,7 @@ public class MainActivity extends Activity
     private volatile boolean prepareInProgress = false;
     private volatile boolean shortestPathRunning = false;
     private String currentArea = "berlin";
-    private String fileListURL = "https://graphhopper.com/public/maps/0.6/";
+    private String fileListURL = "https://graphhopper.com/public/maps/0.5/";
     private String prefixURL = fileListURL;
     private String downloadURL;
     private File mapsFolder;
@@ -414,13 +414,13 @@ public class MainActivity extends Activity
 
         tileRendererLayer = new TileRendererLayer(tileCache, mapDataStore,
                 mapView.getModel().mapViewPosition, false, true, AndroidGraphicFactory.INSTANCE)
-        {
-            @Override
-            public boolean onLongPress( LatLong tapLatLong, Point layerXY, Point tapXY )
-            {
-                return onMapTap(tapLatLong, layerXY, tapXY);
-            }
-        };
+                {
+                    @Override
+                    public boolean onLongPress( LatLong tapLatLong, Point layerXY, Point tapXY )
+                    {
+                        return onMapTap(tapLatLong, layerXY, tapXY);
+                    }
+                };
         tileRendererLayer.setTextScale(1.5f);
         tileRendererLayer.setXmlRenderTheme(InternalRenderTheme.OSMARENDER);
         mapView.getModel().mapViewPosition.setMapPosition(new MapPosition(mapDataStore.boundingBox().getCenterPoint(), (byte) 15));
@@ -471,9 +471,9 @@ public class MainActivity extends Activity
         paintStroke.setStyle(Style.STROKE);
         paintStroke.setColor(Color.argb(200, 0, 0xCC, 0x33));
         paintStroke.setDashPathEffect(new float[]
-                {
-                        25, 15
-                });
+        {
+            25, 15
+        });
         paintStroke.setStrokeWidth(8);
 
         // TODO: new mapsforge version wants an mapsforge-paint, not an android paint.
