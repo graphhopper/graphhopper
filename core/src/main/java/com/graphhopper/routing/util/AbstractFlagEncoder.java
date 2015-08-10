@@ -115,6 +115,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
         acceptedRailways.add("tram");
         acceptedRailways.add("abandoned");
+        acceptedRailways.add("abandoned_tram");        
         acceptedRailways.add("disused");
 
         // http://wiki.openstreetmap.org/wiki/Demolished_Railway
