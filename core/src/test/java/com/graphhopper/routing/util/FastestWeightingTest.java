@@ -45,24 +45,22 @@ public class FastestWeightingTest
     public void testWeightWrongHeading()
     {
         FastestWeighting instance = new FastestWeighting(encoder, new PMap().put("heading_penalty", "100"));
-
         VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, 1, 1, 2, 10,
                 encoder.setProperties(10, true, true), "test", Helper.createPointList(51, 0, 51, 1));
         double time = instance.calcWeight(virtEdge, false, 0);
 
-        virtEdge.setVirtualEdgePreference(true, false);
+        virtEdge.setVirtualEdgePreference(true);
         // heading penalty on edge
         assertEquals(time + 100, instance.calcWeight(virtEdge, false, 0), 1e-8);
-        // but not in reverse heading
-        assertEquals(time, instance.calcWeight(virtEdge, true, 0), 1e-8);
         // only after setting it
-        virtEdge.setVirtualEdgePreference(true, true);
+        virtEdge.setVirtualEdgePreference(true);
         assertEquals(time + 100, instance.calcWeight(virtEdge, true, 0), 1e-8);
         // but not after releasing it
-        virtEdge.setVirtualEdgePreference(false, true);
+        virtEdge.setVirtualEdgePreference(false);
         assertEquals(time, instance.calcWeight(virtEdge, true, 0), 1e-8);
-
+        
         // test default penalty
+        virtEdge.setVirtualEdgePreference(true);
         instance = new FastestWeighting(encoder);
         assertEquals(time + FastestWeighting.DEFAULT_HEADING_PENALTY, instance.calcWeight(virtEdge, false, 0), 1e-8);
     }
