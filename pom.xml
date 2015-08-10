@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.graphhopper</groupId>
     <artifactId>map-matching</artifactId>
-    <version>0.5-SNAPSHOT</version>
+    <version>0.6-SNAPSHOT</version>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -25,7 +25,7 @@
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper</artifactId>
-            <version>0.5-SNAPSHOT</version>            
+            <version>0.6-SNAPSHOT</version>            
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

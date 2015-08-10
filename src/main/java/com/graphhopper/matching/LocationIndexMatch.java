@@ -64,69 +64,74 @@ public class LocationIndexMatch extends LocationIndexTree {
     public List<QueryResult> findNClosest(final double queryLat, final double queryLon, final EdgeFilter edgeFilter) {
         // implement a cheap priority queue via List, sublist and Collections.sort
         final List<QueryResult> queryResults = new ArrayList<QueryResult>();
-        TIntHashSet set = index.findNetworkEntries(queryLat, queryLon, 2);
+        TIntHashSet set = new TIntHashSet();
 
-        final GHBitSet exploredNodes = new GHTBitSet(new TIntHashSet(set));
-        final EdgeExplorer explorer = graph.createEdgeExplorer(edgeFilter);
+        for (int iteration = 0; iteration < 2; iteration++) {
+            // should we use the return value of earlyFinish?
+            index.findNetworkEntries(queryLat, queryLon, set, iteration);
 
-        set.forEach(new TIntProcedure() {
+            final GHBitSet exploredNodes = new GHTBitSet(new TIntHashSet(set));
+            final EdgeExplorer explorer = graph.createEdgeExplorer(edgeFilter);
 
-            @Override
-            public boolean execute(int node) {
-                new XFirstSearchCheck(queryLat, queryLon, exploredNodes, edgeFilter) {
-                    @Override
-                    protected double getQueryDistance() {
-                        // do not skip search if distance is 0 or near zero (equalNormedDelta)
-                        return Double.MAX_VALUE;
-                    }
+            set.forEach(new TIntProcedure() {
 
-                    @Override
-                    protected boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState edge, QueryResult.Position pos) {
-                        if (normedDist < returnAllResultsWithin
-                                || queryResults.isEmpty()
-                                || queryResults.get(0).getQueryDistance() > normedDist) {
+                @Override
+                public boolean execute(int node) {
+                    new XFirstSearchCheck(queryLat, queryLon, exploredNodes, edgeFilter) {
+                        @Override
+                        protected double getQueryDistance() {
+                            // do not skip search if distance is 0 or near zero (equalNormedDelta)
+                            return Double.MAX_VALUE;
+                        }
 
-                            int index = -1;
-                            for (int qrIndex = 0; qrIndex < queryResults.size(); qrIndex++) {
-                                QueryResult qr = queryResults.get(qrIndex);
-                                // overwrite older queryResults which are potentially more far away than returnAllResultsWithin
-                                if (qr.getQueryDistance() > returnAllResultsWithin) {
-                                    index = qrIndex;
-                                    break;
-                                }
+                        @Override
+                        protected boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState edge, QueryResult.Position pos) {
+                            if (normedDist < returnAllResultsWithin
+                                    || queryResults.isEmpty()
+                                    || queryResults.get(0).getQueryDistance() > normedDist) {
 
-                                // avoid duplicate edges
-                                if (qr.getClosestEdge().getEdge() == edge.getEdge()) {
-                                    if (qr.getQueryDistance() < normedDist) {
-                                        // do not add current edge
-                                        return true;
-                                    } else {
-                                        // overwrite old edge with current
+                                int index = -1;
+                                for (int qrIndex = 0; qrIndex < queryResults.size(); qrIndex++) {
+                                    QueryResult qr = queryResults.get(qrIndex);
+                                    // overwrite older queryResults which are potentially more far away than returnAllResultsWithin
+                                    if (qr.getQueryDistance() > returnAllResultsWithin) {
                                         index = qrIndex;
                                         break;
                                     }
+
+                                    // avoid duplicate edges
+                                    if (qr.getClosestEdge().getEdge() == edge.getEdge()) {
+                                        if (qr.getQueryDistance() < normedDist) {
+                                            // do not add current edge
+                                            return true;
+                                        } else {
+                                            // overwrite old edge with current
+                                            index = qrIndex;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                QueryResult qr = new QueryResult(queryLat, queryLon);
+                                qr.setQueryDistance(normedDist);
+                                qr.setClosestNode(node);
+                                qr.setClosestEdge(edge.detach(false));
+                                qr.setWayIndex(wayIndex);
+                                qr.setSnappedPosition(pos);
+
+                                if (index < 0) {
+                                    queryResults.add(qr);
+                                } else {
+                                    queryResults.set(index, qr);
                                 }
                             }
-
-                            QueryResult qr = new QueryResult(queryLat, queryLon);
-                            qr.setQueryDistance(normedDist);
-                            qr.setClosestNode(node);
-                            qr.setClosestEdge(edge.detach(false));
-                            qr.setWayIndex(wayIndex);
-                            qr.setSnappedPosition(pos);
-
-                            if (index < 0) {
-                                queryResults.add(qr);
-                            } else {
-                                queryResults.set(index, qr);
-                            }
+                            return true;
                         }
-                        return true;
-                    }
-                }.start(explorer, node);
-                return true;
-            }
-        });
+                    }.start(explorer, node);
+                    return true;
+                }
+            });
+        }
 
         Collections.sort(queryResults, QR_COMPARATOR);
 

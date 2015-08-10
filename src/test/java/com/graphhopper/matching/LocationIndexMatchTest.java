@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.NodeAccess;
@@ -43,7 +44,7 @@ public class LocationIndexMatchTest {
         RAMDirectory dir = new RAMDirectory();
         FlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = new EncodingManager(encoder);
-        GraphHopperStorage ghStorage = new GraphHopperStorage(dir, em, false);
+        GraphHopperStorage ghStorage = new GraphHopperStorage(dir, em, false, new GraphExtension.NoOpExtension());
         ghStorage.create(1000);
         // 0---1---2
         // |   |   |
