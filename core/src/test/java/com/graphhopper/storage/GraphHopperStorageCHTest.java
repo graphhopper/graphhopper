@@ -46,7 +46,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     @Override
     public GraphHopperStorage newGHStorage( Directory dir, boolean is3D )
     {
-        return new GraphHopperStorage(Collections.singleton(new FastestWeighting(carEncoder)), dir, encodingManager, is3D, new GraphExtension.NoOpExtension());
+        return new GraphHopperStorage(Arrays.asList(new FastestWeighting(carEncoder)), dir, encodingManager, is3D, new GraphExtension.NoOpExtension());
     }
 
     @Test

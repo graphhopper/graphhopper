@@ -134,6 +134,58 @@ public class GraphHopperTest
     }
 
     @Test
+    public void testLoadingWithDifferentCHConfig_issue471()
+    {
+        // with CH should not be loadable without CH configured
+        GraphHopper gh = new GraphHopper().setStoreOnFlush(true).
+                setEncodingManager(new EncodingManager("CAR")).
+                setGraphHopperLocation(ghLoc).
+                setOSMFile(testOsm);
+        gh.importOrLoad();
+        GHResponse rsp = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
+        assertFalse(rsp.hasErrors());
+        assertEquals(3, rsp.getPoints().getSize());
+        gh.close();
+
+        gh = new GraphHopper().setStoreOnFlush(true).
+                setCHEnable(false).
+                setEncodingManager(new EncodingManager("CAR"));
+        try
+        {
+            gh.load(ghLoc);
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.chWeightings:"));
+        }
+
+        Helper.removeDir(new File(ghLoc));
+
+        // without CH should not be loadable with CH enabled
+        gh = new GraphHopper().setStoreOnFlush(true).
+                setCHEnable(false).
+                setEncodingManager(new EncodingManager("CAR")).
+                setGraphHopperLocation(ghLoc).
+                setOSMFile(testOsm);
+        gh.importOrLoad();
+        rsp = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
+        assertFalse(rsp.hasErrors());
+        assertEquals(3, rsp.getPoints().getSize());
+        gh.close();
+
+        gh = new GraphHopper().setStoreOnFlush(true).
+                setEncodingManager(new EncodingManager("CAR"));
+        try
+        {
+            gh.load(ghLoc);
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.chWeightings:"));
+        }
+    }
+
+    @Test
     public void testAllowMultipleReadingInstances()
     {
         GraphHopper instance1 = new GraphHopper().setStoreOnFlush(true).

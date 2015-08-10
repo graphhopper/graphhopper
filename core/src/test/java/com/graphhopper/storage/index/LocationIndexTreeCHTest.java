@@ -30,6 +30,7 @@ import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 
@@ -62,7 +63,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest
     @Override
     GraphHopperStorage createGHStorage( Directory dir, EncodingManager encodingManager, boolean is3D )
     {
-        return new GraphHopperStorage(Collections.singleton(new FastestWeighting(encodingManager.getEncoder("car"))), dir, encodingManager, is3D, new GraphExtension.NoOpExtension()).
+        return new GraphHopperStorage(Arrays.asList(new FastestWeighting(encodingManager.getEncoder("car"))), dir, encodingManager, is3D, new GraphExtension.NoOpExtension()).
                 create(100);
     }
 

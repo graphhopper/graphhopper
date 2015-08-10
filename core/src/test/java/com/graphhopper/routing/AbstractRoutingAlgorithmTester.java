@@ -24,11 +24,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-
-import java.util.Random;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -59,14 +55,14 @@ public abstract class AbstractRoutingAlgorithmTester
         return ghStorage.getGraph(Graph.class, weighting);
     }
 
-    protected GraphHopperStorage createGHStorage( EncodingManager em, Collection<Weighting> weightings, boolean is3D )
+    protected GraphHopperStorage createGHStorage( EncodingManager em, List<? extends Weighting> weightings, boolean is3D )
     {
         return new GraphBuilder(em).set3D(is3D).create();
     }
 
     protected GraphHopperStorage createGHStorage( boolean is3D )
     {
-        return createGHStorage(encodingManager, Collections.singleton(defaultOpts.getWeighting()), is3D);
+        return createGHStorage(encodingManager, Arrays.asList(defaultOpts.getWeighting()), is3D);
     }
 
     protected final RoutingAlgorithm createAlgo( GraphHopperStorage g )
@@ -779,14 +775,14 @@ public abstract class AbstractRoutingAlgorithmTester
         };
 
         AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(defaultOpts.getWeighting()).build();
-        GraphHopperStorage graph = createGHStorage(encodingManager, Collections.singleton(opts.getWeighting()), true);
+        GraphHopperStorage graph = createGHStorage(encodingManager, Arrays.asList(opts.getWeighting()), true);
         initEleGraph(graph);
         Path p = createAlgo(graph, opts).calcPath(0, 10);
         // GHUtility.printEdgeInfo(graph, carEncoder);
         assertEquals(Helper.createTList(0, 4, 6, 10), p.calcNodes());
 
         AlgorithmOptions fakeOpts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(fakeWeighting).build();
-        graph = createGHStorage(encodingManager, Collections.singleton(fakeOpts.getWeighting()), true);
+        graph = createGHStorage(encodingManager, Arrays.asList(fakeOpts.getWeighting()), true);
         initEleGraph(graph);
         QueryResult from = newQR(graph, 3, 0);
         QueryResult to = newQR(graph, 10, 9);

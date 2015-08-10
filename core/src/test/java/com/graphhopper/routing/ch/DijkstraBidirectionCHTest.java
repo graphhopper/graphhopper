@@ -24,8 +24,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.Helper;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -46,7 +45,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     }
 
     @Override
-    protected GraphHopperStorage createGHStorage( EncodingManager em, Collection<Weighting> weightings, boolean is3D )
+    protected GraphHopperStorage createGHStorage( EncodingManager em, 
+                                                  List<? extends Weighting> weightings, boolean is3D )
     {
         return new GraphHopperStorage(weightings, new RAMDirectory(),
                 em, is3D, new GraphExtension.NoOpExtension()).
@@ -70,7 +70,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         FlagEncoder encoder = new Bike2WeightFlagEncoder();
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         EncodingManager em = new EncodingManager(encoder);
-        GraphHopperStorage ghStorage = createGHStorage(em, Collections.<Weighting>singleton(weighting), false);
+        GraphHopperStorage ghStorage = createGHStorage(em, Arrays.asList(weighting), false);
         CHGraphImpl g2 = (CHGraphImpl) ghStorage.getGraph(CHGraph.class, weighting);
         g2.edge(0, 1, 1, true);
         EdgeIteratorState iter1_1 = g2.edge(0, 2, 1.4, false);
@@ -121,7 +121,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carFE).
                 weighting(new ShortestWeighting(carFE)).build();
         GraphHopperStorage ghStorage = createGHStorage(new EncodingManager(carFE),
-                Collections.singleton(opts.getWeighting()), false);
+                Arrays.asList(opts.getWeighting()), false);
         initDirectedAndDiffSpeed(ghStorage, carFE);
 
         // do CH preparation for car        
