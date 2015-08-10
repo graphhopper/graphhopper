@@ -747,7 +747,7 @@ public class GraphHopper implements GraphHopperAPI
                 ? new TurnCostExtension() : new GraphExtension.NoOpExtension();
         if (chEnabled)
         {
-            initCHAlgoFactories();            
+            initCHAlgoFactories();
             ghStorage = new GraphHopperStorage(new ArrayList<Weighting>(algoFactories.keySet()), dir, encodingManager, hasElevation(), ext);
         } else
             ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), ext);
@@ -851,9 +851,7 @@ public class GraphHopper implements GraphHopperAPI
 
         initLocationIndex();
         if (chEnabled)
-        {
             createCHPreparations();
-        }
 
         if (!isPrepared())
             prepare();

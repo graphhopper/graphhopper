@@ -60,8 +60,8 @@ public class GHRequest
 
     /**
      * Set routing request from specified startPlace (fromLat, fromLon) to endPlace (toLat, toLon)
-     * with a preferred start and end heading.
-     * Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal preference.
+     * with a preferred start and end heading. Headings are north based azimuth (clockwise) in (0,
+     * 360) or NaN for equal preference.
      */
     public GHRequest( double fromLat, double fromLon, double toLat, double toLon,
                       double startHeading, double endHeading )
@@ -77,10 +77,9 @@ public class GHRequest
         this(new GHPoint(fromLat, fromLon), new GHPoint(toLat, toLon));
     }
 
-
     /**
-     * Set routing request from specified startPlace to endPlace with a preferred start and end heading.
-     * Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal preference
+     * Set routing request from specified startPlace to endPlace with a preferred start and end
+     * heading. Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal preference
      */
     public GHRequest( GHPoint startPlace, GHPoint endPlace, double startHeading, double endHeading )
     {
@@ -106,19 +105,19 @@ public class GHRequest
         this(startPlace, endPlace, Double.NaN, Double.NaN);
     }
 
-
     /**
      * Set routing request
-     *
-     * @param points          List of stopover points in order: start, 1st stop, 2nd stop, ..., end
-     * @param favoredHeadings List of favored headings for starting (start point) and arrival (via and end points)
-     *                        Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal preference
+     * <p>
+     * @param points List of stopover points in order: start, 1st stop, 2nd stop, ..., end
+     * @param favoredHeadings List of favored headings for starting (start point) and arrival (via
+     * and end points) Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal
+     * preference
      */
     public GHRequest( List<GHPoint> points, List<Double> favoredHeadings )
     {
         if (points.size() != favoredHeadings.size())
-            throw new IllegalArgumentException("Size of headings (" + favoredHeadings.size() +
-                    ") must match size of points (" + points.size() + ")");
+            throw new IllegalArgumentException("Size of headings (" + favoredHeadings.size()
+                    + ") must match size of points (" + points.size() + ")");
 
         for (Double heading : favoredHeadings)
         {
@@ -130,7 +129,7 @@ public class GHRequest
 
     /**
      * Set routing request
-     *
+     * <p>
      * @param points List of stopover points in order: start, 1st stop, 2nd stop, ..., end
      */
     public GHRequest( List<GHPoint> points )
@@ -140,15 +139,14 @@ public class GHRequest
 
     /**
      * Add stopover point to routing request.
-     *
-     * @param point          geographical position (see GHPoint)
+     * <p>
+     * @param point geographical position (see GHPoint)
      * @param favoredHeading north based azimuth (clockwise) in (0, 360) or NaN for equal preference
      */
     public GHRequest addPoint( GHPoint point, Double favoredHeading )
     {
         if (point == null)
             throw new IllegalArgumentException("point cannot be null");
-
 
         if (!possibleToAdd)
             throw new IllegalStateException("Please call empty constructor if you intent to use "
@@ -162,7 +160,7 @@ public class GHRequest
 
     /**
      * Add stopover point to routing request.
-     *
+     * <p>
      * @param point geographical position (see GHPoint)
      */
     public GHRequest addPoint( GHPoint point )
@@ -185,7 +183,7 @@ public class GHRequest
     public boolean hasFavoredHeading( int i )
     {
         if (i >= favoredHeadings.size())
-            throw new IndexOutOfBoundsException("Index: " + i + " too large for list of size " + favoredHeadings.size());
+            return false;
 
         return !Double.isNaN(favoredHeadings.get(i));
     }
