@@ -143,7 +143,7 @@ public class GHRequest
      * @param point geographical position (see GHPoint)
      * @param favoredHeading north based azimuth (clockwise) in (0, 360) or NaN for equal preference
      */
-    public GHRequest addPoint( GHPoint point, Double favoredHeading )
+    public GHRequest addPoint( GHPoint point, double favoredHeading )
     {
         if (point == null)
             throw new IllegalArgumentException("point cannot be null");
@@ -188,14 +188,11 @@ public class GHRequest
         return !Double.isNaN(favoredHeadings.get(i));
     }
 
-    // validate Azimuth entry
-    private void validateAzimuthValue( Double heading )
+    private void validateAzimuthValue( double heading )
     {
-        // heading must be in (0, 360) oder Nan
+        // heading must be in (0, 360) oder NaN
         if (!Double.isNaN(heading) && ((Double.compare(heading, 360) > 0) || (Double.compare(heading, 0) < 0)))
-        {
             throw new IllegalArgumentException("Heading " + heading + " must be in range (0,360) or NaN");
-        }
     }
 
     public List<GHPoint> getPoints()

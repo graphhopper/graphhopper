@@ -67,7 +67,7 @@ GHResponse res = hopper.route(req);
 ```
 
 In the flexibility mode it is also possible to add a desired heading (north based azimuth between 0 and 360 degree)
-to any point,
+to any point:
 ```java
 GHRequest req = new GHRequest().addPoint(new GHPoint (latFrom, lonFrom), favoredHeading).addPoint(new GHPoint (latTo, lonTo));
 ```
@@ -76,6 +76,7 @@ or to avoid u-turns at via points
 req.getHints().put("pass_through", true);
 ```
 
+A heading with the value 'NaN' won't be enforced and a heading not within [0, 360] will trigger an IllegalStateException.
 It is important to note that if you force the heading at via or end points the outgoing heading needs to be specified.
 I.e. if you want to force "coming from south" to a destination you need to specify the resulting "heading towards north" instead, which is 0.
  
