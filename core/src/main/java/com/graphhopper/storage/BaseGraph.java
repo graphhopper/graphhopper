@@ -172,11 +172,6 @@ class BaseGraph implements Graph
 
     protected int loadNodesHeader()
     {
-        int hash = nodes.getHeader(0);
-        if (hash != stringHashCode(getClass().getName()))
-            throw new IllegalStateException("Cannot load the graph when using instance of "
-                    + getClass().getName() + " and location: " + dir);
-
         nodeEntryBytes = nodes.getHeader(1 * 4);
         nodeCount = nodes.getHeader(2 * 4);
         bounds.minLon = Helper.intToDegree(nodes.getHeader(3 * 4));
@@ -196,7 +191,6 @@ class BaseGraph implements Graph
 
     protected int setNodesHeader()
     {
-        nodes.setHeader(0, stringHashCode(getClass().getName()));
         nodes.setHeader(1 * 4, nodeEntryBytes);
         nodes.setHeader(2 * 4, nodeCount);
         nodes.setHeader(3 * 4, Helper.degreeToInt(bounds.minLon));
@@ -961,18 +955,6 @@ class BaseGraph implements Graph
         // one more integer to store also the size itself
         maxGeoRef += arrayLength + 1;
         return tmp;
-    }
-
-    // workaround for graphhopper-ios https://github.com/google/j2objc/issues/423
-    private int stringHashCode( String str )
-    {
-        try
-        {
-            return java.util.Arrays.hashCode(str.getBytes("UTF-8"));
-        } catch (UnsupportedEncodingException ex)
-        {
-            throw new UnsupportedOperationException(ex);
-        }
     }
 
     protected static class EdgeIterable extends CommonEdgeIterator implements EdgeExplorer, EdgeIterator
