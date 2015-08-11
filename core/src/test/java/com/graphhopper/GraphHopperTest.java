@@ -515,9 +515,9 @@ public class GraphHopperTest
         assertEquals(2, instance.getGraphHopperStorage().getAllEdges().getMaxId());
 
         // A to E only for foot
-        GHResponse res = instance.route(new GHRequest(11.1, 50, 11.2, 52).setVehicle(EncodingManager.FOOT));
+        GHResponse res = instance.route(new GHRequest(11.1, 50, 11.2, 52.01).setVehicle(EncodingManager.FOOT));
         assertFalse(res.hasErrors());
-        assertEquals(Helper.createPointList(11.1, 50, 10, 51, 11.2, 52, 11.2, 52), res.getPoints());
+        assertEquals(Helper.createPointList(11.1, 50, 10, 51, 11.2, 52), res.getPoints());
     }
 
     @Test
