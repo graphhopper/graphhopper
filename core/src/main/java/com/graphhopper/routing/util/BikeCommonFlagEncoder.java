@@ -57,7 +57,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     private final Map<String, Integer> bikeNetworkToCode = new HashMap<String, Integer>();
     protected EncodedValue relationCodeEncoder;
     private EncodedValue wayTypeEncoder;
-    private EncodedValue preferWayEncoder;
+    EncodedValue priorityWayEncoder;
 
     // Car speed limit which switches the preference from UNCHANGED to AVOID_IF_POSSIBLE
     private int avoidSpeedLimit;
@@ -220,8 +220,8 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         wayTypeEncoder = new EncodedValue("WayType", shift, 2, 1, 0, 3, true);
         shift += wayTypeEncoder.getBits();
 
-        preferWayEncoder = new EncodedValue("PreferWay", shift, 3, 1, 0, 7);
-        shift += preferWayEncoder.getBits();
+        priorityWayEncoder = new EncodedValue("PreferWay", shift, 3, 1, 0, 7);
+        shift += priorityWayEncoder.getBits();
 
         return shift;
     }
@@ -328,11 +328,6 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         if (!isFerry(allowed))
         {
             double speed = getSpeed(way);
-            int priorityFromRelation = 0;
-            if (relationFlags != 0)
-                priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
-
-            encoded = setLong(encoded, PriorityWeighting.KEY, handlePriority(way, priorityFromRelation));
 
             // bike maxspeed handling is different from car as we don't increase speed
             speed = applyMaxSpeed(way, speed, false);
@@ -353,6 +348,11 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                     highwaySpeeds.get("primary"));
             encoded |= directionBitMask;
         }
+        int priorityFromRelation = 0;
+        if (relationFlags != 0)
+            priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
+
+        encoded = priorityWayEncoder.setValue(encoded, handlePriority(way, priorityFromRelation));
         return encoded;
     }
 
@@ -642,37 +642,9 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         switch (key)
         {
             case PriorityWeighting.KEY:
-                double prio = preferWayEncoder.getValue(flags);
-                if (prio == 0)
-                    return (double) UNCHANGED.getValue() / BEST.getValue();
-
-                return prio / BEST.getValue();
+                return (double) priorityWayEncoder.getValue(flags) / BEST.getValue();
             default:
                 return super.getDouble(flags, key);
-        }
-    }
-
-    @Override
-    public long getLong( long flags, int key )
-    {
-        switch (key)
-        {
-            case PriorityWeighting.KEY:
-                return preferWayEncoder.getValue(flags);
-            default:
-                return super.getLong(flags, key);
-        }
-    }
-
-    @Override
-    public long setLong( long flags, int key, long value )
-    {
-        switch (key)
-        {
-            case PriorityWeighting.KEY:
-                return preferWayEncoder.setValue(flags, value);
-            default:
-                return super.setLong(flags, key, value);
         }
     }
 
