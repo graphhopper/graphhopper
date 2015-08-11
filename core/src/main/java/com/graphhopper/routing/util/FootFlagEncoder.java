@@ -109,8 +109,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         avoidHighwayTags.add("trunk_link");
         avoidHighwayTags.add("primary");
         avoidHighwayTags.add("primary_link");
-        avoidHighwayTags.add("tertiary");
-        avoidHighwayTags.add("tertiary_link");
         // for now no explicit avoiding #257
         //avoidHighwayTags.add("cycleway"); 
 
@@ -119,6 +117,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         allowedHighwayTags.add("cycleway");
         allowedHighwayTags.add("secondary");
         allowedHighwayTags.add("secondary_link");
+        allowedHighwayTags.add("tertiary");
+        allowedHighwayTags.add("tertiary_link");
         allowedHighwayTags.add("unclassified");
         allowedHighwayTags.add("road");
         // disallowed in some countries
@@ -358,30 +358,24 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         {
             weightToPrioMap.put(40d, PREFER.getValue());
             if (way.hasTag("tunnel", intendedValues))
-                weightToPrioMap.put(40d, UNCHANGED.getValue());
+            {
+                if (way.hasTag("sidewalk", "no"))
+                    weightToPrioMap.put(40d, REACH_DEST.getValue());
+                else
+                    weightToPrioMap.put(40d, UNCHANGED.getValue());
+            }
+        } else if (maxSpeed > 50 || avoidHighwayTags.contains(highway))
+        {
+            if (way.hasTag("sidewalk", sidewalks))
+                weightToPrioMap.put(45d, AVOID_IF_POSSIBLE.getValue());
+            else if (way.hasTag("sidewalk", "no"))
+                weightToPrioMap.put(45d, WORST.getValue());
+            else
+                weightToPrioMap.put(45d, REACH_DEST.getValue());
         }
 
         if (way.hasTag("bicycle", "official") || way.hasTag("bicycle", "designated"))
-        {
             weightToPrioMap.put(44d, AVOID_IF_POSSIBLE.getValue());
-        }
-
-        if (avoidHighwayTags.contains(highway) || maxSpeed > 50)
-        {
-            if (way.hasTag("sidewalk", sidewalks))
-            {
-                weightToPrioMap.put(45d, REACH_DEST.getValue());
-            } else
-            {
-                weightToPrioMap.put(45d, AVOID_AT_ALL_COSTS.getValue());
-            }
-        } else
-        {
-            if (way.hasTag("sidewalk", sidewalks))
-            {
-                weightToPrioMap.put(45d, PREFER.getValue());
-            }
-        }
     }
 
     @Override
