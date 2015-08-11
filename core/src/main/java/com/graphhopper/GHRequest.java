@@ -150,7 +150,7 @@ public class GHRequest
 
         if (!possibleToAdd)
             throw new IllegalStateException("Please call empty constructor if you intent to use "
-                    + "more than two places via addPlace method.");
+                    + "more than two places via addPoint method.");
 
         points.add(point);
         validateAzimuthValue(favoredHeading);
