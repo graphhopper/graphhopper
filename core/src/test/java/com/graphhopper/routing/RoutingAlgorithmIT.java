@@ -307,8 +307,8 @@ public class RoutingAlgorithmIT
         List<OneRun> list = new ArrayList<OneRun>();
         // prefer hiking route 'Teufelsloch Unterwaiz' and 'Rotmain-Wanderweg'        
         list.add(new OneRun(49.974972, 11.515657, 49.991022, 11.512299, 2365, 66));
-        // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach'
-        list.add(new OneRun(49.986111, 11.550407, 50.023182, 11.555386, 6429, 122));
+        // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach' but avoid tertiary highway from Pechgraben
+        list.add(new OneRun(49.990967, 11.545258, 50.023182, 11.555386, 5636, 97));
         runAlgo(testCollector, "files/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
                 list, "FOOT", true, "FOOT", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -359,7 +359,7 @@ public class RoutingAlgorithmIT
         list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2322, 110));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3613, 178));
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2331, 121));
-        // hard to select between secondard and primary (both are AVOID for mtb)
+        // hard to select between secondary and primary (both are AVOID for mtb)
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1459, 88));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
                 list, "MTB", true, "MTB", "fastest", false);
@@ -392,6 +392,7 @@ public class RoutingAlgorithmIT
     {
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(48.409523, 15.602394, 48.375466, 15.72916, 12491, 159));
+        // 3109m is better as cyclepath is used
         list.add(new OneRun(48.410061, 15.63951, 48.411386, 15.604899, 3113, 87));
         list.add(new OneRun(48.412294, 15.62007, 48.398306, 15.609667, 3965, 94));
 

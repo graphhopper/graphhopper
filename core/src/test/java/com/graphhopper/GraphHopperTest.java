@@ -26,6 +26,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.shapes.GHPoint;
@@ -516,7 +517,7 @@ public class GraphHopperTest
         // A to E only for foot
         GHResponse res = instance.route(new GHRequest(11.1, 50, 11.2, 52).setVehicle(EncodingManager.FOOT));
         assertFalse(res.hasErrors());
-        assertEquals(3, res.getPoints().getSize());
+        assertEquals(Helper.createPointList(11.1, 50, 10, 51, 11.2, 52, 11.2, 52), res.getPoints());
     }
 
     @Test

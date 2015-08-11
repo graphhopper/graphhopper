@@ -539,7 +539,8 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             }
         } else
         {
-            if (avoidHighwayTags.contains(highway) || ((maxSpeed >= avoidSpeedLimit) && (highway != "track")))
+            if (avoidHighwayTags.contains(highway)
+                    || maxSpeed >= avoidSpeedLimit && !"track".equals(highway))
             {
                 weightToPrioMap.put(50d, REACH_DEST.getValue());
                 if (way.hasTag("tunnel", intendedValues))
@@ -569,11 +570,8 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         {
             String classBicycle = way.getTag("class:bicycle");
             if (classBicycle != null)
-            {
                 weightToPrioMap.put(100d, convertCallValueToPriority(classBicycle).getValue());
-            }
         }
-
     }
 
     /**
@@ -753,5 +751,4 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     {
         specificBicycleClass = "class:bicycle:" + subkey.toString();
     }
-
 }
