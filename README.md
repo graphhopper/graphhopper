@@ -80,8 +80,8 @@ with this maven dependency:
 <dependency>
     <groupId>com.graphhopper</groupId>
     <artifactId>map-matching</artifactId>
-    <!-- or 0.5-SNAPSHOT for the unstable -->
-    <version>0.4.0</version>
+    <!-- or 0.6-SNAPSHOT for the unstable -->
+    <version>0.5.0.0</version>
 </dependency>
 ```
 
