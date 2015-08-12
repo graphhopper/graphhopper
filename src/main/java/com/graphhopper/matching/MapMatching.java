@@ -59,7 +59,8 @@ import java.util.List;
  * if not the full but only partial routes are calculated this will also improve
  * accuracy as currently all loops in a GPX trail are automatically removed.
  * <p>
- * @see http://en.wikipedia.org/wiki/Map_matching
+ * See http://en.wikipedia.org/wiki/Map_matching
+ *
  * @author Peter Karich
  */
 public class MapMatching {
