@@ -226,6 +226,22 @@ public class RoutingAlgorithmIT
     }
 
     @Test
+    public void testSidewalkNo()
+    {
+        List<OneRun> list = new ArrayList<OneRun>();
+        // roundabout contains sidewalk=no which should be avoided
+        list.add(new OneRun(57.154888, -2.101822, 57.153445, -2.099869, 329, 31));
+        // longer path should go through tertiary, see discussion in #476
+        list.add(new OneRun(57.154888, -2.101822, 57.147299, -2.096286, 1118, 68));
+
+        boolean testAlsoCH = false, is3D = false;
+        runAlgo(testCollector, "files/map-sidewalk-no.osm.gz", "target/graph-sidewalkno",
+                list, "foot", testAlsoCH, "foot", "fastest", is3D);
+
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
     public void testMonacoFastest()
     {
         List<OneRun> list = createMonacoCar();
