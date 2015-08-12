@@ -26,6 +26,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.shapes.GHPoint;
@@ -131,6 +132,58 @@ public class GraphHopperTest
         assertEquals(3, rsp.getPoints().getSize());
 
         gh.close();
+    }
+
+    @Test
+    public void testLoadingWithDifferentCHConfig_issue471()
+    {
+        // with CH should not be loadable without CH configured
+        GraphHopper gh = new GraphHopper().setStoreOnFlush(true).
+                setEncodingManager(new EncodingManager("CAR")).
+                setGraphHopperLocation(ghLoc).
+                setOSMFile(testOsm);
+        gh.importOrLoad();
+        GHResponse rsp = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
+        assertFalse(rsp.hasErrors());
+        assertEquals(3, rsp.getPoints().getSize());
+        gh.close();
+
+        gh = new GraphHopper().setStoreOnFlush(true).
+                setCHEnable(false).
+                setEncodingManager(new EncodingManager("CAR"));
+        try
+        {
+            gh.load(ghLoc);
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.chWeightings:"));
+        }
+
+        Helper.removeDir(new File(ghLoc));
+
+        // without CH should not be loadable with CH enabled
+        gh = new GraphHopper().setStoreOnFlush(true).
+                setCHEnable(false).
+                setEncodingManager(new EncodingManager("CAR")).
+                setGraphHopperLocation(ghLoc).
+                setOSMFile(testOsm);
+        gh.importOrLoad();
+        rsp = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
+        assertFalse(rsp.hasErrors());
+        assertEquals(3, rsp.getPoints().getSize());
+        gh.close();
+
+        gh = new GraphHopper().setStoreOnFlush(true).
+                setEncodingManager(new EncodingManager("CAR"));
+        try
+        {
+            gh.load(ghLoc);
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.chWeightings:"));
+        }
     }
 
     @Test
@@ -462,9 +515,9 @@ public class GraphHopperTest
         assertEquals(2, instance.getGraphHopperStorage().getAllEdges().getMaxId());
 
         // A to E only for foot
-        GHResponse res = instance.route(new GHRequest(11.1, 50, 11.2, 52).setVehicle(EncodingManager.FOOT));
+        GHResponse res = instance.route(new GHRequest(11.1, 50, 11.2, 52.01).setVehicle(EncodingManager.FOOT));
         assertFalse(res.hasErrors());
-        assertEquals(3, res.getPoints().getSize());
+        assertEquals(Helper.createPointList(11.1, 50, 10, 51, 11.2, 52), res.getPoints());
     }
 
     @Test

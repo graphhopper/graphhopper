@@ -35,7 +35,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     private final int adjNode;
     private final int originalTraversalKey;
     // indication if edges are dispreferred as start/stop edge 
-    private boolean unfavoredReverseEdge;
     private boolean unfavored;
 
     public VirtualEdgeIteratorState( int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance, long flags, String name, PointList pointList )
@@ -149,27 +148,18 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     public boolean getBoolean( int key, boolean reverse, boolean _default )
     {
         if (key == EdgeIteratorState.K_UNFAVORED_EDGE)
-        {
-            if (reverse)
-                return unfavoredReverseEdge;
-            else
-                return unfavored;
-        }
+            return unfavored;
+
         // for non-existent keys return default
         return _default;
     }
 
     /**
      * This method sets edge to unfavored status for routing from or to the start/stop points.
-     * <p>
-     * @param reverse indicates if forward or backward direction is affected
      */
-    public void setVirtualEdgePreference( boolean unfavored, boolean reverse )
+    public void setVirtualEdgePreference( boolean unfavored )
     {
-        if (reverse)
-            unfavoredReverseEdge = unfavored;
-        else
-            this.unfavored = unfavored;
+        this.unfavored = unfavored;
     }
 
     @Override

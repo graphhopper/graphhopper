@@ -407,11 +407,11 @@ public class QueryGraph implements Graph
 
             if (Math.abs(delta) > 1.74) // penalize if a turn of more than 100°
             {
-                edge.setVirtualEdgePreference(true, false);
+                edge.setVirtualEdgePreference(true);
                 modifiedEdges.add(edge);
                 //also apply to opposite edge for reverse routing
                 VirtualEdgeIteratorState reverseEdge = virtualEdges.get(virtNodeIDintern * 4 + getPosOfReverseEdge(edgePos));
-                reverseEdge.setVirtualEdgePreference(true, true);
+                reverseEdge.setVirtualEdgePreference(true);
                 modifiedEdges.add(reverseEdge);
                 enforcementOccured = true;
             }
@@ -435,9 +435,9 @@ public class QueryGraph implements Graph
 
         VirtualEdgeIteratorState incomingEdge = (VirtualEdgeIteratorState) getEdgeIteratorState(edgeId, nodeId);
         VirtualEdgeIteratorState reverseEdge = (VirtualEdgeIteratorState) getEdgeIteratorState(edgeId, incomingEdge.getBaseNode());
-        incomingEdge.setVirtualEdgePreference(true, !incoming);
+        incomingEdge.setVirtualEdgePreference(true);
         modifiedEdges.add(incomingEdge);
-        reverseEdge.setVirtualEdgePreference(true, incoming);
+        reverseEdge.setVirtualEdgePreference(true);
         modifiedEdges.add(reverseEdge);
         return true;
     }
@@ -449,10 +449,8 @@ public class QueryGraph implements Graph
     {
         for (VirtualEdgeIteratorState edge : modifiedEdges)
         {
-            edge.setVirtualEdgePreference(false, false);
-            edge.setVirtualEdgePreference(false, true);
+            edge.setVirtualEdgePreference(false);
         }
-
     }
 
     @Override

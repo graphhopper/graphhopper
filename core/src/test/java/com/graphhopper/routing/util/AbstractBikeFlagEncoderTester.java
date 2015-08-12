@@ -388,10 +388,10 @@ public abstract class AbstractBikeFlagEncoderTester
     @Test
     public void testPriority()
     {
-        long flags = encoder.setLong(0L, PriorityWeighting.KEY, PriorityCode.BEST.getValue());
+        long flags = encoder.priorityWayEncoder.setValue(0, PriorityCode.BEST.getValue());
         assertEquals(1, encoder.getDouble(flags, PriorityWeighting.KEY), 1e-3);
 
-        flags = encoder.setLong(0L, PriorityWeighting.KEY, PriorityCode.AVOID_IF_POSSIBLE.getValue());
+        flags = encoder.priorityWayEncoder.setValue(0, PriorityCode.AVOID_IF_POSSIBLE.getValue());
         assertEquals(3d / 7d, encoder.getDouble(flags, PriorityWeighting.KEY), 1e-3);
     }
 

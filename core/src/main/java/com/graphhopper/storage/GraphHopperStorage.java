@@ -50,7 +50,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph
         this(Collections.<Weighting>emptyList(), dir, encodingManager, withElevation, extendedStorage);
     }
 
-    public GraphHopperStorage( Collection<? extends Weighting> chWeightings, Directory dir, final EncodingManager encodingManager,
+    public GraphHopperStorage( List<? extends Weighting> chWeightings, Directory dir, final EncodingManager encodingManager,
                                boolean withElevation, GraphExtension extendedStorage )
     {
         if (extendedStorage == null)
@@ -81,7 +81,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph
         };
 
         this.baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, extendedStorage);
-
         for (Weighting w : chWeightings)
         {
             chGraphs.add(new CHGraphImpl(w, dir, this.baseGraph));
@@ -132,9 +131,9 @@ public final class GraphHopperStorage implements GraphStorage, Graph
         return !chGraphs.isEmpty();
     }
 
-    public Collection<Weighting> getCHWeightings()
+    public List<Weighting> getCHWeightings()
     {
-        List<Weighting> list = new ArrayList<Weighting>();
+        List<Weighting> list = new ArrayList<Weighting>(chGraphs.size());
         for (CHGraphImpl cg : chGraphs)
         {
             list.add(cg.getWeighting());
@@ -189,6 +188,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph
             cg.create(byteCount);
         }
 
+        properties.put("graph.chWeightings", getCHWeightings().toString());
         return this;
     }
 
@@ -271,6 +271,11 @@ public final class GraphHopperStorage implements GraphStorage, Graph
 
             String dim = properties.get("graph.dimension");
             baseGraph.loadExisting(dim);
+
+            String loadedCHWeightings = properties.get("graph.chWeightings");
+            String configuredCHWeightings = getCHWeightings().toString();
+            if (!loadedCHWeightings.equals(configuredCHWeightings))
+                throw new IllegalStateException("Configured graph.chWeightings: " + configuredCHWeightings + " is not equal to loaded " + loadedCHWeightings);
 
             for (CHGraphImpl cg : chGraphs)
             {

@@ -203,8 +203,8 @@ public class FootFlagEncoderTest
         assertEquals(PriorityCode.UNCHANGED.getValue(), footEncoder.handlePriority(way, 0));
 
         way.setTag("highway", "primary");
-        assertEquals(PriorityCode.AVOID_AT_ALL_COSTS.getValue(), footEncoder.handlePriority(way, 0));
-        
+        assertEquals(PriorityCode.REACH_DEST.getValue(), footEncoder.handlePriority(way, 0));
+
         way.setTag("highway", "track");
         way.setTag("bicycle", "official");
         assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, 0));
@@ -212,16 +212,32 @@ public class FootFlagEncoderTest
         way.setTag("highway", "track");
         way.setTag("bicycle", "designated");
         assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, 0));
-        
+
         way.setTag("highway", "cycleway");
         way.setTag("bicycle", "designated");
-        way.setTag("foot", "designated"); 
+        way.setTag("foot", "designated");
         assertEquals(PriorityCode.PREFER.getValue(), footEncoder.handlePriority(way, 0));
-        
+
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("sidewalk", "yes");
-        assertEquals(PriorityCode.REACH_DEST.getValue(), footEncoder.handlePriority(way, 0));        
+        assertEquals(PriorityCode.REACH_DEST.getValue(), footEncoder.handlePriority(way, 0));
+
+        way.clearTags();
+        way.setTag("highway", "cycleway");
+        way.setTag("sidewalk", "no");
+        assertEquals(PriorityCode.UNCHANGED.getValue(), footEncoder.handlePriority(way, 0));
+
+        way.clearTags();
+        way.setTag("highway", "road");
+        way.setTag("bicycle", "official");
+        way.setTag("sidewalk", "no");
+        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, 0));
+        
+        way.clearTags();
+        way.setTag("highway", "residential");        
+        way.setTag("sidewalk", "yes");
+        assertEquals(PriorityCode.PREFER.getValue(), footEncoder.handlePriority(way, 0));                
     }
 
     @Test

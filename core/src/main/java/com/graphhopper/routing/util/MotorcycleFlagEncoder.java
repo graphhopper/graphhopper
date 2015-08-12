@@ -33,7 +33,7 @@ import java.util.HashSet;
 public class MotorcycleFlagEncoder extends CarFlagEncoder
 {
     private EncodedDoubleValue reverseSpeedEncoder;
-    private EncodedValue preferWayEncoder;
+    private EncodedValue priorityWayEncoder;
     private final HashSet<String> avoidSet = new HashSet<String>();
     private final HashSet<String> preferSet = new HashSet<String>();
 
@@ -122,7 +122,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
                 defaultSpeedMap.get("secondary"), maxPossibleSpeed);
         shift += reverseSpeedEncoder.getBits();
 
-        preferWayEncoder = new EncodedValue("PreferWay", shift, 3, 1, 3, 7);
+        priorityWayEncoder = new EncodedValue("PreferWay", shift, 3, 1, 3, 7);
         shift += reverseSpeedEncoder.getBits();
 
         return shift;
@@ -180,7 +180,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     }
 
     @Override
-    public long handleWayTags( OSMWay way, long allowed, long relationFlags )
+    public long handleWayTags( OSMWay way, long allowed, long priorityFromRelation )
     {
         if (!isAccept(allowed))
             return 0;
@@ -188,8 +188,6 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         long encoded = 0;
         if (!isFerry(allowed))
         {
-            encoded = setLong(encoded, PriorityWeighting.KEY, calcPriority(way, relationFlags));
-
             // get assumed speed from highway type
             double speed = getSpeed(way);
             speed = applyMaxSpeed(way, speed, true);
@@ -230,6 +228,8 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
             encoded |= directionBitMask;
         }
 
+        // relations are not yet stored -> see BikeCommonFlagEncoder.defineRelationBits how to do this
+        encoded = priorityWayEncoder.setValue(encoded, handlePriority(way, priorityFromRelation));
         return encoded;
     }
 
@@ -301,41 +301,13 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         switch (key)
         {
             case PriorityWeighting.KEY:
-                double prio = preferWayEncoder.getValue(flags);
-                if (prio == 0)
-                    return (double) UNCHANGED.getValue() / BEST.getValue();
-
-                return prio / BEST.getValue();
+                return (double) priorityWayEncoder.getValue(flags) / BEST.getValue();
             default:
                 return super.getDouble(flags, key);
         }
     }
 
-    @Override
-    public long getLong( long flags, int key )
-    {
-        switch (key)
-        {
-            case PriorityWeighting.KEY:
-                return preferWayEncoder.getValue(flags);
-            default:
-                return super.getLong(flags, key);
-        }
-    }
-
-    @Override
-    public long setLong( long flags, int key, long value )
-    {
-        switch (key)
-        {
-            case PriorityWeighting.KEY:
-                return preferWayEncoder.setValue(flags, value);
-            default:
-                return super.setLong(flags, key, value);
-        }
-    }
-
-    private int calcPriority( OSMWay way, long relationFlags )
+    private int handlePriority( OSMWay way, long relationFlags )
     {
         String highway = way.getTag("highway", "");
         if (avoidSet.contains(highway))

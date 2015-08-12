@@ -28,7 +28,7 @@
             <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
         </goals>
         <properties>
-            <exec.args>-classpath %classpath com.graphhopper.http.GHServer graph.elevation.cachedir=../srtmprovider jetty.port=8989 config=../config.properties osmreader.osm=../europe_germany_berlin.pbf</exec.args>
+            <exec.args>-classpath %classpath com.graphhopper.http.GHServer jetty.port=8989 config=../config.properties osmreader.osm=../core/files/monaco.osm.gz</exec.args>
             <exec.executable>java</exec.executable>
         </properties>
     </action>
@@ -42,7 +42,7 @@
             <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
         </goals>
         <properties>
-            <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -classpath %classpath com.graphhopper.http.GHServer graph.elevation.cachedir=../srtmprovider jetty.port=8989 config=../config.properties osmreader.osm=../europe_germany_berlin.pbf</exec.args>
+            <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -classpath %classpath com.graphhopper.http.GHServer jetty.port=8989 config=../config.properties osmreader.osm=../core/files/monaco.osm.gz</exec.args>
             <exec.executable>java</exec.executable>
             <jpda.listen>true</jpda.listen>
         </properties>
@@ -57,7 +57,7 @@
             <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
         </goals>
         <properties>
-            <exec.args>-classpath %classpath com.graphhopper.http.GHServer graph.elevation.cachedir=../srtmprovider jetty.port=8989 config=../config.properties osmreader.osm=../europe_germany_berlin.pbf</exec.args>
+            <exec.args>-classpath %classpath com.graphhopper.http.GHServer jetty.port=8989 config=../config.properties osmreader.osm=../core/files/monaco.osm.gz</exec.args>
             <exec.executable>java</exec.executable>
         </properties>
     </action>

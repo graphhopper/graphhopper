@@ -748,7 +748,7 @@ public class GraphHopper implements GraphHopperAPI
         if (chEnabled)
         {
             initCHAlgoFactories();
-            ghStorage = new GraphHopperStorage(algoFactories.keySet(), dir, encodingManager, hasElevation(), ext);
+            ghStorage = new GraphHopperStorage(new ArrayList<Weighting>(algoFactories.keySet()), dir, encodingManager, hasElevation(), ext);
         } else
             ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), ext);
 
@@ -851,9 +851,7 @@ public class GraphHopper implements GraphHopperAPI
 
         initLocationIndex();
         if (chEnabled)
-        {
             createCHPreparations();
-        }
 
         if (!isPrepared())
             prepare();

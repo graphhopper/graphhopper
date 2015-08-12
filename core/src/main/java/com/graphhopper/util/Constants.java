@@ -14,6 +14,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.GraphHopper;
 import static com.graphhopper.util.Helper.readFile;
 
 import java.io.InputStreamReader;
@@ -53,6 +54,7 @@ public class Constants
     public static final String JAVA_VENDOR = System.getProperty("java.vendor");
     public static final int VERSION_NODE = 4;
     public static final int VERSION_EDGE = 12;
+    public static final int VERSION_SHORTCUT = 1;
     public static final int VERSION_GEOMETRY = 3;
     public static final int VERSION_LOCATION_IDX = 2;
     public static final int VERSION_NAME_IDX = 2;
@@ -66,7 +68,7 @@ public class Constants
     public static String getVersions()
     {
         return VERSION_NODE + "," + VERSION_EDGE + "," + VERSION_GEOMETRY + "," + VERSION_LOCATION_IDX
-                + "," + VERSION_NAME_IDX;
+                + "," + VERSION_NAME_IDX + "," + VERSION_SHORTCUT;
     }
 
     static
@@ -74,7 +76,9 @@ public class Constants
         String version = "0.0";
         try
         {
-            List<String> v = readFile(new InputStreamReader(Helper.class.getResourceAsStream("/version"), Helper.UTF_CS));
+            // see com/graphhopper/version file in resources which is modified in the maven packaging process 
+            // to contain the current version
+            List<String> v = readFile(new InputStreamReader(GraphHopper.class.getResourceAsStream("version"), Helper.UTF_CS));
             version = v.get(0);
         } catch (Exception ex)
         {
@@ -104,7 +108,7 @@ public class Constants
         String buildDate = "";
         try
         {
-            List<String> v = readFile(new InputStreamReader(Helper.class.getResourceAsStream("/builddate"), Helper.UTF_CS));
+            List<String> v = readFile(new InputStreamReader(GraphHopper.class.getResourceAsStream("builddate"), Helper.UTF_CS));
             buildDate = v.get(0);
         } catch (Exception ex)
         {
