@@ -113,10 +113,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         avoidHighwayTags.add("secondary_link");
         avoidHighwayTags.add("tertiary");
         avoidHighwayTags.add("tertiary_link");
-        
+
         // for now no explicit avoiding #257
         //avoidHighwayTags.add("cycleway"); 
-
         allowedHighwayTags.addAll(safeHighwayTags);
         allowedHighwayTags.addAll(avoidHighwayTags);
         allowedHighwayTags.add("cycleway");
@@ -367,9 +366,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             }
         } else if (maxSpeed > 50 || avoidHighwayTags.contains(highway))
         {
-            if (way.hasTag("sidewalk", sidewalks))
-                weightToPrioMap.put(45d, AVOID_IF_POSSIBLE.getValue());
-            else if (way.hasTag("sidewalk", "no"))
+            if (way.hasTag("sidewalk", "no"))
                 weightToPrioMap.put(45d, WORST.getValue());
             else
                 weightToPrioMap.put(45d, REACH_DEST.getValue());
