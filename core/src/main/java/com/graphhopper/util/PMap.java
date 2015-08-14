@@ -60,6 +60,12 @@ public class PMap
         }
     }
 
+    public PMap put( PMap map )
+    {
+        this.map.putAll(map.map);
+        return this;
+    }
+
     public PMap put( String key, Object str )
     {
         if (str == null)

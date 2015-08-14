@@ -186,6 +186,12 @@ public class AlgorithmOptions
             return this;
         }
 
+        public Builder hints( PMap hints )
+        {
+            this.opts.hints.put(hints);
+            return this;
+        }
+
         public AlgorithmOptions build()
         {
             return opts;

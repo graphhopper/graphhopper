@@ -1023,6 +1023,7 @@ public class GraphHopper implements GraphHopperAPI
         String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
         AlgorithmOptions algoOpts = AlgorithmOptions.start().
                 algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).
+                hints(request.getHints()).
                 build();
 
         boolean viaTurnPenalty = request.getHints().getBool("pass_through", false);

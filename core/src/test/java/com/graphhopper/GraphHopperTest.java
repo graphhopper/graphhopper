@@ -18,10 +18,7 @@
 package com.graphhopper;
 
 import com.graphhopper.reader.DataReader;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
@@ -40,6 +37,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
@@ -809,5 +807,22 @@ public class GraphHopperTest
         closableInstance.importOrLoad();
 
         assertTrue(af == closableInstance.getAlgorithmFactory(weighting));
+
+        // test that hints are passwed to algorithm opts
+        final AtomicInteger cnt = new AtomicInteger(0);
+        closableInstance.putAlgorithmFactory(weighting, new RoutingAlgorithmFactorySimple()
+        {
+            @Override
+            public RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts )
+            {
+                cnt.addAndGet(1);
+                assertFalse(opts.getHints().getBool("test", true));
+                return super.createAlgo(g, opts);
+            }
+        });
+        GHRequest req = new GHRequest(51.2492152, 9.4317166, 51.2, 9.4);
+        req.getHints().put("test", false);
+        closableInstance.route(req);
+        assertEquals(1, cnt.get());
     }
 }
