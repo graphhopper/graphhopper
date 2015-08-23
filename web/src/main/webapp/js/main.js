@@ -1039,7 +1039,10 @@ function routeLatLng(request, doQuery) {
 
         var tmpTime = createTimeString(path.time);
         var tmpDist = createDistanceString(path.distance);
-        descriptionDiv.append(tr("routeInfo", [tmpDist, tmpTime]));
+        var tmpEleMeters="";
+        if  (request.hasElevation())
+           tmpEleMeters = createEleMetersString(path.ascendmeters,path.descendmeters);
+        descriptionDiv.append(tr("routeInfo", [tmpDist, tmpTime]) + tmpEleMeters);
 
         $('.defaulting').each(function (index, element) {
             $(element).css("color", "black");
@@ -1128,6 +1131,13 @@ function createDistanceString(dist) {
     if (dist > 100)
         dist = round(dist, 1);
     return dist + tr2("kmAbbr");
+}
+
+function createEleMetersString(ascendmeters,descendmeters) {
+    if ((ascendmeters!== 0) || (descendmeters!==0))
+        return ", " + tr("totalAscend", [ascendmeters + tr2("mAbbr")]) + ", " + tr("totalDescend", [descendmeters + tr2("mAbbr")]);
+    else
+        return "";
 }
 
 function createTimeString(time) {

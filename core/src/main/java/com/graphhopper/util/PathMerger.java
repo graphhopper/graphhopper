@@ -35,6 +35,30 @@ public class PathMerger
     private boolean simplifyResponse = true;
     private DouglasPeucker douglasPeucker;
     private boolean calcPoints = true;
+    private double ascendMeters;
+    private double descendMeters;
+   
+    private void calcAscendDescend(PointList fullpoints ) {
+
+        ascendMeters = 0;
+        descendMeters = 0;
+        double lastele = fullpoints.getElevation(0);
+        for (int i=0;i<fullpoints.size;++i)
+        {
+            double ele = fullpoints.getElevation(i);
+            double diff = Math.abs(ele - lastele);
+
+            if (ele>lastele)
+               ascendMeters += diff;
+            else
+               descendMeters  += diff;
+
+            lastele=ele;
+
+        }
+        ascendMeters = Math.round(ascendMeters);
+        descendMeters = Math.round(descendMeters);
+    }
 
     public void doWork( GHResponse rsp, List<Path> paths, Translation tr )
     {
@@ -106,10 +130,16 @@ public class PathMerger
         {
             String debug = rsp.getDebugInfo() + ", simplify (" + origPoints + "->" + fullPoints.getSize() + ")";
             rsp.setDebugInfo(debug);
+            if (fullPoints.is3D)
+            {
+                calcAscendDescend(fullPoints);
+            }
         }
 
         if (enableInstructions)
+        {
             rsp.setInstructions(fullInstructions);
+        }
 
         if (!allFound)
         {
@@ -118,7 +148,7 @@ public class PathMerger
 
         rsp.setPoints(fullPoints).
                 setRouteWeight(fullWeight).
-                setDistance(fullDistance).setTime(fullTimeInMillis);
+                setDistance(fullDistance).setTime(fullTimeInMillis).setAscendMeters(ascendMeters).setDescendMeters(descendMeters);
     }
 
     public PathMerger setCalcPoints( boolean calcPoints )
