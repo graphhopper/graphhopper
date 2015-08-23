@@ -180,12 +180,7 @@ public class MainActivity extends Activity
         System.gc();
 
         // Cleanup Mapsforge
-        this.mapView.getLayerManager().getLayers().remove(this.tileRendererLayer);
-        this.tileRendererLayer.onDestroy();
-        this.tileCache.destroy();
-        this.mapView.getModel().mapViewPosition.destroy();
-        this.mapView.destroy();
-        AndroidGraphicFactory.clearResourceMemoryCache();
+        this.mapView.destroyAll();
     }
 
     boolean isReady()
@@ -469,16 +464,13 @@ public class MainActivity extends Activity
     {
         Paint paintStroke = AndroidGraphicFactory.INSTANCE.createPaint();
         paintStroke.setStyle(Style.STROKE);
-        paintStroke.setColor(Color.argb(200, 0, 0xCC, 0x33));
+        paintStroke.setColor(Color.argb(128, 0, 0xCC, 0x33));
         paintStroke.setDashPathEffect(new float[]
                 {
                         25, 15
                 });
         paintStroke.setStrokeWidth(8);
 
-        // TODO: new mapsforge version wants an mapsforge-paint, not an android paint.
-        // This doesn't seem to support transparceny
-        //paintStroke.setAlpha(128);
         Polyline line = new Polyline((org.mapsforge.core.graphics.Paint) paintStroke, AndroidGraphicFactory.INSTANCE);
         List<LatLong> geoPoints = line.getLatLongs();
         PointList tmp = response.getPoints();
