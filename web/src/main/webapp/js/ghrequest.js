@@ -315,7 +315,7 @@ GHRequest.prototype.init = function (params) {
 
     // overwrite elevation e.g. important if not supported from feature set
     this.api_params.elevation = false;
-    var featureSet = this.features[this.vehicle];
+    var featureSet = this.features[params.vehicle];
     if (featureSet && featureSet.elevation) {
         if ('elevation' in params)
             this.api_params.elevation = params.elevation;
@@ -353,7 +353,7 @@ GHRequest.prototype.init = function (params) {
 
 GHRequest.prototype.initVehicle = function (vehicle) {
     this.api_params.vehicle = vehicle;
-    var featureSet = this.features[this.vehicle];
+    var featureSet = this.features[vehicle];
 
     if (featureSet && featureSet.elevation)
         this.api_params.elevation = true;
