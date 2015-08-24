@@ -1,6 +1,6 @@
 # Windows Setup from Source
 
-Download [cygwin](http://www.cygwin.com/) to execute bash scripts. Click on the setup and select wget, git and unzip
+Either get [Babun](http://babun.github.io/) which comes preinstalled with git and more. Or download [cygwin](http://www.cygwin.com/) and click on the setup where you need to select wget, git and unzip.
 
 ```bash
 # go to your development area
