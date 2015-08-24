@@ -894,7 +894,7 @@ public class GraphHopper implements GraphHopperAPI
 
     public Weighting getWeightingForCH( WeightingMap weightingMap, FlagEncoder encoder )
     {
-        String encoderStr = encoder.toString();
+        String encoderStr = encoder.toString().toLowerCase();
         String weightingStr = weightingMap.getWeighting().toLowerCase();
         for (Weighting w : algoFactories.keySet())
         {
