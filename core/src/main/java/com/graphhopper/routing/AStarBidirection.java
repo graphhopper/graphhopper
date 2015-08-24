@@ -237,7 +237,7 @@ public class AStarBidirection extends AbstractBidirAlgo
     }
 
     private void fillEdges( AStarEdge currEdge, PriorityQueue<AStarEdge> prioQueueOpenSet,
-                            TIntObjectMap<AStarEdge> shortestWeightMap, EdgeExplorer explorer, boolean reverse )
+                            TIntObjectMap<AStarEdge> bestWeightMap, EdgeExplorer explorer, boolean reverse )
     {
 
         int currNode = currEdge.adjNode;
@@ -256,21 +256,23 @@ public class AStarBidirection extends AbstractBidirAlgo
             if (Double.isInfinite(alreadyVisitedWeight))
                 continue;
 
-            AStarEdge ase = shortestWeightMap.get(traversalId);
+            AStarEdge ase = bestWeightMap.get(traversalId);
             if (ase == null || ase.weightOfVisitedPath > alreadyVisitedWeight)
             {
                 double currWeightToGoal = weightApprox.approximate(neighborNode, reverse);
-                double estimationFullDist = alreadyVisitedWeight + currWeightToGoal;
+                double estimationFullWeight = alreadyVisitedWeight + currWeightToGoal;
                 if (ase == null)
                 {
-                    ase = new AStarEdge(iter.getEdge(), neighborNode, estimationFullDist, alreadyVisitedWeight);
-                    shortestWeightMap.put(traversalId, ase);
+                    ase = new AStarEdge(iter.getEdge(), neighborNode, estimationFullWeight, alreadyVisitedWeight);
+                    bestWeightMap.put(traversalId, ase);
                 } else
                 {
-                    assert (ase.weight > estimationFullDist) : "Inconsistent distance estimate";
+                    assert (ase.weight > 0.999999 * estimationFullWeight) : "Inconsistent distance estimate "
+                                + ase.weight + " vs " + estimationFullWeight + " (" + ase.weight / estimationFullWeight + "), and:"
+                                + ase.weightOfVisitedPath + " vs " + alreadyVisitedWeight + " (" + ase.weightOfVisitedPath / alreadyVisitedWeight + ")";
                     prioQueueOpenSet.remove(ase);
                     ase.edge = iter.getEdge();
-                    ase.weight = estimationFullDist;
+                    ase.weight = estimationFullWeight;
                     ase.weightOfVisitedPath = alreadyVisitedWeight;
                 }
 

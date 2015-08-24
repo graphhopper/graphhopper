@@ -92,7 +92,7 @@ public class AStar extends AbstractRoutingAlgorithm
 
     private Path runAlgo()
     {
-        double currWeightToGoal, distEstimation;
+        double currWeightToGoal, estimationFullWeight;
         EdgeExplorer explorer = outEdgeExplorer;
         while (true)
         {
@@ -118,20 +118,22 @@ public class AStar extends AbstractRoutingAlgorithm
                     continue;
 
                 AStarEdge ase = fromMap.get(traversalId);
-                if ((ase == null) || ase.weightOfVisitedPath > alreadyVisitedWeight)
+                if (ase == null || ase.weightOfVisitedPath > alreadyVisitedWeight)
                 {
                     currWeightToGoal = weightApprox.approximate(neighborNode);
-                    distEstimation = alreadyVisitedWeight + currWeightToGoal;
+                    estimationFullWeight = alreadyVisitedWeight + currWeightToGoal;
                     if (ase == null)
                     {
-                        ase = new AStarEdge(iter.getEdge(), neighborNode, distEstimation, alreadyVisitedWeight);
+                        ase = new AStarEdge(iter.getEdge(), neighborNode, estimationFullWeight, alreadyVisitedWeight);
                         fromMap.put(traversalId, ase);
                     } else
                     {
-                        assert (ase.weight > distEstimation) : "Inconsistent distance estimate";
+                        assert (ase.weight > 0.9999999 * estimationFullWeight) : "Inconsistent distance estimate "
+                                + ase.weight + " vs " + estimationFullWeight + " (" + ase.weight / estimationFullWeight + "), and:"
+                                + ase.weightOfVisitedPath + " vs " + alreadyVisitedWeight + " (" + ase.weightOfVisitedPath / alreadyVisitedWeight + ")";
                         prioQueueOpenSet.remove(ase);
                         ase.edge = iter.getEdge();
-                        ase.weight = distEstimation;
+                        ase.weight = estimationFullWeight;
                         ase.weightOfVisitedPath = alreadyVisitedWeight;
                     }
 
