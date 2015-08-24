@@ -12,10 +12,11 @@ See GraphHopper in action on [GraphHopper Maps](https://graphhopper.com/maps)
 
 [![GraphHopper Maps](https://karussell.files.wordpress.com/2014/12/graphhopper-maps-0-4-preview.png)](https://graphhopper.com/maps)
 
-GraphHopper Maps uses the [Directions API for Business](https://graphhopper.com/#directions-api), which provides 
-routing and matrix routing through GraphHopper and also a fast address search via [Photon](https://github.com/komoot/photon).
-Additionally the map tiles from various Providers are used and all is 
-available for free for a nice route planning experience!
+GraphHopper Maps uses the [Directions API for Business](https://graphhopper.com/#directions-api) under the hood, which provides 
+a Routing API via GraphHopper, a Route Optimization API via [jsprit](http://jsprit.github.io/), a fast Matrix API
+and an address search via [Photon](https://github.com/komoot/photon). Additionally the map tiles from various providers are used 
+where the default is [Omniscale](http://omniscale.com/), and all is available for free, via encrypted connections and from German servers
+for a nice and private route planning experience!
 
 
 GraphHopper for Mobile
