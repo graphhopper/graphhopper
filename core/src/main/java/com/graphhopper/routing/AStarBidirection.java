@@ -251,8 +251,8 @@ public class AStarBidirection extends AbstractBidirAlgo
             int traversalId = traversalMode.createTraversalId(iter, reverse);
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
-            float alreadyVisitedWeight = (float) (weighting.calcWeight(iter, reverse, currEdge.edge)
-                    + currEdge.weightOfVisitedPath);
+            double alreadyVisitedWeight = weighting.calcWeight(iter, reverse, currEdge.edge)
+                    + currEdge.weightOfVisitedPath;
             if (Double.isInfinite(alreadyVisitedWeight))
                 continue;
 
