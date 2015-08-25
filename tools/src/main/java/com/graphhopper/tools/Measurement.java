@@ -22,6 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
+import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
@@ -113,12 +114,12 @@ public class Measurement
         hopper.forDesktop();
         if (!hopper.load(graphLocation))
             throw new IllegalStateException("Cannot load existing graph at " + graphLocation);
-        
+
         GraphHopperStorage g = hopper.getGraphHopperStorage();
         if ("true".equals(g.getProperties().get("prepare.done")))
             throw new IllegalStateException("Graph has to be unprepared but wasn't!");
 
-        String chWeighting = args.get("prepare.chWeighting", "fastest");        
+        String chWeighting = args.get("prepare.chWeighting", "fastest");
         String vehicleStr = args.get("graph.flagEncoders", "car");
         FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicleStr);
         Weighting weighting = hopper.getWeightingForCH(new WeightingMap(chWeighting), encoder);
@@ -132,14 +133,14 @@ public class Measurement
 
             // Route via dijkstrabi. Normal routing takes a lot of time => smaller query number than CH
             // => values are not really comparable to routingCH as e.g. the mean distance etc is different            
-            hopper.setCHEnable(false);            
+            hopper.setCHEnable(false);
             hopper.putAlgorithmFactory(weighting, new RoutingAlgorithmFactorySimple());
             printTimeOfRouteQuery(hopper, count / 20, "routing", vehicleStr, true);
 
             System.gc();
 
             // route via CH. do preparation before                        
-            hopper.setCHEnable(true);            
+            hopper.setCHEnable(true);
             hopper.doPostProcessing(weighting);
             CHGraph lg = g.getGraph(CHGraph.class, weighting);
             fillAllowedEdges(lg.getAllEdges(), allowedEdges);
@@ -321,6 +322,9 @@ public class Measurement
 //        final AtomicLong tmpDist = new AtomicLong(0);
         final Random rand = new Random(seed);
         final NodeAccess na = g.getNodeAccess();
+        
+        // if using none-bidirectional algorithm make sure you exclude CH routing
+        final String algo = AlgorithmOptions.DIJKSTRA_BI;
         MiniPerfTest miniPerf = new MiniPerfTest()
         {
             @Override
@@ -334,7 +338,11 @@ public class Measurement
                 double toLon = na.getLongitude(to);
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
                         setWeighting("fastest").
-                        setVehicle(vehicle);
+                        setVehicle(vehicle).
+                        setAlgorithm(algo);
+                
+                // req.getHints().put(algo + ".approximation", "BeelineSimplification");
+                // req.getHints().put(algo + ".epsilon", 2);
                 req.getHints().put("instructions", withInstructions);
                 GHResponse res;
                 try
