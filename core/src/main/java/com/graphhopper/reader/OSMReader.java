@@ -783,7 +783,7 @@ public class OSMReader implements DataReader
         }
         if (towerNodeDistance < 0.0001)
         {
-            // As investigation shows often two paths should have crossed via one identical point 
+            // As investigation shows often two paths should have crossed via one identical point
             // but end up in two very close points.
             zeroCounter++;
             towerNodeDistance = 0.0001;
@@ -805,17 +805,19 @@ public class OSMReader implements DataReader
         return iter;
     }
 
-	/**
-	 * Stores the way geometry. Overwrite this method for custom simplification.
-	 * @param pillarNodes pillar nodes of the way
-	 * @param edge corresponding edge
-	 */
-	protected void storeWayGeometry(PointList pillarNodes, EdgeIteratorState edge) {
-		if (doSimplify)
-			simplifyAlgo.simplify(pillarNodes);
+    /**
+     * Stores the way geometry. Overwrite this method for custom simplification.
+     *
+     * @param pillarNodes pillar nodes of the way
+     * @param edge        corresponding edge
+     */
+    protected void storeWayGeometry(PointList pillarNodes, EdgeIteratorState edge)
+    {
+        if (doSimplify)
+            simplifyAlgo.simplify(pillarNodes);
 
-		edge.setWayGeometry(pillarNodes);
-	}
+        edge.setWayGeometry(pillarNodes);
+    }
 
 	/**
      * Stores only osmWayIds which are required for relations
