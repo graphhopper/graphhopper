@@ -799,16 +799,25 @@ public class OSMReader implements DataReader
 
         if (nodes > 2)
         {
-            if (doSimplify)
-                simplifyAlgo.simplify(pillarNodes);
-
-            iter.setWayGeometry(pillarNodes);
+			storeWayGeometry(pillarNodes, iter);
         }
         storeOsmWayID(iter.getEdge(), wayOsmId);
         return iter;
     }
 
-    /**
+	/**
+	 * Stores the way geometry. Overwrite this method for custom simplification.
+	 * @param pillarNodes pillar nodes of the way
+	 * @param edge corresponding edge
+	 */
+	protected void storeWayGeometry(PointList pillarNodes, EdgeIteratorState edge) {
+		if (doSimplify)
+			simplifyAlgo.simplify(pillarNodes);
+
+		edge.setWayGeometry(pillarNodes);
+	}
+
+	/**
      * Stores only osmWayIds which are required for relations
      */
     private void storeOsmWayID( int edgeId, long osmWayId )
