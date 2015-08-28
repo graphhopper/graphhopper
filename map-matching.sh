@@ -1,8 +1,9 @@
-set_jar_path
 
 function set_jar_path {
   JAR=$(ls target/map-matching-*-dependencies.jar)
 }
+
+set_jar_path
 
 if [ "$JAVA" = "" ]; then
  JAVA=java

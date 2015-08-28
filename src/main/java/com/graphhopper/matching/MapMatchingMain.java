@@ -47,11 +47,11 @@ public class MapMatchingMain {
             String vehicle = args.get("vehicle", "car").toLowerCase();
             args.put("graph.flagEncoders", vehicle);
             args.put("osmreader.osm", args.get("datasource", ""));
-            
+
             // standard should be to remove disconnected islands
             args.put("prepare.minNetworkSize", 200);
-            args.put("prepare.minOneWayNetworkSize", 200);            
-            GraphHopper hopper = new GraphHopper().init(args);
+            args.put("prepare.minOneWayNetworkSize", 200);
+            GraphHopper hopper = new GraphHopper().init(args);            
             hopper.setCHEnable(false);
             hopper.importOrLoad();
 

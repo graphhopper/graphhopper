@@ -363,7 +363,8 @@ public class MapMatching {
 
         if (pathEdgeList.isEmpty()) {
             throw new RuntimeException("Cannot extract path - no edges returned? "
-                    + gpxList.size() + ", " + startQRList + ", " + endQRList);
+                    + " from:" + startQRList + ", to:" + endQRList + ", for input list of size:"
+                    + gpxList.size() + " [" + gpxList.get(0) + " ... " + gpxList.get(gpxList.size() - 1) + "]");
         }
 
         // only in the first run of doWork firstQueryResults.clear() won't clear 'startQRList' too:
