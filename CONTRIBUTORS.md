@@ -29,6 +29,7 @@
  * rodneyodonnell, improved dead end removal and fords
  * rodo, more descriptions
  * Svantulden, improved documentation and nearest API
+ * vvikas, ideas for many to many improvements
 
 # Translations
 
