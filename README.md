@@ -13,6 +13,10 @@ Currently this project is under heavy development but produces already good resu
 
 Apache License 2.0
 
+### Discussion
+
+Discussion happens [here](https://discuss.graphhopper.com/c/graphhopper/map-matching).
+
 ### Installation and Usage
 
 Java and Maven are required. 
