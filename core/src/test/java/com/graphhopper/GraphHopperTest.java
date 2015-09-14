@@ -35,6 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -825,7 +826,8 @@ public class GraphHopperTest
     @Test
     public void testMultipleCHPreparationsInParallel()
     {
-        // try all parallelization modes
+        HashMap<String, Integer> shortcutCountMap = new HashMap<String, Integer>();
+        // try all parallelization modes        
         for (int threadCount = 1; threadCount < 6; threadCount++)
         {
             EncodingManager em = new EncodingManager(Arrays.asList(new CarFlagEncoder(), new MotorcycleFlagEncoder(),
@@ -845,7 +847,14 @@ public class GraphHopperTest
                 PrepareContractionHierarchies pch = (PrepareContractionHierarchies) raf;
                 assertTrue("Preparation wasn't run! [" + threadCount + "]", pch.isPrepared());
 
-                String key = "prepare.date." + CHGraphImpl.weightingToFileName(pch.getWeighting());
+                String name = CHGraphImpl.weightingToFileName(pch.getWeighting());
+                Integer singleThreadShortcutCount = shortcutCountMap.get(name);
+                if (singleThreadShortcutCount == null)
+                    shortcutCountMap.put(name, pch.getShortcuts());
+                else
+                    assertEquals((int) singleThreadShortcutCount, pch.getShortcuts());
+
+                String key = "prepare.date." + name;
                 String value = tmpGH.getGraphHopperStorage().getProperties().get(key);
                 assertTrue(key + " should contain finish time/date [" + threadCount + "]", !value.isEmpty());
             }
