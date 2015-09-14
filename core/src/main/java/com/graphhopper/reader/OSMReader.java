@@ -352,8 +352,8 @@ public class OSMReader implements DataReader
         long relationFlags = getRelFlagsMap().get(way.getId());
 
         // TODO move this after we have created the edge and know the coordinates => encodingManager.applyWayTags
-        // estimate length of the track e.g. for ferry speed calculation
         TLongList osmNodeIds = way.getNodes();
+        // Estimate length of ways containing a route tag e.g. for ferry speed calculation
         if (osmNodeIds.size() > 1)
         {
             int first = getNodeMap().get(osmNodeIds.get(0));
@@ -363,6 +363,7 @@ public class OSMReader implements DataReader
             if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon) && !Double.isNaN(lastLat) && !Double.isNaN(lastLon))
             {
                 double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
+                // Add artificial tag for the estamated distance and center
                 way.setTag("estimated_distance", estimatedDist);
                 way.setTag("estimated_center", new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2));
             }
