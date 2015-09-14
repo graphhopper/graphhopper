@@ -316,7 +316,7 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setCHPrepareThreads( int prepareThreads )
     {
         this.chPrepareThreads = prepareThreads;
-        this.chPreparePool = java.util.concurrent.Executors.newSingleThreadExecutor();
+        this.chPreparePool = java.util.concurrent.Executors.newFixedThreadPool(chPrepareThreads);
         return this;
     }
 
