@@ -462,13 +462,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     /**
-     * This method parses a string ala "00:00" (hours and minutes) or "0:00:00" (days, hours and
-     * minutes).
+     * This method parses a string ala 'hh:mm', format for hours and minutes 'mm', 'hh:mm' or 'hh:mm:ss'
+     * FIXME: Add support for ISO_8601 
      * <p>
      * @return duration value in minutes
      */
     protected static int parseDuration( String str )
     {
+        int minutes = 0;
         if (str == null)
             return 0;
 
@@ -478,7 +479,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             // because P1M != PT1M but there are wrong edits in OSM! e.g. http://www.openstreetmap.org/way/24791405
             // http://wiki.openstreetmap.org/wiki/Key:duration
             if (str.startsWith("P"))
-                return 0;
+                return minutes;
 
             int index = str.indexOf(":");
             if (index > 0)
@@ -486,14 +487,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                 String hourStr = str.substring(0, index);
                 String minStr = str.substring(index + 1);
                 index = minStr.indexOf(":");
-                int minutes = 0;
                 if (index > 0)
                 {
-                    // string contains hours too
-                    String dayStr = hourStr;
-                    hourStr = minStr.substring(0, index);
-                    minStr = minStr.substring(index + 1);
-                    minutes = Integer.parseInt(dayStr) * 60 * 24;
+                    // string contains seconds too: we ignore them
+                    minStr = minStr.substring(0, index);
                 }
 
                 minutes += Integer.parseInt(hourStr) * 60;
@@ -507,7 +504,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         {
             logger.warn("Cannot parse " + str + " using 0 minutes");
         }
-        return 0;
+        return minutes;
     }
 
     /**
