@@ -39,6 +39,8 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -80,6 +82,8 @@ public class GraphHopper implements GraphHopperAPI
     private boolean doPrepare = true;
     private boolean chEnabled = true;
     private String chWeightingStr = "fastest";
+    private int chPrepareThreads = -1;
+    private ExecutorService chPreparePool;
     private int preparePeriodicUpdates = -1;
     private int prepareLazyUpdates = -1;
     private int prepareNeighborUpdates = -1;
@@ -96,6 +100,7 @@ public class GraphHopper implements GraphHopperAPI
 
     public GraphHopper()
     {
+        setCHPrepareThreads(1);
     }
 
     /**
@@ -302,6 +307,22 @@ public class GraphHopper implements GraphHopperAPI
     public String getCHWeighting()
     {
         return chWeightingStr;
+    }
+
+    /**
+     * This method changes the number of threads used for preparation on import. Default is 1. Make
+     * sure that you have enough memory to increase this number!
+     */
+    public GraphHopper setCHPrepareThreads( int prepareThreads )
+    {
+        this.chPrepareThreads = prepareThreads;
+        this.chPreparePool = java.util.concurrent.Executors.newSingleThreadExecutor();
+        return this;
+    }
+
+    public int getCHPrepareThreads()
+    {
+        return chPrepareThreads;
     }
 
     /**
@@ -565,6 +586,7 @@ public class GraphHopper implements GraphHopperAPI
 
         // prepare CH        
         doPrepare = args.getBool("prepare.doPrepare", doPrepare);
+        setCHPrepareThreads(args.getInt("prepare.threads", chPrepareThreads));
 
         String tmpCHWeighting = args.get("prepare.chWeighting", "fastest");
         chEnabled = "fastest".equals(tmpCHWeighting) || "shortest".equals(tmpCHWeighting);
@@ -815,9 +837,9 @@ public class GraphHopper implements GraphHopperAPI
         if (algoFactories.isEmpty())
             throw new IllegalStateException("No algorithm factories found. Call load before?");
 
-        Set<Weighting> set = new LinkedHashSet<Weighting>(algoFactories.keySet());
+        Set<Weighting> orderedSet = new LinkedHashSet<Weighting>(algoFactories.keySet());
         algoFactories.clear();
-        for (Weighting weighting : set)
+        for (Weighting weighting : orderedSet)
         {
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
                     new GHDirectory("", DAType.RAM_INT), ghStorage, ghStorage.getGraph(CHGraph.class, weighting),
@@ -1108,18 +1130,46 @@ public class GraphHopper implements GraphHopperAPI
         if (tmpPrepare)
         {
             ensureWriteAccess();
+
+            if (chPrepareThreads > 1 && dataAccessType.isMMap() && !dataAccessType.isSynched())
+                throw new IllegalStateException("You cannot execute CH preparation in parallel for MMAP without synching! Specify MMAP_SYNC or use 1 thread only");
+
             ghStorage.freeze();
 
             int counter = 0;
-            for (Entry<Weighting, RoutingAlgorithmFactory> entry : algoFactories.entrySet())
+            for (final Entry<Weighting, RoutingAlgorithmFactory> entry : algoFactories.entrySet())
             {
                 logger.info((++counter) + "/" + algoFactories.entrySet().size() + " calling prepare.doWork for " + entry.getKey() + " ... (" + Helper.getMemInfo() + ")");
                 if (!(entry.getValue() instanceof PrepareContractionHierarchies))
                     throw new IllegalStateException("RoutingAlgorithmFactory is not suited for CH preparation " + entry.getValue());
 
-                ((PrepareContractionHierarchies) entry.getValue()).doWork();
+                final String name = CHGraphImpl.weightingToFileName(entry.getKey());
+                chPreparePool.execute(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
+                        Thread.currentThread().setName(name);
+
+                        PrepareContractionHierarchies pch = (PrepareContractionHierarchies) entry.getValue();
+                        pch.doWork();
+                        ghStorage.getProperties().put("prepare.date." + name, formatDateTime(new Date()));
+                    }
+                });
             }
-            ghStorage.getProperties().put("prepare.date", formatDateTime(new Date()));
+
+            chPreparePool.shutdown();
+            try
+            {
+                if (!chPreparePool.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS))
+                    chPreparePool.shutdownNow();
+
+            } catch (InterruptedException ie)
+            {
+                chPreparePool.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
         }
         ghStorage.getProperties().put("prepare.done", tmpPrepare);
     }

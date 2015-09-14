@@ -19,11 +19,11 @@ package com.graphhopper;
 
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.*;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.shapes.GHPoint;
@@ -33,6 +33,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -592,8 +593,7 @@ public class GraphHopperTest
     {
         // Test enforce start direction
         // Note: This Test does not pass for CH enabled    
-
-        GraphHopper instance = initSquareGraphInstance(false);
+        instance = createSquareGraphInstance(false);
 
         // Start in middle of edge 4-5 
         GHPoint start = new GHPoint(0.0015, 0.002);
@@ -614,8 +614,7 @@ public class GraphHopperTest
     public void testGetPathsDirectionEnforcement2()
     {
         // Test enforce start & end direction
-
-        GraphHopper instance = initSquareGraphInstance(false);
+        instance = createSquareGraphInstance(false);
 
         // Start in middle of edge 4-5 
         GHPoint start = new GHPoint(0.0015, 0.002);
@@ -644,7 +643,7 @@ public class GraphHopperTest
     @Test
     public void testGetPathsDirectionEnforcement3()
     {
-        GraphHopper instance = initSquareGraphInstance(false);
+        instance = createSquareGraphInstance(false);
 
         // Start in middle of edge 4-5 
         GHPoint start = new GHPoint(0.0015, 0.002);
@@ -666,8 +665,7 @@ public class GraphHopperTest
     public void testGetPathsDirectionEnforcement4()
     {
         // Test straight via routing
-
-        GraphHopper instance = initSquareGraphInstance(false);
+        instance = createSquareGraphInstance(false);
 
         // Start in middle of edge 4-5 
         GHPoint start = new GHPoint(0.0015, 0.002);
@@ -693,8 +691,7 @@ public class GraphHopperTest
     public void testGetPathsDirectionEnforcement5()
     {
         // Test independence of previous enforcement for subsequent pathes
-
-        GraphHopper instance = initSquareGraphInstance(false);
+        instance = createSquareGraphInstance(false);
 
         // Start in middle of edge 4-5 
         GHPoint start = new GHPoint(0.0015, 0.002);
@@ -720,8 +717,7 @@ public class GraphHopperTest
     public void testGetPathsDirectionEnforcement6()
     {
         // Test if query results at tower nodes are ignored
-
-        GraphHopper instance = initSquareGraphInstance(false);
+        instance = createSquareGraphInstance(false);
 
         // QueryPoints directly on TowerNodes 
         GHPoint start = new GHPoint(0, 0);
@@ -741,7 +737,7 @@ public class GraphHopperTest
         }, paths.get(1).calcNodes().toArray());
     }
 
-    private GraphHopper initSquareGraphInstance( boolean withCH )
+    private GraphHopper createSquareGraphInstance( boolean withCH )
     {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = new EncodingManager(carEncoder);
@@ -780,15 +776,15 @@ public class GraphHopperTest
         g.edge(5, 8, 110, true);
         g.edge(7, 8, 110, true);
 
-        instance = new GraphHopper().
+        GraphHopper tmp = new GraphHopper().
                 putAlgorithmFactory(weighting, null).
                 setCHEnable(withCH).
                 setCHWeighting("fastest").
                 setEncodingManager(encodingManager);
-        instance.setGraphHopperStorage(g);
-        instance.postProcessing();
+        tmp.setGraphHopperStorage(g);
+        tmp.postProcessing();
 
-        return instance;
+        return tmp;
     }
 
     @Test
@@ -797,20 +793,20 @@ public class GraphHopperTest
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager em = new EncodingManager(carEncoder);
         Weighting weighting = new FastestWeighting(carEncoder);
-        GraphHopper closableInstance = new GraphHopper().setStoreOnFlush(true).
+        instance = new GraphHopper().setStoreOnFlush(false).
                 setCHEnable(false).
                 setEncodingManager(em).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         RoutingAlgorithmFactory af = new RoutingAlgorithmFactorySimple();
-        closableInstance.putAlgorithmFactory(weighting, af);
-        closableInstance.importOrLoad();
+        instance.putAlgorithmFactory(weighting, af);
+        instance.importOrLoad();
 
-        assertTrue(af == closableInstance.getAlgorithmFactory(weighting));
+        assertTrue(af == instance.getAlgorithmFactory(weighting));
 
         // test that hints are passwed to algorithm opts
         final AtomicInteger cnt = new AtomicInteger(0);
-        closableInstance.putAlgorithmFactory(weighting, new RoutingAlgorithmFactorySimple()
+        instance.putAlgorithmFactory(weighting, new RoutingAlgorithmFactorySimple()
         {
             @Override
             public RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts )
@@ -822,7 +818,38 @@ public class GraphHopperTest
         });
         GHRequest req = new GHRequest(51.2492152, 9.4317166, 51.2, 9.4);
         req.getHints().put("test", false);
-        closableInstance.route(req);
+        instance.route(req);
         assertEquals(1, cnt.get());
+    }
+
+    @Test
+    public void testMultipleCHPreparationsInParallel()
+    {
+        // try all parallelization modes
+        for (int threadCount = 1; threadCount < 6; threadCount++)
+        {
+            EncodingManager em = new EncodingManager(Arrays.asList(new CarFlagEncoder(), new MotorcycleFlagEncoder(),
+                    new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder(), new FootFlagEncoder()),
+                    8);
+
+            GraphHopper tmpGH = new GraphHopper().setStoreOnFlush(false).
+                    setEncodingManager(em).
+                    setGraphHopperLocation(ghLoc).
+                    setOSMFile(testOsm).setCHPrepareThreads(threadCount);
+
+            tmpGH.importOrLoad();
+
+            assertEquals(5, tmpGH.getAlgorithmFactories().size());
+            for (RoutingAlgorithmFactory raf : tmpGH.getAlgorithmFactories())
+            {
+                PrepareContractionHierarchies pch = (PrepareContractionHierarchies) raf;
+                assertTrue("Preparation wasn't run! [" + threadCount + "]", pch.isPrepared());
+
+                String key = "prepare.date." + CHGraphImpl.weightingToFileName(pch.getWeighting());
+                String value = tmpGH.getGraphHopperStorage().getProperties().get(key);
+                assertTrue(key + " should contain finish time/date [" + threadCount + "]", !value.isEmpty());
+            }
+            tmpGH.close();
+        }
     }
 }

@@ -46,9 +46,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder
      */
     protected final Map<String, Integer> defaultSpeedMap = new HashMap<String, Integer>();
 
-    /**
-     * Should be only instantied via EncodingManager
-     */
     public CarFlagEncoder()
     {
         this(5, 5, 0);

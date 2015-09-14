@@ -335,7 +335,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph
      * Avoid that edges and nodes of the base graph are further modified. Necessary as hook for e.g.
      * ch graphs on top to initilize themself
      */
-    public void freeze()
+    public synchronized void freeze()
     {
         if (!baseGraph.isFrozen())
             baseGraph.freeze();

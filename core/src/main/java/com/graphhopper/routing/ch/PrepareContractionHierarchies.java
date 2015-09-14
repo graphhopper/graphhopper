@@ -97,7 +97,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         levelFilter = new LevelEdgeFilter(prepareGraph);
 
         prepareWeighting = new PreparationWeighting(weighting);
-        originalEdges = dir.find("original_edges_" + prepareGraph.weightingToFileName(weighting));
+        originalEdges = dir.find("original_edges_" + CHGraphImpl.weightingToFileName(weighting));
         originalEdges.create(1000);
     }
 
@@ -398,6 +398,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     public double getNeighborTime()
     {
         return neighborTime;
+    }
+
+    public Weighting getWeighting()
+    {
+        return prepareGraph.getWeighting();
     }
 
     public void close()
