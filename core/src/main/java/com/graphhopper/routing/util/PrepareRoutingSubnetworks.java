@@ -82,6 +82,7 @@ public class PrepareRoutingSubnetworks
             List<TIntArrayList> components = findSubnetworks(filter);
             keepLargeNetworks(filter, components);
             subnetworks = Math.max(components.size(), subnetworks);
+            logger.info(components.size() + " subnetworks found for " + encoder);
         }
 
         markNodesRemovedIfUnreachable();
