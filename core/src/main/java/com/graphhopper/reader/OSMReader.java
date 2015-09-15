@@ -753,6 +753,16 @@ public class OSMReader implements DataReader
         if (pointList.getDimension() != nodeAccess.getDimension())
             throw new AssertionError("Dimension does not match for pointList vs. nodeAccess " + pointList.getDimension() + " <-> " + nodeAccess.getDimension());
 
+        if (pointList.size() > 2)
+        {
+            PointList tmpList = filterNodes(pointList);
+            if (!tmpList.toGHPoint(0).equals(pointList.toGHPoint(0))
+                    || !tmpList.toGHPoint(tmpList.size() - 1).equals(pointList.toGHPoint(pointList.size() - 1)))
+                throw new IllegalStateException("Start and end point must left unchanged after the filterNodes method");
+
+            pointList = tmpList;
+        }
+        
         double towerNodeDistance = 0;
         double prevLat = pointList.getLatitude(0);
         double prevLon = pointList.getLongitude(0);
@@ -799,14 +809,22 @@ public class OSMReader implements DataReader
         EdgeIteratorState iter = graph.edge(fromIndex, toIndex).setDistance(towerNodeDistance).setFlags(flags);
 
         if (nodes > 2)
-        {
-            if (doSimplify)
-                simplifyAlgo.simplify(pillarNodes);
-
             iter.setWayGeometry(pillarNodes);
-        }
+
         storeOsmWayID(iter.getEdge(), wayOsmId);
         return iter;
+    }
+
+    /**
+     * A hook to smooth, simplify or modify the specified pointList (OSM points). It is forced that
+     * start and end points are unchanged.
+     */
+    protected PointList filterNodes( PointList pointList )
+    {
+        if (doSimplify)
+            simplifyAlgo.simplify(pointList);
+
+        return pointList;
     }
 
     /**
