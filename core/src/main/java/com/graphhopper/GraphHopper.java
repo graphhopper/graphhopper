@@ -1149,12 +1149,21 @@ public class GraphHopper implements GraphHopperAPI
                     @Override
                     public void run()
                     {
-                        // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
-                        Thread.currentThread().setName(name);
-
-                        PrepareContractionHierarchies pch = (PrepareContractionHierarchies) entry.getValue();
-                        pch.doWork();
-                        ghStorage.getProperties().put("prepare.date." + name, formatDateTime(new Date()));
+                        String errorKey = "prepare.error." + name;
+                        try
+                        {
+                            ghStorage.getProperties().put(errorKey, "CH preparation incomplete");
+                            // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options                        
+                            Thread.currentThread().setName(name);
+                            PrepareContractionHierarchies pch = (PrepareContractionHierarchies) entry.getValue();
+                            pch.doWork();
+                            ghStorage.getProperties().put(errorKey, "");
+                            ghStorage.getProperties().put("prepare.date." + name, formatDateTime(new Date()));
+                        } catch (Exception ex)
+                        {
+                            logger.error("Problem while CH preparation " + name);
+                            ghStorage.getProperties().put(errorKey, ex.getMessage());
+                        }
                     }
                 });
             }

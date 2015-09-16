@@ -854,9 +854,13 @@ public class GraphHopperTest
                 else
                     assertEquals((int) singleThreadShortcutCount, pch.getShortcuts());
 
+                String keyError = "prepare.error." + name;
+                String valueError = tmpGH.getGraphHopperStorage().getProperties().get(keyError);
+                assertTrue("Properties for " + name + " should NOT contain error " + valueError + " [" + threadCount + "]", valueError.isEmpty());
+
                 String key = "prepare.date." + name;
                 String value = tmpGH.getGraphHopperStorage().getProperties().get(key);
-                assertTrue(key + " should contain finish time/date [" + threadCount + "]", !value.isEmpty());
+                assertTrue("Properties for " + name + " did NOT contain finish date [" + threadCount + "]", !value.isEmpty());
             }
             tmpGH.close();
         }
