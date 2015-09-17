@@ -127,7 +127,7 @@ public abstract class OSMElement
     }
 
     /**
-     * Chaeck that the object has a given tag with a given value.
+     * Check that the object has a given tag with a given value.
      */
     public boolean hasTag( String key, Object value )
     {

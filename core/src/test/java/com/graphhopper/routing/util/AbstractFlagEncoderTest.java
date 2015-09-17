@@ -55,7 +55,7 @@ public class AbstractFlagEncoderTest
         assertEquals(0, AbstractFlagEncoder.parseDuration("oh"));
         assertEquals(0, AbstractFlagEncoder.parseDuration(null));
         assertEquals(60 * 20, AbstractFlagEncoder.parseDuration("20:00"));
-        assertEquals(60 * 20, AbstractFlagEncoder.parseDuration("0:20:00"));
-        assertEquals(60 * 24 * 2 + 60 * 20 + 2, AbstractFlagEncoder.parseDuration("02:20:02"));
+        assertEquals(20, AbstractFlagEncoder.parseDuration("0:20:00"));
+        assertEquals(60 * 2 + 20, AbstractFlagEncoder.parseDuration("02:20:02"));
     }
 }

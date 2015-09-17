@@ -367,7 +367,7 @@ class BaseGraph implements Graph
         extStorage.setSegmentSize(bytes);
     }
 
-    void freeze()
+    synchronized void freeze()
     {
         if (isFrozen())
             throw new IllegalStateException("base graph already frozen");
@@ -376,7 +376,7 @@ class BaseGraph implements Graph
         listener.freeze();
     }
 
-    boolean isFrozen()
+    synchronized boolean isFrozen()
     {
         return frozen;
     }

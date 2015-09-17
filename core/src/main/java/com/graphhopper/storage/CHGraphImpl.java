@@ -64,7 +64,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
 
         this.weighting = w;
         this.baseGraph = baseGraph;
-        final String name = weightingToFileName(w);
+        final String name = CHGraphImpl.weightingToFileName(w);
         this.nodesCH = dir.find("nodes_ch_" + name);
         this.shortcuts = dir.find("shortcuts_" + name);
         this.chEdgeAccess = new EdgeAccess(shortcuts, baseGraph.bitUtil)
@@ -139,7 +139,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
     /**
      * Replaces all characters which are not numbers, characters or underscores with underscores
      */
-    public String weightingToFileName( Weighting w )
+    public static String weightingToFileName( Weighting w )
     {
         return w.toString().toLowerCase().replaceAll("\\W+", "_");
     }
