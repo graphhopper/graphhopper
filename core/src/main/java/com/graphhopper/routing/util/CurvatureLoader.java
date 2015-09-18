@@ -22,7 +22,7 @@ public enum CurvatureLoader {
     }
 
     private CurvatureLoader() {
-        this.roadData = loadRoadDataFromKML(new File("/Users/robin/Downloads/germany.c_300.kml"));
+        this.roadData = loadRoadDataFromKML(new File("germany.c_300.kml"));
     }
 
     private RoadData loadRoadDataFromKML(File kmlFile) {
