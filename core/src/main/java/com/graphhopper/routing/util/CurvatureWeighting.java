@@ -1,5 +1,6 @@
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.Set;
