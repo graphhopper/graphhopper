@@ -31,6 +31,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +66,7 @@ public class GraphHopper implements GraphHopperAPI
     private final String fileLockName = "gh.lock";
     private boolean allowWrites = true;
     boolean enableInstructions = true;
+    private String preferredLanguage = "";
     private boolean fullyLoaded = false;
     // for routing
     private double defaultWeightLimit = Double.MAX_VALUE;
@@ -396,6 +398,30 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
+     * This method specifies the preferred language for way names during import.
+     * <p>
+     * Language code as defined in ISO 639-1 or ISO 639-2.
+     * <ul>
+     * <li>If no preferred language is specified, only the default language with no tag will be imported.</li>
+     * <li>If a language is specified, it will be imported if its tag is found, otherwise fall back to default language.</li>
+     * </ul>
+     */
+    public GraphHopper setPreferredLanguage( String preferredLanguage )
+    {
+    	ensureNotLoaded();
+    	if (preferredLanguage == null)
+    		throw new IllegalArgumentException("preferred language cannot be null");
+
+    	this.preferredLanguage = preferredLanguage;
+    	return this;
+    }
+
+    public String getPreferredLanguage()
+    {
+    	return preferredLanguage;
+    }
+
+    /**
      * This methods enables gps point calculation. If disabled only distance will be calculated.
      */
     public GraphHopper setEnableCalcPoints( boolean b )
@@ -607,6 +633,7 @@ public class GraphHopper implements GraphHopperAPI
 
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
+        preferredLanguage = args.get("osmreader.preferred-language", preferredLanguage);
 
         // index
         preciseIndexResolution = args.getInt("index.highResolution", preciseIndexResolution);
@@ -689,6 +716,7 @@ public class GraphHopper implements GraphHopperAPI
                     + " but also cannot import from OSM file as it wasn't specified!");
 
         encodingManager.setEnableInstructions(enableInstructions);
+        encodingManager.setPreferredLanguage(preferredLanguage);
         DataReader reader = createReader(ghStorage);
         logger.info("using " + ghStorage.toString() + ", memory:" + Helper.getMemInfo());
         reader.readGraph();

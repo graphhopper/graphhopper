@@ -34,6 +34,7 @@
         <nd ref="20"/>        
         <nd ref="30"/>
         <tag k="name" v="route 666" />
+        <tag k="name:el" v="διαδρομή 666" />
         <tag k="highway" v="motorway_link" />
         <tag k="destination" v="hof;fürth" />
     </way> 
@@ -43,6 +44,7 @@
         <nd ref="40"/>
         <nd ref="50"/>        
         <tag k="name" v="street 123;B 122" />
+        <tag k="name:de" v="straße 123;B 122" />
         <tag k="highway" v="service" />
     </way>
 </osm>
