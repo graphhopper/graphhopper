@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.graphhopper.reader.OSMNode;
@@ -29,8 +30,6 @@ import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
-
-import java.util.*;
 
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders
@@ -58,6 +57,7 @@ public class EncodingManager
     private final int bitsForEdgeFlags;
     private final int bitsForTurnFlags = 8 * 4;
     private boolean enableInstructions = true;
+    private String preferredLanguage = "";
 
     /**
      * Instantiate manager with the given list of encoders. The manager knows the default encoders:
@@ -379,6 +379,15 @@ public class EncodingManager
         return this;
     }
 
+    public EncodingManager setPreferredLanguage( String preferredLanguage )
+    {
+    	if (preferredLanguage == null)
+    		throw new IllegalArgumentException("preferred language cannot be null");
+
+    	this.preferredLanguage = preferredLanguage;
+    	return this;
+    }
+
     public void applyWayTags( OSMWay way, EdgeIteratorState edge )
     {
         // storing the road name does not yet depend on the flagEncoder so manage it directly
@@ -386,12 +395,16 @@ public class EncodingManager
         {
             // String wayInfo = carFlagEncoder.getWayInfo(way);
             // http://wiki.openstreetmap.org/wiki/Key:name
-            String name = fixWayName(way.getTag("name"));
+        	String name = "";
+        	if (!preferredLanguage.isEmpty())
+        		name = fixWayName(way.getTag("name:" + preferredLanguage));
+        	if (name.isEmpty())
+        		name = fixWayName(way.getTag("name"));
             // http://wiki.openstreetmap.org/wiki/Key:ref
             String refName = fixWayName(way.getTag("ref"));
-            if (!Helper.isEmpty(refName))
+            if (!refName.isEmpty())
             {
-                if (Helper.isEmpty(name))
+                if (name.isEmpty())
                     name = refName;
                 else
                     name += ", " + refName;

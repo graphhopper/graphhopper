@@ -127,6 +127,7 @@ public class OSMReaderTest
         @Override
         protected DataReader importData() throws IOException
         {
+            getEncodingManager().setPreferredLanguage(getPreferredLanguage());
             GraphHopperStorage tmpGraph = newGraph(dir, getEncodingManager(), hasElevation(),
                     getEncodingManager().needsTurnCostsSupport());
             setGraphHopperStorage(tmpGraph);
@@ -799,5 +800,24 @@ public class OSMReaderTest
                 assertEquals(10, bike.getTurnCost(entry.flags), 1e-1);
             }
         }
+    }
+
+    @Test
+    public void testPreferredLanguage()
+    {
+    	GraphHopper hopper = new GraphHopperTest(file1).setPreferredLanguage("de").importOrLoad();
+    	GraphHopperStorage graph = hopper.getGraphHopperStorage();
+    	int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
+    	EdgeIterator iter = carOutExplorer.setBaseNode(n20);
+    	assertTrue(iter.next());
+    	assertEquals("straße 123, B 122", iter.getName());
+
+    	hopper = new GraphHopperTest(file1).setPreferredLanguage("el").importOrLoad();
+    	graph = hopper.getGraphHopperStorage();
+    	n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
+    	iter = carOutExplorer.setBaseNode(n20);
+    	assertTrue(iter.next());
+    	assertTrue(iter.next());
+    	assertEquals("διαδρομή 666", iter.getName());
     }
 }
