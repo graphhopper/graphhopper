@@ -91,6 +91,22 @@
         <tag k="route" v="ferry"/>
     </way>
 
+<!-- invalid duration format -->
+    <way id="17" uid="85762">
+        <nd ref="80"/>
+        <nd ref="90"/>
+        <tag k="route" v="ferry"/>
+        <tag k="duration" v="P01:10"/>
+    </way>
+
+<!-- invalid long duration -->
+    <way id="18" uid="85762">
+        <nd ref="22"/>
+        <nd ref="23"/>
+        <tag k="route" v="ferry"/>
+        <tag k="duration" v="P1M"/>
+    </way>
+
     <way id="20">
         <nd ref="60"/>
         <nd ref="70"/>

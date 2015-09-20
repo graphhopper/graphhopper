@@ -352,7 +352,8 @@ public class CarFlagEncoderTest
         way.setTag("route", "shuttle_train");
         way.setTag("motorcar", "yes");
         way.setTag("bicycle", "no");
-        way.setTag("duration", "35");
+        // Provide the duration value in seconds:
+        way.setTag("duration:seconds", Long.toString(35*60));
         way.setTag("estimated_distance", 50000);
         // accept
         assertTrue(encoder.acceptWay(way) > 0);
