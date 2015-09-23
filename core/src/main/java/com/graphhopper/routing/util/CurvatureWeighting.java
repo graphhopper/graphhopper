@@ -23,6 +23,7 @@ public class CurvatureWeighting implements Weighting {
     private final Set<Integer> curvyEdges;
     private final NodeAccess nodeAccess;
     private final PillarInfo pillarInfo;
+    GraphHopperStorage ghStorage;
 
     protected static final int EMPTY = -1;
     // pillar node is >= 3
@@ -37,6 +38,7 @@ public class CurvatureWeighting implements Weighting {
         this.flagEncoder = flagEncoder;
         this.maxSpeed = flagEncoder.getMaxSpeed();
         this.curvyEdges = curvyEdges;
+        this.ghStorage = ghStorage;
 
         this.nodeAccess = ghStorage.getNodeAccess();
         this.pillarInfo = new PillarInfo(nodeAccess.is3D(), ghStorage.getDirectory());
@@ -63,59 +65,32 @@ public class CurvatureWeighting implements Weighting {
         double roadLength = edge.getDistance();
         double distance = calcDist(edge);
 
-        double weight = roadLength/(speed*distance);
+        double weight = (roadLength/(speed*distance))*100;
 
-        logger.info("Calculated a CurvatureWeighting of "+weight+" using the roadLenght of "+roadLength+" the speed of "+speed+" and the distance of "+distance);
+        logger.info("Calculated a CurvatureWeighting of " + weight + " using the roadLenght of " + roadLength + " the speed of " + speed + " and the distance of " + distance);
 
         return weight;
 
     }
 
     private double calcDist(EdgeIteratorState edge){
+        int baseNode = edge.getBaseNode();
         double firstLat = getTmpLatitude(edge.getBaseNode()), firstLon = getTmpLongitude(edge.getBaseNode());
         double lastLat = getTmpLatitude(edge.getAdjNode()), lastLon = getTmpLongitude(edge.getAdjNode());
         double straight_line = distCalc.calcNormalizedDist(firstLat, firstLon, lastLat, lastLon);
 
-        return straight_line;
+        return distCalc.calcDenormalizedDist(straight_line);
     }
 
     // TODO remove this ugly stuff via better preparsing phase! E.g. putting every tags etc into a helper file!
     private double getTmpLatitude( int id )
     {
-        if (id == EMPTY)
-            return Double.NaN;
-        if (id < TOWER_NODE)
-        {
-            // tower node
-            id = -id - 3;
             return nodeAccess.getLatitude(id);
-        } else if (id > -TOWER_NODE)
-        {
-            // pillar node
-            id = id - 3;
-            return pillarInfo.getLatitude(id);
-        } else
-            // e.g. if id is not handled from preparse (e.g. was ignored via isInBounds)
-            return Double.NaN;
     }
 
     private double getTmpLongitude( int id )
     {
-        if (id == EMPTY)
-            return Double.NaN;
-        if (id < TOWER_NODE)
-        {
-            // tower node
-            id = -id - 3;
             return nodeAccess.getLongitude(id);
-        } else if (id > -TOWER_NODE)
-        {
-            // pillar node
-            id = id - 3;
-            return pillarInfo.getLon(id);
-        } else
-            // e.g. if id is not handled from preparse (e.g. was ignored via isInBounds)
-            return Double.NaN;
     }
 
     @Override
