@@ -820,7 +820,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         logger.warn("Creating new Weighting!");
 
-        return new CurvatureWeighting(encoder, determineCurvyEdges());
+        return new CurvatureWeighting(encoder, determineCurvyEdges(), ghStorage);
         /*
         if ("shortest".equalsIgnoreCase(weighting)) {
             return new ShortestWeighting(encoder);
