@@ -495,18 +495,30 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                     double val = estimatedLength.doubleValue() / 1000;
                     // If duration AND distance is available we can calculate the speed more precisely
                     // and set both speed to the same value. Factor 1.4 slower because of waiting time!
-                    shortTripsSpeed = Math.round(val / durationInHours / 1.4);
+                    double calculatedTripSpeed = val / durationInHours / 1.4;
                     // Plausibility check especially for the case of wongly used PxM format with the intension to 
                     // specify the duration in minutes, but actually using months
-                    if (shortTripsSpeed > 0.1d)
+                    if (calculatedTripSpeed > 0.01d)
                     {
-                        if (shortTripsSpeed > getMaxSpeed())
-                            shortTripsSpeed = getMaxSpeed();
-                        longTripsSpeed = shortTripsSpeed;
+                        // If we have a very short ferry with an average lower compared to what we can encode 
+                        // then we need to avoid setting it as otherwise the edge would not be found at all any more.
+                        if (Math.round(calculatedTripSpeed) > speedEncoder.factor / 2)
+                        {
+                            shortTripsSpeed = Math.round(calculatedTripSpeed);
+                            if (shortTripsSpeed > getMaxSpeed())
+                                shortTripsSpeed = getMaxSpeed();
+                            longTripsSpeed = shortTripsSpeed;
+                        }
+                        else
+                        {
+                            // Now we set to the lowest possible still accessible speed. 
+                            shortTripsSpeed = speedEncoder.factor / 2;
+                        }
                     } else
                     {
                         logger.warn("Unrealistic long duration ignored in way with OSMID=" + way.getId() + " : Duration tag value="
                                 + way.getTag("duration") + " (=" + Math.round(duration / 60d) + " minutes)");
+                        durationInHours = 0;
                     }
                 }
             } catch (Exception ex)
