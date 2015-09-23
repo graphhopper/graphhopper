@@ -500,9 +500,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                     // specify the duration in minutes, but actually using months
                     if (calculatedTripSpeed > 0.01d)
                     {
-                        // FIXME: If we have a very short ferry with an average lower compared to what we can encode 
-                        // then we need to avoid setting it as otherwise the edge would not found at all any more.
-                        if (Math.round(calculatedTripSpeed) != 0d)
+                        // If we have a very short ferry with an average lower compared to what we can encode 
+                        // then we need to avoid setting it as otherwise the edge would not be found at all any more.
+                        if (Math.round(calculatedTripSpeed) > speedEncoder.factor / 2)
                         {
                             shortTripsSpeed = Math.round(calculatedTripSpeed);
                             if (shortTripsSpeed > getMaxSpeed())
@@ -511,13 +511,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                         }
                         else
                         {
-                            // Now we set to unknownSpeed. FIXME: This results in a much too low duration.
-                            shortTripsSpeed = unknownSpeed;
+                            // Now we set to the lowest possible still accessible speed. 
+                            shortTripsSpeed = speedEncoder.factor / 2;
                         }
                     } else
                     {
                         logger.warn("Unrealistic long duration ignored in way with OSMID=" + way.getId() + " : Duration tag value="
                                 + way.getTag("duration") + " (=" + Math.round(duration / 60d) + " minutes)");
+                        durationInHours = 0;
                     }
                 }
             } catch (Exception ex)
