@@ -495,14 +495,25 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                     double val = estimatedLength.doubleValue() / 1000;
                     // If duration AND distance is available we can calculate the speed more precisely
                     // and set both speed to the same value. Factor 1.4 slower because of waiting time!
-                    shortTripsSpeed = Math.round(val / durationInHours / 1.4);
+                    double calculatedTripSpeed = val / durationInHours / 1.4;
                     // Plausibility check especially for the case of wongly used PxM format with the intension to 
                     // specify the duration in minutes, but actually using months
-                    if (shortTripsSpeed > 0.1d)
+                    if (calculatedTripSpeed > 0.01d)
                     {
-                        if (shortTripsSpeed > getMaxSpeed())
-                            shortTripsSpeed = getMaxSpeed();
-                        longTripsSpeed = shortTripsSpeed;
+                        // FIXME: If we have a very short ferry with an average lower compared to what we can encode 
+                        // then we need to avoid setting it as otherwise the edge would not found at all any more.
+                        if (Math.round(calculatedTripSpeed) != 0d)
+                        {
+                            shortTripsSpeed = Math.round(calculatedTripSpeed);
+                            if (shortTripsSpeed > getMaxSpeed())
+                                shortTripsSpeed = getMaxSpeed();
+                            longTripsSpeed = shortTripsSpeed;
+                        }
+                        else
+                        {
+                            // Now we set to unknownSpeed. FIXME: This results in a much too low duration.
+                            shortTripsSpeed = unknownSpeed;
+                        }
                     } else
                     {
                         logger.warn("Unrealistic long duration ignored in way with OSMID=" + way.getId() + " : Duration tag value="
