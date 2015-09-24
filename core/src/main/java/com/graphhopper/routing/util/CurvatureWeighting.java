@@ -1,7 +1,5 @@
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMWay;
-import com.graphhopper.reader.PillarInfo;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistanceCalc;
@@ -18,21 +16,17 @@ import java.util.Set;
  */
 public class CurvatureWeighting implements Weighting {
 
+    private static final Logger logger = LoggerFactory.getLogger(CurvatureWeighting.class);
+
     private final FlagEncoder flagEncoder;
     private final double maxSpeed;
     private final Set<Integer> curvyEdges;
     private final NodeAccess nodeAccess;
-    private final PillarInfo pillarInfo;
-    GraphHopperStorage ghStorage;
 
-    protected static final int EMPTY = -1;
-    // pillar node is >= 3
-    protected static final int PILLAR_NODE = 1;
-    // tower node is <= -3
-    protected static final int TOWER_NODE = -2;
-    private static final Logger logger = LoggerFactory.getLogger(CurvatureWeighting.class);
-
+    private final GraphHopperStorage ghStorage;
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
+
+    private double minCurvature = Double.POSITIVE_INFINITY;
 
     public CurvatureWeighting(FlagEncoder flagEncoder, Set<Integer> curvyEdges, GraphHopperStorage ghStorage) {
         this.flagEncoder = flagEncoder;
@@ -41,22 +35,25 @@ public class CurvatureWeighting implements Weighting {
         this.ghStorage = ghStorage;
 
         this.nodeAccess = ghStorage.getNodeAccess();
-        this.pillarInfo = new PillarInfo(nodeAccess.is3D(), ghStorage.getDirectory());
-
-        System.out.println("Curvature Weighting was initialized!");
     }
 
     @Override
     public double getMinWeight(double distance) {
-        return distance / maxSpeed;
+        // The formula for the Curvature Weighting should not return something that is smaller than this.
+        return 0.001;
     }
 
     @Override
     public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
 
         // Return low weight on curvy roads
-        if(curvyEdges.contains(edge.getEdge()))
+        if (curvyEdges.contains(edge.getEdge()))
             return 0;
+
+        return calcCurvateWeight(edge, reverse);
+    }
+
+    private double calcCurvateWeight(EdgeIteratorState edge, boolean reverse) {
 
         double speed = reverse ? flagEncoder.getReverseSpeed(edge.getFlags()) : flagEncoder.getSpeed(edge.getFlags());
         if (speed == 0)
@@ -65,32 +62,45 @@ public class CurvatureWeighting implements Weighting {
         double roadLength = edge.getDistance();
         double distance = calcDist(edge);
 
-        double weight = (roadLength/(speed*distance))*100;
+        double bendiness = distance / roadLength;
 
-        logger.info("Calculated a CurvatureWeighting of " + weight + " using the roadLenght of " + roadLength + " the speed of " + speed + " and the distance of " + distance);
+        if(0.01 > bendiness){
+            bendiness = 1;
+        }
+
+        double regularWeight = roadLength / Math.log10(speed/2);
+
+        double weight = (Math.pow(bendiness, 2) * regularWeight);
+
+        if (bendiness < minCurvature) {
+            minCurvature = bendiness;
+        }
+
+        //logger.info("Calculated a CurvatureWeighting of " + weight + " using the bendiness of " + bendiness + " the speed of " + speed +  " with min Curvature: " + minCurvature);
 
         return weight;
+    }
+
+    private double calcDist(EdgeIteratorState edge) {
+        try {
+            double firstLat = getTmpLatitude(edge.getBaseNode()), firstLon = getTmpLongitude(edge.getBaseNode());
+            double lastLat = getTmpLatitude(edge.getAdjNode()), lastLon = getTmpLongitude(edge.getAdjNode());
+            double straight_line = distCalc.calcNormalizedDist(firstLat, firstLon, lastLat, lastLon);
+
+            return distCalc.calcDenormalizedDist(straight_line);
+        } catch (Exception e) {
+            logger.error("Unable to calculate Distance for the Edge: " + edge);
+            return 0.000000000001;
+        }
 
     }
 
-    private double calcDist(EdgeIteratorState edge){
-        int baseNode = edge.getBaseNode();
-        double firstLat = getTmpLatitude(edge.getBaseNode()), firstLon = getTmpLongitude(edge.getBaseNode());
-        double lastLat = getTmpLatitude(edge.getAdjNode()), lastLon = getTmpLongitude(edge.getAdjNode());
-        double straight_line = distCalc.calcNormalizedDist(firstLat, firstLon, lastLat, lastLon);
-
-        return distCalc.calcDenormalizedDist(straight_line);
+    private double getTmpLatitude(int id) {
+        return nodeAccess.getLatitude(id);
     }
 
-    // TODO remove this ugly stuff via better preparsing phase! E.g. putting every tags etc into a helper file!
-    private double getTmpLatitude( int id )
-    {
-            return nodeAccess.getLatitude(id);
-    }
-
-    private double getTmpLongitude( int id )
-    {
-            return nodeAccess.getLongitude(id);
+    private double getTmpLongitude(int id) {
+        return nodeAccess.getLongitude(id);
     }
 
     @Override
