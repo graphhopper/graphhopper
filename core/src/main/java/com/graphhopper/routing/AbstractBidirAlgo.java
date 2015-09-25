@@ -52,10 +52,11 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
 
     /**
      * Iterates through all edgeIds of the shortest path tree in forward and/or reverse direction.
-     *
-     * @edgeSelection -1 for reverse direction, +1 for forward direction and 0 if edge has to be in both trees
+     * <p>
+     * @edgeSelection -1 for reverse direction, +1 for forward direction and 0 if edge has to be in
+     * both trees
      */
-    public abstract void iterateTree(final int edgeSelection, final TIntProcedure proc);
+    public abstract void iterateTree( final int edgeSelection, final TIntProcedure proc );
 
     abstract boolean fillEdgesFrom();
 
@@ -81,19 +82,11 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
     {
         while (!finished() && !isWeightLimitReached())
         {
-            if (!finishedFrom && !finishedTo)
-            {
-                if (getCurrentFromWeight() < getCurrentToWeight())
-                    finishedFrom = !fillEdgesFrom();
-                else
-                    finishedTo = !fillEdgesTo();
-            } else if (!finishedFrom)
-            {
+            if (!finishedFrom)
                 finishedFrom = !fillEdgesFrom();
-            } else
-            {
+
+            if (!finishedTo)
                 finishedTo = !fillEdgesTo();
-            }
         }
     }
 
