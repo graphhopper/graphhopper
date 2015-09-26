@@ -250,7 +250,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative: " + speed + ", flags:" + BitUtil.LITTLE.toBitString(flags));
 
-        if (speed < speedEncoder.factor / 2)
+        if (speed < speedEncoder.scale_unit / 2)
             return setLowSpeed(flags, speed, true);
 
         if (speed > getMaxSpeed())

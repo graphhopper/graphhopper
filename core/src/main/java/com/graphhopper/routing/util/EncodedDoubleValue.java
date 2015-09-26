@@ -59,8 +59,8 @@ public class EncodedDoubleValue extends EncodedValue
             throw new IllegalStateException("Value cannot be NaN");
 
         // scale value
-        long tmpValue = Math.round(value / factor);
-        checkValue(Math.round(tmpValue * factor));
+        long tmpValue = Math.round(value / scale_unit);
+        checkValue(Math.round(tmpValue * scale_unit));
         tmpValue <<= shift;
 
         // clear value bits
@@ -75,7 +75,7 @@ public class EncodedDoubleValue extends EncodedValue
         // find value
         flags &= mask;
         flags >>>= shift;
-        return flags * factor;
+        return flags * scale_unit;
     }
 
     /**

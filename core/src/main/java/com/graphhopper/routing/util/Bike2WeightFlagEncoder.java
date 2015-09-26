@@ -83,7 +83,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative: " + speed + ", flags:" + BitUtil.LITTLE.toBitString(flags));
 
-        if (speed < speedEncoder.factor / 2)
+        if (speed < speedEncoder.scale_unit / 2)
             return setLowSpeed(flags, speed, true);
 
         if (speed > getMaxSpeed())
@@ -214,7 +214,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
 //                prevEle = ele;
 //            }
             // Calculate slop via tan(asin(height/distance)) but for rather smallish angles where we can assume tan a=a and sin a=a.
-            // Then calculate a factor which decreases or increases the speed.
+            // Then calculate a scale_unit which decreases or increases the speed.
             // Do this via a simple quadratic equation where y(0)=1 and y(0.3)=1/4 for incline and y(0.3)=2 for decline        
             double fwdIncline = incDist2DSum > 1 ? incEleSum / incDist2DSum : 0;
             double fwdDecline = decDist2DSum > 1 ? decEleSum / decDist2DSum : 0;

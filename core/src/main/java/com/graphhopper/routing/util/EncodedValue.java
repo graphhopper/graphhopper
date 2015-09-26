@@ -27,7 +27,7 @@ public class EncodedValue
     private final String name;
     protected final long shift;
     protected final long mask;
-    protected final double factor;
+    protected final double scale_unit;
     protected final long defaultValue;
     private final long maxValue;
     private final boolean allowZero;
@@ -39,24 +39,24 @@ public class EncodedValue
      * @param name Description for debugging
      * @param shift bit index of this value
      * @param bits number of bits reserved
-     * @param factor scaling factor for stored values
+     * @param scale_unit scaling unit for stored values
      * @param defaultValue default value
      * @param maxValue default maximum value
      */
-    public EncodedValue( String name, int shift, int bits, double factor, long defaultValue, int maxValue )
+    public EncodedValue( String name, int shift, int bits, double scale_unit, long defaultValue, int maxValue )
     {
-        this(name, shift, bits, factor, defaultValue, maxValue, true);
+        this(name, shift, bits, scale_unit, defaultValue, maxValue, true);
     }
 
-    public EncodedValue( String name, int shift, int bits, double factor, long defaultValue, int maxValue, boolean allowZero )
+    public EncodedValue( String name, int shift, int bits, double scale_unit, long defaultValue, int maxValue, boolean allowZero )
     {
         this.name = name;
         this.shift = shift;
-        this.factor = factor;
+        this.scale_unit = scale_unit;
         this.defaultValue = defaultValue;
         this.bits = bits;
         long tmpMask = (1L << bits) - 1;
-        this.maxValue = Math.min(maxValue, Math.round(tmpMask * factor));
+        this.maxValue = Math.min(maxValue, Math.round(tmpMask * scale_unit));
         if (maxValue > this.maxValue)
             throw new IllegalStateException(name + " -> maxValue " + maxValue + " is too large for " + bits + " bits");
 
@@ -78,7 +78,7 @@ public class EncodedValue
     {
         checkValue(value);
         // scale value
-        value /= factor;
+        value /= scale_unit;
         value <<= shift;
 
         // clear value bits
@@ -93,7 +93,7 @@ public class EncodedValue
         // find value
         flags &= mask;
         flags >>>= shift;
-        return Math.round(flags * factor);
+        return Math.round(flags * scale_unit);
     }
 
     public int getBits()

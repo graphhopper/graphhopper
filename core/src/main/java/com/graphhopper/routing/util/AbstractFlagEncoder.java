@@ -95,8 +95,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     /**
      * @param speedBits specify the number of bits used for speed
-     * @param speedFactor specify the factor to multiple the stored value (can be used to increase
-     * or decrease accuracy of speed value)
+     * @param speedFactor specify the scale_unit to multiple the stored value (can be used to increase
+ or decrease accuracy of speed value)
      * @param maxTurnCosts specify the maximum value used for turn costs, if this value is reached a
      * turn is forbidden and results in costs of positive infinity.
      */
@@ -310,7 +310,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             throw new IllegalArgumentException("Speed cannot be negative or NaN: " + speed
                     + ", flags:" + BitUtil.LITTLE.toBitString(flags));
 
-        if (speed < speedEncoder.factor / 2)
+        if (speed < speedEncoder.scale_unit / 2)
             return setLowSpeed(flags, speed, false);
 
         if (speed > getMaxSpeed())
@@ -502,7 +502,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                     {
                         // If we have a very short ferry with an average lower compared to what we can encode 
                         // then we need to avoid setting it as otherwise the edge would not be found at all any more.
-                        if (Math.round(calculatedTripSpeed) > speedEncoder.factor / 2)
+                        if (Math.round(calculatedTripSpeed) > speedEncoder.scale_unit / 2)
                         {
                             shortTripsSpeed = Math.round(calculatedTripSpeed);
                             if (shortTripsSpeed > getMaxSpeed())
@@ -512,7 +512,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                         else
                         {
                             // Now we set to the lowest possible still accessible speed. 
-                            shortTripsSpeed = speedEncoder.factor / 2;
+                            shortTripsSpeed = speedEncoder.scale_unit / 2;
                         }
                     } else
                     {
