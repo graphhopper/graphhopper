@@ -402,23 +402,25 @@ public class GraphHopper implements GraphHopperAPI
      * <p>
      * Language code as defined in ISO 639-1 or ISO 639-2.
      * <ul>
-     * <li>If no preferred language is specified, only the default language with no tag will be imported.</li>
-     * <li>If a language is specified, it will be imported if its tag is found, otherwise fall back to default language.</li>
+     * <li>If no preferred language is specified, only the default language with no tag will be
+     * imported.</li>
+     * <li>If a language is specified, it will be imported if its tag is found, otherwise fall back
+     * to default language.</li>
      * </ul>
      */
     public GraphHopper setPreferredLanguage( String preferredLanguage )
     {
-    	ensureNotLoaded();
-    	if (preferredLanguage == null)
-    		throw new IllegalArgumentException("preferred language cannot be null");
+        ensureNotLoaded();
+        if (preferredLanguage == null)
+            throw new IllegalArgumentException("preferred language cannot be null");
 
-    	this.preferredLanguage = preferredLanguage;
-    	return this;
+        this.preferredLanguage = preferredLanguage;
+        return this;
     }
 
     public String getPreferredLanguage()
     {
-    	return preferredLanguage;
+        return preferredLanguage;
     }
 
     /**
@@ -577,6 +579,10 @@ public class GraphHopper implements GraphHopperAPI
         sortGraph = args.getBool("graph.doSort", sortGraph);
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
         int bytesForFlags = args.getInt("graph.bytesForFlags", 4);
+        String flagEncoders = args.get("graph.flagEncoders", "");
+        if (!flagEncoders.isEmpty())
+            setEncodingManager(new EncodingManager(flagEncoders, bytesForFlags));
+
         if (args.get("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
         else
@@ -627,9 +633,6 @@ public class GraphHopper implements GraphHopperAPI
 
         // osm import
         osmReaderWayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", osmReaderWayPointMaxDistance);
-        String flagEncoders = args.get("graph.flagEncoders", "");
-        if (!flagEncoders.isEmpty())
-            setEncodingManager(new EncodingManager(flagEncoders, bytesForFlags));
 
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
