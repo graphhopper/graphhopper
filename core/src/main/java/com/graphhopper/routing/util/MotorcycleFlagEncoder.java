@@ -128,7 +128,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         shift += reverseSpeedEncoder.getBits();
 
         priorityWayEncoder = new EncodedValue("PreferWay", shift, 3, 1, 3, 7);
-        shift += reverseSpeedEncoder.getBits();
+        shift += priorityWayEncoder.getBits();
 
         return shift;
     }
