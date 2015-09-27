@@ -50,8 +50,7 @@ public class AlternativeRouteTest
         if (fullGraph)
             graph.edge(2, 3, 1, true);
         graph.edge(3, 4, 1, true);
-        if (fullGraph)
-            graph.edge(4, 10, 1, true);
+        graph.edge(4, 10, 1, true);
 
         graph.edge(5, 6, 1, true);
 
@@ -204,6 +203,6 @@ public class AlternativeRouteTest
         assertFalse(path.isFound());
 
         // make sure not the full graph is traversed!
-        assertEquals(1, altDijkstra.getVisitedNodes());
+        assertEquals(3, altDijkstra.getVisitedNodes());
     }
 }

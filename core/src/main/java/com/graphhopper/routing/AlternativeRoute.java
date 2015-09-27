@@ -465,22 +465,32 @@ public class AlternativeRoute
             double lat1 = na.getLatitude(from), lon1 = na.getLongitude(from);
             double lastNormedDistance = -1;
             boolean tmpFinishedFrom = false;
+            EdgeEntry tmp = null;
+
             while (!tmpFinishedFrom)
             {
                 tmpFinishedFrom = !fillEdgesFrom();
 
-                double lat2 = na.getLatitude(currFrom.adjNode), lon2 = na.getLongitude(currFrom.adjNode);
+                // DO NOT use currFrom.adjNode and instead use parent as currFrom can contain 
+                // a very big weight making it an unreasonable goal
+                // (think about "avoid motorway" and see #419)
+                tmp = currFrom.parent;
+                if (tmp == null)
+                    continue;
+
+                double lat2 = na.getLatitude(tmp.adjNode), lon2 = na.getLongitude(tmp.adjNode);
                 lastNormedDistance = distanceCalc.calcNormalizedDist(lat1, lon1, lat2, lon2);
                 if (lastNormedDistance > maxDistance)
                     break;
             }
 
-            // TODO is this okay? 
-            // if no path found close to the weight do not return anything!
-            if (tmpFinishedFrom && lastNormedDistance > 0 && lastNormedDistance < distanceCalc.calcNormalizedDist(maxFullDistance / 2 / 4))
+            // if no path found close to the maxWeight radius then do not return anything!
+            if (tmpFinishedFrom
+                    && lastNormedDistance > 0
+                    && lastNormedDistance < distanceCalc.calcNormalizedDist(maxFullDistance / 2 / 4))
                 return null;
 
-            return currFrom;
+            return tmp;
         }
     }
 }
