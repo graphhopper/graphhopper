@@ -31,6 +31,7 @@ var routeSegmentPopup = null;
 var elevationControl = null;
 var activeLayer = '';
 var i18nIsInitialized;
+var metaVersionInfo;
 
 var iconFrom = L.icon({
     iconUrl: './img/marker-icon-green.png',
@@ -128,7 +129,16 @@ $(document).ready(function (e) {
                         vehiclesDiv.append(createButton(key.toLowerCase()));
                     }
                 }
-
+                
+                if (json.import_date)
+                   metaVersionInfo = "<br/>Import date: " + json.import_date;
+                if (json.prepare_date)
+                   metaVersionInfo = metaVersionInfo + "<br/>Prepare date: " + json.prepare_date;
+                if (json.version)
+                   metaVersionInfo = metaVersionInfo + "<br/>GH Version " + json.version;
+                if (json.build_date)
+                   metaVersionInfo = metaVersionInfo + " " + json.build_date;
+               
                 initMap(urlParams.layer);
 
                 // execute query
@@ -1070,15 +1080,19 @@ function routeLatLng(request, doQuery) {
 
             var hiddenDiv = $("<div id='routeDetails'/>");
             hiddenDiv.hide();
+            var versionInfoHiddenDiv = $("<div id='versionDetails'/>");
+            versionInfoHiddenDiv.hide();
 
             var toggly = $("<button id='expandDetails'>+</button>");
             toggly.click(function () {
                 hiddenDiv.toggle();
+                versionInfoHiddenDiv.toggle();
             });
             $("#info").append(toggly);
             var infoStr = "points: " + path.points.coordinates.length;
 
             hiddenDiv.append("<span>" + infoStr + "</span>");
+            versionInfoHiddenDiv.append("<span>" + metaVersionInfo + "</span>");
 
             var exportLink = $("#export-link a");
             exportLink.attr('href', urlForHistory);
@@ -1114,6 +1128,7 @@ function routeLatLng(request, doQuery) {
             bingLink.attr("href", "https://www.bing.com/maps/default.aspx?rtp=adr." + request.from + "~adr." + request.to + addToBing);
             hiddenDiv.append(bingLink);
             $("#info").append(hiddenDiv);
+            $("#info").append(versionInfoHiddenDiv);
         }
     });
 }
