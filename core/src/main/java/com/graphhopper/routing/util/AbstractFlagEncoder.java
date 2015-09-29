@@ -95,8 +95,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     /**
      * @param speedBits specify the number of bits used for speed
-     * @param speedFactor specify the factor to multiple the stored value (can be used to increase
-     * or decrease accuracy of speed value)
+     * @param speedFactor specify the scale_unit to multiple the stored value (can be used to increase
+ or decrease accuracy of speed value)
      * @param maxTurnCosts specify the maximum value used for turn costs, if this value is reached a
      * turn is forbidden and results in costs of positive infinity.
      */
@@ -310,7 +310,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             throw new IllegalArgumentException("Speed cannot be negative or NaN: " + speed
                     + ", flags:" + BitUtil.LITTLE.toBitString(flags));
 
-        if (speed < speedEncoder.factor / 2)
+        if (speed < speedEncoder.scale_unit / 2)
             return setLowSpeed(flags, speed, false);
 
         if (speed > getMaxSpeed())
@@ -495,18 +495,30 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                     double val = estimatedLength.doubleValue() / 1000;
                     // If duration AND distance is available we can calculate the speed more precisely
                     // and set both speed to the same value. Factor 1.4 slower because of waiting time!
-                    shortTripsSpeed = Math.round(val / durationInHours / 1.4);
+                    double calculatedTripSpeed = val / durationInHours / 1.4;
                     // Plausibility check especially for the case of wongly used PxM format with the intension to 
                     // specify the duration in minutes, but actually using months
-                    if (shortTripsSpeed > 0.1d)
+                    if (calculatedTripSpeed > 0.01d)
                     {
-                        if (shortTripsSpeed > getMaxSpeed())
-                            shortTripsSpeed = getMaxSpeed();
-                        longTripsSpeed = shortTripsSpeed;
+                        // If we have a very short ferry with an average lower compared to what we can encode 
+                        // then we need to avoid setting it as otherwise the edge would not be found at all any more.
+                        if (Math.round(calculatedTripSpeed) > speedEncoder.scale_unit / 2)
+                        {
+                            shortTripsSpeed = Math.round(calculatedTripSpeed);
+                            if (shortTripsSpeed > getMaxSpeed())
+                                shortTripsSpeed = getMaxSpeed();
+                            longTripsSpeed = shortTripsSpeed;
+                        }
+                        else
+                        {
+                            // Now we set to the lowest possible still accessible speed. 
+                            shortTripsSpeed = speedEncoder.scale_unit / 2;
+                        }
                     } else
                     {
                         logger.warn("Unrealistic long duration ignored in way with OSMID=" + way.getId() + " : Duration tag value="
                                 + way.getTag("duration") + " (=" + Math.round(duration / 60d) + " minutes)");
+                        durationInHours = 0;
                     }
                 }
             } catch (Exception ex)
