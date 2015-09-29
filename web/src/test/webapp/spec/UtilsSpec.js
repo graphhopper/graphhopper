@@ -80,10 +80,10 @@ describe("utils", function () {
         // force array for point
         // URLs with one point only should work: https://graphhopper.com/maps/?point=50.413331%2C11.699066
         params = parseUrl("blup?point=49.946505%2C11.571232&point=&");
-        expect(params.point).toEqual(["49.946505,11.571232"]);
+        expect(params.point).toEqual(["49.946505,11.571232", ""]);
 
         params = parseUrl("blup?point=&point=49.946505%2C11.571232");
-        expect(params.point).toEqual(["49.946505,11.571232"]);
+        expect(params.point).toEqual(["", "49.946505,11.571232"]);
     });
 
     it("ghrequest should init correctly from params", function () {

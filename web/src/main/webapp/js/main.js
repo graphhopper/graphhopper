@@ -223,18 +223,23 @@ function getSortedVehicleKeys(vehicleHashMap, prefer) {
 
 function initFromParams(params, doQuery) {
     ghRequest.init(params);
-    var fromAndTo = params.from && params.to,
-            routeNow = params.point && params.point.length >= 2 || fromAndTo;
+    var count = 0;
+    var singlePointIndex;
+    for (var key = 0; key < params.point.length; key++) {
+        if (params.point[key] !== "") {
+            count++;
+            singlePointIndex = key;
+        }
+    }
 
+    var routeNow = params.point && count >= 2;
     if (routeNow) {
-        if (fromAndTo)
-            resolveCoords([params.from, params.to], doQuery);
-        else
-            resolveCoords(params.point, doQuery);
-    } else if (params.point && params.point.length === 1) {
-        ghRequest.from = new GHInput(params.point[0]);
-        resolve("from", ghRequest.from);
-        focus(ghRequest.from, 15, true);
+        resolveCoords(params.point, doQuery);
+    } else if (params.point && count === 1) {
+        ghRequest.route.set(params.point[singlePointIndex], singlePointIndex, true);
+        resolveIndex(singlePointIndex).done(function () {
+            focus(ghRequest.route.getIndex(singlePointIndex), 15, singlePointIndex);
+        });
     }
 }
 
@@ -1301,8 +1306,6 @@ function parseUrl(query) {
         var key = vars[i].substring(0, indexPos);
         var value = vars[i].substring(indexPos + 1);
         value = decodeURIComponent(value.replace(/\+/g, ' '));
-        if (value === "")
-            continue;
 
         // force array for heading and point
         if (typeof res[key] === "undefined"
