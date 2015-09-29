@@ -235,6 +235,10 @@ td img.pic {
     background-image: linear-gradient(to bottom, #9f9f9f, #e7e7e7);    
 }
 
+#more-vehicle-btn {
+    cursor: pointer;
+}
+
 .autocomplete {
     border: 1px solid #999; 
     background: #FFF; 

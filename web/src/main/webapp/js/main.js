@@ -105,13 +105,17 @@ $(document).ready(function (e) {
                 bounds.maxLon = tmp[2];
                 bounds.maxLat = tmp[3];
                 var vehiclesDiv = $("#vehicles");
-                function createButton(vehicle) {
+
+                function createButton(vehicle, hide) {
                     var button = $("<button class='vehicle-btn' title='" + tr(vehicle) + "'/>");
+                    if (hide)
+                        button.hide();
+
                     button.attr('id', vehicle);
                     button.html("<img src='img/" + vehicle + ".png' alt='" + tr(vehicle) + "'></img>");
                     button.click(function () {
                         ghRequest.initVehicle(vehicle);
-                        resolveAll()
+                        resolveAll();
                         routeLatLng(ghRequest);
                     });
                     return button;
@@ -120,12 +124,30 @@ $(document).ready(function (e) {
                 if (json.features) {
                     ghRequest.features = json.features;
 
-                    var vehicles = Object.keys(json.features);
+                    // car, foot and bike should come first. mc comes last
+                    var prefer = {"car": 1, "foot": 2, "bike": 3, "motorcycle": 10000};
+                    var showAllVehicles = urlParams.vehicle && (!prefer[urlParams.vehicle] || prefer[urlParams.vehicle] > 3);
+                    var vehicles = getSortedVehicleKeys(json.features, prefer);
                     if (vehicles.length > 0)
                         ghRequest.initVehicle(vehicles[0]);
 
-                    for (var key in json.features) {
-                        vehiclesDiv.append(createButton(key.toLowerCase()));
+                    var hiddenVehicles = [];
+                    for (var i in vehicles) {
+                        var btn = createButton(vehicles[i].toLowerCase(), !showAllVehicles && i > 2);
+                        vehiclesDiv.append(btn);
+
+                        if (i > 2)
+                            hiddenVehicles.push(btn);
+                    }
+
+                    if (!showAllVehicles && vehicles.length > 3) {
+                        var moreBtn = $("<a id='more-vehicle-btn'> ...</a>").click(function () {
+                            moreBtn.hide();
+                            for (var i in hiddenVehicles) {
+                                hiddenVehicles[i].show();
+                            }
+                        });
+                        vehiclesDiv.append(moreBtn);
                     }
                 }
 
@@ -178,6 +200,26 @@ $(document).ready(function (e) {
 
     checkInput();
 });
+
+function getSortedVehicleKeys(vehicleHashMap, prefer) {
+    var keys = Object.keys(vehicleHashMap);
+
+    keys.sort(function (a, b) {
+        var intValA = prefer[a];
+        var intValB = prefer[b];
+
+        if (!intValA && !intValB)
+            return a.localeCompare(b);
+
+        if (!intValA)
+            intValA = 4;
+        if (!intValB)
+            intValB = 4;
+
+        return intValA - intValB;
+    });
+    return keys;
+}
 
 function initFromParams(params, doQuery) {
     ghRequest.init(params);
