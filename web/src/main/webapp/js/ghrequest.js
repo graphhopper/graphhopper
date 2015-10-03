@@ -72,7 +72,7 @@ GHRequest = function (host) {
         this.to = this.route.last();
         log("Foo just moved.");
     }.bind(this));
-    
+
     this.route.addListener('route.reverse', function (evt) {
         this.from = this.route.first();
         this.to = this.route.last();
@@ -386,8 +386,8 @@ GHRequest.prototype.createURL = function () {
     return this.createPath(this.host + "/route?" + this.createPointParams(false) + "&type=" + this.dataType + "&key=" + this.key);
 };
 
-GHRequest.prototype.createGPXURL = function () {
-    return this.createPath(this.host + "/route?" + this.createPointParams(false) + "&type=gpx&key=" + this.key);
+GHRequest.prototype.createGPXURL = function (withRoute, withTrack, withWayPoints) {
+    return this.createPath(this.host + "/route?" + this.createPointParams(false) + "&type=gpx&key=" + this.key + "&gpx.route=" + withRoute + "&gpx.track=" + withTrack + "&gpx.waypoints=" + withWayPoints);
 };
 
 GHRequest.prototype.createHistoryURL = function () {

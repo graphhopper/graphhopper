@@ -180,15 +180,19 @@ public class GraphHopperServlet extends GHBaseServlet
     protected String createGPXString( HttpServletRequest req, HttpServletResponse res, GHResponse rsp )
     {
         boolean includeElevation = getBooleanParam(req, "elevation", false);
+        // default to false for the route part in next API version, see #437
+        boolean withRoute = getBooleanParam(req, "gpx.route", true);
+        boolean withTrack = getBooleanParam(req, "gpx.track", true);
+        boolean withWayPoints = getBooleanParam(req, "gpx.waypoints", false);
         res.setCharacterEncoding("UTF-8");
         res.setContentType("application/xml");
-        String trackName = getParam(req, "track", "GraphHopper Track");
+        String trackName = getParam(req, "trackname", "GraphHopper Track");
         res.setHeader("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
         long time = getLongParam(req, "millis", System.currentTimeMillis());
         if (rsp.hasErrors())
             return errorsToXML(rsp.getErrors());
         else
-            return rsp.getInstructions().createGPX(trackName, time, includeElevation);
+            return rsp.getInstructions().createGPX(trackName, time, includeElevation, withRoute, withTrack, withWayPoints);
     }
 
     String errorsToXML( List<Throwable> list )

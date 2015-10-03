@@ -176,9 +176,9 @@ body {
     text-decoration: none;
     color: #00cc33;
 }
-.footer-link {    
-    padding-right: 12px;    
-    font-size: 12px;    
+.footer-link {
+    padding-right: 12px;
+    font-size: 12px;
 }
 
 #export-link {
@@ -248,24 +248,24 @@ td img.pic {
 }
 
 .autocomplete {
-    border: 1px solid #999; 
-    background: #FFF; 
+    border: 1px solid #999;
+    background: #FFF;
     overflow: auto; 
 }
-.autocomplete strong { 
+.autocomplete strong {
     font-weight: normal;
     color: #04B431; 
 }
-.autocomplete-suggestion { 
-    padding: 5px 5px; 
-    white-space: nowrap; 
+.autocomplete-suggestion {
+    padding: 5px 5px;
+    white-space: nowrap;
     overflow: hidden;
     font-size: small;
     background-image: linear-gradient(to bottom, white, #e7e7e7);
 }
-.autocomplete-selected { 
-    padding: 5px 5px; 
-    background: #e7e7e7; 
+.autocomplete-selected {
+    padding: 5px 5px;
+    background: #e7e7e7;
     background-image: linear-gradient(to bottom, #9f9f9f, #e7e7e7);
 }
 .light { font-weight: lighter; color: #9f9f9f; font-size: smaller }
@@ -285,7 +285,7 @@ td img.pic {
     padding-left: 3px;
 }
 .pointDelete {
-    float: left;    
+    float: left;
     padding-left: 2px;
 }
 .pointDelete:hover, .pointAdd:hover { cursor: pointer; }
@@ -294,7 +294,9 @@ td img.pic {
     color: gray;
     font-size:11px;
     float: right;
+    font-weight: bold;
     width: 20px;
+    height: 20px;
     height: 20px;
     margin: 0px;
     padding: 0px;
@@ -302,4 +304,25 @@ td img.pic {
 }
 #moreButton {
     background-image: linear-gradient(to bottom, white, #e7e7e7);
+}
+
+.ui-dialog > .ui-widget-header{
+    padding:1em
+}
+
+.ui-dialog .ui-dialog-content {
+    padding:1em
+}
+
+.ui-dialog .ui-widget-content {
+    background: white;
+}
+
+.ui-widget-content {
+    background-image: none;
+}
+
+.ui-dialog .ui-dialog-titlebar {
+    padding: 10px;
+    background: #00cc33;
 }

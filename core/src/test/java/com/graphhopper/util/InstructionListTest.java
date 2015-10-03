@@ -116,13 +116,13 @@ public class InstructionListTest
         InstructionList wayList = p.calcInstructions(usTR);
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Continue onto 4-7",
-                        "Turn left onto 7-8", "Continue onto 8-9", "Turn right", "Finish!"),
+                "Turn left onto 7-8", "Continue onto 8-9", "Turn right", "Finish!"),
                 tmpList);
 
         wayList = p.calcInstructions(trMap.getWithFallBack(Locale.GERMAN));
         tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Geradeaus auf 0-1", "Rechts abbiegen auf 1-4", "Geradeaus auf 4-7",
-                        "Links abbiegen auf 7-8", "Geradeaus auf 8-9", "Rechts abbiegen", "Ziel erreicht!"),
+                "Links abbiegen auf 7-8", "Geradeaus auf 8-9", "Rechts abbiegen", "Ziel erreicht!"),
                 tmpList);
 
         assertEquals(70000.0, sumDistances(wayList), 1e-1);
@@ -139,7 +139,7 @@ public class InstructionListTest
         assertEquals(1.16, gpxes.get(5).getLon(), 1e-6);
 
         compare(Arrays.asList(asL(1.2d, 1.0d), asL(1.2d, 1.1), asL(1.1d, 1.1), asL(1.0, 1.1),
-                        asL(1.0, 1.2), asL(1.1, 1.3), asL(1.1, 1.4)),
+                asL(1.0, 1.2), asL(1.1, 1.3), asL(1.1, 1.4)),
                 wayList.createStartPoints());
 
         p = new Dijkstra(g, carEncoder, new ShortestWeighting(carEncoder), tMode).calcPath(6, 2);
@@ -418,7 +418,7 @@ public class InstructionListTest
         fakeList.clear();
         fakeList.add(new GPXEntry(12, 13, 11, 0));
         fakeList.add(new GPXEntry(12.5, 13, 10, 1000));
-        gpxStr = il.createGPX("test", 0, true);
+        gpxStr = il.createGPX("test", 0, true, true, true, true);
 
         assertTrue(gpxStr, gpxStr.contains("<ele>11.0</ele>"));
         assertFalse(gpxStr, gpxStr.contains("NaN"));
@@ -496,7 +496,7 @@ public class InstructionListTest
             throw new RuntimeException(e);
         }
     }
-    
+
     @Test
     public void testFind()
     {
@@ -520,13 +520,12 @@ public class InstructionListTest
         g.edge(3, 4, 10000, true).setName("3-4").setWayGeometry(waypoint);
         g.edge(4, 5, 10000, true).setName("4-5");
 
-
         Path p = new Dijkstra(g, carEncoder, new ShortestWeighting(carEncoder), tMode).calcPath(1, 5);
         InstructionList wayList = p.calcInstructions(usTR);
-        
+
         // query on first edge, get instruction for second edge
         assertEquals("2-3", wayList.find(15.05, 10, 1000).getName());
-        
+
         // query east of first edge, get instruction for second edge
         assertEquals("2-3", wayList.find(15.05, 10.001, 1000).getName());
 

@@ -173,16 +173,28 @@ public class InstructionList implements Iterable<Instruction>
     public String createGPX( String trackName, long startTimeMillis )
     {
         boolean includeElevation = getSize() > 0 ? get(0).getPoints().is3D() : false;
-        return createGPX(trackName, startTimeMillis, includeElevation);
+        return createGPX(trackName, startTimeMillis, includeElevation, true, true, true);
     }
 
-    public String createGPX( String trackName, long startTimeMillis, boolean includeElevation )
+    private void createWayPointBlock( StringBuilder output, Instruction instruction )
+    {
+        output.append("\n<wpt ");
+        output.append("lat='").append(Helper.round6(instruction.getFirstLat()));
+        output.append("' lon='").append(Helper.round6(instruction.getFirstLon())).append("'>");
+        if (instruction.getName().isEmpty())
+            output.append(" <name>").append(instruction.getTurnDescription(tr)).append("</name>");
+        else
+            output.append(" <name>").append(instruction.getName()).append("</name>");
+        output.append("</wpt>");
+    }
+
+    public String createGPX( String trackName, long startTimeMillis, boolean includeElevation, boolean withRoute, boolean withTrack, boolean withWayPoints )
     {
         DateFormat formatter = Helper.createFormatter();
         
         String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
                 + "<gpx xmlns='http://www.topografix.com/GPX/1/1' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'"
-                + " creator='Graphhopper' version='1.1'"
+                + " creator='Graphhopper version " + Constants.VERSION + "' version='1.1'"
                 // This xmlns:gh acts only as ID, no valid URL necessary.
                 // Use a separate namespace for custom extensions to make basecamp happy.
                 + " xmlns:gh='https://graphhopper.com/public/schema/gpx/1.1'>"
@@ -193,40 +205,57 @@ public class InstructionList implements Iterable<Instruction>
                 + "</link>"
                 + "<time>" + formatter.format(startTimeMillis) + "</time>"
                 + "</metadata>";
-        StringBuilder track = new StringBuilder(header);
+        StringBuilder gpxOutput = new StringBuilder(header);
         if (!isEmpty())
         {
-            track.append("\n<rte>");
-            Instruction nextInstr = null;
-            for (Instruction currInstr : instructions)
+            if (withWayPoints)
             {
-                if (null != nextInstr)
-                    createRteptBlock(track, nextInstr, currInstr);
-
-                nextInstr = currInstr;
+                createWayPointBlock(gpxOutput, instructions.get(0));   // Start 
+                for (Instruction currInstr : instructions)
+                {
+                    if ((currInstr.getSign() == Instruction.REACHED_VIA) || // Via 
+                            (currInstr.getSign() == Instruction.FINISH))    // End
+                    {
+                        createWayPointBlock(gpxOutput, currInstr);
+                    }
+                }
             }
-            createRteptBlock(track, nextInstr, null);
-            track.append("</rte>");
+            if (withRoute)
+            {
+                gpxOutput.append("\n<rte>");
+                Instruction nextInstr = null;
+                for (Instruction currInstr : instructions)
+                {
+                    if (null != nextInstr)
+                        createRteptBlock(gpxOutput, nextInstr, currInstr);
+
+                    nextInstr = currInstr;
+                }
+                createRteptBlock(gpxOutput, nextInstr, null);
+                gpxOutput.append("\n</rte>");
+            }
         }
-
-        track.append("\n<trk><name>").append(trackName).append("</name>");
-
-        track.append("<trkseg>");
-        for (GPXEntry entry : createGPXList())
+        if (withTrack)
         {
-            track.append("\n<trkpt lat='").append(Helper.round6(entry.getLat()));
-            track.append("' lon='").append(Helper.round6(entry.getLon())).append("'>");
-            if (includeElevation)
-                track.append("<ele>").append(Helper.round2(entry.getEle())).append("</ele>");
-            track.append("<time>").append(formatter.format(startTimeMillis + entry.getTime())).append("</time>");
-            track.append("</trkpt>");
+            gpxOutput.append("\n<trk><name>").append(trackName).append("</name>");
+
+            gpxOutput.append("<trkseg>");
+            for (GPXEntry entry : createGPXList())
+            {
+                gpxOutput.append("\n<trkpt lat='").append(Helper.round6(entry.getLat()));
+                gpxOutput.append("' lon='").append(Helper.round6(entry.getLon())).append("'>");
+                if (includeElevation)
+                    gpxOutput.append("<ele>").append(Helper.round2(entry.getEle())).append("</ele>");
+                gpxOutput.append("<time>").append(formatter.format(startTimeMillis + entry.getTime())).append("</time>");
+                gpxOutput.append("</trkpt>");
+            }
+            gpxOutput.append("\n</trkseg>");
+            gpxOutput.append("\n</trk>");
         }
-        track.append("</trkseg>");
-        track.append("</trk>");
 
         // we could now use 'wpt' for via points
-        track.append("</gpx>");
-        return track.toString().replaceAll("\\'", "\"");
+        gpxOutput.append("\n</gpx>");
+        return gpxOutput.toString().replaceAll("\\'", "\"");
     }
 
     private void createRteptBlock( StringBuilder output, Instruction instruction, Instruction nextI )
