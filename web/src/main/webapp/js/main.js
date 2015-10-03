@@ -50,6 +50,81 @@ var iconTo = L.icon({
 $(document).ready(function (e) {
     // fixing cross domain support e.g in Opera
     jQuery.support.cors = true;
+    var dialog;
+
+    function exportFlaggedGPX( )
+    {
+        exportGPX($("#route").is(':checked'), $("#track").is(':checked'),$("#waypoints").is(':checked') );
+        dialog.dialog("close");
+        return false;
+    };
+    
+    $(function() {
+        dialog=$("#gpxdialog").dialog({
+        width: 420,
+        height: 260,
+        autoOpen: false,
+        resizable   : false,
+        draggable   : false,
+            buttons: {
+                "Export GPX": exportFlaggedGPX,
+                Cancel: function() {
+                    $(this).dialog("close");
+                }
+            }
+        });
+
+        //Make sure that at least one of the data types remains checked for the GPX export:
+        $("#route").change(function() {
+            if (!$(this).is(':checked'))
+            {
+                if (!$("#track").is(':checked'))
+                   $("#waypoints").prop("disabled", true);
+                else {
+                   if (!$("#waypoints").is(':checked'))
+                      $("#track").prop("disabled", true);
+                }
+            }
+            else
+            {
+                $("#track").prop("disabled", false);
+                $("#waypoints").prop("disabled", false);
+            }
+        });
+        $("#track").change(function() {
+            if (!$(this).is(':checked'))
+            {
+                if (!$("#route").is(':checked'))
+                   $("#waypoints").prop("disabled", true);
+                else {
+                    if (!$("#waypoints").is(':checked'))
+                       $("#route").prop("disabled", true);
+                }
+            }
+            else
+            {
+                $("#route").prop("disabled", false);
+                $("#waypoints").prop("disabled", false);
+            }
+        });
+        $("#waypoints").change(function() {
+            if (!$(this).is(':checked'))
+            {
+                if (!$("#route").is(':checked'))
+                   $("#track").prop("disabled", true);
+                else {
+                    if (!$("#track").is(':checked'))
+                       $("#route").prop("disabled", true);
+                }
+            }
+            else
+            {
+                $("#route").prop("disabled", false);
+                $("#track").prop("disabled", false);
+            }
+        });
+      
+    });
 
     if (isProduction())
         $('#hosting').show();
@@ -76,7 +151,7 @@ $(document).ready(function (e) {
     $('#gpxExportButton a').click(function (e) {
         // no page reload
         e.preventDefault();
-        exportGPX();
+        $("#gpxdialog").dialog('open');
     });
 
     var urlParams = parseUrlWithHisto();
@@ -1464,9 +1539,9 @@ function initI18N() {
     $('#gpxExportButton').attr("title", tr("gpxExportButton"));
 }
 
-function exportGPX() {
+function exportGPX(withRoute, withTrack, withWayPoint) {
     if (ghRequest.route.isResolved())
-        window.open(ghRequest.createGPXURL());
+        window.open(ghRequest.createGPXURL(withRoute, withTrack, withWayPoint));
     return false;
 }
 
