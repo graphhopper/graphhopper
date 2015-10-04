@@ -33,3 +33,4 @@ android/.gradle
 .settings/
 .classpath
 .project
+local.properties
