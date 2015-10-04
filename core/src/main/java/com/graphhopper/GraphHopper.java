@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
- * <p/>
+ * <p>
  *
  * @author Peter Karich
  * @see GraphHopperAPI
@@ -259,7 +259,7 @@ public class GraphHopper implements GraphHopperAPI
      * Only valid option for in-memory graph and if you e.g. want to disable store on flush for unit
      * tests. Specify storeOnFlush to true if you want that existing data will be loaded FROM disc
      * and all in-memory data will be flushed TO disc after flush is called e.g. while OSM import.
-     * <p/>
+     * <p>
      *
      * @param storeOnFlush true by default
      */
@@ -295,7 +295,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * Enables the use of contraction hierarchies to reduce query times. Enabled by default.
-     * <p/>
+     * <p>
      *
      * @param weighting can be "fastest", "shortest" or your own weight-calculation type.
      */
@@ -342,7 +342,7 @@ public class GraphHopper implements GraphHopperAPI
      * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
      * Disabling CH is only recommended for short routes or in combination with
      * setDefaultWeightLimit and called flexibility mode
-     * <p/>
+     * <p>
      *
      * @see #setDefaultWeightLimit(double)
      */
@@ -399,7 +399,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * This method specifies the preferred language for way names during import.
-     * <p/>
+     * <p>
      * Language code as defined in ISO 639-1 or ISO 639-2.
      * <ul>
      * <li>If no preferred language is specified, only the default language with no tag will be
@@ -481,7 +481,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * The underlying graph used in algorithms.
-     * <p/>
+     * <p>
      *
      * @throws IllegalStateException if graph is not instantiated.
      */
@@ -506,7 +506,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * The location index created from the graph.
-     * <p/>
+     * <p>
      *
      * @throws IllegalStateException if index is not initialized
      */
@@ -747,7 +747,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * Opens existing graph.
-     * <p/>
+     * <p>
      *
      * @param graphHopperFolder is the folder containing graphhopper files (which can be compressed
      *                          too)
@@ -919,7 +919,7 @@ public class GraphHopper implements GraphHopperAPI
      * Based on the weightingParameters and the specified vehicle a Weighting instance can be
      * created. Note that all URL parameters are available in the weightingParameters as String if
      * you use the GraphHopper Web module.
-     * <p/>
+     * <p>
      *
      * @param weightingMap all parameters influencing the weighting. E.g. parameters coming via
      *                     GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
