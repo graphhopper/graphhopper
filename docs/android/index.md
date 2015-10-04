@@ -21,8 +21,7 @@ Please read [here](./android-studio-setup.md) for a detailed instruction.
 
 ## None-Android Studio
 
-Download the [Android SDK](http://developer.android.com/sdk/installing/index.html?pkg=tools) and 
-go to the Android SDK Manager and install at least 2.3 (API 9).
+Download the [Android SDK](http://developer.android.com/sdk/installing/index.html?pkg=tools) and go to the Android SDK Manager and install the latest SDK.
 
 ### Maven or NetBeans
  1. Download [Maven Android SDK Deployer](https://github.com/simpligility/maven-android-sdk-deployer) and execute `mvn install -P 5.1` - it uses [Android Maven Plugin](http://simpligility.github.io/android-maven-plugin/) under the hood where you need to set up ANDROID_HOME
@@ -50,11 +49,11 @@ Now that you have a running android app you need to copy somehow the routing and
   
 ## Locus Add-On
 
-The developer of Locus has create a routing plugin for [locus](http://www.locusmap.eu/) the source code for the add-on is available [here](https://bitbucket.org/asamm/locus-add-on-graphhopper) and could be useful for other Map-apps too. The discussion is happing [here](http://forum.locusmap.eu/index.php?topic=4036.0).
+The developer of Locus has create a routing plugin for [locus](http://www.locusmap.eu/) the source code for the add-on is available [here](https://bitbucket.org/asamm/locus-map-add-on-graphhopper) and could be useful for other Map-apps too. The discussion is [here](http://forum.locusmap.eu/index.php?topic=4036.0).
 
 ## Cruiser App
 
-The free offline map app [Cruiser](https://play.google.com/store/apps/details?id=gr.talent.cruiser) is using GraphHopper routing and allows also other things.
+The free offline map app [Cruiser](http://wiki.openstreetmap.org/wiki/Cruiser) is using GraphHopper routing and allows also other things.
 
 ## Limitations
 
