@@ -942,7 +942,10 @@ public class GraphHopper implements GraphHopperAPI
                 return new FastestWeighting(encoder, weightingMap);
         } else if ("curvature".equalsIgnoreCase(weighting) || weighting.isEmpty())
         {
-            return new CurvatureWeighting(encoder, weightingMap, ghStorage);
+            if (encoder.supports(CurvatureWeighting.class))
+                return new CurvatureWeighting(encoder, weightingMap, ghStorage);
+            else
+                return new FastestWeighting(encoder, weightingMap);
         }
 
         throw new UnsupportedOperationException("weighting " + weighting + " not supported");

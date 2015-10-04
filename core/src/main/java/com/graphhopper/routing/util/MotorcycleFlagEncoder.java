@@ -77,32 +77,32 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         avoidSet.add("motorway");
         avoidSet.add("trunk");
         avoidSet.add("motorroad");
-        defaultSpeedMap.put("residential", 40);
+        avoidSet.add("residential");
 
+        preferSet.add("primary");
         preferSet.add("secondary");
         preferSet.add("tertiary");
-        preferSet.add("tertiary_link");
 
         maxPossibleSpeed = 120;
 
         // autobahn
-        defaultSpeedMap.put("motorway", 50);
-        defaultSpeedMap.put("motorway_link", 50);
-        defaultSpeedMap.put("motorroad", 50);
+        defaultSpeedMap.put("motorway", 100);
+        defaultSpeedMap.put("motorway_link", 70);
+        defaultSpeedMap.put("motorroad", 90);
         // bundesstraße
-        defaultSpeedMap.put("trunk", 50);
-        defaultSpeedMap.put("trunk_link", 50);
+        defaultSpeedMap.put("trunk", 80);
+        defaultSpeedMap.put("trunk_link", 75);
         // linking bigger town
-        defaultSpeedMap.put("primary", 100);
-        defaultSpeedMap.put("primary_link", 100);
+        defaultSpeedMap.put("primary", 65);
+        defaultSpeedMap.put("primary_link", 60);
         // linking towns + villages
-        defaultSpeedMap.put("secondary", 100);
-        defaultSpeedMap.put("secondary_link", 100);
+        defaultSpeedMap.put("secondary", 60);
+        defaultSpeedMap.put("secondary_link", 50);
         // streets without middle line separation
-        defaultSpeedMap.put("tertiary", 60);
-        defaultSpeedMap.put("tertiary_link", 50);
-        defaultSpeedMap.put("unclassified", 40);
-        defaultSpeedMap.put("residential", 40);
+        defaultSpeedMap.put("tertiary", 50);
+        defaultSpeedMap.put("tertiary_link", 40);
+        defaultSpeedMap.put("unclassified", 30);
+        defaultSpeedMap.put("residential", 30);
         // spielstraße
         defaultSpeedMap.put("living_street", 5);
         defaultSpeedMap.put("service", 20);
@@ -110,6 +110,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         defaultSpeedMap.put("road", 20);
         // forestry stuff
         defaultSpeedMap.put("track", 15);
+
     }
 
     @Override
@@ -325,6 +326,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         {
             return PriorityCode.BEST.getValue();
         }
+
         return PriorityCode.UNCHANGED.getValue();
     }
 
@@ -333,6 +335,10 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     {
         if (super.supports(feature))
             return true;
+
+        if(CurvatureWeighting.class.isAssignableFrom(feature)){
+            return true;
+        }
 
         return PriorityWeighting.class.isAssignableFrom(feature);
     }
