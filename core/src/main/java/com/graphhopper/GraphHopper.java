@@ -108,7 +108,7 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * For testing only
      */
-    protected GraphHopper loadGraph(GraphHopperStorage g)
+    protected GraphHopper loadGraph( GraphHopperStorage g )
     {
         this.ghStorage = g;
         fullyLoaded = true;
@@ -120,7 +120,7 @@ public class GraphHopper implements GraphHopperAPI
      * Specify which vehicles can be read by this GraphHopper instance. An encoding manager defines
      * how data from every vehicle is written (und read) into edges of the graph.
      */
-    public GraphHopper setEncodingManager(EncodingManager em)
+    public GraphHopper setEncodingManager( EncodingManager em )
     {
         ensureNotLoaded();
         this.encodingManager = em;
@@ -146,7 +146,7 @@ public class GraphHopper implements GraphHopperAPI
         return encodingManager;
     }
 
-    public GraphHopper setElevationProvider(ElevationProvider eleProvider)
+    public GraphHopper setElevationProvider( ElevationProvider eleProvider )
     {
         if (eleProvider == null || eleProvider == ElevationProvider.NOOP)
             setElevation(false);
@@ -176,7 +176,7 @@ public class GraphHopper implements GraphHopperAPI
      * This parameter specifies how to reduce points via douglas peucker while OSM import. Higher
      * value means more details, unit is meter. Default is 1. Disable via 0.
      */
-    public GraphHopper setWayPointMaxDistance(double wayPointMaxDistance)
+    public GraphHopper setWayPointMaxDistance( double wayPointMaxDistance )
     {
         this.osmReaderWayPointMaxDistance = wayPointMaxDistance;
         return this;
@@ -185,7 +185,7 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Sets the default traversal mode used for the algorithms and preparation.
      */
-    public GraphHopper setTraversalMode(TraversalMode traversalMode)
+    public GraphHopper setTraversalMode( TraversalMode traversalMode )
     {
         this.traversalMode = traversalMode;
         return this;
@@ -231,14 +231,14 @@ public class GraphHopper implements GraphHopperAPI
      * probably slower query times, which would be e.g. not suitable for Android. The resolution
      * specifies the tile width (in meter).
      */
-    public GraphHopper setPreciseIndexResolution(int precision)
+    public GraphHopper setPreciseIndexResolution( int precision )
     {
         ensureNotLoaded();
         preciseIndexResolution = precision;
         return this;
     }
 
-    public GraphHopper setMinNetworkSize(int minNetworkSize, int minOneWayNetworkSize)
+    public GraphHopper setMinNetworkSize( int minNetworkSize, int minOneWayNetworkSize )
     {
         this.minNetworkSize = minNetworkSize;
         this.minOneWayNetworkSize = minOneWayNetworkSize;
@@ -263,7 +263,7 @@ public class GraphHopper implements GraphHopperAPI
      *
      * @param storeOnFlush true by default
      */
-    public GraphHopper setStoreOnFlush(boolean storeOnFlush)
+    public GraphHopper setStoreOnFlush( boolean storeOnFlush )
     {
         ensureNotLoaded();
         if (storeOnFlush)
@@ -299,7 +299,7 @@ public class GraphHopper implements GraphHopperAPI
      *
      * @param weighting can be "fastest", "shortest" or your own weight-calculation type.
      */
-    public GraphHopper setCHWeighting(String weighting)
+    public GraphHopper setCHWeighting( String weighting )
     {
         ensureNotLoaded();
         chWeightingStr = weighting;
@@ -315,7 +315,7 @@ public class GraphHopper implements GraphHopperAPI
      * This method changes the number of threads used for preparation on import. Default is 1. Make
      * sure that you have enough memory to increase this number!
      */
-    public GraphHopper setCHPrepareThreads(int prepareThreads)
+    public GraphHopper setCHPrepareThreads( int prepareThreads )
     {
         this.chPrepareThreads = prepareThreads;
         this.chPreparePool = java.util.concurrent.Executors.newFixedThreadPool(chPrepareThreads);
@@ -332,7 +332,7 @@ public class GraphHopper implements GraphHopperAPI
      * the full usage of CH use setCHEnable(false) instead.
      */
     @Deprecated
-    public GraphHopper setDoPrepare(boolean doPrepare)
+    public GraphHopper setDoPrepare( boolean doPrepare )
     {
         this.doPrepare = doPrepare;
         return this;
@@ -346,7 +346,7 @@ public class GraphHopper implements GraphHopperAPI
      *
      * @see #setDefaultWeightLimit(double)
      */
-    public GraphHopper setCHEnable(boolean enable)
+    public GraphHopper setCHEnable( boolean enable )
     {
         ensureNotLoaded();
         chEnabled = enable;
@@ -359,7 +359,7 @@ public class GraphHopper implements GraphHopperAPI
      * created from createWeighting, e.g. distance for shortest or seconds for the standard
      * FastestWeighting implementation.
      */
-    public void setDefaultWeightLimit(double defaultWeightLimit)
+    public void setDefaultWeightLimit( double defaultWeightLimit )
     {
         this.defaultWeightLimit = defaultWeightLimit;
     }
@@ -380,7 +380,7 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Enable storing and fetching elevation data. Default is false
      */
-    public GraphHopper setElevation(boolean includeElevation)
+    public GraphHopper setElevation( boolean includeElevation )
     {
         this.elevation = includeElevation;
         return this;
@@ -390,7 +390,7 @@ public class GraphHopper implements GraphHopperAPI
      * This method specifies if the import should include way names to be able to return
      * instructions for a route.
      */
-    public GraphHopper setEnableInstructions(boolean b)
+    public GraphHopper setEnableInstructions( boolean b )
     {
         ensureNotLoaded();
         enableInstructions = b;
@@ -408,7 +408,7 @@ public class GraphHopper implements GraphHopperAPI
      * to default language.</li>
      * </ul>
      */
-    public GraphHopper setPreferredLanguage(String preferredLanguage)
+    public GraphHopper setPreferredLanguage( String preferredLanguage )
     {
         ensureNotLoaded();
         if (preferredLanguage == null)
@@ -426,7 +426,7 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * This methods enables gps point calculation. If disabled only distance will be calculated.
      */
-    public GraphHopper setEnableCalcPoints(boolean b)
+    public GraphHopper setEnableCalcPoints( boolean b )
     {
         calcPoints = b;
         return this;
@@ -436,7 +436,7 @@ public class GraphHopper implements GraphHopperAPI
      * This method specifies if the returned path should be simplified or not, via douglas-peucker
      * or similar algorithm.
      */
-    private GraphHopper setSimplifyResponse(boolean doSimplify)
+    private GraphHopper setSimplifyResponse( boolean doSimplify )
     {
         this.simplifyResponse = doSimplify;
         return this;
@@ -445,7 +445,7 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Sets the graphhopper folder.
      */
-    public GraphHopper setGraphHopperLocation(String ghLocation)
+    public GraphHopper setGraphHopperLocation( String ghLocation )
     {
         ensureNotLoaded();
         if (ghLocation == null)
@@ -464,7 +464,7 @@ public class GraphHopper implements GraphHopperAPI
      * This file can be an osm xml (.osm), a compressed xml (.osm.zip or .osm.gz) or a protobuf file
      * (.pbf).
      */
-    public GraphHopper setOSMFile(String osmFileStr)
+    public GraphHopper setOSMFile( String osmFileStr )
     {
         ensureNotLoaded();
         if (Helper.isEmpty(osmFileStr))
@@ -493,13 +493,13 @@ public class GraphHopper implements GraphHopperAPI
         return ghStorage;
     }
 
-    public void setGraphHopperStorage(GraphHopperStorage ghStorage)
+    public void setGraphHopperStorage( GraphHopperStorage ghStorage )
     {
         this.ghStorage = ghStorage;
         fullyLoaded = true;
     }
 
-    protected void setLocationIndex(LocationIndex locationIndex)
+    protected void setLocationIndex( LocationIndex locationIndex )
     {
         this.locationIndex = locationIndex;
     }
@@ -521,7 +521,7 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Sorts the graph which requires more RAM while import. See #12
      */
-    public GraphHopper setSortGraph(boolean sortGraph)
+    public GraphHopper setSortGraph( boolean sortGraph )
     {
         ensureNotLoaded();
         this.sortGraph = sortGraph;
@@ -532,7 +532,7 @@ public class GraphHopper implements GraphHopperAPI
      * Specifies if it is allowed for GraphHopper to write. E.g. for read only filesystems it is not
      * possible to create a lock file and so we can avoid write locks.
      */
-    public GraphHopper setAllowWrites(boolean allowWrites)
+    public GraphHopper setAllowWrites( boolean allowWrites )
     {
         this.allowWrites = allowWrites;
         return this;
@@ -553,7 +553,7 @@ public class GraphHopper implements GraphHopperAPI
      * args) ala CmdArgs.read(args) or via configuration file ala
      * CmdArgs.readFromConfig("config.properties", "graphhopper.config")
      */
-    public GraphHopper init(CmdArgs args)
+    public GraphHopper init( CmdArgs args )
     {
         args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
         String tmpOsmFile = args.get("osmreader.osm", "");
@@ -675,7 +675,7 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Creates the graph from OSM data.
      */
-    private GraphHopper process(String graphHopperLocation)
+    private GraphHopper process( String graphHopperLocation )
     {
         setGraphHopperLocation(graphHopperLocation);
         Lock lock = null;
@@ -726,12 +726,12 @@ public class GraphHopper implements GraphHopperAPI
         return reader;
     }
 
-    protected DataReader createReader(GraphHopperStorage ghStorage)
+    protected DataReader createReader( GraphHopperStorage ghStorage )
     {
         return initOSMReader(new OSMReader(ghStorage));
     }
 
-    protected OSMReader initOSMReader(OSMReader reader)
+    protected OSMReader initOSMReader( OSMReader reader )
     {
         if (osmFile == null)
             throw new IllegalArgumentException("No OSM file specified");
@@ -753,7 +753,7 @@ public class GraphHopper implements GraphHopperAPI
      *                          too)
      */
     @Override
-    public boolean load(String graphHopperFolder)
+    public boolean load( String graphHopperFolder )
     {
         if (Helper.isEmpty(graphHopperFolder))
             throw new IllegalStateException("graphHopperLocation is not specified. call init before");
@@ -833,7 +833,7 @@ public class GraphHopper implements GraphHopperAPI
         }
     }
 
-    public RoutingAlgorithmFactory getAlgorithmFactory(Weighting weighting)
+    public RoutingAlgorithmFactory getAlgorithmFactory( Weighting weighting )
     {
         RoutingAlgorithmFactory raf = algoFactories.get(weighting);
         if (raf == null)
@@ -847,7 +847,7 @@ public class GraphHopper implements GraphHopperAPI
         return algoFactories.values();
     }
 
-    public GraphHopper putAlgorithmFactory(Weighting weighting, RoutingAlgorithmFactory algoFactory)
+    public GraphHopper putAlgorithmFactory( Weighting weighting, RoutingAlgorithmFactory algoFactory )
     {
         algoFactories.put(weighting, algoFactory);
         return this;
@@ -927,7 +927,7 @@ public class GraphHopper implements GraphHopperAPI
      * @return the weighting to be used for route calculation
      * @see WeightingMap
      */
-    public Weighting createWeighting(WeightingMap weightingMap, FlagEncoder encoder)
+    public Weighting createWeighting( WeightingMap weightingMap, FlagEncoder encoder )
     {
         String weighting = weightingMap.getWeighting().toLowerCase();
 
@@ -952,7 +952,7 @@ public class GraphHopper implements GraphHopperAPI
 
     }
 
-    public Weighting getWeightingForCH(WeightingMap weightingMap, FlagEncoder encoder)
+    public Weighting getWeightingForCH( WeightingMap weightingMap, FlagEncoder encoder )
     {
         String encoderStr = encoder.toString().toLowerCase();
         String weightingStr = weightingMap.getWeighting().toLowerCase();
@@ -970,7 +970,7 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Potentially wraps the specified weighting into a TurnWeighting instance.
      */
-    public Weighting createTurnWeighting(Weighting weighting, Graph graph, FlagEncoder encoder)
+    public Weighting createTurnWeighting( Weighting weighting, Graph graph, FlagEncoder encoder )
     {
         if (encoder.supports(TurnWeighting.class))
             return new TurnWeighting(weighting, encoder, (TurnCostExtension) graph.getExtension());
@@ -978,9 +978,8 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     @Override
-    public GHResponse route(GHRequest request)
+    public GHResponse route( GHRequest request )
     {
-        logger.warn("Requested a route!");
         GHResponse response = new GHResponse();
         List<Path> paths = getPaths(request, response);
         if (response.hasErrors())
@@ -1001,7 +1000,7 @@ public class GraphHopper implements GraphHopperAPI
         return response;
     }
 
-    protected List<Path> getPaths(GHRequest request, GHResponse rsp)
+    protected List<Path> getPaths( GHRequest request, GHResponse rsp )
     {
         if (ghStorage == null || !fullyLoaded)
             throw new IllegalStateException("Call load or importOrLoad before routing");
@@ -1138,7 +1137,7 @@ public class GraphHopper implements GraphHopperAPI
         return paths;
     }
 
-    protected LocationIndex createLocationIndex(Directory dir)
+    protected LocationIndex createLocationIndex( Directory dir )
     {
         LocationIndexTree tmpIndex = new LocationIndexTree(ghStorage, dir);
         tmpIndex.setResolution(preciseIndexResolution);
@@ -1284,7 +1283,7 @@ public class GraphHopper implements GraphHopperAPI
 
     // make sure this is identical to buildDate used in pom.xml
     // <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZ</maven.build.timestamp.format>
-    private String formatDateTime(Date date)
+    private String formatDateTime( Date date )
     {
         return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(date);
     }

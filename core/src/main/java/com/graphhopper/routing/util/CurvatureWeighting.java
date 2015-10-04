@@ -22,7 +22,7 @@ public class CurvatureWeighting extends PriorityWeighting
 
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
 
-    public CurvatureWeighting(FlagEncoder flagEncoder, PMap pMap, GraphHopperStorage ghStorage)
+    public CurvatureWeighting( FlagEncoder flagEncoder, PMap pMap, GraphHopperStorage ghStorage )
     {
         super(flagEncoder, pMap);
         this.flagEncoder = flagEncoder;
@@ -30,13 +30,13 @@ public class CurvatureWeighting extends PriorityWeighting
     }
 
     @Override
-    public double getMinWeight(double distance)
+    public double getMinWeight( double distance )
     {
         return 0.001 * distance;
     }
 
     @Override
-    public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId)
+    public double calcWeight( EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId )
     {
 
         double speed = getRoadSpeed(edge, reverse);
@@ -56,14 +56,16 @@ public class CurvatureWeighting extends PriorityWeighting
         return (bendiness * regularWeight) / (0.5 + priority);
     }
 
-    protected double getRoadSpeed(EdgeIteratorState edge, boolean reverse)
+    protected double getRoadSpeed( EdgeIteratorState edge, boolean reverse )
     {
         return reverse ? flagEncoder.getReverseSpeed(edge.getFlags()) : flagEncoder.getSpeed(edge.getFlags());
     }
 
-    protected double discriminateSlowStreets(double priority, double speed){
+    protected double discriminateSlowStreets( double priority, double speed )
+    {
         // Streets that slow are not fun and probably in a town
-        if (speed < 51){
+        if (speed < 51)
+        {
             return 1 + priority;
         }
         return priority;
@@ -74,7 +76,7 @@ public class CurvatureWeighting extends PriorityWeighting
      * We use bendiness > 1.2 since the beelineDistance is only approximated,
      * therefore it can happen on straight roads, that the beeline is longer than the road.
      */
-    protected double correctErrors(double bendiness)
+    protected double correctErrors( double bendiness )
     {
         if (bendiness < 0.01 || bendiness > 1.2)
         {
@@ -87,12 +89,12 @@ public class CurvatureWeighting extends PriorityWeighting
     /**
      * A good bendiness should become a greater impact. A bendiness close to 1 should not be changed.
      */
-    protected double increaseBendinessImpact(double bendiness)
+    protected double increaseBendinessImpact( double bendiness )
     {
         return (Math.pow(bendiness, 2));
     }
 
-    protected double calcBeelineDist(EdgeIteratorState edge)
+    protected double calcBeelineDist( EdgeIteratorState edge )
     {
         try
         {
@@ -109,12 +111,12 @@ public class CurvatureWeighting extends PriorityWeighting
 
     }
 
-    protected double getTmpLatitude(int id)
+    protected double getTmpLatitude( int id )
     {
         return nodeAccess.getLatitude(id);
     }
 
-    protected double getTmpLongitude(int id)
+    protected double getTmpLongitude( int id )
     {
         return nodeAccess.getLongitude(id);
     }
