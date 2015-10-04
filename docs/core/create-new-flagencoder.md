@@ -11,6 +11,10 @@ the speedFactor means by which factor the speed should be devided before storing
 As a third step you need to tune the speeds for the different road types and surfaces. Maybe
 now it is time to write a first test for your new FlagEncoder.
 
+Use it e.g. just via `graphHopper.setEncodingManager(new EncodingManager(myEncoder));`
+
+## Different forward and backward weights?
+
 If you need to support two different speed values for one street (one edge) you need to create
 a separate EncodedDoubleValue instance (reverseSpeedEncoder) managing the reverse speed, 
 see Bike2WeightFlagEncoder for an example. You'll have to overwrite the following methods:
@@ -22,8 +26,12 @@ see Bike2WeightFlagEncoder for an example. You'll have to overwrite the followin
  * reverseFlags
  * setLowSpeed
 
+## Elevation
+
 To incorporate or precalculate values based on the elevation data you can hook into applyWayTags
 and call edge.fetchWayGeometry(3) or again, see Bike2WeightFlagEncoder.
+
+## Add to the core
 
 If you want to include your FlagEncoder in GraphHopper you have to add the creation in
 EncodingManager.parseEncoderString to let the EncodingManager pick the correct class when faced
