@@ -395,6 +395,25 @@ public class GraphHopperTest
             assertTrue(false);
         } catch (Exception ex)
         {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoding does not match"));
+        }
+
+        // different bytesForFlags should fail to load
+        instance = new GraphHopper().init(
+                new CmdArgs().
+                put("osmreader.osm", testOsm3).
+                put("osmreader.dataaccess", "RAM").
+                put("graph.flagEncoders", "FOOT,CAR").
+                put("graph.bytesForFlags", 8).
+                put("prepare.chWeighting", "no")).
+                setOSMFile(testOsm3);
+        try
+        {
+            instance.load(ghLoc);
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.bytesForFlags (8) is not equal to loaded 4"));
         }
 
         // different order is no longer okay, see #350
@@ -410,6 +429,7 @@ public class GraphHopperTest
             assertTrue(false);
         } catch (Exception ex)
         {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoding does not match"));
         }
     }
 

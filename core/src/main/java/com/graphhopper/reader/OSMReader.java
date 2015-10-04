@@ -369,6 +369,20 @@ public class OSMReader implements DataReader
             }
         }
 
+        if (way.getTag("duration") != null)
+        {
+            try
+            {
+                long dur = OSMTagParser.parseDuration(way.getTag("duration"));
+                // Provide the duration value in seconds in an artificial graphhopper specific tag:
+                way.setTag("duration:seconds", Long.toString(dur));
+            }
+            catch(Exception ex)
+            {
+                logger.warn("Parsing error in way with OSMID=" + way.getId() + " : " + ex.getMessage());
+            }
+        }
+
         long wayFlags = encodingManager.handleWayTags(way, includeWay, relationFlags);
         if (wayFlags == 0)
             return;

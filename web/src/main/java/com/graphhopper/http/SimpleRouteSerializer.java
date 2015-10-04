@@ -85,6 +85,9 @@ public class SimpleRouteSerializer implements RouteSerializer
                     InstructionList instructions = rsp.getInstructions();
                     jsonPath.put("instructions", instructions.createJson());
                 }
+
+                jsonPath.put("ascend", rsp.getAscend());
+                jsonPath.put("descend", rsp.getDescend());
             }
             json.put("paths", Collections.singletonList(jsonPath));
         }

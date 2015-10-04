@@ -36,6 +36,28 @@ public class PathMerger
     private DouglasPeucker douglasPeucker;
     private boolean calcPoints = true;
 
+    private void calcAscendDescend( final GHResponse rsp, final PointList pointList )
+    {
+        double ascendMeters = 0;
+        double descendMeters = 0;
+        double lastEle = pointList.getElevation(0);
+        for (int i = 1; i < pointList.size(); ++i)
+        {
+            double ele = pointList.getElevation(i);
+            double diff = Math.abs(ele - lastEle);
+
+            if (ele > lastEle)
+                ascendMeters += diff;
+            else
+                descendMeters += diff;
+
+            lastEle = ele;
+
+        }
+        rsp.setAscend(ascendMeters);
+        rsp.setDescend(descendMeters);
+    }
+
     public void doWork( GHResponse rsp, List<Path> paths, Translation tr )
     {
         int origPoints = 0;
@@ -106,19 +128,20 @@ public class PathMerger
         {
             String debug = rsp.getDebugInfo() + ", simplify (" + origPoints + "->" + fullPoints.getSize() + ")";
             rsp.setDebugInfo(debug);
+            if (fullPoints.is3D)
+                calcAscendDescend(rsp, fullPoints);
         }
 
         if (enableInstructions)
             rsp.setInstructions(fullInstructions);
 
         if (!allFound)
-        {
             rsp.addError(new RuntimeException("Connection between locations not found"));
-        }
 
         rsp.setPoints(fullPoints).
                 setRouteWeight(fullWeight).
-                setDistance(fullDistance).setTime(fullTimeInMillis);
+                setDistance(fullDistance).
+                setTime(fullTimeInMillis);
     }
 
     public PathMerger setCalcPoints( boolean calcPoints )

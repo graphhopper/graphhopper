@@ -47,15 +47,4 @@ public class AbstractFlagEncoderTest
         assertEquals(6, encoder.parseSpeed("walk"), 1e-3);
     }
 
-    @Test
-    public void testParseDuration()
-    {
-        assertEquals(10, AbstractFlagEncoder.parseDuration("00:10"));
-        assertEquals(70, AbstractFlagEncoder.parseDuration("01:10"));
-        assertEquals(0, AbstractFlagEncoder.parseDuration("oh"));
-        assertEquals(0, AbstractFlagEncoder.parseDuration(null));
-        assertEquals(60 * 20, AbstractFlagEncoder.parseDuration("20:00"));
-        assertEquals(20, AbstractFlagEncoder.parseDuration("0:20:00"));
-        assertEquals(60 * 2 + 20, AbstractFlagEncoder.parseDuration("02:20:02"));
-    }
 }

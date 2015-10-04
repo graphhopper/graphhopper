@@ -80,51 +80,10 @@ describe("utils", function () {
         // force array for point
         // URLs with one point only should work: https://graphhopper.com/maps/?point=50.413331%2C11.699066
         params = parseUrl("blup?point=49.946505%2C11.571232&point=&");
-        expect(params.point).toEqual(["49.946505,11.571232"]);
+        expect(params.point).toEqual(["49.946505,11.571232", ""]);
 
         params = parseUrl("blup?point=&point=49.946505%2C11.571232");
-        expect(params.point).toEqual(["49.946505,11.571232"]);
-    });
-
-    it("features should work", function () {
-        var ghRequest = new GHRequest("http://test.de?vehicle=car");
-        var params = {};
-        params.elevation = true;
-        ghRequest.features = {"car": {}};
-        ghRequest.init(params);
-        expect(ghRequest.elevation).toEqual(false);
-
-        ghRequest.features = {"car": {elevation: true}};
-        ghRequest.init(params);
-        expect(ghRequest.elevation).toEqual(true);
-
-        var params = {};
-        ghRequest.features = {"car": {elevation: true}};
-        ghRequest.init(params);
-        expect(ghRequest.elevation).toEqual(true);
-
-        var params = {};
-        params.elevation = false;
-        ghRequest.features = {"car": {elevation: true}};
-        ghRequest.init(params);
-        expect(ghRequest.elevation).toEqual(false);
-
-        var params = {};
-        params.elevation = true;
-        ghRequest.features = {"car": {elevation: false}};
-        ghRequest.init(params);
-        expect(ghRequest.elevation).toEqual(false);
-
-        ghRequest = new GHRequest("http://test.de");
-        var params = {point: [[4, 3], [2, 3]], test: "x", test_array: [1, 2]};
-        ghRequest.init(params);
-        
-        // skip point, layer etc
-        expect(ghRequest.api_params.point).toEqual(undefined);
-
-        // include all other parameters
-        expect(ghRequest.api_params.test).toEqual("x");
-        expect(ghRequest.api_params.test_array).toEqual([1, 2]);
+        expect(params.point).toEqual(["", "49.946505,11.571232"]);
     });
 
     it("ghrequest should init correctly from params", function () {
@@ -165,5 +124,54 @@ describe("utils", function () {
         expect(new GHInput("12.44,68.44").lat).toEqual(12.44);
         expect(new GHInput("12.44,68.44").lng).toEqual(68.44);
         expect(new GHInput("london").lon).toEqual(undefined);
+    });
+
+    it("should sort vehicles and prefer car, foot, bike", function () {
+        // car, foot and bike should come first. mc comes last
+        var prefer = {"car": 1, "foot": 2, "bike": 3, "motorcycle": 10000};
+        var keys = getSortedVehicleKeys({"motorcycle": "blup", "car": "blup", "mtb": "blup", "foot": "blup"}, prefer);
+        expect(keys).toEqual(["car", "foot", "mtb", "motorcycle"]);
+    });
+
+    it("features should work", function () {
+        var ghRequest = new GHRequest("http://test.de?vehicle=car");
+        var params = {};
+        params.elevation = true;
+        ghRequest.features = {"car": {}};
+        ghRequest.init(params);
+        expect(ghRequest.api_params.elevation).toEqual(false);
+
+        // overwrite
+        ghRequest.features = {"car": {elevation: true}};
+        ghRequest.init(params);
+        expect(ghRequest.api_params.elevation).toEqual(true);
+
+        var params = {};
+        ghRequest.features = {"car": {elevation: true}};
+        ghRequest.init(params);
+        expect(ghRequest.api_params.elevation).toEqual(true);
+
+        var params = {};
+        params.elevation = false;
+        ghRequest.features = {"car": {elevation: true}};
+        ghRequest.init(params);
+        expect(ghRequest.api_params.elevation).toEqual(false);
+
+        var params = {};
+        params.elevation = true;
+        ghRequest.features = {"car": {elevation: false}};
+        ghRequest.init(params);
+        expect(ghRequest.api_params.elevation).toEqual(false);
+
+        ghRequest = new GHRequest("http://test.de");
+        var params = {point: [[4, 3], [2, 3]], test: "x", test_array: [1, 2]};
+        ghRequest.init(params);
+
+        // skip point, layer etc
+        expect(ghRequest.api_params.point).toEqual(undefined);
+
+        // include all other parameters
+        expect(ghRequest.api_params.test).toEqual("x");
+        expect(ghRequest.api_params.test_array).toEqual([1, 2]);
     });
 });

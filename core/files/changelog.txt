@@ -1,3 +1,6 @@
+0.6
+    specify the preferred-language for way names during graph import (ISO 639-1 or ISO 639-2)
+
 0.5
     Several names have changed see #466, #467, #468
     GraphHopper.optimize removed use postProcessing instead

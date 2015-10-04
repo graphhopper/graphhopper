@@ -46,13 +46,6 @@ var iconTo = L.icon({
     iconAnchor: [12, 40]
 });
 
-var iconInt = L.icon({
-    iconUrl: './img/marker-icon-blue.png',
-    shadowSize: [50, 64],
-    shadowAnchor: [4, 62],
-    iconAnchor: [12, 40]
-});
-
 $(document).ready(function (e) {
     // fixing cross domain support e.g in Opera
     jQuery.support.cors = true;
@@ -112,13 +105,17 @@ $(document).ready(function (e) {
                 bounds.maxLon = tmp[2];
                 bounds.maxLat = tmp[3];
                 var vehiclesDiv = $("#vehicles");
-                function createButton(vehicle) {
+
+                function createButton(vehicle, hide) {
                     var button = $("<button class='vehicle-btn' title='" + tr(vehicle) + "'/>");
+                    if (hide)
+                        button.hide();
+
                     button.attr('id', vehicle);
                     button.html("<img src='img/" + vehicle + ".png' alt='" + tr(vehicle) + "'></img>");
                     button.click(function () {
                         ghRequest.initVehicle(vehicle);
-                        resolveAll()
+                        resolveAll();
                         routeLatLng(ghRequest);
                     });
                     return button;
@@ -127,12 +124,30 @@ $(document).ready(function (e) {
                 if (json.features) {
                     ghRequest.features = json.features;
 
-                    var vehicles = Object.keys(json.features);
+                    // car, foot and bike should come first. mc comes last
+                    var prefer = {"car": 1, "foot": 2, "bike": 3, "motorcycle": 10000};
+                    var showAllVehicles = urlParams.vehicle && (!prefer[urlParams.vehicle] || prefer[urlParams.vehicle] > 3);
+                    var vehicles = getSortedVehicleKeys(json.features, prefer);
                     if (vehicles.length > 0)
                         ghRequest.initVehicle(vehicles[0]);
 
-                    for (var key in json.features) {
-                        vehiclesDiv.append(createButton(key.toLowerCase()));
+                    var hiddenVehicles = [];
+                    for (var i in vehicles) {
+                        var btn = createButton(vehicles[i].toLowerCase(), !showAllVehicles && i > 2);
+                        vehiclesDiv.append(btn);
+
+                        if (i > 2)
+                            hiddenVehicles.push(btn);
+                    }
+
+                    if (!showAllVehicles && vehicles.length > 3) {
+                        var moreBtn = $("<a id='more-vehicle-btn'> ...</a>").click(function () {
+                            moreBtn.hide();
+                            for (var i in hiddenVehicles) {
+                                hiddenVehicles[i].show();
+                            }
+                        });
+                        vehiclesDiv.append(moreBtn);
                     }
                 }
 
@@ -186,20 +201,45 @@ $(document).ready(function (e) {
     checkInput();
 });
 
+function getSortedVehicleKeys(vehicleHashMap, prefer) {
+    var keys = Object.keys(vehicleHashMap);
+
+    keys.sort(function (a, b) {
+        var intValA = prefer[a];
+        var intValB = prefer[b];
+
+        if (!intValA && !intValB)
+            return a.localeCompare(b);
+
+        if (!intValA)
+            intValA = 4;
+        if (!intValB)
+            intValB = 4;
+
+        return intValA - intValB;
+    });
+    return keys;
+}
+
 function initFromParams(params, doQuery) {
     ghRequest.init(params);
-    var fromAndTo = params.from && params.to,
-            routeNow = params.point && params.point.length >= 2 || fromAndTo;
+    var count = 0;
+    var singlePointIndex;
+    for (var key = 0; key < params.point.length; key++) {
+        if (params.point[key] !== "") {
+            count++;
+            singlePointIndex = key;
+        }
+    }
 
+    var routeNow = params.point && count >= 2;
     if (routeNow) {
-        if (fromAndTo)
-            resolveCoords([params.from, params.to], doQuery);
-        else
-            resolveCoords(params.point, doQuery);
-    } else if (params.point && params.point.length === 1) {
-        ghRequest.from = new GHInput(params.point[0]);
-        resolve("from", ghRequest.from);
-        focus(ghRequest.from, 15, true);
+        resolveCoords(params.point, doQuery);
+    } else if (params.point && count === 1) {
+        ghRequest.route.set(params.point[singlePointIndex], singlePointIndex, true);
+        resolveIndex(singlePointIndex).done(function () {
+            focus(ghRequest.route.getIndex(singlePointIndex), 15, singlePointIndex);
+        });
     }
 }
 
@@ -614,7 +654,7 @@ function setFlag(coord, index) {
     if (coord.lat) {
         var toFrom = getToFrom(index),
                 marker = L.marker([coord.lat, coord.lng], {
-                    icon: ((toFrom === FROM) ? iconFrom : ((toFrom === TO) ? iconTo : iconInt)),
+                    icon: ((toFrom === FROM) ? iconFrom : ((toFrom === TO) ? iconTo : new L.NumberedDivIcon({number: index}))),
                     draggable: true,
                     contextmenu: true,
                     contextmenuItems: [{
@@ -1039,7 +1079,12 @@ function routeLatLng(request, doQuery) {
 
         var tmpTime = createTimeString(path.time);
         var tmpDist = createDistanceString(path.distance);
+        var tmpEleInfoStr = "";
+        if (request.hasElevation())
+            tmpEleInfoStr = createEleInfoString(path.ascend, path.descend);
+
         descriptionDiv.append(tr("routeInfo", [tmpDist, tmpTime]));
+        descriptionDiv.append(tmpEleInfoStr);
 
         $('.defaulting').each(function (index, element) {
             $(element).css("color", "black");
@@ -1090,7 +1135,7 @@ function routeLatLng(request, doQuery) {
             if (request.getVehicle().toUpperCase() === "FOOT") {
                 osmVehicle = "foot";
             }
-            osmRouteLink.attr("href", "http://www.openstreetmap.org/directions?engine=graphhopper_" 
+            osmRouteLink.attr("href", "http://www.openstreetmap.org/directions?engine=graphhopper_"
                     + osmVehicle + "&route=" + encodeURIComponent(request.from.lat + "," + request.from.lng + ";" + request.to.lat + "," + request.to.lng));
             hiddenDiv.append(osmRouteLink);
 
@@ -1128,6 +1173,20 @@ function createDistanceString(dist) {
     if (dist > 100)
         dist = round(dist, 1);
     return dist + tr2("kmAbbr");
+}
+
+function createEleInfoString(ascend, descend) {
+    var str = "";
+    if (ascend > 0 || descend > 0) {
+        str = "<br/> ";
+        if (ascend > 0)
+            str += "&#8599;" + round(ascend, 1) + tr2("mAbbr");
+
+        if (descend > 0)
+            str += " &#8600;" + round(descend, 1) + tr2("mAbbr");
+    }
+
+    return str;
 }
 
 function createTimeString(time) {
@@ -1175,7 +1234,7 @@ function addInstruction(main, instr, instrIndex, lngLat) {
     else if (sign === 6)
         sign = "roundabout";
     else
-        throw "did not found sign " + sign;
+        throw "did not find sign " + sign;
     var title = instr.text;
     if (instr.annotation_text) {
         if (!title)
@@ -1247,8 +1306,6 @@ function parseUrl(query) {
         var key = vars[i].substring(0, indexPos);
         var value = vars[i].substring(indexPos + 1);
         value = decodeURIComponent(value.replace(/\+/g, ' '));
-        if (value === "")
-            continue;
 
         // force array for heading and point
         if (typeof res[key] === "undefined"

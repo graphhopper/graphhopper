@@ -65,6 +65,7 @@ public class GraphHopper implements GraphHopperAPI {
     private final String fileLockName = "gh.lock";
     private boolean allowWrites = true;
     boolean enableInstructions = true;
+    private String preferredLanguage = "";
     private boolean fullyLoaded = false;
     // for routing
     private double defaultWeightLimit = Double.MAX_VALUE;
@@ -368,6 +369,32 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
+     * This method specifies the preferred language for way names during import.
+     * <p>
+     * Language code as defined in ISO 639-1 or ISO 639-2.
+     * <ul>
+     * <li>If no preferred language is specified, only the default language with no tag will be
+     * imported.</li>
+     * <li>If a language is specified, it will be imported if its tag is found, otherwise fall back
+     * to default language.</li>
+     * </ul>
+     */
+    public GraphHopper setPreferredLanguage( String preferredLanguage )
+    {
+        ensureNotLoaded();
+        if (preferredLanguage == null)
+            throw new IllegalArgumentException("preferred language cannot be null");
+
+        this.preferredLanguage = preferredLanguage;
+        return this;
+    }
+
+    public String getPreferredLanguage()
+    {
+        return preferredLanguage;
+    }
+
+    /**
      * This methods enables gps point calculation. If disabled only distance will be calculated.
      */
     public GraphHopper setEnableCalcPoints(boolean b) {
@@ -507,6 +534,10 @@ public class GraphHopper implements GraphHopperAPI {
         sortGraph = args.getBool("graph.doSort", sortGraph);
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
         int bytesForFlags = args.getInt("graph.bytesForFlags", 4);
+        String flagEncoders = args.get("graph.flagEncoders", "");
+        if (!flagEncoders.isEmpty())
+            setEncodingManager(new EncodingManager(flagEncoders, bytesForFlags));
+
         if (args.get("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
         else
@@ -555,12 +586,10 @@ public class GraphHopper implements GraphHopperAPI {
 
         // osm import
         osmReaderWayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", osmReaderWayPointMaxDistance);
-        String flagEncoders = args.get("graph.flagEncoders", "");
-        if (!flagEncoders.isEmpty())
-            setEncodingManager(new EncodingManager(flagEncoders, bytesForFlags));
 
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
+        preferredLanguage = args.get("osmreader.preferred-language", preferredLanguage);
 
         // index
         preciseIndexResolution = args.getInt("index.highResolution", preciseIndexResolution);
@@ -632,6 +661,7 @@ public class GraphHopper implements GraphHopperAPI {
                     + " but also cannot import from OSM file as it wasn't specified!");
 
         encodingManager.setEnableInstructions(enableInstructions);
+        encodingManager.setPreferredLanguage(preferredLanguage);
         DataReader reader = createReader(ghStorage);
         logger.info("using " + ghStorage.toString() + ", memory:" + Helper.getMemInfo());
         reader.readGraph();
@@ -818,10 +848,6 @@ public class GraphHopper implements GraphHopperAPI {
     public Weighting createWeighting(WeightingMap weightingMap, FlagEncoder encoder) {
         String weighting = weightingMap.getWeighting().toLowerCase();
 
-        logger.warn("Creating new Weighting!");
-
-        return new CurvatureWeighting(encoder, weightingMap, determineCurvyEdges(), ghStorage);
-        /*
         if ("shortest".equalsIgnoreCase(weighting)) {
             return new ShortestWeighting(encoder);
         } else if ("fastest".equalsIgnoreCase(weighting) || weighting.isEmpty()) {
@@ -830,43 +856,11 @@ public class GraphHopper implements GraphHopperAPI {
             else
                 return new FastestWeighting(encoder, weightingMap);
         } else if ("curvature".equalsIgnoreCase(weighting) || weighting.isEmpty()) {
-            return new CurvatureWeighting(encoder, determineCurvyEdges());
+            return new CurvatureWeighting(encoder, weightingMap, ghStorage);
         }
 
         throw new UnsupportedOperationException("weighting " + weighting + " not supported");
 
-        */
-    }
-
-    public Set<Integer> determineCurvyEdges() {
-
-        if(curvyEdges != null){
-            return curvyEdges;
-        }
-
-        RoadData curvyRoadData = CurvatureLoader.INSTANCE.getCurvyRoads();
-        curvyEdges = new HashSet<Integer>();
-
-        for (RoadEntry curvyEntry : curvyRoadData){
-            Point point = curvyEntry.getPoints().get(curvyEntry.getPoints().size() / 2);
-            QueryResult qr = locationIndex.findClosest(point.lat, point.lon, EdgeFilter.ALL_EDGES);
-
-            if (!qr.isValid()) {
-                continue;
-            }
-
-            int edgeId = qr.getClosestEdge().getEdge();
-            if (curvyEdges.contains(edgeId)) {
-                continue;
-            }
-
-            curvyEdges.add(edgeId);
-
-        }
-
-        logger.info("Loaded Curvy Roads");
-
-        return curvyEdges;
     }
 
     public Weighting getWeightingForCH(WeightingMap weightingMap, FlagEncoder encoder) {

@@ -8,9 +8,9 @@
         <script type="text/javascript" src="lib/jasmine-1.3.1/jasmine.js"></script>
         <script type="text/javascript" src="lib/jasmine-1.3.1/jasmine-html.js"></script>
 
-        <!-- include source files here... -->
+        <!-- include source files here... -->        
         <script type="text/javascript" src="../../main/webapp/js/leaflet.js"></script>
-        <script type="text/javascript" src="../../main/webapp/js/jquery-1.10.2.min.js"></script>        
+        <script type="text/javascript" src="../../main/webapp/js/jquery-2.1.0.min.js"></script>
         <script type="text/javascript" src="../../main/webapp/js/ghrequest.js"></script>
         <script type="text/javascript" src="../../main/webapp/js/main.js"></script> 
 
@@ -21,7 +21,7 @@
     <body>
 
         <script type="text/javascript">
-            (function() {
+            (function () {
                 var jasmineEnv = jasmine.getEnv();
                 jasmineEnv.updateInterval = 1000;
 
@@ -29,13 +29,13 @@
 
                 jasmineEnv.addReporter(htmlReporter);
 
-                jasmineEnv.specFilter = function(spec) {
+                jasmineEnv.specFilter = function (spec) {
                     return htmlReporter.specFilter(spec);
                 };
 
                 var currentWindowOnload = window.onload;
 
-                window.onload = function() {
+                window.onload = function () {
                     if (currentWindowOnload) {
                         currentWindowOnload();
                     }
@@ -48,5 +48,9 @@
 
             })();
         </script>
+        <!-- accept JS error 'map undefined' as otherwise we need to include lots of unnecessary JS here
+        <div id="map">
+        </div>
+        -->
     </body>
 </html>
