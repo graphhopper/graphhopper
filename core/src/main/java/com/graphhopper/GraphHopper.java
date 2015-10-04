@@ -99,9 +99,6 @@ public class GraphHopper implements GraphHopperAPI {
     private final TranslationMap trMap = new TranslationMap().doImport();
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
 
-    // curvature
-    Set<Integer> curvyEdges = null;
-
     public GraphHopper() {
         setCHPrepareThreads(1);
     }
@@ -370,7 +367,7 @@ public class GraphHopper implements GraphHopperAPI {
 
     /**
      * This method specifies the preferred language for way names during import.
-     * <p>
+     * <p/>
      * Language code as defined in ISO 639-1 or ISO 639-2.
      * <ul>
      * <li>If no preferred language is specified, only the default language with no tag will be
@@ -379,8 +376,7 @@ public class GraphHopper implements GraphHopperAPI {
      * to default language.</li>
      * </ul>
      */
-    public GraphHopper setPreferredLanguage( String preferredLanguage )
-    {
+    public GraphHopper setPreferredLanguage(String preferredLanguage) {
         ensureNotLoaded();
         if (preferredLanguage == null)
             throw new IllegalArgumentException("preferred language cannot be null");
@@ -389,8 +385,7 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    public String getPreferredLanguage()
-    {
+    public String getPreferredLanguage() {
         return preferredLanguage;
     }
 

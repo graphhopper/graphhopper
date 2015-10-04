@@ -478,7 +478,7 @@ function decodePath(encoded, is3D) {
 GHRequest.prototype.doRequest = function (url, callback) {
     var that = this;
     $.ajax({
-        timeout: 3000000,
+        timeout: 30000,
         url: url,
         success: function (json) {
             if (json.paths) {
