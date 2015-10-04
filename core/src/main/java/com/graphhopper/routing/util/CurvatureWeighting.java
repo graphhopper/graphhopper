@@ -61,9 +61,11 @@ public class CurvatureWeighting extends PriorityWeighting
         return reverse ? flagEncoder.getReverseSpeed(edge.getFlags()) : flagEncoder.getSpeed(edge.getFlags());
     }
 
+    /**
+     * Streets that slow are not fun and probably in a town.
+     */
     protected double discriminateSlowStreets( double priority, double speed )
     {
-        // Streets that slow are not fun and probably in a town
         if (speed < 51)
         {
             return 1 + priority;
