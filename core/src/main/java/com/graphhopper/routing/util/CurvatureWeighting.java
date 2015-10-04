@@ -5,6 +5,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +15,7 @@ import java.util.Set;
 /**
  * This Class uses Curvature Data to calculate curvy routes.
  */
-public class CurvatureWeighting implements Weighting {
+public class CurvatureWeighting extends PriorityWeighting{
 
     private static final Logger logger = LoggerFactory.getLogger(CurvatureWeighting.class);
 
@@ -28,7 +29,8 @@ public class CurvatureWeighting implements Weighting {
 
     private double minCurvature = Double.POSITIVE_INFINITY;
 
-    public CurvatureWeighting(FlagEncoder flagEncoder, Set<Integer> curvyEdges, GraphHopperStorage ghStorage) {
+    public CurvatureWeighting(FlagEncoder flagEncoder, PMap pMap, Set<Integer> curvyEdges, GraphHopperStorage ghStorage) {
+        super(flagEncoder, pMap);
         this.flagEncoder = flagEncoder;
         this.maxSpeed = flagEncoder.getMaxSpeed();
         this.curvyEdges = curvyEdges;
@@ -39,21 +41,21 @@ public class CurvatureWeighting implements Weighting {
 
     @Override
     public double getMinWeight(double distance) {
-        // The formula for the Curvature Weighting should not return something that is smaller than this.
-        return 0.001;
+        return 0;
     }
 
     @Override
     public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
 
         // Return low weight on curvy roads
-        if (curvyEdges.contains(edge.getEdge()))
+        if (curvyEdges.contains(edge.getEdge())){
             return 0;
+        }
 
-        return calcCurvateWeight(edge, reverse);
+        return calcCurvateWeight(edge, reverse, prevOrNextEdgeId);
     }
 
-    private double calcCurvateWeight(EdgeIteratorState edge, boolean reverse) {
+    private double calcCurvateWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
 
         double speed = reverse ? flagEncoder.getReverseSpeed(edge.getFlags()) : flagEncoder.getSpeed(edge.getFlags());
         if (speed == 0)
@@ -64,19 +66,28 @@ public class CurvatureWeighting implements Weighting {
 
         double bendiness = distance / roadLength;
 
-        if(0.01 > bendiness){
+        // This should errors
+        if(0.01 > bendiness || bendiness > 2){
             bendiness = 1;
         }
 
-        double regularWeight = roadLength / Math.log10(speed/2);
+        //double superWeight = super.calcWeight(edge, reverse, prevOrNextEdgeId);
+        double flagValue = flagEncoder.getDouble(edge.getFlags(), KEY);
+        double regularWeight = (roadLength / Math.log10(speed));
 
-        double weight = (Math.pow(bendiness, 2) * regularWeight);
+        double weight = ((Math.pow(bendiness, 2) * regularWeight)) / (0.5 + flagValue);
 
         if (bendiness < minCurvature) {
             minCurvature = bendiness;
         }
 
-        //logger.info("Calculated a CurvatureWeighting of " + weight + " using the bendiness of " + bendiness + " the speed of " + speed +  " with min Curvature: " + minCurvature);
+        //if(bendiness < .7)
+            //logger.info("FlagValue: "+flagValue+" Bendiness: "+bendiness);
+
+        //if(flagValue > 0.6)
+            //logger.info("FlagValue: "+flagValue+" Bendiness: "+bendiness);
+
+        //logger.info("Calculated a CurvatureWeighting of " + weight + " using the bendiness of " + bendiness + " and a regular weight of: " + regularWeight + " and a flagValue of: " + flagValue + " with min Curvature: " + minCurvature);
 
         return weight;
     }

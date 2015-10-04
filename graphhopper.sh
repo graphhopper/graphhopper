@@ -206,7 +206,7 @@ else
 fi
 
 if [ "$JAVA_OPTS" = "" ]; then
-  JAVA_OPTS="-Xmx1000m -Xms1000m -server"
+  JAVA_OPTS="-Xmx3000m -Xms3000m -server"
 fi
 
 

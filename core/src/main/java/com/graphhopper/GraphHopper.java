@@ -820,7 +820,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         logger.warn("Creating new Weighting!");
 
-        return new CurvatureWeighting(encoder, determineCurvyEdges(), ghStorage);
+        return new CurvatureWeighting(encoder, weightingMap, determineCurvyEdges(), ghStorage);
         /*
         if ("shortest".equalsIgnoreCase(weighting)) {
             return new ShortestWeighting(encoder);
@@ -852,20 +852,19 @@ public class GraphHopper implements GraphHopperAPI {
             QueryResult qr = locationIndex.findClosest(point.lat, point.lon, EdgeFilter.ALL_EDGES);
 
             if (!qr.isValid()) {
-                logger.info("no matching road found for entry " + curvyEntry.getId() + " at " + point);
                 continue;
             }
 
             int edgeId = qr.getClosestEdge().getEdge();
             if (curvyEdges.contains(edgeId)) {
-                // TODO this wouldn't happen with our map matching component
-                logger.info("Edge already added " + curvyEntry.getId() + " at " + point);
                 continue;
             }
 
             curvyEdges.add(edgeId);
 
         }
+
+        logger.info("Loaded Curvy Roads");
 
         return curvyEdges;
     }

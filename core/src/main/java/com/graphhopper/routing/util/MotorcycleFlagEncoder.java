@@ -77,8 +77,8 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         avoidSet.add("motorway");
         avoidSet.add("trunk");
         avoidSet.add("motorroad");
+        defaultSpeedMap.put("residential", 40);
 
-        preferSet.add("primary");
         preferSet.add("secondary");
         preferSet.add("tertiary");
         preferSet.add("tertiary_link");
@@ -86,18 +86,18 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         maxPossibleSpeed = 120;
 
         // autobahn
-        defaultSpeedMap.put("motorway", 80);
-        defaultSpeedMap.put("motorway_link", 70);
-        defaultSpeedMap.put("motorroad", 70);
+        defaultSpeedMap.put("motorway", 50);
+        defaultSpeedMap.put("motorway_link", 50);
+        defaultSpeedMap.put("motorroad", 50);
         // bundesstraße
-        defaultSpeedMap.put("trunk", 100);
-        defaultSpeedMap.put("trunk_link", 100);
+        defaultSpeedMap.put("trunk", 50);
+        defaultSpeedMap.put("trunk_link", 50);
         // linking bigger town
         defaultSpeedMap.put("primary", 100);
         defaultSpeedMap.put("primary_link", 100);
         // linking towns + villages
-        defaultSpeedMap.put("secondary", 80);
-        defaultSpeedMap.put("secondary_link", 80);
+        defaultSpeedMap.put("secondary", 100);
+        defaultSpeedMap.put("secondary_link", 100);
         // streets without middle line separation
         defaultSpeedMap.put("tertiary", 60);
         defaultSpeedMap.put("tertiary_link", 50);
@@ -131,7 +131,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         shift += reverseSpeedEncoder.getBits();
 
         priorityWayEncoder = new EncodedValue("PreferWay", shift, 3, 1, 3, 7);
-        shift += reverseSpeedEncoder.getBits();
+        shift += priorityWayEncoder.getBits();
 
         return shift;
     }
@@ -320,10 +320,10 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         String highway = way.getTag("highway", "");
         if (avoidSet.contains(highway))
         {
-            return PriorityCode.AVOID_AT_ALL_COSTS.getValue();
+            return PriorityCode.WORST.getValue();
         } else if (preferSet.contains(highway))
         {
-            return PriorityCode.VERY_NICE.getValue();
+            return PriorityCode.BEST.getValue();
         }
         return PriorityCode.UNCHANGED.getValue();
     }
