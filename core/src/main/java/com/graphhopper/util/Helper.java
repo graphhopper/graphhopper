@@ -29,7 +29,9 @@ import java.nio.charset.Charset;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.text.DateFormat;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -495,5 +497,16 @@ public class Helper
     public static final double round2( double value )
     {
         return Math.round(value * 100) / 100d;
+    }
+
+    /**
+     * This creates a date formatter for yyyy-MM-dd'T'HH:mm:ss'Z' which is has to be identical to
+     * buildDate used in pom.xml
+     */
+    public static DateFormat createFormatter()
+    {
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        df.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return df;
     }
 }

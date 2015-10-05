@@ -60,6 +60,9 @@ public class OSMReaderTest
     private final String file2 = "test-osm2.xml";
     private final String file3 = "test-osm3.xml";
     private final String file4 = "test-osm4.xml";
+    // test-osm6.pbf was created by running "osmconvert test-osm6.xml --timestamp=2014-01-02T00:10:14Z -o=test-osm6.pbf"
+    // The osmconvert tool can be found here: http://wiki.openstreetmap.org/wiki/Osmconvert
+    private final String file6 = "test-osm6.pbf";
     private final String fileNegIds = "test-osm-negative-ids.xml";
     private final String fileBarriers = "test-barriers.xml";
     private final String fileTurnRestrictions = "test-restrictions.xml";
@@ -160,6 +163,8 @@ public class OSMReaderTest
 
         assertNotNull(graph.getProperties().get("osmreader.import.date"));
         assertNotEquals("", graph.getProperties().get("osmreader.import.date"));
+
+        assertEquals("2013-01-02T01:10:14Z", graph.getProperties().get("osmreader.data.date"));
 
         assertEquals(4, graph.getNodes());
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
@@ -273,7 +278,9 @@ public class OSMReaderTest
     public void testOneWay()
     {
         GraphHopper hopper = new GraphHopperTest(file2).importOrLoad();
-        Graph graph = hopper.getGraphHopperStorage();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+                              
+        assertEquals("2014-01-02T01:10:14Z", graph.getProperties().get("osmreader.data.date"));
 
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52.0);
         int n22 = AbstractGraphStorageTester.getIdOf(graph, 52.133);
@@ -805,19 +812,28 @@ public class OSMReaderTest
     @Test
     public void testPreferredLanguage()
     {
-    	GraphHopper hopper = new GraphHopperTest(file1).setPreferredLanguage("de").importOrLoad();
-    	GraphHopperStorage graph = hopper.getGraphHopperStorage();
-    	int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
-    	EdgeIterator iter = carOutExplorer.setBaseNode(n20);
-    	assertTrue(iter.next());
-    	assertEquals("straße 123, B 122", iter.getName());
+        GraphHopper hopper = new GraphHopperTest(file1).setPreferredLanguage("de").importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
+        EdgeIterator iter = carOutExplorer.setBaseNode(n20);
+        assertTrue(iter.next());
+        assertEquals("straße 123, B 122", iter.getName());
 
-    	hopper = new GraphHopperTest(file1).setPreferredLanguage("el").importOrLoad();
-    	graph = hopper.getGraphHopperStorage();
-    	n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
-    	iter = carOutExplorer.setBaseNode(n20);
-    	assertTrue(iter.next());
-    	assertTrue(iter.next());
-    	assertEquals("διαδρομή 666", iter.getName());
+        hopper = new GraphHopperTest(file1).setPreferredLanguage("el").importOrLoad();
+        graph = hopper.getGraphHopperStorage();
+        n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
+        iter = carOutExplorer.setBaseNode(n20);
+        assertTrue(iter.next());
+        assertTrue(iter.next());
+        assertEquals("διαδρομή 666", iter.getName());
+    }
+
+    @Test
+    public void testDataDateWithinPBF()
+    {
+        GraphHopper hopper = new GraphHopperTest(file6).importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+
+        assertEquals("2014-01-02T00:10:14Z", graph.getProperties().get("osmreader.data.date"));
     }
 }

@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
@@ -691,8 +691,11 @@ public class GraphHopper implements GraphHopperAPI
 
             try
             {
-                importData();
-                ghStorage.getProperties().put("osmreader.import.date", formatDateTime(new Date()));
+                DataReader reader = importData();
+                DateFormat f = Helper.createFormatter();
+                ghStorage.getProperties().put("osmreader.import.date", f.format(new Date()));
+                if (reader.getDataDate() != null)
+                    ghStorage.getProperties().put("osmreader.data.date", f.format(reader.getDataDate()));
             } catch (IOException ex)
             {
                 throw new RuntimeException("Cannot parse OSM file " + getOSMFile(), ex);
@@ -1189,7 +1192,7 @@ public class GraphHopper implements GraphHopperAPI
                             PrepareContractionHierarchies pch = (PrepareContractionHierarchies) entry.getValue();
                             pch.doWork();
                             ghStorage.getProperties().put(errorKey, "");
-                            ghStorage.getProperties().put("prepare.date." + name, formatDateTime(new Date()));
+                            ghStorage.getProperties().put("prepare.date." + name, Helper.createFormatter().format(new Date()));
                         } catch (Exception ex)
                         {
                             logger.error("Problem while CH preparation " + name);
@@ -1272,13 +1275,6 @@ public class GraphHopper implements GraphHopperAPI
 
         File folder = new File(getGraphHopperLocation());
         Helper.removeDir(folder);
-    }
-
-    // make sure this is identical to buildDate used in pom.xml
-    // <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZ</maven.build.timestamp.format>
-    private String formatDateTime( Date date )
-    {
-        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(date);
     }
 
     protected void ensureNotLoaded()

@@ -18,9 +18,13 @@
         <version>0.6-SNAPSHOT</version>
     </parent>
         
-    <properties>  
+    <properties>
         <netbeans.hint.license>apache20</netbeans.hint.license>        
-        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZ</maven.build.timestamp.format>        
+        <!-- Make sure that we use the same format as for Helper.createFormatter.
+             We cannot force the UTC TimeZone so it will just throw away the local offset or is this
+             fixed due to https://issues.apache.org/jira/browse/MNG-5647 ?
+        -->
+        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>        
         <builddate>${maven.build.timestamp}</builddate>        
     </properties>
     <licenses>

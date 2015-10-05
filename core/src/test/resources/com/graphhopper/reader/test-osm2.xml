@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<osm version="0.6" generator="pbf2osm">
+<osm version="0.6" generator="pbf2osm" osmosis_replication_timestamp="2014-01-02T01:10:14Z">
     <node id="10" lat="51.2492152" lon="9.4317166" uid="24853">
         <tag k="is_in" v="Wiesbaden,Hessen,Germany,Europe" />
         <tag k="name" v="Wiesbaden-Naurod" />

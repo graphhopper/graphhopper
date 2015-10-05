@@ -17,7 +17,7 @@
  */
 package com.graphhopper.util;
 
-import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 import java.util.*;
 
 /**
@@ -178,9 +178,8 @@ public class InstructionList implements Iterable<Instruction>
 
     public String createGPX( String trackName, long startTimeMillis, boolean includeElevation )
     {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-
+        DateFormat formatter = Helper.createFormatter();
+        
         String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
                 + "<gpx xmlns='http://www.topografix.com/GPX/1/1' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'"
                 + " creator='Graphhopper' version='1.1'"

@@ -6,11 +6,14 @@ import com.graphhopper.reader.OSMElement;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.OSMFileHeader;
+import com.graphhopper.util.Helper;
 import org.openstreetmap.osmosis.osmbinary.Fileformat;
 import org.openstreetmap.osmosis.osmbinary.Osmformat;
 import gnu.trove.list.TLongList;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
@@ -103,6 +106,11 @@ public class PbfBlobDecoder implements Runnable
         {
             throw new RuntimeException("PBF file contains unsupported features " + unsupportedFeatures);
         }
+
+        OSMFileHeader fileheader = new OSMFileHeader();
+        long milliSecondDate = header.getOsmosisReplicationTimestamp();        
+        fileheader.setTag("timestamp", Helper.createFormatter().format(new Date(milliSecondDate * 1000)));
+        decodedEntities.add(fileheader);
 
         // Build a new bound object which corresponds to the header.
 /*
