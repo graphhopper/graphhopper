@@ -826,7 +826,7 @@ public class OSMReader implements DataReader
     /**
      * Stores only osmWayIds which are required for relations
      */
-    private void storeOsmWayID( int edgeId, long osmWayId )
+    protected void storeOsmWayID( int edgeId, long osmWayId )
     {
         if (getOsmWayIdSet().contains(osmWayId))
         {
