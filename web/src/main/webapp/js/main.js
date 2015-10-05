@@ -31,7 +31,7 @@ var routeSegmentPopup = null;
 var elevationControl = null;
 var activeLayer = '';
 var i18nIsInitialized;
-var metaVersionInfo;
+var metaVersionInfo = "";
 
 var iconFrom = L.icon({
     iconUrl: './img/marker-icon-green.png',
@@ -155,11 +155,11 @@ $(document).ready(function (e) {
                 if (json.import_date)
                     metaVersionInfo = "<br/>Import date: " + json.import_date;
                 if (json.prepare_date)
-                    metaVersionInfo = metaVersionInfo + "<br/>Prepare date: " + json.prepare_date;
+                    metaVersionInfo += "<br/>Prepare date: " + json.prepare_date;
                 if (json.version)
-                    metaVersionInfo = metaVersionInfo + "<br/>GH Version: " + json.version;
+                    metaVersionInfo += "<br/>GH Version: " + json.version;
                 if (json.build_date)
-                    metaVersionInfo = metaVersionInfo + "<br/>Jar Date: " + json.build_date;
+                    metaVersionInfo += "<br/>Jar Date: " + json.build_date;
 
                 initMap(urlParams.layer);
 
@@ -1172,7 +1172,7 @@ function routeLatLng(request, doQuery) {
             hiddenDiv.append(bingLink);
             if (metaVersionInfo)
                 hiddenDiv.append(metaVersionInfo);
-            
+
             $("#info").append(hiddenDiv);
         }
     });
