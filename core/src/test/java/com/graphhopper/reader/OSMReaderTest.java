@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.text.SimpleDateFormat;
 
 import org.junit.After;
 import org.junit.Before;
@@ -60,6 +61,9 @@ public class OSMReaderTest
     private final String file2 = "test-osm2.xml";
     private final String file3 = "test-osm3.xml";
     private final String file4 = "test-osm4.xml";
+    // test-osm6.pbf was created by running "osmconvert test-osm6.xml --timestamp=2014-01-02T00:10:14Z -o=test-osm6.pbf"
+    // The osmconvert tool can be found here: http://wiki.openstreetmap.org/wiki/Osmconvert
+    private final String file6 = "test-osm6.pbf";
     private final String fileNegIds = "test-osm-negative-ids.xml";
     private final String fileBarriers = "test-barriers.xml";
     private final String fileTurnRestrictions = "test-restrictions.xml";
@@ -70,6 +74,23 @@ public class OSMReaderTest
     private EdgeExplorer carOutExplorer;
     private EdgeExplorer carAllExplorer;
 
+    private static String convertUtcDateTimeToLocalDateTimeFormat(GraphHopper hopper, String utcDateTime)
+    {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        Date date = null;
+        try {
+	   date = sdf.parse(utcDateTime);
+        }
+        catch (Exception e)
+                {
+
+                }
+        if (date == null)
+            return "";
+        else
+            return hopper.formatDateTime(date);
+    }
+        
     @Before
     public void setUp()
     {
@@ -161,6 +182,8 @@ public class OSMReaderTest
         assertNotNull(graph.getProperties().get("osmreader.import.date"));
         assertNotEquals("", graph.getProperties().get("osmreader.import.date"));
 
+        assertEquals(convertUtcDateTimeToLocalDateTimeFormat(hopper,"2013-01-02T01:10:14Z"), graph.getProperties().get("osmreader.data.date"));
+        
         assertEquals(4, graph.getNodes());
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
@@ -273,7 +296,9 @@ public class OSMReaderTest
     public void testOneWay()
     {
         GraphHopper hopper = new GraphHopperTest(file2).importOrLoad();
-        Graph graph = hopper.getGraphHopperStorage();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        
+        assertEquals(convertUtcDateTimeToLocalDateTimeFormat(hopper,"2014-01-02T01:10:14Z"), graph.getProperties().get("osmreader.data.date"));
 
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52.0);
         int n22 = AbstractGraphStorageTester.getIdOf(graph, 52.133);
@@ -820,4 +845,14 @@ public class OSMReaderTest
     	assertTrue(iter.next());
     	assertEquals("διαδρομή 666", iter.getName());
     }
+    
+    @Test
+    public void testDataDateWithinPBF()
+    {
+        GraphHopper hopper = new GraphHopperTest(file6).importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        
+        assertEquals(convertUtcDateTimeToLocalDateTimeFormat(hopper,"2014-01-02T01:10:14Z"), graph.getProperties().get("osmreader.data.date"));
+    }
+    
 }

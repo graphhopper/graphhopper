@@ -19,12 +19,13 @@
 package com.graphhopper.reader;
 
 import java.io.IOException;
+import java.util.Date;
 
 /**
  * @author Peter Karich
  */
 public interface DataReader
 {
-
     void readGraph() throws IOException;
+    Date getDataDate();
 }

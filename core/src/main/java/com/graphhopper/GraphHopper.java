@@ -691,8 +691,10 @@ public class GraphHopper implements GraphHopperAPI
 
             try
             {
-                importData();
+                DataReader reader = importData();
                 ghStorage.getProperties().put("osmreader.import.date", formatDateTime(new Date()));
+                if (reader.getDataDate()!=null)
+                   ghStorage.getProperties().put("osmreader.data.date", formatDateTime(reader.getDataDate()));
             } catch (IOException ex)
             {
                 throw new RuntimeException("Cannot parse OSM file " + getOSMFile(), ex);
@@ -1276,7 +1278,7 @@ public class GraphHopper implements GraphHopperAPI
 
     // make sure this is identical to buildDate used in pom.xml
     // <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZ</maven.build.timestamp.format>
-    private String formatDateTime( Date date )
+    public String formatDateTime( Date date )
     {
         return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(date);
     }
