@@ -852,7 +852,7 @@ public class OSMReaderTest
         GraphHopper hopper = new GraphHopperTest(file6).importOrLoad();
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
         
-        assertEquals(convertUtcDateTimeToLocalDateTimeFormat(hopper,"2014-01-02T01:10:14Z"), graph.getProperties().get("osmreader.data.date"));
+        assertEquals(convertUtcDateTimeToLocalDateTimeFormat(hopper,"2014-01-02T00:10:14Z"), graph.getProperties().get("osmreader.data.date"));
     }
     
 }

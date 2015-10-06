@@ -108,6 +108,7 @@ public class PbfBlobDecoder implements Runnable
 
         OSMFileHeader fileheader = new OSMFileHeader();
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        df.setTimeZone(TimeZone.getTimeZone("UTC"));
         long milliSecondDate = header.getOsmosisReplicationTimestamp();
         fileheader.setTag("timestamp", df.format(new Date(milliSecondDate*1000)));
         decodedEntities.add(fileheader);
