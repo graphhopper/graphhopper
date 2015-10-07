@@ -62,10 +62,9 @@ hopper.importOrLoad();
 
 // create MapMatching object, can and should be shared accross threads
 
-GraphStorage graph = hopper.getGraph();
+GraphHopperStorage graph = hopper.getGraphHopperStorage();
 LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
                 (LocationIndexTree) hopper.getLocationIndex());
-locationIndex.prepareIndex();
 MapMatching mapMatching = new MapMatching(graph, locationIndex, encoder);
 
 // do the actual matching, get the GPX entries from a file or via stream
