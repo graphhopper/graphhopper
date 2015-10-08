@@ -68,13 +68,13 @@ LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
 MapMatching mapMatching = new MapMatching(graph, locationIndex, encoder);
 
 // do the actual matching, get the GPX entries from a file or via stream
-List<GPXEntry> inputGPXEntries = new GPXFile("nice.gpx").read();
+List<GPXEntry> inputGPXEntries = new GPXFile().doImport("nice.gpx").getEntries();
 MatchResult mr = mapMatching.doWork(inputGPXEntries);
 
 // return GraphHopper edges with all associated GPX entries
 List<EdgeMatch> matches = mr.getEdgeMatches();
 // now do something with the edges like storing the edgeIds or doing fetchWayGeometry etc
-matches.get(0).edgeState
+matches.get(0).getEdgeState();
 ```
 
 with this maven dependency:
