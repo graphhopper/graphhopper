@@ -367,18 +367,6 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     private double getBeelineDistance( OSMWay way )
     {
         return way.getTag("estimated_distance", Double.POSITIVE_INFINITY);
-/*
-        if(estimatedDistance == null){
-            return Double.POSITIVE_INFINITY;
-        }
-
-        try
-        {
-            return Double.parseDouble(estimatedDistance);
-        }catch (Exception e){
-            return Double.POSITIVE_INFINITY;
-        }
-        */
     }
 
     /**
