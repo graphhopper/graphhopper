@@ -102,6 +102,11 @@ public class CarFlagEncoderTest
         way.setTag("highway", "service");
         way.setTag("access", "emergency");
         assertFalse(encoder.acceptWay(way) > 0);
+        
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("motor_vehicle", "emergency");
+        assertFalse(encoder.acceptWay(way) > 0);
     }
 
     @Test

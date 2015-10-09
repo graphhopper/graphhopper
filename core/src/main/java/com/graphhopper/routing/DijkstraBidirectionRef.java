@@ -130,7 +130,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     {
         if (finished())
             return bestPath.extract();
-
+        
         return bestPath;
     }
 
