@@ -249,7 +249,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         // relations are not yet stored -> see BikeCommonFlagEncoder.defineRelationBits how to do this
         encoded = priorityWayEncoder.setValue(encoded, handlePriority(way, priorityFromRelation));
 
-        // Set the curvature to 0
+        // Set the curvature to the Maximum
         encoded = curvatureEncoder.setValue(encoded, 10);
 
         return encoded;
@@ -430,7 +430,8 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         return PriorityWeighting.class.isAssignableFrom(feature);
     }
 
-    protected int convertToInt(double bendiness){
+    protected int convertToInt( double bendiness )
+    {
         bendiness = bendiness * 10;
         return (int) bendiness;
     }
