@@ -76,6 +76,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         restrictedValues.add("restricted");
         restrictedValues.add("delivery");
         restrictedValues.add("military");
+        restrictedValues.add("emergency");
 
         intendedValues.add("yes");
         intendedValues.add("permissive");

@@ -101,7 +101,7 @@ public class GraphHopper implements GraphHopperAPI
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
 
     public GraphHopper()
-    {
+    {       
         setCHPrepareThreads(1);
     }
 
