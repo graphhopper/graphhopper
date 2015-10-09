@@ -32,14 +32,24 @@ public class CurvatureWeighting extends PriorityWeighting
     @Override
     public double getMinWeight( double distance )
     {
-        return 0.001 * distance;
+        return 0.1 * distance;
     }
 
     @Override
     public double calcWeight( EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId )
     {
 
+        double priority = flagEncoder.getDouble(edge.getFlags(), KEY);
+        double bendiness = flagEncoder.getDouble(edge.getFlags(), MotorcycleFlagEncoder.CURVATURE_KEY);
         double speed = getRoadSpeed(edge, reverse);
+        double roadDistance = edge.getDistance();
+
+        // We use the log of the speed to decrease the impact of the speed, therefore we don't use the highway
+        double regularWeight = (roadDistance / Math.log(speed));
+
+        return (bendiness * regularWeight) / (0.5 + priority);
+
+/*        double speed = getRoadSpeed(edge, reverse);
         double roadDistance = edge.getDistance();
         double beelineDistance = calcBeelineDist(edge);
         double bendiness = beelineDistance / roadDistance;
@@ -53,7 +63,7 @@ public class CurvatureWeighting extends PriorityWeighting
         // We use the log of the speed to decrease the impact of the speed, therefore we don't use the highway
         double regularWeight = (roadDistance / Math.log(speed));
 
-        return (bendiness * regularWeight) / (0.5 + priority);
+        return (bendiness * regularWeight) / (0.5 + priority);*/
     }
 
     protected double getRoadSpeed( EdgeIteratorState edge, boolean reverse )
