@@ -484,7 +484,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     }
 
     // Conversion of class value to priority. See http://wiki.openstreetmap.org/wiki/Class:bicycle
-    private PriorityCode convertCallValueToPriority( String tagvalue )
+    private PriorityCode convertClassValueToPriority( String tagvalue )
     {
         int classvalue;
         try
@@ -566,12 +566,12 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         if (classBicycleSpecific != null)
         {
             // We assume that humans are better in classifying preferences compared to our algorithm above -> weight = 100
-            weightToPrioMap.put(100d, convertCallValueToPriority(classBicycleSpecific).getValue());
+            weightToPrioMap.put(100d, convertClassValueToPriority(classBicycleSpecific).getValue());
         } else
         {
             String classBicycle = way.getTag("class:bicycle");
             if (classBicycle != null)
-                weightToPrioMap.put(100d, convertCallValueToPriority(classBicycle).getValue());
+                weightToPrioMap.put(100d, convertClassValueToPriority(classBicycle).getValue());
         }
     }
 
