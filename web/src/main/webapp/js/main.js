@@ -151,9 +151,11 @@ $(document).ready(function (e) {
                         vehiclesDiv.append(moreBtn);
                     }
                 }
-
+                metaVersionInfo="";
+                if (json.data_date)
+                   metaVersionInfo = metaVersionInfo + "<br/>Data date: " + json.data_date;
                 if (json.import_date)
-                    metaVersionInfo = "<br/>Import date: " + json.import_date;
+                    metaVersionInfo = metaVersionInfo + "<br/>Import date: " + json.import_date;
                 if (json.prepare_date)
                     metaVersionInfo += "<br/>Prepare date: " + json.prepare_date;
                 if (json.version)

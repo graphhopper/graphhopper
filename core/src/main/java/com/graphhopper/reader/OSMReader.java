@@ -49,6 +49,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
+import java.text.SimpleDateFormat;
 
 import java.util.*;
 
@@ -119,6 +120,7 @@ public class OSMReader implements DataReader
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private final boolean exitOnlyPillarNodeException = true;
     private File osmFile;
+    private Date osmDataDate;
     private final Map<FlagEncoder, EdgeExplorer> outExplorerMap = new HashMap<FlagEncoder, EdgeExplorer>();
     private final Map<FlagEncoder, EdgeExplorer> inExplorerMap = new HashMap<FlagEncoder, EdgeExplorer>();
 
@@ -194,22 +196,34 @@ public class OSMReader implements DataReader
                         }
                     }
                 }
-                if (item.isType(OSMElement.RELATION))
+                else
                 {
-                    final OSMRelation relation = (OSMRelation) item;
-                    if (!relation.isMetaRelation() && relation.hasTag("type", "route"))
-                        prepareWaysWithRelationInfo(relation);
-
-                    if (relation.hasTag("type", "restriction"))
-                        prepareRestrictionRelation(relation);
-
-                    if (++tmpRelationCounter % 50000 == 0)
+                    if (item.isType(OSMElement.RELATION))
                     {
-                        logger.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:" + nf(getRelFlagsMap().size())
-                                + " " + Helper.getMemInfo());
-                    }
+                        final OSMRelation relation = (OSMRelation) item;
+                        if (!relation.isMetaRelation() && relation.hasTag("type", "route"))
+                            prepareWaysWithRelationInfo(relation);
 
+                        if (relation.hasTag("type", "restriction"))
+                            prepareRestrictionRelation(relation);
+
+                        if (++tmpRelationCounter % 50000 == 0)
+                        {
+                            logger.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:" + nf(getRelFlagsMap().size())
+                                    + " " + Helper.getMemInfo());
+                        }
+                    }
+                    else
+                    {
+                        if (item.isType(OSMElement.FILEHEADER))
+                        {
+                            final OSMFileHeader fileHeader = (OSMFileHeader) item;
+                            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+                            osmDataDate = df.parse(fileHeader.getTag("timestamp"));
+                        }
+                    }
                 }
+
             }
         } catch (Exception ex)
         {
@@ -1028,6 +1042,12 @@ public class OSMReader implements DataReader
                 + ", nodeFlagsMap.size:" + getNodeFlagsMap().size() + ", relFlagsMap.size:" + getRelFlagsMap().size()
                 + ", zeroCounter:" + zeroCounter
                 + " " + Helper.getMemInfo());
+    }
+
+    @Override
+    public Date getDataDate()
+    {
+        return osmDataDate;
     }
 
     @Override

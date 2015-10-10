@@ -29,8 +29,10 @@ import java.lang.reflect.Constructor;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.Date;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
+import java.text.SimpleDateFormat;
 
 /**
  * A readable OSM file.
@@ -48,6 +50,7 @@ public class OSMInputFile implements Sink, Closeable
     private final BlockingQueue<OSMElement> itemQueue;
     private boolean hasIncomingData;
     private int workerThreads = -1;
+    private OSMFileHeader fileheader;
 
     public OSMInputFile( File file ) throws IOException
     {
@@ -153,6 +156,24 @@ public class OSMInputFile implements Sink, Closeable
         {
             throw new IllegalArgumentException("File is not a valid OSM stream");
         }
+        // See https://wiki.openstreetmap.org/wiki/PBF_Format#Definition_of_the_OSMHeader_fileblock
+        String timestamp = parser.getAttributeValue(null, "osmosis_replication_timestamp");
+
+        if (timestamp==null)
+            timestamp = parser.getAttributeValue(null, "timestamp");
+
+        if (timestamp!=null)
+        {
+            try
+            {
+                fileheader = new OSMFileHeader();
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+                fileheader.setTag("timestamp", timestamp);
+            }
+            catch (Exception ex)
+            {
+            }
+        }
 
         eof = false;
     }
@@ -179,6 +200,13 @@ public class OSMInputFile implements Sink, Closeable
     {
 
         int event = parser.next();
+        if (fileheader!=null)
+        {
+            OSMElement copyfileheader = fileheader;
+            fileheader = null;
+            return copyfileheader;
+        }
+
         while (event != XMLStreamConstants.END_DOCUMENT)
         {
             if (event == XMLStreamConstants.START_ELEMENT)

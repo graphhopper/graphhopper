@@ -72,6 +72,9 @@ public class InfoServlet extends GHBaseServlet
         StorableProperties props = hopper.getGraphHopperStorage().getProperties();
         json.put("import_date", props.get("osmreader.import.date"));
 
+        if (!Helper.isEmpty(props.get("osmreader.data.date")))
+            json.put("data_date" , props.get("osmreader.data.date"));
+
         if (!Helper.isEmpty(props.get("prepare.date")))
             json.put("prepare_date", props.get("prepare.date"));
 
