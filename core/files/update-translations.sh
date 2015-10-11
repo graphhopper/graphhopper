@@ -1,8 +1,7 @@
-#HOME=$(dirname $0)
-#cd $HOME/..
+HOME=$(dirname $0)
+cd $HOME/..
 
-#Assume that this script is run as ./update-translation.sh:
-destination=../src/main/resources/com/graphhopper/util/
+destination=src/main/resources/com/graphhopper/util/
 
 translations="en_US SKIP ar ast bg ca cs_CZ da_DK de_DE el es fa fil fi fr gl he hsb hu_HU it ja lt_LT ne nl pl_PL pt_BR pt_PT ro ru si sk sv_SE tr uk vi_VI zh_CN"
 file=$1
