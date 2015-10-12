@@ -94,6 +94,15 @@ public class SRTMProviderTest
     }
 
     @Test
+    public void testGetHeight_issue545() throws IOException
+    {
+        instance.setCacheDir(new File("./files/"));
+
+        // test different precision of the elevation file (3600)
+        assertEquals(84, instance.getEle(48.003878, -124.660492), 1e-1);
+    }
+
+    @Test
     public void testGetHeightMMap() throws IOException
     {
         instance.setCacheDir(new File("./files/"));
