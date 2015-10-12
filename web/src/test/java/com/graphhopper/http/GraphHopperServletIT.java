@@ -178,7 +178,27 @@ public class GraphHopperServletIT extends BaseServletTester
     public void testGPX() throws Exception
     {
         String str = queryString("point=42.554851,1.536198&point=42.510071,1.548128&type=gpx", 200);
+        // For backward compatibility we currently export route and track. But maybe this should be change to export of track only ???
         assertTrue(str.contains("<gh:distance>115.1</gh:distance>"));
+        assertFalse(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>Finish!</name></wpt>"));
+        assertTrue(str.contains("<trkpt lat=\"42.554839\" lon=\"1.536374\"><time>"));
+    }
+
+    @Test
+    public void testGPXWithExcludedRouteSelection() throws Exception
+    {
+        String str = queryString("point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&route=false&waypoints=false", 200);
+        assertFalse(str.contains("<gh:distance>115.1</gh:distance>"));
+        assertFalse(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>Finish!</name></wpt>"));        
+        assertTrue(str.contains("<trkpt lat=\"42.554839\" lon=\"1.536374\"><time>"));
+    }
+    
+    @Test
+    public void testGPXWithTrackAndWaypointsSelection() throws Exception
+    {
+        String str = queryString("point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&track=true&route=false&waypoints=true", 200);
+        assertFalse(str.contains("<gh:distance>115.1</gh:distance>"));
+        assertTrue(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>Finish!</name></wpt>"));
         assertTrue(str.contains("<trkpt lat=\"42.554839\" lon=\"1.536374\"><time>"));
     }
 
@@ -188,7 +208,7 @@ public class GraphHopperServletIT extends BaseServletTester
         String str = queryString("point=42.554851,1.536198&type=gpx", 400);
         assertFalse(str, str.contains("<html>"));
         assertFalse(str, str.contains("{"));
-        assertTrue("Expected error but was: " + str, str.contains("<message>At least 2 points has to be specified, but was:1</message>"));
+        assertTrue("Expected error but was: " + str, str.contains("<message>At least 2 points have to be specified, but was:1</message>"));
         assertTrue("Expected error but was: " + str, str.contains("<hints><error details=\"java"));
     }
 }

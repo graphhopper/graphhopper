@@ -1029,7 +1029,7 @@ public class GraphHopper implements GraphHopperAPI
         List<GHPoint> points = request.getPoints();
         if (points.size() < 2)
         {
-            rsp.addError(new IllegalStateException("At least 2 points has to be specified, but was:" + points.size()));
+            rsp.addError(new IllegalStateException("At least 2 points have to be specified, but was:" + points.size()));
             return Collections.emptyList();
         }
 
