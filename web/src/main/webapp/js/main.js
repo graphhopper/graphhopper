@@ -313,12 +313,13 @@ function initFromParams(params, doQuery) {
     ghRequest.init(params);
     var count = 0;
     var singlePointIndex;
-    for (var key = 0; key < params.point.length; key++) {
-        if (params.point[key] !== "") {
-            count++;
-            singlePointIndex = key;
+    if (params.point)
+        for (var key = 0; key < params.point.length; key++) {
+            if (params.point[key] !== "") {
+                count++;
+                singlePointIndex = key;
+            }
         }
-    }
 
     var routeNow = params.point && count >= 2;
     if (routeNow) {

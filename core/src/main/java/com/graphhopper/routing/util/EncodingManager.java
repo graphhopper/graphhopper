@@ -28,7 +28,6 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
 /**
@@ -60,8 +59,8 @@ public class EncodingManager
     private String preferredLanguage = "";
 
     /**
-     * Instantiate manager with the given list of encoders. The manager knows the default encoders:
-     * CAR, FOOT and BIKE (ignoring the case).
+     * Instantiate manager with the given list of encoders. The manager knows several default
+     * encoders ignoring case.
      * <p>
      * @param flagEncodersStr comma delimited list of encoders. The order does not matter.
      */
@@ -224,7 +223,7 @@ public class EncodingManager
 
     private FlagEncoder getEncoder( String name, boolean throwExc )
     {
-        for (AbstractFlagEncoder encoder : edgeEncoders)
+        for (FlagEncoder encoder : edgeEncoders)
         {
             if (name.equalsIgnoreCase(encoder.toString()))
                 return encoder;
@@ -281,7 +280,7 @@ public class EncodingManager
     public String toString()
     {
         StringBuilder str = new StringBuilder();
-        for (AbstractFlagEncoder encoder : edgeEncoders)
+        for (FlagEncoder encoder : edgeEncoders)
         {
             if (str.length() > 0)
                 str.append(",");
@@ -352,7 +351,8 @@ public class EncodingManager
             return false;
 
         final EncodingManager other = (EncodingManager) obj;
-        if (this.edgeEncoders != other.edgeEncoders && (this.edgeEncoders == null || !this.edgeEncoders.equals(other.edgeEncoders)))
+        if (this.edgeEncoders != other.edgeEncoders
+                && (this.edgeEncoders == null || !this.edgeEncoders.equals(other.edgeEncoders)))
         {
             return false;
         }
@@ -381,11 +381,11 @@ public class EncodingManager
 
     public EncodingManager setPreferredLanguage( String preferredLanguage )
     {
-    	if (preferredLanguage == null)
-    		throw new IllegalArgumentException("preferred language cannot be null");
+        if (preferredLanguage == null)
+            throw new IllegalArgumentException("preferred language cannot be null");
 
-    	this.preferredLanguage = preferredLanguage;
-    	return this;
+        this.preferredLanguage = preferredLanguage;
+        return this;
     }
 
     public void applyWayTags( OSMWay way, EdgeIteratorState edge )
@@ -395,11 +395,11 @@ public class EncodingManager
         {
             // String wayInfo = carFlagEncoder.getWayInfo(way);
             // http://wiki.openstreetmap.org/wiki/Key:name
-        	String name = "";
-        	if (!preferredLanguage.isEmpty())
-        		name = fixWayName(way.getTag("name:" + preferredLanguage));
-        	if (name.isEmpty())
-        		name = fixWayName(way.getTag("name"));
+            String name = "";
+            if (!preferredLanguage.isEmpty())
+                name = fixWayName(way.getTag("name:" + preferredLanguage));
+            if (name.isEmpty())
+                name = fixWayName(way.getTag("name"));
             // http://wiki.openstreetmap.org/wiki/Key:ref
             String refName = fixWayName(way.getTag("ref"));
             if (!refName.isEmpty())
@@ -448,7 +448,7 @@ public class EncodingManager
 
     /**
      * Create the EncodingManager from the provided GraphHopper location. Throws an
-     * IllegalStateException if it fails.
+     * IllegalStateException if it fails. Used if no EncodingManager specified on load.
      */
     public static EncodingManager create( String ghLoc )
     {

@@ -580,7 +580,7 @@ public class GraphHopper implements GraphHopperAPI
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
         int bytesForFlags = args.getInt("graph.bytesForFlags", 4);
         String flagEncoders = args.get("graph.flagEncoders", "");
-        if (!flagEncoders.isEmpty())
+        if (!flagEncoders.isEmpty())            
             setEncodingManager(new EncodingManager(flagEncoders, bytesForFlags));
 
         if (args.get("graph.locktype", "native").equals("simple"))
