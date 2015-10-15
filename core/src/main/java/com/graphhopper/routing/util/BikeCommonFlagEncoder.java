@@ -584,12 +584,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         String highway = way.getTag("highway");
         String trackType = way.getTag("tracktype");
 
-        // Populate bits at wayTypeMask with wayType            
-        WayType wayType = WayType.OTHER_SMALL_WAY;
-        boolean isPusingSection = isPushingSection(way);
-        if (isPusingSection && !partOfCycleRelation || "steps".equals(highway))
-            wayType = WayType.PUSHING_SECTION;
-
+        // Populate unpavedBit
         if ("track".equals(highway) && (trackType == null || !"grade1".equals(trackType))
                 || "path".equals(highway) && surfaceTag == null
                 || unpavedSurfaceTags.contains(surfaceTag))
@@ -597,16 +592,25 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             encoded = setBool(encoded, K_UNPAVED, true);
         }
 
+        WayType wayType;
+        if (roadValues.contains(highway))
+            wayType = WayType.ROAD;
+        else
+            wayType = WayType.OTHER_SMALL_WAY;
+        
+        boolean isPushingSection = isPushingSection(way);
+        if (isPushingSection && !partOfCycleRelation || "steps".equals(highway))
+            wayType = WayType.PUSHING_SECTION;
+        
         if (way.hasTag("bicycle", intendedValues))
         {
-            if (isPusingSection && !way.hasTag("bicycle", "designated"))
+            if (isPushingSection && !way.hasTag("bicycle", "designated"))
                 wayType = WayType.OTHER_SMALL_WAY;
             else
-                wayType = WayType.CYCLEWAY;
+                if ( (wayType == WayType.OTHER_SMALL_WAY ) || (wayType == WayType.PUSHING_SECTION) )
+                    wayType = WayType.CYCLEWAY;
         } else if ("cycleway".equals(highway))
             wayType = WayType.CYCLEWAY;
-        else if (roadValues.contains(highway))
-            wayType = WayType.ROAD;
 
         return wayTypeEncoder.setValue(encoded, wayType.getValue());
     }
