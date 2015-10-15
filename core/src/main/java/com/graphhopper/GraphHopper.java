@@ -753,7 +753,7 @@ public class GraphHopper implements GraphHopperAPI
      * <p>
      *
      * @param graphHopperFolder is the folder containing graphhopper files (which can be compressed
-     * too)
+     *                          too)
      */
     @Override
     public boolean load( String graphHopperFolder )
@@ -925,8 +925,8 @@ public class GraphHopper implements GraphHopperAPI
      * <p>
      *
      * @param weightingMap all parameters influencing the weighting. E.g. parameters coming via
-     * GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
-     * @param encoder the required vehicle
+     *                     GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
+     * @param encoder      the required vehicle
      * @return the weighting to be used for route calculation
      * @see WeightingMap
      */
@@ -943,9 +943,16 @@ public class GraphHopper implements GraphHopperAPI
                 return new PriorityWeighting(encoder, weightingMap);
             else
                 return new FastestWeighting(encoder, weightingMap);
+        } else if ("curvature".equalsIgnoreCase(weighting))
+        {
+            if (encoder.supports(CurvatureWeighting.class))
+                return new CurvatureWeighting(encoder, weightingMap, ghStorage);
+            else
+                return new FastestWeighting(encoder, weightingMap);
         }
 
         throw new UnsupportedOperationException("weighting " + weighting + " not supported");
+
     }
 
     public Weighting getWeightingForCH( WeightingMap weightingMap, FlagEncoder encoder )
