@@ -281,6 +281,24 @@ public abstract class AbstractBikeFlagEncoderTester
         assertPriority(PREFER.getValue(), way);
 
         way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("bicycle", "yes");
+        wayType = getWayTypeFromFlags(way);
+        assertEquals("", wayType);
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("bicycle", "designated");
+        wayType = getWayTypeFromFlags(way);
+        assertEquals("", wayType);
+
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("bicycle", "designated");
+        wayType = getWayTypeFromFlags(way);
+        assertEquals("cycleway, unpaved", wayType);
+
+        way.clearTags();
         way.setTag("highway", "cycleway");
         wayType = getWayTypeFromFlags(way);
         assertEquals("cycleway", wayType);
