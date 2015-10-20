@@ -124,7 +124,7 @@ public class Helper
 
                 String field = line.substring(0, index);
                 String value = line.substring(index + 1);
-                map.put(field, value);
+                map.put(field.trim(), value.trim());
             }
         } finally
         {
