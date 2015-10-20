@@ -737,7 +737,6 @@ public abstract class AbstractRoutingAlgorithmTester
         // other direction should be different!
         Weighting fakeWeighting = new Weighting()
         {
-
             @Override
             public FlagEncoder getFlagEncoder()
             {
@@ -772,6 +771,18 @@ public abstract class AbstractRoutingAlgorithmTester
 
                 return edgeState.getDistance() * 0.8;
             }
+
+            @Override
+            public boolean matches( String weightingAsStr, FlagEncoder encoder )
+            {
+                throw new UnsupportedOperationException("Not supported");
+            }
+
+            @Override
+            public String getName()
+            {
+                return "custom";
+            }
         };
 
         AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(defaultOpts.getWeighting()).build();
@@ -794,7 +805,7 @@ public abstract class AbstractRoutingAlgorithmTester
         assertEquals(37009621, p.getTime());
         assertEquals(616827, p.getDistance(), 1);
         assertEquals(493462, p.getWeight(), 1);
-    }        
+    }
 
     @Test
     public void testMultipleVehicles_issue548()
@@ -802,7 +813,7 @@ public abstract class AbstractRoutingAlgorithmTester
         FastestWeighting footWeighting = new FastestWeighting(footEncoder);
         AlgorithmOptions footOptions = AlgorithmOptions.start().flagEncoder(footEncoder).
                 weighting(footWeighting).build();
-        
+
         FastestWeighting carWeighting = new FastestWeighting(carEncoder);
         AlgorithmOptions carOptions = AlgorithmOptions.start().flagEncoder(carEncoder).
                 weighting(carWeighting).build();
@@ -810,13 +821,13 @@ public abstract class AbstractRoutingAlgorithmTester
         GraphHopperStorage ghStorage = createGHStorage(encodingManager,
                 Arrays.asList(footOptions.getWeighting(), carOptions.getWeighting()), false);
         initFootVsCar(ghStorage);
-        
+
         // normal path would be 0-4-6-7 but block 4-6
         GHUtility.getEdge(ghStorage, 4, 6).setFlags(carEncoder.setProperties(20, false, false));
-        
+
         RoutingAlgorithm algoFoot = createFactory(ghStorage, footOptions).
                 createAlgo(getGraph(ghStorage, footWeighting), footOptions);
-                        
+
         RoutingAlgorithm algoCar = createFactory(ghStorage, carOptions).
                 createAlgo(getGraph(ghStorage, carWeighting), carOptions);
         Path p1 = algoCar.calcPath(0, 7);

@@ -18,10 +18,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.routing.util.AllCHEdgesIterator;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.BaseGraph.AllEdgeIterator;
 import com.graphhopper.storage.BaseGraph.CommonEdgeIterator;
 import com.graphhopper.storage.BaseGraph.EdgeIterable;
@@ -64,7 +61,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
 
         this.weighting = w;
         this.baseGraph = baseGraph;
-        final String name = CHGraphImpl.weightingToFileName(w);
+        final String name = AbstractWeighting.weightingToFileName(w);
         this.nodesCH = dir.find("nodes_ch_" + name);
         this.shortcuts = dir.find("shortcuts_" + name);
         this.chEdgeAccess = new EdgeAccess(shortcuts, baseGraph.bitUtil)
@@ -134,14 +131,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
     public final Weighting getWeighting()
     {
         return weighting;
-    }
-
-    /**
-     * Replaces all characters which are not numbers, characters or underscores with underscores
-     */
-    public static String weightingToFileName( Weighting w )
-    {
-        return w.toString().toLowerCase().replaceAll("\\W+", "_");
     }
 
     @Override

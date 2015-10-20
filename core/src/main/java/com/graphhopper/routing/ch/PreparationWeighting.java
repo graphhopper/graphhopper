@@ -62,8 +62,14 @@ public class PreparationWeighting implements Weighting
     }
 
     @Override
-    public String toString()
+    public boolean matches( String weightingAsStr, FlagEncoder encoder )
     {
-        return "PREPARE+" + userWeighting.toString();
+        return userWeighting.getName().equals(weightingAsStr) && encoder == userWeighting.getFlagEncoder();
+    }
+
+    @Override
+    public String getName()
+    {
+        return "prepare|" + userWeighting.getName();
     }
 }

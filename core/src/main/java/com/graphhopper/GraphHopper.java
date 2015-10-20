@@ -302,7 +302,7 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setCHWeighting( String weighting )
     {
         ensureNotLoaded();
-        chWeightingStr = weighting;
+        chWeightingStr = weighting.toLowerCase();
         return this;
     }
 
@@ -952,18 +952,18 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         throw new UnsupportedOperationException("weighting " + weighting + " not supported");
-
     }
 
     public Weighting getWeightingForCH( WeightingMap weightingMap, FlagEncoder encoder )
     {
-        String encoderStr = encoder.toString().toLowerCase();
+        // get requested weighting name
         String weightingStr = weightingMap.getWeighting().toLowerCase();
+        if (weightingStr.isEmpty())
+            weightingStr = chWeightingStr;
+        
         for (Weighting w : algoFactories.keySet())
         {
-            // TODO too loose matching? see #490
-            String str = w.toString().toLowerCase();
-            if (str.contains(weightingStr) && str.contains(encoderStr))
+            if (w.matches(weightingStr, encoder))
                 return w;
         }
 
@@ -1184,7 +1184,7 @@ public class GraphHopper implements GraphHopperAPI
                 if (!(entry.getValue() instanceof PrepareContractionHierarchies))
                     throw new IllegalStateException("RoutingAlgorithmFactory is not suited for CH preparation " + entry.getValue());
 
-                final String name = CHGraphImpl.weightingToFileName(entry.getKey());
+                final String name = AbstractWeighting.weightingToFileName(entry.getKey());
                 chPreparePool.execute(new Runnable()
                 {
                     @Override

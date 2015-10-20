@@ -97,7 +97,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         levelFilter = new LevelEdgeFilter(prepareGraph);
 
         prepareWeighting = new PreparationWeighting(weighting);
-        originalEdges = dir.find("original_edges_" + CHGraphImpl.weightingToFileName(weighting));
+        originalEdges = dir.find("original_edges_" + AbstractWeighting.weightingToFileName(weighting));
         originalEdges.create(1000);
     }
 
@@ -1004,6 +1004,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     @Override
     public String toString()
     {
-        return "PREPARE|CH|dijkstrabi";
+        return "prepare|CH|dijkstrabi";
     }
 }

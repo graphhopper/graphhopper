@@ -63,8 +63,8 @@ public class CurvatureWeighting extends PriorityWeighting
     }
 
     @Override
-    public String toString()
+    public String getName()
     {
-        return "CURVATURE|" + flagEncoder;
+        return "curvature";
     }
 }

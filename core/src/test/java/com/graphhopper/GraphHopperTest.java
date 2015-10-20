@@ -867,7 +867,7 @@ public class GraphHopperTest
                 PrepareContractionHierarchies pch = (PrepareContractionHierarchies) raf;
                 assertTrue("Preparation wasn't run! [" + threadCount + "]", pch.isPrepared());
 
-                String name = CHGraphImpl.weightingToFileName(pch.getWeighting());
+                String name = AbstractWeighting.weightingToFileName(pch.getWeighting());
                 Integer singleThreadShortcutCount = shortcutCountMap.get(name);
                 if (singleThreadShortcutCount == null)
                     shortcutCountMap.put(name, pch.getShortcuts());
@@ -884,5 +884,37 @@ public class GraphHopperTest
             }
             tmpGH.close();
         }
+    }
+
+    class TestEncoder extends CarFlagEncoder
+    {
+        private final String name;
+
+        public TestEncoder( String name )
+        {
+            this.name = name;
+        }
+
+        @Override
+        public String toString()
+        {
+            return name;
+        }
+    }
+
+    @Test
+    public void testGetWeightingForCH()
+    {
+        GraphHopper hopper = new GraphHopper();
+        TestEncoder truck = new TestEncoder("truck");
+        TestEncoder sTruck = new TestEncoder("simple_truck");
+
+        // use simple truck first
+        new EncodingManager(sTruck, truck);
+        hopper.putAlgorithmFactory(new FastestWeighting(sTruck), new RoutingAlgorithmFactorySimple());
+        hopper.putAlgorithmFactory(new FastestWeighting(truck), new RoutingAlgorithmFactorySimple());
+
+        assertEquals("fastest|truck", hopper.getWeightingForCH(new WeightingMap("fastest"), truck).toString());
+        assertEquals("fastest|simple_truck", hopper.getWeightingForCH(new WeightingMap("fastest"), sTruck).toString());
     }
 }

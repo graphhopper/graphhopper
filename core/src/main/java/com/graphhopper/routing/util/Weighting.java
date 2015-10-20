@@ -45,4 +45,11 @@ public interface Weighting
     double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId );
 
     FlagEncoder getFlagEncoder();
+
+    String getName();
+
+    /**
+     * Returns true if the specified weighting and encoder matches to this Weighting.
+     */
+    boolean matches( String weightingAsStr, FlagEncoder encoder );
 }
