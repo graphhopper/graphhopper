@@ -44,5 +44,5 @@ public interface Weighting
      */
     double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId );
 
-    FlagEncoder getFlagEncoder();        
+    FlagEncoder getFlagEncoder();
 }

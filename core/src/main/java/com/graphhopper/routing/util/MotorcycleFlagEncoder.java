@@ -31,6 +31,7 @@ import java.util.HashSet;
  * <p>
  *
  * @author Peter Karich
+ * @author boldtrn
  */
 public class MotorcycleFlagEncoder extends CarFlagEncoder
 {
@@ -141,7 +142,6 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
 
         curvatureEncoder = new EncodedValue("Curvature", shift, 4, 1, 10, 10);
         shift += curvatureEncoder.getBits();
-
 
         return shift;
     }
@@ -255,7 +255,6 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         return encoded;
     }
 
-
     @Override
     public double getReverseSpeed( long flags )
     {
@@ -346,10 +345,9 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         return PriorityCode.UNCHANGED.getValue();
     }
 
-
+    @Override
     public void applyWayTags( OSMWay way, EdgeIteratorState edge )
     {
-
         double speed = this.getSpeed(edge.getFlags());
         double roadDistance = edge.getDistance();
         double beelineDistance = getBeelineDistance(way);
@@ -357,11 +355,9 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
 
         bendiness = discriminateSlowStreets(bendiness, speed);
         bendiness = increaseBendinessImpact(bendiness);
-
         bendiness = correctErrors(bendiness);
 
         edge.setFlags(this.curvatureEncoder.setValue(edge.getFlags(), convertToInt(bendiness)));
-
     }
 
     private double getBeelineDistance( OSMWay way )
@@ -382,8 +378,8 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     }
 
     /**
-     * A really small bendiness or a bendiness greater than 1 indicates an error in the calculation. Just ignore them.
-     * We use bendiness > 1.2 since the beelineDistance is only approximated,
+     * A really small bendiness or a bendiness greater than 1 indicates an error in the calculation.
+     * Just ignore them. We use bendiness > 1.2 since the beelineDistance is only approximated,
      * therefore it can happen on straight roads, that the beeline is longer than the road.
      */
     protected double correctErrors( double bendiness )
@@ -396,13 +392,13 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     }
 
     /**
-     * A good bendiness should become a greater impact. A bendiness close to 1 should not be changed.
+     * A good bendiness should become a greater impact. A bendiness close to 1 should not be
+     * changed.
      */
     protected double increaseBendinessImpact( double bendiness )
     {
         return (Math.pow(bendiness, 2));
     }
-
 
     @Override
     public boolean supports( Class<?> feature )

@@ -4,6 +4,7 @@
  * andreaswolf, flag encoder versioning and more
  * agouge, discussion and API refactoring
  * b3nn0, Android improvements
+ * boldtrn, motorcycle improvements
  * cgarreau, increase of routing success rate via subnetwork cleanup
  * daisy1754, fixed usage of graphhopper.sh script
  * dardin88, instructions improved
