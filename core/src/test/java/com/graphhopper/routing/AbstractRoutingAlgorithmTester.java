@@ -794,6 +794,34 @@ public abstract class AbstractRoutingAlgorithmTester
         assertEquals(37009621, p.getTime());
         assertEquals(616827, p.getDistance(), 1);
         assertEquals(493462, p.getWeight(), 1);
+    }        
+
+    @Test
+    public void testMultipleVehicles_issue548()
+    {
+        FastestWeighting footWeighting = new FastestWeighting(footEncoder);
+        AlgorithmOptions footOptions = AlgorithmOptions.start().flagEncoder(footEncoder).
+                weighting(footWeighting).build();
+        
+        FastestWeighting carWeighting = new FastestWeighting(carEncoder);
+        AlgorithmOptions carOptions = AlgorithmOptions.start().flagEncoder(carEncoder).
+                weighting(carWeighting).build();
+
+        GraphHopperStorage ghStorage = createGHStorage(encodingManager,
+                Arrays.asList(footOptions.getWeighting(), carOptions.getWeighting()), false);
+        initFootVsCar(ghStorage);
+        
+        // normal path would be 0-4-6-7 but block 4-6
+        GHUtility.getEdge(ghStorage, 4, 6).setFlags(carEncoder.setProperties(20, false, false));
+        
+        RoutingAlgorithm algoFoot = createFactory(ghStorage, footOptions).
+                createAlgo(getGraph(ghStorage, footWeighting), footOptions);
+                        
+        RoutingAlgorithm algoCar = createFactory(ghStorage, carOptions).
+                createAlgo(getGraph(ghStorage, carWeighting), carOptions);
+        Path p1 = algoCar.calcPath(0, 7);
+        assertEquals(Helper.createTList(0, 1, 5, 6, 7), p1.calcNodes());
+        assertEquals(p1.toString(), 26000, p1.getDistance(), 1e-6);
     }
 
     // 0-1-2

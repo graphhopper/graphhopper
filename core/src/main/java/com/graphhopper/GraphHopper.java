@@ -101,7 +101,7 @@ public class GraphHopper implements GraphHopperAPI
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
 
     public GraphHopper()
-    {       
+    {
         setCHPrepareThreads(1);
     }
 
@@ -580,7 +580,7 @@ public class GraphHopper implements GraphHopperAPI
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
         int bytesForFlags = args.getInt("graph.bytesForFlags", 4);
         String flagEncoders = args.get("graph.flagEncoders", "");
-        if (!flagEncoders.isEmpty())            
+        if (!flagEncoders.isEmpty())
             setEncodingManager(new EncodingManager(flagEncoders, bytesForFlags));
 
         if (args.get("graph.locktype", "native").equals("simple"))
@@ -753,7 +753,7 @@ public class GraphHopper implements GraphHopperAPI
      * <p>
      *
      * @param graphHopperFolder is the folder containing graphhopper files (which can be compressed
-     *                          too)
+     * too)
      */
     @Override
     public boolean load( String graphHopperFolder )
@@ -925,8 +925,8 @@ public class GraphHopper implements GraphHopperAPI
      * <p>
      *
      * @param weightingMap all parameters influencing the weighting. E.g. parameters coming via
-     *                     GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
-     * @param encoder      the required vehicle
+     * GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
+     * @param encoder the required vehicle
      * @return the weighting to be used for route calculation
      * @see WeightingMap
      */

@@ -45,7 +45,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     }
 
     @Override
-    protected GraphHopperStorage createGHStorage( EncodingManager em, 
+    protected GraphHopperStorage createGHStorage( EncodingManager em,
                                                   List<? extends Weighting> weightings, boolean is3D )
     {
         return new GraphHopperStorage(weightings, new RAMDirectory(),
@@ -165,11 +165,5 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         assertEquals(p3.toString(), 17000, p3.getDistance(), 1e-6);
         assertEquals(p3.toString(), 12240 * 1000, p3.getTime());
         assertEquals(Helper.createTList(0, 4, 5, 7), p3.calcNodes());
-    }
-
-    @Override
-    public void testRekeyBugOfIntBinHeap()
-    {
-        super.testRekeyBugOfIntBinHeap(); //To change body of generated methods, choose Tools | Templates.
     }
 }
