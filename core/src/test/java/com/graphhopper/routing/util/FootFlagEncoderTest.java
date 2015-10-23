@@ -233,11 +233,11 @@ public class FootFlagEncoderTest
         way.setTag("bicycle", "official");
         way.setTag("sidewalk", "no");
         assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, 0));
-        
+
         way.clearTags();
-        way.setTag("highway", "residential");        
+        way.setTag("highway", "residential");
         way.setTag("sidewalk", "yes");
-        assertEquals(PriorityCode.PREFER.getValue(), footEncoder.handlePriority(way, 0));                
+        assertEquals(PriorityCode.PREFER.getValue(), footEncoder.handlePriority(way, 0));
     }
 
     @Test
@@ -334,6 +334,10 @@ public class FootFlagEncoderTest
         node = new OSMNode(1, -1, -1);
         node.setTag("ford", "yes");
         assertTrue(footEncoder.handleNodeTags(node) > 0);
+
+        node.setTag("foot", "yes");
+        // no barrier!
+        assertTrue(footEncoder.handleNodeTags(node) == 0);
 
         // Now let's allow fords for foot
         footEncoder.setBlockFords(Boolean.FALSE);

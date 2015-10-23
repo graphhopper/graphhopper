@@ -511,7 +511,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testclassBicycle()
+    public void testClassBicycle()
     {
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "tertiary");

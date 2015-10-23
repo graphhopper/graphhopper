@@ -435,4 +435,17 @@ public abstract class AbstractBikeFlagEncoderTester
         // no barrier!
         assertTrue(encoder.handleNodeTags(node) == 0);
     }
+
+    @Test
+    public void testBarrierAccessFord()
+    {
+        OSMNode node = new OSMNode(1, -1, -1);
+        node.setTag("ford", "yes");
+        // barrier!
+        assertTrue(encoder.handleNodeTags(node) > 0);
+
+        node.setTag("bicycle", "yes");
+        // no barrier!
+        assertTrue(encoder.handleNodeTags(node) == 0);
+    }
 }
