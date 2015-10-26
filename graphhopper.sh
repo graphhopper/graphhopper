@@ -79,7 +79,7 @@ function ensureMaven {
   # maven home existent?
   if [ "$MAVEN_HOME" = "" ]; then
     # not existent but probably is maven in the path?
-    MAVEN_HOME=$(mvn -v | grep "Maven home" | cut -d' ' -f3)
+    MAVEN_HOME=$(mvn -v | grep "Maven home" | cut -d' ' -f3,4,5,6)
     if [ "$MAVEN_HOME" = "" ]; then
       # try to detect previous downloaded version
       MAVEN_HOME="$GH_HOME/maven"
