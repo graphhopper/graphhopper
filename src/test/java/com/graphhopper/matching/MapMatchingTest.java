@@ -214,13 +214,18 @@ public class MapMatchingTest {
         MapMatching mm = new MapMatching(graph, null, null);
         List<EdgeMatch> list = new ArrayList<EdgeMatch>();
 
-        // System.out.println(GHUtility.getNeighbors(graph.createEdgeExplorer().setBaseNode(24627)));
-        list.add(new EdgeMatch(GHUtility.getEdge(graph, 0, 24596), Collections.<GPXExtension>emptyList()));
+        // System.out.println(GHUtility.getNeighbors(graph.createEdgeExplorer().setBaseNode(24594)));
+        EdgeFilter filter = new DefaultEdgeFilter(encoder);
+        int node0 = hopper.getLocationIndex().findClosest(51.354506642099615, 12.188172054026396, filter).getClosestNode();
+        int node24594 = hopper.getLocationIndex().findClosest(51.35358593658177, 12.188015033036807, filter).getClosestNode();
+        int node880 = hopper.getLocationIndex().findClosest(51.35171863477793, 12.18765554251497, filter).getClosestNode();
+
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, node0, node24594), Collections.<GPXExtension>emptyList()));
 
         // incorrect orientation
-        list.add(new EdgeMatch(GHUtility.getEdge(graph, 880, 24596), Collections.<GPXExtension>emptyList()));
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, node880, node24594), Collections.<GPXExtension>emptyList()));
         // duplicate edge        
-        list.add(new EdgeMatch(GHUtility.getEdge(graph, 880, 24596), Collections.<GPXExtension>emptyList()));
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, node880, node24594), Collections.<GPXExtension>emptyList()));
 
         try {
             mm.checkOrCleanup(list, false);
@@ -244,10 +249,16 @@ public class MapMatchingTest {
         MapMatching mm = new MapMatching(graph, null, null);
         List<EdgeMatch> list = new ArrayList<EdgeMatch>();
 
-        list.add(new EdgeMatch(GHUtility.getEdge(graph, 0, 24596), Collections.<GPXExtension>emptyList()));
-        list.add(new EdgeMatch(GHUtility.getEdge(graph, 24596, 880), Collections.<GPXExtension>emptyList()));
-        list.add(new EdgeMatch(GHUtility.getEdge(graph, 880, 24596), Collections.<GPXExtension>emptyList()));
-        list.add(new EdgeMatch(GHUtility.getEdge(graph, 24596, 880), Collections.<GPXExtension>emptyList()));
+        // System.out.println(GHUtility.getNeighbors(graph.createEdgeExplorer().setBaseNode(24594)));
+        EdgeFilter filter = new DefaultEdgeFilter(encoder);
+        int node0 = hopper.getLocationIndex().findClosest(51.354506642099615, 12.188172054026396, filter).getClosestNode();
+        int node24594 = hopper.getLocationIndex().findClosest(51.35358593658177, 12.188015033036807, filter).getClosestNode();
+        int node880 = hopper.getLocationIndex().findClosest(51.35171863477793, 12.18765554251497, filter).getClosestNode();
+
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, node0, node24594), Collections.<GPXExtension>emptyList()));
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, node24594, node880), Collections.<GPXExtension>emptyList()));
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, node880, node24594), Collections.<GPXExtension>emptyList()));
+        list.add(new EdgeMatch(GHUtility.getEdge(graph, node24594, node880), Collections.<GPXExtension>emptyList()));
 
         // repair
         List<EdgeMatch> res = mm.checkOrCleanup(list, true);
