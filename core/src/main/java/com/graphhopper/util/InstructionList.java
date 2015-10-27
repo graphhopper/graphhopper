@@ -258,7 +258,7 @@ public class InstructionList implements Iterable<Instruction>
         return gpxOutput.toString().replaceAll("\\'", "\"");
     }
 
-    private void createRteptBlock( StringBuilder output, Instruction instruction, Instruction nextI )
+    public void createRteptBlock( StringBuilder output, Instruction instruction, Instruction nextI )
     {
         output.append("\n<rtept lat=\"").append(Helper.round6(instruction.getFirstLat())).
                 append("\" lon=\"").append(Helper.round6(instruction.getFirstLon())).append("\">");
