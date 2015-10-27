@@ -61,6 +61,15 @@ The developer of Locus has create a routing plugin for [locus](http://www.locusm
 
 The free offline map app [Cruiser](http://wiki.openstreetmap.org/wiki/Cruiser) is using GraphHopper routing and allows also other things.
 
+## Frameworks
+
+### OSMBonusPack
+
+The [OSMBonusPack](https://github.com/MKergall/osmbonuspack) supports the GraphHopper Routing API via a [GraphHopperRoadManager](https://github.com/MKergall/osmbonuspack/wiki/WhichRoutingService) and also provides map tile integration for various providers.
+
+### GraphHopper Directions API
+
+The [GraphHopper Directions API Java client](https://github.com/graphhopper/directions-api-java-client/blob/master/README.md) supports fetching the route and instructions from official and custom servers.
 
 ## Limitations
 
