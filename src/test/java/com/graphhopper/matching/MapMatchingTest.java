@@ -34,6 +34,7 @@ import com.graphhopper.util.GPXEntry;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.Translation;
+import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,6 +55,7 @@ public class MapMatchingTest {
     // enable turn restrictions in encoder:
     private static final CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
     private static final TestGraphHopper hopper = new TestGraphHopper();
+    public final static TranslationMap SINGLETON = new TranslationMap().doImport();
 
     @BeforeClass
     public static void doImport() {
@@ -91,22 +93,29 @@ public class MapMatchingTest {
         }
 
         // create street names
-        assertEquals(Arrays.asList("Platnerstraße:19138->20044", "Platnerstraße:20044->20043",
-                "Platnerstraße:20043->1551"),
+        assertEquals(Arrays.asList("Platnerstraße", "Platnerstraße", "Platnerstraße"),
                 fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 1.5);
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis());
+        InstructionList il = mapMatching.calcInstructions(mr, SINGLETON.get("en"));
+        assertEquals(il.toString(), 2, il.size());
+        assertEquals("Platnerstraße", il.get(0).getName());
 
         inputGPXEntries = createRandomGPXEntries(
                 new GHPoint(51.33099, 12.380267),
                 new GHPoint(51.330689, 12.380776));
         mr = mapMatching.doWork(inputGPXEntries);
 
-        assertEquals(Arrays.asList("Windmühlenstraße:22106->15521", "Windmühlenstraße:15521->22027",
-                "Bayrischer Platz:22027->2657", "Bayrischer Platz:2657->22017", "Bayrischer Platz:22017->22029"),
+        assertEquals(Arrays.asList("Windmühlenstraße", "Windmühlenstraße",
+                "Bayrischer Platz", "Bayrischer Platz", "Bayrischer Platz"),
                 fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), .1);
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis());
+
+        il = mapMatching.calcInstructions(mr, SINGLETON.get("en"));
+        assertEquals(il.toString(), 3, il.size());
+        assertEquals("Windmühlenstraße", il.get(0).getName());
+        assertEquals("Bayrischer Platz", il.get(1).getName());
 
         // full path
         inputGPXEntries = createRandomGPXEntries(
@@ -141,8 +150,8 @@ public class MapMatchingTest {
         List<GPXEntry> inputGPXEntries = new GPXFile().doImport("./src/test/resources/tour3-with-long-edge.gpx").getEntries();
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
         // new GPXFile(mr).doExport("testSmallSeparatedSearchDistance.gpx");
-        assertEquals(Arrays.asList("Marbachstraße:5587->2195", "Weinligstraße:2195->2196",
-                "Weinligstraße:2196->5593", "Fechnerstraße:5593->5590", "Fechnerstraße:5590->16591"),
+        assertEquals(Arrays.asList("Marbachstraße", "Weinligstraße",
+                "Weinligstraße", "Fechnerstraße", "Fechnerstraße"),
                 fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 11);
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis(), 1000);
@@ -162,9 +171,9 @@ public class MapMatchingTest {
         // new GPXFile(mr).doExport("testLoop-matched.gpx");
 
         // Expected is ~800m. If too short like 166m then the loop was skipped        
-        assertEquals(Arrays.asList("Gustav-Adolf-Straße:1078->1393", "Gustav-Adolf-Straße:1393->205",
-                "Gustav-Adolf-Straße:205->204", "Leibnizstraße:204->206", "Hinrichsenstraße:206->1381",
-                "Hinrichsenstraße:1381->1392", "Tschaikowskistraße:1392->1393", "Tschaikowskistraße:1393->1394"),
+        assertEquals(Arrays.asList("Gustav-Adolf-Straße", "Gustav-Adolf-Straße",
+                "Gustav-Adolf-Straße", "Leibnizstraße", "Hinrichsenstraße",
+                "Hinrichsenstraße", "Tschaikowskistraße", "Tschaikowskistraße"),
                 fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 1);
         // TODO why is there such a big difference for millis?
@@ -184,10 +193,10 @@ public class MapMatchingTest {
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
 
         // new GPXFile(mr).doExport("testLoop2-matched.gpx");        
-        assertEquals(Arrays.asList("Jahnallee, B 87, B 181:16805->1394", "Jahnallee, B 87, B 181:1394->1680",
-                "Jahnallee, B 87, B 181:1680->21683", "Jahnallee, B 87, B 181:21683->207", "Funkenburgstraße:207->205",
-                "Gustav-Adolf-Straße:205->1393", "Tschaikowskistraße:1393->1394", "Jahnallee, B 87, B 181:1394->1680",
-                "Lessingstraße:1680->21682", "Lessingstraße:21682->1679"),
+        assertEquals(Arrays.asList("Jahnallee, B 87, B 181", "Jahnallee, B 87, B 181",
+                "Jahnallee, B 87, B 181", "Jahnallee, B 87, B 181", "Funkenburgstraße",
+                "Gustav-Adolf-Straße", "Tschaikowskistraße", "Jahnallee, B 87, B 181",
+                "Lessingstraße", "Lessingstraße"),
                 fetchStreets(mr.getEdgeMatches()));
     }
 
@@ -203,8 +212,8 @@ public class MapMatchingTest {
         List<GPXEntry> inputGPXEntries = new GPXFile().doImport("./src/test/resources/tour4-with-uturn.gpx").getEntries();
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
 
-        assertEquals(Arrays.asList("Gustav-Adolf-Straße:1078->1393", "Gustav-Adolf-Straße:1393->205",
-                "Funkenburgstraße:205->1381", "Funkenburgstraße:1381->1379"),
+        assertEquals(Arrays.asList("Gustav-Adolf-Straße", "Gustav-Adolf-Straße",
+                "Funkenburgstraße", "Funkenburgstraße"),
                 fetchStreets(mr.getEdgeMatches()));
     }
 
@@ -237,7 +246,7 @@ public class MapMatchingTest {
         // repair
         List<EdgeMatch> res = mm.checkOrCleanup(list, true);
         // dup edge is removed
-        assertEquals(Arrays.asList("A 9:0->24596", "A 9:24596->880"), fetchStreets(res));
+        assertEquals(Arrays.asList("A 9", "A 9"), fetchStreets(res));
 
         // now repaired list must not throw an exception
         mm.checkOrCleanup(res, false);
@@ -263,7 +272,7 @@ public class MapMatchingTest {
         // repair
         List<EdgeMatch> res = mm.checkOrCleanup(list, true);
         // two edges are removed
-        assertEquals(Arrays.asList("A 9:0->24596", "A 9:24596->880"), fetchStreets(res));
+        assertEquals(Arrays.asList("A 9", "A 9"), fetchStreets(res));
 
         // now repaired list must not throw an exception
         mm.checkOrCleanup(res, false);
@@ -274,7 +283,7 @@ public class MapMatchingTest {
         int prevNode = -1;
         List<String> errors = new ArrayList<String>();
         for (EdgeMatch em : emList) {
-            String str = em.getEdgeState().getName() + ":" + em.getEdgeState().getBaseNode() + "->" + em.getEdgeState().getAdjNode();
+            String str = em.getEdgeState().getName(); // + ":" + em.getEdgeState().getBaseNode() + "->" + em.getEdgeState().getAdjNode();
             list.add(str);
             if (prevNode >= 0) {
                 if (em.getEdgeState().getBaseNode() != prevNode) {

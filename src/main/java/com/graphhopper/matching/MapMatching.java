@@ -639,4 +639,34 @@ public class MapMatching {
             return inputList;
         }
     }
+
+    private static class MyPath extends Path {
+
+        public MyPath(Graph graph, FlagEncoder encoder) {
+            super(graph, encoder);
+        }
+
+        @Override
+        public void addEdge(int edge) {
+            super.addEdge(edge);
+        }
+
+        @Override
+        public Path setFromNode(int from) {
+            return super.setFromNode(from);
+        }                
+    };
+
+    public InstructionList calcInstructions(MatchResult mr, Translation tr) {
+        MyPath p = new MyPath(graph, encoder);
+        if (!mr.getEdgeMatches().isEmpty()) {
+            p.setFromNode(mr.getEdgeMatches().get(0).getEdgeState().getBaseNode());
+            for (EdgeMatch em : mr.getEdgeMatches()) {
+                p.addEdge(em.getEdgeState().getEdge());
+            }
+            return p.calcInstructions(tr);
+        } else {
+            return new InstructionList(tr);
+        }
+    }
 }

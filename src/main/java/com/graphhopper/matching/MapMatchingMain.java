@@ -51,7 +51,7 @@ public class MapMatchingMain {
             // standard should be to remove disconnected islands
             args.put("prepare.minNetworkSize", 200);
             args.put("prepare.minOneWayNetworkSize", 200);
-            GraphHopper hopper = new GraphHopper().init(args);            
+            GraphHopper hopper = new GraphHopper().init(args);
             hopper.setCHEnable(false);
             hopper.importOrLoad();
 
@@ -64,6 +64,7 @@ public class MapMatchingMain {
             GraphHopperStorage graph = hopper.getGraphHopperStorage();
 
             int gpxAccuracy = args.getInt("gpxAccuracy", 15);
+            String instructions = args.get("instructions", "");
             logger.info("Setup lookup index. Accuracy filter is at " + gpxAccuracy + "m");
             LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
                     (LocationIndexTree) hopper.getLocationIndex(), gpxAccuracy);
@@ -101,6 +102,9 @@ public class MapMatchingMain {
             logger.info("Now processing " + files.length + " files");
             StopWatch importSW = new StopWatch();
             StopWatch matchSW = new StopWatch();
+
+            Translation tr = new TranslationMap().doImport().get(instructions);
+
             for (File gpxFile : files) {
                 try {
                     importSW.start();
@@ -116,7 +120,13 @@ public class MapMatchingMain {
 
                     String outFile = gpxFile.getAbsolutePath() + ".res.gpx";
                     System.out.println("\texport results to:" + outFile);
-                    new GPXFile(mr).doExport(outFile);
+                    InstructionList il;
+                    if (tr == null || instructions.isEmpty()) {
+                        il = new InstructionList(null);
+                    } else {
+                        il = mapMatching.calcInstructions(mr, tr);
+                    }
+                    new GPXFile(mr, il).doExport(outFile);
                 } catch (Exception ex) {
                     importSW.stop();
                     matchSW.stop();

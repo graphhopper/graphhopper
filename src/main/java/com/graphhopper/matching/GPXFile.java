@@ -18,8 +18,11 @@
 package com.graphhopper.matching;
 
 import com.graphhopper.routing.Path;
+import com.graphhopper.util.Constants;
 import com.graphhopper.util.GPXEntry;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Instruction;
+import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.Translation;
 import java.io.*;
@@ -27,6 +30,7 @@ import java.text.SimpleDateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
@@ -46,6 +50,7 @@ public class GPXFile {
     static final String DATE_FORMAT_Z_MS = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
     private final List<GPXEntry> entries;
     private final boolean includeElevation = false;
+    private InstructionList instructions;
 
     public GPXFile() {
         entries = new ArrayList<GPXEntry>();
@@ -55,8 +60,9 @@ public class GPXFile {
         this.entries = entries;
     }
 
-    public GPXFile(MatchResult mr) {
-        entries = new ArrayList<GPXEntry>(mr.getEdgeMatches().size());
+    public GPXFile(MatchResult mr, InstructionList il) {
+        this.instructions = il;
+        this.entries = new ArrayList<GPXEntry>(mr.getEdgeMatches().size());
         // TODO fetch time from GPX or from calculated route?
         long time = 0;
         for (int emIndex = 0; emIndex < mr.getEdgeMatches().size(); emIndex++) {
@@ -144,25 +150,21 @@ public class GPXFile {
         return str.substring(0, str.length() - 3) + str.substring(str.length() - 2);
     }
 
-    // TODO DUPLICATE CODE from GraphHopper InstructionList!
-    /**
-     * Hack to form valid timezone ala +01:00 instead +0100
-     */
-    private static String tzHack(String str) {
-        return str.substring(0, str.length() - 2) + ":" + str.substring(str.length() - 2);
-    }
-
     @Override
     public String toString() {
         return "entries " + entries.size() + ", " + entries;
     }
 
+    // TODO DUPLICATE CODE from GraphHopper InstructionList!
+    //
     public String createString() {
         long startTimeMillis = 0;
-        SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
+        SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT_Z);
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+
         String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
                 + "<gpx xmlns='http://www.topografix.com/GPX/1/1' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'"
-                + " creator='Graphhopper' version='1.1'"
+                + " creator='Graphhopper MapMatching " + Constants.VERSION + "' version='1.1'"
                 // This xmlns:gh acts only as ID, no valid URL necessary.
                 // Use a separate namespace for custom extensions to make basecamp happy.
                 + " xmlns:gh='https://graphhopper.com/public/schema/gpx/1.1'>"
@@ -171,27 +173,41 @@ public class GPXFile {
                 + "<link href='http://graphhopper.com'>"
                 + "<text>GraphHopper GPX</text>"
                 + "</link>"
-                + "<time>" + tzHack(formatter.format(startTimeMillis)) + "</time>"
+                + "<time>" + formatter.format(startTimeMillis) + "</time>"
                 + "</metadata>";
-        StringBuilder track = new StringBuilder(header);
-        track.append("\n<trk><name>").append("GraphHopper MapMatching").append("</name>");
+        StringBuilder gpxOutput = new StringBuilder(header);
+        gpxOutput.append("\n<trk><name>").append("GraphHopper MapMatching").append("</name>");
 
-        track.append("<trkseg>");
-        for (GPXEntry entry : entries) {
-            track.append("\n<trkpt lat='").append(Helper.round6(entry.getLat()));
-            track.append("' lon='").append(Helper.round6(entry.getLon())).append("'>");
-            if (includeElevation) {
-                track.append("<ele>").append(Helper.round2(entry.getEle())).append("</ele>");
+        if (instructions != null && !instructions.isEmpty()) {
+            gpxOutput.append("\n<rte>");
+            Instruction nextInstr = null;
+            for (Instruction currInstr : instructions) {
+                if (null != nextInstr) {
+                    instructions.createRteptBlock(gpxOutput, nextInstr, currInstr);
+                }
+
+                nextInstr = currInstr;
             }
-            track.append("<time>").append(tzHack(formatter.format(startTimeMillis + entry.getMillis()))).append("</time>");
-            track.append("</trkpt>");
+            instructions.createRteptBlock(gpxOutput, nextInstr, null);
+            gpxOutput.append("\n</rte>");
         }
-        track.append("</trkseg>");
-        track.append("</trk>");
+
+        gpxOutput.append("<trkseg>");
+        for (GPXEntry entry : entries) {
+            gpxOutput.append("\n<trkpt lat='").append(Helper.round6(entry.getLat()));
+            gpxOutput.append("' lon='").append(Helper.round6(entry.getLon())).append("'>");
+            if (includeElevation) {
+                gpxOutput.append("<ele>").append(Helper.round2(entry.getEle())).append("</ele>");
+            }
+            gpxOutput.append("<time>").append(formatter.format(startTimeMillis + entry.getMillis())).append("</time>");
+            gpxOutput.append("</trkpt>");
+        }
+        gpxOutput.append("</trkseg>");
+        gpxOutput.append("</trk>");
 
         // we could now use 'wpt' for via points
-        track.append("</gpx>");
-        return track.toString().replaceAll("\\'", "\"");
+        gpxOutput.append("</gpx>");
+        return gpxOutput.toString().replaceAll("\\'", "\"");
     }
 
     public GPXFile doExport(String gpxFile) {
