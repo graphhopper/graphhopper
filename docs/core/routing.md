@@ -1,7 +1,7 @@
 To do routing in your Java code you'll need just a few lines of code:
 
 ```java
-// create singleton
+// create one GraphHopper instance
 GraphHopper hopper = new GraphHopper().forServer();
 hopper.setOSMFile(osmFile);
 // where to store graphhopper files?
