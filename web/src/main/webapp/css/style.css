@@ -126,6 +126,12 @@ body {
 #options {
     padding-bottom: 10px;
     padding-left: 20px;
+    padding-right: 20px;
+}
+.vehicle-info-link {
+    padding-top: 3px;
+    float: right;
+    text-decoration: none;
 }
 .bold {
     font-weight: bold;
