@@ -42,7 +42,7 @@ Possible arguments are:
 instructions=de             # default=, type=String, if an country-iso-code (like en or de) is specified turn instructions are included in the output, leave empty or default to avoid this
 gpxAccuracy=15              # default=15, type=int, unit=meter, the precision of the used device
 separatedSearchDistance=500 # default=500, type=int, unit=meter, we split the incoming list into smaller parts (hopefully) without loops. Later we'll detect loops and insert the correctly detected road recursivly, see #1
-maxSearchMultiplier=50      # default=50, type=int, the limit we use to search a route from one gps entry to the other to avoid exploring the whole graph in case of disconnected subnetworks. See #15
+maxNodesToVisit=1000        # default=1000, type=int, the limit we use to search a route from one gps entry to the other to avoid exploring the whole graph in case of disconnected subnetworks.
 forceRepair=false           # default=false, type=boolean, when merging two path segments it can happen that edges seem illegal like two adjacent and parallel edges and the search will normally fail. Setting this to true tries to clean the illegal situation
 ```
 
