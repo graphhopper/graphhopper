@@ -22,6 +22,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.BBox;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.List;
@@ -75,29 +76,7 @@ public class MapMatchingMain {
 
             // do the actual matching, get the GPX entries from a file or via stream
             String gpxLocation = args.get("gpx", "");
-            File[] files;
-            if (gpxLocation.contains("*")) {
-                int lastIndex = gpxLocation.lastIndexOf(File.separator);
-                final String pattern;
-                File dir = new File(".");
-                if (lastIndex >= 0) {
-                    dir = new File(gpxLocation.substring(0, lastIndex));
-                    pattern = gpxLocation.substring(lastIndex + 1);
-                } else {
-                    pattern = gpxLocation;
-                }
-
-                files = dir.listFiles(new FilenameFilter() {
-                    @Override
-                    public boolean accept(File dir, String name) {
-                        return name.matches(pattern);
-                    }
-                });
-            } else {
-                files = new File[]{
-                    new File(gpxLocation)
-                };
-            }
+            File[] files = getFiles(gpxLocation);
 
             logger.info("Now processing " + files.length + " files");
             StopWatch importSW = new StopWatch();
@@ -135,11 +114,68 @@ public class MapMatchingMain {
             }
             System.out.println("gps import took:" + importSW.getSeconds() + "s, match took: " + matchSW.getSeconds());
 
+        } else if (action.equals("getbounds")) {
+            String gpxLocation = args.get("gpx", "");
+            File[] files = getFiles(gpxLocation);
+            BBox bbox = BBox.createInverse(false);
+            for (File gpxFile : files) {
+                List<GPXEntry> inputGPXEntries = new GPXFile().doImport(gpxFile.getAbsolutePath()).getEntries();
+                for (GPXEntry entry : inputGPXEntries) {
+                    if (entry.getLat() < bbox.minLat) {
+                        bbox.minLat = entry.getLat();
+                    }
+                    if (entry.getLat() > bbox.maxLat) {
+                        bbox.maxLat = entry.getLat();
+                    }
+                    if (entry.getLon() < bbox.minLon) {
+                        bbox.minLon = entry.getLon();
+                    }
+                    if (entry.getLon() > bbox.maxLon) {
+                        bbox.maxLon = entry.getLon();
+                    }
+                }
+            }
+
+            System.out.println("max bounds: " + bbox);
+
+            // show download only for small areas
+            if (bbox.maxLat - bbox.minLat < 0.1 && bbox.maxLon - bbox.minLon < 0.1) {
+                double delta = 0.01;
+                System.out.println("Get small areas via\n"
+                        + "wget -O extract.osm 'http://overpass-api.de/api/map?bbox="
+                        + (bbox.minLon - delta) + "," + (bbox.minLat - delta) + ","
+                        + (bbox.maxLon + delta) + "," + (bbox.maxLat + delta) + "'");
+            }
         } else {
             System.out.println("Usage: Do an import once, then do the matching\n"
                     + "./map-matching action=import datasource=your.pbf\n"
                     + "./map-matching action=match gpx=your.gpx\n"
                     + "./map-matching action=match gpx=.*gpx\n\n");
+        }
+    }
+
+    File[] getFiles(String gpxLocation) {
+        if (gpxLocation.contains("*")) {
+            int lastIndex = gpxLocation.lastIndexOf(File.separator);
+            final String pattern;
+            File dir = new File(".");
+            if (lastIndex >= 0) {
+                dir = new File(gpxLocation.substring(0, lastIndex));
+                pattern = gpxLocation.substring(lastIndex + 1);
+            } else {
+                pattern = gpxLocation;
+            }
+
+            return dir.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    return name.matches(pattern);
+                }
+            });
+        } else {
+            return new File[]{
+                new File(gpxLocation)
+            };
         }
     }
 }

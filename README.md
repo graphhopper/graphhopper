@@ -48,6 +48,13 @@ forceRepair=false           # default=false, type=boolean, when merging two path
 
 This will produce gpx results similar named as the input files.
 
+#### Development tools
+
+Determine the maximum bounds of one or more GPX file:
+```bash
+./map-matching.sh action=getbounds gpx=./track-data/.*gpx
+```
+
 #### Java usage
 
 Or use this Java snippet:
