@@ -1,5 +1,6 @@
 package com.graphhopper.routing.util;
 
+import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIterator;
@@ -9,6 +10,7 @@ import gnu.trove.stack.array.TIntArrayStack;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of Tarjan's algorithm using an explicit stack. The traditional recursive approach
@@ -22,7 +24,8 @@ public class TarjansStronglyConnectedComponentsAlgorithm
 {
     private final GraphHopperStorage graph;
     private final TIntArrayStack nodeStack;
-    private final GHBitSetImpl onStack;
+    private final GHBitSet onStack;
+    private final GHBitSet ignoreSet;
     private final int[] nodeIndex;
     private final int[] nodeLowLink;
     private final ArrayList<TIntArrayList> components = new ArrayList<TIntArrayList>();
@@ -30,7 +33,8 @@ public class TarjansStronglyConnectedComponentsAlgorithm
     private int index = 1;
     private final EdgeFilter edgeFilter;
 
-    public TarjansStronglyConnectedComponentsAlgorithm( GraphHopperStorage graph, final EdgeFilter edgeFilter )
+    public TarjansStronglyConnectedComponentsAlgorithm( GraphHopperStorage graph, GHBitSet ignoreSet,
+                                                        final EdgeFilter edgeFilter )
     {
         this.graph = graph;
         this.nodeStack = new TIntArrayStack();
@@ -38,6 +42,7 @@ public class TarjansStronglyConnectedComponentsAlgorithm
         this.nodeIndex = new int[graph.getNodes()];
         this.nodeLowLink = new int[graph.getNodes()];
         this.edgeFilter = edgeFilter;
+        this.ignoreSet = ignoreSet;
     }
 
     /**
@@ -48,14 +53,16 @@ public class TarjansStronglyConnectedComponentsAlgorithm
         int nodes = graph.getNodes();
         for (int start = 0; start < nodes; start++)
         {
-            if (nodeIndex[start] == 0 && !graph.isNodeRemoved(start))
-            {
+            if (nodeIndex[start] == 0
+                    && !ignoreSet.contains(start)
+                    && !graph.isNodeRemoved(start))
                 strongConnect(start);
-            }
         }
 
         return components;
     }
+
+    int oneCounter = 0;
 
     // Find all components reachable from firstNode, add them to 'components'
     private void strongConnect( int firstNode )
@@ -79,13 +86,12 @@ public class TarjansStronglyConnectedComponentsAlgorithm
                 nodeLowLink[start] = index;
                 index++;
                 nodeStack.push(start);
-                onStack.set(start);
+                onStack.add(start);
 
                 iter = graph.createEdgeExplorer(edgeFilter).setBaseNode(start);
 
             } else
-            { // if (state.isResume()) {
-
+            {
                 // We're resuming iteration over the next child of 'start', set lowLink as appropriate.
                 iter = state.iter;
 
@@ -98,6 +104,9 @@ public class TarjansStronglyConnectedComponentsAlgorithm
             while (iter.next())
             {
                 int connectedId = iter.getAdjNode();
+                if (ignoreSet.contains(start))
+                    continue;
+
                 if (nodeIndex[connectedId] == 0)
                 {
                     // Push resume and start states onto state stack to continue our DFS through the graph after the jump.
@@ -120,15 +129,23 @@ public class TarjansStronglyConnectedComponentsAlgorithm
                 while ((node = nodeStack.pop()) != start)
                 {
                     component.add(node);
-                    onStack.clear(node);
+                    onStack.remove(node);
                 }
                 component.add(start);
                 component.trimToSize();
-                onStack.clear(start);
+                onStack.remove(start);
+
+                if (component.size() == 1)
+                    oneCounter++;
 
                 components.add(component);
             }
         }
+    }
+
+    public void printStats()
+    {
+        LoggerFactory.getLogger(getClass()).info("counter " + oneCounter);
     }
 
     // Internal stack state of algorithm, used to avoid recursive function calls and hitting stack overflow exceptions.
