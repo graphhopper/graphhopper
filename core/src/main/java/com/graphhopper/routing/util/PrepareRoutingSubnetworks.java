@@ -32,9 +32,9 @@ import org.slf4j.LoggerFactory;
 import gnu.trove.list.array.TIntArrayList;
 
 /**
- * Removes nodes which are not part of the largest network. Ie. mostly nodes with no edges at all
- * but also small subnetworks which are nearly always bugs in OSM data or indicate otherwise
- * disconnected areas e.g. via barriers - see #86.
+ * Removes nodes which are not part of the large networks. Ie. mostly nodes with no edges at all but
+ * also small subnetworks which are often bugs in OSM data or indicate otherwise disconnected areas
+ * e.g. via barriers or one way problems - see #86.
  * <p>
  * @author Peter Karich
  */
@@ -221,7 +221,7 @@ public class PrepareRoutingSubnetworks
      */
     int removeDeadEndUnvisitedNetworks( final PrepEdgeFilter bothFilter )
     {
-        // partition graph into strongly connected components using Tarjan's algorithm
+        StopWatch sw = new StopWatch(bothFilter.getEncoder() + " findComponents").start();
         final EdgeFilter outFilter = new DefaultEdgeFilter(bothFilter.getEncoder(), false, true);
 
         // Very important special case for single entry components: we don't need them! See #520
@@ -240,11 +240,9 @@ public class PrepareRoutingSubnetworks
             }
         }
 
-        TarjansStronglyConnectedComponentsAlgorithm tarjan
-                = new TarjansStronglyConnectedComponentsAlgorithm(ghStorage, ignoreSet, outFilter);
-        StopWatch sw = new StopWatch(bothFilter.getEncoder() + " findComponents").start();
+        // partition graph into strongly connected components using Tarjan's algorithm        
+        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, ignoreSet, outFilter);
         List<TIntArrayList> components = tarjan.findComponents();
-        tarjan.printStats();
         logger.info(sw.stop() + ", size:" + components.size());
 
         return removeEdges(bothFilter, components, minOneWayNetworkSize);

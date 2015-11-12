@@ -10,31 +10,29 @@ import gnu.trove.stack.array.TIntArrayStack;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
-import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of Tarjan's algorithm using an explicit stack. The traditional recursive approach
- * runs into stack overflow pretty quickly. Used for finding strongly connected components to detect
- * dead-ends.
+ * runs into stack overflow pretty quickly. The algorithm is used within GraphHopper to find
+ * strongly connected components to detect dead-ends leading to routes not found.
  * <p>
  * See http://en.wikipedia.org/wiki/Tarjan's_strongly_connected_components_algorithm. See
  * http://www.timl.id.au/?p=327 and http://homepages.ecs.vuw.ac.nz/~djp/files/P05.pdf
  */
-public class TarjansStronglyConnectedComponentsAlgorithm
+public class TarjansSCCAlgorithm
 {
+    private final ArrayList<TIntArrayList> components = new ArrayList<TIntArrayList>();
     private final GraphHopperStorage graph;
     private final TIntArrayStack nodeStack;
     private final GHBitSet onStack;
     private final GHBitSet ignoreSet;
     private final int[] nodeIndex;
     private final int[] nodeLowLink;
-    private final ArrayList<TIntArrayList> components = new ArrayList<TIntArrayList>();
-
     private int index = 1;
     private final EdgeFilter edgeFilter;
 
-    public TarjansStronglyConnectedComponentsAlgorithm( GraphHopperStorage graph, GHBitSet ignoreSet,
-                                                        final EdgeFilter edgeFilter )
+    public TarjansSCCAlgorithm( GraphHopperStorage graph, GHBitSet ignoreSet,
+                                final EdgeFilter edgeFilter )
     {
         this.graph = graph;
         this.nodeStack = new TIntArrayStack();
@@ -62,9 +60,11 @@ public class TarjansStronglyConnectedComponentsAlgorithm
         return components;
     }
 
-    int oneCounter = 0;
-
-    // Find all components reachable from firstNode, add them to 'components'
+    /**
+     * Find all components reachable from firstNode, add them to 'components'
+     * <p>
+     * @param firstNode start search of SCC at this node
+     */
     private void strongConnect( int firstNode )
     {
         final Stack<TarjanState> stateStack = new Stack<TarjanState>();
@@ -134,22 +134,16 @@ public class TarjansStronglyConnectedComponentsAlgorithm
                 component.add(start);
                 component.trimToSize();
                 onStack.remove(start);
-
-                if (component.size() == 1)
-                    oneCounter++;
-
                 components.add(component);
             }
         }
     }
 
-    public void printStats()
-    {
-        LoggerFactory.getLogger(getClass()).info("counter " + oneCounter);
-    }
-
-    // Internal stack state of algorithm, used to avoid recursive function calls and hitting stack overflow exceptions.
-    // State is either 'start' for new nodes or 'resume' for partially traversed nodes.
+    /**
+     * Internal stack state of algorithm, used to avoid recursive function calls and hitting stack
+     * overflow exceptions. State is either 'start' for new nodes or 'resume' for partially
+     * traversed nodes.
+     */
     private static class TarjanState
     {
         final int start;
