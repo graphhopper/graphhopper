@@ -72,4 +72,10 @@ public class PreparationWeighting implements Weighting
     {
         return "prepare|" + userWeighting.getName();
     }
+
+    @Override
+    public String toString()
+    {
+        return getName();
+    }
 }
