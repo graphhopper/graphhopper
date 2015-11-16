@@ -36,8 +36,13 @@
         </license>
     </licenses> 
     <dependencies>
+        <dependency>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper-tools-lgpl</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         
-        <!-- Trove is LGPL and slightly big (~3MB) -->
+        <!-- Trove is LGPL and slightly big (~3MB) -->        
         <dependency>
             <groupId>net.sf.trove4j</groupId>
             <artifactId>trove4j</artifactId>

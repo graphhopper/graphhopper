@@ -1,4 +1,5 @@
 0.6
+    moving lgpl licensed file into own submodule graphhopper-tools-lgpl
     renaming of Tarjans algorithm class to TarjansSCCAlgorithm
     more strict naming for Weighting enforced and more strict matching to select Weighting (equals check), #490
     specify the preferred-language for way names during graph import (ISO 639-1 or ISO 639-2)
