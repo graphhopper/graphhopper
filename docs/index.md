@@ -2,7 +2,7 @@
 
  * [Quickstart](./web/quickstart.md): HowTo for users.
  * [Read Overview](https://graphhopper.com/#overview): Summary of the product Graphhopper. 
- * [Add GraphHopper Maps to your Browser](./web/open-search.md): Instructions how to setup Graphhopper as the standart search enginge in your browser.
+ * [Add GraphHopper Maps to your Browser](./web/open-search.md): Instructions how to setup Graphhopper as the standard search engine in your browser.
  * [GraphHopper on Twitter](https://twitter.com/graphhopper): Find the official Graphhopper account on Twitter.
 
 # Translators
