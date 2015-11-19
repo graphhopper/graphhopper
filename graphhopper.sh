@@ -153,7 +153,7 @@ elif [ "$ACTION" = "extract" ]; then
  
 elif [ "$ACTION" = "android" ]; then
  prepareEclipse
- "$MAVEN_HOME/bin/mvn" -P include-android --projects android install android:deploy android:run
+ "$MAVEN_HOME/bin/mvn" -P include-android --projects android/app install android:deploy android:run
  exit
 fi
 
